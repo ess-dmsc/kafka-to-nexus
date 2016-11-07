@@ -1,0 +1,52 @@
+// Some very early try at visualizing the flow (Dominik)
+
+// Render for example using:
+// dot -T png -o flow.png flow.gv
+
+digraph System {
+  rankdir = LR;
+
+  subgraph Inputs {
+    //rankdir = TB;
+    //ordering="out";
+    rank="same";
+    ecp01 [label="ECP"];
+    kf01 [shape="rect", label="Kafka 01", pos="1,2"];
+    kf02 [shape="rect", label="Kafka 02"];
+    kf03 [shape="rect", label="Kafka 03"];
+    edge [style="invis"];
+    ecp01 -> kf01 [weight=1000000];
+    kf01 -> kf02 [weight=1000000];
+    kf02 -> kf03 [weight=1000000];
+    //{rank="same";ordering="out";ecp01;kf01;kf02;kf03}
+  }
+
+  writer_config_api [shape="record", label="Writer Config API | Add Metadata | Add data stream (select by broker(?),\ntopic, fields in msgs)"];
+
+  subgraph FileWriter {
+    writer_main [shape="rect", label="File Writer Main"];
+    writer_exp01 [shape="rect", label="Writer for Experiment 1"];
+    writer_exp02 [shape="rect", label="Writer for Experiment 2"];
+    subgraph Process {
+      writer_exp01_p01 [shape="note", label="Main File"];
+      writer_exp01_p02 [shape="note", label="Virtual File"];
+      writer_exp02_p01 [shape="note", label="Main File"];
+      writer_exp02_p02 [shape="note", label="Virtual File"];
+    }
+    writer_exp01 -> writer_exp01_p01;
+    writer_exp01 -> writer_exp01_p02;
+    writer_exp02 -> writer_exp02_p01;
+    writer_exp02 -> writer_exp02_p02;
+  }
+
+  ecp01 -> writer_config_api [label="API calls"];
+
+  writer_config_api -> writer_main [label="JSON (net)"];
+  writer_main -> writer_exp01;
+  writer_main -> writer_exp02;
+
+  kf01 -> writer_exp02_p01 [weight=0];
+  kf02 -> writer_exp02_p02 [weight=0];
+  kf03 -> writer_exp02_p02 [weight=0];
+
+}
