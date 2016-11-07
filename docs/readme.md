@@ -11,9 +11,9 @@ Documents:
 
 Very early draft so far:
 
-<./flow.gv>
+[Graphviz dot](flow.gv)
 
-<./flow.png>
+[Graphviz png](flow.png)
 
 
 ## To be discussed
