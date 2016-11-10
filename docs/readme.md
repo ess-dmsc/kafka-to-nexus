@@ -12,6 +12,7 @@ Documents:
 Very early draft so far:
 
 [Flow chart](https://bitbucket.org/europeanspallationsource/kafka-to-nexus-blobs/raw/5e11c703d14673a0677fe38d9488b72120ee0635/docs/flow.pdf)
+![Flow](flow.svg)
 
 
 ## To be discussed
