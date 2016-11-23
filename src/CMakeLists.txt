@@ -1,0 +1,142 @@
+project("ess-file-writer")
+
+# Relative to build root
+#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ..)
+
+if (NOT CMAKE_BUILD_TYPE)
+set(CMAKE_BUILD_TYPE Debug)
+endif()
+message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+
+
+
+file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx "extern \"C\" char const GIT_COMMIT[] = \"NOTSET\";\n")
+
+add_custom_target(git_commit_now ALL
+COMMAND echo 'extern \"C\" char const GIT_COMMIT[] = \"'`git rev-parse HEAD`'\"\;' > ${CMAKE_CURRENT_BINARY_DIR}/git_commit_now
+WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+add_custom_target(git_commit_current ALL
+COMMAND git diff --name-only --no-index ${CMAKE_CURRENT_BINARY_DIR}/git_commit_now ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx || cp ${CMAKE_CURRENT_BINARY_DIR}/git_commit_now ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+DEPENDS git_commit_now
+)
+
+
+
+
+find_path(path_include_fmt NAMES fmt/format.cc PATHS
+  "$ENV{fmt_dir}/include"
+  /opt/local
+)
+
+find_path(path_include_gtest NAMES gtest/gtest.h)
+find_library(path_lib_gtest NAMES gtest)
+add_library(libgtest SHARED IMPORTED)
+set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
+
+find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h PATHS
+ "$ENV{flatbuffers_dir}/include"
+ /opt/local/flatbuffers.git/include
+)
+
+find_path(path_include_rapidjson NAMES rapidjson/document.h PATHS
+ "$ENV{rapidjson_dir}/include"
+ /opt/local/rapidjson.git/include
+)
+
+find_path(path_include_hdf5 NAMES hdf5.h PATHS
+  "$ENV{hdf5_dir}/include"
+)
+
+find_library(path_lib_hdf5 NAMES hdf5-shared PATHS
+  "$ENV{hdf5_dir}/lib"
+)
+
+add_library(libhdf5 SHARED IMPORTED)
+set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
+
+find_library(path_lib_hdf5cpp NAMES hdf5_cpp-shared PATHS
+  "$ENV{hdf5_dir}/lib"
+)
+add_library(libhdf5cpp SHARED IMPORTED)
+set_property(TARGET libhdf5cpp PROPERTY IMPORTED_LOCATION ${path_lib_hdf5cpp})
+
+find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h PATHS
+ "$ENV{librdkafka_dir}/include"
+ /opt/local/rdkafka/install/include
+ /usr/local/include
+)
+
+find_library(path_lib_rdkafka NAMES rdkafka PATHS
+ "$ENV{librdkafka_dir}/lib"
+ /opt/local/rdkafka/install/lib
+ /usr/local/lib
+)
+add_library(librdkafka SHARED IMPORTED)
+set_property(TARGET librdkafka PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka})
+
+
+
+
+
+# TODO
+# Import the actual schemes
+set(flatbuffers_schemata "")
+set(flatbuffers_generated_headers "")
+
+foreach (f ${flatbuffers_schemata})
+	set(fbs "${f}.fbs")
+	set(fbh "${f}_generated.h")
+	add_custom_command(
+		OUTPUT ${fbh}
+		COMMAND ${flatc} --cpp "${CMAKE_CURRENT_SOURCE_DIR}/${fbs}"
+		DEPENDS "${fbs}"
+		COMMENT "Process ${fbs} using ${flatc}"
+	)
+	list(APPEND flatbuffers_generated_headers "${fbh}")
+endforeach()
+
+add_custom_target(flatbuffers_generate ALL DEPENDS ${flatbuffers_generated_headers})
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-inline")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
+#set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wpedantic -Wno-variadic-macros")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fomit-frame-pointer")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-inline -fno-omit-frame-pointer")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fprofile-arcs -ftest-coverage")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pg")
+
+if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.3")
+else ()
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
+endif()
+
+
+set(tgt ess-file-writer)
+
+add_executable(${tgt}
+ess-file-writer.cxx
+${path_include_fmt}/fmt/format.cc
+${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+)
+set_target_properties(${tgt} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
+
+add_dependencies(${tgt} flatbuffers_generate)
+add_dependencies(${tgt} git_commit_current)
+
+target_include_directories(${tgt} PRIVATE
+${path_include_fmt}
+${path_include_gtest}
+${path_include_hdf5}
+${path_include_rdkafka}
+${path_include_flatbuffers}
+${path_include_rapidjson}
+${CMAKE_CURRENT_BINARY_DIR}
+)
+
+#target_link_libraries(${tgt} libhdf5)
+target_link_libraries(${tgt} libhdf5cpp)
+target_link_libraries(${tgt} libgtest)
+target_link_libraries(${tgt} librdkafka)
