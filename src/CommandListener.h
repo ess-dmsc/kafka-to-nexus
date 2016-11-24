@@ -2,6 +2,7 @@
 
 #include <thread>
 #include <librdkafka/rdkafkacpp.h>
+#include "Master_handler.h"
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -19,10 +20,15 @@ CommandListener(CommandListenerConfig);
 /// Start listening to command messages
 void start();
 void stop();
-void run();
+void poll(FileWriterCommandHandler & command_handler);
 private:
 CommandListenerConfig config;
 std::thread thr_consumer;
+std::unique_ptr<RdKafka::Conf> gconf;
+std::unique_ptr<RdKafka::Conf> tconf;
+std::unique_ptr<RdKafka::Consumer> kcons;
+std::unique_ptr<RdKafka::Topic> topic;
+int32_t partition = RdKafka::Topic::PARTITION_UA;
 };
 
 }
