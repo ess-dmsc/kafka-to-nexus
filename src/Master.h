@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include <stdexcept>
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -16,7 +17,20 @@ std::string broker_command_topic = "ess-file-writer.command";
 /// Reacts also to stop, and possibly other future commands.
 class Master {
 public:
-Master();
+Master(MasterConfig config);
+
+/// Start listening to command messages
+void listen_start();
+void listen_stop();
+
+private:
+MasterConfig config;
+};
+
+
+class BrokerFailure : public std::runtime_error {
+public:
+BrokerFailure(std::string msg);
 };
 
 }
