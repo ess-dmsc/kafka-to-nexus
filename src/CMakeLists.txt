@@ -120,7 +120,9 @@ set(tgt ess-file-writer)
 
 add_executable(${tgt}
 ess-file-writer.cxx
+kafka_util.cxx
 Master.cxx
+CommandListener.cxx
 NexusWriter.cxx
 logger.cxx
 ${path_include_fmt}/fmt/format.cc

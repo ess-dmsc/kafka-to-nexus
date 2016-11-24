@@ -1,16 +1,14 @@
 #pragma once
 #include <string>
 #include <stdexcept>
+#include "CommandListener.h"
 
 namespace BrightnESS {
 namespace FileWriter {
 
-// POD
 struct MasterConfig {
-std::string broker_command_address = "localhost:9092";
-std::string broker_command_topic = "ess-file-writer.command";
+CommandListenerConfig command_listener;
 };
-
 
 /// Listens to the Kafka configuration topic.
 /// On a new file writing request, creates new nexusWriter instance.
@@ -19,19 +17,11 @@ class Master {
 public:
 Master(MasterConfig config);
 
-/// Start listening to command messages
-void listen_start();
-void listen_stop();
-
 private:
 MasterConfig config;
+CommandListener command_listener;
 };
 
-
-class BrokerFailure : public std::runtime_error {
-public:
-BrokerFailure(std::string msg);
-};
 
 }
 }

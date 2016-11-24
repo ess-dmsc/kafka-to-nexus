@@ -65,10 +65,10 @@ int main(int argc, char ** argv) {
 				opt.help = true;
 			}
 			if (std::string("broker-command-address") == lname) {
-				opt.master_config.broker_command_address = optarg;
+				opt.master_config.command_listener.address = optarg;
 			}
 			if (std::string("broker-command-topic") == lname) {
-				opt.master_config.broker_command_topic = optarg;
+				opt.master_config.command_listener.topic = optarg;
 			}
 		}
 	}
@@ -98,13 +98,13 @@ int main(int argc, char ** argv) {
 		       "      Kafka brokers to connect with for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.master_config.broker_command_address.c_str());
+			opt.master_config.command_listener.address.c_str());
 
 		printf("  --broker-configuration-topic      <topic-name>\n"
 		       "      Topic name to listen to for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.master_config.broker_command_topic.c_str());
+			opt.master_config.command_listener.topic.c_str());
 
 		printf("  --verbose\n"
 		       "\n");
