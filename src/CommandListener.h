@@ -7,22 +7,24 @@
 namespace BrightnESS {
 namespace FileWriter {
 
-// POD
+/// Settings for the Kafka command broker and topic.
 struct CommandListenerConfig {
 std::string address = "localhost:9092";
 std::string topic = "ess-file-writer.command";
 };
 
 
+/// Check for new commands on the topic, dispatch to the Master
 class CommandListener {
 public:
 CommandListener(CommandListenerConfig);
 /// Start listening to command messages
 void start();
 void stop();
+/// Check for new command packets
 void poll(FileWriterCommandHandler & command_handler);
 
-// Only used for testing:
+/// Only used for testing:
 bool is_mockup = false;
 private:
 CommandListenerConfig config;

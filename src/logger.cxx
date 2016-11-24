@@ -8,6 +8,7 @@
 int log_level = 3;
 
 int prefix_len() {
-	static int n1 = strlen(__FILE__) - 10;
+	// Yes, depends on the name of this very file without the path:
+	static int n1 = strlen(__FILE__) - strlen("logger.cxx");
 	return n1;
 }

@@ -31,7 +31,9 @@ size_t size() { return data_.size(); }
 std::vector<uint8_t> data_;
 };
 
+
 /// Master will be responsible for parsing the command messages.
+
 /// Still, abstract away the interface for decoupling:
 class FileWriterCommandHandler {
 public:

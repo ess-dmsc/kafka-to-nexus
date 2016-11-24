@@ -12,9 +12,11 @@ using std::vector;
 using std::string;
 
 
+/// Stub, will perform the JSON parsing and then take appropriate action.
 class CommandHandler : public FileWriterCommandHandler {
 public:
 void handle(std::unique_ptr<CmdMsg> msg) {
+	LOG(3, "CommandHandler got message: {}", (char*)msg->data());
 }
 };
 

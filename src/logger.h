@@ -3,8 +3,6 @@
 #include <stdarg.h>
 #include <fmt/format.h>
 
-// Do we have a cross-platform way of doing this?
-// Would a stream work better?
 #ifdef _MSC_VER
 
 #define LOG(level, fmt, ...) { \
@@ -13,8 +11,6 @@
 	} \
 }
 
-//#define QLOG(level, fmt, ...) { dwlog(level, "[%lx] " fmt, __FILE__, __LINE__, __FUNCSIG__, (uint64_t)QThread::currentThreadId(), __VA_ARGS__); }
-
 #else
 
 #define LOG(level, fmt, args...) { \
@@ -22,8 +18,6 @@
 		dwlog(level, fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, ## args); \
 	} \
 }
-
-//#define QLOG(level, fmt, args...) { dwlog(level, "[%lx] " fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, (uint64_t)QThread::currentThreadId(), ## args); }
 
 #endif
 
