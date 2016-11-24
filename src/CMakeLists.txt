@@ -120,6 +120,7 @@ set(tgt ess-file-writer)
 
 add_executable(${tgt}
 ess-file-writer.cxx
+Master.cxx
 NexusWriter.cxx
 logger.cxx
 ${path_include_fmt}/fmt/format.cc

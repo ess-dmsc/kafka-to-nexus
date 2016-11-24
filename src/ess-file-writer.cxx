@@ -3,7 +3,7 @@
 #include <string>
 #include <getopt.h>
 #include "logger.h"
-#include "NexusWriter.h"
+#include "Master.h"
 
 #if HAVE_GTEST
 #include <gtest/gtest.h>
@@ -15,11 +15,9 @@ extern "C" char const GIT_COMMIT[];
 
 // POD
 struct MainOpt {
-public:
-std::string broker_command_address = "localhost:9092";
-std::string broker_command_topic = "ess-file-writer.command";
 bool help = false;
 bool verbose = false;
+BrightnESS::FileWriter::MasterConfig master_config;
 };
 
 
@@ -65,10 +63,10 @@ int main(int argc, char ** argv) {
 				opt.help = true;
 			}
 			if (std::string("broker-command-address") == lname) {
-				opt.broker_command_address = optarg;
+				opt.master_config.broker_command_address = optarg;
 			}
 			if (std::string("broker-command-topic") == lname) {
-				opt.broker_command_topic = optarg;
+				opt.master_config.broker_command_topic = optarg;
 			}
 		}
 	}
@@ -95,13 +93,13 @@ int main(int argc, char ** argv) {
 		       "      Kafka brokers to connect with for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.broker_command_address.c_str());
+			opt.master_config.broker_command_address.c_str());
 
 		printf("  --broker-configuration-topic      <topic-name>\n"
 		       "      Topic name to listen to for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.broker_command_topic.c_str());
+			opt.master_config.broker_command_topic.c_str());
 
 		printf("  --verbose\n"
 		       "\n");
