@@ -34,7 +34,7 @@ int main(int argc, char ** argv) {
 	MainOpt opt;
 
 	static struct option long_options[] = {
-		{"help",                            no_argument,              0,  0 },
+		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
 		{"broker-command-topic",            required_argument,        0,  0 },
 		{"verbose",                         no_argument,              0, 'v'},
@@ -44,7 +44,7 @@ int main(int argc, char ** argv) {
 	int option_index = 0;
 	bool getopt_error = false;
 	while (true) {
-		int c = getopt_long(argc, argv, "v", long_options, &option_index);
+		int c = getopt_long(argc, argv, "vh", long_options, &option_index);
 		//LOG(5, "c getopt {}", c);
 		if (c == -1) break;
 		if (c == '?') {
@@ -57,6 +57,8 @@ int main(int argc, char ** argv) {
 			opt.verbose = true;
 			log_level = std::max(0, log_level - 1);
 			break;
+		case 'h':
+			opt.help = true;
 		case 0:
 			auto lname = long_options[option_index].name;
 			if (std::string("help") == lname) {
@@ -87,7 +89,10 @@ int main(int argc, char ** argv) {
 		       "\n"
 		       "\n"
 		       "forward-epics-to-kafka\n"
-		       "  --help\n"
+		       "  --help, -h\n"
+		       "\n"
+		       "  --test\n"
+		       "      Run tests\n"
 		       "\n"
 		       "  --broker-configuration-address    host:port,host:port,...\n"
 		       "      Kafka brokers to connect with for configuration updates.\n"
