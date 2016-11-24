@@ -3,6 +3,7 @@
 #include <string>
 #include <getopt.h>
 #include "logger.h"
+#include "NexusWriter.h"
 
 #if HAVE_GTEST
 #include <gtest/gtest.h>
