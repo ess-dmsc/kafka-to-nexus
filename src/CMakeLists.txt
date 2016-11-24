@@ -32,8 +32,10 @@ find_path(path_include_fmt NAMES fmt/format.cc PATHS
 
 find_path(path_include_gtest NAMES gtest/gtest.h)
 find_library(path_lib_gtest NAMES gtest)
+if (path_lib_gtest)
 add_library(libgtest SHARED IMPORTED)
 set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
+endif()
 
 find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h PATHS
  "$ENV{flatbuffers_dir}/include"
@@ -118,6 +120,7 @@ set(tgt ess-file-writer)
 
 add_executable(${tgt}
 ess-file-writer.cxx
+logger.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
@@ -126,9 +129,15 @@ set_target_properties(${tgt} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 
+if (path_include_gtest AND path_lib_gtest)
+message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
+target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
+target_include_directories(${tgt} PRIVATE ${path_include_gtest})
+target_link_libraries(${tgt} libgtest)
+endif()
+
 target_include_directories(${tgt} PRIVATE
 ${path_include_fmt}
-${path_include_gtest}
 ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
@@ -138,5 +147,4 @@ ${CMAKE_CURRENT_BINARY_DIR}
 
 #target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} libgtest)
 target_link_libraries(${tgt} librdkafka)
