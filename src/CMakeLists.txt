@@ -70,13 +70,13 @@ find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h PATHS
  /usr/local/include
 )
 
-find_library(path_lib_rdkafka NAMES rdkafka PATHS
+find_library(path_lib_rdkafka++ NAMES rdkafka++ PATHS
  "$ENV{librdkafka_dir}/lib"
  /opt/local/rdkafka/install/lib
  /usr/local/lib
 )
-add_library(librdkafka SHARED IMPORTED)
-set_property(TARGET librdkafka PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka})
+add_library(librdkafka++ SHARED IMPORTED)
+set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
 
 
@@ -149,4 +149,4 @@ ${CMAKE_CURRENT_BINARY_DIR}
 
 #target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} librdkafka)
+target_link_libraries(${tgt} librdkafka++)
