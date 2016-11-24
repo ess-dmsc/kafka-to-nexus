@@ -1,7 +1,10 @@
 #include "CommandListener.h"
 #include <string>
 #include "logger.h"
+#include "helper.h"
+#include "Master_handler.h"
 #include "kafka_util.h"
+#include <cassert>
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -12,6 +15,10 @@ using std::string;
 CommandListener::CommandListener(CommandListenerConfig config) : config(config) { }
 
 void CommandListener::start() {
+	if (is_mockup) {
+		LOG(1, "is_mockup, no Kafka init");
+		return;
+	}
 	string errstr;
 	gconf = decltype(gconf)(RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
 	gconf->set("metadata.broker.list", config.address, errstr);
@@ -70,6 +77,14 @@ void consume_cb(RdKafka::Message & msg, void * opaque) {
 
 
 void CommandListener::poll(FileWriterCommandHandler & command_handler) {
+	if (is_mockup) {
+		LOG(1, "is_mockup, no Kafka");
+		auto msg = make_unique<CmdMsg_Mockup>();
+		auto s1 = "adasdasdasdsadsad";
+		std::copy(s1, s1+strlen(s1), std::back_inserter(msg->data_));
+		command_handler.handle(std::move(msg));
+		return;
+	}
 	ConsumeCallback ccb;
 	auto top = topic.get();
 	void * opaque = nullptr;

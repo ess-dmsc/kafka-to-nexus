@@ -21,6 +21,9 @@ CommandListener(CommandListenerConfig);
 void start();
 void stop();
 void poll(FileWriterCommandHandler & command_handler);
+
+// Only used for testing:
+bool is_mockup = false;
 private:
 CommandListenerConfig config;
 std::thread thr_consumer;

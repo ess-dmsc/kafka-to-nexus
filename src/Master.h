@@ -8,6 +8,7 @@ namespace FileWriter {
 
 struct MasterConfig {
 CommandListenerConfig command_listener;
+bool test_mockup_command_listener {false};
 };
 
 /// Listens to the Kafka configuration topic.

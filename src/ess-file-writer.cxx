@@ -119,10 +119,13 @@ int main(int argc, char ** argv) {
 
 TEST(config, read_simple) {
 	LOG(3, "Test a simple configuration");
+	using namespace BrightnESS::FileWriter;
 	// TODO
 	// * Input a predefined configuration message to setup a simple stream writing
 	// * Connect outputs to test buffers
 	// * Input a predefined message (or more) and test if it arrives at the correct ends
+	MasterConfig conf_m;
+	conf_m.test_mockup_command_listener = true;
 }
 
 #endif

@@ -1,4 +1,5 @@
 #include "NexusWriter.h"
+#include <rapidjson/document.h>
 
 namespace BrightnESS {
 namespace FileWriter {
