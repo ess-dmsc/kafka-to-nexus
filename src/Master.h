@@ -1,7 +1,9 @@
 #pragma once
 #include <string>
 #include <stdexcept>
+#include <vector>
 #include "CommandListener.h"
+#include "NexusWriter.h"
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -22,6 +24,9 @@ void run();
 private:
 MasterConfig config;
 CommandListener command_listener;
+std::vector<NexusWriter_uptr> nexus_writers;
+
+friend class CommandHandler;
 };
 
 

@@ -17,7 +17,7 @@ using std::string;
 class CommandHandler : public FileWriterCommandHandler {
 public:
 
-CommandHandler() {
+CommandHandler(Master * master) : master(master) {
 	using namespace rapidjson;
 	auto buf1 = gulp("test/schema-command.json");
 	auto doc = make_unique<rapidjson::Document>();
@@ -42,10 +42,19 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 		throw std::runtime_error("ERROR command message schema validation");
 	}
 	LOG(3, "cmd: {}", d["cmd"].GetString());
+
+	try {
+		master->nexus_writers.emplace_back(new NexusWriter(d));
+	}
+	catch (...) {
+		LOG(3, "TODO see what we can handle here...");
+		throw;
+	}
 }
 
 private:
 std::unique_ptr<rapidjson::SchemaDocument> schema_command;
+Master * master;
 };
 
 
@@ -62,7 +71,8 @@ Master::Master(MasterConfig config) :
 
 void Master::run() {
 	command_listener.start();
-	CommandHandler command_handler;
+	// Handler is meant to life only until the command is handled
+	CommandHandler command_handler(this);
 	command_listener.poll(command_handler);
 }
 
