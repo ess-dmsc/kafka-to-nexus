@@ -3,7 +3,8 @@
 #include "logger.h"
 #include "helper.h"
 #include <rapidjson/document.h>
-
+#include <rapidjson/schema.h>
+#include <rapidjson/error/en.h>
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -15,9 +16,36 @@ using std::string;
 /// Stub, will perform the JSON parsing and then take appropriate action.
 class CommandHandler : public FileWriterCommandHandler {
 public:
-void handle(std::unique_ptr<CmdMsg> msg) {
-	LOG(3, "CommandHandler got message: {}", (char*)msg->data());
+
+CommandHandler() {
+	using namespace rapidjson;
+	auto buf1 = gulp("test/schema-command.json");
+	auto doc = make_unique<rapidjson::Document>();
+	ParseResult err = doc->Parse(buf1.data(), buf1.size());
+	if (err.Code() != ParseErrorCode::kParseErrorNone) {
+		throw std::runtime_error("ERROR can not parse schema_command");
+	}
+	schema_command.reset(new SchemaDocument(*doc));
 }
+
+void handle(std::unique_ptr<CmdMsg> msg) {
+	using namespace rapidjson;
+	auto doc = make_unique<Document>();
+	ParseResult err = doc->Parse(msg->data(), msg->size());
+	if (doc->HasParseError()) {
+		LOG(3, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+		throw std::runtime_error("");
+	}
+	auto & d = * doc;
+	SchemaValidator vali(*schema_command);
+	if (not d.Accept(vali)) {
+		throw std::runtime_error("ERROR command message schema validation");
+	}
+	LOG(3, "cmd: {}", d["cmd"].GetString());
+}
+
+private:
+std::unique_ptr<rapidjson::SchemaDocument> schema_command;
 };
 
 
@@ -32,7 +60,11 @@ Master::Master(MasterConfig config) :
 }
 
 
-
+void Master::run() {
+	command_listener.start();
+	CommandHandler command_handler;
+	command_listener.poll(command_handler);
+}
 
 
 }

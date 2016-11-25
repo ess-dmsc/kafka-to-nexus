@@ -126,6 +126,8 @@ TEST(config, read_simple) {
 	// * Input a predefined message (or more) and test if it arrives at the correct ends
 	MasterConfig conf_m;
 	conf_m.test_mockup_command_listener = true;
+	Master m(conf_m);
+	ASSERT_NO_THROW( m.run() );
 }
 
 #endif

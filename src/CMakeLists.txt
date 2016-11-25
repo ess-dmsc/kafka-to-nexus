@@ -124,6 +124,7 @@ kafka_util.cxx
 Master.cxx
 CommandListener.cxx
 NexusWriter.cxx
+helper.cxx
 logger.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
@@ -152,3 +153,6 @@ ${CMAKE_CURRENT_BINARY_DIR}
 #target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka++)
+
+configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
+configure_file(../test/schema-command.json ../test/schema-command.json)

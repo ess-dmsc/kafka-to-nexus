@@ -11,7 +11,7 @@ namespace FileWriter {
 class CmdMsg {
 public:
 /// Returns pointer into the underlying message buffer
-virtual void * data() = 0;
+virtual char * data() = 0;
 /// Number of bytes in the message
 virtual size_t size() = 0;
 };
@@ -25,10 +25,10 @@ std::unique_ptr<RdKafka::Message> msg_k;
 /// For testing
 class CmdMsg_Mockup : public CmdMsg {
 public:
-void * data() { return data_.data(); }
+char * data() { return data_.data(); }
 size_t size() { return data_.size(); }
 /// Mockup data to be filled by the testing code
-std::vector<uint8_t> data_;
+std::vector<char> data_;
 };
 
 

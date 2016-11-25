@@ -80,8 +80,7 @@ void CommandListener::poll(FileWriterCommandHandler & command_handler) {
 	if (is_mockup) {
 		LOG(1, "is_mockup, no Kafka");
 		auto msg = make_unique<CmdMsg_Mockup>();
-		auto s1 = "adasdasdasdsadsad";
-		std::copy(s1, s1+strlen(s1), std::back_inserter(msg->data_));
+		msg->data_ = gulp("test/msg-conf-new-01.json");
 		command_handler.handle(std::move(msg));
 		return;
 	}

@@ -17,6 +17,7 @@ bool test_mockup_command_listener {false};
 class Master {
 public:
 Master(MasterConfig config);
+void run();
 
 private:
 MasterConfig config;
