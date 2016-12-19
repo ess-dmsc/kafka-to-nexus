@@ -1,18 +1,32 @@
 {
 	"$schema": "http://json-schema.org/schema#",
-	"id": "psi.brightness.schema.filewriter.command",
+	"id": "ess.schema.filewriter.command-new",
 
 	"type": "object",
 	"properties": {
-		"cmd": {
-			"type": "string"
-		},
 		"streams": {
 			"type": "array",
 			"items": {
-				"type": "object"
+				"type": "object",
+				"properties": {
+					"doc": "",
+
+					"broker": "string",
+
+					"topic": "string",
+
+					"source-----DOC": "'source' is an identifier included in each packet which allows to relate to this configuration on topics which are used by multiple sources.  Can be empty, but only for one source on each configured topic.  It is not allowed to have two sources with empty 'source' on the same topic!",
+					"source": "string"
+				},
+				"required": ["topic"],
+				"additionalProperties": false
 			}
+		},
+
+		"__note": "can so far not limit the types of the object properties without specifying all property keys",
+		"file_attributes": {
+			"type": "object"
 		}
 	},
-	"required": ["cmd", "streams"]
+	"required": ["file_attributes"]
 }

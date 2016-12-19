@@ -1,16 +1,24 @@
 {
 	"cmd": "FileWriter_new",
 	"streams": [
+		{"a": 12, "b": 56}
+	],
+	"sstreams": [
 		{
 			"broker": "127.0.0.1:9092",
 			"topic": "topic.with.multiple.sources",
-			"source-DOC": "'source' is an identifier included in each packet which allows to relate to this configuration on topics which are used by multiple sources.  Can be empty, but only for one source on each configured topic.  It is not allowed to have two sources with empty 'source' on the same topic!",
+			"source-DOC": "",
 			"source": "for_example_motor01",
 
 			"path-DOC": "",
 			"path": "v"
 		}
 	],
-	"metadata": [
-	]
+	"file_attributes": {
+		"dummy-attribute-01": 2.579,
+		"dummy-attribute-02": "can also be some text",
+		"dummy-attribute-03": {
+			"but": "should an object be allowed here?"
+		}
+	}
 }

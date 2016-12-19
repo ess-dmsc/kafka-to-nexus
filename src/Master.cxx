@@ -23,6 +23,7 @@ CommandHandler(Master * master) : master(master) {
 	auto doc = make_unique<rapidjson::Document>();
 	ParseResult err = doc->Parse(buf1.data(), buf1.size());
 	if (err.Code() != ParseErrorCode::kParseErrorNone) {
+		LOG(7, "ERROR can not parse schema_command");
 		throw std::runtime_error("ERROR can not parse schema_command");
 	}
 	schema_command.reset(new SchemaDocument(*doc));
@@ -39,6 +40,7 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	auto & d = * doc;
 	SchemaValidator vali(*schema_command);
 	if (not d.Accept(vali)) {
+		LOG(3, "ERROR command message schema validation");
 		throw std::runtime_error("ERROR command message schema validation");
 	}
 	LOG(3, "cmd: {}", d["cmd"].GetString());
