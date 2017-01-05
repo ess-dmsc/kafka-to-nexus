@@ -1,6 +1,12 @@
 #include "NexusWriter.h"
 #include <rapidjson/document.h>
 #include "logger.h"
+#include <hdf5.h>
+#include <H5Cpp.h>
+
+#if HAVE_GTEST
+#include <gtest/gtest.h>
+#endif
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -23,6 +29,21 @@ NexusWriter::NexusWriter(rapidjson::Document & conf) {
 int NexusWriter::status() {
 	return 0;
 }
+
+
+#if HAVE_GTEST
+
+TEST(hdf, proto_01) {
+	LOG(3, "HDF playground (remove later)");
+	// Size of a comound must be given and is specified in bytes.
+	// When building up data types, HDF checks for overlap.
+	size_t nbytes = 128;
+	hid_t t1 = H5Tcreate(H5T_COMPOUND, nbytes);
+	H5Tinsert(t1, "member1", 0, H5T_NATIVE_UINT64);
+	H5Tinsert(t1, "member2", 8, H5T_NATIVE_DOUBLE);
+}
+
+#endif
 
 }
 }

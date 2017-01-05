@@ -5,6 +5,7 @@
 #include <rapidjson/document.h>
 #include <rapidjson/schema.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/stringbuffer.h>
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -40,7 +41,13 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	auto & d = * doc;
 	SchemaValidator vali(*schema_command);
 	if (not d.Accept(vali)) {
-		LOG(3, "ERROR command message schema validation");
+		StringBuffer sb1, sb2;
+		vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
+		vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
+		LOG(3, "ERROR command message schema validation:  Invalid schema: {}  keyword: {}",
+			sb1.GetString(),
+			vali.GetInvalidSchemaKeyword()
+		);
 		throw std::runtime_error("ERROR command message schema validation");
 	}
 	LOG(3, "cmd: {}", d["cmd"].GetString());
