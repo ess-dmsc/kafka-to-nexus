@@ -1,17 +1,16 @@
 {
 	"cmd": "FileWriter_new",
-	"streams": [
+	"sstreams": [
 		{"a": 12, "b": 56}
 	],
-	"sstreams": [
+	"streams": [
 		{
 			"broker": "127.0.0.1:9092",
 			"topic": "topic.with.multiple.sources",
-			"source-DOC": "",
 			"source": "for_example_motor01",
-
-			"path-DOC": "",
-			"path": "v"
+			"path": "v",
+			"on_path_missing": "ignore",
+			"default_value": 238476
 		}
 	],
 	"file_attributes": {
