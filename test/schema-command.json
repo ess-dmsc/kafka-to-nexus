@@ -19,7 +19,7 @@
 					"broker": "string",
 					"topic": "string",
 
-					"source-----DOC": "'source' is an identifier included in each packet which allows to relate to this configuration on topics which are used by multiple sources.  Can be empty, but only for one source on each configured topic.  It is not allowed to have two sources with empty 'source' on the same topic!",
+					"source-----DOC": "'source' is an identifier included in each packet which allows to relate to this configuration on topics which are used by multiple sources.  Can be empty, but only for one source on each configured topic.  It is not allowed to have two sources with empty 'source' on the same topic!  In that case, the file writer will only write the messages with the flatbuffer format of the first data message that it encounters and emits a warning.",
 					"source": "string",
 
 					"path-----DOC": "object-style path, for example sensor.internal.voltage01, to the property within the message",
