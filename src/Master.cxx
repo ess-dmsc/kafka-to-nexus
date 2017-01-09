@@ -86,9 +86,10 @@ void Master::run() {
 	// Handler is meant to life only until the command is handled
 	CommandHandler command_handler(this);
 	while (true) {
+		LOG(3, "Master poll");
 		command_listener.poll(command_handler);
 		auto now = CLK::now();
-		if (now - start > std::chrono::seconds(10)) {
+		if (now - start > std::chrono::milliseconds(3000)) {
 			break;
 		}
 	}

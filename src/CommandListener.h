@@ -17,7 +17,7 @@ std::string topic = "ess-file-writer.command";
 };
 
 
-class Callback {
+class MessageCallback {
 public:
 virtual void operator() (int partition, std::string const & topic, std::string const & msg) = 0;
 };

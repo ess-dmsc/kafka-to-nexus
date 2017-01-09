@@ -34,15 +34,23 @@ Consumer::Consumer(BrokerOpt opt) : opt(opt), poll_timeout_ms(100) {
 
 
 Consumer::~Consumer() {
+	LOG(3, "~Consumer()");
+	if (rk) {
+		// commit offsets?
+		LOG(3, "rd_kafka_unsubscribe");
+		rd_kafka_unsubscribe(rk);
+		LOG(3, "rd_kafka_poll");
+		int n1 = rd_kafka_poll(rk, 100);
+		LOG(3, "  served {} reuests", n1);
+		//rd_kafka_consumer_close(rk);
+		// rd_kafka_consume_stop(rd_kafka_topic_t *, partition)  therefore low-level API?
+		LOG(3, "rd_kafka_destroy");
+		rd_kafka_destroy(rk);
+		rk = nullptr;
+	}
 	if (plist) {
 		rd_kafka_topic_partition_list_destroy(plist);
 		plist = nullptr;
-	}
-	if (rk) {
-		// commit offsets
-		rd_kafka_consumer_close(rk);
-		rd_kafka_destroy(rk);
-		rk = nullptr;
 	}
 }
 
@@ -90,6 +98,7 @@ static void rebalance_cb(
 	switch (err) {
 	case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
 		LOG(3, "rebalance_cb assign:");
+		plist->elems[0].offset = RD_KAFKA_OFFSET_BEGINNING;
 		print_partition_list(plist);
 		err2 = rd_kafka_assign(rk, plist);
 		break;
@@ -108,7 +117,8 @@ static void rebalance_cb(
 
 
 static void consume_cb(rd_kafka_message_t * msg, void * opaque) {
-	auto const & consumer = static_cast<Consumer*>(opaque);
+	//auto const & consumer = static_cast<Consumer*>(opaque);
+	LOG(3, "consume_cb");
 
 	if (msg) {
 		auto topic_name = rd_kafka_topic_name(msg->rkt);
