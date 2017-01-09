@@ -23,6 +23,7 @@ void start();
 void stop();
 /// Check for new command packets
 void poll(FileWriterCommandHandler & command_handler);
+void print_subscribed();
 
 /// Only used for testing:
 bool is_mockup = false;
@@ -31,9 +32,17 @@ CommandListenerConfig config;
 std::thread thr_consumer;
 std::unique_ptr<RdKafka::Conf> gconf;
 std::unique_ptr<RdKafka::Conf> tconf;
-std::unique_ptr<RdKafka::Consumer> kcons;
+std::unique_ptr<RdKafka::KafkaConsumer> kcons;
 std::unique_ptr<RdKafka::Topic> topic;
 int32_t partition = RdKafka::Topic::PARTITION_UA;
+};
+
+
+/// Produce pre-fabricated commands for testing
+class TestCommandProducer {
+public:
+/// Just a preliminary name for a first test command
+void produce_simple_01(CommandListenerConfig config);
 };
 
 }

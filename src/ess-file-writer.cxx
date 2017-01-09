@@ -130,4 +130,15 @@ TEST(config, read_simple) {
 	ASSERT_NO_THROW( m.run() );
 }
 
+TEST(setup_with_kafka, setup_01) {
+	using namespace BrightnESS::FileWriter;
+	MasterConfig conf_m;
+
+	TestCommandProducer tcp;
+	tcp.produce_simple_01(conf_m.command_listener);
+
+	Master m(conf_m);
+	ASSERT_NO_THROW( m.run() );
+}
+
 #endif
