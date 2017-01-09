@@ -223,71 +223,17 @@ void Consumer::start() {
 		throw std::runtime_error("could not add brokers");
 	}
 
-	// TODO check what it does ?!??  part of high level??
-	// This is experimental
-	//rd_kafka_poll_set_consumer(rk);
-
-	// Listen to all partitions
 	int partition = RD_KAFKA_PARTITION_UA;
-
 	plist = rd_kafka_topic_partition_list_new(1);
 	rd_kafka_topic_partition_list_add(plist, opt.topic.c_str(), partition);
 	rd_kafka_topic_partition_list_set_offset(plist, opt.topic.c_str(), partition, RD_KAFKA_OFFSET_BEGINNING);
 
-	/*
-	for (int i1 = 0; i1 < n_topics; ++i1) {
-		std::array<char, 16> topic;
-		snprintf(topic.data(), topic.size(), "pv.%06d", i1);
-		rd_kafka_topic_partition_list_add(plist, topic.data(), partition);
+	err = rd_kafka_subscribe(rk, plist);
+	KERR(err);
+	if (err) {
+		LOG(7, "ERROR could not subscribe");
+		throw std::runtime_error("can not subscribe");
 	}
-	*/
-
-	if (true) {
-		err = rd_kafka_subscribe(rk, plist);
-		KERR(err);
-		if (err) {
-			LOG(7, "ERROR could not subscribe");
-			throw std::runtime_error("can not subscribe");
-		}
-	}
-
-	if (false) {
-		err = rd_kafka_resume_partitions(rk, plist);
-		KERR(err);
-		if (err) {
-			LOG(7, "ERROR could not resume consumption");
-			throw std::runtime_error("ERROR could not resume consumption");
-		}
-	}
-
-	if (false) {
-		// assign apparently also used from rebalance callback??
-		err = rd_kafka_assign(rk, plist);
-		KERR(err);
-		if (err) {
-			LOG(7, "ERROR could not rd_kafka_assign");
-			throw std::runtime_error("can not rd_kafka_assign");
-		}
-	}
-
-/*
-The legacy APIs are the ones using errno to propagate error value, namely:
- *  - rd_kafka_topic_new()
- *  - rd_kafka_consume_start()
- *  - rd_kafka_consume_stop()
- *  - rd_kafka_consume()
- *  - rd_kafka_consume_batch()
- *  - rd_kafka_consume_callback()
- *  - rd_kafka_consume_queue()
- *  - rd_kafka_produce()
-
-LEGACY API USES:
-rd_kafka_last_error
-*/
-
-	//auto = rd_kafka_topic_new(rk, "nda", topic_conf);
-
-	//rd_kafka_consume_start()
 }
 
 
