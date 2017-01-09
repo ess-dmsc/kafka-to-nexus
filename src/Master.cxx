@@ -1,4 +1,5 @@
 #include "Master.h"
+#include <chrono>
 #include "NexusWriter.h"
 #include "logger.h"
 #include "helper.h"
@@ -79,10 +80,18 @@ Master::Master(MasterConfig config) :
 
 
 void Master::run() {
+	using CLK = std::chrono::steady_clock;
+	auto start = CLK::now();
 	command_listener.start();
 	// Handler is meant to life only until the command is handled
 	CommandHandler command_handler(this);
-	command_listener.poll(command_handler);
+	while (true) {
+		command_listener.poll(command_handler);
+		auto now = CLK::now();
+		if (now - start > std::chrono::seconds(10)) {
+			break;
+		}
+	}
 }
 
 

@@ -1,11 +1,52 @@
 #pragma once
 
 #include <thread>
+#include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
 #include "Master_handler.h"
 
 namespace BrightnESS {
 namespace FileWriter {
+
+
+
+class BrokerOpt {
+public:
+std::string address = "localhost:9092";
+std::string topic = "ess-file-writer.command";
+};
+
+
+class Callback {
+public:
+virtual void operator() (int partition, std::string const & topic, std::string const & msg) = 0;
+};
+
+
+enum class PollStatus {
+	OK,
+};
+
+
+class Consumer {
+public:
+Consumer(BrokerOpt opt);
+~Consumer();
+void start();
+void dump_current_subscription();
+PollStatus poll();
+
+private:
+BrokerOpt opt;
+int poll_timeout_ms = 10;
+static void log_cb(rd_kafka_t const * rk, int level, char const * fac, char const * buf);
+rd_kafka_t * rk = nullptr;
+//rd_kafka_topic_t * rkt = nullptr;
+rd_kafka_topic_partition_list_t * plist = nullptr;
+};
+
+
+
 
 /// Settings for the Kafka command broker and topic.
 struct CommandListenerConfig {
@@ -35,6 +76,8 @@ std::unique_ptr<RdKafka::Conf> tconf;
 std::unique_ptr<RdKafka::KafkaConsumer> kcons;
 std::unique_ptr<RdKafka::Topic> topic;
 int32_t partition = RdKafka::Topic::PARTITION_UA;
+
+std::unique_ptr<Consumer> leg_consumer;
 };
 
 

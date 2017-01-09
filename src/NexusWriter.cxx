@@ -8,6 +8,10 @@
 #include <gtest/gtest.h>
 #endif
 
+
+//				static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
+
+
 namespace BrightnESS {
 namespace FileWriter {
 
