@@ -1,6 +1,8 @@
 #pragma once
 
 #include <string>
+#include <vector>
+#include <map>
 #include <stdexcept>
 #include "kafka_util.h"
 
@@ -19,7 +21,8 @@ virtual size_t size() = 0;
 /// The real Kafka one
 class CmdMsg_K : public CmdMsg {
 private:
-std::unique_ptr<RdKafka::Message> msg_k;
+//std::unique_ptr<RdKafka::Message> msg_k;
+//std::unique_ptr<RdKafka::Message> msg_k;
 };
 
 /// For testing

@@ -20,11 +20,13 @@ class Master {
 public:
 Master(MasterConfig config);
 void run();
+void on_consumer_connected(std::function<void(void)> const & cb_on_connected);
 
 private:
 MasterConfig config;
 CommandListener command_listener;
 std::vector<NexusWriter_uptr> nexus_writers;
+std::function<void(void)> const * _cb_on_connected = nullptr;
 
 friend class CommandHandler;
 };

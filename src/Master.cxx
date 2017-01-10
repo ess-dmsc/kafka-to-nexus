@@ -85,14 +85,20 @@ void Master::run() {
 	command_listener.start();
 	// Handler is meant to life only until the command is handled
 	CommandHandler command_handler(this);
+	if (_cb_on_connected) (*_cb_on_connected)();
 	while (true) {
-		LOG(3, "Master poll");
+		//LOG(3, "Master poll");
 		command_listener.poll(command_handler);
 		auto now = CLK::now();
 		if (now - start > std::chrono::milliseconds(3000)) {
 			break;
 		}
 	}
+}
+
+
+void Master::on_consumer_connected(std::function<void(void)> const & cb_on_connected) {
+	_cb_on_connected = &cb_on_connected;
 }
 
 

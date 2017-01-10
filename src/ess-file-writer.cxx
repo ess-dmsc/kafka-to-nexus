@@ -135,12 +135,28 @@ TEST(config, read_simple) {
 TEST(setup_with_kafka, setup_01) {
 	using namespace BrightnESS::FileWriter;
 	MasterConfig conf_m;
+	MasterConfig conf_m2;
+	std::thread t1;
 
-	TestCommandProducer tcp;
-	tcp.produce_simple_01(conf_m.command_listener);
+	if (0) {
+		t1 = std::thread( [] {
+		});
+		t1.join();
+	}
 
-	Master m(conf_m);
-	ASSERT_NO_THROW( m.run() );
+	if (1) {
+		auto cb = [conf_m2](){
+			LOG(3, "on_consumer_connected");
+			std::this_thread::sleep_for(std::chrono::milliseconds(100));
+			TestCommandProducer tcp;
+			auto aaa = conf_m2;
+			//tcp.produce_simple_01(conf_m.command_listener);
+		};
+		Master m(conf_m);
+		cb();
+		m.on_consumer_connected(cb);
+		ASSERT_NO_THROW( m.run() );
+	}
 }
 
 #endif
