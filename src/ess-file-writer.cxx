@@ -21,6 +21,15 @@ BrightnESS::FileWriter::MasterConfig master_config;
 };
 
 
+#if HAVE_GTEST
+class TestGlobalSetup : public testing::Environment {
+public:
+void SetUp();
+void TearDown();
+};
+#endif
+
+
 int main(int argc, char ** argv) {
 	#if HAVE_GTEST
 	// In the current stage, it makes sense for tests to live here.
@@ -28,6 +37,7 @@ int main(int argc, char ** argv) {
 	if (argc == 2 and strcmp("--test", argv[1]) == 0) {
 		log_level = 1;
 		::testing::InitGoogleTest(&argc, argv);
+		::testing::AddGlobalTestEnvironment(new TestGlobalSetup);
 		return RUN_ALL_TESTS();
 	}
 	#endif
@@ -118,6 +128,16 @@ int main(int argc, char ** argv) {
 
 #if HAVE_GTEST
 
+void TestGlobalSetup::SetUp() {
+	// Establish our group id
+	using namespace BrightnESS::FileWriter;
+}
+
+void TestGlobalSetup::TearDown() {
+	// Nothing needed for now.
+}
+
+
 TEST(config, read_simple) {
 	return;
 	LOG(3, "Test a simple configuration");
@@ -135,26 +155,18 @@ TEST(config, read_simple) {
 TEST(setup_with_kafka, setup_01) {
 	using namespace BrightnESS::FileWriter;
 	MasterConfig conf_m;
-	MasterConfig conf_m2;
-	std::thread t1;
-
-	if (0) {
-		t1 = std::thread( [] {
+	std::function<void()> cb = [conf_m] {
+		std::thread t1 ( [conf_m] {
+			std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			TestCommandProducer tcp;
+			tcp.produce_simple_01(conf_m.command_listener);
 		});
 		t1.join();
-	}
+	};
+	conf_m.command_listener.on_rebalance_assign = &cb;
 
 	if (1) {
-		auto cb = [conf_m2](){
-			LOG(3, "on_consumer_connected");
-			std::this_thread::sleep_for(std::chrono::milliseconds(100));
-			TestCommandProducer tcp;
-			auto aaa = conf_m2;
-			//tcp.produce_simple_01(conf_m.command_listener);
-		};
 		Master m(conf_m);
-		cb();
-		m.on_consumer_connected(cb);
 		ASSERT_NO_THROW( m.run() );
 	}
 }

@@ -45,6 +45,8 @@ void start();
 void dump_current_subscription();
 PollStatus poll();
 
+std::function<void()> * on_rebalance_assign = nullptr;
+
 private:
 BrokerOpt opt;
 int poll_timeout_ms = 10;
@@ -59,7 +61,7 @@ rd_kafka_topic_partition_list_t * plist = nullptr;
 };
 
 
-Consumer::Consumer(BrokerOpt opt) : opt(opt), poll_timeout_ms(100) {
+Consumer::Consumer(BrokerOpt opt) : opt(opt), poll_timeout_ms(200) {
 	start();
 }
 
@@ -96,7 +98,7 @@ Consumer::~Consumer() {
 
 
 void Consumer::cb_log(rd_kafka_t const * rk, int level, char const * fac, char const * buf) {
-	LOG(level, "{}  fac: {}", buf, fac);
+	LOG(level, "cb_log: {}  fac: {}", buf, fac);
 }
 
 // Called from the poll() thread
@@ -130,14 +132,20 @@ static void print_partition_list(rd_kafka_topic_partition_list_t * plist) {
 void Consumer::cb_rebalance(rd_kafka_t * rk, rd_kafka_resp_err_t err, rd_kafka_topic_partition_list_t * plist, void * opaque) {
 	rd_kafka_resp_err_t err2;
 	LOG(3, "Consumer group rebalanced:");
+	auto self = static_cast<Consumer*>(opaque);
 	switch (err) {
 	case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
 		LOG(3, "rebalance_cb assign:");
-		//plist->elems[0].offset = RD_KAFKA_OFFSET_BEGINNING;
+		for (int i1 = 0; i1 < plist->cnt; ++i1) {
+			plist->elems[i1].offset = RD_KAFKA_OFFSET_END;
+		}
 		print_partition_list(plist);
 		err2 = rd_kafka_assign(rk, plist);
 		if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
 			LOG(9, "rebalance error: {}  {}", rd_kafka_err2name(err2), rd_kafka_err2str(err2));
+		}
+		if (self->on_rebalance_assign) {
+			(*self->on_rebalance_assign)();
 		}
 		break;
 	case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
@@ -147,6 +155,13 @@ void Consumer::cb_rebalance(rd_kafka_t * rk, rd_kafka_resp_err_t err, rd_kafka_t
 		if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
 			LOG(9, "rebalance error: {}  {}", rd_kafka_err2name(err2), rd_kafka_err2str(err2));
 		}
+		/*
+		LOG(3, "commit offsets");
+		err2 = rd_kafka_commit(rk, plist, 0);
+		if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
+			LOG(9, "commit error: {}  {}", rd_kafka_err2name(err2), rd_kafka_err2str(err2));
+		}
+		*/
 		break;
 	default:
 		LOG(3, "rebalance_cb failure and revoke: {}", rd_kafka_err2str(err));
@@ -168,7 +183,7 @@ void Consumer::cb_consume(rd_kafka_message_t * msg, void * opaque) {
 		//auto topic_name = rd_kafka_topic_name(msg->rkt);
 		//int partition = msg->partition;
 		if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-			LOG(3, "GOT MESSAGE: {:.{}}", (char*)msg->payload, msg->len);
+			LOG(3, "GOT MESSAGE  {}  {:.{}}", msg->offset, (char*)msg->payload, msg->len);
 		}
 		else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
 			// Just an advisory.  msg contains which partition it is.
@@ -204,12 +219,13 @@ void Consumer::start() {
 	auto conf = rd_kafka_conf_new();
 
 	std::map<std::string, int> conf_ints {
+		{"statistics.interval.ms",                  600 * 1000},
+		{"metadata.request.timeout.ms",               2 * 1000},
+		{"socket.timeout.ms",                         2 * 1000},
+		{"session.timeout.ms",                        2 * 2000},
+		{"coordinator.query.interval.ms",             2 * 1000},
+		{"heartbeat.interval.ms",                          500},
 		/*
-		Default config should be good enough for us.
-		{"statistics.interval.ms",                   20 * 1000},
-		{"metadata.request.timeout.ms",              15 * 1000},
-		{"socket.timeout.ms",                         4 * 1000},
-		{"session.timeout.ms",                       15 * 1000},
 
 		{"message.max.bytes",                 23 * 1024 * 1024},
 		{"fetch.message.max.bytes",           23 * 1024 * 1024},
@@ -326,7 +342,7 @@ PollStatus Consumer::poll() {
 				//auto topic_name = rd_kafka_topic_name(msg->rkt);
 				//int partition = msg->partition;
 				if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-					LOG(3, "GOT MESSAGE: {:.{}}", (char*)msg->payload, msg->len);
+					LOG(3, "GOT MESSAGE  {}  {:.{}}", msg->offset, (char*)msg->payload, msg->len);
 				}
 				else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
 					// Just an advisory.  msg contains which partition it is.
@@ -494,6 +510,7 @@ void CommandListener::start() {
 	switch (0) {
 	case 0:
 		leg_consumer.reset(new Consumer(opt));
+		leg_consumer->on_rebalance_assign = config.on_rebalance_assign;
 		break;
 	}
 
@@ -824,6 +841,7 @@ void TestCommandProducer::produce_simple_01(CommandListenerConfig config) {
 		pt.produce(v1.data(), v1.size());
 	}
 	return;
+
 	LOG(3, "Use for configuration the topic {}", config.topic);
 	string errstr;
 	auto gconf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);

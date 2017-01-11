@@ -2,6 +2,7 @@
 #include <string>
 #include <stdexcept>
 #include <vector>
+#include <functional>
 #include "CommandListener.h"
 #include "NexusWriter.h"
 
@@ -20,13 +21,13 @@ class Master {
 public:
 Master(MasterConfig config);
 void run();
-void on_consumer_connected(std::function<void(void)> const & cb_on_connected);
+void on_consumer_connected(std::function<void(void)> * cb_on_connected);
 
 private:
 MasterConfig config;
 CommandListener command_listener;
 std::vector<NexusWriter_uptr> nexus_writers;
-std::function<void(void)> const * _cb_on_connected = nullptr;
+std::function<void(void)> * _cb_on_connected = nullptr;
 
 friend class CommandHandler;
 };

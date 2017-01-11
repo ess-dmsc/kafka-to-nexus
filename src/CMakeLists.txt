@@ -155,4 +155,5 @@ target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka++)
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
+configure_file(../test/msg-conf-new-02.json ../test/msg-conf-new-02.json)
 configure_file(../test/schema-command.json ../test/schema-command.json)

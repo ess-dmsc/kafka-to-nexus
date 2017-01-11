@@ -27,6 +27,7 @@ virtual void operator() (int partition, std::string const & topic, std::string c
 struct CommandListenerConfig {
 std::string address = "localhost:9092";
 std::string topic = "ess-file-writer.command";
+std::function<void()> * on_rebalance_assign = nullptr;
 };
 
 class Consumer;
