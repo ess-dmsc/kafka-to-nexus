@@ -124,6 +124,7 @@ kafka_util.cxx
 Master.cxx
 CommandListener.cxx
 NexusWriter.cxx
+Source.cxx
 helper.cxx
 logger.cxx
 ${path_include_fmt}/fmt/format.cc
