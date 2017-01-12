@@ -8,11 +8,17 @@
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 
+
 namespace BrightnESS {
 namespace FileWriter {
 
 using std::vector;
 using std::string;
+
+
+std::string & CmdMsg_K::str() {
+	return _str;
+}
 
 
 /// Stub, will perform the JSON parsing and then take appropriate action.
@@ -34,7 +40,7 @@ CommandHandler(Master * master) : master(master) {
 void handle(std::unique_ptr<CmdMsg> msg) {
 	using namespace rapidjson;
 	auto doc = make_unique<Document>();
-	ParseResult err = doc->Parse(msg->data(), msg->size());
+	ParseResult err = doc->Parse(msg->str().data(), msg->str().size());
 	if (doc->HasParseError()) {
 		LOG(3, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
 		throw std::runtime_error("");
@@ -86,9 +92,13 @@ void Master::run() {
 	// Handler is meant to live only until the command is handled
 	CommandHandler command_handler(this);
 	if (_cb_on_connected) (*_cb_on_connected)();
-	while (true) {
-		LOG(1, "Master poll");
-		command_listener.poll(command_handler);
+	while (do_run) {
+		LOG(0, "Master poll");
+		auto p = command_listener.poll(command_handler);
+		if (auto msg = p.is_CmdMsg()) {
+			LOG(9, "Master got: {}", msg->str());
+			do_run = false;
+		}
 		auto now = CLK::now();
 		if (now - start > std::chrono::milliseconds(8000)) {
 			break;
@@ -104,3 +114,47 @@ void Master::on_consumer_connected(std::function<void(void)> * cb_on_connected) 
 
 }
 }
+
+
+
+
+#if HAVE_GTEST
+#include <gtest/gtest.h>
+
+TEST(config, read_simple) {
+	return;
+	LOG(3, "Test a simple configuration");
+	using namespace BrightnESS::FileWriter;
+	// TODO
+	// * Input a predefined configuration message to setup a simple stream writing
+	// * Connect outputs to test buffers
+	// * Input a predefined message (or more) and test if it arrives at the correct ends
+	MasterConfig conf_m;
+	conf_m.test_mockup_command_listener = true;
+	Master m(conf_m);
+	ASSERT_NO_THROW( m.run() );
+}
+
+TEST(setup_with_kafka, setup_01) {
+	using namespace BrightnESS::FileWriter;
+	MasterConfig conf_m;
+	std::function<int64_t()> cb = [conf_m] {
+		//std::thread t1 ( [conf_m] {
+			//std::this_thread::sleep_for(std::chrono::milliseconds(10));
+			TestCommandProducer tcp;
+			auto res = tcp.produce_simple_01(conf_m.command_listener);
+			return res;
+		//});
+		//t1.join();
+	};
+	//conf_m.command_listener.on_rebalance_assign = &cb;
+	auto of = cb();
+	conf_m.command_listener.start_at_command_offset = of;
+
+	if (1) {
+		Master m(conf_m);
+		ASSERT_NO_THROW( m.run() );
+	}
+}
+
+#endif

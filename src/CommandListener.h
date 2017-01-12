@@ -28,9 +28,28 @@ struct CommandListenerConfig {
 std::string address = "localhost:9092";
 std::string topic = "ess-file-writer.command";
 std::function<void()> * on_rebalance_assign = nullptr;
+int64_t start_at_command_offset = -1;
 };
 
 class Consumer;
+
+class PollStatus {
+public:
+static PollStatus Ok();
+static PollStatus Err();
+static PollStatus make_CmdMsg(std::unique_ptr<CmdMsg> x);
+PollStatus(PollStatus &&);
+PollStatus & operator = (PollStatus &&);
+~PollStatus();
+void reset();
+PollStatus();
+bool is_Ok();
+bool is_Err();
+std::unique_ptr<CmdMsg> is_CmdMsg();
+private:
+int state = -1;
+void * data = nullptr;
+};
 
 
 /// Check for new commands on the topic, dispatch to the Master
@@ -42,7 +61,7 @@ CommandListener(CommandListenerConfig);
 void start();
 void stop();
 /// Check for new command packets
-void poll(FileWriterCommandHandler & command_handler);
+PollStatus poll(FileWriterCommandHandler & command_handler);
 
 /// Only used for testing:
 bool is_mockup = false;
@@ -57,7 +76,7 @@ std::unique_ptr<Consumer> leg_consumer;
 class TestCommandProducer {
 public:
 /// Just a preliminary name for a first test command
-void produce_simple_01(CommandListenerConfig config);
+int64_t produce_simple_01(CommandListenerConfig config);
 };
 
 }

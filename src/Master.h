@@ -3,6 +3,7 @@
 #include <stdexcept>
 #include <vector>
 #include <functional>
+#include <atomic>
 #include "CommandListener.h"
 #include "NexusWriter.h"
 
@@ -22,10 +23,12 @@ public:
 Master(MasterConfig config);
 void run();
 void on_consumer_connected(std::function<void(void)> * cb_on_connected);
+std::function<void(void)> cb_on_filewriter_new;
 
 private:
 MasterConfig config;
 CommandListener command_listener;
+std::atomic<bool> do_run {true};
 std::vector<NexusWriter_uptr> nexus_writers;
 std::function<void(void)> * _cb_on_connected = nullptr;
 
