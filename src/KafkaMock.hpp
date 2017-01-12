@@ -5,7 +5,8 @@
 
 namespace RdKafka {
 
-  struct Conf {
+  class Conf {
+  public:
     enum { CONF_OK, CONF_TOPIC, CONF_GLOBAL };
     static Conf* create(const int&);
     bool set(const std::string&, const std::string&, std::string&);
@@ -19,22 +20,26 @@ namespace RdKafka {
     bool operator!=(const ErrorCode&);
   };
   
-  struct Message {
+  class Message {
+  public:
     int load=1;
     ErrorCode err();
     size_t len() { return 1; }
     void* payload();
   };
 
-  struct Topic;
-  struct Consumer {
+  class Topic;
+  class Consumer {
+  public:
     static Consumer* create(Conf*, std::string&);
     ErrorCode start(Topic* , const int& , const int&);
     int stop(Topic*, const int&);
     Message* consume(Topic*, const int&, const int&);
+    static ErrorCode OffsetTail(int64_t);
   };
 
-  struct Topic {
+  class Topic {
+  public:
     enum { OFFSET_BEGINNING=0 };
     static Topic* create(Consumer*, const std::string&, Conf*,std::string);
   };

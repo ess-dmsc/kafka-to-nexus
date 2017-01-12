@@ -4,7 +4,7 @@
 
 #include <Streamer.hpp>
 
-std::string broker;
+std::string broker("129.168.10.11:9092");
 std::string topic("test");
 
 struct MockConsumer {
@@ -29,7 +29,7 @@ TEST (Streamer, NoReceive) {
   EXPECT_FALSE( s.recv(f) ) ;
   std::function<void(void*)> f1 = [](void*) { std::cout << "hello!" << std::endl; };
   EXPECT_TRUE( s.recv(f1) );
-  EXPECT_FALSE( s.len() == 0 );
+  EXPECT_TRUE( s.len() == 0 );
 }
 
 

@@ -1,15 +1,18 @@
-#include <Streamer.hpp>
-//#include <librdkafka/rdkafkacpp.h>
-#include <KafkaMock.hpp>
+#include "Streamer.hpp"
+#include <librdkafka/rdkafkacpp.h>
+// #include "KafkaMock.hpp"
 
+int64_t Streamer::backward_offset = 1000;
 
-Streamer::Streamer(const std::string& topic_name, const std::string& broker) {
+Streamer::Streamer(const std::string& topic_name, const std::string& broker, const int64_t& p) : partition(p) {
 
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   RdKafka::Conf *tconf  = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 
   std::string debug,errstr;
-  conf->set("metadata.broker.list", broker, errstr);
+  if (conf->set("metadata.broker.list", broker, errstr) != RdKafka::Conf::CONF_OK) {
+    throw std::runtime_error("Failed to initialise configuration: "+errstr);
+  }
   if (!debug.empty()) {
     if (conf->set("debug", debug, errstr) != RdKafka::Conf::CONF_OK) {
       throw std::runtime_error("Failed to initialise configuration: "+errstr);
@@ -40,7 +43,7 @@ Streamer::Streamer(const std::string& topic_name, const std::string& broker) {
 }
 
 
-Streamer::Streamer(const Streamer& other) : topic(other.topic), consumer(other.consumer), offset(other.offset) { }
+Streamer::Streamer(const Streamer& other) : topic(other.topic), consumer(other.consumer), offset(other.offset), partition(other.partition) { }
 
 int Streamer::disconnect() {
   int return_code = consumer->stop(topic,partition);
@@ -81,7 +84,7 @@ int Streamer::connect(const std::string& topic_name, const std::string& broker) 
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
-  
+  return int(RdKafka::ERR_NO_ERROR);
 }
 
 
@@ -116,5 +119,16 @@ bool Streamer::recv_impl(std::function<void(void*)>& f,void* payload) {
 /// (assumed to be stored in Source)
 template<>
 bool Streamer::search_backward(std::function<void(void*)>& f) {
+  
+  RdKafka::ErrorCode err = consumer->stop(topic,partition);
+
+  int64_t offset = RdKafka::Consumer::OffsetTail(backward_offset);
+
+  RdKafka::ErrorCode resp = consumer->start(topic, partition, offset);
+  if (resp != RdKafka::ERR_NO_ERROR) {
+    throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
+  }
+
+  
   return false;
 }

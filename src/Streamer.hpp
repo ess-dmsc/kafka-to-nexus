@@ -14,10 +14,10 @@ namespace RdKafka {
 
 
 // actually a "kafka streamer"
-class Streamer {
+struct Streamer {
 public:
-  Streamer() : offset(0) { };
-  Streamer(const std::string&, const std::string&);
+  Streamer() : offset(0), partition(0) { };
+  Streamer(const std::string&, const std::string&, const int64_t& p=0);
   Streamer(const Streamer&);
   
   //  ~Streamer(); // disconnect
@@ -36,7 +36,8 @@ public:
   
   /// Returns message length
   size_t len() { return message_length; }
-  
+
+  static int64_t backward_offset;
 private:
   RdKafka::Topic *topic;
   RdKafka::Consumer *consumer;
@@ -48,7 +49,6 @@ private:
   template<class T>
   bool recv_impl(T& f, void*) { };
 };
-
 
 template<> bool Streamer::recv<std::function<void(void*)> >(std::function<void(void*)>&);
 template<> bool Streamer::recv_impl<std::function<void(void*)> >(std::function<void(void*)>&, void*);

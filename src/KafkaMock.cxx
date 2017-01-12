@@ -1,4 +1,4 @@
-#include <KafkaMock.hpp>
+#include "KafkaMock.hpp"
 
 namespace RdKafka {
 
@@ -30,6 +30,10 @@ namespace RdKafka {
     return &mock_message;
   }
 
+  ErrorCode Consumer::OffsetTail(int64_t from_last_message) {
+    return ERR_NO_ERROR;
+  }
+  
   Topic* Topic::create(Consumer* consumer,
                        const std::string& name,
                        Conf* tconf,
