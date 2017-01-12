@@ -17,38 +17,19 @@ extern "C" char const GIT_COMMIT[];
 struct MainOpt {
 bool help = false;
 bool verbose = false;
+bool gtest = false;
 BrightnESS::FileWriter::MasterConfig master_config;
 };
 
 
-#if HAVE_GTEST
-class TestGlobalSetup : public testing::Environment {
-public:
-void SetUp();
-void TearDown();
-};
-#endif
-
-
 int main(int argc, char ** argv) {
-	#if HAVE_GTEST
-	// In the current stage, it makes sense for tests to live here.
-	// Before any possible changes to MainOpt.
-	if (argc == 2 and strcmp("--test", argv[1]) == 0) {
-		log_level = 1;
-		::testing::InitGoogleTest(&argc, argv);
-		::testing::AddGlobalTestEnvironment(new TestGlobalSetup);
-		return RUN_ALL_TESTS();
-	}
-	#endif
-
 	MainOpt opt;
 
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
 		{"broker-command-topic",            required_argument,        0,  0 },
-		{"verbose",                         no_argument,              0, 'v'},
+		{"test",                            no_argument,              0,  0 },
 		{0, 0, 0, 0},
 	};
 	std::string cmd;
@@ -63,13 +44,12 @@ int main(int argc, char ** argv) {
 		}
 		switch (c) {
 		case 'v':
-			// Do nothing, purpose is to fall through to long-option handling
-			LOG(9, "Verbose");
 			opt.verbose = true;
 			log_level = std::max(0, log_level - 1);
 			break;
 		case 'h':
 			opt.help = true;
+			break;
 		case 0:
 			auto lname = long_options[option_index].name;
 			if (std::string("help") == lname) {
@@ -81,6 +61,10 @@ int main(int argc, char ** argv) {
 			if (std::string("broker-command-topic") == lname) {
 				opt.master_config.command_listener.topic = optarg;
 			}
+			if (std::string("test") == lname) {
+				opt.gtest = true;
+			}
+			break;
 		}
 	}
 
@@ -92,7 +76,7 @@ int main(int argc, char ** argv) {
 
 	printf("ess-file-writer-0.0.1  (ESS, BrightnESS)\n");
 	printf("  %.7s\n", GIT_COMMIT);
-	printf("  Contact: dominik.werder@psi.ch\n\n");
+	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
 	if (opt.help) {
 		printf("Forwards EPICS process variables to Kafka topics.\n"
@@ -117,58 +101,24 @@ int main(int argc, char ** argv) {
 		       "\n",
 			opt.master_config.command_listener.topic.c_str());
 
-		printf("  --verbose\n"
+		printf("  -v\n"
+		       "      Increase verbosity\n"
+		       "\n");
+		printf("  --test\n"
+		       "      Run test suite\n"
 		       "\n");
 		return 1;
 	}
 
+	if (opt.gtest) {
+		#if HAVE_GTEST
+		::testing::InitGoogleTest(&argc, argv);
+		return RUN_ALL_TESTS();
+		#else
+		printf("ERROR To run tests, the executable must be compiled with the Google Test library.\n");
+		return 1;
+		#endif
+	}
+
 	return 0;
 }
-
-
-#if HAVE_GTEST
-
-void TestGlobalSetup::SetUp() {
-	// Establish our group id
-	using namespace BrightnESS::FileWriter;
-}
-
-void TestGlobalSetup::TearDown() {
-	// Nothing needed for now.
-}
-
-
-TEST(config, read_simple) {
-	return;
-	LOG(3, "Test a simple configuration");
-	using namespace BrightnESS::FileWriter;
-	// TODO
-	// * Input a predefined configuration message to setup a simple stream writing
-	// * Connect outputs to test buffers
-	// * Input a predefined message (or more) and test if it arrives at the correct ends
-	MasterConfig conf_m;
-	conf_m.test_mockup_command_listener = true;
-	Master m(conf_m);
-	ASSERT_NO_THROW( m.run() );
-}
-
-TEST(setup_with_kafka, setup_01) {
-	using namespace BrightnESS::FileWriter;
-	MasterConfig conf_m;
-	std::function<void()> cb = [conf_m] {
-		std::thread t1 ( [conf_m] {
-			std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			TestCommandProducer tcp;
-			tcp.produce_simple_01(conf_m.command_listener);
-		});
-		t1.join();
-	};
-	conf_m.command_listener.on_rebalance_assign = &cb;
-
-	if (1) {
-		Master m(conf_m);
-		ASSERT_NO_THROW( m.run() );
-	}
-}
-
-#endif
