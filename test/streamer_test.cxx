@@ -3,6 +3,7 @@
 #include <stdexcept>
 
 #include <Streamer.hpp>
+#include <librdkafka/rdkafkacpp.h>
 
 std::string broker("129.168.10.11:9092");
 std::string topic("test");
@@ -26,39 +27,48 @@ TEST (Streamer, ConstructionSuccess) {
 TEST (Streamer, NoReceive) {
   Streamer s(topic+"_no",broker);
   int f;
-  EXPECT_FALSE( s.recv(f) ) ;
-  std::function<void(void*)> f1 = [](void*) { std::cout << "hello!" << std::endl; };
-  EXPECT_TRUE( s.recv(f1) );
+  EXPECT_FALSE( s.write(f) == RdKafka::ERR_NO_ERROR ) ;
+  auto f1 = [](void*,int) { std::cout << "hello!" << std::endl; };
+  EXPECT_FALSE( s.write(f1) == RdKafka::ERR_NO_ERROR );
   EXPECT_TRUE( s.len() == 0 );
 }
-
-
-// TEST (Streamer, Reconnect) {
-//   Streamer s(topic,broker);
-//   EXPECT_EQ(s.disconnect(),0);
-//   EXPECT_EQ(s.connect(topic,broker),0);
-// }
-
 
 
 TEST (Streamer, Receive) {
   Streamer s(topic,broker);
   
-  // int data_size = 0;
-  // std::function<void(void*)> f1 = [&](void*) { std::cout << "hello!" << std::endl; data_size++; return; };
-  // ASSERT_NO_THROW( s.recv(f1) );
+  // std::function<void(void*,int)>
+  auto f1 = [&](void* x, int) { std::cout << std::string((char*)x) << std::endl; return; };
+
+  int status = RdKafka::ERR_NO_ERROR;
+  do {
+    EXPECT_TRUE(status == RdKafka::ERR_NO_ERROR);
+    status = s.write(f1);
+  } while(status == RdKafka::ERR_NO_ERROR);
   // EXPECT_GT(data_size,0);
   
-  MockConsumer m;
-  int counter = 0;
-  std::function<void(void*)> f = std::bind(&MockConsumer::process_data,&m, std::placeholders::_1);
-  while(s.recv(f) && (counter<10) ) {
-    EXPECT_GT(m.data_size,0);
-    ++counter;
-  }
-  std::cout << "num messages received: " << counter << std::endl;
+  // MockConsumer m;
+  // int counter = 0;
+  // //  std::function<void(void*)> f = std::bind(&MockConsumer::process_data,&m, std::placeholders::_1);
+  
+  // while(s.write(f) && (counter<10) ) {
+  //   EXPECT_GT(m.data_size,0);
+  //   ++counter;
+  // }
+  // std::cout << "num messages received: " << counter << std::endl;
 }
 
+// TEST (Streamer, Reconnect) {
+
+//   std::function<void(void*)> f = [&](void* x) { return; };
+//   std::function<void(void*)> f1 = [&](void* x) { std::cout << std::string((char*)x) << std::endl; return; };
+  
+//   Streamer s(topic+"_no",broker);
+//   EXPECT_EQ(s.disconnect(),0);
+//   EXPECT_EQ(s.connect(topic,broker),0);
+//   s.search_backward(f);
+//   s.write(f1);
+// }
 
 
 int main(int argc, char **argv) {

@@ -20,8 +20,8 @@ Actor as in the sense of the distributed actor pattern: This is a SW component w
 
 The streamer is a class which is responsible for writing one stream of data. To this purpose it holds handles to the appropriate (Kafka) Stream to write and the HDF5 handles for the datasets and data types to write. Its abstract interface will hold three main methods:
 
-- **recv** This methods responsibility is to check for new data on the stream and if it finds data, to write it.
-- **recv(StreamPointer start, StreamPointer end)** This is
+- **write** This methods responsibility is to check for new data on the stream and if it finds data, to write it.
+- **write(StreamPointer start, StreamPointer end)** This is
 for the use case of rerunning data file writing. It writes stream data form start to end.
 - **closeStream()** for closing all connections and handles when streaming finishes.
 

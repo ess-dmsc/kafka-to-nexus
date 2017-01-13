@@ -10,10 +10,10 @@ std::string topic;
 
 
 TEST (Streamer, NotAllocatedFailure) {
-  StreamMaster<Streamer> sm;
-  EXPECT_FALSE( sm.status() );
-  sm.push_back("168.0.0.1","test","first");
-  EXPECT_TRUE( sm.status() );
+  //  FileWriterCommand fcw;
+  Pino pizzeria;
+  StreamMaster<Streamer,Pizza> sm(pizzeria);
+
   int i=1;
   sm.run<int>(i);
 }

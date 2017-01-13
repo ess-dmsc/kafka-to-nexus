@@ -2,9 +2,15 @@
 #include <librdkafka/rdkafkacpp.h>
 // #include "KafkaMock.hpp"
 
+
+/// TODO:
+///   - reconnect if consumer return broker error
+///   - search backward at connection setup
+
+
 int64_t Streamer::backward_offset = 1000;
 
-Streamer::Streamer(const std::string& topic_name, const std::string& broker, const int64_t& p) : partition(p) {
+Streamer::Streamer(const std::string& topic_name, const std::string& broker, const int64_t& p) : offset(RdKafka::Topic::OFFSET_BEGINNING), partition(p) {
 
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   RdKafka::Conf *tconf  = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
@@ -35,7 +41,7 @@ Streamer::Streamer(const std::string& topic_name, const std::string& broker, con
   }
   
   // Start consumer for topic+partition at start offset
-  RdKafka::ErrorCode resp = consumer->start(topic, partition, RdKafka::Topic::OFFSET_BEGINNING);
+  RdKafka::ErrorCode resp = consumer->start(topic, partition, offset);
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
@@ -80,7 +86,7 @@ int Streamer::connect(const std::string& topic_name, const std::string& broker) 
   }
   
   // Start consumer for topic+partition at start offset
-  RdKafka::ErrorCode resp = consumer->start(topic, partition, RdKafka::Topic::OFFSET_BEGINNING);
+  RdKafka::ErrorCode resp = consumer->start(topic, partition, offset);
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
@@ -91,44 +97,36 @@ int Streamer::connect(const std::string& topic_name, const std::string& broker) 
 /// Method specialisation for a functor with signature void f(void*). The
 /// method applies f to the message payload.
 template<>
-bool Streamer::recv(std::function<void(void*)>& f) {
-  bool success = false;
+int Streamer::write(std::function<void(void*,int)>& f) {
   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
-    return 0;
+    return RdKafka::ERR__PARTITION_EOF;
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
     return msg->err();
   }
-  success = recv_impl(f,msg->payload());
+  f(msg->payload(),msg->len());
   message_length = msg->len();
-  return success;
+  return RdKafka::ERR_NO_ERROR;
 }
-template<>
-bool Streamer::recv_impl(std::function<void(void*)>& f,void* payload) {
-  f(payload);
-  return true;
-}
-
 
 
 /// Implements some algorithm in order to search in the kafka queue the first
 /// message with timestamp >= the timestam of beginning of data taking 
 /// (assumed to be stored in Source)
 template<>
-bool Streamer::search_backward(std::function<void(void*)>& f) {
+bool Streamer::search_backward(std::function<void(void*)>& f, const int multiplier) {
   
-  RdKafka::ErrorCode err = consumer->stop(topic,partition);
-
-  int64_t offset = RdKafka::Consumer::OffsetTail(backward_offset);
-
-  RdKafka::ErrorCode resp = consumer->start(topic, partition, offset);
+  RdKafka::ErrorCode resp = consumer->stop(topic,partition);
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
-
+  resp = consumer->start(topic, partition, RdKafka::Consumer::OffsetTail(multiplier*backward_offset));
+  if (resp != RdKafka::ERR_NO_ERROR) {
+    throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
+  }
   
   return false;
 }
