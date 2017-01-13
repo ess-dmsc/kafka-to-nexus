@@ -124,7 +124,9 @@ kafka_util.cxx
 Master.cxx
 CommandListener.cxx
 NexusWriter.cxx
+TimeDifferenceFromMessage.cxx
 Source.cxx
+DemuxTopic.cxx
 helper.cxx
 logger.cxx
 ${path_include_fmt}/fmt/format.cc
