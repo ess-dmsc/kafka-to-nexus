@@ -125,6 +125,7 @@ Master.cxx
 CommandListener.cxx
 NexusWriter.cxx
 TimeDifferenceFromMessage.cxx
+FileWriterTask.cxx
 Source.cxx
 DemuxTopic.cxx
 helper.cxx
