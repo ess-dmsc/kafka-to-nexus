@@ -10,7 +10,7 @@
 
 int64_t Streamer::backward_offset = 1000;
 
-Streamer::Streamer(const std::string& topic_name, const std::string& broker, const int64_t& p) : offset(RdKafka::Topic::OFFSET_BEGINNING), partition(p) {
+Streamer::Streamer(const std::string& broker, const std::string& topic_name, const int64_t& p) : offset(RdKafka::Topic::OFFSET_END), partition(p) {
 
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   RdKafka::Conf *tconf  = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);

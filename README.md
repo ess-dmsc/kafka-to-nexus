@@ -52,8 +52,11 @@ the list of brokers from Kafka.
   Kafka queue. It has to be used in combination with Streamer
   ``search_backward``. It maps the topic with the vector of pairs
   source-timestamp difference _w.r.t._ the offset of DAQ start provided by ECP
-
-
+* after instantiation **searches** in the Kafka queue the _OFFSET_ of the oldest
+  "good" value (due to synchronisation issues, slow sensors, etc)
+* for each topic iterates over the Sources . Listen on each Source until
+  - the queue is empty
+  - Streammaster::duration milliseconds have been passed
 
 ## Running tests
 

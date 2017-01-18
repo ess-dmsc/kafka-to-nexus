@@ -12,10 +12,13 @@ std::string topic;
 TEST (Streamer, NotAllocatedFailure) {
   //  FileWriterCommand fcw;
   Pino pizzeria;
-  StreamMaster<Streamer,Pizza> sm(pizzeria);
+  StreamMaster<Streamer,Pizza> sm(broker,pizzeria);
 
-  int i=1;
-  sm.run<int>(i);
+
+  sm.start();
+  std::this_thread::sleep_for (std::chrono::seconds(1));
+  sm.stop();
+  
 }
 
 

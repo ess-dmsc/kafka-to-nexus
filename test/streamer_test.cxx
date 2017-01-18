@@ -17,15 +17,15 @@ struct MockConsumer {
 
 
 TEST (Streamer, MissingTopicFailure) {
-  ASSERT_THROW(Streamer(std::string(""),std::string("data_server:1234")),std::runtime_error);
+  ASSERT_THROW(Streamer(std::string("data_server:1234")),std::string(""),std::runtime_error);
 }
 
 TEST (Streamer, ConstructionSuccess) {
-  ASSERT_NO_THROW(Streamer(topic,broker));
+  ASSERT_NO_THROW(Streamer(broker,topic));
 }
 
 TEST (Streamer, NoReceive) {
-  Streamer s(topic+"_no",broker);
+  Streamer s(broker,topic+"_no");
   int f;
   EXPECT_FALSE( s.write(f) == RdKafka::ERR_NO_ERROR ) ;
   auto f1 = [](void*,int) { std::cout << "hello!" << std::endl; };
@@ -35,10 +35,9 @@ TEST (Streamer, NoReceive) {
 
 
 TEST (Streamer, Receive) {
-  Streamer s(topic,broker);
+  Streamer s(broker,topic);
   
-  // std::function<void(void*,int)>
-  auto f1 = [&](void* x, int) { std::cout << std::string((char*)x) << std::endl; return; };
+  std::function<void(void*,int)> f1 = [](void* x, int size) { std::cout << std::string((char*)x) << std::endl; return; };
 
   int status = RdKafka::ERR_NO_ERROR;
   do {
@@ -63,9 +62,9 @@ TEST (Streamer, Receive) {
 //   std::function<void(void*)> f = [&](void* x) { return; };
 //   std::function<void(void*)> f1 = [&](void* x) { std::cout << std::string((char*)x) << std::endl; return; };
   
-//   Streamer s(topic+"_no",broker);
+//   Streamer (broker,topic+"_no");
 //   EXPECT_EQ(s.disconnect(),0);
-//   EXPECT_EQ(s.connect(topic,broker),0);
+//   EXPECT_EQ(s.connect(broker,topic),0);
 //   s.search_backward(f);
 //   s.write(f1);
 // }
