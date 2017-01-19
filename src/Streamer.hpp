@@ -10,7 +10,6 @@ namespace RdKafka {
   class Consumer;
 }
 
-
 // actually a "kafka streamer"
 struct Streamer {
 public:

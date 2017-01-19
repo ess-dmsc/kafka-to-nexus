@@ -1,5 +1,7 @@
 #include "DemuxTopic.h"
 
+
+
 namespace BrightnESS {
 namespace FileWriter {
 
@@ -12,6 +14,8 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(void * msg_data, int msg
 	static std::string _tmp_dummy;
 	return DT(_tmp_dummy, 0);
 }
+
+  std::string const& DemuxTopic::topic() { return _topic; }
 
 }
 }

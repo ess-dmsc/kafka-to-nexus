@@ -25,6 +25,7 @@ import sys
 import string
 import random
 import thread
+import time
 
 # Random string generator
 def string_generator(size=10, chars=string.ascii_lowercase + string.digits):
@@ -42,11 +43,12 @@ def delivery_callback (err, msg):
 
 def produce(conf,topic) :
     p = Producer(**conf)
-    line=  "x" * (1024*10)
+#    line=  "x" * (1024*10)
     while 1:
-#        line=string_generator(1024*1024)
+        line=string_generator(1024)
         try:
             p.produce(topic, line, callback=delivery_callback)
+            time.sleep(.5)
         except BufferError as e:
             sys.stderr.write('%% Local producer queue is full ' \
                              '(%d messages awaiting delivery): try again\n' %
@@ -69,7 +71,8 @@ if __name__ == '__main__':
     print conf
 
     try:
-        for name in ['HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian','HamAndMushroom','Deluxe','Hawaiian']:
+        for name in ["area_detector","tof_detector","motor1","motor2","temp"]:
+#        for name in ["area_detector"]:
             thread.start_new_thread( produce, (conf,name) )
     except:
             print "Error: unable to start thread"

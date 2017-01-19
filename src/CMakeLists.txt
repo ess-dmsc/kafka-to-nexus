@@ -85,8 +85,8 @@ add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
 
-add_library( rdkafka_mock KafkaMock.cxx)
-add_library( NeXusFileWriter Streamer.cxx StreamMaster.cxx)
+#add_library( rdkafka_mock KafkaMock.cxx)
+add_library( NeXusFileWriter Streamer.cxx StreamMaster.cxx DemuxTopic.cxx TimeDifferenceFromMessage.cxx)
 
 
 # TODO
