@@ -57,7 +57,10 @@ int Streamer::disconnect() {
   delete consumer;
   return return_code;
 }
-  
+
+
+int Streamer::closeStream() { return consumer->stop(topic,partition); }
+
 int Streamer::connect(const std::string& topic_name, const std::string& broker) {
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   RdKafka::Conf *tconf  = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);

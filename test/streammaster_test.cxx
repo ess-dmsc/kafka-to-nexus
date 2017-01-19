@@ -8,18 +8,40 @@
 
 std::string broker;
 std::vector<std::string> topic = {"area_detector","tof_detector","motor1","motor2","temp"};
+std::vector<std::string> no_topic = {""};
 
 
 TEST (Streamer, NotAllocatedFailure) {
-
-  StreamMaster<Streamer,DemuxTopic> sm(broker,topic);
-
-  sm.start();
-  std::this_thread::sleep_for (std::chrono::seconds(1));
-  sm.stop();
+  using StreamMaster=StreamMaster<Streamer,DemuxTopic>;
   
+  EXPECT_THROW(StreamMaster sm(broker,no_topic), std::runtime_error);
+  StreamMaster sm;
+  EXPECT_THROW(sm.push_back(broker,no_topic[0]), std::runtime_error);
 }
 
+TEST (Streamer, Constructor) {
+  using StreamMaster=StreamMaster<Streamer,DemuxTopic>;
+
+  EXPECT_NO_THROW(StreamMaster sm(broker,topic));
+  StreamMaster sm;
+  EXPECT_NO_THROW(sm.push_back(broker,"new_motor"));
+
+}
+
+
+TEST (Streamer, StartStop) {
+  using StreamMaster=StreamMaster<Streamer,DemuxTopic>;
+
+  StreamMaster sm(broker,topic);
+  bool is_joinable = sm.start();
+  EXPECT_TRUE( is_joinable );
+  std::this_thread::sleep_for (std::chrono::seconds(1));
+  auto value = sm.stop();
+  std::for_each(value.begin(),value.end(),[](auto& item) {
+      //      std::cout << item.first << ":" << item.second << std::endl;
+      EXPECT_TRUE(item.second == 0);
+    });
+}
 
 
 

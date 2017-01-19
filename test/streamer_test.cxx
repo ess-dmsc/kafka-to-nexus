@@ -17,7 +17,7 @@ struct MockConsumer {
 
 
 TEST (Streamer, MissingTopicFailure) {
-  ASSERT_THROW(Streamer(std::string("data_server:1234")),std::string(""),std::runtime_error);
+  ASSERT_THROW(Streamer(std::string("data_server:1234"),std::string("")),std::runtime_error);
 }
 
 TEST (Streamer, ConstructionSuccess) {
@@ -37,7 +37,7 @@ TEST (Streamer, NoReceive) {
 TEST (Streamer, Receive) {
   Streamer s(broker,topic);
   
-  std::function<void(void*,int)> f1 = [](void* x, int size) { std::cout << std::string((char*)x) << std::endl; return; };
+  std::function<void(void*,int)> f1 = [](void* x, int size) { std::cout << std::string((char*)x) << "\t" << size << std::endl; return; };
 
   int status = RdKafka::ERR_NO_ERROR;
   do {

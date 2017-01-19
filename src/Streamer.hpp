@@ -30,6 +30,7 @@ public:
   
   int connect(const std::string&, const std::string&);
   int disconnect();
+  int closeStream();
   
   /// Returns message length
   size_t len() { return message_length; }

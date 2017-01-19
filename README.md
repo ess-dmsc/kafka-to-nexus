@@ -39,24 +39,25 @@ In the current implementation the Streamer does not "contains" the corresponding
 sources. They are part of a different container in the StreamMaster. A different
 solution would be make the sources to be contained in the corresponding streamer.
 
-## Demux
+## DemuxTopic
+Mapped 1:1 with topics (and Streamers) drives the message to the correct Source.
 
 ## Source
 
 ## StreamMaster
-The StreamMaster receives the array of Demux's from FileWriterCommand and
+The StreamMaster receives the array of DemuxTopic from FileWriterCommand and
 instantiates the Streamer array according to the topics. Eventually retrieves
 the list of brokers from Kafka.
 
-* the timestamp_list is useful for look for initial status of sources in the
+* ``the timestamp_list`` is useful for look for initial status of sources in the
   Kafka queue. It has to be used in combination with Streamer
   ``search_backward``. It maps the topic with the vector of pairs
   source-timestamp difference _w.r.t._ the offset of DAQ start provided by ECP
 * after instantiation **searches** in the Kafka queue the _OFFSET_ of the oldest
   "good" value (due to synchronisation issues, slow sensors, etc)
 * for each topic iterates over the Sources . Listen on each Source until
-  - the queue is empty
-  - Streammaster::duration milliseconds have been passed
+  - the message queue is empty
+  - Streammaster::duration milliseconds have been elapsed
 
 ## Running tests
 
@@ -64,9 +65,17 @@ Tests currently make use of the KakaMock implementation. In principle there is n
 kafka borker. Nevertheless, it would be nice to be able to run with the mock
 version and the real broker.
 
+The utility producer.py can be used to generate random messages on different
+topics (requires
+[confluent-kafka](https://github.com/confluentinc/confluent-kafka-python.git)):
+```python
+python producer.py <broker>
+```
+
 Usage:
 ```bash
    bin/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
-   ```
+   bin/streammaster_test --kafka_broker=<broker>:<port>"
+```
 Tests are implemented using the gtest suite. They support all the command
 line option provided by gtest.

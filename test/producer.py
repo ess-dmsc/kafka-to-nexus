@@ -45,10 +45,10 @@ def produce(conf,topic) :
     p = Producer(**conf)
 #    line=  "x" * (1024*10)
     while 1:
-        line=string_generator(1024)
+        line=string_generator(10)
         try:
             p.produce(topic, line, callback=delivery_callback)
-            time.sleep(.5)
+#            time.sleep(.5)
         except BufferError as e:
             sys.stderr.write('%% Local producer queue is full ' \
                              '(%d messages awaiting delivery): try again\n' %
