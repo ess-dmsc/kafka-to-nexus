@@ -58,12 +58,14 @@ the list of brokers from Kafka.
 * for each topic iterates over the Sources . Listen on each Source until
   - the message queue is empty
   - Streammaster::duration milliseconds have been elapsed
+* when receives a **termination** command from Master closes all the streamers
 
 ## Running tests
 
-Tests currently make use of the KakaMock implementation. In principle there is no need for a real
-kafka borker. Nevertheless, it would be nice to be able to run with the mock
-version and the real broker.
+<div class="strike">Tests currently make use of the KakaMock
+implementation. <sup>not true anymore, KakaMock is just partial</sup> In principle there is no need for a real
+kafka borker. Nevertheless, it would be nice to be able to run with either the mock
+version or the real broker. </div>
 
 The utility producer.py can be used to generate random messages on different
 topics (requires

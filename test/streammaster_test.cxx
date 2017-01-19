@@ -4,35 +4,33 @@
 
 #include <StreamMaster.hpp>
 #include <Streamer.hpp>
-#include <DemuxTopic.h>
+#include <FileWriterTask.h>
 
 std::string broker;
-std::vector<std::string> topic = {"area_detector","tof_detector","motor1","motor2","temp"};
 std::vector<std::string> no_topic = {""};
-
+std::vector<std::string> topic = {"area_detector","tof_detector","motor1","motor2","temp"};
+std::vector<DemuxTopic> no_demux = { DemuxTopic("") };
+std::vector<DemuxTopic> demux = { DemuxTopic("area_detector"),
+                                  DemuxTopic("tof_detector"),
+                                  DemuxTopic("motor1"),
+                                  DemuxTopic("motor2"),
+                                  DemuxTopic("temp") };
 
 TEST (Streamer, NotAllocatedFailure) {
   using StreamMaster=StreamMaster<Streamer,DemuxTopic>;
-  
-  EXPECT_THROW(StreamMaster sm(broker,no_topic), std::runtime_error);
-  StreamMaster sm;
-  EXPECT_THROW(sm.push_back(broker,no_topic[0]), std::runtime_error);
+  EXPECT_THROW(StreamMaster sm(broker,no_demux), std::runtime_error);
 }
 
 TEST (Streamer, Constructor) {
   using StreamMaster=StreamMaster<Streamer,DemuxTopic>;
-
-  EXPECT_NO_THROW(StreamMaster sm(broker,topic));
-  StreamMaster sm;
-  EXPECT_NO_THROW(sm.push_back(broker,"new_motor"));
-
+  EXPECT_NO_THROW(StreamMaster sm(broker,demux));
 }
 
 
 TEST (Streamer, StartStop) {
   using StreamMaster=StreamMaster<Streamer,DemuxTopic>;
 
-  StreamMaster sm(broker,topic);
+  StreamMaster sm(broker,demux);
   bool is_joinable = sm.start();
   EXPECT_TRUE( is_joinable );
   std::this_thread::sleep_for (std::chrono::seconds(1));
