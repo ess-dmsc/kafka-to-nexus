@@ -15,6 +15,12 @@ struct MockConsumer {
   int data_size=0;
 };
 
+  std::function<void(void*,int)> silent = [](void* x, int) { return; };
+
+std::function<void(void*,int)> verbose = [](void* x, int size) {
+  std::cout << std::string((char*)x) << "\t" << size << std::endl;
+  return;
+};
 
 TEST (Streamer, MissingTopicFailure) {
   ASSERT_THROW(Streamer(std::string("data_server:1234"),std::string("")),std::runtime_error);
@@ -28,46 +34,72 @@ TEST (Streamer, NoReceive) {
   Streamer s(broker,topic+"_no");
   int f;
   EXPECT_FALSE( s.write(f) == RdKafka::ERR_NO_ERROR ) ;
-  auto f1 = [](void*,int) { std::cout << "hello!" << std::endl; };
-  EXPECT_FALSE( s.write(f1) == RdKafka::ERR_NO_ERROR );
+  EXPECT_FALSE( s.write(silent) == RdKafka::ERR_NO_ERROR );
   EXPECT_TRUE( s.len() == 0 );
 }
 
 
 TEST (Streamer, Receive) {
   Streamer s(broker,topic);
-  
-  std::function<void(void*,int)> f1 = [](void* x, int size) { std::cout << std::string((char*)x) << "\t" << size << std::endl; return; };
+  int data_size=0;
+  std::function<void(void*,int)> f1 = [&](void* x, int size) {
+    //    std::cout << std::string((char*)x) << "\t" << size << std::endl;
+    data_size += size;
+    return; };
 
   int status = RdKafka::ERR_NO_ERROR;
+  // .. warm up .. 
+  s.write(silent);
   do {
     EXPECT_TRUE(status == RdKafka::ERR_NO_ERROR);
     status = s.write(f1);
   } while(status == RdKafka::ERR_NO_ERROR);
-  // EXPECT_GT(data_size,0);
-  
-  // MockConsumer m;
-  // int counter = 0;
-  // //  std::function<void(void*)> f = std::bind(&MockConsumer::process_data,&m, std::placeholders::_1);
-  
-  // while(s.write(f) && (counter<10) ) {
-  //   EXPECT_GT(m.data_size,0);
-  //   ++counter;
-  // }
-  // std::cout << "num messages received: " << counter << std::endl;
+  EXPECT_GT(data_size,0);
+  std::cout << "data_size" << "\t" << data_size << std::endl;
+
 }
 
-// TEST (Streamer, Reconnect) {
-
-//   std::function<void(void*)> f = [&](void* x) { return; };
-//   std::function<void(void*)> f1 = [&](void* x) { std::cout << std::string((char*)x) << std::endl; return; };
+TEST (Streamer, Reconnect) {
+  int data_size=0;
+  std::function<void(void*,int)> f1 = [&](void* x, int size) {
+    data_size += size;
+    return; };
   
-//   Streamer (broker,topic+"_no");
-//   EXPECT_EQ(s.disconnect(),0);
-//   EXPECT_EQ(s.connect(broker,topic),0);
-//   s.search_backward(f);
-//   s.write(f1);
+  Streamer s(broker,topic);
+  EXPECT_EQ(s.disconnect(),0);
+  EXPECT_EQ(s.connect(broker,topic),0);
+  for(int i=0;i<10;++i)
+    s.write(f1);
+  EXPECT_GT(data_size,0);
+  //  std::cout << "data_size = " << data_size<< "\n";
+}
+
+
+// TEST (Streamer, SearchBackward) {
+//   Streamer s(broker,topic);
+//   int status=0;
+//   int last_value, new_value;
+//   std::function<void(void*,int)> register_value = [&](void* x, int) {
+//     last_value = *(int*)x;
+//   };
+//   std::function<void(void*,int)> rollback_value = [&](void* x, int) {
+//     new_value = *(int*)x;
+//   };
+  
+//   do {
+//     status = s.write(register_value);
+//   } while(status == RdKafka::ERR_NO_ERROR);
+//   s.search_backward(silent);
+//   status = s.write(rollback_value);
+
+//   std::cout << last_value << "\t" << new_value << std::endl;
+  
+//   // do {
+//   //   status = s.write(verbose);
+//   // } while(status == RdKafka::ERR_NO_ERROR);
+//   // s.write(verbose);
 // }
+
 
 
 int main(int argc, char **argv) {

@@ -48,7 +48,7 @@ def produce(conf,topic) :
         line=string_generator(10)
         try:
             p.produce(topic, line, callback=delivery_callback)
-#            time.sleep(.5)
+            time.sleep(.1)
         except BufferError as e:
             sys.stderr.write('%% Local producer queue is full ' \
                              '(%d messages awaiting delivery): try again\n' %
@@ -59,20 +59,23 @@ def produce(conf,topic) :
 
         
 if __name__ == '__main__':
-    if len(sys.argv) != 2:
-        sys.stderr.write('Usage: %s <bootstrap-brokers>\n' % sys.argv[0])
+    if not  (2 <= len(sys.argv) <= 3):
+        sys.stderr.write('Usage: %s <bootstrap-brokers> [ <topic1>,<topic2>,... ]\n' % sys.argv[0])
+        sys.stderr.write('\topics must be separated by a \',\' and there must be no whitespaces\n')
         sys.exit(1)
 
     broker = sys.argv[1]
-
+        
     # Producer configuration
     # See https://github.com/edenhill/librdkafka/blob/master/CONFIGURATION.md
     conf = {'bootstrap.servers': broker, 'message.max.bytes':1000000000}
-    print conf
 
+    topics = ["area_detector","tof_detector","motor1","motor2","temp"]
+    if len(sys.argv) == 3 :
+        topics = sys.argv[2].split(",")
+        
     try:
-        for name in ["area_detector","tof_detector","motor1","motor2","temp"]:
-#        for name in ["area_detector"]:
+        for name in topics:
             thread.start_new_thread( produce, (conf,name) )
     except:
             print "Error: unable to start thread"
