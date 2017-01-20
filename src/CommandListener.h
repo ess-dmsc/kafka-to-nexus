@@ -52,16 +52,16 @@ void * data = nullptr;
 };
 
 
-/// Check for new commands on the topic, dispatch to the Master
+/// Check for new commands on the topic, return them to the Master.
 class CommandListener {
 public:
 CommandListener(CommandListenerConfig);
 ~CommandListener();
-/// Start listening to command messages
+/// Start listening to command messages.
 void start();
 void stop();
-/// Check for new command packets
-PollStatus poll(FileWriterCommandHandler & command_handler);
+/// Check for new command packets and return one if there is.
+PollStatus poll();
 
 /// Only used for testing:
 bool is_mockup = false;

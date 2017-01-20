@@ -1,6 +1,8 @@
 #include "Master.h"
 #include <chrono>
+#include "FileWriterTask.h"
 #include "NexusWriter.h"
+#include "Source.h"
 #include "logger.h"
 #include "helper.h"
 #include <rapidjson/document.h>
@@ -8,6 +10,8 @@
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 
+#include "f140-general_generated.h"
+#include "f141-ntarraydouble_generated.h"
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -47,7 +51,7 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	}
 	auto & d = * doc;
 	SchemaValidator vali(*schema_command);
-	if (not d.Accept(vali)) {
+	if (!d.Accept(vali)) {
 		StringBuffer sb1, sb2;
 		vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
 		vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
@@ -59,12 +63,37 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	}
 	LOG(3, "cmd: {}", d["cmd"].GetString());
 
-	try {
-		master->nexus_writers.emplace_back(new NexusWriter(d));
+	auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
+	fwt->set_hdf_filename("a-dummy-name.h5");
+
+	for (auto & st : d["streams"].GetArray()) {
+		LOG(3, "{}", st["topic"].GetString());
+		fwt->add_source(Source(st["topic"].GetString(), st["source"].GetString()));
 	}
-	catch (...) {
-		LOG(3, "TODO see what we can handle here...");
-		throw;
+
+	for (auto & d : fwt->demuxers()) {
+		LOG(3, "{}", d.to_str());
+	}
+
+	fwt->hdf_init();
+
+	{
+		// TODO
+		// Move testing code into async test
+		flatbuffers::FlatBufferBuilder builder(1024);
+		auto srcn = builder.CreateString(fwt->demuxers().at(0).sources().at(0).source());
+		auto v = builder.CreateVector(std::vector<double>({1, 3, 5, 7, 13}));
+		BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::PVBuilder b1(builder);
+		b1.add_ts(102030);
+		b1.add_src(srcn);
+		b1.add_v(v);
+		auto pv = b1.Finish();
+		builder.Finish(pv);
+		std::vector<char> msg;
+		msg.push_back(0x41);
+		msg.push_back(0xf1);
+		std::copy(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize(), std::back_inserter(msg));
+		fwt->demuxers().at(0).process_message(msg.data(), msg.size());
 	}
 }
 
@@ -85,18 +114,28 @@ Master::Master(MasterConfig config) :
 }
 
 
+void Master::handle_command_message(std::unique_ptr<CmdMsg> && msg) {
+	// Parse
+	// Create Task
+	// Create new FileMaster (later)
+	LOG(3, "Master hands this message to CommandHandler: {}", msg->str());
+	CommandHandler command_handler(this);
+	command_handler.handle(std::move(msg));
+}
+
+
 void Master::run() {
 	using CLK = std::chrono::steady_clock;
 	auto start = CLK::now();
 	command_listener.start();
-	// Handler is meant to live only until the command is handled
-	CommandHandler command_handler(this);
 	if (_cb_on_connected) (*_cb_on_connected)();
 	while (do_run) {
 		LOG(0, "Master poll");
-		auto p = command_listener.poll(command_handler);
+		auto p = command_listener.poll();
 		if (auto msg = p.is_CmdMsg()) {
-			LOG(9, "Master got: {}", msg->str());
+			this->handle_command_message(std::move(msg));
+			// TODO
+			// Allow to set a callback so that tests can exit the poll loop
 			do_run = false;
 		}
 		auto now = CLK::now();
@@ -138,23 +177,11 @@ TEST(config, read_simple) {
 TEST(setup_with_kafka, setup_01) {
 	using namespace BrightnESS::FileWriter;
 	MasterConfig conf_m;
-	std::function<int64_t()> cb = [conf_m] {
-		//std::thread t1 ( [conf_m] {
-			//std::this_thread::sleep_for(std::chrono::milliseconds(10));
-			TestCommandProducer tcp;
-			auto res = tcp.produce_simple_01(conf_m.command_listener);
-			return res;
-		//});
-		//t1.join();
-	};
-	//conf_m.command_listener.on_rebalance_assign = &cb;
-	auto of = cb();
+	TestCommandProducer tcp;
+	auto of = tcp.produce_simple_01(conf_m.command_listener);
 	conf_m.command_listener.start_at_command_offset = of;
-
-	if (1) {
-		Master m(conf_m);
-		ASSERT_NO_THROW( m.run() );
-	}
+	Master m(conf_m);
+	ASSERT_NO_THROW( m.run() );
 }
 
 #endif

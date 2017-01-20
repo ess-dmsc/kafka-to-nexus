@@ -3,6 +3,7 @@
 #include <vector>
 #include <memory>
 #include "DemuxTopic.h"
+#include "Source.h"
 
 class Test___FileWriterTask___Create01;
 
@@ -17,15 +18,23 @@ It contains the list of Source and DemuxTopic
 and makes those available to the FileMaster and Streamer.
 Created by Master on command message and passed to FileMaster in ctor.
 */
-class FileWriterTask {
+class FileWriterTask final {
 friend class ::Test___FileWriterTask___Create01;
+friend class CommandHandler;
 public:
 FileWriterTask();
+~FileWriterTask();
+FileWriterTask & set_hdf_filename(std::string hdf_filename);
 /// Used by Streamer to get the list of demuxers
 std::vector<DemuxTopic> & demuxers();
+void hdf_flush();
+void hdf_close();
 private:
 std::vector<DemuxTopic> _demuxers;
 std::unique_ptr<FileWriterTask_impl> impl;
+void add_source(Source && source);
+/// Called by CommandHandler on setup.
+void hdf_init();
 };
 
 }

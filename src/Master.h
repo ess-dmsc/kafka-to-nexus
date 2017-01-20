@@ -22,6 +22,7 @@ class Master {
 public:
 Master(MasterConfig config);
 void run();
+void handle_command_message(std::unique_ptr<CmdMsg> && msg);
 void on_consumer_connected(std::function<void(void)> * cb_on_connected);
 std::function<void(void)> cb_on_filewriter_new;
 

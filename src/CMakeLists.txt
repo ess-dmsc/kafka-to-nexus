@@ -78,21 +78,32 @@ find_library(path_lib_rdkafka++ NAMES rdkafka++ PATHS
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
+find_path(path_streaming_data_types NAMES f140-general.fbs PATHS
+../../streaming-data-types
+)
+
+find_path(path_flatc NAMES flatc PATHS
+$ENV{flatc_dir}
+)
+
 
 
 
 
 # TODO
 # Import the actual schemes
-set(flatbuffers_schemata "")
+set(flatbuffers_schemata
+f140-general
+f141-ntarraydouble
+)
 set(flatbuffers_generated_headers "")
 
 foreach (f ${flatbuffers_schemata})
-	set(fbs "${f}.fbs")
+	set(fbs "${path_streaming_data_types}/${f}.fbs")
 	set(fbh "${f}_generated.h")
 	add_custom_command(
 		OUTPUT ${fbh}
-		COMMAND ${flatc} --cpp "${CMAKE_CURRENT_SOURCE_DIR}/${fbs}"
+		COMMAND "${path_flatc}/flatc" --cpp "${fbs}"
 		DEPENDS "${fbs}"
 		COMMENT "Process ${fbs} using ${flatc}"
 	)
@@ -128,8 +139,10 @@ TimeDifferenceFromMessage.cxx
 FileWriterTask.cxx
 Source.cxx
 DemuxTopic.cxx
+HDFFile.cxx
 helper.cxx
 logger.cxx
+json.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )

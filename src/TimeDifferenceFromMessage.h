@@ -18,7 +18,7 @@ using DT = TimeDifferenceFromMessage_DT;
 /// `dt = tm - t0` (milliseconds) between the message `tm` and the
 /// time at which `sourcename` would like to start to consume data.
 virtual
-DT time_difference_from_message(void * msg_data, int msg_size) = 0;
+DT time_difference_from_message(char * msg_data, int msg_size) = 0;
 };
 
 }

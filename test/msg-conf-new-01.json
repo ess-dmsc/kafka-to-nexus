@@ -10,7 +10,15 @@
 			"source": "for_example_motor01",
 			"path": "v",
 			"on_path_missing": "ignore",
-			"default_value": 238476
+			"default_value": 405
+		},
+		{
+			"broker": "127.0.0.1:9092",
+			"topic": "topic.with.multiple.sources",
+			"source": "for_example_temperature02",
+			"path": "v",
+			"on_path_missing": "ignore",
+			"default_value": 182
 		}
 	],
 	"file_attributes": {

@@ -284,7 +284,7 @@ void Consumer::start() {
 		{"statistics.interval.ms",                  600 * 1000},
 		{"metadata.request.timeout.ms",               2 * 1000},
 		{"socket.timeout.ms",                         2 * 1000},
-		{"session.timeout.ms",                        2 * 2000},
+		{"session.timeout.ms",                        2 * 1000},
 		{"coordinator.query.interval.ms",             2 * 1000},
 		{"heartbeat.interval.ms",                          500},
 		/*
@@ -357,7 +357,7 @@ void Consumer::start() {
 	int partition = RD_KAFKA_PARTITION_UA;
 	plist = rd_kafka_topic_partition_list_new(1);
 	rd_kafka_topic_partition_list_add(plist, opt.topic.c_str(), partition);
-	rd_kafka_topic_partition_list_set_offset(plist, opt.topic.c_str(), partition, RD_KAFKA_OFFSET_BEGINNING);
+	//rd_kafka_topic_partition_list_set_offset(plist, opt.topic.c_str(), partition, RD_KAFKA_OFFSET_BEGINNING);
 
 	err = rd_kafka_subscribe(rk, plist);
 	KERR(err);
@@ -611,7 +611,7 @@ void consume_cb(RdKafka::Message & msg, void * opaque) {
 };
 
 
-PollStatus CommandListener::poll(FileWriterCommandHandler & command_handler) {
+PollStatus CommandListener::poll() {
 	if (leg_consumer) {
 		return leg_consumer->poll();
 	}
@@ -667,16 +667,21 @@ void Producer::cb_delivered(rd_kafka_t * rk, rd_kafka_message_t const * msg, voi
 			(*self->on_delivery)(msg);
 		}
 		if (true) {
-			LOG(0, "Ok delivered ({} bytes, offset {}, partition {}): {:.{}}\n",
-				msg->len, msg->offset, msg->partition,
-				(char const *)msg->payload, (int)msg->len);
+			LOG(0, "Ok delivered ({}, p {}, offset {}, len {}): {:.{}}\n",
+				rd_kafka_name(rk),
+				msg->partition, msg->offset, msg->len,
+				(char const *)msg->payload, (int)msg->len
+			);
 		}
 	}
 	else {
-		LOG(6, "ERROR on delivery, topic {}, {}, {}",
+		LOG(6, "ERROR on delivery, {}, topic {}, {} [{}] {}",
+			rd_kafka_name(rk),
 			rd_kafka_topic_name(msg->rkt),
-			rd_kafka_err2str(msg->err),
-			rd_kafka_message_errstr(msg));
+			rd_kafka_err2name(msg->err),
+			msg->err,
+			rd_kafka_err2str(msg->err)
+		);
 	}
 }
 
@@ -684,19 +689,19 @@ void Producer::cb_delivered(rd_kafka_t * rk, rd_kafka_message_t const * msg, voi
 void Producer::cb_error(rd_kafka_t * rk, int err_i, char const * reason, void * opaque) {
 	// cast necessary because of Kafka API design
 	rd_kafka_resp_err_t err = (rd_kafka_resp_err_t) err_i;
-	LOG(7, "ERROR Kafka: {}, {}, {}, {}", err_i, rd_kafka_err2name(err), rd_kafka_err2str(err), reason);
+	LOG(7, "ERROR {} {}, {}, {}, {}", rd_kafka_name(rk), err_i, rd_kafka_err2name(err), rd_kafka_err2str(err), reason);
 }
 
 
 int Producer::cb_stats(rd_kafka_t * rk, char * json, size_t json_len, void * opaque) {
-	LOG(3, "INFO Producer::cb_stats length {}   {:.{}}", json_len, json, json_len);
+	LOG(3, "INFO cb_stats {} length {}   {:.{}}", rd_kafka_name(rk), json_len, json, json_len);
 	// What does Kafka want us to return from this callback?
 	return 0;
 }
 
 
 void Producer::cb_log(rd_kafka_t const * rk, int level, char const * fac, char const * buf) {
-	LOG(level, "{}  fac: {}", buf, fac);
+	LOG(level, "{}  {}  fac: {}", rd_kafka_name(rk), buf, fac);
 }
 
 
@@ -726,6 +731,7 @@ Producer::~Producer() {
 
 Producer::Producer(BrokerOpt opt) : opt(opt), poll_timeout_ms(100) {
 	std::map<std::string, int> conf_ints {
+		{"queue.buffering.max.ms",                         200},
 		/*
 		{"statistics.interval.ms",                   20 * 1000},
 		{"metadata.request.timeout.ms",              15 * 1000},
