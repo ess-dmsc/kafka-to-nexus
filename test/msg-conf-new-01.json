@@ -1,5 +1,6 @@
 {
 	"cmd": "FileWriter_new",
+	"broker": "127.0.0.1:9092",
 	"sstreams": [
 		{"a": 12, "b": 56}
 	],
