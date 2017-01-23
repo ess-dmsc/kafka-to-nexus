@@ -1,5 +1,6 @@
 #include "HDFFile.h"
 #include "HDFFile_h5.h"
+#include <array>
 #include <H5Cpp.h>
 #include "f140-general_generated.h"
 #include "f141-ntarraydouble_generated.h"
