@@ -170,6 +170,7 @@ set_target_properties(${tgt} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
 
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
+add_dependencies(${tgt} NeXusFileWriter)
 
 if (path_include_gtest AND path_lib_gtest)
 message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
@@ -190,6 +191,7 @@ ${CMAKE_CURRENT_BINARY_DIR}
 #target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka++)
+target_link_libraries(${tgt} NeXusFileWriter)
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
 configure_file(../test/msg-conf-new-02.json ../test/msg-conf-new-02.json)

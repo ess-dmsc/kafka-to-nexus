@@ -2,6 +2,8 @@
 #include <chrono>
 #include "FileWriterTask.h"
 #include "NexusWriter.h"
+#include "StreamMaster.hpp"
+#include "Streamer.hpp"
 #include "Source.h"
 #include "logger.h"
 #include "helper.h"
@@ -74,14 +76,21 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 		LOG(1, "{}", d.to_str());
 	}
 
+	std::vector<std::string> test_source_names;
+	test_source_names.push_back(fwt->demuxers().at(0).sources().at(0).source());
+
 	fwt->hdf_init();
+
+	std::string br(d["broker"].GetString());
+	StreamMaster<Streamer, DemuxTopic> stream_master(br, std::move(fwt));
+	stream_master.start();
 
 	{
 		// TODO
 		// Move testing code into async test
 		for (int i1 = 0; i1 < 3; ++i1) {
 			flatbuffers::FlatBufferBuilder builder(1024);
-			auto srcn = builder.CreateString(fwt->demuxers().at(0).sources().at(0).source());
+			auto srcn = builder.CreateString(test_source_names.at(0));
 			std::vector<double> data;
 			data.resize(5);
 			for (size_t i2 = 0; i2 < data.size(); ++i2) {
@@ -98,10 +107,20 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 			msg.push_back(0x41);
 			msg.push_back(0xf1);
 			std::copy(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize(), std::back_inserter(msg));
-			fwt->demuxers().at(0).process_message(msg.data(), msg.size());
+			if (true) {
+				// Send off to Kafka and let Streamer fetch it
+			}
+			else {
+				// Feed directly to the demuxers.
+				// Works only if we do not give away the file writer task before.
+				fwt->demuxers().at(0).process_message(msg.data(), msg.size());
+			}
 		}
-		fwt->file_flush();
+		//fwt->file_flush();
 	}
+
+	//stream_master.wait_until_n_packets_recv(10)
+	std::this_thread::sleep_for(std::chrono::milliseconds(6000));
 }
 
 private:

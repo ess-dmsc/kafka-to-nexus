@@ -117,7 +117,7 @@ int Streamer::write(std::function<void(void*,int)>& f) {
 }
 
 template<>
-int Streamer::write(BrightnESS::FileWriter::MessageProcessor & mp) {
+int Streamer::write(BrightnESS::FileWriter::DemuxTopic & mp) {
   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;

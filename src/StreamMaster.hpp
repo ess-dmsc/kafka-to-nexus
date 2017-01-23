@@ -12,6 +12,7 @@
 #include <atomic>
 #include <algorithm>
 
+#include "FileWriterTask.h"
 #include "DemuxTopic.h"
 
 
@@ -31,6 +32,15 @@ struct StreamMaster {
   StreamMaster() : keep_writing(false) { };
   
   StreamMaster(std::string& broker, std::vector<DemuxTopic>& _demux) : demux(_demux) {
+    for( auto& d: demux) {
+      streamer[d.topic()] = Streamer(broker,d.topic());
+    }
+  };
+
+  StreamMaster(std::string& broker, std::unique_ptr<FileWriterTask> file_writer_task) :
+    demux(file_writer_task->demuxers()),
+    file_writer_task(std::move(file_writer_task))
+  {
     for( auto& d: demux) {
       streamer[d.topic()] = Streamer(broker,d.topic());
     }
@@ -80,6 +90,7 @@ private:
   std::map< std::string,std::vector< std::pair<std::string,int64_t> > > timestamp_list;
   std::atomic<bool> keep_writing;
   std::thread loop;
+  std::unique_ptr<FileWriterTask> file_writer_task;
 };
 
 template<typename S,typename D>

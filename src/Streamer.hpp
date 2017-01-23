@@ -46,6 +46,6 @@ private:
 };
 
 template<> int Streamer::write<std::function<void(void*,int)> >(std::function<void(void*,int)>&);
-template<> int Streamer::write<BrightnESS::FileWriter::MessageProcessor>(BrightnESS::FileWriter::MessageProcessor &);
+template<> int Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
 
 template<> bool Streamer::search_backward<std::function<void(void*)> >(std::function<void(void*)>&, int);
