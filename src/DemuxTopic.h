@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <functional>
 #include "TimeDifferenceFromMessage.h"
 #include "Source.h"
 #include "json.h"
@@ -8,8 +9,17 @@
 namespace BrightnESS {
 namespace FileWriter {
 
+
+class MessageProcessor {
+public:
+virtual void process_message(char * msg_data, int msg_size) = 0;
+};
+
+
 /// %Result of a call to `process_message`.
 /// Can be extended later for more detailed reporting.
+/// Streamer currently does not accept the return value, therefore currently
+/// not used.
 class ProcessMessageResult {
 public:
 static ProcessMessageResult OK();
@@ -23,12 +33,13 @@ char res = -1;
 /// Represents a sourcename on a topic.
 /// The sourcename can be empty.
 /// This is meant for highest efficiency on topics which are exclusively used for only one sourcename.
-class DemuxTopic : public TimeDifferenceFromMessage {
+class DemuxTopic : public TimeDifferenceFromMessage, public MessageProcessor {
 public:
 DemuxTopic(std::string topic);
 std::string const & topic() const;
 /// To be called by FileMaster when a new message is available for this source.
-ProcessMessageResult process_message(char * msg_data, int msg_size);
+/// Streamer currently expects void as return, will add return value in the future.
+void process_message(char * msg_data, int msg_size);
 /// Implements TimeDifferenceFromMessage.
 DT time_difference_from_message(char * msg_data, int msg_size);
 std::vector<Source> & sources();
