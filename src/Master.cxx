@@ -46,7 +46,7 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	auto doc = make_unique<Document>();
 	ParseResult err = doc->Parse(msg->str().data(), msg->str().size());
 	if (doc->HasParseError()) {
-		LOG(3, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+		LOG(6, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
 		throw std::runtime_error("");
 	}
 	auto & d = * doc;
@@ -55,24 +55,23 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 		StringBuffer sb1, sb2;
 		vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
 		vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-		LOG(3, "ERROR command message schema validation:  Invalid schema: {}  keyword: {}",
+		LOG(6, "ERROR command message schema validation:  Invalid schema: {}  keyword: {}",
 			sb1.GetString(),
 			vali.GetInvalidSchemaKeyword()
 		);
 		throw std::runtime_error("ERROR command message schema validation");
 	}
-	LOG(3, "cmd: {}", d["cmd"].GetString());
+	LOG(1, "cmd: {}", d["cmd"].GetString());
 
 	auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 	fwt->set_hdf_filename("a-dummy-name.h5");
 
 	for (auto & st : d["streams"].GetArray()) {
-		LOG(3, "{}", st["topic"].GetString());
 		fwt->add_source(Source(st["topic"].GetString(), st["source"].GetString()));
 	}
 
 	for (auto & d : fwt->demuxers()) {
-		LOG(3, "{}", d.to_str());
+		LOG(1, "{}", d.to_str());
 	}
 
 	fwt->hdf_init();
@@ -80,20 +79,28 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	{
 		// TODO
 		// Move testing code into async test
-		flatbuffers::FlatBufferBuilder builder(1024);
-		auto srcn = builder.CreateString(fwt->demuxers().at(0).sources().at(0).source());
-		auto v = builder.CreateVector(std::vector<double>({1, 3, 5, 7, 13}));
-		BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::PVBuilder b1(builder);
-		b1.add_ts(102030);
-		b1.add_src(srcn);
-		b1.add_v(v);
-		auto pv = b1.Finish();
-		builder.Finish(pv);
-		std::vector<char> msg;
-		msg.push_back(0x41);
-		msg.push_back(0xf1);
-		std::copy(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize(), std::back_inserter(msg));
-		fwt->demuxers().at(0).process_message(msg.data(), msg.size());
+		for (int i1 = 0; i1 < 3; ++i1) {
+			flatbuffers::FlatBufferBuilder builder(1024);
+			auto srcn = builder.CreateString(fwt->demuxers().at(0).sources().at(0).source());
+			std::vector<double> data;
+			data.resize(5);
+			for (size_t i2 = 0; i2 < data.size(); ++i2) {
+				data[i2] = 10000 + 100 * i1 + i2;
+			}
+			auto v = builder.CreateVector(data);
+			BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::PVBuilder b1(builder);
+			b1.add_ts(102030);
+			b1.add_src(srcn);
+			b1.add_v(v);
+			auto pv = b1.Finish();
+			builder.Finish(pv);
+			std::vector<char> msg;
+			msg.push_back(0x41);
+			msg.push_back(0xf1);
+			std::copy(builder.GetBufferPointer(), builder.GetBufferPointer() + builder.GetSize(), std::back_inserter(msg));
+			fwt->demuxers().at(0).process_message(msg.data(), msg.size());
+		}
+		fwt->file_flush();
 	}
 }
 
@@ -115,10 +122,6 @@ Master::Master(MasterConfig config) :
 
 
 void Master::handle_command_message(std::unique_ptr<CmdMsg> && msg) {
-	// Parse
-	// Create Task
-	// Create new FileMaster (later)
-	LOG(3, "Master hands this message to CommandHandler: {}", msg->str());
 	CommandHandler command_handler(this);
 	command_handler.handle(std::move(msg));
 }

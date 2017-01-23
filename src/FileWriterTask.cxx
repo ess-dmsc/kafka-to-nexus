@@ -78,6 +78,11 @@ void FileWriterTask::hdf_init() {
 }
 
 
+void FileWriterTask::file_flush() {
+	if (impl) impl->hdf_file.flush();
+}
+
+
 }
 }
 

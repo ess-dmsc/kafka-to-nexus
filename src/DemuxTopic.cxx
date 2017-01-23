@@ -37,7 +37,7 @@ ProcessMessageResult DemuxTopic::process_message(char * msg_data, int msg_size) 
 		return ProcessMessageResult::ERR();
 	}
 	auto srcn = reader->sourcename(msg_data);
-	LOG(3, "Msg is for sourcename: {}", srcn);
+	LOG(0, "Msg is for sourcename: {}", srcn);
 	for (auto & s : sources()) {
 		if (s.source() == srcn) {
 			s.process_message(msg_data, msg_size);

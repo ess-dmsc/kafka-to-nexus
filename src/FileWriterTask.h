@@ -27,8 +27,8 @@ FileWriterTask();
 FileWriterTask & set_hdf_filename(std::string hdf_filename);
 /// Used by Streamer to get the list of demuxers
 std::vector<DemuxTopic> & demuxers();
-void hdf_flush();
-void hdf_close();
+void file_flush();
+void file_close();
 private:
 std::vector<DemuxTopic> _demuxers;
 std::unique_ptr<FileWriterTask_impl> impl;

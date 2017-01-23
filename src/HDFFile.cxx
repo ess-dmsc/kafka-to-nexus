@@ -32,6 +32,10 @@ void HDFFile::init(std::string filename) {
 	impl->h5file = H5::H5File(filename, H5F_ACC_TRUNC);
 }
 
+void HDFFile::flush() {
+	impl->h5file.flush(H5F_SCOPE_LOCAL);
+}
+
 HDFFile_h5 HDFFile::h5file_detail() {
 	return HDFFile_h5(&impl->h5file);
 }
@@ -81,6 +85,8 @@ f141_ntarraydouble();
 void init_impl(HDFFile & hdf_file, char * msg);
 void write_impl(char * msg_data);
 private:
+using DT = double;
+// DataSet::getId() will be -1 for the default constructed
 H5::DataSet ds;
 };
 
@@ -135,33 +141,71 @@ void f140_general::write_impl(char * msg_data) {
 f141_ntarraydouble::f141_ntarraydouble() {
 }
 void f141_ntarraydouble::init_impl(HDFFile & hdf_file, char * msg_data) {
-	LOG(3, "f141_ntarraydouble init");
+	// TODO
+	// This is just a unbuffered, low-performance write.
+	// Add buffering after it works.
 	auto & file = hdf_file.h5file_detail().h5file();
-	auto fid = file.getId();
-	LOG(3, "id of the file: {}  size: {}", fid, file.getFileSize());
-
 	auto pv = BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::GetPV(msg_data + 2);
-	LOG(3, "init stream for v.size() == {}", pv->v()->size());
+	LOG(1, "f141_ntarraydouble::init_impl  v.size() == {}", pv->v()->size());
 	using std::vector;
 	using std::array;
-	using DT = double;
 	auto dt = nat_type<DT>();
 	// H5S_UNLIMITED
-	std::array<hsize_t, 2> sizes_ini {1, 5};
+	std::array<hsize_t, 2> sizes_ini {0, 5};
 	std::array<hsize_t, 2> sizes_max {H5S_UNLIMITED, H5S_UNLIMITED};
+	//std::array<hsize_t, 2> sizes_max {20, 20};
 	H5::DataSpace dsp(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
-	auto cprops = H5::DSetCreatPropList();
-	std::array<hsize_t, 2> sizes_chk {1, 5};
-	cprops.setChunk(sizes_chk.size(), sizes_chk.data());
-	ds = file.createDataSet("slab1", dt, dsp, cprops);
-	ds.write(pv->v()->data(), dt);
-
-	file.flush(H5F_SCOPE_LOCAL);
-}
-void f141_ntarraydouble::write_impl(char * msg_data) {
-	LOG(3, "f141_ntarraydouble write_impl");
-	if (ds.getSpace().isSimple()) {
+	if (false) {
+		// Just check if it works as I think it should
+		LOG(0, "DataSpace isSimple {}", dsp.isSimple());
+		LOG(0, "DataSpace getSimpleExtentNdims {}", dsp.getSimpleExtentNdims());
+		LOG(0, "DataSpace getSimpleExtentNpoints {}", dsp.getSimpleExtentNpoints());
+		auto ndims = dsp.getSimpleExtentNdims();
+		std::vector<hsize_t> get_sizes_now;
+		std::vector<hsize_t> get_sizes_max;
+		get_sizes_now.resize(ndims);
+		get_sizes_max.resize(ndims);
+		dsp.getSimpleExtentDims(get_sizes_now.data(), get_sizes_max.data());
+		for (int i1 = 0; i1 < ndims; ++i1) {
+			LOG(0, "DataSpace getSimpleExtentDims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		}
 	}
+	auto cprops = H5::DSetCreatPropList();
+	std::array<hsize_t, 2> sizes_chk {10, 5};
+	cprops.setChunk(sizes_chk.size(), sizes_chk.data());
+	ds = file.createDataSet("this_data_set_needs_a_better_name", dt, dsp, cprops);
+}
+
+void f141_ntarraydouble::write_impl(char * msg_data) {
+	LOG(0, "f141_ntarraydouble::write_impl");
+	// TODO cache these values later, but for now, let's make it verbose:
+	auto dt = nat_type<DT>();
+	auto dsp = ds.getSpace();
+	auto ndims = dsp.getSimpleExtentNdims();
+	std::vector<hsize_t> get_sizes_now;
+	std::vector<hsize_t> get_sizes_max;
+	get_sizes_now.resize(ndims);
+	get_sizes_max.resize(ndims);
+	dsp.getSimpleExtentDims(get_sizes_now.data(), get_sizes_max.data());
+
+	auto pv = BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::GetPV(msg_data + 2);
+	if (pv->v()->size() != get_sizes_now.at(1)) {
+		LOG(7, "ERROR this message is not compatible with the previous ones");
+		return;
+	}
+
+	get_sizes_now.at(0) += 1;
+	ds.extend(get_sizes_now.data());
+	using A = std::array<hsize_t, 2>;
+	auto tgt = ds.getSpace();
+	hsize_t mem_size = 5;
+	auto mem = H5::DataSpace(1, &mem_size, &mem_size);
+	{
+		A hsl_count {1, 5};
+		A hsl_start {get_sizes_now.at(0)-1, 0};
+		tgt.selectHyperslab(H5S_SELECT_SET, hsl_count.data(), hsl_start.data());
+	}
+	ds.write(pv->v()->data(), dt, mem, tgt);
 }
 
 }
