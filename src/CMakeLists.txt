@@ -93,6 +93,9 @@ $ENV{flatc_dir}
 )
 
 
+message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 #add_library( rdkafka_mock KafkaMock.cxx)
 add_library( NeXusFileWriter Streamer.cxx StreamMaster.cxx DemuxTopic.cxx TimeDifferenceFromMessage.cxx)
 target_include_directories(NeXusFileWriter PRIVATE
@@ -103,6 +106,7 @@ ${path_include_flatbuffers}
 ${path_include_rapidjson}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
+set_target_properties(NeXusFileWriter PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 
 
