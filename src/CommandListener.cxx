@@ -6,6 +6,7 @@
 #include "helper.h"
 #include "Master_handler.h"
 #include "kafka_util.h"
+#include "commandproducer.h"
 #include <cassert>
 #include <sys/types.h>
 #include <unistd.h>
@@ -14,9 +15,6 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/prettywriter.h>
-
-#include <librdkafka/rdkafka.h>
-#include <librdkafka/rdkafkacpp.h>
 
 
 namespace BrightnESS {
@@ -618,42 +616,6 @@ PollStatus CommandListener::poll() {
 	return PollStatus::Err();
 }
 
-
-
-
-
-class Producer {
-public:
-Producer(BrokerOpt opt);
-~Producer();
-//void produce(void const * msg_data, int msg_size);
-void poll_outq();
-static void cb_delivered(rd_kafka_t * rk, rd_kafka_message_t const * msg, void * opaque);
-static void cb_error(rd_kafka_t * rk, int err_i, char const * reason, void * opaque);
-static int cb_stats(rd_kafka_t * rk, char * json, size_t json_len, void * opaque);
-static void cb_log(rd_kafka_t const * rk, int level, char const * fac, char const * buf);
-rd_kafka_t * rd_kafka_ptr() const;
-std::function<void(rd_kafka_message_t const * msg)> * on_delivery = nullptr;
-private:
-BrokerOpt opt;
-int poll_timeout_ms = 10;
-rd_kafka_t * rk = nullptr;
-//rd_kafka_topic_t * rkt = nullptr;
-rd_kafka_topic_partition_list_t * plist = nullptr;
-};
-
-
-
-class ProducerTopic {
-public:
-ProducerTopic(Producer const & producer, string name);
-~ProducerTopic();
-void produce(void * msg_data, int msg_size);
-private:
-Producer const & producer;
-rd_kafka_topic_t * rkt = nullptr;
-string _name;
-};
 
 
 

@@ -74,7 +74,7 @@ namespace schemawriters {
 class f140_general : public FBSchemaWriter {
 public:
 f140_general();
-void init_impl(HDFFile & hdf_file, char * msg);
+void init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg);
 void write_impl(char * msg_data);
 private:
 H5::DataSet ds;
@@ -83,7 +83,7 @@ H5::DataSet ds;
 class f141_ntarraydouble : public FBSchemaWriter {
 public:
 f141_ntarraydouble();
-void init_impl(HDFFile & hdf_file, char * msg);
+void init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg);
 void write_impl(char * msg_data);
 private:
 using DT = double;
@@ -129,7 +129,7 @@ namespace schemawriters {
 
 f140_general::f140_general() {
 }
-void f140_general::init_impl(HDFFile & hdf_file, char * msg_data) {
+void f140_general::init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg_data) {
 	LOG(3, "f140_general init");
 	auto & file = hdf_file.h5file_detail().h5file();
 	auto fid = file.getId();
@@ -141,7 +141,7 @@ void f140_general::write_impl(char * msg_data) {
 
 f141_ntarraydouble::f141_ntarraydouble() {
 }
-void f141_ntarraydouble::init_impl(HDFFile & hdf_file, char * msg_data) {
+void f141_ntarraydouble::init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg_data) {
 	// TODO
 	// This is just a unbuffered, low-performance write.
 	// Add buffering after it works.
@@ -174,7 +174,7 @@ void f141_ntarraydouble::init_impl(HDFFile & hdf_file, char * msg_data) {
 	auto cprops = H5::DSetCreatPropList();
 	std::array<hsize_t, 2> sizes_chk {10, 5};
 	cprops.setChunk(sizes_chk.size(), sizes_chk.data());
-	ds = file.createDataSet("this_data_set_needs_a_better_name", dt, dsp, cprops);
+	ds = file.createDataSet(sourcename, dt, dsp, cprops);
 }
 
 void f141_ntarraydouble::write_impl(char * msg_data) {
@@ -244,8 +244,8 @@ FBSchemaWriter::FBSchemaWriter() {
 FBSchemaWriter::~FBSchemaWriter() {
 }
 
-void FBSchemaWriter::init(HDFFile & hdf_file, char * msg_data) {
-	init_impl(hdf_file, msg_data);
+void FBSchemaWriter::init(HDFFile & hdf_file, std::string const & sourcename, char * msg_data) {
+	init_impl(hdf_file, sourcename, msg_data);
 }
 
 void FBSchemaWriter::write(char * msg_data) {
