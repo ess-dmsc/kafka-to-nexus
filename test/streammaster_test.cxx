@@ -6,55 +6,94 @@
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
 
+using namespace BrightnESS::FileWriter;
+
+class MockSource {
+public:
+  MockSource(std::string topic, std::string source) : _topic(topic), _source(source) { };
+  //  MockSource(MockSource &&);
+  std::string const & topic() const { return _topic; }
+  std::string const & source() const { return _source; }
+  uint32_t processed_messages_count() const { return _processed_messages_count; }
+  Result process_message(char * msg_data, int msg_size) {  _processed_messages_count++; return Result(); }
+private:
+  std::string _topic;
+  std::string _source;
+  int _processed_messages_count=0;
+};
+
+
 class MockDemuxTopic : public MessageProcessor {
 public:
   MockDemuxTopic(std::string topic) : _topic(topic) { };
   std::string const & topic() const { return _topic; };
-
-  void process_message(char * msg_data, int msg_size) {
+  
+  ProcessMessageResult process_message(char * msg_data, int msg_size) {
     std::string s(msg_data);
     int source_index=0;
     for(; source_index < _sources.size(); ++source_index) {
-      if( (s.find(_sources[source_index]) !=std::string::npos ) ) {
-        if( _sources[source_index]).process_message_counte
-        // do something
-        break;
-      }
+      if( (s.find(_sources[source_index].source()) !=std::string::npos ) ) break;
     }
-    _message_counter[source_index]++;
+    _sources[source_index].process_message(msg_data,msg_size);
+    return ProcessMessageResult::OK();
+  };
+  
+  ProcessMessageResult process_message_count(char * msg_data, int msg_size) {
+    std::string s(msg_data);
+    int source_index=0;
+    for(; source_index < _sources.size(); ++source_index) {
+      if( (s.find(_sources[source_index].source()) !=std::string::npos ) )  break;
+    }
+    if( _sources[source_index].processed_messages_count() < 10 )
+      _sources[source_index].process_message(msg_data,msg_size);
+    return ProcessMessageResult::OK();
   };
   
   void add_source(std::string s) {
-    if (std::find (_sources.begin(), _sources.end(), s) == _sources.end()) {
-      _sources.push_back(s);
-      _message_counter.push_back(0);
+    for(auto item=_sources.begin(); item != _sources.end(); ++item) {
+      if ( (*item).source() == s ) return;
     }
+    _sources.push_back( MockSource(topic(),s) );
   }
-  std::vector<std::string> & sources() { return _sources; };
-  std::vector<int> & message_counter() { return _message_counter; };
+  std::vector<MockSource> & sources() { return _sources; };
   
 private:
   std::string _topic;
-  std::vector<std::string> _sources;
+  std::vector<MockSource> _sources;
   std::vector<int> _message_counter;
 };
 
 template<>
-int Streamer::write(MockDemuxTopic & mp) {
+BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp) {
   
   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
-    return RdKafka::ERR__PARTITION_EOF;
+    return ProcessMessageResult::OK();
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
-    return msg->err();
+    return ProcessMessageResult::ERR();
   }
-  mp.process_message((char*)msg->payload(),msg->len());
   message_length = msg->len();
-  return RdKafka::ERR_NO_ERROR;
+  return mp.process_message((char*)msg->payload(),msg->len());
 }
+
+// template<>
+// BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp, const int n_mesg) {
+  
+//   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
+//   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
+//     std::cout << "eof reached" << std::endl;
+//     return ProcessMessageResult::OK();
+//   }
+//   if( msg->err() != RdKafka::ERR_NO_ERROR) {
+//     std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
+//     return ProcessMessageResult::ERR();
+//   }
+//   message_length = msg->len();
+//   return mp.process_message((char*)msg->payload(),msg->len(), n_mesg);
+// }
 
 
 std::string broker;
@@ -72,18 +111,18 @@ std::vector<MockDemuxTopic> demux = { MockDemuxTopic("area_detector"),
                                       MockDemuxTopic("temp") };
 
 TEST (Streammaster, NotAllocatedFailure) {
-  using StreamMaster=StreamMaster<Streamer,MockDemuxTopic>;
+  using StreamMaster=StreamMaster<BrightnESS::FileWriter::Streamer,MockDemuxTopic>;
   EXPECT_THROW(StreamMaster sm(broker,no_demux), std::runtime_error);
 }
 
 TEST (Streammaster, Constructor) {
-  using StreamMaster=StreamMaster<Streamer,MockDemuxTopic>;
+  using StreamMaster=StreamMaster<BrightnESS::FileWriter::Streamer,MockDemuxTopic>;
   EXPECT_NO_THROW(StreamMaster sm(broker,demux));
 }
 
 
 TEST (Streammaster, StartStop) {
-  using StreamMaster=StreamMaster<Streamer,MockDemuxTopic>;
+  using StreamMaster=StreamMaster<BrightnESS::FileWriter::Streamer,MockDemuxTopic>;
   EXPECT_TRUE( one_demux[0].sources().size()  == 0 );
   one_demux[0].add_source("for_example_motor01");
   one_demux[0].add_source("for_example_temperature02");
@@ -96,7 +135,8 @@ TEST (Streammaster, StartStop) {
   auto value = sm.stop();
 
   for(int item=0;item<one_demux[0].sources().size();++item)
-    std::cout << one_demux[0].sources()[item] <<  " : " << one_demux[0].message_counter()[item] << "\n";
+    std::cout << one_demux[0].sources()[item].source() <<  " : "
+              << one_demux[0].sources()[item].processed_messages_count() << "\n";
 
 }
 

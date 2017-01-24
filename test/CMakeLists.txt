@@ -47,6 +47,16 @@ else()
   target_link_libraries(streammaster_test librdkafka++)
 endif()
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_libraries(streamer_test hdf5_cpp)
+  target_link_libraries(streamer_test hdf5)
+  target_link_libraries(streamer_test rdkafka)
+  target_link_libraries(streamer_test rdkafka++)
+else()
+  target_link_libraries(streamer_test libhdf5)
+  target_link_libraries(streamer_test librdkafka++)
+endif()
+
 target_link_libraries( streamer_test
 		       ${GTEST_BOTH_LIBRARIES}
 #		       rdkafka_mock

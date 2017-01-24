@@ -11,6 +11,9 @@ namespace RdKafka {
   class Consumer;
 }
 
+namespace BrightnESS {
+  namespace FileWriter {
+    
 // actually a "kafka streamer"
 struct Streamer {
 public:
@@ -24,7 +27,7 @@ public:
   /// writes a message and return -1, doing nothing. For specific usage
   /// implement specialised version.
   template<class T>
-  int write(T& f) { message_length=0; std::cout << "fake_recv\n"; return -1; }
+  ProcessMessageResult write(T& f) { message_length=0; std::cout << "fake_recv\n"; return ProcessMessageResult(); }
 
   template<class T>
   bool search_backward(T& f, int m=1) { message_length=0; std::cout << "fake_search\n"; return false; }
@@ -45,7 +48,10 @@ private:
   size_t message_length;
 };
 
-template<> int Streamer::write<std::function<void(void*,int)> >(std::function<void(void*,int)>&);
-template<> int Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
+template<> ProcessMessageResult Streamer::write<std::function<ProcessMessageResult(void*,int)> >(std::function<ProcessMessageResult(void*,int)>&);
+template<> ProcessMessageResult Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
 
 template<> bool Streamer::search_backward<std::function<void(void*)> >(std::function<void(void*)>&, int);
+
+  }
+}

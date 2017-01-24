@@ -98,6 +98,8 @@ message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 #add_library( rdkafka_mock KafkaMock.cxx)
+
+
 add_library( NeXusFileWriter
   Streamer.cxx
   StreamMaster.cxx
@@ -116,6 +118,7 @@ add_library( NeXusFileWriter
   ${path_include_fmt}/fmt/format.cc
   #${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
+add_dependencies(NeXusFileWriter flatbuffers_generate)
 
 target_include_directories(NeXusFileWriter PRIVATE
 ${path_include_fmt}

@@ -15,7 +15,6 @@
 #include "FileWriterTask.h"
 #include "DemuxTopic.h"
 
-
 struct Streamer;
 struct FileWriterCommand;
 
@@ -75,11 +74,11 @@ private:
     while( keep_writing ) {
       for (auto d=demux.begin(); d!=demux.end(); ++d) {
         start_source_time = std::chrono::system_clock::now();
-        int value = 0;
+        BrightnESS::FileWriter::ProcessMessageResult value;
         do {
-          value = streamer[dem.topic()].write(dem);
-        } while( value == 0 && ((std::chrono::system_clock::now() - start_source_time) < duration) );
-        return value;
+          value = streamer[d->topic()].write(*d);
+        } while( value.is_OK() && ((std::chrono::system_clock::now() - start_source_time) < duration) );
+
       }
     }
   }
@@ -90,10 +89,10 @@ private:
       
       for (auto d=demux.begin(); d!=demux.end(); ++d) {
         start_source_time = std::chrono::system_clock::now();
-        int value = 0;
+        BrightnESS::FileWriter::ProcessMessageResult value;
         do {
           value = streamer[d->topic()].write(*d);
-        } while( value == 0 && ((std::chrono::system_clock::now() - start_source_time) < duration) );
+        } while( value.is_OK() && ((std::chrono::system_clock::now() - start_source_time) < duration) );
  
       }
     }

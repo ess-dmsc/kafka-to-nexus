@@ -8,9 +8,9 @@
 ///   - search backward at connection setup
 
 
-int64_t Streamer::backward_offset = 1000;
+int64_t BrightnESS::FileWriter::Streamer::backward_offset = 1000;
 
-Streamer::Streamer(const std::string& broker, const std::string& topic_name, const int64_t& p) : offset(RdKafka::Topic::OFFSET_END), partition(p) {
+BrightnESS::FileWriter::Streamer::Streamer(const std::string& broker, const std::string& topic_name, const int64_t& p) : offset(RdKafka::Topic::OFFSET_END), partition(p) {
 
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   RdKafka::Conf *tconf  = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
@@ -49,9 +49,9 @@ Streamer::Streamer(const std::string& broker, const std::string& topic_name, con
 }
 
 
-Streamer::Streamer(const Streamer& other) : topic(other.topic), consumer(other.consumer), offset(other.offset), partition(other.partition) { }
+BrightnESS::FileWriter::Streamer::Streamer(const Streamer& other) : topic(other.topic), consumer(other.consumer), offset(other.offset), partition(other.partition) { }
 
-int Streamer::disconnect() {
+int BrightnESS::FileWriter::Streamer::disconnect() {
   int return_code = consumer->stop(topic,partition);
   delete topic;
   delete consumer;
@@ -59,9 +59,9 @@ int Streamer::disconnect() {
 }
 
 
-int Streamer::closeStream() { return consumer->stop(topic,partition); }
+int BrightnESS::FileWriter::Streamer::closeStream() { return consumer->stop(topic,partition); }
 
-int Streamer::connect(const std::string& broker,
+int BrightnESS::FileWriter::Streamer::connect(const std::string& broker,
                       const std::string& topic_name) {
   RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   RdKafka::Conf *tconf  = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
@@ -101,35 +101,33 @@ int Streamer::connect(const std::string& broker,
 /// Method specialisation for a functor with signature void f(void*). The
 /// method applies f to the message payload.
 template<>
-int Streamer::write(std::function<void(void*,int)>& f) {
+BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(std::function<ProcessMessageResult(void*,int)>& f) {
   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
-    return RdKafka::ERR__PARTITION_EOF;
+    return ProcessMessageResult::OK();
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
-    return msg->err();
+    return ProcessMessageResult::ERR();//msg->err();
   }
-  f(msg->payload(),msg->len());
   message_length = msg->len();
-  return RdKafka::ERR_NO_ERROR;
+  return f(msg->payload(),msg->len());
 }
 
 template<>
-int Streamer::write(BrightnESS::FileWriter::DemuxTopic & mp) {
+BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(BrightnESS::FileWriter::DemuxTopic & mp) {
   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
-    return RdKafka::ERR__PARTITION_EOF;
+    return ProcessMessageResult::OK();
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
-    return msg->err();
+    return ProcessMessageResult::ERR();//msg->err();
   }
-  mp.process_message((char*)msg->payload(),msg->len());
   message_length = msg->len();
-  return RdKafka::ERR_NO_ERROR;
+  return mp.process_message((char*)msg->payload(),msg->len());
 }
 
 
@@ -137,7 +135,7 @@ int Streamer::write(BrightnESS::FileWriter::DemuxTopic & mp) {
 /// message with timestamp >= the timestam of beginning of data taking 
 /// (assumed to be stored in Source)
 template<>
-bool Streamer::search_backward(std::function<void(void*)>& f, const int multiplier) {
+bool BrightnESS::FileWriter::Streamer::search_backward(std::function<void(void*)>& f, const int multiplier) {
   
   RdKafka::ErrorCode resp = consumer->stop(topic,partition);
   if (resp != RdKafka::ERR_NO_ERROR) {
