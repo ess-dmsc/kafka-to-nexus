@@ -32,11 +32,11 @@ std::string const & DemuxTopic::topic() const {
 	return _topic;
 }
 
-void DemuxTopic::process_message(char * msg_data, int msg_size) {
+ProcessMessageResult DemuxTopic::process_message(char * msg_data, int msg_size) {
 	auto reader = FBSchemaReader::create(msg_data, msg_size);
 	if (!reader) {
 		LOG(3, "ERROR unknown schema id?");
-		return; //ProcessMessageResult::ERR();
+		return ProcessMessageResult::ERR();
 	}
 	auto srcn = reader->sourcename(msg_data);
 	LOG(0, "Msg is for sourcename: {}", srcn);
@@ -45,7 +45,7 @@ void DemuxTopic::process_message(char * msg_data, int msg_size) {
 			s.process_message(msg_data, msg_size);
 		}
 	}
-	return; //ProcessMessageResult::OK();
+	return ProcessMessageResult::OK();
 }
 
 std::vector<Source> & DemuxTopic::sources() {

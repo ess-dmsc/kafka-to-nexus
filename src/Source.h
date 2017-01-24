@@ -28,6 +28,7 @@ public:
 Source(Source &&);
 std::string const & topic() const;
 std::string const & source() const;
+uint32_t processed_messages_count() const;
 Result process_message(char * msg_data, int msg_size);
 std::string to_str() const;
 rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * a = nullptr) const;
@@ -40,6 +41,8 @@ std::string _topic;
 std::string _source;
 std::unique_ptr<FBSchemaReader> _schema_reader;
 std::unique_ptr<FBSchemaWriter> _schema_writer;
+
+uint32_t _processed_messages_count = 0;
 
 HDFFile * _hdf_file = nullptr;
 

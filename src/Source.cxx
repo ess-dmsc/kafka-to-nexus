@@ -42,7 +42,12 @@ Result Source::process_message(char * msg_data, int msg_size) {
 		_schema_writer->init(*_hdf_file, msg_data);
 	}
 	_schema_writer->write(msg_data);
+	_processed_messages_count += 1;
 	return Result::Ok();
+}
+
+uint32_t Source::processed_messages_count() const {
+	return _processed_messages_count;
 }
 
 void Source::hdf_init(HDFFile & hdf_file) {
