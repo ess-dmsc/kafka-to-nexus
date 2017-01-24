@@ -25,13 +25,12 @@ constexpr std::chrono::milliseconds operator "" _ms(const unsigned long long int
 
 using namespace BrightnESS::FileWriter;
 
-
 template<typename Streamer, typename Demux>
 struct StreamMaster {
   
   StreamMaster() : keep_writing(false) { };
   
-  StreamMaster(std::string& broker, std::vector<DemuxTopic>& _demux) : demux(_demux) {
+  StreamMaster(std::string& broker, std::vector<Demux>& _demux) : demux(_demux) {
     for( auto& d: demux) {
       streamer[d.topic()] = Streamer(broker,d.topic());
     }
@@ -45,6 +44,7 @@ struct StreamMaster {
       streamer[d.topic()] = Streamer(broker,d.topic());
     }
   };
+
 
   bool start() {
     keep_writing = true;
@@ -62,26 +62,43 @@ struct StreamMaster {
     return stream_status;
   }
 
+  bool poll_n_messages(const int n) {
+    keep_writing = true;
+    loop = std::thread( [&] { this->poll_n_messages_impl(n); } );
+    return loop.joinable();
+  }
+
+  
 private:
   
   void run() {
     while( keep_writing ) {
-      std::for_each(demux.begin(),demux.end(), [&](Demux & item) {
-          run_on_demux(item); });
+      for (auto d=demux.begin(); d!=demux.end(); ++d) {
+        start_source_time = std::chrono::system_clock::now();
+        int value = 0;
+        do {
+          value = streamer[dem.topic()].write(dem);
+        } while( value == 0 && ((std::chrono::system_clock::now() - start_source_time) < duration) );
+        return value;
+      }
     }
   }
 
   
-  int run_on_demux(Demux& dem) {
-    start_source_time = std::chrono::system_clock::now();
-    int value;
-    do {
-      value = streamer[dem.topic()].write(dem);
-    } while( value == 0 && ((std::chrono::system_clock::now() - start_source_time) < duration) );
-    return value;
+  void poll_n_messages_impl(const int n) {
+    while(keep_writing) {
+      
+      for (auto d=demux.begin(); d!=demux.end(); ++d) {
+        start_source_time = std::chrono::system_clock::now();
+        int value = 0;
+        do {
+          value = streamer[d->topic()].write(*d);
+        } while( value == 0 && ((std::chrono::system_clock::now() - start_source_time) < duration) );
+ 
+      }
+    }
   }
   
-   
   static std::chrono::milliseconds duration;
   std::chrono::system_clock::time_point start_source_time;
   std::map<std::string,Streamer> streamer;

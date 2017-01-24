@@ -64,6 +64,7 @@ if( NOT path_lib_hdf5 )
     )
 endif()
 
+
 add_library(libhdf5 SHARED IMPORTED)
 set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
 
@@ -97,7 +98,25 @@ message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 #add_library( rdkafka_mock KafkaMock.cxx)
-add_library( NeXusFileWriter Streamer.cxx StreamMaster.cxx DemuxTopic.cxx TimeDifferenceFromMessage.cxx)
+add_library( NeXusFileWriter
+  Streamer.cxx
+  StreamMaster.cxx
+  kafka_util.cxx
+  Master.cxx
+  CommandListener.cxx
+  NexusWriter.cxx
+  TimeDifferenceFromMessage.cxx
+  FileWriterTask.cxx
+  Source.cxx
+  DemuxTopic.cxx
+  HDFFile.cxx
+  helper.cxx
+  logger.cxx
+  json.cxx
+  ${path_include_fmt}/fmt/format.cc
+  #${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+)
+
 target_include_directories(NeXusFileWriter PRIVATE
 ${path_include_fmt}
 ${path_include_hdf5}
@@ -151,20 +170,6 @@ set(tgt ess-file-writer)
 
 add_executable(${tgt}
 ess-file-writer.cxx
-kafka_util.cxx
-Master.cxx
-CommandListener.cxx
-NexusWriter.cxx
-TimeDifferenceFromMessage.cxx
-FileWriterTask.cxx
-Source.cxx
-DemuxTopic.cxx
-HDFFile.cxx
-helper.cxx
-logger.cxx
-json.cxx
-${path_include_fmt}/fmt/format.cc
-${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 set_target_properties(${tgt} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
 
@@ -188,9 +193,16 @@ ${path_include_rapidjson}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-#target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} librdkafka++)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_libraries(${tgt} hdf5_cpp)
+  target_link_libraries(${tgt} hdf5)
+  target_link_libraries(${tgt} rdkafka)
+  target_link_libraries(${tgt} rdkafka++)
+else()
+  target_link_libraries(${tgt} libhdf5)
+  target_link_libraries(${tgt} librdkafka++)
+endif()
+
 target_link_libraries(${tgt} NeXusFileWriter)
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)

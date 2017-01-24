@@ -31,26 +31,32 @@ include_directories (
   ) 
 
 add_executable (streamer_test streamer_test.cxx) 
-add_executable (streammaster_test streammaster_test.cxx) 
+add_executable (streammaster_test streammaster_test.cxx ) 
 
 
 find_package(GTest REQUIRED)
 include_directories(${GTEST_INCLUDE_DIR})
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  target_link_libraries(streammaster_test hdf5_cpp)
+  target_link_libraries(streammaster_test hdf5)
+  target_link_libraries(streammaster_test rdkafka)
+  target_link_libraries(streammaster_test rdkafka++)
+else()
+  target_link_libraries(streammaster_test libhdf5)
+  target_link_libraries(streammaster_test librdkafka++)
+endif()
+
 target_link_libraries( streamer_test
 		       ${GTEST_BOTH_LIBRARIES}
 #		       rdkafka_mock
-#		       rdkafka
-#		       rdkafka++
-		       librdkafka++
                        NeXusFileWriter)
 
+
+                     
 target_link_libraries( streammaster_test
 		       ${GTEST_BOTH_LIBRARIES}
 #		       rdkafka_mock
-#		       rdkafka
-#		       rdkafka++
-		       librdkafka++
                        NeXusFileWriter)
 
 add_test(NAME streamer_test WORKING_DIRECTORY ${PROJECT_SOURCE_DIR} COMMAND ${CMAKE_CURRENT_BINARY_DIR}/streamer_test)
