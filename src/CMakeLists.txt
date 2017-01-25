@@ -125,7 +125,7 @@ foreach (f ${flatbuffers_schemata})
 		OUTPUT ${fbh}
 		COMMAND "${path_flatc}/flatc" --cpp "${fbs}"
 		DEPENDS "${fbs}"
-		COMMENT "Process ${fbs} using ${flatc}"
+		COMMENT "Process ${fbs} using ${path_flatc}/flatc"
 	)
 	list(APPEND flatbuffers_generated_headers "${fbh}")
 endforeach()

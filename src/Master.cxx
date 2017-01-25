@@ -88,6 +88,8 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 	std::string br(d["broker"].GetString());
 	StreamMaster<Streamer, DemuxTopic> stream_master(br, std::move(fwt));
 	stream_master.start();
+	//stream_master.wait_until_connected();
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
 	{
 		// TODO
@@ -120,7 +122,7 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 				if (true) {
 					// TODO Send off to Kafka and let Streamer fetch it
 					topic.produce(msg.data(), msg.size());
-					prod.poll_outq();
+					prod.poll();
 				}
 				else {
 					// Feed directly to the demuxers.
@@ -130,12 +132,12 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 			}
 		}
 		//fwt->file_flush();
+		prod.poll_outq();
 	}
-
 
 	LOG(3, "Waiting for StreamMaster to stop");
 	//stream_master.wait_until_n_packets_recv(10)
-	//std::this_thread::sleep_for(std::chrono::milliseconds(6000));
+	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	stream_master.stop();
 }
 

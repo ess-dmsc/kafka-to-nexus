@@ -57,14 +57,15 @@ virtual uint64_t ts_impl(char * msg_data) = 0;
 class FBSchemaWriter {
 public:
 ~FBSchemaWriter();
-void init(HDFFile & hdf_file, std::string const & sourcename, char * msg_data);
+void init(HDFFile * hdf_file, std::string const & sourcename, char * msg_data);
 WriteResult write(char * msg_data);
 void flush();
 void close();
 protected:
 FBSchemaWriter();
+HDFFile * hdf_file = nullptr;
 private:
-virtual void init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg_data) = 0;
+virtual void init_impl(std::string const & sourcename, char * msg_data) = 0;
 virtual WriteResult write_impl(char * msg_data) = 0;
 };
 

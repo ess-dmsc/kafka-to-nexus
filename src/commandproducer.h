@@ -20,6 +20,7 @@ Producer(BrokerOpt opt);
 ~Producer();
 //void produce(void const * msg_data, int msg_size);
 void poll_outq();
+void poll();
 static void cb_delivered(rd_kafka_t * rk, rd_kafka_message_t const * msg, void * opaque);
 static void cb_error(rd_kafka_t * rk, int err_i, char const * reason, void * opaque);
 static int cb_stats(rd_kafka_t * rk, char * json, size_t json_len, void * opaque);

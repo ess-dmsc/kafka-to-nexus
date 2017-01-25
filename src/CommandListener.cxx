@@ -759,9 +759,16 @@ Producer::Producer(BrokerOpt opt) : opt(opt), poll_timeout_ms(100) {
 
 
 
+void Producer::poll() {
+	int n1 = rd_kafka_poll(rk, 0);
+	if (n1 > 0) {
+		LOG(0, "INFO rd_kafka_poll() = {}", n1);
+	}
+}
+
 void Producer::poll_outq() {
 	while (rd_kafka_outq_len(rk) > 0) {
-		rd_kafka_poll(rk, 50);
+		rd_kafka_poll(rk, 5);
 	}
 }
 

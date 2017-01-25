@@ -39,7 +39,7 @@ ProcessMessageResult Source::process_message(char * msg_data, int msg_size) {
 		if (!_hdf_file) {
 			throw "SHOULD NEVER HAPPEN";
 		}
-		_schema_writer->init(*_hdf_file, source(), msg_data);
+		_schema_writer->init(_hdf_file, source(), msg_data);
 	}
 	auto ret = _schema_writer->write(msg_data);
 	_processed_messages_count += 1;
