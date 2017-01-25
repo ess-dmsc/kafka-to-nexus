@@ -18,8 +18,10 @@ class ProcessMessageResult {
 public:
 static ProcessMessageResult OK();
 static ProcessMessageResult ERR();
+static ProcessMessageResult ALL_SOURCES_FULL();
 inline bool is_OK() { return res == 0; }
 inline bool is_ERR() { return res == -1; }
+inline bool is_ALL_SOURCES_FULL() { return res == -2; }
 private:
 char res = -1;
 };
