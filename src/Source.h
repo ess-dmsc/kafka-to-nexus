@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include "TimeDifferenceFromMessage.h"
+#include "ProcessMessageResult.h"
 #include "HDFFile.h"
 #include "json.h"
 
@@ -29,7 +30,7 @@ Source(Source &&);
 std::string const & topic() const;
 std::string const & source() const;
 uint32_t processed_messages_count() const;
-Result process_message(char * msg_data, int msg_size);
+ProcessMessageResult process_message(char * msg_data, int msg_size);
 std::string to_str() const;
 rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * a = nullptr) const;
 private:

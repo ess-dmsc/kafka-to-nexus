@@ -30,7 +30,7 @@ std::string const & Source::source() const {
 	return _source;
 }
 
-Result Source::process_message(char * msg_data, int msg_size) {
+ProcessMessageResult Source::process_message(char * msg_data, int msg_size) {
 	if (!_schema_reader) {
 		_schema_reader = FBSchemaReader::create(msg_data, msg_size);
 	}
@@ -41,9 +41,9 @@ Result Source::process_message(char * msg_data, int msg_size) {
 		}
 		_schema_writer->init(*_hdf_file, source(), msg_data);
 	}
-	_schema_writer->write(msg_data);
+	auto ret = _schema_writer->write(msg_data);
 	_processed_messages_count += 1;
-	return Result::Ok();
+	return ProcessMessageResult::OK(ret.ts);
 }
 
 uint32_t Source::processed_messages_count() const {

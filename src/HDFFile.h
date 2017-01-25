@@ -7,6 +7,13 @@
 namespace BrightnESS {
 namespace FileWriter {
 
+// Basically POD
+class WriteResult {
+public:
+int64_t ts;
+};
+
+
 class FlatBufferMsg {
 public:
 std::string src();
@@ -51,14 +58,14 @@ class FBSchemaWriter {
 public:
 ~FBSchemaWriter();
 void init(HDFFile & hdf_file, std::string const & sourcename, char * msg_data);
-void write(char * msg_data);
+WriteResult write(char * msg_data);
 void flush();
 void close();
 protected:
 FBSchemaWriter();
 private:
 virtual void init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg_data) = 0;
-virtual void write_impl(char * msg_data) = 0;
+virtual WriteResult write_impl(char * msg_data) = 0;
 };
 
 

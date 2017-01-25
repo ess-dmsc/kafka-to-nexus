@@ -3,28 +3,13 @@
 #include <vector>
 #include <functional>
 #include "TimeDifferenceFromMessage.h"
+#include "ProcessMessageResult.h"
 #include "Source.h"
 #include "json.h"
 
 namespace BrightnESS {
 namespace FileWriter {
 
-
-/// %Result of a call to `process_message`.
-/// Can be extended later for more detailed reporting.
-/// Streamer currently does not accept the return value, therefore currently
-/// not used.
-class ProcessMessageResult {
-public:
-static ProcessMessageResult OK();
-static ProcessMessageResult ERR();
-static ProcessMessageResult ALL_SOURCES_FULL();
-inline bool is_OK() { return res == 0; }
-inline bool is_ERR() { return res == -1; }
-inline bool is_ALL_SOURCES_FULL() { return res == -2; }
-private:
-char res = -1;
-};
 
 class MessageProcessor {
 public:

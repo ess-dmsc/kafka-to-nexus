@@ -75,7 +75,7 @@ class f140_general : public FBSchemaWriter {
 public:
 f140_general();
 void init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg);
-void write_impl(char * msg_data);
+WriteResult write_impl(char * msg_data);
 private:
 H5::DataSet ds;
 };
@@ -84,7 +84,7 @@ class f141_ntarraydouble : public FBSchemaWriter {
 public:
 f141_ntarraydouble();
 void init_impl(HDFFile & hdf_file, std::string const & sourcename, char * msg);
-void write_impl(char * msg_data);
+WriteResult write_impl(char * msg_data);
 private:
 using DT = double;
 // DataSet::getId() will be -1 for the default constructed
@@ -136,7 +136,8 @@ void f140_general::init_impl(HDFFile & hdf_file, std::string const & sourcename,
 	LOG(3, "id of the file: {}  size: {}", fid, file.getFileSize());
 	file.flush(H5F_SCOPE_LOCAL);
 }
-void f140_general::write_impl(char * msg_data) {
+WriteResult f140_general::write_impl(char * msg_data) {
+	return {-1};
 }
 
 f141_ntarraydouble::f141_ntarraydouble() {
@@ -177,7 +178,7 @@ void f141_ntarraydouble::init_impl(HDFFile & hdf_file, std::string const & sourc
 	ds = file.createDataSet(sourcename, dt, dsp, cprops);
 }
 
-void f141_ntarraydouble::write_impl(char * msg_data) {
+WriteResult f141_ntarraydouble::write_impl(char * msg_data) {
 	LOG(0, "f141_ntarraydouble::write_impl");
 	// TODO cache these values later, but for now, let's make it verbose:
 	auto dt = nat_type<DT>();
@@ -192,7 +193,7 @@ void f141_ntarraydouble::write_impl(char * msg_data) {
 	auto pv = BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::GetPV(msg_data + 2);
 	if (pv->v()->size() != get_sizes_now.at(1)) {
 		LOG(7, "ERROR this message is not compatible with the previous ones");
-		return;
+		return {-1};
 	}
 
 	get_sizes_now.at(0) += 1;
@@ -207,6 +208,7 @@ void f141_ntarraydouble::write_impl(char * msg_data) {
 		tgt.selectHyperslab(H5S_SELECT_SET, hsl_count.data(), hsl_start.data());
 	}
 	ds.write(pv->v()->data(), dt, mem, tgt);
+	return {pv->ts()};
 }
 
 }
@@ -248,8 +250,8 @@ void FBSchemaWriter::init(HDFFile & hdf_file, std::string const & sourcename, ch
 	init_impl(hdf_file, sourcename, msg_data);
 }
 
-void FBSchemaWriter::write(char * msg_data) {
-	write_impl(msg_data);
+WriteResult FBSchemaWriter::write(char * msg_data) {
+	return write_impl(msg_data);
 }
 
 
