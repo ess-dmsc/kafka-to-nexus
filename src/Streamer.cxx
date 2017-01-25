@@ -102,13 +102,13 @@ int BrightnESS::FileWriter::Streamer::connect(const std::string& broker,
 /// method applies f to the message payload.
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(std::function<ProcessMessageResult(void*,int)>& f) {
-  RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
+  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
-    std::cout << "eof reached" << std::endl;
+    //    std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
-    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
+    //    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
     return ProcessMessageResult::ERR();//msg->err();
   }
   message_length = msg->len();
@@ -117,13 +117,13 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
 
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(BrightnESS::FileWriter::DemuxTopic & mp) {
-  RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
+  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
-    std::cout << "eof reached" << std::endl;
+    //    std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
-    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
+    //    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
     return ProcessMessageResult::ERR();//msg->err();
   }
   message_length = msg->len();

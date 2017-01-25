@@ -18,7 +18,7 @@
 struct Streamer;
 struct FileWriterCommand;
 
-typedef int ESSTimeStamp;
+typedef int64_t ESSTimeStamp;
 
 constexpr std::chrono::milliseconds operator "" _ms(const unsigned long long int value) {
   return std::chrono::milliseconds(value);
@@ -28,6 +28,7 @@ using namespace BrightnESS::FileWriter;
 
 template<typename Streamer, typename Demux>
 struct StreamMaster {
+  static std::chrono::milliseconds delay_after_last_message;
   
   StreamMaster() : do_write(false), _stop(false) { };
   
@@ -44,7 +45,6 @@ struct StreamMaster {
       streamer[d.topic()] = Streamer(broker,d.topic());
     }
     loop = std::thread( [&] { this->run(); } );
-    //   return loop.joinable();
   };
 
   ~StreamMaster() {
@@ -55,15 +55,16 @@ struct StreamMaster {
 
   
   bool start() {
-    std::cout << "start()\n";
-    // std::this_thread::sleep_for(1000_ms);
     do_write = true;
+    _stop = false;
+    if( !loop.joinable() ) {
+      loop = std::thread( [&] { this->run(); } );
+      std::this_thread::sleep_for(100_ms);
+    }
     return loop.joinable();
   }
 
   std::vector< std::pair<std::string,int> > stop() {
-    std::cout << "stop()\n" << std::flush;
-    std::this_thread::sleep_for(1000_ms);
     do_write = false;
     _stop = true;
     if( loop.joinable() ) loop.join();
@@ -74,19 +75,14 @@ struct StreamMaster {
     return stream_status;
   }
   std::vector< std::pair<std::string,int> > stop(const ESSTimeStamp ts) {
-    // verifica del tempo
-    do_write = false;
-    _stop = true;
-    loop.join();
-    std::vector< std::pair<std::string,int> > stream_status;
-    for (auto it=streamer.begin(); it!=streamer.end(); ++it) {
-      stream_status.push_back(std::pair<std::string,int>(it->first,it->second.closeStream()));
+    while( value.ts() < ts ) {
+      std::this_thread::sleep_for(50_ms);
     }
-    return stream_status;
+    std::this_thread::sleep_for(delay_after_last_message);
+    return stop();
   }
 
   bool poll_n_messages(const int n) { }
-
   
 private:
   
@@ -123,3 +119,5 @@ private:
 
 template<typename S,typename D>
 std::chrono::milliseconds StreamMaster<S,D>::duration=10_ms;
+template<typename S,typename D>
+std::chrono::milliseconds StreamMaster<S,D>::delay_after_last_message=1000_ms;

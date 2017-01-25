@@ -51,8 +51,9 @@ def produce(conf,data) :
         line=data['source']+":hello-"+str(counter)
         counter+=1
         try:
-            p.produce(data['topic'], line, callback=delivery_callback)
-            time.sleep(.1)
+            p.produce(data['topic'], line)
+#            p.produce(data['topic'], line, callback=delivery_callback)
+            time.sleep(.01)
         except BufferError as e:
             sys.stderr.write('%% Local producer queue is full ' \
                              '(%d messages awaiting delivery): try again\n' %

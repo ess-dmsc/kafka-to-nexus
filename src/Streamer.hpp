@@ -13,10 +13,13 @@ namespace RdKafka {
 
 namespace BrightnESS {
   namespace FileWriter {
+
+
     
 // actually a "kafka streamer"
 struct Streamer {
-public:
+  static const int consumer_timeout = 10;
+
   Streamer() : offset(0), partition(0) { };
   Streamer(const std::string&, const std::string&, const int64_t& p=0);
   Streamer(const Streamer&);

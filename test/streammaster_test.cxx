@@ -23,7 +23,6 @@ public:
   ProcessMessageResult process_message(char * msg_data, int msg_size) {
     _processed_messages_count++;
     int64_t value = rng();
-    //    std::cout << value << "\n";
     return ProcessMessageResult(value); }
 private:
   std::string _topic;
@@ -63,13 +62,13 @@ private:
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp) {
 
-  RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
+  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
-    std::cout << "eof reached" << std::endl;
+    //    std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
   }
   if( msg->err() != RdKafka::ERR_NO_ERROR) {
-    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
+    //    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
     return ProcessMessageResult::ERR();
   }
   message_length = msg->len();
@@ -110,39 +109,19 @@ TEST (Streammaster, StartStop) {
   EXPECT_FALSE( one_demux[0].sources().size()  == 0 );
 
   StreamMaster sm(broker,one_demux);
-  std::this_thread::sleep_for (std::chrono::seconds(1));
-
-  
   bool is_joinable = sm.start();
-//  EXPECT_TRUE( is_joinable );
-  //std::this_thread::sleep_for (std::chrono::seconds(100));
-  auto value = sm.stop();
-//
-//  for(int item=0;item<one_demux[0].sources().size();++item)
-//    std::cout << one_demux[0].sources()[item].source() <<  " : "
-//              << one_demux[0].sources()[item].processed_messages_count() << "\n";
-//
+  EXPECT_TRUE( is_joinable );
+  std::this_thread::sleep_for (std::chrono::seconds(1));
+  auto value = sm.stop(-5);
+
+  for(int item=0;item<one_demux[0].sources().size();++item)
+    std::cout << one_demux[0].sources()[item].source() <<  " : "
+              << one_demux[0].sources()[item].processed_messages_count() << "\n";
+  
+  StreamMaster::delay_after_last_message = 1_ms;
+  
 }
 
-
-
-// TEST (Streammaster, PollNMessages) {
-//   using StreamMaster=StreamMaster<Streamer,MockDemuxTopic>;
-
-//   StreamMaster sm(broker,one_demux);
-//   sm.poll_n_messages(10);
-
-  
-//   // bool is_joinable = sm.start();
-//   // EXPECT_TRUE( is_joinable );
-//   std::this_thread::sleep_for (std::chrono::seconds(10));
-//   auto value = sm.stop();
-
-//   // std::for_each(value.begin(),value.end(),[](auto& item) {
-//   //     std::cout << item.first << ":" << item.second << std::endl;
-//   //     EXPECT_TRUE(item.second == 0);
-//   //   });
-// }
 
 
 
