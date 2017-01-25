@@ -1,12 +1,17 @@
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <stdexcept>
+#include <random>
+#include<cstdint>
 
 #include <StreamMaster.hpp>
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
 
 using namespace BrightnESS::FileWriter;
+
+static std::mt19937_64 rng;
+
 
 class MockSource {
 public:
@@ -15,7 +20,11 @@ public:
   std::string const & topic() const { return _topic; }
   std::string const & source() const { return _source; }
   uint32_t processed_messages_count() const { return _processed_messages_count; }
-  Result process_message(char * msg_data, int msg_size) {  _processed_messages_count++; return Result(); }
+  ProcessMessageResult process_message(char * msg_data, int msg_size) {
+    _processed_messages_count++;
+    int64_t value = rng();
+    //    std::cout << value << "\n";
+    return ProcessMessageResult(value); }
 private:
   std::string _topic;
   std::string _source;
@@ -34,19 +43,7 @@ public:
     for(; source_index < _sources.size(); ++source_index) {
       if( (s.find(_sources[source_index].source()) !=std::string::npos ) ) break;
     }
-    _sources[source_index].process_message(msg_data,msg_size);
-    return ProcessMessageResult::OK();
-  };
-  
-  ProcessMessageResult process_message_count(char * msg_data, int msg_size) {
-    std::string s(msg_data);
-    int source_index=0;
-    for(; source_index < _sources.size(); ++source_index) {
-      if( (s.find(_sources[source_index].source()) !=std::string::npos ) )  break;
-    }
-    if( _sources[source_index].processed_messages_count() < 10 )
-      _sources[source_index].process_message(msg_data,msg_size);
-    return ProcessMessageResult::OK();
+    return _sources[source_index].process_message(msg_data,msg_size);
   };
   
   void add_source(std::string s) {
@@ -65,7 +62,7 @@ private:
 
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp) {
-  
+
   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
@@ -78,22 +75,6 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
   message_length = msg->len();
   return mp.process_message((char*)msg->payload(),msg->len());
 }
-
-// template<>
-// BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp, const int n_mesg) {
-  
-//   RdKafka::Message *msg = consumer->consume(topic, partition, 1000);
-//   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
-//     std::cout << "eof reached" << std::endl;
-//     return ProcessMessageResult::OK();
-//   }
-//   if( msg->err() != RdKafka::ERR_NO_ERROR) {
-//     std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
-//     return ProcessMessageResult::ERR();
-//   }
-//   message_length = msg->len();
-//   return mp.process_message((char*)msg->payload(),msg->len(), n_mesg);
-// }
 
 
 std::string broker;
@@ -129,15 +110,18 @@ TEST (Streammaster, StartStop) {
   EXPECT_FALSE( one_demux[0].sources().size()  == 0 );
 
   StreamMaster sm(broker,one_demux);
+  std::this_thread::sleep_for (std::chrono::seconds(1));
+
+  
   bool is_joinable = sm.start();
-  EXPECT_TRUE( is_joinable );
-  std::this_thread::sleep_for (std::chrono::seconds(10));
+//  EXPECT_TRUE( is_joinable );
+  //std::this_thread::sleep_for (std::chrono::seconds(100));
   auto value = sm.stop();
-
-  for(int item=0;item<one_demux[0].sources().size();++item)
-    std::cout << one_demux[0].sources()[item].source() <<  " : "
-              << one_demux[0].sources()[item].processed_messages_count() << "\n";
-
+//
+//  for(int item=0;item<one_demux[0].sources().size();++item)
+//    std::cout << one_demux[0].sources()[item].source() <<  " : "
+//              << one_demux[0].sources()[item].processed_messages_count() << "\n";
+//
 }
 
 
@@ -164,7 +148,7 @@ TEST (Streammaster, StartStop) {
 
 
 int main(int argc, char **argv) {
-
+  rng.seed(1234);
   ::testing::InitGoogleTest(&argc, argv);
   for(int i=1;i<argc;++i) {
     std::string opt(argv[i]);

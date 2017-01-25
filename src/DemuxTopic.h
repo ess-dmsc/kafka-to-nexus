@@ -16,12 +16,14 @@ namespace FileWriter {
 /// not used.
 class ProcessMessageResult {
 public:
+ ProcessMessageResult(int64_t value=-1) : res(value) { };
 static ProcessMessageResult OK();
 static ProcessMessageResult ERR();
-inline bool is_OK() { return res == 0; }
+inline bool is_OK() { return res >= 0; }
 inline bool is_ERR() { return res == -1; }
-private:
-char res = -1;
+ inline int64_t ts() const { return res; }
+   private:
+int64_t res = -1;
 };
 
 class MessageProcessor {
