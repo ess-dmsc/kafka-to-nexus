@@ -8,7 +8,7 @@
 ///   - search backward at connection setup
 
 
-int64_t BrightnESS::FileWriter::Streamer::backward_offset = 1000;
+int64_t BrightnESS::FileWriter::Streamer::step_back_amount = 1000;
 
 BrightnESS::FileWriter::Streamer::Streamer(const std::string& broker, const std::string& topic_name, const int64_t& p) : offset(RdKafka::Topic::OFFSET_END), partition(p) {
 
@@ -112,6 +112,7 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
     return ProcessMessageResult::ERR();//msg->err();
   }
   message_length = msg->len();
+  last_offset = msg->offset();
   return f(msg->payload(),msg->len());
 }
 
@@ -127,6 +128,7 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
     return ProcessMessageResult::ERR();//msg->err();
   }
   message_length = msg->len();
+  last_offset = msg->offset();
   return mp.process_message((char*)msg->payload(),msg->len());
 }
 
@@ -135,16 +137,22 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
 /// message with timestamp >= the timestam of beginning of data taking 
 /// (assumed to be stored in Source)
 template<>
-bool BrightnESS::FileWriter::Streamer::search_backward(std::function<void(void*)>& f, const int multiplier) {
-  
+BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Streamer::search_backward<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic& td) {
+
   RdKafka::ErrorCode resp = consumer->stop(topic,partition);
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
-  resp = consumer->start(topic, partition, RdKafka::Consumer::OffsetTail(backward_offset));
+  step_back_offset -= step_back_amount;
+  resp = consumer->start(topic, partition, step_back_offset);
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
   
-  return false;
+  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout);
+  if( msg->err() != RdKafka::ERR_NO_ERROR) {
+    std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
+    return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
+  }
+  return td.time_difference_from_message((char*)msg->payload(),msg->len());
 }

@@ -64,7 +64,33 @@ struct StreamMaster {
     return loop.joinable();
   }
 
-  std::vector< std::pair<std::string,int> > stop() {
+  bool start(const ESSTimeStamp ts) {
+    do_write = true;
+    _stop = false;
+    if( !loop.joinable() ) {
+      loop = std::thread( [&] { this->run(); } );
+      std::this_thread::sleep_for(100_ms);
+    }
+    return loop.joinable();
+  }
+
+  // Stops data writing. If a ESSTimeStamp threshold is given keeps writing
+  // until the first packet with timestamp above threshold. Since then keep
+  // receiving for delay_after_last_message milliseconds, then stops.
+  std::vector< std::pair<std::string,int> > stop(const ESSTimeStamp ts=0) {
+    while( value.ts() < ts ) {
+      std::this_thread::sleep_for(50_ms);
+    }
+    std::this_thread::sleep_for(delay_after_last_message);
+    return stop_impl();
+  }
+
+  bool poll_n_messages(const int n) { }
+  
+private:
+
+
+  std::vector< std::pair<std::string,int> > stop_impl() {
     do_write = false;
     _stop = true;
     if( loop.joinable() ) loop.join();
@@ -74,18 +100,7 @@ struct StreamMaster {
     }
     return stream_status;
   }
-  std::vector< std::pair<std::string,int> > stop(const ESSTimeStamp ts) {
-    while( value.ts() < ts ) {
-      std::this_thread::sleep_for(50_ms);
-    }
-    std::this_thread::sleep_for(delay_after_last_message);
-    return stop();
-  }
 
-  bool poll_n_messages(const int n) { }
-  
-private:
-  
   void run() {
     std::chrono::system_clock::time_point tp;
     while( !_stop ) {
@@ -101,6 +116,14 @@ private:
       }
     }
   }
+
+  void find_initial_offset(ESSTimeStamp ts) {
+
+
+  }
+
+
+
   
   static std::chrono::milliseconds duration;
 

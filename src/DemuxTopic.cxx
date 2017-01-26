@@ -22,10 +22,21 @@ DemuxTopic::DemuxTopic(std::string topic) : _topic(topic) {
 }
 
 DemuxTopic::DT DemuxTopic::time_difference_from_message(char * msg_data, int msg_size) {
-	// TODO
-	// a dummy so far
-	static std::string _tmp_dummy;
-	return DT(_tmp_dummy, 0);
+  std::string _tmp_dummy;
+  auto reader = FBSchemaReader::create(msg_data, msg_size);
+  if (!reader) {
+    LOG(3, "ERROR unknown schema id?");
+    return DT(_tmp_dummy, 0);
+  }
+  auto srcn = reader->sourcename(msg_data);
+  std::unique_ptr<FBSchemaReader> _schema_reader;
+  LOG(0, "Msg is for sourcename: {}", srcn);
+  for (auto & s : sources()) {
+    if (s.source() == srcn) {
+       _schema_reader = FBSchemaReader::create(msg_data, msg_size);
+    }
+  }
+  return DT(srcn, _schema_reader->ts(msg_data));
 }
 
 std::string const & DemuxTopic::topic() const {
