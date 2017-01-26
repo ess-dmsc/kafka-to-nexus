@@ -23,7 +23,7 @@ public:
   ProcessMessageResult process_message(char * msg_data, int msg_size) {
     _processed_messages_count++;
     int64_t value = rng();
-    return ProcessMessageResult(value); }
+    return ProcessMessageResult::OK(); }
 private:
   std::string _topic;
   std::string _source;

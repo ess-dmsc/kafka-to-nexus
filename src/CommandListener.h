@@ -8,13 +8,6 @@ namespace FileWriter {
 
 
 
-class BrokerOpt {
-public:
-std::string address = "localhost:9092";
-std::string topic = "ess-file-writer.command";
-};
-
-
 class MessageCallback {
 public:
 virtual void operator() (int partition, std::string const & topic, std::string const & msg) = 0;

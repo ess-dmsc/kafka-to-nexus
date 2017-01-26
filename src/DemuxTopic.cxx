@@ -1,4 +1,5 @@
 #include "DemuxTopic.h"
+#include <stdexcept>
 #include "logger.h"
 
 
@@ -6,15 +7,24 @@
 namespace BrightnESS {
 namespace FileWriter {
 
-ProcessMessageResult ProcessMessageResult::OK() {
+ProcessMessageResult ProcessMessageResult::OK(int64_t ts) {
+	if (ts < 0) {
+		throw std::runtime_error("Invalid timestamp");
+	}
 	ProcessMessageResult ret;
-	ret.res = 0;
+	ret._ts = ts;
 	return ret;
 }
 
 ProcessMessageResult ProcessMessageResult::ERR() {
 	ProcessMessageResult ret;
-	ret.res = -1;
+	ret._ts = -1;
+	return ret;
+}
+
+ProcessMessageResult ProcessMessageResult::ALL_SOURCES_FULL() {
+	ProcessMessageResult ret;
+	ret._ts = -2;
 	return ret;
 }
 
@@ -26,7 +36,7 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(char * msg_data, int msg
   auto reader = FBSchemaReader::create(msg_data, msg_size);
   if (!reader) {
     LOG(3, "ERROR unknown schema id?");
-    return DT(_tmp_dummy, 0);
+    return DT::ERR();
   }
   auto srcn = reader->sourcename(msg_data);
   std::unique_ptr<FBSchemaReader> _schema_reader;
@@ -53,10 +63,12 @@ ProcessMessageResult DemuxTopic::process_message(char * msg_data, int msg_size) 
 	LOG(0, "Msg is for sourcename: {}", srcn);
 	for (auto & s : sources()) {
 		if (s.source() == srcn) {
-			s.process_message(msg_data, msg_size);
+			auto ret = s.process_message(msg_data, msg_size);
+			if (ret.ts() < 0) return ProcessMessageResult::ERR();
+			return ProcessMessageResult::OK(ret.ts());
 		}
 	}
-	return ProcessMessageResult::OK();
+	return ProcessMessageResult::ERR();
 }
 
 std::vector<Source> & DemuxTopic::sources() {
