@@ -41,7 +41,7 @@ struct Streamer {
   TimeDifferenceFromMessage_DT search_backward(T& f) {
     message_length=0;
     std::cout << "fake_search\n";
-    //    return TimeDifferenceFromMessage("",0);
+    return TimeDifferenceFromMessage_DT("",0);
   }
   
   int connect(const std::string&, const std::string&);

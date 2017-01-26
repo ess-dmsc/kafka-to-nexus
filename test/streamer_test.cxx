@@ -34,66 +34,67 @@ TEST (Streamer, NoReceive) {
 }
 
 
-// TEST (Streamer, Receive) {
-//   Streamer s(broker,topic);
-//   int data_size=0;
-//   std::function<void(void*,int)> f1 = [&](void* x, int size) {
-//     //    std::cout << std::string((char*)x) << "\t" << size << std::endl;
-//     data_size += size;
-//     return; };
+TEST (Streamer, Receive) {
+  Streamer s(broker,topic);
+  int data_size=0;
+  std::function<void(void*,int)> f1 = [&](void* x, int size) {
+    //    std::cout << std::string((char*)x) << "\t" << size << std::endl;
+    data_size += size;
+    return; };
 
-//   int status = RdKafka::ERR_NO_ERROR;
-//   // .. warm up .. 
-//   s.write(silent);
-//   do {
-//     EXPECT_TRUE(status == RdKafka::ERR_NO_ERROR);
-//     status = s.write(f1);
-//   } while(status == RdKafka::ERR_NO_ERROR);
-//   EXPECT_GT(data_size,0);
-//   std::cout << "data_size" << "\t" << data_size << std::endl;
+  ProcessMessageResult status = ProcessMessageResult::OK();
+  // .. warm up .. 
+  s.write(silent);
+  do {
+    EXPECT_TRUE(status.is_OK());
+    status = s.write(f1);
+  } while(status.is_OK() );
+  EXPECT_GT(data_size,0);
+  std::cout << "data_size" << "\t" << data_size << std::endl;
 
-// }
+}
 
-// TEST (Streamer, Reconnect) {
-//   int data_size=0;
-//   std::function<void(void*,int)> f1 = [&](void* x, int size) {
-//     data_size += size;
-//     return; };
+TEST (Streamer, Reconnect) {
+  int data_size=0;
+  std::function<void(void*,int)> f1 = [&](void* x, int size) {
+    data_size += size;
+    return; };
   
-//   Streamer s(broker,topic);
-//   EXPECT_EQ(s.disconnect(),0);
-//   EXPECT_EQ(s.connect(broker,topic),0);
-//   for(int i=0;i<10;++i)
-//     s.write(f1);
-//   EXPECT_GT(data_size,0);
-//   //  std::cout << "data_size = " << data_size<< "\n";
-// }
+  Streamer s(broker,topic);
+  EXPECT_EQ(s.disconnect(),0);
+  EXPECT_EQ(s.connect(broker,topic),0);
+  for(int i=0;i<10;++i)
+    s.write(f1);
+  EXPECT_GT(data_size,0);
+  //  std::cout << "data_size = " << data_size<< "\n";
+}
 
 
-// TEST (Streamer, SearchBackward) {
-//   Streamer s(broker,topic);
-//   int status=0;
-//   int last_value, new_value;
-//   std::function<void(void*,int)> register_value = [&](void* x, int) {
-//     last_value = *(int*)x;
-//   };
-//   std::function<void(void*,int)> rollback_value = [&](void* x, int) {
-//     new_value = *(int*)x;
-//   };
+TEST (Streamer, SearchBackward) {
+  Streamer s(broker,topic);
+  ProcessMessageResult status = ProcessMessageResult::OK();
+  int last_value, new_value;
+  std::function<void(void*,int)> register_value = [&](void* x, int) {
+    last_value = *(int*)x;
+  };
+  std::function<void(void*,int)> rollback_value = [&](void* x, int) {
+    new_value = *(int*)x;
+  };
   
-//   do {
-//     status = s.write(register_value);
-//   } while(status == RdKafka::ERR_NO_ERROR);
-//   s.search_backward(silent);
-//   status = s.write(rollback_value);
-
-//   std::cout << last_value << "\t" << new_value << std::endl;
+  do {
+    status = s.write(register_value);
+  } while(status.is_OK());
   
-//   // do {
-//   //   status = s.write(verbose);
-//   // } while(status == RdKafka::ERR_NO_ERROR);
-//   // s.write(verbose);
-// }
+  s.search_backward(silent);
+  status = s.write(rollback_value);
+
+  std::cout << last_value << "\t" << new_value << std::endl;
+  
+  // do {
+  //   status = s.write(verbose);
+  // } while(status == RdKafka::ERR_NO_ERROR);
+  // s.write(verbose);
+}
 
 
 
