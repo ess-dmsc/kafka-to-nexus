@@ -7,22 +7,18 @@
 #include <vector>
 #include <map>
 
-#include <chrono>
 #include <thread>
 #include <atomic>
 #include <algorithm>
 
 #include "FileWriterTask.h"
 #include "DemuxTopic.h"
+#include "utils.h"
 
 struct Streamer;
 struct FileWriterCommand;
 
 typedef int64_t ESSTimeStamp;
-
-constexpr std::chrono::milliseconds operator "" _ms(const unsigned long long int value) {
-  return std::chrono::milliseconds(value);
-}
 
 using namespace BrightnESS::FileWriter;
 
@@ -125,7 +121,7 @@ private:
 
 
   
-  static std::chrono::milliseconds duration;
+  static milliseconds duration;
 
   BrightnESS::FileWriter::ProcessMessageResult value;
   std::map<std::string,Streamer> streamer;
@@ -141,6 +137,6 @@ private:
 
 
 template<typename S,typename D>
-std::chrono::milliseconds StreamMaster<S,D>::duration=10_ms;
+milliseconds StreamMaster<S,D>::duration=10_ms;
 template<typename S,typename D>
-std::chrono::milliseconds StreamMaster<S,D>::delay_after_last_message=1000_ms;
+milliseconds StreamMaster<S,D>::delay_after_last_message=1000_ms;

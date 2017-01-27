@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 #include <algorithm>
 #include <stdexcept>
+#include <thread>
 
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
@@ -8,14 +9,27 @@
 std::string broker("129.168.10.11:9092");
 std::string topic("test");
 
+const int max_recv_messages = 10;
+
 using namespace BrightnESS::FileWriter;
 
 std::function<ProcessMessageResult(void*,int)> silent = [](void* x, int) { return ProcessMessageResult::OK(); };
 
 std::function<ProcessMessageResult(void*,int)> verbose = [](void* x, int size) {
-  std::cout << std::string((char*)x) << "\t" << size << std::endl;
+  std::cout << "message: " << std::string((char*)x) << "\t" << size << std::endl;
   return ProcessMessageResult::OK();
 };
+std::function<ProcessMessageResult(void*,int,int*)> sum = [](void* x, int size, int* data_size) {
+  (*data_size) += size;
+  return ProcessMessageResult::OK();
+};
+
+
+std::function<TimeDifferenceFromMessage_DT(void*,int)> time_difference = [](void* x, int size) {
+  std::cout << "message: " << std::string((char*)x) << "\t" << size << std::endl;
+  return TimeDifferenceFromMessage_DT::OK();
+};
+
 
 TEST (Streamer, MissingTopicFailure) {
   ASSERT_THROW(Streamer(std::string("data_server:1234"),std::string("")),std::runtime_error);
@@ -26,76 +40,94 @@ TEST (Streamer, ConstructionSuccess) {
 }
 
 TEST (Streamer, NoReceive) {
-  Streamer s(broker,topic+"_no");
-  int f;
-  EXPECT_FALSE( s.write(f).is_OK() ) ;
-  EXPECT_FALSE( s.write(silent).is_OK() );
-  EXPECT_TRUE( s.len() == 0 );
+  Streamer s(broker,"dummy_topic");
+  using namespace std::placeholders;
+  int data_size=0,counter =0;
+  std::function<ProcessMessageResult(void*,int)> f1 = std::bind (sum,_1,_2,&data_size); 
+  ProcessMessageResult status = ProcessMessageResult::OK();
+  
+  do {
+    EXPECT_TRUE(status.is_OK());
+    status = s.write(f1);
+    ++counter;
+  } while(status.is_OK()  && (counter < max_recv_messages ));
+  
+  EXPECT_EQ(data_size,0);
 }
 
 
 TEST (Streamer, Receive) {
-  Streamer s(broker,topic);
-  int data_size=0;
-  std::function<void(void*,int)> f1 = [&](void* x, int size) {
-    //    std::cout << std::string((char*)x) << "\t" << size << std::endl;
-    data_size += size;
-    return; };
+  using namespace std::placeholders;
 
+  Streamer s(broker,topic);
+  int data_size=0,counter =0;
+  std::function<ProcessMessageResult(void*,int)> f1 = std::bind (sum,_1,_2,&data_size); 
+  
   ProcessMessageResult status = ProcessMessageResult::OK();
-  // .. warm up .. 
-  s.write(silent);
+  status = s.write(silent);
+  ASSERT_TRUE(status.is_OK());
+  
   do {
     EXPECT_TRUE(status.is_OK());
     status = s.write(f1);
-  } while(status.is_OK() );
-  EXPECT_GT(data_size,0);
-  std::cout << "data_size" << "\t" << data_size << std::endl;
+    ++counter;
+  } while(status.is_OK()  && (counter < max_recv_messages ));
+   EXPECT_GT(data_size,0);
 
 }
 
 TEST (Streamer, Reconnect) {
-  int data_size=0;
-  std::function<void(void*,int)> f1 = [&](void* x, int size) {
-    data_size += size;
-    return; };
-  
-  Streamer s(broker,topic);
-  EXPECT_EQ(s.disconnect(),0);
-  EXPECT_EQ(s.connect(broker,topic),0);
-  for(int i=0;i<10;++i)
-    s.write(f1);
-  EXPECT_GT(data_size,0);
-  //  std::cout << "data_size = " << data_size<< "\n";
-}
+  using namespace std::placeholders;
+    
+  int data_size=0,counter =0;
+  std::function<ProcessMessageResult(void*,int)> f1 = std::bind (sum,_1,_2,&data_size); 
 
+  Streamer s(broker,"dummy_topic");
+  ProcessMessageResult status = ProcessMessageResult::OK();
+  do {
+    EXPECT_TRUE(status.is_OK());
+    status = s.write(f1);
+    ++counter;
+  } while(status.is_OK() && (counter < max_recv_messages ));
+  EXPECT_FALSE(data_size > 0);  
+  EXPECT_EQ(s.disconnect(),0);
+
+  data_size=0;
+  counter=0; 
+
+  EXPECT_EQ(s.connect(broker,topic),0);
+  status = ProcessMessageResult::OK();
+  do {
+    EXPECT_TRUE(status.is_OK());
+    status = s.write(f1);
+    ++counter;
+  } while(status.is_OK() && (counter < max_recv_messages ));
+  EXPECT_TRUE(data_size > 0);  
+
+}
 
 TEST (Streamer, SearchBackward) {
   Streamer s(broker,topic);
   ProcessMessageResult status = ProcessMessageResult::OK();
-  int last_value, new_value;
-  std::function<void(void*,int)> register_value = [&](void* x, int) {
-    last_value = *(int*)x;
-  };
-  std::function<void(void*,int)> rollback_value = [&](void* x, int) {
-    new_value = *(int*)x;
-  };
-  
-  do {
-    status = s.write(register_value);
-  } while(status.is_OK());
-  
-  s.search_backward(silent);
-  status = s.write(rollback_value);
+  int counter=0;
 
-  std::cout << last_value << "\t" << new_value << std::endl;
+  do {
+    EXPECT_TRUE(status.is_OK());
+    status = s.write(verbose);
+    ++counter;
+  } while(status.is_OK()  && (counter < max_recv_messages ));
+
+  TimeDifferenceFromMessage_DT dt = s.search_backward(time_difference);
+  std::cout << dt.sourcename << "\t" << dt.dt << "\n";
+
+  do {
+    ++counter;
+    status = s.write(silent);
+  } while(status.is_OK());
+  EXPECT_EQ( counter, Streamer::step_back_amount);
   
-  // do {
-  //   status = s.write(verbose);
-  // } while(status == RdKafka::ERR_NO_ERROR);
   // s.write(verbose);
 }
-
 
 
 int main(int argc, char **argv) {

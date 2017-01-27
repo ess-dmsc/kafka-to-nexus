@@ -4,6 +4,7 @@
 #include <string>
 #include <functional>
 #include "DemuxTopic.h"
+#include "utils.h"
 
 // forward definitions
 namespace RdKafka {
@@ -18,7 +19,7 @@ namespace BrightnESS {
     
 // actually a "kafka streamer"
 struct Streamer {
-  static const int consumer_timeout = 10;
+  static milliseconds consumer_timeout;
   static int64_t step_back_amount;
 
   Streamer() : offset(0), partition(0) { };
@@ -60,12 +61,16 @@ private:
   int32_t partition = 0;
   size_t message_length;
 
+  ProcessMessageResult process_last_message();
+
 };
 
-template<> ProcessMessageResult Streamer::write<std::function<ProcessMessageResult(void*,int)> >(std::function<ProcessMessageResult(void*,int)>&);
-template<> ProcessMessageResult Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
-
-template<> TimeDifferenceFromMessage_DT Streamer::search_backward<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic&);
-
+    template<> ProcessMessageResult Streamer::write<std::function<ProcessMessageResult(void*,int)> >(std::function<ProcessMessageResult(void*,int)>&);
+    template<> ProcessMessageResult Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
+    
+    template<> TimeDifferenceFromMessage_DT Streamer::search_backward<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic&);
+    
+    template<> TimeDifferenceFromMessage_DT Streamer::search_backward<std::function<TimeDifferenceFromMessage_DT(void*,int)> >(std::function<TimeDifferenceFromMessage_DT(void*,int)>&);
+    
   }
 }
