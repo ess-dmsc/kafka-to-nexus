@@ -25,9 +25,18 @@ std::function<ProcessMessageResult(void*,int,int*)> sum = [](void* x, int size, 
 };
 
 
+
+std::pair<std::string,int64_t> dummy_message_parser(std::string&& msg) {
+  int position = msg.find("-", 0 );
+  int64_t timestamp;
+  if ( position != std::string::npos) {
+    std::stringstream(msg.substr(position+1)) >> timestamp;
+    return std::pair<std::string,int64_t>(msg.substr(0,position),timestamp);
+  }
+}
 std::function<TimeDifferenceFromMessage_DT(void*,int)> time_difference = [](void* x, int size) {
-  std::cout << "message: " << std::string((char*)x) << "\t" << size << std::endl;
-  return TimeDifferenceFromMessage_DT::OK();
+  auto parsed_text = dummy_message_parser(std::move(std::string((char*)x)));
+  return TimeDifferenceFromMessage_DT(parsed_text.first,parsed_text.second);
 };
 
 
@@ -106,7 +115,7 @@ TEST (Streamer, Reconnect) {
 
 }
 
-TEST (Streamer, SearchBackward) {
+TEST (Streamer, JumpBack) {
   Streamer s(broker,topic);
   ProcessMessageResult status = ProcessMessageResult::OK();
   int counter=0;
@@ -117,16 +126,15 @@ TEST (Streamer, SearchBackward) {
     ++counter;
   } while(status.is_OK()  && (counter < max_recv_messages ));
 
-  TimeDifferenceFromMessage_DT dt = s.search_backward(time_difference);
+  TimeDifferenceFromMessage_DT dt = s.jump_back(time_difference);
   std::cout << dt.sourcename << "\t" << dt.dt << "\n";
 
   do {
     ++counter;
     status = s.write(silent);
   } while(status.is_OK());
-  EXPECT_EQ( counter, Streamer::step_back_amount);
-  
-  // s.write(verbose);
+  //  EXPECT_EQ( counter, Streamer::step_back_amount);
+  EXPECT_GT( counter, Streamer::step_back_amount);
 }
 
 

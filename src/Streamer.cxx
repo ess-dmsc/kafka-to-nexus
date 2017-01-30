@@ -9,6 +9,8 @@
 
 
 int64_t BrightnESS::FileWriter::Streamer::step_back_amount = 1000;
+milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout = 1000_ms;
+
 
 BrightnESS::FileWriter::Streamer::Streamer(const std::string& broker, const std::string& topic_name, const int64_t& p) : offset(RdKafka::Topic::OFFSET_END), partition(p) {
 
@@ -46,6 +48,8 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string& broker, const std:
     throw std::runtime_error("Failed to start consumer: "+RdKafka::err2str(resp));
   }
 
+  // sets the current offset
+  get_last_offset();
 }
 
 
@@ -98,7 +102,7 @@ int BrightnESS::FileWriter::Streamer::connect(const std::string& broker,
 }
 
 
-BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::process_last_message() {
+BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::get_last_offset() {
   
   RdKafka::ErrorCode resp = consumer->stop(topic,partition);
   if (resp != RdKafka::ERR_NO_ERROR) {
@@ -114,7 +118,6 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::p
   if(msg->err() != RdKafka::ERR_NO_ERROR) {
     ProcessMessageResult::ERR();
   }
-
   last_offset = msg->offset();
   return ProcessMessageResult::OK();
 }
@@ -161,10 +164,10 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
 /// message with timestamp >= the timestam of beginning of data taking 
 /// (assumed to be stored in Source)
 template<>
-BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Streamer::search_backward<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic& td) {
-
+BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic& td) {
+  
   if(last_offset == 0 ) {
-    if( process_last_message().is_ERR() ) {
+    if( get_last_offset().is_ERR() ) {
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
@@ -192,10 +195,12 @@ BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Str
 
 
 template<>
-BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Streamer::search_backward<std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void*,int)> >(std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void*,int)>& f) {
+BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Streamer::jump_back<std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void*,int)> >(std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void*,int)>& f) {
 
+  
   if(last_offset == 0 ) {
-    if( process_last_message().is_ERR() ) {
+    // prima provare cmq a consumare un messaggio
+    if( get_last_offset().is_ERR() ) {
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
@@ -222,5 +227,36 @@ BrightnESS::FileWriter::TimeDifferenceFromMessage_DT BrightnESS::FileWriter::Str
 }
 
 
+
+
+template<>
+std::map<std::string,int64_t>&& BrightnESS::FileWriter::Streamer::scan_timestamps<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic & demux) {
+
+  std::map<std::string,int64_t> timestamp;
+  for(auto& s: demux.sources() ) {
+    timestamp[s.source()] = -1;
+  }
+  int n_sources = demux.sources().size();
+
+  do {
+    RdKafka::Message* msg = consumer->consume(topic, partition, consumer_timeout.count());
+    if( msg->err() != RdKafka::ERR__PARTITION_EOF) break;
+    if( msg->err() != RdKafka::ERR_NO_ERROR) {
+      std::cout << "Failed to consume message: "+RdKafka::err2str(msg->err()) << std::endl;
+      continue;
+    }
+    DemuxTopic::DT t = demux.time_difference_from_message((char*)msg->payload(),msg->len());
+    // HP: messages within the same source are ordered
+    if(timestamp[t.sourcename] == -1) {
+      n_sources--;
+      timestamp[t.sourcename] = t.dt;
+    }
+      
+  } while(n_sources < 1 );
+
+  return std::move(timestamp);
+}
+
+
+
   
-milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout = 1000_ms;

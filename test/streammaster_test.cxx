@@ -62,7 +62,7 @@ private:
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp) {
 
-  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout);
+  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout.count());
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     //    std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
