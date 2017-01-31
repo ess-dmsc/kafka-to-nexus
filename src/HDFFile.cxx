@@ -163,8 +163,8 @@ void f141_ntarraydouble::init_impl(std::string const & sourcename, char * msg_da
 	using std::array;
 	auto dt = nat_type<DT>();
 	// H5S_UNLIMITED
-	std::array<hsize_t, 2> sizes_ini {0, ncols};
-	std::array<hsize_t, 2> sizes_max {H5S_UNLIMITED, H5S_UNLIMITED};
+	std::array<hsize_t, 2> sizes_ini {{0, ncols}};
+	std::array<hsize_t, 2> sizes_max {{H5S_UNLIMITED, H5S_UNLIMITED}};
 
 	// TODO
 	// Lifetime?  Must it live as long as dataset exists?
@@ -189,7 +189,7 @@ void f141_ntarraydouble::init_impl(std::string const & sourcename, char * msg_da
 	// Lifetime of this guy?
 	// Together with the dataset?
 	this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
-	std::array<hsize_t, 2> sizes_chk {std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), ncols};
+	std::array<hsize_t, 2> sizes_chk {{std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), ncols}};
 	H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
 	this->ds = H5Dcreate1(file, sourcename.c_str(), dt, dsp, dcpl);
 }
@@ -228,11 +228,11 @@ WriteResult f141_ntarraydouble::write_impl(char * msg_data) {
 
 	tgt = H5Dget_space(ds);
 	using A = std::array<hsize_t, 2>;
-	A mem_size = {1, get_sizes_now.at(1)};
+	A mem_size = {{1, get_sizes_now.at(1)}};
 	auto mem = H5Screate_simple(2, mem_size.data(), nullptr);
 	{
-		A hsl_start {0, 0};
-		A hsl_count {1, get_sizes_now.at(1)};
+		A hsl_start {{0, 0}};
+		A hsl_count {{1, get_sizes_now.at(1)}};
 		err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
 		if (err < 0) {
 			LOG(7, "ERROR can not select mem hyperslab");
@@ -240,8 +240,8 @@ WriteResult f141_ntarraydouble::write_impl(char * msg_data) {
 		}
 	}
 	{
-		A hsl_start {get_sizes_now.at(0)-1, 0};
-		A hsl_count {1, get_sizes_now.at(1)};
+		A hsl_start {{get_sizes_now.at(0)-1, 0}};
+		A hsl_count {{1, get_sizes_now.at(1)}};
 		err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
 		if (err < 0) {
 			LOG(7, "ERROR can not select tgt hyperslab");
