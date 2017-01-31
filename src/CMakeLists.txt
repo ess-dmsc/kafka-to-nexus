@@ -28,8 +28,12 @@ find_path(path_include_fmt NAMES fmt/format.cc PATHS
   /opt/local
 )
 
-find_path(path_include_gtest NAMES gtest/gtest.h)
-find_library(path_lib_gtest NAMES gtest)
+find_path(path_include_gtest NAMES gtest/gtest.h PATHS
+$ENV{googletest_dir}
+)
+find_library(path_lib_gtest NAMES gtest PATHS
+$ENV{googletest_dir}
+)
 if (path_lib_gtest)
 add_library(libgtest SHARED IMPORTED)
 set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
@@ -75,6 +79,14 @@ find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h PATHS
  /opt/local/rdkafka/install/include
  /usr/local/include
 )
+
+find_library(path_lib_rdkafka NAMES rdkafka PATHS
+"$ENV{librdkafka_dir}/lib"
+/opt/local/rdkafka/install/lib
+/usr/local/lib
+)
+add_library(librdkafka SHARED IMPORTED)
+set_property(TARGET librdkafka PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka})
 
 find_library(path_lib_rdkafka++ NAMES rdkafka++ PATHS
  "$ENV{librdkafka_dir}/lib"
@@ -188,8 +200,9 @@ ${path_include_rapidjson}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-#target_link_libraries(${tgt} libhdf5)
+target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
+target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
 target_link_libraries(${tgt} NeXusFileWriter)
 
