@@ -137,6 +137,7 @@ set_target_properties(NeXusFileWriter PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAK
 set(flatbuffers_schemata
 f140-general
 f141-ntarraydouble
+amor_event-schema
 )
 set(flatbuffers_generated_headers "")
 

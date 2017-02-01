@@ -34,17 +34,27 @@ add_executable (streamer_test streamer_test.cxx)
 add_executable (streammaster_test streammaster_test.cxx ) 
 
 
-find_package(GTest REQUIRED)
-include_directories(${GTEST_INCLUDE_DIR})
+find_path(path_include_gtest NAMES gtest/gtest.h PATHS
+  "$ENV{googletest_dir}/include"
+  )
+
+find_path(path_lib_gtest NAMES gtest PATHS "$ENV{googletest_dir}/lib")
+
+if (path_lib_gtest)
+  add_library(libgtest SHARED IMPORTED)
+  set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
+endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   target_link_libraries(streammaster_test hdf5_cpp)
   target_link_libraries(streammaster_test hdf5)
   target_link_libraries(streammaster_test rdkafka)
   target_link_libraries(streammaster_test rdkafka++)
+  set(GTEST_BOTH_LIBRARIES gtest gtest_main)
 else()
   target_link_libraries(streammaster_test libhdf5)
   target_link_libraries(streammaster_test librdkafka++)
+  set(GTEST_BOTH_LIBRARIES libgtest libgtest_main)
 endif()
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
