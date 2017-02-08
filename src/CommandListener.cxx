@@ -682,7 +682,7 @@ Producer::~Producer() {
 			if (n1 > 0) {
 				LOG(-1, "rd_kafka_poll handled {}, timeout {}", n1, ns);
 			}
-			ns = std::min(500, ns << 2);
+			ns = std::min(500, ns << 1);
 		}
 		LOG(-1, "rd_kafka_destroy");
 		rd_kafka_destroy(rk);
