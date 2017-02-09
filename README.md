@@ -23,8 +23,7 @@ A pictorial representation of the implementation is ![File Writer overall design
 According to the design the Streamer connects to Kafka (other
 sources to be implemented) and consumes a message in the specified topic. Some features:
 * one Streamer per topic
-* (eventually) multiple Source per streamer
-* acts according the function ```f( msg->payload() )``` specified in ```write(f)```
+* multiple Source per streamer
 * has to be able to search back in the kafka queue for the first message. Some
   slow sources can be (much) older than the DAQ starts and updated not
   frequently, we must be able to retrieve the
