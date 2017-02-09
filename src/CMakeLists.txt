@@ -1,15 +1,14 @@
 project("ess-file-writer")
 
 # Relative to build root
-#set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ..)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ..)
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ..)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ..)
 
 if (NOT CMAKE_BUILD_TYPE)
 set(CMAKE_BUILD_TYPE Debug)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
-
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
-set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx "extern \"C\" char const GIT_COMMIT[] = \"NOTSET\";\n")
 
@@ -124,51 +123,60 @@ target_include_directories(NeXusFileWriter PRIVATE
   ${path_include_rapidjson}
   ${CMAKE_CURRENT_BINARY_DIR}
   )
-set_target_properties(NeXusFileWriter PROPERTIES
-  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 
-message(STATUS $ENV{streaming_data_types_dir})
+message(STATUS "ENV{streaming_data_types_dir}: $ENV{streaming_data_types_dir}")
 find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
   $ENV{streaming_data_types_dir}/schemas
-  )
+  "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types/schemas"
+)
 set(path_streaming_data_types ${path_streaming_data_types})
-message(STATUS ${path_streaming_data_types})
+message(STATUS "path_streaming_data_types: ${path_streaming_data_types}")
 
 message(STATUS $ENV{flatc_dir})
 find_path(path_flatc NAMES flatc PATHS
   $ENV{flatc_dir}
+  $ENV{flatc}
 )
-message(STATUS ${path_flatc})
+message(STATUS "path_flatc: ${path_flatc}")
 
 
 message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 
 
-# TODO
-# Import the actual schemes
-set(flatbuffers_schemata
-f140_general
-rit0_psi_sinq_schema
-)
 set(flatbuffers_generated_headers "")
 
-foreach (f ${flatbuffers_schemata})
-	set(fbs "${path_streaming_data_types}/${f}.fbs")
-	set(fbh "${f}_generated.h")
+# Search the dev env standard locations, but it will also look in PATH
+find_program(flatc flatc PATHS $ENV{flatc_dir} $ENV{flatc} "$ENV{HOME}/.tools" "/opt/local/flatbuffers")
+message(STATUS "flatc in ${flatc}")
+
+set(schemas_subdir "schemas")
+set(head_out_dir "${CMAKE_CURRENT_BINARY_DIR}/${schemas_subdir}")
+file(MAKE_DIRECTORY ${head_out_dir})
+file(GLOB_RECURSE flatbuffers_schemata2 RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types/schemas" "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types/schemas/*.fbs")
+
+foreach (f0 ${flatbuffers_schemata2})
+	string(REGEX REPLACE "\\.fbs$" "" s0 ${f0})
+	#message(STATUS "s0: ${s0}")
+	set(fbs "${s0}.fbs")
+	set(fbh "${s0}_generated.h")
+	message(STATUS "fbs: ${fbs}")
+	#message(STATUS "fbh: ${fbh}")
 	add_custom_command(
-		OUTPUT ${fbh}
-		COMMAND "${path_flatc}/flatc" --cpp "${fbs}"
-		DEPENDS "${fbs}"
-		COMMENT "Process ${fbs} using ${path_flatc}/flatc"
+		OUTPUT "${head_out_dir}/${fbh}"
+		COMMAND pwd && ${flatc} --cpp --gen-mutable --gen-name-strings --scoped-enums "../../../../streaming-data-types/schemas/${fbs}"
+		DEPENDS "../../streaming-data-types/schemas/${fbs}"
+		WORKING_DIRECTORY "${head_out_dir}"
+		COMMENT "Process ${fbs} using ${flatc}"
 	)
-	list(APPEND flatbuffers_generated_headers "${fbh}")
+	list(APPEND flatbuffers_generated_headers "${head_out_dir}/${fbh}")
 endforeach()
 
 add_custom_target(flatbuffers_generate ALL DEPENDS ${flatbuffers_generated_headers})
+
+
+
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
@@ -191,7 +199,6 @@ add_executable(${tgt}
   ess-file-writer.cxx
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
-set_target_properties(${tgt} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
 
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)

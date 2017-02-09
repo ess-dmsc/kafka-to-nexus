@@ -13,8 +13,8 @@
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "f140_general_generated.h"
-#include "rit0_psi_sinq_schema_generated.h"
+#include "schemas/f140_general_generated.h"
+#include "schemas/rit0_psi_sinq_schema_generated.h"
 //#include "f141-ntarraydouble_generated.h"
 
 namespace BrightnESS {
@@ -110,7 +110,7 @@ void handle(std::unique_ptr<CmdMsg> msg) {
 					data[i2] = 10000 + 100 * i1 + i2;
 				}
 				auto v = builder.CreateVector(data);
-				BrightnESS::ForwardEpicsToKafka::FlatBufs::f140_general::pvDoubleBuilder b1(builder);
+				BrightnESS::FlatBufs::f140_general::pvDoubleBuilder b1(builder);
 				//				b1.add_ts(102030);
 				//				b1.add_src(srcn);
 				//				b1.add_v(v);
