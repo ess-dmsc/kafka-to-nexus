@@ -11,10 +11,6 @@
 #include <rapidjson/error/en.h>
 #include <rapidjson/stringbuffer.h>
 
-#include "schemas/f140_general_generated.h"
-#include "schemas/rit0_psi_sinq_schema_generated.h"
-//#include "f141-ntarraydouble_generated.h"
-
 namespace BrightnESS {
 namespace FileWriter {
 
@@ -43,10 +39,10 @@ CommandHandler(Master * master) : master(master) {
 	schema_command.reset(new SchemaDocument(*doc));
 }
 
-void handle(std::unique_ptr<CmdMsg> msg) {
+void handle(std::unique_ptr<KafkaW::Msg> msg) {
 	using namespace rapidjson;
 	auto doc = make_unique<Document>();
-	ParseResult err = doc->Parse(msg->str().data(), msg->str().size());
+	ParseResult err = doc->Parse((char*)msg->data(), msg->size());
 	if (doc->HasParseError()) {
 		LOG(6, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
 		throw std::runtime_error("");
@@ -95,37 +91,36 @@ Master::Master(MasterConfig config) :
 	config(config),
 	command_listener(config.command_listener)
 {
-	if (config.test_mockup_command_listener) {
-		command_listener.is_mockup = true;
-	}
 }
 
 
-void Master::handle_command_message(std::unique_ptr<CmdMsg> && msg) {
+void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> && msg) {
 	CommandHandler command_handler(this);
 	command_handler.handle(std::move(msg));
 }
 
 
 void Master::run() {
-	using CLK = std::chrono::steady_clock;
-	auto start = CLK::now();
 	command_listener.start();
 	if (_cb_on_connected) (*_cb_on_connected)();
 	while (do_run) {
 		LOG(0, "Master poll");
 		auto p = command_listener.poll();
-		if (auto msg = p.is_CmdMsg()) {
+		if (auto msg = p.is_Msg()) {
+			LOG(0, "Handle a command");
 			this->handle_command_message(std::move(msg));
-			// TODO
-			// Allow to set a callback so that tests can exit the poll loop
-			do_run = false;
-		}
-		auto now = CLK::now();
-		if (now - start > std::chrono::milliseconds(8000)) {
-			break;
 		}
 	}
+	LOG(1, "calling stop on all stream_masters");
+	for (auto & x : stream_masters) {
+		x->stop(-2);
+	}
+	LOG(1, "called stop on all stream_masters");
+}
+
+
+void Master::stop() {
+	do_run = false;
 }
 
 
@@ -153,16 +148,6 @@ TEST(config, read_simple) {
 	// * Input a predefined message (or more) and test if it arrives at the correct ends
 	MasterConfig conf_m;
 	conf_m.test_mockup_command_listener = true;
-	Master m(conf_m);
-	ASSERT_NO_THROW( m.run() );
-}
-
-TEST(setup_with_kafka, setup_01) {
-	using namespace BrightnESS::FileWriter;
-	MasterConfig conf_m;
-	TestCommandProducer tcp;
-	auto of = tcp.produce_simple_01(conf_m.command_listener);
-	conf_m.command_listener.start_at_command_offset = of;
 	Master m(conf_m);
 	ASSERT_NO_THROW( m.run() );
 }

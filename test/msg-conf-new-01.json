@@ -1,12 +1,12 @@
 {
 	"cmd": "FileWriter_new",
-	"broker": "127.0.0.1:9092",
+	"broker": "localhost:9092",
 	"sstreams": [
 		{"a": 12, "b": 56}
 	],
 	"streams": [
 		{
-			"broker": "127.0.0.1:9092",
+			"broker": "localhost:9092",
 			"topic": "topic.with.multiple.sources",
 			"source": "for_example_motor01",
 			"path": "v",
@@ -14,7 +14,7 @@
 			"default_value": 405
 		},
 		{
-			"broker": "127.0.0.1:9092",
+			"broker": "localhost:9092",
 			"topic": "topic.with.multiple.sources",
 			"source": "for_example_temperature02",
 			"path": "v",
