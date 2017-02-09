@@ -3,7 +3,10 @@
 #include <iostream>
 #include <string>
 #include <functional>
+#include <map>
+
 #include "DemuxTopic.h"
+#include "utils.h"
 
 // forward definitions
 namespace RdKafka {
@@ -11,9 +14,16 @@ namespace RdKafka {
   class Consumer;
 }
 
+namespace BrightnESS {
+  namespace FileWriter {
+
+
+    
 // actually a "kafka streamer"
 struct Streamer {
-public:
+  static milliseconds consumer_timeout;
+  static int64_t step_back_amount;
+
   Streamer() : offset(0), partition(0) { };
   Streamer(const std::string&, const std::string&, const int64_t& p=0);
   Streamer(const Streamer&);
@@ -24,28 +34,61 @@ public:
   /// writes a message and return -1, doing nothing. For specific usage
   /// implement specialised version.
   template<class T>
-  int write(T& f) { message_length=0; std::cout << "fake_recv\n"; return -1; }
+  ProcessMessageResult write(T& f) {
+    message_length=0;
+    std::cout << "fake_recv\n";
+    return ProcessMessageResult::ERR();
+  }
 
-  template<class T>
-  bool search_backward(T& f, int m=1) { message_length=0; std::cout << "fake_search\n"; return false; }
-  
   int connect(const std::string&, const std::string&);
   int disconnect();
   int closeStream();
   
   /// Returns message length
   size_t len() { return message_length; }
+  
+  ProcessMessageResult get_last_offset();
+  
+  template<class T>
+  std::map<std::string,int64_t>&& scan_timestamps(T&);
+  
+// make PRIVATE
+  template<class T>
+  TimeDifferenceFromMessage_DT jump_back(T& f) {
+    message_length=0;
+    std::cout << "fake_search\n";
+    return TimeDifferenceFromMessage_DT::ERR();
+  }
 
-  static int64_t backward_offset;
+  template<class T>
+  std::map<std::string,int64_t> search_backward(T& demux, const ESSTimeStamp t0) {
+    jump_back(demux);
+    auto ts = scan_timestamp(demux);
+    if(/* any ts < 0 || > ESSTimestamp? */0)
+      return search_backward(demux,t0);
+    return ts;
+  }
+
+  
 private:
   RdKafka::Topic *topic;
   RdKafka::Consumer *consumer;
   uint64_t offset;
+  int64_t last_offset=-1;
+  int64_t step_back_offset=0;
   int32_t partition = 0;
   size_t message_length;
+
 };
 
-template<> int Streamer::write<std::function<void(void*,int)> >(std::function<void(void*,int)>&);
-template<> int Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
+    template<> ProcessMessageResult Streamer::write<std::function<ProcessMessageResult(void*,int)> >(std::function<ProcessMessageResult(void*,int)>&);
+    template<> ProcessMessageResult Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
+    
+    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic&);
+    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<std::function<TimeDifferenceFromMessage_DT(void*,int)> >(std::function<TimeDifferenceFromMessage_DT(void*,int)>&);
 
-template<> bool Streamer::search_backward<std::function<void(void*)> >(std::function<void(void*)>&, int);
+    template<> std::map<std::string,int64_t>&& Streamer::scan_timestamps<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
+
+  }
+}
+

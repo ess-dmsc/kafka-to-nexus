@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx "extern \"C\" char const GIT_COMMIT[] = \"NOTSET\";\n")
@@ -68,6 +68,7 @@ if( NOT path_lib_hdf5 )
     )
 endif()
 
+
 add_library(libhdf5 SHARED IMPORTED)
 set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
 
@@ -96,37 +97,62 @@ find_library(path_lib_rdkafka++ NAMES rdkafka++ PATHS
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
-find_path(path_streaming_data_types NAMES f140-general.fbs PATHS
-../../streaming-data-types
+add_library( NeXusFileWriter
+  Streamer.cxx
+  StreamMaster.cxx
+  kafka_util.cxx
+  Master.cxx
+  CommandListener.cxx
+  NexusWriter.cxx
+  TimeDifferenceFromMessage.cxx
+  FileWriterTask.cxx
+  Source.cxx
+  DemuxTopic.cxx
+  HDFFile.cxx
+  helper.cxx
+  logger.cxx
+  json.cxx
+  ${path_include_fmt}/fmt/format.cc
 )
+add_dependencies(NeXusFileWriter flatbuffers_generate)
 
+target_include_directories(NeXusFileWriter PRIVATE
+  ${path_include_fmt}
+  ${path_include_hdf5}
+  ${path_include_rdkafka}
+  ${path_include_flatbuffers}
+  ${path_include_rapidjson}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
+set_target_properties(NeXusFileWriter PROPERTIES
+  LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+
+
+message(STATUS $ENV{streaming_data_types_dir})
+find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
+  $ENV{streaming_data_types_dir}/schemas
+  )
+set(path_streaming_data_types ${path_streaming_data_types})
+message(STATUS ${path_streaming_data_types})
+
+message(STATUS $ENV{flatc_dir})
 find_path(path_flatc NAMES flatc PATHS
-$ENV{flatc_dir}
+  $ENV{flatc_dir}
 )
+message(STATUS ${path_flatc})
 
 
 message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-#add_library( rdkafka_mock KafkaMock.cxx)
-add_library( NeXusFileWriter Streamer.cxx StreamMaster.cxx DemuxTopic.cxx TimeDifferenceFromMessage.cxx)
-target_include_directories(NeXusFileWriter PRIVATE
-${path_include_fmt}
-${path_include_hdf5}
-${path_include_rdkafka}
-${path_include_flatbuffers}
-${path_include_rapidjson}
-${CMAKE_CURRENT_BINARY_DIR}
-)
-set_target_properties(NeXusFileWriter PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 
 
 
 # TODO
 # Import the actual schemes
 set(flatbuffers_schemata
-f140-general
-f141-ntarraydouble
+f140_general
+rit0_psi_sinq_schema
 )
 set(flatbuffers_generated_headers "")
 
@@ -144,7 +170,7 @@ endforeach()
 
 add_custom_target(flatbuffers_generate ALL DEPENDS ${flatbuffers_generated_headers})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++1y -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O3 -D_GLIBCXX_USE_NANOSLEEP")
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wpedantic -Wno-variadic-macros")
@@ -162,21 +188,8 @@ endif()
 set(tgt ess-file-writer)
 
 add_executable(${tgt}
-ess-file-writer.cxx
-kafka_util.cxx
-Master.cxx
-CommandListener.cxx
-NexusWriter.cxx
-TimeDifferenceFromMessage.cxx
-FileWriterTask.cxx
-Source.cxx
-DemuxTopic.cxx
-HDFFile.cxx
-helper.cxx
-logger.cxx
-json.cxx
-${path_include_fmt}/fmt/format.cc
-${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+  ess-file-writer.cxx
+  ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 set_target_properties(${tgt} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ..)
 
@@ -200,10 +213,19 @@ ${path_include_rapidjson}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} librdkafka)
-target_link_libraries(${tgt} librdkafka++)
+
+#if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#  target_link_libraries(${tgt} hdf5_cpp)
+#  target_link_libraries(${tgt} hdf5)
+#  target_link_libraries(${tgt} rdkafka)
+#  target_link_libraries(${tgt} rdkafka++)
+#else()
+  target_link_libraries(${tgt} libhdf5)
+  target_link_libraries(${tgt} libhdf5cpp)
+  target_link_libraries(${tgt} librdkafka)
+  target_link_libraries(${tgt} librdkafka++)
+#endif()
+
 target_link_libraries(${tgt} NeXusFileWriter)
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)

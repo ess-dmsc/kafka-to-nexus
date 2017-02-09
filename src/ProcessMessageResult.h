@@ -10,7 +10,7 @@ namespace FileWriter {
 /// not used.
 class ProcessMessageResult {
 public:
-static ProcessMessageResult OK(int64_t ts);
+static ProcessMessageResult OK(int64_t ts=0);
 static ProcessMessageResult ERR();
 static ProcessMessageResult ALL_SOURCES_FULL();
 inline bool is_OK() { return _ts >= 0; }

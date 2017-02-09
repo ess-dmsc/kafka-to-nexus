@@ -8,10 +8,10 @@ Documents:
 
 The overall design of the file writer is described in
 [NeXusFileWriterDesign](NeXusFileWriterDesign.md) (Mark). It is used as a sort
-of "guideline". 
+of "guideline".
 
 ## Graph of dependencies and data flow
- 
+
  Very early draft so far:
 
 ![Flow](flow.svg)
@@ -34,12 +34,13 @@ sources to be implemented) and consumes a message in the specified topic. Some f
 * if the broker is not valid (_e.g._ a change of IP address) it should notify
   the FileMaster, retrieve the new configuration and reconnect
 
-In the current implementation the Streamer does not "contains" the corresponding
-sources. They are part of a different container in the StreamMaster. A different
-solution would be make the sources to be contained in the corresponding streamer.
 
 ## DemuxTopic
-Mapped 1:1 with topics (and Streamers) drives the message to the correct Source.
+Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.
+The two corresponding methods are
+* process_message
+* time_difference_from_message
+Both receive the message payload and size. Return values are ProcessMessageResult and TimeDifferenceFromMessage_DT.
 
 ## Source
 

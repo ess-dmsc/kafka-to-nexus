@@ -6,9 +6,13 @@ namespace FileWriter {
 
 class TimeDifferenceFromMessage_DT {
 public:
+  static TimeDifferenceFromMessage_DT OK();
+  static TimeDifferenceFromMessage_DT ERR();
+  inline bool is_OK() { return sourcename != ""; }
+  inline bool is_ERR() { return sourcename == ""; }
 std::string const & sourcename;
 int64_t dt;
-TimeDifferenceFromMessage_DT(std::string & sourcename, int64_t dt);
+TimeDifferenceFromMessage_DT(const std::string & sourcename, int64_t dt);
 };
 
 class TimeDifferenceFromMessage {
