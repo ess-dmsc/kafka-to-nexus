@@ -8,7 +8,7 @@ set(CMAKE_BUILD_TYPE Debug)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/bin)
+set (CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR})
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/lib)
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx "extern \"C\" char const GIT_COMMIT[] = \"NOTSET\";\n")
@@ -130,9 +130,9 @@ set_target_properties(NeXusFileWriter PROPERTIES
 
 message(STATUS $ENV{streaming_data_types_dir})
 find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
-  $ENV{streaming_data_types_dir}
+  $ENV{streaming_data_types_dir}/schemas
   )
-set(path_streaming_data_types ${path_streaming_data_types}/schemas)
+set(path_streaming_data_types ${path_streaming_data_types})
 message(STATUS ${path_streaming_data_types})
 
 message(STATUS $ENV{flatc_dir})
@@ -214,17 +214,17 @@ ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  target_link_libraries(${tgt} hdf5_cpp)
-  target_link_libraries(${tgt} hdf5)
-  target_link_libraries(${tgt} rdkafka)
-  target_link_libraries(${tgt} rdkafka++)
-else()
+#if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+#  target_link_libraries(${tgt} hdf5_cpp)
+#  target_link_libraries(${tgt} hdf5)
+#  target_link_libraries(${tgt} rdkafka)
+#  target_link_libraries(${tgt} rdkafka++)
+#else()
   target_link_libraries(${tgt} libhdf5)
   target_link_libraries(${tgt} libhdf5cpp)
   target_link_libraries(${tgt} librdkafka)
   target_link_libraries(${tgt} librdkafka++)
-endif()
+#endif()
 
 target_link_libraries(${tgt} NeXusFileWriter)
 
