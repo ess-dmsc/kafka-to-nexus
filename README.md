@@ -62,17 +62,6 @@ the list of brokers from Kafka.
 
 ## Running tests
 
-<div class="strike">Tests currently make use of the KakaMock
-implementation. <sup>not true anymore, KakaMock is just partial</sup> In principle there is no need for a real
-kafka borker. Nevertheless, it would be nice to be able to run with either the mock
-version or the real broker. </div>
-
-The utility producer.py can be used to generate random messages on different
-topics (requires
-[confluent-kafka](https://github.com/confluentinc/confluent-kafka-python.git)):
-```python
-python producer.py <broker>
-```
 
 Usage:
 ```bash
