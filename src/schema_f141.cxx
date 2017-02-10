@@ -195,99 +195,14 @@ WriteResult writer::write_impl(char * msg_data) {
 class Info : public SchemaInfo {
 public:
 FBSchemaReader::ptr create_reader() override;
-FBSchemaWriter::ptr create_writer() override;
 };
 
 FBSchemaReader::ptr Info::create_reader() {
 	return FBSchemaReader::ptr(new reader);
 }
-FBSchemaWriter::ptr Info::create_writer() {
-	return nullptr;
-}
 
 
 SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("f141"));
-
-
-#if 0
-
-
-      f140_general::f140_general() {
-      }
-
-      // f141_ntarraydouble::f141_ntarraydouble() {
-      // }
-      // std::unique_ptr<FBSchemaWriter> f141_ntarraydouble::create_writer_impl() {
-      //   return std::unique_ptr<FBSchemaWriter>(new schemawriters::f141_ntarraydouble);
-      // }
-      // std::string f141_ntarraydouble::sourcename_impl(char * msg_data) {
-      //   auto pv = BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::GetPV(msg_data + 2);
-      //   return pv->src()->str();
-      // }
-      // uint64_t f141_ntarraydouble::ts_impl(char * msg_data) {
-      //   auto pv = BrightnESS::ForwardEpicsToKafka::FlatBufs::f141_ntarraydouble::GetPV(msg_data + 2);
-      //   return pv->ts();
-      // }
-
-
-
-      class f140_general : public FBSchemaReader {
-      public:
-        f140_general();
-        std::unique_ptr<FBSchemaWriter> create_writer_impl();
-        std::string sourcename_impl(char * msg_data);
-        uint64_t ts_impl(char * msg_data);
-      };
-
-      // class f141_ntarraydouble : public FBSchemaReader {
-      // public:
-      //   f141_ntarraydouble();
-      //   std::unique_ptr<FBSchemaWriter> create_writer_impl();
-      //   std::string sourcename_impl(char * msg_data);
-      //   uint64_t ts_impl(char * msg_data);
-      // };
-
-
-
-
-
-namespace schemawriters {
-
-      class f140_general : public FBSchemaWriter {
-      public:
-        f140_general();
-        void init_impl(std::string const & sourcename, char * msg);
-        WriteResult write_impl(char * msg_data);
-      private:
-        H5::DataSet ds;
-      };
-
-
-
-
-
-
-
-
-      f140_general::f140_general() {
-      }
-      void f140_general::init_impl(std::string const & sourcename, char * msg_data) {
-	LOG(3, "f140_general init");
-      }
-      WriteResult f140_general::write_impl(char * msg_data) {
-	return {-1};
-      }
-
-      // f141_ntarraydouble::f141_ntarraydouble() {
-      // }
-      // f141_ntarraydouble::~f141_ntarraydouble() {
-      //   // TODO
-      //   // Check dtor order w.r.t. to the file
-      //   H5Dclose(ds);
-      //   H5Sclose(dsp);
-      //   H5Pclose(dcpl);
-      // }
-#endif
 
 
 }

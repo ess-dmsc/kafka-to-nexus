@@ -19,7 +19,6 @@ class SchemaInfo {
 public:
 typedef std::unique_ptr<SchemaInfo> ptr;
 virtual FBSchemaReader::ptr create_reader() = 0;
-virtual FBSchemaWriter::ptr create_writer() = 0;
 };
 
 class SchemaRegistry {
