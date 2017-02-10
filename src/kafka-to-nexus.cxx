@@ -3,24 +3,20 @@
 #include <string>
 #include <getopt.h>
 #include "logger.h"
-#include "Master.h"
+#include "kafka-to-nexus.h"
 
 #if HAVE_GTEST
 #include <gtest/gtest.h>
+#include "test-roundtrip.h"
 #endif
 
-extern "C" char const GIT_COMMIT[];
-
-
-
-// POD
-struct MainOpt {
-bool help = false;
-bool verbose = false;
-bool gtest = false;
-BrightnESS::FileWriter::MasterConfig master_config;
+#if HAVE_GTEST
+class Roundtrip : public ::testing::Test {
+public:
+static MainOpt * opt;
 };
-
+MainOpt * Roundtrip::opt = nullptr;
+#endif
 
 int main(int argc, char ** argv) {
 	MainOpt opt;
@@ -110,6 +106,8 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
+	Roundtrip::opt = & opt;
+
 	if (opt.gtest) {
 		#if HAVE_GTEST
 		::testing::InitGoogleTest(&argc, argv);
@@ -122,3 +120,12 @@ int main(int argc, char ** argv) {
 
 	return 0;
 }
+
+#if HAVE_GTEST
+TEST(librdkafka, basics) {
+	ASSERT_EQ(RD_KAFKA_RESP_ERR_NO_ERROR, 0);
+}
+TEST_F(Roundtrip, simple_01) {
+	BrightnESS::FileWriter::Test::roundtrip_simple_01(*opt);
+}
+#endif

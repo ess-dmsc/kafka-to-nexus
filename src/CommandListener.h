@@ -2,10 +2,11 @@
 
 #include <thread>
 #include "Master_handler.h"
+#include "KafkaW.h"
+
 
 namespace BrightnESS {
 namespace FileWriter {
-
 
 
 class MessageCallback {
@@ -19,12 +20,10 @@ virtual void operator() (int partition, std::string const & topic, std::string c
 /// Settings for the Kafka command broker and topic.
 struct CommandListenerConfig {
 std::string address = "localhost:9092";
-std::string topic = "ess-file-writer.command";
+std::string topic = "kafka-to-nexus.command";
 std::function<void()> * on_rebalance_assign = nullptr;
 int64_t start_at_command_offset = -1;
 };
-
-class Consumer;
 
 class PollStatus {
 public:
@@ -54,23 +53,14 @@ CommandListener(CommandListenerConfig);
 void start();
 void stop();
 /// Check for new command packets and return one if there is.
-PollStatus poll();
+KafkaW::PollStatus poll();
 
-/// Only used for testing:
-bool is_mockup = false;
 private:
 CommandListenerConfig config;
 std::thread thr_consumer;
-std::unique_ptr<Consumer> leg_consumer;
+std::unique_ptr<KafkaW::Consumer> consumer;
 };
 
-
-/// Produce pre-fabricated commands for testing
-class TestCommandProducer {
-public:
-/// Just a preliminary name for a first test command
-int64_t produce_simple_01(CommandListenerConfig config);
-};
 
 }
 }

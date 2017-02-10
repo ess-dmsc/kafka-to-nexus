@@ -43,6 +43,7 @@ class FBSchemaWriter;
 
 class FBSchemaReader {
 public:
+typedef std::unique_ptr<FBSchemaReader> ptr;
 static std::unique_ptr<FBSchemaReader> create(char * msg_data, int msg_size);
 std::unique_ptr<FBSchemaWriter> create_writer();
 std::string sourcename(char * msg_data);
@@ -56,6 +57,7 @@ virtual uint64_t ts_impl(char * msg_data) = 0;
 
 class FBSchemaWriter {
 public:
+typedef std::unique_ptr<FBSchemaWriter> ptr;
 ~FBSchemaWriter();
 void init(HDFFile * hdf_file, std::string const & sourcename, char * msg_data);
 WriteResult write(char * msg_data);

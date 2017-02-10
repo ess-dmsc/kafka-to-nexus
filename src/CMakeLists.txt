@@ -37,6 +37,10 @@ if (path_lib_gtest)
 add_library(libgtest SHARED IMPORTED)
 set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
 endif()
+set(have_gtest 0)
+if (path_include_gtest AND path_lib_gtest)
+set(have_gtest 1)
+endif()
 
 find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h PATHS
  "$ENV{flatbuffers_dir}/include"
@@ -108,6 +112,8 @@ add_library( NeXusFileWriter
   Source.cxx
   DemuxTopic.cxx
   HDFFile.cxx
+  SchemaRegistry.cxx
+  KafkaW.cxx
   helper.cxx
   logger.cxx
   json.cxx
@@ -194,17 +200,22 @@ endif()
 
 
 set(tgt "kafka-to-nexus")
-
-add_executable(${tgt}
-  kafka-to-nexus.cxx
-  ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+set(sources
+kafka-to-nexus.cxx
+schema_f141.cxx
+test-roundtrip.cxx
+${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
+if (have_gtest)
+list(APPEND sources test-roundtrip.cxx)
+endif()
+add_executable(${tgt} ${sources})
 
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 add_dependencies(${tgt} NeXusFileWriter)
 
-if (path_include_gtest AND path_lib_gtest)
+if (have_gtest)
 message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
 target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
 target_include_directories(${tgt} PRIVATE ${path_include_gtest})
