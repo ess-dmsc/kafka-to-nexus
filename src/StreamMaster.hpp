@@ -72,7 +72,10 @@ struct StreamMaster {
   // Stops data writing. If a ESSTimeStamp threshold is given keeps writing
   // until the first packet with timestamp above threshold. Since then keep
   // receiving for delay_after_last_message milliseconds, then stops.
-  std::vector< std::pair<std::string,int> > stop(const ESSTimeStamp ts=0) {
+  std::vector< std::pair<std::string,int> > stop(const ESSTimeStamp ts=-2) {
+    // If no message has been read so far, value.ts() will be == -1.
+    // Therefore, use ts == -2 to indicate that we do *not* want to wait
+    // for a certain time in the future.
     while( value.ts() < ts ) {
       std::this_thread::sleep_for(50_ms);
     }
