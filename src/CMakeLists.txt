@@ -1,4 +1,4 @@
-project("ess-file-writer")
+project("kafka-to-nexus")
 
 # Relative to build root
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ..)
@@ -193,10 +193,10 @@ else ()
 endif()
 
 
-set(tgt ess-file-writer)
+set(tgt "kafka-to-nexus")
 
 add_executable(${tgt}
-  ess-file-writer.cxx
+  kafka-to-nexus.cxx
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 
