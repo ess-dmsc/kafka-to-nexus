@@ -70,8 +70,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-	printf("ess-file-writer-0.0.1  (ESS, BrightnESS)\n");
-	printf("  %.7s\n", GIT_COMMIT);
+	printf("kafka-to-nexus-0.0.1  (ESS, BrightnESS)  %.7s\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
 	if (opt.help) {
@@ -79,19 +78,19 @@ int main(int argc, char ** argv) {
 		       "Controlled via JSON packets sent over the configuration topic.\n"
 		       "\n"
 		       "\n"
-		       "forward-epics-to-kafka\n"
+		       "kafka-to-nexus\n"
 		       "  --help, -h\n"
 		       "\n"
 		       "  --test\n"
 		       "      Run tests\n"
 		       "\n"
-		       "  --broker-configuration-address    host:port,host:port,...\n"
+		       "  --broker-command-address    host:port,host:port,...\n"
 		       "      Kafka brokers to connect with for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
 			opt.master_config.command_listener.address.c_str());
 
-		printf("  --broker-configuration-topic      <topic-name>\n"
+		printf("  --broker-command-topic      <topic-name>\n"
 		       "      Topic name to listen to for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
