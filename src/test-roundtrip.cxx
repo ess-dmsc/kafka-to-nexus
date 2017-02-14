@@ -9,6 +9,7 @@
 #include <rapidjson/writer.h>
 #include <rapidjson/prettywriter.h>
 #include "schemas/f141_epics_nt_generated.h"
+#include <type_traits>
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -37,6 +38,20 @@ int64_t produce_command_from_file(CommandListenerConfig config, std::string file
 	LOG(9, "Timeout on production of test message");
 	return -1;
 }
+
+
+template <typename T, typename = int>
+struct _has_teamid : std::false_type {
+static void fill(T & fwdinfo, uint64_t teamid) {
+}
+};
+template <typename T>
+struct _has_teamid <T, decltype((void) T::teamid, 0)> : std::true_type {
+static void fill(T & fwdinfo, uint64_t teamid) {
+	fwdinfo.teamid = teamid;
+}
+};
+
 
 
 void roundtrip_simple_01(MainOpt & opt) {
@@ -79,12 +94,12 @@ void roundtrip_simple_01(MainOpt & opt) {
 			auto & sourcename = test_sourcenames[i3];
 			for (int i1 = 0; i1 < 2; ++i1) {
 				flatbuffers::FlatBufferBuilder builder(1024);
-				auto fwdinfo = FlatBufs::f141_epics_nt::fwdinfo_t(
-					i1,
-					nowns() + 1000000 * i1,
-					nowns() + 1000000 * i1,
-					0
-				);
+				FlatBufs::f141_epics_nt::fwdinfo_t fi;
+				fi.mutate_seq(i1);
+				fi.mutate_ts_data(nowns() + 1000000 * i1);
+				fi.mutate_ts_fwd(fi.ts_data());
+				fi.mutate_fwdix(0);
+				_has_teamid<FlatBufs::f141_epics_nt::fwdinfo_t>::fill(fi, 0);
 				auto srcn = builder.CreateString(sourcename);
 				std::vector<double> data;
 				data.resize(7);
@@ -103,7 +118,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 				//auto o2 = *((uint32_t*)&pv);
 				//LOG(3, "TRY TO WRITE OFFSET: {}", o2);
 				epicspv.add_pv(o1);
-				epicspv.add_fwdinfo(&fwdinfo);
+				epicspv.add_fwdinfo(&fi);
 				FinishEpicsPVBuffer(builder, epicspv.Finish());
 				if (true) {
 					topic.produce(builder.GetBufferPointer(), builder.GetSize(), nullptr);

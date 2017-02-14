@@ -22,7 +22,7 @@ uint64_t ts_impl(Msg msg) override;
 };
 
 class writer : public FBSchemaWriter {
-~writer();
+~writer() override;
 void init_impl(std::string const & sourcename, Msg msg) override;
 WriteResult write_impl(Msg msg) override;
 using DT = double;
@@ -59,6 +59,9 @@ uint64_t reader::ts_impl(Msg msg) {
 
 
 
+
+writer::~writer() {
+}
 
 void writer::init_impl(std::string const & sourcename, Msg msg) {
 	// TODO
