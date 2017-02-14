@@ -58,10 +58,12 @@ uint64_t reader::ts_impl(Msg msg) {
 }
 
 
-
-
 writer::~writer() {
+	if (ds != -1) H5Dclose(ds);
+	if (dsp != -1) H5Sclose(dsp);
+	if (dcpl != -1) H5Pclose(dcpl);
 }
+
 
 void writer::init_impl(std::string const & sourcename, Msg msg) {
 	// TODO
