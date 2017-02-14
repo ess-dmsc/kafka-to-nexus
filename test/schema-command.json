@@ -42,7 +42,10 @@
 		"__note": "can so far not limit the types of the object properties without specifying all property keys",
 		"file_attributes": {
 			"type": "object"
+		},
+		"broker": {
+			"type": "string"
 		}
 	},
-	"required": ["file_attributes"]
+	"required": ["broker", "streams"]
 }
