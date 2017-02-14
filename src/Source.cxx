@@ -30,19 +30,28 @@ std::string const & Source::source() const {
 	return _source;
 }
 
-ProcessMessageResult Source::process_message(char * msg_data, int msg_size) {
+Source::~Source() {
+}
+
+ProcessMessageResult Source::process_message(Msg msg) {
 	if (!_schema_reader) {
-		_schema_reader = FBSchemaReader::create(msg_data, msg_size);
-	}
-	if (!_schema_writer) {
-		_schema_writer = _schema_reader->create_writer();
-		if (!_hdf_file) {
-			throw "SHOULD NEVER HAPPEN";
+		_schema_reader = FBSchemaReader::create(msg);
+		if (_schema_writer) {
+			LOG(7, "ERROR _schema_writer should not exist");
 		}
-		_schema_writer->init(_hdf_file, source(), msg_data);
+		if (!_hdf_file) {
+			throw "SHOULD NEVER HAPPEN AT LEAST CURRENTLY, HDF FILE SHOULD ALREADY BE OPEN";
+		}
+		_schema_writer = _schema_reader->create_writer();
 	}
-	auto ret = _schema_writer->write(msg_data);
+	//if (teamid == _schema_reader->teamid(msg)) {
+	//}
+	if (_cnt_msg_written == 0) {
+		_schema_writer->init(_hdf_file, source(), msg);
+	}
+	auto ret = _schema_writer->write(msg);
 	_processed_messages_count += 1;
+	_cnt_msg_written += 1;
 	return ProcessMessageResult::OK(ret.ts);
 }
 

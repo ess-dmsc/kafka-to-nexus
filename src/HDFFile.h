@@ -14,13 +14,9 @@ int64_t ts;
 };
 
 
-class FlatBufferMsg {
-public:
-std::string src();
-uint64_t ts();
-private:
-virtual std::string src_impl() = 0;
-virtual uint64_t ts_impl() = 0;
+struct Msg {
+char * data;
+int32_t size;
 };
 
 
@@ -44,31 +40,32 @@ class FBSchemaWriter;
 class FBSchemaReader {
 public:
 typedef std::unique_ptr<FBSchemaReader> ptr;
-static std::unique_ptr<FBSchemaReader> create(char * msg_data, int msg_size);
+static std::unique_ptr<FBSchemaReader> create(Msg msg);
+virtual ~FBSchemaReader();
 std::unique_ptr<FBSchemaWriter> create_writer();
-std::string sourcename(char * msg_data);
-uint64_t ts(char * msg_data);
+std::string sourcename(Msg msg);
+uint64_t ts(Msg msg);
 private:
 virtual std::unique_ptr<FBSchemaWriter> create_writer_impl() = 0;
-virtual std::string sourcename_impl(char * msg_data) = 0;
-virtual uint64_t ts_impl(char * msg_data) = 0;
+virtual std::string sourcename_impl(Msg msg) = 0;
+virtual uint64_t ts_impl(Msg msg) = 0;
 };
 
 
 class FBSchemaWriter {
 public:
 typedef std::unique_ptr<FBSchemaWriter> ptr;
-~FBSchemaWriter();
-void init(HDFFile * hdf_file, std::string const & sourcename, char * msg_data);
-WriteResult write(char * msg_data);
+virtual ~FBSchemaWriter();
+void init(HDFFile * hdf_file, std::string const & sourcename, Msg msg);
+WriteResult write(Msg msg);
 void flush();
 void close();
 protected:
 FBSchemaWriter();
 HDFFile * hdf_file = nullptr;
 private:
-virtual void init_impl(std::string const & sourcename, char * msg_data) = 0;
-virtual WriteResult write_impl(char * msg_data) = 0;
+virtual void init_impl(std::string const & sourcename, Msg msg) = 0;
+virtual WriteResult write_impl(Msg msg) = 0;
 };
 
 

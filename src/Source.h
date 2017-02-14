@@ -27,10 +27,11 @@ int _res = 0;
 class Source {
 public:
 Source(Source &&);
+~Source();
 std::string const & topic() const;
 std::string const & source() const;
 uint32_t processed_messages_count() const;
-ProcessMessageResult process_message(char * msg_data, int msg_size);
+ProcessMessageResult process_message(Msg msg);
 std::string to_str() const;
 rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * a = nullptr) const;
 private:
@@ -43,7 +44,8 @@ std::string _source;
 std::unique_ptr<FBSchemaReader> _schema_reader;
 std::unique_ptr<FBSchemaWriter> _schema_writer;
 
-uint32_t _processed_messages_count = 0;
+uint64_t _processed_messages_count = 0;
+uint64_t _cnt_msg_written = 0;
 
 HDFFile * _hdf_file = nullptr;
 

@@ -50,22 +50,26 @@ BrokerOpt::BrokerOpt() {
 
 		*/
 	};
-	std::map<std::string, std::string> conf_strings {
-		{"group.id", fmt::format("some-group-id")},
+	conf_strings = {
+		//{"group.id",                      ""},
+		{"api.version.request",                  "true"},
 	};
 }
 
 
 void BrokerOpt::apply(rd_kafka_conf_t * conf) {
-	std::vector<char> errstr(1024);
+	std::vector<char> errstr(256);
 	for (auto & c : conf_ints) {
-		if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(), fmt::format("{:d}", c.second).c_str(), errstr.data(), errstr.size())) {
-			LOG(7, "error setting config: {}", c.first.c_str());
+		auto s1 = fmt::format("{:d}", c.second);
+		LOG(2, "set config: {} = {}", c.first, s1);
+		if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(), s1.c_str(), errstr.data(), errstr.size())) {
+			LOG(7, "error setting config: {} = {}", c.first, s1);
 		}
 	}
 	for (auto & c : conf_strings) {
+		LOG(2, "set config: {} = {}", c.first, c.second);
 		if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(), c.second.c_str(), errstr.data(), errstr.size())) {
-			LOG(7, "error setting config: {}", c.first.c_str());
+			LOG(7, "error setting config: {} = {}", c.first, c.second);
 		}
 	}
 }
@@ -105,6 +109,18 @@ uchar * Msg::data() {
 
 uint32_t Msg::size() {
 	return ((rd_kafka_message_t*)kmsg)->len;
+}
+
+char const * Msg::topic_name() {
+	return rd_kafka_topic_name( ((rd_kafka_message_t*)kmsg)->rkt );
+}
+
+int32_t Msg::partition() {
+	return ((rd_kafka_message_t*)kmsg)->partition;
+}
+
+int32_t Msg::offset() {
+	return ((rd_kafka_message_t*)kmsg)->offset;
 }
 
 
@@ -374,10 +390,10 @@ PollStatus Consumer::poll() {
 		static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
 		std::unique_ptr<Msg> m2(new Msg);
 		m2->kmsg = msg;
-		auto topic_name = rd_kafka_topic_name(msg->rkt);
-		int partition = msg->partition;
+		//auto topic_name = rd_kafka_topic_name(msg->rkt);
+		//int partition = msg->partition;
 		if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-			LOG(0, "Consuming offset: {}  {:.{}}", msg->offset, (char*)msg->payload, msg->len);
+			LOG(0, "Consuming offset: {}  partition: {}", m2->offset(), m2->partition());
 			return PollStatus::make_Msg(std::move(m2));
 		}
 		else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
