@@ -16,6 +16,7 @@ namespace FileWriter {
 
 struct MasterConfig {
 CommandListenerConfig command_listener;
+uint64_t teamid = 0;
 };
 
 /// Listens to the Kafka configuration topic.
@@ -30,8 +31,8 @@ void handle_command_message(std::unique_ptr<KafkaW::Msg> && msg);
 void on_consumer_connected(std::function<void(void)> * cb_on_connected);
 std::function<void(void)> cb_on_filewriter_new;
 
-private:
 MasterConfig config;
+private:
 CommandListener command_listener;
 std::atomic<bool> do_run {true};
 std::vector<NexusWriter_uptr> nexus_writers;

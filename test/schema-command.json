@@ -33,7 +33,7 @@
 				},
 
 				"DOC": "additionalProperties accepted by validator, turn on later",
-				"additionalProperties": false,
+				"additionalProperties": true,
 
 				"required": ["topic"]
 			}
@@ -44,6 +44,9 @@
 			"type": "object"
 		},
 		"broker": {
+			"type": "string"
+		},
+		"filename": {
 			"type": "string"
 		}
 	},

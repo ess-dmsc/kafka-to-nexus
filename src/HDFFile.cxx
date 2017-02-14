@@ -73,6 +73,14 @@ uint64_t FBSchemaReader::ts(Msg msg) {
 	return ts_impl(msg);
 }
 
+uint64_t FBSchemaReader::teamid(Msg & msg) {
+	return teamid_impl(msg);
+}
+
+uint64_t FBSchemaReader::teamid_impl(Msg & msg) {
+	return 0;
+}
+
 
 FBSchemaWriter::FBSchemaWriter() {
 }

@@ -84,6 +84,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 
 	{
 		// Produce sample data using the nt types scheme only
+		auto teamid = opt.master_config.teamid;
 		KafkaW::BrokerOpt opt;
 		opt.address = "localhost:9092";
 		auto nowns = []{return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};

@@ -199,6 +199,25 @@ else ()
 endif()
 
 
+set(tgt "send-command")
+set(sources
+send-command.cxx
+KafkaW.cxx
+logger.cxx
+${path_include_fmt}/fmt/format.cc
+${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+)
+add_executable(${tgt} ${sources})
+add_dependencies(${tgt} git_commit_current)
+target_include_directories(${tgt} PRIVATE
+${path_include_fmt}
+${path_include_rdkafka}
+${path_include_rapidjson}
+${CMAKE_CURRENT_BINARY_DIR}
+)
+target_link_libraries(${tgt} librdkafka)
+
+
 set(tgt "kafka-to-nexus")
 set(sources
 kafka-to-nexus.cxx

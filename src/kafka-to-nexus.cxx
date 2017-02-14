@@ -25,6 +25,7 @@ int main(int argc, char ** argv) {
 		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
 		{"broker-command-topic",            required_argument,        0,  0 },
+		{"teamid",                          required_argument,        0,  0 },
 		{"test",                            no_argument,              0,  0 },
 		{0, 0, 0, 0},
 	};
@@ -56,6 +57,9 @@ int main(int argc, char ** argv) {
 			}
 			if (std::string("broker-command-topic") == lname) {
 				opt.master_config.command_listener.topic = optarg;
+			}
+			if (std::string("teamid") == lname) {
+				opt.master_config.teamid = strtoul(optarg, nullptr, 0);
 			}
 			if (std::string("test") == lname) {
 				opt.gtest = true;
@@ -116,6 +120,12 @@ int main(int argc, char ** argv) {
 		return 1;
 		#endif
 	}
+
+	Master m(opt.master_config);
+	std::thread t1([&m]{
+		m.run();
+	});
+	t1.join();
 
 	return 0;
 }
