@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <string>
+#include <csignal>
 #include <getopt.h>
 #include "logger.h"
 #include "kafka-to-nexus.h"
@@ -18,8 +19,20 @@ static MainOpt * opt;
 MainOpt * Roundtrip::opt = nullptr;
 #endif
 
+MainOpt * g_main_opt = nullptr;
+
+void signal_handler(int signal) {
+	LOG(9, "SIGNAL {}", signal);
+	if (auto m = g_main_opt->master.load()) {
+		m->stop();
+	}
+}
+
 int main(int argc, char ** argv) {
+	std::signal(SIGINT, signal_handler);
+	std::signal(SIGTERM, signal_handler);
 	MainOpt opt;
+	g_main_opt = &opt;
 
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
