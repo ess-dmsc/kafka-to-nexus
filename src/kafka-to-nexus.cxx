@@ -135,10 +135,12 @@ int main(int argc, char ** argv) {
 	}
 
 	Master m(opt.master_config);
+	opt.master = &m;
 	std::thread t1([&m]{
 		m.run();
 	});
 	t1.join();
+	opt.master = nullptr;
 
 	return 0;
 }
