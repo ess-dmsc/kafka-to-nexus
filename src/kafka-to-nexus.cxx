@@ -122,10 +122,9 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-	Roundtrip::opt = & opt;
-
 	if (opt.gtest) {
 		#if HAVE_GTEST
+		Roundtrip::opt = & opt;
 		::testing::InitGoogleTest(&argc, argv);
 		return RUN_ALL_TESTS();
 		#else

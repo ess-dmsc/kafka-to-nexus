@@ -1,6 +1,5 @@
 #include "test-roundtrip.h"
 #include <future>
-#include <gtest/gtest.h>
 #include "logger.h"
 #include "helper.h"
 #include "KafkaW.h"
@@ -10,6 +9,10 @@
 #include <rapidjson/prettywriter.h>
 #include "schemas/f141_epics_nt_generated.h"
 #include <type_traits>
+
+#if HAVE_GTEST
+#include <gtest/gtest.h>
+#endif
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -65,7 +68,11 @@ void roundtrip_simple_01(MainOpt & opt) {
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
 	Master m(opt.master_config);
 	std::thread t1([&m]{
+		#if HAVE_GTEST
 		ASSERT_NO_THROW( m.run() );
+		#else
+		m.run();
+		#endif
 	});
 
 	// We want the streamers to be ready

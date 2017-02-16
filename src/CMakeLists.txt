@@ -23,8 +23,11 @@ DEPENDS git_commit_now
 )
 
 find_path(path_include_fmt NAMES fmt/format.cc PATHS
-  "$ENV{fmt_dir}/include"
-  /opt/local
+$ENV{fmt_dir}/include
+/opt/local/fmt
+# For DMSC build node:
+$ENV{DM_ROOT}/usr/include
+/opt/local
 )
 
 find_path(path_include_gtest NAMES gtest/gtest.h PATHS
