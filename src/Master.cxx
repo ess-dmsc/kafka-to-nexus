@@ -32,7 +32,7 @@ public:
 
 CommandHandler(Master * master) : master(master) {
 	using namespace rapidjson;
-	auto buf1 = gulp("test/schema-command.json");
+	auto buf1 = gulp(master->config.dir_assets + "/test/schema-command.json");
 	auto doc = make_unique<rapidjson::Document>();
 	ParseResult err = doc->Parse(buf1.data(), buf1.size());
 	if (err.Code() != ParseErrorCode::kParseErrorNone) {

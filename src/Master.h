@@ -17,6 +17,7 @@ namespace FileWriter {
 struct MasterConfig {
 CommandListenerConfig command_listener;
 uint64_t teamid = 0;
+std::string dir_assets = ".";
 };
 
 /// Listens to the Kafka configuration topic.

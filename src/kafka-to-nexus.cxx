@@ -40,6 +40,7 @@ int main(int argc, char ** argv) {
 		{"broker-command-topic",            required_argument,        0,  0 },
 		{"teamid",                          required_argument,        0,  0 },
 		{"test",                            no_argument,              0,  0 },
+		{"assets-dir",                      required_argument,        0,  0 },
 		{0, 0, 0, 0},
 	};
 	std::string cmd;
@@ -77,6 +78,9 @@ int main(int argc, char ** argv) {
 			if (std::string("test") == lname) {
 				opt.gtest = true;
 			}
+			if (std::string("assets-dir") == lname) {
+				opt.master_config.dir_assets = optarg;
+			}
 			break;
 		}
 	}
@@ -112,6 +116,13 @@ int main(int argc, char ** argv) {
 		       "      Default: %s\n"
 		       "\n",
 			opt.master_config.command_listener.topic.c_str());
+
+		printf("  --assets-dir                <path>\n"
+		       "      Path where program can find some supplementary files.\n"
+		       "      Should point e.g. to the build or install directory.\n"
+		       "      Default: %s\n"
+		       "\n",
+			opt.master_config.dir_assets.c_str());
 
 		printf("  -v\n"
 		       "      Increase verbosity\n"
