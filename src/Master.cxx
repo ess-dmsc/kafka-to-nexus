@@ -104,11 +104,11 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 	}
 	auto & d = * doc;
 
-	auto teamid = 0;
+	uint64_t teamid = 0;
 	if (d.HasMember("teamid")) {
 		auto & m = d["teamid"];
 		if (m.IsInt()) {
-			teamid = d["teamid"].GetInt();
+			teamid = d["teamid"].GetUint64();
 		}
 	}
 	if (teamid != master->config.teamid) {
