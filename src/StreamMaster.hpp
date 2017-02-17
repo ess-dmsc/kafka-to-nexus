@@ -35,7 +35,7 @@ struct StreamMaster {
   };
 
   StreamMaster(std::string& broker, std::unique_ptr<FileWriterTask> file_writer_task) :
-    demux(file_writer_task->demuxers()), file_writer_task_(std::move(file_writer_task)), do_write(false), _stop(false) {
+    demux(file_writer_task->demuxers()), do_write(false), _stop(false), file_writer_task_(std::move(file_writer_task)) {
     for( auto& d: demux) {
       streamer[d.topic()] = Streamer(broker,d.topic());
     }
@@ -83,7 +83,7 @@ struct StreamMaster {
     return stop_impl();
   }
 
-  bool poll_n_messages(const int n) { };
+  bool poll_n_messages(const int n) { return false; }
   
 private:
 
