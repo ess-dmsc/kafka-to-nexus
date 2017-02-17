@@ -60,7 +60,7 @@ include_directories (
   ${path_include_rdkafka}
   ) 
 
-if (false)
+
 add_executable (streamer_test streamer_test.cxx)
 add_executable (streammaster_test streammaster_test.cxx ) 
 
@@ -94,4 +94,3 @@ target_link_libraries(streamer_test libhdf5cpp
   NeXusFileWriter
   )
 
-endif()

@@ -139,17 +139,6 @@ find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
 set(path_streaming_data_types ${path_streaming_data_types})
 message(STATUS "path_streaming_data_types: ${path_streaming_data_types}")
 
-message(STATUS $ENV{flatc_dir})
-find_path(path_flatc NAMES flatc PATHS
-  $ENV{flatc_dir}
-  $ENV{flatc}
-)
-message(STATUS "path_flatc: ${path_flatc}")
-
-
-message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
-
-
 
 set(flatbuffers_generated_headers "")
 
@@ -160,7 +149,7 @@ message(STATUS "flatc in ${flatc}")
 set(schemas_subdir "schemas")
 set(head_out_dir "${CMAKE_CURRENT_BINARY_DIR}/${schemas_subdir}")
 file(MAKE_DIRECTORY ${head_out_dir})
-file(GLOB_RECURSE flatbuffers_schemata2 RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types/schemas" "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types/schemas/*.fbs")
+file(GLOB_RECURSE flatbuffers_schemata2 RELATIVE ${path_streaming_data_types} ${path_streaming_data_types}/*.fbs)
 
 foreach (f0 ${flatbuffers_schemata2})
 	string(REGEX REPLACE "\\.fbs$" "" s0 ${f0})
@@ -171,8 +160,8 @@ foreach (f0 ${flatbuffers_schemata2})
 	#message(STATUS "fbh: ${fbh}")
 	add_custom_command(
 		OUTPUT "${head_out_dir}/${fbh}"
-		COMMAND pwd && ${flatc} --cpp --gen-mutable --gen-name-strings --scoped-enums "../../../../streaming-data-types/schemas/${fbs}"
-		DEPENDS "../../streaming-data-types/schemas/${fbs}"
+		COMMAND pwd && ${flatc} --cpp --gen-mutable --gen-name-strings --scoped-enums ${path_streaming_data_types}/${fbs}
+		DEPENDS  ${path_streaming_data_types}/${fbs}
 		WORKING_DIRECTORY "${head_out_dir}"
 		COMMENT "Process ${fbs} using ${flatc}"
 	)
