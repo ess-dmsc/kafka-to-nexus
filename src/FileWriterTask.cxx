@@ -78,6 +78,7 @@ int FileWriterTask::hdf_init() {
 			s.hdf_init(impl->hdf_file);
 		}
 	}
+	return 0;
 }
 
 

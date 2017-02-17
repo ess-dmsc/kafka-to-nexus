@@ -38,6 +38,7 @@ int HDFFile::init(std::string filename) {
 		LOG(7, "ERROR could not create the HDF file: {}  cwd: {}", filename, cwd.data());
 		return -1;
 	}
+	LOG(2, "INFO opened the file hid: {}", x);
 	impl->h5file = x;
 	return 0;
 }
