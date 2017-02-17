@@ -24,7 +24,7 @@ synth::synth(std::string name, PV type, int size, uint64_t seed) : name(name), s
 synth::~synth() {
 }
 
-fb synth::next() {
+fb synth::next(uint64_t seq) {
 	fb ret;
 	ret.builder.reset(new flatbuffers::FlatBufferBuilder);
 	// NOTE
@@ -36,8 +36,9 @@ fb synth::next() {
 	switch (impl->type) {
 	case PV::NTScalarArrayDouble: {
 		std::vector<double> a1;
-		for (int i1 = 0; i1 < size; ++i1) {
-			a1.push_back((impl->rnd() >> 8) * 1e-3);
+		a1.push_back(seq);
+		for (int i1 = 1; i1 < size; ++i1) {
+			a1.push_back((impl->rnd() >> 10) * 1e-3);
 		}
 		auto d1 = ret.builder->CreateVector(a1);
 		NTScalarArrayDoubleBuilder b2(*ret.builder);
