@@ -81,7 +81,13 @@ void handle_new(rapidjson::Document & d) {
 		LOG(1, "{}", d.to_str());
 	}
 
-	fwt->hdf_init();
+	{
+		auto x = fwt->hdf_init();
+		if (x) {
+			LOG(7, "ERROR hdf init failed, cancel this write command");
+			return;
+		}
+	}
 
 	std::string br(d["broker"].GetString());
 	auto s = std::unique_ptr< StreamMaster<Streamer, DemuxTopic> >(new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt)));

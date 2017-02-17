@@ -34,7 +34,7 @@ std::vector<DemuxTopic> _demuxers;
 std::unique_ptr<FileWriterTask_impl> impl;
 void add_source(Source && source);
 /// Called by CommandHandler on setup.
-void hdf_init();
+int hdf_init();
 };
 
 }

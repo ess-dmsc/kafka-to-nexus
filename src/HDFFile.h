@@ -27,7 +27,7 @@ class HDFFile final {
 public:
 HDFFile();
 ~HDFFile();
-void init(std::string filename);
+int init(std::string filename);
 void flush();
 HDFFile_h5 h5file_detail();
 private:
