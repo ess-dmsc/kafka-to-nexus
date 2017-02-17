@@ -44,14 +44,14 @@ hid_t HDFFile_h5::h5file() {
 	return _h5file;
 }
 
-std::unique_ptr<FBSchemaReader> FBSchemaReader::create(char * msg_data, int msg_size) {
+std::unique_ptr<FBSchemaReader> FBSchemaReader::create(Msg msg) {
 	static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
-	if (msg_size < 8) {
+	if (msg.size < 8) {
 		LOG(3, "ERROR message is too small");
 		return nullptr;
 	}
 	Schemas::FBID fbid;
-	memcpy(&fbid, msg_data + 4, 4);
+	memcpy(&fbid, msg.data + 4, 4);
 	if (auto & cr = Schemas::SchemaRegistry::find(fbid)) {
 		return cr->create_reader();
 	}
@@ -62,12 +62,15 @@ std::unique_ptr<FBSchemaWriter> FBSchemaReader::create_writer() {
 	return create_writer_impl();
 }
 
-std::string FBSchemaReader::sourcename(char * msg_data) {
-	return sourcename_impl(msg_data);
+FBSchemaReader::~FBSchemaReader() {
 }
 
-uint64_t FBSchemaReader::ts(char * msg_data) {
-	return ts_impl(msg_data);
+std::string FBSchemaReader::sourcename(Msg msg) {
+	return sourcename_impl(msg);
+}
+
+uint64_t FBSchemaReader::ts(Msg msg) {
+	return ts_impl(msg);
 }
 
 
@@ -77,13 +80,13 @@ FBSchemaWriter::FBSchemaWriter() {
 FBSchemaWriter::~FBSchemaWriter() {
 }
 
-void FBSchemaWriter::init(HDFFile * hdf_file, std::string const & sourcename, char * msg_data) {
+void FBSchemaWriter::init(HDFFile * hdf_file, std::string const & sourcename, Msg msg) {
 	this->hdf_file = hdf_file;
-	init_impl(sourcename, msg_data);
+	init_impl(sourcename, msg);
 }
 
-WriteResult FBSchemaWriter::write(char * msg_data) {
-	return write_impl(msg_data);
+WriteResult FBSchemaWriter::write(Msg msg) {
+	return write_impl(msg);
 }
 
 

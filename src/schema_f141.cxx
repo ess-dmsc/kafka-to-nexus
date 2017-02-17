@@ -17,13 +17,14 @@ template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 class reader : public FBSchemaReader {
 std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
-std::string sourcename_impl(char * msg_data) override;
-uint64_t ts_impl(char * msg_data) override;
+std::string sourcename_impl(Msg msg) override;
+uint64_t ts_impl(Msg msg) override;
 };
 
 class writer : public FBSchemaWriter {
-void init_impl(std::string const & sourcename, char * msg_data) override;
-WriteResult write_impl(char * msg_data) override;
+~writer() override;
+void init_impl(std::string const & sourcename, Msg msg) override;
+WriteResult write_impl(Msg msg) override;
 using DT = double;
 // DataSet::getId() will be -1 for the default constructed
 hid_t ds = -1;
@@ -35,8 +36,8 @@ std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
 	return std::unique_ptr<FBSchemaWriter>(new writer);
 }
 
-std::string reader::sourcename_impl(char * msg_data) {
-	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg_data);
+std::string reader::sourcename_impl(Msg msg) {
+	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	if (!epicspv->name()) {
 		LOG(3, "WARNING message has no source name");
 		return "";
@@ -46,8 +47,8 @@ std::string reader::sourcename_impl(char * msg_data) {
 
 // TODO
 // Should be in64_t to handle error cases
-uint64_t reader::ts_impl(char * msg_data) {
-	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg_data);
+uint64_t reader::ts_impl(Msg msg) {
+	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	auto fwdinfo = epicspv->fwdinfo();
 	if (!fwdinfo) {
 		LOG(3, "ERROR no time data sent");
@@ -58,12 +59,16 @@ uint64_t reader::ts_impl(char * msg_data) {
 
 
 
-void writer::init_impl(std::string const & sourcename, char * msg_data) {
+
+writer::~writer() {
+}
+
+void writer::init_impl(std::string const & sourcename, Msg msg) {
 	// TODO
 	// This is just a unbuffered, low-performance write.
 	// Add buffering after it works.
 	auto file = hdf_file->h5file_detail().h5file();
-	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg_data);
+	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	// TODO verify buffer
 	if (epicspv->pv_type() != FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble) {
 		LOG(2, "SORRY cant handle that at the moment");
@@ -117,7 +122,7 @@ void writer::init_impl(std::string const & sourcename, char * msg_data) {
 }
 
 
-WriteResult writer::write_impl(char * msg_data) {
+WriteResult writer::write_impl(Msg msg) {
 	LOG(0, "f141_epics_nt::write_impl");
 	// TODO cache these values later, but for now, let's make it verbose:
 
@@ -134,7 +139,7 @@ WriteResult writer::write_impl(char * msg_data) {
 		LOG(0, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 
-	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg_data);
+	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	auto pv = (FlatBufs::f141_epics_nt::NTScalarArrayDouble*)epicspv->pv();
 	if (pv->value()->size() != get_sizes_now.at(1)) {
 		LOG(7, "ERROR this message is not compatible with the previous ones");

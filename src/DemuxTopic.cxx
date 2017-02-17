@@ -32,21 +32,22 @@ DemuxTopic::DemuxTopic(std::string topic) : _topic(topic) {
 }
 
 DemuxTopic::DT DemuxTopic::time_difference_from_message(char * msg_data, int msg_size) {
+	Msg msg {msg_data, msg_size};
   std::string _tmp_dummy;
-  auto reader = FBSchemaReader::create(msg_data, msg_size);
+  auto reader = FBSchemaReader::create(msg);
   if (!reader) {
     LOG(3, "ERROR unknown schema id?");
     return DT::ERR();
   }
-  auto srcn = reader->sourcename(msg_data);
+  auto srcn = reader->sourcename(msg);
   std::unique_ptr<FBSchemaReader> _schema_reader;
   LOG(0, "Msg is for sourcename: {}", srcn);
   for (auto & s : sources()) {
     if (s.source() == srcn) {
-       _schema_reader = FBSchemaReader::create(msg_data, msg_size);
+       _schema_reader = FBSchemaReader::create(msg);
     }
   }
-  return DT(srcn, _schema_reader->ts(msg_data));
+  return DT(srcn, _schema_reader->ts(msg));
 }
 
 std::string const & DemuxTopic::topic() const {
@@ -54,16 +55,17 @@ std::string const & DemuxTopic::topic() const {
 }
 
 ProcessMessageResult DemuxTopic::process_message(char * msg_data, int msg_size) {
-	auto reader = FBSchemaReader::create(msg_data, msg_size);
+	Msg msg {msg_data, msg_size};
+	auto reader = FBSchemaReader::create(msg);
 	if (!reader) {
 		LOG(3, "ERROR unknown schema id?");
 		return ProcessMessageResult::ERR();
 	}
-	auto srcn = reader->sourcename(msg_data);
+	auto srcn = reader->sourcename(msg);
 	LOG(0, "Msg is for sourcename: {}", srcn);
 	for (auto & s : sources()) {
 		if (s.source() == srcn) {
-			auto ret = s.process_message(msg_data, msg_size);
+			auto ret = s.process_message(msg);
 			if (ret.ts() < 0) return ProcessMessageResult::ERR();
 			return ProcessMessageResult::OK(ret.ts());
 		}
