@@ -83,7 +83,7 @@ struct StreamMaster {
     return stop_impl();
   }
 
-  bool poll_n_messages(const int n) { };
+  bool poll_n_messages(const int n) { return false; }
   
 private:
 
