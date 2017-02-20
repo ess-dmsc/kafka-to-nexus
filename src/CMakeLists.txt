@@ -192,6 +192,7 @@ set(tgt "kafka-to-nexus")
 set(sources
 kafka-to-nexus.cxx
 schema_f141.cxx
+schema_amo0.cxx
 test-roundtrip.cxx
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )

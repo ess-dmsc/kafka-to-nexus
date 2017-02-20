@@ -1,0 +1,24 @@
+{
+	"cmd": "FileWriter_new",
+	"broker": "129.129.188.59:9092",
+	"sstreams": [
+		{"a": 12, "b": 56}
+	],
+	"streams": [
+		{
+			"broker": "129.129.188.59:9092",
+			"topic": "event.stream",
+			"source": "AMOR_area_detector",
+			"path": "",
+			"on_path_missing": "ignore"
+		}
+
+	],
+	"file_attributes": {
+		"dummy-attribute-01": 2.579,
+		"dummy-attribute-02": "can also be some text",
+		"dummy-attribute-03": {
+			"but": "should an object be allowed here?"
+		}
+	}
+}
