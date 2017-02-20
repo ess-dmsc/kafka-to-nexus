@@ -23,6 +23,9 @@ std::string & CmdMsg_K::str() {
 }
 
 
+// In the future, want to handle many, but not right now.
+int g_N_HANDLED = 0;
+
 /// Stub, will perform the JSON parsing and then take appropriate action.
 class CommandHandler : public FileWriterCommandHandler {
 public:
@@ -39,15 +42,10 @@ CommandHandler(Master * master) : master(master) {
 	schema_command.reset(new SchemaDocument(*doc));
 }
 
-void handle(std::unique_ptr<KafkaW::Msg> msg) {
+void handle_new(rapidjson::Document & d) {
+	if (g_N_HANDLED > 0) return;
+
 	using namespace rapidjson;
-	auto doc = make_unique<Document>();
-	ParseResult err = doc->Parse((char*)msg->data(), msg->size());
-	if (doc->HasParseError()) {
-		LOG(6, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
-		throw std::runtime_error("");
-	}
-	auto & d = * doc;
 	SchemaValidator vali(*schema_command);
 	if (!d.Accept(vali)) {
 		StringBuffer sb1, sb2;
@@ -59,13 +57,24 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 		);
 		throw std::runtime_error("ERROR command message schema validation");
 	}
-	LOG(1, "cmd: {}", d["cmd"].GetString());
 
+	LOG(1, "cmd: {}", d["cmd"].GetString());
 	auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
-	fwt->set_hdf_filename("a-dummy-name.h5");
+	std::string fname = "a-dummy-name.h5";
+	if (d.HasMember("filename")) {
+		if (d["filename"].IsString()) {
+			fname = d["filename"].GetString();
+		}
+	}
+	fwt->set_hdf_filename(fname);
 
 	for (auto & st : d["streams"].GetArray()) {
 		fwt->add_source(Source(st["topic"].GetString(), st["source"].GetString()));
+	}
+	for (auto & d : fwt->demuxers()) {
+		for (auto & s : d.sources()) {
+			s.teamid = master->config.teamid;
+		}
 	}
 
 	for (auto & d : fwt->demuxers()) {
@@ -78,6 +87,50 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 	auto s = std::unique_ptr< StreamMaster<Streamer, DemuxTopic> >(new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt)));
 	s->start();
 	master->stream_masters.push_back(std::move(s));
+	g_N_HANDLED += 1;
+}
+
+void handle_exit(rapidjson::Document & d) {
+	master->stop();
+}
+
+void handle(std::unique_ptr<KafkaW::Msg> msg) {
+	using namespace rapidjson;
+	auto doc = make_unique<Document>();
+	ParseResult err = doc->Parse((char*)msg->data(), msg->size());
+	if (doc->HasParseError()) {
+		LOG(6, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+		throw std::runtime_error("");
+	}
+	auto & d = * doc;
+
+	auto teamid = 0;
+	if (d.HasMember("teamid")) {
+		auto & m = d["teamid"];
+		if (m.IsInt()) {
+			teamid = d["teamid"].GetInt();
+		}
+	}
+	if (teamid != master->config.teamid) {
+		LOG(2, "WARNING command is for teamid {}, we are {}", teamid, master->config.teamid);
+		return;
+	}
+
+	if (d.HasMember("cmd")) {
+		if (d["cmd"].IsString()) {
+			std::string cmd(d["cmd"].GetString());
+			if (cmd == "FileWriter_new") {
+				handle_new(d);
+				return;
+			}
+			if (cmd == "FileWriter_exit") {
+				handle_exit(d);
+				return;
+			}
+		}
+	}
+	LOG(3, "ERROR could not figure out this command: {:.{}}", msg->data(), msg->size());
+
 }
 
 private:

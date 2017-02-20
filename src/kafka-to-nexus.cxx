@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <cstdio>
 #include <string>
+#include <csignal>
 #include <getopt.h>
 #include "logger.h"
 #include "kafka-to-nexus.h"
@@ -18,13 +19,26 @@ static MainOpt * opt;
 MainOpt * Roundtrip::opt = nullptr;
 #endif
 
+MainOpt * g_main_opt = nullptr;
+
+void signal_handler(int signal) {
+	LOG(9, "SIGNAL {}", signal);
+	if (auto m = g_main_opt->master.load()) {
+		m->stop();
+	}
+}
+
 int main(int argc, char ** argv) {
+	std::signal(SIGINT, signal_handler);
+	std::signal(SIGTERM, signal_handler);
 	MainOpt opt;
+	g_main_opt = &opt;
 
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
 		{"broker-command-topic",            required_argument,        0,  0 },
+		{"teamid",                          required_argument,        0,  0 },
 		{"test",                            no_argument,              0,  0 },
 		{0, 0, 0, 0},
 	};
@@ -57,6 +71,9 @@ int main(int argc, char ** argv) {
 			if (std::string("broker-command-topic") == lname) {
 				opt.master_config.command_listener.topic = optarg;
 			}
+			if (std::string("teamid") == lname) {
+				opt.master_config.teamid = strtoul(optarg, nullptr, 0);
+			}
 			if (std::string("test") == lname) {
 				opt.gtest = true;
 			}
@@ -70,8 +87,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-	printf("ess-file-writer-0.0.1  (ESS, BrightnESS)\n");
-	printf("  %.7s\n", GIT_COMMIT);
+	printf("kafka-to-nexus-0.0.1  (ESS, BrightnESS)  %.7s\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
 	if (opt.help) {
@@ -79,19 +95,19 @@ int main(int argc, char ** argv) {
 		       "Controlled via JSON packets sent over the configuration topic.\n"
 		       "\n"
 		       "\n"
-		       "forward-epics-to-kafka\n"
+		       "kafka-to-nexus\n"
 		       "  --help, -h\n"
 		       "\n"
 		       "  --test\n"
 		       "      Run tests\n"
 		       "\n"
-		       "  --broker-configuration-address    host:port,host:port,...\n"
+		       "  --broker-command-address    host:port,host:port,...\n"
 		       "      Kafka brokers to connect with for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
 			opt.master_config.command_listener.address.c_str());
 
-		printf("  --broker-configuration-topic      <topic-name>\n"
+		printf("  --broker-command-topic      <topic-name>\n"
 		       "      Topic name to listen to for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
@@ -117,6 +133,14 @@ int main(int argc, char ** argv) {
 		return 1;
 		#endif
 	}
+
+	Master m(opt.master_config);
+	opt.master = &m;
+	std::thread t1([&m]{
+		m.run();
+	});
+	t1.join();
+	opt.master = nullptr;
 
 	return 0;
 }

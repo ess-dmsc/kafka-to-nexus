@@ -84,6 +84,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 
 	{
 		// Produce sample data using the nt types scheme only
+		auto teamid = opt.master_config.teamid;
 		KafkaW::BrokerOpt opt;
 		opt.address = "localhost:9092";
 		auto nowns = []{return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};
@@ -109,15 +110,12 @@ void roundtrip_simple_01(MainOpt & opt) {
 				auto value = builder.CreateVector(data);
 				FlatBufs::f141_epics_nt::NTScalarArrayDoubleBuilder b1(builder);
 				b1.add_value(value);
-				auto pv = b1.Finish();
+				auto pv = b1.Finish().Union();
 				auto sn = builder.CreateString(sourcename);
 				FlatBufs::f141_epics_nt::EpicsPVBuilder epicspv(builder);
 				epicspv.add_name(sn);
 				epicspv.add_pv_type(FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble);
-				auto o1 = *((flatbuffers::Offset<void>*)&pv);
-				//auto o2 = *((uint32_t*)&pv);
-				//LOG(3, "TRY TO WRITE OFFSET: {}", o2);
-				epicspv.add_pv(o1);
+				epicspv.add_pv(pv);
 				epicspv.add_fwdinfo(&fi);
 				FinishEpicsPVBuffer(builder, epicspv.Finish());
 				if (true) {

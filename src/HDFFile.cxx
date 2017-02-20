@@ -21,6 +21,10 @@ HDFFile::HDFFile() {
 
 HDFFile::~HDFFile() {
 	if (impl->h5file >= 0) {
+		std::array<char, 512> fname;
+		H5Fget_name(impl->h5file, fname.data(), fname.size());
+		LOG(2, "flush file {}", fname.data());
+		H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
 		H5Fclose(impl->h5file);
 	}
 }
@@ -71,6 +75,14 @@ std::string FBSchemaReader::sourcename(Msg msg) {
 
 uint64_t FBSchemaReader::ts(Msg msg) {
 	return ts_impl(msg);
+}
+
+uint64_t FBSchemaReader::teamid(Msg & msg) {
+	return teamid_impl(msg);
+}
+
+uint64_t FBSchemaReader::teamid_impl(Msg & msg) {
+	return 0;
 }
 
 
