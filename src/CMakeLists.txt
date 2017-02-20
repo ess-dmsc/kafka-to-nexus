@@ -23,8 +23,11 @@ DEPENDS git_commit_now
 )
 
 find_path(path_include_fmt NAMES fmt/format.cc PATHS
-  "$ENV{fmt_dir}/include"
-  /opt/local
+$ENV{fmt_dir}/include
+/opt/local/fmt
+# For DMSC build node:
+$ENV{DM_ROOT}/usr/include
+/opt/local
 )
 
 find_path(path_include_gtest NAMES gtest/gtest.h PATHS
@@ -42,31 +45,31 @@ if (path_include_gtest AND path_lib_gtest)
 set(have_gtest 1)
 endif()
 
-find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h PATHS
- "$ENV{flatbuffers_dir}/include"
- /opt/local/flatbuffers.git/include
+find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h HINTS
+"$ENV{flatbuffers_dir}/include"
+/opt/local/flatbuffers.git/include
 )
 
-find_path(path_include_rapidjson NAMES rapidjson/document.h PATHS
- "$ENV{rapidjson_dir}/include"
- /opt/local/rapidjson.git/include
+find_path(path_include_rapidjson NAMES rapidjson/document.h HINTS
+"$ENV{rapidjson_dir}/include"
+/opt/local/rapidjson.git/include
 )
 
-find_path(path_include_hdf5 NAMES hdf5.h PATHS
-  "$ENV{hdf5_dir}/include"
+find_path(path_include_hdf5 NAMES hdf5.h HINTS
+"$ENV{hdf5_dir}/include"
 )
 
-find_library(path_lib_hdf5 NAMES hdf5-shared PATHS
-  "$ENV{hdf5_dir}/lib"
-  )
-find_library(path_lib_hdf5cpp NAMES hdf5_cpp-shared PATHS
-  "$ENV{hdf5_dir}/lib"
-  )
+find_library(path_lib_hdf5 NAMES hdf5-shared HINTS
+"$ENV{hdf5_dir}/lib"
+)
+find_library(path_lib_hdf5cpp NAMES hdf5_cpp-shared HINTS
+"$ENV{hdf5_dir}/lib"
+)
 if( NOT path_lib_hdf5 )
-  find_library(path_lib_hdf5 NAMES hdf5 PATHS
+  find_library(path_lib_hdf5 NAMES hdf5 HINTS
   "$ENV{hdf5_dir}/lib"
   )
-  find_library(path_lib_hdf5cpp NAMES hdf5_cpp PATHS
+  find_library(path_lib_hdf5cpp NAMES hdf5_cpp HINTS
     "$ENV{hdf5_dir}/lib"
     )
 endif()
@@ -78,24 +81,26 @@ set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
 add_library(libhdf5cpp SHARED IMPORTED)
 set_property(TARGET libhdf5cpp PROPERTY IMPORTED_LOCATION ${path_lib_hdf5cpp})
 
-find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h PATHS
- "$ENV{librdkafka_dir}/include"
- /opt/local/rdkafka/install/include
- /usr/local/include
+find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h HINTS
+"$ENV{librdkafka_dir}/include"
+/opt/local/rdkafka/install/include
+PATHS
+/usr/local/include
 )
 
-find_library(path_lib_rdkafka NAMES rdkafka PATHS
+find_library(path_lib_rdkafka NAMES rdkafka HINTS
 "$ENV{librdkafka_dir}/lib"
 /opt/local/rdkafka/install/lib
+PATHS
 /usr/local/lib
 )
 add_library(librdkafka SHARED IMPORTED)
 set_property(TARGET librdkafka PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka})
 
-find_library(path_lib_rdkafka++ NAMES rdkafka++ PATHS
- "$ENV{librdkafka_dir}/lib"
- /opt/local/rdkafka/install/lib
- /usr/local/lib
+find_library(path_lib_rdkafka++ NAMES rdkafka++ HINTS
+"$ENV{librdkafka_dir}/lib"
+/opt/local/rdkafka/install/lib
+/usr/local/lib
 )
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
@@ -139,22 +144,11 @@ find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
 set(path_streaming_data_types ${path_streaming_data_types})
 message(STATUS "path_streaming_data_types: ${path_streaming_data_types}")
 
-message(STATUS $ENV{flatc_dir})
-find_path(path_flatc NAMES flatc PATHS
-  $ENV{flatc_dir}
-  $ENV{flatc}
-)
-message(STATUS "path_flatc: ${path_flatc}")
-
-
-message(STATUS ${CMAKE_CURRENT_BINARY_DIR})
-
-
 
 set(flatbuffers_generated_headers "")
 
 # Search the dev env standard locations, but it will also look in PATH
-find_program(flatc flatc PATHS $ENV{flatc_dir} $ENV{flatc} "$ENV{HOME}/.tools" "/opt/local/flatbuffers")
+find_program(flatc flatc HINTS $ENV{flatc_dir} $ENV{flatc} "/opt/local/flatbuffers")
 message(STATUS "flatc in ${flatc}")
 
 set(schemas_subdir "schemas")

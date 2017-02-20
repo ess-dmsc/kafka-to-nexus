@@ -204,7 +204,7 @@ WriteResult writer::write_impl(Msg msg) {
 	{
 		// currently want to see each write
 		auto file = hdf_file->h5file_detail().h5file();
-		H5Fflush(file, H5F_SCOPE_GLOBAL);
+		H5Fflush(file, H5F_SCOPE_LOCAL);
 	}
 	auto fwdinfo = epicspv->fwdinfo();
 	if (!fwdinfo) {

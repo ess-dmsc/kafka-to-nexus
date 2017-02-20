@@ -1,6 +1,5 @@
 #include "test-roundtrip.h"
 #include <future>
-#include <gtest/gtest.h>
 #include "logger.h"
 #include "helper.h"
 #include "KafkaW.h"
@@ -10,6 +9,10 @@
 #include <rapidjson/prettywriter.h>
 #include "schemas/f141_epics_nt_generated.h"
 #include <type_traits>
+
+#if HAVE_GTEST
+#include <gtest/gtest.h>
+#endif
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -65,7 +68,11 @@ void roundtrip_simple_01(MainOpt & opt) {
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
 	Master m(opt.master_config);
 	std::thread t1([&m]{
+		#if HAVE_GTEST
 		ASSERT_NO_THROW( m.run() );
+		#else
+		m.run();
+		#endif
 	});
 
 	// We want the streamers to be ready
@@ -84,7 +91,6 @@ void roundtrip_simple_01(MainOpt & opt) {
 
 	{
 		// Produce sample data using the nt types scheme only
-		auto teamid = opt.master_config.teamid;
 		KafkaW::BrokerOpt opt;
 		opt.address = "localhost:9092";
 		auto nowns = []{return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};
@@ -100,8 +106,8 @@ void roundtrip_simple_01(MainOpt & opt) {
 				fi.mutate_ts_data(nowns() + 1000000 * i1);
 				fi.mutate_ts_fwd(fi.ts_data());
 				fi.mutate_fwdix(0);
+				fi.mutate_teamid(0);
 				_has_teamid<FlatBufs::f141_epics_nt::fwdinfo_t>::fill(fi, 0);
-				auto srcn = builder.CreateString(sourcename);
 				std::vector<double> data;
 				data.resize(7);
 				for (size_t i2 = 0; i2 < data.size(); ++i2) {

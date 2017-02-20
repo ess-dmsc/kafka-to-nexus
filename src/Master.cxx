@@ -32,7 +32,7 @@ public:
 
 CommandHandler(Master * master) : master(master) {
 	using namespace rapidjson;
-	auto buf1 = gulp("test/schema-command.json");
+	auto buf1 = gulp(master->config.dir_assets + "/test/schema-command.json");
 	auto doc = make_unique<rapidjson::Document>();
 	ParseResult err = doc->Parse(buf1.data(), buf1.size());
 	if (err.Code() != ParseErrorCode::kParseErrorNone) {
@@ -81,7 +81,13 @@ void handle_new(rapidjson::Document & d) {
 		LOG(1, "{}", d.to_str());
 	}
 
-	fwt->hdf_init();
+	{
+		auto x = fwt->hdf_init();
+		if (x) {
+			LOG(7, "ERROR hdf init failed, cancel this write command");
+			return;
+		}
+	}
 
 	std::string br(d["broker"].GetString());
 	auto s = std::unique_ptr< StreamMaster<Streamer, DemuxTopic> >(new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt)));
@@ -104,11 +110,11 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 	}
 	auto & d = * doc;
 
-	auto teamid = 0;
+	uint64_t teamid = 0;
 	if (d.HasMember("teamid")) {
 		auto & m = d["teamid"];
 		if (m.IsInt()) {
-			teamid = d["teamid"].GetInt();
+			teamid = d["teamid"].GetUint64();
 		}
 	}
 	if (teamid != master->config.teamid) {

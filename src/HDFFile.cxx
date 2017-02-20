@@ -5,6 +5,7 @@
 #include "SchemaRegistry.h"
 #include "logger.h"
 #include <flatbuffers/flatbuffers.h>
+#include <unistd.h>
 
 
 namespace BrightnESS {
@@ -29,8 +30,17 @@ HDFFile::~HDFFile() {
 	}
 }
 
-void HDFFile::init(std::string filename) {
-	impl->h5file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+int HDFFile::init(std::string filename) {
+	auto x = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if (x < 0) {
+		std::array<char, 256> cwd;
+		getcwd(cwd.data(), cwd.size());
+		LOG(7, "ERROR could not create the HDF file: {}  cwd: {}", filename, cwd.data());
+		return -1;
+	}
+	LOG(2, "INFO opened the file hid: {}", x);
+	impl->h5file = x;
+	return 0;
 }
 
 void HDFFile::flush() {

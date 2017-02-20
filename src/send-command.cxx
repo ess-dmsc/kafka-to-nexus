@@ -26,7 +26,7 @@ std::string make_command(std::string broker, uint64_t teamid) {
 	d.AddMember("cmd", Value("FileWriter_new", a), a);
 	d.AddMember("teamid", teamid, a);
 	d.AddMember("broker", Value(broker.c_str(), a), a);
-	d.AddMember("filename", Value(fmt::format("tmp-{}.h5", teamid).c_str(), a), a);
+	d.AddMember("filename", Value(fmt::format("tmp-{:016x}.h5", teamid).c_str(), a), a);
 	Value sa;
 	sa.SetArray();
 	{
