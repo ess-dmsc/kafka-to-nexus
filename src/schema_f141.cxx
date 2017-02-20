@@ -38,6 +38,7 @@ hid_t ds = -1;
 hid_t dsp = -1;
 hid_t dcpl = -1;
 hid_t ds_seq_data = -1;
+hid_t ds_seq_fwd = -1;
 hid_t ds_ts_data = -1;
 bool do_flush_always = true;
 };
@@ -90,6 +91,7 @@ uint64_t reader::teamid_impl(Msg & msg) {
 writer::~writer() {
 	if (ds != -1) H5Dclose(ds);
 	if (ds_seq_data != -1) H5Dclose(ds_seq_data);
+	if (ds_seq_fwd != -1) H5Dclose(ds_seq_fwd);
 	if (ds_ts_data != -1) H5Dclose(ds_ts_data);
 	if (dsp != -1) H5Sclose(dsp);
 	if (dcpl != -1) H5Pclose(dcpl);
@@ -171,6 +173,27 @@ void writer::init_impl(std::string const & sourcename, Msg msg) {
 		this->ds_seq_data = H5Dcreate1(file, (sourcename + "__seq_data").c_str(), dt, dsp, dcpl);
 		if (this->ds_seq_data < 0) {
 			LOG(7, "ERROR creating ds_seq_data");
+		}
+		H5Pclose(dcpl);
+		H5Sclose(dsp);
+	}
+
+	{
+		// Dataset seq_fwd
+		auto dt = nat_type<uint64_t>();
+		auto ncols = 1;
+		array<hsize_t, 2> sini {{ 0, 1 }};
+		array<hsize_t, 2> smax {{ H5S_UNLIMITED, 1 }};
+		auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+		auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+		array<hsize_t, 2> schk {{std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), 1}};
+		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
+		if (err < 0) {
+			LOG(7, "ERROR in H5Pset_chunk");
+		}
+		this->ds_seq_fwd = H5Dcreate1(file, (sourcename + "__seq_fwd").c_str(), dt, dsp, dcpl);
+		if (this->ds_seq_fwd < 0) {
+			LOG(7, "ERROR creating ds_seq_fwd");
 		}
 		H5Pclose(dcpl);
 		H5Sclose(dsp);
@@ -283,8 +306,10 @@ WriteResult writer::write_impl(Msg msg) {
 	if (fi) {
 		LOG(3, "ts_data: {}", fi->ts_data());
 		ts_data = (int64_t) fi->ts_data();
-		auto x1 = fi->seq_data();
-		append_data(this->ds_seq_data, &x1, 1);
+		auto seq_data = fi->seq_data();
+		auto seq_fwd = fi->seq_fwd();
+		append_data(this->ds_seq_data, &seq_data, 1);
+		append_data(this->ds_seq_fwd, &seq_fwd, 1);
 		append_data(this->ds_ts_data, &ts_data, 1);
 	}
 
