@@ -304,7 +304,6 @@ WriteResult writer::write_impl(Msg msg) {
 
 	auto fi = fwdinfo(epicspv);
 	if (fi) {
-		LOG(3, "ts_data: {}", fi->ts_data());
 		ts_data = (int64_t) fi->ts_data();
 		auto seq_data = fi->seq_data();
 		auto seq_fwd = fi->seq_fwd();
