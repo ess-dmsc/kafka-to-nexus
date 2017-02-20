@@ -19,6 +19,7 @@ class reader : public FBSchemaReader {
 std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
 std::string sourcename_impl(Msg msg) override;
 uint64_t ts_impl(Msg msg) override;
+uint64_t teamid_impl(Msg & msg) override;
 };
 
 class writer : public FBSchemaWriter {
@@ -58,10 +59,23 @@ uint64_t reader::ts_impl(Msg msg) {
 }
 
 
+uint64_t reader::teamid_impl(Msg & msg) {
+	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
+	auto fwdinfo = epicspv->fwdinfo();
+	if (!fwdinfo) {
+		LOG(3, "ERROR no time data sent");
+		return 0;
+	}
+	return fwdinfo->teamid();
+}
 
 
 writer::~writer() {
+	if (ds != -1) H5Dclose(ds);
+	if (dsp != -1) H5Sclose(dsp);
+	if (dcpl != -1) H5Pclose(dcpl);
 }
+
 
 void writer::init_impl(std::string const & sourcename, Msg msg) {
 	// TODO
@@ -136,7 +150,7 @@ WriteResult writer::write_impl(Msg msg) {
 	get_sizes_max.resize(ndims);
 	H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
 	for (int i1 = 0; i1 < ndims; ++i1) {
-		LOG(0, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		LOG(-1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
@@ -178,7 +192,7 @@ WriteResult writer::write_impl(Msg msg) {
 		}
 	}
 	for (int i1 = 0; i1 < ndims; ++i1) {
-		LOG(0, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		LOG(-1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 	auto dt = nat_type<DT>();
 	err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, pv->value()->data());
@@ -187,6 +201,11 @@ WriteResult writer::write_impl(Msg msg) {
 		return {-1};
 	}
 	H5Sclose(mem);
+	{
+		// currently want to see each write
+		auto file = hdf_file->h5file_detail().h5file();
+		H5Fflush(file, H5F_SCOPE_LOCAL);
+	}
 	auto fwdinfo = epicspv->fwdinfo();
 	if (!fwdinfo) {
 		LOG(3, "ERROR no time data sent");

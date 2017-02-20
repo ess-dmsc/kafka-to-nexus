@@ -1,6 +1,5 @@
 #include "test-roundtrip.h"
 #include <future>
-#include <gtest/gtest.h>
 #include "logger.h"
 #include "helper.h"
 #include "KafkaW.h"
@@ -10,6 +9,10 @@
 #include <rapidjson/prettywriter.h>
 #include "schemas/f141_epics_nt_generated.h"
 #include <type_traits>
+
+#if HAVE_GTEST
+#include <gtest/gtest.h>
+#endif
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -65,7 +68,11 @@ void roundtrip_simple_01(MainOpt & opt) {
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
 	Master m(opt.master_config);
 	std::thread t1([&m]{
+		#if HAVE_GTEST
 		ASSERT_NO_THROW( m.run() );
+		#else
+		m.run();
+		#endif
 	});
 
 	// We want the streamers to be ready
@@ -99,8 +106,8 @@ void roundtrip_simple_01(MainOpt & opt) {
 				fi.mutate_ts_data(nowns() + 1000000 * i1);
 				fi.mutate_ts_fwd(fi.ts_data());
 				fi.mutate_fwdix(0);
+				fi.mutate_teamid(0);
 				_has_teamid<FlatBufs::f141_epics_nt::fwdinfo_t>::fill(fi, 0);
-				auto srcn = builder.CreateString(sourcename);
 				std::vector<double> data;
 				data.resize(7);
 				for (size_t i2 = 0; i2 < data.size(); ++i2) {
@@ -109,15 +116,12 @@ void roundtrip_simple_01(MainOpt & opt) {
 				auto value = builder.CreateVector(data);
 				FlatBufs::f141_epics_nt::NTScalarArrayDoubleBuilder b1(builder);
 				b1.add_value(value);
-				auto pv = b1.Finish();
+				auto pv = b1.Finish().Union();
 				auto sn = builder.CreateString(sourcename);
 				FlatBufs::f141_epics_nt::EpicsPVBuilder epicspv(builder);
 				epicspv.add_name(sn);
 				epicspv.add_pv_type(FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble);
-				auto o1 = *((flatbuffers::Offset<void>*)&pv);
-				//auto o2 = *((uint32_t*)&pv);
-				//LOG(3, "TRY TO WRITE OFFSET: {}", o2);
-				epicspv.add_pv(o1);
+				epicspv.add_pv(pv);
 				epicspv.add_fwdinfo(&fi);
 				FinishEpicsPVBuffer(builder, epicspv.Finish());
 				if (true) {

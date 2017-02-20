@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include "Master.h"
 
 extern "C" char const GIT_COMMIT[];
@@ -9,4 +10,5 @@ bool help = false;
 bool verbose = false;
 bool gtest = false;
 BrightnESS::FileWriter::MasterConfig master_config;
+std::atomic<Master *> master;
 };

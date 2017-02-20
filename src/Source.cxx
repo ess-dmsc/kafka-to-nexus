@@ -44,15 +44,21 @@ ProcessMessageResult Source::process_message(Msg msg) {
 		}
 		_schema_writer = _schema_reader->create_writer();
 	}
-	//if (teamid == _schema_reader->teamid(msg)) {
-	//}
-	if (_cnt_msg_written == 0) {
-		_schema_writer->init(_hdf_file, source(), msg);
+	if (teamid == _schema_reader->teamid(msg)) {
+		if (_cnt_msg_written == 0) {
+			_schema_writer->init(_hdf_file, source(), msg);
+		}
+		auto ret = _schema_writer->write(msg);
+		_cnt_msg_written += 1;
+		_processed_messages_count += 1;
+		return ProcessMessageResult::OK(ret.ts);
 	}
-	auto ret = _schema_writer->write(msg);
-	_processed_messages_count += 1;
-	_cnt_msg_written += 1;
-	return ProcessMessageResult::OK(ret.ts);
+	else {
+		// If it's not on the team, still fake success because otherwise
+		// Streamer currently aborts.
+		return ProcessMessageResult::OK(_schema_reader->ts(msg));
+	}
+	return ProcessMessageResult::ERR();
 }
 
 uint32_t Source::processed_messages_count() const {

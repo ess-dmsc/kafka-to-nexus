@@ -34,6 +34,7 @@ uint32_t processed_messages_count() const;
 ProcessMessageResult process_message(Msg msg);
 std::string to_str() const;
 rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * a = nullptr) const;
+uint64_t teamid = 0;
 private:
 Source(std::string topic, std::string source);
 /// Used by FileWriterTask during setup.

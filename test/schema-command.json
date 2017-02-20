@@ -33,7 +33,7 @@
 				},
 
 				"DOC": "additionalProperties accepted by validator, turn on later",
-				"additionalProperties": false,
+				"additionalProperties": true,
 
 				"required": ["topic"]
 			}
@@ -42,7 +42,13 @@
 		"__note": "can so far not limit the types of the object properties without specifying all property keys",
 		"file_attributes": {
 			"type": "object"
+		},
+		"broker": {
+			"type": "string"
+		},
+		"filename": {
+			"type": "string"
 		}
 	},
-	"required": ["file_attributes"]
+	"required": ["broker", "streams"]
 }

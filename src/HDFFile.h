@@ -27,7 +27,7 @@ class HDFFile final {
 public:
 HDFFile();
 ~HDFFile();
-void init(std::string filename);
+int init(std::string filename);
 void flush();
 HDFFile_h5 h5file_detail();
 private:
@@ -45,10 +45,12 @@ virtual ~FBSchemaReader();
 std::unique_ptr<FBSchemaWriter> create_writer();
 std::string sourcename(Msg msg);
 uint64_t ts(Msg msg);
+uint64_t teamid(Msg & msg);
 private:
 virtual std::unique_ptr<FBSchemaWriter> create_writer_impl() = 0;
 virtual std::string sourcename_impl(Msg msg) = 0;
 virtual uint64_t ts_impl(Msg msg) = 0;
+virtual uint64_t teamid_impl(Msg & msg);
 };
 
 

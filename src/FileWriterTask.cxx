@@ -68,13 +68,17 @@ void FileWriterTask::add_source(Source && source) {
 }
 
 
-void FileWriterTask::hdf_init() {
-	impl->hdf_file.init(impl->hdf_filename);
+int FileWriterTask::hdf_init() {
+	auto x = impl->hdf_file.init(impl->hdf_filename);
+	if (x) {
+		return x;
+	}
 	for (auto & d: demuxers()) {
 		for (auto & s : d.sources()) {
 			s.hdf_init(impl->hdf_file);
 		}
 	}
+	return 0;
 }
 
 

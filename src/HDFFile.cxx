@@ -5,6 +5,7 @@
 #include "SchemaRegistry.h"
 #include "logger.h"
 #include <flatbuffers/flatbuffers.h>
+#include <unistd.h>
 
 
 namespace BrightnESS {
@@ -21,12 +22,25 @@ HDFFile::HDFFile() {
 
 HDFFile::~HDFFile() {
 	if (impl->h5file >= 0) {
+		std::array<char, 512> fname;
+		H5Fget_name(impl->h5file, fname.data(), fname.size());
+		LOG(2, "flush file {}", fname.data());
+		H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
 		H5Fclose(impl->h5file);
 	}
 }
 
-void HDFFile::init(std::string filename) {
-	impl->h5file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+int HDFFile::init(std::string filename) {
+	auto x = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+	if (x < 0) {
+		std::array<char, 256> cwd;
+		getcwd(cwd.data(), cwd.size());
+		LOG(7, "ERROR could not create the HDF file: {}  cwd: {}", filename, cwd.data());
+		return -1;
+	}
+	LOG(2, "INFO opened the file hid: {}", x);
+	impl->h5file = x;
+	return 0;
 }
 
 void HDFFile::flush() {
@@ -71,6 +85,14 @@ std::string FBSchemaReader::sourcename(Msg msg) {
 
 uint64_t FBSchemaReader::ts(Msg msg) {
 	return ts_impl(msg);
+}
+
+uint64_t FBSchemaReader::teamid(Msg & msg) {
+	return teamid_impl(msg);
+}
+
+uint64_t FBSchemaReader::teamid_impl(Msg & msg) {
+	return 0;
 }
 
 
