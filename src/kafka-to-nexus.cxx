@@ -19,20 +19,22 @@ static MainOpt * opt;
 MainOpt * Roundtrip::opt = nullptr;
 #endif
 
-MainOpt * g_main_opt = nullptr;
+std::atomic<MainOpt *> g_main_opt;
 
 void signal_handler(int signal) {
-	LOG(9, "SIGNAL {}", signal);
-	if (auto m = g_main_opt->master.load()) {
+	LOG(7, "SIGNAL {}", signal);
+	auto m = g_main_opt.load()->master.load();
+	if (m) {
 		m->stop();
 	}
 }
 
 int main(int argc, char ** argv) {
+	MainOpt opt;
+	opt.master = nullptr;
+	g_main_opt.store(&opt);
 	std::signal(SIGINT, signal_handler);
 	std::signal(SIGTERM, signal_handler);
-	MainOpt opt;
-	g_main_opt = &opt;
 
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
