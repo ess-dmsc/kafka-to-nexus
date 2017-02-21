@@ -17,6 +17,14 @@ class HDFFile_impl {
 };
 
 HDFFile::HDFFile() {
+	// Keep this.  Will be used later to test against different lib versions
+	#if H5_VERSION_GE(1, 8, 0) && H5_VERSION_LE(1, 10, 99)
+		unsigned int maj, min, rel;
+		H5get_libversion(&maj, &min, &rel);
+	#else
+		static_assert(false, "Unexpected HDF version");
+	#endif
+
 	impl.reset(new HDFFile_impl);
 }
 
