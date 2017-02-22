@@ -16,7 +16,7 @@ BrokerOpt::BrokerOpt() {
 	conf_ints = {
 		{"metadata.request.timeout.ms",               2 * 1000},
 		{"socket.timeout.ms",                         2 * 1000},
-		{"session.timeout.ms",                        2 * 1000},
+		//{"session.timeout.ms",                        2 * 1000},
 
 		{"message.max.bytes",                 23 * 1024 * 1024},
 		{"fetch.message.max.bytes",           23 * 1024 * 1024},

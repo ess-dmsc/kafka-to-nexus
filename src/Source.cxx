@@ -30,6 +30,10 @@ std::string const & Source::source() const {
 	return _source;
 }
 
+std::string const & Source::broker() const {
+	return _broker;
+}
+
 Source::~Source() {
 }
 
