@@ -105,6 +105,7 @@ find_library(path_lib_rdkafka++ NAMES rdkafka++ HINTS
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
+
 add_library( NeXusFileWriter
   Streamer.cxx
   StreamMaster.cxx
@@ -122,6 +123,8 @@ add_library( NeXusFileWriter
   helper.cxx
   logger.cxx
   json.cxx
+  date/tz.cpp
+  date/tzblobs.cpp
   ${path_include_fmt}/fmt/format.cc
 )
 add_dependencies(NeXusFileWriter flatbuffers_generate)
@@ -143,6 +146,8 @@ find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
 )
 set(path_streaming_data_types ${path_streaming_data_types})
 message(STATUS "path_streaming_data_types: ${path_streaming_data_types}")
+
+target_compile_definitions(NeXusFileWriter PRIVATE HAS_REMOTE_API=0)
 
 
 set(flatbuffers_generated_headers "")
@@ -216,11 +221,11 @@ set(tgt "kafka-to-nexus")
 set(sources
 kafka-to-nexus.cxx
 schema_f141.cxx
-test-roundtrip.cxx
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 if (have_gtest)
 list(APPEND sources test-roundtrip.cxx)
+list(APPEND sources ../test/HDFFile.cxx)
 endif()
 add_executable(${tgt} ${sources})
 

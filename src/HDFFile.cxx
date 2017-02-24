@@ -1,11 +1,16 @@
 #include "HDFFile.h"
 #include "HDFFile_h5.h"
 #include <array>
+#include <chrono>
+#include <ctime>
 #include <hdf5.h>
 #include "SchemaRegistry.h"
 #include "logger.h"
 #include <flatbuffers/flatbuffers.h>
 #include <unistd.h>
+#include "date/date.h"
+#define HAS_REMOTE_API 0
+#include "date/tz.h"
 
 
 namespace BrightnESS {
@@ -39,6 +44,8 @@ HDFFile::~HDFFile() {
 }
 
 int HDFFile::init(std::string filename) {
+	using std::string;
+	using std::vector;
 	auto x = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
 	if (x < 0) {
 		std::array<char, 256> cwd;
@@ -48,6 +55,64 @@ int HDFFile::init(std::string filename) {
 	}
 	LOG(2, "INFO opened the file hid: {}", x);
 	impl->h5file = x;
+
+	auto f1 = x;
+
+	auto lcpl = H5Pcreate(H5P_LINK_CREATE);
+	H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
+	auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+	H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
+	auto strfix = H5Tcopy(H5T_C_S1);
+	H5Tset_cset(strfix, H5T_CSET_UTF8);
+	H5Tset_size(strfix, 1);
+	auto dsp_sc = H5Screate(H5S_SCALAR);
+
+	{
+		auto payload = filename;
+		H5Tset_size(strfix, payload.size());
+		auto at = H5Acreate2(f1, "file_name", strfix, dsp_sc, acpl, H5P_DEFAULT);
+		H5Awrite(at, strfix, payload.data());
+		H5Aclose(at);
+		//H5Eprint2(H5E_DEFAULT, nullptr);
+	}
+
+	{
+		vector<char> s1(64);
+		if (false) {
+			// std way
+			using namespace std::chrono;
+			auto now = system_clock::now();
+			auto time = system_clock::to_time_t(now);
+			strftime(s1.data(), s1.size(), "%Y-%m-%dT%H:%M:%S%z", localtime(&time));
+		}
+		{
+			// date way
+			using namespace date;
+			using namespace std::chrono;
+			auto now2 = make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
+			auto s2 = format("%Y-%m-%dT%H:%M:%S%z", now2);
+			std::copy(s2.c_str(), s2.c_str() + s2.size(), s1.data());
+		}
+		H5Tset_size(strfix, s1.size());
+		auto at = H5Acreate2(f1, "file_time", strfix, dsp_sc, acpl, H5P_DEFAULT);
+		H5Awrite(at, strfix, s1.data());
+		H5Aclose(at);
+	}
+
+	{
+		// top level NXentry
+		auto e = H5Gcreate2(f1, "entry", lcpl, H5P_DEFAULT, H5P_DEFAULT);
+		string s1 {"NXentry"};
+		H5Tset_size(strfix, s1.size());
+		auto at = H5Acreate2(f1, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
+		H5Awrite(at, strfix, s1.data());
+		H5Aclose(at);
+	}
+
+	H5Sclose(dsp_sc);
+	H5Pclose(lcpl);
+	H5Pclose(acpl);
+
 	return 0;
 }
 
