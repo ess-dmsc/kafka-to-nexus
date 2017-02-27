@@ -1,4 +1,5 @@
 #include "HDFFile.h"
+#include "HDFFile_impl.h"
 #include "HDFFile_h5.h"
 #include <array>
 #include <chrono>
@@ -16,10 +17,6 @@
 namespace BrightnESS {
 namespace FileWriter {
 
-class HDFFile_impl {
-	friend class HDFFile;
-	hid_t h5file = -1;
-};
 using std::string;
 using std::vector;
 using std::array;

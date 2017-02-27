@@ -221,6 +221,7 @@ set(tgt "kafka-to-nexus")
 set(sources
 kafka-to-nexus.cxx
 schema_f141.cxx
+schemas/f141/synth.cxx
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 if (have_gtest)
