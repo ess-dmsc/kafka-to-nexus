@@ -2,6 +2,8 @@
 #include <memory>
 #include <vector>
 #include <string>
+// we only need hid_t from this:
+#include <hdf5.h>
 
 
 namespace BrightnESS {
@@ -66,7 +68,7 @@ protected:
 FBSchemaWriter();
 HDFFile * hdf_file = nullptr;
 private:
-virtual void init_impl(std::string const & sourcename, Msg msg) = 0;
+virtual void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) = 0;
 virtual WriteResult write_impl(Msg msg) = 0;
 };
 

@@ -30,7 +30,7 @@ uint64_t teamid_impl(Msg & msg) override;
 
 class writer : public FBSchemaWriter {
 ~writer() override;
-void init_impl(std::string const & sourcename, Msg msg) override;
+void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) override;
 WriteResult write_impl(Msg msg) override;
 using DT = double;
 // DataSet::getId() will be -1 for the default constructed
@@ -98,11 +98,10 @@ writer::~writer() {
 }
 
 
-void writer::init_impl(std::string const & sourcename, Msg msg) {
+void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
 	// TODO
 	// This is just a unbuffered, low-performance write.
 	// Add buffering after it works.
-	auto file = hdf_file->h5file_detail().h5file();
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	// TODO verify buffer
 	if (epicspv->pv_type() != FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble) {
@@ -154,7 +153,7 @@ void writer::init_impl(std::string const & sourcename, Msg msg) {
 	this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
 	std::array<hsize_t, 2> sizes_chk {{std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), ncols}};
 	H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
-	this->ds = H5Dcreate1(file, sourcename.c_str(), dt, dsp, dcpl);
+	this->ds = H5Dcreate1(hdf_group, sourcename.c_str(), dt, dsp, dcpl);
 
 	{
 		// Dataset for sequence numbers, used primarily for unit tests
@@ -170,7 +169,7 @@ void writer::init_impl(std::string const & sourcename, Msg msg) {
 		if (err < 0) {
 			LOG(7, "ERROR in H5Pset_chunk");
 		}
-		this->ds_seq_data = H5Dcreate1(file, (sourcename + "__seq_data").c_str(), dt, dsp, dcpl);
+		this->ds_seq_data = H5Dcreate1(hdf_group, (sourcename + "__seq_data").c_str(), dt, dsp, dcpl);
 		if (this->ds_seq_data < 0) {
 			LOG(7, "ERROR creating ds_seq_data");
 		}
@@ -191,7 +190,7 @@ void writer::init_impl(std::string const & sourcename, Msg msg) {
 		if (err < 0) {
 			LOG(7, "ERROR in H5Pset_chunk");
 		}
-		this->ds_seq_fwd = H5Dcreate1(file, (sourcename + "__seq_fwd").c_str(), dt, dsp, dcpl);
+		this->ds_seq_fwd = H5Dcreate1(hdf_group, (sourcename + "__seq_fwd").c_str(), dt, dsp, dcpl);
 		if (this->ds_seq_fwd < 0) {
 			LOG(7, "ERROR creating ds_seq_fwd");
 		}
@@ -213,7 +212,7 @@ void writer::init_impl(std::string const & sourcename, Msg msg) {
 		if (err < 0) {
 			LOG(7, "ERROR in H5Pset_chunk");
 		}
-		this->ds_ts_data = H5Dcreate1(file, (sourcename + "__ts_data").c_str(), dt, dsp, dcpl);
+		this->ds_ts_data = H5Dcreate1(hdf_group, (sourcename + "__ts_data").c_str(), dt, dsp, dcpl);
 		if (this->ds_ts_data < 0) {
 			LOG(7, "ERROR creating ds_ts_data");
 		}

@@ -20,6 +20,9 @@ class HDFFile_impl {
 	friend class HDFFile;
 	hid_t h5file = -1;
 };
+using std::string;
+using std::vector;
+using std::array;
 
 HDFFile::HDFFile() {
 	// Keep this.  Will be used later to test against different lib versions
@@ -261,9 +264,35 @@ FBSchemaWriter::FBSchemaWriter() {
 FBSchemaWriter::~FBSchemaWriter() {
 }
 
-void FBSchemaWriter::init(HDFFile * hdf_file, std::string const & sourcename, Msg msg) {
+void FBSchemaWriter::init(HDFFile * hdf_file, string const & sourcename, Msg msg) {
 	this->hdf_file = hdf_file;
-	init_impl(sourcename, msg);
+	auto f1 = hdf_file->h5file_detail().h5file();
+
+	auto group_name = std::string("data-") + sourcename;
+
+	// Create the event data group
+	auto lcpl = H5Pcreate(H5P_LINK_CREATE);
+	H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
+	auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+	H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
+	auto strfix = H5Tcopy(H5T_C_S1);
+	H5Tset_cset(strfix, H5T_CSET_UTF8);
+	H5Tset_size(strfix, 1);
+	auto dsp_sc = H5Screate(H5S_SCALAR);
+	auto gev = H5Gcreate2(f1, group_name.c_str(), lcpl, H5P_DEFAULT, H5P_DEFAULT);
+	{
+		string s1 {"NXevent_data"};
+		H5Tset_size(strfix, s1.size());
+		auto at = H5Acreate2(gev, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
+		H5Awrite(at, strfix, s1.data());
+		H5Aclose(at);
+	}
+	H5Pclose(lcpl);
+	H5Pclose(acpl);
+	H5Tclose(strfix);
+	H5Sclose(dsp_sc);
+
+	init_impl(sourcename, gev, msg);
 }
 
 WriteResult FBSchemaWriter::write(Msg msg) {
