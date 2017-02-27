@@ -43,6 +43,35 @@ HDFFile::~HDFFile() {
 	}
 }
 
+
+template <size_t const N> using AA = std::array<hsize_t, N>;
+
+static void write_hdf_ds_scalar_string(hid_t loc, std::string name, std::string s1) {
+	auto strfix = H5Tcopy(H5T_C_S1);
+	H5Tset_cset(strfix, H5T_CSET_UTF8);
+	H5Tset_size(strfix, s1.size());
+	using A = AA<1>;
+	A sini {{ 1 }};
+	A smax {{ 1 }};
+	auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+	auto ds = H5Dcreate2(loc, name.c_str(), strfix, dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+	H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
+	H5Dclose(ds);
+	H5Sclose(dsp);
+	H5Tclose(strfix);
+}
+
+
+template <typename T>
+static void write_hdf_iso8601(hid_t loc, std::string name, T & ts) {
+	using namespace date;
+	using namespace std::chrono;
+	auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
+	write_hdf_ds_scalar_string(loc, name, s2.c_str());
+}
+
+
+
 int HDFFile::init(std::string filename) {
 	using std::string;
 	using std::vector;
@@ -101,12 +130,69 @@ int HDFFile::init(std::string filename) {
 
 	{
 		// top level NXentry
-		auto e = H5Gcreate2(f1, "entry", lcpl, H5P_DEFAULT, H5P_DEFAULT);
-		string s1 {"NXentry"};
-		H5Tset_size(strfix, s1.size());
-		auto at = H5Acreate2(f1, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
-		H5Awrite(at, strfix, s1.data());
-		H5Aclose(at);
+		auto g1 = H5Gcreate2(f1, "entry", lcpl, H5P_DEFAULT, H5P_DEFAULT);
+		{
+			string s1 {"NXentry"};
+			H5Tset_size(strfix, s1.size());
+			auto at = H5Acreate2(g1, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
+			H5Awrite(at, strfix, s1.data());
+			H5Aclose(at);
+		}
+		{
+			// set application definition
+			string s1("NXreftof");
+			using A = AA<1>;
+			A sini {{ 1 }};
+			A smax {{ 1 }};
+			auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+			H5Tset_size(strfix, s1.size());
+			auto ds = H5Dcreate2(g1, "definition", strfix, dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
+			H5Dclose(ds);
+		}
+		{
+			// set application definition
+			string s1("Some title here");
+			using A = AA<1>;
+			A sini {{ 1 }};
+			A smax {{ 1 }};
+			auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+			H5Tset_size(strfix, s1.size());
+			auto ds = H5Dcreate2(g1, "title", strfix, dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+			H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
+			H5Dclose(ds);
+		}
+		{
+			using namespace date;
+			using namespace std::chrono;
+			auto now = make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
+			auto end = make_zoned(current_zone(), floor<milliseconds>(system_clock::now() + seconds(10)));
+			write_hdf_iso8601(g1, "start_time", now);
+			write_hdf_iso8601(g1, "end_time", end);
+		}
+		{
+			// NXinstrument
+			auto g_inst = H5Gcreate2(g1, "instrument", lcpl, H5P_DEFAULT, H5P_DEFAULT);
+			{
+				string s1 {"NXinstrument"};
+				H5Tset_size(strfix, s1.size());
+				auto at = H5Acreate2(g_inst, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
+				H5Awrite(at, strfix, s1.data());
+				H5Aclose(at);
+			}
+			write_hdf_ds_scalar_string(g_inst, "name", "instrument-name");
+			{
+				auto g_chopper = H5Gcreate2(g_inst, "chopper", lcpl, H5P_DEFAULT, H5P_DEFAULT);
+				{
+					string s1 {"NXdisk_chopper"};
+					H5Tset_size(strfix, s1.size());
+					auto at = H5Acreate2(g_chopper, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
+					H5Awrite(at, strfix, s1.data());
+					H5Aclose(at);
+				}
+				write_hdf_ds_scalar_string(g_chopper, "distance", "the-chopper-distance...");
+			}
+		}
 	}
 
 	H5Sclose(dsp_sc);
