@@ -7,8 +7,8 @@
 	"streams": [
 		{
 			"broker": "129.129.188.59:9092",
-			"topic": "event.stream",
-			"source": "AMOR_area_detector",
+			"topic": "AMOR.area.detector",
+			"source": "AMOR.event.stream",
 			"path": "",
 			"on_path_missing": "ignore"
 		}
