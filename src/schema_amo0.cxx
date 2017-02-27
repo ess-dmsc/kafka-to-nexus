@@ -1,7 +1,6 @@
 #include "SchemaRegistry.h"
 #include "HDFFile.h"
 #include "HDFFile_h5.h"
-#include <hdf5.h>
 #include "schemas/amo0_psi_sinq_schema_generated.h"
 
 #include <iterator>
@@ -27,8 +26,8 @@ uint64_t ts_impl(Msg msg) override;
 
 class writer : public FBSchemaWriter {
 ~writer() override;
-void init_impl(std::string const & sourcename, Msg msg) override;
-WriteResult write_impl(Msg msg) override;
+  void init_impl(std::string const &, hid_t, Msg) override;
+WriteResult write_impl(Msg) override;
   hid_t grp_event = -1;
   hid_t to,id,tz,ei; //datasets
   hid_t dsp = -1; // dataspace
@@ -68,7 +67,7 @@ uint64_t reader::ts_impl(Msg msg) {
 writer::~writer() {
 }
 
-void writer::init_impl(std::string const & sourcename, Msg msg) {
+void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
 	// // TODO
 	// // This is just a unbuffered, low-performance write.
 	// // Add buffering after it works.
@@ -81,7 +80,7 @@ void writer::init_impl(std::string const & sourcename, Msg msg) {
 	// event_time_zero : timestamp
 	// event_index : ???
 	
-	grp_event = H5Gcreate1(file,"NXEvent_data",0);
+	grp_event = hdf_group;
 
 	{
 	  auto dt = nat_type<uint32_t>();

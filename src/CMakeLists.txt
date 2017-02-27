@@ -58,6 +58,8 @@ find_path(path_include_rapidjson NAMES rapidjson/document.h HINTS
 find_path(path_include_hdf5 NAMES hdf5.h HINTS
 "$ENV{hdf5_dir}/include"
 )
+set(path_include_hdf5 ${path_include_hdf5})
+message(STATUS "path_include_hdf5" ${path_include_hdf5})
 
 find_library(path_lib_hdf5 NAMES hdf5-shared HINTS
 "$ENV{hdf5_dir}/lib"
@@ -105,6 +107,7 @@ find_library(path_lib_rdkafka++ NAMES rdkafka++ HINTS
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
+
 add_library( NeXusFileWriter
   Streamer.cxx
   StreamMaster.cxx
@@ -122,6 +125,8 @@ add_library( NeXusFileWriter
   helper.cxx
   logger.cxx
   json.cxx
+  date/tz.cpp
+  date/tzblobs.cpp
   ${path_include_fmt}/fmt/format.cc
 )
 add_dependencies(NeXusFileWriter flatbuffers_generate)
@@ -136,13 +141,14 @@ target_include_directories(NeXusFileWriter PRIVATE
   )
 
 
-message(STATUS "ENV{streaming_data_types_dir}: $ENV{streaming_data_types_dir}")
 find_path(path_streaming_data_types NAMES f140_general.fbs PATHS
   $ENV{streaming_data_types_dir}/schemas
   "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types/schemas"
 )
 set(path_streaming_data_types ${path_streaming_data_types})
 message(STATUS "path_streaming_data_types: ${path_streaming_data_types}")
+
+target_compile_definitions(NeXusFileWriter PRIVATE HAS_REMOTE_API=0)
 
 
 set(flatbuffers_generated_headers "")
@@ -218,10 +224,12 @@ kafka-to-nexus.cxx
 schema_f141.cxx
 schema_amo0.cxx
 test-roundtrip.cxx
+schemas/f141/synth.cxx
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 if (have_gtest)
 list(APPEND sources test-roundtrip.cxx)
+list(APPEND sources ../test/HDFFile.cxx)
 endif()
 add_executable(${tgt} ${sources})
 
@@ -262,4 +270,6 @@ target_link_libraries(${tgt} NeXusFileWriter)
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
 configure_file(../test/msg-conf-new-02.json ../test/msg-conf-new-02.json)
+configure_file(../test/msg-conf-new-03.json ../test/msg-conf-new-03.json)
+configure_file(../test/msg-conf-stop.json ../test/msg-conf-stop.json)
 configure_file(../test/schema-command.json ../test/schema-command.json)
