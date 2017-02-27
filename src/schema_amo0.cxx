@@ -12,8 +12,6 @@ namespace Schemas {
 namespace AMOR {
 
 template <typename T> hid_t nat_type();
-  //template <> hid_t nat_type<float>()    { return H5T_NATIVE_FLOAT; }
-  //template <> hid_t nat_type<double>()   { return H5T_NATIVE_DOUBLE; }
 template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
 template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
@@ -25,9 +23,10 @@ uint64_t ts_impl(Msg msg) override;
 
 
 class writer : public FBSchemaWriter {
+  const hsize_t chunk_size = 1000000;
 ~writer() override;
   void init_impl(std::string const &, hid_t, Msg) override;
-WriteResult write_impl(Msg) override;
+  WriteResult write_impl(Msg) override;
   hid_t grp_event = -1;
   hid_t to,id,tz,ei; //datasets
   hid_t dsp = -1; // dataspace
@@ -68,18 +67,10 @@ writer::~writer() {
 }
 
 void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
-	// // TODO
-	// // This is just a unbuffered, low-performance write.
-	// // Add buffering after it works.
-	auto file = hdf_file->h5file_detail().h5file();
-	hsize_t ncols = 1000000;
-	LOG(1, "amo0::init_impl  v.size() == {}", ncols);
-	// NEEDS:
-	// event_time_offset : event->data()[0:nelem-1]
-	// event_id : event->data()[nelem:2*nelem-1]
-	// event_time_zero : timestamp
-	// event_index : ???
-	
+	// TODO
+	// This is just a unbuffered, low-performance write.
+	// Add buffering after it works.
+	LOG(1, "amo0::init_impl  v.size() == {}", chunk_size);
 	grp_event = hdf_group;
 
 	{
@@ -106,10 +97,10 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	  }
 
 	  this->dpl = H5Pcreate(H5P_DATASET_CREATE);
-	  std::array<hsize_t, 1> sizes_chk {{ncols}};
+	  std::array<hsize_t, 1> sizes_chk {{chunk_size}};
 	  H5Pset_chunk(dpl, sizes_chk.size(), sizes_chk.data());
-	  this->to = H5Dcreate1(grp_event,"event_time_offset", dt, dsp, dpl);
-	  this->id = H5Dcreate1(grp_event,"event_id", dt, dsp, dpl);
+	  this->to = H5Dcreate1(hdf_group,"event_time_offset", dt, dsp, dpl);
+	  this->id = H5Dcreate1(hdf_group,"event_id", dt, dsp, dpl);
 	  H5Sclose(dsp);
 	  H5Pclose(dpl);
 	}
@@ -119,15 +110,73 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	  std::array<hsize_t, 1> sizes_max {{H5S_UNLIMITED}};
 	  this->dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
 	  this->dpl = H5Pcreate(H5P_DATASET_CREATE);
-	  std::array<hsize_t, 1> sizes_chk {{ncols}};
+	  std::array<hsize_t, 1> sizes_chk {{chunk_size}};
 	  H5Pset_chunk(dpl, sizes_chk.size(), sizes_chk.data());
-	  this->tz = H5Dcreate1(grp_event,"event_time_zero", dt, dsp, dpl);
-	  this->ei = H5Dcreate1(grp_event,"event_index", dt, dsp, dpl);
+	  this->tz = H5Dcreate1(hdf_group,"event_time_zero", dt, dsp, dpl);
+	  this->ei = H5Dcreate1(hdf_group,"event_index", dt, dsp, dpl);
 	  H5Sclose(dsp);
 	  H5Pclose(dpl);
 	}
 
 }
+
+
+  std::array<hsize_t, 1> _get_size_now(const hid_t& ds) {
+    using A = std::array<hsize_t, 1>;    
+
+    auto tgt = H5Dget_space(ds);
+    auto ndims = H5Sget_simple_extent_ndims(tgt);
+    LOG(1, "DataSpace getSimpleExtentNdims {}", ndims);
+    LOG(1, "DataSpace getSimpleExtentNpoints {}", 
+	H5Sget_simple_extent_npoints(tgt));
+    
+    A get_sizes_now;
+    A get_sizes_max;
+    H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
+    for (uint i1 = 0; i1 < get_sizes_now.size(); ++i1)
+      LOG(1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+    H5Sclose(tgt);
+
+    return get_sizes_now;
+  }
+
+
+  std::array<hsize_t, 1> _h5data_extend(const hid_t& ds, std::array<hsize_t, 1> new_sizes, const std::array<hsize_t, 1>& event_size) {
+
+    for (uint i1 = 0; i1 < new_sizes.size(); ++i1)
+      new_sizes.at(i1) += event_size.at(i1);
+    if (H5Dextend(ds, new_sizes.data()) < 0) {
+      LOG(7, "ERROR can not extend dataset");
+      return {-1};
+    }
+    return std::move(new_sizes);
+  }
+
+
+  template<typename value_type>
+  std::array<hsize_t, 1> _h5data_write(const hid_t& ds, std::array<hsize_t, 1> sizes_now, const std::array<hsize_t, 1>& event_size, 
+				       const value_type* data, const uint offset=0) {
+    hid_t tgt = H5Dget_space(ds);
+    herr_t err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, sizes_now.data(), nullptr, 
+				     event_size.data(), nullptr);
+    if (err < 0) {
+      LOG(7, "ERROR can not select mem hyperslab");
+      return {-1};
+    }
+    auto mem = H5Screate_simple(event_size.size(), event_size.data(), nullptr);
+
+    auto dt = nat_type<uint32_t>();
+    err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
+    if (err < 0) {
+      LOG(7, "ERROR writing failed");
+      return {-1};
+    }
+    H5Sclose(mem);
+    H5Sclose(tgt);
+    return _get_size_now(ds);
+    
+  }
+
 
 
 WriteResult writer::write_impl(Msg msg) {
@@ -140,53 +189,38 @@ WriteResult writer::write_impl(Msg msg) {
   }
   pid = event->pid();
 
-
-  A event_size = {{event->data()->size()/2}};
-  auto dt = nat_type<uint32_t>();
-
-  // later factor out
-  auto & ds = this->to;
-  auto tgt = H5Dget_space(ds);
-  auto ndims = H5Sget_simple_extent_ndims(tgt);
-  LOG(1, "DataSpace getSimpleExtentNdims {}", ndims);
-  LOG(1, "DataSpace getSimpleExtentNpoints {}", 
-      H5Sget_simple_extent_npoints(tgt));
-
-  A get_sizes_now;
-  A get_sizes_max;
-  H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
-  for (uint i1 = 0; i1 < get_sizes_now.size(); ++i1) {
-    LOG(1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+  int size=event->data()->size()/2;
+  hsize_t position=0;
+  {
+    auto & ds = this->to;
+    A get_sizes_now = _get_size_now(ds);
+    A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data());
+    position = get_sizes_now.data()[0];
   }
-  H5Sclose(tgt);
-
-  A new_sizes(get_sizes_now);
-  for (uint i1 = 0; i1 < new_sizes.size(); ++i1) {
-    new_sizes.at(i1) += event_size.at(i1);
+  {
+    auto & ds = this->id;
+    A get_sizes_now = _get_size_now(ds);
+    A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data()+size);
   }
-  herr_t err = H5Dextend(ds, new_sizes.data());
-  if (err < 0) {
-    LOG(7, "ERROR can not extend dataset");
-    return {-1};
-  }
+  
 
-  tgt = H5Dget_space(ds);
-  err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, get_sizes_now.data(), nullptr, 
-			    event_size.data(), nullptr);
-  if (err < 0) {
-    LOG(7, "ERROR can not select mem hyperslab");
-    return {-1};
+  {
+    auto & ds = this->tz;
+    A get_sizes_now = _get_size_now(ds);
+    A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
+    std::cout << "event->timestamp()\t:\t" << event->timestamp() << "\n";
+    auto value = event->timestamp();
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&value);
   }
-  auto mem = H5Screate_simple(event_size.size(), event_size.data(), nullptr);
-
-  err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, event->data()->data());
-  if (err < 0) {
-    LOG(7, "ERROR writing failed");
-    return {-1};
+  {
+    auto & ds = this->ei;
+    A get_sizes_now = _get_size_now(ds);
+    A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
+    std::cout << "event->timestamp()\t:\t" << event->timestamp() << "\n";
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&position);
   }
-
-  H5Sclose(mem);
-  H5Sclose(tgt);
 
   return {(int64_t)event->timestamp()};
 }
