@@ -63,10 +63,11 @@ void roundtrip_simple_01(MainOpt & opt) {
 	using namespace rapidjson;
 	using CLK = std::chrono::steady_clock;
 	using MS = std::chrono::milliseconds;
+	Master m(opt.master_config);
+	opt.master = &m;
 	auto fn_cmd = "test/msg-conf-new-01.json";
 	auto of = produce_command_from_file(opt.master_config.command_listener, fn_cmd);
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
-	Master m(opt.master_config);
 	std::thread t1([&m]{
 		#if HAVE_GTEST
 		ASSERT_NO_THROW( m.run() );
