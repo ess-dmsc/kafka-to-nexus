@@ -14,6 +14,9 @@ namespace AMOR {
 template <typename T> hid_t nat_type();
 template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
 template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
+template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
+template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
+
 
 class reader : public FBSchemaReader {
 std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
@@ -147,7 +150,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
       new_sizes.at(i1) += event_size.at(i1);
     if (H5Dextend(ds, new_sizes.data()) < 0) {
       LOG(7, "ERROR can not extend dataset");
-      return {-1};
+      return {-1ul};
     }
     return std::move(new_sizes);
   }
@@ -161,7 +164,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 				     event_size.data(), nullptr);
     if (err < 0) {
       LOG(7, "ERROR can not select mem hyperslab");
-      return {-1};
+      return {-1ul};
     }
     auto mem = H5Screate_simple(event_size.size(), event_size.data(), nullptr);
 
@@ -169,7 +172,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
     err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
     if (err < 0) {
       LOG(7, "ERROR writing failed");
-      return {-1};
+      return {-1ul};
     }
     H5Sclose(mem);
     H5Sclose(tgt);
@@ -183,19 +186,23 @@ WriteResult writer::write_impl(Msg msg) {
   using A = std::array<hsize_t, 1>;
 
   auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
-  if( (event->pid() != pid+1) && (pid < -1) ) {
+  if( (event->pid() != pid+1) && (pid < -1ul) ) {
     LOG(0, "amo0 stream event loss: {} -> {}", pid, event->pid());
     // TODO write into nexus log
   }
+
+  int64_t value = event->ts();
   pid = event->pid();
 
-  int size=event->data()->size()/2;
+  uint32_t size=event->data()->size()/2;
   hsize_t position=0;
   {
     auto & ds = this->to;
     A get_sizes_now = _get_size_now(ds);
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data());
+    if( new_sizes != get_sizes_now )
+      LOG(1,"Expected file size differs from actual size");
     position = get_sizes_now.data()[0];
   }
   {
@@ -203,26 +210,28 @@ WriteResult writer::write_impl(Msg msg) {
     A get_sizes_now = _get_size_now(ds);
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data()+size);
+    if( new_sizes != get_sizes_now )
+      LOG(1,"Expected file size differs from actual size");
   }
   
-
   {
     auto & ds = this->tz;
     A get_sizes_now = _get_size_now(ds);
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
-    std::cout << "event->timestamp()\t:\t" << event->timestamp() << "\n";
-    auto value = event->timestamp();
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&value);
+    if( new_sizes != get_sizes_now )
+      LOG(1,"Expected file size differs from actual size");
   }
   {
     auto & ds = this->ei;
     A get_sizes_now = _get_size_now(ds);
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
-    std::cout << "event->timestamp()\t:\t" << event->timestamp() << "\n";
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&position);
+    if( new_sizes != get_sizes_now )
+      LOG(1,"Expected file size differs from actual size");
   }
 
-  return {(int64_t)event->timestamp()};
+  return {value};
 }
 
 
