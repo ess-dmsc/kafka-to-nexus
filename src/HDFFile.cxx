@@ -259,6 +259,7 @@ FBSchemaWriter::FBSchemaWriter() {
 }
 
 FBSchemaWriter::~FBSchemaWriter() {
+	if (group_event_data != -1) H5Gclose(group_event_data);
 }
 
 void FBSchemaWriter::init(HDFFile * hdf_file, string const & sourcename, Msg msg) {
@@ -276,11 +277,11 @@ void FBSchemaWriter::init(HDFFile * hdf_file, string const & sourcename, Msg msg
 	H5Tset_cset(strfix, H5T_CSET_UTF8);
 	H5Tset_size(strfix, 1);
 	auto dsp_sc = H5Screate(H5S_SCALAR);
-	auto gev = H5Gcreate2(f1, group_name.c_str(), lcpl, H5P_DEFAULT, H5P_DEFAULT);
+	group_event_data = H5Gcreate2(f1, group_name.c_str(), lcpl, H5P_DEFAULT, H5P_DEFAULT);
 	{
 		string s1 {"NXevent_data"};
 		H5Tset_size(strfix, s1.size());
-		auto at = H5Acreate2(gev, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
+		auto at = H5Acreate2(group_event_data, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
 		H5Awrite(at, strfix, s1.data());
 		H5Aclose(at);
 	}
@@ -289,7 +290,7 @@ void FBSchemaWriter::init(HDFFile * hdf_file, string const & sourcename, Msg msg
 	H5Tclose(strfix);
 	H5Sclose(dsp_sc);
 
-	init_impl(sourcename, gev, msg);
+	init_impl(sourcename, group_event_data, msg);
 }
 
 WriteResult FBSchemaWriter::write(Msg msg) {
