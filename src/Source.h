@@ -30,10 +30,13 @@ Source(Source &&);
 ~Source();
 std::string const & topic() const;
 std::string const & source() const;
+/// If non-empty, specifies the broker where the data of this Source can be found.
+std::string const & broker() const;
 uint32_t processed_messages_count() const;
 ProcessMessageResult process_message(Msg msg);
 std::string to_str() const;
 rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * a = nullptr) const;
+uint64_t teamid = 0;
 private:
 Source(std::string topic, std::string source);
 /// Used by FileWriterTask during setup.
@@ -41,6 +44,7 @@ void hdf_init(HDFFile & hdf_file);
 
 std::string _topic;
 std::string _source;
+std::string _broker;
 std::unique_ptr<FBSchemaReader> _schema_reader;
 std::unique_ptr<FBSchemaWriter> _schema_writer;
 

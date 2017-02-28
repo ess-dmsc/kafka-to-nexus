@@ -16,7 +16,7 @@ BrokerOpt::BrokerOpt() {
 	conf_ints = {
 		{"metadata.request.timeout.ms",               2 * 1000},
 		{"socket.timeout.ms",                         2 * 1000},
-		{"session.timeout.ms",                        2 * 1000},
+		//{"session.timeout.ms",                        2 * 1000},
 
 		{"message.max.bytes",                 23 * 1024 * 1024},
 		{"fetch.message.max.bytes",           23 * 1024 * 1024},
@@ -329,11 +329,10 @@ void Consumer::start() {
 		throw std::runtime_error("can not create Kafka handle");
 	}
 
-	LOG(3, "New Kafka consumer: {}", rd_kafka_name(rk));
-
 	int const LOG_DEBUG = 7;
 	rd_kafka_set_log_level(rk, LOG_DEBUG);
 
+	LOG(3, "New Kafka consumer {} with brokers: {}", rd_kafka_name(rk), opt.address.c_str());
 	if (rd_kafka_brokers_add(rk, opt.address.c_str()) == 0) {
 		LOG(7, "ERROR could not add brokers");
 		throw std::runtime_error("could not add brokers");

@@ -1,6 +1,12 @@
 # Kafka to Nexus file writing
 
-Documents:
+## Requirements
+
+- <https://github.com/HowardHinnant/date.git>
+  Clone e.g. in the same directory as `kafka-to-nexus`.
+
+
+## Documents:
 
 [Nexus-for-ESS](https://ess-ics.atlassian.net/wiki/display/DMSC/NeXus+for+ESS)
 

@@ -2,7 +2,10 @@
 #include <memory>
 #include <vector>
 #include <string>
+// we only need hid_t from this:
+#include <hdf5.h>
 
+class T_HDFFile;
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -27,11 +30,12 @@ class HDFFile final {
 public:
 HDFFile();
 ~HDFFile();
-void init(std::string filename);
+int init(std::string filename);
 void flush();
 HDFFile_h5 h5file_detail();
 private:
 std::unique_ptr<HDFFile_impl> impl;
+friend class ::T_HDFFile;
 };
 
 
@@ -45,10 +49,12 @@ virtual ~FBSchemaReader();
 std::unique_ptr<FBSchemaWriter> create_writer();
 std::string sourcename(Msg msg);
 uint64_t ts(Msg msg);
+uint64_t teamid(Msg & msg);
 private:
 virtual std::unique_ptr<FBSchemaWriter> create_writer_impl() = 0;
 virtual std::string sourcename_impl(Msg msg) = 0;
 virtual uint64_t ts_impl(Msg msg) = 0;
+virtual uint64_t teamid_impl(Msg & msg);
 };
 
 
@@ -64,8 +70,9 @@ protected:
 FBSchemaWriter();
 HDFFile * hdf_file = nullptr;
 private:
-virtual void init_impl(std::string const & sourcename, Msg msg) = 0;
+virtual void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) = 0;
 virtual WriteResult write_impl(Msg msg) = 0;
+hid_t group_event_data = -1;
 };
 
 
