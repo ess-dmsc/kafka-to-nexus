@@ -9,8 +9,11 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/istreamwrapper.h>
 
+#include "parser.hpp"
+
 #include <iostream>
 #include <fstream>
+
 
 // POD
 struct MainOpt {
@@ -79,12 +82,20 @@ std::string make_command_from_file(const std::string& filename) {
 extern "C" char const GIT_COMMIT[];
 
 int main(int argc, char ** argv) {
+
+  parser::Parser::Param p;
+  {
+    parser::Parser parser;
+    parser.init(argv[1]);
+    p = parser.get();
+  }
+
   MainOpt opt;
 
   static struct option long_options[] = {
     {"help",                            no_argument,              0, 'h'},
-    {"broker-command-address",          required_argument,        0,  0 },
-    {"broker-command-topic",            required_argument,        0,  0 },
+    //    {"broker-command-address",          required_argument,        0,  0 },
+    //    {"broker-command-topic",            required_argument,        0,  0 },
     {"teamid",                          required_argument,        0,  0 },
     {"cmd",                             required_argument,        0,  0 },
     {0, 0, 0, 0},
@@ -111,12 +122,12 @@ int main(int argc, char ** argv) {
       if (std::string("help") == lname) {
 	opt.help = true;
       }
-      if (std::string("broker-command-address") == lname) {
-	opt.broker_opt.address = optarg;
-      }
-      if (std::string("broker-command-topic") == lname) {
-	opt.topic = optarg;
-      }
+      // if (std::string("broker-command-address") == lname) {
+      // 	opt.broker_opt.address = optarg;
+      // }
+      // if (std::string("broker-command-topic") == lname) {
+      // 	opt.topic = optarg;
+      // }
       if (std::string("teamid") == lname) {
 	opt.teamid = strtoul(optarg, nullptr, 0);
       }
@@ -142,15 +153,16 @@ int main(int argc, char ** argv) {
 	   "kafka-to-nexus\n"
 	   "  --help, -h\n"
 	   "\n"
-	   "  --broker-command-address    host:port,host:port,...\n"
-	   "      Default: %s\n"
-	   "\n",
-	   opt.broker_opt.address.c_str());
+	   );
+    // 	   "  --broker-command-address    host:port,host:port,...\n"
+    // 	   "      Default: %s\n"
+    // 	   "\n",
+    // 	   opt.broker_opt.address.c_str());
 
-    printf("  --broker-command-topic      <topic-name>\n"
-	   "      Default: %s\n"
-	   "\n",
-	   opt.topic.c_str());
+    // printf("  --broker-command-topic      <topic-name>\n"
+    // 	   "      Default: %s\n"
+    // 	   "\n",
+    // 	   opt.topic.c_str());
 
     printf("  --cmd      <command>\n"
 	   "      Default: %s\n"
@@ -164,7 +176,8 @@ int main(int argc, char ** argv) {
     return 1;
   }
 
-
+  opt.broker_opt.address = p["host"]+":"+p["port"];
+  opt.topic = p["topic"];
   std::cout << opt.topic << std::endl;
   std::cout << opt.broker_opt.address << std::endl;
 
