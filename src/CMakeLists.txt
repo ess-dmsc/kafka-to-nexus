@@ -249,18 +249,10 @@ ${path_include_rapidjson}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
 
-
-#if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-#  target_link_libraries(${tgt} hdf5_cpp)
-#  target_link_libraries(${tgt} hdf5)
-#  target_link_libraries(${tgt} rdkafka)
-#  target_link_libraries(${tgt} rdkafka++)
-#else()
-  target_link_libraries(${tgt} libhdf5)
-  target_link_libraries(${tgt} libhdf5cpp)
-  target_link_libraries(${tgt} librdkafka)
-  target_link_libraries(${tgt} librdkafka++)
-#endif()
+target_link_libraries(${tgt} libhdf5)
+target_link_libraries(${tgt} libhdf5cpp)
+target_link_libraries(${tgt} librdkafka)
+target_link_libraries(${tgt} librdkafka++)
 
 target_link_libraries(${tgt} NeXusFileWriter)
 
