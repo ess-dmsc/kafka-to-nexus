@@ -3,6 +3,7 @@
 #include <vector>
 #include <string>
 #include <H5Ipublic.h>
+#include "Msg.h"
 
 class T_HDFFile;
 
@@ -13,12 +14,6 @@ namespace FileWriter {
 class WriteResult {
 public:
 int64_t ts;
-};
-
-
-struct Msg {
-char * data;
-int32_t size;
 };
 
 

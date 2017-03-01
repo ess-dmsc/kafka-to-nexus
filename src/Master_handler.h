@@ -6,6 +6,7 @@
 #include <stdexcept>
 #include "kafka_util.h"
 #include "KafkaW.h"
+#include "Msg.h"
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -29,7 +30,7 @@ std::string _str;
 /// Still, abstract away the interface for decoupling:
 class FileWriterCommandHandler {
 public:
-virtual void handle(std::unique_ptr<KafkaW::Msg> msg) = 0;
+virtual void handle(Msg const & msg) = 0;
 };
 
 }
