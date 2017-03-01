@@ -2,8 +2,7 @@
 #include <memory>
 #include <vector>
 #include <string>
-// we only need hid_t from this:
-#include <hdf5.h>
+#include <H5Ipublic.h>
 
 class T_HDFFile;
 
