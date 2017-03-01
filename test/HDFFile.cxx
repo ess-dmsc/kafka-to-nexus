@@ -30,7 +30,7 @@ static void write_f141() {
 	{
 		BrightnESS::FlatBufs::f141_epics_nt::synth synth("some-sourcename", BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
 		auto fb = synth.next(0);
-		msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), fb.builder->GetSize()};
+		msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 	}
 	// f1.impl->h5file
 	writer->init(&f1, "some-sourcename", msg);
