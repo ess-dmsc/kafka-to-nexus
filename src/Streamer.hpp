@@ -16,16 +16,15 @@ namespace RdKafka {
 
 namespace BrightnESS {
   namespace FileWriter {
-
-
     
 // actually a "kafka streamer"
 struct Streamer {
   static milliseconds consumer_timeout;
   static int64_t step_back_amount;
+  
 
   Streamer() : offset(0), partition(0) { };
-  Streamer(const std::string&, const std::string&, const int64_t& p=0);
+  Streamer(const std::string&, const std::string&, const RdKafkaOffset& =RdKafkaOffset(-1),const RdKafkaPartition& =RdKafkaPartition(0));
   Streamer(const Streamer&);
   
   //  ~Streamer(); // disconnect
@@ -73,10 +72,10 @@ struct Streamer {
 private:
   RdKafka::Topic *topic;
   RdKafka::Consumer *consumer;
-  int64_t offset;
-  int64_t last_offset=-1;
+  RdKafkaOffset offset;
+  RdKafkaOffset last_offset=RdKafkaOffset(-1);
   int64_t step_back_offset=0;
-  int32_t partition = 0;
+  RdKafkaPartition partition;
   size_t message_length;
 
 };
