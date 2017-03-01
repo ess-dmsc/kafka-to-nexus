@@ -102,6 +102,11 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	// TODO
 	// This is just a unbuffered, low-performance write.
 	// Add buffering after it works.
+	auto veri = flatbuffers::Verifier((uint8_t*)msg.data, msg.size);
+	if (!BrightnESS::FlatBufs::f141_epics_nt::VerifyEpicsPVBuffer(veri)) {
+		LOG(3, "ERROR bad flat buffer");
+		return;
+	}
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	// TODO verify buffer
 	if (epicspv->pv_type() != FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble) {
