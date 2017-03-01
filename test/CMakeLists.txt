@@ -7,6 +7,11 @@ find_path(path_include_rapidjson NAMES rapidjson/document.h PATHS
  /opt/local/rapidjson.git/include
 )
 
+find_path(path_include_hdf5 NAMES hdf5.h HINTS
+"$ENV{hdf5_dir}/include"
+)
+message(STATUS "path_include_hdf5" ${path_include_hdf5})
+
 find_library(path_lib_hdf5 NAMES hdf5-shared PATHS
   "$ENV{hdf5_dir}/lib"
   )
@@ -58,9 +63,10 @@ include_directories (
   ${TEST_SOURCE_DIR}
   ${path_include_rapidjson}
   ${path_include_rdkafka}
+  ${path_include_hdf5}
   ) 
 
-if (false)
+
 add_executable (streamer_test streamer_test.cxx)
 add_executable (streammaster_test streammaster_test.cxx ) 
 
@@ -94,4 +100,3 @@ target_link_libraries(streamer_test libhdf5cpp
   NeXusFileWriter
   )
 
-endif()

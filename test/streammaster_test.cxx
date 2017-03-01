@@ -8,56 +8,61 @@
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
 
-using namespace BrightnESS::FileWriter;
+//using namespace BrightnESS::FileWriter;
 
 static std::mt19937_64 rng;
 
 
-class MockSource {
-public:
-  MockSource(std::string topic, std::string source) : _topic(topic), _source(source) { };
-  //  MockSource(MockSource &&);
-  std::string const & topic() const { return _topic; }
-  std::string const & source() const { return _source; }
-  uint32_t processed_messages_count() const { return _processed_messages_count; }
-  ProcessMessageResult process_message(char * msg_data, int msg_size) {
-    _processed_messages_count++;
-    int64_t value = rng();
-    return ProcessMessageResult::OK(); }
-private:
-  std::string _topic;
-  std::string _source;
-  int _processed_messages_count=0;
-};
+
+namespace BrightnESS {
+  namespace FileWriter {
+    class MockSource {
+    public:
+      MockSource(std::string topic, std::string source) : _topic(topic), _source(source) { };
+      //  MockSource(MockSource &&);
+      std::string const & topic() const { return _topic; }
+      std::string const & source() const { return _source; }
+      uint32_t processed_messages_count() const { return _processed_messages_count; }
+      ProcessMessageResult process_message(char * msg_data, int msg_size) {
+	_processed_messages_count++;
+	int64_t value = rng();
+	return ProcessMessageResult::OK(); }
+    private:
+      std::string _topic;
+      std::string _source;
+      int _processed_messages_count=0;
+    };
+    
+    
+    class MockDemuxTopic : public MessageProcessor {
+    public:
+      MockDemuxTopic(std::string topic) : _topic(topic) { };
+      std::string const & topic() const { return _topic; };
+      
+      ProcessMessageResult process_message(char * msg_data, int msg_size) {
+	std::string s(msg_data);
+	int source_index=0;
+	for(; source_index < _sources.size(); ++source_index) {
+	  if( (s.find(_sources[source_index].source()) !=std::string::npos ) ) break;
+	}
+	return _sources[source_index].process_message(msg_data,msg_size);
+      };
+      
+      void add_source(std::string s) {
+	for(auto item=_sources.begin(); item != _sources.end(); ++item) {
+	  if ( (*item).source() == s ) return;
+	}
+	_sources.push_back( MockSource(topic(),s) );
+      }
+      std::vector<MockSource> & sources() { return _sources; };
+      
+    private:
+      std::string _topic;
+      std::vector<MockSource> _sources;
+      std::vector<int> _message_counter;
+    };
 
 
-class MockDemuxTopic : public MessageProcessor {
-public:
-  MockDemuxTopic(std::string topic) : _topic(topic) { };
-  std::string const & topic() const { return _topic; };
-  
-  ProcessMessageResult process_message(char * msg_data, int msg_size) {
-    std::string s(msg_data);
-    int source_index=0;
-    for(; source_index < _sources.size(); ++source_index) {
-      if( (s.find(_sources[source_index].source()) !=std::string::npos ) ) break;
-    }
-    return _sources[source_index].process_message(msg_data,msg_size);
-  };
-  
-  void add_source(std::string s) {
-    for(auto item=_sources.begin(); item != _sources.end(); ++item) {
-      if ( (*item).source() == s ) return;
-    }
-    _sources.push_back( MockSource(topic(),s) );
-  }
-  std::vector<MockSource> & sources() { return _sources; };
-  
-private:
-  std::string _topic;
-  std::vector<MockSource> _sources;
-  std::vector<int> _message_counter;
-};
 
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp) {
@@ -75,6 +80,11 @@ BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::w
   return mp.process_message((char*)msg->payload(),msg->len());
 }
 
+  } // FileWriter
+} // BrightnESS
+
+
+using namespace BrightnESS::FileWriter;
 
 std::string broker;
 std::vector<std::string> no_topic = {""};
