@@ -1,6 +1,7 @@
 #include "KafkaW.h"
 #include "logger.h"
 #include <atomic>
+#include <cerrno>
 
 namespace KafkaW {
 

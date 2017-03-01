@@ -1,5 +1,6 @@
 #include "helper.h"
 #include "logger.h"
+#include <array>
 #include <fstream>
 #include <unistd.h>
 
