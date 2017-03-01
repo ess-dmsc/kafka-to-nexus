@@ -1,9 +1,6 @@
 {
 	"cmd": "FileWriter_new",
 	"broker": "localhost:9092",
-	"sstreams": [
-		{"a": 12, "b": 56}
-	],
 	"streams": [
 		{
 			"broker": "localhost:9092",
@@ -11,15 +8,14 @@
 			"source": "for_example_motor01",
 			"path": "v",
 			"on_path_missing": "ignore",
-			"default_value": 405
+			"default_value": 405,
+			"write_last_known": true,
+			"nexus_container": "NXlog"
 		},
 		{
 			"broker": "localhost:9092",
 			"topic": "topic.with.multiple.sources",
-			"source": "for_example_temperature02",
-			"path": "v",
-			"on_path_missing": "ignore",
-			"default_value": 182
+			"source": "for_example_temperature02"
 		}
 	],
 	"file_attributes": {
