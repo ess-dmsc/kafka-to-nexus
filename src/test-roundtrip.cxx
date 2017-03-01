@@ -94,7 +94,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 		// Produce sample data using the nt types scheme only
 		KafkaW::BrokerOpt opt;
 		opt.address = "localhost:9092";
-		auto nowns = []{return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};
+		//auto nowns = []{return std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};
 		for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
 			KafkaW::Producer prod(opt);
 			KafkaW::Producer::Topic topic(prod, test_topics[i3]);
@@ -102,6 +102,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 			auto & sourcename = test_sourcenames[i3];
 			for (int i1 = 0; i1 < 2; ++i1) {
 				flatbuffers::FlatBufferBuilder builder(1024);
+				/*
 				FlatBufs::f141_epics_nt::fwdinfo_t fi;
 				fi.mutate_seq(i1);
 				fi.mutate_ts_data(nowns() + 1000000 * i1);
@@ -109,6 +110,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 				fi.mutate_fwdix(0);
 				fi.mutate_teamid(0);
 				_has_teamid<FlatBufs::f141_epics_nt::fwdinfo_t>::fill(fi, 0);
+				*/
 				std::vector<double> data;
 				data.resize(7);
 				for (size_t i2 = 0; i2 < data.size(); ++i2) {
@@ -123,7 +125,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 				epicspv.add_name(sn);
 				epicspv.add_pv_type(FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble);
 				epicspv.add_pv(pv);
-				epicspv.add_fwdinfo(&fi);
+				//epicspv.add_fwdinfo(&fi);
 				FinishEpicsPVBuffer(builder, epicspv.Finish());
 				if (true) {
 					topic.produce(builder.GetBufferPointer(), builder.GetSize(), nullptr);
