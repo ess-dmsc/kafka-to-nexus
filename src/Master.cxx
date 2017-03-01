@@ -5,12 +5,7 @@
 #include "NexusWriter.h"
 #include "Source.h"
 #include "logger.h"
-#include "helper.h"
 #include "commandproducer.h"
-#include <rapidjson/document.h>
-#include <rapidjson/schema.h>
-#include <rapidjson/error/en.h>
-#include <rapidjson/stringbuffer.h>
 
 namespace BrightnESS {
 namespace FileWriter {

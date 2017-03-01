@@ -68,8 +68,8 @@ void FileWriterTask::add_source(Source && source) {
 }
 
 
-int FileWriterTask::hdf_init() {
-	auto x = impl->hdf_file.init(impl->hdf_filename);
+int FileWriterTask::hdf_init(rapidjson::Value const & nexus_structure) {
+	auto x = impl->hdf_file.init(impl->hdf_filename, nexus_structure);
 	if (x) {
 		return x;
 	}
