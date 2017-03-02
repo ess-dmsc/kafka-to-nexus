@@ -41,7 +41,7 @@ ProcessMessageResult Source::process_message(Msg msg) {
 	if (!_schema_reader) {
 		_schema_reader = FBSchemaReader::create(msg);
 		if (_schema_writer) {
-			LOG(7, "ERROR _schema_writer should not exist");
+			LOG(0, "ERROR _schema_writer should not exist");
 		}
 		if (!_hdf_file) {
 			throw "SHOULD NEVER HAPPEN AT LEAST CURRENTLY, HDF FILE SHOULD ALREADY BE OPEN";

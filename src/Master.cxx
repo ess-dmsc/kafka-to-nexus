@@ -36,7 +36,7 @@ CommandHandler(Master * master) : master(master) {
 	auto doc = make_unique<rapidjson::Document>();
 	ParseResult err = doc->Parse(buf1.data(), buf1.size());
 	if (err.Code() != ParseErrorCode::kParseErrorNone) {
-		LOG(7, "ERROR can not parse schema_command");
+		LOG(0, "ERROR can not parse schema_command");
 		throw std::runtime_error("ERROR can not parse schema_command");
 	}
 	schema_command.reset(new SchemaDocument(*doc));
@@ -51,14 +51,14 @@ void handle_new(rapidjson::Document & d) {
 		StringBuffer sb1, sb2;
 		vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
 		vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-		LOG(6, "ERROR command message schema validation:  Invalid schema: {}  keyword: {}",
+		LOG(1, "ERROR command message schema validation:  Invalid schema: {}  keyword: {}",
 			sb1.GetString(),
 			vali.GetInvalidSchemaKeyword()
 		);
 		throw std::runtime_error("ERROR command message schema validation");
 	}
 
-	LOG(1, "cmd: {}", d["cmd"].GetString());
+	LOG(6, "cmd: {}", d["cmd"].GetString());
 	auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 	std::string fname = "a-dummy-name.h5";
 	if (d.HasMember("filename")) {
@@ -78,13 +78,13 @@ void handle_new(rapidjson::Document & d) {
 	}
 
 	for (auto & d : fwt->demuxers()) {
-		LOG(1, "{}", d.to_str());
+		LOG(6, "{}", d.to_str());
 	}
 
 	{
 		auto x = fwt->hdf_init();
 		if (x) {
-			LOG(7, "ERROR hdf init failed, cancel this write command");
+			LOG(0, "ERROR hdf init failed, cancel this write command");
 			return;
 		}
 	}
@@ -105,7 +105,7 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 	auto doc = make_unique<Document>();
 	ParseResult err = doc->Parse((char*)msg->data(), msg->size());
 	if (doc->HasParseError()) {
-		LOG(6, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+		LOG(1, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
 		throw std::runtime_error("");
 	}
 	auto & d = * doc;
@@ -118,7 +118,7 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 		}
 	}
 	if (teamid != master->config.teamid) {
-		LOG(2, "WARNING command is for teamid {}, we are {}", teamid, master->config.teamid);
+		LOG(5, "WARNING command is for teamid {}, we are {}", teamid, master->config.teamid);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void handle(std::unique_ptr<KafkaW::Msg> msg) {
 			}
 		}
 	}
-	LOG(3, "ERROR could not figure out this command: {:.{}}", msg->data(), msg->size());
+	LOG(4, "ERROR could not figure out this command: {:.{}}", msg->data(), msg->size());
 
 }
 
@@ -163,18 +163,18 @@ void Master::run() {
 	command_listener.start();
 	if (_cb_on_connected) (*_cb_on_connected)();
 	while (do_run) {
-		LOG(0, "Master poll");
+		LOG(7, "Master poll");
 		auto p = command_listener.poll();
 		if (auto msg = p.is_Msg()) {
-			LOG(0, "Handle a command");
+			LOG(7, "Handle a command");
 			this->handle_command_message(std::move(msg));
 		}
 	}
-	LOG(1, "calling stop on all stream_masters");
+	LOG(6, "calling stop on all stream_masters");
 	for (auto & x : stream_masters) {
 		x->stop(-2);
 	}
-	LOG(1, "called stop on all stream_masters");
+	LOG(6, "called stop on all stream_masters");
 }
 
 
@@ -199,7 +199,7 @@ void Master::on_consumer_connected(std::function<void(void)> * cb_on_connected) 
 
 TEST(config, read_simple) {
 	return;
-	LOG(3, "Test a simple configuration");
+	LOG(4, "Test a simple configuration");
 	using namespace BrightnESS::FileWriter;
 	// TODO
 	// * Input a predefined configuration message to setup a simple stream writing

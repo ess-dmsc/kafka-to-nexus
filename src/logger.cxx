@@ -48,7 +48,7 @@ Logger::Logger() {
 Logger::~Logger() {
 	do_run_kafka = false;
 	if (log_file != nullptr and log_file != stdout) {
-		LOG(9, "Closing log");
+		LOG(0, "Closing log");
 		fclose(log_file);
 	}
 	if (thread_poll.joinable()) {
@@ -93,11 +93,11 @@ void Logger::fwd_graylog_logger_enable(std::string address) {
 		port = strtol(address.c_str() + col + 1, nullptr, 10);
 	}
 	Log::RemoveAllHandlers();
-	LOG(3, "Enable graylog_logger on {}:{}", addr, port);
+	LOG(4, "Enable graylog_logger on {}:{}", addr, port);
 	Log::AddLogHandler(new GraylogInterface(addr, port));
 	do_use_graylog_logger = true;
 	#else
-	LOG(7, "ERROR not compiled with support for graylog_logger");
+	LOG(0, "ERROR not compiled with support for graylog_logger");
 	#endif
 }
 
