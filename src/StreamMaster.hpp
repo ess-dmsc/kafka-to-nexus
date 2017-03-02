@@ -14,6 +14,7 @@
 #include "FileWriterTask.h"
 #include "DemuxTopic.h"
 #include "utils.h"
+#include "logger.h"
 
 struct Streamer;
 struct FileWriterCommand;
@@ -31,7 +32,6 @@ struct StreamMaster {
     for( auto& d: demux) {
       streamer[d.topic()] = Streamer(broker,d.topic(),offset);
     }
-    loop = std::thread( [&] { this->run(); } );
   };
 
   StreamMaster(std::string& broker, std::unique_ptr<FileWriterTask> file_writer_task, const RdKafkaOffset& offset = RdKafkaOffsetEnd) :
@@ -39,7 +39,6 @@ struct StreamMaster {
     for( auto& d: demux) {
       streamer[d.topic()] = Streamer(broker,d.topic(), offset);
     }
-    loop = std::thread( [&] { this->run(); } );
   };
 
   ~StreamMaster() {
@@ -61,6 +60,13 @@ struct StreamMaster {
 
   bool start_time(const ESSTimeStamp ts) {
     _start_time = ts;
+    //    find_initial_offset(_start_time);
+    
+    for( auto& _s: streamer) {
+      LOG(3,"stream > {}",_s.first);
+    }
+    
+
     return false;
   }
 

@@ -133,6 +133,15 @@ TEST (Streammaster, StartStop) {
 }
 
 
+TEST (Streammaster, StartTime) {
+  using StreamMaster=StreamMaster<BrightnESS::FileWriter::Streamer,MockDemuxTopic>;
+  one_demux[0].add_source("for_example_motor01");
+  one_demux[0].add_source("for_example_temperature02");
+  StreamMaster sm(broker,one_demux);
+  sm.start_time(ESSTimeStamp(10));
+}
+
+
 
 
 
