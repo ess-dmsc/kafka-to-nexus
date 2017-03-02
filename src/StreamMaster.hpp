@@ -123,11 +123,7 @@ private:
 
 
   }
-
-
-
   
-  static milliseconds duration;
 
   BrightnESS::FileWriter::ProcessMessageResult value;
   std::map<std::string,Streamer> streamer;
@@ -140,6 +136,8 @@ private:
   std::atomic<bool> do_write;
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
+
+  static milliseconds duration;
 };
 
 

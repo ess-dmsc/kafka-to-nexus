@@ -191,6 +191,8 @@ BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
     }
   }
 
+  std::cout << "1-last_offset: " << last_offset.value() << std::endl;
+
   RdKafka::ErrorCode resp = consumer->stop(topic, partition.value());
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: " +
@@ -200,6 +202,8 @@ BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
   if (last_offset.value() < 0)
     last_offset = RdKafkaOffset(0);
   last_offset -= RdKafkaOffset(step_back_amount);
+  std::cout << "2-last_offset: " << last_offset.value() << std::endl;
+
 
   resp = consumer->start(topic, partition.value(), last_offset.value());
   if (resp != RdKafka::ERR_NO_ERROR) {
@@ -207,8 +211,10 @@ BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
                              RdKafka::err2str(resp));
   }
 
+  std::cout << "3-last_offset: " << last_offset.value() << std::endl;
   RdKafka::Message *msg =
       consumer->consume(topic, partition.value(), consumer_timeout.count());
+
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
               << std::endl;
