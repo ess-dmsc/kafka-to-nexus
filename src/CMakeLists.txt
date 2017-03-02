@@ -123,6 +123,7 @@ add_library( NeXusFileWriter
   helper.cxx
   logger.cxx
   json.cxx
+  uri.cxx
   date/tz.cpp
   date/tzblobs.cpp
   ${path_include_fmt}/fmt/format.cc
@@ -253,7 +254,7 @@ target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-
+target_link_libraries(${tgt} pcre2-8)
 target_link_libraries(${tgt} NeXusFileWriter)
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
