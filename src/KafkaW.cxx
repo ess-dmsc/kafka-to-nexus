@@ -330,8 +330,7 @@ void Consumer::start() {
 		throw std::runtime_error("can not create Kafka handle");
 	}
 
-	int const LOG_DEBUG = 7;
-	rd_kafka_set_log_level(rk, LOG_DEBUG);
+	rd_kafka_set_log_level(rk, 4);
 
 	LOG(3, "New Kafka consumer {} with brokers: {}", rd_kafka_name(rk), opt.address.c_str());
 	if (rd_kafka_brokers_add(rk, opt.address.c_str()) == 0) {
@@ -542,7 +541,7 @@ Producer::Producer(BrokerOpt opt) : opt(opt) {
 		throw std::runtime_error("can not create Kafka handle");
 	}
 
-	rd_kafka_set_log_level(rk, 7);
+	rd_kafka_set_log_level(rk, 4);
 
 	LOG(3, "New Kafka {} with brokers: {}", rd_kafka_name(rk), opt.address.c_str());
 	if (rd_kafka_brokers_add(rk, opt.address.c_str()) == 0) {

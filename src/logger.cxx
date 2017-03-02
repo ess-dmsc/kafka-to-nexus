@@ -111,7 +111,7 @@ void Logger::dwlog_inner(int level, char const * file, int line, char const * fu
 	auto f1 = file + npre;
 	auto lmsg = fmt::format("{}:{} [{}]:  {}\n", f1, line, level, s1);
 	fwrite(lmsg.c_str(), 1, lmsg.size(), log_file);
-	if (level > 1 && do_run_kafka.load()) {
+	if (level < 7 && do_run_kafka.load()) {
 		// If we will use logging to Kafka in the future, refactor a bit to reduce duplicate work..
 		using namespace rapidjson;
 		Document d;
@@ -129,7 +129,7 @@ void Logger::dwlog_inner(int level, char const * file, int line, char const * fu
 		topic->produce((void*)s1, strlen(s1), nullptr);
 	}
 	#ifdef HAVE_GRAYLOG_LOGGER
-	if (do_use_graylog_logger.load() and level >= 0) {
+	if (do_use_graylog_logger.load() and level < 7) {
 		Log::Msg(level, lmsg);
 	}
 	#endif

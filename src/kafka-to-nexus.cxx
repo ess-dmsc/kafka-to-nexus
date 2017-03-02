@@ -61,7 +61,7 @@ int main(int argc, char ** argv) {
 		switch (c) {
 		case 'v':
 			opt.verbose = true;
-			log_level = std::max(0, log_level - 1);
+			log_level = std::min(9, log_level + 1);
 			break;
 		case 'h':
 			opt.help = true;

@@ -23,7 +23,7 @@ void dwlog_inner(int level, char const * file, int line, char const * func, std:
 
 template <typename ...TT>
 void dwlog(int level, char const * fmt, char const * file, int line, char const * func, TT const & ... args) {
-	if (level < log_level) return;
+	if (level > log_level) return;
 	try {
 		dwlog_inner(level, file, line, func, fmt::format(fmt, args...));
 	}
