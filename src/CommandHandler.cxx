@@ -39,18 +39,26 @@ void CommandHandler::handle_new(rapidjson::Document & d) {
 		}
 	}
 
-	LOG(1, "cmd: {}", d["cmd"].GetString());
 	auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 	std::string fname = "a-dummy-name.h5";
-	if (d.HasMember("filename")) {
-		if (d["filename"].IsString()) {
-			fname = d["filename"].GetString();
+	{
+		auto m1 = d.FindMember("file_attributes");
+		if (m1 != d.MemberEnd() && m1->value.IsObject()) {
+			auto m2 = m1->value.FindMember("file_name");
+			if (m2 != m1->value.MemberEnd() && m2->value.IsString()) {
+				fname = m2->value.GetString();
+			}
 		}
 	}
 	fwt->set_hdf_filename(fname);
 
-	for (auto & st : d["streams"].GetArray()) {
-		fwt->add_source(Source(st["topic"].GetString(), st["source"].GetString()));
+	{
+		auto m1 = d.FindMember("streams");
+		if (m1 != d.MemberEnd() && m1->value.IsArray()) {
+			for (auto & st : m1->value.GetArray()) {
+				fwt->add_source(Source(st["topic"].GetString(), st["source"].GetString()));
+			}
+		}
 	}
 	uint64_t teamid = 0;
 	if (master) {
