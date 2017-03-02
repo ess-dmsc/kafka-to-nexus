@@ -173,6 +173,14 @@ int main(int argc, char ** argv) {
 		fwd_graylog_logger_enable(opt.graylog_logger_address);
 	}
 
+	if (false) {
+		// test if log messages arrive on all destinations
+		for (int i1 = 0; i1 < 100; ++i1) {
+			LOG(i1 % 8, "Log ix {} level {}", i1, i1 % 8);
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
+	}
+
 	Master m(opt.master_config);
 	opt.master = &m;
 	std::thread t1([&m]{
