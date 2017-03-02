@@ -459,7 +459,7 @@ void Producer::cb_error(rd_kafka_t * rk, int err_i, char const * msg, void * opa
 	rd_kafka_resp_err_t err = (rd_kafka_resp_err_t) err_i;
 	LOG(0, "IID: {}  ERROR  {}, {}, {}, {}", self->id, err_i, rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 	if (err == RD_KAFKA_RESP_ERR__TRANSPORT) {
-		rd_kafka_dump(stdout, rk);
+		if (log_level >= 7) rd_kafka_dump(stdout, rk);
 	}
 	else {
 		// TODO
