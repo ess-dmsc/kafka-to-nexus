@@ -37,7 +37,7 @@ HDFFile::~HDFFile() {
 	if (impl->h5file >= 0) {
 		std::array<char, 512> fname;
 		H5Fget_name(impl->h5file, fname.data(), fname.size());
-		LOG(2, "flush file {}", fname.data());
+		LOG(5, "flush file {}", fname.data());
 		H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
 		H5Fclose(impl->h5file);
 	}
@@ -79,10 +79,10 @@ int HDFFile::init(std::string filename) {
 	if (x < 0) {
 		std::array<char, 256> cwd;
 		getcwd(cwd.data(), cwd.size());
-		LOG(7, "ERROR could not create the HDF file: {}  cwd: {}", filename, cwd.data());
+		LOG(0, "ERROR could not create the HDF file: {}  cwd: {}", filename, cwd.data());
 		return -1;
 	}
-	LOG(2, "INFO opened the file hid: {}", x);
+	LOG(5, "INFO opened the file hid: {}", x);
 	impl->h5file = x;
 
 	auto f1 = x;
@@ -220,7 +220,7 @@ hid_t HDFFile_h5::h5file() {
 std::unique_ptr<FBSchemaReader> FBSchemaReader::create(Msg msg) {
 	static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
 	if (msg.size < 8) {
-		LOG(3, "ERROR message is too small");
+		LOG(4, "ERROR message is too small");
 		return nullptr;
 	}
 	Schemas::FBID fbid;

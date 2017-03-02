@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include "logger.h"
 #include "kafka-to-nexus.h"
+#include "uri.h"
 
 #if HAVE_GTEST
 #include <gtest/gtest.h>
@@ -22,7 +23,7 @@ MainOpt * Roundtrip::opt = nullptr;
 std::atomic<MainOpt *> g_main_opt;
 
 void signal_handler(int signal) {
-	LOG(7, "SIGNAL {}", signal);
+	LOG(0, "SIGNAL {}", signal);
 	auto m = g_main_opt.load()->master.load();
 	if (m) {
 		m->stop();
@@ -40,6 +41,8 @@ int main(int argc, char ** argv) {
 		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
 		{"broker-command-topic",            required_argument,        0,  0 },
+		{"kafka-gelf",                      required_argument,        0,  0 },
+		{"graylog-logger-address",          required_argument,        0,  0 },
 		{"teamid",                          required_argument,        0,  0 },
 		{"test",                            no_argument,              0,  0 },
 		{"assets-dir",                      required_argument,        0,  0 },
@@ -50,7 +53,7 @@ int main(int argc, char ** argv) {
 	bool getopt_error = false;
 	while (true) {
 		int c = getopt_long(argc, argv, "vh", long_options, &option_index);
-		//LOG(5, "c getopt {}", c);
+		//LOG(2, "c getopt {}", c);
 		if (c == -1) break;
 		if (c == '?') {
 			getopt_error = true;
@@ -58,7 +61,7 @@ int main(int argc, char ** argv) {
 		switch (c) {
 		case 'v':
 			opt.verbose = true;
-			log_level = std::max(0, log_level - 1);
+			log_level = std::min(9, log_level + 1);
 			break;
 		case 'h':
 			opt.help = true;
@@ -74,6 +77,12 @@ int main(int argc, char ** argv) {
 			if (std::string("broker-command-topic") == lname) {
 				opt.master_config.command_listener.topic = optarg;
 			}
+			if (std::string("kafka-gelf") == lname) {
+				opt.kafka_gelf = optarg;
+			}
+			if (std::string("graylog-logger-address") == lname) {
+				opt.graylog_logger_address = optarg;
+			}
 			if (std::string("teamid") == lname) {
 				opt.master_config.teamid = strtoul(optarg, nullptr, 0);
 			}
@@ -88,12 +97,12 @@ int main(int argc, char ** argv) {
 	}
 
 	if (getopt_error) {
-		LOG(5, "ERROR parsing command line options");
+		LOG(2, "ERROR parsing command line options");
 		opt.help = true;
 		return 1;
 	}
 
-	printf("kafka-to-nexus-0.0.1  (ESS, BrightnESS)  %.7s\n", GIT_COMMIT);
+	printf("kafka-to-nexus-0.0.1 %.7s (ESS, BrightnESS)\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
 	if (opt.help) {
@@ -126,6 +135,14 @@ int main(int argc, char ** argv) {
 		       "\n",
 			opt.master_config.dir_assets.c_str());
 
+		printf("  --kafka-gelf                <kafka://host[:port]/topic>\n"
+		       "      Log to Graylog via Kafka GELF adapter.\n"
+		       "\n");
+
+		printf("  --graylog-logger-address    <host:port>\n"
+		       "      Log to Graylog via graylog_logger library.\n"
+		       "\n");
+
 		printf("  -v\n"
 		       "      Increase verbosity\n"
 		       "\n");
@@ -144,6 +161,24 @@ int main(int argc, char ** argv) {
 		printf("ERROR To run tests, the executable must be compiled with the Google Test library.\n");
 		return 1;
 		#endif
+	}
+
+	if (opt.kafka_gelf != "") {
+		BrightnESS::uri::URI uri(opt.kafka_gelf);
+		log_kafka_gelf_start(uri.host, uri.topic);
+		LOG(4, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
+	}
+
+	if (opt.graylog_logger_address != "") {
+		fwd_graylog_logger_enable(opt.graylog_logger_address);
+	}
+
+	if (false) {
+		// test if log messages arrive on all destinations
+		for (int i1 = 0; i1 < 100; ++i1) {
+			LOG(i1 % 8, "Log ix {} level {}", i1, i1 % 8);
+			std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+		}
 	}
 
 	Master m(opt.master_config);

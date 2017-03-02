@@ -45,7 +45,7 @@ std::string reader::sourcename_impl(Msg msg) {
   auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
   
   if (!event->htype()) {
-    LOG(3, "WARNING message has no source name");
+    LOG(4, "WARNING message has no source name");
     return "";
   }
   return event->htype()->str();
@@ -57,7 +57,7 @@ uint64_t reader::ts_impl(Msg msg) {
   auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
   auto ts = event->ts();
   if (!ts) {
-    LOG(3, "ERROR no time data sent");
+    LOG(4, "ERROR no time data sent");
     return 0;
   }
   return ts;
@@ -73,7 +73,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	// TODO
 	// This is just a unbuffered, low-performance write.
 	// Add buffering after it works.
-	LOG(1, "amo0::init_impl  v.size() == {}", chunk_size);
+	LOG(6, "amo0::init_impl  v.size() == {}", chunk_size);
 	grp_event = hdf_group;
 
 	{
@@ -83,10 +83,10 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	  this->dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
 
 	  if(true) {
-	    LOG(0, "\tDataSpace isSimple {}", H5Sis_simple(dsp));
+	    LOG(7, "\tDataSpace isSimple {}", H5Sis_simple(dsp));
 	    auto ndims = H5Sget_simple_extent_ndims(dsp);
-	    LOG(0, "\tDataSpace getSimpleExtentNdims {}", ndims);
-	    LOG(0, "\tDataSpace getSimpleExtentNpoints {}", 
+	    LOG(7, "\tDataSpace getSimpleExtentNdims {}", ndims);
+	    LOG(7, "\tDataSpace getSimpleExtentNpoints {}", 
 	  	H5Sget_simple_extent_npoints(dsp));
 	    std::vector<hsize_t> get_sizes_now;
 	    std::vector<hsize_t> get_sizes_max;
@@ -94,7 +94,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	    get_sizes_max.resize(ndims);
 	    H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
 	    for (int i1 = 0; i1 < ndims; ++i1) {
-	      LOG(0, "\tH5Sget_simple_extent_dims {:3} {:3}", 
+	      LOG(7, "\tH5Sget_simple_extent_dims {:3} {:3}", 
 	  	  get_sizes_now.at(i1), get_sizes_max.at(i1));
 	    }
 	  }
@@ -129,15 +129,15 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 
     auto tgt = H5Dget_space(ds);
     auto ndims = H5Sget_simple_extent_ndims(tgt);
-    LOG(1, "DataSpace getSimpleExtentNdims {}", ndims);
-    LOG(1, "DataSpace getSimpleExtentNpoints {}", 
+    LOG(6, "DataSpace getSimpleExtentNdims {}", ndims);
+    LOG(6, "DataSpace getSimpleExtentNpoints {}", 
 	H5Sget_simple_extent_npoints(tgt));
     
     A get_sizes_now;
     A get_sizes_max;
     H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
     for (uint i1 = 0; i1 < get_sizes_now.size(); ++i1)
-      LOG(1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+      LOG(6, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
     H5Sclose(tgt);
 
     return get_sizes_now;
@@ -149,7 +149,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
     for (uint i1 = 0; i1 < new_sizes.size(); ++i1)
       new_sizes.at(i1) += event_size.at(i1);
     if (H5Dextend(ds, new_sizes.data()) < 0) {
-      LOG(7, "ERROR can not extend dataset");
+      LOG(0, "ERROR can not extend dataset");
       return {-1ul};
     }
     return std::move(new_sizes);
@@ -163,7 +163,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
     herr_t err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, sizes_now.data(), nullptr, 
 				     event_size.data(), nullptr);
     if (err < 0) {
-      LOG(7, "ERROR can not select mem hyperslab");
+      LOG(0, "ERROR can not select mem hyperslab");
       return {-1ul};
     }
     auto mem = H5Screate_simple(event_size.size(), event_size.data(), nullptr);
@@ -171,7 +171,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
     auto dt = nat_type<uint32_t>();
     err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
     if (err < 0) {
-      LOG(7, "ERROR writing failed");
+      LOG(0, "ERROR writing failed");
       return {-1ul};
     }
     H5Sclose(mem);
@@ -187,7 +187,7 @@ WriteResult writer::write_impl(Msg msg) {
 
   auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
   if( (event->pid() != pid+1) && (pid < -1ul) ) {
-    LOG(0, "amo0 stream event loss: {} -> {}", pid, event->pid());
+    LOG(7, "amo0 stream event loss: {} -> {}", pid, event->pid());
     // TODO write into nexus log
   }
 
@@ -202,7 +202,7 @@ WriteResult writer::write_impl(Msg msg) {
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data());
     if( new_sizes != get_sizes_now )
-      LOG(1,"Expected file size differs from actual size");
+      LOG(6,"Expected file size differs from actual size");
     position = get_sizes_now.data()[0];
   }
   {
@@ -211,7 +211,7 @@ WriteResult writer::write_impl(Msg msg) {
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data()+size);
     if( new_sizes != get_sizes_now )
-      LOG(1,"Expected file size differs from actual size");
+      LOG(6,"Expected file size differs from actual size");
   }
   
   {
@@ -220,7 +220,7 @@ WriteResult writer::write_impl(Msg msg) {
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&value);
     if( new_sizes != get_sizes_now )
-      LOG(1,"Expected file size differs from actual size");
+      LOG(6,"Expected file size differs from actual size");
   }
   {
     auto & ds = this->ei;
@@ -228,7 +228,7 @@ WriteResult writer::write_impl(Msg msg) {
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
     get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&position);
     if( new_sizes != get_sizes_now )
-      LOG(1,"Expected file size differs from actual size");
+      LOG(6,"Expected file size differs from actual size");
   }
 
   return {value};

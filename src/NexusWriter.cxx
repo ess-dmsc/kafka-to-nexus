@@ -23,7 +23,7 @@ NexusWriter::NexusWriter(rapidjson::Document & conf) {
 	// With schema validation, json document should be safe to use
 	auto streams = conf.FindMember("streams")->value.GetArray();
 	for (auto & s : streams) {
-		LOG(3, "have a stream: {}", s["topic"].GetString());
+		LOG(4, "have a stream: {}", s["topic"].GetString());
 	}
 }
 
@@ -38,7 +38,7 @@ int NexusWriter::status() {
 #if HAVE_GTEST
 
 TEST(hdf, proto_01) {
-	LOG(3, "HDF playground (remove later)");
+	LOG(4, "HDF playground (remove later)");
 	// Size of a comound must be given and is specified in bytes.
 	// When building up data types, HDF checks for overlap.
 	size_t nbytes = 128;

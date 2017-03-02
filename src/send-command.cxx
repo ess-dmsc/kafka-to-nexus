@@ -104,7 +104,7 @@ int main(int argc, char ** argv) {
   bool getopt_error = false;
   while (true) {
     int c = getopt_long(argc, argv, "vh", long_options, &option_index);
-    //LOG(5, "c getopt {}", c);
+    //LOG(2, "c getopt {}", c);
     if (c == -1) break;
     if (c == '?') {
       getopt_error = true;
@@ -112,7 +112,7 @@ int main(int argc, char ** argv) {
     switch (c) {
     case 'v':
       opt.verbose = true;
-      log_level = std::max(0, log_level - 1);
+      log_level = std::min(9, log_level + 1);
       break;
     case 'h':
       opt.help = true;
@@ -139,7 +139,7 @@ int main(int argc, char ** argv) {
   }
 
   if (getopt_error) {
-    LOG(5, "ERROR parsing command line options");
+    LOG(2, "ERROR parsing command line options");
     opt.help = true;
     return 1;
   }
@@ -185,18 +185,18 @@ int main(int argc, char ** argv) {
   KafkaW::Producer::Topic pt(producer, "kafka-to-nexus.command");
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.broker_opt.address, opt.teamid);
-    LOG(3, "sending {}", m1);
+    LOG(4, "sending {}", m1);
     pt.produce((void*)m1.data(), m1.size(), nullptr, true);
   }
   if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.broker_opt.address, opt.teamid);
-    LOG(3, "sending {}", m1);
+    LOG(4, "sending {}", m1);
     pt.produce((void*)m1.data(), m1.size(), nullptr, true);
   }
   if (opt.cmd.substr(0,5) == "file:") {
     std::string input=opt.cmd.substr(5);
     auto m1 = make_command_from_file(opt.cmd.substr(5));
-    LOG(3, "sending {}", m1);
+    LOG(4, "sending {}", m1);
     pt.produce((void*)m1.data(), m1.size(), nullptr, true);
   }
   

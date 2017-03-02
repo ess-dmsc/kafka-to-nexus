@@ -38,7 +38,7 @@ int64_t produce_command_from_file(CommandListenerConfig config, std::string file
 	if (x == std::future_status::ready) {
 		return fut.get();
 	}
-	LOG(9, "Timeout on production of test message");
+	LOG(0, "Timeout on production of test message");
 	return -1;
 }
 
@@ -58,7 +58,7 @@ static void fill(T & fwdinfo, uint64_t teamid) {
 
 
 void roundtrip_simple_01(MainOpt & opt) {
-	LOG(2, "Run test:  Test::roundtrip_simple_01");
+	LOG(5, "Run test:  Test::roundtrip_simple_01");
 	using namespace BrightnESS::FileWriter;
 	using namespace rapidjson;
 	using CLK = std::chrono::steady_clock;
@@ -141,7 +141,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 	while (CLK::now() - start < MS(5000)) {
 		std::this_thread::sleep_for(MS(200));
 	}
-	LOG(2, "Stop Master");
+	LOG(5, "Stop Master");
 	m.stop();
 	t1.join();
 }
