@@ -2,6 +2,11 @@
 
 ## Requirements
 
+- rapidjson
+- libfmt
+- `streaming-data-types` repository (clone e.g. in the same directory as `kafka-to-nexus`)
+- pcre2 (`yum install pcre2 pcre2-devel`)
+
 - <https://github.com/HowardHinnant/date.git>
   Clone e.g. in the same directory as `kafka-to-nexus`.
 
