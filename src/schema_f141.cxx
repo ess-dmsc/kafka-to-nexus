@@ -250,7 +250,7 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 	err = H5Dextend(ds, get_sizes_now.data());
 	if (err < 0) {
 		LOG(7, "ERROR can not extend dataset");
-		return {-1};
+		return -1;
 	}
 	H5Sclose(tgt);
 
