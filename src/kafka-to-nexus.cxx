@@ -5,6 +5,7 @@
 #include <getopt.h>
 #include "logger.h"
 #include "kafka-to-nexus.h"
+#include "uri.h"
 
 #if HAVE_GTEST
 #include <gtest/gtest.h>
@@ -40,6 +41,8 @@ int main(int argc, char ** argv) {
 		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
 		{"broker-command-topic",            required_argument,        0,  0 },
+		{"kafka-gelf",                      required_argument,        0,  0 },
+		{"graylog-logger-address",          required_argument,        0,  0 },
 		{"teamid",                          required_argument,        0,  0 },
 		{"test",                            no_argument,              0,  0 },
 		{"assets-dir",                      required_argument,        0,  0 },
@@ -74,6 +77,12 @@ int main(int argc, char ** argv) {
 			if (std::string("broker-command-topic") == lname) {
 				opt.master_config.command_listener.topic = optarg;
 			}
+			if (std::string("kafka-gelf") == lname) {
+				opt.kafka_gelf = optarg;
+			}
+			if (std::string("graylog-logger-address") == lname) {
+				opt.graylog_logger_address = optarg;
+			}
 			if (std::string("teamid") == lname) {
 				opt.master_config.teamid = strtoul(optarg, nullptr, 0);
 			}
@@ -93,7 +102,7 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-	printf("kafka-to-nexus-0.0.1  (ESS, BrightnESS)  %.7s\n", GIT_COMMIT);
+	printf("kafka-to-nexus-0.0.1 %.7s (ESS, BrightnESS)\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
 	if (opt.help) {
@@ -126,6 +135,14 @@ int main(int argc, char ** argv) {
 		       "\n",
 			opt.master_config.dir_assets.c_str());
 
+		printf("  --kafka-gelf                <kafka://host[:port]/topic>\n"
+		       "      Log to Graylog via Kafka GELF adapter.\n"
+		       "\n");
+
+		printf("  --graylog-logger-address    <host:port>\n"
+		       "      Log to Graylog via graylog_logger library.\n"
+		       "\n");
+
 		printf("  -v\n"
 		       "      Increase verbosity\n"
 		       "\n");
@@ -144,6 +161,16 @@ int main(int argc, char ** argv) {
 		printf("ERROR To run tests, the executable must be compiled with the Google Test library.\n");
 		return 1;
 		#endif
+	}
+
+	if (opt.kafka_gelf != "") {
+		BrightnESS::uri::URI uri(opt.kafka_gelf);
+		log_kafka_gelf_start(uri.host, uri.topic);
+		LOG(3, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
+	}
+
+	if (opt.graylog_logger_address != "") {
+		fwd_graylog_logger_enable(opt.graylog_logger_address);
 	}
 
 	Master m(opt.master_config);
