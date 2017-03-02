@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.11)
 add_subdirectory(src)
+if (have_gtest)
 add_subdirectory(test)
+endif()
 
 option(RUN_DOXYGEN "Run doxygen" TRUE)
 
