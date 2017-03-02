@@ -39,7 +39,6 @@ std::atomic<bool> do_run {true};
 std::vector<NexusWriter_uptr> nexus_writers;
 std::function<void(void)> * _cb_on_connected = nullptr;
 std::vector< std::unique_ptr< StreamMaster<Streamer, DemuxTopic> > > stream_masters;
-Schemas::SchemaRegistry schema_registry;
 
 friend class CommandHandler;
 };
