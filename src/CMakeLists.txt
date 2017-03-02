@@ -105,6 +105,21 @@ find_library(path_lib_rdkafka++ NAMES rdkafka++ HINTS
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
+find_path(path_include_graylog_logger NAMES graylog_logger/Log.hpp PATHS
+$ENV{graylog_logger_dir}/include
+/opt/local/graylog_logger-install
+)
+find_library(path_lib_graylog_logger NAMES graylog_logger PATHS
+$ENV{graylog_logger_dir}/lib
+/opt/local/graylog_logger-install
+)
+if (path_include_graylog_logger AND path_lib_graylog_logger)
+message(STATUS "Using graylog_logger")
+set(have_graylog_logger TRUE)
+add_library(libgraylog_logger SHARED IMPORTED)
+set_property(TARGET libgraylog_logger PROPERTY IMPORTED_LOCATION ${path_lib_graylog_logger})
+endif()
+
 
 add_library( NeXusFileWriter
   Streamer.cxx
@@ -148,6 +163,13 @@ $ENV{streaming_data_types_dir}
 message(STATUS "path_include_streaming_data_types: ${path_include_streaming_data_types}")
 
 target_compile_definitions(NeXusFileWriter PRIVATE HAS_REMOTE_API=0)
+
+if (have_graylog_logger)
+target_compile_definitions(NeXusFileWriter PRIVATE HAVE_GRAYLOG_LOGGER=1)
+target_include_directories(NeXusFileWriter PRIVATE ${path_include_graylog_logger})
+target_link_libraries(NeXusFileWriter libgraylog_logger)
+endif()
+
 
 
 set(flatbuffers_generated_headers "")
@@ -234,13 +256,6 @@ add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 add_dependencies(${tgt} NeXusFileWriter)
 
-if (have_gtest)
-message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
-target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
-target_include_directories(${tgt} PRIVATE ${path_include_gtest})
-target_link_libraries(${tgt} libgtest)
-endif()
-
 target_include_directories(${tgt} PRIVATE
 ${path_include_fmt}
 ${path_include_hdf5}
@@ -256,6 +271,19 @@ target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
 target_link_libraries(${tgt} pcre2-8)
 target_link_libraries(${tgt} NeXusFileWriter)
+
+if (have_gtest)
+message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
+target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
+target_include_directories(${tgt} PRIVATE ${path_include_gtest})
+target_link_libraries(${tgt} libgtest)
+endif()
+
+if (have_graylog_logger)
+target_compile_definitions(${tgt} PRIVATE HAVE_GRAYLOG_LOGGER=1)
+target_include_directories(${tgt} PRIVATE ${path_include_graylog_logger})
+target_link_libraries(${tgt} libgraylog_logger)
+endif()
 
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
 configure_file(../test/msg-conf-new-02.json ../test/msg-conf-new-02.json)
