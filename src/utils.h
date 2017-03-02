@@ -3,12 +3,17 @@
 #include <chrono>
 
 using milliseconds = std::chrono::milliseconds;
-constexpr milliseconds operator "" _ms(const unsigned long long int value) {
-  return milliseconds(value);
-}
-
-typedef int64_t ESSTimeStamp;
-
+using microseconds = std::chrono::microseconds;
+using nanoseconds = std::chrono::nanoseconds;
+/* constexpr milliseconds operator "" _ms(const uint32_t value) { */
+/*   return milliseconds(value); */
+/* } */
+/* constexpr microseconds operator "" _us(const uint64_t value) { */
+/*   return microseconds(value); */
+/* } */
+/* constexpr nanoseconds operator "" _ns(const uint64_t value) { */
+/*   return nanoseconds(value); */
+/* } */
 
 
 namespace BrightnESS {
@@ -41,9 +46,16 @@ namespace BrightnESS {
     
       struct OffsetType {}; 
       struct PartitionType {};
+      struct Timestamp {};
+
     }
 
     typedef utils::StrongType<int64_t,utils::OffsetType> RdKafkaOffset;
     typedef utils::StrongType<int32_t,utils::PartitionType> RdKafkaPartition;
+    const RdKafkaOffset RdKafkaOffsetBegin(-2);
+    const RdKafkaOffset RdKafkaOffsetEnd(-1);
+
+    typedef nanoseconds ESSTimeStamp;
+
   }
 }

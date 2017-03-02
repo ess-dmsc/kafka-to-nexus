@@ -8,7 +8,7 @@
 ///   - search backward at connection setup
 
 int64_t BrightnESS::FileWriter::Streamer::step_back_amount = 1000;
-milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout = 1000_ms;
+milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout = milliseconds(1000);
 
 BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
                                            const std::string &topic_name,
@@ -149,7 +149,7 @@ BrightnESS::FileWriter::Streamer::write(
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
               << std::endl;
-    return ProcessMessageResult::ERR(); // msg->err();
+    return ProcessMessageResult::ERR();;
   }
   message_length = msg->len();
   last_offset = RdKafkaOffset(msg->offset());
@@ -173,7 +173,9 @@ BrightnESS::FileWriter::Streamer::write(
   }
   message_length = msg->len();
   last_offset = RdKafkaOffset(msg->offset());
-  return mp.process_message((char *)msg->payload(), msg->len());
+  auto result = mp.process_message((char *)msg->payload(), msg->len());
+  std::cout << "process_message:\t" << result.ts() << std::endl;
+  return result;
 }
 
 /// Implements some algorithm in order to search in the kafka queue the first

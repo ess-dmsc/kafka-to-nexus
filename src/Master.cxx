@@ -4,6 +4,8 @@
 #include "CommandHandler.h"
 #include "Source.h"
 #include "logger.h"
+// #include "helper.h"
+// #include "utils.h"
 #include "commandproducer.h"
 
 namespace BrightnESS {
@@ -44,7 +46,7 @@ void Master::run() {
 	}
 	LOG(6, "calling stop on all stream_masters");
 	for (auto & x : stream_masters) {
-		x->stop(-2);
+	  x->stop();
 	}
 	LOG(6, "called stop on all stream_masters");
 }

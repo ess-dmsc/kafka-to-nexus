@@ -122,13 +122,13 @@ TEST (Streammaster, StartStop) {
   bool is_joinable = sm.start();
   EXPECT_TRUE( is_joinable );
   std::this_thread::sleep_for (std::chrono::seconds(1));
-  auto value = sm.stop(-5);
+  auto value = sm.stop();
 
   for(int item=0;item<(int64_t)one_demux[0].sources().size();++item)
     std::cout << one_demux[0].sources()[item].source() <<  " : "
               << one_demux[0].sources()[item].processed_messages_count() << "\n";
   
-  StreamMaster::delay_after_last_message = 1_ms;
+  StreamMaster::delay_after_last_message = milliseconds(1);
   
 }
 

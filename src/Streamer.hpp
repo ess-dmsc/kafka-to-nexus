@@ -23,8 +23,8 @@ struct Streamer {
   static int64_t step_back_amount;
   
 
-  Streamer() : offset(0), partition(0) { };
-  Streamer(const std::string&, const std::string&, const RdKafkaOffset& =RdKafkaOffset(-1),const RdKafkaPartition& =RdKafkaPartition(0));
+  Streamer() : offset(RdKafkaOffsetEnd), partition(0) { };
+  Streamer(const std::string&, const std::string&, const RdKafkaOffset& = RdKafkaOffsetEnd, const RdKafkaPartition& = RdKafkaPartition(0));
   Streamer(const Streamer&);
   
   //  ~Streamer(); // disconnect
