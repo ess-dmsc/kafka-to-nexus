@@ -123,7 +123,6 @@ void (*on_error) (Producer *, rd_kafka_resp_err_t) = nullptr;
 BrokerOpt opt;
 rd_kafka_t * rk = nullptr;
 private:
-rd_kafka_topic_partition_list_t * plist = nullptr;
 int id = 0;
 };
 
