@@ -1,5 +1,6 @@
 #include "uri.h"
 #include "logger.h"
+#include <array>
 
 namespace BrightnESS {
 namespace uri {
