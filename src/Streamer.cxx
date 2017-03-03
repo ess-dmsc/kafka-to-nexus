@@ -44,6 +44,9 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
     throw std::runtime_error("Failed to create topic: " + errstr);
   }
 
+  _tp = RdKafka::TopicPartition::create(topic_name,partition.value());
+  std::cout << "StreamerConstructor::TopicPartition::offset( ) = " << _tp->offset() << "\n";
+
   // Start consumer for topic+partition at start offset
   RdKafka::ErrorCode resp = consumer->start(topic, partition.value(), offset.value());
   if (resp != RdKafka::ERR_NO_ERROR) {
@@ -65,6 +68,7 @@ int BrightnESS::FileWriter::Streamer::disconnect() {
   int return_code = consumer->stop(topic, partition.value());
   delete topic;
   delete consumer;
+  delete _tp;
   return return_code;
 }
 
@@ -129,6 +133,10 @@ BrightnESS::FileWriter::Streamer::get_last_offset() {
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     ProcessMessageResult::ERR();
   }
+
+  std::cout << "TopicPartition::offset( ) = " << _tp->offset() << "\n";
+
+
   last_offset = RdKafkaOffset(msg->offset());
   return ProcessMessageResult::OK();
 }
@@ -152,6 +160,9 @@ BrightnESS::FileWriter::Streamer::write(
   }
   message_length = msg->len();
   last_offset = RdKafkaOffset(msg->offset());
+  std::cout << "TopicPartition::offset( ) = " << _tp->offset() << "\n";
+  std::cout << "msg->offset() = " << msg->offset() << "\n";
+  
   return f(msg->payload(), msg->len());
 }
 
@@ -172,6 +183,7 @@ BrightnESS::FileWriter::Streamer::write(
   }
   message_length = msg->len();
   last_offset = RdKafkaOffset(msg->offset());
+
   auto result = mp.process_message((char *)msg->payload(), msg->len());
   std::cout << "process_message:\t" << result.ts() << std::endl;
   return result;

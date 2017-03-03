@@ -12,6 +12,7 @@
 namespace RdKafka {
   class Topic;
   class Consumer;
+  class TopicPartition;
 }
 
 namespace BrightnESS {
@@ -72,6 +73,8 @@ struct Streamer {
 private:
   RdKafka::Topic *topic;
   RdKafka::Consumer *consumer;
+  RdKafka::TopicPartition *_tp;
+
   RdKafkaOffset offset;
   RdKafkaOffset last_offset=RdKafkaOffset(-1);
   int64_t step_back_offset=0;
