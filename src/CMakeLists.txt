@@ -321,9 +321,9 @@ target_include_directories(${tgt} PRIVATE ${path_include_graylog_logger})
 target_link_libraries(${tgt} libgraylog_logger)
 endif()
 
-configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
-configure_file(../test/msg-conf-new-02.json ../test/msg-conf-new-02.json)
-configure_file(../test/schema-command.json ../test/schema-command.json)
+configure_file(tests/msg-conf-new-01.json tests/msg-conf-new-01.json)
+configure_file(tests/msg-conf-new-02.json tests/msg-conf-new-02.json)
+configure_file(tests/schema-command.json tests/schema-command.json)
 
 if (have_gtest)
 add_subdirectory(tests)
