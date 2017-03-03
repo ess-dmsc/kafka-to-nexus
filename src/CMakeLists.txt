@@ -30,20 +30,20 @@ $ENV{DM_ROOT}/usr/include
 /opt/local
 )
 
+set(have_gtest 0)
 find_path(path_include_gtest NAMES gtest/gtest.h PATHS
 $ENV{googletest_dir}
 )
 find_library(path_lib_gtest NAMES gtest PATHS
 $ENV{googletest_dir}
 )
-if (path_lib_gtest)
+if (path_include_gtest AND path_lib_gtest)
+set(have_gtest 1)
+message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
 add_library(libgtest SHARED IMPORTED)
 set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
 endif()
-set(have_gtest 0)
-if (path_include_gtest AND path_lib_gtest)
-set(have_gtest 1)
-endif()
+
 
 find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h HINTS
 "$ENV{flatbuffers_dir}/include"
@@ -114,45 +114,11 @@ $ENV{graylog_logger_dir}/lib
 /opt/local/graylog_logger-install
 )
 if (path_include_graylog_logger AND path_lib_graylog_logger)
-message(STATUS "Using graylog_logger")
+message(STATUS "Using graylog_logger ${path_include_graylog_logger} ${path_lib_graylog_logger}")
 set(have_graylog_logger TRUE)
 add_library(libgraylog_logger SHARED IMPORTED)
 set_property(TARGET libgraylog_logger PROPERTY IMPORTED_LOCATION ${path_lib_graylog_logger})
 endif()
-
-
-add_library( NeXusFileWriter
-  Streamer.cxx
-  StreamMaster.cxx
-  kafka_util.cxx
-  Master.cxx
-  CommandListener.cxx
-  NexusWriter.cxx
-  TimeDifferenceFromMessage.cxx
-  FileWriterTask.cxx
-  Source.cxx
-  DemuxTopic.cxx
-  HDFFile.cxx
-  SchemaRegistry.cxx
-  KafkaW.cxx
-  helper.cxx
-  logger.cxx
-  json.cxx
-  uri.cxx
-  date/tz.cpp
-  date/tzblobs.cpp
-  ${path_include_fmt}/fmt/format.cc
-)
-add_dependencies(NeXusFileWriter flatbuffers_generate)
-
-target_include_directories(NeXusFileWriter PRIVATE
-  ${path_include_fmt}
-  ${path_include_hdf5}
-  ${path_include_rdkafka}
-  ${path_include_flatbuffers}
-  ${path_include_rapidjson}
-  ${CMAKE_CURRENT_BINARY_DIR}
-  )
 
 
 message(STATUS "ENV{streaming_data_types_dir}: $ENV{streaming_data_types_dir}")
@@ -161,14 +127,6 @@ $ENV{streaming_data_types_dir}
 "${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types"
 )
 message(STATUS "path_include_streaming_data_types: ${path_include_streaming_data_types}")
-
-target_compile_definitions(NeXusFileWriter PRIVATE HAS_REMOTE_API=0)
-
-if (have_graylog_logger)
-target_compile_definitions(NeXusFileWriter PRIVATE HAVE_GRAYLOG_LOGGER=1)
-target_include_directories(NeXusFileWriter PRIVATE ${path_include_graylog_logger})
-target_link_libraries(NeXusFileWriter libgraylog_logger)
-endif()
 
 
 
@@ -220,43 +178,33 @@ else ()
 endif()
 
 
-set(tgt "send-command")
-set(sources
-send-command.cxx
+add_library(kafka_to_nexus__objects OBJECT
+Streamer.cxx
+StreamMaster.cxx
+kafka_util.cxx
+Master.cxx
+CommandListener.cxx
+NexusWriter.cxx
+TimeDifferenceFromMessage.cxx
+FileWriterTask.cxx
+Source.cxx
+DemuxTopic.cxx
+HDFFile.cxx
+SchemaRegistry.cxx
 KafkaW.cxx
+helper.cxx
 logger.cxx
+json.cxx
+uri.cxx
+date/tz.cpp
+date/tzblobs.cpp
+schema_f141.cxx
+schemas/f141/synth.cxx
+MainOpt.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
-add_executable(${tgt} ${sources})
-add_dependencies(${tgt} git_commit_current)
-target_include_directories(${tgt} PRIVATE
-${path_include_fmt}
-${path_include_rdkafka}
-${path_include_rapidjson}
-${CMAKE_CURRENT_BINARY_DIR}
-)
-target_link_libraries(${tgt} librdkafka)
-
-
-set(tgt "kafka-to-nexus")
-set(sources
-kafka-to-nexus.cxx
-schema_f141.cxx
-schemas/f141/synth.cxx
-${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
-)
-if (have_gtest)
-list(APPEND sources test-roundtrip.cxx)
-list(APPEND sources ../test/HDFFile.cxx)
-endif()
-add_executable(${tgt} ${sources})
-
-add_dependencies(${tgt} flatbuffers_generate)
-add_dependencies(${tgt} git_commit_current)
-add_dependencies(${tgt} NeXusFileWriter)
-
-target_include_directories(${tgt} PRIVATE
+target_include_directories(kafka_to_nexus__objects PRIVATE
 ${path_include_fmt}
 ${path_include_hdf5}
 ${path_include_rdkafka}
@@ -264,18 +212,106 @@ ${path_include_flatbuffers}
 ${path_include_rapidjson}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
+target_compile_definitions(kafka_to_nexus__objects PRIVATE HAS_REMOTE_API=0)
+add_dependencies(kafka_to_nexus__objects flatbuffers_generate)
+if (have_gtest)
+target_compile_definitions(kafka_to_nexus__objects PRIVATE HAVE_GTEST=1)
+target_include_directories(kafka_to_nexus__objects PRIVATE ${path_include_gtest})
+endif()
+
+
+
+if (false)
+add_library( NeXusFileWriter
+  Streamer.cxx
+  StreamMaster.cxx
+  kafka_util.cxx
+  Master.cxx
+  CommandListener.cxx
+  NexusWriter.cxx
+  TimeDifferenceFromMessage.cxx
+  FileWriterTask.cxx
+  Source.cxx
+  DemuxTopic.cxx
+  HDFFile.cxx
+  SchemaRegistry.cxx
+  KafkaW.cxx
+  helper.cxx
+  logger.cxx
+  json.cxx
+  uri.cxx
+  date/tz.cpp
+  date/tzblobs.cpp
+  ${path_include_fmt}/fmt/format.cc
+)
+add_dependencies(NeXusFileWriter flatbuffers_generate)
+
+target_include_directories(NeXusFileWriter PRIVATE
+  ${path_include_fmt}
+  ${path_include_hdf5}
+  ${path_include_rdkafka}
+  ${path_include_flatbuffers}
+  ${path_include_rapidjson}
+  ${CMAKE_CURRENT_BINARY_DIR}
+  )
+target_compile_definitions(NeXusFileWriter PRIVATE HAS_REMOTE_API=0)
+if (have_graylog_logger)
+target_compile_definitions(NeXusFileWriter PRIVATE HAVE_GRAYLOG_LOGGER=1)
+target_include_directories(NeXusFileWriter PRIVATE ${path_include_graylog_logger})
+target_link_libraries(NeXusFileWriter libgraylog_logger)
+endif()
+
+endif()
+
+
+
+set(tgt "send-command")
+set(sources
+send-command.cxx
+$<TARGET_OBJECTS:kafka_to_nexus__objects>
+)
+add_executable(${tgt} ${sources})
+add_dependencies(${tgt} git_commit_current)
+target_include_directories(${tgt} PRIVATE
+${path_include_fmt}
+${path_include_rdkafka}
+${path_include_rapidjson}
+)
+target_link_libraries(${tgt} libhdf5)
+target_link_libraries(${tgt} librdkafka)
+target_link_libraries(${tgt} librdkafka++)
+target_link_libraries(${tgt} pcre2-8)
+if (have_gtest)
+target_link_libraries(${tgt} libgtest)
+endif()
+
+
+
+set(tgt "kafka-to-nexus")
+set(sources
+kafka-to-nexus.cxx
+$<TARGET_OBJECTS:kafka_to_nexus__objects>
+)
+add_executable(${tgt} ${sources})
+
+add_dependencies(${tgt} flatbuffers_generate)
+add_dependencies(${tgt} git_commit_current)
+
+target_include_directories(${tgt} PRIVATE
+${path_include_fmt}
+${path_include_hdf5}
+${path_include_rdkafka}
+${path_include_flatbuffers}
+${path_include_rapidjson}
+)
 
 target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
 target_link_libraries(${tgt} pcre2-8)
-target_link_libraries(${tgt} NeXusFileWriter)
 
 if (have_gtest)
-message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
-target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
-target_include_directories(${tgt} PRIVATE ${path_include_gtest})
 target_link_libraries(${tgt} libgtest)
 endif()
 
@@ -288,3 +324,7 @@ endif()
 configure_file(../test/msg-conf-new-01.json ../test/msg-conf-new-01.json)
 configure_file(../test/msg-conf-new-02.json ../test/msg-conf-new-02.json)
 configure_file(../test/schema-command.json ../test/schema-command.json)
+
+if (have_gtest)
+add_subdirectory(tests)
+endif()
