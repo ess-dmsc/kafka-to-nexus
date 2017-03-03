@@ -221,50 +221,6 @@ endif()
 
 
 
-if (false)
-add_library( NeXusFileWriter
-  Streamer.cxx
-  StreamMaster.cxx
-  kafka_util.cxx
-  Master.cxx
-  CommandListener.cxx
-  NexusWriter.cxx
-  TimeDifferenceFromMessage.cxx
-  FileWriterTask.cxx
-  Source.cxx
-  DemuxTopic.cxx
-  HDFFile.cxx
-  SchemaRegistry.cxx
-  KafkaW.cxx
-  helper.cxx
-  logger.cxx
-  json.cxx
-  uri.cxx
-  date/tz.cpp
-  date/tzblobs.cpp
-  ${path_include_fmt}/fmt/format.cc
-)
-add_dependencies(NeXusFileWriter flatbuffers_generate)
-
-target_include_directories(NeXusFileWriter PRIVATE
-  ${path_include_fmt}
-  ${path_include_hdf5}
-  ${path_include_rdkafka}
-  ${path_include_flatbuffers}
-  ${path_include_rapidjson}
-  ${CMAKE_CURRENT_BINARY_DIR}
-  )
-target_compile_definitions(NeXusFileWriter PRIVATE HAS_REMOTE_API=0)
-if (have_graylog_logger)
-target_compile_definitions(NeXusFileWriter PRIVATE HAVE_GRAYLOG_LOGGER=1)
-target_include_directories(NeXusFileWriter PRIVATE ${path_include_graylog_logger})
-target_link_libraries(NeXusFileWriter libgraylog_logger)
-endif()
-
-endif()
-
-
-
 set(tgt "send-command")
 set(sources
 send-command.cxx
