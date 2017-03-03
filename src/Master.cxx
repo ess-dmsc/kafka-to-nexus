@@ -190,25 +190,3 @@ void Master::on_consumer_connected(std::function<void(void)> * cb_on_connected) 
 
 }
 }
-
-
-
-
-#if HAVE_GTEST
-#include <gtest/gtest.h>
-
-TEST(config, read_simple) {
-	return;
-	LOG(4, "Test a simple configuration");
-	using namespace BrightnESS::FileWriter;
-	// TODO
-	// * Input a predefined configuration message to setup a simple stream writing
-	// * Connect outputs to test buffers
-	// * Input a predefined message (or more) and test if it arrives at the correct ends
-	MasterConfig conf_m;
-	conf_m.test_mockup_command_listener = true;
-	Master m(conf_m);
-	ASSERT_NO_THROW( m.run() );
-}
-
-#endif
