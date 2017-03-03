@@ -5,10 +5,9 @@
 - rapidjson
 - libfmt
 - `streaming-data-types` repository (clone e.g. in the same directory as `kafka-to-nexus`)
-- pcre2 (`yum install pcre2 pcre2-devel`)
-
-- <https://github.com/HowardHinnant/date.git>
-  Clone e.g. in the same directory as `kafka-to-nexus`.
+- librdkafka
+- pcre2 (`yum install pcre2 pcre2-devel` or `brew install pcre2`)
+  (Needed because we support GCC < 4.9 where std regex is incomplete)
 
 
 ## Documents:
@@ -71,13 +70,33 @@ the list of brokers from Kafka.
   - Streammaster::duration milliseconds have been elapsed
 * when receives a **termination** command from Master closes all the streamers
 
+
+## Flatbuffer Schema Plugins
+
+The actual parsing of the different FlatBuffer schemata is handled by plugins
+which register themself via the `SchemaRegistry`.
+See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
+Support for new schemas can be added in the same way.
+
+
 ## Running tests
 
+Tests are built only when `gtest` is detected.  If detected, the `cmake` output
+contains
+```
+-- Using Google Test: [ DISCOVERED_LOCATION_OF_GTEST ]
+```
+with the location where it has found `gtest`.
 
-Usage:
-```bash
-   bin/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
-   bin/streammaster_test --kafka_broker=<broker>:<port>"
+Start the `gtest` based test suite via:
+```
+./tests/tests
+```
+
+More tests involing the network:
+```
+tests/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
+tests/streammaster_test --kafka_broker=<broker>:<port>"
 ```
 Tests are implemented using the gtest suite. They support all the command
 line option provided by gtest.
