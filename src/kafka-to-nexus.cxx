@@ -24,19 +24,22 @@ std::atomic<MainOpt *> g_main_opt;
 
 void signal_handler(int signal) {
 	LOG(0, "SIGNAL {}", signal);
-	auto m = g_main_opt.load()->master.load();
-	if (m) {
-		m->stop();
+	if (auto opt = g_main_opt.load()) {
+		if (auto m = opt->master.load()) {
+			m->stop();
+		}
 	}
 }
 
-int main(int argc, char ** argv) {
-	MainOpt opt;
-	opt.master = nullptr;
-	g_main_opt.store(&opt);
-	std::signal(SIGINT, signal_handler);
-	std::signal(SIGTERM, signal_handler);
 
+/**
+Parses the options using getopt and returns a MainOpt
+*/
+std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
+	std::unique_ptr<MainOpt> opt(new MainOpt);
+	opt->master = nullptr;
+	// For the signal handler
+	g_main_opt.store(opt.get());
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
 		{"broker-command-address",          required_argument,        0,  0 },
@@ -60,37 +63,37 @@ int main(int argc, char ** argv) {
 		}
 		switch (c) {
 		case 'v':
-			opt.verbose = true;
+			opt->verbose = true;
 			log_level = std::min(9, log_level + 1);
 			break;
 		case 'h':
-			opt.help = true;
+			opt->help = true;
 			break;
 		case 0:
 			auto lname = long_options[option_index].name;
 			if (std::string("help") == lname) {
-				opt.help = true;
+				opt->help = true;
 			}
 			if (std::string("broker-command-address") == lname) {
-				opt.master_config.command_listener.address = optarg;
+				opt->master_config.command_listener.address = optarg;
 			}
 			if (std::string("broker-command-topic") == lname) {
-				opt.master_config.command_listener.topic = optarg;
+				opt->master_config.command_listener.topic = optarg;
 			}
 			if (std::string("kafka-gelf") == lname) {
-				opt.kafka_gelf = optarg;
+				opt->kafka_gelf = optarg;
 			}
 			if (std::string("graylog-logger-address") == lname) {
-				opt.graylog_logger_address = optarg;
+				opt->graylog_logger_address = optarg;
 			}
 			if (std::string("teamid") == lname) {
-				opt.master_config.teamid = strtoul(optarg, nullptr, 0);
+				opt->master_config.teamid = strtoul(optarg, nullptr, 0);
 			}
 			if (std::string("test") == lname) {
-				opt.gtest = true;
+				opt->gtest = true;
 			}
 			if (std::string("assets-dir") == lname) {
-				opt.master_config.dir_assets = optarg;
+				opt->master_config.dir_assets = optarg;
 			}
 			break;
 		}
@@ -98,14 +101,27 @@ int main(int argc, char ** argv) {
 
 	if (getopt_error) {
 		LOG(2, "ERROR parsing command line options");
-		opt.help = true;
+		opt->help = true;
+		return {1, std::move(opt)};
+	}
+
+	return {0, std::move(opt)};
+}
+
+
+int main(int argc, char ** argv) {
+	auto po = parse_opt(argc, argv);
+	if (po.first) {
 		return 1;
 	}
+	auto opt = std::move(po.second);
+	std::signal(SIGINT, signal_handler);
+	std::signal(SIGTERM, signal_handler);
 
 	printf("kafka-to-nexus-0.0.1 %.7s (ESS, BrightnESS)\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
-	if (opt.help) {
+	if (opt->help) {
 		printf("Forwards EPICS process variables to Kafka topics.\n"
 		       "Controlled via JSON packets sent over the configuration topic.\n"
 		       "\n"
@@ -120,20 +136,20 @@ int main(int argc, char ** argv) {
 		       "      Kafka brokers to connect with for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.master_config.command_listener.address.c_str());
+			opt->master_config.command_listener.address.c_str());
 
 		printf("  --broker-command-topic      <topic-name>\n"
 		       "      Topic name to listen to for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.master_config.command_listener.topic.c_str());
+			opt->master_config.command_listener.topic.c_str());
 
 		printf("  --assets-dir                <path>\n"
 		       "      Path where program can find some supplementary files.\n"
 		       "      Should point e.g. to the build or install directory.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt.master_config.dir_assets.c_str());
+			opt->master_config.dir_assets.c_str());
 
 		printf("  --kafka-gelf                <kafka://host[:port]/topic>\n"
 		       "      Log to Graylog via Kafka GELF adapter.\n"
@@ -152,9 +168,9 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 
-	if (opt.gtest) {
+	if (opt->gtest) {
 		#if HAVE_GTEST
-		Roundtrip::opt = & opt;
+		Roundtrip::opt = opt.get();
 		::testing::InitGoogleTest(&argc, argv);
 		return RUN_ALL_TESTS();
 		#else
@@ -163,14 +179,14 @@ int main(int argc, char ** argv) {
 		#endif
 	}
 
-	if (opt.kafka_gelf != "") {
-		BrightnESS::uri::URI uri(opt.kafka_gelf);
+	if (opt->kafka_gelf != "") {
+		BrightnESS::uri::URI uri(opt->kafka_gelf);
 		log_kafka_gelf_start(uri.host, uri.topic);
 		LOG(4, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
 	}
 
-	if (opt.graylog_logger_address != "") {
-		fwd_graylog_logger_enable(opt.graylog_logger_address);
+	if (opt->graylog_logger_address != "") {
+		fwd_graylog_logger_enable(opt->graylog_logger_address);
 	}
 
 	if (false) {
@@ -181,13 +197,13 @@ int main(int argc, char ** argv) {
 		}
 	}
 
-	Master m(opt.master_config);
-	opt.master = &m;
+	Master m(opt->master_config);
+	opt->master = &m;
 	std::thread t1([&m]{
 		m.run();
 	});
 	t1.join();
-	opt.master = nullptr;
+	opt->master = nullptr;
 
 	return 0;
 }
