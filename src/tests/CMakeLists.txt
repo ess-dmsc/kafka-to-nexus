@@ -1,4 +1,4 @@
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../tests)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
 
 
 set(tgt "tests")
@@ -83,3 +83,7 @@ target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
 target_include_directories(${tgt} PRIVATE ${path_include_gtest})
 target_link_libraries(${tgt} libgtest)
 endif()
+
+configure_file(msg-conf-new-01.json ../../tests/msg-conf-new-01.json)
+configure_file(msg-conf-new-02.json ../../tests/msg-conf-new-02.json)
+configure_file(schema-command.json ../../tests/schema-command.json)
