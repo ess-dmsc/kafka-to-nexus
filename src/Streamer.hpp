@@ -24,8 +24,9 @@ struct Streamer {
   static int64_t step_back_amount;
   
 
-  Streamer() : offset(RdKafkaOffsetEnd), partition(0) { };
-  Streamer(const std::string&, const std::string&, const RdKafkaOffset& = RdKafkaOffsetEnd, const RdKafkaPartition& = RdKafkaPartition(0));
+  Streamer() : offset(RdKafkaOffsetEnd), partition(RdKafkaPartiti) { };
+  Streamer(const std::string&, const std::string&, 
+	   const RdKafkaOffset& = RdKafkaOffsetEnd, const RdKafkaPartition& = RdKafkaPartition(0));
   Streamer(const Streamer&);
   
   //  ~Streamer(); // disconnect
@@ -76,9 +77,9 @@ private:
   RdKafka::TopicPartition *_tp;
 
   RdKafkaOffset offset;
-  RdKafkaOffset last_offset=RdKafkaOffset(-1);
+  RdKafkaOffset last_offset;
   int64_t step_back_offset=0;
-  RdKafkaPartition partition;
+  int partition;
   size_t message_length;
 
 };

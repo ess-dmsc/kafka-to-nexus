@@ -23,7 +23,7 @@ namespace BrightnESS {
       template <typename T, typename PHANTOM>
 	struct StrongType {
 	public:
-	  explicit StrongType (T value) : m_value{value} { }
+	  StrongType (T value) : m_value{value} { }
 	  inline const T& value () { return m_value; }
 	  bool operator==(const StrongType<T,PHANTOM>& other) {
 	    return m_value == other.m_value;
@@ -54,6 +54,7 @@ namespace BrightnESS {
     typedef utils::StrongType<int32_t,utils::PartitionType> RdKafkaPartition;
     const RdKafkaOffset RdKafkaOffsetBegin(-2);
     const RdKafkaOffset RdKafkaOffsetEnd(-1);
+    const RdKafkaOffset RdKafkaPartitionZero(-1);
 
     typedef nanoseconds ESSTimeStamp;
 
