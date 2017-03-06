@@ -45,6 +45,7 @@ FileWriterTask::FileWriterTask() {
 }
 
 FileWriterTask::~FileWriterTask() {
+	LOG(9, "~FileWriterTask");
 }
 
 FileWriterTask & FileWriterTask::set_hdf_filename(std::string hdf_filename) {

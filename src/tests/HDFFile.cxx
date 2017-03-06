@@ -51,19 +51,21 @@ TEST_F(T_HDFFile, write_f141) {
 class T_CommandHandler : public testing::Test {
 public:
 static void new_03() {
-	auto fname = "tmp-new-03.h5";
-	auto source_name = "some-sourcename";
-	unlink(fname);
 	using namespace BrightnESS;
 	using namespace BrightnESS::FileWriter;
 	auto cmd = gulp("tests/msg-cmd-new-03.json");
 	LOG(3, "cmd: {:.{}}", cmd.data(), cmd.size());
+	rapidjson::Document d;
+	d.Parse(cmd.data(), cmd.size());
+	char const * fname = d["file_attributes"]["file_name"].GetString();
+	char const * source_name = d["streams"][0]["source"].GetString();
+	unlink(fname);
 	FileWriter::CommandHandler ch(nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
+
+	// From here, I need the file writer task instance
 	return;
 
-	FileWriter::HDFFile f1;
-	f1.init(fname, rapidjson::Value());
 	auto & reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
 	std::array<char, 4> fbid {{ 'f', '1', '4', '1' }};
 	auto writer = reg.at(fbid)->create_reader()->create_writer();
@@ -73,8 +75,6 @@ static void new_03() {
 		auto fb = synth.next(0);
 		msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 	}
-	// f1.impl->h5file
-	writer->init(&f1, source_name, msg);
 }
 };
 

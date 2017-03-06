@@ -72,17 +72,45 @@ static void write_hdf_iso8601(hid_t loc, std::string name, T & ts) {
 }
 
 
-static void write_attribute(hid_t loc, std::string name, std::string value) {
+
+static void write_attribute_str(hid_t loc, std::string name, char const * value) {
 	auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
 	H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
 	auto dsp_sc = H5Screate(H5S_SCALAR);
 	auto strfix = H5Tcopy(H5T_C_S1);
 	H5Tset_cset(strfix, H5T_CSET_UTF8);
-	H5Tset_size(strfix, value.size());
+	H5Tset_size(strfix, strlen(value));
 	auto at = H5Acreate2(loc, name.c_str(), strfix, dsp_sc, acpl, H5P_DEFAULT);
-	H5Awrite(at, strfix, value.data());
+	H5Awrite(at, strfix, value);
 	H5Aclose(at);
 	H5Tclose(strfix);
+	H5Sclose(dsp_sc);
+	H5Pclose(acpl);
+}
+
+template <typename T> hid_t nat_type();
+template <> hid_t nat_type<float>()    { return H5T_NATIVE_FLOAT; }
+template <> hid_t nat_type<double>()   { return H5T_NATIVE_DOUBLE; }
+template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
+template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
+template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
+template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
+template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
+template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
+template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
+template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
+
+template <typename T>
+static void write_attribute(hid_t loc, std::string name, T value);
+
+template <typename T>
+static void write_attribute(hid_t loc, std::string name, T value) {
+	auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+	H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
+	auto dsp_sc = H5Screate(H5S_SCALAR);
+	auto at = H5Acreate2(loc, name.c_str(), nat_type<T>(), dsp_sc, acpl, H5P_DEFAULT);
+	H5Awrite(at, nat_type<T>(), &value);
+	H5Aclose(at);
 	H5Sclose(dsp_sc);
 	H5Pclose(acpl);
 }
@@ -176,15 +204,25 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 				if (mem != jsv->MemberEnd()) {
 					auto & nx_class = mem->value;
 					if (nx_class.IsString()) {
-						write_attribute(se.nxv, "NX_class", nx_class.GetString());
+						write_attribute_str(se.nxv, "NX_class", nx_class.GetString());
 					}
 				}
 
 				mem = jsv->FindMember("NX_attributes");
 				if (mem != jsv->MemberEnd()) {
-					auto & nx_class = mem->value;
-					if (nx_class.IsString()) {
-						write_attribute(se.nxv, "NX_class", nx_class.GetString());
+					auto & a = mem->value;
+					if (a.IsObject()) {
+						for (auto & at : a.GetObject()) {
+							if (at.value.IsString()) {
+								write_attribute_str(se.nxv, at.name.GetString(), at.value.GetString());
+							}
+							if (at.value.IsInt64()) {
+								write_attribute(se.nxv, at.name.GetString(), at.value.GetInt64());
+							}
+							if (at.value.IsDouble()) {
+								write_attribute(se.nxv, at.name.GetString(), at.value.GetDouble());
+							}
+						}
 					}
 				}
 

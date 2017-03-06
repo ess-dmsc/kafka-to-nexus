@@ -86,8 +86,11 @@ void CommandHandler::handle_new(rapidjson::Document & d) {
 	if (master) {
 		std::string br(d["broker"].GetString());
 		auto s = std::unique_ptr< StreamMaster<Streamer, DemuxTopic> >(new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt)));
-		master->stream_masters.push_back(std::move(s));
 		s->start();
+		master->stream_masters.push_back(std::move(s));
+	}
+	else {
+		file_writer_tasks.emplace_back(std::move(fwt));
 	}
 	g_N_HANDLED += 1;
 }
