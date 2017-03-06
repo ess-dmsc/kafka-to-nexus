@@ -86,4 +86,5 @@ endif()
 
 configure_file(msg-conf-new-01.json ../../tests/msg-conf-new-01.json)
 configure_file(msg-conf-new-02.json ../../tests/msg-conf-new-02.json)
+configure_file(msg-cmd-new-03.json ../../tests/msg-cmd-new-03.json)
 configure_file(schema-command.json ../../tests/schema-command.json)
