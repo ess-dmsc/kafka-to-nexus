@@ -127,7 +127,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 		LOG(0, "ERROR could not create the HDF file: {}  cwd: {}", filename, cwd.data());
 		return -1;
 	}
-	LOG(5, "INFO opened the file hid: {}", x);
 	impl->h5file = x;
 
 	auto lcpl = H5Pcreate(H5P_LINK_CREATE);
@@ -170,13 +169,11 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 		stack.back().nxv = f1;
 		while (stack.size() > 0) {
 			auto & se = stack.back();
-			LOG(3, "NOW AT level: {}  name: {}", stack.size(), se.name);
 			for (auto & x : stack) {
 				string itrname = "[empty]";
 				if (x.itr != x.jsv->MemberEnd()) {
 					itrname = x.itr->name.GetString();
 				}
-				LOG(3, "  itrname: {}", itrname);
 			}
 			auto & jsv = se.jsv;
 			if (!se.basics) {
@@ -185,7 +182,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 					auto & nx_type = mem->value;
 					if (nx_type.IsString()) {
 						char const * s = nx_type.GetString();
-						LOG(3, "nx_type: {} {}", (void*)&s, s[0]);
 						if (string("field") == s) {
 							se.nx_type = "field";
 						}
@@ -235,11 +231,9 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 			bool have_child = false;
 			if (se.jsv->IsObject()) {
 				while (!have_child && se.itr != se.jsv->MemberEnd()) {
-					LOG(3, "consider name: {}", se.itr->name.GetString());
 					if (strncmp("NX_", se.itr->name.GetString(), 3) != 0) {
 						if (se.itr->value.IsObject()) {
 							stack.emplace_back(se.itr->name.GetString(), &se.itr->value, se.nxv);
-							LOG(3, "pushed name: {}", stack.back().name);
 							have_child = true;
 						}
 						else if (se.itr->value.IsString()) {
@@ -279,107 +273,11 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 		}
 	}
 
-	if (false) {
-
 	{
-		auto payload = filename;
-		H5Tset_size(strfix, payload.size());
-		auto at = H5Acreate2(f1, "file_name", strfix, dsp_sc, acpl, H5P_DEFAULT);
-		H5Awrite(at, strfix, payload.data());
-		H5Aclose(at);
-		//H5Eprint2(H5E_DEFAULT, nullptr);
-	}
-
-	{
-		vector<char> s1(64);
-		if (false) {
-			// std way
-			using namespace std::chrono;
-			auto now = system_clock::now();
-			auto time = system_clock::to_time_t(now);
-			strftime(s1.data(), s1.size(), "%Y-%m-%dT%H:%M:%S%z", localtime(&time));
-		}
-		{
-			// date way
-			using namespace date;
-			using namespace std::chrono;
-			auto now2 = make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
-			auto s2 = format("%Y-%m-%dT%H:%M:%S%z", now2);
-			std::copy(s2.c_str(), s2.c_str() + s2.size(), s1.data());
-		}
-		H5Tset_size(strfix, s1.size());
-		auto at = H5Acreate2(f1, "file_time", strfix, dsp_sc, acpl, H5P_DEFAULT);
-		H5Awrite(at, strfix, s1.data());
-		H5Aclose(at);
-	}
-
-	{
-		// top level NXentry
-		auto g1 = H5Gcreate2(f1, "entry", lcpl, H5P_DEFAULT, H5P_DEFAULT);
-		{
-			string s1 {"NXentry"};
-			H5Tset_size(strfix, s1.size());
-			auto at = H5Acreate2(g1, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
-			H5Awrite(at, strfix, s1.data());
-			H5Aclose(at);
-		}
-		{
-			// set application definition
-			string s1("NXreftof");
-			using A = AA<1>;
-			A sini {{ 1 }};
-			A smax {{ 1 }};
-			auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-			H5Tset_size(strfix, s1.size());
-			auto ds = H5Dcreate2(g1, "definition", strfix, dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-			H5Dclose(ds);
-		}
-		{
-			// set application definition
-			string s1("Some title here");
-			using A = AA<1>;
-			A sini {{ 1 }};
-			A smax {{ 1 }};
-			auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-			H5Tset_size(strfix, s1.size());
-			auto ds = H5Dcreate2(g1, "title", strfix, dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-			H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-			H5Dclose(ds);
-		}
-		{
-			using namespace date;
-			using namespace std::chrono;
-			auto now = make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
-			auto end = make_zoned(current_zone(), floor<milliseconds>(system_clock::now() + seconds(10)));
-			write_hdf_iso8601(g1, "start_time", now);
-			write_hdf_iso8601(g1, "end_time", end);
-		}
-		{
-			// NXinstrument
-			auto g_inst = H5Gcreate2(g1, "instrument", lcpl, H5P_DEFAULT, H5P_DEFAULT);
-			{
-				string s1 {"NXinstrument"};
-				H5Tset_size(strfix, s1.size());
-				auto at = H5Acreate2(g_inst, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
-				H5Awrite(at, strfix, s1.data());
-				H5Aclose(at);
-			}
-			write_hdf_ds_scalar_string(g_inst, "name", "instrument-name");
-			{
-				auto g_chopper = H5Gcreate2(g_inst, "chopper", lcpl, H5P_DEFAULT, H5P_DEFAULT);
-				{
-					string s1 {"NXdisk_chopper"};
-					H5Tset_size(strfix, s1.size());
-					auto at = H5Acreate2(g_chopper, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
-					H5Awrite(at, strfix, s1.data());
-					H5Aclose(at);
-				}
-				write_hdf_ds_scalar_string(g_chopper, "distance", "the-chopper-distance...");
-			}
-		}
-	}
-
+		using namespace date;
+		using namespace std::chrono;
+		auto now = make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
+		write_hdf_iso8601(f1, "file_time", now);
 	}
 
 	H5Sclose(dsp_sc);
@@ -388,6 +286,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const & nexus_structure
 
 	return 0;
 }
+
 
 void HDFFile::flush() {
 	H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
