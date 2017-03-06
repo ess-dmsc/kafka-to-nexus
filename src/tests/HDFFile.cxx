@@ -50,6 +50,7 @@ TEST_F(T_HDFFile, write_f141) {
 
 class T_CommandHandler : public testing::Test {
 public:
+
 static void new_03() {
 	using namespace BrightnESS;
 	using namespace BrightnESS::FileWriter;
@@ -62,6 +63,28 @@ static void new_03() {
 	unlink(fname);
 	FileWriter::CommandHandler ch(nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
+}
+
+static void new_03_data() {
+	using namespace BrightnESS;
+	using namespace BrightnESS::FileWriter;
+	auto cmd = gulp("tests/msg-cmd-new-03.json");
+	LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
+	rapidjson::Document d;
+	d.Parse(cmd.data(), cmd.size());
+	char const * fname = d["file_attributes"]["file_name"].GetString();
+	char const * source_name = d["streams"][0]["source"].GetString();
+	unlink(fname);
+	FileWriter::CommandHandler ch(nullptr);
+	ch.handle({cmd.data(), (int32_t)cmd.size()});
+
+	ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+
+	auto & fwt = ch.file_writer_tasks.at(0);
+	ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
+
+	// TODO
+	// Make demuxer process the test message.
 
 	// From here, I need the file writer task instance
 	return;
@@ -76,8 +99,13 @@ static void new_03() {
 		msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 	}
 }
+
 };
 
 TEST_F(T_CommandHandler, new_03) {
 	T_CommandHandler::new_03();
+}
+
+TEST_F(T_CommandHandler, new_03_data) {
+	T_CommandHandler::new_03_data();
 }

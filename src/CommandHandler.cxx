@@ -71,7 +71,7 @@ void CommandHandler::handle_new(rapidjson::Document & d) {
 	}
 
 	for (auto & d : fwt->demuxers()) {
-		LOG(1, "{}", d.to_str());
+		LOG(7, "{}", d.to_str());
 	}
 
 	{
