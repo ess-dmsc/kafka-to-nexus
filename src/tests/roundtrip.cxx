@@ -4,7 +4,7 @@
 #include "../logger.h"
 #include "../helper.h"
 #include "../KafkaW.h"
-#include "../schemas/f141_epics_nt_generated.h"
+#include "schemas/f141_epics_nt_generated.h"
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
@@ -64,7 +64,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 	using MS = std::chrono::milliseconds;
 	Master m(opt.master_config);
 	opt.master = &m;
-	auto fn_cmd = "test/msg-conf-new-01.json";
+	auto fn_cmd = "tests/msg-conf-new-01.json";
 	auto of = produce_command_from_file(opt.master_config.command_listener, fn_cmd);
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
 	std::thread t1([&m]{

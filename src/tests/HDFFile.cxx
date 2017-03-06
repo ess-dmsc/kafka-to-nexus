@@ -1,12 +1,12 @@
 #include <unistd.h>
 #include <gtest/gtest.h>
-#include "../src/helper.h"
-#include "../src/CommandHandler.h"
-#include "../src/HDFFile.h"
-#include "../src/HDFFile_impl.h"
-#include "../src/SchemaRegistry.h"
-#include "../src/schemas/f141/synth.h"
-#include "../src/KafkaW.h"
+#include "../helper.h"
+#include "../CommandHandler.h"
+#include "../HDFFile.h"
+#include "../HDFFile_impl.h"
+#include "../SchemaRegistry.h"
+#include "../schemas/f141/synth.h"
+#include "../KafkaW.h"
 #include <rapidjson/document.h>
 
 // Verify
@@ -56,7 +56,7 @@ static void new_03() {
 	unlink(fname);
 	using namespace BrightnESS;
 	using namespace BrightnESS::FileWriter;
-	auto cmd = gulp("test/msg-cmd-new-03.json");
+	auto cmd = gulp("tests/msg-cmd-new-03.json");
 	LOG(3, "cmd: {:.{}}", cmd.data(), cmd.size());
 	FileWriter::CommandHandler ch(nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});

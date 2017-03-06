@@ -5,6 +5,7 @@ set(tgt "tests")
 set(sources
 tests.cxx
 roundtrip.cxx
+HDFFile.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
@@ -15,7 +16,7 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
-${CMAKE_CURRENT_BINARY_DIR}
+${CMAKE_CURRENT_BINARY_DIR}/..
 )
 target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
