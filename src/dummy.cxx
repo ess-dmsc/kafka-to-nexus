@@ -191,34 +191,7 @@ std::function<BrightnESS::FileWriter::ProcessMessageResult(void*,int)> verbose =
   return BrightnESS::FileWriter::ProcessMessageResult::OK();
 };
 
-class ExampleRebalanceCb : public RdKafka::RebalanceCb {
-private:
-  static void part_list_print (const std::vector<RdKafka::TopicPartition*>&partitions){
-    for (unsigned int i = 0 ; i < partitions.size() ; i++)
-      std::cerr << partitions[i]->topic() <<
-	"[" << partitions[i]->partition() << "], ";
-    std::cerr << "\n";
-  }
 
-public:
-  void rebalance_cb (RdKafka::KafkaConsumer *consumer,
-		     RdKafka::ErrorCode err,
-                     std::vector<RdKafka::TopicPartition*> &partitions) {
-    std::cerr << "RebalanceCb: " << RdKafka::err2str(err) << ": ";
-
-    part_list_print(partitions);
-
-    if (err == RdKafka::ERR__ASSIGN_PARTITIONS) {
-      consumer->assign(partitions);
-      partition_cnt = (int)partitions.size();
-    } else {
-      consumer->unassign();
-      partition_cnt = 0;
-    }
-    eof_cnt = 0;
-  }
-  int partition_cnt,eof_cnt;
-};
 
 int main(int argc, char **argv) {
 
@@ -240,125 +213,131 @@ int main(int argc, char **argv) {
     producer.TearDown();
   }
   else {
-    consumer.SetUp();
+  //   consumer.SetUp();
 
-    ExampleRebalanceCb erc;
+  //   ExampleRebalanceCb erc;
 
 
-    std::vector<RdKafka::TopicPartition*> partitions;
-    consumer._consumer->assignment(partitions);
-    for(auto& tp : partitions) {
-      std::cout << "Partition: "    << tp->partition() << "\n";
-      std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-      std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-      std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-    }
-    std::vector<RdKafka::TopicPartition*> p;
-    p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-						1, 
-						RdKafka::Topic::OFFSET_BEGINNING));
-    RdKafka::ErrorCode err = consumer._consumer->assign(p);
-    erc.rebalance_cb(consumer._consumer,err,p);
-    std::cerr << RdKafka::err2str(err)  << "\n";
-    if (err != RdKafka::ERR_NO_ERROR) {
-      exit(1);
-    }
-    consumer.consume(); 
-    consumer._consumer->unassign();
+  //   std::vector<RdKafka::TopicPartition*> partitions;
+  //   consumer._consumer->assignment(partitions);
+  //   for(auto& tp : partitions) {
+  //     std::cout << "Partition: "    << tp->partition() << "\n";
+  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
+  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
+  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
+  //   }
+  //   std::vector<RdKafka::TopicPartition*> p;
+  //   p.push_back(RdKafka::TopicPartition::create(producer.topic, 
+  // 						1, 
+  // 						RdKafka::Topic::OFFSET_BEGINNING));
+  //   RdKafka::ErrorCode err = consumer._consumer->assign(p);
+  //   erc.rebalance_cb(consumer._consumer,err,p);
+  //   std::cerr << RdKafka::err2str(err)  << "\n";
+  //   if (err != RdKafka::ERR_NO_ERROR) {
+  //     exit(1);
+  //   }
+  //   consumer.consume(); 
+  //   consumer._consumer->unassign();
 
-    consumer._consumer->assign(partitions);
-    consumer._consumer->assignment(partitions);
-    for(auto& tp : partitions) {
-      std::cout << "Partition: "    << tp->partition() << "\n";
-      std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-      std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-      std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-    }
-    std::cout << consumer.consume_single_message() << "\n"; 
+  //   consumer._consumer->assign(partitions);
+  //   consumer._consumer->assignment(partitions);
+  //   for(auto& tp : partitions) {
+  //     std::cout << "Partition: "    << tp->partition() << "\n";
+  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
+  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
+  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
+  //   }
+  //   std::cout << consumer.consume_single_message() << "\n"; 
 
-    p.pop_back();
-    p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-						1, 
-						RdKafka::Topic::OFFSET_END));
-    err = consumer._consumer->assign(p);
-    // erc.rebalance_cb(consumer._consumer,err,consumer._tp);
-    std::cerr << RdKafka::err2str(err)  << "\n";
-    if (err != RdKafka::ERR_NO_ERROR) {
-      exit(1);
-    }
-    consumer._consumer->assignment(partitions);
-    for(auto& tp : partitions) {
-      std::cout << "Partition: "    << tp->partition() << "\n";
-      std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-      std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-      std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-    }
-    std::cout << consumer.consume_single_message() << "\n"; 
+  //   p.pop_back();
+  //   p.push_back(RdKafka::TopicPartition::create(producer.topic, 
+  // 						1, 
+  // 						RdKafka::Topic::OFFSET_END));
+  //   err = consumer._consumer->assign(p);
+  //   // erc.rebalance_cb(consumer._consumer,err,consumer._tp);
+  //   std::cerr << RdKafka::err2str(err)  << "\n";
+  //   if (err != RdKafka::ERR_NO_ERROR) {
+  //     exit(1);
+  //   }
+  //   consumer._consumer->assignment(partitions);
+  //   for(auto& tp : partitions) {
+  //     std::cout << "Partition: "    << tp->partition() << "\n";
+  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
+  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
+  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
+  //   }
+  //   std::cout << consumer.consume_single_message() << "\n"; 
 
-    // std::cout << consumer.consume_single_message() << "\n"; 
+  //   // std::cout << consumer.consume_single_message() << "\n"; 
 
-    p.pop_back();
-    p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-						1, 
-						RdKafka::Topic::OFFSET_STORED));
-    err = consumer._consumer->assign(p);
-    // erc.rebalance_cb(consumer._consumer,err,consumer._tp);
-    std::cerr << RdKafka::err2str(err)  << "\n";
-    if (err != RdKafka::ERR_NO_ERROR) {
-      exit(1);
-    }
-    consumer._consumer->assignment(partitions);
-    for(auto& tp : partitions) {
-      std::cout << "Partition: "    << tp->partition() << "\n";
-      std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-      std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-      std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-    }
-    std::cout << consumer.consume_single_message() << "\n"; 
+  //   p.pop_back();
+  //   p.push_back(RdKafka::TopicPartition::create(producer.topic, 
+  // 						1, 
+  // 						RdKafka::Topic::OFFSET_STORED));
+  //   err = consumer._consumer->assign(p);
+  //   // erc.rebalance_cb(consumer._consumer,err,consumer._tp);
+  //   std::cerr << RdKafka::err2str(err)  << "\n";
+  //   if (err != RdKafka::ERR_NO_ERROR) {
+  //     exit(1);
+  //   }
+  //   consumer._consumer->assignment(partitions);
+  //   for(auto& tp : partitions) {
+  //     std::cout << "Partition: "    << tp->partition() << "\n";
+  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
+  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
+  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
+  //   }
+  //   std::cout << consumer.consume_single_message() << "\n"; 
 
-    // std::cout << consumer.consume_single_message() << "\n"; 
+  //   // std::cout << consumer.consume_single_message() << "\n"; 
 
-    int in = 1;
-    while(1) {
-      std::cin >> in;
-      if (in < 0) break;
-      p.pop_back();
-      p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-						  1,
-						  RdKafka::Consumer::OffsetTail(in)
-      ));
-      err = consumer._consumer->assign(p);
-      erc.rebalance_cb(consumer._consumer,err,p);
-      std::cerr << RdKafka::err2str(err)  << "\n";
-      if (err != RdKafka::ERR_NO_ERROR) {
-	exit(1);
-      }
-      consumer._consumer->assignment(p);
-      for(auto& tp : p) {
-	std::cout << "Partition: "    << tp->partition() << "\n";
-	std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-	std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-	std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-      }
-      consumer.consume(); 
-    }
+  //   int in = 1;
+  //   while(1) {
+  //     std::cin >> in;
+  //     if (in < 0) break;
+  //     p.pop_back();
+  //     p.push_back(RdKafka::TopicPartition::create(producer.topic, 
+  // 						  1,
+  // 						  RdKafka::Consumer::OffsetTail(in)
+  //     ));
+  //     err = consumer._consumer->assign(p);
+  //     erc.rebalance_cb(consumer._consumer,err,p);
+  //     std::cerr << RdKafka::err2str(err)  << "\n";
+  //     if (err != RdKafka::ERR_NO_ERROR) {
+  // 	exit(1);
+  //     }
+  //     consumer._consumer->assignment(p);
+  //     for(auto& tp : p) {
+  // 	std::cout << "Partition: "    << tp->partition() << "\n";
+  // 	std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
+  // 	std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
+  // 	std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
+  //     }
+  //     consumer.consume(); 
+  //   }
 
-    consumer.TearDown();
-  }
+  //   consumer.TearDown();
+  // }
 
-  // int counter =0;
-  // ProcessMessageResult status = ProcessMessageResult::OK();
-  // do {
-  //   status = s.write(verbose);
-  //   ++counter;
-  // } while(status.is_OK());
-  
-  // TimeDifferenceFromMessage_DT dt = s.jump_back(demux);
-  // do {
-  //   status = s.write(verbose);
-  //   ++counter;
-  // } while(status.is_OK());
-  
+    Streamer s(producer.broker,producer.topic,RdKafkaOffsetEnd);
+    DemuxTopic demux(producer.topic);
+
+    int counter =0;
+    ProcessMessageResult status = ProcessMessageResult::OK();
+    do {
+      status = s.write(verbose);
+      ++counter;
+    } while(status.is_OK());
+
+    std::cout << "last_offset : \t" << s.last_offset.value() << std::endl;
+    
+    TimeDifferenceFromMessage_DT dt = s.jump_back(demux,10);
+    do {
+      status = s.write(verbose);
+      ++counter;
+    } while(status.is_OK());
+    
+  }  
   return 0;
 }
 

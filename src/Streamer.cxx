@@ -44,12 +44,13 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
   }
 
   // Start consumer for topic+partition at start offset
-  RdKafka::ErrorCode resp = consumer->start(topic, partition.value(), offset.value());
+  RdKafka::ErrorCode resp = consumer->start(topic, partition.value(),offset.value());
+
+  //  RdKafka::ErrorCode resp = consumer->start(topic, partition.value(), offset.value());
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: " +
                              RdKafka::err2str(resp));
   }
-  
 
   // sets the current offset
   if (offset != RdKafka::Topic::OFFSET_END) {
@@ -59,7 +60,7 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
     : topic(other.topic), consumer(other.consumer), offset(other.offset),
-      partition(other.partition.value()) {}
+      partition(other.partition) {}
 
 int BrightnESS::FileWriter::Streamer::disconnect() {
   int return_code = consumer->stop(topic, partition.value());
@@ -111,25 +112,6 @@ int BrightnESS::FileWriter::Streamer::connect(const std::string &broker,
 
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::get_last_offset() {
-
-  // RdKafka::ErrorCode resp = consumer->stop(topic, partition.value());
-  // if (resp != RdKafka::ERR_NO_ERROR) {
-  //   throw std::runtime_error("Failed to start consumer: " +
-  //                            RdKafka::err2str(resp));
-  //   return ProcessMessageResult::ERR();
-  // }
-  // resp = consumer->start(topic, partition.value(), RdKafka::Consumer::OffsetTail(1));
-  // if (resp != RdKafka::ERR_NO_ERROR) {
-  //   throw std::runtime_error("Failed to start consumer: " +
-  //                            RdKafka::err2str(resp));
-  //   return ProcessMessageResult::ERR();
-  // }
-  // RdKafka::Message *msg =
-  //     consumer->consume(topic, partition.value(), consumer_timeout.count());
-  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
-  //   ProcessMessageResult::ERR();
-  // }
-
   consumer->seek(topic,partition.value(),RdKafka::Consumer::OffsetTail(1),1000);
   RdKafka::Message *msg = consumer->consume(topic, partition.value(), 1000);
   last_offset = RdKafkaOffset(msg->offset());
@@ -189,7 +171,7 @@ BrightnESS::FileWriter::Streamer::write(
 template <>
 BrightnESS::FileWriter::TimeDifferenceFromMessage_DT
 BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
-    BrightnESS::FileWriter::DemuxTopic &td) {
+										BrightnESS::FileWriter::DemuxTopic &td, const int amount) {
 
   if (last_offset == RdKafkaOffset(0) ) {
     if (get_last_offset().is_ERR()) {
@@ -197,68 +179,47 @@ BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
     }
   }
 
-  std::cout << "1-last_offset: " << last_offset.value() << std::endl;
-
-  RdKafka::ErrorCode resp = consumer->stop(topic, partition.value());
-  if (resp != RdKafka::ERR_NO_ERROR) {
-    throw std::runtime_error("Failed to start consumer: " +
-                             RdKafka::err2str(resp));
+  std::cout << "before seek : \t" << last_offset.value() << std::endl;
+  auto err = consumer->seek(topic,
+			    partition.value(),
+			    last_offset.value()-amount,
+			    1000);
+  if( err != RdKafka::ERR_NO_ERROR) {
+    std::cout << RdKafka::err2str(err) << std::endl;
+    return TimeDifferenceFromMessage_DT::ERR();
   }
-
-  if (last_offset.value() < 0)
-    last_offset = RdKafkaOffset(0);
-  last_offset -= RdKafkaOffset(step_back_amount);
-  std::cout << "2-last_offset: " << last_offset.value() << std::endl;
-
-
-  resp = consumer->start(topic, partition.value(), last_offset.value());
-  if (resp != RdKafka::ERR_NO_ERROR) {
-    throw std::runtime_error("Failed to start consumer: " +
-                             RdKafka::err2str(resp));
-  }
-
-  std::cout << "3-last_offset: " << last_offset.value() << std::endl;
   RdKafka::Message *msg =
       consumer->consume(topic, partition.value(), consumer_timeout.count());
-
+  std::cout << "after seek : \t" << last_offset.value() << std::endl;
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
-    std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
-              << std::endl;
-    return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
+    std::cout << RdKafka::err2str(msg->err()) << std::endl;
+    return TimeDifferenceFromMessage_DT::ERR(); // msg->err();
   }
+  
   return td.time_difference_from_message((char *)msg->payload(), msg->len());
 }
+
 
 template <>
 BrightnESS::FileWriter::TimeDifferenceFromMessage_DT
 BrightnESS::FileWriter::Streamer::jump_back<std::function<
     BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)>>(
     std::function<
-        BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)> &f) {
+    BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)> &f,const int amount) {
 
   if (last_offset.value() == 0) {
-    // prima provare cmq a consumare un messaggio
     if (get_last_offset().is_ERR()) {
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
-
-  RdKafka::ErrorCode resp = consumer->stop(topic, partition.value());
-  if (resp != RdKafka::ERR_NO_ERROR) {
-    throw std::runtime_error("Failed to stop consumer: " +
-                             RdKafka::err2str(resp));
+  auto err = consumer->seek(topic,
+			    partition.value(),
+			    last_offset.value()-amount,
+			    1000);
+  if( err != RdKafka::ERR_NO_ERROR) {
+    std::cout << RdKafka::err2str(err) << std::endl;
+    return TimeDifferenceFromMessage_DT::ERR();
   }
-
-  last_offset -= RdKafkaOffset(step_back_amount);
-  if (last_offset.value() < 0)
-    last_offset = RdKafkaOffset(0);
-
-  resp = consumer->start(topic, partition.value(), last_offset.value());
-  if (resp != RdKafka::ERR_NO_ERROR) {
-    throw std::runtime_error("Failed to start consumer: " +
-                             RdKafka::err2str(resp));
-  }
-
   RdKafka::Message *msg =
       consumer->consume(topic, partition.value(), consumer_timeout.count());
   if (msg->err() != RdKafka::ERR_NO_ERROR) {

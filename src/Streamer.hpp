@@ -24,9 +24,8 @@ struct Streamer {
   static int64_t step_back_amount;
   
 
-  Streamer() : offset(RdKafkaOffsetEnd), partition(RdKafkaPartiti) { };
-  Streamer(const std::string&, const std::string&, 
-	   const RdKafkaOffset& = RdKafkaOffsetEnd, const RdKafkaPartition& = RdKafkaPartition(0));
+  Streamer() : offset(RdKafkaOffsetEnd), partition(0) { };
+  Streamer(const std::string&, const std::string&, const RdKafkaOffset& = RdKafkaOffsetEnd, const RdKafkaPartition& = RdKafkaPartition(0));
   Streamer(const Streamer&);
   
   //  ~Streamer(); // disconnect
@@ -55,7 +54,7 @@ struct Streamer {
   
 // make PRIVATE
   template<class T>
-  TimeDifferenceFromMessage_DT jump_back(T& f) {
+  TimeDifferenceFromMessage_DT jump_back(T& f,const int=1000) {
     message_length=0;
     std::cout << "fake_search\n";
     return TimeDifferenceFromMessage_DT::ERR();
@@ -70,16 +69,16 @@ struct Streamer {
     return ts;
   }
 
-  
+  RdKafkaOffset last_offset=RdKafkaOffset(-1);
 private:
   RdKafka::Topic *topic;
   RdKafka::Consumer *consumer;
   RdKafka::TopicPartition *_tp;
 
   RdKafkaOffset offset;
-  RdKafkaOffset last_offset;
+  //  RdKafkaOffset last_offset=RdKafkaOffset(-1);
   int64_t step_back_offset=0;
-  int partition;
+  RdKafkaPartition partition;
   size_t message_length;
 
 };
@@ -87,8 +86,8 @@ private:
     template<> ProcessMessageResult Streamer::write<std::function<ProcessMessageResult(void*,int)> >(std::function<ProcessMessageResult(void*,int)>&);
     template<> ProcessMessageResult Streamer::write<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
     
-    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic&);
-    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<std::function<TimeDifferenceFromMessage_DT(void*,int)> >(std::function<TimeDifferenceFromMessage_DT(void*,int)>&);
+    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic&,const int);
+    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<std::function<TimeDifferenceFromMessage_DT(void*,int)> >(std::function<TimeDifferenceFromMessage_DT(void*,int)>&,const int);
 
     template<> std::map<std::string,int64_t>&& Streamer::scan_timestamps<BrightnESS::FileWriter::DemuxTopic>(BrightnESS::FileWriter::DemuxTopic &);
 
