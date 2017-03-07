@@ -51,7 +51,9 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
   }
 
   // sets the current offset
-  get_last_offset();
+  if (offset != RdKafka::Topic::OFFSET_END) {
+    get_last_offset();
+  }
 }
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
