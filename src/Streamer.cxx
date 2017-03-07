@@ -11,66 +11,88 @@ milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout = milliseconds(1
 
 BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
                                            const std::string &topic_name,
-                                           const RdKafkaOffset &offs,
-                                           const RdKafkaPartition &p)
-    : offset(offs), partition(p) {
-
-  RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-  RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
-
-  std::string debug, errstr;
-  if (conf->set("metadata.broker.list", broker, errstr) !=
-      RdKafka::Conf::CONF_OK) {
-    throw std::runtime_error("Failed to initialise configuration: " + errstr);
-  }
-  if (!debug.empty()) {
-    if (conf->set("debug", debug, errstr) != RdKafka::Conf::CONF_OK) {
+                                           const RdKafkaOffset &offset,
+                                           const RdKafkaPartition &partition)
+    : _offset(offset), _partition(partition) {
+ 
+  std::string errstr;
+  {
+    RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+    std::string debug;
+    if (conf->set("metadata.broker.list", broker, errstr) !=
+	RdKafka::Conf::CONF_OK) {
       throw std::runtime_error("Failed to initialise configuration: " + errstr);
     }
+    if (conf->set("fetch.message.max.bytes", "1000000000", errstr) !=
+	RdKafka::Conf::CONF_OK) {
+      throw std::runtime_error("Failed to initialise configuration: " + errstr);
+    }
+    if (conf->set("receive.message.max.bytes", "1000000000", errstr) !=
+	RdKafka::Conf::CONF_OK) {
+      throw std::runtime_error("Failed to initialise configuration: " + errstr);
+    }
+    if (!debug.empty()) {
+      if (conf->set("debug", debug, errstr) != RdKafka::Conf::CONF_OK) {
+	throw std::runtime_error("Failed to initialise configuration: " + errstr);
+      }
+    }
+    if (!(_consumer = RdKafka::Consumer::create(conf, errstr))) {
+      throw std::runtime_error("Failed to create consumer: " + errstr);
+    }
+    delete conf;
   }
 
-  conf->set("fetch.message.max.bytes", "1000000000", errstr);
-  conf->set("receive.message.max.bytes", "1000000000", errstr);
-
-  if (topic_name.empty()) {
-    throw std::runtime_error("Topic required");
+  {
+    RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
+    if (topic_name.empty()) {
+      throw std::runtime_error("Topic required");
+    }
+    _topic = RdKafka::Topic::create(_consumer, topic_name, tconf, errstr);
+    if (!_topic) {
+      throw std::runtime_error("Failed to create topic: " + errstr);
+    }
+    delete tconf;
   }
-  if (!(consumer = RdKafka::Consumer::create(conf, errstr))) {
-    throw std::runtime_error("Failed to create consumer: " + errstr);
-  }
-  topic = RdKafka::Topic::create(consumer, topic_name, tconf, errstr);
-  if (!topic) {
-    throw std::runtime_error("Failed to create topic: " + errstr);
-  }
-
+  
   // Start consumer for topic+partition at start offset
-  RdKafka::ErrorCode resp = consumer->start(topic, partition.value(),offset.value());
-
-  //  RdKafka::ErrorCode resp = consumer->start(topic, partition.value(), offset.value());
-  if (resp != RdKafka::ERR_NO_ERROR) {
-    throw std::runtime_error("Failed to start consumer: " +
-                             RdKafka::err2str(resp));
+  {
+    RdKafka::ErrorCode resp = _consumer->start(_topic,
+					       _partition.value(),
+					       RdKafka::Topic::OFFSET_BEGINNING);
+    if (resp != RdKafka::ERR_NO_ERROR) {
+      throw std::runtime_error("Failed to start consumer: " +
+			       RdKafka::err2str(resp));
+    }
+    RdKafka::Message *msg = _consumer->consume(_topic, _partition.value(), 100);
+    _begin_offset = RdKafkaOffset(msg->offset());
+    
+    if ( _offset.value() != _begin_offset.value()) {
+      _consumer->seek(_topic, _partition.value(),
+		      RdKafka::Consumer::OffsetTail(1), 1000);
+      RdKafka::Message *msg = _consumer->consume(_topic, _partition.value(), 1000);
+      _offset = RdKafkaOffset(msg->offset());
+    }
+    else {
+      _offset = _begin_offset;
+    }
+    delete msg;
   }
 
-  // sets the current offset
-  if (offset != RdKafka::Topic::OFFSET_END) {
-    get_last_offset();
-  }
 }
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
-    : topic(other.topic), consumer(other.consumer), offset(other.offset),
-      partition(other.partition) {}
+  : _topic(other._topic), _consumer(other._consumer), _offset(other._offset),
+    _partition(other._partition) {}
 
 int BrightnESS::FileWriter::Streamer::disconnect() {
-  int return_code = consumer->stop(topic, partition.value());
-  delete topic;
-  delete consumer;
+  int return_code = _consumer->stop(_topic, _partition.value());
+  delete _topic;
+  delete _consumer;
   return return_code;
 }
 
 int BrightnESS::FileWriter::Streamer::closeStream() {
-  return consumer->stop(topic, partition.value());
+  return _consumer->stop(_topic, _partition.value());
 }
 
 int BrightnESS::FileWriter::Streamer::connect(const std::string &broker,
@@ -93,16 +115,16 @@ int BrightnESS::FileWriter::Streamer::connect(const std::string &broker,
     throw std::runtime_error("Topic required");
   }
 
-  if (!(consumer = RdKafka::Consumer::create(conf, errstr))) {
+  if (!(_consumer = RdKafka::Consumer::create(conf, errstr))) {
     throw std::runtime_error("Failed to create consumer: " + errstr);
   }
 
-  if (!(topic = RdKafka::Topic::create(consumer, topic_name, tconf, errstr))) {
+  if (!(_topic = RdKafka::Topic::create(_consumer, topic_name, tconf, errstr))) {
     throw std::runtime_error("Failed to create topic: " + errstr);
   }
 
   // Start consumer for topic+partition at start offset
-  RdKafka::ErrorCode resp = consumer->start(topic, partition.value(), offset.value());
+  RdKafka::ErrorCode resp = _consumer->start(_topic, _partition.value(), _offset.value());
   if (resp != RdKafka::ERR_NO_ERROR) {
     throw std::runtime_error("Failed to start consumer: " +
                              RdKafka::err2str(resp));
@@ -111,9 +133,9 @@ int BrightnESS::FileWriter::Streamer::connect(const std::string &broker,
 }
 
 BrightnESS::FileWriter::ProcessMessageResult
-BrightnESS::FileWriter::Streamer::get_last_offset() {
-  consumer->seek(topic,partition.value(),RdKafka::Consumer::OffsetTail(1),1000);
-  RdKafka::Message *msg = consumer->consume(topic, partition.value(), 1000);
+BrightnESS::FileWriter::Streamer::get_offset() {
+  _consumer->seek(_topic,_partition.value(),RdKafka::Consumer::OffsetTail(1),1000);
+  RdKafka::Message *msg = _consumer->consume(_topic, _partition.value(), 1000);
   last_offset = RdKafkaOffset(msg->offset());
   return ProcessMessageResult::OK();
 }
@@ -125,7 +147,7 @@ BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     std::function<ProcessMessageResult(void *, int)> &f) {
   RdKafka::Message *msg =
-      consumer->consume(topic, partition.value(), consumer_timeout.count());
+      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
@@ -147,7 +169,7 @@ BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     BrightnESS::FileWriter::DemuxTopic &mp) {
   RdKafka::Message *msg =
-      consumer->consume(topic, partition.value(), consumer_timeout.count());
+      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
     //    std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
@@ -173,15 +195,15 @@ BrightnESS::FileWriter::TimeDifferenceFromMessage_DT
 BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
 										BrightnESS::FileWriter::DemuxTopic &td, const int amount) {
 
-  if (last_offset == RdKafkaOffset(0) ) {
-    if (get_last_offset().is_ERR()) {
+  if (last_offset.value() == 0 ) {
+    if (get_offset().is_ERR()) {
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
 
   std::cout << "before seek : \t" << last_offset.value() << std::endl;
-  auto err = consumer->seek(topic,
-			    partition.value(),
+  auto err = _consumer->seek(_topic,
+			    _partition.value(),
 			    last_offset.value()-amount,
 			    1000);
   if( err != RdKafka::ERR_NO_ERROR) {
@@ -189,7 +211,7 @@ BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
     return TimeDifferenceFromMessage_DT::ERR();
   }
   RdKafka::Message *msg =
-      consumer->consume(topic, partition.value(), consumer_timeout.count());
+      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   std::cout << "after seek : \t" << last_offset.value() << std::endl;
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << RdKafka::err2str(msg->err()) << std::endl;
@@ -208,12 +230,12 @@ BrightnESS::FileWriter::Streamer::jump_back<std::function<
     BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)> &f,const int amount) {
 
   if (last_offset.value() == 0) {
-    if (get_last_offset().is_ERR()) {
+    if (get_offset().is_ERR()) {
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
-  auto err = consumer->seek(topic,
-			    partition.value(),
+  auto err = _consumer->seek(_topic,
+			    _partition.value(),
 			    last_offset.value()-amount,
 			    1000);
   if( err != RdKafka::ERR_NO_ERROR) {
@@ -221,7 +243,7 @@ BrightnESS::FileWriter::Streamer::jump_back<std::function<
     return TimeDifferenceFromMessage_DT::ERR();
   }
   RdKafka::Message *msg =
-      consumer->consume(topic, partition.value(), consumer_timeout.count());
+      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
               << std::endl;
@@ -244,7 +266,7 @@ BrightnESS::FileWriter::Streamer::scan_timestamps<
 
   do {
     RdKafka::Message *msg =
-        consumer->consume(topic, partition.value(), consumer_timeout.count());
+        _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
     if (msg->err() != RdKafka::ERR__PARTITION_EOF)
       break;
     if (msg->err() != RdKafka::ERR_NO_ERROR) {

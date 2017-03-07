@@ -24,8 +24,10 @@ struct Streamer {
   static int64_t step_back_amount;
   
 
-  Streamer() : offset(RdKafkaOffsetEnd), partition(0) { };
-  Streamer(const std::string&, const std::string&, const RdKafkaOffset& = RdKafkaOffsetEnd, const RdKafkaPartition& = RdKafkaPartition(0));
+  Streamer() { };
+  Streamer(const std::string&, const std::string&, 
+	   const RdKafkaOffset& = RdKafkaOffsetEnd, 
+	   const RdKafkaPartition& = RdKafkaPartition(0));
   Streamer(const Streamer&);
   
   //  ~Streamer(); // disconnect
@@ -47,7 +49,7 @@ struct Streamer {
   /// Returns message length
   size_t len() { return message_length; }
   
-  ProcessMessageResult get_last_offset();
+  ProcessMessageResult get_offset();
   
   template<class T>
   std::map<std::string,int64_t>&& scan_timestamps(T&);
@@ -69,16 +71,17 @@ struct Streamer {
     return ts;
   }
 
-  RdKafkaOffset last_offset=RdKafkaOffset(-1);
+  RdKafkaOffset last_offset;
 private:
-  RdKafka::Topic *topic;
-  RdKafka::Consumer *consumer;
+  RdKafka::Topic *_topic;
+  RdKafka::Consumer *_consumer;
   RdKafka::TopicPartition *_tp;
 
-  RdKafkaOffset offset;
+  RdKafkaOffset _offset;
+  RdKafkaOffset _begin_offset;
   //  RdKafkaOffset last_offset=RdKafkaOffset(-1);
-  int64_t step_back_offset=0;
-  RdKafkaPartition partition;
+  int64_t step_back_offset;
+  RdKafkaPartition _partition;
   size_t message_length;
 
 };
