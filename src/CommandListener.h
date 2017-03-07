@@ -57,7 +57,6 @@ KafkaW::PollStatus poll();
 
 private:
 CommandListenerConfig config;
-std::thread thr_consumer;
 std::unique_ptr<KafkaW::Consumer> consumer;
 };
 

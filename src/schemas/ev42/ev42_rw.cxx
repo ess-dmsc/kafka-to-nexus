@@ -105,6 +105,7 @@ template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 template <typename Td>
 static int append_data_1d(hid_t ds, Td const * data, size_t nlen) {
+	auto dt = nat_type<Td>();
 	auto tgt = H5Dget_space(ds);
 	//auto ndims = H5Sget_simple_extent_ndims(tgt);
 	using A1 = array<hsize_t, 1>;
@@ -127,8 +128,22 @@ static int append_data_1d(hid_t ds, Td const * data, size_t nlen) {
 	H5Sclose(tgt);
 
 	tgt = H5Dget_space(ds);
-	//A1 mem = {{ nlen }};
-	//auto mem = H5Screate_simple(mem.size(), mem.data(), nullptr);
+	A1 mem = {{ nlen }};
+
+	// TODO make this a class member?
+	static hid_t dsp_mem = -1;
+	if (dsp_mem == -1) {
+		dsp_mem = H5Screate_simple(mem.size(), mem.data(), nullptr);
+	}
+	{
+		A1 start {{ 0 }};
+		A1 count {{ nlen }};
+		err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr, count.data(), nullptr);
+		if (err < 0) {
+			LOG(0, "ERROR can not select tgt hyperslab");
+			return -3;
+		}
+	}
 	{
 		A1 start {{ snow.at(0)-nlen }};
 		A1 count {{ nlen }};
@@ -141,13 +156,12 @@ static int append_data_1d(hid_t ds, Td const * data, size_t nlen) {
 	for (size_t i1 = 0; i1 < snow.size(); ++i1) {
 		LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", snow.at(i1), smax.at(i1));
 	}
-	auto dt = nat_type<Td>();
-	err = H5Dwrite(ds, dt, H5S_ALL, tgt, H5P_DEFAULT, data);
+	err = H5Dwrite(ds, dt, dsp_mem, tgt, H5P_DEFAULT, data);
 	if (err < 0) {
 		LOG(0, "ERROR writing failed");
 		return -4;
 	}
-	return 0;
+	return -1;
 }
 
 
