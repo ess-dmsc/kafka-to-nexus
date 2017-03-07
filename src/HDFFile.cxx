@@ -352,7 +352,7 @@ void FBSchemaWriter::init(HDFFile * hdf_file, string const & sourcename, Msg msg
 	this->hdf_file = hdf_file;
 	auto f1 = hdf_file->h5file_detail().h5file();
 
-	auto group_name = std::string("data-") + sourcename;
+	auto group_name = std::string("group_for_source__") + sourcename;
 
 	// Create the event data group
 	auto lcpl = H5Pcreate(H5P_LINK_CREATE);
