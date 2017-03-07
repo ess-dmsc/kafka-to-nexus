@@ -42,7 +42,9 @@ struct Streamer {
     return ProcessMessageResult::ERR();
   }
 
-  int connect(const std::string&, const std::string&);
+  int connect(const std::string&, const std::string&, 
+	   const RdKafkaOffset& = RdKafkaOffsetEnd, 
+	   const RdKafkaPartition& = RdKafkaPartition(0));
   int disconnect();
   int closeStream();
   
@@ -71,15 +73,16 @@ struct Streamer {
     return ts;
   }
 
-  RdKafkaOffset last_offset;
 private:
   RdKafka::Topic *_topic;
   RdKafka::Consumer *_consumer;
   RdKafka::TopicPartition *_tp;
 
+public:
   RdKafkaOffset _offset;
   RdKafkaOffset _begin_offset;
-  //  RdKafkaOffset last_offset=RdKafkaOffset(-1);
+private:
+  //  RdKafkaOffset _begin_offset;
   int64_t step_back_offset;
   RdKafkaPartition _partition;
   size_t message_length;

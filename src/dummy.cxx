@@ -206,10 +206,13 @@ int main(int argc, char **argv) {
   
   if (argc > 1) {
     producer.SetUp();
-    producer.start();
-    std::this_thread::sleep_for (std::chrono::milliseconds(1000));
-    producer.stop();
-    // producer.produce_single_message("hello-1");
+    // producer.start();
+    // std::this_thread::sleep_for (std::chrono::milliseconds(1000));
+    // producer.stop();
+    for( int i = 0;i < 100; ++i) {
+      std::string line = "hello"+std::to_string(i);
+      producer.produce_single_message(line);
+    }
     producer.TearDown();
   }
   else {
@@ -329,13 +332,19 @@ int main(int argc, char **argv) {
       ++counter;
     } while(status.is_OK());
 
-    std::cout << "last_offset : \t" << s.last_offset.value() << std::endl;
+    std::cout << "first available offset : \t" << s._begin_offset.value() << std::endl;
+    std::cout << "current offset : \t" << s._offset.value() << std::endl;
     
-    TimeDifferenceFromMessage_DT dt = s.jump_back(demux,10);
-    do {
-      status = s.write(verbose);
-      ++counter;
-    } while(status.is_OK());
+    // TimeDifferenceFromMessage_DT dt = 
+      s.jump_back(demux,10);
+    // TimeDifferenceFromMessage_DT dt = 
+      s.jump_back(demux,10);
+      s.jump_back(demux,1000);
+
+    // do {
+    //   status = s.write(verbose);
+    //   ++counter;
+    // } while(status.is_OK());
     
   }  
   return 0;
