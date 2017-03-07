@@ -3,6 +3,8 @@
 #include <vector>
 #include <string>
 #include <H5Ipublic.h>
+#include "Msg.h"
+#include <rapidjson/document.h>
 
 class T_HDFFile;
 
@@ -16,12 +18,6 @@ int64_t ts;
 };
 
 
-struct Msg {
-char * data;
-int32_t size;
-};
-
-
 class HDFFile_h5;
 class HDFFile_impl;
 
@@ -29,7 +25,7 @@ class HDFFile final {
 public:
 HDFFile();
 ~HDFFile();
-int init(std::string filename);
+int init(std::string filename, rapidjson::Value const & nexus_structure);
 void flush();
 HDFFile_h5 h5file_detail();
 private:

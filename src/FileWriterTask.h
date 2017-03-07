@@ -4,6 +4,7 @@
 #include <memory>
 #include "DemuxTopic.h"
 #include "Source.h"
+#include <rapidjson/document.h>
 
 class Test___FileWriterTask___Create01;
 
@@ -34,7 +35,7 @@ std::vector<DemuxTopic> _demuxers;
 std::unique_ptr<FileWriterTask_impl> impl;
 void add_source(Source && source);
 /// Called by CommandHandler on setup.
-int hdf_init();
+int hdf_init(rapidjson::Value const & nexus_structure);
 };
 
 }

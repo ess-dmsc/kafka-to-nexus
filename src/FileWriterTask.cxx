@@ -45,6 +45,7 @@ FileWriterTask::FileWriterTask() {
 }
 
 FileWriterTask::~FileWriterTask() {
+	LOG(9, "~FileWriterTask");
 }
 
 FileWriterTask & FileWriterTask::set_hdf_filename(std::string hdf_filename) {
@@ -68,8 +69,8 @@ void FileWriterTask::add_source(Source && source) {
 }
 
 
-int FileWriterTask::hdf_init() {
-	auto x = impl->hdf_file.init(impl->hdf_filename);
+int FileWriterTask::hdf_init(rapidjson::Value const & nexus_structure) {
+	auto x = impl->hdf_file.init(impl->hdf_filename, nexus_structure);
 	if (x) {
 		return x;
 	}

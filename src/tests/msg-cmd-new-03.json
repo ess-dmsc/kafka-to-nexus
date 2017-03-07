@@ -1,0 +1,54 @@
+{
+	"cmd": "FileWriter_new",
+	"broker": "localhost:9092",
+	"streams": [
+		{
+			"broker": "localhost:9092",
+			"topic": "topic.with.multiple.sources",
+			"source": "for_example_motor01",
+			"path": "v",
+			"on_path_missing": "ignore",
+			"default_value": 405,
+			"write_last_known": true,
+			"nexus_container": "NXlog",
+			"nexus_path": "/entry-01/instrument-01/events-01"
+		},
+		{
+			"broker": "localhost:9092",
+			"topic": "topic.with.multiple.sources",
+			"source": "for_example_temperature02"
+		}
+	],
+
+	"nexus_structure": {
+		"some_string_field": "the-field-value",
+		"some_int_field": 88004400,
+		"some_double_field": 55.11,
+		"entry-01": {
+			"NX_class": "NXentry",
+			"instrument-01": {
+				"NX_class": "NXinstrument",
+				"events-01": {
+					"NX_class": "NXevent_data"
+				}
+			},
+			"instrument-02": {
+				"NX_class": "NXinstrument",
+				"NX_attributes": {
+					"notes": "some notes in form of an attribute",
+					"attribute_integer": 42,
+					"attribute_double": 42.0
+				}
+			}
+		}
+	},
+
+	"file_attributes": {
+		"file_name": "tmp-new-03.h5",
+		"dummy-attribute-01": 2.579,
+		"dummy-attribute-02": "can also be some text",
+		"dummy-attribute-03": {
+			"but": "should an object be allowed here?"
+		}
+	}
+}
