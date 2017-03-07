@@ -9,6 +9,10 @@ namespace FileWriter {
 namespace Schemas {
 namespace ev42 {
 
+using std::array;
+using std::vector;
+using std::string;
+
 
 class reader : public FBSchemaReader {
 std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
@@ -63,7 +67,32 @@ writer::~writer() {
 }
 
 
+static hid_t create_dataset(hid_t loc, string name) {
+	using A2 = array<hsize_t, 2>;
+	hid_t ret = -1;
+	auto dt = H5T_NATIVE_DOUBLE;
+	// Sizes, at initialization and maximum
+	A2 sini {{ 0, 1 }};
+	A2 smax {{ H5S_UNLIMITED, 1 }};
+	auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+	auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+	A2 schk {{ std::max(4*1024*1024/H5Tget_size(dt), (size_t)1), 1 }};
+	H5Pset_chunk(dcpl, schk.size(), schk.data());
+	ret = H5Dcreate1(loc, name.c_str(), dt, dsp, dcpl);
+	H5Pclose(dcpl);
+	H5Sclose(dsp);
+}
+
+
 void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
+	LOG(7, "ev42::init_impl");
+	auto veri = flatbuffers::Verifier((uint8_t*)msg.data, msg.size);
+	if (!VerifyEventMessageBuffer(veri)) {
+		LOG(3, "bad flat buffer");
+		return;
+	}
+	auto evmsg = GetEventMessage(msg.data);
+	create_dataset(hdf_group, "the-data");
 }
 
 
@@ -77,7 +106,6 @@ WriteResult writer::write_impl(Msg msg) {
 	int64_t ts = 1;
 	return {ts};
 }
-
 
 
 class Info : public SchemaInfo {
