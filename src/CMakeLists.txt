@@ -201,6 +201,8 @@ date/tz.cpp
 date/tzblobs.cpp
 schema_f141.cxx
 schemas/f141/synth.cxx
+schemas/ev42/ev42_rw.cxx
+schemas/ev42/ev42_synth.cxx
 MainOpt.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx

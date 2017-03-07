@@ -239,7 +239,7 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 	herr_t err;
 	H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
 	for (int i1 = 0; i1 < ndims; ++i1) {
-		LOG(-1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 	if (get_sizes_now.at(1) != nlen) {
 		LOG(4, "ERROR number of columns does not match");
@@ -277,7 +277,7 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 		}
 	}
 	for (int i1 = 0; i1 < ndims; ++i1) {
-		LOG(-1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 	auto dt = nat_type<Td>();
 	err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);

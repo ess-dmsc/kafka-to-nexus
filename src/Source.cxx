@@ -55,6 +55,9 @@ ProcessMessageResult Source::process_message(Msg msg) {
 		auto ret = _schema_writer->write(msg);
 		_cnt_msg_written += 1;
 		_processed_messages_count += 1;
+		if (ret.ts < 0) {
+			return ProcessMessageResult::ERR();
+		}
 		return ProcessMessageResult::OK(ret.ts);
 	}
 	else {
