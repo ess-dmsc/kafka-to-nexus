@@ -6,7 +6,6 @@
 #include <atomic>
 #include "SchemaRegistry.h"
 #include "CommandListener.h"
-#include "NexusWriter.h"
 #include "StreamMaster.hpp"
 #include "Streamer.hpp"
 #include "KafkaW.h"
@@ -36,7 +35,6 @@ MasterConfig config;
 private:
 CommandListener command_listener;
 std::atomic<bool> do_run {true};
-std::vector<NexusWriter_uptr> nexus_writers;
 std::function<void(void)> * _cb_on_connected = nullptr;
 std::vector< std::unique_ptr< StreamMaster<Streamer, DemuxTopic> > > stream_masters;
 

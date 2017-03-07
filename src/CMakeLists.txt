@@ -185,7 +185,6 @@ kafka_util.cxx
 Master.cxx
 CommandListener.cxx
 CommandHandler.cxx
-NexusWriter.cxx
 TimeDifferenceFromMessage.cxx
 FileWriterTask.cxx
 Source.cxx

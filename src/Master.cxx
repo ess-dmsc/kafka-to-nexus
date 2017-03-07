@@ -2,7 +2,6 @@
 #include <chrono>
 #include "FileWriterTask.h"
 #include "CommandHandler.h"
-#include "NexusWriter.h"
 #include "Source.h"
 #include "logger.h"
 #include "commandproducer.h"
