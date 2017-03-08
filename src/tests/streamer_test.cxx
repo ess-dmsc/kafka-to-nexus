@@ -117,12 +117,14 @@ std::function<ProcessMessageResult(void*,int,int*)> sum = [](void* x, int size, 
 
 
 std::pair<std::string,int64_t> dummy_message_parser(std::string&& msg) {
-  int position = msg.find("-", 0 );
+  auto position = msg.find("-", 0 );
   int64_t timestamp;
   if ( position != std::string::npos) {
     std::stringstream(msg.substr(position+1)) >> timestamp;
     return std::pair<std::string,int64_t>(msg.substr(0,position),timestamp);
   }
+  // what to return??  make it an error.
+  return std::pair<std::string,int64_t>("", -1);
 }
 std::function<TimeDifferenceFromMessage_DT(void*,int)> time_difference = [](void* x, int size) {
   auto parsed_text = dummy_message_parser(std::move(std::string((char*)x)));
