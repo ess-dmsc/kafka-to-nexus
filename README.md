@@ -1,8 +1,8 @@
 # Kafka to Nexus file writing
 
-- [Usage](#Usage)
-- [Installation](#Installation)
-- [Flatbuffer Schema Plugins](#Flatbuffer-Schema-Plugins)
+- [Usage](#usage)
+- [Installation](#installation)
+- [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
 
 
 ## Features
