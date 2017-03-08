@@ -34,7 +34,7 @@ void CommandHandler::handle_new(rapidjson::Document & d) {
 				sb1.GetString(),
 				vali.GetInvalidSchemaKeyword()
 			);
-			throw std::runtime_error("ERROR command message schema validation");
+			return;
 		}
 	}
 
@@ -107,8 +107,8 @@ void CommandHandler::handle(Msg const & msg) {
 	auto doc = make_unique<Document>();
 	ParseResult err = doc->Parse((char*)msg.data, msg.size);
 	if (doc->HasParseError()) {
-		LOG(6, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
-		throw std::runtime_error("");
+		LOG(2, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+		return;
 	}
 	auto & d = * doc;
 
