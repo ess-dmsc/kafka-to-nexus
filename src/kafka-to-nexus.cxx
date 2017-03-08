@@ -36,32 +36,31 @@ int main(int argc, char ** argv) {
 		       "kafka-to-nexus\n"
 		       "  --help, -h\n"
 		       "\n"
-		       "  --broker-command-address    host:port,host:port,...\n"
+		       "  --broker-command            <//host[:port][/topic]>\n"
 		       "      Kafka brokers to connect with for configuration updates.\n"
-		       "      Default: %s\n"
+		       "      Default: //%s/%s\n"
 		       "\n",
-			opt->master_config.command_listener.broker.host_port.c_str());
+			opt->master_config.command_listener.broker.host_port.c_str(),
+			opt->master_config.command_listener.broker.topic.c_str()
+		);
 
-		printf("  --broker-command-topic      <topic-name>\n"
-		       "      Topic name to listen to for configuration updates.\n"
-		       "      Default: %s\n"
-		       "\n",
-			opt->master_config.command_listener.broker.topic.c_str());
-
-		printf("  --assets-dir                <path>\n"
-		       "      Path where program can find some supplementary files.\n"
-		       "      Should point e.g. to the build or install directory.\n"
-		       "      Default: %s\n"
-		       "\n",
-			opt->master_config.dir_assets.c_str());
-
-		printf("  --kafka-gelf                <kafka://host[:port]/topic>\n"
+		printf("  --kafka-gelf                <//host[:port]/topic>\n"
 		       "      Log to Graylog via Kafka GELF adapter.\n"
 		       "\n");
 
 		printf("  --graylog-logger-address    <host:port>\n"
 		       "      Log to Graylog via graylog_logger library.\n"
 		       "\n");
+
+		if (false) {
+			// probably removed soon...
+		printf("  --assets-dir                <path>\n"
+		       "      Path where program can find some supplementary files.\n"
+		       "      Should point e.g. to the build or install directory.\n"
+		       "      Default: %s\n"
+		       "\n",
+			opt->master_config.dir_assets.c_str());
+		}
 
 		printf("  -v\n"
 		       "      Increase verbosity\n"

@@ -2,8 +2,76 @@
 
 ## Features
 
+- What for file writing command from a Kafka topic
+- Write data to file
+- And more coming up...
+
 
 ## Usage
+
+### Running kafka-to-nexus
+```
+kafka-to-nexus -h
+```
+
+For example:
+```
+./kafka-to-nexus --broker-command //kafka-host/filewriter-commands
+```
+
+### Send command to kafka-to-nexus
+
+Commands are JSON messages.
+
+Send commands to the broker/topic given by `--broker-command`
+
+Command to start writing a file:
+```json
+{
+	"cmd": "FileWriter_new",
+	"broker": "broker-where-data-is-coming-from:9092",
+	"streams": [
+		{
+			"topic": "some.topic.with.multiple.sources",
+			"source": "for_example_motor01",
+			"nexus_path": "/entry-01/instrument-01/events-01"
+		}
+	],
+
+	"nexus_structure": {
+		"some_string_field": "the-field-value",
+		"some_int_field": 88004400,
+		"some_double_field": 55.11,
+		"entry-01": {
+			"NX_class": "NXentry",
+			"instrument-01": {
+				"NX_class": "NXinstrument",
+				"events-01": {
+					"NX_class": "NXevent_data"
+				}
+			},
+			"instrument-02": {
+				"NX_class": "NXinstrument",
+				"NX_attributes": {
+					"notes": "some notes in form of an attribute",
+					"attribute_integer": 42,
+					"attribute_double": 42.0
+				}
+			}
+		}
+	},
+
+	"file_attributes": {
+		"file_name": "tmp-new-03.h5"
+	}
+}
+```
+
+Command to exit the file writer:
+```json
+{"cmd": "FileWriter_exit"}
+```
+
 
 
 ## Installation
@@ -30,6 +98,7 @@ As usual `cmake`, `make`.
 
 ### Usage of your custom builds of the dependencies
 
+If you have dependencies in non-standard locations:
 Locations of dependencies can be supplied either via standard
 `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` or by the more specific
 variables here:
@@ -47,6 +116,29 @@ variables here:
   - we expect `ENV{fmt_dir}/include/fmt/[format.cc, format.h]`
 
 - `gtest`: `ENV{googletest_dir}`
+
+
+## Flatbuffer Schema Plugins
+
+The actual parsing of the different FlatBuffer schemata is handled by plugins
+which register themself via the `SchemaRegistry`.
+See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
+Support for new schemas can be added in the same way.
+
+
+## Running tests
+
+Tests are built only when `gtest` is detected.  If detected, the `cmake` output
+contains
+```
+-- Using Google Test: [ DISCOVERED_LOCATION_OF_GTEST ]
+```
+with the location where it has found `gtest`.
+
+Start the `gtest` based test suite via:
+```
+./tests/tests
+```
 
 
 ## Documents:
@@ -109,28 +201,6 @@ the list of brokers from Kafka.
   - Streammaster::duration milliseconds have been elapsed
 * when receives a **termination** command from Master closes all the streamers
 
-
-## Flatbuffer Schema Plugins
-
-The actual parsing of the different FlatBuffer schemata is handled by plugins
-which register themself via the `SchemaRegistry`.
-See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
-Support for new schemas can be added in the same way.
-
-
-## Running tests
-
-Tests are built only when `gtest` is detected.  If detected, the `cmake` output
-contains
-```
--- Using Google Test: [ DISCOVERED_LOCATION_OF_GTEST ]
-```
-with the location where it has found `gtest`.
-
-Start the `gtest` based test suite via:
-```
-./tests/tests
-```
 
 More tests involing the network:
 ```
