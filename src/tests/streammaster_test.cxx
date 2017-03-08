@@ -25,7 +25,7 @@ namespace BrightnESS {
       uint32_t processed_messages_count() const { return _processed_messages_count; }
       ProcessMessageResult process_message(char * msg_data, int msg_size) {
 	_processed_messages_count++;
-	int64_t value = rng();
+	//int64_t value = rng();
 	return ProcessMessageResult::OK(); }
     private:
       std::string _topic;
@@ -42,7 +42,7 @@ namespace BrightnESS {
       ProcessMessageResult process_message(char * msg_data, int msg_size) {
 	std::string s(msg_data);
 	int source_index=0;
-	for(; source_index < _sources.size(); ++source_index) {
+	for(; source_index < (int64_t)_sources.size(); ++source_index) {
 	  if( (s.find(_sources[source_index].source()) !=std::string::npos ) ) break;
 	}
 	return _sources[source_index].process_message(msg_data,msg_size);
@@ -124,7 +124,7 @@ TEST (Streammaster, StartStop) {
   std::this_thread::sleep_for (std::chrono::seconds(1));
   auto value = sm.stop(-5);
 
-  for(int item=0;item<one_demux[0].sources().size();++item)
+  for(int item=0;item<(int64_t)one_demux[0].sources().size();++item)
     std::cout << one_demux[0].sources()[item].source() <<  " : "
               << one_demux[0].sources()[item].processed_messages_count() << "\n";
   

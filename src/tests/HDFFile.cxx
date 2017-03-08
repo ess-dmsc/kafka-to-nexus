@@ -58,7 +58,7 @@ static void new_03() {
 	rapidjson::Document d;
 	d.Parse(cmd.data(), cmd.size());
 	char const * fname = d["file_attributes"]["file_name"].GetString();
-	char const * source_name = d["streams"][0]["source"].GetString();
+	//char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
 	FileWriter::CommandHandler ch(nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
