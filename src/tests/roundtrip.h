@@ -1,5 +1,11 @@
 #pragma once
-#include "kafka-to-nexus.h"
+#include "../MainOpt.h"
+#include <gtest/gtest.h>
+
+class Roundtrip : public ::testing::Test {
+public:
+static MainOpt * opt;
+};
 
 namespace BrightnESS {
 namespace FileWriter {

@@ -58,7 +58,7 @@ static FlatBufs::f141_epics_nt::fwdinfo_2_t const * fwdinfo(FlatBufs::f141_epics
 std::string reader::sourcename_impl(Msg msg) {
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	if (!epicspv->name()) {
-		LOG(3, "WARNING message has no source name");
+		LOG(4, "WARNING message has no source name");
 		return "";
 	}
 	return epicspv->name()->str();
@@ -70,7 +70,7 @@ uint64_t reader::ts_impl(Msg msg) {
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	auto fi = fwdinfo(epicspv);
 	if (!fi) {
-		LOG(3, "ERROR no time data sent");
+		LOG(4, "ERROR no time data sent");
 		return 0;
 	}
 	return fi->ts_data();
@@ -81,7 +81,7 @@ uint64_t reader::teamid_impl(Msg & msg) {
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	auto fi = fwdinfo(epicspv);
 	if (!fi) {
-		LOG(3, "ERROR no fwdinfo data sent");
+		LOG(4, "ERROR no fwdinfo data sent");
 		return 0;
 	}
 	return fi->teamid();
@@ -102,24 +102,29 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	// TODO
 	// This is just a unbuffered, low-performance write.
 	// Add buffering after it works.
+	auto veri = flatbuffers::Verifier((uint8_t*)msg.data, msg.size);
+	if (!BrightnESS::FlatBufs::f141_epics_nt::VerifyEpicsPVBuffer(veri)) {
+		LOG(4, "ERROR bad flat buffer");
+		return;
+	}
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
 	// TODO verify buffer
 	if (epicspv->pv_type() != FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble) {
-		LOG(2, "SORRY cant handle that at the moment");
+		LOG(5, "SORRY cant handle that at the moment");
 		return;
 	}
 	auto pv = (FlatBufs::f141_epics_nt::NTScalarArrayDouble*) epicspv->pv();
 	if (!pv) {
-		LOG(2, "ERROR no data was sent");
+		LOG(5, "ERROR no data was sent");
 		return;
 	}
 	auto value = pv->value();
 	if (!value) {
-		LOG(2, "ERROR no value");
+		LOG(5, "ERROR no value");
 		return;
 	}
 	auto ncols = value->size();
-	LOG(1, "f141_epics_nt::init_impl  v.size() == {}", ncols);
+	LOG(6, "f141_epics_nt::init_impl  v.size() == {}", ncols);
 	using std::vector;
 	using std::array;
 	auto dt = nat_type<DT>();
@@ -133,17 +138,17 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	this->dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
 	if (true) {
 		// Just check if it works as I think it should
-		LOG(0, "DataSpace isSimple {}", H5Sis_simple(dsp));
+		LOG(7, "DataSpace isSimple {}", H5Sis_simple(dsp));
 		auto ndims = H5Sget_simple_extent_ndims(dsp);
-		LOG(0, "DataSpace getSimpleExtentNdims {}", ndims);
-		LOG(0, "DataSpace getSimpleExtentNpoints {}", H5Sget_simple_extent_npoints(dsp));
+		LOG(7, "DataSpace getSimpleExtentNdims {}", ndims);
+		LOG(7, "DataSpace getSimpleExtentNpoints {}", H5Sget_simple_extent_npoints(dsp));
 		std::vector<hsize_t> get_sizes_now;
 		std::vector<hsize_t> get_sizes_max;
 		get_sizes_now.resize(ndims);
 		get_sizes_max.resize(ndims);
 		H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
 		for (int i1 = 0; i1 < ndims; ++i1) {
-			LOG(0, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+			LOG(7, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 		}
 	}
 
@@ -167,11 +172,11 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 		array<hsize_t, 2> schk {{std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), 1}};
 		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
 		if (err < 0) {
-			LOG(7, "ERROR in H5Pset_chunk");
+			LOG(0, "ERROR in H5Pset_chunk");
 		}
 		this->ds_seq_data = H5Dcreate1(hdf_group, (sourcename + "__seq_data").c_str(), dt, dsp, dcpl);
 		if (this->ds_seq_data < 0) {
-			LOG(7, "ERROR creating ds_seq_data");
+			LOG(0, "ERROR creating ds_seq_data");
 		}
 		H5Pclose(dcpl);
 		H5Sclose(dsp);
@@ -188,11 +193,11 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 		array<hsize_t, 2> schk {{std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), 1}};
 		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
 		if (err < 0) {
-			LOG(7, "ERROR in H5Pset_chunk");
+			LOG(0, "ERROR in H5Pset_chunk");
 		}
 		this->ds_seq_fwd = H5Dcreate1(hdf_group, (sourcename + "__seq_fwd").c_str(), dt, dsp, dcpl);
 		if (this->ds_seq_fwd < 0) {
-			LOG(7, "ERROR creating ds_seq_fwd");
+			LOG(0, "ERROR creating ds_seq_fwd");
 		}
 		H5Pclose(dcpl);
 		H5Sclose(dsp);
@@ -210,11 +215,11 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 		array<hsize_t, 2> schk {{ std::max(64*1024/H5Tget_size(dt)/ncols, (size_t)1), 1 }};
 		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
 		if (err < 0) {
-			LOG(7, "ERROR in H5Pset_chunk");
+			LOG(0, "ERROR in H5Pset_chunk");
 		}
 		this->ds_ts_data = H5Dcreate1(hdf_group, (sourcename + "__ts_data").c_str(), dt, dsp, dcpl);
 		if (this->ds_ts_data < 0) {
-			LOG(7, "ERROR creating ds_ts_data");
+			LOG(0, "ERROR creating ds_ts_data");
 		}
 		H5Pclose(dcpl);
 		H5Sclose(dsp);
@@ -234,18 +239,18 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 	herr_t err;
 	H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
 	for (int i1 = 0; i1 < ndims; ++i1) {
-		LOG(-1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 	if (get_sizes_now.at(1) != nlen) {
-		LOG(3, "ERROR number of columns does not match");
+		LOG(4, "ERROR number of columns does not match");
 		return -1;
 	}
 
 	get_sizes_now.at(0) += 1;
 	err = H5Dextend(ds, get_sizes_now.data());
 	if (err < 0) {
-		LOG(7, "ERROR can not extend dataset");
-		return {-1};
+		LOG(0, "ERROR can not extend dataset");
+		return -1;
 	}
 	H5Sclose(tgt);
 
@@ -258,7 +263,7 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 		A hsl_count {{1, get_sizes_now.at(1)}};
 		err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
 		if (err < 0) {
-			LOG(7, "ERROR can not select mem hyperslab");
+			LOG(0, "ERROR can not select mem hyperslab");
 			return -2;
 		}
 	}
@@ -267,17 +272,17 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 		A hsl_count {{1, get_sizes_now.at(1)}};
 		err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
 		if (err < 0) {
-			LOG(7, "ERROR can not select tgt hyperslab");
+			LOG(0, "ERROR can not select tgt hyperslab");
 			return -3;
 		}
 	}
 	for (int i1 = 0; i1 < ndims; ++i1) {
-		LOG(-1, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
 	}
 	auto dt = nat_type<Td>();
 	err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
 	if (err < 0) {
-		LOG(7, "ERROR writing failed");
+		LOG(0, "ERROR writing failed");
 		return -4;
 	}
 	err = H5Sclose(mem);
@@ -287,11 +292,11 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 
 
 WriteResult writer::write_impl(Msg msg) {
-	LOG(0, "f141_epics_nt::write_impl");
+	LOG(7, "f141_epics_nt::write_impl");
 	herr_t err;
 	auto veri = flatbuffers::Verifier((uint8_t*)msg.data, msg.size);
 	if (!BrightnESS::FlatBufs::f141_epics_nt::VerifyEpicsPVBuffer(veri)) {
-		LOG(3, "ERROR bad flat buffer");
+		LOG(4, "ERROR bad flat buffer");
 		return {-1};
 	}
 	auto epicspv = FlatBufs::f141_epics_nt::GetEpicsPV(msg.data);
@@ -315,7 +320,7 @@ WriteResult writer::write_impl(Msg msg) {
 		auto file = hdf_file->h5file_detail().h5file();
 		err = H5Fflush(file, H5F_SCOPE_LOCAL);
 		if (err < 0) {
-			LOG(3, "ERROR while flushing");
+			LOG(4, "ERROR while flushing");
 		}
 	}
 	return {ts_data};

@@ -42,7 +42,7 @@
 		prod.poll_outq();
 	}
 
-	LOG(3, "Waiting for StreamMaster to stop");
+	LOG(4, "Waiting for StreamMaster to stop");
 	//stream_master.wait_until_n_packets_recv(10)
 	std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 	stream_master.stop();

@@ -73,7 +73,7 @@ struct Streamer {
 private:
   RdKafka::Topic *topic;
   RdKafka::Consumer *consumer;
-  uint64_t offset;
+  int64_t offset;
   int64_t last_offset=-1;
   int64_t step_back_offset=0;
   int32_t partition = 0;

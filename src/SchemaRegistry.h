@@ -27,7 +27,12 @@ static std::map<FBID, SchemaInfo::ptr> & items();
 static SchemaInfo::ptr & find(FBID const & fbid);
 
 static void registrate(FBID fbid, SchemaInfo::ptr && si) {
-	items()[fbid] = std::move(si);
+	auto & m = items();
+	if (m.find(fbid) != m.end()) {
+		auto s = fmt::format("ERROR schema handler for [{:.{}}] exists already", fbid.data(), fbid.size());
+		throw std::runtime_error(s);
+	}
+	m[fbid] = std::move(si);
 }
 
 template <typename T>

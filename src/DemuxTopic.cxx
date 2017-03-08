@@ -36,12 +36,12 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(char * msg_data, int msg
   std::string _tmp_dummy;
   auto reader = FBSchemaReader::create(msg);
   if (!reader) {
-    LOG(3, "ERROR unknown schema id?");
+    LOG(4, "ERROR unknown schema id?");
     return DT::ERR();
   }
   auto srcn = reader->sourcename(msg);
   std::unique_ptr<FBSchemaReader> _schema_reader;
-  LOG(0, "Msg is for sourcename: {}", srcn);
+  LOG(7, "Msg is for sourcename: {}", srcn);
   for (auto & s : sources()) {
     if (s.source() == srcn) {
        _schema_reader = FBSchemaReader::create(msg);
@@ -58,11 +58,11 @@ ProcessMessageResult DemuxTopic::process_message(char * msg_data, int msg_size) 
 	Msg msg {msg_data, msg_size};
 	auto reader = FBSchemaReader::create(msg);
 	if (!reader) {
-		LOG(3, "ERROR unknown schema id?");
+		LOG(4, "ERROR unknown schema id?");
 		return ProcessMessageResult::ERR();
 	}
 	auto srcn = reader->sourcename(msg);
-	LOG(0, "Msg is for sourcename: {}", srcn);
+	LOG(7, "Msg is for sourcename: {}", srcn);
 	for (auto & s : sources()) {
 		if (s.source() == srcn) {
 			auto ret = s.process_message(msg);

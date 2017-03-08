@@ -261,6 +261,7 @@ get_install()
     return ref;
 }
 
+/*
 static
 std::string
 get_download_gz_file(const std::string& version)
@@ -268,6 +269,7 @@ get_download_gz_file(const std::string& version)
     auto file = get_install() + version + ".tar.gz";
     return file;
 }
+*/
 
 // These can be used to reduce the range of the database to save memory
 CONSTDATA auto min_year = date::year::min();
@@ -2223,6 +2225,7 @@ operator<<(std::ostream& os, const leap& x)
     return os << x.date_ << "  +";
 }
 
+/*
 static
 bool
 file_exists(const std::string& filename)
@@ -2233,6 +2236,7 @@ file_exists(const std::string& filename)
     return ::access(filename.c_str(), F_OK) == 0;
 #endif
 }
+*/
 
 #if HAS_REMOTE_API
 
@@ -2759,6 +2763,7 @@ remote_install(const std::string& version)
 }
 #endif  // HAS_REMOTE_API
 
+/*
 static
 std::string
 get_version(const std::string& path)
@@ -2786,6 +2791,7 @@ get_version(const std::string& path)
     }
     throw std::runtime_error("Unable to get Timezone database version from " + path);
 }
+*/
 
 static
 TZ_DB

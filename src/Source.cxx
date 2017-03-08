@@ -41,7 +41,7 @@ ProcessMessageResult Source::process_message(Msg msg) {
 	if (!_schema_reader) {
 		_schema_reader = FBSchemaReader::create(msg);
 		if (_schema_writer) {
-			LOG(7, "ERROR _schema_writer should not exist");
+			LOG(0, "ERROR _schema_writer should not exist");
 		}
 		if (!_hdf_file) {
 			throw "SHOULD NEVER HAPPEN AT LEAST CURRENTLY, HDF FILE SHOULD ALREADY BE OPEN";
@@ -55,6 +55,9 @@ ProcessMessageResult Source::process_message(Msg msg) {
 		auto ret = _schema_writer->write(msg);
 		_cnt_msg_written += 1;
 		_processed_messages_count += 1;
+		if (ret.ts < 0) {
+			return ProcessMessageResult::ERR();
+		}
 		return ProcessMessageResult::OK(ret.ts);
 	}
 	else {
