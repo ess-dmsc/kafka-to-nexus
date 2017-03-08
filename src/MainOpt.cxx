@@ -2,6 +2,7 @@
 #include "uri.h"
 #include <getopt.h>
 
+using BrightnESS::uri::URI;
 
 /**
 Parses the options using getopt and returns a MainOpt
@@ -13,10 +14,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 	g_main_opt.store(opt.get());
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
-		{"broker-command-address",          required_argument,        0,  0 },
-		{"broker-command-topic",            required_argument,        0,  0 },
+		{"broker-command",                  required_argument,        0,  0 },
 		{"kafka-gelf",                      required_argument,        0,  0 },
-		{"graylog-logger-address",          required_argument,        0,  0 },
+		{"graylog-logger",                  required_argument,        0,  0 },
 		{"teamid",                          required_argument,        0,  0 },
 		{"assets-dir",                      required_argument,        0,  0 },
 		{0, 0, 0, 0},
@@ -44,11 +44,12 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 			if (std::string("help") == lname) {
 				opt->help = true;
 			}
-			if (std::string("broker-command-address") == lname) {
-				opt->master_config.command_listener.address = optarg;
-			}
-			if (std::string("broker-command-topic") == lname) {
-				opt->master_config.command_listener.topic = optarg;
+			if (std::string("broker-command") == lname) {
+				URI x(optarg);
+				x.default_host("localhost");
+				x.default_port(9092);
+				x.default_path("kafka-to-nexus.command");
+				opt->master_config.command_listener.broker = x;
 			}
 			if (std::string("kafka-gelf") == lname) {
 				opt->kafka_gelf = optarg;

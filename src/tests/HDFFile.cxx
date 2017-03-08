@@ -54,7 +54,7 @@ static void new_03() {
 	using namespace BrightnESS;
 	using namespace BrightnESS::FileWriter;
 	auto cmd = gulp("tests/msg-cmd-new-03.json");
-	LOG(3, "cmd: {:.{}}", cmd.data(), cmd.size());
+	LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
 	rapidjson::Document d;
 	d.Parse(cmd.data(), cmd.size());
 	char const * fname = d["file_attributes"]["file_name"].GetString();

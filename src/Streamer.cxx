@@ -1,5 +1,6 @@
 #include "Streamer.hpp"
 #include <librdkafka/rdkafkacpp.h>
+#include "logger.h"
 // #include "KafkaMock.hpp"
 
 /// TODO:

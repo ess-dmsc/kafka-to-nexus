@@ -28,6 +28,23 @@ uint32_t ol;
 PCRE2_SIZE * ov;
 };
 
+
+void URI::update_deps() {
+	if (port != 0) {
+		host_port = fmt::format("{}:{}", host, port);
+	}
+	else {
+		host_port = host;
+	}
+	// check if the path could be a valid topic
+	auto mdd = pcre2_match_data_create(16, nullptr);
+	if (0 <= pcre2_match(re_topic, (uchar*)path.data(), path.size(), 0, 0, mdd, nullptr)) {
+		topic = MD(mdd).cg(1).substr(path.data());
+	}
+	pcre2_match_data_free(mdd);
+}
+
+
 URI::URI(std::string uri) {
 	using std::vector;
 	using std::string;
@@ -58,23 +75,22 @@ URI::URI(std::string uri) {
 			path = m.cg(0).substr(p0);
 		}
 	}
-	// check if the path could be a valid topic
-	if (0 <= pcre2_match(re_topic, (uchar*)path.data(), path.size(), 0, 0, mdd, nullptr)) {
-		topic = MD(mdd).cg(1).substr(path.data());
-	}
-
 	pcre2_match_data_free(mdd);
+	update_deps();
 }
+
 
 pcre2_code * URI::re1 = nullptr;
 pcre2_code * URI::re_no_host = nullptr;
 pcre2_code * URI::re_topic = nullptr;
+
 
 void p_regerr(int err) {
 	std::array<unsigned char, 512> s1;
 	auto n = pcre2_get_error_message(err, s1.data(), s1.size());
 	fmt::print("err in regex: [{}, {}] {:.{}}\n", err, n, (char*)s1.data(), n);
 }
+
 
 bool URI::compile() {
 	int err = 0;
@@ -108,7 +124,33 @@ bool URI::compile() {
 	return true;
 }
 
+
+void URI::default_port(int port_) {
+	if (port == 0) {
+		port = port_;
+	}
+	update_deps();
+}
+
+
+void URI::default_path(std::string path_) {
+	if (path.size() == 0) {
+		path = path_;
+	}
+	update_deps();
+}
+
+
+void URI::default_host(std::string host_) {
+	if (host.size() == 0) {
+		host = host_;
+	}
+	update_deps();
+}
+
+
 bool URI::compiled = compile();
+
 
 #if HAVE_GTEST
 TEST(URI, host) {
@@ -125,9 +167,19 @@ TEST(URI, host_port) {
 }
 TEST(URI, scheme_host_port) {
 	URI u1("http://my.host:345");
+	u1.default_port(123);
 	ASSERT_EQ(u1.scheme, "http");
 	ASSERT_EQ(u1.host, "my.host");
+	ASSERT_EQ(u1.host_port, "my.host:345");
 	ASSERT_EQ(u1.port, (uint32_t)345);
+}
+TEST(URI, scheme_host_port_default) {
+	URI u1("http://my.host");
+	u1.default_port(123);
+	ASSERT_EQ(u1.scheme, "http");
+	ASSERT_EQ(u1.host, "my.host");
+	ASSERT_EQ(u1.host_port, "my.host:123");
+	ASSERT_EQ(u1.port, (uint32_t)123);
 }
 TEST(URI, scheme_host_port_pathdefault) {
 	URI u1("kafka://my-host.com:8080/");
@@ -197,6 +249,15 @@ TEST(URI, reltopic) {
 	ASSERT_EQ(u1.port, (uint32_t)0);
 	ASSERT_EQ(u1.path, "topic-name.test");
 	ASSERT_EQ(u1.topic, "topic-name.test");
+}
+TEST(URI, host_default_topic) {
+	URI u1("//my.host");
+	u1.default_path("/some-path");
+	ASSERT_EQ(u1.scheme, "");
+	ASSERT_EQ(u1.host, "my.host");
+	ASSERT_EQ(u1.port, (uint32_t)0);
+	ASSERT_EQ(u1.path, "/some-path");
+	ASSERT_EQ(u1.topic, "some-path");
 }
 #endif
 

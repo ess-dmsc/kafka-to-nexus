@@ -18,7 +18,7 @@ std::string & CmdMsg_K::str() {
 }
 
 
-Master::Master(MasterConfig config) :
+Master::Master(MasterConfig & config) :
 	config(config),
 	command_listener(config.command_listener)
 {

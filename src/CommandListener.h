@@ -3,6 +3,7 @@
 #include <thread>
 #include "Master_handler.h"
 #include "KafkaW.h"
+#include "uri.h"
 
 
 namespace BrightnESS {
@@ -19,10 +20,12 @@ virtual void operator() (int partition, std::string const & topic, std::string c
 
 /// Settings for the Kafka command broker and topic.
 struct CommandListenerConfig {
-std::string address = "localhost:9092";
-std::string topic = "kafka-to-nexus.command";
+uri::URI broker;
 std::function<void()> * on_rebalance_assign = nullptr;
 int64_t start_at_command_offset = -1;
+CommandListenerConfig() :
+	broker("kafka://localhost:9092/kafka-to-nexus.command")
+{ }
 };
 
 class PollStatus {
@@ -57,7 +60,6 @@ KafkaW::PollStatus poll();
 
 private:
 CommandListenerConfig config;
-std::thread thr_consumer;
 std::unique_ptr<KafkaW::Consumer> consumer;
 };
 

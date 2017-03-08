@@ -11,16 +11,14 @@ int main(int argc, char ** argv) {
 	setup_logger_from_options(*opt);
 	Roundtrip::opt = opt.get();
 	::testing::InitGoogleTest(&argc, argv);
+	auto & f = ::testing::GTEST_FLAG(filter);
+	if (f.find("remote_kafka") == std::string::npos) {
+		f = f + std::string(":-*remote_kafka*");
+	}
 	return RUN_ALL_TESTS();
 }
 
 static_assert(RD_KAFKA_RESP_ERR_NO_ERROR == 0, "Make sure that NO_ERROR is and stays 0");
-
-TEST_F(Roundtrip, simple_01) {
-	// disabled
-	return;
-	BrightnESS::FileWriter::Test::roundtrip_simple_01(*opt);
-}
 
 #if 0
 	if (false) {

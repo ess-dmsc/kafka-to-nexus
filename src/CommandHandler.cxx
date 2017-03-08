@@ -22,8 +22,7 @@ CommandHandler::CommandHandler(Master * master) : master(master) {
 }
 
 void CommandHandler::handle_new(rapidjson::Document & d) {
-	if (g_N_HANDLED > 0) return;
-
+	//if (g_N_HANDLED > 0) return;
 	using namespace rapidjson;
 	if (schema_command) {
 		SchemaValidator vali(*schema_command);
@@ -84,7 +83,11 @@ void CommandHandler::handle_new(rapidjson::Document & d) {
 	}
 
 	if (master) {
-		std::string br(d["broker"].GetString());
+		std::string br("localhost:9092");
+		auto m = d.FindMember("broker");
+		if (m != d.MemberEnd()) {
+			br = m->value.GetString();
+		}
 		auto s = std::unique_ptr< StreamMaster<Streamer, DemuxTopic> >(new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt)));
 		s->start();
 		master->stream_masters.push_back(std::move(s));
