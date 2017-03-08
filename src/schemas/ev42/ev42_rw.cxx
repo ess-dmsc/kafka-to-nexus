@@ -85,7 +85,7 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 		LOG(3, "bad flat buffer");
 		return;
 	}
-	auto evmsg = GetEventMessage(msg.data);
+	//auto evmsg = GetEventMessage(msg.data);
 	this->ds_detector_id = create_dataset(hdf_group, "detector_id");
 	this->ds_time_of_flight = create_dataset(hdf_group, "time_of_flight");
 }
