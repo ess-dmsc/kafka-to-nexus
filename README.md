@@ -1,13 +1,52 @@
 # Kafka to Nexus file writing
 
-## Requirements
+## Features
 
-- rapidjson
-- libfmt
-- `streaming-data-types` repository (clone e.g. in the same directory as `kafka-to-nexus`)
+
+## Usage
+
+
+## Installation
+
+### Dependencies
+
+- cmake (at least 2.8.11)
+- git
+- flatbuffers (headers and working `flatc`)
 - librdkafka
+- rapidjson
+- hdf5
+- libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
+- `streaming-data-types` repository (clone e.g. in the same directory as this `kafka-to-nexus`)
 - pcre2 (`yum install pcre2 pcre2-devel` or `brew install pcre2`)
   (Needed because we support GCC < 4.9 where std regex is incomplete)
+- Optional `graylog_logger`
+
+
+### Build
+
+As usual `cmake`, `make`.
+
+
+### Usage of your custom builds of the dependencies
+
+Locations of dependencies can be supplied either via standard
+`CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` or by the more specific
+variables here:
+
+- `flatbuffers`: `ENV{flatbuffers_dir}`
+
+- `rapidjson`: `ENV{rapidjson_dir}`
+
+- HDF5: `ENV{hdf5_dir}`
+
+- `graylog_logger`: `ENV{graylog_logger_dir}`
+  - cmake will report if it is found
+
+- `libfmt`: `ENV{fmt_dir}`
+  - we expect `ENV{fmt_dir}/include/fmt/[format.cc, format.h]`
+
+- `gtest`: `ENV{googletest_dir}`
 
 
 ## Documents:

@@ -42,6 +42,8 @@ set(have_gtest 1)
 message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
 add_library(libgtest SHARED IMPORTED)
 set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
+else()
+message(STATUS "Not found: gtest, not using it.")
 endif()
 
 
@@ -118,6 +120,8 @@ message(STATUS "Using graylog_logger ${path_include_graylog_logger} ${path_lib_g
 set(have_graylog_logger TRUE)
 add_library(libgraylog_logger SHARED IMPORTED)
 set_property(TARGET libgraylog_logger PROPERTY IMPORTED_LOCATION ${path_lib_graylog_logger})
+else()
+message(STATUS "Not found: graylog_logger, not using it.")
 endif()
 
 
