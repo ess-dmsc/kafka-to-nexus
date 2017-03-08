@@ -1,7 +1,7 @@
-#include "SchemaRegistry.h"
-#include "HDFFile.h"
-#include "HDFFile_h5.h"
-#include "schemas/amo0_psi_sinq_schema_generated.h"
+#include "../../SchemaRegistry.h"
+#include "../../HDFFile.h"
+#include "../../HDFFile_h5.h"
+#include "schemas/amo0_psi_sinq_generated.h"
 
 #include <iterator>
 #include <iostream>
@@ -42,20 +42,20 @@ std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
 }
 
 std::string reader::sourcename_impl(Msg msg) {
-  auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
+  auto event = GetEventMessage(msg.data);
   
-  if (!event->htype()) {
+  if (!event->source_name()) {
     LOG(4, "WARNING message has no source name");
     return "";
   }
-  return event->htype()->str();
+  return event->source_name()->str();
 }
 
 // TODO
 // Should be in64_t to handle error cases
 uint64_t reader::ts_impl(Msg msg) {
-  auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
-  auto ts = event->ts();
+  auto event = GetEventMessage(msg.data);
+  auto ts = event->pulse_time();
   if (!ts) {
     LOG(4, "ERROR no time data sent");
     return 0;
@@ -185,22 +185,22 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 WriteResult writer::write_impl(Msg msg) {
   using A = std::array<hsize_t, 1>;
 
-  auto event = EventGenerator::FlatBufs::AMOR::GetEvent(msg.data);
-  if( (event->pid() != pid+1) && (pid < -1ul) ) {
-    LOG(7, "amo0 stream event loss: {} -> {}", pid, event->pid());
+  auto event = GetEventMessage(msg.data);
+  if( (event->message_id() != pid+1) && (pid < -1ul) ) {
+    LOG(7, "amo0 stream event loss: {} -> {}", pid, event->message_id());
     // TODO write into nexus log
   }
 
-  int64_t value = event->ts();
-  pid = event->pid();
+  int64_t value = event->pulse_time();
+  pid = event->message_id();
 
-  uint32_t size=event->data()->size()/2;
+  uint32_t size=event->detector_id()->size();
   hsize_t position=0;
   {
     auto & ds = this->to;
     A get_sizes_now = _get_size_now(ds);
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
-    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data());
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->time_of_flight()->data());
     if( new_sizes != get_sizes_now )
       LOG(6,"Expected file size differs from actual size");
     position = get_sizes_now.data()[0];
@@ -209,7 +209,7 @@ WriteResult writer::write_impl(Msg msg) {
     auto & ds = this->id;
     A get_sizes_now = _get_size_now(ds);
     A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
-    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->data()->data()+size);
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->detector_id()->data());
     if( new_sizes != get_sizes_now )
       LOG(6,"Expected file size differs from actual size");
   }

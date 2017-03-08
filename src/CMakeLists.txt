@@ -206,6 +206,7 @@ schema_f141.cxx
 schemas/f141/synth.cxx
 schemas/ev42/ev42_rw.cxx
 schemas/ev42/ev42_synth.cxx
+schemas/events/schema_amo0.cxx
 MainOpt.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
