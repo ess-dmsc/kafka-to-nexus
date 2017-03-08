@@ -1,5 +1,10 @@
 # Kafka to Nexus file writing
 
+- [Usage](#Usage)
+- [Installation](#Installation)
+- [Flatbuffer Schema Plugins](#Flatbuffer-Schema-Plugins)
+
+
 ## Features
 
 - What for file writing command from a Kafka topic
@@ -11,7 +16,7 @@
 
 ### Running kafka-to-nexus
 ```
-kafka-to-nexus -h
+./kafka-to-nexus -h
 ```
 
 For example:
@@ -101,7 +106,7 @@ As usual `cmake`, `make`.
 If you have dependencies in non-standard locations:
 Locations of dependencies can be supplied either via standard
 `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` or by the more specific
-variables here:
+environment variables here:
 
 - `flatbuffers`: `ENV{flatbuffers_dir}`
 
@@ -126,7 +131,7 @@ See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
 Support for new schemas can be added in the same way.
 
 
-## Running tests
+## Running Tests
 
 Tests are built only when `gtest` is detected.  If detected, the `cmake` output
 contains
