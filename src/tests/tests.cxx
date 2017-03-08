@@ -12,9 +12,9 @@ int main(int argc, char ** argv) {
 	Roundtrip::opt = opt.get();
 	::testing::InitGoogleTest(&argc, argv);
 	auto & f = ::testing::GTEST_FLAG(filter);
-	if (f.find("remote_kafka") == std::string::npos) {
-		f = f + std::string(":-*remote_kafka*");
-	}
+	// if (f.find("remote_kafka") == std::string::npos) {
+	// 	f = f + std::string(":-*remote_kafka*");
+	// }
 	return RUN_ALL_TESTS();
 }
 

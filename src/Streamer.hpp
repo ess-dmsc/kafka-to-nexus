@@ -76,13 +76,9 @@ private:
   RdKafka::Topic *_topic;
   RdKafka::Consumer *_consumer;
   RdKafka::TopicPartition *_tp;
-
-public:
   RdKafkaOffset _offset;
   RdKafkaOffset _begin_offset;
   RdKafkaOffset _last_visited_offset;
-private:
-  //  RdKafkaOffset _begin_offset;
   int64_t step_back_offset;
   RdKafkaPartition _partition;
   size_t message_length;
