@@ -1,5 +1,6 @@
 #include <thread>
 #include <atomic>
+#include <regex>
 
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
@@ -191,6 +192,19 @@ std::function<BrightnESS::FileWriter::ProcessMessageResult(void*,int)> verbose =
   return BrightnESS::FileWriter::ProcessMessageResult::OK();
 };
 
+std::string time_diff_message;
+std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void*,int)> time_diff = [](void* x, int size) {
+  std::smatch m;
+  auto s = std::string((char*)x);
+  std::cout << s << std::endl;
+  std::regex_search (s,m,std::regex("[0-9]+$"));
+  int time = std::atoi(std::string(m[0]).c_str());
+  std::regex_search (s,m,std::regex("^[a-zA-Z]+"));
+  time_diff_message = std::string(m[0]);
+  
+  return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(time_diff_message,time);
+};
+
 
 
 int main(int argc, char **argv) {
@@ -216,111 +230,6 @@ int main(int argc, char **argv) {
     producer.TearDown();
   }
   else {
-  //   consumer.SetUp();
-
-  //   ExampleRebalanceCb erc;
-
-
-  //   std::vector<RdKafka::TopicPartition*> partitions;
-  //   consumer._consumer->assignment(partitions);
-  //   for(auto& tp : partitions) {
-  //     std::cout << "Partition: "    << tp->partition() << "\n";
-  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-  //   }
-  //   std::vector<RdKafka::TopicPartition*> p;
-  //   p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-  // 						1, 
-  // 						RdKafka::Topic::OFFSET_BEGINNING));
-  //   RdKafka::ErrorCode err = consumer._consumer->assign(p);
-  //   erc.rebalance_cb(consumer._consumer,err,p);
-  //   std::cerr << RdKafka::err2str(err)  << "\n";
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     exit(1);
-  //   }
-  //   consumer.consume(); 
-  //   consumer._consumer->unassign();
-
-  //   consumer._consumer->assign(partitions);
-  //   consumer._consumer->assignment(partitions);
-  //   for(auto& tp : partitions) {
-  //     std::cout << "Partition: "    << tp->partition() << "\n";
-  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-  //   }
-  //   std::cout << consumer.consume_single_message() << "\n"; 
-
-  //   p.pop_back();
-  //   p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-  // 						1, 
-  // 						RdKafka::Topic::OFFSET_END));
-  //   err = consumer._consumer->assign(p);
-  //   // erc.rebalance_cb(consumer._consumer,err,consumer._tp);
-  //   std::cerr << RdKafka::err2str(err)  << "\n";
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     exit(1);
-  //   }
-  //   consumer._consumer->assignment(partitions);
-  //   for(auto& tp : partitions) {
-  //     std::cout << "Partition: "    << tp->partition() << "\n";
-  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-  //   }
-  //   std::cout << consumer.consume_single_message() << "\n"; 
-
-  //   // std::cout << consumer.consume_single_message() << "\n"; 
-
-  //   p.pop_back();
-  //   p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-  // 						1, 
-  // 						RdKafka::Topic::OFFSET_STORED));
-  //   err = consumer._consumer->assign(p);
-  //   // erc.rebalance_cb(consumer._consumer,err,consumer._tp);
-  //   std::cerr << RdKafka::err2str(err)  << "\n";
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     exit(1);
-  //   }
-  //   consumer._consumer->assignment(partitions);
-  //   for(auto& tp : partitions) {
-  //     std::cout << "Partition: "    << tp->partition() << "\n";
-  //     std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-  //     std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-  //     std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-  //   }
-  //   std::cout << consumer.consume_single_message() << "\n"; 
-
-  //   // std::cout << consumer.consume_single_message() << "\n"; 
-
-  //   int in = 1;
-  //   while(1) {
-  //     std::cin >> in;
-  //     if (in < 0) break;
-  //     p.pop_back();
-  //     p.push_back(RdKafka::TopicPartition::create(producer.topic, 
-  // 						  1,
-  // 						  RdKafka::Consumer::OffsetTail(in)
-  //     ));
-  //     err = consumer._consumer->assign(p);
-  //     erc.rebalance_cb(consumer._consumer,err,p);
-  //     std::cerr << RdKafka::err2str(err)  << "\n";
-  //     if (err != RdKafka::ERR_NO_ERROR) {
-  // 	exit(1);
-  //     }
-  //     consumer._consumer->assignment(p);
-  //     for(auto& tp : p) {
-  // 	std::cout << "Partition: "    << tp->partition() << "\n";
-  // 	std::cout << "\ttopic() :\t"  << tp->topic()  << "\n"; 
-  // 	std::cout << "\toffset() :\t" << tp->offset()  << "\n"; 
-  // 	std::cout << "\terr() :\t"    << tp->err()  << "\n\n"; 
-  //     }
-  //     consumer.consume(); 
-  //   }
-
-  //   consumer.TearDown();
-  // }
 
     Streamer s(producer.broker,producer.topic,RdKafkaOffsetEnd);
     DemuxTopic demux(producer.topic);
@@ -331,16 +240,33 @@ int main(int argc, char **argv) {
       status = s.write(verbose);
       ++counter;
     } while(status.is_OK());
+    // {
+    //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
+    //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" << dt.dt << "\n";
+    // }
+    // {
+    //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
+    //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" << dt.dt << "\n";
+    // }
+    // {
+    //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,1000);
+    //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" << dt.dt << "\n";
+    // }
 
-    std::cout << "first available offset : \t" << s._begin_offset.value() << std::endl;
-    std::cout << "current offset : \t" << s._offset.value() << std::endl;
+    std::map<std::string,int64_t> m;
+    // m["hello"] = 10;
+    // s.scan_timestamps(time_diff,m);
+    // std::cout << " :: scan_timestamps :: " << std::endl;
+    // for(auto& v: m) {
+    //   std::cout << v.first << "\t" << v.second << std::endl;
+    // }
+
+    m = s.get_initial_time(time_diff,nanoseconds(25));
+    std::cout << " :: get_initial_time :: " << std::endl;
+    for(auto& v: m) {
+      std::cout << v.first << "\t" << v.second << std::endl;
+    }
     
-    // TimeDifferenceFromMessage_DT dt = 
-      s.jump_back(demux,10);
-    // TimeDifferenceFromMessage_DT dt = 
-      s.jump_back(demux,10);
-      s.jump_back(demux,1000);
-
     // do {
     //   status = s.write(verbose);
     //   ++counter;
@@ -349,10 +275,6 @@ int main(int argc, char **argv) {
   }  
   return 0;
 }
-
-
-
-
 
 
 

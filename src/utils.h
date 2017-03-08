@@ -26,6 +26,13 @@ namespace BrightnESS {
 	  StrongType () { }
 	  StrongType (T value) : m_value{value} { }
 	  inline const T& value () { return m_value; }
+	  StrongType& operator=(const StrongType& other) {
+	    m_value = other.m_value;
+	    return *this;
+	  }
+	    inline bool operator!=(const StrongType& other) { return m_value != other.m_value; } 
+	  inline bool operator==(const StrongType& other) { return m_value == other.m_value; } 
+	
 	private:
 	  T m_value;
 	};
