@@ -45,11 +45,11 @@ CommandListener::~CommandListener() {
 void CommandListener::start() {
 	KafkaW::BrokerOpt opt;
 	opt.poll_timeout_ms = 500;
-	opt.address = config.address;
+	opt.address = config.broker.host_port;
 	opt.conf_strings["group.id"] = "kafka-to-nexus.CommandListener";
 	consumer.reset(new KafkaW::Consumer(opt));
 	consumer->on_rebalance_assign = config.on_rebalance_assign;
-	consumer->add_topic(config.topic);
+	consumer->add_topic(config.broker.topic);
 	if (config.start_at_command_offset >= 0) {
 		int n1 = config.start_at_command_offset;
 		consumer->on_rebalance_start = [n1] (rd_kafka_topic_partition_list_t * plist) {

@@ -40,13 +40,13 @@ int main(int argc, char ** argv) {
 		       "      Kafka brokers to connect with for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt->master_config.command_listener.address.c_str());
+			opt->master_config.command_listener.broker.host_port.c_str());
 
 		printf("  --broker-command-topic      <topic-name>\n"
 		       "      Topic name to listen to for configuration updates.\n"
 		       "      Default: %s\n"
 		       "\n",
-			opt->master_config.command_listener.topic.c_str());
+			opt->master_config.command_listener.broker.topic.c_str());
 
 		printf("  --assets-dir                <path>\n"
 		       "      Path where program can find some supplementary files.\n"

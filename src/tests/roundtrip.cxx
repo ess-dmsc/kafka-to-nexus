@@ -26,16 +26,16 @@ using std::string;
 using std::array;
 using std::vector;
 
-int64_t produce_command_from_string(CommandListenerConfig & config, std::string const & cmd) {
+int64_t produce_command_from_string(uri::URI const & uri, std::string const & cmd) {
 	KafkaW::BrokerOpt opt;
-	opt.address = config.address;
+	opt.address = uri.host_port;
 	KafkaW::Producer p(opt);
 	std::promise<int64_t> offset;
 	std::function<void(rd_kafka_message_t const * msg)> cb = [&offset](rd_kafka_message_t const * msg) {
 		offset.set_value(msg->offset);
 	};
 	p.on_delivery_ok = &cb;
-	KafkaW::Producer::Topic pt(p, config.topic);
+	KafkaW::Producer::Topic pt(p, uri.topic);
 	pt.do_copy();
 	pt.produce((void*)cmd.data(), cmd.size(), nullptr);
 	p.poll_while_outq();
@@ -50,9 +50,9 @@ int64_t produce_command_from_string(CommandListenerConfig & config, std::string 
 
 
 /// Produce a command from a json file
-int64_t produce_command_from_file(CommandListenerConfig & config, std::string file) {
+int64_t produce_command_from_file(uri::URI const & uri, std::string file) {
 	auto v1 = gulp(file.c_str());
-	return produce_command_from_string(config, std::string(v1.data(), v1.size()));
+	return produce_command_from_string(uri, std::string(v1.data(), v1.size()));
 }
 
 
@@ -79,7 +79,7 @@ void roundtrip_simple_01(MainOpt & opt) {
 	Master m(opt.master_config);
 	opt.master = &m;
 	auto fn_cmd = "tests/msg-conf-new-01.json";
-	auto of = produce_command_from_file(opt.master_config.command_listener, fn_cmd);
+	auto of = produce_command_from_file(opt.master_config.command_listener.broker, fn_cmd);
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
 	std::thread t1([&m]{
 		ASSERT_NO_THROW( m.run() );
@@ -156,6 +156,14 @@ void roundtrip_simple_01(MainOpt & opt) {
 }
 
 
+TEST_F(Roundtrip, simple_01) {
+	// disabled
+	return;
+	BrightnESS::FileWriter::Test::roundtrip_simple_01(*opt);
+}
+
+
+
 
 
 void roundtrip_remote_kafka(MainOpt & opt, string fn_cmd) {
@@ -167,7 +175,7 @@ void roundtrip_remote_kafka(MainOpt & opt, string fn_cmd) {
 	using std::string;
 
 	// One broker for commands and data for this test
-	string broker_common = opt.master_config.command_listener.address;
+	auto & broker_common = opt.master_config.command_listener.broker;
 
 	auto json_data = gulp(fn_cmd);
 	Document d;
@@ -178,12 +186,12 @@ void roundtrip_remote_kafka(MainOpt & opt, string fn_cmd) {
 	}
 	auto & a = d.GetAllocator();
 	d.RemoveMember("broker");
-	d.AddMember("broker", Value(broker_common.c_str(), a), a);
+	d.AddMember("broker", Value(broker_common.host_port.c_str(), a), a);
 	StringBuffer cmd_buf1;
 	PrettyWriter<StringBuffer> wr(cmd_buf1);
 	d.Accept(wr);
 
-	auto of = produce_command_from_string(opt.master_config.command_listener, cmd_buf1.GetString());
+	auto of = produce_command_from_string(broker_common, cmd_buf1.GetString());
 	opt.master_config.command_listener.start_at_command_offset = of - 1;
 	Master m(opt.master_config);
 	opt.master = &m;
@@ -208,14 +216,14 @@ void roundtrip_remote_kafka(MainOpt & opt, string fn_cmd) {
 	{
 		// Produce sample data using the nt types scheme only
 		KafkaW::BrokerOpt bopt;
-		bopt.address = broker_common;
+		bopt.address = broker_common.host_port;
 		KafkaW::Producer prod(bopt);
 		for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
 			KafkaW::Producer::Topic topic(prod, test_topics[i3]);
 			topic.do_copy();
 			auto & sourcename = test_sourcenames[i3];
 			BrightnESS::FileWriter::Msg msg;
-			BrightnESS::FlatBufs::ev42::synth synth(sourcename, 64*1024, 1);
+			BrightnESS::FlatBufs::ev42::synth synth(sourcename, 64, 1);
 
 			for (int i1 = 0; i1 < 32; ++i1) {
 				auto fb = synth.next(i1);
@@ -251,6 +259,6 @@ void roundtrip_remote_kafka(MainOpt & opt, string fn_cmd) {
 }
 
 
-TEST(Roundtrip, ev42_remote_kafka) {
+TEST_F(Roundtrip, ev42_remote_kafka) {
 	BrightnESS::FileWriter::Test::roundtrip_remote_kafka(*Roundtrip::opt, "tests/msg-cmd-new-03.json");
 }

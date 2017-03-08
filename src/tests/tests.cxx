@@ -20,12 +20,6 @@ int main(int argc, char ** argv) {
 
 static_assert(RD_KAFKA_RESP_ERR_NO_ERROR == 0, "Make sure that NO_ERROR is and stays 0");
 
-TEST_F(Roundtrip, simple_01) {
-	// disabled
-	return;
-	BrightnESS::FileWriter::Test::roundtrip_simple_01(*opt);
-}
-
 #if 0
 	if (false) {
 		// test if log messages arrive on all destinations
