@@ -18,6 +18,8 @@ Source::Source(std::string topic, std::string source)
 Source::Source(Source && x) :
 	_topic(std::move(x._topic)),
 	_source(std::move(x._source)),
+	_broker(std::move(x._broker)),
+	_hdf_path(std::move(x._hdf_path)),
 	_schema_writer(std::move(x._schema_writer))
 {	
 }
@@ -50,7 +52,7 @@ ProcessMessageResult Source::process_message(Msg msg) {
 	}
 	if (teamid == _schema_reader->teamid(msg)) {
 		if (_cnt_msg_written == 0) {
-			_schema_writer->init(_hdf_file, source(), msg);
+			_schema_writer->init(_hdf_file, _hdf_path, source(), msg);
 		}
 		auto ret = _schema_writer->write(msg);
 		_cnt_msg_written += 1;

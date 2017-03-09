@@ -57,7 +57,7 @@ class FBSchemaWriter {
 public:
 typedef std::unique_ptr<FBSchemaWriter> ptr;
 virtual ~FBSchemaWriter();
-void init(HDFFile * hdf_file, std::string const & sourcename, Msg msg);
+void init(HDFFile * hdf_file, std::string const & hdf_path, std::string const & sourcename, Msg msg);
 WriteResult write(Msg msg);
 void flush();
 void close();

@@ -19,7 +19,7 @@ class synth {
 public:
 synth(std::string name, int size, uint64_t seed);
 ~synth();
-fb next(uint64_t seq);
+fb next();
 std::unique_ptr<synth_impl> impl;
 std::string name;
 int size;

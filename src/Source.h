@@ -45,6 +45,7 @@ void hdf_init(HDFFile & hdf_file);
 std::string _topic;
 std::string _source;
 std::string _broker;
+std::string _hdf_path;
 std::unique_ptr<FBSchemaReader> _schema_reader;
 std::unique_ptr<FBSchemaWriter> _schema_writer;
 

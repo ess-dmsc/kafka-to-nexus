@@ -7,6 +7,7 @@
 #include <ctime>
 #include <hdf5.h>
 #include "SchemaRegistry.h"
+#include "helper.h"
 #include "logger.h"
 #include <flatbuffers/flatbuffers.h>
 #include <unistd.h>
@@ -348,35 +349,23 @@ FBSchemaWriter::~FBSchemaWriter() {
 	if (group_event_data != -1) H5Gclose(group_event_data);
 }
 
-void FBSchemaWriter::init(HDFFile * hdf_file, string const & sourcename, Msg msg) {
+void FBSchemaWriter::init(HDFFile * hdf_file, string const & hdf_path, string const & sourcename, Msg msg) {
 	this->hdf_file = hdf_file;
 	auto f1 = hdf_file->h5file_detail().h5file();
 
-	auto group_name = std::string("group_for_source__") + sourcename;
-
-	// Create the event data group
-	auto lcpl = H5Pcreate(H5P_LINK_CREATE);
-	H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
-	auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
-	H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-	auto strfix = H5Tcopy(H5T_C_S1);
-	H5Tset_cset(strfix, H5T_CSET_UTF8);
-	H5Tset_size(strfix, 1);
-	auto dsp_sc = H5Screate(H5S_SCALAR);
-	group_event_data = H5Gcreate2(f1, group_name.c_str(), lcpl, H5P_DEFAULT, H5P_DEFAULT);
-	{
-		string s1 {"NXevent_data"};
-		H5Tset_size(strfix, s1.size());
-		auto at = H5Acreate2(group_event_data, "NX_class", strfix, dsp_sc, acpl, H5P_DEFAULT);
-		H5Awrite(at, strfix, s1.data());
-		H5Aclose(at);
+	// if it proves useful, factor out
+	H5E_auto2_t _f;
+	void * _d;
+	H5Eget_auto2(H5E_DEFAULT, &_f, &_d);
+	H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
+	hid_t gid = H5Gopen2(f1, hdf_path.c_str(), H5P_DEFAULT);
+	if (gid < 0) {
+		LOG(2, "can not find group {}, using file root instead", hdf_path);
+		gid = f1;
 	}
-	H5Pclose(lcpl);
-	H5Pclose(acpl);
-	H5Tclose(strfix);
-	H5Sclose(dsp_sc);
+	H5Eset_auto2(H5E_DEFAULT, _f, _d);
 
-	init_impl(sourcename, group_event_data, msg);
+	init_impl(sourcename, gid, msg);
 }
 
 WriteResult FBSchemaWriter::write(Msg msg) {
