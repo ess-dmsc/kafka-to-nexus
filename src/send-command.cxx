@@ -9,7 +9,7 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/istreamwrapper.h>
 
-#include "parser.hpp"
+#include "uri.h"
 
 #include <iostream>
 #include <fstream>
@@ -67,6 +67,8 @@ std::string make_command_exit(std::string broker, uint64_t teamid) {
 std::string make_command_from_file(const std::string& filename) {
   using namespace rapidjson;
   std::ifstream ifs(filename);
+  LOG(4,"make_command_from_file {:} : {}",filename,ifs.good());
+
   IStreamWrapper isw(ifs);
 
   Document d;
@@ -83,19 +85,12 @@ extern "C" char const GIT_COMMIT[];
 
 int main(int argc, char ** argv) {
 
-  parser::Parser::Param p;
-  {
-    parser::Parser parser;
-    parser.init(argv[1]);
-    p = parser.get();
-  }
-
+  BrightnESS::uri::URI uri(argv[1]);
+    
   MainOpt opt;
 
   static struct option long_options[] = {
     {"help",                            no_argument,              0, 'h'},
-    //    {"broker-command-address",          required_argument,        0,  0 },
-    //    {"broker-command-topic",            required_argument,        0,  0 },
     {"teamid",                          required_argument,        0,  0 },
     {"cmd",                             required_argument,        0,  0 },
     {0, 0, 0, 0},
@@ -122,12 +117,6 @@ int main(int argc, char ** argv) {
       if (std::string("help") == lname) {
 	opt.help = true;
       }
-      // if (std::string("broker-command-address") == lname) {
-      // 	opt.broker_opt.address = optarg;
-      // }
-      // if (std::string("broker-command-topic") == lname) {
-      // 	opt.topic = optarg;
-      // }
       if (std::string("teamid") == lname) {
 	opt.teamid = strtoul(optarg, nullptr, 0);
       }
@@ -176,10 +165,10 @@ int main(int argc, char ** argv) {
     return 1;
   }
 
-  opt.broker_opt.address = p["host"]+":"+p["port"];
-  opt.topic = p["topic"];
-  std::cout << opt.topic << std::endl;
-  std::cout << opt.broker_opt.address << std::endl;
+  opt.broker_opt.address = uri.host;
+  opt.topic = uri.topic;
+  std::cout << "host :\t" << opt.broker_opt.address << std::endl;
+  std::cout << "topic :\t: " << opt.topic << std::endl;
 
   KafkaW::Producer producer(opt.broker_opt);
   KafkaW::Producer::Topic pt(producer, "kafka-to-nexus.command");

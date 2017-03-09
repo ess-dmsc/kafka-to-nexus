@@ -1,24 +1,40 @@
 {
-	"cmd": "FileWriter_new",
-	"broker": "129.129.188.59:9092",
-	"sstreams": [
-		{"a": 12, "b": 56}
-	],
-	"streams": [
-		{
-			"broker": "129.129.188.59:9092",
-			"topic": "AMOR.area.detector",
-			"source": "AMOR.event.stream",
-			"path": "",
-			"on_path_missing": "ignore"
-		}
-
-	],
-	"file_attributes": {
-		"dummy-attribute-01": 2.579,
-		"dummy-attribute-02": "can also be some text",
-		"dummy-attribute-03": {
-			"but": "should an object be allowed here?"
-		}
+    "cmd": "FileWriter_new",
+    "broker": "129.129.188.59:9092",
+    "streams": [
+	{
+	    "broker": "129.129.188.59:9092",
+	    "topic": "AMOR.area.detector",
+	    "source": "AMOR.event.stream",
+	    "path": "",
+	    "on_path_missing": "ignore",
+	    "nexus_container": "NXevent_data",
+	    "nexus_path": "/entry1/AMOR/area_detector"
 	}
+
+    ],
+
+    "nexus_structure": {
+	"some_string_field": "the-field-value",
+	"some_int_field": 88004400,
+	"some_double_field": 55.11,
+	"entry1": {
+	    "NX_class": "NXentry",
+	    "AMOR": {
+		"NX_class": "NXinstrument",
+		"area_detector": {
+		    "NX_class": "NXevent_data"
+		}
+	    },
+	    "instrument-02": {
+		"NX_class": "NXinstrument",
+		"NX_attributes": {
+		    "notes": "some notes in form of an attribute",
+		    "attribute_integer": 42,
+		    "attribute_double": 42.0
+		}
+	    }
+	}
+    }
+    
 }
