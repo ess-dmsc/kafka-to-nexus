@@ -1,6 +1,7 @@
 #include "helper.h"
 #include <fstream>
 #include <unistd.h>
+#include <array>
 
 std::vector<char> gulp(std::string fname) {
 	std::vector<char> ret;
