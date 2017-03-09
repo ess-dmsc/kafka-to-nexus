@@ -13,6 +13,7 @@ EventMessage const * fb::root() {
 class synth_impl {
 friend class synth;
 std::mt19937 rnd;
+uint64_t seq = 0;
 uint64_t c1 = 0;
 };
 
@@ -24,7 +25,7 @@ synth::synth(std::string name, int size, uint64_t seed) : name(name), size(size)
 synth::~synth() {
 }
 
-fb synth::next(uint64_t seq) {
+fb synth::next() {
 	using DT = uint32_t;
 	fb ret;
 	ret.builder.reset(new flatbuffers::FlatBufferBuilder(size * 4 * 2 + 1024));
@@ -49,7 +50,7 @@ fb synth::next(uint64_t seq) {
 
 	//auto ts = timeStamp_t(123, 456);
 	EventMessageBuilder b1(*ret.builder);
-	b1.add_message_id(seq);
+	b1.add_message_id(impl->seq);
 	b1.add_source_name(n);
 	b1.add_time_of_flight(v1);
 	b1.add_detector_id(v2);
