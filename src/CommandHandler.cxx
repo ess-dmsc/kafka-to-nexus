@@ -24,6 +24,7 @@ CommandHandler::CommandHandler(Master * master) : master(master) {
 void CommandHandler::handle_new(rapidjson::Document & d) {
 	//if (g_N_HANDLED > 0) return;
 	using namespace rapidjson;
+	using std::move;
 	if (schema_command) {
 		SchemaValidator vali(*schema_command);
 		if (!d.Accept(vali)) {
@@ -55,7 +56,14 @@ void CommandHandler::handle_new(rapidjson::Document & d) {
 		auto m1 = d.FindMember("streams");
 		if (m1 != d.MemberEnd() && m1->value.IsArray()) {
 			for (auto & st : m1->value.GetArray()) {
-				fwt->add_source(Source(st["topic"].GetString(), st["source"].GetString()));
+				auto s = Source(st["topic"].GetString(), st["source"].GetString());
+				auto m = st.FindMember("nexus_path");
+				if (m != st.MemberEnd()) {
+					if (m->value.IsString()) {
+						s._hdf_path = m->value.GetString();
+					}
+				}
+				fwt->add_source(move(s));
 			}
 		}
 	}
