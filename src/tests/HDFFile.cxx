@@ -129,6 +129,24 @@ static void data_ev42() {
 	}
 
 	fwt->demuxers().at(0).process_message(msg.data, msg.size);
+	fwt.reset();
+
+	auto fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+	ASSERT_GE(fid, 0);
+
+	auto g0 = H5Gopen(fid, "entry-01", H5P_DEFAULT);
+	ASSERT_GE(g0, 0);
+
+	auto g1 = H5Gopen(g0, "instrument-01", H5P_DEFAULT);
+	ASSERT_GE(g1, 0);
+
+	auto g2 = H5Gopen(g1, "events-01", H5P_DEFAULT);
+	ASSERT_GE(g2, 0);
+
+	// TODO
+	// Verify the data
+
+	H5Fclose(fid);
 }
 
 };
