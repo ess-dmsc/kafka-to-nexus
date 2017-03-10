@@ -45,6 +45,13 @@ void URI::update_deps() {
 }
 
 
+URI::~URI() {
+	if (auto & x = re_no_host) pcre2_code_free(x);
+	if (auto & x = re_topic) pcre2_code_free(x);
+	if (auto & x = re1) pcre2_code_free(x);
+}
+
+
 URI::URI(std::string uri) {
 	using std::vector;
 	using std::string;

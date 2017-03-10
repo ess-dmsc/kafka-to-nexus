@@ -14,6 +14,7 @@ namespace uri {
 class URI {
 public:
 using uchar = unsigned char;
+~URI();
 URI(std::string uri);
 void default_host(std::string host);
 void default_port(int port);
