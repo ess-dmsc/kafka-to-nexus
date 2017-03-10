@@ -31,9 +31,12 @@ class writer : public FBSchemaWriter {
   void init_impl(std::string const &, hid_t, Msg) override;
   WriteResult write_impl(Msg) override;
   hid_t grp_event = -1;
-  hid_t to,id,tz,ei; //datasets
-  hid_t dsp = -1; // dataspace
-  hid_t dpl = -1; // data properties list
+  hid_t ds_event_index;
+  hid_t ds_pulse_time;
+  hid_t ds_time_of_flight;
+  hid_t ds_detector_id;
+  // hid_t dsp = -1; // dataspace
+  // hid_t dpl = -1; // data properties list
   uint64_t pid = -1;
 };
 
@@ -64,62 +67,49 @@ uint64_t reader::ts_impl(Msg msg) {
 }
 
 
+writer::~writer() { }
+
+  template<typename T>
+  static hid_t create_dataset(hid_t loc, std::string name) {
+    auto dt = nat_type<T>();
+    std::array<hsize_t, 1> sizes_ini {{0}};
+    std::array<hsize_t, 1> sizes_max {{H5S_UNLIMITED}};
+    hid_t dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
+    
+    if(true) {
+      LOG(7, "\tDataSpace isSimple {}", H5Sis_simple(dsp));
+      auto ndims = H5Sget_simple_extent_ndims(dsp);
+      LOG(7, "\tDataSpace getSimpleExtentNdims {}", ndims);
+      LOG(7, "\tDataSpace getSimpleExtentNpoints {}", 
+	  H5Sget_simple_extent_npoints(dsp));
+      std::vector<hsize_t> get_sizes_now;
+      std::vector<hsize_t> get_sizes_max;
+      get_sizes_now.resize(ndims);
+      get_sizes_max.resize(ndims);
+      H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
+      for (int i1 = 0; i1 < ndims; ++i1) {
+	LOG(7, "\tH5Sget_simple_extent_dims {:3} {:3}", 
+	    get_sizes_now.at(i1), get_sizes_max.at(i1));
+      }
+    }
+    std::array<hsize_t, 1> schk {{ std::max(4*1024*1024/H5Tget_size(dt), (size_t)1) }};
+    hid_t dpl = H5Pcreate(H5P_DATASET_CREATE);
+    H5Pset_chunk(dpl, schk.size(), schk.data());
+    hid_t result = H5Dcreate1(loc,name.c_str(), dt, dsp, dpl);
+    H5Sclose(dsp);
+    H5Pclose(dpl);
+    return result;
+  }
 
 
-writer::~writer() {
-}
 
 void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
-	// TODO
-	// This is just a unbuffered, low-performance write.
-	// Add buffering after it works.
-	LOG(6, "amo0::init_impl  v.size() == {}", chunk_size);
-	grp_event = hdf_group;
-
-	{
-	  auto dt = nat_type<uint32_t>();
-	  std::array<hsize_t, 1> sizes_ini {{0}};
-	  std::array<hsize_t, 1> sizes_max {{H5S_UNLIMITED}};
-	  this->dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
-
-	  if(true) {
-	    LOG(7, "\tDataSpace isSimple {}", H5Sis_simple(dsp));
-	    auto ndims = H5Sget_simple_extent_ndims(dsp);
-	    LOG(7, "\tDataSpace getSimpleExtentNdims {}", ndims);
-	    LOG(7, "\tDataSpace getSimpleExtentNpoints {}", 
-	  	H5Sget_simple_extent_npoints(dsp));
-	    std::vector<hsize_t> get_sizes_now;
-	    std::vector<hsize_t> get_sizes_max;
-	    get_sizes_now.resize(ndims);
-	    get_sizes_max.resize(ndims);
-	    H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
-	    for (int i1 = 0; i1 < ndims; ++i1) {
-	      LOG(7, "\tH5Sget_simple_extent_dims {:3} {:3}", 
-	  	  get_sizes_now.at(i1), get_sizes_max.at(i1));
-	    }
-	  }
-
-	  this->dpl = H5Pcreate(H5P_DATASET_CREATE);
-	  std::array<hsize_t, 1> sizes_chk {{chunk_size}};
-	  H5Pset_chunk(dpl, sizes_chk.size(), sizes_chk.data());
-	  this->to = H5Dcreate1(hdf_group,"event_time_offset", dt, dsp, dpl);
-	  this->id = H5Dcreate1(hdf_group,"event_id", dt, dsp, dpl);
-	  H5Sclose(dsp);
-	  H5Pclose(dpl);
-	}
-	{
-	  auto dt = nat_type<uint64_t>();
-	  std::array<hsize_t, 1> sizes_ini {{0}};
-	  std::array<hsize_t, 1> sizes_max {{H5S_UNLIMITED}};
-	  this->dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
-	  this->dpl = H5Pcreate(H5P_DATASET_CREATE);
-	  std::array<hsize_t, 1> sizes_chk {{chunk_size}};
-	  H5Pset_chunk(dpl, sizes_chk.size(), sizes_chk.data());
-	  this->tz = H5Dcreate1(hdf_group,"event_time_zero", dt, dsp, dpl);
-	  this->ei = H5Dcreate1(hdf_group,"event_index", dt, dsp, dpl);
-	  H5Sclose(dsp);
-	  H5Pclose(dpl);
-	}
+  LOG(6, "amo0::init_impl  v.size() == {}", chunk_size);
+  
+  this->ds_time_of_flight = create_dataset<uint32_t>(hdf_group, "event_time_offset");
+  this->ds_detector_id    = create_dataset<uint32_t>(hdf_group, "event_id");
+  this->ds_pulse_time     = create_dataset<uint64_t>(hdf_group, "event_time_zero");
+  this->ds_event_index = create_dataset<uint64_t>(hdf_group, "event_index");
 
 }
 
@@ -182,55 +172,34 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 
 
 
-WriteResult writer::write_impl(Msg msg) {
-  using A = std::array<hsize_t, 1>;
+  template<typename T>
+  hsize_t do_write(hid_t ds, T const * data, size_t nlen) {
+    using A = std::array<hsize_t, 1>;
+    A get_sizes_now = _get_size_now(ds);
+    A new_sizes = _h5data_extend(ds, get_sizes_now, {{nlen}} );
+    get_sizes_now = _h5data_write(ds,get_sizes_now, {{nlen}},data);
+    if( new_sizes != get_sizes_now )
+      LOG(6,"Expected file size differs from actual size");
+    return get_sizes_now[0];
+  }
 
+
+
+
+
+WriteResult writer::write_impl(Msg msg) {
   auto event = GetEventMessage(msg.data);
   if( (event->message_id() != pid+1) && (pid < -1ul) ) {
     LOG(7, "amo0 stream event loss: {} -> {}", pid, event->message_id());
     // TODO write into nexus log
   }
-
-  int64_t value = event->pulse_time();
   pid = event->message_id();
-
   uint32_t size=event->detector_id()->size();
-  hsize_t position=0;
-  {
-    auto & ds = this->to;
-    A get_sizes_now = _get_size_now(ds);
-    A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
-    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->time_of_flight()->data());
-    if( new_sizes != get_sizes_now )
-      LOG(6,"Expected file size differs from actual size");
-    position = get_sizes_now.data()[0];
-  }
-  {
-    auto & ds = this->id;
-    A get_sizes_now = _get_size_now(ds);
-    A new_sizes = _h5data_extend(ds, get_sizes_now, {{size}} );
-    get_sizes_now = _h5data_write(ds,get_sizes_now, {{size}},event->detector_id()->data());
-    if( new_sizes != get_sizes_now )
-      LOG(6,"Expected file size differs from actual size");
-  }
-  
-  {
-    auto & ds = this->tz;
-    A get_sizes_now = _get_size_now(ds);
-    A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
-    get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&value);
-    if( new_sizes != get_sizes_now )
-      LOG(6,"Expected file size differs from actual size");
-  }
-  {
-    auto & ds = this->ei;
-    A get_sizes_now = _get_size_now(ds);
-    A new_sizes = _h5data_extend(ds, get_sizes_now, {{1}});
-    get_sizes_now = _h5data_write(ds,get_sizes_now, {{1}},&position);
-    if( new_sizes != get_sizes_now )
-      LOG(6,"Expected file size differs from actual size");
-  }
-
+  int64_t value = event->pulse_time();
+  hsize_t position = do_write(this->ds_time_of_flight,event->time_of_flight()->data(),size);
+  do_write(this->ds_detector_id, event->detector_id()->data(), size);
+  do_write(this->ds_pulse_time , &value                      , 1);
+  do_write(this->ds_event_index, &position                   , 1);
   return {value};
 }
 
