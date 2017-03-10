@@ -58,19 +58,10 @@ struct Streamer {
 
   
   template<class T>
-  std::map<std::string,int64_t>& scan_timestamps(T& x, std::map<std::string,int64_t>& m) {
+  BrightnESS::FileWriter::RdKafkaOffset scan_timestamps(T& x, std::map<std::string,int64_t>& m, const ESSTimeStamp& ts) {
     std::cout << "no scan\n";
-    return m;
+    return RdKafkaOffset(-1);
   }
-  
-// make PRIVATE
-  template<class T>
-  TimeDifferenceFromMessage_DT jump_back(T& x,const int=100) {
-    message_length=0;
-    std::cout << "no search\n";
-    return TimeDifferenceFromMessage_DT::ERR();
-  }
-
 
 private:
   RdKafka::Topic *_topic;
@@ -83,17 +74,18 @@ private:
   RdKafkaPartition _partition;
   size_t message_length;
 
-  int jump_back_impl(const int&);
+  bool jump_back_impl(const int&);
 };
 
     template<> ProcessMessageResult Streamer::write<>(std::function<ProcessMessageResult(void*,int)>&);
     template<> ProcessMessageResult Streamer::write<>(BrightnESS::FileWriter::DemuxTopic &);
     
-    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<>(BrightnESS::FileWriter::DemuxTopic&,const int);
-    template<> TimeDifferenceFromMessage_DT Streamer::jump_back<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>&,const int);
-
-    template<> std::map<std::string,int64_t>& Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &, std::map<std::string,int64_t>&);
-    template<> std::map<std::string,int64_t>& Streamer::scan_timestamps<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>&, std::map<std::string,int64_t>&);
+    template<> BrightnESS::FileWriter::RdKafkaOffset Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &, 
+									  std::map<std::string,int64_t>&, 
+									  const ESSTimeStamp&);
+    template<> BrightnESS::FileWriter::RdKafkaOffset Streamer::scan_timestamps<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>&, 
+									  std::map<std::string,int64_t>&,
+									  const ESSTimeStamp&);
 
     template<> std::map<std::string,int64_t> Streamer::get_initial_time<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>&, const ESSTimeStamp);
     template<> std::map<std::string,int64_t> Streamer::get_initial_time<>(BrightnESS::FileWriter::DemuxTopic &, const ESSTimeStamp);
