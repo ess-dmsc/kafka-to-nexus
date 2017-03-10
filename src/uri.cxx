@@ -29,6 +29,54 @@ PCRE2_SIZE * ov;
 };
 
 
+void p_regerr(int err) {
+	std::array<unsigned char, 512> s1;
+	auto n = pcre2_get_error_message(err, s1.data(), s1.size());
+	fmt::print("err in regex: [{}, {}] {:.{}}\n", err, n, (char*)s1.data(), n);
+}
+
+
+static_ini::static_ini() {
+	using uchar = unsigned char;
+	int err = 0;
+	size_t errpos = 0;
+	{
+		auto s1 = (uchar*) "^(([a-z]+):)?//(([-.A-Za-z0-9]+)(:([0-9]+))?)(/([-./A-Za-z0-9]*))?$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re1 = re;
+	}
+	{
+		auto s1 = (uchar*) "^/?([-./A-Za-z0-9]*)$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re_no_host = re;
+	}
+	{
+		auto s1 = (uchar*) "^/?([-.A-Za-z0-9]+)$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re_topic = re;
+	}
+}
+
+
+static_ini::~static_ini() {
+	if (auto & x = URI::re_no_host) pcre2_code_free(x);
+	if (auto & x = URI::re_topic) pcre2_code_free(x);
+	if (auto & x = URI::re1) pcre2_code_free(x);
+}
+
+
 void URI::update_deps() {
 	if (port != 0) {
 		host_port = fmt::format("{}:{}", host, port);
@@ -46,9 +94,6 @@ void URI::update_deps() {
 
 
 URI::~URI() {
-	if (auto & x = re_no_host) pcre2_code_free(x);
-	if (auto & x = re_topic) pcre2_code_free(x);
-	if (auto & x = re1) pcre2_code_free(x);
 }
 
 
@@ -92,46 +137,6 @@ pcre2_code * URI::re_no_host = nullptr;
 pcre2_code * URI::re_topic = nullptr;
 
 
-void p_regerr(int err) {
-	std::array<unsigned char, 512> s1;
-	auto n = pcre2_get_error_message(err, s1.data(), s1.size());
-	fmt::print("err in regex: [{}, {}] {:.{}}\n", err, n, (char*)s1.data(), n);
-}
-
-
-bool URI::compile() {
-	int err = 0;
-	size_t errpos = 0;
-	{
-		auto s1 = (uchar*) "^(([a-z]+):)?//(([-.A-Za-z0-9]+)(:([0-9]+))?)(/([-./A-Za-z0-9]*))?$";
-		re1 = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-		if (!re1) {
-			p_regerr(err);
-			throw std::runtime_error("can not compile regex");
-		}
-	}
-	{
-		auto s1 = (uchar*) "^/?([-./A-Za-z0-9]*)$";
-		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-		if (!re) {
-			p_regerr(err);
-			throw std::runtime_error("can not compile regex");
-		}
-		re_no_host = re;
-	}
-	{
-		auto s1 = (uchar*) "^/?([-.A-Za-z0-9]+)$";
-		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-		if (!re) {
-			p_regerr(err);
-			throw std::runtime_error("can not compile regex");
-		}
-		re_topic = re;
-	}
-	return true;
-}
-
-
 void URI::default_port(int port_) {
 	if (port == 0) {
 		port = port_;
@@ -156,7 +161,7 @@ void URI::default_host(std::string host_) {
 }
 
 
-bool URI::compiled = compile();
+static_ini URI::compiled;
 
 
 #if HAVE_GTEST
