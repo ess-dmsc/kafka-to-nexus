@@ -118,11 +118,6 @@ private:
       }
     }
   }
-
-  void find_initial_offset(ESSTimeStamp ts) {
-
-
-  }
   
 
   BrightnESS::FileWriter::ProcessMessageResult value;
@@ -146,34 +141,3 @@ milliseconds StreamMaster<S,D>::duration=milliseconds(10);
 template<typename S,typename D>
 milliseconds StreamMaster<S,D>::delay_after_last_message=milliseconds(1000);
 
-
-// template<typename Streamer, typename Demux>
-// class NaiveTimestampSearch {
-// public:
-//   typedef typename std::pair<std::string,ESSTimeStamp> value_t;
-//   OffsetSearch(const ESSTimeStamp initial_time, Streamer& stream, Demux& demux) : _initial(initial_time),
-//                                                                                   _stream(stream),
-//                                                                                   _demux(demux) {
-
-//     for(auto& _source : _stream.source() )
-//       timestamp_list.push_back(0,_source.source());
-//   }
-
-//   ESSTimeStamp get() {
-//     _stream.search_backward(_demux);
-//     std::map m;
-    
-//   }
-  
-// private:
-//   std::vector< value_t > timestamp_list;
-//   ESSTimeStamp _initial;
-//   Streamer& _stream;
-//   Demux& _demux;
-  
-//   ProcessMessageResult_DT get_impl() {
-//     return 
-//   }
-
-  
-// };

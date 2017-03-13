@@ -295,3 +295,40 @@ endif()
 if (have_gtest)
 add_subdirectory(tests)
 endif()
+
+
+set(tgt "dummy")
+set(sources
+dummy.cxx
+$<TARGET_OBJECTS:kafka_to_nexus__objects>
+)
+add_executable(${tgt} ${sources})
+
+add_dependencies(${tgt} flatbuffers_generate)
+add_dependencies(${tgt} git_commit_current)
+
+target_include_directories(${tgt} PRIVATE
+${CMAKE_CURRENT_SOURCE_DIR}
+${path_include_fmt}
+${path_include_hdf5}
+${path_include_rdkafka}
+${path_include_flatbuffers}
+${path_include_rapidjson}
+)
+
+target_link_libraries(${tgt} libhdf5)
+target_link_libraries(${tgt} libhdf5cpp)
+target_link_libraries(${tgt} librdkafka)
+target_link_libraries(${tgt} librdkafka++)
+target_link_libraries(${tgt} pcre2-8)
+
+if (have_gtest)
+target_link_libraries(${tgt} libgtest)
+endif()
+
+if (have_graylog_logger)
+target_compile_definitions(${tgt} PRIVATE HAVE_GRAYLOG_LOGGER=1)
+target_include_directories(${tgt} PRIVATE ${path_include_graylog_logger})
+target_link_libraries(${tgt} libgraylog_logger)
+endif()
+

@@ -112,13 +112,13 @@ BrightnESS::FileWriter::Streamer::get_offset() {
 }
 
 
-int BrightnESS::FileWriter::Streamer::jump_back_impl(const int& amount) {
-  int reach_beginning=0;
+bool BrightnESS::FileWriter::Streamer::jump_back_impl(const int& amount) {
+  bool reach_beginning=false;
   _last_visited_offset = _offset;
-  int position = _offset.value()-(amount+1); // pone message is consumed reading the offet
-  if( position < _begin_offset.value() ) {
+  int position = _offset.value()-(amount+1); // message is consumed reading the offet
+  if( position <= _begin_offset.value() ) {
     position = _begin_offset.value();
-    reach_beginning = 1;
+    reach_beginning = true;
   }
   auto err = _consumer->seek(_topic,
 			    _partition.value(),
@@ -126,7 +126,7 @@ int BrightnESS::FileWriter::Streamer::jump_back_impl(const int& amount) {
 			    1000);
   if( err != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to seek :\t" << RdKafka::err2str(err) << std::endl;
-    reach_beginning = -1;
+    reach_beginning = false;
   }
   _offset = RdKafkaOffset(position);
   return reach_beginning;
@@ -143,15 +143,14 @@ BrightnESS::FileWriter::Streamer::jump_back<BrightnESS::FileWriter::DemuxTopic>(
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
-  int is_beginning = jump_back_impl(amount);
-  if(is_beginning < 0) {
-    TimeDifferenceFromMessage_DT::ERR();
+  if(jump_back_impl(amount)) {
+    return TimeDifferenceFromMessage_DT::BOP();
   }
   RdKafka::Message *msg =
     _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
-    return TimeDifferenceFromMessage_DT::ERR();
+    return TimeDifferenceFromMessage_DT::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
@@ -188,7 +187,8 @@ BrightnESS::FileWriter::Streamer::write(
 template <>
 std::map<std::string, int64_t>&
 BrightnESS::FileWriter::Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &mp,
-						    std::map<std::string, int64_t>& ts_list) {
+						    std::map<std::string, int64_t>& ts_list,
+						    const ESSTimeStamp& ts) {
 
   do {
     RdKafka::Message *msg =
@@ -220,18 +220,22 @@ std::map<std::string,int64_t>
 BrightnESS::FileWriter::Streamer::get_initial_time<>(BrightnESS::FileWriter::DemuxTopic &mp, 
 						     const ESSTimeStamp tp) {
   std::map<std::string,int64_t> m;
-  bool stop = false;
-  do {
-    jump_back(mp,step_back_amount);
-    scan_timestamps(mp,m);
-    bool cont = true;
-    for(auto & v: m) {
-      cont &= (v.second > tp.count());
-    }
-    stop = (m.size() >= 1) && cont;
-  } while( stop );
-  
-  return std::move(m);
+  jump_back(mp,step_back_amount);
+  scan_timestamps(mp,m,tp);
+  std::cout << "status:\t" <<  m.size() << "\t" << _offset.value() << "\n";
+  if( (m.size() < mp.sources().size()) ||
+      (_offset.value() == _begin_offset.value())) {
+    return std::move(m);
+  }
+  return get_initial_time(mp,tp);
+  // do {
+  //   bool cont = true;
+  //   for(auto & v: m) {
+  //     cont &= (v.second > tp.count());
+  //   }
+  //   stop = (m.size() >= 1) && cont;
+  // } while( stop );
+  // return std::move(m);
 } 
 
 
@@ -247,15 +251,14 @@ BrightnESS::FileWriter::Streamer::jump_back<std::function<
       return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT::ERR();
     }
   }
-  int is_beginning = jump_back_impl(amount);
-  if(is_beginning < 0) {
-    TimeDifferenceFromMessage_DT::ERR();
+  if(jump_back_impl(amount)) {
+    return TimeDifferenceFromMessage_DT::BOP();
   }
   RdKafka::Message *msg =
     _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
     std::cout << "eof reached" << std::endl;
-    return TimeDifferenceFromMessage_DT::ERR();
+    return TimeDifferenceFromMessage_DT::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
@@ -290,7 +293,7 @@ BrightnESS::FileWriter::Streamer::write<>(
 template <>
 std::map<std::string, int64_t>&
 BrightnESS::FileWriter::Streamer::scan_timestamps<>(std::function<
-						    BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)> &f, std::map<std::string, int64_t>& ts_list) {
+						    BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)> &f, std::map<std::string, int64_t>& ts_list, const ESSTimeStamp& ts) {
 
   do {
     RdKafka::Message *msg =
@@ -302,6 +305,10 @@ BrightnESS::FileWriter::Streamer::scan_timestamps<>(std::function<
     }
     _offset = RdKafkaOffset(msg->offset());
     DemuxTopic::DT t = f((char *)msg->payload(), msg->len());
+    if(t.dt > ts.count()) {
+      return ts_list;
+    }
+
     if( !ts_list[t.sourcename] )
       ts_list[t.sourcename]=t.dt;
     else {
@@ -320,18 +327,18 @@ std::map<std::string,int64_t>
 BrightnESS::FileWriter::Streamer::get_initial_time<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>& f, const ESSTimeStamp tp) {
   std::map<std::string,int64_t> m;
 
-  bool stop = false;
-  do {
-    jump_back(f,step_back_amount);
-    scan_timestamps(f,m);
-    bool cont = true;
-    for(auto & v: m) {
-      cont &= (v.second > tp.count());
-    }
-    stop = (m.size() >= 1) && cont;
-  } while( stop );
-  
-  return std::move(m);
+  auto result = jump_back(f,step_back_amount);
+  std::cout << result.is_BOP() << std::endl;
+  //  scan_timestamps(f,m,tp);
+
+  // std::cout << "offset = \t" << _offset.value()
+    //	    << "\tstatus = \t" << result.sourcename
+	    // << "\ttp = \t" << tp.count()
+	    // << "\n";
+  // if ( (m.size() == 1) || result.is_BOP() ) {
+  //   return std::move(m);
+  // }
+  return get_initial_time(f,tp);
 } 
 
 

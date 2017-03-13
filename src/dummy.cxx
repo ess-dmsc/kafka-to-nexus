@@ -261,8 +261,8 @@ int main(int argc, char **argv) {
     //   std::cout << v.first << "\t" << v.second << std::endl;
     // }
 
-    m = s.get_initial_time(time_diff,nanoseconds(25));
-    std::cout << " :: get_initial_time :: " << std::endl;
+    m = s.get_initial_time(time_diff,nanoseconds(-56));
+    std::cout << " :: got initial time :: " << std::endl;
     for(auto& v: m) {
       std::cout << v.first << "\t" << v.second << std::endl;
     }

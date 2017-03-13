@@ -8,15 +8,19 @@ TimeDifferenceFromMessage_DT::TimeDifferenceFromMessage_DT(const std::string & s
 	dt(dt)
 { }
 
-  TimeDifferenceFromMessage_DT TimeDifferenceFromMessage_DT::OK() {
+  const TimeDifferenceFromMessage_DT TimeDifferenceFromMessage_DT::OK() {
     TimeDifferenceFromMessage_DT ret("ok",0);
     return ret;
   }
 
-  TimeDifferenceFromMessage_DT TimeDifferenceFromMessage_DT::ERR() {
+  const TimeDifferenceFromMessage_DT TimeDifferenceFromMessage_DT::ERR() {
     TimeDifferenceFromMessage_DT ret("",0);
     return ret;
   }
   
+  const TimeDifferenceFromMessage_DT TimeDifferenceFromMessage_DT::BOP() {
+    TimeDifferenceFromMessage_DT ret("eof",0);
+    return ret;
+  }
 }
 }

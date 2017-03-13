@@ -123,7 +123,6 @@ namespace BrightnESS {
 	  LOG(3,"stop time :\t{}",stop_time.count() );
 	  s->stop_time(stop_time);
 	}
-	exit(0);
 	s->start();
 	master->stream_masters.push_back(std::move(s));
       }
