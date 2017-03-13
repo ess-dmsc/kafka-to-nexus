@@ -224,18 +224,7 @@ TEST_F (MinimalProducer, JumpBack) {
 
   std::cout << "\n\nhello\n" << std::endl;
   DemuxTopic demux(MinimalProducer::topic);
-  TimeDifferenceFromMessage_DT dt = s.jump_back(demux);
-  std::cout << "source:\t" << dt.sourcename << "\ttimestamp:\t" << dt.dt << "\n";
-  // counter=0;
-  // do {
-  //   ++counter;
-  //   status = s.write(verbose);
-  // } while(status.is_OK());
-  // //  EXPECT_EQ( counter, Streamer::step_back_amount);
-  // EXPECT_GT( counter, Streamer::step_back_amount);
-
   stop();
-
 }
 
 

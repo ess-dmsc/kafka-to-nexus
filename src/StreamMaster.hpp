@@ -60,10 +60,11 @@ struct StreamMaster {
 
   bool start_time(const ESSTimeStamp ts) {
     _start_time = ts;
-    //    find_initial_offset(_start_time);
     
-    for( auto& _s: streamer) {
-      LOG(3,"stream > {}",_s.first);
+    //    for( auto& _s: streamer) {
+    for( auto& d: demux) {
+      streamer[d.topic()].get_initial_time(d,_start_time);
+      LOG(3,"stream > {}",d.topic());
     }
     
 
