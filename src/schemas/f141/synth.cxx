@@ -17,7 +17,6 @@ PV type;
 
 synth::synth(std::string name, PV type, int size, uint64_t seed) : name(name), size(size) {
 	impl.reset(new synth_impl);
-	impl->rnd.seed(seed);
 	impl->type = type;
 }
 
@@ -25,6 +24,7 @@ synth::~synth() {
 }
 
 fb synth::next(uint64_t seq) {
+	impl->rnd.seed(seq);
 	fb ret;
 	ret.builder.reset(new flatbuffers::FlatBufferBuilder);
 	// NOTE
