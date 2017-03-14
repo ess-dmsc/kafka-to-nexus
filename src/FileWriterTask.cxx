@@ -10,19 +10,12 @@ using std::string;
 using std::vector;
 
 class FileWriterTask_impl {
-//void add_source(Source && source);
 std::vector<Source> _sources;
 friend class FileWriterTask;
 friend class ::Test___FileWriterTask___Create01;
 std::string hdf_filename;
 HDFFile hdf_file;
 };
-
-/*
-void FileWriterTask_impl::add_source(Source && source) {
-	_sources.push_back(std::move(source));
-}
-*/
 
 
 class SourceFactory_by_FileWriterTask {

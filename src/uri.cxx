@@ -29,6 +29,64 @@ PCRE2_SIZE * ov;
 };
 
 
+void p_regerr(int err) {
+	std::array<unsigned char, 512> s1;
+	auto n = pcre2_get_error_message(err, s1.data(), s1.size());
+	fmt::print("err in regex: [{}, {}] {:.{}}\n", err, n, (char*)s1.data(), n);
+}
+
+
+static_ini::static_ini() {
+	using uchar = unsigned char;
+	int err = 0;
+	size_t errpos = 0;
+	{
+		auto s1 = (uchar*) "^\\s*(([a-z]+):)?//(([-._A-Za-z0-9]+)(:([0-9]+))?)(/([-./_A-Za-z0-9]*))?\\s*$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re1 = re;
+	}
+	{
+		auto s1 = (uchar*) "^\\s*(([-._A-Za-z0-9]+)(:([0-9]+))?)(/([-./_A-Za-z0-9]*))?\\s*$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re_host_no_slashes = re;
+	}
+	{
+		auto s1 = (uchar*) "^/?([-./_A-Za-z0-9]*)$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re_no_host = re;
+	}
+	{
+		auto s1 = (uchar*) "^/?([-._A-Za-z0-9]+)$";
+		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
+		if (!re) {
+			p_regerr(err);
+			throw std::runtime_error("can not compile regex");
+		}
+		URI::re_topic = re;
+	}
+}
+
+
+static_ini::~static_ini() {
+	if (auto & x = URI::re1) pcre2_code_free(x);
+	if (auto & x = URI::re_host_no_slashes) pcre2_code_free(x);
+	if (auto & x = URI::re_no_host) pcre2_code_free(x);
+	if (auto & x = URI::re_topic) pcre2_code_free(x);
+}
+
+
 void URI::update_deps() {
 	if (port != 0) {
 		host_port = fmt::format("{}:{}", host, port);
@@ -45,7 +103,20 @@ void URI::update_deps() {
 }
 
 
+URI::~URI() {
+}
+
+
+URI::URI() {
+}
+
+
 URI::URI(std::string uri) {
+	init(uri);
+}
+
+
+void URI::init(std::string uri) {
 	using std::vector;
 	using std::string;
 	auto p0 = uri.data();
@@ -66,6 +137,20 @@ URI::URI(std::string uri) {
 			path = m.cg(7).substr(p0);
 		}
 	}
+	if (!match && !require_host_slashes) {
+		int x;
+		x = pcre2_match(re_host_no_slashes, (uchar*)uri.data(), uri.size(), 0, 0, mdd, nullptr);
+		if (x >= 0) {
+			match = true;
+			MD m(mdd);
+			host = m.cg(2).substr(p0);
+			auto cg = m.cg(4);
+			if (cg.n > 0) {
+				port = strtoul(string(p0 + cg.a, cg.n).data(), nullptr, 10);
+			}
+			path = m.cg(5).substr(p0);
+		}
+	}
 	if (!match) {
 		int x;
 		x = pcre2_match(re_no_host, (uchar*)uri.data(), uri.size(), 0, 0, mdd, nullptr);
@@ -81,48 +166,9 @@ URI::URI(std::string uri) {
 
 
 pcre2_code * URI::re1 = nullptr;
+pcre2_code * URI::re_host_no_slashes = nullptr;
 pcre2_code * URI::re_no_host = nullptr;
 pcre2_code * URI::re_topic = nullptr;
-
-
-void p_regerr(int err) {
-	std::array<unsigned char, 512> s1;
-	auto n = pcre2_get_error_message(err, s1.data(), s1.size());
-	fmt::print("err in regex: [{}, {}] {:.{}}\n", err, n, (char*)s1.data(), n);
-}
-
-
-bool URI::compile() {
-	int err = 0;
-	size_t errpos = 0;
-	{
-		auto s1 = (uchar*) "^(([a-z]+):)?//(([-.A-Za-z0-9]+)(:([0-9]+))?)(/([-./A-Za-z0-9]*))?$";
-		re1 = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-		if (!re1) {
-			p_regerr(err);
-			throw std::runtime_error("can not compile regex");
-		}
-	}
-	{
-		auto s1 = (uchar*) "^/?([-./A-Za-z0-9]*)$";
-		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-		if (!re) {
-			p_regerr(err);
-			throw std::runtime_error("can not compile regex");
-		}
-		re_no_host = re;
-	}
-	{
-		auto s1 = (uchar*) "^/?([-.A-Za-z0-9]+)$";
-		auto re = pcre2_compile_8(s1, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-		if (!re) {
-			p_regerr(err);
-			throw std::runtime_error("can not compile regex");
-		}
-		re_topic = re;
-	}
-	return true;
-}
 
 
 void URI::default_port(int port_) {
@@ -149,7 +195,7 @@ void URI::default_host(std::string host_) {
 }
 
 
-bool URI::compiled = compile();
+static_ini URI::compiled;
 
 
 #if HAVE_GTEST
@@ -159,10 +205,30 @@ TEST(URI, host) {
 	ASSERT_EQ(u1.host, "myhost");
 	ASSERT_EQ(u1.port, (uint32_t)0);
 }
+TEST(URI, ip) {
+	URI u1("//127.0.0.1");
+	ASSERT_EQ(u1.scheme, "");
+	ASSERT_EQ(u1.host, "127.0.0.1");
+	ASSERT_EQ(u1.port, (uint32_t)0);
+}
 TEST(URI, host_port) {
 	URI u1("//myhost:345");
 	ASSERT_EQ(u1.scheme, "");
 	ASSERT_EQ(u1.host, "myhost");
+	ASSERT_EQ(u1.port, (uint32_t)345);
+}
+TEST(URI, host_port_noslashes) {
+	URI u1;
+	u1.require_host_slashes = false;
+	u1.init("myhost:345");
+	ASSERT_EQ(u1.scheme, "");
+	ASSERT_EQ(u1.host, "myhost");
+	ASSERT_EQ(u1.port, (uint32_t)345);
+}
+TEST(URI, ip_port) {
+	URI u1("//127.0.0.1:345");
+	ASSERT_EQ(u1.scheme, "");
+	ASSERT_EQ(u1.host, "127.0.0.1");
 	ASSERT_EQ(u1.port, (uint32_t)345);
 }
 TEST(URI, scheme_host_port) {
@@ -189,17 +255,17 @@ TEST(URI, scheme_host_port_pathdefault) {
 	ASSERT_EQ(u1.path, "/");
 }
 TEST(URI, scheme_host_port_path) {
-	URI u1("kafka://my-host.com:8080/some");
+	URI u1("kafka://my-host.com:8080/som_e");
 	ASSERT_EQ(u1.scheme, "kafka");
 	ASSERT_EQ(u1.host, "my-host.com");
 	ASSERT_EQ(u1.port, (uint32_t)8080);
-	ASSERT_EQ(u1.path, "/some");
-	ASSERT_EQ(u1.topic, "some");
+	ASSERT_EQ(u1.path, "/som_e");
+	ASSERT_EQ(u1.topic, "som_e");
 }
 TEST(URI, scheme_host_port_pathlonger) {
-	URI u1("kafka://my-host.com:8080/some/longer");
+	URI u1("kafka://my_host.com:8080/some/longer");
 	ASSERT_EQ(u1.scheme, "kafka");
-	ASSERT_EQ(u1.host, "my-host.com");
+	ASSERT_EQ(u1.host, "my_host.com");
 	ASSERT_EQ(u1.port, (uint32_t)8080);
 	ASSERT_EQ(u1.path, "/some/longer");
 	ASSERT_EQ(u1.topic, "");

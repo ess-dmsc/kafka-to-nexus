@@ -67,7 +67,7 @@ namespace BrightnESS {
 template<>
 BrightnESS::FileWriter::ProcessMessageResult BrightnESS::FileWriter::Streamer::write(MockDemuxTopic & mp) {
 
-  RdKafka::Message *msg = consumer->consume(topic, partition, consumer_timeout.count());
+  RdKafka::Message *msg = _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
   if( msg->err() == RdKafka::ERR__PARTITION_EOF) {
     //    std::cout << "eof reached" << std::endl;
     return ProcessMessageResult::OK();
@@ -122,14 +122,23 @@ TEST (Streammaster, StartStop) {
   bool is_joinable = sm.start();
   EXPECT_TRUE( is_joinable );
   std::this_thread::sleep_for (std::chrono::seconds(1));
-  auto value = sm.stop(-5);
+  auto value = sm.stop();
 
   for(int item=0;item<(int64_t)one_demux[0].sources().size();++item)
     std::cout << one_demux[0].sources()[item].source() <<  " : "
               << one_demux[0].sources()[item].processed_messages_count() << "\n";
   
-  StreamMaster::delay_after_last_message = 1_ms;
+  StreamMaster::delay_after_last_message = milliseconds(1);
   
+}
+
+
+TEST (Streammaster, StartTime) {
+  using StreamMaster=StreamMaster<BrightnESS::FileWriter::Streamer,MockDemuxTopic>;
+  one_demux[0].add_source("for_example_motor01");
+  one_demux[0].add_source("for_example_temperature02");
+  StreamMaster sm(broker,one_demux);
+  sm.start_time(ESSTimeStamp(10));
 }
 
 

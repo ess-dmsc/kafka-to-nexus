@@ -133,6 +133,13 @@ $ENV{streaming_data_types_dir}
 message(STATUS "path_include_streaming_data_types: ${path_include_streaming_data_types}")
 
 
+# Minimum commit of streaming-data-types that we need:
+set(need_commit d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
+
+add_custom_target(check_streaming_data_types ALL
+COMMAND bash -c '\(cd ${path_include_streaming_data_types} && git merge-base --is-ancestor ${need_commit} HEAD \) || \( echo ERROR\ Your\ streaming-data-types\ repository\ is\ too\ old && exit 1 \) '
+)
+
 
 set(flatbuffers_generated_headers "")
 
@@ -163,6 +170,7 @@ foreach (f0 ${flatbuffers_schemata2})
 endforeach()
 
 add_custom_target(flatbuffers_generate ALL DEPENDS ${flatbuffers_generated_headers})
+add_dependencies(flatbuffers_generate check_streaming_data_types)
 
 
 
@@ -206,6 +214,7 @@ schema_f141.cxx
 schemas/f141/synth.cxx
 schemas/ev42/ev42_rw.cxx
 schemas/ev42/ev42_synth.cxx
+schemas/events/schema_amo0.cxx
 MainOpt.cxx
 ${path_include_fmt}/fmt/format.cc
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
