@@ -30,22 +30,6 @@ $ENV{DM_ROOT}/usr/include
 /opt/local
 )
 
-set(have_gtest 0)
-find_path(path_include_gtest NAMES gtest/gtest.h PATHS
-$ENV{googletest_dir}
-)
-find_library(path_lib_gtest NAMES gtest PATHS
-$ENV{googletest_dir}
-)
-if (path_include_gtest AND path_lib_gtest)
-set(have_gtest 1)
-message(STATUS "Using Google Test: ${path_include_gtest}  ${path_lib_gtest}")
-add_library(libgtest SHARED IMPORTED)
-set_property(TARGET libgtest PROPERTY IMPORTED_LOCATION ${path_lib_gtest})
-else()
-message(STATUS "Not found: gtest, not using it.")
-endif()
-
 
 find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h HINTS
 "$ENV{flatbuffers_dir}/include"
@@ -57,31 +41,12 @@ find_path(path_include_rapidjson NAMES rapidjson/document.h HINTS
 /opt/local/rapidjson.git/include
 )
 
-find_path(path_include_hdf5 NAMES hdf5.h HINTS
-"$ENV{hdf5_dir}/include"
-)
 
-find_library(path_lib_hdf5 NAMES hdf5-shared HINTS
-"$ENV{hdf5_dir}/lib"
-)
-find_library(path_lib_hdf5cpp NAMES hdf5_cpp-shared HINTS
-"$ENV{hdf5_dir}/lib"
-)
-if( NOT path_lib_hdf5 )
-  find_library(path_lib_hdf5 NAMES hdf5 HINTS
-  "$ENV{hdf5_dir}/lib"
-  )
-  find_library(path_lib_hdf5cpp NAMES hdf5_cpp HINTS
-    "$ENV{hdf5_dir}/lib"
-    )
-endif()
-
-
-add_library(libhdf5 SHARED IMPORTED)
-set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
-
-add_library(libhdf5cpp SHARED IMPORTED)
-set_property(TARGET libhdf5cpp PROPERTY IMPORTED_LOCATION ${path_lib_hdf5cpp})
+# add_library(libhdf5 SHARED IMPORTED)
+# set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
+#
+# add_library(libhdf5cpp SHARED IMPORTED)
+# set_property(TARGET libhdf5cpp PROPERTY IMPORTED_LOCATION ${path_lib_hdf5cpp})
 
 find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h HINTS
 "$ENV{librdkafka_dir}/include"
@@ -223,7 +188,7 @@ ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 target_include_directories(kafka_to_nexus__objects PRIVATE
 ${path_include_fmt}
-${path_include_hdf5}
+${HDF5_INCLUDE_DIRS}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
@@ -231,11 +196,6 @@ ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_compile_definitions(kafka_to_nexus__objects PRIVATE HAS_REMOTE_API=0)
 add_dependencies(kafka_to_nexus__objects flatbuffers_generate)
-if (have_gtest)
-target_compile_definitions(kafka_to_nexus__objects PRIVATE HAVE_GTEST=1)
-target_include_directories(kafka_to_nexus__objects PRIVATE ${path_include_gtest})
-endif()
-
 
 
 set(tgt "send-command")
@@ -250,14 +210,10 @@ ${path_include_fmt}
 ${path_include_rdkafka}
 ${path_include_rapidjson}
 )
-target_link_libraries(${tgt} libhdf5)
+target_link_libraries(${tgt} ${HDF5_LIBRARIES})
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
 target_link_libraries(${tgt} pcre2-8)
-if (have_gtest)
-target_link_libraries(${tgt} libgtest)
-endif()
-
 
 
 set(tgt "kafka-to-nexus")
@@ -272,21 +228,17 @@ add_dependencies(${tgt} git_commit_current)
 
 target_include_directories(${tgt} PRIVATE
 ${path_include_fmt}
-${path_include_hdf5}
+${HDF5_INCLUDE_DIRS}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
 )
 
-target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
+target_link_libraries(${tgt} ${HDF5_LIBRARIES})
+target_link_libraries(${tgt} ${HDF5_CXX_LIBRARIES})
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
 target_link_libraries(${tgt} pcre2-8)
-
-if (have_gtest)
-target_link_libraries(${tgt} libgtest)
-endif()
 
 if (have_graylog_logger)
 target_compile_definitions(${tgt} PRIVATE HAVE_GRAYLOG_LOGGER=1)
@@ -294,9 +246,6 @@ target_include_directories(${tgt} PRIVATE ${path_include_graylog_logger})
 target_link_libraries(${tgt} libgraylog_logger)
 endif()
 
-if (have_gtest)
-add_subdirectory(tests)
-endif()
 
 
 set(tgt "dummy")
@@ -334,3 +283,7 @@ target_include_directories(${tgt} PRIVATE ${path_include_graylog_logger})
 target_link_libraries(${tgt} libgraylog_logger)
 endif()
 
+
+if (have_gtest)
+add_subdirectory(tests)
+endif()
