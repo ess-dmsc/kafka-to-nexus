@@ -15,6 +15,7 @@ int main(int argc, char ** argv) {
 	if (f.find("remote_kafka") == std::string::npos) {
 		f = f + std::string(":-*remote_kafka*");
 	}
+	::testing::GTEST_FLAG(filter) = f;
 	return RUN_ALL_TESTS();
 }
 
