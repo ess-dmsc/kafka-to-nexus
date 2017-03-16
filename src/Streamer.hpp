@@ -51,8 +51,8 @@ struct Streamer {
   
   ProcessMessageResult get_offset();
 
-  template<class T>
-  std::map<std::string,int64_t> get_initial_time(T& x, const ESSTimeStamp tp) {
+  template <class T>
+  std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
     std::cout << "no initial timepoint\n";
     return std::map<std::string,int64_t>();
   }
@@ -78,20 +78,29 @@ private:
   bool jump_back_impl(const int&);
 };
 
-    template<> ProcessMessageResult Streamer::write<>(std::function<ProcessMessageResult(void*,int)>&);
-    template<> ProcessMessageResult Streamer::write<>(BrightnESS::FileWriter::DemuxTopic &);
-    
-    template<> BrightnESS::FileWriter::RdKafkaOffset Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &, 
-									  std::map<std::string,int64_t>&, 
-									  const ESSTimeStamp&);
-    template<> BrightnESS::FileWriter::RdKafkaOffset Streamer::scan_timestamps<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>&, 
-									  std::map<std::string,int64_t>&,
-									  const ESSTimeStamp&);
+template <>
+ProcessMessageResult
+Streamer::write<>(std::function<ProcessMessageResult(void *, int)> &);
+template <>
+ProcessMessageResult Streamer::write<>(BrightnESS::FileWriter::DemuxTopic &);
 
-    template<> std::map<std::string,int64_t> Streamer::get_initial_time<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>&, const ESSTimeStamp);
-    template<> std::map<std::string,int64_t> Streamer::get_initial_time<>(BrightnESS::FileWriter::DemuxTopic &, const ESSTimeStamp);
-    
-    
-  }
+template <>
+BrightnESS::FileWriter::RdKafkaOffset
+Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &,
+                            std::map<std::string, int64_t> &,
+                            const ESSTimeStamp &);
+template <>
+BrightnESS::FileWriter::RdKafkaOffset Streamer::scan_timestamps<>(
+    std::function<TimeDifferenceFromMessage_DT(void *, int)> &,
+    std::map<std::string, int64_t> &, const ESSTimeStamp &);
+
+template <>
+std::map<std::string, int64_t> Streamer::set_start_time<>(
+    std::function<TimeDifferenceFromMessage_DT(void *, int)> &,
+    const ESSTimeStamp);
+template <>
+std::map<std::string, int64_t>
+Streamer::set_start_time<>(BrightnESS::FileWriter::DemuxTopic &,
+                           const ESSTimeStamp);
 }
-
+}

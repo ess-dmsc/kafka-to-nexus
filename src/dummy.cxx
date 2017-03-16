@@ -255,7 +255,7 @@ int main(int argc, char **argv) {
 
     std::map<std::string,int64_t> m;
 
-    m = s.get_initial_time(demux,nanoseconds(-56));
+    m = s.set_start_time(demux,nanoseconds(-56));
     std::cout << " :: got initial time :: " << std::endl;
     for(auto& v: m) {
       std::cout << v.first << "\t" << v.second << std::endl;
