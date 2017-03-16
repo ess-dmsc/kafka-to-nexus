@@ -85,8 +85,9 @@ int BrightnESS::FileWriter::Streamer::disconnect() {
   return return_code;
 }
 
-int BrightnESS::FileWriter::Streamer::closeStream() {
-  return _consumer->stop(_topic, _partition.value());
+BrightnESS::FileWriter::ErrorCode
+BrightnESS::FileWriter::Streamer::closeStream() {
+  return ErrorCode(_consumer->stop(_topic, _partition.value()));
 }
 
 int BrightnESS::FileWriter::Streamer::connect(const std::string &broker,
@@ -113,16 +114,15 @@ BrightnESS::FileWriter::Streamer::get_offset() {
 bool BrightnESS::FileWriter::Streamer::jump_back_impl(const int& amount) {
   bool reach_beginning=false;
   _last_visited_offset = _offset;
-  int position = _offset.value()-amount;
-  if( position <= _begin_offset.value() ) {
+  int position = _offset.value() - amount;
+  std::cout << " last_visited_offset :\t" << _last_visited_offset.value()
+            << "\tposition :\t" << position << "\n";
+  if (position <= _begin_offset.value()) {
     position = _begin_offset.value();
     reach_beginning = true;
   }
-  auto err = _consumer->seek(_topic,
-			    _partition.value(),
-			    position,
-			    1000);
-  if( err != RdKafka::ERR_NO_ERROR) {
+  auto err = _consumer->seek(_topic, _partition.value(), position, 10000);
+  if (err != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to seek :\t" << RdKafka::err2str(err) << std::endl;
     reach_beginning = false;
   }

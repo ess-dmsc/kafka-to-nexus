@@ -43,8 +43,9 @@ struct Streamer {
 	   const RdKafkaOffset& = RdKafkaOffsetEnd, 
 	   const RdKafkaPartition& = RdKafkaPartition(0));
   int disconnect();
-  int closeStream();
-  
+
+  ErrorCode closeStream();
+
   /// Returns message length
   size_t len() { return message_length; }
   
