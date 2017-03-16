@@ -33,7 +33,19 @@ fb synth::next(uint64_t seq) {
 	auto n = ret.builder->CreateString(name);
 	flatbuffers::Offset<void> value;
 	Value value_type = Value::NONE;
+	// TODO make general..
 	switch (impl->type) {
+	case Value::ArrayInt: {
+		std::vector<int32_t> a1;
+		for (int i1 = 0; i1 < size; ++i1) {
+			a1.push_back((impl->rnd() >> 10) * 1e-3);
+		}
+		auto d1 = ret.builder->CreateVector(a1);
+		ArrayIntBuilder b2(*ret.builder);
+		b2.add_value(d1);
+		value_type = Value::ArrayInt;
+		value = b2.Finish().Union();
+		} break;
 	case Value::ArrayDouble: {
 		std::vector<double> a1;
 		for (int i1 = 0; i1 < size; ++i1) {
