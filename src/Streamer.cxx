@@ -6,7 +6,6 @@
 
 /// TODO:
 ///   - reconnect if consumer return broker error
-///   - search backward at connection setup
 
 int64_t BrightnESS::FileWriter::Streamer::step_back_amount = 1000;
 milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout = milliseconds(1000);
@@ -85,8 +84,9 @@ int BrightnESS::FileWriter::Streamer::disconnect() {
   return return_code;
 }
 
-int BrightnESS::FileWriter::Streamer::closeStream() {
-  return _consumer->stop(_topic, _partition.value());
+BrightnESS::FileWriter::ErrorCode
+BrightnESS::FileWriter::Streamer::closeStream() {
+  return ErrorCode(_consumer->stop(_topic, _partition.value()));
 }
 
 int BrightnESS::FileWriter::Streamer::connect(const std::string &broker,
@@ -113,17 +113,16 @@ BrightnESS::FileWriter::Streamer::get_offset() {
 bool BrightnESS::FileWriter::Streamer::jump_back_impl(const int& amount) {
   bool reach_beginning=false;
   _last_visited_offset = _offset;
-  int position = _offset.value()-amount;
-  if( position <= _begin_offset.value() ) {
+  int position = _offset.value() - amount;
+  // std::cout << " last_visited_offset :\t" << _last_visited_offset.value()
+  //           << "\tposition :\t" << position << "\n";
+  if (position <= _begin_offset.value()) {
     position = _begin_offset.value();
     reach_beginning = true;
   }
-  auto err = _consumer->seek(_topic,
-			    _partition.value(),
-			    position,
-			    1000);
-  if( err != RdKafka::ERR_NO_ERROR) {
-    std::cout << "Failed to seek :\t" << RdKafka::err2str(err) << std::endl;
+  auto err = _consumer->seek(_topic, _partition.value(), position, 10000);
+  if (err != RdKafka::ERR_NO_ERROR) {
+    LOG(0,"Failed to seek :\t{}",RdKafka::err2str(err));
     reach_beginning = false;
   }
   _offset = RdKafkaOffset(position);
@@ -219,7 +218,7 @@ BrightnESS::FileWriter::Streamer::write<>(
   }
   message_length = msg->len();
   _offset = RdKafkaOffset(msg->offset());
-  std::cout << "msg->offset() = " << msg->offset() << "\n";  
+  //  std::cout << "msg->offset() = " << msg->offset() << "\n";  
   return f(msg->payload(), msg->len());
 }
 
