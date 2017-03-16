@@ -95,10 +95,11 @@ namespace BrightnESS {
 	ESSTimeStamp start_time(0);
 	{
 	  auto m = d.FindMember("start_time");
+#if 0
 	  if (m != d.MemberEnd()) {
 	    start_time = ESSTimeStamp(m->value.GetInt());
 	  }
-
+#endif
 	}
 	ESSTimeStamp stop_time(0);
 	{

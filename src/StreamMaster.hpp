@@ -147,11 +147,10 @@ private:
             _status[d.topic()] = streamer[d.topic()].closeStream();
           }
         }
-        
       }
     }
   }
-  
+
   ErrorCode remove_source(const std::string &s) {
     if (_n_sources[s] > 1) {
       _n_sources[s]--;
@@ -165,7 +164,6 @@ private:
   std::map<std::string, Streamer> streamer;
   std::map<std::string, int> _n_sources;
   std::map<std::string, ErrorCode> _status;
-
   std::vector<Demux> &demux;
   std::thread loop;
   std::atomic<bool> do_write;

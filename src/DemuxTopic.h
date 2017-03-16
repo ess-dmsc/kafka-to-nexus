@@ -33,13 +33,15 @@ std::vector<Source> & sources();
 template <typename... Args> Source & add_source(Args && ... args) {
 	_sources.emplace_back(std::forward<Args>(args)...);
 	return _sources.back();
-}
-std::string to_str() const;
-rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * _a = nullptr) const;
-private:
-std::string _topic;
-std::vector<Source> _sources;
-};
+      }
+      std::string to_str() const;
+      rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> * _a = nullptr) const;
+      int64_t & stop_time();
+    private:
+      std::string _topic;
+      std::vector<Source> _sources;
+      int64_t _stop_time;
+    };
 
 }
 }

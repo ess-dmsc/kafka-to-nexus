@@ -129,9 +129,6 @@ bool BrightnESS::FileWriter::Streamer::jump_back_impl(const int& amount) {
   return reach_beginning;
 }
 
-
-
-
 template <>
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
@@ -150,7 +147,6 @@ BrightnESS::FileWriter::Streamer::write(
   auto result = mp.process_message((char *)msg->payload(), msg->len());
   return result;
 }
-
 
 template <>
 BrightnESS::FileWriter::RdKafkaOffset
@@ -181,13 +177,13 @@ BrightnESS::FileWriter::Streamer::scan_timestamps<>(BrightnESS::FileWriter::Demu
   return BrightnESS::FileWriter::RdKafkaOffset(msg->offset());
 }
 
-
-template<>
-std::map<std::string,int64_t> 
-BrightnESS::FileWriter::Streamer::get_initial_time<>(BrightnESS::FileWriter::DemuxTopic &mp, 
-						     const ESSTimeStamp tp) {
-  std::map<std::string,int64_t> m;
-  std::cout << "jump_back_impl(step_back_amount) = " << jump_back_impl(step_back_amount) << "\n";
+template <>
+std::map<std::string, int64_t>
+BrightnESS::FileWriter::Streamer::set_start_time<>(
+    BrightnESS::FileWriter::DemuxTopic &mp, const ESSTimeStamp tp) {
+  std::map<std::string, int64_t> m;
+  std::cout << "jump_back_impl(step_back_amount) = "
+            << jump_back_impl(step_back_amount) << "\n";
   //  jump_back_impl(step_back_amount);
   BrightnESS::FileWriter::RdKafkaOffset pos = scan_timestamps(mp,m,tp);
   std::cout << "scan_timestamps: pos = \t" << pos.value() << "\n";
@@ -197,9 +193,8 @@ BrightnESS::FileWriter::Streamer::get_initial_time<>(BrightnESS::FileWriter::Dem
     _offset = BrightnESS::FileWriter::RdKafkaOffset(pos);
     return std::move(m);
   }
-  return get_initial_time(mp,tp);
-} 
-
+  return set_start_time(mp, tp);
+}
 
 template <>
 BrightnESS::FileWriter::ProcessMessageResult
@@ -214,7 +209,8 @@ BrightnESS::FileWriter::Streamer::write<>(
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     std::cout << "Failed to consume message: " + RdKafka::err2str(msg->err())
               << std::endl;
-    return ProcessMessageResult::ERR();;
+    return ProcessMessageResult::ERR();
+    ;
   }
   message_length = msg->len();
   _offset = RdKafkaOffset(msg->offset());
@@ -255,17 +251,17 @@ BrightnESS::FileWriter::Streamer::scan_timestamps<>(std::function<
   return BrightnESS::FileWriter::RdKafkaOffset(msg->offset());
 }
 
-template<>
-std::map<std::string,int64_t> 
-BrightnESS::FileWriter::Streamer::get_initial_time<>(std::function<TimeDifferenceFromMessage_DT(void*,int)>& f, const ESSTimeStamp tp) {
-  std::map<std::string,int64_t> m;
+template <>
+std::map<std::string, int64_t>
+BrightnESS::FileWriter::Streamer::set_start_time<>(
+    std::function<TimeDifferenceFromMessage_DT(void *, int)> &f,
+    const ESSTimeStamp tp) {
+  std::map<std::string, int64_t> m;
   jump_back_impl(step_back_amount);
   BrightnESS::FileWriter::RdKafkaOffset pos = scan_timestamps(f,m,tp);
   if ( (m.size() == 1) || (_offset == _begin_offset) ) {
     _offset = BrightnESS::FileWriter::RdKafkaOffset(pos);
     return std::move(m);
   }
-  return get_initial_time(f,tp);
-} 
-
-
+  return set_start_time(f, tp);
+}
