@@ -10,56 +10,55 @@
 
 // forward definitions
 namespace RdKafka {
-  class Topic;
-  class Consumer;
-  class TopicPartition;
-  class Message;
+class Topic;
+class Consumer;
+class TopicPartition;
+class Message;
 }
 
 namespace BrightnESS {
-  namespace FileWriter {
-    
+namespace FileWriter {
+
 // actually a "kafka streamer"
 struct Streamer {
   static milliseconds consumer_timeout;
   static int64_t step_back_amount;
-  
 
-  Streamer() { };
-  Streamer(const std::string&, const std::string&, 
-	   const RdKafkaOffset& = RdKafkaOffsetEnd, 
-	   const RdKafkaPartition& = RdKafkaPartition(0));
-  Streamer(const Streamer&);
-  
+  Streamer() {};
+  Streamer(const std::string &, const std::string &,
+           const RdKafkaOffset & = RdKafkaOffsetEnd,
+           const RdKafkaPartition & = RdKafkaPartition(0));
+  Streamer(const Streamer &);
+
   //  ~Streamer(); // disconnect
-  template<class T>
-  ProcessMessageResult write(T& f) {
-    message_length=0;
+  template <class T> ProcessMessageResult write(T &f) {
+    message_length = 0;
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
 
-  int connect(const std::string&, const std::string&, 
-	   const RdKafkaOffset& = RdKafkaOffsetEnd, 
-	   const RdKafkaPartition& = RdKafkaPartition(0));
-  int disconnect();
+  int connect(const std::string &, const std::string &,
+              const RdKafkaOffset & = RdKafkaOffsetEnd,
+              const RdKafkaPartition & = RdKafkaPartition(0));
+  ErrorCode disconnect();
 
   ErrorCode closeStream();
 
   /// Returns message length
   size_t len() { return message_length; }
-  
+
   ProcessMessageResult get_offset();
 
   template <class T>
   std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
     std::cout << "no initial timepoint\n";
-    return std::map<std::string,int64_t>();
+    return std::map<std::string, int64_t>();
   }
 
-  
-  template<class T>
-  BrightnESS::FileWriter::RdKafkaOffset scan_timestamps(T& x, std::map<std::string,int64_t>& m, const ESSTimeStamp& ts) {
+  template <class T>
+  BrightnESS::FileWriter::RdKafkaOffset
+  scan_timestamps(T &x, std::map<std::string, int64_t> &m,
+                  const ESSTimeStamp &ts) {
     std::cout << "no scan\n";
     return RdKafkaOffset(-1);
   }
@@ -69,13 +68,13 @@ private:
   RdKafka::Consumer *_consumer;
   RdKafka::TopicPartition *_tp;
   RdKafkaOffset _offset;
-  RdKafkaOffset _begin_offset;
-  RdKafkaOffset _last_visited_offset;
+  RdKafkaOffset _begin;
+  RdKafkaOffset _low;
   int64_t step_back_offset;
   RdKafkaPartition _partition;
   size_t message_length;
 
-  bool jump_back_impl(const int&);
+  BrightnESS::FileWriter::RdKafkaOffset jump_back_impl(const int &);
 };
 
 template <>

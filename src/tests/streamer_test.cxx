@@ -196,7 +196,7 @@ TEST_F (MinimalProducer, Reconnect) {
     ++counter;
   } while(status.is_OK() && (counter < max_recv_messages ));
   EXPECT_FALSE(data_size > 0);  
-  EXPECT_EQ(s.disconnect(),0);
+  EXPECT_EQ(s.disconnect().value(),0);
 
   data_size=0;
   counter=0; 
