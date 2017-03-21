@@ -30,6 +30,12 @@ Commands are JSON messages.
 
 Send commands to the broker/topic given by `--broker-command`
 
+In the "streams" section of the command:
+- `topic`: Kafka topic from which the data comes.
+- `source`: Use only Kafka messages where source name matches, important
+  because topics are in general multiplexed.
+- `nexus_path`: Location of the written data within the HDF tree.
+
 Command to start writing a file:
 ```json
 {
