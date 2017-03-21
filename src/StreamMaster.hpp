@@ -22,8 +22,7 @@ struct FileWriterCommand;
 namespace BrightnESS {
 namespace FileWriter {
 
-template<typename Streamer, typename Demux>
-struct StreamMaster {
+template <typename Streamer, typename Demux> struct StreamMaster {
   static std::chrono::milliseconds delay_after_last_message;
 
   StreamMaster() : do_write(false), _stop(false) {};
@@ -52,19 +51,15 @@ struct StreamMaster {
 
   ~StreamMaster() {
     _stop = true;
-    if (loop.joinable())
+    if (loop.joinable()) {
       loop.join();
+    }
   }
 
   bool start_time(const ESSTimeStamp start) {
     for (auto &d : demux) {
       auto result = streamer[d.topic()].set_start_time(d, start);
-      for (auto r : result) {
-        std::cout << r.first << "\t:\t" << r.second << std::endl;
-      }
     }
-    exit(0);
-    LOG(3, "StreamMaster > start_time :\t{}", start.count());
     return false;
   }
   bool stop_time(const ESSTimeStamp stop) {
@@ -74,7 +69,6 @@ struct StreamMaster {
     for (auto &d : demux) {
       d.stop_time() = stop.count();
     }
-    LOG(3, "StreamMaster - stop_time :\t{}", stop.count());
     return true;
   }
 
@@ -116,19 +110,6 @@ private:
     while (!_stop) {
 
       for (auto &d : demux) {
-        // switch (_status[d.topic()].value()) {
-        // case StatusCode::RUNNING:
-        //   std::cout << d.topic() << " is running\n";
-        //   break;
-        // case StatusCode::STOPPED:
-        //   std::cout << d.topic() << " is stopped\n";
-        //   break;
-        // case StatusCode::ERROR:
-        //   std::cout << "Error in " << d.topic() << "\n";
-        //   break;
-        // default:
-        //   break;
-        // }
         if (_status[d.topic()].value()) {
 
           tp = std::chrono::system_clock::now();
