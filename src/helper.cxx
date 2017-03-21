@@ -57,56 +57,45 @@ std::vector<std::string> split(std::string const & input, std::string token) {
 	return ret;
 }
 
-#if HAVE_GTEST
-#include <gtest/gtest.h>
 
-TEST(helper, split_01) {
-	using std::vector;
-	using std::string;
-	auto v = split("", "");
-	ASSERT_TRUE(v == vector<string>({""}));
+std::string get_string(rapidjson::Value const * v, std::string path) {
+	auto a = split(path, ".");
+	uint32_t i1 = 0;
+	for (auto & x : a) {
+		bool num = true;
+		for (char & c : x) {
+			if (c < 48 || c > 57) { num = false; break; }
+		}
+		if (num) {
+			if (!v->IsArray()) return "";
+			auto n1 = (uint32_t)strtol(x.c_str(), nullptr, 10);
+			if (n1 >= v->Size()) return "";
+			auto & v2 = v->GetArray()[n1];
+			if (i1 == a.size() - 1) {
+				if (v2.IsString()) {
+					return v2.GetString();
+				}
+			}
+			else {
+				v = &v2;
+			}
+		}
+		else {
+			if (!v->IsObject()) return "";
+			auto it = v->FindMember(x.c_str());
+			if (it == v->MemberEnd()) {
+				return "";
+			}
+			if (i1 == a.size() - 1) {
+				if (it->value.IsString()) {
+					return it->value.GetString();
+				}
+			}
+			else {
+				v = &it->value;
+			}
+		}
+		++i1;
+	}
+	return "";
 }
-
-TEST(helper, split_02) {
-	using std::vector;
-	using std::string;
-	auto v = split("abc", "");
-	ASSERT_TRUE(v == vector<string>({"abc"}));
-}
-
-TEST(helper, split_03) {
-	using std::vector;
-	using std::string;
-	auto v = split("a/b", "/");
-	ASSERT_TRUE(v == vector<string>({"a", "b"}));
-}
-
-TEST(helper, split_04) {
-	using std::vector;
-	using std::string;
-	auto v = split("/a/b", "/");
-	ASSERT_TRUE(v == vector<string>({"a", "b"}));
-}
-
-TEST(helper, split_05) {
-	using std::vector;
-	using std::string;
-	auto v = split("ac/dc/", "/");
-	ASSERT_TRUE(v == vector<string>({"ac", "dc"}));
-}
-
-TEST(helper, split_06) {
-	using std::vector;
-	using std::string;
-	auto v = split("/ac/dc/", "/");
-	ASSERT_TRUE(v == vector<string>({"ac", "dc"}));
-}
-
-TEST(helper, split_07) {
-	using std::vector;
-	using std::string;
-	auto v = split("/some/longer/thing/for/testing", "/");
-	ASSERT_TRUE(v == vector<string>({"some", "longer", "thing", "for", "testing"}));
-}
-
-#endif

@@ -6,6 +6,7 @@ set(sources
 tests.cxx
 roundtrip.cxx
 HDFFile.cxx
+helper.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
