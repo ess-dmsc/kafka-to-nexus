@@ -1,6 +1,6 @@
-#include "SchemaRegistry.h"
-#include "HDFFile.h"
-#include "HDFFile_h5.h"
+#include "../../SchemaRegistry.h"
+#include "../../HDFFile.h"
+#include "../../HDFFile_h5.h"
 #include <hdf5.h>
 #include "schemas/f141_epics_nt_generated.h"
 
