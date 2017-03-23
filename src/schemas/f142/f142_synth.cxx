@@ -36,30 +36,42 @@ fb synth::next(uint64_t seq) {
 	// TODO make general..
 	switch (impl->type) {
 	case Value::ArrayInt: {
-		std::vector<int32_t> a1;
+		using T = int32_t;
+		T * a1 = nullptr;
+		auto d1 = ret.builder->CreateUninitializedVector(size, sizeof(T), (uint8_t**)&a1);
 		for (int i1 = 0; i1 < size; ++i1) {
-			a1.push_back((impl->rnd() >> 10) * 1e-3);
+			//a1[i1] = impl->rnd() >> 25;
+			a1[i1] = seq;
 		}
-		auto d1 = ret.builder->CreateVector(a1);
 		ArrayIntBuilder b2(*ret.builder);
 		b2.add_value(d1);
 		value_type = Value::ArrayInt;
 		value = b2.Finish().Union();
 		} break;
 	case Value::ArrayDouble: {
-		std::vector<double> a1;
+		using T = double;
+		T * a1 = nullptr;
+		auto d1 = ret.builder->CreateUninitializedVector(size, sizeof(T), (uint8_t**)&a1);
 		for (int i1 = 0; i1 < size; ++i1) {
-			a1.push_back((impl->rnd() >> 10) * 1e-3);
+			//a1[i1] = impl->rnd() >> 25;
+			a1[i1] = seq;
 		}
-		auto d1 = ret.builder->CreateVector(a1);
 		ArrayDoubleBuilder b2(*ret.builder);
 		b2.add_value(d1);
 		value_type = Value::ArrayDouble;
 		value = b2.Finish().Union();
 		} break;
 	case Value::ArrayFloat: {
-		ArrayFloatBuilder b2(*ret.builder);
-		value_type = Value::ArrayFloat;
+		using T = float;
+		T * a1 = nullptr;
+		auto d1 = ret.builder->CreateUninitializedVector(size, sizeof(T), (uint8_t**)&a1);
+		for (int i1 = 0; i1 < size; ++i1) {
+			//a1[i1] = impl->rnd() >> 25;
+			a1[i1] = seq;
+		}
+		ArrayDoubleBuilder b2(*ret.builder);
+		b2.add_value(d1);
+		value_type = Value::ArrayDouble;
 		value = b2.Finish().Union();
 		} break;
 	default:

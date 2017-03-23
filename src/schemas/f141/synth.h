@@ -47,7 +47,8 @@ fb next(uint64_t seq) {
 	>::type
 	>::type;
 
-	impl->rnd.seed(seq);
+	//impl->rnd.seed(seq);
+
 	fb ret;
 	ret.builder.reset(new flatbuffers::FlatBufferBuilder);
 	// NOTE
@@ -60,13 +61,14 @@ fb next(uint64_t seq) {
 		printf("error\n");
 	}
 	else {
-		std::vector<T> a1;
+		T * a1 = nullptr;
+		auto v1 = ret.builder->CreateUninitializedVector(size, sizeof(T), (uint8_t**)&a1);
 		for (int i1 = 0; i1 < size; ++i1) {
-			a1.push_back((impl->rnd() >> 25));
+			//a1[i1] = impl->rnd() >> 25;
+			a1[i1] = seq;
 		}
-		auto d1 = ret.builder->CreateVector(a1);
 		Tb b2(*ret.builder);
-		b2.add_value(d1);
+		b2.add_value(v1);
 		pv_type = impl->type;
 		pv = b2.Finish().Union();
 	}
