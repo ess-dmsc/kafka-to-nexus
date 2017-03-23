@@ -65,7 +65,6 @@ ProcessMessageResult DemuxTopic::process_message(char * msg_data, int msg_size) 
 	Msg msg {msg_data, msg_size};
 	auto reader = FBSchemaReader::create(msg);
 	if (!reader) {
-		LOG(4, "ERROR unknown schema id?");
 		return ProcessMessageResult::ERR();
 	}
 	auto srcn = reader->sourcename(msg);
