@@ -2,24 +2,20 @@ node('kafka-to-nexus') {
     dir("code") {
         stage("Checkout") {
             checkout scm
-            sh "git submodule update --init"
         }
     }
 
     dir("build") {
-        stage("CMake") {
-            sh "rm -rf *"
-            sh "HDF5_ROOT=\$DM_ROOT/usr \
-                cmake ../code \
-                -Dhave_gtest=NO \
-                -Dflatc=\$DM_ROOT/usr/bin/flatc \
-                -Dpath_include_flatbuffers=\$DM_ROOT/usr/include \
-                -Dpath_include_fmt=\$DM_ROOT/usr/include \
-                -Dpath_include_rapidjson=\$DM_ROOT/usr/include \
-                -Dpath_include_rdkafka=\$DM_ROOT/usr/include \
-                -Dpath_lib_rdkafka=\$DM_ROOT/usr/lib/librdkafka.so \
-                -Dpath_lib_rdkafka++=\$DM_ROOT/usr/lib/librdkafka++.so \
-                -Dpath_include_streaming_data_types=../code/streaming-data-types"
+        stage("Update local dependencies") {
+            sh "cd .. && bash code/build-script/update-local-deps.sh"
+        }
+
+        stage("make clean") {
+            sh "make clean; rm CMakeCache.txt"
+        }
+
+        stage("cmake") {
+            sh "bash ../code/build-script/invoke-cmake-from-jenkinsfile.sh"
         }
 
         stage("Build") {
