@@ -50,6 +50,10 @@ ProcessMessageResult Source::process_message(Msg msg) {
 		}
 		_schema_writer = _schema_reader->create_writer();
 	}
+	if (!_schema_reader->verify(msg)) {
+		LOG(5, "buffer not verified");
+		return ProcessMessageResult::ERR();
+	}
 	if (teamid == _schema_reader->teamid(msg)) {
 		if (_cnt_msg_written == 0) {
 			_schema_writer->init(_hdf_file, _hdf_path, source(), msg);

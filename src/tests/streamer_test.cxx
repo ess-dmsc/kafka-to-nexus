@@ -77,7 +77,7 @@ protected:
   void start() {
     _stop = false;
     _pause = false;
-    t = std::move( std::thread( [this] { this->produce(); } ) );
+    t = std::thread( [this] { this->produce(); } );
     std::this_thread::sleep_for (std::chrono::milliseconds(100));
   }
 
@@ -127,7 +127,7 @@ std::pair<std::string,int64_t> dummy_message_parser(std::string&& msg) {
   return std::pair<std::string,int64_t>("", -1);
 }
 std::function<TimeDifferenceFromMessage_DT(void*,int)> time_difference = [](void* x, int size) {
-  auto parsed_text = dummy_message_parser(std::move(std::string((char*)x)));
+  auto parsed_text = dummy_message_parser(std::string((char*)x));
   return TimeDifferenceFromMessage_DT(parsed_text.first,parsed_text.second);
 };
 
@@ -196,7 +196,7 @@ TEST_F (MinimalProducer, Reconnect) {
     ++counter;
   } while(status.is_OK() && (counter < max_recv_messages ));
   EXPECT_FALSE(data_size > 0);  
-  EXPECT_EQ(s.disconnect(),0);
+  EXPECT_EQ(s.disconnect().value(),0);
 
   data_size=0;
   counter=0; 
@@ -224,18 +224,7 @@ TEST_F (MinimalProducer, JumpBack) {
 
   std::cout << "\n\nhello\n" << std::endl;
   DemuxTopic demux(MinimalProducer::topic);
-  TimeDifferenceFromMessage_DT dt = s.jump_back(demux);
-  std::cout << "source:\t" << dt.sourcename << "\ttimestamp:\t" << dt.dt << "\n";
-  // counter=0;
-  // do {
-  //   ++counter;
-  //   status = s.write(verbose);
-  // } while(status.is_OK());
-  // //  EXPECT_EQ( counter, Streamer::step_back_amount);
-  // EXPECT_GT( counter, Streamer::step_back_amount);
-
   stop();
-
 }
 
 

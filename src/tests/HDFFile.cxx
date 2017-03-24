@@ -35,7 +35,7 @@ static void write_f141() {
 	auto writer = reg.at(fbid)->create_reader()->create_writer();
 	BrightnESS::FileWriter::Msg msg;
 	BrightnESS::FlatBufs::f141_epics_nt::synth synth(source_name, BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
-	auto fb = synth.next(0);
+	auto fb = synth.next<double>(0);
 	msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 	// f1.impl->h5file
 	writer->init(&f1, "/", source_name, msg);
@@ -93,7 +93,7 @@ static void new_03_data() {
 	auto writer = reg.at(fbid)->create_reader()->create_writer();
 	BrightnESS::FileWriter::Msg msg;
 	BrightnESS::FlatBufs::f141_epics_nt::synth synth(source_name, BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
-	auto fb = synth.next(0);
+	auto fb = synth.next<double>(0);
 	msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 }
 
@@ -132,9 +132,9 @@ static void data_ev42() {
 			(char*)fb.builder->GetBufferPointer(),
 			(int32_t)fb.builder->GetSize()
 		};
-		{
+		if (false) {
 			auto v = binary_to_hex(msg.data, msg.size);
-			//LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+			LOG(7, "msg:\n{:.{}}", v.data(), v.size());
 		}
 		fwt->demuxers().at(0).process_message(msg.data, msg.size);
 	}

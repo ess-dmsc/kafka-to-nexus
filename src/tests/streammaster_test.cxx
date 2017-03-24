@@ -22,6 +22,9 @@ namespace BrightnESS {
       //  MockSource(MockSource &&);
       std::string const & topic() const { return _topic; }
       std::string const & source() const { return _source; }
+      bool stop_time(const ESSTimeStamp) { return false; }
+      bool start_time(const ESSTimeStamp) { return false; }
+      
       uint32_t processed_messages_count() const { return _processed_messages_count; }
       ProcessMessageResult process_message(char * msg_data, int msg_size) {
 	_processed_messages_count++;
@@ -38,7 +41,7 @@ namespace BrightnESS {
     public:
       MockDemuxTopic(std::string topic) : _topic(topic) { };
       std::string const & topic() const { return _topic; };
-      
+      bool stop_time(const ESSTimeStamp) { return false; }
       ProcessMessageResult process_message(char * msg_data, int msg_size) {
 	std::string s(msg_data);
 	int source_index=0;

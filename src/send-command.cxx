@@ -7,9 +7,9 @@
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
-#include <rapidjson/istreamwrapper.h>
 
 #include "uri.h"
+#include "helper.h"
 
 #include <iostream>
 #include <fstream>
@@ -23,7 +23,6 @@ struct MainOpt {
 	uint64_t teamid = 0;
 	URI broker {"localhost:9092/commands"};
 	KafkaW::BrokerOpt broker_opt;
-	std::string topic {"commandtopicname"};
 	std::string cmd;
 };
 
@@ -69,17 +68,13 @@ std::string make_command_exit(std::string broker, uint64_t teamid) {
 std::string make_command_from_file(const std::string& filename) {
 	using namespace rapidjson;
 	std::ifstream ifs(filename);
-	LOG(4,"make_command_from_file {:} : {}",filename,ifs.good());
-
-	IStreamWrapper isw(ifs);
-
-	Document d;
-	d.ParseStream(isw);
-
-	StringBuffer buf1;
-	PrettyWriter<StringBuffer> wr(buf1);
-	d.Accept(wr);
-	return buf1.GetString();
+	if (!ifs.good()) {
+		LOG(3, "can not open file {}", filename);
+		return "";
+	}
+	LOG(4, "make_command_from_file {}", filename);
+	auto buf1 = gulp(filename);
+	return {buf1.data(), buf1.size()};
 }
 
 
@@ -160,30 +155,24 @@ int main(int argc, char ** argv) {
 	}
 
 	opt.broker_opt.address = opt.broker.host_port;
-	opt.topic = opt.broker.topic;
-
-	LOG(3, "{} {}", opt.broker_opt.address, opt.topic);
-
 	KafkaW::Producer producer(opt.broker_opt);
-	KafkaW::Producer::Topic pt(producer, opt.topic);
+	KafkaW::Producer::Topic pt(producer, opt.broker.topic);
 	if (opt.cmd == "new") {
 		auto m1 = make_command(opt.broker_opt.address, opt.teamid);
 		LOG(4, "sending {}", m1);
 		pt.produce((void*)m1.data(), m1.size(), nullptr, true);
 	}
-	if (opt.cmd == "exit") {
+	else if (opt.cmd == "exit") {
 		auto m1 = make_command_exit(opt.broker_opt.address, opt.teamid);
 		LOG(4, "sending {}", m1);
 		pt.produce((void*)m1.data(), m1.size(), nullptr, true);
 	}
-	if (opt.cmd.substr(0,5) == "file:") {
-		std::string input=opt.cmd.substr(5);
+	else if (opt.cmd.substr(0, 5) == "file:") {
+		std::string input = opt.cmd.substr(5);
 		auto m1 = make_command_from_file(opt.cmd.substr(5));
-		LOG(4, "sending {}", m1);
+		LOG(5, "sending:\n{}", m1);
 		pt.produce((void*)m1.data(), m1.size(), nullptr, true);
 	}
-
-	producer.poll_while_outq();
 
 	return 0;
 }

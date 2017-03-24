@@ -13,7 +13,7 @@ bool gtest = false;
 BrightnESS::FileWriter::MasterConfig master_config;
 std::string kafka_gelf;
 std::string graylog_logger_address;
-std::atomic<Master *> master;
+std::atomic<BrightnESS::FileWriter::Master *> master;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv);

@@ -19,16 +19,20 @@ std::vector<char> gulp(std::string fname) {
 
 std::vector<char> binary_to_hex(char const * data, int len) {
 	std::vector<char> ret;
-	ret.reserve(len * 5 / 4);
-	for (int i1 = 0; i1 < len; ++i1) {
-		auto c = (uint8_t)data[i1];
-		for (auto & v : std::array<uint8_t, 2>{ {(uint8_t)(c >> 4), (uint8_t)(c & 0x0f)} }) {
-			if (v < 10) v += 48;
-			else v += 97 - 10;
-			ret.push_back(v);
+	ret.reserve(len * (64 + 5) / 32 + 32);
+	for (uint32_t i1 = 0; i1 < len; ++i1) {
+		uint8_t c = ((uint8_t)data[i1]) >> 4;
+		if (c < 10) c += 48;
+		else c += 97 - 10;
+		ret.emplace_back(c);
+		c = 0x0f & (uint8_t)data[i1];
+		if (c < 10) c += 48;
+		else c += 97 - 10;
+		ret.emplace_back(c);
+		if ((0x07 & i1) == 0x7) {
+			ret.push_back(' ');
+			if ((0x1f & i1) == 0x1f) ret.push_back('\n');
 		}
-		if (i1 %    8  == 7) ret.push_back(' ');
-		if (i1 % (4*8) == 4*8-1) ret.push_back('\n');
 	}
 	return ret;
 }
@@ -53,56 +57,45 @@ std::vector<std::string> split(std::string const & input, std::string token) {
 	return ret;
 }
 
-#if HAVE_GTEST
-#include <gtest/gtest.h>
 
-TEST(helper, split_01) {
-	using std::vector;
-	using std::string;
-	auto v = split("", "");
-	ASSERT_TRUE(v == vector<string>({""}));
+std::string get_string(rapidjson::Value const * v, std::string path) {
+	auto a = split(path, ".");
+	uint32_t i1 = 0;
+	for (auto & x : a) {
+		bool num = true;
+		for (char & c : x) {
+			if (c < 48 || c > 57) { num = false; break; }
+		}
+		if (num) {
+			if (!v->IsArray()) return "";
+			auto n1 = (uint32_t)strtol(x.c_str(), nullptr, 10);
+			if (n1 >= v->Size()) return "";
+			auto & v2 = v->GetArray()[n1];
+			if (i1 == a.size() - 1) {
+				if (v2.IsString()) {
+					return v2.GetString();
+				}
+			}
+			else {
+				v = &v2;
+			}
+		}
+		else {
+			if (!v->IsObject()) return "";
+			auto it = v->FindMember(x.c_str());
+			if (it == v->MemberEnd()) {
+				return "";
+			}
+			if (i1 == a.size() - 1) {
+				if (it->value.IsString()) {
+					return it->value.GetString();
+				}
+			}
+			else {
+				v = &it->value;
+			}
+		}
+		++i1;
+	}
+	return "";
 }
-
-TEST(helper, split_02) {
-	using std::vector;
-	using std::string;
-	auto v = split("abc", "");
-	ASSERT_TRUE(v == vector<string>({"abc"}));
-}
-
-TEST(helper, split_03) {
-	using std::vector;
-	using std::string;
-	auto v = split("a/b", "/");
-	ASSERT_TRUE(v == vector<string>({"a", "b"}));
-}
-
-TEST(helper, split_04) {
-	using std::vector;
-	using std::string;
-	auto v = split("/a/b", "/");
-	ASSERT_TRUE(v == vector<string>({"a", "b"}));
-}
-
-TEST(helper, split_05) {
-	using std::vector;
-	using std::string;
-	auto v = split("ac/dc/", "/");
-	ASSERT_TRUE(v == vector<string>({"ac", "dc"}));
-}
-
-TEST(helper, split_06) {
-	using std::vector;
-	using std::string;
-	auto v = split("/ac/dc/", "/");
-	ASSERT_TRUE(v == vector<string>({"ac", "dc"}));
-}
-
-TEST(helper, split_07) {
-	using std::vector;
-	using std::string;
-	auto v = split("/some/longer/thing/for/testing", "/");
-	ASSERT_TRUE(v == vector<string>({"some", "longer", "thing", "for", "testing"}));
-}
-
-#endif

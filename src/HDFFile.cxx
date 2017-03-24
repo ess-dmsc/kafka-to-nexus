@@ -315,6 +315,7 @@ std::unique_ptr<FBSchemaReader> FBSchemaReader::create(Msg msg) {
 	if (auto & cr = Schemas::SchemaRegistry::find(fbid)) {
 		return cr->create_reader();
 	}
+	LOG(5, "does not seem like a known schema id: {:0x}  {:4.4s}", uint32_t((uint64_t)fbid.data()), (char*)fbid.data());
 	return nullptr;
 }
 
@@ -323,6 +324,14 @@ std::unique_ptr<FBSchemaWriter> FBSchemaReader::create_writer() {
 }
 
 FBSchemaReader::~FBSchemaReader() {
+}
+
+bool FBSchemaReader::verify(Msg msg) {
+	return verify_impl(msg);
+}
+
+bool FBSchemaReader::verify_impl(Msg msg) {
+	return false;
 }
 
 std::string FBSchemaReader::sourcename(Msg msg) {
