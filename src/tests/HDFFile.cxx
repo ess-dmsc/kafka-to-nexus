@@ -132,9 +132,9 @@ static void data_ev42() {
 			(char*)fb.builder->GetBufferPointer(),
 			(int32_t)fb.builder->GetSize()
 		};
-		{
+		if (false) {
 			auto v = binary_to_hex(msg.data, msg.size);
-			//LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+			LOG(7, "msg:\n{:.{}}", v.data(), v.size());
 		}
 		fwt->demuxers().at(0).process_message(msg.data, msg.size);
 	}
