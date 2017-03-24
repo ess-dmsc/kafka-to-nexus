@@ -210,8 +210,10 @@ json.cxx
 uri.cxx
 date/tz.cpp
 date/tzblobs.cpp
-schema_f141.cxx
+schemas/f141/f141_rw.cxx
 schemas/f141/synth.cxx
+schemas/f142/f142_rw.cxx
+schemas/f142/f142_synth.cxx
 schemas/ev42/ev42_rw.cxx
 schemas/ev42/ev42_synth.cxx
 schemas/events/schema_amo0.cxx
