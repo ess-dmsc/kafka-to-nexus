@@ -68,7 +68,7 @@ add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 target_include_directories(${tgt} PRIVATE
 ${path_include_fmt}
-${path_include_hdf5}
+${HDF5_INCLUDE_DIRS}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}

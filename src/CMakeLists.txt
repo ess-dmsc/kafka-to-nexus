@@ -261,14 +261,14 @@ add_dependencies(${tgt} git_commit_current)
 target_include_directories(${tgt} PRIVATE
 ${CMAKE_CURRENT_SOURCE_DIR}
 ${path_include_fmt}
-${path_include_hdf5}
+${HDF5_INCLUDE_DIRS}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
 )
 
-target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
+target_link_libraries(${tgt} ${HDF5_LIBRARIES})
+target_link_libraries(${tgt} ${HDF5_CXX_LIBRARIES})
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
 target_link_libraries(${tgt} pcre2-8)
