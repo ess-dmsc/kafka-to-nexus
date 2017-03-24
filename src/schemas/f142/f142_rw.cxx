@@ -36,14 +36,24 @@ public:
 virtual int write_impl(LogData const * fbuf) = 0;
 };
 
-template <typename DT>
+template <typename DT, typename FV>
 class writer_typed_array : public writer_typed_base {
 public:
-template <typename FV>
-writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV fbval);
+writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV * fbval);
 ~writer_typed_array();
-int write_impl(LogData const * fbuf);
+int write_impl(LogData const * fbuf) override;
 // DataSet::getId() will be -1 for the default constructed
+hid_t ds = -1;
+hid_t dsp = -1;
+hid_t dcpl = -1;
+};
+
+template <typename DT, typename FV>
+class writer_typed_scalar : public writer_typed_base {
+public:
+writer_typed_scalar(hid_t hdf_group, std::string const & sourcename, FV * fbval);
+~writer_typed_scalar();
+int write_impl(LogData const * fbuf) override;
 hid_t ds = -1;
 hid_t dsp = -1;
 hid_t dcpl = -1;
@@ -100,7 +110,33 @@ writer::~writer() {
 	if (ds_ts_data != -1) H5Dclose(ds_ts_data);
 }
 
-template <typename T> using WA = writer_typed_array<T>;
+template <typename T, typename V> using WA = writer_typed_array<T,V>;
+template <typename T, typename V> using WS = writer_typed_scalar<T,V>;
+
+template <typename T>
+static hid_t create_1d_ds(hid_t loc, std::string const & name) {
+	hid_t ret = -1;
+	// Dataset for sequence numbers, used primarily for unit tests
+	using AA = std::array<hsize_t, 1>;
+	auto dt = nat_type<T>();
+	AA sini {{ 0 }};
+	AA smax {{ H5S_UNLIMITED }};
+	auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+	auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+	AA schk {{std::max<hsize_t>(64*1024/H5Tget_size(dt), 1)}};
+	herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
+	if (err < 0) {
+		LOG(5, "in H5Pset_chunk");
+	}
+	ret = H5Dcreate1(loc, name.c_str(), dt, dsp, dcpl);
+	if (ret < 0) {
+		LOG(5, "can not create {}", name);
+	}
+	H5Pclose(dcpl);
+	H5Sclose(dsp);
+	return ret;
+}
+
 
 void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
 	using std::array;
@@ -112,101 +148,52 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	auto & hg = hdf_group;
 	auto & s = sourcename;
 
-	// TODO
-	// add remaining, and also the scalar values!
-
 	auto impl_fac = [&hg, &s, &fbuf](Value x){
 		using R = writer_typed_base *;
 		void const * v = fbuf->value();
-		if (x == Value::ArrayByte)   return (R) new WA<int8_t>  (hg, s, (ArrayByte*)v);
-		if (x == Value::ArrayShort)  return (R) new WA<int16_t> (hg, s, (ArrayShort*)v);
-		if (x == Value::ArrayInt)    return (R) new WA<int32_t> (hg, s, (ArrayInt*)v);
-		if (x == Value::ArrayLong)   return (R) new WA<int64_t> (hg, s, (ArrayLong*)v);
-		if (x == Value::ArrayUByte)  return (R) new WA<uint8_t> (hg, s, (ArrayUByte*)v);
-		if (x == Value::ArrayUShort) return (R) new WA<uint16_t>(hg, s, (ArrayUShort*)v);
-		if (x == Value::ArrayUInt)   return (R) new WA<uint32_t>(hg, s, (ArrayUInt*)v);
-		if (x == Value::ArrayULong)  return (R) new WA<uint64_t>(hg, s, (ArrayULong*)v);
-		if (x == Value::ArrayDouble) return (R) new WA<double>  (hg, s, (ArrayDouble*)v);
-		if (x == Value::ArrayFloat)  return (R) new WA<float>   (hg, s, (ArrayFloat*)v);
+		if (x == Value::Byte)   return (R) new WS<int8_t,   Byte>  (hg, s, (Byte*)v);
+		if (x == Value::Short)  return (R) new WS<int16_t,  Short> (hg, s, (Short*)v);
+		if (x == Value::Int)    return (R) new WS<int32_t,  Int>   (hg, s, (Int*)v);
+		if (x == Value::Long)   return (R) new WS<int64_t,  Long>  (hg, s, (Long*)v);
+		if (x == Value::UByte)  return (R) new WS<uint8_t,  UByte> (hg, s, (UByte*)v);
+		if (x == Value::UShort) return (R) new WS<uint16_t, UShort>(hg, s, (UShort*)v);
+		if (x == Value::UInt)   return (R) new WS<uint32_t, UInt>  (hg, s, (UInt*)v);
+		if (x == Value::ULong)  return (R) new WS<uint64_t, ULong> (hg, s, (ULong*)v);
+		if (x == Value::Double) return (R) new WS<double,   Double>(hg, s, (Double*)v);
+		if (x == Value::Float)  return (R) new WS<float,    Float> (hg, s, (Float*)v);
+		if (x == Value::ArrayByte)   return (R) new WA<int8_t,   ArrayByte>  (hg, s, (ArrayByte*)v);
+		if (x == Value::ArrayShort)  return (R) new WA<int16_t,  ArrayShort> (hg, s, (ArrayShort*)v);
+		if (x == Value::ArrayInt)    return (R) new WA<int32_t,  ArrayInt>   (hg, s, (ArrayInt*)v);
+		if (x == Value::ArrayLong)   return (R) new WA<int64_t,  ArrayLong>  (hg, s, (ArrayLong*)v);
+		if (x == Value::ArrayUByte)  return (R) new WA<uint8_t,  ArrayUByte> (hg, s, (ArrayUByte*)v);
+		if (x == Value::ArrayUShort) return (R) new WA<uint16_t, ArrayUShort>(hg, s, (ArrayUShort*)v);
+		if (x == Value::ArrayUInt)   return (R) new WA<uint32_t, ArrayUInt>  (hg, s, (ArrayUInt*)v);
+		if (x == Value::ArrayULong)  return (R) new WA<uint64_t, ArrayULong> (hg, s, (ArrayULong*)v);
+		if (x == Value::ArrayDouble) return (R) new WA<double,   ArrayDouble>(hg, s, (ArrayDouble*)v);
+		if (x == Value::ArrayFloat)  return (R) new WA<float,    ArrayFloat> (hg, s, (ArrayFloat*)v);
 		return (writer_typed_base*) nullptr;
 	};
 	impl.reset(impl_fac(fbuf->value_type()));
 
 	if (do_writer_forwarder_internal) {
-		// Dataset for sequence numbers, used primarily for unit tests
-		auto dt = nat_type<uint64_t>();
-		auto ncols = 1;
-		array<hsize_t, 2> sini {{ 0, 1 }};
-		array<hsize_t, 2> smax {{ H5S_UNLIMITED, 1 }};
-		auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-		auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-		array<hsize_t, 2> schk {{std::max<hsize_t>(64*1024/H5Tget_size(dt)/ncols, 1), 1}};
-		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
-		if (err < 0) {
-			LOG(0, "ERROR in H5Pset_chunk");
-		}
-		this->ds_seq_data = H5Dcreate1(hdf_group, (sourcename + "__fwdinfo_seq_data").c_str(), dt, dsp, dcpl);
-		if (this->ds_seq_data < 0) {
-			LOG(0, "ERROR creating ds_seq_data");
-		}
-		H5Pclose(dcpl);
-		H5Sclose(dsp);
-	}
-	if (do_writer_forwarder_internal) {
-		// Dataset seq_fwd
-		auto dt = nat_type<uint64_t>();
-		auto ncols = 1;
-		array<hsize_t, 2> sini {{ 0, 1 }};
-		array<hsize_t, 2> smax {{ H5S_UNLIMITED, 1 }};
-		auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-		auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-		array<hsize_t, 2> schk {{std::max<hsize_t>(64*1024/H5Tget_size(dt)/ncols, 1), 1}};
-		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
-		if (err < 0) {
-			LOG(0, "ERROR in H5Pset_chunk");
-		}
-		this->ds_seq_fwd = H5Dcreate1(hdf_group, (sourcename + "__fwdinfo_seq_fwd").c_str(), dt, dsp, dcpl);
-		if (this->ds_seq_fwd < 0) {
-			LOG(0, "ERROR creating ds_seq_fwd");
-		}
-		H5Pclose(dcpl);
-		H5Sclose(dsp);
-	}
-	if (do_writer_forwarder_internal) {
-		// Dataset for ts_data
-		auto dt = nat_type<uint64_t>();
-		auto ncols = 1;
-		array<hsize_t, 2> sini {{ 0, 1 }};
-		array<hsize_t, 2> smax {{ H5S_UNLIMITED, 1 }};
-		auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-		auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-		array<hsize_t, 2> schk {{ std::max<hsize_t>(64*1024/H5Tget_size(dt)/ncols, 1), 1 }};
-		herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
-		if (err < 0) {
-			LOG(0, "ERROR in H5Pset_chunk");
-		}
-		this->ds_ts_data = H5Dcreate1(hdf_group, (sourcename + "__fwdinfo_ts_data").c_str(), dt, dsp, dcpl);
-		if (this->ds_ts_data < 0) {
-			LOG(0, "ERROR creating ds_ts_data");
-		}
-		H5Pclose(dcpl);
-		H5Sclose(dsp);
+		this->ds_seq_data = create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_data");
+		this->ds_seq_fwd = create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_fwd");
+		this->ds_ts_data = create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_ts_data");
 	}
 }
 
 
 
-template <typename DT>
-writer_typed_array<DT>::~writer_typed_array() {
+template <typename DT, typename FV>
+writer_typed_array<DT, FV>::~writer_typed_array() {
 	if (ds != -1) H5Dclose(ds);
 	if (dsp != -1) H5Sclose(dsp);
 	if (dcpl != -1) H5Pclose(dcpl);
 }
 
 
-template <typename DT>
-template <typename FV>
-writer_typed_array<DT>::writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV fv) {
+template <typename DT, typename FV>
+writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV * fv) {
 	hsize_t ncols = fv->value()->size();
 	LOG(7, "f142 init_impl  v.size(): {}", ncols);
 	using std::vector;
@@ -242,7 +229,9 @@ writer_typed_array<DT>::writer_typed_array(hid_t hdf_group, std::string const & 
 
 
 template <typename Td>
-static int append_data(hid_t ds, Td const * data, size_t nlen) {
+static int append_data_array(hid_t ds, Td const * data, size_t nlen) {
+	// Yes, verbose and more checks than necessary, but this is to gather
+	// baseline performance data before merging the tuned branch.
 	auto tgt = H5Dget_space(ds);
 	auto ndims = H5Sget_simple_extent_ndims(tgt);
 	std::vector<hsize_t> get_sizes_now;
@@ -307,28 +296,147 @@ static int append_data(hid_t ds, Td const * data, size_t nlen) {
 }
 
 
-template <typename DT>
-int writer_typed_array<DT>::write_impl(LogData const * fbuf) {
-	auto value1 = (ArrayDouble*)fbuf->value();
-	append_data(this->ds, value1->value()->data(), value1->value()->size());
+template <typename Td>
+static int append_data_scalar(hid_t ds, Td const data) {
+	// Yes, verbose and more checks than necessary, but this is to gather
+	// baseline performance data before merging the tuned branch.
+	auto tgt = H5Dget_space(ds);
+	auto ndims = H5Sget_simple_extent_ndims(tgt);
+	if (ndims != 1) {
+		LOG(6, "this data space is expected to have one dimension");
+		return -1;
+	}
+	using AA = std::array<hsize_t, 1>;
+	AA get_sizes_now;
+	AA get_sizes_max;
+	herr_t err;
+	H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
+	if (false) {
+		for (int i1 = 0; i1 < ndims; ++i1) {
+			LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		}
+	}
+
+	get_sizes_now.at(0) += 1;
+	err = H5Dextend(ds, get_sizes_now.data());
+	if (err < 0) {
+		LOG(4, "ERROR can not extend dataset");
+		return -1;
+	}
+	H5Sclose(tgt);
+
+	tgt = H5Dget_space(ds);
+	AA mem_size = {{1}};
+	auto mem = H5Screate_simple(1, mem_size.data(), nullptr);
+	{
+		AA hsl_start {{0}};
+		AA hsl_count {{1}};
+		err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
+		if (err < 0) {
+			LOG(4, "ERROR can not select mem hyperslab");
+			return -2;
+		}
+	}
+	{
+		AA hsl_start {{get_sizes_now.at(0)-1}};
+		AA hsl_count {{1}};
+		err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
+		if (err < 0) {
+			LOG(4, "ERROR can not select tgt hyperslab");
+			return -3;
+		}
+	}
+	if (false) {
+		for (int i1 = 0; i1 < ndims; ++i1) {
+			LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		}
+	}
+	auto dt = nat_type<Td>();
+	err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, &data);
+	if (err < 0) {
+		LOG(4, "ERROR writing failed");
+		return -4;
+	}
+	err = H5Sclose(mem);
 	return 0;
 }
 
 
+template <typename DT, typename FV>
+int writer_typed_array<DT, FV>::write_impl(LogData const * fbuf) {
+	auto value1 = (FV const *)fbuf->value();
+	append_data_array(this->ds, value1->value()->data(), value1->value()->size());
+	return 0;
+}
+
+
+template <typename DT, typename FV>
+writer_typed_scalar<DT, FV>::~writer_typed_scalar() {
+	if (ds != -1) H5Dclose(ds);
+	if (dsp != -1) H5Sclose(dsp);
+	if (dcpl != -1) H5Pclose(dcpl);
+}
+
+
+template <typename DT, typename FV>
+writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group, std::string const & sourcename, FV * fv) {
+	LOG(7, "f142 init_impl  scalar");
+	using std::vector;
+	using std::array;
+	using AA = std::array<hsize_t, 1>;
+	auto dt = nat_type<DT>();
+
+	AA sizes_ini {{0}};
+	AA sizes_max {{H5S_UNLIMITED}};
+
+	this->dsp = H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
+	if (true) {
+		// Just check if it works as I think it should
+		LOG(7, "DataSpace isSimple {}", H5Sis_simple(dsp));
+		auto ndims = H5Sget_simple_extent_ndims(dsp);
+		LOG(7, "DataSpace getSimpleExtentNdims {}", ndims);
+		LOG(7, "DataSpace getSimpleExtentNpoints {}", H5Sget_simple_extent_npoints(dsp));
+		std::vector<hsize_t> get_sizes_now;
+		std::vector<hsize_t> get_sizes_max;
+		get_sizes_now.resize(ndims);
+		get_sizes_max.resize(ndims);
+		H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
+		for (int i1 = 0; i1 < ndims; ++i1) {
+			LOG(7, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
+		}
+	}
+
+	this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
+	AA sizes_chk {{std::max<hsize_t>(64*1024/H5Tget_size(dt), 1)}};
+	H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
+	this->ds = H5Dcreate1(hdf_group, sourcename.c_str(), dt, dsp, dcpl);
+}
+
+
+template <typename DT, typename FV>
+int writer_typed_scalar<DT, FV>::write_impl(LogData const * fbuf) {
+	auto value1 = (FV const *)fbuf->value();
+	append_data_scalar(this->ds, value1->value());
+	return 0;
+}
+
+
+
 WriteResult writer::write_impl(Msg msg) {
 	auto fbuf = GetLogData(msg.data);
+	if (!impl) {
+		LOG(5, "sorry, but we were unable to initialize for this kind of messages");
+		return {-1};
+	}
 	if (impl->write_impl(fbuf)) {
 		LOG(5, "write failed");
 	}
 	if (do_writer_forwarder_internal) {
 		if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
 			auto fi = (fwdinfo_1_t*)fbuf->fwdinfo();
-			auto ts_data = (int64_t) fi->ts_data();
-			auto seq_data = fi->seq_data();
-			auto seq_fwd = fi->seq_fwd();
-			append_data(this->ds_seq_data, &seq_data, 1);
-			append_data(this->ds_seq_fwd, &seq_fwd, 1);
-			append_data(this->ds_ts_data, &ts_data, 1);
+			append_data_scalar(this->ds_seq_data, fi->seq_data());
+			append_data_scalar(this->ds_seq_fwd, fi->seq_fwd());
+			append_data_scalar(this->ds_ts_data, fi->ts_data());
 		}
 	}
 
