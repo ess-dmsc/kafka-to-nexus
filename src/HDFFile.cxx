@@ -326,6 +326,14 @@ std::unique_ptr<FBSchemaWriter> FBSchemaReader::create_writer() {
 FBSchemaReader::~FBSchemaReader() {
 }
 
+bool FBSchemaReader::verify(Msg msg) {
+	return verify_impl(msg);
+}
+
+bool FBSchemaReader::verify_impl(Msg msg) {
+	return false;
+}
+
 std::string FBSchemaReader::sourcename(Msg msg) {
 	return sourcename_impl(msg);
 }

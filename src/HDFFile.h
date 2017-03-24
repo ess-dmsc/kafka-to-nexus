@@ -42,11 +42,13 @@ typedef std::unique_ptr<FBSchemaReader> ptr;
 static std::unique_ptr<FBSchemaReader> create(Msg msg);
 virtual ~FBSchemaReader();
 std::unique_ptr<FBSchemaWriter> create_writer();
+bool verify(Msg msg);
 std::string sourcename(Msg msg);
 uint64_t ts(Msg msg);
 uint64_t teamid(Msg & msg);
 private:
 virtual std::unique_ptr<FBSchemaWriter> create_writer_impl() = 0;
+virtual bool verify_impl(Msg msg);
 virtual std::string sourcename_impl(Msg msg) = 0;
 virtual uint64_t ts_impl(Msg msg) = 0;
 virtual uint64_t teamid_impl(Msg & msg);
