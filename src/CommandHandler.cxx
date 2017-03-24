@@ -135,6 +135,7 @@ void CommandHandler::handle_exit(rapidjson::Document &d) {
 }
 
 void CommandHandler::handle(Msg const &msg) {
+  using std::string;
   using namespace rapidjson;
   auto doc = make_unique<Document>();
   ParseResult err = doc->Parse((char *)msg.data, msg.size);
@@ -149,10 +150,10 @@ void CommandHandler::handle(Msg const &msg) {
   if (master) {
     teamid = master->config.teamid;
   }
-  if (d.HasMember("teamid")) {
-    auto &m = d["teamid"];
-    if (m.IsInt()) {
-      cmd_teamid = d["teamid"].GetUint64();
+  {
+    auto m = d.FindMember("teamid");
+    if (m != d.MemberEnd() && m->value.IsInt()) {
+      cmd_teamid = m->value.GetUint64();
     }
   }
   if (cmd_teamid != teamid) {
@@ -161,9 +162,10 @@ void CommandHandler::handle(Msg const &msg) {
     return;
   }
 
-  if (d.HasMember("cmd")) {
-    if (d["cmd"].IsString()) {
-      std::string cmd(d["cmd"].GetString());
+  {
+    auto m = d.FindMember("cmd");
+    if (m != d.MemberEnd() && m->value.IsString()) {
+      string cmd(m->value.GetString());
       if (cmd == "FileWriter_new") {
         handle_new(d);
         return;
