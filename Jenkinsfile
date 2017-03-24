@@ -11,7 +11,7 @@ node('kafka-to-nexus') {
         }
 
         stage("make clean") {
-            sh "make clean; rm CMakeCache.txt"
+            sh "make clean; rm CMakeCache.txt; rm -rf ../build/*"
         }
 
         stage("cmake") {
@@ -23,7 +23,7 @@ node('kafka-to-nexus') {
         }
 
         stage("Archive") {
-            sh "mkdir file-writer"
+            sh "rm -rf file-writer; mkdir file-writer"
             sh "cp kafka-to-nexus send-command file-writer/"
             sh "tar czf file-writer.tar.gz file-writer"
             archiveArtifacts 'file-writer.tar.gz'
