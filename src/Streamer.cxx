@@ -186,7 +186,7 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
     if (err != RdKafka::ERR_NO_ERROR) {
       LOG(3, "seek failed :\t{}", RdKafka::err2str(err));
     }
-    return std::move(m);
+    return m;
   }
   _begin = _offset;
   BrightnESS::FileWriter::RdKafkaOffset pos = jump_back_impl(step_back_amount);
@@ -198,7 +198,7 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
     if (err != RdKafka::ERR_NO_ERROR) {
       LOG(3, "seek failed :\t{}", RdKafka::err2str(err));
     }
-    return std::move(m);
+    return m;
   }
   return set_start_time(mp, tp);
 }
@@ -262,7 +262,7 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
     if (err != RdKafka::ERR_NO_ERROR) {
       LOG(3, "seek failed :\t{}", RdKafka::err2str(err));
     }
-    return std::move(m);
+    return m;
   }
   _begin = _offset;
   BrightnESS::FileWriter::RdKafkaOffset pos = jump_back_impl(step_back_amount);
@@ -274,7 +274,7 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
     if (err != RdKafka::ERR_NO_ERROR) {
       LOG(3, "seek failed :\t{}", RdKafka::err2str(err));
     }
-    return std::move(m);
+    return m;
   }
   return set_start_time(f, tp);
 }

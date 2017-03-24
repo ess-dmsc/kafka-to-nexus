@@ -77,7 +77,7 @@ protected:
   void start() {
     _stop = false;
     _pause = false;
-    t = std::move( std::thread( [this] { this->produce(); } ) );
+    t = std::thread( [this] { this->produce(); } );
     std::this_thread::sleep_for (std::chrono::milliseconds(100));
   }
 
@@ -127,7 +127,7 @@ std::pair<std::string,int64_t> dummy_message_parser(std::string&& msg) {
   return std::pair<std::string,int64_t>("", -1);
 }
 std::function<TimeDifferenceFromMessage_DT(void*,int)> time_difference = [](void* x, int size) {
-  auto parsed_text = dummy_message_parser(std::move(std::string((char*)x)));
+  auto parsed_text = dummy_message_parser(std::string((char*)x));
   return TimeDifferenceFromMessage_DT(parsed_text.first,parsed_text.second);
 };
 
