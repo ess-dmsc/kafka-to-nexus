@@ -11,7 +11,7 @@ node('kafka-to-nexus') {
         }
 
         stage("make clean") {
-            sh "make clean; rm CMakeCache.txt; rm -rf ../build/*"
+            sh "rm -rf ../build/*"
         }
 
         stage("cmake") {
