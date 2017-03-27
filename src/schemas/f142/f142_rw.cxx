@@ -9,7 +9,11 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+using std::array;
+using std::vector;
+using std::string;
 template <typename T> using uptr = std::unique_ptr<T>;
+using FBUF = LogData;
 
 template <typename T> hid_t nat_type();
 template <> hid_t nat_type<float>()    { return H5T_NATIVE_FLOAT; }
@@ -33,7 +37,7 @@ uint64_t teamid_impl(Msg & msg) override;
 
 class writer_typed_base {
 public:
-virtual int write_impl(LogData const * fbuf) = 0;
+virtual int write_impl(FBUF const * fbuf) = 0;
 };
 
 template <typename DT, typename FV>
@@ -41,7 +45,7 @@ class writer_typed_array : public writer_typed_base {
 public:
 writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV * fbval);
 ~writer_typed_array();
-int write_impl(LogData const * fbuf) override;
+int write_impl(FBUF const * fbuf) override;
 // DataSet::getId() will be -1 for the default constructed
 hid_t ds = -1;
 hid_t dsp = -1;
@@ -53,7 +57,7 @@ class writer_typed_scalar : public writer_typed_base {
 public:
 writer_typed_scalar(hid_t hdf_group, std::string const & sourcename, FV * fbval);
 ~writer_typed_scalar();
-int write_impl(LogData const * fbuf) override;
+int write_impl(FBUF const * fbuf) override;
 hid_t ds = -1;
 hid_t dsp = -1;
 hid_t dcpl = -1;
@@ -64,12 +68,17 @@ class writer : public FBSchemaWriter {
 void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) override;
 WriteResult write_impl(Msg msg) override;
 uptr<writer_typed_base> impl;
+hid_t ds_timestamp = -1;
 hid_t ds_seq_data = -1;
 hid_t ds_seq_fwd = -1;
 hid_t ds_ts_data = -1;
 bool do_flush_always = false;
 bool do_writer_forwarder_internal = false;
 };
+
+static FBUF const * get_fbuf(char * data) {
+	return GetLogData(data);
+}
 
 std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
 	return std::unique_ptr<FBSchemaWriter>(new writer);
@@ -82,21 +91,22 @@ bool reader::verify_impl(Msg msg) {
 }
 
 std::string reader::sourcename_impl(Msg msg) {
-	auto fbuf = GetLogData(msg.data);
-	if (!fbuf->source_name()) {
+	auto fbuf = get_fbuf(msg.data);
+	auto s1 = fbuf->source_name();
+	if (!s1) {
 		LOG(4, "WARNING message has no source name");
 		return "";
 	}
-	return fbuf->source_name()->str();
+	return s1->str();
 }
 
 uint64_t reader::ts_impl(Msg msg) {
-	auto fbuf = GetLogData(msg.data);
+	auto fbuf = get_fbuf(msg.data);
 	return fbuf->timestamp();
 }
 
 uint64_t reader::teamid_impl(Msg & msg) {
-	auto fbuf = GetLogData(msg.data);
+	auto fbuf = get_fbuf(msg.data);
 	if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
 		return ((fwdinfo_1_t*)fbuf->fwdinfo())->teamid();
 	}
@@ -105,6 +115,7 @@ uint64_t reader::teamid_impl(Msg & msg) {
 
 
 writer::~writer() {
+	if (ds_timestamp != -1) H5Dclose(ds_timestamp);
 	if (ds_seq_data != -1) H5Dclose(ds_seq_data);
 	if (ds_seq_fwd != -1) H5Dclose(ds_seq_fwd);
 	if (ds_ts_data != -1) H5Dclose(ds_ts_data);
@@ -138,15 +149,14 @@ static hid_t create_1d_ds(hid_t loc, std::string const & name) {
 }
 
 
-void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) {
-	using std::array;
+void writer::init_impl(string const & sourcename, hid_t hdf_group, Msg msg) {
 	// This is just a unbuffered, low-performance write.
 	// Improved write on separate branch.
 	// Want to gather performance data first for this baseline implementation
 	// in the integration tests.
-	auto fbuf = GetLogData(msg.data);
+	auto fbuf = get_fbuf(msg.data);
 	auto & hg = hdf_group;
-	auto & s = sourcename;
+	string s("value");
 
 	auto impl_fac = [&hg, &s, &fbuf](Value x){
 		using R = writer_typed_base *;
@@ -175,6 +185,8 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 	};
 	impl.reset(impl_fac(fbuf->value_type()));
 
+	this->ds_timestamp = create_1d_ds<uint64_t>(hdf_group, "time");
+
 	if (do_writer_forwarder_internal) {
 		this->ds_seq_data = create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_data");
 		this->ds_seq_fwd = create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_fwd");
@@ -193,7 +205,7 @@ writer_typed_array<DT, FV>::~writer_typed_array() {
 
 
 template <typename DT, typename FV>
-writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV * fv) {
+writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group, std::string const & dataset_name, FV * fv) {
 	hsize_t ncols = fv->value()->size();
 	LOG(7, "f142 init_impl  v.size(): {}", ncols);
 	using std::vector;
@@ -223,7 +235,7 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group, std::string cons
 	this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
 	std::array<hsize_t, 2> sizes_chk {{std::max(64*1024/H5Tget_size(dt)/ncols, (hsize_t)1), ncols}};
 	H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
-	this->ds = H5Dcreate1(hdf_group, sourcename.c_str(), dt, dsp, dcpl);
+	this->ds = H5Dcreate1(hdf_group, dataset_name.c_str(), dt, dsp, dcpl);
 }
 
 
@@ -363,7 +375,7 @@ static int append_data_scalar(hid_t ds, Td const data) {
 
 
 template <typename DT, typename FV>
-int writer_typed_array<DT, FV>::write_impl(LogData const * fbuf) {
+int writer_typed_array<DT, FV>::write_impl(FBUF const * fbuf) {
 	auto value1 = (FV const *)fbuf->value();
 	append_data_array(this->ds, value1->value()->data(), value1->value()->size());
 	return 0;
@@ -379,7 +391,7 @@ writer_typed_scalar<DT, FV>::~writer_typed_scalar() {
 
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group, std::string const & sourcename, FV * fv) {
+writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group, std::string const & dataset_name, FV * fv) {
 	LOG(7, "f142 init_impl  scalar");
 	using std::vector;
 	using std::array;
@@ -409,12 +421,12 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group, std::string co
 	this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
 	AA sizes_chk {{std::max<hsize_t>(64*1024/H5Tget_size(dt), 1)}};
 	H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
-	this->ds = H5Dcreate1(hdf_group, sourcename.c_str(), dt, dsp, dcpl);
+	this->ds = H5Dcreate1(hdf_group, dataset_name.c_str(), dt, dsp, dcpl);
 }
 
 
 template <typename DT, typename FV>
-int writer_typed_scalar<DT, FV>::write_impl(LogData const * fbuf) {
+int writer_typed_scalar<DT, FV>::write_impl(FBUF const * fbuf) {
 	auto value1 = (FV const *)fbuf->value();
 	append_data_scalar(this->ds, value1->value());
 	return 0;
@@ -423,7 +435,7 @@ int writer_typed_scalar<DT, FV>::write_impl(LogData const * fbuf) {
 
 
 WriteResult writer::write_impl(Msg msg) {
-	auto fbuf = GetLogData(msg.data);
+	auto fbuf = get_fbuf(msg.data);
 	if (!impl) {
 		LOG(5, "sorry, but we were unable to initialize for this kind of messages");
 		return {-1};
@@ -431,6 +443,7 @@ WriteResult writer::write_impl(Msg msg) {
 	if (impl->write_impl(fbuf)) {
 		LOG(5, "write failed");
 	}
+	append_data_scalar(this->ds_timestamp, fbuf->timestamp());
 	if (do_writer_forwarder_internal) {
 		if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
 			auto fi = (fwdinfo_1_t*)fbuf->fwdinfo();
