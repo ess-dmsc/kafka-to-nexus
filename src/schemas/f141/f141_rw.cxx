@@ -23,6 +23,7 @@ template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 class reader : public FBSchemaReader {
 std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
+bool verify_impl(Msg msg) override;
 std::string sourcename_impl(Msg msg) override;
 uint64_t ts_impl(Msg msg) override;
 uint64_t teamid_impl(Msg & msg) override;
@@ -62,6 +63,12 @@ std::string reader::sourcename_impl(Msg msg) {
 		return "";
 	}
 	return epicspv->name()->str();
+}
+
+bool reader::verify_impl(Msg msg) {
+	auto veri = flatbuffers::Verifier((uint8_t*)msg.data, msg.size);
+	if (FlatBufs::f141_epics_nt::VerifyEpicsPVBuffer(veri)) return true;
+	return false;
 }
 
 // TODO

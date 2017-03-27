@@ -3,6 +3,7 @@
 #include "schemas/f141_epics_nt_generated.h"
 #include <string>
 #include <type_traits>
+#include <random>
 
 namespace BrightnESS {
 namespace FlatBufs {

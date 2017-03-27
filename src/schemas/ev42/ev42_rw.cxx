@@ -17,6 +17,7 @@ using std::string;
 
 class reader : public FBSchemaReader {
 std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
+bool verify_impl(Msg msg) override;
 std::string sourcename_impl(Msg msg) override;
 uint64_t ts_impl(Msg msg) override;
 };
@@ -28,7 +29,7 @@ void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) overrid
 WriteResult write_impl(Msg msg) override;
 hid_t ds_time_of_flight = -1;
 hid_t ds_detector_id = -1;
-bool do_flush_always = true;
+bool do_flush_always = false;
 };
 
 
@@ -36,6 +37,11 @@ std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
 	return std::unique_ptr<FBSchemaWriter>(new writer);
 }
 
+bool reader::verify_impl(Msg msg) {
+	auto veri = flatbuffers::Verifier((uint8_t*)msg.data, msg.size);
+	if (VerifyEventMessageBuffer(veri)) return true;
+	return false;
+}
 
 uint64_t reader::ts_impl(Msg msg) {
 	return 818181;
@@ -179,6 +185,13 @@ WriteResult writer::write_impl(Msg msg) {
 	LOG(9, "APPEND TO: {}, {}", ds_time_of_flight, evmsg->time_of_flight()->size());
 	append_data_1d(this->ds_time_of_flight, evmsg->time_of_flight()->data(), evmsg->time_of_flight()->size());
 	append_data_1d(this->ds_detector_id, evmsg->detector_id()->data(), evmsg->detector_id()->size());
+	if (do_flush_always) {
+		auto file = hdf_file->h5file_detail().h5file();
+		auto err = H5Fflush(file, H5F_SCOPE_LOCAL);
+		if (err < 0) {
+			LOG(4, "ERROR while flushing");
+		}
+	}
 	return {ts};
 }
 
