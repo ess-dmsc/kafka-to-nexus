@@ -31,7 +31,8 @@ int MainOpt::parse_config_file(std::string fname) {
 Parses the options using getopt and returns a MainOpt
 */
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
-	std::unique_ptr<MainOpt> opt(new MainOpt);
+	std::pair<int, std::unique_ptr<MainOpt>> ret {0, std::unique_ptr<MainOpt>(new MainOpt)};
+	auto & opt = ret.second;
 	opt->master = nullptr;
 	// For the signal handler
 	g_main_opt.store(opt.get());
@@ -70,7 +71,10 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 				opt->help = true;
 			}
 			if (std::string("config-file") == lname) {
-				opt->parse_config_file(optarg);
+				if (opt->parse_config_file(optarg)) {
+					opt->help = true;
+					ret.first = 1;
+				}
 			}
 			if (std::string("broker-command") == lname) {
 				URI x(optarg);
@@ -101,10 +105,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 	if (getopt_error) {
 		LOG(2, "ERROR parsing command line options");
 		opt->help = true;
-		return {1, std::move(opt)};
+		ret.first = 1;
 	}
-
-	return {0, std::move(opt)};
+	return ret;
 }
 
 

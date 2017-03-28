@@ -18,14 +18,7 @@ void signal_handler(int signal) {
 
 int main(int argc, char ** argv) {
 	auto po = parse_opt(argc, argv);
-	if (po.first) {
-		return 1;
-	}
 	auto opt = std::move(po.second);
-	if (opt->use_signal_handler) {
-		std::signal(SIGINT, signal_handler);
-		std::signal(SIGTERM, signal_handler);
-	}
 
 	printf("kafka-to-nexus-0.0.1 %.7s (ESS, BrightnESS)\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
@@ -37,6 +30,8 @@ int main(int argc, char ** argv) {
 		       "\n"
 		       "kafka-to-nexus\n"
 		       "  --help, -h\n"
+		       "\n"
+		       "  --config-file               <filename.json>\n"
 		       "\n"
 		       "  --broker-command            <//host[:port][/topic]>\n"
 		       "      Kafka brokers to connect with for configuration updates.\n"
@@ -68,6 +63,15 @@ int main(int argc, char ** argv) {
 		       "      Increase verbosity\n"
 		       "\n");
 		return 1;
+	}
+
+	if (po.first) {
+		return 1;
+	}
+
+	if (opt->use_signal_handler) {
+		std::signal(SIGINT, signal_handler);
+		std::signal(SIGTERM, signal_handler);
 	}
 
 	setup_logger_from_options(*opt);
