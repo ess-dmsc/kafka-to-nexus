@@ -15,6 +15,8 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <rapidjson/prettywriter.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 
 namespace BrightnESS {
@@ -46,7 +48,7 @@ void CommandListener::start() {
 	KafkaW::BrokerOpt opt;
 	opt.poll_timeout_ms = 500;
 	opt.address = config.broker.host_port;
-	opt.conf_strings["group.id"] = "kafka-to-nexus.CommandListener";
+	opt.conf_strings["group.id"] = fmt::format("kafka-to-nexus.CommandListener--pid-{}", getpid());
 	consumer.reset(new KafkaW::Consumer(opt));
 	consumer->on_rebalance_assign = config.on_rebalance_assign;
 	consumer->add_topic(config.broker.topic);
