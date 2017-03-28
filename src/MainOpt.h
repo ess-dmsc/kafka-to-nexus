@@ -4,6 +4,7 @@
 #include <utility>
 #include <string>
 #include "Master.h"
+#include <rapidjson/document.h>
 
 // POD
 struct MainOpt {
@@ -15,6 +16,8 @@ BrightnESS::FileWriter::MasterConfig master_config;
 std::string kafka_gelf;
 std::string graylog_logger_address;
 std::atomic<BrightnESS::FileWriter::Master *> master;
+rapidjson::Document config_file;
+int parse_config_file(std::string fname);
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv);

@@ -1,8 +1,31 @@
 #include "MainOpt.h"
 #include "uri.h"
+#include "helper.h"
 #include <getopt.h>
+#include <rapidjson/writer.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/schema.h>
 
 using BrightnESS::uri::URI;
+
+int MainOpt::parse_config_file(std::string fname) {
+	using namespace rapidjson;
+	if (fname == "") {
+		LOG(3, "given config filename is empty");
+		return -1;
+	}
+	// Parse the JSON configuration and extract parameters.
+	// Currently, these parameters take precedence over what is given on the command line.
+	auto jsontxt = gulp(fname);
+	auto & d = config_file;
+	d.Parse(jsontxt.data(), jsontxt.size());
+	if (d.HasParseError()) {
+		LOG(3, "configuration is not well formed");
+		return -5;
+	}
+	return 0;
+}
 
 /**
 Parses the options using getopt and returns a MainOpt
@@ -14,6 +37,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 	g_main_opt.store(opt.get());
 	static struct option long_options[] = {
 		{"help",                            no_argument,              0, 'h'},
+		{"config-file",                     required_argument,        0,  0 },
 		{"broker-command",                  required_argument,        0,  0 },
 		{"kafka-gelf",                      required_argument,        0,  0 },
 		{"graylog-logger",                  required_argument,        0,  0 },
@@ -44,6 +68,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 			auto lname = long_options[option_index].name;
 			if (std::string("help") == lname) {
 				opt->help = true;
+			}
+			if (std::string("config-file") == lname) {
+				opt->parse_config_file(optarg);
 			}
 			if (std::string("broker-command") == lname) {
 				URI x(optarg);
