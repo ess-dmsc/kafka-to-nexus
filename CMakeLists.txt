@@ -1,4 +1,18 @@
 cmake_minimum_required(VERSION 2.8.11)
+project("kafka-to-nexus")
+
+set(REQUIRE_GTEST FALSE CACHE BOOL "Require Google Test")
+if (REQUIRE_GTEST)
+find_path(path_googletest_repository NAMES "googletest/include/gtest/gtest.h" PATHS ../googletest $ENV{googletest_repository_dir})
+if (path_googletest_repository)
+set(path_include_gtest "${path_googletest_repository}/googletest/include")
+message(STATUS "Google Test repository at ${path_googletest_repository}")
+set(have_gtest 1)
+add_subdirectory(${path_googletest_repository} googletest)
+else()
+message(FATAL_ERROR "Google Test required but not found")
+endif()
+endif()
 
 add_subdirectory(src)
 
