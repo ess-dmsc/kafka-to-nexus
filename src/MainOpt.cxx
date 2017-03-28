@@ -17,6 +17,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 		{"broker-command",                  required_argument,        0,  0 },
 		{"kafka-gelf",                      required_argument,        0,  0 },
 		{"graylog-logger",                  required_argument,        0,  0 },
+		{"use-signal-handler",              required_argument,        0,  0 },
 		{"teamid",                          required_argument,        0,  0 },
 		{"assets-dir",                      required_argument,        0,  0 },
 		{0, 0, 0, 0},
@@ -56,6 +57,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 			}
 			if (std::string("graylog-logger-address") == lname) {
 				opt->graylog_logger_address = optarg;
+			}
+			if (std::string("use-signal-handler") == lname) {
+				opt->use_signal_handler = (bool)strtoul(optarg, nullptr, 0);
 			}
 			if (std::string("teamid") == lname) {
 				opt->master_config.teamid = strtoul(optarg, nullptr, 0);

@@ -22,8 +22,10 @@ int main(int argc, char ** argv) {
 		return 1;
 	}
 	auto opt = std::move(po.second);
-	std::signal(SIGINT, signal_handler);
-	std::signal(SIGTERM, signal_handler);
+	if (opt->use_signal_handler) {
+		std::signal(SIGINT, signal_handler);
+		std::signal(SIGTERM, signal_handler);
+	}
 
 	printf("kafka-to-nexus-0.0.1 %.7s (ESS, BrightnESS)\n", GIT_COMMIT);
 	printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");

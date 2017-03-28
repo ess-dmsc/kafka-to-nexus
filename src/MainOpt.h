@@ -10,6 +10,7 @@ struct MainOpt {
 bool help = false;
 bool verbose = false;
 bool gtest = false;
+bool use_signal_handler = true;
 BrightnESS::FileWriter::MasterConfig master_config;
 std::string kafka_gelf;
 std::string graylog_logger_address;
