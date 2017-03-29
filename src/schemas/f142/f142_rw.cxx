@@ -1,7 +1,9 @@
 #include "../../SchemaRegistry.h"
 #include "../../HDFFile.h"
 #include "../../HDFFile_h5.h"
+#include "../../helper.h"
 #include <hdf5.h>
+#include <limits>
 #include "schemas/f142_logdata_generated.h"
 
 namespace BrightnESS {
@@ -85,6 +87,7 @@ bool do_flush_always = false;
 bool do_writer_forwarder_internal = false;
 uint64_t total_written_bytes = 0;
 uint64_t index_at_bytes = 0;
+uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
 uint64_t ts_max = 0;
 };
 
@@ -131,6 +134,8 @@ writer::~writer() {
 	if (ds_seq_data != -1) H5Dclose(ds_seq_data);
 	if (ds_seq_fwd != -1) H5Dclose(ds_seq_fwd);
 	if (ds_ts_data != -1) H5Dclose(ds_ts_data);
+	if (ds_cue_timestamp_zero != -1) H5Dclose(ds_cue_timestamp_zero);
+	if (ds_cue_index != -1) H5Dclose(ds_cue_index);
 }
 
 template <typename T, typename V> using WA = writer_typed_array<T,V>;
@@ -169,6 +174,12 @@ void writer::init_impl(string const & sourcename, hid_t hdf_group, Msg msg) {
 	auto fbuf = get_fbuf(msg.data);
 	auto & hg = hdf_group;
 	string s("value");
+
+	if (config_file) {
+		if (auto x = get_int(config_file, "nexus.indices.index_every_mb")) {
+			index_every_bytes = (int)x * 1024*1024;
+		}
+	}
 
 	auto impl_fac = [&hg, &s, &fbuf](Value x){
 		using R = writer_typed_base *;
@@ -457,7 +468,7 @@ WriteResult writer::write_impl(Msg msg) {
 	}
 	total_written_bytes += wret.written_bytes;
 	ts_max = std::max(fbuf->timestamp(), ts_max);
-	if (total_written_bytes > index_at_bytes + 120) {
+	if (total_written_bytes > index_at_bytes + index_every_bytes) {
 		append_data_scalar(this->ds_cue_timestamp_zero, ts_max);
 		append_data_scalar(this->ds_cue_index, wret.ix0);
 		index_at_bytes = total_written_bytes;
