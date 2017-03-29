@@ -1,7 +1,9 @@
 #include "../../SchemaRegistry.h"
 #include "../../HDFFile.h"
 #include "../../HDFFile_h5.h"
+#include "../../helper.h"
 #include <hdf5.h>
+#include <limits>
 #include "schemas/f141_epics_nt_generated.h"
 
 namespace BrightnESS {
@@ -35,9 +37,16 @@ uint64_t ts_impl(Msg msg) override;
 uint64_t teamid_impl(Msg & msg) override;
 };
 
+struct append_ret {
+int status;
+uint64_t written_bytes;
+uint64_t ix0;
+operator bool () const { return status == 0; }
+};
+
 class writer_typed_base {
 public:
-virtual int write_impl(FBUF const * fbuf) = 0;
+virtual append_ret write_impl(FBUF const * fbuf) = 0;
 };
 
 template <typename DT, typename FV>
@@ -45,7 +54,7 @@ class writer_typed_array : public writer_typed_base {
 public:
 writer_typed_array(hid_t hdf_group, std::string const & sourcename, FV * fbval);
 ~writer_typed_array();
-int write_impl(FBUF const * fbuf) override;
+append_ret write_impl(FBUF const * fbuf) override;
 // DataSet::getId() will be -1 for the default constructed
 hid_t ds = -1;
 hid_t dsp = -1;
@@ -57,7 +66,7 @@ class writer_typed_scalar : public writer_typed_base {
 public:
 writer_typed_scalar(hid_t hdf_group, std::string const & sourcename, FV * fbval);
 ~writer_typed_scalar();
-int write_impl(FBUF const * fbuf) override;
+append_ret write_impl(FBUF const * fbuf) override;
 hid_t ds = -1;
 hid_t dsp = -1;
 hid_t dcpl = -1;
@@ -72,8 +81,14 @@ hid_t ds_timestamp = -1;
 hid_t ds_seq_data = -1;
 hid_t ds_seq_fwd = -1;
 hid_t ds_ts_data = -1;
+hid_t ds_cue_timestamp_zero = -1;
+hid_t ds_cue_index = -1;
 bool do_flush_always = false;
 bool do_writer_forwarder_internal = false;
+uint64_t total_written_bytes = 0;
+uint64_t index_at_bytes = 0;
+uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
+uint64_t ts_max = 0;
 };
 
 static FBUF const * get_fbuf(char * data) {
@@ -134,6 +149,8 @@ writer::~writer() {
 	if (ds_seq_data != -1) H5Dclose(ds_seq_data);
 	if (ds_seq_fwd != -1) H5Dclose(ds_seq_fwd);
 	if (ds_ts_data != -1) H5Dclose(ds_ts_data);
+	if (ds_cue_timestamp_zero != -1) H5Dclose(ds_cue_timestamp_zero);
+	if (ds_cue_index != -1) H5Dclose(ds_cue_index);
 }
 
 template <typename T, typename V> using WA = writer_typed_array<T,V>;
@@ -173,6 +190,12 @@ void writer::init_impl(string const & sourcename, hid_t hdf_group, Msg msg) {
 	auto & hg = hdf_group;
 	string s("value");
 
+	if (config_file) {
+		if (auto x = get_int(config_file, "nexus.indices.index_every_mb")) {
+			index_every_bytes = (int)x * 1024*1024;
+		}
+	}
+
 	using Value = FlatBufs::f141_epics_nt::PV;
 	auto impl_fac = [&hg, &s, &fbuf](Value x){
 		using R = writer_typed_base *;
@@ -203,6 +226,8 @@ void writer::init_impl(string const & sourcename, hid_t hdf_group, Msg msg) {
 	impl.reset(impl_fac(fbuf->pv_type()));
 
 	this->ds_timestamp = create_1d_ds<uint64_t>(hdf_group, "time");
+	this->ds_cue_timestamp_zero = create_1d_ds<uint64_t>(hdf_group, "cue_timestamp_zero");
+	this->ds_cue_index = create_1d_ds<uint64_t>(hdf_group, "cue_index");
 
 	if (do_writer_forwarder_internal) {
 		this->ds_seq_data = create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_data");
@@ -256,9 +281,8 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group, std::string cons
 }
 
 
-
 template <typename Td>
-static int append_data_array(hid_t ds, Td const * data, size_t nlen) {
+static append_ret append_data_array(hid_t ds, Td const * data, size_t nlen) {
 	// Yes, verbose and more checks than necessary, but this is to gather
 	// baseline performance data before merging the tuned branch.
 	auto tgt = H5Dget_space(ds);
@@ -276,14 +300,14 @@ static int append_data_array(hid_t ds, Td const * data, size_t nlen) {
 	}
 	if (get_sizes_now.at(1) != nlen) {
 		LOG(4, "ERROR number of columns does not match");
-		return -1;
+		return {-1};
 	}
 
 	get_sizes_now.at(0) += 1;
 	err = H5Dextend(ds, get_sizes_now.data());
 	if (err < 0) {
 		LOG(4, "ERROR can not extend dataset");
-		return -1;
+		return {-1};
 	}
 	H5Sclose(tgt);
 
@@ -297,18 +321,18 @@ static int append_data_array(hid_t ds, Td const * data, size_t nlen) {
 		err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
 		if (err < 0) {
 			LOG(4, "ERROR can not select mem hyperslab");
-			return -2;
+			return {-2};
 		}
 	}
-	{
-		A hsl_start {{get_sizes_now.at(0)-1, 0}};
-		A hsl_count {{1, get_sizes_now.at(1)}};
-		err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
-		if (err < 0) {
-			LOG(4, "ERROR can not select tgt hyperslab");
-			return -3;
-		}
+
+	A tgt_start {{get_sizes_now.at(0)-1, 0}};
+	A tgt_count {{1, get_sizes_now.at(1)}};
+	err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr, tgt_count.data(), nullptr);
+	if (err < 0) {
+		LOG(4, "ERROR can not select tgt hyperslab");
+		return {-3};
 	}
+
 	if (false) {
 		for (int i1 = 0; i1 < ndims; ++i1) {
 			LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
@@ -318,22 +342,22 @@ static int append_data_array(hid_t ds, Td const * data, size_t nlen) {
 	err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
 	if (err < 0) {
 		LOG(4, "ERROR writing failed");
-		return -4;
+		return {-4};
 	}
 	err = H5Sclose(mem);
-	return 0;
+	return {0, sizeof(Td) * nlen, tgt_start[0]};
 }
 
 
 template <typename Td>
-static int append_data_scalar(hid_t ds, Td const data) {
+static append_ret append_data_scalar(hid_t ds, Td const data) {
 	// Yes, verbose and more checks than necessary, but this is to gather
 	// baseline performance data before merging the tuned branch.
 	auto tgt = H5Dget_space(ds);
 	auto ndims = H5Sget_simple_extent_ndims(tgt);
 	if (ndims != 1) {
 		LOG(6, "this data space is expected to have one dimension");
-		return -1;
+		return {-1};
 	}
 	using AA = std::array<hsize_t, 1>;
 	AA get_sizes_now;
@@ -350,7 +374,7 @@ static int append_data_scalar(hid_t ds, Td const data) {
 	err = H5Dextend(ds, get_sizes_now.data());
 	if (err < 0) {
 		LOG(4, "ERROR can not extend dataset");
-		return -1;
+		return {-1};
 	}
 	H5Sclose(tgt);
 
@@ -363,18 +387,18 @@ static int append_data_scalar(hid_t ds, Td const data) {
 		err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
 		if (err < 0) {
 			LOG(4, "ERROR can not select mem hyperslab");
-			return -2;
+			return {-2};
 		}
 	}
-	{
-		AA hsl_start {{get_sizes_now.at(0)-1}};
-		AA hsl_count {{1}};
-		err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, hsl_start.data(), nullptr, hsl_count.data(), nullptr);
-		if (err < 0) {
-			LOG(4, "ERROR can not select tgt hyperslab");
-			return -3;
-		}
+
+	AA tgt_start {{get_sizes_now.at(0)-1}};
+	AA tgt_count {{1}};
+	err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr, tgt_count.data(), nullptr);
+	if (err < 0) {
+		LOG(4, "ERROR can not select tgt hyperslab");
+		return {-3};
 	}
+
 	if (false) {
 		for (int i1 = 0; i1 < ndims; ++i1) {
 			LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1), get_sizes_max.at(i1));
@@ -384,18 +408,17 @@ static int append_data_scalar(hid_t ds, Td const data) {
 	err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, &data);
 	if (err < 0) {
 		LOG(4, "ERROR writing failed");
-		return -4;
+		return {-4};
 	}
 	err = H5Sclose(mem);
-	return 0;
+	return {0, sizeof(Td), tgt_start[0]};
 }
 
 
 template <typename DT, typename FV>
-int writer_typed_array<DT, FV>::write_impl(FBUF const * fbuf) {
+append_ret writer_typed_array<DT, FV>::write_impl(FBUF const * fbuf) {
 	auto value1 = (FV const *)fbuf->pv();
-	append_data_array(this->ds, value1->value()->data(), value1->value()->size());
-	return 0;
+	return append_data_array(this->ds, value1->value()->data(), value1->value()->size());
 }
 
 
@@ -443,10 +466,9 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group, std::string co
 
 
 template <typename DT, typename FV>
-int writer_typed_scalar<DT, FV>::write_impl(FBUF const * fbuf) {
+append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const * fbuf) {
 	auto value1 = (FV const *)fbuf->pv();
-	append_data_scalar(this->ds, value1->value());
-	return 0;
+	return append_data_scalar(this->ds, value1->value());
 }
 
 
@@ -456,13 +478,21 @@ WriteResult writer::write_impl(Msg msg) {
 		LOG(5, "sorry, but we were unable to initialize for this kind of messages");
 		return {-1};
 	}
-	if (impl->write_impl(fbuf)) {
-		LOG(5, "write failed");
-	}
 	uint64_t ts = 0;
 	if (auto fts = fbuf->timeStamp()) {
 		ts = fts->secondsPastEpoch() * 1000000000;
 		ts += fts->nanoseconds();
+	}
+	auto wret = impl->write_impl(fbuf);
+	if (!wret) {
+		LOG(5, "write failed");
+	}
+	total_written_bytes += wret.written_bytes;
+	ts_max = std::max(ts, ts_max);
+	if (total_written_bytes > index_at_bytes + index_every_bytes) {
+		append_data_scalar(this->ds_cue_timestamp_zero, ts_max);
+		append_data_scalar(this->ds_cue_index, wret.ix0);
+		index_at_bytes = total_written_bytes;
 	}
 	append_data_scalar(this->ds_timestamp, ts);
 	if (do_writer_forwarder_internal) {
