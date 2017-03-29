@@ -28,7 +28,7 @@ Master::Master(MasterConfig & config) :
 
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> && msg) {
-	CommandHandler command_handler(this);
+	CommandHandler command_handler(this, config.config_file);
 	command_handler.handle({(char*)msg->data(), (int32_t)msg->size()});
 }
 

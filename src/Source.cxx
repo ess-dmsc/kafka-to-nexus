@@ -21,7 +21,8 @@ Source::Source(Source && x) :
 	_broker(std::move(x._broker)),
 	_hdf_path(std::move(x._hdf_path)),
 	_schema_writer(std::move(x._schema_writer))
-{	
+{
+	std::swap(_config_file, x._config_file);
 }
 
 std::string const & Source::topic() const {
@@ -56,7 +57,7 @@ ProcessMessageResult Source::process_message(Msg msg) {
 	}
 	if (teamid == _schema_reader->teamid(msg)) {
 		if (_cnt_msg_written == 0) {
-			_schema_writer->init(_hdf_file, _hdf_path, source(), msg);
+			_schema_writer->init(_hdf_file, _hdf_path, source(), msg, _config_file);
 		}
 		auto ret = _schema_writer->write(msg);
 		_cnt_msg_written += 1;
@@ -80,6 +81,10 @@ uint32_t Source::processed_messages_count() const {
 
 void Source::hdf_init(HDFFile & hdf_file) {
 	_hdf_file = &hdf_file;
+}
+
+void Source::config_file(rapidjson::Value const * config_file) {
+	this->_config_file = config_file;
 }
 
 std::string Source::to_str() const {

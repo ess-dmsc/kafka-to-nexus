@@ -107,6 +107,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char ** argv) {
 		opt->help = true;
 		ret.first = 1;
 	}
+
+	opt->master_config.config_file = &opt->config_file;
+
 	return ret;
 }
 

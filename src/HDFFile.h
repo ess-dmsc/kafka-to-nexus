@@ -59,13 +59,14 @@ class FBSchemaWriter {
 public:
 typedef std::unique_ptr<FBSchemaWriter> ptr;
 virtual ~FBSchemaWriter();
-void init(HDFFile * hdf_file, std::string const & hdf_path, std::string const & sourcename, Msg msg);
+void init(HDFFile * hdf_file, std::string const & hdf_path, std::string const & sourcename, Msg msg, rapidjson::Value const * config_file);
 WriteResult write(Msg msg);
 void flush();
 void close();
 protected:
 FBSchemaWriter();
 HDFFile * hdf_file = nullptr;
+rapidjson::Value const * config_file = nullptr;
 private:
 virtual void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) = 0;
 virtual WriteResult write_impl(Msg msg) = 0;

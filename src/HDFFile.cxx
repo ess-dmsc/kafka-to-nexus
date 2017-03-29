@@ -358,7 +358,8 @@ FBSchemaWriter::~FBSchemaWriter() {
 	if (group_event_data != -1) H5Gclose(group_event_data);
 }
 
-void FBSchemaWriter::init(HDFFile * hdf_file, string const & hdf_path, string const & sourcename, Msg msg) {
+void FBSchemaWriter::init(HDFFile * hdf_file, std::string const & hdf_path, std::string const & sourcename, Msg msg, rapidjson::Value const * config_file) {
+	this->config_file = config_file;
 	this->hdf_file = hdf_file;
 	auto f1 = hdf_file->h5file_detail().h5file();
 

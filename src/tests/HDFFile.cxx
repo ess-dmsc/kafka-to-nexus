@@ -38,7 +38,7 @@ static void write_f141() {
 	auto fb = synth.next<double>(0);
 	msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 	// f1.impl->h5file
-	writer->init(&f1, "/", source_name, msg);
+	writer->init(&f1, "/", source_name, msg, nullptr);
 }
 };
 
@@ -60,7 +60,7 @@ static void new_03() {
 	char const * fname = d["file_attributes"]["file_name"].GetString();
 	//char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr);
+	FileWriter::CommandHandler ch(nullptr, nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 }
 
@@ -74,7 +74,7 @@ static void new_03_data() {
 	char const * fname = d["file_attributes"]["file_name"].GetString();
 	char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr);
+	FileWriter::CommandHandler ch(nullptr, nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 
 	ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
@@ -109,7 +109,7 @@ static void data_ev42() {
 	char const * fname = d["file_attributes"]["file_name"].GetString();
 	char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr);
+	FileWriter::CommandHandler ch(nullptr, nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 
 	ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
