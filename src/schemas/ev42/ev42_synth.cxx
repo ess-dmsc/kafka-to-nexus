@@ -17,7 +17,7 @@ uint64_t seq = 0;
 uint64_t c1 = 0;
 };
 
-synth::synth(std::string name, int size, uint64_t seed) : name(name), size(size) {
+synth::synth(std::string name, uint64_t seed) : name(name) {
 	impl.reset(new synth_impl);
 	impl->rnd.seed(seed);
 }
@@ -25,7 +25,7 @@ synth::synth(std::string name, int size, uint64_t seed) : name(name), size(size)
 synth::~synth() {
 }
 
-fb synth::next() {
+fb synth::next(uint32_t size) {
 	using DT = uint32_t;
 	fb ret;
 	ret.builder.reset(new flatbuffers::FlatBufferBuilder(size * 4 * 2 + 1024));
@@ -40,10 +40,11 @@ fb synth::next() {
 	}
 	else {
 		for (int i1 = 0; i1 < size; ++i1) {
-			//a1[i1] = (impl->rnd() >> 4);
-			//a2[i1] = (impl->rnd() >> 4);
-			a1[i1] = impl->c1;
-			a2[i1] = impl->c1;
+			auto eid = impl->rnd();
+			a1[i1] = eid & 0xff;
+			a2[i1] = (eid >> 8) & 0xff;
+			//a1[i1] = impl->c1;
+			//a2[i1] = impl->c1;
 			impl->c1 += 1;
 		}
 	}
@@ -52,10 +53,12 @@ fb synth::next() {
 	EventMessageBuilder b1(*ret.builder);
 	b1.add_message_id(impl->seq);
 	b1.add_source_name(n);
+	b1.add_pulse_time(100 * impl->seq);
 	b1.add_time_of_flight(v1);
 	b1.add_detector_id(v2);
 	FinishEventMessageBuffer(*ret.builder, b1.Finish());
 	//LOG(7, "SIZE: {}", ret.builder->GetSize());
+	++impl->seq;
 	return ret;
 }
 

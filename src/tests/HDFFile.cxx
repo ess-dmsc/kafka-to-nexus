@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <random>
 #include <gtest/gtest.h>
 #include "../helper.h"
 #include "../CommandHandler.h"
@@ -109,7 +110,10 @@ static void data_ev42() {
 	char const * fname = d["file_attributes"]["file_name"].GetString();
 	char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr, nullptr);
+	rapidjson::Document config_file;
+	config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_mb\":1}}}");
+	ASSERT_FALSE(config_file.HasParseError());
+	FileWriter::CommandHandler ch(nullptr, &config_file);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 
 	ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
@@ -118,16 +122,17 @@ static void data_ev42() {
 	ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
 	using DT = uint32_t;
-	size_t const NN = 1894;
-	int const SP = 1978;
+	int const SP = 128*1024;
 	int seed = 1;
+	std::mt19937 rnd_nn;
+	rnd_nn.seed(0);
 	auto & reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
 	std::array<char, 4> fbid {{ 'e', 'v', '4', '2' }};
 	auto writer = reg.at(fbid)->create_reader()->create_writer();
 	BrightnESS::FileWriter::Msg msg;
-	BrightnESS::FlatBufs::ev42::synth synth(source_name, NN, seed);
+	BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
 	for (int i1 = 0; i1 < SP; ++i1) {
-		auto fb = synth.next();
+		auto fb = synth.next(rnd_nn() >> 28);
 		msg = BrightnESS::FileWriter::Msg {
 			(char*)fb.builder->GetBufferPointer(),
 			(int32_t)fb.builder->GetSize()
@@ -148,7 +153,7 @@ static void data_ev42() {
 	auto g0 = H5Gopen(fid, "/entry-01/instrument-01/events-01", H5P_DEFAULT);
 	ASSERT_GE(g0, 0);
 
-	auto ds = H5Dopen2(fid, "/entry-01/instrument-01/events-01/detector_id", H5P_DEFAULT);
+	auto ds = H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_id", H5P_DEFAULT);
 	ASSERT_GE(ds, 0);
 
 	auto dt = H5Dget_type(ds);
@@ -159,7 +164,6 @@ static void data_ev42() {
 	ASSERT_GE(dsp, 0);
 	ASSERT_EQ(H5Sis_simple(dsp), 1);
 	auto nn = H5Sget_simple_extent_npoints(dsp);
-	ASSERT_EQ(nn, (int32_t)SP*NN);
 
 	auto mem = H5Screate(H5S_SIMPLE);
 	using A = array<hsize_t, 1>;
@@ -173,10 +177,11 @@ static void data_ev42() {
 	ASSERT_GE(err, 0);
 
 	{
+		rnd_nn.seed(0);
 		size_t n1 = 0;
-		BrightnESS::FlatBufs::ev42::synth synth(source_name, NN, seed);
+		BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
 		for (int i1 = 0; i1 < SP; ++i1) {
-			auto fb_ = synth.next();
+			auto fb_ = synth.next(rnd_nn() >> 28);
 			auto fb = fb_.root();
 			auto a = fb->detector_id();
 			for (size_t i2 = 0; i2 < a->size(); ++i2) {
@@ -185,7 +190,6 @@ static void data_ev42() {
 				++n1;
 			}
 		}
-		ASSERT_EQ(n1, SP*NN);
 	}
 
 	H5Tclose(dt);
