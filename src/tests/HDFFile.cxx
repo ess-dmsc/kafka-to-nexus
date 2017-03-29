@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <random>
 #include <gtest/gtest.h>
 #include "../helper.h"
 #include "../CommandHandler.h"
@@ -38,7 +39,7 @@ static void write_f141() {
 	auto fb = synth.next<double>(0);
 	msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 	// f1.impl->h5file
-	writer->init(&f1, "/", source_name, msg);
+	writer->init(&f1, "/", source_name, msg, nullptr);
 }
 };
 
@@ -60,7 +61,7 @@ static void new_03() {
 	char const * fname = d["file_attributes"]["file_name"].GetString();
 	//char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr);
+	FileWriter::CommandHandler ch(nullptr, nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 }
 
@@ -74,7 +75,7 @@ static void new_03_data() {
 	char const * fname = d["file_attributes"]["file_name"].GetString();
 	char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr);
+	FileWriter::CommandHandler ch(nullptr, nullptr);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 
 	ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
@@ -97,6 +98,22 @@ static void new_03_data() {
 	msg = BrightnESS::FileWriter::Msg {(char*)fb.builder->GetBufferPointer(), (int32_t)fb.builder->GetSize()};
 }
 
+
+static bool check_cue(std::vector<uint64_t> const & event_time_zero, std::vector<uint32_t> const & event_index, uint64_t cue_timestamp_zero, uint32_t cue_index) {
+	bool found = false;
+	size_t i2 = 0;
+	for (auto & evt : event_time_zero) {
+		if (evt == cue_timestamp_zero) {
+			found = true;
+			break;
+		}
+		++i2;
+	}
+	if (!found) return false;
+	if (event_index[i2] != cue_index) return false;
+	return true;
+}
+
 static void data_ev42() {
 	using namespace BrightnESS;
 	using namespace BrightnESS::FileWriter;
@@ -106,10 +123,15 @@ static void data_ev42() {
 	LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
 	rapidjson::Document d;
 	d.Parse(cmd.data(), cmd.size());
-	char const * fname = d["file_attributes"]["file_name"].GetString();
-	char const * source_name = d["streams"][0]["source"].GetString();
-	unlink(fname);
-	FileWriter::CommandHandler ch(nullptr);
+	auto fname = get_string(&d, "file_attributes.file_name");
+	auto source_name = get_string(&d, "streams.0.source");
+	//char const * fname = d["file_attributes"]["file_name"].GetString();
+	//char const * source_name = d["streams"][0]["source"].GetString();
+	unlink(fname.c_str());
+	rapidjson::Document config_file;
+	config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1}}}");
+	ASSERT_FALSE(config_file.HasParseError());
+	FileWriter::CommandHandler ch(nullptr, &config_file);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
 
 	ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
@@ -118,16 +140,17 @@ static void data_ev42() {
 	ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
 	using DT = uint32_t;
-	size_t const NN = 1894;
-	int const SP = 1978;
+	int const SP = 8*1024;
 	int seed = 1;
+	std::mt19937 rnd_nn;
+	rnd_nn.seed(0);
 	auto & reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
 	std::array<char, 4> fbid {{ 'e', 'v', '4', '2' }};
 	auto writer = reg.at(fbid)->create_reader()->create_writer();
 	BrightnESS::FileWriter::Msg msg;
-	BrightnESS::FlatBufs::ev42::synth synth(source_name, NN, seed);
+	BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
 	for (int i1 = 0; i1 < SP; ++i1) {
-		auto fb = synth.next();
+		auto fb = synth.next(rnd_nn() >> 28);
 		msg = BrightnESS::FileWriter::Msg {
 			(char*)fb.builder->GetBufferPointer(),
 			(int32_t)fb.builder->GetSize()
@@ -142,13 +165,13 @@ static void data_ev42() {
 
 	herr_t err;
 
-	auto fid = H5Fopen(fname, H5F_ACC_RDONLY, H5P_DEFAULT);
+	auto fid = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
 	ASSERT_GE(fid, 0);
 
 	auto g0 = H5Gopen(fid, "/entry-01/instrument-01/events-01", H5P_DEFAULT);
 	ASSERT_GE(g0, 0);
 
-	auto ds = H5Dopen2(fid, "/entry-01/instrument-01/events-01/detector_id", H5P_DEFAULT);
+	auto ds = H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_id", H5P_DEFAULT);
 	ASSERT_GE(ds, 0);
 
 	auto dt = H5Dget_type(ds);
@@ -159,7 +182,6 @@ static void data_ev42() {
 	ASSERT_GE(dsp, 0);
 	ASSERT_EQ(H5Sis_simple(dsp), 1);
 	auto nn = H5Sget_simple_extent_npoints(dsp);
-	ASSERT_EQ(nn, (int32_t)SP*NN);
 
 	auto mem = H5Screate(H5S_SIMPLE);
 	using A = array<hsize_t, 1>;
@@ -173,10 +195,11 @@ static void data_ev42() {
 	ASSERT_GE(err, 0);
 
 	{
+		rnd_nn.seed(0);
 		size_t n1 = 0;
-		BrightnESS::FlatBufs::ev42::synth synth(source_name, NN, seed);
+		BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
 		for (int i1 = 0; i1 < SP; ++i1) {
-			auto fb_ = synth.next();
+			auto fb_ = synth.next(rnd_nn() >> 28);
 			auto fb = fb_.root();
 			auto a = fb->detector_id();
 			for (size_t i2 = 0; i2 < a->size(); ++i2) {
@@ -185,7 +208,48 @@ static void data_ev42() {
 				++n1;
 			}
 		}
-		ASSERT_EQ(n1, SP*NN);
+	}
+
+	{
+		auto ds_cue_timestamp_zero = H5Dopen2(fid, "/entry-01/instrument-01/events-01/cue_timestamp_zero", H5P_DEFAULT);
+		ASSERT_GE(ds_cue_timestamp_zero, 0);
+		vector<uint64_t> cue_timestamp_zero(H5Sget_simple_extent_npoints(H5Dget_space(ds_cue_timestamp_zero)));
+		err = H5Dread(ds_cue_timestamp_zero, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, cue_timestamp_zero.data());
+		ASSERT_EQ(err, 0);
+		H5Dclose(ds_cue_timestamp_zero);
+
+		auto ds_cue_index = H5Dopen2(fid, "/entry-01/instrument-01/events-01/cue_index", H5P_DEFAULT);
+		ASSERT_GE(ds_cue_index, 0);
+		vector<uint32_t> cue_index(H5Sget_simple_extent_npoints(H5Dget_space(ds_cue_index)));
+		err = H5Dread(ds_cue_index, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, cue_index.data());
+		ASSERT_EQ(err, 0);
+		H5Dclose(ds_cue_index);
+
+		ASSERT_GT(cue_timestamp_zero.size(), 100);
+		ASSERT_EQ(cue_timestamp_zero.size(), cue_index.size());
+
+		auto ds_event_time_zero = H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_time_zero", H5P_DEFAULT);
+		ASSERT_GE(ds_event_time_zero, 0);
+		vector<uint64_t> event_time_zero(H5Sget_simple_extent_npoints(H5Dget_space(ds_event_time_zero)));
+		err = H5Dread(ds_event_time_zero, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, event_time_zero.data());
+		ASSERT_EQ(err, 0);
+		H5Dclose(ds_event_time_zero);
+
+		auto ds_event_index = H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_index", H5P_DEFAULT);
+		ASSERT_GE(ds_event_index, 0);
+		vector<uint32_t> event_index(H5Sget_simple_extent_npoints(H5Dget_space(ds_event_index)));
+		err = H5Dread(ds_event_index, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL, H5P_DEFAULT, event_index.data());
+		ASSERT_EQ(err, 0);
+		H5Dclose(ds_event_index);
+
+		ASSERT_GT(event_time_zero.size(), 0);
+		ASSERT_EQ(event_time_zero.size(), event_index.size());
+
+		for (int i1 = 0; i1 < cue_timestamp_zero.size(); ++i1) {
+			auto ok = check_cue(event_time_zero, event_index, cue_timestamp_zero[i1], cue_index[i1]);
+			ASSERT_TRUE(ok);
+		}
+
 	}
 
 	H5Tclose(dt);

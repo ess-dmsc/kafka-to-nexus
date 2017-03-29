@@ -17,12 +17,11 @@ class synth_impl;
 
 class synth {
 public:
-synth(std::string name, int size, uint64_t seed);
+synth(std::string name, uint64_t seed);
 ~synth();
-fb next();
+fb next(uint32_t size);
 std::unique_ptr<synth_impl> impl;
 std::string name;
-int size;
 };
 
 }

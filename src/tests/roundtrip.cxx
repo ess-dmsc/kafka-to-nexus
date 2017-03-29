@@ -223,10 +223,10 @@ void roundtrip_remote_kafka(MainOpt & opt, string fn_cmd) {
 			topic.do_copy();
 			auto & sourcename = test_sourcenames[i3];
 			BrightnESS::FileWriter::Msg msg;
-			BrightnESS::FlatBufs::ev42::synth synth(sourcename, 64, 1);
+			BrightnESS::FlatBufs::ev42::synth synth(sourcename, 1);
 
 			for (int i1 = 0; i1 < 32; ++i1) {
-				auto fb = synth.next();
+				auto fb = synth.next(64);
 				msg = BrightnESS::FileWriter::Msg {
 					(char*)fb.builder->GetBufferPointer(),
 					(int32_t)fb.builder->GetSize()

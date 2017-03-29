@@ -8,7 +8,10 @@ namespace FileWriter {
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
-CommandHandler::CommandHandler(Master *master) : master(master) {
+CommandHandler::CommandHandler(Master *master, rapidjson::Value const * config_file) :
+		master(master),
+		config_file(config_file)
+{
   if (false) {
     using namespace rapidjson;
     auto buf1 = gulp(master->config.dir_assets + "/test/schema-command.json");
@@ -63,6 +66,7 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
             s._hdf_path = m->value.GetString();
           }
         }
+        s.config_file(config_file);
         fwt->add_source(move(s));
       }
     }
