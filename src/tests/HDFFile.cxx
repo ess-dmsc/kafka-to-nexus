@@ -129,7 +129,7 @@ static void data_ev42() {
 	//char const * source_name = d["streams"][0]["source"].GetString();
 	unlink(fname.c_str());
 	rapidjson::Document config_file;
-	config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1}}}");
+	config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
 	ASSERT_FALSE(config_file.HasParseError());
 	FileWriter::CommandHandler ch(nullptr, &config_file);
 	ch.handle({cmd.data(), (int32_t)cmd.size()});
@@ -139,29 +139,43 @@ static void data_ev42() {
 	auto & fwt = ch.file_writer_tasks.at(0);
 	ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
+	std::vector<FlatBufs::ev42::fb> fbs;
+	std::vector<BrightnESS::FileWriter::Msg> msgs;
+
 	using DT = uint32_t;
-	int const SP = 8*1024;
+	int const SP = 256*1024;
 	int seed = 1;
 	std::mt19937 rnd_nn;
 	rnd_nn.seed(0);
 	auto & reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
 	std::array<char, 4> fbid {{ 'e', 'v', '4', '2' }};
 	auto writer = reg.at(fbid)->create_reader()->create_writer();
-	BrightnESS::FileWriter::Msg msg;
 	BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
+	LOG(7, "generating...");
 	for (int i1 = 0; i1 < SP; ++i1) {
-		auto fb = synth.next(rnd_nn() >> 28);
-		msg = BrightnESS::FileWriter::Msg {
+		fbs.push_back(synth.next(rnd_nn() >> 24));
+		auto & fb = fbs.back();
+		msgs.push_back(BrightnESS::FileWriter::Msg {
 			(char*)fb.builder->GetBufferPointer(),
 			(int32_t)fb.builder->GetSize()
-		};
+		});
+	}
+	LOG(7, "processing...");
+	using CLK = std::chrono::steady_clock;
+	using MS = std::chrono::milliseconds;
+	auto t1 = CLK::now();
+	for (auto & msg : msgs) {
 		if (false) {
 			auto v = binary_to_hex(msg.data, msg.size);
 			LOG(7, "msg:\n{:.{}}", v.data(), v.size());
 		}
 		fwt->demuxers().at(0).process_message(msg.data, msg.size);
 	}
+	auto t2 = CLK::now();
+	LOG(7, "processing done in {}", std::chrono::duration_cast<MS>(t2-t1).count());
+	LOG(7, "finishing...");
 	fwt.reset();
+	LOG(7, "done.");
 
 	herr_t err;
 
@@ -199,7 +213,7 @@ static void data_ev42() {
 		size_t n1 = 0;
 		BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
 		for (int i1 = 0; i1 < SP; ++i1) {
-			auto fb_ = synth.next(rnd_nn() >> 28);
+			auto fb_ = synth.next(rnd_nn() >> 24);
 			auto fb = fb_.root();
 			auto a = fb->detector_id();
 			for (size_t i2 = 0; i2 < a->size(); ++i2) {
@@ -225,7 +239,7 @@ static void data_ev42() {
 		ASSERT_EQ(err, 0);
 		H5Dclose(ds_cue_index);
 
-		ASSERT_GT(cue_timestamp_zero.size(), 100);
+		ASSERT_GT(cue_timestamp_zero.size(), 10);
 		ASSERT_EQ(cue_timestamp_zero.size(), cue_index.size());
 
 		auto ds_event_time_zero = H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_time_zero", H5P_DEFAULT);

@@ -190,6 +190,7 @@ schemas/f142/f142_rw.cxx
 schemas/f142/f142_synth.cxx
 schemas/ev42/ev42_rw.cxx
 schemas/ev42/ev42_synth.cxx
+schemas/ev42/h5.cxx
 schemas/events/schema_amo0.cxx
 MainOpt.cxx
 ${path_include_fmt}/fmt/format.cc

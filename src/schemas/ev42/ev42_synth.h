@@ -9,6 +9,10 @@ namespace ev42 {
 
 class fb {
 public:
+fb() { }
+fb(fb && x) {
+	std::swap(builder, x.builder);
+}
 std::unique_ptr<flatbuffers::FlatBufferBuilder> builder;
 EventMessage const * root();
 };
