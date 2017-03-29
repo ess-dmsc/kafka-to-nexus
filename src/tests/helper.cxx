@@ -55,6 +55,16 @@ TEST(helper, split_07) {
 
 using namespace rapidjson;
 
+static Document make_test_doc() {
+	Document d;
+	d.Parse("{\"a\":{\"aa\":\"text\",\"bb\":456}}");
+	return d;
+}
+
+TEST(helper, make_test_doc) {
+	ASSERT_EQ(false, make_test_doc().HasParseError());
+}
+
 TEST(helper, get_string_01) {
 	Document d;
 	d.SetObject();
@@ -86,7 +96,31 @@ TEST(helper, get_string_01) {
 }
 
 TEST(helper, get_string_02) {
+	auto d = make_test_doc();
+	auto s = get_string(&d, "a.aa");
+	ASSERT_EQ(s, "text");
+}
+
+TEST(helper, get_string_03) {
 	Document d;
 	d.Parse("{\"a\":{\"aa\":\"text\",\"bb\":unquoted}}");
 	ASSERT_TRUE(d.HasParseError());
+}
+
+TEST(helper, get_int_01) {
+	auto d = make_test_doc();
+	auto r = get_int(&d, "a.bb");
+	ASSERT_EQ((bool)r, true);
+	ASSERT_EQ((int)r, 456);
+	if (auto g = get_int(&d, "a.bb")) {
+		ASSERT_EQ((int)g, 456);
+	}
+	else {
+		// We should not be here
+		ASSERT_TRUE(false);
+	}
+	if (auto g = get_int(&d, "blabla")) {
+		// we should not be here
+		ASSERT_TRUE(false);
+	}
 }
