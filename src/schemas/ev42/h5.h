@@ -65,19 +65,21 @@ private:
 h5d();
 };
 
+template <typename T>
 class h5d_chunked_1d {
 public:
-template <typename T>
-h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, T dummy = 0);
+h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes);
 h5d ds;
 h5d_chunked_1d(h5d_chunked_1d && x);
+~h5d_chunked_1d();
 friend void swap(h5d_chunked_1d & x, h5d_chunked_1d & y);
-template <typename T>
 append_ret append_data_1d(T const * data, hsize_t nlen);
-void write();
+int flush_buf();
 private:
 h5d_chunked_1d();
 h5s dsp_wr;
+std::vector<T> buf;
+hsize_t i0 = 0;
 };
 
 }

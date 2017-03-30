@@ -37,12 +37,12 @@ class writer : public FBSchemaWriter {
 ~writer() override;
 void init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg) override;
 WriteResult write_impl(Msg msg) override;
-uptr<h5::h5d_chunked_1d> ds_event_id;
-uptr<h5::h5d_chunked_1d> ds_event_time_offset;
-uptr<h5::h5d_chunked_1d> ds_event_time_zero;
-uptr<h5::h5d_chunked_1d> ds_event_index;
-uptr<h5::h5d_chunked_1d> ds_cue_index;
-uptr<h5::h5d_chunked_1d> ds_cue_timestamp_zero;
+uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;
+uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_id;
+uptr<h5::h5d_chunked_1d<uint64_t>> ds_event_time_zero;
+uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_index;
+uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
+uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
 bool do_flush_always = false;
 uint64_t total_written_bytes = 0;
 uint64_t index_at_bytes = 0;
@@ -98,12 +98,12 @@ void writer::init_impl(std::string const & sourcename, hid_t hdf_group, Msg msg)
 		}
 	}
 
-	this->ds_event_time_offset.reset(new h5::h5d_chunked_1d(hdf_group, "event_time_offset", 1*1024*1024, uint32_t(0)));
-	this->ds_event_id.reset(new h5::h5d_chunked_1d(hdf_group, "event_id", 1*1024*1024, uint32_t(0)));
-	this->ds_event_time_zero.reset(new h5::h5d_chunked_1d(hdf_group, "event_time_zero", 128*1024, uint64_t(0)));
-	this->ds_event_index.reset(new h5::h5d_chunked_1d(hdf_group, "event_index", 64*1024, uint32_t(0)));
-	this->ds_cue_index.reset(new h5::h5d_chunked_1d(hdf_group, "cue_index", 64*1024, uint32_t(0)));
-	this->ds_cue_timestamp_zero.reset(new h5::h5d_chunked_1d(hdf_group, "cue_timestamp_zero", 128*1024, uint64_t(0)));
+	this->ds_event_time_offset.reset(new h5::h5d_chunked_1d<uint32_t>(hdf_group, "event_time_offset", 1*1024*1024));
+	this->ds_event_id.reset(new h5::h5d_chunked_1d<uint32_t>(hdf_group, "event_id", 1*1024*1024));
+	this->ds_event_time_zero.reset(new h5::h5d_chunked_1d<uint64_t>(hdf_group, "event_time_zero", 128*1024));
+	this->ds_event_index.reset(new h5::h5d_chunked_1d<uint32_t>(hdf_group, "event_index", 64*1024));
+	this->ds_cue_index.reset(new h5::h5d_chunked_1d<uint32_t>(hdf_group, "cue_index", 64*1024));
+	this->ds_cue_timestamp_zero.reset(new h5::h5d_chunked_1d<uint64_t>(hdf_group, "cue_timestamp_zero", 128*1024));
 }
 
 

@@ -179,23 +179,55 @@ h5d::h5d() {
 }
 
 template <typename T>
-h5d_chunked_1d::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, T dummy) :
+h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes) :
 	ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<1>({{0}}), h5p::dataset_create::chunked1(nat_type<T>(), chunk_bytes)),
 	dsp_wr(ds)
 {
 }
 
-h5d_chunked_1d::h5d_chunked_1d(h5d_chunked_1d && x) : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {
-}
-
-void swap(h5d_chunked_1d & x, h5d_chunked_1d & y) {
-	swap(x.ds, y.ds);
-	swap(x.dsp_wr, y.dsp_wr);
+template <typename T>
+h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d && x) : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {
 }
 
 template <typename T>
-append_ret h5d_chunked_1d::append_data_1d(T const * data, hsize_t nlen) {
-	return ds.append_data_1d(data, nlen);
+h5d_chunked_1d<T>::~h5d_chunked_1d() {
+	flush_buf();
+}
+
+template <typename T>
+void swap(h5d_chunked_1d<T> & x, h5d_chunked_1d<T> & y) {
+	swap(x.ds, y.ds);
+	swap(x.dsp_wr, y.dsp_wr);
+	swap(x.i0, y.i0);
+}
+
+template <typename T>
+append_ret h5d_chunked_1d<T>::append_data_1d(T const * data, hsize_t nlen) {
+	append_ret ret {-1};
+	bool do_buf = nlen * sizeof(T) < 4*1024;
+	if (do_buf) {
+		std::copy(data, data + nlen, std::back_inserter(buf));
+	}
+	if (buf.size() > 128*1024 || (!do_buf && buf.size() > 0)) {
+		if (flush_buf() != 0) return {-1};
+	}
+	if (!do_buf) {
+		ret = ds.append_data_1d(data, nlen);
+		if (!ret) return ret;
+	}
+	ret.status = 0;
+	ret.ix0 = i0;
+	ret.written_bytes = sizeof(T) * nlen;
+	i0 += nlen;
+	return ret;
+}
+
+template <typename T>
+int h5d_chunked_1d<T>::flush_buf() {
+	auto wr = ds.append_data_1d(buf.data(), buf.size());
+	if (!wr) return -1;
+	buf.clear();
+	return 0;
 }
 
 template h5s h5s::simple_unlim(array<hsize_t,1> const & sini);
@@ -208,9 +240,12 @@ template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint64_t dummy);
 template append_ret h5d::append_data_1d(uint32_t const * data, hsize_t nlen);
 template append_ret h5d::append_data_1d(uint64_t const * data, hsize_t nlen);
 
-template h5d_chunked_1d::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, uint32_t dummy);
-template h5d_chunked_1d::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, uint64_t dummy);
+template h5d_chunked_1d<uint32_t>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint64_t>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes);
 
-template append_ret h5d_chunked_1d::h5d_chunked_1d::append_data_1d(uint32_t const * data, hsize_t nlen);
-template append_ret h5d_chunked_1d::h5d_chunked_1d::append_data_1d(uint64_t const * data, hsize_t nlen);
+template h5d_chunked_1d<uint32_t>::~h5d_chunked_1d();
+template h5d_chunked_1d<uint64_t>::~h5d_chunked_1d();
+
+template append_ret h5d_chunked_1d<uint32_t>::h5d_chunked_1d::append_data_1d(uint32_t const * data, hsize_t nlen);
+template append_ret h5d_chunked_1d<uint64_t>::h5d_chunked_1d::append_data_1d(uint64_t const * data, hsize_t nlen);
 }
