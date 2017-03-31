@@ -226,20 +226,36 @@ template h5s h5s::simple_unlim(array<hsize_t, 1> const &sini);
 template h5s h5s::simple_unlim(array<hsize_t, 2> const &sini);
 template h5s h5s::simple_unlim(array<hsize_t, 3> const &sini);
 
+template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint8_t dummy);
+template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint16_t dummy);
 template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint32_t dummy);
 template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint64_t dummy);
 
+template append_ret h5d::append_data_1d(uint8_t const *data, hsize_t nlen);
+template append_ret h5d::append_data_1d(uint16_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(uint32_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(uint64_t const *data, hsize_t nlen);
 
+template h5d_chunked_1d<uint8_t>::h5d_chunked_1d(hid_t loc, string name,
+                                                 hsize_t chunk_bytes);
+template h5d_chunked_1d<uint16_t>::h5d_chunked_1d(hid_t loc, string name,
+                                                  hsize_t chunk_bytes);
 template h5d_chunked_1d<uint32_t>::h5d_chunked_1d(hid_t loc, string name,
                                                   hsize_t chunk_bytes);
 template h5d_chunked_1d<uint64_t>::h5d_chunked_1d(hid_t loc, string name,
                                                   hsize_t chunk_bytes);
 
+template h5d_chunked_1d<uint8_t>::~h5d_chunked_1d();
+template h5d_chunked_1d<uint16_t>::~h5d_chunked_1d();
 template h5d_chunked_1d<uint32_t>::~h5d_chunked_1d();
 template h5d_chunked_1d<uint64_t>::~h5d_chunked_1d();
 
+template append_ret
+h5d_chunked_1d<uint8_t>::h5d_chunked_1d::append_data_1d(uint8_t const *data,
+                                                        hsize_t nlen);
+template append_ret
+h5d_chunked_1d<uint16_t>::h5d_chunked_1d::append_data_1d(uint16_t const *data,
+                                                         hsize_t nlen);
 template append_ret
 h5d_chunked_1d<uint32_t>::h5d_chunked_1d::append_data_1d(uint32_t const *data,
                                                          hsize_t nlen);
