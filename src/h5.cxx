@@ -1,5 +1,5 @@
 #include "h5.h"
-#include "../../logger.h"
+#include "logger.h"
 
 namespace h5 {
 
