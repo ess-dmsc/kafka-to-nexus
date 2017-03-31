@@ -2,8 +2,7 @@
 #include "../../HDFFile.h"
 #include "../../HDFFile_h5.h"
 #include "../../helper.h"
-#include <hdf5.h>
-#include "h5.h"
+#include "../../h5.h"
 #include <limits>
 #include "schemas/ev42_events_generated.h"
 
