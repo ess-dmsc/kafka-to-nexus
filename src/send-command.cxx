@@ -158,16 +158,16 @@ int main(int argc, char **argv) {
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.broker_opt.address, opt.teamid);
     LOG(4, "sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), nullptr, true);
+    pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.broker_opt.address, opt.teamid);
     LOG(4, "sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), nullptr, true);
+    pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "file:") {
     std::string input = opt.cmd.substr(5);
     auto m1 = make_command_from_file(opt.cmd.substr(5));
     LOG(5, "sending:\n{}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), nullptr, true);
+    pt.produce((uint8_t *)m1.data(), m1.size(), true);
   }
 
   return 0;

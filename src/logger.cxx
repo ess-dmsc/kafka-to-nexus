@@ -129,7 +129,7 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     Writer<StringBuffer> wr(buf1);
     d.Accept(wr);
     auto s1 = buf1.GetString();
-    topic->produce((unsigned char *)s1, strlen(s1), nullptr);
+    topic->produce((unsigned char *)s1, strlen(s1));
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {

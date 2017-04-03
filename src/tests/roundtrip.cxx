@@ -36,7 +36,7 @@ int64_t produce_command_from_string(uri::URI const &uri,
   p->on_delivery_ok = cb;
   KafkaW::Producer::Topic pt(p, uri.topic);
   pt.do_copy();
-  pt.produce((uint8_t *)cmd.data(), cmd.size(), nullptr);
+  pt.produce((uint8_t *)cmd.data(), cmd.size());
   p->poll_while_outq();
   auto fut = offset.get_future();
   auto x = fut.wait_for(std::chrono::milliseconds(2000));
@@ -128,7 +128,7 @@ void roundtrip_simple_01(MainOpt &opt) {
         // epicspv.add_fwdinfo(&fi);
         FinishEpicsPVBuffer(builder, epicspv.Finish());
         if (true) {
-          topic.produce(builder.GetBufferPointer(), builder.GetSize(), nullptr);
+          topic.produce(builder.GetBufferPointer(), builder.GetSize());
           prod->poll();
         }
       }
@@ -219,7 +219,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
           LOG(7, "msg:\n{:.{}}", v.data(), v.size());
         }
         if (true) {
-          topic.produce((uint8_t *)msg.data, msg.size, nullptr);
+          topic.produce((uint8_t *)msg.data, msg.size);
           prod->poll();
         }
       }

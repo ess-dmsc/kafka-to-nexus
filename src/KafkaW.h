@@ -140,8 +140,7 @@ public:
   ProducerTopic(ProducerTopic &&);
   ProducerTopic(std::shared_ptr<Producer> producer, std::string name);
   ~ProducerTopic();
-  int produce(uchar *msg_data, int msg_size, void *opaque = nullptr,
-              bool print_err = false);
+  int produce(uchar *msg_data, int msg_size, bool print_err = false);
   int produce(Producer::Msg &msg);
   // Currently it's nice to have access to these for statistics:
   std::shared_ptr<Producer> producer;
