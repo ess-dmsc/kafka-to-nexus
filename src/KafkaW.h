@@ -8,7 +8,7 @@
 
 namespace KafkaW {
 
-using uchar = uint8_t;
+using uchar = unsigned char;
 
 /// POD to collect the options
 class BrokerOpt {
@@ -16,7 +16,7 @@ public:
   BrokerOpt();
   void apply(rd_kafka_conf_t *conf);
   std::string address;
-  int poll_timeout_ms = 10;
+  int poll_timeout_ms = 100;
   std::map<std::string, int> conf_ints;
   std::map<std::string, std::string> conf_strings;
 };
@@ -62,14 +62,17 @@ private:
 class Consumer {
 public:
   Consumer(BrokerOpt opt);
+  Consumer(Consumer &&) = delete;
+  Consumer(Consumer const &) = delete;
   ~Consumer();
-  void start();
+  void init();
   void add_topic(std::string topic);
   void dump_current_subscription();
   PollStatus poll();
-  std::function<void()> *on_rebalance_assign = nullptr;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_start = nullptr;
+  on_rebalance_assign;
+  std::function<void(rd_kafka_topic_partition_list_t *plist)>
+  on_rebalance_start;
   rd_kafka_t *rk = nullptr;
 
 private:
@@ -84,7 +87,6 @@ private:
                            rd_kafka_topic_partition_list_t *plist,
                            void *opaque);
   static void cb_consume(rd_kafka_message_t *msg, void *opaque);
-  // rd_kafka_topic_t * rkt = nullptr;
   rd_kafka_topic_partition_list_t *plist = nullptr;
   int id = 0;
 };
@@ -94,6 +96,10 @@ class ProducerTopic;
 class ProducerMsg {
 public:
   virtual ~ProducerMsg();
+  virtual void delivery_ok();
+  virtual void delivery_fail();
+  uchar *data;
+  uint32_t size;
 };
 
 class Producer {
@@ -101,6 +107,8 @@ public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
   Producer(BrokerOpt opt);
+  Producer(Producer const &) = delete;
+  Producer(Producer &&x);
   ~Producer();
   void poll_while_outq();
   void poll();
@@ -116,8 +124,9 @@ public:
                           int32_t broker_id, int throttle_time_ms,
                           void *opaque);
   rd_kafka_t *rd_kafka_ptr() const;
-  std::function<void(rd_kafka_message_t const *msg)> *on_delivery_ok = nullptr;
-  void (*on_error)(Producer *, rd_kafka_resp_err_t) = nullptr;
+  std::function<void(rd_kafka_message_t const *msg)> on_delivery_ok;
+  std::function<void(rd_kafka_message_t const *msg)> on_delivery_failed;
+  std::function<void(Producer *, rd_kafka_resp_err_t)> on_error;
   // Currently it's nice to have acces to these two for statistics:
   BrokerOpt opt;
   rd_kafka_t *rk = nullptr;
@@ -128,12 +137,14 @@ private:
 
 class ProducerTopic {
 public:
-  ProducerTopic(Producer const &producer, std::string name);
+  ProducerTopic(ProducerTopic &&);
+  ProducerTopic(std::shared_ptr<Producer> producer, std::string name);
   ~ProducerTopic();
-  int produce(void *msg_data, int msg_size, void *opaque,
+  int produce(uchar *msg_data, int msg_size, void *opaque = nullptr,
               bool print_err = false);
+  int produce(Producer::Msg &msg);
   // Currently it's nice to have access to these for statistics:
-  Producer const &producer;
+  std::shared_ptr<Producer> producer;
   rd_kafka_topic_t *rkt = nullptr;
   void do_copy();
 

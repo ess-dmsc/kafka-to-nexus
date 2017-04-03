@@ -29,15 +29,15 @@ int64_t produce_command_from_string(uri::URI const &uri,
                                     std::string const &cmd) {
   KafkaW::BrokerOpt opt;
   opt.address = uri.host_port;
-  KafkaW::Producer p(opt);
+  auto p = std::make_shared<KafkaW::Producer>(opt);
   std::promise<int64_t> offset;
   std::function<void(rd_kafka_message_t const *msg)> cb = [&offset](
       rd_kafka_message_t const *msg) { offset.set_value(msg->offset); };
-  p.on_delivery_ok = &cb;
+  p->on_delivery_ok = cb;
   KafkaW::Producer::Topic pt(p, uri.topic);
   pt.do_copy();
-  pt.produce((void *)cmd.data(), cmd.size(), nullptr);
-  p.poll_while_outq();
+  pt.produce((uint8_t *)cmd.data(), cmd.size(), nullptr);
+  p->poll_while_outq();
   auto fut = offset.get_future();
   auto x = fut.wait_for(std::chrono::milliseconds(2000));
   if (x == std::future_status::ready) {
@@ -96,7 +96,7 @@ void roundtrip_simple_01(MainOpt &opt) {
     // auto nowns = []{return
     // std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};
     for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
-      KafkaW::Producer prod(opt);
+      auto prod = std::make_shared<KafkaW::Producer>(opt);
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);
       topic.do_copy();
       auto &sourcename = test_sourcenames[i3];
@@ -129,10 +129,10 @@ void roundtrip_simple_01(MainOpt &opt) {
         FinishEpicsPVBuffer(builder, epicspv.Finish());
         if (true) {
           topic.produce(builder.GetBufferPointer(), builder.GetSize(), nullptr);
-          prod.poll();
+          prod->poll();
         }
       }
-      prod.poll_while_outq();
+      prod->poll_while_outq();
     }
     // fwt->file_flush();
   }
@@ -201,7 +201,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
     // Produce sample data using the nt types scheme only
     KafkaW::BrokerOpt bopt;
     bopt.address = broker_common.host_port;
-    KafkaW::Producer prod(bopt);
+    auto prod = std::make_shared<KafkaW::Producer>(bopt);
     for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);
       topic.do_copy();
@@ -219,11 +219,11 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
           LOG(7, "msg:\n{:.{}}", v.data(), v.size());
         }
         if (true) {
-          topic.produce(msg.data, msg.size, nullptr);
-          prod.poll();
+          topic.produce((uint8_t *)msg.data, msg.size, nullptr);
+          prod->poll();
         }
       }
-      prod.poll_while_outq();
+      prod->poll_while_outq();
     }
     // fwt->file_flush();
   }

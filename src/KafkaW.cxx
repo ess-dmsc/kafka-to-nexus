@@ -7,9 +7,11 @@ namespace KafkaW {
 
 std::atomic<int> g_kafka_instance_count;
 
-#define KERR(err)                                                              \
+using std::move;
+
+#define KERR(rk, err)                                                          \
   if (err != 0) {                                                              \
-    LOG(4, "Kafka error code: {}, {}, {}", err,                                \
+    LOG(4, "Kafka {}  error: {}, {}, {}", rd_kafka_name(rk), err,              \
         rd_kafka_err2name((rd_kafka_resp_err_t)err),                           \
         rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
   }
@@ -21,8 +23,9 @@ BrokerOpt::BrokerOpt() {
                 { "message.max.bytes", 23 * 1024 * 1024 },
                 { "fetch.message.max.bytes", 23 * 1024 * 1024 },
                 { "receive.message.max.bytes", 23 * 1024 * 1024 },
-                { "queue.buffering.max.messages", 2 * 1024 },
-                { "queue.buffering.max.ms", 100 },
+                { "queue.buffering.max.messages", 100 * 1000 },
+                { "queue.buffering.max.ms", 50 },
+                { "queue.buffering.max.kbytes", 800 * 1024 },
                 { "batch.num.messages", 100 * 1000 },
                 //{"socket.send.buffer.bytes",          23 * 1024 * 1024},
                 //{"socket.receive.buffer.bytes",       23 * 1024 * 1024},
@@ -37,7 +40,6 @@ BrokerOpt::BrokerOpt() {
                 {"receive.message.max.bytes",          3 * 1024 * 1024},
 
                 {"queue.buffering.max.messages",       2 * 1000 * 1000},
-                //{"queue.buffering.max.kbytes",              800 * 1024},
                 {"queue.buffering.max.ms",                        1000},
 
                 // Total MessageSet size limited by message.max.bytes
@@ -170,31 +172,45 @@ std::unique_ptr<Msg> PollStatus::is_Msg() {
 }
 
 Consumer::Consumer(BrokerOpt opt) : opt(opt) {
-  start();
+  // on_rebalance_start = nullptr;
+  // on_rebalance_assign = nullptr;
+  init();
   id = g_kafka_instance_count++;
 }
 
+/*
+Consumer::Consumer(Consumer && x) {
+        using std::swap;
+        swap(on_rebalance_assign, x.on_rebalance_assign);
+        swap(on_rebalance_start, x.on_rebalance_start);
+        swap(rk, x.rk);
+        swap(opt, x.opt);
+        swap(plist, x.plist);
+        swap(id, x.id);
+}
+*/
+
 Consumer::~Consumer() {
-  LOG(9, "~Consumer()");
+  LOG(7, "~Consumer()");
   if (rk) {
     // commit offsets?
     if (0) {
-      LOG(9, "rd_kafka_unsubscribe");
+      LOG(7, "rd_kafka_unsubscribe");
       rd_kafka_unsubscribe(rk);
     }
     if (0) {
-      LOG(9, "rd_kafka_poll");
+      LOG(7, "rd_kafka_poll");
       int n1 = rd_kafka_poll(rk, 100);
-      LOG(9, "  served {} reuests", n1);
+      LOG(7, "  served {} reuests", n1);
     }
     if (1) {
-      LOG(9, "rd_kafka_consumer_close");
+      LOG(7, "rd_kafka_consumer_close");
       rd_kafka_consumer_close(rk);
     }
     // rd_kafka_consume_stop(rd_kafka_topic_t *, partition)  therefore low-level
     // API?
     if (1) {
-      LOG(9, "rd_kafka_destroy");
+      LOG(7, "rd_kafka_destroy");
       rd_kafka_destroy(rk);
       rk = nullptr;
     }
@@ -211,15 +227,17 @@ void Consumer::cb_log(rd_kafka_t const *rk, int level, char const *fac,
   LOG(level, "IID: {}  {}  fac: {}", self->id, buf, fac);
 }
 
-// Called from the poll() thread
-void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *reason,
+void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
                         void *opaque) {
-  // cast necessary because of Kafka API design
+  auto self = reinterpret_cast<Consumer *>(opaque);
   rd_kafka_resp_err_t err = (rd_kafka_resp_err_t)err_i;
-  LOG(0, "ERROR Kafka Config: {}, {}, {}, {}", err_i, rd_kafka_err2name(err),
-      rd_kafka_err2str(err), reason);
-  // Could do something with this opaque:
-  // auto self = static_cast<Consumer*>(opaque);
+  int ll = 2;
+  if (err == RD_KAFKA_RESP_ERR__TRANSPORT) {
+    ll = 5;
+    // rd_kafka_dump(stdout, rk);
+  }
+  LOG(ll, "Kafka cb_error  IID: {}  [{}] {} {}, {}", self->id, err_i,
+      rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
 int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
@@ -233,7 +251,7 @@ int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
 static void print_partition_list(rd_kafka_topic_partition_list_t *plist) {
   for (int i1 = 0; i1 < plist->cnt; ++i1) {
     auto &x = plist->elems[i1];
-    LOG(4, "   {}  {}  {}", x.topic, x.partition, x.offset);
+    LOG(7, "   {}  {}  {}", x.topic, x.partition, x.offset);
   }
 }
 
@@ -244,7 +262,7 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
   auto self = static_cast<Consumer *>(opaque);
   switch (err) {
   case RD_KAFKA_RESP_ERR__ASSIGN_PARTITIONS:
-    LOG(6, "cb_rebalance assign:");
+    LOG(6, "cb_rebalance assign {}", rd_kafka_name(rk));
     if (auto &cb = self->on_rebalance_start) {
       cb(plist);
     }
@@ -254,8 +272,8 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
       LOG(0, "rebalance error: {}  {}", rd_kafka_err2name(err2),
           rd_kafka_err2str(err2));
     }
-    if (self->on_rebalance_assign) {
-      (*self->on_rebalance_assign)();
+    if (auto &cb = self->on_rebalance_assign) {
+      cb(plist);
     }
     break;
   case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
@@ -286,7 +304,7 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
   }
 }
 
-void Consumer::start() {
+void Consumer::init() {
   // librdkafka API sometimes wants to write errors into a buffer:
   int const errstr_N = 512;
   char errstr[errstr_N];
@@ -328,7 +346,7 @@ void Consumer::add_topic(std::string topic) {
   int partition = RD_KAFKA_PARTITION_UA;
   rd_kafka_topic_partition_list_add(plist, topic.c_str(), partition);
   int err = rd_kafka_subscribe(rk, plist);
-  KERR(err);
+  KERR(rk, err);
   if (err) {
     LOG(0, "ERROR could not subscribe");
     throw std::runtime_error("can not subscribe");
@@ -366,12 +384,12 @@ PollStatus Consumer::poll() {
     // auto topic_name = rd_kafka_topic_name(msg->rkt);
     // int partition = msg->partition;
     if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-      LOG(7, "Consuming offset: {}  partition: {}", m2->offset(),
-          m2->partition());
+      // LOG(7, "Consuming offset: {}  partition: {}", m2->offset(),
+      // m2->partition());
       return PollStatus::make_Msg(std::move(m2));
     } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
       // Just an advisory.  msg contains which partition it is.
-      LOG(7, "RD_KAFKA_RESP_ERR__PARTITION_EOF");
+      // LOG(7, "RD_KAFKA_RESP_ERR__PARTITION_EOF");
     } else if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
       LOG(4, "RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN");
     } else if (msg->err == RD_KAFKA_RESP_ERR__BAD_MSG) {
@@ -401,11 +419,14 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
     if (msg->err == RD_KAFKA_RESP_ERR__MSG_TIMED_OUT) {
       // TODO
     }
-  } else {
-    if (auto p = self->on_delivery_ok) {
-      (*p)(msg);
+    if (auto &cb = self->on_delivery_failed) {
+      cb(msg);
     }
-    if (true) {
+  } else {
+    if (auto &cb = self->on_delivery_ok) {
+      cb(msg);
+    }
+    if (false) {
       LOG(7, "IID: {}  Ok delivered ({}, p {}, offset {}, len {})", self->id,
           rd_kafka_name(rk), msg->partition, msg->offset, msg->len);
     }
@@ -416,17 +437,16 @@ void Producer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
                         void *opaque) {
   auto self = reinterpret_cast<Producer *>(opaque);
   rd_kafka_resp_err_t err = (rd_kafka_resp_err_t)err_i;
-  LOG(0, "IID: {}  ERROR  {}, {}, {}, {}", self->id, err_i,
-      rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
+  int ll = 2;
   if (err == RD_KAFKA_RESP_ERR__TRANSPORT) {
-    if (log_level >= 7)
-      rd_kafka_dump(stdout, rk);
+    ll = 5;
+    // rd_kafka_dump(stdout, rk);
   } else {
-    // TODO
-    // self->error_from_kafka_callback();
     if (self->on_error)
       self->on_error(self, err);
   }
+  LOG(ll, "Kafka cb_error  IID: {}  [{}] {} {}, {}", self->id, err_i,
+      rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
 int Producer::cb_stats(rd_kafka_t *rk, char *json, size_t json_len,
@@ -441,7 +461,7 @@ int Producer::cb_stats(rd_kafka_t *rk, char *json, size_t json_len,
 void Producer::cb_log(rd_kafka_t const *rk, int level, char const *fac,
                       char const *buf) {
   auto self = reinterpret_cast<Producer *>(rd_kafka_opaque(rk));
-  LOG(level, "IID: {}  {}  fac: {}", self->id, buf, fac);
+  LOG(5, "IID: {}  {}  fac: {}", self->id, buf, fac);
 }
 
 void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
@@ -454,17 +474,17 @@ void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
 }
 
 Producer::~Producer() {
-  LOG(9, "~Producer");
+  LOG(7, "~Producer");
   if (rk) {
     int ns = 10;
     while (rd_kafka_outq_len(rk) > 0) {
       auto n1 = rd_kafka_poll(rk, ns);
       if (n1 > 0) {
-        LOG(9, "rd_kafka_poll handled {}, timeout {}", n1, ns);
+        LOG(7, "rd_kafka_poll handled {}, timeout {}", n1, ns);
       }
-      ns = std::min(1000, ns * 3 / 2);
+      ns = std::min(500, ns * 3 / 2);
     }
-    LOG(9, "rd_kafka_destroy");
+    LOG(7, "rd_kafka_destroy");
     rd_kafka_destroy(rk);
     rk = nullptr;
   }
@@ -486,7 +506,7 @@ Producer::Producer(BrokerOpt opt) : opt(opt) {
   rd_kafka_conf_set_throttle_cb(conf, Producer::cb_throttle);
 
   rd_kafka_conf_set_opaque(conf, this);
-  LOG(9, "Producer opaque: {}", (void *)this);
+  LOG(7, "Producer opaque: {}", (void *)this);
 
   opt.apply(conf);
 
@@ -506,6 +526,16 @@ Producer::Producer(BrokerOpt opt) : opt(opt) {
   }
 }
 
+Producer::Producer(Producer &&x) {
+  using std::swap;
+  swap(rk, x.rk);
+  swap(on_delivery_ok, x.on_delivery_ok);
+  swap(on_delivery_failed, x.on_delivery_failed);
+  swap(on_error, x.on_error);
+  swap(opt, x.opt);
+  swap(id, x.id);
+}
+
 void Producer::poll() {
   int n1 = rd_kafka_poll(rk, opt.poll_timeout_ms);
   if (n1 > 0) {
@@ -523,24 +553,25 @@ void Producer::poll_while_outq() {
 rd_kafka_t *Producer::rd_kafka_ptr() const { return rk; }
 
 ProducerTopic::~ProducerTopic() {
-  LOG(9, "~ProducerTopic");
+  LOG(7, "~ProducerTopic");
   if (rkt) {
-    auto rk = producer.rd_kafka_ptr();
+    auto rk = producer->rd_kafka_ptr();
     int ns = 10;
     while (rd_kafka_outq_len(rk) > 0) {
       auto n1 = rd_kafka_poll(rk, ns);
       if (n1 > 0) {
-        LOG(9, "rd_kafka_poll handled {}, timeout {}", n1, ns);
+        LOG(7, "rd_kafka_poll handled {}, timeout {}", n1, ns);
       }
       ns = std::min(500, ns << 2);
     }
-    LOG(9, "rd_kafka_topic_destroy");
+    LOG(7, "rd_kafka_topic_destroy");
     rd_kafka_topic_destroy(rkt);
     rkt = nullptr;
   }
 }
 
-ProducerTopic::ProducerTopic(Producer const &producer, std::string name)
+ProducerTopic::ProducerTopic(std::shared_ptr<Producer> producer,
+                             std::string name)
     : producer(producer), _name(name) {
   TopicOpt opt;
   rd_kafka_topic_conf_t *topic_conf = rd_kafka_topic_conf_new();
@@ -551,20 +582,27 @@ ProducerTopic::ProducerTopic(Producer const &producer, std::string name)
   // rd_kafka_topic_conf_set_partitioner_cb(topic_conf,
   // rd_kafka_msg_partitioner_random);
 
-  rkt = rd_kafka_topic_new(producer.rd_kafka_ptr(), _name.c_str(), topic_conf);
+  rkt = rd_kafka_topic_new(producer->rd_kafka_ptr(), _name.c_str(), topic_conf);
   if (rkt == nullptr) {
     // Seems like Kafka uses the system error code?
     auto errstr = rd_kafka_err2str(rd_kafka_errno2err(errno));
     LOG(0, "ERROR could not create Kafka topic: {}", errstr);
     throw std::exception();
   }
-  LOG(9, "Ctor topic {} finished", rd_kafka_topic_name(rkt));
+  LOG(7, "ctor topic: {}  producer: {}", rd_kafka_topic_name(rkt),
+      rd_kafka_name(producer->rd_kafka_ptr()));
 }
 
-int ProducerTopic::produce(void *msg_data, int msg_size, void *opaque,
+ProducerTopic::ProducerTopic(ProducerTopic &&x) {
+  std::swap(producer, x.producer);
+  std::swap(rkt, x.rkt);
+  std::swap(_name, x._name);
+  std::swap(_do_copy, x._do_copy);
+}
+
+int ProducerTopic::produce(uchar *msg_data, int msg_size, void *opaque,
                            bool print_err) {
-  static_assert(RD_KAFKA_RESP_ERR_NO_ERROR == 0,
-                "Currently return lies on NO_ERROR == 0");
+  static_assert(RD_KAFKA_RESP_ERR_NO_ERROR == 0, "We rely on NO_ERROR == 0");
   if (not rkt) {
     throw std::runtime_error("ERROR tried to produce on uninitialized rkt");
   }
@@ -577,8 +615,12 @@ int ProducerTopic::produce(void *msg_data, int msg_size, void *opaque,
 
   // no flags means that we reown our buffer when Kafka calls our callback.
   int msgflags = 0; // 0, RD_KAFKA_MSG_F_COPY, RD_KAFKA_MSG_F_FREE
-  if (_do_copy)
+  if (_do_copy || opaque == nullptr)
     msgflags = RD_KAFKA_MSG_F_COPY;
+
+  // This overload does always copy because non-copy should use the new Msg
+  // based one.
+  msgflags = RD_KAFKA_MSG_F_COPY;
 
   // TODO
   // How does Kafka report the error?
@@ -586,22 +628,64 @@ int ProducerTopic::produce(void *msg_data, int msg_size, void *opaque,
   // Check that this is thread safe ?!?
 
   x = rd_kafka_produce(rkt, partition, msgflags, msg_data, msg_size, key,
-                       key_len, opaque);
+                       key_len, nullptr);
 
   if (print_err) {
     if (x == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
       LOG(0, "ERROR OutQ: {}  QUEUE_FULL",
-          rd_kafka_outq_len(producer.rd_kafka_ptr()));
+          rd_kafka_outq_len(producer->rd_kafka_ptr()));
     } else if (x == RD_KAFKA_RESP_ERR_MSG_SIZE_TOO_LARGE) {
       LOG(0, "ERROR OutQ: {}  TOO_LARGE",
-          rd_kafka_outq_len(producer.rd_kafka_ptr()));
+          rd_kafka_outq_len(producer->rd_kafka_ptr()));
     } else if (x != 0) {
       LOG(0, "ERROR on produce topic {}  partition {}   {}",
           rd_kafka_topic_name(rkt), partition,
           rd_kafka_err2str(rd_kafka_last_error()));
     } else {
-      LOG(9, "sent to topic {} partition {}", rd_kafka_topic_name(rkt),
+      LOG(7, "sent to topic {} partition {}", rd_kafka_topic_name(rkt),
           partition);
+    }
+  }
+
+  return x;
+}
+
+int ProducerTopic::produce(Producer::Msg &msg) {
+  if (not rkt) {
+    throw std::runtime_error("ERROR tried to produce on uninitialized rkt");
+  }
+  int x;
+  int32_t partition = RD_KAFKA_PARTITION_UA;
+
+  // Optional:
+  void const *key = NULL;
+  size_t key_len = 0;
+
+  // no flags means that we reown our buffer when Kafka calls our callback.
+  int msgflags = 0; // 0, RD_KAFKA_MSG_F_COPY, RD_KAFKA_MSG_F_FREE
+
+  // TODO
+  // How does Kafka report the error?
+  // API docs state that error codes are given in 'errno'
+  // Check that this is thread safe ?!?
+
+  x = rd_kafka_produce(rkt, partition, msgflags, msg.data, msg.size, key,
+                       key_len, &msg);
+
+  if (true) {
+    if (x == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
+      LOG(3, "ERROR OutQ: {}  QUEUE_FULL",
+          rd_kafka_outq_len(producer->rd_kafka_ptr()));
+    } else if (x == RD_KAFKA_RESP_ERR_MSG_SIZE_TOO_LARGE) {
+      LOG(3, "ERROR OutQ: {}  TOO_LARGE",
+          rd_kafka_outq_len(producer->rd_kafka_ptr()));
+    } else if (x != 0) {
+      LOG(3, "ERROR on produce topic {}  partition {}   {}",
+          rd_kafka_topic_name(rkt), partition,
+          rd_kafka_err2str(rd_kafka_last_error()));
+    } else {
+      // LOG(7, "sent to topic {} partition {}", rd_kafka_topic_name(rkt),
+      // partition);
     }
   }
 
@@ -611,5 +695,9 @@ int ProducerTopic::produce(void *msg_data, int msg_size, void *opaque,
 void ProducerTopic::do_copy() { _do_copy = true; }
 
 ProducerMsg::~ProducerMsg() {}
+
+void ProducerMsg::delivery_ok() {}
+
+void ProducerMsg::delivery_fail() {}
 
 } // namespace KafkaW

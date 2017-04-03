@@ -17,7 +17,7 @@ public:
 /// Settings for the Kafka command broker and topic.
 struct CommandListenerConfig {
   uri::URI broker;
-  std::function<void()> *on_rebalance_assign = nullptr;
+  std::function<void(rd_kafka_topic_partition_list_s *)> on_rebalance_assign;
   int64_t start_at_command_offset = -1;
   CommandListenerConfig()
       : broker("kafka://localhost:9092/kafka-to-nexus.command") {}

@@ -39,7 +39,7 @@ public:
 private:
   std::atomic<bool> do_run_kafka{ false };
   std::atomic<bool> do_use_graylog_logger{ false };
-  std::unique_ptr<KafkaW::Producer> producer;
+  std::shared_ptr<KafkaW::Producer> producer;
   std::unique_ptr<KafkaW::Producer::Topic> topic;
   std::thread thread_poll;
 };
@@ -66,7 +66,7 @@ void Logger::log_kafka_gelf_start(std::string address, std::string topicname) {
   KafkaW::BrokerOpt opt;
   opt.address = address;
   producer.reset(new KafkaW::Producer(opt));
-  topic.reset(new KafkaW::Producer::Topic(*producer, topicname));
+  topic.reset(new KafkaW::Producer::Topic(producer, topicname));
   topic->do_copy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {
@@ -129,7 +129,7 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     Writer<StringBuffer> wr(buf1);
     d.Accept(wr);
     auto s1 = buf1.GetString();
-    topic->produce((void *)s1, strlen(s1), nullptr);
+    topic->produce((unsigned char *)s1, strlen(s1), nullptr);
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {
