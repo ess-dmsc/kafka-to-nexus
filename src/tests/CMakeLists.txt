@@ -17,13 +17,14 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
+${path_include_pcre2}
 ${CMAKE_CURRENT_BINARY_DIR}/..
 )
 target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} pcre2-8)
+target_link_libraries(${tgt} libpcre2-8)
 if (have_gtest)
 target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
 target_include_directories(${tgt} PRIVATE ${path_include_gtest})
@@ -44,6 +45,7 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
+${path_include_pcre2}
 ${CMAKE_CURRENT_BINARY_DIR}
 ..
 )
@@ -51,7 +53,7 @@ target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} pcre2-8)
+target_link_libraries(${tgt} libpcre2-8)
 if (have_gtest)
 target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
 target_include_directories(${tgt} PRIVATE ${path_include_gtest})
@@ -72,6 +74,7 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
+${path_include_pcre2}
 ${CMAKE_CURRENT_BINARY_DIR}
 ..
 )
@@ -79,7 +82,7 @@ target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} pcre2-8)
+target_link_libraries(${tgt} libpcre2-8)
 if (have_gtest)
 target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
 target_include_directories(${tgt} PRIVATE ${path_include_gtest})

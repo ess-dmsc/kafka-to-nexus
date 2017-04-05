@@ -39,6 +39,9 @@ find_path(path_include_rapidjson NAMES rapidjson/document.h HINTS
 /opt/local/rapidjson.git/include
 )
 
+find_path(path_include_pcre2 NAMES pcre2.h)
+find_library(path_lib_pcre2 NAMES pcre2-8)
+
 find_path(path_include_hdf5 NAMES hdf5.h HINTS
 "$ENV{hdf5_dir}/include"
 )
@@ -97,6 +100,10 @@ set_property(TARGET libgraylog_logger PROPERTY IMPORTED_LOCATION ${path_lib_gray
 else()
 message(STATUS "Not found: graylog_logger, not using it.")
 endif()
+
+add_library(libpcre2-8 SHARED IMPORTED)
+set_property(TARGET libpcre2-8 PROPERTY IMPORTED_LOCATION ${path_lib_pcre2})
+
 
 
 message(STATUS "ENV{streaming_data_types_dir}: $ENV{streaming_data_types_dir}")
@@ -202,6 +209,7 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
+${path_include_pcre2}
 ${CMAKE_CURRENT_BINARY_DIR}
 )
 target_compile_definitions(kafka_to_nexus__objects PRIVATE HAS_REMOTE_API=0)
@@ -219,11 +227,12 @@ target_include_directories(${tgt} PRIVATE
 ${path_include_fmt}
 ${path_include_rdkafka}
 ${path_include_rapidjson}
+${path_include_pcre2}
 )
 target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} pcre2-8)
+target_link_libraries(${tgt} libpcre2-8)
 
 
 set(tgt "kafka-to-nexus")
@@ -242,13 +251,14 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
+${path_include_pcre2}
 )
 
 target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} pcre2-8)
+target_link_libraries(${tgt} libpcre2-8)
 
 if (have_gtest)
 add_dependencies(${tgt} gtest)
@@ -281,13 +291,14 @@ ${path_include_hdf5}
 ${path_include_rdkafka}
 ${path_include_flatbuffers}
 ${path_include_rapidjson}
+${path_include_pcre2}
 )
 
 target_link_libraries(${tgt} libhdf5)
 target_link_libraries(${tgt} libhdf5cpp)
 target_link_libraries(${tgt} librdkafka)
 target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} pcre2-8)
+target_link_libraries(${tgt} libpcre2-8)
 
 if (have_gtest)
 add_dependencies(${tgt} gtest)
