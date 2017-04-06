@@ -20,78 +20,36 @@ COMMAND git diff --name-only --no-index ${CMAKE_CURRENT_BINARY_DIR}/git_commit_n
 DEPENDS git_commit_now
 )
 
-find_path(path_include_fmt NAMES fmt/format.cc PATHS
-$ENV{fmt_dir}/include
-/opt/local/fmt
-# For DMSC build node:
-$ENV{DM_ROOT}/usr/include
-/opt/local
-)
+find_path(path_include_fmt NAMES fmt/format.cc)
 
+find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h)
 
-find_path(path_include_flatbuffers NAMES flatbuffers/flatbuffers.h HINTS
-"$ENV{flatbuffers_dir}/include"
-/opt/local/flatbuffers.git/include
-)
-
-find_path(path_include_rapidjson NAMES rapidjson/document.h HINTS
-"$ENV{rapidjson_dir}/include"
-/opt/local/rapidjson.git/include
-)
+find_path(path_include_rapidjson NAMES rapidjson/document.h)
 
 find_path(path_include_pcre2 NAMES pcre2.h)
 find_library(path_lib_pcre2 NAMES pcre2-8)
+add_library(libpcre2-8 SHARED IMPORTED)
+set_property(TARGET libpcre2-8 PROPERTY IMPORTED_LOCATION ${path_lib_pcre2})
 
-find_path(path_include_hdf5 NAMES hdf5.h HINTS
-"$ENV{hdf5_dir}/include"
-)
-
-find_library(path_lib_hdf5 NAMES hdf5-shared hdf5 PATHS
-"$ENV{hdf5_dir}/lib"
-)
-find_library(path_lib_hdf5cpp NAMES hdf5_cpp-shared hdf5_cpp PATHS
-"$ENV{hdf5_dir}/lib"
-)
-
-
+find_path(path_include_hdf5 NAMES hdf5.h)
+find_library(path_lib_hdf5 NAMES hdf5-shared hdf5)
+find_library(path_lib_hdf5cpp NAMES hdf5_cpp-shared hdf5_cpp)
 add_library(libhdf5 SHARED IMPORTED)
 set_property(TARGET libhdf5 PROPERTY IMPORTED_LOCATION ${path_lib_hdf5})
-
 add_library(libhdf5cpp SHARED IMPORTED)
 set_property(TARGET libhdf5cpp PROPERTY IMPORTED_LOCATION ${path_lib_hdf5cpp})
 
-find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h HINTS
-"$ENV{librdkafka_dir}/include"
-/opt/local/rdkafka/install/include
-PATHS
-/usr/local/include
-)
-
-find_library(path_lib_rdkafka NAMES rdkafka HINTS
-"$ENV{librdkafka_dir}/lib"
-/opt/local/rdkafka/install/lib
-PATHS
-/usr/local/lib
-)
+find_path(path_include_rdkafka NAMES librdkafka/rdkafka.h)
+find_library(path_lib_rdkafka NAMES rdkafka)
 add_library(librdkafka SHARED IMPORTED)
 set_property(TARGET librdkafka PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka})
 
-find_library(path_lib_rdkafka++ NAMES rdkafka++ HINTS
-"$ENV{librdkafka_dir}/lib"
-/opt/local/rdkafka/install/lib
-/usr/local/lib
-)
+find_library(path_lib_rdkafka++ NAMES rdkafka++)
 add_library(librdkafka++ SHARED IMPORTED)
 set_property(TARGET librdkafka++ PROPERTY IMPORTED_LOCATION ${path_lib_rdkafka++})
 
-find_path(path_include_graylog_logger NAMES graylog_logger/Log.hpp PATHS
-$ENV{graylog_logger_dir}/include
-/opt/local/graylog_logger-install
-)
-find_library(path_lib_graylog_logger NAMES graylog_logger PATHS
-$ENV{graylog_logger_dir}/lib
-/opt/local/graylog_logger-install
-)
+find_path(path_include_graylog_logger NAMES graylog_logger/Log.hpp)
+find_library(path_lib_graylog_logger NAMES graylog_logger)
 if (path_include_graylog_logger AND path_lib_graylog_logger)
 message(STATUS "Using graylog_logger ${path_include_graylog_logger} ${path_lib_graylog_logger}")
 set(have_graylog_logger TRUE)
@@ -101,15 +59,11 @@ else()
 message(STATUS "Not found: graylog_logger, not using it.")
 endif()
 
-add_library(libpcre2-8 SHARED IMPORTED)
-set_property(TARGET libpcre2-8 PROPERTY IMPORTED_LOCATION ${path_lib_pcre2})
-
-
 
 message(STATUS "ENV{streaming_data_types_dir}: $ENV{streaming_data_types_dir}")
 find_path(path_include_streaming_data_types NAMES schemas/f141_epics_nt.fbs PATHS
-$ENV{streaming_data_types_dir}
-"${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types"
+# The common case as fallback:
+${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types
 )
 message(STATUS "path_include_streaming_data_types: ${path_include_streaming_data_types}")
 
@@ -125,7 +79,7 @@ COMMAND bash -c '\(cd ${path_include_streaming_data_types} && git merge-base --i
 set(flatbuffers_generated_headers "")
 
 # Search the dev env standard locations, but it will also look in PATH
-find_program(flatc flatc PATHS "$ENV{flatc}" "$ENV{flatc_dir}" "/opt/local/flatbuffers")
+find_program(flatc flatc)
 message(STATUS "flatc in ${flatc}")
 
 set(schemas_subdir "schemas")
@@ -135,11 +89,8 @@ file(GLOB_RECURSE flatbuffers_schemata2 RELATIVE "${path_include_streaming_data_
 
 foreach (f0 ${flatbuffers_schemata2})
 	string(REGEX REPLACE "\\.fbs$" "" s0 ${f0})
-	#message(STATUS "s0: ${s0}")
 	set(fbs "${s0}.fbs")
 	set(fbh "${s0}_generated.h")
-	#message(STATUS "fbs: ${fbs}")
-	#message(STATUS "fbh: ${fbh}")
 	add_custom_command(
 		OUTPUT "${head_out_dir}/${fbh}"
 		COMMAND ${flatc} --cpp --gen-mutable --gen-name-strings --scoped-enums "${path_include_streaming_data_types}/schemas/${fbs}"
