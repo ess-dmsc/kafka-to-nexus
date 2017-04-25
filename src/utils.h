@@ -34,7 +34,7 @@ struct OffsetType {};
 struct PartitionType {};
 struct Timestamp {};
 struct FileWriterErrorCode {};
-}
+} // namespace utils
 
 using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
 using RdKafkaPartition = utils::StrongType<int32_t, utils::PartitionType>;
@@ -50,5 +50,5 @@ enum StatusCode {
   STOPPED = 0,
   ERROR = -1,
 };
-}
-}
+} // namespace FileWriter
+} // namespace BrightnESS

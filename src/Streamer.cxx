@@ -1,5 +1,5 @@
-#include <librdkafka/rdkafkacpp.h>
 #include "logger.h"
+#include <librdkafka/rdkafkacpp.h>
 
 #include "Streamer.hpp"
 #include "helper.h"

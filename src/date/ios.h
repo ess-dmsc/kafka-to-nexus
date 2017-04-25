@@ -13,8 +13,8 @@
 // copies of the Software, and to permit persons to whom the Software is
 // furnished to do so, subject to the following conditions:
 //
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
 //
 // THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 // IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
@@ -28,22 +28,20 @@
 #define ios_hpp
 
 #if __APPLE__
-# include <TargetConditionals.h>
-# if TARGET_OS_IPHONE
-#   include <string>
+#include <TargetConditionals.h>
+#if TARGET_OS_IPHONE
+#include <string>
 
-    namespace date
-    {
-    namespace iOSUtils
-    {
-    
-    std::string get_tzdata_path();
-    
-    }  // namespace iOSUtils
-    }  // namespace date
+namespace date {
+namespace iOSUtils {
 
-# endif  // TARGET_OS_IPHONE
-#else   // !__APPLE__
-# define TARGET_OS_IPHONE 0
-#endif  // !__APPLE__
+std::string get_tzdata_path();
+
+} // namespace iOSUtils
+} // namespace date
+
+#endif // TARGET_OS_IPHONE
+#else  // !__APPLE__
+#define TARGET_OS_IPHONE 0
+#endif // !__APPLE__
 #endif // ios_hpp

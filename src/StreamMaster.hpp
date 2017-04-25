@@ -1,20 +1,20 @@
 #pragma once
 
-#include <iostream>
-#include <string>
 #include <functional>
-#include <memory>
-#include <vector>
+#include <iostream>
 #include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
-#include <thread>
-#include <atomic>
 #include <algorithm>
+#include <atomic>
+#include <thread>
 
-#include "FileWriterTask.h"
 #include "DemuxTopic.h"
-#include "utils.h"
+#include "FileWriterTask.h"
 #include "logger.h"
+#include "utils.h"
 
 struct Streamer;
 struct FileWriterCommand;
@@ -158,5 +158,5 @@ template <typename S, typename D>
 milliseconds StreamMaster<S, D>::duration = milliseconds(10);
 template <typename S, typename D>
 milliseconds StreamMaster<S, D>::delay_after_last_message = milliseconds(1000);
-}
-}
+} // namespace FileWriter
+} // namespace BrightnESS

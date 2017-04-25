@@ -1,9 +1,9 @@
 #pragma once
 
-#include <iostream>
-#include <string>
 #include <functional>
+#include <iostream>
 #include <map>
+#include <string>
 
 #include "DemuxTopic.h"
 #include "utils.h"
@@ -14,7 +14,7 @@ class Topic;
 class Consumer;
 class TopicPartition;
 class Message;
-}
+} // namespace RdKafka
 
 namespace BrightnESS {
 namespace FileWriter {
@@ -101,5 +101,5 @@ template <>
 std::map<std::string, int64_t>
 Streamer::set_start_time<>(BrightnESS::FileWriter::DemuxTopic &,
                            const ESSTimeStamp);
-}
-}
+} // namespace FileWriter
+} // namespace BrightnESS

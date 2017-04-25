@@ -8,10 +8,9 @@ namespace FileWriter {
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
-CommandHandler::CommandHandler(Master *master, rapidjson::Value const * config_file) :
-		master(master),
-		config_file(config_file)
-{
+CommandHandler::CommandHandler(Master *master,
+                               rapidjson::Value const *config_file)
+    : master(master), config_file(config_file) {
   if (false) {
     using namespace rapidjson;
     auto buf1 = gulp(master->config.dir_assets + "/test/schema-command.json");
@@ -185,5 +184,5 @@ void CommandHandler::handle(Msg const &msg) {
     LOG(3, "ERROR could not figure out this command: {:.{}}", msg.data, n1);
   }
 }
-}
-}
+} // namespace FileWriter
+} // namespace BrightnESS
