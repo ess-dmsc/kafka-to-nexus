@@ -11,25 +11,10 @@ $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
-target_include_directories(${tgt} PRIVATE
-${path_include_fmt}
-${path_include_hdf5}
-${path_include_rdkafka}
-${path_include_flatbuffers}
-${path_include_rapidjson}
-${path_include_pcre2}
-${CMAKE_CURRENT_BINARY_DIR}/..
-)
-target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} librdkafka)
-target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} libpcre2-8)
-if (have_gtest)
-target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
-target_include_directories(${tgt} PRIVATE ${path_include_gtest})
-target_link_libraries(${tgt} gtest)
-endif()
+target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common})
+target_link_libraries(${tgt} ${libraries_common})
+add_gtest_to_target(${tgt})
 
 
 set(tgt "streamer_test")
@@ -39,26 +24,10 @@ $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
-target_include_directories(${tgt} PRIVATE
-${path_include_fmt}
-${path_include_hdf5}
-${path_include_rdkafka}
-${path_include_flatbuffers}
-${path_include_rapidjson}
-${path_include_pcre2}
-${CMAKE_CURRENT_BINARY_DIR}
-..
-)
-target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} librdkafka)
-target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} libpcre2-8)
-if (have_gtest)
-target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
-target_include_directories(${tgt} PRIVATE ${path_include_gtest})
-target_link_libraries(${tgt} gtest)
-endif()
+target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common})
+target_link_libraries(${tgt} ${libraries_common})
+add_gtest_to_target(${tgt})
 
 
 set(tgt "streammaster_test")
@@ -68,26 +37,11 @@ $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
-target_include_directories(${tgt} PRIVATE
-${path_include_fmt}
-${path_include_hdf5}
-${path_include_rdkafka}
-${path_include_flatbuffers}
-${path_include_rapidjson}
-${path_include_pcre2}
-${CMAKE_CURRENT_BINARY_DIR}
-..
-)
-target_link_libraries(${tgt} libhdf5)
-target_link_libraries(${tgt} libhdf5cpp)
-target_link_libraries(${tgt} librdkafka)
-target_link_libraries(${tgt} librdkafka++)
-target_link_libraries(${tgt} libpcre2-8)
-if (have_gtest)
-target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
-target_include_directories(${tgt} PRIVATE ${path_include_gtest})
-target_link_libraries(${tgt} gtest)
-endif()
+target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common})
+target_link_libraries(${tgt} ${libraries_common})
+add_gtest_to_target(${tgt})
+
 
 configure_file(msg-conf-new-01.json ../../tests/msg-conf-new-01.json)
 configure_file(msg-conf-new-02.json ../../tests/msg-conf-new-02.json)
