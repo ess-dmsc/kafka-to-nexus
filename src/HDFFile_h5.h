@@ -1,5 +1,5 @@
 #pragma once
-#include <H5Cpp.h>
+#include <hdf5.h>
 
 namespace BrightnESS {
 namespace FileWriter {
