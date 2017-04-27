@@ -60,7 +60,8 @@ public:
   virtual ~FBSchemaWriter();
   void init(HDFFile *hdf_file, std::string const &hdf_path,
             std::string const &sourcename, Msg msg,
-            rapidjson::Value const *config_file);
+            rapidjson::Value const *config_file,
+            rapidjson::Document *config_stream);
   WriteResult write(Msg msg);
   void flush();
   void close();
@@ -69,6 +70,12 @@ protected:
   FBSchemaWriter();
   HDFFile *hdf_file = nullptr;
   rapidjson::Value const *config_file = nullptr;
+  /**
+  Contains all the options set for the stream that this FBSchemaWriter
+  should write to HDF.  If your plugin needs to be configurable, this is where
+  you can access the options.
+  */
+  rapidjson::Document *config_stream = nullptr;
 
 private:
   virtual void init_impl(std::string const &sourcename, hid_t hdf_group,

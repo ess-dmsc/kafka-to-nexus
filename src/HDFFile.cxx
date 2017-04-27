@@ -344,8 +344,10 @@ FBSchemaWriter::~FBSchemaWriter() {
 
 void FBSchemaWriter::init(HDFFile *hdf_file, std::string const &hdf_path,
                           std::string const &sourcename, Msg msg,
-                          rapidjson::Value const *config_file) {
+                          rapidjson::Value const *config_file,
+                          rapidjson::Document *config_stream) {
   this->config_file = config_file;
+  this->config_stream = config_stream;
   this->hdf_file = hdf_file;
   auto f1 = hdf_file->h5file_detail().h5file();
 

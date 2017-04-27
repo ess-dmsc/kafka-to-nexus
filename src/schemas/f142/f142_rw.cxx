@@ -1,6 +1,7 @@
 #include "../../HDFFile.h"
 #include "../../HDFFile_h5.h"
 #include "../../SchemaRegistry.h"
+#include "../../h5.h"
 #include "../../helper.h"
 #include "schemas/f142_logdata_generated.h"
 #include <hdf5.h>
@@ -16,6 +17,7 @@ using std::vector;
 using std::string;
 template <typename T> using uptr = std::unique_ptr<T>;
 using FBUF = LogData;
+using h5::append_ret;
 
 template <typename T> hid_t nat_type();
 template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
@@ -37,15 +39,9 @@ class reader : public FBSchemaReader {
   uint64_t teamid_impl(Msg &msg) override;
 };
 
-struct append_ret {
-  int status;
-  uint64_t written_bytes;
-  uint64_t ix0;
-  operator bool() const { return status == 0; }
-};
-
 class writer_typed_base {
 public:
+  virtual ~writer_typed_base();
   virtual append_ret write_impl(FBUF const *fbuf) = 0;
 };
 
@@ -55,10 +51,7 @@ public:
   writer_typed_array(hid_t hdf_group, std::string const &sourcename, FV *fbval);
   ~writer_typed_array();
   append_ret write_impl(FBUF const *fbuf) override;
-  // DataSet::getId() will be -1 for the default constructed
-  hid_t ds = -1;
-  hid_t dsp = -1;
-  hid_t dcpl = -1;
+  uptr<h5::h5d_chunked_2d<DT> > ds;
 };
 
 template <typename DT, typename FV>
@@ -68,9 +61,7 @@ public:
                       FV *fbval);
   ~writer_typed_scalar();
   append_ret write_impl(FBUF const *fbuf) override;
-  hid_t ds = -1;
-  hid_t dsp = -1;
-  hid_t dcpl = -1;
+  uptr<h5::h5d_chunked_1d<DT> > ds;
 };
 
 class writer : public FBSchemaWriter {
@@ -79,12 +70,12 @@ class writer : public FBSchemaWriter {
                  Msg msg) override;
   WriteResult write_impl(Msg msg) override;
   uptr<writer_typed_base> impl;
-  hid_t ds_timestamp = -1;
-  hid_t ds_seq_data = -1;
-  hid_t ds_seq_fwd = -1;
-  hid_t ds_ts_data = -1;
-  hid_t ds_cue_timestamp_zero = -1;
-  hid_t ds_cue_index = -1;
+  uptr<h5::h5d_chunked_1d<uint64_t> > ds_timestamp;
+  uptr<h5::h5d_chunked_1d<uint64_t> > ds_cue_timestamp_zero;
+  uptr<h5::h5d_chunked_1d<uint64_t> > ds_cue_index;
+  uptr<h5::h5d_chunked_1d<uint64_t> > ds_seq_data;
+  uptr<h5::h5d_chunked_1d<uint64_t> > ds_seq_fwd;
+  uptr<h5::h5d_chunked_1d<uint64_t> > ds_ts_data;
   bool do_flush_always = false;
   bool do_writer_forwarder_internal = false;
   uint64_t total_written_bytes = 0;
@@ -129,20 +120,7 @@ uint64_t reader::teamid_impl(Msg &msg) {
   return 0;
 }
 
-writer::~writer() {
-  if (ds_timestamp != -1)
-    H5Dclose(ds_timestamp);
-  if (ds_seq_data != -1)
-    H5Dclose(ds_seq_data);
-  if (ds_seq_fwd != -1)
-    H5Dclose(ds_seq_fwd);
-  if (ds_ts_data != -1)
-    H5Dclose(ds_ts_data);
-  if (ds_cue_timestamp_zero != -1)
-    H5Dclose(ds_cue_timestamp_zero);
-  if (ds_cue_index != -1)
-    H5Dclose(ds_cue_index);
-}
+writer::~writer() {}
 
 template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
@@ -180,8 +158,15 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
   auto &hg = hdf_group;
   string s("value");
 
+  // todo, unify ...
   if (config_file) {
     if (auto x = get_int(config_file, "nexus.indices.index_every_mb")) {
+      index_every_bytes = (int)x * 1024 * 1024;
+    }
+  }
+
+  if (config_stream) {
+    if (auto x = get_int(config_stream, "nexus.indices.index_every_mb")) {
       index_every_bytes = (int)x * 1024 * 1024;
     }
   }
@@ -233,30 +218,26 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
   };
   impl.reset(impl_fac(fbuf->value_type()));
 
-  this->ds_timestamp = create_1d_ds<uint64_t>(hdf_group, "time");
-  this->ds_cue_timestamp_zero =
-      create_1d_ds<uint64_t>(hdf_group, "cue_timestamp_zero");
-  this->ds_cue_index = create_1d_ds<uint64_t>(hdf_group, "cue_index");
-
+  this->ds_timestamp.reset(
+      new h5::h5d_chunked_1d<uint64_t>(hdf_group, "time", 64 * 1024));
+  this->ds_cue_timestamp_zero.reset(new h5::h5d_chunked_1d<uint64_t>(
+      hdf_group, "cue_timestamp_zero", 64 * 1024));
+  this->ds_cue_index.reset(
+      new h5::h5d_chunked_1d<uint64_t>(hdf_group, "cue_index", 64 * 1024));
   if (do_writer_forwarder_internal) {
-    this->ds_seq_data =
-        create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_data");
-    this->ds_seq_fwd =
-        create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_seq_fwd");
-    this->ds_ts_data =
-        create_1d_ds<uint64_t>(hdf_group, sourcename + "__fwdinfo_ts_data");
+    this->ds_seq_data.reset(new h5::h5d_chunked_1d<uint64_t>(
+        hdf_group, sourcename + "__fwdinfo_seq_data", 64 * 1024));
+    this->ds_seq_fwd.reset(new h5::h5d_chunked_1d<uint64_t>(
+        hdf_group, sourcename + "__fwdinfo_seq_fwd", 64 * 1024));
+    this->ds_ts_data.reset(new h5::h5d_chunked_1d<uint64_t>(
+        hdf_group, sourcename + "__fwdinfo_ts_data", 64 * 1024));
   }
 }
 
+writer_typed_base::~writer_typed_base() {}
+
 template <typename DT, typename FV>
-writer_typed_array<DT, FV>::~writer_typed_array() {
-  if (ds != -1)
-    H5Dclose(ds);
-  if (dsp != -1)
-    H5Sclose(dsp);
-  if (dcpl != -1)
-    H5Pclose(dcpl);
-}
+writer_typed_array<DT, FV>::~writer_typed_array() {}
 
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
@@ -266,195 +247,19 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
   LOG(7, "f142 init_impl  v.size(): {}", ncols);
   using std::vector;
   using std::array;
-  auto dt = nat_type<DT>();
-
-  std::array<hsize_t, 2> sizes_ini{ { 0, ncols } };
-  std::array<hsize_t, 2> sizes_max{ { H5S_UNLIMITED, ncols } };
-
-  this->dsp =
-      H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
-  if (true) {
-    // Just check if it works as I think it should
-    LOG(7, "DataSpace isSimple {}", H5Sis_simple(dsp));
-    auto ndims = H5Sget_simple_extent_ndims(dsp);
-    LOG(7, "DataSpace getSimpleExtentNdims {}", ndims);
-    LOG(7, "DataSpace getSimpleExtentNpoints {}",
-        H5Sget_simple_extent_npoints(dsp));
-    std::vector<hsize_t> get_sizes_now;
-    std::vector<hsize_t> get_sizes_max;
-    get_sizes_now.resize(ndims);
-    get_sizes_max.resize(ndims);
-    H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(7, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1),
-          get_sizes_max.at(i1));
-    }
-  }
-
-  this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  std::array<hsize_t, 2> sizes_chk{
-    { std::max(64 * 1024 / H5Tget_size(dt) / ncols, (hsize_t)1), ncols }
-  };
-  H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
-  this->ds = H5Dcreate1(hdf_group, dataset_name.c_str(), dt, dsp, dcpl);
-}
-
-template <typename Td>
-static append_ret append_data_array(hid_t ds, Td const *data, size_t nlen) {
-  // Yes, verbose and more checks than necessary, but this is to gather
-  // baseline performance data before merging the tuned branch.
-  auto tgt = H5Dget_space(ds);
-  auto ndims = H5Sget_simple_extent_ndims(tgt);
-  std::vector<hsize_t> get_sizes_now;
-  std::vector<hsize_t> get_sizes_max;
-  get_sizes_now.resize(ndims);
-  get_sizes_max.resize(ndims);
-  herr_t err;
-  H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
-  if (false) {
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1),
-          get_sizes_max.at(i1));
-    }
-  }
-  if (get_sizes_now.at(1) != nlen) {
-    LOG(4, "ERROR number of columns does not match");
-    return { -1 };
-  }
-
-  get_sizes_now.at(0) += 1;
-  err = H5Dextend(ds, get_sizes_now.data());
-  if (err < 0) {
-    LOG(4, "ERROR can not extend dataset");
-    return { -1 };
-  }
-  H5Sclose(tgt);
-
-  tgt = H5Dget_space(ds);
-  using A = std::array<hsize_t, 2>;
-  A mem_size = { { 1, get_sizes_now.at(1) } };
-  auto mem = H5Screate_simple(2, mem_size.data(), nullptr);
-  {
-    A hsl_start{ { 0, 0 } };
-    A hsl_count{ { 1, get_sizes_now.at(1) } };
-    err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr,
-                              hsl_count.data(), nullptr);
-    if (err < 0) {
-      LOG(4, "ERROR can not select mem hyperslab");
-      return { -2 };
-    }
-  }
-
-  A tgt_start{ { get_sizes_now.at(0) - 1, 0 } };
-  A tgt_count{ { 1, get_sizes_now.at(1) } };
-  err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
-                            tgt_count.data(), nullptr);
-  if (err < 0) {
-    LOG(4, "ERROR can not select tgt hyperslab");
-    return { -3 };
-  }
-
-  if (false) {
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1),
-          get_sizes_max.at(i1));
-    }
-  }
-  auto dt = nat_type<Td>();
-  err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
-  if (err < 0) {
-    LOG(4, "ERROR writing failed");
-    return { -4 };
-  }
-  err = H5Sclose(mem);
-  return { 0, sizeof(Td) * nlen, tgt_start[0] };
-}
-
-template <typename Td>
-static append_ret append_data_scalar(hid_t ds, Td const data) {
-  // Yes, verbose and more checks than necessary, but this is to gather
-  // baseline performance data before merging the tuned branch.
-  auto tgt = H5Dget_space(ds);
-  auto ndims = H5Sget_simple_extent_ndims(tgt);
-  if (ndims != 1) {
-    LOG(6, "this data space is expected to have one dimension");
-    return { -1 };
-  }
-  using AA = std::array<hsize_t, 1>;
-  AA get_sizes_now;
-  AA get_sizes_max;
-  herr_t err;
-  H5Sget_simple_extent_dims(tgt, get_sizes_now.data(), get_sizes_max.data());
-  if (false) {
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1),
-          get_sizes_max.at(i1));
-    }
-  }
-
-  get_sizes_now.at(0) += 1;
-  err = H5Dextend(ds, get_sizes_now.data());
-  if (err < 0) {
-    LOG(4, "ERROR can not extend dataset");
-    return { -1 };
-  }
-  H5Sclose(tgt);
-
-  tgt = H5Dget_space(ds);
-  AA mem_size = { { 1 } };
-  auto mem = H5Screate_simple(1, mem_size.data(), nullptr);
-  {
-    AA hsl_start{ { 0 } };
-    AA hsl_count{ { 1 } };
-    err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr,
-                              hsl_count.data(), nullptr);
-    if (err < 0) {
-      LOG(4, "ERROR can not select mem hyperslab");
-      return { -2 };
-    }
-  }
-
-  AA tgt_start{ { get_sizes_now.at(0) - 1 } };
-  AA tgt_count{ { 1 } };
-  err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
-                            tgt_count.data(), nullptr);
-  if (err < 0) {
-    LOG(4, "ERROR can not select tgt hyperslab");
-    return { -3 };
-  }
-
-  if (false) {
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1),
-          get_sizes_max.at(i1));
-    }
-  }
-  auto dt = nat_type<Td>();
-  err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, &data);
-  if (err < 0) {
-    LOG(4, "ERROR writing failed");
-    return { -4 };
-  }
-  err = H5Sclose(mem);
-  return { 0, sizeof(Td), tgt_start[0] };
+  this->ds.reset(
+      new h5::h5d_chunked_2d<DT>(hdf_group, dataset_name, ncols, 64 * 1024));
 }
 
 template <typename DT, typename FV>
 append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
   auto value1 = (FV const *)fbuf->value();
-  return append_data_array(this->ds, value1->value()->data(),
-                           value1->value()->size());
+  return this->ds->append_data_2d(value1->value()->data(),
+                                  value1->value()->size());
 }
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::~writer_typed_scalar() {
-  if (ds != -1)
-    H5Dclose(ds);
-  if (dsp != -1)
-    H5Sclose(dsp);
-  if (dcpl != -1)
-    H5Pclose(dcpl);
-}
+writer_typed_scalar<DT, FV>::~writer_typed_scalar() {}
 
 template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(
@@ -462,42 +267,14 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(
   LOG(7, "f142 init_impl  scalar");
   using std::vector;
   using std::array;
-  using AA = std::array<hsize_t, 1>;
-  auto dt = nat_type<DT>();
-
-  AA sizes_ini{ { 0 } };
-  AA sizes_max{ { H5S_UNLIMITED } };
-
-  this->dsp =
-      H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
-  if (true) {
-    // Just check if it works as I think it should
-    LOG(7, "DataSpace isSimple {}", H5Sis_simple(dsp));
-    auto ndims = H5Sget_simple_extent_ndims(dsp);
-    LOG(7, "DataSpace getSimpleExtentNdims {}", ndims);
-    LOG(7, "DataSpace getSimpleExtentNpoints {}",
-        H5Sget_simple_extent_npoints(dsp));
-    std::vector<hsize_t> get_sizes_now;
-    std::vector<hsize_t> get_sizes_max;
-    get_sizes_now.resize(ndims);
-    get_sizes_max.resize(ndims);
-    H5Sget_simple_extent_dims(dsp, get_sizes_now.data(), get_sizes_max.data());
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(7, "H5Sget_simple_extent_dims {:3} {:3}", get_sizes_now.at(i1),
-          get_sizes_max.at(i1));
-    }
-  }
-
-  this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  AA sizes_chk{ { std::max<hsize_t>(64 * 1024 / H5Tget_size(dt), 1) } };
-  H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
-  this->ds = H5Dcreate1(hdf_group, dataset_name.c_str(), dt, dsp, dcpl);
+  this->ds.reset(
+      new h5::h5d_chunked_1d<DT>(hdf_group, dataset_name, 64 * 1024));
 }
 
 template <typename DT, typename FV>
 append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
-  auto value1 = (FV const *)fbuf->value();
-  return append_data_scalar(this->ds, value1->value());
+  auto value1 = ((FV const *)(fbuf->value()))->value();
+  return this->ds->append_data_1d(&value1, 1);
 }
 
 WriteResult writer::write_impl(Msg msg) {
@@ -513,17 +290,29 @@ WriteResult writer::write_impl(Msg msg) {
   total_written_bytes += wret.written_bytes;
   ts_max = std::max(fbuf->timestamp(), ts_max);
   if (total_written_bytes > index_at_bytes + index_every_bytes) {
-    append_data_scalar(this->ds_cue_timestamp_zero, ts_max);
-    append_data_scalar(this->ds_cue_index, wret.ix0);
+    this->ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
+    this->ds_cue_index->append_data_1d(&wret.ix0, 1);
     index_at_bytes = total_written_bytes;
   }
-  append_data_scalar(this->ds_timestamp, fbuf->timestamp());
+  {
+    auto x = fbuf->timestamp();
+    this->ds_timestamp->append_data_1d(&x, 1);
+  }
   if (do_writer_forwarder_internal) {
     if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
       auto fi = (fwdinfo_1_t *)fbuf->fwdinfo();
-      append_data_scalar(this->ds_seq_data, fi->seq_data());
-      append_data_scalar(this->ds_seq_fwd, fi->seq_fwd());
-      append_data_scalar(this->ds_ts_data, fi->ts_data());
+      {
+        auto x = fi->seq_data();
+        this->ds_seq_data->append_data_1d(&x, 1);
+      }
+      {
+        auto x = fi->seq_fwd();
+        this->ds_seq_fwd->append_data_1d(&x, 1);
+      }
+      {
+        auto x = fi->ts_data();
+        this->ds_ts_data->append_data_1d(&x, 1);
+      }
     }
   }
 
@@ -531,7 +320,7 @@ WriteResult writer::write_impl(Msg msg) {
     auto file = hdf_file->h5file_detail().h5file();
     auto err = H5Fflush(file, H5F_SCOPE_LOCAL);
     if (err < 0) {
-      LOG(4, "ERROR while flushing");
+      LOG(4, "error while flushing");
     }
   }
   return {(int64_t)fbuf->timestamp() };

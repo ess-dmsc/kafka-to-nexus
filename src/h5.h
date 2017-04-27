@@ -15,6 +15,7 @@ namespace h5p {
 class dataset_create {
 public:
   static dataset_create chunked1(hid_t type, hsize_t bytes);
+  static dataset_create chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
   dataset_create(dataset_create &&x);
   ~dataset_create();
   friend void swap(dataset_create &x, dataset_create &y);
@@ -37,6 +38,8 @@ public:
   ~h5s();
   friend void swap(h5s &x, h5s &y);
   hid_t id = -1;
+  vector<hsize_t> sini;
+  vector<hsize_t> smax;
 
 private:
   h5s();
@@ -60,6 +63,7 @@ public:
   ~h5d();
   friend void swap(h5d &x, h5d &y);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
+  template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
   hid_t id = -1;
   hid_t type = -1;
 
@@ -81,6 +85,25 @@ private:
   h5d_chunked_1d();
   h5s dsp_wr;
   std::vector<T> buf;
+  hsize_t i0 = 0;
+};
+
+template <typename T> class h5d_chunked_2d {
+public:
+  h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
+  h5d ds;
+  h5d_chunked_2d(h5d_chunked_2d &&x);
+  ~h5d_chunked_2d();
+  friend void swap(h5d_chunked_2d &x, h5d_chunked_2d &y);
+  append_ret append_data_2d(T const *data, hsize_t nlen);
+  int flush_buf();
+
+private:
+  h5d_chunked_2d();
+  h5s dsp_wr;
+  hsize_t ncols;
+  std::vector<T> buf;
+  uint32_t buf_bytes = 0;
   hsize_t i0 = 0;
 };
 

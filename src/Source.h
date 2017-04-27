@@ -42,6 +42,7 @@ public:
                                   nullptr) const;
   uint64_t teamid = 0;
   void config_file(rapidjson::Value const *config_file);
+  void config_stream(rapidjson::Document &&config_stream);
 
 private:
   Source(std::string topic, std::string source);
@@ -60,6 +61,7 @@ private:
 
   HDFFile *_hdf_file = nullptr;
   rapidjson::Value const *_config_file = nullptr;
+  rapidjson::Document _config_stream;
 
   friend class CommandHandler;
   friend class FileWriterTask;

@@ -4,6 +4,9 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/prettywriter.h>
 
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;
@@ -135,4 +138,11 @@ get_json_ret_int get_int(rapidjson::Value const *v, std::string path) {
     ++i1;
   }
   return { 1, 0 };
+}
+
+std::string pretty_print(rapidjson::Document const *v) {
+  rapidjson::StringBuffer buf1;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> wr(buf1);
+  v->Accept(wr);
+  return buf1.GetString();
 }

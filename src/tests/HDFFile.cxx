@@ -41,7 +41,7 @@ public:
     msg = BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
                                       (int32_t)fb.builder->GetSize() };
     // f1.impl->h5file
-    writer->init(&f1, "/", source_name, msg, nullptr);
+    writer->init(&f1, "/", source_name, msg, nullptr, nullptr);
   }
 };
 

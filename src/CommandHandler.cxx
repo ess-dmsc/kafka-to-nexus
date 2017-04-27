@@ -66,6 +66,9 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
           }
         }
         s.config_file(config_file);
+        rapidjson::Document j1;
+        j1.CopyFrom(st, j1.GetAllocator());
+        s.config_stream(std::move(j1));
         fwt->add_source(move(s));
       }
     }
@@ -78,10 +81,6 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
     for (auto &s : d.sources()) {
       s.teamid = teamid;
     }
-  }
-
-  for (auto &d : fwt->demuxers()) {
-    LOG(7, "{}", d.to_str());
   }
 
   {

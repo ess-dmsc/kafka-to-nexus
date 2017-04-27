@@ -26,3 +26,4 @@ struct get_json_ret_int {
 
 std::string get_string(rapidjson::Value const *v, std::string path);
 get_json_ret_int get_int(rapidjson::Value const *v, std::string path);
+std::string pretty_print(rapidjson::Document const *v);
