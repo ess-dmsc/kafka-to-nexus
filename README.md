@@ -9,6 +9,7 @@
 
 - What for file writing command from a Kafka topic
 - Write data to file
+- Writer plugins can be [configured via the json command](#options-for-schema-plugins)
 - And more coming up...
 
 
@@ -136,6 +137,43 @@ The actual parsing of the different FlatBuffer schemata is handled by plugins
 which register themself via the `SchemaRegistry`.
 See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
 Support for new schemas can be added in the same way.
+
+### Options for Schema Plugins
+
+Schema plugins can access configuration options which got passed via the
+`FileWriter_new` json command.  The writer implementation, meaning the class
+which derives from `FBSchemaWriter`, can read its member variable
+`rapidjson::Document const * config_stream` which contains all the options.
+
+In this example, we assume that a stream uses the `f142` schema.  We tell the
+writer for the `f142` schema to write an index entry every 3 megabytes:
+```
+{
+  "cmd": "FileWriter_new",
+  "broker": "<your-broker>",
+  "streams": [
+    {
+      "topic": "<kafka-topic>",
+      "source": "<some-source-using-schema-f142>",
+      "nexus_path": "/path/to/the/nexus/group",
+      "nexus": {
+        "indices": {
+          "index_every_mb": 3
+        }
+      }
+    }
+  ], ...
+```
+
+
+### Available Options for Schema Plugins
+
+Not that many in this release, but will be extended with upcoming changes:
+
+- `f142`
+  - `nexus.indices.index_every_mb`
+    Write an index entry (in Nexus terminology: cue entry) every given
+    megabytes.
 
 
 ## Running Tests
