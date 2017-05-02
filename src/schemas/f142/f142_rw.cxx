@@ -19,18 +19,6 @@ template <typename T> using uptr = std::unique_ptr<T>;
 using FBUF = LogData;
 using h5::append_ret;
 
-template <typename T> hid_t nat_type();
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
-
 class reader : public FBSchemaReader {
   std::unique_ptr<FBSchemaWriter> create_writer_impl() override;
   bool verify_impl(Msg msg) override;
@@ -124,30 +112,6 @@ writer::~writer() {}
 
 template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
-
-template <typename T>
-static hid_t create_1d_ds(hid_t loc, std::string const &name) {
-  hid_t ret = -1;
-  // Dataset for sequence numbers, used primarily for unit tests
-  using AA = std::array<hsize_t, 1>;
-  auto dt = nat_type<T>();
-  AA sini{ { 0 } };
-  AA smax{ { H5S_UNLIMITED } };
-  auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  AA schk{ { std::max<hsize_t>(64 * 1024 / H5Tget_size(dt), 1) } };
-  herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
-  if (err < 0) {
-    LOG(5, "in H5Pset_chunk");
-  }
-  ret = H5Dcreate1(loc, name.c_str(), dt, dsp, dcpl);
-  if (ret < 0) {
-    LOG(5, "can not create {}", name);
-  }
-  H5Pclose(dcpl);
-  H5Sclose(dsp);
-  return ret;
-}
 
 void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
   // This is just a unbuffered, low-performance write.
