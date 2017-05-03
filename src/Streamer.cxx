@@ -112,10 +112,10 @@ BrightnESS::FileWriter::Streamer::jump_back_impl(const int &amount) {
   if (err != RdKafka::ERR_NO_ERROR) {
     LOG(2, "seek failed :\t{}", RdKafka::err2str(err));
   }
-  RdKafka::Message *msg;
+  std::unique_ptr<RdKafka::Message> msg;
   do {
-    msg = _consumer->consume(_topic, _partition.value(),
-                             consumer_timeout.count());
+    msg = std::unique_ptr<RdKafka::Message>(_consumer->consume(
+        _topic, _partition.value(), consumer_timeout.count()));
     if (msg->err() != RdKafka::ERR_NO_ERROR) {
       LOG(3, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
     }
@@ -128,8 +128,8 @@ template <>
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     BrightnESS::FileWriter::DemuxTopic &mp) {
-  RdKafka::Message *msg =
-      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
+  std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
+      _topic, _partition.value(), consumer_timeout.count()) };
   if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
     return ProcessMessageResult::OK();
   }
@@ -149,10 +149,10 @@ BrightnESS::FileWriter::RdKafkaOffset
 BrightnESS::FileWriter::Streamer::scan_timestamps<>(
     BrightnESS::FileWriter::DemuxTopic &mp,
     std::map<std::string, int64_t> &ts_list, const ESSTimeStamp &ts) {
-  RdKafka::Message *msg;
+  std::unique_ptr<RdKafka::Message> msg;
   do {
-    msg = _consumer->consume(_topic, _partition.value(),
-                             consumer_timeout.count());
+    msg = std::unique_ptr<RdKafka::Message>(_consumer->consume(
+        _topic, _partition.value(), consumer_timeout.count()));
     if (msg->err() != RdKafka::ERR_NO_ERROR) {
       LOG(4, "Failed to consume message: {}", RdKafka::err2str(msg->err()));
       break;
@@ -207,8 +207,8 @@ template <>
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write<>(
     std::function<ProcessMessageResult(void *, int)> &f) {
-  RdKafka::Message *msg =
-      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
+  std::unique_ptr<RdKafka::Message> msg{_consumer->consume(
+      _topic, _partition.value(), consumer_timeout.count()) };
   if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
     return ProcessMessageResult::OK();
   }
@@ -227,10 +227,10 @@ BrightnESS::FileWriter::Streamer::scan_timestamps<>(
     std::function<
         BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)> &f,
     std::map<std::string, int64_t> &ts_list, const ESSTimeStamp &ts) {
-  RdKafka::Message *msg;
+  std::unique_ptr<RdKafka::Message> msg;
   do {
-    msg = _consumer->consume(_topic, _partition.value(),
-                             consumer_timeout.count());
+    msg = std::unique_ptr<RdKafka::Message>(_consumer->consume(
+        _topic, _partition.value(), consumer_timeout.count()));
     if (msg->err() != RdKafka::ERR_NO_ERROR) {
       LOG(4, "Failed to consume message: {}", RdKafka::err2str(msg->err()));
       break;
