@@ -37,7 +37,7 @@ struct Streamer {
     return ProcessMessageResult::ERR();
   }
 
-  int connect(const std::string &, const std::string &,
+  int connect(const std::string & topic,
               const RdKafkaOffset & = RdKafkaOffsetEnd,
               const RdKafkaPartition & = RdKafkaPartition(0));
   ErrorCode disconnect();
@@ -64,8 +64,8 @@ struct Streamer {
   }
 
 private:
-  RdKafka::Topic *_topic;
-  RdKafka::Consumer *_consumer;
+  RdKafka::Topic *_topic{nullptr};
+  RdKafka::Consumer *_consumer{nullptr};
   RdKafka::TopicPartition *_tp;
   RdKafkaOffset _offset;
   RdKafkaOffset _begin;
@@ -78,9 +78,6 @@ private:
 };
 
 template <>
-ProcessMessageResult
-Streamer::write<>(std::function<ProcessMessageResult(void *, int)> &);
-template <>
 ProcessMessageResult Streamer::write<>(BrightnESS::FileWriter::DemuxTopic &);
 
 template <>
@@ -88,15 +85,7 @@ BrightnESS::FileWriter::RdKafkaOffset
 Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &,
                             std::map<std::string, int64_t> &,
                             const ESSTimeStamp &);
-template <>
-BrightnESS::FileWriter::RdKafkaOffset Streamer::scan_timestamps<>(
-    std::function<TimeDifferenceFromMessage_DT(void *, int)> &,
-    std::map<std::string, int64_t> &, const ESSTimeStamp &);
 
-template <>
-std::map<std::string, int64_t> Streamer::set_start_time<>(
-    std::function<TimeDifferenceFromMessage_DT(void *, int)> &,
-    const ESSTimeStamp);
 template <>
 std::map<std::string, int64_t>
 Streamer::set_start_time<>(BrightnESS::FileWriter::DemuxTopic &,
