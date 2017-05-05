@@ -3,13 +3,15 @@
 #include "../../SchemaRegistry.h"
 #include "../../h5.h"
 #include "../../helper.h"
-#include "schemas/amo0_psi_sinq_generated.h"
 #include <limits>
+#include <flatbuffers/flatbuffers.h>
 
 namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 namespace amo0 {
+
+#include "schemas/amo0_psi_sinq_generated.h"
 
 using std::array;
 using std::vector;
@@ -52,13 +54,13 @@ std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
   return std::unique_ptr<FBSchemaWriter>(new writer);
 }
 
-static EventMessage const *get_fbuf(char const *data) {
-  return GetEventMessage(data);
+static amo0::EventMessage const *get_fbuf(char const *data) {
+  return amo0::GetEventMessage(data);
 }
 
 bool reader::verify_impl(Msg msg) {
   auto veri = flatbuffers::Verifier((uint8_t *)msg.data, msg.size);
-  if (VerifyEventMessageBuffer(veri))
+  if (amo0::VerifyEventMessageBuffer(veri))
     return true;
   return false;
 }
