@@ -184,37 +184,37 @@ TEST_F(MinimalProducer, Receive) {
   stop();
 }
 
-TEST_F(MinimalProducer, Reconnect) {
-  using namespace std::placeholders;
+// TEST_F(MinimalProducer, Reconnect) {
+//   using namespace std::placeholders;
 
-  int data_size = 0, counter = 0;
-  std::function<ProcessMessageResult(void *, int)> f1 =
-      std::bind(sum, _1, _2, &data_size);
+//   int data_size = 0, counter = 0;
+//   std::function<ProcessMessageResult(void *, int)> f1 =
+//       std::bind(sum, _1, _2, &data_size);
 
-  start();
+//   start();
 
-  Streamer s(MinimalProducer::broker, "dummy_topic");
-  ProcessMessageResult status = ProcessMessageResult::OK();
-  do {
-    EXPECT_TRUE(status.is_OK());
-    status = s.write(f1);
-    ++counter;
-  } while (status.is_OK() && (counter < max_recv_messages));
-  EXPECT_FALSE(data_size > 0);
-  EXPECT_EQ(s.disconnect().value(), 0);
+//   Streamer s(MinimalProducer::broker, "dummy_topic");
+//   ProcessMessageResult status = ProcessMessageResult::OK();
+//   do {
+//     EXPECT_TRUE(status.is_OK());
+//     status = s.write(f1);
+//     ++counter;
+//   } while (status.is_OK() && (counter < max_recv_messages));
+//   EXPECT_FALSE(data_size > 0);
+//   EXPECT_EQ(s.disconnect().value(), 0);
 
-  data_size = 0;
-  counter = 0;
-  EXPECT_EQ(s.connect(MinimalProducer::broker, MinimalProducer::topic), 0);
-  status = ProcessMessageResult::OK();
-  do {
-    EXPECT_TRUE(status.is_OK());
-    status = s.write(f1);
-    ++counter;
-  } while (status.is_OK() && (counter < max_recv_messages));
-  EXPECT_TRUE(data_size > 0);
-  stop();
-}
+//   data_size = 0;
+//   counter = 0;
+//   EXPECT_EQ(s.connect(MinimalProducer::broker, MinimalProducer::topic), 0);
+//   status = ProcessMessageResult::OK();
+//   do {
+//     EXPECT_TRUE(status.is_OK());
+//     status = s.write(f1);
+//     ++counter;
+//   } while (status.is_OK() && (counter < max_recv_messages));
+//   EXPECT_TRUE(data_size > 0);
+//   stop();
+// }
 
 TEST_F(MinimalProducer, JumpBack) {
   Streamer s(broker, topic);
