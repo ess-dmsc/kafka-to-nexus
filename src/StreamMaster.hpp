@@ -27,15 +27,17 @@ template <typename Streamer, typename Demux> struct StreamMaster {
 
   StreamMaster() : do_write(false), _stop(false) {};
 
-  // StreamMaster(std::string &broker, std::vector<Demux> &_demux,
-  //              const RdKafkaOffset &offset = RdKafkaOffsetEnd)
-  //     : demux(_demux), do_write(false), _stop(false) {
-  //   for (auto &d : demux) {
-  //     streamer[d.topic()] = Streamer(broker, d.topic(), offset);
-  //     _n_sources[d.topic()] = d.sources().size();
-  //     _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
-  //   }
-  // };
+  StreamMaster(
+      std::string &broker, std::vector<Demux> &_demux,
+      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
+      : demux(_demux), do_write(false), _stop(false) {
+    for (auto &d : demux) {
+      streamer[d.topic()] = Streamer(broker, d.topic(), kafka_options, offset);
+      _n_sources[d.topic()] = d.sources().size();
+      _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
+    }
+  };
 
   StreamMaster(
       std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
