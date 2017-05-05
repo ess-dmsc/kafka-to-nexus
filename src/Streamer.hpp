@@ -45,7 +45,7 @@ struct Streamer {
   ErrorCode closeStream();
 
   /// Returns message length
-  size_t len() { return message_length; }
+  size_t& len() { return message_length; }
 
   ProcessMessageResult get_offset();
 
@@ -72,7 +72,7 @@ private:
   RdKafkaOffset _low;
   int64_t step_back_offset;
   RdKafkaPartition _partition;
-  size_t message_length;
+  size_t message_length{0};
 
   BrightnESS::FileWriter::RdKafkaOffset jump_back_impl(const int &);
 };

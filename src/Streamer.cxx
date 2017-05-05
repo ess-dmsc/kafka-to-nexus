@@ -38,8 +38,6 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
     exit(-1);
   }
 
-  printf("%s:\t%p\t%p\n",topic_name.c_str(),_topic,_consumer);
-
   if (!topic_name.empty()) {
     auto value = connect(topic_name, offset, partition);
     if (value) {
@@ -48,8 +46,6 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
   } else {
     LOG(3, "Topic required");
   }
-
-  printf("> %s:\t%p\t%p\n",topic_name.c_str(),_topic,_consumer);
 
 }
 
@@ -146,7 +142,7 @@ BrightnESS::FileWriter::Streamer::write(
     LOG(6, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
     return ProcessMessageResult::ERR();
   }
-  message_length = msg->len();
+  message_length += msg->len();
   _offset = RdKafkaOffset(msg->offset());
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
