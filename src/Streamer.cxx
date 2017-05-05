@@ -8,29 +8,37 @@ int64_t BrightnESS::FileWriter::Streamer::step_back_amount = 100;
 milliseconds BrightnESS::FileWriter::Streamer::consumer_timeout =
     milliseconds(1000);
 
-BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
-                                           const std::string &topic_name,
-                                           const RdKafkaOffset &offset,
-                                           const RdKafkaPartition &partition)
+int BrightnESS::FileWriter::Streamer::set_conf_opt(
+    std::shared_ptr<RdKafka::Conf> conf,
+    const std::pair<std::string, std::string> &option) {
+  std::string errstr;
+  if (!(option.first.empty() || option.second.empty())) {
+    auto result = conf->set(option.first, option.second, errstr);
+    if (result != RdKafka::Conf::CONF_OK) {
+      LOG(2, "Failed to initialise configuration: {}", errstr);
+      return result;
+    }
+  }
+  return RdKafka::Conf::CONF_OK;
+}
+
+BrightnESS::FileWriter::Streamer::Streamer(
+    const std::string &broker, const std::string &topic_name,
+    const std::vector<std::pair<std::string, std::string> > &kafka_options,
+    const RdKafkaOffset &offset, const RdKafkaPartition &partition)
     : _offset(offset), _partition(partition) {
 
   std::string errstr;
-  std::unique_ptr<RdKafka::Conf> conf(
+  std::shared_ptr<RdKafka::Conf> conf(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
-  if (conf->set("metadata.broker.list", broker, errstr) !=
-      RdKafka::Conf::CONF_OK) {
-    LOG(2, "Failed to initialise configuration: {}", errstr);
-  }
-  if (conf->set("fetch.message.max.bytes", "10485760", errstr) !=
-      RdKafka::Conf::CONF_OK) {
-    LOG(2, "Failed to initialise configuration: {}", errstr);
-  }
-  if (conf->set("receive.message.max.bytes", "10485760", errstr) !=
-      RdKafka::Conf::CONF_OK) {
-    LOG(2, "Failed to initialise configuration: {}", errstr);
-  }
-  if (conf->set("log_level", "3", errstr) != RdKafka::Conf::CONF_OK) {
-    LOG(2, "Failed to initialise configuration: {}", errstr);
+
+  using opt_t = std::pair<std::string, std::string>;
+  set_conf_opt(conf, opt_t{ "metadata.broker.list", broker });
+  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "10485760" });
+  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "10485760" });
+  set_conf_opt(conf, opt_t{ "log_level", "3" });
+  for (auto &item : kafka_options) {
+    set_conf_opt(conf, item);
   }
 
   if (!(_consumer = RdKafka::Consumer::create(conf.get(), errstr))) {
@@ -47,11 +55,6 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
     LOG(3, "Topic required");
   }
 }
-
-// BrightnESS::FileWriter::Streamer::~Streamer() {
-//   delete _topic;
-//   delete _consumer;
-// }
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
     : _topic(other._topic), _consumer(other._consumer), _offset(other._offset),

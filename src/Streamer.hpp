@@ -14,6 +14,7 @@ class Topic;
 class Consumer;
 class TopicPartition;
 class Message;
+class Conf;
 } // namespace RdKafka
 
 namespace BrightnESS {
@@ -26,6 +27,8 @@ struct Streamer {
 
   Streamer() {};
   Streamer(const std::string &, const std::string &,
+           const std::vector<std::pair<std::string, std::string> > &
+               kafka_options = {},
            const RdKafkaOffset & = RdKafkaOffsetEnd,
            const RdKafkaPartition & = RdKafkaPartition(0));
   Streamer(const Streamer &);
@@ -73,6 +76,9 @@ private:
   int64_t step_back_offset;
   RdKafkaPartition _partition;
   size_t message_length{ 0 };
+
+  int set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
+                   const std::pair<std::string, std::string> &option);
 
   BrightnESS::FileWriter::RdKafkaOffset jump_back_impl(const int &);
 };
