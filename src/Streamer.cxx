@@ -46,25 +46,23 @@ BrightnESS::FileWriter::Streamer::Streamer(const std::string &broker,
   } else {
     LOG(3, "Topic required");
   }
-
 }
+
+// BrightnESS::FileWriter::Streamer::~Streamer() {
+//   delete _topic;
+//   delete _consumer;
+// }
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
     : _topic(other._topic), _consumer(other._consumer), _offset(other._offset),
       _begin(other._offset), _low(other._low), _partition(other._partition) {}
 
 BrightnESS::FileWriter::ErrorCode
-BrightnESS::FileWriter::Streamer::disconnect() {
-  BrightnESS::FileWriter::ErrorCode return_code =
-      _consumer->stop(_topic, _partition.value());
+BrightnESS::FileWriter::Streamer::closeStream() {
+  auto status = _consumer->stop(_topic, _partition.value());
   delete _topic;
   delete _consumer;
-  return return_code;
-}
-
-BrightnESS::FileWriter::ErrorCode
-BrightnESS::FileWriter::Streamer::closeStream() {
-  return ErrorCode(_consumer->stop(_topic, _partition.value()));
+  return status;
 }
 
 int
@@ -210,4 +208,3 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
   }
   return set_start_time(mp, tp);
 }
-

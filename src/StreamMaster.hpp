@@ -94,6 +94,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     }
     for (auto &d : demux) {
       _status[d.topic()] = streamer[d.topic()].closeStream();
+      streamer.erase(d.topic());
     }
     return _status;
   }
@@ -125,9 +126,10 @@ private:
               }
             }
           }
-          LOG(6, "Received {}KB @ {}KB/s", streamer[d.topic()].len()*1e-3,
-              streamer[d.topic()].len()*1e-3 / static_cast<double>(duration.count()));
-	  streamer[d.topic()].len() = 0;
+          LOG(6, "Received {}KB @ {}KB/s", streamer[d.topic()].len() * 1e-3,
+              streamer[d.topic()].len() * 1e-3 /
+                  static_cast<double>(duration.count()));
+          streamer[d.topic()].len() = 0;
           if (_status[d.topic()] == ErrorCode(StatusCode::STOPPED)) {
             _status[d.topic()] = streamer[d.topic()].closeStream();
           }

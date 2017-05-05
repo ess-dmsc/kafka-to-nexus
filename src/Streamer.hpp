@@ -30,22 +30,22 @@ struct Streamer {
            const RdKafkaPartition & = RdKafkaPartition(0));
   Streamer(const Streamer &);
 
-  //  ~Streamer(); // disconnect
+  ~Streamer() = default;
+
   template <class T> ProcessMessageResult write(T &f) {
     message_length = 0;
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
 
-  int connect(const std::string & topic,
+  int connect(const std::string &topic,
               const RdKafkaOffset & = RdKafkaOffsetEnd,
               const RdKafkaPartition & = RdKafkaPartition(0));
-  ErrorCode disconnect();
 
   ErrorCode closeStream();
 
   /// Returns message length
-  size_t& len() { return message_length; }
+  size_t &len() { return message_length; }
 
   ProcessMessageResult get_offset();
 
@@ -64,15 +64,15 @@ struct Streamer {
   }
 
 private:
-  RdKafka::Topic *_topic{nullptr};
-  RdKafka::Consumer *_consumer{nullptr};
+  RdKafka::Topic *_topic{ nullptr };
+  RdKafka::Consumer *_consumer{ nullptr };
   RdKafka::TopicPartition *_tp;
   RdKafkaOffset _offset;
   RdKafkaOffset _begin;
   RdKafkaOffset _low;
   int64_t step_back_offset;
   RdKafkaPartition _partition;
-  size_t message_length{0};
+  size_t message_length{ 0 };
 
   BrightnESS::FileWriter::RdKafkaOffset jump_back_impl(const int &);
 };
