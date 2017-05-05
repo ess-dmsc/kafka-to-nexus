@@ -37,9 +37,10 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     }
   };
 
-  StreamMaster(std::string &broker,
-               std::unique_ptr<FileWriterTask> file_writer_task,
-               const RdKafkaOffset &offset = RdKafkaOffsetEnd)
+  StreamMaster(
+      std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
+      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
         _file_writer_task(std::move(file_writer_task)) {
     for (auto &d : demux) {

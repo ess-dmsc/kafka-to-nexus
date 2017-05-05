@@ -25,6 +25,18 @@ int MainOpt::parse_config_file(std::string fname) {
     LOG(3, "configuration is not well formed");
     return -5;
   }
+  if (auto o = get_object(d, "kafka")) {
+    for (auto &m : o.v->GetObject()) {
+      if (m.value.IsString()) {
+        master_config.kafka.emplace_back(m.name.GetString(),
+                                         m.value.GetString());
+      }
+      if (m.value.IsInt()) {
+        master_config.kafka.emplace_back(m.name.GetString(),
+                                         fmt::format("{}", m.value.GetInt()));
+      }
+    }
+  }
   return 0;
 }
 
