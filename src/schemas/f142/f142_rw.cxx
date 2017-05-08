@@ -245,9 +245,6 @@ append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
     return { 1, 0, 0 };
   }
   auto v2 = v1->value();
-  if (!v2) {
-    return { 1, 0, 0 };
-  }
   return this->ds->append_data_1d(&v2, 1);
 }
 
