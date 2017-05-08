@@ -18,6 +18,7 @@ struct MasterConfig {
   uint64_t teamid = 0;
   std::string dir_assets = ".";
   rapidjson::Value const *config_file = nullptr;
+  std::vector<std::pair<std::string, std::string> > kafka;
 };
 
 /// Listens to the Kafka configuration topic.

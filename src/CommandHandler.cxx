@@ -114,7 +114,8 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
       br = m->value.GetString();
     }
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic> >(
-        new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt)));
+        new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
+                                               master->config.kafka));
     if (start_time.count()) {
       LOG(3, "start time :\t{}", start_time.count());
       s->start_time(start_time);

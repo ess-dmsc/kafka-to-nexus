@@ -226,7 +226,7 @@ int main(int argc, char **argv) {
     producer.TearDown();
   } else {
 
-    Streamer s(producer.broker, producer.topic, RdKafkaOffsetEnd);
+    Streamer s(producer.broker, producer.topic, {}, RdKafkaOffsetEnd);
     DemuxTopic demux(producer.topic);
 
     int counter = 0;

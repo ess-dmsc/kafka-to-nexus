@@ -27,23 +27,27 @@ template <typename Streamer, typename Demux> struct StreamMaster {
 
   StreamMaster() : do_write(false), _stop(false) {};
 
-  StreamMaster(std::string &broker, std::vector<Demux> &_demux,
-               const RdKafkaOffset &offset = RdKafkaOffsetEnd)
+  StreamMaster(
+      std::string &broker, std::vector<Demux> &_demux,
+      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(_demux), do_write(false), _stop(false) {
     for (auto &d : demux) {
-      streamer[d.topic()] = Streamer(broker, d.topic(), offset);
+      streamer[d.topic()] = Streamer(broker, d.topic(), kafka_options, offset);
       _n_sources[d.topic()] = d.sources().size();
       _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
     }
   };
 
-  StreamMaster(std::string &broker,
-               std::unique_ptr<FileWriterTask> file_writer_task,
-               const RdKafkaOffset &offset = RdKafkaOffsetEnd)
+  StreamMaster(
+      std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
+      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
         _file_writer_task(std::move(file_writer_task)) {
+
     for (auto &d : demux) {
-      streamer[d.topic()] = Streamer(broker, d.topic(), offset);
+      streamer[d.topic()] = Streamer(broker, d.topic(), kafka_options, offset);
       _n_sources[d.topic()] = d.sources().size();
       _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
     }
@@ -93,6 +97,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     }
     for (auto &d : demux) {
       _status[d.topic()] = streamer[d.topic()].closeStream();
+      streamer.erase(d.topic());
     }
     return _status;
   }
@@ -106,15 +111,15 @@ private:
   ErrorCode stop_streamer(Streamer &s) { return s.closeStream(); }
 
   void run() {
-    std::chrono::system_clock::time_point tp;
+    using namespace std::chrono;
+    system_clock::time_point tp;
     while (!_stop) {
 
       for (auto &d : demux) {
         if (_status[d.topic()].value()) {
 
-          tp = std::chrono::system_clock::now();
-          while (do_write &&
-                 ((std::chrono::system_clock::now() - tp) < duration)) {
+          tp = system_clock::now();
+          while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = streamer[d.topic()].write(d);
             if (_value.is_STOP()) {
 
@@ -124,6 +129,10 @@ private:
               }
             }
           }
+          LOG(6, "Received {}KB @ {}KB/s", streamer[d.topic()].len() * 1e-3,
+              streamer[d.topic()].len() * 1e-3 /
+                  static_cast<double>(duration.count()));
+          streamer[d.topic()].len() = 0;
           if (_status[d.topic()] == ErrorCode(StatusCode::STOPPED)) {
             _status[d.topic()] = streamer[d.topic()].closeStream();
           }
@@ -155,7 +164,7 @@ private:
 };
 
 template <typename S, typename D>
-milliseconds StreamMaster<S, D>::duration = milliseconds(10);
+milliseconds StreamMaster<S, D>::duration = milliseconds(1000);
 template <typename S, typename D>
 milliseconds StreamMaster<S, D>::delay_after_last_message = milliseconds(1000);
 } // namespace FileWriter

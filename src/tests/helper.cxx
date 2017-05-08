@@ -123,3 +123,13 @@ TEST(helper, get_int_01) {
     ASSERT_TRUE(false);
   }
 }
+
+TEST(helper, get_object) {
+  Document d;
+  d.Parse("{\"a\":{\"b\":{\"k\":\"the object\"}}}");
+  auto o1 = get_object(d, "a.b").v;
+  auto o2 = get_object(d, "a.b").v;
+  ASSERT_EQ(o1, o2);
+  ASSERT_EQ(get_string(o1, "k"), "the object");
+  ASSERT_EQ(get_string(o2, "k"), "the object");
+}
