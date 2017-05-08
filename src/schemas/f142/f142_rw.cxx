@@ -80,8 +80,9 @@ std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
 
 bool reader::verify_impl(Msg msg) {
   auto veri = flatbuffers::Verifier((uint8_t *)msg.data, msg.size);
-  if (VerifyLogDataBuffer(veri))
+  if (VerifyLogDataBuffer(veri)) {
     return true;
+  }
   return false;
 }
 
@@ -209,17 +210,21 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                FV *fv) {
   hsize_t ncols = fv->value()->size();
   LOG(7, "f142 init_impl  v.size(): {}", ncols);
-  using std::vector;
-  using std::array;
   this->ds.reset(
       new h5::h5d_chunked_2d<DT>(hdf_group, dataset_name, ncols, 64 * 1024));
 }
 
 template <typename DT, typename FV>
 append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
-  auto value1 = (FV const *)fbuf->value();
-  return this->ds->append_data_2d(value1->value()->data(),
-                                  value1->value()->size());
+  auto v1 = (FV const *)fbuf->value();
+  if (!v1) {
+    return { 1, 0, 0 };
+  }
+  auto v2 = v1->value();
+  if (!v2) {
+    return { 1, 0, 0 };
+  }
+  return this->ds->append_data_2d(v2->data(), v2->size());
 }
 
 template <typename DT, typename FV>
@@ -229,16 +234,21 @@ template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(
     hid_t hdf_group, std::string const &dataset_name, FV *fv) {
   LOG(7, "f142 init_impl  scalar");
-  using std::vector;
-  using std::array;
   this->ds.reset(
       new h5::h5d_chunked_1d<DT>(hdf_group, dataset_name, 64 * 1024));
 }
 
 template <typename DT, typename FV>
 append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
-  auto value1 = ((FV const *)(fbuf->value()))->value();
-  return this->ds->append_data_1d(&value1, 1);
+  auto v1 = (FV const *)fbuf->value();
+  if (!v1) {
+    return { 1, 0, 0 };
+  }
+  auto v2 = v1->value();
+  if (!v2) {
+    return { 1, 0, 0 };
+  }
+  return this->ds->append_data_1d(&v2, 1);
 }
 
 WriteResult writer::write_impl(Msg msg) {
@@ -287,7 +297,7 @@ WriteResult writer::write_impl(Msg msg) {
       LOG(4, "error while flushing");
     }
   }
-  return {(int64_t)fbuf->timestamp() };
+  return { (int64_t)fbuf->timestamp() };
 }
 
 class Info : public SchemaInfo {
