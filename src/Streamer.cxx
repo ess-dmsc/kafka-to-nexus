@@ -16,18 +16,51 @@ int BrightnESS::FileWriter::Streamer::set_conf_opt(
     auto result = conf->set(option.first, option.second, errstr);
     LOG(5, "set streamer config: {} = {}", option.first, option.second);
     if (result != RdKafka::Conf::CONF_OK) {
-      LOG(2, "Failed to initialise configuration: {}", errstr);
+      LOG(3, "Failed to initialise configuration: {}", errstr);
       return result;
     }
   }
   return RdKafka::Conf::CONF_OK;
 }
 
+bool BrightnESS::FileWriter::Streamer::set_streamer_opt(
+    const std::pair<std::string, std::string> &opt) {
+  if (opt.first == "start.offset") {
+    if (opt.second == "beginning") {
+      _offset = RdKafkaOffsetBegin;
+      return true;
+    } else {
+      if (opt.second == "end") {
+        _offset = RdKafkaOffsetEnd;
+        return true;
+      } else {
+        auto value = to_num<int>(opt.second);
+        if (value.first && value.second > 0) {
+          _offset = RdKafkaOffset(RdKafka::Consumer::OffsetTail(value.second));
+          return true;
+        }
+      }
+    }
+  }
+
+  if (opt.first == "partition") {
+    auto value = to_num<int>(opt.second);
+    if (value.first && value.second > 0) {
+      _partition = RdKafkaPartition(value.second);
+      return true;
+    }
+  }
+
+  return false;
+}
+
 BrightnESS::FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
-    const std::vector<std::pair<std::string, std::string> > &kafka_options,
-    const RdKafkaOffset &offset, const RdKafkaPartition &partition)
-    : _offset(offset), _partition(partition) {
+    const std::vector<std::pair<std::string, std::string> > &kafka_options) {
+
+  for (auto &item : kafka_options) {
+    set_streamer_opt(item);
+  }
 
   std::string errstr;
   std::shared_ptr<RdKafka::Conf> conf(
@@ -50,7 +83,7 @@ BrightnESS::FileWriter::Streamer::Streamer(
   }
 
   if (!topic_name.empty()) {
-    auto value = connect(topic_name, offset, partition);
+    auto value = connect(topic_name, _offset, _partition);
     if (value) {
       LOG(1, "Error: {}", value);
     }

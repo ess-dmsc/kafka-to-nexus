@@ -23,7 +23,6 @@ namespace BrightnESS {
 namespace FileWriter {
 
 template <typename Streamer, typename Demux> struct StreamMaster {
-  static std::chrono::milliseconds delay_after_last_message;
 
   StreamMaster() : do_write(false), _stop(false) {};
 
@@ -33,8 +32,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(_demux), do_write(false), _stop(false) {
     for (auto &d : demux) {
-      streamer.emplace(d.topic(),
-                       Streamer{ broker, d.topic(), kafka_options, offset });
+      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
       streamer[d.topic()].n_sources = d.sources().size();
     }
   };
@@ -47,8 +45,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(),
-                       Streamer{ broker, d.topic(), kafka_options, offset });
+      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
       streamer[d.topic()].n_sources = d.sources().size();
     }
   };
@@ -60,13 +57,13 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     }
   }
 
-  bool start_time(const ESSTimeStamp& start) {
+  bool start_time(const ESSTimeStamp &start) {
     for (auto &d : demux) {
       auto result = streamer[d.topic()].set_start_time(d, start);
     }
     return false;
   }
-  bool stop_time(const ESSTimeStamp& stop) {
+  bool stop_time(const ESSTimeStamp &stop) {
     if (stop.count() < 0) {
       return false;
     }
@@ -159,12 +156,8 @@ private:
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
 
-  static milliseconds duration;
+  milliseconds duration{1000};
 };
 
-template <typename S, typename D>
-milliseconds StreamMaster<S, D>::duration = milliseconds(1000);
-template <typename S, typename D>
-milliseconds StreamMaster<S, D>::delay_after_last_message = milliseconds(1000);
 } // namespace FileWriter
 } // namespace BrightnESS

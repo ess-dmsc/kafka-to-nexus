@@ -28,12 +28,12 @@ struct Streamer {
   Streamer() {};
   Streamer(const std::string &, const std::string &,
            const std::vector<std::pair<std::string, std::string> > &
-               kafka_options = {},
-           const RdKafkaOffset & = RdKafkaOffsetEnd,
-           const RdKafkaPartition & = RdKafkaPartition(0));
+               kafka_options = {});
   Streamer(const Streamer &);
 
   ~Streamer() = default;
+
+  bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
 
   template <class T> ProcessMessageResult write(T &f) {
     message_length = 0;
@@ -64,18 +64,18 @@ struct Streamer {
     return RdKafkaOffset(-1);
   }
 
-  int n_sources{0};
-  ErrorCode status{StatusCode::STOPPED};
+  int n_sources{ 0 };
+  ErrorCode status{ StatusCode::STOPPED };
 
 private:
   RdKafka::Topic *_topic{ nullptr };
   RdKafka::Consumer *_consumer{ nullptr };
   RdKafka::TopicPartition *_tp;
-  RdKafkaOffset _offset;
+  RdKafkaOffset _offset{ RdKafkaOffsetEnd };
   RdKafkaOffset _begin;
   RdKafkaOffset _low;
   int64_t step_back_offset;
-  RdKafkaPartition _partition;
+  RdKafkaPartition _partition{ RdKafkaPartition(0) };
   size_t message_length{ 0 };
 
   int set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,

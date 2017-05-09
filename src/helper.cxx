@@ -4,6 +4,8 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+//#include <algorithm>
+
 #include <rapidjson/document.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
@@ -176,4 +178,26 @@ std::string pretty_print(rapidjson::Document const *v) {
   rapidjson::PrettyWriter<rapidjson::StringBuffer> wr(buf1);
   v->Accept(wr);
   return buf1.GetString();
+}
+
+template <> std::pair<short int, int> to_num(const std::string &string) {
+  int result;
+  try {
+    result = std::stoi(string);
+  }
+  catch (std::exception &e) {
+    return std::pair<short int, int>(false, 0);
+  }
+  return std::pair<short int, int>(true, result);
+}
+
+template <> std::pair<short int, double> to_num(const std::string &string) {
+  double result;
+  try {
+    result = std::stoi(string);
+  }
+  catch (std::exception &e) {
+    return std::pair<short int, double>(false, 0);
+  }
+  return std::pair<short int, double>(true, result);
 }
