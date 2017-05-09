@@ -1,9 +1,68 @@
 #include <atomic>
 #include <regex>
 #include <thread>
+#include <chrono>
+#include <functional>
 
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
+
+#include <flatbuffers/flatbuffers.h>
+
+#include "schemas/ev42_events_generated.h"
+uint64_t event_timestamp(char *msg, int) {
+  auto event = GetEventMessage(static_cast<const void *>(msg));
+  int pid = event->message_id();
+  uint64_t timestamp = event->pulse_time();
+  std::cout << "\tpacket id : " << pid << "\ttimestamp : " << timestamp << "\n";
+  return timestamp;
+}
+
+struct DummyAlgo {
+  DummyAlgo(RdKafka::Topic *&t, const int &p) : topic(t), partition(p) {}
+
+  uint64_t seek(const uint64_t &target, RdKafka::Consumer *consumer) {
+    uint64_t offset = 0;
+    uint64_t ts = 18446744073309970608+1;
+    if (!high) {
+      consumer->query_watermark_offsets(topic->name(), partition, &low, &high,
+                                        1000);
+    }
+
+    auto msg = consumer->consume(topic, partition, 1000);
+    if (msg->err() != RdKafka::ERR_NO_ERROR) {
+      std::cerr << "Failed to consume message: " << RdKafka::err2str(msg->err())
+                << "\n";
+    } else {
+      ts = event_timestamp((char *)msg->payload(), -1);
+      offset = msg->offset();
+      std::cout << "current offset : " << offset
+                << "\tcurrent timestamp : " << ts << "\n";
+    }
+    delete msg;
+
+    //    auto prev = std::max(low, offset - 100);
+    uint64_t prev;
+    std::cout << "insert offset\n";
+    std::cin >> prev;
+    if (ts > target) {
+      auto err = consumer->seek(topic, partition, prev, 5000);
+      if (err != RdKafka::ERR_NO_ERROR) {
+        std::cerr << "seek failed : " << RdKafka::err2str(err) << "\n";
+        return ts;
+      }
+
+      return this->seek(target, consumer);
+    }
+    return ts;
+  }
+
+private:
+  RdKafka::Topic *topic;
+  int partition;
+  int64_t low;
+  int64_t high;
+};
 
 class MinimalProducer {
 public:
@@ -103,6 +162,111 @@ public:
     RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
     RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 
+    std::string errstr;
+    if (conf->set("metadata.broker.list", broker, errstr) !=
+        RdKafka::Conf::CONF_OK) {
+      throw std::runtime_error("Failed to initialise configuration: " + errstr);
+    }
+    if (conf->set("group.id", "1", errstr) != RdKafka::Conf::CONF_OK) {
+      throw std::runtime_error("Failed to initialise configuration: " + errstr);
+    }
+    if (conf->set("api.version.request", "true", errstr) !=
+        RdKafka::Conf::CONF_OK) {
+      throw std::runtime_error("Failed to initialise configuration: " + errstr);
+    }
+
+    if (!(_consumer = RdKafka::Consumer::create(conf, errstr))) {
+      throw std::runtime_error("Failed to create consumer: " + errstr);
+    }
+    delete conf;
+
+    if (!(_topic =
+              RdKafka::Topic::create(_consumer, topics[0], tconf, errstr))) {
+      throw std::runtime_error("Failed to create topic: " + errstr);
+    }
+
+    RdKafka::ErrorCode resp =
+        _consumer->start(_topic, _partition, RdKafka::Topic::OFFSET_END);
+    if (resp != RdKafka::ERR_NO_ERROR) {
+      throw std::runtime_error("Failed to create consumer: " + err2str(resp));
+    }
+
+    _consumer->query_watermark_offsets(topics[0], _partition, &low, &high,
+                                       1000);
+  }
+
+  void TearDown() {
+    auto status = _consumer->stop(_topic, _partition);
+    delete _topic;
+    delete _consumer;
+  }
+
+  void consume(std::function<uint64_t(char *, int)> f = [](char *,
+                                                           int) { return 0; }) {
+    using namespace std::chrono;
+    RdKafka::Message *msg;
+    while (1) {
+      msg = _consumer->consume(_topic, _partition, 1000);
+      if (msg->err() != RdKafka::ERR_NO_ERROR) {
+        std::cerr << "Failed to consume message: "
+                  << RdKafka::err2str(msg->err()) << "\n";
+      } else {
+        std::cout << "> offset : " << msg->offset() << "\t-\tlen :\t"
+                  << msg->len() << "\t-\tpayload :\t"
+                  << (msg->len() > 0 ? std::string((char *)msg->payload()) : "")
+                  << "\t-\ttimestamp :\t"
+                  << ((msg->timestamp().type !=
+                       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
+                          ? msg->timestamp().timestamp
+                          : -1) << "\n";
+        _offset = msg->offset();
+        f((char *)msg->payload(), -1);
+      }
+    }
+    delete msg;
+    return;
+  }
+
+  std::string consume_single_message() {
+    RdKafka::Message *msg = _consumer->consume(_topic, _partition, 1000);
+    if (msg->err() != RdKafka::ERR_NO_ERROR) {
+      std::cerr << "Failed to consume message: " << RdKafka::err2str(msg->err())
+                << "\n";
+    } else {
+      std::cout << "> offset : " << msg->offset() << "\t-\tlen :\t"
+                << msg->len() << "\t-\tpayload :\t"
+                << (msg->len() > 0 ? std::string((char *)msg->payload()) : "")
+                << "\t-\ttimestamp :\t"
+                << ((msg->timestamp().type !=
+                     RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
+                        ? msg->timestamp().timestamp
+                        : -1) << "\n";
+    }
+    return std::string("");
+  }
+
+  template <typename A> void seek(const uint64_t target, A &m) {
+    m.seek(target, _consumer);
+  }
+
+  int32_t _partition = 0;
+  int32_t _message_count = 0;
+  RdKafka::Consumer *_consumer;
+  RdKafka::Topic *_topic;
+  std::string broker;
+  std::vector<std::string> topics;
+  int64_t low, high;
+  int64_t _offset;
+};
+
+class MinimalKafkaConsumer {
+public:
+  MinimalKafkaConsumer() {};
+
+  void SetUp() {
+    RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+    RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
+
     std::string debug, errstr;
     if (conf->set("metadata.broker.list", broker, errstr) !=
         RdKafka::Conf::CONF_OK) {
@@ -168,7 +332,11 @@ public:
       std::cout << "> offset : " << msg->offset() << "\t-\tlen :\t"
                 << msg->len() << "\t-\tpayload :\t"
                 << (msg->len() > 0 ? std::string((char *)msg->payload()) : "")
-                << "\n";
+                << "\t-\ttimestamp :\t"
+                << ((msg->timestamp().type !=
+                     RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
+                        ? msg->timestamp().timestamp
+                        : -1) << "\n";
     }
     return std::string("");
   }
@@ -210,59 +378,75 @@ int main(int argc, char **argv) {
   MinimalProducer producer;
   MinimalConsumer consumer;
 
-  producer.topic = "dummy";
-  consumer.topics.push_back(producer.topic);
-  consumer.broker = producer.broker = "129.129.188.59:9092";
+  producer.topic = "AMOR.area.detector";
+  consumer.topics.push_back("AMOR.area.detector");
+  consumer.broker = producer.broker = "ess01.psi.ch:9092";
 
-  if (argc > 1) {
-    producer.SetUp();
-    // producer.start();
-    // std::this_thread::sleep_for (std::chrono::milliseconds(1000));
-    // producer.stop();
-    for (int i = 0; i < 100; ++i) {
-      std::string line = "hello" + std::to_string(i);
-      producer.produce_single_message(line);
-    }
-    producer.TearDown();
-  } else {
+  // if (argc > 1) {
+  //   producer.SetUp();
+  //   // producer.start();
+  //   // std::this_thread::sleep_for (std::chrono::milliseconds(1000));
+  //   // producer.stop();
+  //   for (int i = 0; i < 100; ++i) {
+  //     std::string line = "hello" + std::to_string(i);
+  //     producer.produce_single_message(line);
+  //   }
+  //   producer.TearDown();
+  // } else {
 
-    Streamer s(producer.broker, producer.topic, {}, RdKafkaOffsetEnd);
-    DemuxTopic demux(producer.topic);
+  //   Streamer s(producer.broker, producer.topic, {}, RdKafkaOffsetEnd);
+  //   DemuxTopic demux(producer.topic);
 
-    int counter = 0;
-    ProcessMessageResult status = ProcessMessageResult::OK();
-    do {
-      status = s.write(verbose);
-      ++counter;
-    } while (status.is_OK());
-    // {
-    //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
-    //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" << dt.dt <<
-    //   "\n";
-    // }
-    // {
-    //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
-    //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" << dt.dt <<
-    //   "\n";
-    // }
-    // {
-    //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,1000);
-    //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" << dt.dt <<
-    //   "\n";
-    // }
+  //   int counter = 0;
+  //   ProcessMessageResult status = ProcessMessageResult::OK();
+  //   do {
+  //     status = s.write(verbose);
+  //     ++counter;
+  //   } while (status.is_OK());
+  //   // {
+  //   //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
+  //   //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" <<
+  // dt.dt
+  // <<
+  //   //   "\n";
+  //   // }
+  //   // {
+  //   //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
+  //   //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" <<
+  // dt.dt
+  // <<
+  //   //   "\n";
+  //   // }
+  //   // {
+  //   //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,1000);
+  //   //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" <<
+  // dt.dt
+  // <<
+  //   //   "\n";
+  //   // }
 
-    std::map<std::string, int64_t> m;
+  //   std::map<std::string, int64_t> m;
 
-    m = s.set_start_time(demux, nanoseconds(-56));
-    std::cout << " :: got initial time :: " << std::endl;
-    for (auto &v : m) {
-      std::cout << v.first << "\t" << v.second << std::endl;
-    }
+  //   m = s.set_start_time(demux, nanoseconds(-56));
+  //   std::cout << " :: got initial time :: " << std::endl;
+  //   for (auto &v : m) {
+  //     std::cout << v.first << "\t" << v.second << std::endl;
+  //   }
 
-    do {
-      status = s.write(verbose);
-      ++counter;
-    } while (status.is_OK());
-  }
+  //   do {
+  //     status = s.write(verbose);
+  //     ++counter;
+  //   } while (status.is_OK());
+  // }
+
+  consumer.SetUp();
+
+  std::cout << "lower offset : \t" << consumer.low << "\t"
+            << "higher offset : \t " << consumer.high << "\n";
+
+  DummyAlgo ds(consumer._topic, consumer._partition);
+  consumer.seek(18446744073309970608u, ds);
+  // consumer.consume(event_timestamp);
+
   return 0;
 }

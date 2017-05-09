@@ -142,8 +142,6 @@ TEST(Streammaster, StartStop) {
     std::cout << one_demux[0].sources()[item].source() << " : "
               << one_demux[0].sources()[item].processed_messages_count()
               << "\n";
-
-  StreamMaster::delay_after_last_message = milliseconds(1);
 }
 
 TEST(Streammaster, StartTime) {
