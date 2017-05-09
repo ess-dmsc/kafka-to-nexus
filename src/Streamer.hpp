@@ -50,8 +50,6 @@ struct Streamer {
   /// Returns message length
   size_t &len() { return message_length; }
 
-  ProcessMessageResult get_offset();
-
   template <class T>
   std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
     std::cout << "no initial timepoint\n";
@@ -65,6 +63,9 @@ struct Streamer {
     std::cout << "no scan\n";
     return RdKafkaOffset(-1);
   }
+
+  int n_sources{0};
+  ErrorCode status{StatusCode::STOPPED};
 
 private:
   RdKafka::Topic *_topic{ nullptr };

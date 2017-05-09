@@ -33,9 +33,9 @@ template <typename Streamer, typename Demux> struct StreamMaster {
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(_demux), do_write(false), _stop(false) {
     for (auto &d : demux) {
-      streamer[d.topic()] = Streamer(broker, d.topic(), kafka_options, offset);
-      _n_sources[d.topic()] = d.sources().size();
-      _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
+      streamer.emplace(d.topic(),
+                       Streamer{ broker, d.topic(), kafka_options, offset });
+      streamer[d.topic()].n_sources = d.sources().size();
     }
   };
 
@@ -47,9 +47,9 @@ template <typename Streamer, typename Demux> struct StreamMaster {
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer[d.topic()] = Streamer(broker, d.topic(), kafka_options, offset);
-      _n_sources[d.topic()] = d.sources().size();
-      _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
+      streamer.emplace(d.topic(),
+                       Streamer{ broker, d.topic(), kafka_options, offset });
+      streamer[d.topic()].n_sources = d.sources().size();
     }
   };
 
@@ -60,13 +60,13 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     }
   }
 
-  bool start_time(const ESSTimeStamp start) {
+  bool start_time(const ESSTimeStamp& start) {
     for (auto &d : demux) {
       auto result = streamer[d.topic()].set_start_time(d, start);
     }
     return false;
   }
-  bool stop_time(const ESSTimeStamp stop) {
+  bool stop_time(const ESSTimeStamp& stop) {
     if (stop.count() < 0) {
       return false;
     }
@@ -79,9 +79,11 @@ template <typename Streamer, typename Demux> struct StreamMaster {
   bool start() {
     do_write = true;
     _stop = false;
-    for (auto item = _status.begin(); item != _status.end(); ++item) {
-      item->second = ErrorCode(StatusCode::RUNNING);
-    }
+
+    std::for_each(streamer.begin(), streamer.end(),
+                  [](std::pair<const std::string, Streamer> &item) {
+      item.second.status = ErrorCode(StatusCode::RUNNING);
+    });
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
       std::this_thread::sleep_for(milliseconds(100));
@@ -89,20 +91,18 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return loop.joinable();
   }
 
-  std::map<std::string, ErrorCode> &stop() {
+  bool stop() {
     do_write = false;
     _stop = true;
     if (loop.joinable()) {
       loop.join();
     }
     for (auto &d : demux) {
-      _status[d.topic()] = streamer[d.topic()].closeStream();
+      this->stop_streamer(streamer[d.topic()]);
       streamer.erase(d.topic());
     }
-    return _status;
+    return !loop.joinable();
   }
-
-  std::map<std::string, ErrorCode> &status() { return _status; }
 
 private:
   ErrorCode stop_streamer(const std::string &topic) {
@@ -116,44 +116,43 @@ private:
     while (!_stop) {
 
       for (auto &d : demux) {
-        if (_status[d.topic()].value()) {
+        auto &s = streamer[d.topic()];
 
+        if (s.status == ErrorCode(StatusCode::RUNNING)) {
           tp = system_clock::now();
-          while (do_write && ((system_clock::now() - tp) < duration)) {
-            auto _value = streamer[d.topic()].write(d);
-            if (_value.is_STOP()) {
 
-              if (remove_source(d.topic()) != ErrorCode(StatusCode::RUNNING)) {
-                _status[d.topic()] = ErrorCode(StatusCode::STOPPED);
-                break;
-              }
+          while (do_write && ((system_clock::now() - tp) < duration)) {
+            auto _value = s.write(d);
+
+            if (_value.is_STOP() &&
+                (remove_source(d.topic()) != ErrorCode(StatusCode::RUNNING))) {
+              break;
             }
           }
+
           LOG(6, "Received {}KB @ {}KB/s", streamer[d.topic()].len() * 1e-3,
               streamer[d.topic()].len() * 1e-3 /
                   static_cast<double>(duration.count()));
           streamer[d.topic()].len() = 0;
-          if (_status[d.topic()] == ErrorCode(StatusCode::STOPPED)) {
-            _status[d.topic()] = streamer[d.topic()].closeStream();
-          }
         }
       }
     }
   }
 
-  ErrorCode remove_source(const std::string &s) {
-    if (_n_sources[s] > 1) {
-      _n_sources[s]--;
-      return std::move(ErrorCode(StatusCode::RUNNING));
+  ErrorCode remove_source(const std::string &topic) {
+    auto &s(streamer[topic]);
+    if (s.n_sources > 1) {
+      s.n_sources--;
+      return s.status;
+    } else {
+      LOG(3, "All sources in {} have expired, remove streamer", topic);
+      stop_streamer(s);
+      streamer.erase(topic);
+      return ErrorCode(StatusCode::STOPPED);
     }
-    _n_sources[s] = 0;
-    LOG(3, "All sources in {} have expired", s);
-    return std::move(ErrorCode(StatusCode::STOPPED));
   }
 
   std::map<std::string, Streamer> streamer;
-  std::map<std::string, int> _n_sources;
-  std::map<std::string, ErrorCode> _status;
   std::vector<Demux> &demux;
   std::thread loop;
   std::atomic<bool> do_write;

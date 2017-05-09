@@ -14,6 +14,7 @@ int BrightnESS::FileWriter::Streamer::set_conf_opt(
   std::string errstr;
   if (!(option.first.empty() || option.second.empty())) {
     auto result = conf->set(option.first, option.second, errstr);
+    LOG(5, "set streamer config: {} = {}", option.first, option.second);
     if (result != RdKafka::Conf::CONF_OK) {
       LOG(2, "Failed to initialise configuration: {}", errstr);
       return result;
@@ -34,9 +35,11 @@ BrightnESS::FileWriter::Streamer::Streamer(
 
   using opt_t = std::pair<std::string, std::string>;
   set_conf_opt(conf, opt_t{ "metadata.broker.list", broker });
-  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "10485760" });
-  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "10485760" });
+  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "204857600" });
+  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "204857600" });
+  set_conf_opt(conf, opt_t{ "api.version.request", "true" });
   set_conf_opt(conf, opt_t{ "log_level", "3" });
+
   for (auto &item : kafka_options) {
     set_conf_opt(conf, item);
   }
@@ -62,9 +65,14 @@ BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
 
 BrightnESS::FileWriter::ErrorCode
 BrightnESS::FileWriter::Streamer::closeStream() {
-  auto status = _consumer->stop(_topic, _partition.value());
-  delete _topic;
-  delete _consumer;
+  BrightnESS::FileWriter::ErrorCode status;
+  if (_consumer) {
+    status = _consumer->stop(_topic, _partition.value());
+    delete _consumer;
+  }
+  if (_topic) {
+    delete _topic;
+  }
   return status;
 }
 
@@ -134,13 +142,18 @@ BrightnESS::FileWriter::Streamer::write(
 
   std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
       _topic, _partition.value(), consumer_timeout.count()) };
+
+  LOG(6, "{} : event timestamp : {}", _topic->name(),
+      msg->timestamp().timestamp);
+
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
-    LOG(6, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
+    LOG(5, "consume :\t{}", RdKafka::err2str(msg->err()));
+
     return ProcessMessageResult::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
-    LOG(6, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
+    LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
     return ProcessMessageResult::ERR();
   }
   message_length += msg->len();

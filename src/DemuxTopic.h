@@ -38,12 +38,12 @@ public:
   std::string to_str() const;
   rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> *_a =
                                   nullptr) const;
-  int64_t &stop_time();
+  uint64_t &stop_time();
 
 private:
   std::string _topic;
   std::vector<Source> _sources;
-  int64_t _stop_time;
+  uint64_t _stop_time;
 };
 
 } // namespace FileWriter

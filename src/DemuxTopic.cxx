@@ -34,7 +34,7 @@ ProcessMessageResult ProcessMessageResult::STOP() {
 }
 
 DemuxTopic::DemuxTopic(std::string topic)
-    : _topic(topic), _stop_time(std::numeric_limits<int64_t>::max()) {}
+    : _topic(topic), _stop_time(std::numeric_limits<uint64_t>::max()) {}
 
 DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
                                                         int msg_size) {
@@ -65,10 +65,11 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
     return ProcessMessageResult::ERR();
   }
   auto srcn = reader->sourcename(msg);
-  // LOG(7, "Msg is for sourcename: {}", srcn);
+  LOG(7, "Msg is for sourcename: {}", srcn);
   for (auto &s : sources()) {
     if (reader->ts(msg) > _stop_time) {
-      LOG(7, "reader->ts(msg) > _stop_time :\t{}",
+      LOG(7, "reader->ts(msg) [{}]  > _stop_time [{}] :\t{}",
+	  reader->ts(msg), _stop_time,
           ProcessMessageResult::STOP().ts());
       return ProcessMessageResult::STOP();
     }
@@ -106,7 +107,7 @@ DemuxTopic::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
   return jd;
 }
 
-int64_t &DemuxTopic::stop_time() { return _stop_time; }
+uint64_t &DemuxTopic::stop_time() { return _stop_time; }
 
 } // namespace FileWriter
 } // namespace BrightnESS
