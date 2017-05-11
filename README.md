@@ -128,7 +128,11 @@ environment variables here:
 - `libfmt`: `ENV{fmt_dir}`
   - we expect `ENV{fmt_dir}/include/fmt/[format.cc, format.h]`
 
-- `gtest`: `ENV{googletest_dir}`
+- Google Test (optional) (git clone `https://github.com/google/googletest.git` in
+  parallel to this repository, or give the repository location in
+  `GOOGLETEST_REPOSITORY_DIR` or in `CMAKE_INCLUDE_PATH` and specify
+  `cmake -DREQUIRE_GTEST=1`)
+
 
 
 ## Flatbuffer Schema Plugins
