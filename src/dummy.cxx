@@ -23,7 +23,7 @@ struct DummyAlgo {
 
   uint64_t seek(const uint64_t &target, RdKafka::Consumer *consumer) {
     uint64_t offset = 0;
-    uint64_t ts = 18446744073309970608 + 1;
+    uint64_t ts = 18446744073309970608u + 1u;
     if (!high) {
       consumer->query_watermark_offsets(topic->name(), partition, &low, &high,
                                         1000);
@@ -269,7 +269,7 @@ public:
   void SetUp() {
     RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
 
-    std::string debug, errstr;
+    std::string errstr;
     if (conf->set("metadata.broker.list", broker, errstr) !=
         RdKafka::Conf::CONF_OK) {
       throw std::runtime_error("Failed to initialise configuration: " + errstr);
@@ -278,18 +278,21 @@ public:
       std::cerr << errstr << std::endl;
       exit(1);
     }
-    if (!debug.empty()) {
-      if (conf->set("debug", debug, errstr) != RdKafka::Conf::CONF_OK) {
-        throw std::runtime_error("Failed to initialise configuration: " +
-                                 errstr);
-      }
+    if (conf->set("api.version.request", "true", errstr) !=
+        RdKafka::Conf::CONF_OK) {
+      throw std::runtime_error("Failed to initialise configuration: " + errstr);
     }
 
     if (!(_consumer = RdKafka::KafkaConsumer::create(conf, errstr))) {
       throw std::runtime_error("Failed to create consumer: " + errstr);
     }
     delete conf;
-    RdKafka::ErrorCode err = _consumer->subscribe(topics);
+
+    build_partitions(5);
+    set_topics_partition(topics[0]);
+    RdKafka::ErrorCode err = _consumer->assign(_tp);
+
+    // RdKafka::ErrorCode err = _consumer->subscribe(topics);
     if (err) {
       std::cerr << "Failed to subscribe to " << topics.size()
                 << " topics: " << RdKafka::err2str(err) << std::endl;
@@ -302,6 +305,47 @@ public:
     delete _consumer;
   }
 
+  int build_partitions(int retry) {
+    RdKafka::Metadata *md;
+    std::unique_ptr<RdKafka::Topic> ptopic;
+    auto err =
+        _consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 5000);
+    if (err != RdKafka::ERR_NO_ERROR) {
+      fprintf(stderr, "Can't request metadata");
+      if (retry) {
+        build_partitions(retry - 1);
+      } else {
+        return -1;
+      }
+    }
+    _metadata.reset(md);
+    return 0;
+  }
+
+  int set_topics_partition(const std::string &topic) {
+    bool found = false;
+    if (!_metadata) {
+      return -1;
+    }
+
+    auto partition_metadata = _metadata->topics()->at(0)->partitions();
+    for (auto &i : *_metadata->topics()) {
+      if (i->topic() == topic) {
+        found = true;
+        partition_metadata = i->partitions();
+      }
+    }
+    if (!found) {
+      fprintf(stderr, "Unable to find topic : %s\n", topic.c_str());
+      return -1;
+    }
+    for (auto &i : (*partition_metadata)) {
+      _tp.push_back(RdKafka::TopicPartition::create(topic, i->id()));
+      fprintf(stderr, "%s : %d\n", topic.c_str(), i->id());
+    }
+    return 0;
+  }
+
   void consume() {
     RdKafka::Message *msg;
     while (1) {
@@ -309,12 +353,16 @@ public:
       if (msg->err() != RdKafka::ERR_NO_ERROR) {
         std::cerr << "Failed to consume message: "
                   << RdKafka::err2str(msg->err()) << "\n";
-        break;
+        //        break;
       } else {
         std::cout << "> offset : " << msg->offset() << "\t-\tlen :\t"
                   << msg->len() << "\t-\tpayload :\t"
                   << (msg->len() > 0 ? std::string((char *)msg->payload()) : "")
-                  << "\n";
+                  << "\t-\ttimestamp :\t"
+                  << ((msg->timestamp().type !=
+                       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
+                          ? msg->timestamp().timestamp
+                          : -1) << "\n";
       }
     }
     return;
@@ -339,9 +387,35 @@ public:
     return std::string("");
   }
 
+  void set_start_time(const uint64_t &timepoint) {
+    std::map<std::string, int64_t> m;
+
+    for (auto &i : _tp) {
+      i->set_offset(timepoint);
+    }
+
+    auto err = _consumer->offsetsForTimes(_tp, 1000);
+    if (err == RdKafka::ERR_NO_ERROR) {
+      for (auto &i : _tp) {
+        auto offset = i->offset();
+        if (offset < 0) {
+          //          LOG(3, "Unable to find required offset, start from last
+          // message");
+          fprintf(stderr,
+                  "Unable to find required offset, start from last message\n");
+        } else {
+          fprintf(stderr, "Found offset : %ld\n", offset);
+        }
+        i->set_offset(offset);
+      }
+    }
+    _consumer->assign(_tp);
+  }
   int32_t _partition = 0;
   int32_t _message_count = 0;
   RdKafka::KafkaConsumer *_consumer;
+  std::vector<RdKafka::TopicPartition *> _tp;
+  std::shared_ptr<RdKafka::Metadata> _metadata;
 
   std::string broker;
   std::vector<std::string> topics;
@@ -373,21 +447,27 @@ int main(int argc, char **argv) {
   using namespace BrightnESS::FileWriter;
 
   MinimalProducer producer;
-  MinimalConsumer consumer;
+  MinimalKafkaConsumer consumer;
 
   producer.topic = "AMOR.area.detector";
   consumer.topics.push_back("AMOR.area.detector");
   consumer.broker = producer.broker = "ess01.psi.ch:9092";
 
-
   consumer.SetUp();
 
-  std::cout << "lower offset : \t" << consumer.low << "\t"
-            << "higher offset : \t " << consumer.high << "\n";
+  // std::cout << "lower offset : \t" << consumer.low << "\t"
+  //           << "higher offset : \t " << consumer.high << "\n";
 
-  DummyAlgo ds(consumer._topic, consumer._partition);
-  consumer.seek(18446744073309970608u, ds);
-  // consumer.consume(event_timestamp);
+  // DummyAlgo ds(consumer.topic, consumer._partition);
+  // consumer.seek(18446744073309970608u, ds);
+  uint64_t t;
+  for (int i = 0; i < 10; ++i)
+    consumer.consume_single_message();
+
+  std::cin >> t;
+  consumer.set_start_time(t);
+  for (int i = 0; i < 10; ++i)
+    consumer.consume_single_message();
 
   return 0;
 }

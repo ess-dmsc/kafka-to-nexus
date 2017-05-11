@@ -10,8 +10,11 @@
 
 // forward definitions
 namespace RdKafka {
-class KafkaConsumer;
 class Conf;
+class KafkaConsumer;
+class Metadata;
+// class PartitionMetadata;
+class TopicPartition;
 } // namespace RdKafka
 
 namespace BrightnESS {
@@ -61,20 +64,30 @@ struct Streamer {
 
 private:
   RdKafka::KafkaConsumer *_consumer{ nullptr };
+  std::shared_ptr<RdKafka::Metadata> _metadata;
   std::vector<std::string> _topics;
+  std::vector<RdKafka::TopicPartition *> _tp;
 
   RdKafkaOffset _offset{ RdKafkaOffsetEnd };
   RdKafkaOffset _begin;
-  RdKafkaOffset _low;
+  std::vector<RdKafkaOffset> _low;
   int64_t step_back_offset;
-  RdKafkaPartition _partition;
   size_t message_length{ 0 };
+  ESSTimeStamp _timestamp_delay{ 3000 };
 
+  // sets options for the Streamer object
   bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
+
+  // sets Kafka configuration options
   bool set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
                     const std::pair<std::string, std::string> &option);
 
+  // retrieve Metadata and fills TopicPartition. Retries <retry> times
+  int get_metadata(int retry = 10);
+  int get_topic_partitions(const std::string &topic);
+
   BrightnESS::FileWriter::ErrorCode get_offset_boundaries();
+
   milliseconds consumer_timeout{ 1000 };
   int64_t step_back_amount{ 100 };
 

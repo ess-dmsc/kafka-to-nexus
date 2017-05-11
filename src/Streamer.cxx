@@ -43,53 +43,76 @@ bool BrightnESS::FileWriter::Streamer::set_streamer_opt(
       }
     }
   }
-
-  if (option.first == "partition") {
-    LOG(5, "set streamer config: {} = {}", option.first, option.second);
+  if (option.first == "timestamp_delay") {
     auto value = to_num<int>(option.second);
-    if (value.first && value.second >= 0) {
-      _partition = RdKafkaPartition(value.second);
+    if (value.first && value.second > 0) {
+      _timestamp_delay = ESSTimeStamp(value.second);
       return true;
     }
   }
-
   return false;
+}
+
+int BrightnESS::FileWriter::Streamer::get_metadata(int retry) {
+  RdKafka::Metadata *md;
+  std::unique_ptr<RdKafka::Topic> ptopic;
+  auto err = _consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 5000);
+  if (err != RdKafka::ERR_NO_ERROR) {
+    LOG(3, "Can't request metadata");
+    if (retry) {
+      get_metadata(retry - 1);
+    } else {
+      return -1;
+    }
+  }
+  _metadata.reset(md);
+  return !_metadata;
+}
+
+int BrightnESS::FileWriter::Streamer::get_topic_partitions(
+    const std::string &topic) {
+  bool topic_found = false;
+  if (!_metadata) {
+    LOG(3, "Missing metadata informations");
+    return -1;
+  }
+  auto partition_metadata = _metadata->topics()->at(0)->partitions();
+  for (auto &i : *_metadata->topics()) {
+    if (i->topic() == topic) {
+      partition_metadata = i->partitions();
+      topic_found = true;
+    }
+  }
+  if (!topic_found) {
+    LOG(3, "Can't find topic : {}", topic);
+    return -2;
+  }
+  for (auto &i : (*partition_metadata)) {
+    _tp.push_back(RdKafka::TopicPartition::create(topic, i->id()));
+  }
+  return 0;
 }
 
 BrightnESS::FileWriter::ErrorCode
 BrightnESS::FileWriter::Streamer::get_offset_boundaries() {
-
-  RdKafka::Metadata *metadata;
-  std::unique_ptr<RdKafka::Topic> topic;
-  auto err =
-      _consumer->metadata(topic.get() != NULL, topic.get(), &metadata, 5000);
-  if (err != RdKafka::ERR_NO_ERROR) {
-    LOG(3,"Can't request metadata");
-  }
-  auto topic_list = *metadata->topics();
-  auto partition_metadata = *(metadata->topics()->at(0)->partitions());
-  for (auto &i : topic_list) {
-    if (i->topic() == _topics[0]) {
-      partition_metadata = *(i->partitions());
+  for (auto &i : _tp) {
+    int64_t high, low;
+    auto err = _consumer->query_watermark_offsets(i->topic(), i->partition(),
+                                                  &low, &high, 5000);
+    if (err) {
+      LOG(1, "Unable to get topic boundaries (topic : {}, partition : {})",
+          i->topic(), i->partition())
     }
+    // fprintf(stderr, "topic : %s, partition : %d\t low : %lu high : %lu\n",
+    //         i->topic().c_str(), i->partition(), low, high);
+    _low.push_back(RdKafkaOffset(low));
   }
-
-  int64_t high, low;
-  err = _consumer->query_watermark_offsets(
-      _topics[0], partition_metadata[0]->id(), &low, &high, 5000);
-  if (!err) {
-    LOG(0, "{} -> offset low : {}\t high : {}", _topics[0], low, high);
-    _low = RdKafkaOffset(low);
-  }
-  delete metadata;
-  return BrightnESS::FileWriter::ErrorCode(err);
+  return BrightnESS::FileWriter::ErrorCode(0);
 }
 
 BrightnESS::FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
-    std::vector<std::pair<std::string, std::string> > kafka_options)
-    : _partition(RdKafkaPartition( // RdKafka::Topic::PARTITION_UA
-          0)) {
+    std::vector<std::pair<std::string, std::string> > kafka_options) {
 
   kafka_options.erase(
       std::remove_if(kafka_options.begin(), kafka_options.end(),
@@ -103,8 +126,8 @@ BrightnESS::FileWriter::Streamer::Streamer(
 
   using opt_t = std::pair<std::string, std::string>;
   set_conf_opt(conf, opt_t{ "metadata.broker.list", broker });
-  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "204857600" });
-  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "204857600" });
+  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "2048576000" });
+  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "2048576000" });
   set_conf_opt(conf, opt_t{ "api.version.request", "true" });
   set_conf_opt(conf, opt_t{ "log_level", "3" });
   set_conf_opt(conf, opt_t{ "group.id", topic_name });
@@ -125,52 +148,23 @@ BrightnESS::FileWriter::Streamer::Streamer(
   }
 
   if (!topic_name.empty()) {
-    _topics.push_back(topic_name);
-    RdKafka::ErrorCode err = _consumer->subscribe(_topics);
+    if (get_metadata() != 0) {
+      LOG(1, "Unable to retrieve metadata");
+    }
+    if (get_topic_partitions(topic_name) < 0) {
+      LOG(1, "Unable to build TopicPartitions structure");
+    }
+    for (auto &i : _tp) {
+      i->set_offset(_offset.value());
+    }
+
+    RdKafka::ErrorCode err = _consumer->assign(_tp);
     if (err) {
       LOG(0, "Failed to subscribe to {} ", topic_name);
     }
   } else {
     LOG(0, "Topic required");
   }
-
-  // //////////////////////////
-  // {
-  //   RdKafka::Metadata *metadata;
-  //   std::unique_ptr<RdKafka::Topic> topic;
-  //   RdKafka::ErrorCode err =
-  //       _consumer->metadata(topic.get() != NULL, topic.get(), &metadata,
-  // 5000);
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     std::cerr << "Can't request metadata \n";
-  //   }
-  //   std::cerr << metadata->orig_broker_name() << ","
-  //             << metadata->orig_broker_id() << "\n";
-
-  //   sleep(1);
-
-  //   err =
-  //       _consumer->metadata(topic.get() != NULL, topic.get(), &metadata,
-  // 5000);
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     std::cerr << "Can't request metadata \n";
-  //   }
-  //   std::cerr << metadata->orig_broker_name() << ","
-  //             << metadata->orig_broker_id() << "\n";
-
-  //   auto topic_list = *metadata->topics();
-  //   auto partition_metadata = *(topic_list[0]->partitions());
-  //   for (auto &i : topic_list)
-  //     std::cerr << i->topic() << "\n";
-  //   std::cerr << partition_metadata.size() << "\n";
-  //   for (auto i : partition_metadata)
-  //     std::cerr << i->leader() << "," << i->replicas()->size() << "\n";
-
-  //   delete metadata;
-  //   exit(-1);
-  // }
-  // ////////////////////////////
-
   if (get_offset_boundaries().value()) {
     LOG(3, "Unable to determine lower and higher offset in topic {}",
         topic_name);
@@ -178,19 +172,18 @@ BrightnESS::FileWriter::Streamer::Streamer(
 }
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
-    : _consumer(other._consumer), _topics(other._topics),
-      _offset(other._offset), _begin(other._offset), _low(other._low),
-      _partition(other._partition) {}
+    : _consumer(other._consumer), _tp(other._tp), _offset(other._offset),
+      _begin(other._offset), _low(other._low) {}
 
 BrightnESS::FileWriter::ErrorCode
 BrightnESS::FileWriter::Streamer::closeStream() {
   BrightnESS::FileWriter::ErrorCode status;
 
+  _tp.clear();
   if (_consumer) {
     _consumer->close();
     delete _consumer;
   }
-  //  _topics.clear();
   return status;
 }
 
@@ -264,96 +257,52 @@ BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     BrightnESS::FileWriter::DemuxTopic &mp) {
 
-  // std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
-  //     _topic, _partition.value(), consumer_timeout.count()) };
+  std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
+      consumer_timeout.count()) };
+  LOG(6, "{} : event timestamp : {}", _tp[0]->topic(),
+      msg->timestamp().timestamp);
 
-  // // LOG(6, "{} : event timestamp : {}", _topic->name(),
-  // //     msg->timestamp().timestamp);
+  if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
+      msg->err() == RdKafka::ERR__TIMED_OUT) {
+    LOG(5, "consume :\t{}", RdKafka::err2str(msg->err()));
 
-  // if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
-  //     msg->err() == RdKafka::ERR__TIMED_OUT) {
-  //   LOG(5, "consume :\t{}", RdKafka::err2str(msg->err()));
+    return ProcessMessageResult::OK();
+  }
+  if (msg->err() != RdKafka::ERR_NO_ERROR) {
+    LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
+    return ProcessMessageResult::ERR();
+  }
+  message_length += msg->len();
+  _offset = RdKafkaOffset(msg->offset());
 
-  //   return ProcessMessageResult::OK();
-  // }
-  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
-  //   LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
-  //   return ProcessMessageResult::ERR();
-  // }
-  // message_length += msg->len();
-  // _offset = RdKafkaOffset(msg->offset());
-
-  // auto result = mp.process_message((char *)msg->payload(), msg->len());
-  // return result;
-  ProcessMessageResult::ERR();
-}
-
-template <>
-BrightnESS::FileWriter::RdKafkaOffset
-BrightnESS::FileWriter::Streamer::scan_timestamps<>(
-    BrightnESS::FileWriter::DemuxTopic &mp,
-    std::map<std::string, int64_t> &ts_list, const ESSTimeStamp &ts) {
-  // std::unique_ptr<RdKafka::Message> msg;
-  // do {
-  //   msg = std::unique_ptr<RdKafka::Message>(_consumer->consume(
-  //       _topic, _partition.value(), consumer_timeout.count()));
-
-  //   if (msg->err() != RdKafka::ERR_NO_ERROR &&
-  //       msg->err() != RdKafka::ERR__PARTITION_EOF &&
-  //       msg->err() != RdKafka::ERR__TIMED_OUT) {
-  //     LOG(3, "Failed to consume message: {}",
-  // RdKafka::err2str(msg->err()));
-  //     break;
-  //   }
-  //   DemuxTopic::DT t =
-  //       mp.time_difference_from_message((char *)msg->payload(),
-  // msg->len());
-
-  //   if (t.dt > ts.count()) {
-  //     return BrightnESS::FileWriter::RdKafkaOffset(-1);
-  //   }
-
-  //   auto it = ts_list.find(t.sourcename);
-  //   if (it == ts_list.end()) {
-  //     ts_list[t.sourcename] = t.dt;
-  //     if (ts_list.size() == mp.sources().size()) {
-  //       return BrightnESS::FileWriter::RdKafkaOffset(msg->offset());
-  //     }
-  //   }
-  // } while (BrightnESS::FileWriter::RdKafkaOffset(msg->offset()) !=
-  // _begin);
-  return BrightnESS::FileWriter::RdKafkaOffset(-1);
+  auto result = mp.process_message((char *)msg->payload(), msg->len());
+  return result;
 }
 
 template <>
 std::map<std::string, int64_t>
 BrightnESS::FileWriter::Streamer::set_start_time<>(
-    BrightnESS::FileWriter::DemuxTopic &mp, const ESSTimeStamp tp) {
+    BrightnESS::FileWriter::DemuxTopic &mp, const ESSTimeStamp timepoint) {
   std::map<std::string, int64_t> m;
-  // if (_offset == _low) {
-  //   auto err = _consumer->seek(_topic, _partition.value(),
-  //                              RdKafka::Topic::OFFSET_BEGINNING, 100);
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     LOG(3, "seek failed :\t{}", RdKafka::err2str(err));
-  //   }
-  //   return m;
-  // }
-  // _begin = _offset;
-  // BrightnESS::FileWriter::RdKafkaOffset pos =
-  // jump_back_impl(step_back_amount);
-  // pos = scan_timestamps(mp, m, tp);
 
-  // if ((pos != BrightnESS::FileWriter::RdKafkaOffset(-1)) && (_offset !=
-  // _low)) {
-  //   auto err =
-  //       _consumer->seek(_topic, _partition.value(), _offset.value(),
-  // 100);
-  //   if (err != RdKafka::ERR_NO_ERROR) {
-  //     LOG(3, "seek failed :\t{}", RdKafka::err2str(err));
-  //   }
-  //   return m;
-  // }
-  // return set_start_time(mp, tp);
+  for (auto &i : _tp) {
+    i->set_offset(timepoint.count() - _timestamp_delay.count());
+  }
+  auto err = _consumer->offsetsForTimes(_tp, 1000);
+  if (err != RdKafka::ERR_NO_ERROR) {
+    LOG(3,"Error searching initial time: {}", err2str(err));
+  }
+  if (err == RdKafka::ERR_NO_ERROR) {
+    // for (auto &i : _low) {
+    //   fprintf(stderr, "Lower timestamp in partition : %ld\n", i.value());
+    // }
+    for (auto &i : _tp) {
+      auto offset = i->offset();
+      // fprintf(stderr, "Found offset : %ld\n", offset);
+      i->set_offset(offset);
+    }
+  }
+  _consumer->assign(_tp);
 
   return m;
 }
