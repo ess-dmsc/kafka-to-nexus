@@ -209,6 +209,10 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                std::string const &dataset_name,
                                                FV *fv) {
   hsize_t ncols = fv->value()->size();
+  if (ncols <= 0) {
+    LOG(4, "can not handle number of columns ncols == {}", ncols);
+    return;
+  }
   LOG(7, "f142 init_impl  v.size(): {}", ncols);
   this->ds.reset(
       new h5::h5d_chunked_2d<DT>(hdf_group, dataset_name, ncols, 64 * 1024));
@@ -222,6 +226,9 @@ append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
   }
   auto v2 = v1->value();
   if (!v2) {
+    return { 1, 0, 0 };
+  }
+  if (!this->ds) {
     return { 1, 0, 0 };
   }
   return this->ds->append_data_2d(v2->data(), v2->size());
