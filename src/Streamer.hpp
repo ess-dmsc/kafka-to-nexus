@@ -65,13 +65,11 @@ struct Streamer {
 private:
   RdKafka::KafkaConsumer *_consumer{ nullptr };
   std::shared_ptr<RdKafka::Metadata> _metadata;
-  std::vector<std::string> _topics;
   std::vector<RdKafka::TopicPartition *> _tp;
 
   RdKafkaOffset _offset{ RdKafkaOffsetEnd };
   RdKafkaOffset _begin;
   std::vector<RdKafkaOffset> _low;
-  int64_t step_back_offset;
   size_t message_length{ 0 };
   ESSTimeStamp _timestamp_delay{ 3000 };
 
