@@ -192,14 +192,22 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
   this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
       hdf_group, "cue_timestamp_zero", 64 * 1024));
   this->ds_cue_index.reset(
-      new h5::h5d_chunked_1d<uint64_t>(hdf_group, "cue_index", 64 * 1024));
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "cue_index", 64 * 1024));
+  if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
+    impl.reset();
+    return;
+  }
   if (do_writer_forwarder_internal) {
-    this->ds_seq_data.reset(new h5::h5d_chunked_1d<uint64_t>(
+    this->ds_seq_data.reset(h5::h5d_chunked_1d<uint64_t>::create(
         hdf_group, sourcename + "__fwdinfo_seq_data", 64 * 1024));
-    this->ds_seq_fwd.reset(new h5::h5d_chunked_1d<uint64_t>(
+    this->ds_seq_fwd.reset(h5::h5d_chunked_1d<uint64_t>::create(
         hdf_group, sourcename + "__fwdinfo_seq_fwd", 64 * 1024));
-    this->ds_ts_data.reset(new h5::h5d_chunked_1d<uint64_t>(
+    this->ds_ts_data.reset(h5::h5d_chunked_1d<uint64_t>::create(
         hdf_group, sourcename + "__fwdinfo_ts_data", 64 * 1024));
+    if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+      impl.reset();
+      return;
+    }
   }
 }
 
