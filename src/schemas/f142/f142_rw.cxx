@@ -182,10 +182,14 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
     return (writer_typed_base *)nullptr;
   };
   impl.reset(impl_fac(fbuf->value_type()));
+  if (!impl) {
+    LOG(4, "Could not create a writer implementation for value_type {}",
+        (int)fbuf->value_type());
+  }
 
   this->ds_timestamp.reset(
-      new h5::h5d_chunked_1d<uint64_t>(hdf_group, "time", 64 * 1024));
-  this->ds_cue_timestamp_zero.reset(new h5::h5d_chunked_1d<uint64_t>(
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024));
+  this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
       hdf_group, "cue_timestamp_zero", 64 * 1024));
   this->ds_cue_index.reset(
       new h5::h5d_chunked_1d<uint64_t>(hdf_group, "cue_index", 64 * 1024));
