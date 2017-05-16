@@ -17,6 +17,27 @@ template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 namespace h5p {
 
+dataset_create dataset_create::chunked1_or_exc(hid_t type, hsize_t bytes) {
+  dataset_create *p = nullptr;
+  dataset_create::chunked1_var(type, bytes)
+      .match([&](bool) {}, [&](dataset_create &x) { p = &x; });
+  if (p)
+    return std::move(*p);
+  throw std::runtime_error("can not create chunked1");
+}
+
+variant<bool, dataset_create> dataset_create::chunked1_var(hid_t type,
+                                                           hsize_t bytes) {
+  dataset_create ret;
+  ret.id = H5Pcreate(H5P_DATASET_CREATE);
+  if (ret.id == -1) {
+    return false;
+  }
+  array<hsize_t, 1> schk{{std::max<hsize_t>(bytes / H5Tget_size(type), 1)}};
+  H5Pset_chunk(ret.id, schk.size(), schk.data());
+  return ret;
+}
+
 dataset_create dataset_create::chunked1(hid_t type, hsize_t bytes) {
   dataset_create ret;
   ret.id = H5Pcreate(H5P_DATASET_CREATE);
@@ -116,6 +137,14 @@ h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, T dummy) {
   auto dsp = h5::h5s::simple_unlim<1>({{0}});
   auto dcpl = h5p::dataset_create::chunked1(type, chunk_bytes);
   id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
+  /*
+  dcplQ.match(
+    [](bool){},
+    [&] (h5p::dataset_create & dcpl) {
+      this->id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
+    }
+  );
+  */
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }

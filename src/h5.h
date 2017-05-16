@@ -1,6 +1,7 @@
 #pragma once
 #include <array>
 #include <hdf5.h>
+#include <mapbox/variant.hpp>
 #include <string>
 #include <vector>
 
@@ -12,9 +13,13 @@ using std::string;
 
 namespace h5p {
 
+using mapbox::util::variant;
+
 class dataset_create {
 public:
   static dataset_create chunked1(hid_t type, hsize_t bytes);
+  static variant<bool, dataset_create> chunked1_var(hid_t type, hsize_t bytes);
+  static dataset_create chunked1_or_exc(hid_t type, hsize_t bytes);
   static dataset_create chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
   dataset_create(dataset_create &&x);
   ~dataset_create();
