@@ -106,9 +106,22 @@ void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
       h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "cue_index", 64 * 1024));
   this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
       hdf_group, "cue_timestamp_zero", 128 * 1024));
+
+  if (!ds_flatbuffer || !ds_index || !ds_size || !ds_timestamp ||
+      !ds_cue_index || !ds_cue_timestamp_zero) {
+    ds_flatbuffer.reset();
+    ds_index.reset();
+    ds_size.reset();
+    ds_timestamp.reset();
+    ds_cue_index.reset();
+    ds_cue_timestamp_zero.reset();
+  }
 }
 
 WriteResult writer::write_impl(Msg msg) {
+  if (!ds_flatbuffer) {
+    return {-1};
+  }
   auto fbuf = get_fbuf(msg.data);
   uint64_t ts = fbuf->timestamp();
   auto w1ret = this->ds_flatbuffer->append_data_1d(
