@@ -17,44 +17,45 @@ using std::move;
   }
 
 BrokerOpt::BrokerOpt() {
-  conf_ints = { { "metadata.request.timeout.ms", 2 * 1000 },
-                { "socket.timeout.ms", 2 * 1000 },
-                //{"session.timeout.ms",                        2 * 1000},
-                { "message.max.bytes", 23 * 1024 * 1024 },
-                { "fetch.message.max.bytes", 23 * 1024 * 1024 },
-                { "receive.message.max.bytes", 23 * 1024 * 1024 },
-                { "queue.buffering.max.messages", 100 * 1000 },
-                { "queue.buffering.max.ms", 50 },
-                { "queue.buffering.max.kbytes", 800 * 1024 },
-                { "batch.num.messages", 100 * 1000 },
-                //{"socket.send.buffer.bytes",          23 * 1024 * 1024},
-                //{"socket.receive.buffer.bytes",       23 * 1024 * 1024},
-                { "coordinator.query.interval.ms", 2 * 1000 },
-                { "heartbeat.interval.ms", 500 },
-                { "statistics.interval.ms", 600 * 1000 },
-                /*
-                {"message.max.bytes",                 23 * 1024 * 1024},
+  conf_ints = {
+      {"metadata.request.timeout.ms", 2 * 1000},
+      {"socket.timeout.ms", 2 * 1000},
+      //{"session.timeout.ms",                        2 * 1000},
+      {"message.max.bytes", 23 * 1024 * 1024},
+      {"fetch.message.max.bytes", 23 * 1024 * 1024},
+      {"receive.message.max.bytes", 23 * 1024 * 1024},
+      {"queue.buffering.max.messages", 100 * 1000},
+      {"queue.buffering.max.ms", 50},
+      {"queue.buffering.max.kbytes", 800 * 1024},
+      {"batch.num.messages", 100 * 1000},
+      //{"socket.send.buffer.bytes",          23 * 1024 * 1024},
+      //{"socket.receive.buffer.bytes",       23 * 1024 * 1024},
+      {"coordinator.query.interval.ms", 2 * 1000},
+      {"heartbeat.interval.ms", 500},
+      {"statistics.interval.ms", 600 * 1000},
+      /*
+      {"message.max.bytes",                 23 * 1024 * 1024},
 
-                // check again these two?
-                {"fetch.message.max.bytes",            3 * 1024 * 1024},
-                {"receive.message.max.bytes",          3 * 1024 * 1024},
+      // check again these two?
+      {"fetch.message.max.bytes",            3 * 1024 * 1024},
+      {"receive.message.max.bytes",          3 * 1024 * 1024},
 
-                {"queue.buffering.max.messages",       2 * 1000 * 1000},
-                {"queue.buffering.max.ms",                        1000},
+      {"queue.buffering.max.messages",       2 * 1000 * 1000},
+      {"queue.buffering.max.ms",                        1000},
 
-                // Total MessageSet size limited by message.max.bytes
-                {"batch.num.messages",                      100 * 1000},
-                {"socket.send.buffer.bytes",          23 * 1024 * 1024},
-                {"socket.receive.buffer.bytes",       23 * 1024 * 1024},
+      // Total MessageSet size limited by message.max.bytes
+      {"batch.num.messages",                      100 * 1000},
+      {"socket.send.buffer.bytes",          23 * 1024 * 1024},
+      {"socket.receive.buffer.bytes",       23 * 1024 * 1024},
 
-                // Consumer
-                //{"queued.min.messages", "1"},
+      // Consumer
+      //{"queued.min.messages", "1"},
 
-                */
+      */
   };
   conf_strings = {
-    //{"group.id",                      ""},
-    { "api.version.request", "true" },
+      //{"group.id",                      ""},
+      {"api.version.request", "true"},
   };
 }
 

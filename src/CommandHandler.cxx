@@ -113,7 +113,7 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
     if (m != d.MemberEnd()) {
       br = m->value.GetString();
     }
-    auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic> >(
+    auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
                                                master->config.kafka));
     if (start_time.count()) {

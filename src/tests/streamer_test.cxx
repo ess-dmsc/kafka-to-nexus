@@ -112,11 +112,11 @@ std::function<ProcessMessageResult(void *, int)> verbose = [](void *x,
   std::cout << "message: " << x << "\t" << size << std::endl;
   return ProcessMessageResult::OK();
 };
-std::function<ProcessMessageResult(void *, int, int *)> sum = [](
-    void *x, int size, int *data_size) {
-  (*data_size) += size;
-  return ProcessMessageResult::OK();
-};
+std::function<ProcessMessageResult(void *, int, int *)> sum =
+    [](void *x, int size, int *data_size) {
+      (*data_size) += size;
+      return ProcessMessageResult::OK();
+    };
 
 std::pair<std::string, int64_t> dummy_message_parser(std::string &&msg) {
   auto position = msg.find("-", 0);

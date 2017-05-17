@@ -24,7 +24,7 @@ int BrightnESS::FileWriter::Streamer::set_conf_opt(
 
 BrightnESS::FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
-    const std::vector<std::pair<std::string, std::string> > &kafka_options,
+    const std::vector<std::pair<std::string, std::string>> &kafka_options,
     const RdKafkaOffset &offset, const RdKafkaPartition &partition)
     : _offset(offset), _partition(partition) {
 
@@ -33,10 +33,10 @@ BrightnESS::FileWriter::Streamer::Streamer(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
 
   using opt_t = std::pair<std::string, std::string>;
-  set_conf_opt(conf, opt_t{ "metadata.broker.list", broker });
-  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "10485760" });
-  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "10485760" });
-  set_conf_opt(conf, opt_t{ "log_level", "3" });
+  set_conf_opt(conf, opt_t{"metadata.broker.list", broker});
+  set_conf_opt(conf, opt_t{"fetch.message.max.bytes", "10485760"});
+  set_conf_opt(conf, opt_t{"receive.message.max.bytes", "10485760"});
+  set_conf_opt(conf, opt_t{"log_level", "3"});
   for (auto &item : kafka_options) {
     set_conf_opt(conf, item);
   }
@@ -68,10 +68,9 @@ BrightnESS::FileWriter::Streamer::closeStream() {
   return status;
 }
 
-int
-BrightnESS::FileWriter::Streamer::connect(const std::string &topic_name,
-                                          const RdKafkaOffset &offset,
-                                          const RdKafkaPartition &partition) {
+int BrightnESS::FileWriter::Streamer::connect(
+    const std::string &topic_name, const RdKafkaOffset &offset,
+    const RdKafkaPartition &partition) {
   if (!_topic) {
     std::string errstr;
     std::unique_ptr<RdKafka::Conf> tconf(
@@ -132,8 +131,8 @@ BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     BrightnESS::FileWriter::DemuxTopic &mp) {
 
-  std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
-      _topic, _partition.value(), consumer_timeout.count()) };
+  std::unique_ptr<RdKafka::Message> msg{
+      _consumer->consume(_topic, _partition.value(), consumer_timeout.count())};
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
     LOG(6, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));

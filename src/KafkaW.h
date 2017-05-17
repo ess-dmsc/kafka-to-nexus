@@ -70,9 +70,9 @@ public:
   void dump_current_subscription();
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_assign;
+      on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_start;
+      on_rebalance_start;
   rd_kafka_t *rk = nullptr;
 
 private:
@@ -149,7 +149,7 @@ public:
 
 private:
   std::string _name;
-  bool _do_copy{ false };
+  bool _do_copy{false};
 };
 
 } // namespace KafkaW

@@ -1,12 +1,12 @@
 #include "helper.h"
 #include <array>
 #include <fstream>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/prettywriter.h>
 
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;
@@ -52,7 +52,7 @@ std::vector<std::string> split(std::string const &input, std::string token) {
   using std::string;
   vector<string> ret;
   if (token.size() == 0)
-    return { input };
+    return {input};
   string::size_type i1 = 0;
   while (true) {
     auto i2 = input.find(token, i1);
@@ -125,22 +125,22 @@ get_json_ret_int get_int(rapidjson::Value const *v, std::string path) {
   uint32_t i1 = 0;
   for (auto &x : a) {
     if (!v->IsObject()) {
-      return { 1, 0 };
+      return {1, 0};
     }
     auto it = v->FindMember(x.c_str());
     if (it == v->MemberEnd()) {
-      return { 1, 0 };
+      return {1, 0};
     }
     if (i1 == a.size() - 1) {
       if (it->value.IsInt()) {
-        return { 0, it->value.GetInt() };
+        return {0, it->value.GetInt()};
       }
     } else {
       v = &it->value;
     }
     ++i1;
   }
-  return { 1, 0 };
+  return {1, 0};
 }
 
 get_json_ret_object get_object(rapidjson::Value const &v_, std::string path) {

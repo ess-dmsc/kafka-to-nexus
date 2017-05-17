@@ -21,7 +21,7 @@ public:
   CG cg(uint32_t i) {
     if (i >= ol)
       throw std::runtime_error("out-of-bounds capture group requested");
-    return { ov[i * 2 + 0], ov[i * 2 + 1], ov[i * 2 + 1] - ov[i * 2 + 0] };
+    return {ov[i * 2 + 0], ov[i * 2 + 1], ov[i * 2 + 1] - ov[i * 2 + 0]};
   }
   uint32_t ol;
   PCRE2_SIZE *ov;

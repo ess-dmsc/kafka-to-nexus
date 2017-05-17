@@ -21,7 +21,7 @@ struct MainOpt {
   bool help = false;
   bool verbose = false;
   uint64_t teamid = 0;
-  URI broker{ "localhost:9092/commands" };
+  URI broker{"localhost:9092/commands"};
   KafkaW::BrokerOpt broker_opt;
   std::string cmd;
 };
@@ -75,7 +75,7 @@ std::string make_command_from_file(const std::string &filename) {
   }
   LOG(4, "make_command_from_file {}", filename);
   auto buf1 = gulp(filename);
-  return { buf1.data(), buf1.size() };
+  return {buf1.data(), buf1.size()};
 }
 
 extern "C" char const GIT_COMMIT[];
@@ -84,11 +84,13 @@ int main(int argc, char **argv) {
 
   MainOpt opt;
 
-  static struct option long_options[] = { { "help", no_argument, 0, 'h' },
-                                          { "teamid", required_argument, 0, 0 },
-                                          { "cmd", required_argument, 0, 0 },
-                                          { "broker", required_argument, 0, 0 },
-                                          { 0, 0, 0, 0 }, };
+  static struct option long_options[] = {
+      {"help", no_argument, 0, 'h'},
+      {"teamid", required_argument, 0, 0},
+      {"cmd", required_argument, 0, 0},
+      {"broker", required_argument, 0, 0},
+      {0, 0, 0, 0},
+  };
   int option_index = 0;
   bool getopt_error = false;
   while (true) {

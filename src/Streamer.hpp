@@ -25,10 +25,10 @@ struct Streamer {
   static milliseconds consumer_timeout;
   static int64_t step_back_amount;
 
-  Streamer() {};
+  Streamer(){};
   Streamer(const std::string &, const std::string &,
-           const std::vector<std::pair<std::string, std::string> > &
-               kafka_options = {},
+           const std::vector<std::pair<std::string, std::string>>
+               &kafka_options = {},
            const RdKafkaOffset & = RdKafkaOffsetEnd,
            const RdKafkaPartition & = RdKafkaPartition(0));
   Streamer(const Streamer &);
@@ -67,15 +67,15 @@ struct Streamer {
   }
 
 private:
-  RdKafka::Topic *_topic{ nullptr };
-  RdKafka::Consumer *_consumer{ nullptr };
+  RdKafka::Topic *_topic{nullptr};
+  RdKafka::Consumer *_consumer{nullptr};
   RdKafka::TopicPartition *_tp;
   RdKafkaOffset _offset;
   RdKafkaOffset _begin;
   RdKafkaOffset _low;
   int64_t step_back_offset;
   RdKafkaPartition _partition;
-  size_t message_length{ 0 };
+  size_t message_length{0};
 
   int set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
                    const std::pair<std::string, std::string> &option);

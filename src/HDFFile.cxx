@@ -52,8 +52,8 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, s1.size());
   using A = AA<1>;
-  A sini{ { 1 } };
-  A smax{ { 1 } };
+  A sini{{1}};
+  A smax{{1}};
   auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
   auto ds = H5Dcreate2(loc, name.c_str(), strfix, dsp, H5P_DEFAULT, H5P_DEFAULT,
                        H5P_DEFAULT);
@@ -151,7 +151,7 @@ int HDFFile::init(std::string filename,
       hid_t nxv;
       Value::ConstMemberIterator itr;
       bool basics;
-      string nx_type{ "group" };
+      string nx_type{"group"};
       SE(string name, Value const *jsv, hid_t nxparent)
           : name(name), jsv(jsv), nxparent(nxparent), nxv(-1),
             itr(jsv->MemberEnd()), basics(false) {
@@ -161,7 +161,7 @@ int HDFFile::init(std::string filename,
       }
     };
     std::deque<SE> stack;
-    stack.push_back(SE{ "/", &nexus_structure, -1 });
+    stack.push_back(SE{"/", &nexus_structure, -1});
     stack.back().nxv = f1;
     while (stack.size() > 0) {
       auto &se = stack.back();

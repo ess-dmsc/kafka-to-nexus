@@ -25,11 +25,11 @@ namespace FileWriter {
 template <typename Streamer, typename Demux> struct StreamMaster {
   static std::chrono::milliseconds delay_after_last_message;
 
-  StreamMaster() : do_write(false), _stop(false) {};
+  StreamMaster() : do_write(false), _stop(false){};
 
   StreamMaster(
       std::string &broker, std::vector<Demux> &_demux,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(_demux), do_write(false), _stop(false) {
     for (auto &d : demux) {
@@ -41,7 +41,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
 
   StreamMaster(
       std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
         _file_writer_task(std::move(file_writer_task)) {

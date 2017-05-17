@@ -13,7 +13,7 @@ namespace utils {
 template <typename T, typename PHANTOM> struct StrongType {
 public:
   StrongType() {}
-  StrongType(T value) : m_value{ value } {}
+  StrongType(T value) : m_value{value} {}
   inline const T &value() { return m_value; }
   StrongType &operator=(const StrongType &other) {
     m_value = other.m_value;
