@@ -36,8 +36,8 @@ public:
     return _sources.back();
   }
   std::string to_str() const;
-  rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> *_a =
-                                  nullptr) const;
+  rapidjson::Document
+  to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;
   uint64_t &stop_time();
 
 private:

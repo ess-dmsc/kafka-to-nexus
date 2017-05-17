@@ -38,11 +38,7 @@ namespace date {
 
 namespace detail {
 
-enum class tz {
-  utc,
-  local,
-  standard
-};
+enum class tz { utc, local, standard };
 
 // forward declare to avoid warnings in gcc 6.2
 class MonthDayTime;
@@ -63,27 +59,22 @@ private:
     date::weekday weekday_;
   };
 
-  enum Type {
-    month_day,
-    month_last_dow,
-    lteq,
-    gteq
-  };
+  enum Type { month_day, month_last_dow, lteq, gteq };
 
-  Type type_{ month_day };
+  Type type_{month_day};
 
 #if !defined(_MSC_VER) || (_MSC_VER >= 1900)
   union U
 #else
   struct U
 #endif
-      {
+  {
     date::month_day month_day_;
     date::month_weekday_last month_weekday_last_;
     pair month_day_weekday_;
 
 #if !defined(_MSC_VER) || (_MSC_VER >= 1900)
-    U() : month_day_{ date::jan / 1 } {}
+    U() : month_day_{date::jan / 1} {}
 #else
     U()
         : month_day_(date::jan / 1),
@@ -97,10 +88,10 @@ private:
     U &operator=(const pair &x);
   } u;
 
-  std::chrono::hours h_{ 0 };
-  std::chrono::minutes m_{ 0 };
-  std::chrono::seconds s_{ 0 };
-  tz zone_{ tz::local };
+  std::chrono::hours h_{0};
+  std::chrono::minutes m_{0};
+  std::chrono::seconds s_{0};
+  tz zone_{tz::local};
 
 public:
   MonthDayTime() = default;
@@ -151,10 +142,10 @@ std::ostream &operator<<(std::ostream &os, const Rule &r);
 class Rule {
 private:
   std::string name_;
-  date::year starting_year_{ 0 };
-  date::year ending_year_{ 0 };
+  date::year starting_year_{0};
+  date::year ending_year_{0};
   MonthDayTime starting_at_;
-  std::chrono::minutes save_{ 0 };
+  std::chrono::minutes save_{0};
   std::string abbrev_;
 
 public:
@@ -225,11 +216,7 @@ inline bool operator<=(const std::string &x, const Rule &y) { return !(y < x); }
 inline bool operator>=(const std::string &x, const Rule &y) { return !(x < y); }
 
 struct zonelet {
-  enum tag {
-    has_rule,
-    has_save,
-    is_empty
-  };
+  enum tag { has_rule, has_save, is_empty };
 
   std::chrono::seconds gmtoff_;
   tag tag_ = has_rule;
@@ -239,7 +226,7 @@ struct zonelet {
 #else
   struct U
 #endif
-      {
+  {
     std::string rule_;
     std::chrono::minutes save_;
 
@@ -250,15 +237,15 @@ struct zonelet {
   } u;
 
   std::string format_;
-  date::year until_year_{ 0 };
+  date::year until_year_{0};
   MonthDayTime until_date_;
   sys_seconds until_utc_;
   local_seconds until_std_;
   local_seconds until_loc_;
   std::chrono::minutes initial_save_{};
   std::string initial_abbrev_;
-  std::pair<const Rule *, date::year> first_rule_{ nullptr, date::year::min() };
-  std::pair<const Rule *, date::year> last_rule_{ nullptr, date::year::max() };
+  std::pair<const Rule *, date::year> first_rule_{nullptr, date::year::min()};
+  std::pair<const Rule *, date::year> last_rule_{nullptr, date::year::max()};
 
   ~zonelet();
   zonelet();

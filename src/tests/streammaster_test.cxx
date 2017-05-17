@@ -17,7 +17,7 @@ namespace FileWriter {
 class MockSource {
 public:
   MockSource(std::string topic, std::string source)
-      : _topic(topic), _source(source) {};
+      : _topic(topic), _source(source){};
   //  MockSource(MockSource &&);
   std::string const &topic() const { return _topic; }
   std::string const &source() const { return _source; }
@@ -41,10 +41,8 @@ private:
 
 class MockDemuxTopic : public MessageProcessor {
 public:
-  MockDemuxTopic(std::string topic) : _topic(topic) {};
-  std::string const &topic() const {
-    return _topic;
-  };
+  MockDemuxTopic(std::string topic) : _topic(topic){};
+  std::string const &topic() const { return _topic; };
   bool stop_time(const ESSTimeStamp) { return false; }
   ProcessMessageResult process_message(char *msg_data, int msg_size) {
     std::string s(msg_data);
@@ -63,9 +61,7 @@ public:
     }
     _sources.push_back(MockSource(topic(), s));
   }
-  std::vector<MockSource> &sources() {
-    return _sources;
-  };
+  std::vector<MockSource> &sources() { return _sources; };
 
 private:
   std::string _topic;
@@ -77,19 +73,21 @@ template <>
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
-  RdKafka::Message *msg =
-      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
-  if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
-    //    std::cout << "eof reached" << std::endl;
-    return ProcessMessageResult::OK();
-  }
-  if (msg->err() != RdKafka::ERR_NO_ERROR) {
-    //    std::cout << "Failed to consume message:
-    //    "+RdKafka::err2str(msg->err()) << std::endl;
-    return ProcessMessageResult::ERR();
-  }
-  message_length = msg->len();
-  return mp.process_message((char *)msg->payload(), msg->len());
+  // RdKafka::Message *msg =
+  //     _consumer->consume(_topic, _partition.value(),
+  // consumer_timeout.count());
+  // if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
+  //   //    std::cout << "eof reached" << std::endl;
+  //   return ProcessMessageResult::OK();
+  // }
+  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
+  //   //    std::cout << "Failed to consume message:
+  //   //    "+RdKafka::err2str(msg->err()) << std::endl;
+  //   return ProcessMessageResult::ERR();
+  // }
+  // message_length = msg->len();
+  // return mp.process_message((char *)msg->payload(), msg->len());
+  return ProcessMessageResult::ERR();
 }
 
 } // namespace FileWriter
@@ -98,19 +96,17 @@ BrightnESS::FileWriter::Streamer::write(MockDemuxTopic &mp) {
 using namespace BrightnESS::FileWriter;
 
 std::string broker;
-std::vector<std::string> no_topic = { "" };
-std::vector<std::string> topic = { "area_detector", "tof_detector", "motor1",
-                                   "motor2",        "temp" };
+std::vector<std::string> no_topic = {""};
+std::vector<std::string> topic = {"area_detector", "tof_detector", "motor1",
+                                  "motor2", "temp"};
 
 #if 1
-std::vector<MockDemuxTopic> no_demux = { MockDemuxTopic("") };
-std::vector<MockDemuxTopic> one_demux = { MockDemuxTopic(
-    "topic.with.multiple.sources") };
-std::vector<MockDemuxTopic> demux = { MockDemuxTopic("area_detector"),
-                                      MockDemuxTopic("tof_detector"),
-                                      MockDemuxTopic("motor1"),
-                                      MockDemuxTopic("motor2"),
-                                      MockDemuxTopic("temp") };
+std::vector<MockDemuxTopic> no_demux = {MockDemuxTopic("")};
+std::vector<MockDemuxTopic> one_demux = {
+    MockDemuxTopic("topic.with.multiple.sources")};
+std::vector<MockDemuxTopic> demux = {
+    MockDemuxTopic("area_detector"), MockDemuxTopic("tof_detector"),
+    MockDemuxTopic("motor1"), MockDemuxTopic("motor2"), MockDemuxTopic("temp")};
 
 TEST(Streammaster, NotAllocatedFailure) {
   using StreamMaster =

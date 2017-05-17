@@ -38,8 +38,8 @@ public:
   uint32_t processed_messages_count() const;
   ProcessMessageResult process_message(Msg msg);
   std::string to_str() const;
-  rapidjson::Document to_json(rapidjson::MemoryPoolAllocator<> *a =
-                                  nullptr) const;
+  rapidjson::Document
+  to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
   uint64_t teamid = 0;
   void config_file(rapidjson::Value const *config_file);
   void config_stream(rapidjson::Document &&config_stream);

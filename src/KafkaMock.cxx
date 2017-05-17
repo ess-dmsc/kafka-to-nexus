@@ -21,7 +21,7 @@ bool ErrorCode::operator!=(const ErrorCode &other) {
   return value != other.value;
 }
 
-ErrorCode::ErrorCode(int n) : value(n) {};
+ErrorCode::ErrorCode(int n) : value(n){};
 ErrorCode Message::err() { return ERR_NO_ERROR; }
 void *Message::payload() { return static_cast<void *>(&load); }
 

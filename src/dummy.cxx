@@ -1,8 +1,8 @@
 #include <atomic>
-#include <regex>
-#include <thread>
 #include <chrono>
 #include <functional>
+#include <regex>
+#include <thread>
 
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
@@ -23,7 +23,7 @@ struct DummyAlgo {
 
   uint64_t seek(const uint64_t &target, RdKafka::Consumer *consumer) {
     uint64_t offset = 0;
-    uint64_t ts = 18446744073309970608+1;
+    uint64_t ts = 18446744073309970608 + 1;
     if (!high) {
       consumer->query_watermark_offsets(topic->name(), partition, &low, &high,
                                         1000);
@@ -66,7 +66,7 @@ private:
 
 class MinimalProducer {
 public:
-  MinimalProducer() {};
+  MinimalProducer(){};
 
   void SetUp() {
     RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
@@ -119,8 +119,8 @@ public:
     return;
   }
 
-  RdKafka::ErrorCode produce_single_message(std::string message =
-                                                "no-message-0") {
+  RdKafka::ErrorCode
+  produce_single_message(std::string message = "no-message-0") {
     RdKafka::ErrorCode resp = _producer->produce(
         _topic, _partition, RdKafka::Producer::RK_MSG_COPY,
         const_cast<char *>(message.c_str()), message.size(), NULL, NULL);
@@ -156,7 +156,7 @@ public:
 
 class MinimalConsumer {
 public:
-  MinimalConsumer() {};
+  MinimalConsumer(){};
 
   void SetUp() {
     RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
@@ -201,8 +201,9 @@ public:
     delete _consumer;
   }
 
-  void consume(std::function<uint64_t(char *, int)> f = [](char *,
-                                                           int) { return 0; }) {
+  void consume(std::function<uint64_t(char *, int)> f = [](char *, int) {
+    return 0;
+  }) {
     using namespace std::chrono;
     RdKafka::Message *msg;
     while (1) {
@@ -218,7 +219,8 @@ public:
                   << ((msg->timestamp().type !=
                        RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
                           ? msg->timestamp().timestamp
-                          : -1) << "\n";
+                          : -1)
+                  << "\n";
         _offset = msg->offset();
         f((char *)msg->payload(), -1);
       }
@@ -240,7 +242,8 @@ public:
                 << ((msg->timestamp().type !=
                      RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
                         ? msg->timestamp().timestamp
-                        : -1) << "\n";
+                        : -1)
+                << "\n";
     }
     return std::string("");
   }
@@ -261,11 +264,10 @@ public:
 
 class MinimalKafkaConsumer {
 public:
-  MinimalKafkaConsumer() {};
+  MinimalKafkaConsumer(){};
 
   void SetUp() {
     RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-    RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
 
     std::string debug, errstr;
     if (conf->set("metadata.broker.list", broker, errstr) !=
@@ -293,15 +295,10 @@ public:
                 << " topics: " << RdKafka::err2str(err) << std::endl;
       exit(1);
     }
-    if (!(_topic =
-              RdKafka::Topic::create(_consumer, topics[0], tconf, errstr))) {
-      throw std::runtime_error("Failed to create topic: " + errstr);
-    }
   }
 
   void TearDown() {
     _consumer->close();
-    delete _topic;
     delete _consumer;
   }
 
@@ -336,7 +333,8 @@ public:
                 << ((msg->timestamp().type !=
                      RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
                         ? msg->timestamp().timestamp
-                        : -1) << "\n";
+                        : -1)
+                << "\n";
     }
     return std::string("");
   }
@@ -344,32 +342,31 @@ public:
   int32_t _partition = 0;
   int32_t _message_count = 0;
   RdKafka::KafkaConsumer *_consumer;
-  RdKafka::Topic *_topic;
 
   std::string broker;
   std::vector<std::string> topics;
 };
 
 std::function<BrightnESS::FileWriter::ProcessMessageResult(void *, int)>
-verbose = [](void *x, int size) {
-  std::cout << "message: " << std::string((char *)x) << std::endl;
-  return BrightnESS::FileWriter::ProcessMessageResult::OK();
-};
+    verbose = [](void *x, int size) {
+      std::cout << "message: " << std::string((char *)x) << std::endl;
+      return BrightnESS::FileWriter::ProcessMessageResult::OK();
+    };
 
 std::string time_diff_message;
 std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)>
-time_diff = [](void *x, int size) {
-  std::smatch m;
-  auto s = std::string((char *)x);
-  std::cout << s << std::endl;
-  std::regex_search(s, m, std::regex("[0-9]+$"));
-  int time = std::atoi(std::string(m[0]).c_str());
-  std::regex_search(s, m, std::regex("^[a-zA-Z]+"));
-  time_diff_message = std::string(m[0]);
+    time_diff = [](void *x, int size) {
+      std::smatch m;
+      auto s = std::string((char *)x);
+      std::cout << s << std::endl;
+      std::regex_search(s, m, std::regex("[0-9]+$"));
+      int time = std::atoi(std::string(m[0]).c_str());
+      std::regex_search(s, m, std::regex("^[a-zA-Z]+"));
+      time_diff_message = std::string(m[0]);
 
-  return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(time_diff_message,
-                                                              time);
-};
+      return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(
+          time_diff_message, time);
+    };
 
 int main(int argc, char **argv) {
 
@@ -382,62 +379,6 @@ int main(int argc, char **argv) {
   consumer.topics.push_back("AMOR.area.detector");
   consumer.broker = producer.broker = "ess01.psi.ch:9092";
 
-  // if (argc > 1) {
-  //   producer.SetUp();
-  //   // producer.start();
-  //   // std::this_thread::sleep_for (std::chrono::milliseconds(1000));
-  //   // producer.stop();
-  //   for (int i = 0; i < 100; ++i) {
-  //     std::string line = "hello" + std::to_string(i);
-  //     producer.produce_single_message(line);
-  //   }
-  //   producer.TearDown();
-  // } else {
-
-  //   Streamer s(producer.broker, producer.topic, {}, RdKafkaOffsetEnd);
-  //   DemuxTopic demux(producer.topic);
-
-  //   int counter = 0;
-  //   ProcessMessageResult status = ProcessMessageResult::OK();
-  //   do {
-  //     status = s.write(verbose);
-  //     ++counter;
-  //   } while (status.is_OK());
-  //   // {
-  //   //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
-  //   //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" <<
-  // dt.dt
-  // <<
-  //   //   "\n";
-  //   // }
-  //   // {
-  //   //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,10);
-  //   //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" <<
-  // dt.dt
-  // <<
-  //   //   "\n";
-  //   // }
-  //   // {
-  //   //   TimeDifferenceFromMessage_DT dt = s.jump_back(time_diff,1000);
-  //   //   std::cout << "source :\t" << dt.sourcename << "\ttime :\t" <<
-  // dt.dt
-  // <<
-  //   //   "\n";
-  //   // }
-
-  //   std::map<std::string, int64_t> m;
-
-  //   m = s.set_start_time(demux, nanoseconds(-56));
-  //   std::cout << " :: got initial time :: " << std::endl;
-  //   for (auto &v : m) {
-  //     std::cout << v.first << "\t" << v.second << std::endl;
-  //   }
-
-  //   do {
-  //     status = s.write(verbose);
-  //     ++counter;
-  //   } while (status.is_OK());
-  // }
 
   consumer.SetUp();
 

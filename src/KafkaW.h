@@ -1,11 +1,11 @@
 #pragma once
-#include <memory>
-#include <functional>
-#include <vector>
-#include <map>
 #include <atomic>
-#include <string>
+#include <functional>
 #include <librdkafka/rdkafka.h>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace KafkaW {
 
@@ -91,9 +91,9 @@ public:
   void dump_current_subscription();
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_assign;
+      on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_start;
+      on_rebalance_start;
   rd_kafka_t *rk = nullptr;
 
 private:
@@ -124,15 +124,15 @@ public:
 };
 
 struct ProducerStats {
-  atomic<uint64_t> produced{ 0 };
-  atomic<uint32_t> produce_fail{ 0 };
-  atomic<uint32_t> local_queue_full{ 0 };
-  atomic<uint64_t> produce_cb{ 0 };
-  atomic<uint64_t> produce_cb_fail{ 0 };
-  atomic<uint64_t> poll_served{ 0 };
-  atomic<uint64_t> msg_too_large{ 0 };
-  atomic<uint64_t> produced_bytes{ 0 };
-  atomic<uint32_t> outq{ 0 };
+  atomic<uint64_t> produced{0};
+  atomic<uint32_t> produce_fail{0};
+  atomic<uint32_t> local_queue_full{0};
+  atomic<uint64_t> produce_cb{0};
+  atomic<uint64_t> produce_cb_fail{0};
+  atomic<uint64_t> poll_served{0};
+  atomic<uint64_t> msg_too_large{0};
+  atomic<uint64_t> produced_bytes{0};
+  atomic<uint32_t> outq{0};
   ProducerStats();
   ProducerStats(ProducerStats const &);
 };
@@ -168,7 +168,7 @@ public:
   // Currently it's nice to have acces to these two for statistics:
   BrokerOpt opt;
   rd_kafka_t *rk = nullptr;
-  std::atomic<uint64_t> total_produced_{ 0 };
+  std::atomic<uint64_t> total_produced_{0};
   Stats stats;
 
 private:
@@ -194,6 +194,6 @@ public:
 
 private:
   std::string _name;
-  bool _do_copy{ false };
+  bool _do_copy{false};
 };
 }

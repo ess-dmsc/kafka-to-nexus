@@ -24,28 +24,29 @@ namespace FileWriter {
 
 template <typename Streamer, typename Demux> struct StreamMaster {
 
-  StreamMaster() : do_write(false), _stop(false) {};
+  StreamMaster() : do_write(false), _stop(false){};
 
   StreamMaster(
       std::string &broker, std::vector<Demux> &_demux,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(_demux), do_write(false), _stop(false) {
+
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
       streamer[d.topic()].n_sources = d.sources().size();
     }
   };
 
   StreamMaster(
       std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
       streamer[d.topic()].n_sources = d.sources().size();
     }
   };
@@ -79,8 +80,8 @@ template <typename Streamer, typename Demux> struct StreamMaster {
 
     std::for_each(streamer.begin(), streamer.end(),
                   [](std::pair<const std::string, Streamer> &item) {
-      item.second.status = ErrorCode(StatusCode::RUNNING);
-    });
+                    item.second.status = ErrorCode(StatusCode::RUNNING);
+                  });
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
       std::this_thread::sleep_for(milliseconds(100));
@@ -109,28 +110,28 @@ private:
 
   void run() {
     using namespace std::chrono;
-    system_clock::time_point tp;
+    double total_size(0);
+    system_clock::time_point tp, tp_global(system_clock::now());
+
     while (!_stop) {
 
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
-
         if (s.status == ErrorCode(StatusCode::RUNNING)) {
           tp = system_clock::now();
-
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
-
             if (_value.is_STOP() &&
                 (remove_source(d.topic()) != ErrorCode(StatusCode::RUNNING))) {
               break;
             }
           }
-
-          LOG(6, "Received {}KB @ {}KB/s", streamer[d.topic()].len() * 1e-3,
-              streamer[d.topic()].len() * 1e-3 /
-                  static_cast<double>(duration.count()));
-          streamer[d.topic()].len() = 0;
+          total_size += s.len() * 1e-6;
+          s.len() = 0;
+          auto elapsed =
+              duration_cast<seconds>(system_clock::now() - tp_global);
+          LOG(5, "Received {}MB @ {}MB/s", total_size,
+              total_size / elapsed.count());
         }
       }
     }
@@ -156,7 +157,7 @@ private:
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
 
-  milliseconds duration{1000};
+  milliseconds duration{ 1000 };
 };
 
 } // namespace FileWriter

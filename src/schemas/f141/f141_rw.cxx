@@ -171,11 +171,11 @@ static hid_t create_1d_ds(hid_t loc, std::string const &name) {
   // Dataset for sequence numbers, used primarily for unit tests
   using AA = std::array<hsize_t, 1>;
   auto dt = nat_type<T>();
-  AA sini{ { 0 } };
-  AA smax{ { H5S_UNLIMITED } };
+  AA sini{{0}};
+  AA smax{{H5S_UNLIMITED}};
   auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
   auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  AA schk{ { std::max<hsize_t>(64 * 1024 / H5Tget_size(dt), 1) } };
+  AA schk{{std::max<hsize_t>(64 * 1024 / H5Tget_size(dt), 1)}};
   herr_t err = H5Pset_chunk(dcpl, schk.size(), schk.data());
   if (err < 0) {
     LOG(5, "in H5Pset_chunk");
@@ -298,8 +298,8 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
   using std::array;
   auto dt = nat_type<DT>();
 
-  std::array<hsize_t, 2> sizes_ini{ { 0, ncols } };
-  std::array<hsize_t, 2> sizes_max{ { H5S_UNLIMITED, ncols } };
+  std::array<hsize_t, 2> sizes_ini{{0, ncols}};
+  std::array<hsize_t, 2> sizes_max{{H5S_UNLIMITED, ncols}};
 
   this->dsp =
       H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
@@ -323,8 +323,7 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
 
   this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
   std::array<hsize_t, 2> sizes_chk{
-    { std::max(64 * 1024 / H5Tget_size(dt) / ncols, (hsize_t)1), ncols }
-  };
+      {std::max(64 * 1024 / H5Tget_size(dt) / ncols, (hsize_t)1), ncols}};
   H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
   this->ds = H5Dcreate1(hdf_group, dataset_name.c_str(), dt, dsp, dcpl);
 }
@@ -349,39 +348,39 @@ static append_ret append_data_array(hid_t ds, Td const *data, size_t nlen) {
   }
   if (get_sizes_now.at(1) != nlen) {
     LOG(4, "ERROR number of columns does not match");
-    return { -1 };
+    return {-1};
   }
 
   get_sizes_now.at(0) += 1;
   err = H5Dextend(ds, get_sizes_now.data());
   if (err < 0) {
     LOG(4, "ERROR can not extend dataset");
-    return { -1 };
+    return {-1};
   }
   H5Sclose(tgt);
 
   tgt = H5Dget_space(ds);
   using A = std::array<hsize_t, 2>;
-  A mem_size = { { 1, get_sizes_now.at(1) } };
+  A mem_size = {{1, get_sizes_now.at(1)}};
   auto mem = H5Screate_simple(2, mem_size.data(), nullptr);
   {
-    A hsl_start{ { 0, 0 } };
-    A hsl_count{ { 1, get_sizes_now.at(1) } };
+    A hsl_start{{0, 0}};
+    A hsl_count{{1, get_sizes_now.at(1)}};
     err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr,
                               hsl_count.data(), nullptr);
     if (err < 0) {
       LOG(4, "ERROR can not select mem hyperslab");
-      return { -2 };
+      return {-2};
     }
   }
 
-  A tgt_start{ { get_sizes_now.at(0) - 1, 0 } };
-  A tgt_count{ { 1, get_sizes_now.at(1) } };
+  A tgt_start{{get_sizes_now.at(0) - 1, 0}};
+  A tgt_count{{1, get_sizes_now.at(1)}};
   err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(4, "ERROR can not select tgt hyperslab");
-    return { -3 };
+    return {-3};
   }
 
   if (false) {
@@ -394,10 +393,10 @@ static append_ret append_data_array(hid_t ds, Td const *data, size_t nlen) {
   err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, data);
   if (err < 0) {
     LOG(4, "ERROR writing failed");
-    return { -4 };
+    return {-4};
   }
   err = H5Sclose(mem);
-  return { 0, sizeof(Td) * nlen, tgt_start[0] };
+  return {0, sizeof(Td) * nlen, tgt_start[0]};
 }
 
 template <typename Td>
@@ -408,7 +407,7 @@ static append_ret append_data_scalar(hid_t ds, Td const data) {
   auto ndims = H5Sget_simple_extent_ndims(tgt);
   if (ndims != 1) {
     LOG(6, "this data space is expected to have one dimension");
-    return { -1 };
+    return {-1};
   }
   using AA = std::array<hsize_t, 1>;
   AA get_sizes_now;
@@ -426,31 +425,31 @@ static append_ret append_data_scalar(hid_t ds, Td const data) {
   err = H5Dextend(ds, get_sizes_now.data());
   if (err < 0) {
     LOG(4, "ERROR can not extend dataset");
-    return { -1 };
+    return {-1};
   }
   H5Sclose(tgt);
 
   tgt = H5Dget_space(ds);
-  AA mem_size = { { 1 } };
+  AA mem_size = {{1}};
   auto mem = H5Screate_simple(1, mem_size.data(), nullptr);
   {
-    AA hsl_start{ { 0 } };
-    AA hsl_count{ { 1 } };
+    AA hsl_start{{0}};
+    AA hsl_count{{1}};
     err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, hsl_start.data(), nullptr,
                               hsl_count.data(), nullptr);
     if (err < 0) {
       LOG(4, "ERROR can not select mem hyperslab");
-      return { -2 };
+      return {-2};
     }
   }
 
-  AA tgt_start{ { get_sizes_now.at(0) - 1 } };
-  AA tgt_count{ { 1 } };
+  AA tgt_start{{get_sizes_now.at(0) - 1}};
+  AA tgt_count{{1}};
   err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(4, "ERROR can not select tgt hyperslab");
-    return { -3 };
+    return {-3};
   }
 
   if (false) {
@@ -463,10 +462,10 @@ static append_ret append_data_scalar(hid_t ds, Td const data) {
   err = H5Dwrite(ds, dt, mem, tgt, H5P_DEFAULT, &data);
   if (err < 0) {
     LOG(4, "ERROR writing failed");
-    return { -4 };
+    return {-4};
   }
   err = H5Sclose(mem);
-  return { 0, sizeof(Td), tgt_start[0] };
+  return {0, sizeof(Td), tgt_start[0]};
 }
 
 template <typename DT, typename FV>
@@ -495,8 +494,8 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(
   using AA = std::array<hsize_t, 1>;
   auto dt = nat_type<DT>();
 
-  AA sizes_ini{ { 0 } };
-  AA sizes_max{ { H5S_UNLIMITED } };
+  AA sizes_ini{{0}};
+  AA sizes_max{{H5S_UNLIMITED}};
 
   this->dsp =
       H5Screate_simple(sizes_ini.size(), sizes_ini.data(), sizes_max.data());
@@ -519,7 +518,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(
   }
 
   this->dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  AA sizes_chk{ { std::max<hsize_t>(64 * 1024 / H5Tget_size(dt), 1) } };
+  AA sizes_chk{{std::max<hsize_t>(64 * 1024 / H5Tget_size(dt), 1)}};
   H5Pset_chunk(dcpl, sizes_chk.size(), sizes_chk.data());
   this->ds = H5Dcreate1(hdf_group, dataset_name.c_str(), dt, dsp, dcpl);
 }
@@ -534,7 +533,7 @@ WriteResult writer::write_impl(Msg msg) {
   auto fbuf = get_fbuf(msg.data);
   if (!impl) {
     LOG(5, "sorry, but we were unable to initialize for this kind of messages");
-    return { -1 };
+    return {-1};
   }
   uint64_t ts = 0;
   if (auto fts = fbuf->timeStamp()) {
@@ -570,7 +569,7 @@ WriteResult writer::write_impl(Msg msg) {
       LOG(4, "ERROR while flushing");
     }
   }
-  return {(int64_t)ts };
+  return {(int64_t)ts};
 }
 
 class Info : public SchemaInfo {

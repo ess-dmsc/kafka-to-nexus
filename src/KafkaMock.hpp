@@ -6,11 +6,7 @@ namespace RdKafka {
 
 class Conf {
 public:
-  enum {
-    CONF_OK,
-    CONF_TOPIC,
-    CONF_GLOBAL
-  };
+  enum { CONF_OK, CONF_TOPIC, CONF_GLOBAL };
   static Conf *create(const int &);
   bool set(const std::string &, const std::string &, std::string &);
 };
@@ -43,9 +39,7 @@ public:
 
 class Topic {
 public:
-  enum {
-    OFFSET_BEGINNING = 0
-  };
+  enum { OFFSET_BEGINNING = 0 };
   static Topic *create(Consumer *, const std::string &, Conf *, std::string);
 };
 

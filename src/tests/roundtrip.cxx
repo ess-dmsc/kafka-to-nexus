@@ -213,7 +213,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
         auto fb = synth.next(64);
         msg =
             BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                        (int32_t)fb.builder->GetSize() };
+                                        (int32_t)fb.builder->GetSize()};
         {
           auto v = binary_to_hex(msg.data, msg.size);
           LOG(7, "msg:\n{:.{}}", v.data(), v.size());

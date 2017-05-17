@@ -18,7 +18,7 @@ struct MasterConfig {
   uint64_t teamid = 0;
   std::string dir_assets = ".";
   rapidjson::Value const *config_file = nullptr;
-  std::vector<std::pair<std::string, std::string> > kafka;
+  std::vector<std::pair<std::string, std::string>> kafka;
 };
 
 /// Listens to the Kafka configuration topic.
@@ -37,10 +37,10 @@ public:
 
 private:
   CommandListener command_listener;
-  std::atomic<bool> do_run{ true };
+  std::atomic<bool> do_run{true};
   std::function<void(void)> *_cb_on_connected = nullptr;
-  std::vector<std::unique_ptr<StreamMaster<Streamer, DemuxTopic> > >
-  stream_masters;
+  std::vector<std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>>
+      stream_masters;
   friend class CommandHandler;
 };
 

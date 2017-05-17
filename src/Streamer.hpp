@@ -10,30 +10,22 @@
 
 // forward definitions
 namespace RdKafka {
-class Topic;
-class Consumer;
-class TopicPartition;
-class Message;
+class KafkaConsumer;
 class Conf;
 } // namespace RdKafka
 
 namespace BrightnESS {
 namespace FileWriter {
 
-// actually a "kafka streamer"
 struct Streamer {
-  static milliseconds consumer_timeout;
-  static int64_t step_back_amount;
 
   Streamer() {};
-  Streamer(const std::string &, const std::string &,
-           const std::vector<std::pair<std::string, std::string> > &
-               kafka_options = {});
+  Streamer(
+      const std::string &, const std::string &,
+      std::vector<std::pair<std::string, std::string> > kafka_options = {});
   Streamer(const Streamer &);
 
   ~Streamer() = default;
-
-  bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
 
   template <class T> ProcessMessageResult write(T &f) {
     message_length = 0;
@@ -64,22 +56,27 @@ struct Streamer {
     return RdKafkaOffset(-1);
   }
 
-  int n_sources{ 0 };
-  ErrorCode status{ StatusCode::STOPPED };
+  int n_sources{0};
+  ErrorCode status{StatusCode::STOPPED};
 
 private:
-  RdKafka::Topic *_topic{ nullptr };
-  RdKafka::Consumer *_consumer{ nullptr };
-  RdKafka::TopicPartition *_tp;
+  RdKafka::KafkaConsumer *_consumer{ nullptr };
+  std::vector<std::string> _topics;
+
   RdKafkaOffset _offset{ RdKafkaOffsetEnd };
   RdKafkaOffset _begin;
   RdKafkaOffset _low;
   int64_t step_back_offset;
-  RdKafkaPartition _partition{ RdKafkaPartition(0) };
+  RdKafkaPartition _partition;
   size_t message_length{ 0 };
 
-  int set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
-                   const std::pair<std::string, std::string> &option);
+  bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
+  bool set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
+                    const std::pair<std::string, std::string> &option);
+
+  BrightnESS::FileWriter::ErrorCode get_offset_boundaries();
+  milliseconds consumer_timeout{ 1000 };
+  int64_t step_back_amount{ 100 };
 
   BrightnESS::FileWriter::RdKafkaOffset jump_back_impl(const int &);
 };
