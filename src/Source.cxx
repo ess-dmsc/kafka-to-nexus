@@ -1,6 +1,6 @@
 #include "Source.h"
-#include "logger.h"
 #include "helper.h"
+#include "logger.h"
 
 namespace BrightnESS {
 namespace FileWriter {

@@ -36,12 +36,12 @@ class writer : public FBSchemaWriter {
   void init_impl(std::string const &sourcename, hid_t hdf_group,
                  Msg msg) override;
   WriteResult write_impl(Msg msg) override;
-  uptr<h5::h5d_chunked_1d<uint8_t> > ds_flatbuffer;
-  uptr<h5::h5d_chunked_1d<uint32_t> > ds_index;
-  uptr<h5::h5d_chunked_1d<uint32_t> > ds_size;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_timestamp;
-  uptr<h5::h5d_chunked_1d<uint32_t> > ds_cue_index;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_cue_timestamp_zero;
+  uptr<h5::h5d_chunked_1d<uint8_t>> ds_flatbuffer;
+  uptr<h5::h5d_chunked_1d<uint32_t>> ds_index;
+  uptr<h5::h5d_chunked_1d<uint32_t>> ds_size;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
+  uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
   bool do_flush_always = false;
   uint64_t total_written_bytes = 0;
   uint64_t index_at_bytes = 0;
@@ -132,7 +132,7 @@ WriteResult writer::write_impl(Msg msg) {
       LOG(4, "ERROR while flushing");
     }
   }
-  return {(int64_t)ts };
+  return {(int64_t)ts};
 }
 
 class Info : public SchemaInfo {

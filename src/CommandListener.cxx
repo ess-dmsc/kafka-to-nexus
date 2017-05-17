@@ -47,12 +47,12 @@ void CommandListener::start() {
   consumer->add_topic(config.broker.topic);
   if (config.start_at_command_offset >= 0) {
     int n1 = config.start_at_command_offset;
-    consumer->on_rebalance_start = [n1](
-        rd_kafka_topic_partition_list_t *plist) {
-      for (int i1 = 0; i1 < plist->cnt; ++i1) {
-        plist->elems[i1].offset = n1;
-      }
-    };
+    consumer->on_rebalance_start =
+        [n1](rd_kafka_topic_partition_list_t *plist) {
+          for (int i1 = 0; i1 < plist->cnt; ++i1) {
+            plist->elems[i1].offset = n1;
+          }
+        };
   }
 }
 

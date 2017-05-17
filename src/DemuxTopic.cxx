@@ -38,7 +38,7 @@ DemuxTopic::DemuxTopic(std::string topic)
 
 DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
                                                         int msg_size) {
-  Msg msg{ msg_data, msg_size };
+  Msg msg{msg_data, msg_size};
   std::string _tmp_dummy;
   auto reader = FBSchemaReader::create(msg);
   if (!reader) {
@@ -59,7 +59,7 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
 std::string const &DemuxTopic::topic() const { return _topic; }
 
 ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
-  Msg msg{ msg_data, msg_size };
+  Msg msg{msg_data, msg_size};
   auto reader = FBSchemaReader::create(msg);
   if (!reader) {
     return ProcessMessageResult::ERR();
@@ -68,9 +68,8 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
   LOG(7, "Msg is for sourcename: {}", srcn);
   for (auto &s : sources()) {
     if (reader->ts(msg) > _stop_time) {
-      LOG(7, "reader->ts(msg) [{}]  > _stop_time [{}] :\t{}",
-	  reader->ts(msg), _stop_time,
-          ProcessMessageResult::STOP().ts());
+      LOG(7, "reader->ts(msg) [{}]  > _stop_time [{}] :\t{}", reader->ts(msg),
+          _stop_time, ProcessMessageResult::STOP().ts());
       return ProcessMessageResult::STOP();
     }
     if (s.source() == srcn) {

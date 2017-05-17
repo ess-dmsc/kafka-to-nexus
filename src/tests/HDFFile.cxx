@@ -31,7 +31,7 @@ public:
     FileWriter::HDFFile f1;
     f1.init(fname, rapidjson::Value());
     auto &reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
-    std::array<char, 4> fbid{ { 'f', '1', '4', '1' } };
+    std::array<char, 4> fbid{{'f', '1', '4', '1'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
     BrightnESS::FileWriter::Msg msg;
     BrightnESS::FlatBufs::f141_epics_nt::synth synth(
@@ -39,7 +39,7 @@ public:
         BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
     auto fb = synth.next<double>(0);
     msg = BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                      (int32_t)fb.builder->GetSize() };
+                                      (int32_t)fb.builder->GetSize()};
     // f1.impl->h5file
     writer->init(&f1, "/", source_name, msg, nullptr, nullptr);
   }
@@ -60,7 +60,7 @@ public:
     // char const * source_name = d["streams"][0]["source"].GetString();
     unlink(fname);
     FileWriter::CommandHandler ch(nullptr, nullptr);
-    ch.handle({ cmd.data(), (int32_t)cmd.size() });
+    ch.handle({cmd.data(), (int32_t)cmd.size()});
   }
 
   static void new_03_data() {
@@ -74,7 +74,7 @@ public:
     char const *source_name = d["streams"][0]["source"].GetString();
     unlink(fname);
     FileWriter::CommandHandler ch(nullptr, nullptr);
-    ch.handle({ cmd.data(), (int32_t)cmd.size() });
+    ch.handle({cmd.data(), (int32_t)cmd.size()});
 
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
@@ -88,7 +88,7 @@ public:
     return;
 
     auto &reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
-    std::array<char, 4> fbid{ { 'f', '1', '4', '1' } };
+    std::array<char, 4> fbid{{'f', '1', '4', '1'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
     BrightnESS::FileWriter::Msg msg;
     BrightnESS::FlatBufs::f141_epics_nt::synth synth(
@@ -96,7 +96,7 @@ public:
         BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
     auto fb = synth.next<double>(0);
     msg = BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                      (int32_t)fb.builder->GetSize() };
+                                      (int32_t)fb.builder->GetSize()};
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -136,7 +136,7 @@ public:
     config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
     ASSERT_FALSE(config_file.HasParseError());
     FileWriter::CommandHandler ch(nullptr, &config_file);
-    ch.handle({ cmd.data(), (int32_t)cmd.size() });
+    ch.handle({cmd.data(), (int32_t)cmd.size()});
 
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
@@ -152,7 +152,7 @@ public:
     std::mt19937 rnd_nn;
     rnd_nn.seed(0);
     auto &reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
-    std::array<char, 4> fbid{ { 'e', 'v', '4', '2' } };
+    std::array<char, 4> fbid{{'e', 'v', '4', '2'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
     BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
     LOG(7, "generating...");
@@ -161,7 +161,7 @@ public:
       auto &fb = fbs.back();
       msgs.push_back(
           BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                      (int32_t)fb.builder->GetSize() });
+                                      (int32_t)fb.builder->GetSize()});
     }
     LOG(7, "processing...");
     using CLK = std::chrono::steady_clock;
@@ -204,8 +204,8 @@ public:
 
     auto mem = H5Screate(H5S_SIMPLE);
     using A = array<hsize_t, 1>;
-    A sini = { {(uint32_t)nn } };
-    A smax = { {(uint32_t)nn } };
+    A sini = {{(uint32_t)nn}};
+    A smax = {{(uint32_t)nn}};
     H5Sset_extent_simple(mem, sini.size(), sini.data(), smax.data());
 
     vector<DT> data(nn);

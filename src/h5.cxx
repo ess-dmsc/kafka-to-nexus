@@ -20,7 +20,7 @@ namespace h5p {
 dataset_create dataset_create::chunked1(hid_t type, hsize_t bytes) {
   dataset_create ret;
   ret.id = H5Pcreate(H5P_DATASET_CREATE);
-  array<hsize_t, 1> schk{ { std::max<hsize_t>(bytes / H5Tget_size(type), 1) } };
+  array<hsize_t, 1> schk{{std::max<hsize_t>(bytes / H5Tget_size(type), 1)}};
   H5Pset_chunk(ret.id, schk.size(), schk.data());
   return ret;
 }
@@ -30,8 +30,7 @@ dataset_create dataset_create::chunked2(hid_t type, hsize_t ncols,
   dataset_create ret;
   ret.id = H5Pcreate(H5P_DATASET_CREATE);
   array<hsize_t, 2> schk{
-    { std::max<hsize_t>(bytes / ncols / H5Tget_size(type), 1), ncols }
-  };
+      {std::max<hsize_t>(bytes / ncols / H5Tget_size(type), 1), ncols}};
   H5Pset_chunk(ret.id, schk.size(), schk.data());
   return ret;
 }
@@ -61,7 +60,7 @@ void swap(dataset_create &x, dataset_create &y) {
 
 template <size_t N> h5s h5s::simple_unlim(array<hsize_t, N> const &sini) {
   h5s ret;
-  ret.sini = { sini.data(), sini.data() + sini.size() };
+  ret.sini = {sini.data(), sini.data() + sini.size()};
   ret.smax.clear();
   ret.smax.resize(ret.sini.size(), H5S_UNLIMITED);
   for (int i1 = 1; i1 < ret.sini.size(); ++i1) {
@@ -114,7 +113,7 @@ h5d::h5d(hid_t loc, string name, hid_t type, h5s dsp,
 template <typename T>
 h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, T dummy) {
   type = nat_type<T>();
-  auto dsp = h5::h5s::simple_unlim<1>({ { 0 } });
+  auto dsp = h5::h5s::simple_unlim<1>({{0}});
   auto dcpl = h5p::dataset_create::chunked1(type, chunk_bytes);
   id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
 }
@@ -161,41 +160,41 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (err < 0) {
     LOG(3, "can not extend dataset");
     H5Sclose(tgt);
-    return { -1 };
+    return {-1};
   }
 
   H5Sclose(tgt);
 
   tgt = H5Dget_space(id);
-  A1 mem = { { nlen } };
+  A1 mem = {{nlen}};
 
   auto dsp_mem = H5Screate_simple(mem.size(), mem.data(), nullptr);
   {
-    A1 start{ { 0 } };
-    A1 count{ { nlen } };
+    A1 start{{0}};
+    A1 count{{nlen}};
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
       LOG(3, "can not select mem hyperslab");
-      return { -3 };
+      return {-3};
     }
   }
 
-  A1 tgt_start{ { snow.at(0) - nlen } };
-  A1 tgt_count{ { nlen } };
+  A1 tgt_start{{snow.at(0) - nlen}};
+  A1 tgt_count{{nlen}};
   err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(3, "can not select tgt hyperslab");
-    return { -3 };
+    return {-3};
   }
 
   err = H5Dwrite(id, type, dsp_mem, tgt, H5P_DEFAULT, data);
   if (err < 0) {
     LOG(3, "writing failed");
-    return { -4 };
+    return {-4};
   }
-  return { 0, sizeof(T) * nlen, tgt_start[0] };
+  return {0, sizeof(T) * nlen, tgt_start[0]};
 }
 
 template <typename T>
@@ -215,7 +214,7 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
   herr_t err;
   if (NDIM != H5Sget_simple_extent_ndims(tgt)) {
     LOG(3, "dataset dimensions do not match");
-    return { -1 };
+    return {-1};
   }
   H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
   if (log_level >= 9) {
@@ -227,7 +226,7 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
   hsize_t ncols = snow[1];
   if (nlen % ncols != 0) {
     LOG(3, "dataset dimensions do not match");
-    return { -1 };
+    return {-1};
   }
 
   hsize_t nrows = nlen / ncols;
@@ -237,46 +236,46 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
   if (err < 0) {
     LOG(3, "can not extend dataset");
     H5Sclose(tgt);
-    return { -1 };
+    return {-1};
   }
 
   H5Sclose(tgt);
 
   tgt = H5Dget_space(id);
-  A1 mem = { { nrows, ncols } };
+  A1 mem = {{nrows, ncols}};
 
   auto dsp_mem = H5Screate_simple(mem.size(), mem.data(), nullptr);
   {
-    A1 start{ { 0, 0 } };
-    A1 count{ { nrows, ncols } };
+    A1 start{{0, 0}};
+    A1 count{{nrows, ncols}};
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
       LOG(3, "can not select mem hyperslab");
-      return { -3 };
+      return {-3};
     }
   }
 
-  A1 tgt_start{ { snow[0] - nrows, 0 } };
-  A1 tgt_count{ { nrows, ncols } };
+  A1 tgt_start{{snow[0] - nrows, 0}};
+  A1 tgt_count{{nrows, ncols}};
   err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(3, "can not select tgt hyperslab");
-    return { -3 };
+    return {-3};
   }
 
   err = H5Dwrite(id, type, dsp_mem, tgt, H5P_DEFAULT, data);
   if (err < 0) {
     LOG(3, "writing failed");
-    return { -4 };
+    return {-4};
   }
-  return { 0, sizeof(T) * nlen, tgt_start[0] };
+  return {0, sizeof(T) * nlen, tgt_start[0]};
 }
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes)
-    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<1>({ { 0 } }),
+    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<1>({{0}}),
          h5p::dataset_create::chunked1(nat_type<T>(), chunk_bytes)),
       dsp_wr(ds) {}
 
@@ -294,14 +293,14 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y) {
 
 template <typename T>
 append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
-  append_ret ret{ -1 };
+  append_ret ret{-1};
   bool do_buf = nlen * sizeof(T) < 4 * 1024;
   if (do_buf) {
     std::copy(data, data + nlen, std::back_inserter(buf));
   }
   if (buf.size() > 128 * 1024 || (!do_buf && buf.size() > 0)) {
     if (flush_buf() != 0) {
-      return { -1 };
+      return {-1};
     }
   }
   if (!do_buf) {
@@ -329,7 +328,7 @@ template <typename T> int h5d_chunked_1d<T>::flush_buf() {
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, hsize_t ncols,
                                   hsize_t chunk_bytes)
-    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<2>({ { 0, ncols } }),
+    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<2>({{0, ncols}}),
          h5p::dataset_create::chunked2(nat_type<T>(), ncols, chunk_bytes)),
       dsp_wr(ds), ncols(ncols) {}
 
@@ -347,9 +346,9 @@ template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y) {
 
 template <typename T>
 append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
-  append_ret ret{ -1 };
+  append_ret ret{-1};
   if (nlen != dsp_wr.sini.at(1)) {
-    return { -1 };
+    return {-1};
   }
   bool do_buf = nlen * sizeof(T) < 4 * 1024;
   if (do_buf) {
@@ -358,7 +357,7 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
   }
   if (buf_bytes > 128 * 1024 || (!do_buf && buf_bytes > 0)) {
     if (flush_buf() != 0) {
-      return { -1 };
+      return {-1};
     }
   }
   if (!do_buf) {

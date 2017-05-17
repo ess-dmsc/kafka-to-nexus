@@ -24,28 +24,28 @@ namespace FileWriter {
 
 template <typename Streamer, typename Demux> struct StreamMaster {
 
-  StreamMaster() : do_write(false), _stop(false) {};
+  StreamMaster() : do_write(false), _stop(false){};
 
   StreamMaster(
       std::string &broker, std::vector<Demux> &_demux,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(_demux), do_write(false), _stop(false) {
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
       streamer[d.topic()].n_sources = d.sources().size();
     }
   };
 
   StreamMaster(
       std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {},
+      std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
       : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
       streamer[d.topic()].n_sources = d.sources().size();
     }
   };
@@ -79,8 +79,8 @@ template <typename Streamer, typename Demux> struct StreamMaster {
 
     std::for_each(streamer.begin(), streamer.end(),
                   [](std::pair<const std::string, Streamer> &item) {
-      item.second.status = ErrorCode(StatusCode::RUNNING);
-    });
+                    item.second.status = ErrorCode(StatusCode::RUNNING);
+                  });
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
       std::this_thread::sleep_for(milliseconds(100));

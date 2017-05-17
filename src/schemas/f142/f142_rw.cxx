@@ -39,7 +39,7 @@ public:
   writer_typed_array(hid_t hdf_group, std::string const &sourcename, FV *fbval);
   ~writer_typed_array();
   append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_2d<DT> > ds;
+  uptr<h5::h5d_chunked_2d<DT>> ds;
 };
 
 template <typename DT, typename FV>
@@ -49,7 +49,7 @@ public:
                       FV *fbval);
   ~writer_typed_scalar();
   append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_1d<DT> > ds;
+  uptr<h5::h5d_chunked_1d<DT>> ds;
 };
 
 class writer : public FBSchemaWriter {
@@ -58,12 +58,12 @@ class writer : public FBSchemaWriter {
                  Msg msg) override;
   WriteResult write_impl(Msg msg) override;
   uptr<writer_typed_base> impl;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_timestamp;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_cue_timestamp_zero;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_cue_index;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_seq_data;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_seq_fwd;
-  uptr<h5::h5d_chunked_1d<uint64_t> > ds_ts_data;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_data;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
   bool do_flush_always = false;
   bool do_writer_forwarder_internal = false;
   uint64_t total_written_bytes = 0;
@@ -222,14 +222,14 @@ template <typename DT, typename FV>
 append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
-    return { 1, 0, 0 };
+    return {1, 0, 0};
   }
   auto v2 = v1->value();
   if (!v2) {
-    return { 1, 0, 0 };
+    return {1, 0, 0};
   }
   if (!this->ds) {
-    return { 1, 0, 0 };
+    return {1, 0, 0};
   }
   return this->ds->append_data_2d(v2->data(), v2->size());
 }
@@ -249,7 +249,7 @@ template <typename DT, typename FV>
 append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
-    return { 1, 0, 0 };
+    return {1, 0, 0};
   }
   auto v2 = v1->value();
   return this->ds->append_data_1d(&v2, 1);
@@ -259,7 +259,7 @@ WriteResult writer::write_impl(Msg msg) {
   auto fbuf = get_fbuf(msg.data);
   if (!impl) {
     LOG(5, "sorry, but we were unable to initialize for this kind of messages");
-    return { -1 };
+    return {-1};
   }
   auto wret = impl->write_impl(fbuf);
   if (!wret) {
@@ -301,7 +301,7 @@ WriteResult writer::write_impl(Msg msg) {
       LOG(4, "error while flushing");
     }
   }
-  return { (int64_t)fbuf->timestamp() };
+  return {(int64_t)fbuf->timestamp()};
 }
 
 class Info : public SchemaInfo {

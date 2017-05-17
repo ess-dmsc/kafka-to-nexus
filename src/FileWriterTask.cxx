@@ -25,7 +25,7 @@ private:
 
 Source SourceFactory_by_FileWriterTask::create(string topic,
                                                string sourcename) {
-  return { topic, sourcename };
+  return {topic, sourcename};
 }
 
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }

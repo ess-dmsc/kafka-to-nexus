@@ -56,7 +56,7 @@ bool BrightnESS::FileWriter::Streamer::set_streamer_opt(
 
 BrightnESS::FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
-    const std::vector<std::pair<std::string, std::string> > &kafka_options) {
+    const std::vector<std::pair<std::string, std::string>> &kafka_options) {
 
   for (auto &item : kafka_options) {
     set_streamer_opt(item);
@@ -67,11 +67,11 @@ BrightnESS::FileWriter::Streamer::Streamer(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
 
   using opt_t = std::pair<std::string, std::string>;
-  set_conf_opt(conf, opt_t{ "metadata.broker.list", broker });
-  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "204857600" });
-  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "204857600" });
-  set_conf_opt(conf, opt_t{ "api.version.request", "true" });
-  set_conf_opt(conf, opt_t{ "log_level", "3" });
+  set_conf_opt(conf, opt_t{"metadata.broker.list", broker});
+  set_conf_opt(conf, opt_t{"fetch.message.max.bytes", "204857600"});
+  set_conf_opt(conf, opt_t{"receive.message.max.bytes", "204857600"});
+  set_conf_opt(conf, opt_t{"api.version.request", "true"});
+  set_conf_opt(conf, opt_t{"log_level", "3"});
 
   for (auto &item : kafka_options) {
     set_conf_opt(conf, item);
@@ -109,10 +109,9 @@ BrightnESS::FileWriter::Streamer::closeStream() {
   return status;
 }
 
-int
-BrightnESS::FileWriter::Streamer::connect(const std::string &topic_name,
-                                          const RdKafkaOffset &offset,
-                                          const RdKafkaPartition &partition) {
+int BrightnESS::FileWriter::Streamer::connect(
+    const std::string &topic_name, const RdKafkaOffset &offset,
+    const RdKafkaPartition &partition) {
   if (!_topic) {
     std::string errstr;
     std::unique_ptr<RdKafka::Conf> tconf(
@@ -173,8 +172,8 @@ BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     BrightnESS::FileWriter::DemuxTopic &mp) {
 
-  std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
-      _topic, _partition.value(), consumer_timeout.count()) };
+  std::unique_ptr<RdKafka::Message> msg{
+      _consumer->consume(_topic, _partition.value(), consumer_timeout.count())};
 
   LOG(6, "{} : event timestamp : {}", _topic->name(),
       msg->timestamp().timestamp);

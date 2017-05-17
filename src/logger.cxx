@@ -37,8 +37,8 @@ public:
   void fwd_graylog_logger_enable(std::string address);
 
 private:
-  std::atomic<bool> do_run_kafka{ false };
-  std::atomic<bool> do_use_graylog_logger{ false };
+  std::atomic<bool> do_run_kafka{false};
+  std::atomic<bool> do_use_graylog_logger{false};
   std::shared_ptr<KafkaW::Producer> producer;
   std::unique_ptr<KafkaW::Producer::Topic> topic;
   std::thread thread_poll;

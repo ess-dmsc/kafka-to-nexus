@@ -43,23 +43,23 @@ int MainOpt::parse_config_file(std::string fname) {
 /**
 Parses the options using getopt and returns a MainOpt
 */
-std::pair<int, std::unique_ptr<MainOpt> > parse_opt(int argc, char **argv) {
-  std::pair<int, std::unique_ptr<MainOpt> > ret{ 0, std::unique_ptr<MainOpt>(
-                                                        new MainOpt) };
+std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
+  std::pair<int, std::unique_ptr<MainOpt>> ret{
+      0, std::unique_ptr<MainOpt>(new MainOpt)};
   auto &opt = ret.second;
   opt->master = nullptr;
   // For the signal handler
   g_main_opt.store(opt.get());
   static struct option long_options[] = {
-    { "help", no_argument, 0, 'h' },
-    { "config-file", required_argument, 0, 0 },
-    { "broker-command", required_argument, 0, 0 },
-    { "kafka-gelf", required_argument, 0, 0 },
-    { "graylog-logger", required_argument, 0, 0 },
-    { "use-signal-handler", required_argument, 0, 0 },
-    { "teamid", required_argument, 0, 0 },
-    { "assets-dir", required_argument, 0, 0 },
-    { 0, 0, 0, 0 },
+      {"help", no_argument, 0, 'h'},
+      {"config-file", required_argument, 0, 0},
+      {"broker-command", required_argument, 0, 0},
+      {"kafka-gelf", required_argument, 0, 0},
+      {"graylog-logger", required_argument, 0, 0},
+      {"use-signal-handler", required_argument, 0, 0},
+      {"teamid", required_argument, 0, 0},
+      {"assets-dir", required_argument, 0, 0},
+      {0, 0, 0, 0},
   };
   std::string cmd;
   int option_index = 0;

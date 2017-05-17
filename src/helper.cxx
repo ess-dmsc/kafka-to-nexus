@@ -7,8 +7,8 @@
 //#include <algorithm>
 
 #include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
 #include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;
@@ -54,7 +54,7 @@ std::vector<std::string> split(std::string const &input, std::string token) {
   using std::string;
   vector<string> ret;
   if (token.size() == 0)
-    return { input };
+    return {input};
   string::size_type i1 = 0;
   while (true) {
     auto i2 = input.find(token, i1);
@@ -127,22 +127,22 @@ get_json_ret_int get_int(rapidjson::Value const *v, std::string path) {
   uint32_t i1 = 0;
   for (auto &x : a) {
     if (!v->IsObject()) {
-      return { 1, 0 };
+      return {1, 0};
     }
     auto it = v->FindMember(x.c_str());
     if (it == v->MemberEnd()) {
-      return { 1, 0 };
+      return {1, 0};
     }
     if (i1 == a.size() - 1) {
       if (it->value.IsInt()) {
-        return { 0, it->value.GetInt() };
+        return {0, it->value.GetInt()};
       }
     } else {
       v = &it->value;
     }
     ++i1;
   }
-  return { 1, 0 };
+  return {1, 0};
 }
 
 get_json_ret_object get_object(rapidjson::Value const &v_, std::string path) {
@@ -184,8 +184,7 @@ template <> std::pair<short int, int> to_num(const std::string &string) {
   int result;
   try {
     result = std::stoi(string);
-  }
-  catch (std::exception &e) {
+  } catch (std::exception &e) {
     return std::pair<short int, int>(false, 0);
   }
   return std::pair<short int, int>(true, result);
@@ -195,8 +194,7 @@ template <> std::pair<short int, double> to_num(const std::string &string) {
   double result;
   try {
     result = std::stoi(string);
-  }
-  catch (std::exception &e) {
+  } catch (std::exception &e) {
     return std::pair<short int, double>(false, 0);
   }
   return std::pair<short int, double>(true, result);

@@ -20,6 +20,6 @@ struct MainOpt {
   int parse_config_file(std::string fname);
 };
 
-std::pair<int, std::unique_ptr<MainOpt> > parse_opt(int argc, char **argv);
+std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
 void setup_logger_from_options(MainOpt const &opt);
 extern std::atomic<MainOpt *> g_main_opt;
