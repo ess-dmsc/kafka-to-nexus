@@ -2,11 +2,14 @@
 #include <array>
 #include <hdf5.h>
 #include <mapbox/variant.hpp>
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace h5 {
 
+using std::unique_ptr;
+using std::move;
 using std::array;
 using std::vector;
 using std::string;
@@ -17,8 +20,10 @@ using mapbox::util::variant;
 
 class dataset_create {
 public:
+  typedef unique_ptr<dataset_create> ptr;
+  static ptr chunked1(hid_t type, hsize_t bytes);
   static dataset_create chunked1_nocheck(hid_t type, hsize_t bytes);
-  static variant<bool, dataset_create> chunked1(hid_t type, hsize_t bytes);
+  static variant<bool, dataset_create> chunked1_var(hid_t type, hsize_t bytes);
   static dataset_create chunked1_or_exc(hid_t type, hsize_t bytes);
   static dataset_create chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
   dataset_create(dataset_create &&x);
@@ -59,6 +64,7 @@ struct append_ret {
 
 class h5d {
 public:
+  typedef unique_ptr<h5d> ptr;
   static h5d create(hid_t loc, string name, hid_t type, h5s dsp,
                     h5p::dataset_create dcpl);
   h5d(hid_t loc, string name, hid_t type, h5s dsp, h5p::dataset_create dcpl);
@@ -79,7 +85,8 @@ private:
 template <typename T> class h5d_chunked_1d {
 public:
   static h5d_chunked_1d<T> *create(hid_t loc, string name, hsize_t chunk_bytes);
-  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes);
+  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
+                 h5p::dataset_create dcpl);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -96,6 +103,8 @@ private:
 
 template <typename T> class h5d_chunked_2d {
 public:
+  static h5d_chunked_2d<T> *create(hid_t loc, string name, hsize_t ncols,
+                                   hsize_t chunk_bytes);
   h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);

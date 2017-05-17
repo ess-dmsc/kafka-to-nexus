@@ -254,7 +254,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(
     hid_t hdf_group, std::string const &dataset_name, FV *fv) {
   LOG(7, "f142 init_impl  scalar");
   this->ds.reset(
-      new h5::h5d_chunked_1d<DT>(hdf_group, dataset_name, 64 * 1024));
+      h5::h5d_chunked_1d<DT>::create(hdf_group, dataset_name, 64 * 1024));
 }
 
 template <typename DT, typename FV>

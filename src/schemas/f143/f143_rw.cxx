@@ -94,17 +94,17 @@ void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
     }
   }
 
-  this->ds_flatbuffer.reset(new h5::h5d_chunked_1d<uint8_t>(
+  this->ds_flatbuffer.reset(h5::h5d_chunked_1d<uint8_t>::create(
       hdf_group, "flatbuffer", 1 * 1024 * 1024));
   this->ds_index.reset(
-      new h5::h5d_chunked_1d<uint32_t>(hdf_group, "index", 64 * 1024));
+      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "index", 64 * 1024));
   this->ds_size.reset(
-      new h5::h5d_chunked_1d<uint32_t>(hdf_group, "size", 64 * 1024));
+      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "size", 64 * 1024));
   this->ds_timestamp.reset(
-      new h5::h5d_chunked_1d<uint64_t>(hdf_group, "timestamp", 128 * 1024));
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "timestamp", 128 * 1024));
   this->ds_cue_index.reset(
-      new h5::h5d_chunked_1d<uint32_t>(hdf_group, "cue_index", 64 * 1024));
-  this->ds_cue_timestamp_zero.reset(new h5::h5d_chunked_1d<uint64_t>(
+      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "cue_index", 64 * 1024));
+  this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
       hdf_group, "cue_timestamp_zero", 128 * 1024));
 }
 
