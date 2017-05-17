@@ -25,7 +25,7 @@ public:
   static dataset_create chunked1_nocheck(hid_t type, hsize_t bytes);
   static variant<bool, dataset_create> chunked1_var(hid_t type, hsize_t bytes);
   static dataset_create chunked1_or_exc(hid_t type, hsize_t bytes);
-  static dataset_create chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
+  static ptr chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
   dataset_create(dataset_create &&x);
   ~dataset_create();
   friend void swap(dataset_create &x, dataset_create &y);
@@ -85,8 +85,6 @@ private:
 template <typename T> class h5d_chunked_1d {
 public:
   static h5d_chunked_1d<T> *create(hid_t loc, string name, hsize_t chunk_bytes);
-  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
-                 h5p::dataset_create dcpl);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -96,6 +94,8 @@ public:
 
 private:
   h5d_chunked_1d();
+  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
+                 h5p::dataset_create dcpl);
   h5s dsp_wr;
   std::vector<T> buf;
   hsize_t i0 = 0;
@@ -105,7 +105,6 @@ template <typename T> class h5d_chunked_2d {
 public:
   static h5d_chunked_2d<T> *create(hid_t loc, string name, hsize_t ncols,
                                    hsize_t chunk_bytes);
-  h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();
@@ -115,6 +114,8 @@ public:
 
 private:
   h5d_chunked_2d();
+  h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
+                 h5p::dataset_create dcpl);
   h5s dsp_wr;
   hsize_t ncols;
   std::vector<T> buf;

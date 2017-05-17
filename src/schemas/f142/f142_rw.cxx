@@ -226,8 +226,8 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
     return;
   }
   LOG(7, "f142 init_impl  v.size(): {}", ncols);
-  this->ds.reset(
-      new h5::h5d_chunked_2d<DT>(hdf_group, dataset_name, ncols, 64 * 1024));
+  this->ds.reset(h5::h5d_chunked_2d<DT>::create(hdf_group, dataset_name, ncols,
+                                                64 * 1024));
 }
 
 template <typename DT, typename FV>
