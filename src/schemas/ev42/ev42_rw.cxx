@@ -104,10 +104,22 @@ void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
       h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "cue_index", 64 * 1024));
   this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
       hdf_group, "cue_timestamp_zero", 128 * 1024));
+
+  if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
+      !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
+    ds_event_time_offset.reset();
+    ds_event_id.reset();
+    ds_event_time_zero.reset();
+    ds_event_index.reset();
+    ds_cue_index.reset();
+    ds_cue_timestamp_zero.reset();
+  }
 }
 
 WriteResult writer::write_impl(Msg msg) {
-  // No buffering yet, just plain and simple writes for integration tests
+  if (!ds_event_time_offset) {
+    return {-1};
+  }
   auto fbuf = get_fbuf(msg.data);
   int64_t ts = fbuf->pulse_time();
   auto w1ret = this->ds_event_time_offset->append_data_1d(
