@@ -92,18 +92,18 @@ void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
     }
   }
 
-  this->ds_event_time_offset.reset(h5::h5d_chunked_1d<uint32_t>::create(
-      hdf_group, "event_time_offset", 1 * 1024 * 1024));
-  this->ds_event_id.reset(h5::h5d_chunked_1d<uint32_t>::create(
-      hdf_group, "event_id", 1 * 1024 * 1024));
-  this->ds_event_time_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "event_time_zero", 128 * 1024));
-  this->ds_event_index.reset(h5::h5d_chunked_1d<uint32_t>::create(
-      hdf_group, "event_index", 64 * 1024));
-  this->ds_cue_index.reset(
-      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "cue_index", 64 * 1024));
-  this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "cue_timestamp_zero", 128 * 1024));
+  this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
+      hdf_group, "event_time_offset", 1 * 1024 * 1024);
+  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
+      hdf_group, "event_id", 1 * 1024 * 1024);
+  this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
+      hdf_group, "event_time_zero", 128 * 1024);
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "event_index", 64 * 1024);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "cue_index", 64 * 1024);
+  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+      hdf_group, "cue_timestamp_zero", 128 * 1024);
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {

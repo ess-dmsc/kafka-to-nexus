@@ -187,23 +187,23 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
         (int)fbuf->value_type());
   }
 
-  this->ds_timestamp.reset(
-      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024));
-  this->ds_cue_timestamp_zero.reset(h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "cue_timestamp_zero", 64 * 1024));
-  this->ds_cue_index.reset(
-      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "cue_index", 64 * 1024));
+  this->ds_timestamp =
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024);
+  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+      hdf_group, "cue_timestamp_zero", 64 * 1024);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "cue_index", 64 * 1024);
   if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
     impl.reset();
     return;
   }
   if (do_writer_forwarder_internal) {
-    this->ds_seq_data.reset(h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, sourcename + "__fwdinfo_seq_data", 64 * 1024));
-    this->ds_seq_fwd.reset(h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, sourcename + "__fwdinfo_seq_fwd", 64 * 1024));
-    this->ds_ts_data.reset(h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, sourcename + "__fwdinfo_ts_data", 64 * 1024));
+    this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
+        hdf_group, sourcename + "__fwdinfo_seq_data", 64 * 1024);
+    this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
+        hdf_group, sourcename + "__fwdinfo_seq_fwd", 64 * 1024);
+    this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
+        hdf_group, sourcename + "__fwdinfo_ts_data", 64 * 1024);
     if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
       impl.reset();
       return;
@@ -226,8 +226,8 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
     return;
   }
   LOG(7, "f142 init_impl  v.size(): {}", ncols);
-  this->ds.reset(h5::h5d_chunked_2d<DT>::create(hdf_group, dataset_name, ncols,
-                                                64 * 1024));
+  this->ds =
+      h5::h5d_chunked_2d<DT>::create(hdf_group, dataset_name, ncols, 64 * 1024);
 }
 
 template <typename DT, typename FV>
@@ -253,8 +253,7 @@ template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(
     hid_t hdf_group, std::string const &dataset_name, FV *fv) {
   LOG(7, "f142 init_impl  scalar");
-  this->ds.reset(
-      h5::h5d_chunked_1d<DT>::create(hdf_group, dataset_name, 64 * 1024));
+  this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, dataset_name, 64 * 1024);
 }
 
 template <typename DT, typename FV>

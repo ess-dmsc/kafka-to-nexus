@@ -82,7 +82,8 @@ private:
 
 template <typename T> class h5d_chunked_1d {
 public:
-  static h5d_chunked_1d<T> *create(hid_t loc, string name, hsize_t chunk_bytes);
+  typedef unique_ptr<h5d_chunked_1d<T>> ptr;
+  static ptr create(hid_t loc, string name, hsize_t chunk_bytes);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -100,8 +101,8 @@ private:
 
 template <typename T> class h5d_chunked_2d {
 public:
-  static h5d_chunked_2d<T> *create(hid_t loc, string name, hsize_t ncols,
-                                   hsize_t chunk_bytes);
+  typedef unique_ptr<h5d_chunked_2d<T>> ptr;
+  static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();
