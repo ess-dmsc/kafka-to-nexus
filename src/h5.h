@@ -95,7 +95,7 @@ public:
 
 private:
   h5d_chunked_1d();
-  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
+  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5s dsp,
                  h5p::dataset_create dcpl);
   h5s dsp_wr;
   std::vector<T> buf;
@@ -116,7 +116,7 @@ public:
 private:
   h5d_chunked_2d();
   h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
-                 h5p::dataset_create dcpl);
+                 h5s dsp, h5p::dataset_create dcpl);
   h5s dsp_wr;
   hsize_t ncols;
   std::vector<T> buf;
