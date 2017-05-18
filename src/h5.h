@@ -66,11 +66,8 @@ struct append_ret {
 class h5d {
 public:
   typedef unique_ptr<h5d> ptr;
-  static h5d create(hid_t loc, string name, hid_t type, h5s dsp,
+  static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
                     h5p::dataset_create dcpl);
-  h5d(hid_t loc, string name, hid_t type, h5s dsp, h5p::dataset_create dcpl);
-  template <typename T>
-  h5d(hid_t loc, string name, hsize_t chunk_bytes, T dummy = 0);
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);
@@ -95,8 +92,7 @@ public:
 
 private:
   h5d_chunked_1d();
-  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5s dsp,
-                 h5p::dataset_create dcpl);
+  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5d ds);
   h5s dsp_wr;
   std::vector<T> buf;
   hsize_t i0 = 0;
@@ -116,7 +112,7 @@ public:
 private:
   h5d_chunked_2d();
   h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
-                 h5s dsp, h5p::dataset_create dcpl);
+                 h5d ds);
   h5s dsp_wr;
   hsize_t ncols;
   std::vector<T> buf;
