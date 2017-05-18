@@ -29,36 +29,6 @@ dataset_create::ptr dataset_create::chunked1(hid_t type, hsize_t bytes) {
   return ret;
 }
 
-variant<bool, dataset_create> dataset_create::chunked1_var(hid_t type,
-                                                           hsize_t bytes) {
-  dataset_create ret;
-  ret.id = H5Pcreate(H5P_DATASET_CREATE);
-  if (ret.id == -1) {
-    return false;
-  }
-  array<hsize_t, 1> schk{{std::max<hsize_t>(bytes / H5Tget_size(type), 1)}};
-  H5Pset_chunk(ret.id, schk.size(), schk.data());
-  return ret;
-}
-
-dataset_create dataset_create::chunked1_or_exc(hid_t type, hsize_t bytes) {
-  dataset_create *p = nullptr;
-  auto v = dataset_create::chunked1_var(type, bytes);
-  v.match([&](bool) {}, [&](dataset_create &x) { p = &x; });
-  if (p) {
-    return move(*p);
-  }
-  throw std::runtime_error("can not create chunked1");
-}
-
-dataset_create dataset_create::chunked1_nocheck(hid_t type, hsize_t bytes) {
-  dataset_create ret;
-  ret.id = H5Pcreate(H5P_DATASET_CREATE);
-  array<hsize_t, 1> schk{{std::max<hsize_t>(bytes / H5Tget_size(type), 1)}};
-  H5Pset_chunk(ret.id, schk.size(), schk.data());
-  return ret;
-}
-
 dataset_create::ptr dataset_create::chunked2(hid_t type, hsize_t ncols,
                                              hsize_t bytes) {
   auto id = H5Pcreate(H5P_DATASET_CREATE);
