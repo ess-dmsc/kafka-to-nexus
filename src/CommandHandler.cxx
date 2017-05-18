@@ -97,14 +97,14 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
     {
       auto m = d.FindMember("start_time");
       if (m != d.MemberEnd()) {
-        start_time = ESSTimeStamp(m->value.GetInt());
+        start_time = ESSTimeStamp(m->value.GetUint64());
       }
     }
     ESSTimeStamp stop_time(0);
     {
       auto m = d.FindMember("stop_time");
       if (m != d.MemberEnd()) {
-        stop_time = ESSTimeStamp(m->value.GetInt());
+        stop_time = ESSTimeStamp(m->value.GetUint64());
       }
     }
 

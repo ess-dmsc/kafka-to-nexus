@@ -73,19 +73,21 @@ template <>
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
-  RdKafka::Message *msg =
-      _consumer->consume(_topic, _partition.value(), consumer_timeout.count());
-  if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
-    //    std::cout << "eof reached" << std::endl;
-    return ProcessMessageResult::OK();
-  }
-  if (msg->err() != RdKafka::ERR_NO_ERROR) {
-    //    std::cout << "Failed to consume message:
-    //    "+RdKafka::err2str(msg->err()) << std::endl;
-    return ProcessMessageResult::ERR();
-  }
-  message_length = msg->len();
-  return mp.process_message((char *)msg->payload(), msg->len());
+  // RdKafka::Message *msg =
+  //     _consumer->consume(_topic, _partition.value(),
+  // consumer_timeout.count());
+  // if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
+  //   //    std::cout << "eof reached" << std::endl;
+  //   return ProcessMessageResult::OK();
+  // }
+  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
+  //   //    std::cout << "Failed to consume message:
+  //   //    "+RdKafka::err2str(msg->err()) << std::endl;
+  //   return ProcessMessageResult::ERR();
+  // }
+  // message_length = msg->len();
+  // return mp.process_message((char *)msg->payload(), msg->len());
+  return ProcessMessageResult::ERR();
 }
 
 } // namespace FileWriter
