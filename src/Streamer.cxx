@@ -103,8 +103,6 @@ BrightnESS::FileWriter::Streamer::get_offset_boundaries() {
       LOG(1, "Unable to get topic boundaries (topic : {}, partition : {})",
           i->topic(), i->partition())
     }
-    // fprintf(stderr, "topic : %s, partition : %d\t low : %lu high : %lu\n",
-    //         i->topic().c_str(), i->partition(), low, high);
     _low.push_back(RdKafkaOffset(low));
   }
   return BrightnESS::FileWriter::ErrorCode(0);
@@ -116,10 +114,12 @@ BrightnESS::FileWriter::Streamer::Streamer(
 
   kafka_options.erase(
       std::remove_if(kafka_options.begin(), kafka_options.end(),
-                     [&](std::pair<std::string, std::string> & item)
-                         ->bool { return this->set_streamer_opt(item); }),
+                     [&](std::pair<std::string, std::string> &item) -> bool {
+                       return this->set_streamer_opt(item);
+                     }),
       kafka_options.end());
 
+  status_["status.run"] = 0;
   std::string errstr;
   std::shared_ptr<RdKafka::Conf> conf(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
@@ -134,8 +134,9 @@ BrightnESS::FileWriter::Streamer::Streamer(
 
   kafka_options.erase(
       std::remove_if(kafka_options.begin(), kafka_options.end(),
-                     [&](std::pair<std::string, std::string> & item)
-                         ->bool { return this->set_conf_opt(conf, item); }),
+                     [&](std::pair<std::string, std::string> &item) -> bool {
+                       return this->set_conf_opt(conf, item);
+                     }),
       kafka_options.end());
   if (!kafka_options.empty()) {
     for (auto &item : kafka_options) {
@@ -145,14 +146,21 @@ BrightnESS::FileWriter::Streamer::Streamer(
 
   if (!(_consumer = RdKafka::KafkaConsumer::create(conf.get(), errstr))) {
     LOG(0, "Failed to create consumer: {}", errstr);
+    status_.emplace("status.consumer", -1);
+  } else {
+    status_.emplace("status.consumer", 1);
   }
 
   if (!topic_name.empty()) {
+    status_.emplace("status.metadata", 1);
     if (get_metadata() != 0) {
       LOG(1, "Unable to retrieve metadata");
+      status_["status.metadata"] = -1;
     }
+    status_.emplace("status.topic_partition", 1);
     if (get_topic_partitions(topic_name) < 0) {
       LOG(1, "Unable to build TopicPartitions structure");
+      status_["status.topic_partition"] = -1;
     }
     for (auto &i : _tp) {
       i->set_offset(_offset.value());
@@ -161,36 +169,45 @@ BrightnESS::FileWriter::Streamer::Streamer(
     RdKafka::ErrorCode err = _consumer->assign(_tp);
     if (err) {
       LOG(0, "Failed to subscribe to {} ", topic_name);
+      status_["status.consumer"] = -1;
     }
   } else {
     LOG(0, "Topic required");
+    status_["status.consumer"] = -1;
   }
   if (get_offset_boundaries().value()) {
     LOG(3, "Unable to determine lower and higher offset in topic {}",
         topic_name);
+    status_["status.metadata"] = -1;
   }
+
+  // prepare status info
+  status_.emplace("status.size", 0);
+  status_.emplace("status.n_messages", 0);
+  status_.emplace("status.n_sources", 0);
 }
 
 BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
     : _consumer(other._consumer), _tp(other._tp), _offset(other._offset),
-      _begin(other._offset), _low(other._low) {}
+      _begin(other._offset), _low(other._low), status_(other.status_) {}
 
 BrightnESS::FileWriter::ErrorCode
 BrightnESS::FileWriter::Streamer::closeStream() {
   BrightnESS::FileWriter::ErrorCode status;
 
   _tp.clear();
+  status_["status.topic_partition"] = 0;
   if (_consumer) {
     _consumer->close();
+    status_["status.consumer"] = 0;
     delete _consumer;
   }
   return status;
 }
 
-int
-BrightnESS::FileWriter::Streamer::connect(const std::string &topic_name,
-                                          const RdKafkaOffset &offset,
-                                          const RdKafkaPartition &partition) {
+int BrightnESS::FileWriter::Streamer::connect(
+    const std::string &topic_name, const RdKafkaOffset &offset,
+    const RdKafkaPartition &partition) {
   // if (!_topic) {
   //   std::string errstr;
   //   std::unique_ptr<RdKafka::Conf> tconf(
@@ -231,27 +248,6 @@ BrightnESS::FileWriter::Streamer::connect(const std::string &topic_name,
   // return int(RdKafka::ERR_NO_ERROR);
 }
 
-BrightnESS::FileWriter::RdKafkaOffset
-BrightnESS::FileWriter::Streamer::jump_back_impl(const int &amount) {
-  // _offset = RdKafkaOffset(std::max(_begin.value() - amount,
-  // _low.value()));
-  // auto err = _consumer->seek(_topic, _partition.value(), _offset.value(),
-  // 100);
-  // if (err != RdKafka::ERR_NO_ERROR) {
-  //   LOG(2, "seek failed :\t{}", RdKafka::err2str(err));
-  // }
-  // std::unique_ptr<RdKafka::Message> msg;
-  // do {
-  //   msg = std::unique_ptr<RdKafka::Message>(_consumer->consume(
-  //       _topic, _partition.value(), consumer_timeout.count()));
-  //   if (msg->err() != RdKafka::ERR_NO_ERROR) {
-  //     LOG(3, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
-  //   }
-  //   _consumer->poll(10);
-  // } while (msg->err() != RdKafka::ERR_NO_ERROR);
-  // return RdKafkaOffset(msg->offset());
-}
-
 template <>
 BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
@@ -272,7 +268,8 @@ BrightnESS::FileWriter::Streamer::write(
     LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
     return ProcessMessageResult::ERR();
   }
-  message_length += msg->len();
+  message_length_ += msg->len();
+  n_messages_++;
   _offset = RdKafkaOffset(msg->offset());
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
@@ -290,7 +287,7 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
   }
   auto err = _consumer->offsetsForTimes(_tp, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
-    LOG(3,"Error searching initial time: {}", err2str(err));
+    LOG(3, "Error searching initial time: {}", err2str(err));
   }
   if (err == RdKafka::ERR_NO_ERROR) {
     // for (auto &i : _low) {
@@ -305,4 +302,12 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
   _consumer->assign(_tp);
 
   return m;
+}
+
+BrightnESS::FileWriter::Streamer::status_type &
+BrightnESS::FileWriter::Streamer::status() {
+  status_["status.size"] = message_length_;
+  status_["status.n_messages"] = n_messages_;
+  status_["status.n_sources"] = n_sources_;
+  return status_;
 }

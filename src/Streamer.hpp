@@ -13,7 +13,6 @@ namespace RdKafka {
 class Conf;
 class KafkaConsumer;
 class Metadata;
-// class PartitionMetadata;
 class TopicPartition;
 } // namespace RdKafka
 
@@ -21,8 +20,9 @@ namespace BrightnESS {
 namespace FileWriter {
 
 struct Streamer {
+  using status_type = std::map<std::string, int32_t>;
 
-  Streamer() {};
+  Streamer(){};
   Streamer(
       const std::string &, const std::string &,
       std::vector<std::pair<std::string, std::string> > kafka_options = {});
@@ -31,7 +31,6 @@ struct Streamer {
   ~Streamer() = default;
 
   template <class T> ProcessMessageResult write(T &f) {
-    message_length = 0;
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
@@ -42,36 +41,35 @@ struct Streamer {
 
   ErrorCode closeStream();
 
-  /// Returns message length
-  size_t &len() { return message_length; }
-
   template <class T>
   std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
     std::cout << "no initial timepoint\n";
     return std::map<std::string, int64_t>();
   }
 
-  template <class T>
-  BrightnESS::FileWriter::RdKafkaOffset
-  scan_timestamps(T &x, std::map<std::string, int64_t> &m,
-                  const ESSTimeStamp &ts) {
-    std::cout << "no scan\n";
-    return RdKafkaOffset(-1);
+  int32_t &n_sources() { return n_sources_; }
+  int run_status() {
+    if (n_sources_ > 0) {
+      return StatusCode::RUNNING;
+    }
+    return StatusCode::STOPPED;
   }
-
-  int n_sources{0};
-  ErrorCode status{StatusCode::STOPPED};
+  status_type &status();
 
 private:
   RdKafka::KafkaConsumer *_consumer{ nullptr };
   std::shared_ptr<RdKafka::Metadata> _metadata;
   std::vector<RdKafka::TopicPartition *> _tp;
+  std::vector<RdKafkaOffset> _low;
+  status_type status_;
 
   RdKafkaOffset _offset{ RdKafkaOffsetEnd };
   RdKafkaOffset _begin;
-  std::vector<RdKafkaOffset> _low;
-  size_t message_length{ 0 };
+  int32_t message_length_{ 0 };
+  int32_t n_messages_{ 0 };
+  int32_t n_sources_{ 0 };
   ESSTimeStamp _timestamp_delay{ 3000 };
+  milliseconds consumer_timeout{ 1000 };
 
   // sets options for the Streamer object
   bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
@@ -85,21 +83,16 @@ private:
   int get_topic_partitions(const std::string &topic);
 
   BrightnESS::FileWriter::ErrorCode get_offset_boundaries();
-
-  milliseconds consumer_timeout{ 1000 };
-  int64_t step_back_amount{ 100 };
-
-  BrightnESS::FileWriter::RdKafkaOffset jump_back_impl(const int &);
 };
 
 template <>
 ProcessMessageResult Streamer::write<>(BrightnESS::FileWriter::DemuxTopic &);
 
-template <>
-BrightnESS::FileWriter::RdKafkaOffset
-Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &,
-                            std::map<std::string, int64_t> &,
-                            const ESSTimeStamp &);
+// template <>
+// BrightnESS::FileWriter::RdKafkaOffset
+// Streamer::scan_timestamps<>(BrightnESS::FileWriter::DemuxTopic &,
+//                             std::map<std::string, int64_t> &,
+//                             const ESSTimeStamp &);
 
 template <>
 std::map<std::string, int64_t>

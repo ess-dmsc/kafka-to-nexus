@@ -33,8 +33,8 @@ template <typename Streamer, typename Demux> struct StreamMaster {
       : demux(_demux), do_write(false), _stop(false) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
-      streamer[d.topic()].n_sources = d.sources().size();
+      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
 
@@ -46,8 +46,8 @@ template <typename Streamer, typename Demux> struct StreamMaster {
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
-      streamer[d.topic()].n_sources = d.sources().size();
+      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
 
@@ -78,10 +78,6 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     do_write = true;
     _stop = false;
 
-    std::for_each(streamer.begin(), streamer.end(),
-                  [](std::pair<const std::string, Streamer> &item) {
-                    item.second.status = ErrorCode(StatusCode::RUNNING);
-                  });
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
       std::this_thread::sleep_for(milliseconds(100));
@@ -102,6 +98,14 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return !loop.joinable();
   }
 
+  std::map<std::string, typename Streamer::status_type> &&status() {
+    std::map<std::string, typename Streamer::status_type> stat;
+    for (auto &s : streamer) {
+      stat.emplace(s.first, s.second.status());
+    }
+    return std::move(stat);
+  }
+
 private:
   ErrorCode stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
@@ -110,38 +114,38 @@ private:
 
   void run() {
     using namespace std::chrono;
-    double total_size(0);
     system_clock::time_point tp, tp_global(system_clock::now());
 
     while (!_stop) {
 
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
-        if (s.status == ErrorCode(StatusCode::RUNNING)) {
+        if (s.run_status() == StatusCode::RUNNING) {
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
             if (_value.is_STOP() &&
-                (remove_source(d.topic()) != ErrorCode(StatusCode::RUNNING))) {
+                (remove_source(d.topic()) != StatusCode::RUNNING)) {
               break;
             }
           }
-          total_size += s.len() * 1e-6;
-          s.len() = 0;
-          auto elapsed =
-              duration_cast<seconds>(system_clock::now() - tp_global);
-          LOG(5, "Received {}MB @ {}MB/s", total_size,
-              total_size / elapsed.count());
         }
       }
+      double total_size(0);
+      for (auto &s : streamer) {
+        total_size += s.second.status()["status.size"];
+      }
+      std::cout << "Written " << total_size * 1e-6 << "MB @ "
+                << total_size * 1e3 / (system_clock::now() - tp_global).count()
+                << "MB/s\n";
     }
   }
 
   ErrorCode remove_source(const std::string &topic) {
     auto &s(streamer[topic]);
-    if (s.n_sources > 1) {
-      s.n_sources--;
-      return s.status;
+    if (s.n_sources() > 1) {
+      s.n_sources()--;
+      return ErrorCode(StatusCode::RUNNING);
     } else {
       LOG(3, "All sources in {} have expired, remove streamer", topic);
       stop_streamer(s);
