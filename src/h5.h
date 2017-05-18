@@ -42,7 +42,8 @@ class h5d;
 
 class h5s {
 public:
-  template <size_t N> static h5s simple_unlim(array<hsize_t, N> const &sini);
+  typedef unique_ptr<h5s> ptr;
+  template <size_t N> static ptr simple_unlim(array<hsize_t, N> const &sini);
   h5s(h5d const &x);
   h5s(h5s &&x);
   ~h5s();

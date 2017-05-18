@@ -96,15 +96,19 @@ void swap(dataset_create &x, dataset_create &y) {
 
 } // namespace h5p
 
-template <size_t N> h5s h5s::simple_unlim(array<hsize_t, N> const &sini) {
-  h5s ret;
-  ret.sini = {sini.data(), sini.data() + sini.size()};
-  ret.smax.clear();
-  ret.smax.resize(ret.sini.size(), H5S_UNLIMITED);
-  for (int i1 = 1; i1 < ret.sini.size(); ++i1) {
-    ret.smax[i1] = ret.sini[i1];
+template <size_t N> h5s::ptr h5s::simple_unlim(array<hsize_t, N> const &sini) {
+  auto ret = ptr(new h5s);
+  auto &o = *ret;
+  o.sini = {sini.data(), sini.data() + sini.size()};
+  o.smax.clear();
+  o.smax.resize(o.sini.size(), H5S_UNLIMITED);
+  for (int i1 = 1; i1 < o.sini.size(); ++i1) {
+    o.smax[i1] = o.sini[i1];
   }
-  ret.id = H5Screate_simple(ret.sini.size(), ret.sini.data(), ret.smax.data());
+  o.id = H5Screate_simple(o.sini.size(), o.sini.data(), o.smax.data());
+  if (o.id == -1) {
+    ret.reset();
+  }
   return ret;
 }
 
@@ -155,12 +159,15 @@ h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, T dummy) {
   }
   type = nat_type<T>();
   auto dsp = h5::h5s::simple_unlim<1>({{0}});
-  // id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
+  if (!dsp) {
+    throw std::runtime_error("dataspace invalid");
+  }
+  // id = H5Dcreate1(loc, name.c_str(), type, dsp->id, dcpl.id);
   auto dcpl = h5p::dataset_create::chunked1(type, chunk_bytes);
   if (!dcpl) {
     throw std::runtime_error("can not create dataset");
   }
-  this->id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl->id);
+  this->id = H5Dcreate1(loc, name.c_str(), type, dsp->id, dcpl->id);
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
@@ -333,7 +340,8 @@ h5d_chunked_1d<T> *h5d_chunked_1d<T>::create(hid_t loc, string name,
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
                                   h5p::dataset_create dcpl)
-    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<1>({{0}}), move(dcpl)),
+    : ds(loc, name, nat_type<T>(), move(*h5::h5s::simple_unlim<1>({{0}})),
+         move(dcpl)),
       dsp_wr(ds) {}
 
 template <typename T>
@@ -397,8 +405,8 @@ h5d_chunked_2d<T> *h5d_chunked_2d<T>::create(hid_t loc, string name,
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, hsize_t ncols,
                                   hsize_t chunk_bytes, h5p::dataset_create dcpl)
-    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<2>({{0, ncols}}),
-         move(dcpl)),
+    : ds(loc, name, nat_type<T>(),
+         move(*h5::h5s::simple_unlim<2>({{0, ncols}})), move(dcpl)),
       dsp_wr(ds), ncols(ncols) {}
 
 template <typename T>
@@ -451,9 +459,9 @@ template <typename T> int h5d_chunked_2d<T>::flush_buf() {
   return 0;
 }
 
-template h5s h5s::simple_unlim(array<hsize_t, 1> const &sini);
-template h5s h5s::simple_unlim(array<hsize_t, 2> const &sini);
-template h5s h5s::simple_unlim(array<hsize_t, 3> const &sini);
+template h5s::ptr h5s::simple_unlim(array<hsize_t, 1> const &sini);
+template h5s::ptr h5s::simple_unlim(array<hsize_t, 2> const &sini);
+template h5s::ptr h5s::simple_unlim(array<hsize_t, 3> const &sini);
 
 template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint8_t dummy);
 template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint16_t dummy);
