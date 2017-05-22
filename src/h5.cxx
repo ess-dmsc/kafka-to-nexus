@@ -17,21 +17,29 @@ template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 namespace h5p {
 
-dataset_create dataset_create::chunked1(hid_t type, hsize_t bytes) {
-  dataset_create ret;
-  ret.id = H5Pcreate(H5P_DATASET_CREATE);
+dataset_create::ptr dataset_create::chunked1(hid_t type, hsize_t bytes) {
+  auto id = H5Pcreate(H5P_DATASET_CREATE);
+  if (id == -1) {
+    return {nullptr};
+  }
   array<hsize_t, 1> schk{{std::max<hsize_t>(bytes / H5Tget_size(type), 1)}};
-  H5Pset_chunk(ret.id, schk.size(), schk.data());
+  H5Pset_chunk(id, schk.size(), schk.data());
+  auto ret = ptr(new dataset_create);
+  ret->id = id;
   return ret;
 }
 
-dataset_create dataset_create::chunked2(hid_t type, hsize_t ncols,
-                                        hsize_t bytes) {
-  dataset_create ret;
-  ret.id = H5Pcreate(H5P_DATASET_CREATE);
+dataset_create::ptr dataset_create::chunked2(hid_t type, hsize_t ncols,
+                                             hsize_t bytes) {
+  auto id = H5Pcreate(H5P_DATASET_CREATE);
+  if (id == -1) {
+    return {nullptr};
+  }
   array<hsize_t, 2> schk{
       {std::max<hsize_t>(bytes / ncols / H5Tget_size(type), 1), ncols}};
-  H5Pset_chunk(ret.id, schk.size(), schk.data());
+  H5Pset_chunk(id, schk.size(), schk.data());
+  auto ret = ptr(new dataset_create);
+  ret->id = id;
   return ret;
 }
 
@@ -58,15 +66,19 @@ void swap(dataset_create &x, dataset_create &y) {
 
 } // namespace h5p
 
-template <size_t N> h5s h5s::simple_unlim(array<hsize_t, N> const &sini) {
-  h5s ret;
-  ret.sini = {sini.data(), sini.data() + sini.size()};
-  ret.smax.clear();
-  ret.smax.resize(ret.sini.size(), H5S_UNLIMITED);
-  for (int i1 = 1; i1 < ret.sini.size(); ++i1) {
-    ret.smax[i1] = ret.sini[i1];
+template <size_t N> h5s::ptr h5s::simple_unlim(array<hsize_t, N> const &sini) {
+  auto ret = ptr(new h5s);
+  auto &o = *ret;
+  o.sini = {sini.data(), sini.data() + sini.size()};
+  o.smax.clear();
+  o.smax.resize(o.sini.size(), H5S_UNLIMITED);
+  for (int i1 = 1; i1 < o.sini.size(); ++i1) {
+    o.smax[i1] = o.sini[i1];
   }
-  ret.id = H5Screate_simple(ret.sini.size(), ret.sini.data(), ret.smax.data());
+  o.id = H5Screate_simple(o.sini.size(), o.sini.data(), o.smax.data());
+  if (o.id == -1) {
+    ret.reset();
+  }
   return ret;
 }
 
@@ -96,26 +108,16 @@ h5s::~h5s() {
   }
 }
 
-h5d h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
-                h5p::dataset_create dcpl) {
-  h5d ret;
-  ret.type = type;
-  ret.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
+h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
+                     h5p::dataset_create dcpl) {
+  auto ret = ptr(new h5d);
+  auto &o = *ret;
+  o.type = type;
+  o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
+  if (o.id == -1) {
+    ret.reset();
+  }
   return ret;
-}
-
-h5d::h5d(hid_t loc, string name, hid_t type, h5s dsp,
-         h5p::dataset_create dcpl) {
-  this->type = type;
-  id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
-}
-
-template <typename T>
-h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, T dummy) {
-  type = nat_type<T>();
-  auto dsp = h5::h5s::simple_unlim<1>({{0}});
-  auto dcpl = h5p::dataset_create::chunked1(type, chunk_bytes);
-  id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
@@ -274,14 +276,33 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
 }
 
 template <typename T>
-h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes)
-    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<1>({{0}}),
-         h5p::dataset_create::chunked1(nat_type<T>(), chunk_bytes)),
-      dsp_wr(ds) {}
+typename h5d_chunked_1d<T>::ptr
+h5d_chunked_1d<T>::create(hid_t loc, string name, hsize_t chunk_bytes) {
+  auto dsp = h5s::simple_unlim<1>({{0}});
+  if (!dsp) {
+    return nullptr;
+  }
+  auto dcpl = h5p::dataset_create::chunked1(nat_type<T>(), chunk_bytes);
+  if (!dcpl) {
+    return nullptr;
+  }
+  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), move(*dcpl));
+  if (!ds) {
+    return nullptr;
+  }
+  // todo: With these changes, return ::ptr directly.  Also in 2d case.
+  auto ret = new h5d_chunked_1d<T>(loc, name, chunk_bytes, move(*ds));
+  return ptr(ret);
+}
+
+template <typename T>
+h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
+                                  h5d ds)
+    : ds(move(ds)), dsp_wr(this->ds) {}
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
-    : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
+    : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() { flush_buf(); }
 
@@ -326,15 +347,33 @@ template <typename T> int h5d_chunked_1d<T>::flush_buf() {
 }
 
 template <typename T>
+typename h5d_chunked_2d<T>::ptr
+h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
+                          hsize_t chunk_bytes) {
+  auto dsp = h5s::simple_unlim<2>({{0, ncols}});
+  if (!dsp) {
+    return nullptr;
+  }
+  auto dcpl = h5p::dataset_create::chunked2(nat_type<T>(), ncols, chunk_bytes);
+  if (!dcpl) {
+    return nullptr;
+  }
+  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), move(*dcpl));
+  if (!ds) {
+    return nullptr;
+  }
+  auto ret = new h5d_chunked_2d<T>(loc, name, ncols, chunk_bytes, move(*ds));
+  return ptr(ret);
+}
+
+template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, hsize_t ncols,
-                                  hsize_t chunk_bytes)
-    : ds(loc, name, nat_type<T>(), h5::h5s::simple_unlim<2>({{0, ncols}}),
-         h5p::dataset_create::chunked2(nat_type<T>(), ncols, chunk_bytes)),
-      dsp_wr(ds), ncols(ncols) {}
+                                  hsize_t chunk_bytes, h5d ds)
+    : ds(move(ds)), dsp_wr(this->ds), ncols(ncols) {}
 
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(h5d_chunked_2d &&x)
-    : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
+    : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_2d<T>::~h5d_chunked_2d() { flush_buf(); }
 
@@ -382,14 +421,9 @@ template <typename T> int h5d_chunked_2d<T>::flush_buf() {
   return 0;
 }
 
-template h5s h5s::simple_unlim(array<hsize_t, 1> const &sini);
-template h5s h5s::simple_unlim(array<hsize_t, 2> const &sini);
-template h5s h5s::simple_unlim(array<hsize_t, 3> const &sini);
-
-template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint8_t dummy);
-template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint16_t dummy);
-template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint32_t dummy);
-template h5d::h5d(hid_t loc, string name, hsize_t chunk_bytes, uint64_t dummy);
+template h5s::ptr h5s::simple_unlim(array<hsize_t, 1> const &sini);
+template h5s::ptr h5s::simple_unlim(array<hsize_t, 2> const &sini);
+template h5s::ptr h5s::simple_unlim(array<hsize_t, 3> const &sini);
 
 template append_ret h5d::append_data_1d(uint8_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(uint16_t const *data, hsize_t nlen);
@@ -400,26 +434,47 @@ template append_ret h5d::append_data_1d(int16_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(int32_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(int64_t const *data, hsize_t nlen);
 
+template h5d_chunked_1d<uint8_t>::ptr
+h5d_chunked_1d<uint8_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint16_t>::ptr
+h5d_chunked_1d<uint16_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint32_t>::ptr
+h5d_chunked_1d<uint32_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint64_t>::ptr
+h5d_chunked_1d<uint64_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<int8_t>::ptr
+h5d_chunked_1d<int8_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<int16_t>::ptr
+h5d_chunked_1d<int16_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<int32_t>::ptr
+h5d_chunked_1d<int32_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<int64_t>::ptr
+h5d_chunked_1d<int64_t>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<float>::ptr
+h5d_chunked_1d<float>::create(hid_t loc, string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<double>::ptr
+h5d_chunked_1d<double>::create(hid_t loc, string name, hsize_t chunk_bytes);
+
 template h5d_chunked_1d<uint8_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<uint16_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                  hsize_t chunk_bytes);
+                                                  hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<uint32_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                  hsize_t chunk_bytes);
+                                                  hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<uint64_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                  hsize_t chunk_bytes);
+                                                  hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<int8_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                hsize_t chunk_bytes);
+                                                hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<int16_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<int32_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<int64_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<float>::h5d_chunked_1d(hid_t loc, string name,
-                                               hsize_t chunk_bytes);
+                                               hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_1d<double>::h5d_chunked_1d(hid_t loc, string name,
-                                                hsize_t chunk_bytes);
+                                                hsize_t chunk_bytes, h5d ds);
 
 template h5d_chunked_1d<uint8_t>::~h5d_chunked_1d();
 template h5d_chunked_1d<uint16_t>::~h5d_chunked_1d();
@@ -463,36 +518,67 @@ template append_ret
 h5d_chunked_1d<double>::h5d_chunked_1d::append_data_1d(double const *data,
                                                        hsize_t nlen);
 
+template h5d_chunked_2d<uint8_t>::ptr
+h5d_chunked_2d<uint8_t>::create(hid_t loc, string name, hsize_t ncols,
+                                hsize_t chunk_bytes);
+template h5d_chunked_2d<uint16_t>::ptr
+h5d_chunked_2d<uint16_t>::create(hid_t loc, string name, hsize_t ncols,
+                                 hsize_t chunk_bytes);
+template h5d_chunked_2d<uint32_t>::ptr
+h5d_chunked_2d<uint32_t>::create(hid_t loc, string name, hsize_t ncols,
+                                 hsize_t chunk_bytes);
+template h5d_chunked_2d<uint64_t>::ptr
+h5d_chunked_2d<uint64_t>::create(hid_t loc, string name, hsize_t ncols,
+                                 hsize_t chunk_bytes);
+template h5d_chunked_2d<int8_t>::ptr
+h5d_chunked_2d<int8_t>::create(hid_t loc, string name, hsize_t ncols,
+                               hsize_t chunk_bytes);
+template h5d_chunked_2d<int16_t>::ptr
+h5d_chunked_2d<int16_t>::create(hid_t loc, string name, hsize_t ncols,
+                                hsize_t chunk_bytes);
+template h5d_chunked_2d<int32_t>::ptr
+h5d_chunked_2d<int32_t>::create(hid_t loc, string name, hsize_t ncols,
+                                hsize_t chunk_bytes);
+template h5d_chunked_2d<int64_t>::ptr
+h5d_chunked_2d<int64_t>::create(hid_t loc, string name, hsize_t ncols,
+                                hsize_t chunk_bytes);
+template h5d_chunked_2d<float>::ptr
+h5d_chunked_2d<float>::create(hid_t loc, string name, hsize_t ncols,
+                              hsize_t chunk_bytes);
+template h5d_chunked_2d<double>::ptr
+h5d_chunked_2d<double>::create(hid_t loc, string name, hsize_t ncols,
+                               hsize_t chunk_bytes);
+
 template h5d_chunked_2d<uint8_t>::h5d_chunked_2d(hid_t loc, string name,
                                                  hsize_t ncols,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<uint16_t>::h5d_chunked_2d(hid_t loc, string name,
                                                   hsize_t ncols,
-                                                  hsize_t chunk_bytes);
+                                                  hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<uint32_t>::h5d_chunked_2d(hid_t loc, string name,
                                                   hsize_t ncols,
-                                                  hsize_t chunk_bytes);
+                                                  hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<uint64_t>::h5d_chunked_2d(hid_t loc, string name,
                                                   hsize_t ncols,
-                                                  hsize_t chunk_bytes);
+                                                  hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<int8_t>::h5d_chunked_2d(hid_t loc, string name,
                                                 hsize_t ncols,
-                                                hsize_t chunk_bytes);
+                                                hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<int16_t>::h5d_chunked_2d(hid_t loc, string name,
                                                  hsize_t ncols,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<int32_t>::h5d_chunked_2d(hid_t loc, string name,
                                                  hsize_t ncols,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<int64_t>::h5d_chunked_2d(hid_t loc, string name,
                                                  hsize_t ncols,
-                                                 hsize_t chunk_bytes);
+                                                 hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<float>::h5d_chunked_2d(hid_t loc, string name,
                                                hsize_t ncols,
-                                               hsize_t chunk_bytes);
+                                               hsize_t chunk_bytes, h5d ds);
 template h5d_chunked_2d<double>::h5d_chunked_2d(hid_t loc, string name,
                                                 hsize_t ncols,
-                                                hsize_t chunk_bytes);
+                                                hsize_t chunk_bytes, h5d ds);
 
 template h5d_chunked_2d<uint8_t>::~h5d_chunked_2d();
 template h5d_chunked_2d<uint16_t>::~h5d_chunked_2d();

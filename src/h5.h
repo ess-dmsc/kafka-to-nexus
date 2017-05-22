@@ -1,11 +1,14 @@
 #pragma once
 #include <array>
 #include <hdf5.h>
+#include <memory>
 #include <string>
 #include <vector>
 
 namespace h5 {
 
+using std::unique_ptr;
+using std::move;
 using std::array;
 using std::vector;
 using std::string;
@@ -14,8 +17,9 @@ namespace h5p {
 
 class dataset_create {
 public:
-  static dataset_create chunked1(hid_t type, hsize_t bytes);
-  static dataset_create chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
+  typedef unique_ptr<dataset_create> ptr;
+  static ptr chunked1(hid_t type, hsize_t bytes);
+  static ptr chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
   dataset_create(dataset_create &&x);
   ~dataset_create();
   friend void swap(dataset_create &x, dataset_create &y);
@@ -32,7 +36,8 @@ class h5d;
 
 class h5s {
 public:
-  template <size_t N> static h5s simple_unlim(array<hsize_t, N> const &sini);
+  typedef unique_ptr<h5s> ptr;
+  template <size_t N> static ptr simple_unlim(array<hsize_t, N> const &sini);
   h5s(h5d const &x);
   h5s(h5s &&x);
   ~h5s();
@@ -54,11 +59,9 @@ struct append_ret {
 
 class h5d {
 public:
-  static h5d create(hid_t loc, string name, hid_t type, h5s dsp,
+  typedef unique_ptr<h5d> ptr;
+  static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
                     h5p::dataset_create dcpl);
-  h5d(hid_t loc, string name, hid_t type, h5s dsp, h5p::dataset_create dcpl);
-  template <typename T>
-  h5d(hid_t loc, string name, hsize_t chunk_bytes, T dummy = 0);
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);
@@ -73,7 +76,8 @@ private:
 
 template <typename T> class h5d_chunked_1d {
 public:
-  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes);
+  typedef unique_ptr<h5d_chunked_1d<T>> ptr;
+  static ptr create(hid_t loc, string name, hsize_t chunk_bytes);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -83,6 +87,7 @@ public:
 
 private:
   h5d_chunked_1d();
+  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5d ds);
   h5s dsp_wr;
   std::vector<T> buf;
   hsize_t i0 = 0;
@@ -90,7 +95,8 @@ private:
 
 template <typename T> class h5d_chunked_2d {
 public:
-  h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
+  typedef unique_ptr<h5d_chunked_2d<T>> ptr;
+  static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();
@@ -100,6 +106,8 @@ public:
 
 private:
   h5d_chunked_2d();
+  h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
+                 h5d ds);
   h5s dsp_wr;
   hsize_t ncols;
   std::vector<T> buf;
