@@ -24,14 +24,6 @@ if(BUILD_TESTING)
 
     add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
 
-    # When using CMake 2.8.11 or later, header path dependencies
-    # are automatically added to the gtest and gmock targets.
-    # For earlier CMake versions, we have to explicitly add the
-    # required directories to the header search path ourselves.
-    if (CMAKE_VERSION VERSION_LESS 2.8.11)
-        include_directories("${gtest_SOURCE_DIR}/include"
-                "${gmock_SOURCE_DIR}/include")
-    endif()
     function(add_gtest_to_target tgt)
         add_dependencies(${tgt} gtest)
         target_link_libraries(${tgt} gtest gmock)
