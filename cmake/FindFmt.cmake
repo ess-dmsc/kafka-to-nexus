@@ -7,8 +7,8 @@ endif()
 
 include(${PROJECT_SOURCE_DIR}/cmake/DownloadProject.cmake)
 download_project(PROJ                fmt
-        GIT_REPOSITORY      https://github.com/fmtlib/fmt.git
-        GIT_TAG             3.0.0
-        ${UPDATE_DISCONNECTED_IF_AVAILABLE})
+                 GIT_REPOSITORY      https://github.com/fmtlib/fmt.git
+                 GIT_TAG             3.0.0
+                 ${UPDATE_DISCONNECTED_IF_AVAILABLE})
 set(FMT_SRC ${CMAKE_BINARY_DIR}/fmt-src/fmt/format.cc)
 set(FMT_INCLUDE_DIR ${CMAKE_BINARY_DIR}/fmt-src)
