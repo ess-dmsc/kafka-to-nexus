@@ -8,8 +8,6 @@ set(CMAKE_BUILD_TYPE Debug)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-find_package(Fmt REQUIRED)
-find_package(Rapidjson REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
@@ -32,24 +30,24 @@ endif()
 
 
 set(path_include_common
-${FMT_INCLUDE_DIR}
-${RDKAFKA_INCLUDE_DIR}
-${HDF5_INCLUDE_DIRS}
-${FLATBUFFERS_INCLUDE_DIR}
-${RAPIDJSON_INCLUDE_DIR}
-${CURL_INCLUDE_DIRS}
-${PCREX_INCLUDE_DIRS}
-${PROJECT_SOURCE_DIR}/src
-${PROJECT_BINARY_DIR}/src
+	${FMT_INCLUDE_DIR}
+	${RDKAFKA_INCLUDE_DIR}
+	${HDF5_INCLUDE_DIRS}
+	${FLATBUFFERS_INCLUDE_DIR}
+	${RAPIDJSON_INCLUDE_DIR}
+	${CURL_INCLUDE_DIRS}
+	${PCREX_INCLUDE_DIRS}
+	${PROJECT_SOURCE_DIR}/src
+	${PROJECT_BINARY_DIR}/src
 )
 
 set(libraries_common
-${RDKAFKA_LIBRARIES}
-${HDF5_C_LIBRARIES}
-${HDF5_CXX_LIBRARIES}
-${CURL_LIBRARIES}
-${PCREX_LIBRARIES}
-pthread
+	${RDKAFKA_LIBRARIES}
+	${HDF5_C_LIBRARIES}
+	${HDF5_CXX_LIBRARIES}
+	${CURL_LIBRARIES}
+	${PCREX_LIBRARIES}
+	pthread
 )
 
 set(compile_defs_common "${PCREX_COMPILER_DEFINITIONS}")
@@ -71,37 +69,37 @@ endif()
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
-Streamer.cxx
-StreamMaster.cxx
-kafka_util.cxx
-Master.cxx
-CommandListener.cxx
-CommandHandler.cxx
-TimeDifferenceFromMessage.cxx
-FileWriterTask.cxx
-Source.cxx
-DemuxTopic.cxx
-HDFFile.cxx
-SchemaRegistry.cxx
-KafkaW.cxx
-helper.cxx
-logger.cxx
-json.cxx
-uri.cxx
-h5.cxx
-date/tz.cpp
-date/tzblobs.cpp
-schemas/f141/f141_rw.cxx
-schemas/f141/synth.cxx
-schemas/f142/f142_rw.cxx
-schemas/f142/f142_synth.cxx
-schemas/f143/f143_rw.cxx
-schemas/ev42/ev42_rw.cxx
-schemas/ev42/ev42_synth.cxx
-#schemas/events/schema_amo0.cxx
-MainOpt.cxx
-${FMT_SRC}
-${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+	Streamer.cxx
+	StreamMaster.cxx
+	kafka_util.cxx
+	Master.cxx
+	CommandListener.cxx
+	CommandHandler.cxx
+	TimeDifferenceFromMessage.cxx
+	FileWriterTask.cxx
+	Source.cxx
+	DemuxTopic.cxx
+	HDFFile.cxx
+	SchemaRegistry.cxx
+	KafkaW.cxx
+	helper.cxx
+	logger.cxx
+	json.cxx
+	uri.cxx
+	h5.cxx
+	date/tz.cpp
+	date/tzblobs.cpp
+	schemas/f141/f141_rw.cxx
+	schemas/f141/synth.cxx
+	schemas/f142/f142_rw.cxx
+	schemas/f142/f142_synth.cxx
+	schemas/f143/f143_rw.cxx
+	schemas/ev42/ev42_rw.cxx
+	schemas/ev42/ev42_synth.cxx
+	#schemas/events/schema_amo0.cxx
+	MainOpt.cxx
+	${FMT_SRC}
+	${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
 )
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
@@ -111,8 +109,8 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 set(tgt "send-command")
 set(sources
-send-command.cxx
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
+	send-command.cxx
+	$<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
@@ -134,7 +132,7 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common})
 
-if (have_gtest)
+if(BUILD_TESTING)
 add_gtest_to_target(${tgt})
 endif()
 
@@ -142,8 +140,8 @@ endif()
 
 set(tgt "dummy")
 set(sources
-dummy.cxx
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
+	dummy.cxx
+	$<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
@@ -154,6 +152,6 @@ target_link_libraries(${tgt} ${libraries_common})
 
 
 
-if (have_gtest)
+if(BUILD_TESTING)
 add_subdirectory(tests)
 endif()
