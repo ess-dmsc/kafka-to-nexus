@@ -3,7 +3,7 @@ project("kafka-to-nexus")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
-# Get googletest
+##### Get googletest ######
 if(BUILD_TESTING)
     # Download and  build gtest and gmock
     if (CMAKE_VERSION VERSION_LESS 3.2)
@@ -37,6 +37,7 @@ if(BUILD_TESTING)
         target_link_libraries(${tgt} gtest gmock)
     endfunction()
 endif(BUILD_TESTING)
+########################
 
 ##### Get libfmt ######
 if (CMAKE_VERSION VERSION_LESS 3.2)

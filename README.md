@@ -101,7 +101,7 @@ Command to exit the file writer:
   (Needed because we support GCC < 4.9 where std regex is incomplete)
 - Optional `graylog_logger`
 
-The following dependencies are automatically downloaded by CMake.
+The following dependencies are automatically downloaded by CMake:
 - libfmt
 - rapidjson
 - googletest
