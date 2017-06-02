@@ -8,6 +8,8 @@ set(CMAKE_BUILD_TYPE Debug)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
+find_package(Fmt REQUIRED)
+find_package(Rapidjson REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
