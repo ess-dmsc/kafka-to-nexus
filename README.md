@@ -110,6 +110,11 @@ The following dependencies are automatically downloaded by CMake:
 
 As usual `cmake`, `make`.
 
+To enable building unit tests use the `BUILD_TESTING` cmake flag:
+```
+cmake -DBUILD_TESTING
+```
+
 
 ### Usage of your custom builds of the dependencies
 
