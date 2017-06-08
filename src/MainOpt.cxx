@@ -25,6 +25,13 @@ int MainOpt::parse_config_file(std::string fname) {
     LOG(3, "configuration is not well formed");
     return -5;
   }
+  if (auto o = get_string(&d, "broker-command")) {
+    URI x(o.v);
+    x.default_host("localhost");
+    x.default_port(9092);
+    x.default_path("kafka-to-nexus.command");
+    master_config.command_listener.broker = x;
+  }
   if (auto o = get_object(d, "kafka")) {
     for (auto &m : o.v->GetObject()) {
       if (m.value.IsString()) {
