@@ -88,17 +88,17 @@ TEST(helper, get_string_01) {
   PrettyWriter<StringBuffer> wr(buf1);
   d.Accept(wr);
   auto s1 = get_string(&d, "mem00");
-  ASSERT_EQ(s1, "s1");
+  ASSERT_EQ(s1.v, "s1");
   s1 = get_string(&d, "mem01.mem10");
-  ASSERT_EQ(s1, "s2");
+  ASSERT_EQ(s1.v, "s2");
   s1 = get_string(&d, "mem02.1");
-  ASSERT_EQ(s1, "something_a_1");
+  ASSERT_EQ(s1.v, "something_a_1");
 }
 
 TEST(helper, get_string_02) {
   auto d = make_test_doc();
   auto s = get_string(&d, "a.aa");
-  ASSERT_EQ(s, "text");
+  ASSERT_EQ(s.v, "text");
 }
 
 TEST(helper, get_string_03) {
@@ -130,6 +130,6 @@ TEST(helper, get_object) {
   auto o1 = get_object(d, "a.b").v;
   auto o2 = get_object(d, "a.b").v;
   ASSERT_EQ(o1, o2);
-  ASSERT_EQ(get_string(o1, "k"), "the object");
-  ASSERT_EQ(get_string(o2, "k"), "the object");
+  ASSERT_EQ(get_string(o1, "k").v, "the object");
+  ASSERT_EQ(get_string(o2, "k").v, "the object");
 }

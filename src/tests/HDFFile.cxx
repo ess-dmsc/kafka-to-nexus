@@ -123,6 +123,7 @@ public:
     using namespace BrightnESS::FileWriter;
     using std::array;
     using std::vector;
+    using std::string;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
@@ -131,7 +132,7 @@ public:
     auto source_name = get_string(&d, "streams.0.source");
     // char const * fname = d["file_attributes"]["file_name"].GetString();
     // char const * source_name = d["streams"][0]["source"].GetString();
-    unlink(fname.c_str());
+    unlink(string(fname).c_str());
     rapidjson::Document config_file;
     config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
     ASSERT_FALSE(config_file.HasParseError());
@@ -183,7 +184,7 @@ public:
 
     herr_t err;
 
-    auto fid = H5Fopen(fname.c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
 
     auto g0 = H5Gopen(fid, "/entry-01/instrument-01/events-01", H5P_DEFAULT);
