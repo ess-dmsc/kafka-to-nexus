@@ -112,8 +112,14 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
     auto m = d.FindMember("broker");
     if (m != d.MemberEnd()) {
       auto s = std::string(m->value.GetString());
-      uri::URI u(s);
-      br = u.host_port;
+      if (s.substr(0, 2) == "//") {
+        uri::URI u(s);
+        br = u.host_port;
+      }
+      else {
+        // legacy semantics
+        br = s;
+      }
     }
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
