@@ -70,9 +70,9 @@ fb synth::next(uint64_t seq) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }
-    ArrayDoubleBuilder b2(*ret.builder);
+    ArrayFloatBuilder b2(*ret.builder);
     b2.add_value(d1);
-    value_type = Value::ArrayDouble;
+    value_type = Value::ArrayFloat;
     value = b2.Finish().Union();
   } break;
   default:
