@@ -85,7 +85,6 @@ void Logger::log_kafka_gelf_stop() {
 }
 
 void Logger::fwd_graylog_logger_enable(std::string address) {
-#ifdef HAVE_GRAYLOG_LOGGER
   auto addr = address;
   int port = 12201;
   auto col = address.find(":");
@@ -93,6 +92,7 @@ void Logger::fwd_graylog_logger_enable(std::string address) {
     addr = address.substr(0, col);
     port = strtol(address.c_str() + col + 1, nullptr, 10);
   }
+#ifdef HAVE_GRAYLOG_LOGGER
   Log::RemoveAllHandlers();
   LOG(4, "Enable graylog_logger on {}:{}", addr, port);
   Log::AddLogHandler(new GraylogInterface(addr, port));

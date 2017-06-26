@@ -62,7 +62,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"config-file", required_argument, 0, 0},
       {"broker-command", required_argument, 0, 0},
       {"kafka-gelf", required_argument, 0, 0},
-      {"graylog-logger", required_argument, 0, 0},
+      {"graylog-logger-address", required_argument, 0, 0},
       {"use-signal-handler", required_argument, 0, 0},
       {"teamid", required_argument, 0, 0},
       {"assets-dir", required_argument, 0, 0},
