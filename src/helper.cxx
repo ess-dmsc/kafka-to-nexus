@@ -1,12 +1,14 @@
 #include "helper.h"
 #include <array>
 #include <fstream>
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/stringbuffer.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
+//#include <algorithm>
+
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;
@@ -69,13 +71,16 @@ std::vector<std::string> split(std::string const &input, std::string token) {
   return ret;
 }
 
+get_json_ret_string::operator bool() const { return err == 0; }
+get_json_ret_string::operator std::string() const { return v; }
+
 get_json_ret_int::operator bool() const { return err == 0; }
 
 get_json_ret_int::operator int() const { return v; }
 
 get_json_ret_object::operator bool() const { return err == 0; }
 
-std::string get_string(rapidjson::Value const *v, std::string path) {
+get_json_ret_string get_string(rapidjson::Value const *v, std::string path) {
   auto a = split(path, ".");
   uint32_t i1 = 0;
   for (auto &x : a) {
@@ -87,29 +92,32 @@ std::string get_string(rapidjson::Value const *v, std::string path) {
       }
     }
     if (num) {
-      if (!v->IsArray())
-        return "";
+      if (!v->IsArray()) {
+        return {1, ""};
+      }
       auto n1 = (uint32_t)strtol(x.c_str(), nullptr, 10);
-      if (n1 >= v->Size())
-        return "";
+      if (n1 >= v->Size()) {
+        return {1, ""};
+      }
       auto &v2 = v->GetArray()[n1];
       if (i1 == a.size() - 1) {
         if (v2.IsString()) {
-          return v2.GetString();
+          return {0, v2.GetString()};
         }
       } else {
         v = &v2;
       }
     } else {
-      if (!v->IsObject())
-        return "";
+      if (!v->IsObject()) {
+        return {1, ""};
+      }
       auto it = v->FindMember(x.c_str());
       if (it == v->MemberEnd()) {
-        return "";
+        return {1, ""};
       }
       if (i1 == a.size() - 1) {
         if (it->value.IsString()) {
-          return it->value.GetString();
+          return {0, it->value.GetString()};
         }
       } else {
         v = &it->value;
@@ -117,7 +125,7 @@ std::string get_string(rapidjson::Value const *v, std::string path) {
     }
     ++i1;
   }
-  return "";
+  return {1, ""};
 }
 
 get_json_ret_int get_int(rapidjson::Value const *v, std::string path) {
@@ -176,4 +184,24 @@ std::string pretty_print(rapidjson::Document const *v) {
   rapidjson::PrettyWriter<rapidjson::StringBuffer> wr(buf1);
   v->Accept(wr);
   return buf1.GetString();
+}
+
+template <> std::pair<short int, int> to_num(const std::string &string) {
+  int result;
+  try {
+    result = std::stoi(string);
+  } catch (std::exception &e) {
+    return std::pair<short int, int>(false, 0);
+  }
+  return std::pair<short int, int>(true, result);
+}
+
+template <> std::pair<short int, double> to_num(const std::string &string) {
+  double result;
+  try {
+    result = std::stod(string);
+  } catch (std::exception &e) {
+    return std::pair<short int, double>(false, 0);
+  }
+  return std::pair<short int, double>(true, result);
 }

@@ -97,21 +97,28 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
     {
       auto m = d.FindMember("start_time");
       if (m != d.MemberEnd()) {
-        start_time = ESSTimeStamp(m->value.GetInt());
+        start_time = ESSTimeStamp(m->value.GetUint64());
       }
     }
     ESSTimeStamp stop_time(0);
     {
       auto m = d.FindMember("stop_time");
       if (m != d.MemberEnd()) {
-        stop_time = ESSTimeStamp(m->value.GetInt());
+        stop_time = ESSTimeStamp(m->value.GetUint64());
       }
     }
 
     std::string br("localhost:9092");
     auto m = d.FindMember("broker");
     if (m != d.MemberEnd()) {
-      br = m->value.GetString();
+      auto s = std::string(m->value.GetString());
+      if (s.substr(0, 2) == "//") {
+        uri::URI u(s);
+        br = u.host_port;
+      } else {
+        // legacy semantics
+        br = s;
+      }
     }
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),

@@ -1,4 +1,5 @@
 #pragma once
+#include <atomic>
 #include <functional>
 #include <librdkafka/rdkafka.h>
 #include <map>
@@ -9,6 +10,20 @@
 namespace KafkaW {
 
 using uchar = unsigned char;
+using std::unique_ptr;
+using std::shared_ptr;
+using std::array;
+using std::vector;
+using std::string;
+using std::atomic;
+using std::move;
+}
+
+#if HAVE_KAFKAW_INSPECT
+#include "KafkaW-inspect.h"
+#endif
+
+namespace KafkaW {
 
 /// POD to collect the options
 class BrokerOpt {
@@ -44,6 +59,8 @@ class PollStatus {
 public:
   static PollStatus Ok();
   static PollStatus Err();
+  static PollStatus EOP();
+  static PollStatus Empty();
   static PollStatus make_Msg(std::unique_ptr<Msg> x);
   PollStatus(PollStatus &&);
   PollStatus &operator=(PollStatus &&);
@@ -52,12 +69,16 @@ public:
   PollStatus();
   bool is_Ok();
   bool is_Err();
+  bool is_EOP();
+  bool is_Empty();
   std::unique_ptr<Msg> is_Msg();
 
 private:
   int state = -1;
   void *data = nullptr;
 };
+
+class Inspect;
 
 class Consumer {
 public:
@@ -102,16 +123,33 @@ public:
   uint32_t size;
 };
 
+struct ProducerStats {
+  atomic<uint64_t> produced{0};
+  atomic<uint32_t> produce_fail{0};
+  atomic<uint32_t> local_queue_full{0};
+  atomic<uint64_t> produce_cb{0};
+  atomic<uint64_t> produce_cb_fail{0};
+  atomic<uint64_t> poll_served{0};
+  atomic<uint64_t> msg_too_large{0};
+  atomic<uint64_t> produced_bytes{0};
+  atomic<uint32_t> outq{0};
+  ProducerStats();
+  ProducerStats(ProducerStats const &);
+};
+
 class Producer {
 public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
+  typedef ProducerStats Stats;
   Producer(BrokerOpt opt);
   Producer(Producer const &) = delete;
   Producer(Producer &&x);
   ~Producer();
   void poll_while_outq();
   void poll();
+  uint64_t total_produced();
+  uint64_t outq();
   static void cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
                            void *opaque);
   static void cb_error(rd_kafka_t *rk, int err_i, char const *reason,
@@ -130,9 +168,16 @@ public:
   // Currently it's nice to have acces to these two for statistics:
   BrokerOpt opt;
   rd_kafka_t *rk = nullptr;
+  std::atomic<uint64_t> total_produced_{0};
+  Stats stats;
 
 private:
   int id = 0;
+
+public:
+#if HAVE_KAFKAW_INSPECT
+  unique_ptr<Inspect> inspect();
+#endif
 };
 
 class ProducerTopic {
@@ -141,7 +186,7 @@ public:
   ProducerTopic(std::shared_ptr<Producer> producer, std::string name);
   ~ProducerTopic();
   int produce(uchar *msg_data, int msg_size, bool print_err = false);
-  int produce(Producer::Msg &msg);
+  int produce(unique_ptr<Producer::Msg> &msg);
   // Currently it's nice to have access to these for statistics:
   std::shared_ptr<Producer> producer;
   rd_kafka_topic_t *rkt = nullptr;
@@ -151,5 +196,4 @@ private:
   std::string _name;
   bool _do_copy{false};
 };
-
-} // namespace KafkaW
+}

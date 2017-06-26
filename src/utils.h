@@ -2,6 +2,7 @@
 
 #include <chrono>
 
+using seconds = std::chrono::seconds;
 using milliseconds = std::chrono::milliseconds;
 using microseconds = std::chrono::microseconds;
 using nanoseconds = std::chrono::nanoseconds;
@@ -14,6 +15,7 @@ template <typename T, typename PHANTOM> struct StrongType {
 public:
   StrongType() {}
   StrongType(T value) : m_value{value} {}
+  StrongType(const StrongType &other) : m_value(other.m_value) {}
   inline const T &value() { return m_value; }
   StrongType &operator=(const StrongType &other) {
     m_value = other.m_value;
