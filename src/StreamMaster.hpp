@@ -33,7 +33,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
       : demux(_demux), do_write(false), _stop(false) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
       streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
@@ -46,7 +46,7 @@ template <typename Streamer, typename Demux> struct StreamMaster {
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{ broker, d.topic(), kafka_options });
+      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
       streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
@@ -161,7 +161,7 @@ private:
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
 
-  milliseconds duration{ 1000 };
+  milliseconds duration{1000};
 };
 
 } // namespace FileWriter

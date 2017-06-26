@@ -200,8 +200,7 @@ template <> std::pair<short int, double> to_num(const std::string &string) {
   double result;
   try {
     result = std::stod(string);
-  }
-  catch (std::exception &e) {
+  } catch (std::exception &e) {
     return std::pair<short int, double>(false, 0);
   }
   return std::pair<short int, double>(true, result);

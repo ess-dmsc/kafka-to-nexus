@@ -110,7 +110,7 @@ BrightnESS::FileWriter::Streamer::get_offset_boundaries() {
 
 BrightnESS::FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
-    std::vector<std::pair<std::string, std::string> > kafka_options) {
+    std::vector<std::pair<std::string, std::string>> kafka_options) {
 
   kafka_options.erase(
       std::remove_if(kafka_options.begin(), kafka_options.end(),
@@ -125,12 +125,12 @@ BrightnESS::FileWriter::Streamer::Streamer(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
 
   using opt_t = std::pair<std::string, std::string>;
-  set_conf_opt(conf, opt_t{ "metadata.broker.list", broker });
-  set_conf_opt(conf, opt_t{ "fetch.message.max.bytes", "2048576000" });
-  set_conf_opt(conf, opt_t{ "receive.message.max.bytes", "2048576000" });
-  set_conf_opt(conf, opt_t{ "api.version.request", "true" });
-  set_conf_opt(conf, opt_t{ "log_level", "3" });
-  set_conf_opt(conf, opt_t{ "group.id", topic_name });
+  set_conf_opt(conf, opt_t{"metadata.broker.list", broker});
+  set_conf_opt(conf, opt_t{"fetch.message.max.bytes", "2048576000"});
+  set_conf_opt(conf, opt_t{"receive.message.max.bytes", "2048576000"});
+  set_conf_opt(conf, opt_t{"api.version.request", "true"});
+  set_conf_opt(conf, opt_t{"log_level", "3"});
+  set_conf_opt(conf, opt_t{"group.id", topic_name});
 
   kafka_options.erase(
       std::remove_if(kafka_options.begin(), kafka_options.end(),
@@ -253,8 +253,8 @@ BrightnESS::FileWriter::ProcessMessageResult
 BrightnESS::FileWriter::Streamer::write(
     BrightnESS::FileWriter::DemuxTopic &mp) {
 
-  std::unique_ptr<RdKafka::Message> msg{ _consumer->consume(
-      consumer_timeout.count()) };
+  std::unique_ptr<RdKafka::Message> msg{
+      _consumer->consume(consumer_timeout.count())};
   LOG(6, "{} : event timestamp : {}", _tp[0]->topic(),
       msg->timestamp().timestamp);
 

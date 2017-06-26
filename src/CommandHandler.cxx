@@ -115,8 +115,7 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
       if (s.substr(0, 2) == "//") {
         uri::URI u(s);
         br = u.host_port;
-      }
-      else {
+      } else {
         // legacy semantics
         br = s;
       }

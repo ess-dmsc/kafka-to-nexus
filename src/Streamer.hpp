@@ -23,9 +23,8 @@ struct Streamer {
   using status_type = std::map<std::string, int32_t>;
 
   Streamer(){};
-  Streamer(
-      const std::string &, const std::string &,
-      std::vector<std::pair<std::string, std::string> > kafka_options = {});
+  Streamer(const std::string &, const std::string &,
+           std::vector<std::pair<std::string, std::string>> kafka_options = {});
   Streamer(const Streamer &);
 
   ~Streamer() = default;
@@ -57,19 +56,19 @@ struct Streamer {
   status_type &status();
 
 private:
-  RdKafka::KafkaConsumer *_consumer{ nullptr };
+  RdKafka::KafkaConsumer *_consumer{nullptr};
   std::shared_ptr<RdKafka::Metadata> _metadata;
   std::vector<RdKafka::TopicPartition *> _tp;
   std::vector<RdKafkaOffset> _low;
   status_type status_;
 
-  RdKafkaOffset _offset{ RdKafkaOffsetEnd };
+  RdKafkaOffset _offset{RdKafkaOffsetEnd};
   RdKafkaOffset _begin;
-  int32_t message_length_{ 0 };
-  int32_t n_messages_{ 0 };
-  int32_t n_sources_{ 0 };
-  ESSTimeStamp _timestamp_delay{ 3000 };
-  milliseconds consumer_timeout{ 1000 };
+  int32_t message_length_{0};
+  int32_t n_messages_{0};
+  int32_t n_sources_{0};
+  ESSTimeStamp _timestamp_delay{3000};
+  milliseconds consumer_timeout{1000};
 
   // sets options for the Streamer object
   bool set_streamer_opt(const std::pair<std::string, std::string> &opt);

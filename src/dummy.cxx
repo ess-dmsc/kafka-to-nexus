@@ -362,7 +362,8 @@ public:
                   << ((msg->timestamp().type !=
                        RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE)
                           ? msg->timestamp().timestamp
-                          : -1) << "\n";
+                          : -1)
+                  << "\n";
       }
     }
     return;
