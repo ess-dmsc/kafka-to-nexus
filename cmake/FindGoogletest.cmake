@@ -1,24 +1,25 @@
-set(REQUIRE_GTEST FALSE CACHE BOOL "Require Google Test")
-if (REQUIRE_GTEST)
-	find_path(path_googletest_repository NAMES "googletest/include/gtest/gtest.h" HINTS "${GOOGLETEST_REPOSITORY_DIR}" "../googletest")
-	if (path_googletest_repository)
-		set(path_include_gtest "${path_googletest_repository}/googletest/include")
-		set(path_include_gmock "${path_googletest_repository}/googlemock/include")
-		message(STATUS "Google Test repository at ${path_googletest_repository}")
-		message(STATUS "path_include_gtest: ${path_include_gtest}")
-		message(STATUS "path_include_gmock: ${path_include_gmock}")
-		set(have_gtest 1)
-		add_subdirectory(${path_googletest_repository} googletest)
-	else()
-		message(FATAL_ERROR "Google Test required but not found")
-	endif()
-endif()
+if(BUILD_TESTING)
+    # Download and  build gtest and gmock
+    if (CMAKE_VERSION VERSION_LESS 3.2)
+        set(UPDATE_DISCONNECTED_IF_AVAILABLE "")
+    else()
+        set(UPDATE_DISCONNECTED_IF_AVAILABLE "UPDATE_DISCONNECTED 1")
+    endif()
 
-function(add_gtest_to_target tgt)
-	if (have_gtest)
-		add_dependencies(${tgt} gtest)
-		target_compile_definitions(${tgt} PRIVATE HAVE_GTEST=1)
-		target_include_directories(${tgt} PRIVATE ${path_include_gtest} ${path_include_gmock})
-		target_link_libraries(${tgt} gtest_main gmock_main)
-	endif()
-endfunction()
+    include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/DownloadProject.cmake)
+    download_project(PROJ                googletest
+                     GIT_REPOSITORY      https://github.com/google/googletest.git
+                     GIT_TAG             release-1.8.0
+                     ${UPDATE_DISCONNECTED_IF_AVAILABLE})
+
+    # Prevent GoogleTest from overriding our compiler/linker options
+    # when building with Visual Studio
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+
+    function(add_gtest_to_target tgt)
+        add_dependencies(${tgt} gtest)
+        target_link_libraries(${tgt} gtest gmock)
+    endfunction()
+endif(BUILD_TESTING)

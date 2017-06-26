@@ -14,7 +14,13 @@ find_path(path_include_streaming_data_types NAMES schemas/f141_epics_nt.fbs HINT
 ${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types
 )
 if (NOT path_include_streaming_data_types)
-	message(FATAL_ERROR "Can not find_path() the streaming-data-types repository")
+	find_path(path_include_streaming_data_types NAMES schemas/f141_epics_nt.fbs HINTS
+			  # Also try with the common .git suffix:
+			  ${CMAKE_CURRENT_SOURCE_DIR}/../../streaming-data-types.git
+			  )
+	if (NOT path_include_streaming_data_types)
+		message(FATAL_ERROR "Can not find_path() the streaming-data-types repository")
+	endif()
 endif()
 message(STATUS "path_include_streaming_data_types ${path_include_streaming_data_types}")
 

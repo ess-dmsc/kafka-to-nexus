@@ -94,19 +94,26 @@ Command to exit the file writer:
 - git
 - flatbuffers (headers and working `flatc`)
 - librdkafka
-- rapidjson
-- hdf5
-- libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
+- hdf5 1.10
 - `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
   and `streaming-data-types` are in the same directory)
 - pcre2 (`yum install pcre2 pcre2-devel` or `brew install pcre2`)
   (Needed because we support GCC < 4.9 where std regex is incomplete)
 - Optional `graylog_logger`
 
+The following dependencies are automatically downloaded by CMake:
+- libfmt
+- rapidjson
+- googletest
 
 ### Build
 
 As usual `cmake`, `make`.
+
+To enable building unit tests use the `BUILD_TESTING` cmake flag:
+```
+cmake -DBUILD_TESTING
+```
 
 
 ### Usage of your custom builds of the dependencies
@@ -118,17 +125,10 @@ environment variables here:
 
 - `flatbuffers`: `ENV{flatbuffers_dir}`
 
-- `rapidjson`: `ENV{rapidjson_dir}`
-
 - HDF5: `ENV{hdf5_dir}`
 
 - `graylog_logger`: `ENV{graylog_logger_dir}`
   - cmake will report if it is found
-
-- `libfmt`: `ENV{fmt_dir}`
-  - we expect `ENV{fmt_dir}/include/fmt/[format.cc, format.h]`
-
-- `gtest`: `ENV{googletest_dir}`
 
 
 ## Flatbuffer Schema Plugins
