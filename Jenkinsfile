@@ -1,4 +1,14 @@
 node('kafka-to-nexus') {
+    stage("Get artifacts") {
+        step([
+            $class: 'CopyArtifact',
+            filter: 'graylog-logger.tar.gz',
+            fingerprintArtifacts: true,
+            projectName: 'ess-dmsc/graylog-logger/master',
+            target: 'artifacts'
+        ])
+    }
+
     dir("code") {
         stage("Checkout") {
             checkout scm
