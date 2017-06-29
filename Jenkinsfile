@@ -7,6 +7,9 @@ node('kafka-to-nexus') {
             projectName: 'ess-dmsc/graylog-logger/master',
             target: 'artifacts'
         ])
+        dir("artifacts") {
+            sh "tar xzf graylog-logger.tar.gz"
+        }
     }
 
     dir("code") {
