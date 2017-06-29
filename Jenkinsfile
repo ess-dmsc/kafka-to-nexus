@@ -38,6 +38,8 @@ node('kafka-to-nexus') {
         stage("Archive") {
             sh "rm -rf file-writer; mkdir file-writer"
             sh "cp kafka-to-nexus send-command file-writer/"
+            sh "rm -rf file-writer/libs; mkdir file-writer/libs"
+            sh "cp ../artifacts/graylog-logger/usr/local/lib/libgraylog_logger.so file-writer/libs/"
             sh "tar czf file-writer.tar.gz file-writer"
             archiveArtifacts 'file-writer.tar.gz'
         }
