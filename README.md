@@ -201,9 +201,8 @@ Start the `gtest` based test suite via:
 
 [file-writer-2016-10-28](https://ess-ics.atlassian.net/wiki/download/attachments/48202445/BrightNeXus.pdf?version=1&modificationDate=1477659873237&cacheVersion=1&api=v2)
 
-The overall design of the file writer is described in
-[NeXusFileWriterDesign](NeXusFileWriterDesign.md) (Mark). It is used as a sort
-of "guideline".
+Very outdated but archived design of the file writer is described in
+[NeXusFileWriterDesign](NeXusFileWriterDesign.md) (Mark).
 
 ## Graph of dependencies and data flow
 
