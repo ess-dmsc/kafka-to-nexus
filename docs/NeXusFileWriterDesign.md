@@ -1,5 +1,7 @@
 # BrightnESS NeXus File Writer
 
+Archived, this is outdated with respect to the technical information.
+
 November 2016: This is a design study for how the thing could operate.
 
 ## Requirements and Project Status
