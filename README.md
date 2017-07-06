@@ -195,14 +195,25 @@ Start the `gtest` based test suite via:
 ```
 
 
+## Performance
+
+- [Profiling ev42 HDF writer module](docs/profile-ev42.md)
+
+
 ## Documents:
 
 [Nexus-for-ESS](https://ess-ics.atlassian.net/wiki/display/DMSC/NeXus+for+ESS)
 
 [file-writer-2016-10-28](https://ess-ics.atlassian.net/wiki/download/attachments/48202445/BrightNeXus.pdf?version=1&modificationDate=1477659873237&cacheVersion=1&api=v2)
 
-Very outdated but archived design of the file writer is described in
-[NeXusFileWriterDesign](NeXusFileWriterDesign.md) (Mark).
+
+## Archive
+
+These documents are outdated regarding technical documentation, but linked here
+for archival:
+
+- [NeXusFileWriterDesign](docs/NeXusFileWriterDesign.md) (Mark).
+
 
 ## Graph of dependencies and data flow
 
