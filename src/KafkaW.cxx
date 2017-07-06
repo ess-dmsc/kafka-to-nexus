@@ -22,7 +22,6 @@ BrokerOpt::BrokerOpt() {
   conf_ints = {
       {"metadata.request.timeout.ms", 2 * 1000},
       {"socket.timeout.ms", 2 * 1000},
-      //{"session.timeout.ms",                        2 * 1000},
       {"message.max.bytes", 23 * 1024 * 1024},
       {"fetch.message.max.bytes", 23 * 1024 * 1024},
       {"receive.message.max.bytes", 23 * 1024 * 1024},
@@ -30,34 +29,11 @@ BrokerOpt::BrokerOpt() {
       {"queue.buffering.max.ms", 50},
       {"queue.buffering.max.kbytes", 800 * 1024},
       {"batch.num.messages", 100 * 1000},
-      //{"socket.send.buffer.bytes",          23 * 1024 * 1024},
-      //{"socket.receive.buffer.bytes",       23 * 1024 * 1024},
       {"coordinator.query.interval.ms", 2 * 1000},
       {"heartbeat.interval.ms", 500},
       {"statistics.interval.ms", 600 * 1000},
-      //{"message.timeout.ms",                            6000},
-      /*
-      {"message.max.bytes",                 23 * 1024 * 1024},
-
-      // check again these two?
-      {"fetch.message.max.bytes",            3 * 1024 * 1024},
-      {"receive.message.max.bytes",          3 * 1024 * 1024},
-
-      {"queue.buffering.max.messages",       2 * 1000 * 1000},
-      {"queue.buffering.max.ms",                        1000},
-
-      // Total MessageSet size limited by message.max.bytes
-      {"batch.num.messages",                      100 * 1000},
-      {"socket.send.buffer.bytes",          23 * 1024 * 1024},
-      {"socket.receive.buffer.bytes",       23 * 1024 * 1024},
-
-      // Consumer
-      //{"queued.min.messages", "1"},
-
-      */
   };
   conf_strings = {
-      //{"group.id",                      ""},
       {"api.version.request", "true"},
   };
 }
@@ -192,23 +168,9 @@ std::unique_ptr<Msg> PollStatus::is_Msg() {
 }
 
 Consumer::Consumer(BrokerOpt opt) : opt(opt) {
-  // on_rebalance_start = nullptr;
-  // on_rebalance_assign = nullptr;
   init();
   id = g_kafka_instance_count++;
 }
-
-/*
-Consumer::Consumer(Consumer && x) {
-        using std::swap;
-        swap(on_rebalance_assign, x.on_rebalance_assign);
-        swap(on_rebalance_start, x.on_rebalance_start);
-        swap(rk, x.rk);
-        swap(opt, x.opt);
-        swap(plist, x.plist);
-        swap(id, x.id);
-}
-*/
 
 Consumer::~Consumer() {
   LOG(7, "~Consumer()");
@@ -265,7 +227,6 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
 int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
                        void *opaque) {
   LOG(4, "INFO stats_cb {}  {:.{}}", json_size, json, json_size);
-  // TODO
   // What does Kafka want us to return from this callback?
   return 0;
 }
@@ -306,14 +267,6 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
       LOG(2, "rebalance error: {}  {}", rd_kafka_err2name(err2),
           rd_kafka_err2str(err2));
     }
-    /*
-    LOG(4, "commit offsets");
-    err2 = rd_kafka_commit(rk, plist, 0);
-    if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
-            LOG(0, "commit error: {}  {}", rd_kafka_err2name(err2),
-    rd_kafka_err2str(err2));
-    }
-    */
     break;
   default:
     LOG(6, "cb_rebalance failure and revoke: {}", rd_kafka_err2str(err));
@@ -363,8 +316,6 @@ void Consumer::init() {
 }
 
 void Consumer::add_topic(std::string topic) {
-  // rd_kafka_topic_partition_list_set_offset(plist, opt.topic.c_str(),
-  // partition, RD_KAFKA_OFFSET_BEGINNING);
   LOG(7, "Consumer::add_topic  {}", topic);
   int partition = RD_KAFKA_PARTITION_UA;
   rd_kafka_topic_partition_list_add(plist, topic.c_str(), partition);
@@ -397,7 +348,6 @@ PollStatus Consumer::poll() {
 
   auto ret = PollStatus::Empty();
 
-  // LOG(4, "rd_kafka_consumer_poll");
   auto msg = rd_kafka_consumer_poll(rk, opt.poll_timeout_ms);
 
   if (msg == nullptr) {
@@ -407,15 +357,10 @@ PollStatus Consumer::poll() {
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   std::unique_ptr<Msg> m2(new Msg);
   m2->kmsg = msg;
-  // auto topic_name = rd_kafka_topic_name(msg->rkt);
-  // int partition = msg->partition;
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    // LOG(7, "Consuming offset: {}  partition: {}", m2->offset(),
-    // m2->partition());
     return PollStatus::make_Msg(std::move(m2));
   } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
     // Just an advisory.  msg contains which partition it is.
-    // LOG(7, "RD_KAFKA_RESP_ERR__PARTITION_EOF");
     return PollStatus::EOP();
   } else if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
     LOG(4, "RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN");
