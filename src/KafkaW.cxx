@@ -5,6 +5,14 @@
 
 namespace KafkaW {
 
+using std::unique_ptr;
+using std::shared_ptr;
+using std::array;
+using std::vector;
+using std::string;
+using std::atomic;
+using std::move;
+
 std::atomic<int> g_kafka_instance_count;
 
 using std::move;
@@ -22,7 +30,6 @@ BrokerOpt::BrokerOpt() {
   conf_ints = {
       {"metadata.request.timeout.ms", 2 * 1000},
       {"socket.timeout.ms", 2 * 1000},
-      //{"session.timeout.ms",                        2 * 1000},
       {"message.max.bytes", 23 * 1024 * 1024},
       {"fetch.message.max.bytes", 23 * 1024 * 1024},
       {"receive.message.max.bytes", 23 * 1024 * 1024},
@@ -30,34 +37,11 @@ BrokerOpt::BrokerOpt() {
       {"queue.buffering.max.ms", 50},
       {"queue.buffering.max.kbytes", 800 * 1024},
       {"batch.num.messages", 100 * 1000},
-      //{"socket.send.buffer.bytes",          23 * 1024 * 1024},
-      //{"socket.receive.buffer.bytes",       23 * 1024 * 1024},
       {"coordinator.query.interval.ms", 2 * 1000},
       {"heartbeat.interval.ms", 500},
       {"statistics.interval.ms", 600 * 1000},
-      //{"message.timeout.ms",                            6000},
-      /*
-      {"message.max.bytes",                 23 * 1024 * 1024},
-
-      // check again these two?
-      {"fetch.message.max.bytes",            3 * 1024 * 1024},
-      {"receive.message.max.bytes",          3 * 1024 * 1024},
-
-      {"queue.buffering.max.messages",       2 * 1000 * 1000},
-      {"queue.buffering.max.ms",                        1000},
-
-      // Total MessageSet size limited by message.max.bytes
-      {"batch.num.messages",                      100 * 1000},
-      {"socket.send.buffer.bytes",          23 * 1024 * 1024},
-      {"socket.receive.buffer.bytes",       23 * 1024 * 1024},
-
-      // Consumer
-      //{"queued.min.messages", "1"},
-
-      */
   };
   conf_strings = {
-      //{"group.id",                      ""},
       {"api.version.request", "true"},
   };
 }
@@ -192,23 +176,9 @@ std::unique_ptr<Msg> PollStatus::is_Msg() {
 }
 
 Consumer::Consumer(BrokerOpt opt) : opt(opt) {
-  // on_rebalance_start = nullptr;
-  // on_rebalance_assign = nullptr;
   init();
   id = g_kafka_instance_count++;
 }
-
-/*
-Consumer::Consumer(Consumer && x) {
-        using std::swap;
-        swap(on_rebalance_assign, x.on_rebalance_assign);
-        swap(on_rebalance_start, x.on_rebalance_start);
-        swap(rk, x.rk);
-        swap(opt, x.opt);
-        swap(plist, x.plist);
-        swap(id, x.id);
-}
-*/
 
 Consumer::~Consumer() {
   LOG(7, "~Consumer()");
@@ -265,7 +235,6 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
 int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
                        void *opaque) {
   LOG(4, "INFO stats_cb {}  {:.{}}", json_size, json, json_size);
-  // TODO
   // What does Kafka want us to return from this callback?
   return 0;
 }
@@ -306,14 +275,6 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
       LOG(2, "rebalance error: {}  {}", rd_kafka_err2name(err2),
           rd_kafka_err2str(err2));
     }
-    /*
-    LOG(4, "commit offsets");
-    err2 = rd_kafka_commit(rk, plist, 0);
-    if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
-            LOG(0, "commit error: {}  {}", rd_kafka_err2name(err2),
-    rd_kafka_err2str(err2));
-    }
-    */
     break;
   default:
     LOG(6, "cb_rebalance failure and revoke: {}", rd_kafka_err2str(err));
@@ -363,8 +324,6 @@ void Consumer::init() {
 }
 
 void Consumer::add_topic(std::string topic) {
-  // rd_kafka_topic_partition_list_set_offset(plist, opt.topic.c_str(),
-  // partition, RD_KAFKA_OFFSET_BEGINNING);
   LOG(7, "Consumer::add_topic  {}", topic);
   int partition = RD_KAFKA_PARTITION_UA;
   rd_kafka_topic_partition_list_add(plist, topic.c_str(), partition);
@@ -397,7 +356,6 @@ PollStatus Consumer::poll() {
 
   auto ret = PollStatus::Empty();
 
-  // LOG(4, "rd_kafka_consumer_poll");
   auto msg = rd_kafka_consumer_poll(rk, opt.poll_timeout_ms);
 
   if (msg == nullptr) {
@@ -407,15 +365,10 @@ PollStatus Consumer::poll() {
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   std::unique_ptr<Msg> m2(new Msg);
   m2->kmsg = msg;
-  // auto topic_name = rd_kafka_topic_name(msg->rkt);
-  // int partition = msg->partition;
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    // LOG(7, "Consuming offset: {}  partition: {}", m2->offset(),
-    // m2->partition());
     return PollStatus::make_Msg(std::move(m2));
   } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
     // Just an advisory.  msg contains which partition it is.
-    // LOG(7, "RD_KAFKA_RESP_ERR__PARTITION_EOF");
     return PollStatus::EOP();
   } else if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
     LOG(4, "RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN");
@@ -507,24 +460,26 @@ void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
 Producer::~Producer() {
   LOG(7, "~Producer");
   if (rk) {
-    int ms = 1;
-    uint32_t n0 = 0;
+    int timeout_ms = 1;
+    uint32_t outq_len = 0;
     while (true) {
-      n0 = rd_kafka_outq_len(rk);
-      if (n0 == 0)
+      outq_len = rd_kafka_outq_len(rk);
+      if (outq_len == 0) {
         break;
-      auto n1 = rd_kafka_poll(rk, ms);
-      if (n1 > 0) {
-        LOG(7, "rd_kafka_poll handled: {}  outq before: {}  timeout: {}", n1,
-            n0, ms);
       }
-      ms = ms << 1;
-      if (ms > 8 * 1024)
+      auto events_handled = rd_kafka_poll(rk, timeout_ms);
+      if (events_handled > 0) {
+        LOG(7, "rd_kafka_poll handled: {}  outq before: {}  timeout: {}",
+            events_handled, outq_len, timeout_ms);
+      }
+      timeout_ms = timeout_ms << 1;
+      if (timeout_ms > 8 * 1024) {
         break;
+      }
     }
-    if (n0 > 0) {
+    if (outq_len > 0) {
       LOG(3, "Kafka out queue still not empty: {}  destroy producer anyway.",
-          n0);
+          outq_len);
     }
     LOG(7, "rd_kafka_destroy");
     rd_kafka_destroy(rk);
@@ -579,24 +534,23 @@ Producer::Producer(Producer &&x) {
 }
 
 void Producer::poll() {
-  int n1 = rd_kafka_poll(rk, opt.poll_timeout_ms);
+  int events_handled = rd_kafka_poll(rk, opt.poll_timeout_ms);
   int level = 7;
-  if (n1 == 0) {
+  if (events_handled == 0) {
     level = 8;
   }
   LOG(level, "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
-      id, opt.address, n1, outq());
+      id, opt.address, events_handled, outq());
   if (log_level >= 8) {
     rd_kafka_dump(stdout, rk);
   }
-  stats.poll_served += n1;
-  stats.outq = outq();
+  stats.poll_served += events_handled;
+  stats.out_queue = outq();
 }
 
 void Producer::poll_while_outq() {
   while (outq() > 0) {
-    int n1 = rd_kafka_poll(rk, opt.poll_timeout_ms);
-    stats.poll_served += n1;
+    stats.poll_served += rd_kafka_poll(rk, opt.poll_timeout_ms);
   }
 }
 
@@ -617,7 +571,7 @@ ProducerStats::ProducerStats(ProducerStats const &x) {
   poll_served = x.poll_served.load();
   msg_too_large = x.msg_too_large.load();
   produced_bytes = x.produced_bytes.load();
-  outq = x.outq.load();
+  out_queue = x.out_queue.load();
 }
 
 ProducerTopic::~ProducerTopic() {
@@ -672,8 +626,7 @@ int ProducerTopic::produce(uchar *msg_data, int msg_size, bool print_err) {
   std::copy(msg_data, msg_data + msg_size, std::back_inserter(p->v));
   p->finalize();
   unique_ptr<Producer::Msg> m(p);
-  int x = produce(m);
-  return x;
+  return produce(m);
 }
 
 int ProducerTopic::produce(unique_ptr<Producer::Msg> &msg) {
