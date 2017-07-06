@@ -8,15 +8,8 @@
 #include <vector>
 
 namespace KafkaW {
-
+// Want to expose this typedef also for users of this namespace
 using uchar = unsigned char;
-using std::unique_ptr;
-using std::shared_ptr;
-using std::array;
-using std::vector;
-using std::string;
-using std::atomic;
-using std::move;
 }
 
 #if HAVE_KAFKAW_INSPECT
@@ -124,15 +117,15 @@ public:
 };
 
 struct ProducerStats {
-  atomic<uint64_t> produced{0};
-  atomic<uint32_t> produce_fail{0};
-  atomic<uint32_t> local_queue_full{0};
-  atomic<uint64_t> produce_cb{0};
-  atomic<uint64_t> produce_cb_fail{0};
-  atomic<uint64_t> poll_served{0};
-  atomic<uint64_t> msg_too_large{0};
-  atomic<uint64_t> produced_bytes{0};
-  atomic<uint32_t> outq{0};
+  std::atomic<uint64_t> produced{0};
+  std::atomic<uint32_t> produce_fail{0};
+  std::atomic<uint32_t> local_queue_full{0};
+  std::atomic<uint64_t> produce_cb{0};
+  std::atomic<uint64_t> produce_cb_fail{0};
+  std::atomic<uint64_t> poll_served{0};
+  std::atomic<uint64_t> msg_too_large{0};
+  std::atomic<uint64_t> produced_bytes{0};
+  std::atomic<uint32_t> outq{0};
   ProducerStats();
   ProducerStats(ProducerStats const &);
 };
@@ -186,7 +179,7 @@ public:
   ProducerTopic(std::shared_ptr<Producer> producer, std::string name);
   ~ProducerTopic();
   int produce(uchar *msg_data, int msg_size, bool print_err = false);
-  int produce(unique_ptr<Producer::Msg> &msg);
+  int produce(std::unique_ptr<Producer::Msg> &msg);
   // Currently it's nice to have access to these for statistics:
   std::shared_ptr<Producer> producer;
   rd_kafka_topic_t *rkt = nullptr;

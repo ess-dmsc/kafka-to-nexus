@@ -5,6 +5,14 @@
 
 namespace KafkaW {
 
+using std::unique_ptr;
+using std::shared_ptr;
+using std::array;
+using std::vector;
+using std::string;
+using std::atomic;
+using std::move;
+
 std::atomic<int> g_kafka_instance_count;
 
 using std::move;
