@@ -158,6 +158,10 @@ public:
 
     using DT = uint32_t;
     int SP = 32 * 1024;
+    if (auto x = get_int(&g_config_file, "unit_test.test_file_size")) {
+      LOG(4, "unit_test.test_file_size: {}", x.v);
+      SP = x.v;
+    }
     int const feed_msgs_times = 1;
     int const seed = 2;
     std::mt19937 rnd_nn;
