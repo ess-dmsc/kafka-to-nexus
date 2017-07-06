@@ -125,7 +125,7 @@ struct ProducerStats {
   std::atomic<uint64_t> poll_served{0};
   std::atomic<uint64_t> msg_too_large{0};
   std::atomic<uint64_t> produced_bytes{0};
-  std::atomic<uint32_t> outq{0};
+  std::atomic<uint32_t> out_queue{0};
   ProducerStats();
   ProducerStats(ProducerStats const &);
 };

@@ -545,7 +545,7 @@ void Producer::poll() {
     rd_kafka_dump(stdout, rk);
   }
   stats.poll_served += events_handled;
-  stats.outq = outq();
+  stats.out_queue = outq();
 }
 
 void Producer::poll_while_outq() {
@@ -571,7 +571,7 @@ ProducerStats::ProducerStats(ProducerStats const &x) {
   poll_served = x.poll_served.load();
   msg_too_large = x.msg_too_large.load();
   produced_bytes = x.produced_bytes.load();
-  outq = x.outq.load();
+  out_queue = x.out_queue.load();
 }
 
 ProducerTopic::~ProducerTopic() {
