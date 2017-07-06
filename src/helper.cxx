@@ -1,12 +1,8 @@
 #include "helper.h"
 #include <array>
 #include <fstream>
-#include <string>
 #include <unistd.h>
-#include <vector>
-//#include <algorithm>
 
-#include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 
