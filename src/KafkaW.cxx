@@ -618,8 +618,7 @@ int ProducerTopic::produce(uchar *msg_data, int msg_size, bool print_err) {
   std::copy(msg_data, msg_data + msg_size, std::back_inserter(p->v));
   p->finalize();
   unique_ptr<Producer::Msg> m(p);
-  int x = produce(m);
-  return x;
+  return produce(m);
 }
 
 int ProducerTopic::produce(unique_ptr<Producer::Msg> &msg) {
