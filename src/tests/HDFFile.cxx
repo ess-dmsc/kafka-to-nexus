@@ -129,6 +129,14 @@ public:
     using std::vector;
     using std::string;
     MainOpt main_opt;
+    bool do_verification = true;
+    auto &g_config_file = g_main_opt.load()->config_file;
+
+    if (auto x = get_int(&g_config_file, "unit_test.hdf.do_verification")) {
+      do_verification = x.v == 1;
+      LOG(4, "do_verification: {}", do_verification);
+    }
+
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
@@ -149,8 +157,8 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     using DT = uint32_t;
-    int const SP = 4 * 1024;
-    int const feed_msgs_times = 5;
+    int SP = 32 * 1024;
+    int const feed_msgs_times = 1;
     int const seed = 2;
     std::mt19937 rnd_nn;
 
@@ -205,7 +213,9 @@ public:
       LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
     }
 
-    return;
+    if (!do_verification) {
+      return;
+    }
 
     herr_t err;
 
