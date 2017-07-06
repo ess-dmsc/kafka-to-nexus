@@ -1,0 +1,33 @@
+---
+
+- name: Make sure rapidjson is present
+  stat:
+    path: "{{rapidjson}}"
+  register: st
+
+- name: Download rapidjson
+  git:
+    repo: "{{rapidjson_src}}"
+    dest: "{{sources}}/rapidjson-{{rapidjson_version}}"
+    force: yes
+  when: not st.stat.exists
+
+- name: Create build folder
+  file:
+    path: "{{builds}}/rapidjson-{{rapidjson_version}}"
+    state: directory
+  when: not st.stat.exists
+
+- name: Configure rapidjson
+  command: "cmake -DCMAKE_INSTALL_PREFIX={{rapidjson}} {{sources}}/rapidjson-{{rapidjson_version}}"
+  args:
+    chdir: "{{builds}}/rapidjson-{{rapidjson_version}}"
+  when: not st.stat.exists
+
+- name: Compile and install rapidjson
+  make:
+    target: install
+    chdir: "{{builds}}/rapidjson-{{rapidjson_version}}"
+    params:
+      NUM_THREADS: 4
+  when: not st.stat.exists

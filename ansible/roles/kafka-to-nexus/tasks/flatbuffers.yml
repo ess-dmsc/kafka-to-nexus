@@ -1,0 +1,33 @@
+---
+
+- name: Make sure flatbuffers is present
+  stat:
+    path: "{{flatbuffers}}"
+  register: st
+
+- name: Download flatbuffers
+  git:
+    repo: "{{flatbuffers_src}}"
+    dest: "{{sources}}/flatbuffers-{{flatbuffers_version}}"
+    version: "{{flatbuffers_version}}"
+  when: not st.stat.exists
+
+- name: Create build folder
+  file:
+    path: "{{builds}}/flatbuffers-{{flatbuffers_version}}"
+    state: directory
+  when: not st.stat.exists
+
+- name: Configure flatbuffers
+  command: "cmake -DCMAKE_INSTALL_PREFIX={{flatbuffers}} {{sources}}/flatbuffers-{{flatbuffers_version}}"
+  args:
+    chdir: "{{builds}}/flatbuffers-{{flatbuffers_version}}"
+  when: not st.stat.exists
+
+- name: Compile and install flatbuffers
+  make:
+    target: install
+    chdir: "{{builds}}/flatbuffers-{{flatbuffers_version}}"
+    params:
+      NUM_THREADS: 4
+  when: not st.stat.exists

@@ -1,0 +1,4 @@
+[writer]
+ess01.psi.ch
+
+#192.168.10.12 ansible_user=vagrant ansible_ssh_pass=4N518L3

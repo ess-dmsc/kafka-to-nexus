@@ -1,0 +1,34 @@
+---
+
+- name: install flatbuffers
+  include: flatbuffers.yml
+  async: 60
+  poll: 10
+
+- name: make sure rdkafka is installed
+  include: rdkafka.yml
+  async: 60
+  poll: 10
+
+- name: make sure rapidjson is installed
+  include: rapidjson.yml
+  async: 60
+  poll: 10
+
+- name: make sure streaming data types are installed
+  include: streaming_data_types.yml
+  async: 60
+  poll: 10
+
+- name: make sure hdf5 is installed
+  include: hdf5.yml
+  async: 60
+  poll: 10
+
+- name: make sure fmt is installed
+  include: fmt.yml
+  async: 60
+  poll: 10
+
+- name: make sure kafka-to-nexus is installed
+  include: kafka-to-nexus.yml

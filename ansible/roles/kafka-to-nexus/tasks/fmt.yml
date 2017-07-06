@@ -1,0 +1,33 @@
+---
+
+- stat:
+    path: "{{fmt}}"
+  register: st
+
+- name: Download fmt
+  git:
+    repo: "{{fmt_src}}"
+    dest: "{{sources}}/fmt-{{fmt_version}}"
+    version: "{{fmt_version}}"
+  when: not st.stat.exists
+
+- name: Create build folder
+  file:
+    path: "{{builds}}/fmt-{{fmt_version}}"
+    state: directory
+  when: not st.stat.exists
+
+- name: Configure fmt
+  command: "cmake -DBUILD_SHARED_LIBS=TRUE -DCMAKE_INSTALL_PREFIX={{fmt}} {{sources}}/fmt-{{fmt_version}}"
+  args:
+    chdir: "{{builds}}/fmt-{{fmt_version}}"
+  when: not st.stat.exists
+
+- name: Compile and install fmt
+  make:
+    target: install
+    chdir: "{{builds}}/fmt-{{fmt_version}}"
+    params:
+      NUM_THREADS: 4
+  when: not st.stat.exists
+

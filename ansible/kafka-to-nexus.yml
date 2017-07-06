@@ -1,0 +1,3 @@
+- hosts: writer
+  roles:
+    - kafka-to-nexus
