@@ -452,24 +452,26 @@ void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
 Producer::~Producer() {
   LOG(7, "~Producer");
   if (rk) {
-    int ms = 1;
-    uint32_t n0 = 0;
+    int timeout_ms = 1;
+    uint32_t outq_len = 0;
     while (true) {
-      n0 = rd_kafka_outq_len(rk);
-      if (n0 == 0)
+      outq_len = rd_kafka_outq_len(rk);
+      if (outq_len == 0) {
         break;
-      auto n1 = rd_kafka_poll(rk, ms);
-      if (n1 > 0) {
-        LOG(7, "rd_kafka_poll handled: {}  outq before: {}  timeout: {}", n1,
-            n0, ms);
       }
-      ms = ms << 1;
-      if (ms > 8 * 1024)
+      auto events_handled = rd_kafka_poll(rk, timeout_ms);
+      if (events_handled > 0) {
+        LOG(7, "rd_kafka_poll handled: {}  outq before: {}  timeout: {}",
+            events_handled, outq_len, timeout_ms);
+      }
+      timeout_ms = timeout_ms << 1;
+      if (timeout_ms > 8 * 1024) {
         break;
+      }
     }
-    if (n0 > 0) {
+    if (outq_len > 0) {
       LOG(3, "Kafka out queue still not empty: {}  destroy producer anyway.",
-          n0);
+          outq_len);
     }
     LOG(7, "rd_kafka_destroy");
     rd_kafka_destroy(rk);
@@ -524,24 +526,23 @@ Producer::Producer(Producer &&x) {
 }
 
 void Producer::poll() {
-  int n1 = rd_kafka_poll(rk, opt.poll_timeout_ms);
+  int events_handled = rd_kafka_poll(rk, opt.poll_timeout_ms);
   int level = 7;
-  if (n1 == 0) {
+  if (events_handled == 0) {
     level = 8;
   }
   LOG(level, "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
-      id, opt.address, n1, outq());
+      id, opt.address, events_handled, outq());
   if (log_level >= 8) {
     rd_kafka_dump(stdout, rk);
   }
-  stats.poll_served += n1;
+  stats.poll_served += events_handled;
   stats.outq = outq();
 }
 
 void Producer::poll_while_outq() {
   while (outq() > 0) {
-    int n1 = rd_kafka_poll(rk, opt.poll_timeout_ms);
-    stats.poll_served += n1;
+    stats.poll_served += rd_kafka_poll(rk, opt.poll_timeout_ms);
   }
 }
 
