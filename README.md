@@ -197,9 +197,9 @@ Start the `gtest` based test suite via:
 
 ## Documents:
 
-[Nexus-for-ESS](https://ess-ics.atlassian.net/wiki/display/DMSC/NeXus+for+ESS)
+[Nexus-for-ESS](https://confluence.esss.lu.se/display/DMSC/NeXus+for+ESS)
 
-[file-writer-2016-10-28](https://ess-ics.atlassian.net/wiki/download/attachments/48202445/BrightNeXus.pdf?version=1&modificationDate=1477659873237&cacheVersion=1&api=v2)
+[file-writer-2016-10-28](https://confluence.esss.lu.se/download/attachments/48202445/BrightNeXus.pdf?version=1&modificationDate=1477659873237&api=v2)
 
 The overall design of the file writer is described in
 [NeXusFileWriterDesign](NeXusFileWriterDesign.md) (Mark). It is used as a sort
