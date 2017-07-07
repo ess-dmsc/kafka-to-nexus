@@ -23,6 +23,18 @@ using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
 
+template <typename T> hid_t nat_type();
+template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
+template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
+template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
+template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
+template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
+template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
+template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
+template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
+template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
+template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
+
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -136,7 +148,6 @@ public:
     string topic;
     string source;
     int seed = 0;
-    int msg_size = 1024;
     std::mt19937 rnd;
     vector<FlatBufs::ev42::fb> fbs;
     vector<FileWriter::Msg> msgs;
@@ -144,15 +155,20 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(int n) {
-      LOG(4, "generating {} {}...", topic, source);
+    void pregenerate(int n, int n_events_per_message) {
+      // LOG(4, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
-        fbs.push_back(synth.next(rnd() >> 24));
+        // Number of events per message:
+        // size_t n_ele = rnd() >> 24;
+        // Currently fixed, have to adapt verification code first.
+        size_t n_ele = n_events_per_message;
+        fbs.push_back(synth.next(n_ele));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
                                        (int32_t)fb.builder->GetSize()});
+        // LOG(4, "GetSize: {}", fb.builder->GetSize());
       }
     }
   };
@@ -171,20 +187,36 @@ public:
       LOG(4, "do_verification: {}", do_verification);
     }
 
-    int n_msgs_per_source = 2;
+    int n_msgs_per_source = 1;
     if (auto x = get_int(&g_config_file, "unit_test.test_file_size")) {
       LOG(4, "unit_test.test_file_size: {}", x.v);
       n_msgs_per_source = x.v;
     }
 
+    int n_sources = 1;
+    if (auto x = get_int(&g_config_file, "unit_test.n_sources")) {
+      LOG(4, "unit_test.n_sources: {}", x.v);
+      n_sources = x.v;
+    }
+
+    int n_events_per_message = 1;
+    if (auto x = get_int(&g_config_file, "unit_test.n_events_per_message")) {
+      LOG(4, "unit_test.n_events_per_message: {}", x.v);
+      n_events_per_message = x.v;
+    }
+
     vector<SourceDataGen> sources;
-    {
+    for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
       auto &s = sources.back();
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
-      s.source = "for_example_motor01";
-      s.pregenerate(n_msgs_per_source);
+      s.source = fmt::format("for_example_motor_{:04}", i1);
+      s.pregenerate(n_msgs_per_source, n_events_per_message);
+    }
+
+    for (auto &source : sources) {
+      // LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
     }
 
     rapidjson::Document json_command;
@@ -206,7 +238,7 @@ public:
         v2.AddMember("topic", StringRef(source.topic.c_str()), a);
         v2.AddMember("source", StringRef(source.source.c_str()), a);
         v2.AddMember("nexus_path",
-                     StringRef(fmt::format("/{}", source.source).c_str()), a);
+                     Value(fmt::format("/{}", source.source).c_str(), a), a);
         streams.PushBack(v2, a);
       }
       j.AddMember("nexus_structure", nexus_structure, a);
@@ -221,6 +253,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
+    // LOG(4, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -253,18 +286,26 @@ public:
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
-      for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
-        for (auto &source : sources) {
-          for (int i2 = 0;
-               i2 < n_msgs_per_batch && source.n_fed < source.msgs.size();
-               ++i2) {
-            auto &msg = source.msgs[source.n_fed++];
-            if (false) {
-              auto v = binary_to_hex(msg.data, msg.size);
-              LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+      for (;;) {
+        bool change = false;
+        for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
+          for (auto &source : sources) {
+            for (int i2 = 0;
+                 i2 < n_msgs_per_batch && source.n_fed < source.msgs.size();
+                 ++i2) {
+              auto &msg = source.msgs[source.n_fed];
+              if (false) {
+                auto v = binary_to_hex(msg.data, msg.size);
+                LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+              }
+              fwt->demuxers().at(0).process_message(msg.data, msg.size);
+              source.n_fed++;
+              change = true;
             }
-            fwt->demuxers().at(0).process_message(msg.data, msg.size);
           }
+        }
+        if (!change) {
+          break;
         }
       }
       auto t2 = CLK::now();
@@ -289,16 +330,60 @@ public:
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
 
+    vector<DT> data((size_t)32000);
+
     for (auto &source : sources) {
       string base_path = "/";
       string group_path = base_path + source.source;
 
       auto g0 = H5Gopen(fid, group_path.c_str(), H5P_DEFAULT);
-      ASSERT_GE(g0, 0);
+      ASSERT_GT(g0, 0);
       H5Gclose(g0);
 
       auto ds = H5Dopen2(fid, (group_path + "/event_id").c_str(), H5P_DEFAULT);
-      ASSERT_GE(ds, 1);
+      ASSERT_GT(ds, 0);
+
+      auto dt = H5Dget_type(ds);
+      ASSERT_GT(dt, 0);
+      ASSERT_EQ(H5Tget_size(dt), sizeof(DT));
+
+      auto dsp = H5Dget_space(ds);
+      ASSERT_GT(dsp, 0);
+      ASSERT_EQ(H5Sis_simple(dsp), 1);
+      auto nn = H5Sget_simple_extent_npoints(dsp);
+
+      using A = array<hsize_t, 1>;
+      A sini = {{(hsize_t)n_events_per_message}};
+      A smax = {{(hsize_t)n_events_per_message}};
+      A count = {{(hsize_t)n_events_per_message}};
+      A start0 = {{(hsize_t)0}};
+      auto mem = H5Screate(H5S_SIMPLE);
+      err = H5Sset_extent_simple(mem, sini.size(), sini.data(), smax.data());
+      ASSERT_GE(err, 0);
+      err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, start0.data(), nullptr,
+                                count.data(), nullptr);
+      ASSERT_GE(err, 0);
+
+      // LOG(4, "have {} messages", source.msgs.size());
+      for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
+        auto &msg = source.msgs.at(msg_i);
+        auto &fb = source.fbs.at(msg_i);
+        A start = {{(hsize_t)msg_i * n_events_per_message}};
+        err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
+                                  count.data(), nullptr);
+        ASSERT_GE(err, 0);
+        err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+        ASSERT_GE(err, 0);
+        auto fbd = fb.root()->detector_id();
+        for (int i1 = 0; i1 < n_events_per_message; ++i1) {
+          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1), fbd->Get(i1));
+          ASSERT_EQ(data.at(i1), fbd->Get(i1));
+        }
+      }
+
+      H5Sclose(mem);
+      H5Sclose(dsp);
+      H5Tclose(dt);
       H5Dclose(ds);
     }
 
@@ -306,27 +391,6 @@ public:
 
 #if 0 == 1
 
-
-    auto dt = H5Dget_type(ds);
-    ASSERT_GE(dt, 0);
-    ASSERT_EQ(H5Tget_size(dt), sizeof(DT));
-
-    auto dsp = H5Dget_space(ds);
-    ASSERT_GE(dsp, 0);
-    ASSERT_EQ(H5Sis_simple(dsp), 1);
-    auto nn = H5Sget_simple_extent_npoints(dsp);
-
-    auto mem = H5Screate(H5S_SIMPLE);
-    using A = array<hsize_t, 1>;
-    A sini = {{(uint32_t)nn}};
-    A smax = {{(uint32_t)nn}};
-    H5Sset_extent_simple(mem, sini.size(), sini.data(), smax.data());
-
-    vector<DT> data(nn);
-
-    err =
-        H5Dread(ds, H5T_NATIVE_UINT32, dsp, H5S_ALL, H5P_DEFAULT, data.data());
-    ASSERT_GE(err, 0);
 
     {
       rnd_nn.seed(seed);
@@ -400,7 +464,6 @@ public:
       }
     }
 
-    H5Tclose(dt);
 #endif
   }
 };
