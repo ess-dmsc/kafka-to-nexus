@@ -50,6 +50,7 @@ ${HDF5_CXX_LIBRARIES}
 ${CURL_LIBRARIES}
 ${PCREX_LIBRARIES}
 pthread
+z
 )
 
 set(compile_defs_common "${PCREX_COMPILER_DEFINITIONS}")

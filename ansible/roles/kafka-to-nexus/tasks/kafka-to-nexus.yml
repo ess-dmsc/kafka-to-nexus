@@ -13,17 +13,17 @@
     force: yes
   when: not st.stat.exists
 
-- name: copy Find<tool>.cmake specialised for this installation
-  template:
-    src: '{{item}}.j2'
-    dest: '{{sources}}/filewriter-{{filewriter_version}}/cmake/{{item}}.cmake'
-  with_items:
-    - FindFmt
-    - FindFlatBuffers
-    - FindHDF5_SIMPLE
-    - FindRapidjson
-    - FindRdKafka
-    - FindStreamingDataTypes
+#- name: copy Find<tool>.cmake specialised for this installation
+#  template:
+#    src: '{{item}}.j2'
+#    dest: '{{sources}}/filewriter-{{filewriter_version}}/cmake/{{item}}.cmake'
+#  with_items:
+#    - FindFmt
+#    - FindFlatBuffers
+#    - FindHDF5_SIMPLE
+#    - FindRapidjson
+#    - FindRdKafka
+#    - FindStreamingDataTypes
 
 - name: Create build folder
   file:
@@ -31,8 +31,11 @@
     state: directory
   when: not st.stat.exists
 
+- debug:
+    msg: 'cmake -DCMAKE_INSTALL_PREFIX={{filewriter}} -DCMAKE_INCLUDE_PATH={{filewriter_inc}} -DCMAKE_LIBRARY_PATH={{filewriter_lib}} -DCMAKE_PROGRAM_PATH={{filewriter_bin}} {{sources}}/filewriter-{{filewriter_version}}'
+
 - name: Configure kafka-to-nexus
-  command: 'cmake -DCMAKE_INSTALL_PREFIX={{filewriter}} {{sources}}/filewriter-{{filewriter_version}}'
+  command: 'cmake -DCMAKE_INSTALL_PREFIX={{filewriter}} -DCMAKE_INCLUDE_PATH={{filewriter_inc}} -DCMAKE_LIBRARY_PATH={{filewriter_lib}} -DCMAKE_PROGRAM_PATH={{filewriter_bin}} {{sources}}/filewriter-{{filewriter_version}}'
   args:
     chdir: '{{builds}}/filewriter-{{filewriter_version}}'
   when: not st.stat.exists

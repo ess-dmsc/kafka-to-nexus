@@ -31,9 +31,9 @@ filewriter_src: https://github.com/ess-dmsc/kafka-to-nexus.git
 filewriter_version: master
 filewriter: software_dest/kafka-to-nexus
 
-filewriter_inc: '"{{hdf5}}/include;{{flatbuffers}}/include;{{rapidjson}}/include;{{rdkafka}}/include;{{streaming_data_types}};{{fmt}}/include"'
-filewriter_lib: '"{{hdf5}}/lib;{{flatbuffers}}/lib;{{rapidjson}}/lib;{{rdkafka}}/lib;{{fmt}}/lib"'
-filewriter_exe: "{{flatbuffers}}/bin"
+filewriter_inc: '"{{hdf5}}/include;{{flatbuffers}}/include;{{rapidjson}}/include;{{rdkafka}}/include;{{streaming_data_types}};{{fmt}}"'
+filewriter_lib: '"{{hdf5}}/lib;{{flatbuffers}}/lib;{{rdkafka}}/lib;{{fmt}}"'
+filewriter_bin: "{{flatbuffers}}/bin"
 
 use_stow: false
 
