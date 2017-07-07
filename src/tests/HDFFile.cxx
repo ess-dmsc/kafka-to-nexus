@@ -7,12 +7,18 @@
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f141/synth.h"
+#include <array>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <random>
 #include <rapidjson/document.h>
+#include <string>
 #include <unistd.h>
+#include <vector>
 
+using std::string;
+using std::vector;
+using std::array;
 using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
@@ -123,6 +129,34 @@ public:
     return true;
   }
 
+  /// Can supply pre-generated test data for a source on a topic to profile the
+  /// writing.
+  class SourceDataGen {
+  public:
+    string topic;
+    string source;
+    int seed = 0;
+    int msg_size = 1024;
+    std::mt19937 rnd;
+    vector<FlatBufs::ev42::fb> fbs;
+    vector<FileWriter::Msg> msgs;
+    // Number of messages already fed into file writer during testing
+    size_t n_fed = 0;
+    /// Generates n test messages which we can later feed from memory into the
+    /// file writer.
+    void pregenerate(int n) {
+      LOG(4, "generating {} {}...", topic, source);
+      FlatBufs::ev42::synth synth(source, seed);
+      rnd.seed(seed);
+      for (int i1 = 0; i1 < n; ++i1) {
+        fbs.push_back(synth.next(rnd() >> 24));
+        auto &fb = fbs.back();
+        msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
+                                       (int32_t)fb.builder->GetSize()});
+      }
+    }
+  };
+
   static void data_ev42() {
     using namespace FileWriter;
     using std::array;
@@ -137,52 +171,76 @@ public:
       LOG(4, "do_verification: {}", do_verification);
     }
 
-    auto cmd = gulp("tests/msg-cmd-new-03.json");
-    LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
-    rapidjson::Document d;
-    d.Parse(cmd.data(), cmd.size());
+    int n_msgs_per_source = 2;
+    if (auto x = get_int(&g_config_file, "unit_test.test_file_size")) {
+      LOG(4, "unit_test.test_file_size: {}", x.v);
+      n_msgs_per_source = x.v;
+    }
+
+    vector<SourceDataGen> sources;
+    {
+      sources.emplace_back();
+      auto &s = sources.back();
+      // Currently, we assume only one topic!
+      s.topic = "topic.with.multiple.sources";
+      s.source = "for_example_motor01";
+      s.pregenerate(n_msgs_per_source);
+    }
+
+    rapidjson::Document json_command;
+    {
+      using namespace rapidjson;
+      auto &j = json_command;
+      auto &a = j.GetAllocator();
+      j.SetObject();
+      Value nexus_structure;
+      nexus_structure.SetObject();
+      Value streams;
+      streams.SetArray();
+      for (auto &source : sources) {
+        Value v;
+        v.SetObject();
+        nexus_structure.AddMember(StringRef(source.source.c_str()), v, a);
+        Value v2;
+        v2.SetObject();
+        v2.AddMember("topic", StringRef(source.topic.c_str()), a);
+        v2.AddMember("source", StringRef(source.source.c_str()), a);
+        v2.AddMember("nexus_path",
+                     StringRef(fmt::format("/{}", source.source).c_str()), a);
+        streams.PushBack(v2, a);
+      }
+      j.AddMember("nexus_structure", nexus_structure, a);
+      j.AddMember("streams", streams, a);
+      {
+        Value v;
+        v.SetObject();
+        v.AddMember("file_name", StringRef("tmp-ev42.h5"), a);
+        j.AddMember("file_attributes", v, a);
+      }
+      j.AddMember("cmd", StringRef("FileWriter_new"), a);
+    }
+
+    auto cmd = json_to_string(json_command);
+
+    auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
     ASSERT_GT(fname.v.size(), 8);
-    auto source_name = get_string(&d, "streams.0.source");
-    // char const * fname = d["file_attributes"]["file_name"].GetString();
-    // char const * source_name = d["streams"][0]["source"].GetString();
-    rapidjson::Document config_file;
-    config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
-    ASSERT_FALSE(config_file.HasParseError());
-    // rapidjson::Document cmd_fwt_clear;
-    // cmd_fwt_clear.Parse("{\"recv_type\":\"FileWriter\",
-    // \"cmd\":\"file_writer_tasks_clear_all\"}");
-    // ASSERT_FALSE(cmd_fwt_clear.HasParseError());
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     using DT = uint32_t;
-    int SP = 32 * 1024;
-    if (auto x = get_int(&g_config_file, "unit_test.test_file_size")) {
-      LOG(4, "unit_test.test_file_size: {}", x.v);
-      SP = x.v;
-    }
     int const feed_msgs_times = 1;
     int const seed = 2;
+    int n_msgs_per_batch = 1;
     std::mt19937 rnd_nn;
-
-    std::vector<FlatBufs::ev42::fb> fbs;
-    std::vector<FileWriter::Msg> msgs;
-
-    LOG(6, "generating...");
-    FlatBufs::ev42::synth synth(source_name.v, seed);
-    rnd_nn.seed(seed);
-    for (int i1 = 0; i1 < SP; ++i1) {
-      fbs.push_back(synth.next(rnd_nn() >> 24));
-      auto &fb = fbs.back();
-      msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                     (int32_t)fb.builder->GetSize()});
-    }
 
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      ch.handle({cmd.data(), (int32_t)cmd.size()});
+      Msg msg;
+      msg.data = (char *)cmd.data();
+      msg.size = cmd.size();
+      ch.handle(msg);
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
       auto &fwt = ch.file_writer_tasks.at(0);
@@ -196,12 +254,17 @@ public:
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
       for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
-        for (auto &msg : msgs) {
-          if (false) {
-            auto v = binary_to_hex(msg.data, msg.size);
-            LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+        for (auto &source : sources) {
+          for (int i2 = 0;
+               i2 < n_msgs_per_batch && source.n_fed < source.msgs.size();
+               ++i2) {
+            auto &msg = source.msgs[source.n_fed++];
+            if (false) {
+              auto v = binary_to_hex(msg.data, msg.size);
+              LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+            }
+            fwt->demuxers().at(0).process_message(msg.data, msg.size);
           }
-          fwt->demuxers().at(0).process_message(msg.data, msg.size);
         }
       }
       auto t2 = CLK::now();
@@ -226,12 +289,23 @@ public:
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
 
-    auto g0 = H5Gopen(fid, "/entry-01/instrument-01/events-01", H5P_DEFAULT);
-    ASSERT_GE(g0, 0);
+    for (auto &source : sources) {
+      string base_path = "/";
+      string group_path = base_path + source.source;
 
-    auto ds = H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_id",
-                       H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
+      auto g0 = H5Gopen(fid, group_path.c_str(), H5P_DEFAULT);
+      ASSERT_GE(g0, 0);
+      H5Gclose(g0);
+
+      auto ds = H5Dopen2(fid, (group_path + "/event_id").c_str(), H5P_DEFAULT);
+      ASSERT_GE(ds, 1);
+      H5Dclose(ds);
+    }
+
+    H5Fclose(fid);
+
+#if 0 == 1
+
 
     auto dt = H5Dget_type(ds);
     ASSERT_GE(dt, 0);
@@ -327,9 +401,7 @@ public:
     }
 
     H5Tclose(dt);
-    H5Dclose(ds);
-    H5Gclose(g0);
-    H5Fclose(fid);
+#endif
   }
 };
 
