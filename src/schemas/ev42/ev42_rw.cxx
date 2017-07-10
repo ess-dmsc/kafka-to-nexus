@@ -88,8 +88,10 @@ void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
   if (config_file) {
     if (auto x = get_int(config_file, "nexus.indices.index_every_kb")) {
       index_every_bytes = (int)x * 1024;
+      LOG(7, "index_every_bytes: {}", index_every_bytes);
     } else if (auto x = get_int(config_file, "nexus.indices.index_every_mb")) {
       index_every_bytes = (int)x * 1024 * 1024;
+      LOG(7, "index_every_bytes: {}", index_every_bytes);
     }
     if (auto x = get_int(config_file, "nexus.chunk.chunk_n_elements")) {
       chunk_n_elements = x.v;
