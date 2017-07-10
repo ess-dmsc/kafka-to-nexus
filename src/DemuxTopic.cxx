@@ -63,18 +63,21 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
   }
   auto srcn = reader->sourcename(msg);
   LOG(7, "Msg is for sourcename: {}", srcn);
-  for (auto &s : sources()) {
-    if (s.source() == srcn) {
-      auto ret = s.process_message(msg);
-      if (ret.ts() < 0)
-        return ProcessMessageResult::ERR();
-      return ProcessMessageResult::OK(ret.ts());
+  try {
+    auto &s = _sources_map.at(srcn);
+    auto ret = s.process_message(msg);
+    if (ret.ts() < 0) {
+      return ProcessMessageResult::ERR();
     }
+    return ProcessMessageResult::OK(ret.ts());
+  } catch (std::out_of_range &e) {
   }
   return ProcessMessageResult::ERR();
 }
 
-std::vector<Source> &DemuxTopic::sources() { return _sources; }
+std::unordered_map<std::string, Source> &DemuxTopic::sources() {
+  return _sources_map;
+}
 
 std::string DemuxTopic::to_str() const { return json_to_string(to_json()); }
 
@@ -91,8 +94,8 @@ DemuxTopic::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
   v.AddMember("topic", Value(topic().data(), a), a);
   Value kl;
   kl.SetArray();
-  for (auto &s : _sources) {
-    kl.PushBack(s.to_json(&a), a);
+  for (auto it = _sources_map.cbegin(); it != _sources_map.cend(); ++it) {
+    kl.PushBack(it->second.to_json(&a), a);
   }
   v.AddMember("sources", kl, a);
   return jd;

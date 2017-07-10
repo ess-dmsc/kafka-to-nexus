@@ -5,6 +5,7 @@
 #include "json.h"
 #include <functional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace BrightnESS {
@@ -30,10 +31,12 @@ public:
   ProcessMessageResult process_message(char *msg_data, int msg_size);
   /// Implements TimeDifferenceFromMessage.
   DT time_difference_from_message(char *msg_data, int msg_size);
-  std::vector<Source> &sources();
-  template <typename... Args> Source &add_source(Args &&... args) {
-    _sources.emplace_back(std::forward<Args>(args)...);
-    return _sources.back();
+  std::unordered_map<std::string, Source> &sources();
+  Source &add_source(Source &&source) {
+    using std::move;
+    auto k = source.source();
+    std::pair<std::string, Source> v{k, move(source)};
+    return _sources_map.insert(move(v)).first->second;
   }
   std::string to_str() const;
   rapidjson::Document
@@ -42,7 +45,7 @@ public:
 
 private:
   std::string _topic;
-  std::vector<Source> _sources;
+  std::unordered_map<std::string, Source> _sources_map;
   uint64_t _stop_time;
 };
 

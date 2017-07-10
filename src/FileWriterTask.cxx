@@ -61,7 +61,7 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure) {
   }
   for (auto &d : demuxers()) {
     for (auto &s : d.sources()) {
-      s.hdf_init(impl->hdf_file);
+      s.second.hdf_init(impl->hdf_file);
     }
   }
   return 0;

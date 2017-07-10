@@ -79,7 +79,7 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
   }
   for (auto &d : fwt->demuxers()) {
     for (auto &s : d.sources()) {
-      s.teamid = teamid;
+      s.second.teamid = teamid;
     }
   }
 
