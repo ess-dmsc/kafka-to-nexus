@@ -83,26 +83,32 @@ void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
                        Msg msg) {
   LOG(7, "ev42::init_impl");
 
+  hsize_t chunk_n_elements = 1;
+
   if (config_file) {
     if (auto x = get_int(config_file, "nexus.indices.index_every_kb")) {
       index_every_bytes = (int)x * 1024;
     } else if (auto x = get_int(config_file, "nexus.indices.index_every_mb")) {
       index_every_bytes = (int)x * 1024 * 1024;
     }
+    if (auto x = get_int(config_file, "nexus.chunk.chunk_n_elements")) {
+      chunk_n_elements = x.v;
+      LOG(7, "chunk_n_elements: {}", chunk_n_elements);
+    }
   }
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-      hdf_group, "event_time_offset", 1 * 1024 * 1024);
+      hdf_group, "event_time_offset", chunk_n_elements * sizeof(uint32_t));
   this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-      hdf_group, "event_id", 1 * 1024 * 1024);
+      hdf_group, "event_id", chunk_n_elements * sizeof(uint32_t));
   this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "event_time_zero", 128 * 1024);
-  this->ds_event_index =
-      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "event_index", 64 * 1024);
-  this->ds_cue_index =
-      h5::h5d_chunked_1d<uint32_t>::create(hdf_group, "cue_index", 64 * 1024);
+      hdf_group, "event_time_zero", chunk_n_elements * sizeof(uint64_t));
+  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
+      hdf_group, "event_index", chunk_n_elements * sizeof(uint32_t));
+  this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
+      hdf_group, "cue_index", chunk_n_elements * sizeof(uint32_t));
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "cue_timestamp_zero", 128 * 1024);
+      hdf_group, "cue_timestamp_zero", chunk_n_elements * sizeof(uint64_t));
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
