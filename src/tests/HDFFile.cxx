@@ -330,6 +330,8 @@ public:
       return;
     }
 
+    int minimum_expected_entries_in_the_index = 1;
+
     herr_t err;
 
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -342,11 +344,12 @@ public:
       string group_path = base_path + source.source;
 
       auto g0 = H5Gopen(fid, group_path.c_str(), H5P_DEFAULT);
-      ASSERT_GT(g0, 0);
+      ASSERT_GE(g0, 0);
       H5Gclose(g0);
 
       auto ds = H5Dopen2(fid, (group_path + "/event_id").c_str(), H5P_DEFAULT);
-      ASSERT_GT(ds, 0);
+      ASSERT_GE(ds, 0);
+      ASSERT_GT(H5Iis_valid(ds), 0);
 
       auto dt = H5Dget_type(ds);
       ASSERT_GT(dt, 0);
@@ -388,36 +391,11 @@ public:
 
       H5Sclose(mem);
       H5Sclose(dsp);
-      H5Tclose(dt);
-      H5Dclose(ds);
-    }
 
-    H5Fclose(fid);
-
-#if 0 == 1
-
-
-    {
-      rnd_nn.seed(seed);
-      size_t n1 = 0;
-      FlatBufs::ev42::synth synth(string(source_name), seed);
-      for (int i1 = 0; i1 < SP; ++i1) {
-        auto fb_ = synth.next(rnd_nn() >> 24);
-        auto fb = fb_.root();
-        auto a = fb->detector_id();
-        for (size_t i2 = 0; i2 < a->size(); ++i2) {
-          // LOG(3, "{}, {}, {}", i2, data.at(i2), a->Get(i2));
-          ASSERT_EQ(a->Get(i2), data.at(n1 % data.size()));
-          ++n1;
-        }
-      }
-    }
-
-    {
-      auto ds_cue_timestamp_zero =
-          H5Dopen2(fid, "/entry-01/instrument-01/events-01/cue_timestamp_zero",
-                   H5P_DEFAULT);
+      auto ds_cue_timestamp_zero = H5Dopen2(
+          fid, (group_path + "/cue_timestamp_zero").c_str(), H5P_DEFAULT);
       ASSERT_GE(ds_cue_timestamp_zero, 0);
+      ASSERT_GT(H5Iis_valid(ds_cue_timestamp_zero), 0);
       vector<uint64_t> cue_timestamp_zero(
           H5Sget_simple_extent_npoints(H5Dget_space(ds_cue_timestamp_zero)));
       err = H5Dread(ds_cue_timestamp_zero, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL,
@@ -425,9 +403,10 @@ public:
       ASSERT_EQ(err, 0);
       H5Dclose(ds_cue_timestamp_zero);
 
-      auto ds_cue_index = H5Dopen2(
-          fid, "/entry-01/instrument-01/events-01/cue_index", H5P_DEFAULT);
+      auto ds_cue_index =
+          H5Dopen2(fid, (group_path + "/cue_index").c_str(), H5P_DEFAULT);
       ASSERT_GE(ds_cue_index, 0);
+      ASSERT_GT(H5Iis_valid(ds_cue_index), 0);
       vector<uint32_t> cue_index(
           H5Sget_simple_extent_npoints(H5Dget_space(ds_cue_index)));
       err = H5Dread(ds_cue_index, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL,
@@ -435,13 +414,14 @@ public:
       ASSERT_EQ(err, 0);
       H5Dclose(ds_cue_index);
 
-      ASSERT_GT(cue_timestamp_zero.size(), 10u);
+      ASSERT_GE(cue_timestamp_zero.size(),
+                minimum_expected_entries_in_the_index);
       ASSERT_EQ(cue_timestamp_zero.size(), cue_index.size());
 
       auto ds_event_time_zero =
-          H5Dopen2(fid, "/entry-01/instrument-01/events-01/event_time_zero",
-                   H5P_DEFAULT);
+          H5Dopen2(fid, (group_path + "/event_time_zero").c_str(), H5P_DEFAULT);
       ASSERT_GE(ds_event_time_zero, 0);
+      ASSERT_GT(H5Iis_valid(ds_event_time_zero), 0);
       vector<uint64_t> event_time_zero(
           H5Sget_simple_extent_npoints(H5Dget_space(ds_event_time_zero)));
       err = H5Dread(ds_event_time_zero, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL,
@@ -449,9 +429,10 @@ public:
       ASSERT_EQ(err, 0);
       H5Dclose(ds_event_time_zero);
 
-      auto ds_event_index = H5Dopen2(
-          fid, "/entry-01/instrument-01/events-01/event_index", H5P_DEFAULT);
+      auto ds_event_index =
+          H5Dopen2(fid, (group_path + "/event_index").c_str(), H5P_DEFAULT);
       ASSERT_GE(ds_event_index, 0);
+      ASSERT_GT(H5Iis_valid(ds_event_index), 0);
       vector<uint32_t> event_index(
           H5Sget_simple_extent_npoints(H5Dget_space(ds_event_index)));
       err = H5Dread(ds_event_index, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL,
@@ -467,9 +448,12 @@ public:
                             cue_timestamp_zero[i1], cue_index[i1]);
         ASSERT_TRUE(ok);
       }
+
+      H5Tclose(dt);
+      H5Dclose(ds);
     }
 
-#endif
+    H5Fclose(fid);
   }
 };
 
