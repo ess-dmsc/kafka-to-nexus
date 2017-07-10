@@ -135,6 +135,12 @@ environment variables here:
 
 ### Using Ansible
 
+Install using the playbook:
+
+```
+ansible-playbook -i hosts kafka-to-nexus.yml
+```
+
 The filewriter can be installed using the ansible playbook defined in
 `ansible`. The file `roles/kafka-to-nexus/defaults/main.yml` defines
 the variables used during installation. The variables `<dep>_src` and
