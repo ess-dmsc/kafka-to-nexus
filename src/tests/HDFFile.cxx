@@ -188,8 +188,8 @@ public:
     }
 
     int n_msgs_per_source = 1;
-    if (auto x = get_int(&g_config_file, "unit_test.test_file_size")) {
-      LOG(4, "unit_test.test_file_size: {}", x.v);
+    if (auto x = get_int(&g_config_file, "unit_test.n_msgs_per_source")) {
+      LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = x.v;
     }
 
