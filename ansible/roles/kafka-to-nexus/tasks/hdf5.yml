@@ -18,7 +18,7 @@
   when: not st.stat.exists
 
 - name: Configure hdf5
-  command: "cmake -DBUILD_SHARED_LIBS:BOOL=TRUE -DCMAKE_INSTALL_PREFIX={{hdf5}} {{sources}}/hdf5-{{hdf5_version}}"
+  command: "{{cmake}} -DBUILD_SHARED_LIBS:BOOL=TRUE -DCMAKE_INSTALL_PREFIX={{hdf5}} {{sources}}/hdf5-{{hdf5_version}}"
   args:
     chdir: "{{builds}}/hdf5-{{hdf5_version}}"
   when: not st.stat.exists

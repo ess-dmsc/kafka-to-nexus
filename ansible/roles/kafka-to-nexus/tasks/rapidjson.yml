@@ -19,7 +19,7 @@
   when: not st.stat.exists
 
 - name: Configure rapidjson
-  command: "cmake -DCMAKE_INSTALL_PREFIX={{rapidjson}} {{sources}}/rapidjson-{{rapidjson_version}}"
+  command: "{{cmake}} -DCMAKE_INSTALL_PREFIX={{rapidjson}} {{sources}}/rapidjson-{{rapidjson_version}}"
   args:
     chdir: "{{builds}}/rapidjson-{{rapidjson_version}}"
   when: not st.stat.exists

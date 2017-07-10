@@ -1,0 +1,20 @@
+- name: enable epel repository
+  command: yum-config-manager --enable epel
+
+- name: install required tools
+  package:
+    name: '{{item}}'
+    state: latest
+  with_items:
+    - cmake3
+    - pcre2-devel
+
+- name: create directories layout
+  file: 
+    path: '{{item}}'
+    state: directory
+  with_items:
+    - '{{software_dest}}'
+    - '{{sources}}'
+    - '{{builds}}'
+

@@ -1,5 +1,8 @@
 ---
 
+- name: prerequisites
+  include: common.yml
+
 - name: install flatbuffers
   include: flatbuffers.yml
   async: 60

@@ -20,7 +20,7 @@
   when: not st.stat.exists
 
 - name: Configure kafka-to-nexus
-  command: 'cmake -DCMAKE_INSTALL_PREFIX={{filewriter}} -DCMAKE_INCLUDE_PATH={{filewriter_inc}} -DCMAKE_LIBRARY_PATH={{filewriter_lib}} -DCMAKE_PROGRAM_PATH={{filewriter_bin}} {{sources}}/filewriter-{{filewriter_version}}'
+  command: '{{cmake}} -DCMAKE_INSTALL_PREFIX={{filewriter}} -DCMAKE_INCLUDE_PATH={{filewriter_inc}} -DCMAKE_LIBRARY_PATH={{filewriter_lib}} -DCMAKE_PROGRAM_PATH={{filewriter_bin}} {{sources}}/filewriter-{{filewriter_version}}'
   args:
     chdir: '{{builds}}/filewriter-{{filewriter_version}}'
   when: not st.stat.exists

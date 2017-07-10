@@ -19,7 +19,7 @@
   when: not st.stat.exists
 
 - name: Configure flatbuffers
-  command: "cmake -DCMAKE_INSTALL_PREFIX={{flatbuffers}} {{sources}}/flatbuffers-{{flatbuffers_version}}"
+  command: "{{cmake}} -DCMAKE_INSTALL_PREFIX={{flatbuffers}} {{sources}}/flatbuffers-{{flatbuffers_version}}"
   args:
     chdir: "{{builds}}/flatbuffers-{{flatbuffers_version}}"
   when: not st.stat.exists

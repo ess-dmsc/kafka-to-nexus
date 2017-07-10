@@ -18,7 +18,7 @@
   when: not st.stat.exists
 
 - name: Configure fmt
-  command: "cmake -DBUILD_SHARED_LIBS=TRUE -DCMAKE_INSTALL_PREFIX={{fmt}} {{sources}}/fmt-{{fmt_version}}"
+  command: "{{cmake}} -DBUILD_SHARED_LIBS=TRUE -DCMAKE_INSTALL_PREFIX={{fmt}} {{sources}}/fmt-{{fmt_version}}"
   args:
     chdir: "{{builds}}/fmt-{{fmt_version}}"
   when: not st.stat.exists
