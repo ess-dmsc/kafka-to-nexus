@@ -1,0 +1,35 @@
+---
+
+- name: Make sure rdkafka is present
+  stat:
+    path: "{{rdkafka}}"
+  register: st
+
+- name: Download librdkafka
+  git:
+    repo: "{{rdkafka_src}}"
+    dest: "{{sources}}/rdkafka-{{rdkafka_version}}"
+    force: yes
+  when: not st.stat.exists
+    
+- name: Configure rdkafka
+  command: "./configure --prefix={{rdkafka}}"
+  args:
+    chdir: "{{sources}}/rdkafka-{{rdkafka_version}}"
+  when: not st.stat.exists
+
+- name: Compile rdkafka
+  make:
+    chdir: "{{sources}}/rdkafka-{{rdkafka_version}}"
+    params:
+      NUM_THREADS: 4
+  when: not st.stat.exists
+
+- name: Install rdkafka
+  make:
+    target: install
+    chdir: "{{sources}}/rdkafka-{{rdkafka_version}}"
+    params:
+      NUM_THREADS: 4
+  when: not st.stat.exists
+

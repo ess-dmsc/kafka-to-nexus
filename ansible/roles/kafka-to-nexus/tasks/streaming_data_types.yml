@@ -1,0 +1,6 @@
+- name: Download flatbuffers schema repository
+  git:
+    repo: "{{streaming_data_types_src}}"
+    dest: "{{streaming_data_types}}"
+  env:
+    streaming_data_types_dir: "{{streaming_data_types}}"

@@ -1,0 +1,33 @@
+---
+
+- name: Make sure kafka-to-nexus is present
+  stat:
+    path: '{{filewriter}}'
+  register: st
+
+- name: Download kafka-to-nexus
+  git:
+    repo: '{{filewriter_src}}'
+    dest: '{{sources}}/filewriter-{{filewriter_version}}'
+    version: '{{filewriter_version}}'
+    force: yes
+  when: not st.stat.exists
+
+- name: Create build folder
+  file:
+    path: '{{builds}}/filewriter-{{filewriter_version}}'
+    state: directory
+  when: not st.stat.exists
+
+- name: Configure kafka-to-nexus
+  command: '{{cmake}} -DCMAKE_INSTALL_PREFIX={{filewriter}} -DCMAKE_INCLUDE_PATH={{filewriter_inc}} -DCMAKE_LIBRARY_PATH={{filewriter_lib}} -DCMAKE_PROGRAM_PATH={{filewriter_bin}} {{sources}}/filewriter-{{filewriter_version}}'
+  args:
+    chdir: '{{builds}}/filewriter-{{filewriter_version}}'
+  when: not st.stat.exists
+
+- name: Compile and install kafka-to-nexus
+  make:
+    chdir: '{{builds}}/filewriter-{{filewriter_version}}'
+    params:
+      NUM_THREADS: 4
+  when: not st.stat.exists
