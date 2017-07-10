@@ -205,6 +205,12 @@ public:
       n_events_per_message = x.v;
     }
 
+    int n_msgs_per_batch = 1;
+    if (auto x = get_int(&g_config_file, "unit_test.n_msgs_per_batch")) {
+      LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
+      n_msgs_per_batch = x.v;
+    }
+
     vector<SourceDataGen> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -264,7 +270,6 @@ public:
     using DT = uint32_t;
     int const feed_msgs_times = 1;
     int const seed = 2;
-    int n_msgs_per_batch = 1;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
