@@ -98,12 +98,12 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return !loop.joinable();
   }
 
-  std::map<std::string, typename Streamer::status_type> &&status() {
+  std::map<std::string, typename Streamer::status_type> status() {
     std::map<std::string, typename Streamer::status_type> stat;
     for (auto &s : streamer) {
       stat.emplace(s.first, s.second.status());
     }
-    return std::move(stat);
+    return stat;
   }
 
 private:
