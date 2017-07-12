@@ -1,6 +1,5 @@
 #include "TimeDifferenceFromMessage.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 
 TimeDifferenceFromMessage_DT::TimeDifferenceFromMessage_DT(
@@ -22,4 +21,3 @@ const TimeDifferenceFromMessage_DT TimeDifferenceFromMessage_DT::BOP() {
   return ret;
 }
 } // namespace FileWriter
-} // namespace BrightnESS

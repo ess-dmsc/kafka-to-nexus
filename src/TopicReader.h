@@ -1,6 +1,5 @@
 #pragma once
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class TopicReader {
@@ -12,4 +11,3 @@ public:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

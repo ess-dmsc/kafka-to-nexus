@@ -8,11 +8,8 @@
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
 
-// using namespace BrightnESS::FileWriter;
-
 static std::mt19937_64 rng;
 
-namespace BrightnESS {
 namespace FileWriter {
 class MockSource {
 public:
@@ -70,8 +67,8 @@ private:
 };
 
 template <>
-BrightnESS::FileWriter::ProcessMessageResult
-BrightnESS::FileWriter::Streamer::write(MockDemuxTopic &mp) {
+FileWriter::ProcessMessageResult
+FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
   // RdKafka::Message *msg =
   //     _consumer->consume(_topic, _partition.value(),
@@ -91,9 +88,8 @@ BrightnESS::FileWriter::Streamer::write(MockDemuxTopic &mp) {
 }
 
 } // namespace FileWriter
-} // namespace BrightnESS
 
-using namespace BrightnESS::FileWriter;
+using namespace FileWriter;
 
 std::string broker;
 std::vector<std::string> no_topic = {""};
@@ -109,20 +105,17 @@ std::vector<MockDemuxTopic> demux = {
     MockDemuxTopic("motor1"), MockDemuxTopic("motor2"), MockDemuxTopic("temp")};
 
 TEST(Streammaster, NotAllocatedFailure) {
-  using StreamMaster =
-      StreamMaster<BrightnESS::FileWriter::Streamer, MockDemuxTopic>;
+  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
   EXPECT_THROW(StreamMaster sm(broker, no_demux), std::runtime_error);
 }
 
 TEST(Streammaster, Constructor) {
-  using StreamMaster =
-      StreamMaster<BrightnESS::FileWriter::Streamer, MockDemuxTopic>;
+  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
   EXPECT_NO_THROW(StreamMaster sm(broker, demux));
 }
 
 TEST(Streammaster, StartStop) {
-  using StreamMaster =
-      StreamMaster<BrightnESS::FileWriter::Streamer, MockDemuxTopic>;
+  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
   EXPECT_TRUE(one_demux[0].sources().size() == 0);
   one_demux[0].add_source("for_example_motor01");
   one_demux[0].add_source("for_example_temperature02");
@@ -141,8 +134,7 @@ TEST(Streammaster, StartStop) {
 }
 
 TEST(Streammaster, StartTime) {
-  using StreamMaster =
-      StreamMaster<BrightnESS::FileWriter::Streamer, MockDemuxTopic>;
+  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
   one_demux[0].add_source("for_example_motor01");
   one_demux[0].add_source("for_example_temperature02");
   StreamMaster sm(broker, one_demux);

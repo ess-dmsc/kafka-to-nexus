@@ -1,6 +1,5 @@
 #pragma once
 
-namespace BrightnESS {
 namespace FileWriter {
 
 // TODO
@@ -17,4 +16,3 @@ public:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

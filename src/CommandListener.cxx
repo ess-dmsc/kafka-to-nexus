@@ -16,7 +16,6 @@
 #include <unistd.h>
 #include <vector>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 using std::vector;
@@ -59,4 +58,3 @@ void CommandListener::start() {
 KafkaW::PollStatus CommandListener::poll() { return consumer->poll(); }
 
 } // namespace FileWriter
-} // namespace BrightnESS

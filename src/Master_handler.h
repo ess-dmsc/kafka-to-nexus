@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 /// Abstract the message for testing
@@ -34,4 +33,3 @@ public:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

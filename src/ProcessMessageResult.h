@@ -2,7 +2,6 @@
 
 #include <cstdint>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 /// %Result of a call to `process_message`.
@@ -26,4 +25,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

@@ -8,7 +8,6 @@
 #include <gtest/gtest.h>
 #endif
 
-namespace BrightnESS {
 namespace uri {
 
 struct static_ini {
@@ -46,4 +45,3 @@ private:
 };
 
 } // namespace uri
-} // namespace BrightnESS

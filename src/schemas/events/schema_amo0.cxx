@@ -6,7 +6,6 @@
 #include <flatbuffers/flatbuffers.h>
 #include <limits>
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 namespace amo0 {
@@ -154,4 +153,3 @@ SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("amo0"));
 } // namespace amo0
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

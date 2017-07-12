@@ -7,7 +7,6 @@
 #include <hdf5.h>
 #include <limits>
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
@@ -329,4 +328,3 @@ SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("f142"));
 } // namespace f142
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

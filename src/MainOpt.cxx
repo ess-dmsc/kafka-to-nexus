@@ -7,7 +7,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
-using BrightnESS::uri::URI;
+using uri::URI;
 
 int MainOpt::parse_config_file(std::string fname) {
   using namespace rapidjson;
@@ -137,7 +137,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
 
 void setup_logger_from_options(MainOpt const &opt) {
   if (opt.kafka_gelf != "") {
-    BrightnESS::uri::URI uri(opt.kafka_gelf);
+    URI uri(opt.kafka_gelf);
     log_kafka_gelf_start(uri.host, uri.topic);
     LOG(4, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
   }

@@ -1,7 +1,6 @@
 #pragma once
 #include <string>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class TimeDifferenceFromMessage_DT {
@@ -27,4 +26,3 @@ public:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

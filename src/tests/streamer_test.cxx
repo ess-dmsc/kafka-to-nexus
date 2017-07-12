@@ -10,7 +10,7 @@
 
 const int max_recv_messages = 10;
 
-using namespace BrightnESS::FileWriter;
+using namespace FileWriter;
 
 class MinimalProducer : public ::testing::Test {
 

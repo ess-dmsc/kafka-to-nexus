@@ -17,7 +17,6 @@
 
 MainOpt *Roundtrip::opt = nullptr;
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Test {
 
@@ -63,8 +62,9 @@ struct _has_teamid<T, decltype((void)T::teamid, 0)> : std::true_type {
 
 void roundtrip_simple_01(MainOpt &opt) {
   LOG(5, "Run test:  Test::roundtrip_simple_01");
-  using namespace BrightnESS::FileWriter;
+  using namespace FileWriter;
   using namespace rapidjson;
+  using namespace BrightnESS::FlatBufs::f141_epics_nt;
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
   Master m(opt.master_config);
@@ -117,13 +117,13 @@ void roundtrip_simple_01(MainOpt &opt) {
           data[i2] = 10000 * (i3 + 1) + 100 * i1 + i2;
         }
         auto value = builder.CreateVector(data);
-        FlatBufs::f141_epics_nt::NTScalarArrayDoubleBuilder b1(builder);
+        NTScalarArrayDoubleBuilder b1(builder);
         b1.add_value(value);
         auto pv = b1.Finish().Union();
         auto sn = builder.CreateString(sourcename);
-        FlatBufs::f141_epics_nt::EpicsPVBuilder epicspv(builder);
+        EpicsPVBuilder epicspv(builder);
         epicspv.add_name(sn);
-        epicspv.add_pv_type(FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble);
+        epicspv.add_pv_type(PV::NTScalarArrayDouble);
         epicspv.add_pv(pv);
         // epicspv.add_fwdinfo(&fi);
         FinishEpicsPVBuffer(builder, epicspv.Finish());
@@ -149,12 +149,12 @@ void roundtrip_simple_01(MainOpt &opt) {
 TEST_F(Roundtrip, simple_01) {
   // disabled
   return;
-  BrightnESS::FileWriter::Test::roundtrip_simple_01(*opt);
+  FileWriter::Test::roundtrip_simple_01(*opt);
 }
 
 void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   LOG(7, "roundtrip_remote_kafka");
-  using namespace BrightnESS::FileWriter;
+  using namespace FileWriter;
   using namespace rapidjson;
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
@@ -206,14 +206,13 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);
       topic.do_copy();
       auto &sourcename = test_sourcenames[i3];
-      BrightnESS::FileWriter::Msg msg;
-      BrightnESS::FlatBufs::ev42::synth synth(sourcename, 1);
+      FileWriter::Msg msg;
+      FlatBufs::ev42::synth synth(sourcename, 1);
 
       for (int i1 = 0; i1 < 32; ++i1) {
         auto fb = synth.next(64);
-        msg =
-            BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                        (int32_t)fb.builder->GetSize()};
+        msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
+                              (int32_t)fb.builder->GetSize()};
         {
           auto v = binary_to_hex(msg.data, msg.size);
           LOG(7, "msg:\n{:.{}}", v.data(), v.size());
@@ -239,9 +238,8 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
 
 } // namespace Test
 } // namespace FileWriter
-} // namespace BrightnESS
 
 TEST_F(Roundtrip, ev42_remote_kafka) {
-  BrightnESS::FileWriter::Test::roundtrip_remote_kafka(
-      *Roundtrip::opt, "tests/msg-cmd-new-03.json");
+  FileWriter::Test::roundtrip_remote_kafka(*Roundtrip::opt,
+                                           "tests/msg-cmd-new-03.json");
 }

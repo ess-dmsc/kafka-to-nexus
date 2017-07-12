@@ -15,7 +15,6 @@
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 
 using std::string;
@@ -369,4 +368,3 @@ void FBSchemaWriter::init(HDFFile *hdf_file, std::string const &hdf_path,
 WriteResult FBSchemaWriter::write(Msg msg) { return write_impl(msg); }
 
 } // namespace FileWriter
-} // namespace BrightnESS

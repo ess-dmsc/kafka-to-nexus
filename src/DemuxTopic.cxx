@@ -3,7 +3,6 @@
 #include <limits>
 #include <stdexcept>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 ProcessMessageResult ProcessMessageResult::OK(int64_t ts) {
@@ -104,4 +103,3 @@ DemuxTopic::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
 uint64_t &DemuxTopic::stop_time() { return _stop_time; }
 
 } // namespace FileWriter
-} // namespace BrightnESS

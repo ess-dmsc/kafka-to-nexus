@@ -2,7 +2,6 @@
 
 #include <cstdint>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 struct Msg {
@@ -11,4 +10,3 @@ struct Msg {
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

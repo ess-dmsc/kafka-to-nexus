@@ -2,7 +2,6 @@
 #include "../../logger.h"
 #include <random>
 
-namespace BrightnESS {
 namespace FlatBufs {
 namespace ev42 {
 
@@ -64,4 +63,3 @@ fb synth::next(uint32_t size) {
 
 } // namespace ev42
 } // namespace FlatBufs
-} // namespace BrightnESS

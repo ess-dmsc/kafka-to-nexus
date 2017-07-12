@@ -1,7 +1,6 @@
 #include "f142_synth.h"
 #include <random>
 
-namespace BrightnESS {
 namespace FlatBufs {
 namespace f142 {
 
@@ -89,4 +88,3 @@ fb synth::next(uint64_t seq) {
 
 } // namespace f142
 } // namespace FlatBufs
-} // namespace BrightnESS

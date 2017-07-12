@@ -16,7 +16,6 @@ class Metadata;
 class TopicPartition;
 } // namespace RdKafka
 
-namespace BrightnESS {
 namespace FileWriter {
 
 struct Streamer {
@@ -81,15 +80,12 @@ private:
   int get_metadata(int retry = 10);
   int get_topic_partitions(const std::string &topic);
 
-  BrightnESS::FileWriter::ErrorCode get_offset_boundaries();
+  FileWriter::ErrorCode get_offset_boundaries();
 };
 
-template <>
-ProcessMessageResult Streamer::write<>(BrightnESS::FileWriter::DemuxTopic &);
+template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
 
 template <>
 std::map<std::string, int64_t>
-Streamer::set_start_time<>(BrightnESS::FileWriter::DemuxTopic &,
-                           const ESSTimeStamp);
+Streamer::set_start_time<>(FileWriter::DemuxTopic &, const ESSTimeStamp);
 } // namespace FileWriter
-} // namespace BrightnESS

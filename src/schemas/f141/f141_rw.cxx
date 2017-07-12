@@ -6,7 +6,6 @@
 #include <hdf5.h>
 #include <limits>
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 namespace f141 {
@@ -15,7 +14,8 @@ using std::array;
 using std::vector;
 using std::string;
 template <typename T> using uptr = std::unique_ptr<T>;
-using FBUF = FlatBufs::f141_epics_nt::EpicsPV;
+using namespace BrightnESS::FlatBufs;
+using FBUF = f141_epics_nt::EpicsPV;
 
 template <typename T> hid_t nat_type();
 template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
@@ -94,15 +94,15 @@ class writer : public FBSchemaWriter {
 };
 
 static FBUF const *get_fbuf(char *data) {
-  return FlatBufs::f141_epics_nt::GetEpicsPV(data);
+  return f141_epics_nt::GetEpicsPV(data);
 }
 
-static FlatBufs::f141_epics_nt::fwdinfo_2_t const *
-fwdinfo(FlatBufs::f141_epics_nt::EpicsPV const *buf) {
-  if (buf->fwdinfo2_type() != FlatBufs::f141_epics_nt::fwdinfo_u::fwdinfo_2_t) {
+static f141_epics_nt::fwdinfo_2_t const *
+fwdinfo(f141_epics_nt::EpicsPV const *buf) {
+  if (buf->fwdinfo2_type() != f141_epics_nt::fwdinfo_u::fwdinfo_2_t) {
     return 0;
   }
-  auto fi = (FlatBufs::f141_epics_nt::fwdinfo_2_t const *)buf->fwdinfo2();
+  auto fi = (f141_epics_nt::fwdinfo_2_t const *)buf->fwdinfo2();
   return fi;
 }
 
@@ -112,7 +112,7 @@ std::unique_ptr<FBSchemaWriter> reader::create_writer_impl() {
 
 bool reader::verify_impl(Msg msg) {
   auto veri = flatbuffers::Verifier((uint8_t *)msg.data, msg.size);
-  if (FlatBufs::f141_epics_nt::VerifyEpicsPVBuffer(veri))
+  if (f141_epics_nt::VerifyEpicsPVBuffer(veri))
     return true;
   return false;
 }
@@ -204,10 +204,10 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
     }
   }
 
-  using Value = FlatBufs::f141_epics_nt::PV;
+  using Value = f141_epics_nt::PV;
   auto impl_fac = [&hg, &s, &fbuf](Value x) {
     using R = writer_typed_base *;
-    using namespace FlatBufs::f141_epics_nt;
+    using namespace f141_epics_nt;
     void const *v = fbuf->pv();
     if (x == Value::NTScalarByte)
       return (R) new WS<int8_t, NTScalarByte>(hg, s, (NTScalarByte *)v);
@@ -553,9 +553,8 @@ WriteResult writer::write_impl(Msg msg) {
   }
   append_data_scalar(this->ds_timestamp, ts);
   if (do_writer_forwarder_internal) {
-    if (fbuf->fwdinfo2_type() ==
-        FlatBufs::f141_epics_nt::fwdinfo_u::fwdinfo_2_t) {
-      auto fi = (FlatBufs::f141_epics_nt::fwdinfo_2_t *)fbuf->fwdinfo2();
+    if (fbuf->fwdinfo2_type() == f141_epics_nt::fwdinfo_u::fwdinfo_2_t) {
+      auto fi = (f141_epics_nt::fwdinfo_2_t *)fbuf->fwdinfo2();
       append_data_scalar(this->ds_seq_data, fi->seq_data());
       append_data_scalar(this->ds_seq_fwd, fi->seq_fwd());
       append_data_scalar(this->ds_ts_data, fi->ts_data());
@@ -586,4 +585,3 @@ SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("f141"));
 } // namespace f141
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

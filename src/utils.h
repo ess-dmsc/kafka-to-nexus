@@ -7,7 +7,6 @@ using milliseconds = std::chrono::milliseconds;
 using microseconds = std::chrono::microseconds;
 using nanoseconds = std::chrono::nanoseconds;
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace utils {
 
@@ -53,4 +52,3 @@ enum StatusCode {
   ERROR = -1,
 };
 } // namespace FileWriter
-} // namespace BrightnESS

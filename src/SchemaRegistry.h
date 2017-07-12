@@ -7,7 +7,6 @@
 #include <memory>
 #include <vector>
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 
@@ -46,4 +45,3 @@ public:
 
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

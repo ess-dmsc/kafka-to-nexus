@@ -2,7 +2,6 @@
 #include "helper.h"
 #include "utils.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 
 // In the future, want to handle many, but not right now.
@@ -192,4 +191,3 @@ void CommandHandler::handle(Msg const &msg) {
   }
 }
 } // namespace FileWriter
-} // namespace BrightnESS
