@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
 
   setup_logger_from_options(*opt);
 
-  BrightnESS::FileWriter::Master m(opt->master_config);
+  FileWriter::Master m(opt->master_config);
   opt->master = &m;
   std::thread t1([&m] { m.run(); });
   t1.join();

@@ -3,7 +3,6 @@
 #include <stdexcept>
 #include <string>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class BrokerFailure : public std::runtime_error {
@@ -12,4 +11,3 @@ public:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

@@ -19,7 +19,6 @@
 struct Streamer;
 struct FileWriterCommand;
 
-namespace BrightnESS {
 namespace FileWriter {
 
 template <typename Streamer, typename Demux> struct StreamMaster {
@@ -165,4 +164,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

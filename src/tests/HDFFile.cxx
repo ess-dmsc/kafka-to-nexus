@@ -15,7 +15,7 @@
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
   unlink(fname);
-  using namespace BrightnESS::FileWriter;
+  using namespace FileWriter;
   HDFFile f1;
   f1.init("tmp-test.h5", rapidjson::Value());
 }
@@ -26,20 +26,19 @@ public:
     auto fname = "tmp-test.h5";
     auto source_name = "some-sourcename";
     unlink(fname);
-    using namespace BrightnESS;
-    using namespace BrightnESS::FileWriter;
+    using namespace FileWriter;
     FileWriter::HDFFile f1;
     f1.init(fname, rapidjson::Value());
-    auto &reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
+    auto &reg = FileWriter::Schemas::SchemaRegistry::items();
     std::array<char, 4> fbid{{'f', '1', '4', '1'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
-    BrightnESS::FileWriter::Msg msg;
-    BrightnESS::FlatBufs::f141_epics_nt::synth synth(
+    FileWriter::Msg msg;
+    FlatBufs::f141_epics_nt::synth synth(
         source_name,
         BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
     auto fb = synth.next<double>(0);
-    msg = BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                      (int32_t)fb.builder->GetSize()};
+    msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
+                          (int32_t)fb.builder->GetSize()};
     // f1.impl->h5file
     writer->init(&f1, "/", source_name, msg, nullptr, nullptr);
   }
@@ -50,8 +49,7 @@ TEST_F(T_HDFFile, write_f141) { T_HDFFile::write_f141(); }
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    using namespace BrightnESS;
-    using namespace BrightnESS::FileWriter;
+    using namespace FileWriter;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
@@ -64,8 +62,7 @@ public:
   }
 
   static void new_03_data() {
-    using namespace BrightnESS;
-    using namespace BrightnESS::FileWriter;
+    using namespace FileWriter;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
@@ -87,16 +84,16 @@ public:
     // From here, I need the file writer task instance
     return;
 
-    auto &reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
+    auto &reg = FileWriter::Schemas::SchemaRegistry::items();
     std::array<char, 4> fbid{{'f', '1', '4', '1'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
-    BrightnESS::FileWriter::Msg msg;
-    BrightnESS::FlatBufs::f141_epics_nt::synth synth(
+    FileWriter::Msg msg;
+    FlatBufs::f141_epics_nt::synth synth(
         source_name,
         BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
     auto fb = synth.next<double>(0);
-    msg = BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                      (int32_t)fb.builder->GetSize()};
+    msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
+                          (int32_t)fb.builder->GetSize()};
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -119,8 +116,7 @@ public:
   }
 
   static void data_ev42() {
-    using namespace BrightnESS;
-    using namespace BrightnESS::FileWriter;
+    using namespace FileWriter;
     using std::array;
     using std::vector;
     using std::string;
@@ -145,24 +141,23 @@ public:
     ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
     std::vector<FlatBufs::ev42::fb> fbs;
-    std::vector<BrightnESS::FileWriter::Msg> msgs;
+    std::vector<FileWriter::Msg> msgs;
 
     using DT = uint32_t;
     int const SP = 256 * 1024;
     int seed = 1;
     std::mt19937 rnd_nn;
     rnd_nn.seed(0);
-    auto &reg = BrightnESS::FileWriter::Schemas::SchemaRegistry::items();
+    auto &reg = FileWriter::Schemas::SchemaRegistry::items();
     std::array<char, 4> fbid{{'e', 'v', '4', '2'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
-    BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
+    FlatBufs::ev42::synth synth(source_name, seed);
     LOG(7, "generating...");
     for (int i1 = 0; i1 < SP; ++i1) {
       fbs.push_back(synth.next(rnd_nn() >> 24));
       auto &fb = fbs.back();
-      msgs.push_back(
-          BrightnESS::FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                      (int32_t)fb.builder->GetSize()});
+      msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
+                                     (int32_t)fb.builder->GetSize()});
     }
     LOG(7, "processing...");
     using CLK = std::chrono::steady_clock;
@@ -218,7 +213,7 @@ public:
     {
       rnd_nn.seed(0);
       size_t n1 = 0;
-      BrightnESS::FlatBufs::ev42::synth synth(source_name, seed);
+      FlatBufs::ev42::synth synth(source_name, seed);
       for (int i1 = 0; i1 < SP; ++i1) {
         auto fb_ = synth.next(rnd_nn() >> 24);
         auto fb = fb_.root();

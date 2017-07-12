@@ -3,7 +3,6 @@
 #include <memory>
 #include <string>
 
-namespace BrightnESS {
 namespace FlatBufs {
 namespace ev42 {
 
@@ -28,4 +27,3 @@ public:
 
 } // namespace ev42
 } // namespace FlatBufs
-} // namespace BrightnESS

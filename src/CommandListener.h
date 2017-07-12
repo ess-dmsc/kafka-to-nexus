@@ -5,7 +5,6 @@
 #include "uri.h"
 #include <thread>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class MessageCallback {
@@ -59,4 +58,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

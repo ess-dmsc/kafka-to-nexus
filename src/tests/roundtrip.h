@@ -7,11 +7,9 @@ public:
   static MainOpt *opt;
 };
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Test {
 
 void roundtrip_simple_01(MainOpt &opt);
 }
 } // namespace FileWriter
-} // namespace BrightnESS

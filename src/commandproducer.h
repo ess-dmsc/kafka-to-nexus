@@ -3,7 +3,6 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <string>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class BrokerOpt {
@@ -51,4 +50,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

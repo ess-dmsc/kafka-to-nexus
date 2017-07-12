@@ -5,13 +5,14 @@
 #include <string>
 #include <type_traits>
 
-namespace BrightnESS {
 namespace FlatBufs {
 namespace f141_epics_nt {
 
-using _V = BrightnESS::FlatBufs::f141_epics_nt::PV;
+using namespace BrightnESS::FlatBufs;
+using namespace BrightnESS::FlatBufs::f141_epics_nt;
+using _V = PV;
 struct nt_val_type_U {
-  using _V = BrightnESS::FlatBufs::f141_epics_nt::PV;
+  using _V = PV;
 };
 
 template <typename T> struct nt_val_type : public nt_val_type_U {
@@ -95,4 +96,3 @@ public:
 
 } // namespace f141_epics_nt
 } // namespace FlatBufs
-} // namespace BrightnESS

@@ -8,7 +8,6 @@
 #include <unordered_map>
 #include <vector>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class MessageProcessor {
@@ -50,4 +49,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

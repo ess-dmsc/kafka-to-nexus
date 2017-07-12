@@ -1,7 +1,6 @@
 #include "synth.h"
 #include <random>
 
-namespace BrightnESS {
 namespace FlatBufs {
 namespace f141_epics_nt {
 
@@ -17,4 +16,3 @@ synth::~synth() {}
 
 } // namespace f141_epics_nt
 } // namespace FlatBufs
-} // namespace BrightnESS

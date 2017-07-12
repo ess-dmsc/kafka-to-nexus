@@ -1,7 +1,6 @@
 #pragma once
 #include <hdf5.h>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 /**
@@ -15,4 +14,3 @@ public:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

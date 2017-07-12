@@ -1,7 +1,6 @@
 #include "SchemaRegistry.h"
 #include "logger.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 
@@ -27,4 +26,3 @@ SchemaInfo::ptr &SchemaRegistry::find(FBID const &fbid) {
 
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

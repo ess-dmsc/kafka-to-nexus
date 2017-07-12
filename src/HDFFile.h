@@ -8,7 +8,6 @@
 
 class T_HDFFile;
 
-namespace BrightnESS {
 namespace FileWriter {
 
 // Basically POD
@@ -85,4 +84,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

@@ -2,7 +2,6 @@
 #include "logger.h"
 #include <array>
 
-namespace BrightnESS {
 namespace uri {
 
 // POD
@@ -321,4 +320,3 @@ TEST(URI, host_default_topic) {
 #endif
 
 } // namespace uri
-} // namespace BrightnESS

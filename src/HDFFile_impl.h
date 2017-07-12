@@ -3,7 +3,6 @@
 
 class T_HDFFile;
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class HDFFile_impl {
@@ -13,4 +12,3 @@ class HDFFile_impl {
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

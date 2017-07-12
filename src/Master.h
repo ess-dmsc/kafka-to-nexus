@@ -10,7 +10,6 @@
 #include <string>
 #include <vector>
 
-namespace BrightnESS {
 namespace FileWriter {
 
 struct MasterConfig {
@@ -45,4 +44,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

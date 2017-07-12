@@ -6,7 +6,6 @@
 #include "schemas/ev42_events_generated.h"
 #include <limits>
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 namespace ev42 {
@@ -164,4 +163,3 @@ SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("ev42"));
 } // namespace ev42
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

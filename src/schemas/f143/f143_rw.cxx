@@ -6,7 +6,6 @@
 #include "schemas/f143_structure_generated.h"
 #include <limits>
 
-namespace BrightnESS {
 namespace FileWriter {
 namespace Schemas {
 namespace f143 {
@@ -162,4 +161,3 @@ SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("f143"));
 } // namespace f143
 } // namespace Schemas
 } // namespace FileWriter
-} // namespace BrightnESS

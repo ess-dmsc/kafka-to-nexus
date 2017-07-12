@@ -422,15 +422,15 @@ public:
   std::vector<std::string> topics;
 };
 
-std::function<BrightnESS::FileWriter::ProcessMessageResult(void *, int)>
-    verbose = [](void *x, int size) {
+std::function<FileWriter::ProcessMessageResult(void *, int)> verbose =
+    [](void *x, int size) {
       std::cout << "message: " << std::string((char *)x) << std::endl;
-      return BrightnESS::FileWriter::ProcessMessageResult::OK();
+      return FileWriter::ProcessMessageResult::OK();
     };
 
 std::string time_diff_message;
-std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)>
-    time_diff = [](void *x, int size) {
+std::function<FileWriter::TimeDifferenceFromMessage_DT(void *, int)> time_diff =
+    [](void *x, int size) {
       std::smatch m;
       auto s = std::string((char *)x);
       std::cout << s << std::endl;
@@ -439,13 +439,12 @@ std::function<BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(void *, int)>
       std::regex_search(s, m, std::regex("^[a-zA-Z]+"));
       time_diff_message = std::string(m[0]);
 
-      return BrightnESS::FileWriter::TimeDifferenceFromMessage_DT(
-          time_diff_message, time);
+      return FileWriter::TimeDifferenceFromMessage_DT(time_diff_message, time);
     };
 
 int main(int argc, char **argv) {
 
-  using namespace BrightnESS::FileWriter;
+  using namespace FileWriter;
 
   MinimalProducer producer;
   MinimalKafkaConsumer consumer;

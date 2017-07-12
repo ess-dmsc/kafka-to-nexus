@@ -8,7 +8,6 @@
 
 class Test___FileWriterTask___Create01;
 
-namespace BrightnESS {
 namespace FileWriter {
 
 class FileWriterTask_impl;
@@ -41,4 +40,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

@@ -7,7 +7,7 @@
 #include "helper.h"
 #include <unistd.h>
 
-bool BrightnESS::FileWriter::Streamer::set_conf_opt(
+bool FileWriter::Streamer::set_conf_opt(
     std::shared_ptr<RdKafka::Conf> conf,
     const std::pair<std::string, std::string> &option) {
   std::string errstr;
@@ -22,7 +22,7 @@ bool BrightnESS::FileWriter::Streamer::set_conf_opt(
   return true;
 }
 
-bool BrightnESS::FileWriter::Streamer::set_streamer_opt(
+bool FileWriter::Streamer::set_streamer_opt(
     const std::pair<std::string, std::string> &option) {
 
   if (option.first == "start.offset") {
@@ -53,7 +53,7 @@ bool BrightnESS::FileWriter::Streamer::set_streamer_opt(
   return false;
 }
 
-int BrightnESS::FileWriter::Streamer::get_metadata(int retry) {
+int FileWriter::Streamer::get_metadata(int retry) {
   RdKafka::Metadata *md;
   std::unique_ptr<RdKafka::Topic> ptopic;
   auto err = _consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 5000);
@@ -69,8 +69,7 @@ int BrightnESS::FileWriter::Streamer::get_metadata(int retry) {
   return !_metadata;
 }
 
-int BrightnESS::FileWriter::Streamer::get_topic_partitions(
-    const std::string &topic) {
+int FileWriter::Streamer::get_topic_partitions(const std::string &topic) {
   bool topic_found = false;
   if (!_metadata) {
     LOG(3, "Missing metadata informations");
@@ -93,8 +92,7 @@ int BrightnESS::FileWriter::Streamer::get_topic_partitions(
   return 0;
 }
 
-BrightnESS::FileWriter::ErrorCode
-BrightnESS::FileWriter::Streamer::get_offset_boundaries() {
+FileWriter::ErrorCode FileWriter::Streamer::get_offset_boundaries() {
   for (auto &i : _tp) {
     int64_t high, low;
     auto err = _consumer->query_watermark_offsets(i->topic(), i->partition(),
@@ -105,10 +103,10 @@ BrightnESS::FileWriter::Streamer::get_offset_boundaries() {
     }
     _low.push_back(RdKafkaOffset(low));
   }
-  return BrightnESS::FileWriter::ErrorCode(0);
+  return FileWriter::ErrorCode(0);
 }
 
-BrightnESS::FileWriter::Streamer::Streamer(
+FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
     std::vector<std::pair<std::string, std::string>> kafka_options) {
 
@@ -187,13 +185,12 @@ BrightnESS::FileWriter::Streamer::Streamer(
   status_.emplace("status.n_sources", 0);
 }
 
-BrightnESS::FileWriter::Streamer::Streamer(const Streamer &other)
+FileWriter::Streamer::Streamer(const Streamer &other)
     : _consumer(other._consumer), _tp(other._tp), _offset(other._offset),
       _begin(other._offset), _low(other._low), status_(other.status_) {}
 
-BrightnESS::FileWriter::ErrorCode
-BrightnESS::FileWriter::Streamer::closeStream() {
-  BrightnESS::FileWriter::ErrorCode status;
+FileWriter::ErrorCode FileWriter::Streamer::closeStream() {
+  FileWriter::ErrorCode status;
 
   _tp.clear();
   status_["status.topic_partition"] = 0;
@@ -205,9 +202,9 @@ BrightnESS::FileWriter::Streamer::closeStream() {
   return status;
 }
 
-int BrightnESS::FileWriter::Streamer::connect(
-    const std::string &topic_name, const RdKafkaOffset &offset,
-    const RdKafkaPartition &partition) {
+int FileWriter::Streamer::connect(const std::string &topic_name,
+                                  const RdKafkaOffset &offset,
+                                  const RdKafkaPartition &partition) {
   // if (!_topic) {
   //   std::string errstr;
   //   std::unique_ptr<RdKafka::Conf> tconf(
@@ -249,9 +246,8 @@ int BrightnESS::FileWriter::Streamer::connect(
 }
 
 template <>
-BrightnESS::FileWriter::ProcessMessageResult
-BrightnESS::FileWriter::Streamer::write(
-    BrightnESS::FileWriter::DemuxTopic &mp) {
+FileWriter::ProcessMessageResult
+FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
   std::unique_ptr<RdKafka::Message> msg{
       _consumer->consume(consumer_timeout.count())};
@@ -278,8 +274,8 @@ BrightnESS::FileWriter::Streamer::write(
 
 template <>
 std::map<std::string, int64_t>
-BrightnESS::FileWriter::Streamer::set_start_time<>(
-    BrightnESS::FileWriter::DemuxTopic &mp, const ESSTimeStamp timepoint) {
+FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
+                                       const ESSTimeStamp timepoint) {
   std::map<std::string, int64_t> m;
 
   for (auto &i : _tp) {
@@ -304,8 +300,7 @@ BrightnESS::FileWriter::Streamer::set_start_time<>(
   return m;
 }
 
-BrightnESS::FileWriter::Streamer::status_type &
-BrightnESS::FileWriter::Streamer::status() {
+FileWriter::Streamer::status_type &FileWriter::Streamer::status() {
   status_["status.size"] = message_length_;
   status_["status.n_messages"] = n_messages_;
   status_["status.n_sources"] = n_sources_;

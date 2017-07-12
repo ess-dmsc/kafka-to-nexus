@@ -14,7 +14,7 @@
 #include <fstream>
 #include <iostream>
 
-using BrightnESS::uri::URI;
+using uri::URI;
 
 // POD
 struct MainOpt {

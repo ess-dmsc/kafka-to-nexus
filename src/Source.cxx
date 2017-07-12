@@ -2,7 +2,6 @@
 #include "helper.h"
 #include "logger.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 
 Result Result::Ok() {
@@ -100,4 +99,3 @@ Source::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
 }
 
 } // namespace FileWriter
-} // namespace BrightnESS

@@ -3,7 +3,6 @@
 #include "Source.h"
 #include "logger.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 
 using std::string;
@@ -73,16 +72,3 @@ void FileWriterTask::file_flush() {
 }
 
 } // namespace FileWriter
-} // namespace BrightnESS
-
-#if HAVE_GTEST
-#include <gtest/gtest.h>
-
-class Test___FileWriterTask___Create01 {
-public:
-  void run() {}
-};
-
-TEST(FileWriterTask, Create01) { Test___FileWriterTask___Create01().run(); }
-
-#endif

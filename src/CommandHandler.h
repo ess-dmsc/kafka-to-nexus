@@ -9,7 +9,6 @@
 
 class T_CommandHandler;
 
-namespace BrightnESS {
 namespace FileWriter {
 
 /// Stub, will perform the JSON parsing and then take appropriate action.
@@ -29,4 +28,3 @@ private:
 };
 
 } // namespace FileWriter
-} // namespace BrightnESS

@@ -12,10 +12,10 @@ struct MainOpt {
   bool verbose = false;
   bool gtest = false;
   bool use_signal_handler = true;
-  BrightnESS::FileWriter::MasterConfig master_config;
+  FileWriter::MasterConfig master_config;
   std::string kafka_gelf;
   std::string graylog_logger_address;
-  std::atomic<BrightnESS::FileWriter::Master *> master;
+  std::atomic<FileWriter::Master *> master;
   rapidjson::Document config_file;
   int parse_config_file(std::string fname);
 };

@@ -8,7 +8,6 @@
 // #include "utils.h"
 #include "commandproducer.h"
 
-namespace BrightnESS {
 namespace FileWriter {
 
 using std::vector;
@@ -50,4 +49,3 @@ void Master::on_consumer_connected(std::function<void(void)> *cb_on_connected) {
 }
 
 } // namespace FileWriter
-} // namespace BrightnESS
