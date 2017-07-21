@@ -9,7 +9,6 @@ using std::string;
 using std::vector;
 
 class FileWriterTask_impl {
-  std::vector<Source> _sources;
   friend class FileWriterTask;
   friend class ::Test___FileWriterTask___Create01;
   std::string hdf_filename;
