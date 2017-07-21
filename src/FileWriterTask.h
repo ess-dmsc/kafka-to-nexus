@@ -31,6 +31,8 @@ public:
   void file_flush();
   void file_close();
   uint64_t id() const;
+  rapidjson::Value
+  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a);
 
 private:
   std::vector<DemuxTopic> _demuxers;

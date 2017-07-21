@@ -83,4 +83,19 @@ void FileWriterTask::file_flush() {
 
 uint64_t FileWriterTask::id() const { return _id; }
 
+rapidjson::Value FileWriterTask::stats(
+    rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) {
+  using namespace rapidjson;
+  Value js_topics;
+  js_topics.SetObject();
+  for (auto &d : _demuxers) {
+    js_topics.AddMember(Value(d.topic().c_str(), a), Value(0), a);
+  }
+  Value js_fwt;
+  js_fwt.SetObject();
+  js_fwt.AddMember("filename", Value(impl->hdf_filename.c_str(), a), a);
+  js_fwt.AddMember("topics", js_topics, a);
+  return js_fwt;
+}
+
 } // namespace FileWriter
