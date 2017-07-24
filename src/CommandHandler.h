@@ -4,6 +4,7 @@
 #include <memory>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
+#include <rapidjson/prettywriter.h>
 #include <rapidjson/schema.h>
 #include <rapidjson/stringbuffer.h>
 
@@ -18,6 +19,7 @@ public:
   void handle_new(rapidjson::Document &d);
   void handle_exit(rapidjson::Document &d);
   void handle(Msg const &msg);
+  void handle(rapidjson::Document &cmd);
 
 private:
   std::unique_ptr<rapidjson::SchemaDocument> schema_command;

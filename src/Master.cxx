@@ -23,7 +23,15 @@ void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
   command_handler.handle({(char *)msg->data(), (int32_t)msg->size()});
 }
 
+void Master::handle_command(rapidjson::Document &cmd) {
+  CommandHandler command_handler(this, config.config_file);
+  command_handler.handle(cmd);
+}
+
 void Master::run() {
+  for (auto &cmd : config.commands_from_config_file) {
+    this->handle_command(cmd);
+  }
   command_listener.start();
   if (_cb_on_connected)
     (*_cb_on_connected)();

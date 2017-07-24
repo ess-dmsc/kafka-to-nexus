@@ -143,17 +143,9 @@ void CommandHandler::handle_exit(rapidjson::Document &d) {
     master->stop();
 }
 
-void CommandHandler::handle(Msg const &msg) {
+void CommandHandler::handle(rapidjson::Document &d) {
   using std::string;
   using namespace rapidjson;
-  auto doc = make_unique<Document>();
-  ParseResult err = doc->Parse((char *)msg.data, msg.size);
-  if (doc->HasParseError()) {
-    LOG(2, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
-    return;
-  }
-  auto &d = *doc;
-
   uint64_t teamid = 0;
   uint64_t cmd_teamid = 0;
   if (master) {
@@ -186,8 +178,23 @@ void CommandHandler::handle(Msg const &msg) {
     }
   }
   {
-    auto n1 = std::min(msg.size, (int32_t)1024);
-    LOG(3, "ERROR could not figure out this command: {:.{}}", msg.data, n1);
+    StringBuffer buffer;
+    PrettyWriter<StringBuffer> writer(buffer);
+    d.Accept(writer);
+    LOG(3, "ERROR could not figure out this command: {}", buffer.GetString());
   }
 }
+
+void CommandHandler::handle(Msg const &msg) {
+  using std::string;
+  using namespace rapidjson;
+  auto doc = make_unique<Document>();
+  ParseResult err = doc->Parse((char *)msg.data, msg.size);
+  if (doc->HasParseError()) {
+    LOG(2, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+    return;
+  }
+  handle(*doc);
+}
+
 } // namespace FileWriter
