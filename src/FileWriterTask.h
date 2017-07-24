@@ -30,6 +30,7 @@ public:
   std::vector<DemuxTopic> &demuxers();
   void file_flush();
   void file_close();
+  uint64_t id() const;
 
 private:
   std::vector<DemuxTopic> _demuxers;
@@ -37,6 +38,7 @@ private:
   void add_source(Source &&source);
   /// Called by CommandHandler on setup.
   int hdf_init(rapidjson::Value const &nexus_structure);
+  uint64_t _id;
 };
 
 } // namespace FileWriter

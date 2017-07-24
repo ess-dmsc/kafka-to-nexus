@@ -2,11 +2,15 @@
 #include "HDFFile.h"
 #include "Source.h"
 #include "logger.h"
+#include <atomic>
+#include <chrono>
 
 namespace FileWriter {
 
 using std::string;
 using std::vector;
+
+std::atomic<uint32_t> n_FileWriterTask_created{0};
 
 class FileWriterTask_impl {
   friend class FileWriterTask;
@@ -28,7 +32,14 @@ Source SourceFactory_by_FileWriterTask::create(string topic,
 
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
 
-FileWriterTask::FileWriterTask() { impl.reset(new FileWriterTask_impl); }
+FileWriterTask::FileWriterTask() {
+  using namespace std::chrono;
+  _id = duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
+            .count();
+  _id = (_id & uint64_t(-1) << 16) | (n_FileWriterTask_created & 0xffff);
+  ++n_FileWriterTask_created;
+  impl.reset(new FileWriterTask_impl);
+}
 
 FileWriterTask::~FileWriterTask() { LOG(9, "~FileWriterTask"); }
 
@@ -69,5 +80,7 @@ void FileWriterTask::file_flush() {
   if (impl)
     impl->hdf_file.flush();
 }
+
+uint64_t FileWriterTask::id() const { return _id; }
 
 } // namespace FileWriter
