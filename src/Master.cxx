@@ -55,6 +55,8 @@ void Master::run() {
     this->handle_command(cmd);
   }
   command_listener.start();
+  using Clock = std::chrono::steady_clock;
+  auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(7, "Master poll");
     auto p = command_listener.poll();
@@ -62,7 +64,10 @@ void Master::run() {
       LOG(7, "Handle a command");
       this->handle_command_message(std::move(msg));
     }
-    statistics();
+    if (Clock::now() - t_last_statistics > std::chrono::milliseconds(2000)) {
+      t_last_statistics = Clock::now();
+      statistics();
+    }
   }
   LOG(6, "calling stop on all stream_masters");
   for (auto &x : stream_masters) {
