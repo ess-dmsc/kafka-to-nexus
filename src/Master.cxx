@@ -5,6 +5,8 @@
 #include "commandproducer.h"
 #include "logger.h"
 #include <chrono>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -60,12 +62,26 @@ void Master::run() {
       LOG(7, "Handle a command");
       this->handle_command_message(std::move(msg));
     }
+    statistics();
   }
   LOG(6, "calling stop on all stream_masters");
   for (auto &x : stream_masters) {
     x->stop();
   }
   LOG(6, "called stop on all stream_masters");
+}
+
+void Master::statistics() {
+  rapidjson::Document js_status;
+  js_status.SetObject();
+  auto &a = js_status.GetAllocator();
+  for (auto &stream_master : stream_masters) {
+    js_status.AddMember("topics", stream_master->stats(a), a);
+  }
+  rapidjson::StringBuffer buf1;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> wr(buf1);
+  js_status.Accept(wr);
+  LOG(3, "status is: {}", buf1.GetString());
 }
 
 void Master::stop() { do_run = false; }
