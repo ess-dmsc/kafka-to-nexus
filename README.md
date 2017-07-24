@@ -27,9 +27,11 @@ For example:
 
 ### Send command to kafka-to-nexus
 
-Commands are JSON messages.
-
-Send commands to the broker/topic given by `--broker-command`
+Commands in the form of JSON messages are used to start and stop file writing.
+Commands can be send through Kafka via the broker/topic specified by the
+`--broker-command` option.  Commands can also be given in the configuration
+file specified by `--config-file <file.json>` (see a bit later in this
+section).
 
 In the "streams" section of the command:
 - `topic`: Kafka topic from which the data comes.
@@ -38,6 +40,7 @@ In the "streams" section of the command:
 - `nexus_path`: Location of the written data within the HDF tree.
 
 Command to start writing a file:
+
 ```json
 {
 	"cmd": "FileWriter_new",
@@ -80,8 +83,19 @@ Command to start writing a file:
 ```
 
 Command to exit the file writer:
+
 ```json
 {"cmd": "FileWriter_exit"}
+```
+
+Commands can be given in the configuration file as well:
+
+```json
+{
+  "commands": [
+    { <some command as discussed above> }
+  ]
+}
 ```
 
 
