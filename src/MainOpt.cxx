@@ -11,6 +11,7 @@ using uri::URI;
 
 int MainOpt::parse_config_file(std::string fname) {
   using namespace rapidjson;
+  using std::move;
   if (fname == "") {
     LOG(3, "given config filename is empty");
     return -1;
@@ -42,6 +43,13 @@ int MainOpt::parse_config_file(std::string fname) {
         master_config.kafka.emplace_back(m.name.GetString(),
                                          fmt::format("{}", m.value.GetInt()));
       }
+    }
+  }
+  if (auto a = get_array(d, "commands")) {
+    for (auto &e : a.v->GetArray()) {
+      Document js_command;
+      js_command.CopyFrom(e, js_command.GetAllocator());
+      master_config.commands_from_config_file.push_back(move(js_command));
     }
   }
   return 0;

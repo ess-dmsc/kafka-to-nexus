@@ -18,6 +18,7 @@ struct MasterConfig {
   std::string dir_assets = ".";
   rapidjson::Value const *config_file = nullptr;
   std::vector<std::pair<std::string, std::string>> kafka;
+  std::vector<rapidjson::Document> commands_from_config_file;
 };
 
 /// Listens to the Kafka configuration topic.
