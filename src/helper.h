@@ -31,6 +31,12 @@ struct get_json_ret_int {
   int v;
 };
 
+struct get_json_ret_array {
+  operator bool() const;
+  int err = 1;
+  rapidjson::Value const *v = nullptr;
+};
+
 struct get_json_ret_object {
   operator bool() const;
   int err = 1;
@@ -39,6 +45,7 @@ struct get_json_ret_object {
 
 get_json_ret_string get_string(rapidjson::Value const *v, std::string path);
 get_json_ret_int get_int(rapidjson::Value const *v, std::string path);
+get_json_ret_array get_array(rapidjson::Value const &v, std::string path);
 get_json_ret_object get_object(rapidjson::Value const &v, std::string path);
 std::string pretty_print(rapidjson::Document const *v);
 

@@ -74,6 +74,7 @@ get_json_ret_int::operator bool() const { return err == 0; }
 
 get_json_ret_int::operator int() const { return v; }
 
+get_json_ret_array::operator bool() const { return err == 0; }
 get_json_ret_object::operator bool() const { return err == 0; }
 
 get_json_ret_string get_string(rapidjson::Value const *v, std::string path) {
@@ -145,6 +146,34 @@ get_json_ret_int get_int(rapidjson::Value const *v, std::string path) {
     ++i1;
   }
   return {1, 0};
+}
+
+get_json_ret_array get_array(rapidjson::Value const &v_, std::string path) {
+  auto v = &v_;
+  get_json_ret_array ret;
+  ret.err = 1;
+  auto a = split(path, ".");
+  uint32_t i1 = 0;
+  for (auto &x : a) {
+    if (!v->IsObject()) {
+      return ret;
+    }
+    auto it = v->FindMember(x.c_str());
+    if (it == v->MemberEnd()) {
+      return ret;
+    }
+    if (i1 == a.size() - 1) {
+      if (it->value.IsArray()) {
+        ret.err = 0;
+        ret.v = &it->value;
+        return ret;
+      }
+    } else {
+      v = &it->value;
+    }
+    ++i1;
+  }
+  return ret;
 }
 
 get_json_ret_object get_object(rapidjson::Value const &v_, std::string path) {
