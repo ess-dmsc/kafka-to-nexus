@@ -83,6 +83,10 @@ void FileWriterTask::file_flush() {
 
 uint64_t FileWriterTask::id() const { return _id; }
 
+std::string const &FileWriterTask::hdf_filename() const {
+  return impl->hdf_filename;
+}
+
 rapidjson::Value FileWriterTask::stats(
     rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const {
   using namespace rapidjson;

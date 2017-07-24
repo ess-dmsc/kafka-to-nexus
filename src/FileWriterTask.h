@@ -31,6 +31,7 @@ public:
   void file_flush();
   void file_close();
   uint64_t id() const;
+  std::string const &hdf_filename() const;
   rapidjson::Value
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
 
