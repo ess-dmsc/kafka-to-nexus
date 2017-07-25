@@ -151,7 +151,7 @@ public:
     auto &reg = FileWriter::Schemas::SchemaRegistry::items();
     std::array<char, 4> fbid{{'e', 'v', '4', '2'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();
-    FlatBufs::ev42::synth synth(source_name, seed);
+    FlatBufs::ev42::synth synth(string(source_name), seed);
     LOG(7, "generating...");
     for (int i1 = 0; i1 < SP; ++i1) {
       fbs.push_back(synth.next(rnd_nn() >> 24));
@@ -213,7 +213,7 @@ public:
     {
       rnd_nn.seed(0);
       size_t n1 = 0;
-      FlatBufs::ev42::synth synth(source_name, seed);
+      FlatBufs::ev42::synth synth(string(source_name), seed);
       for (int i1 = 0; i1 < SP; ++i1) {
         auto fb_ = synth.next(rnd_nn() >> 24);
         auto fb = fb_.root();

@@ -18,27 +18,27 @@ std::vector<char> binary_to_hex(char const *data, int len);
 std::vector<std::string> split(std::string const &input, std::string token);
 
 struct get_json_ret_string {
-  operator bool() const;
-  operator std::string() const;
+  explicit operator bool() const;
+  explicit operator std::string() const;
   int err;
   std::string v;
 };
 
 struct get_json_ret_int {
-  operator bool() const;
-  operator int() const;
+  explicit operator bool() const;
+  explicit operator int() const;
   int err;
   int v;
 };
 
 struct get_json_ret_array {
-  operator bool() const;
+  explicit operator bool() const;
   int err = 1;
   rapidjson::Value const *v = nullptr;
 };
 
 struct get_json_ret_object {
-  operator bool() const;
+  explicit operator bool() const;
   int err = 1;
   rapidjson::Value const *v = nullptr;
 };
