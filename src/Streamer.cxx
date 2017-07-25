@@ -262,13 +262,18 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
+    s_.error();
     return ProcessMessageResult::ERR();
   }
-  message_length_ += msg->len();
-  n_messages_++;
+  s_.add_message(msg->len());
+  // message_length_ += msg->len();
+  // n_messages_++;
   _offset = RdKafkaOffset(msg->offset());
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
+  if (!result.is_OK()) {
+    s_.error();
+  }
   return result;
 }
 

@@ -7,6 +7,7 @@
 
 #include "DemuxTopic.h"
 #include "utils.h"
+#include "Status.hpp"
 
 // forward definitions
 namespace RdKafka {
@@ -61,6 +62,8 @@ private:
   RdKafkaOffset _offset{RdKafkaOffsetEnd};
   RdKafkaOffset _begin;
   std::vector<RdKafkaOffset> _low;
+
+  Status::StreamerStatus s_;
   status_type status_;
 
   int32_t message_length_{0};
