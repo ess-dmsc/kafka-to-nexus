@@ -23,7 +23,7 @@ CommandHandler::CommandHandler(Master *master,
   }
 }
 
-void CommandHandler::handle_new(rapidjson::Document &d) {
+void CommandHandler::handle_new(rapidjson::Document const &d) {
   // if (g_N_HANDLED > 0) return;
   using namespace rapidjson;
   using std::move;
@@ -83,7 +83,7 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
   }
 
   {
-    Value &nexus_structure = d.FindMember("nexus_structure")->value;
+    Value const & nexus_structure = d.FindMember("nexus_structure")->value;
     auto x = fwt->hdf_init(nexus_structure);
     if (x) {
       LOG(7, "ERROR hdf init failed, cancel this write command");
@@ -138,12 +138,12 @@ void CommandHandler::handle_new(rapidjson::Document &d) {
   g_N_HANDLED += 1;
 }
 
-void CommandHandler::handle_exit(rapidjson::Document &d) {
+void CommandHandler::handle_exit(rapidjson::Document const &d) {
   if (master)
     master->stop();
 }
 
-void CommandHandler::handle(rapidjson::Document &d) {
+void CommandHandler::handle(rapidjson::Document const &d) {
   using std::string;
   using namespace rapidjson;
   uint64_t teamid = 0;

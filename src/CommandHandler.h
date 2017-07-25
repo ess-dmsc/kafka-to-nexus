@@ -16,10 +16,10 @@ namespace FileWriter {
 class CommandHandler : public FileWriterCommandHandler {
 public:
   CommandHandler(Master *master, rapidjson::Value const *config_file);
-  void handle_new(rapidjson::Document &d);
-  void handle_exit(rapidjson::Document &d);
+  void handle_new(rapidjson::Document const &d);
+  void handle_exit(rapidjson::Document const &d);
   void handle(Msg const &msg);
-  void handle(rapidjson::Document &cmd);
+  void handle(rapidjson::Document const &cmd);
 
 private:
   std::unique_ptr<rapidjson::SchemaDocument> schema_command;
