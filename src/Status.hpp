@@ -50,9 +50,28 @@ class StreamMasterStatus {
   StreamerStatisticsType streamer_stats;
 };
 
+enum RunStatusError {
+  running = 1,
+  stopped = 0,
+  consumer_error = -1,
+  metadata_error = -2,
+  topic_partition_error = -3,
+  assign_error = -4,
+  topic_error = -5,
+  offset_error = -6,
+  start_time_error = -7
+};
+
 class StreamerStatus {
 
 public:
+  StreamerStatus()
+      : last_time{std::chrono::system_clock::now()}, partitions{0},
+        run_status_(RunStatusError::stopped) {}
+  StreamerStatus(const StreamerStatus &other)
+      : current{other.current}, last{other.last}, last_time{other.last_time},
+        partitions{other.partitions}, run_status_(other.run_status_) {}
+
   void add_message(const double &bytes) {
     std::unique_lock<std::mutex> lock(m);
     current.bytes += bytes;
@@ -87,14 +106,16 @@ public:
     current.reset();
     return st;
   }
+  void run_status(const int8_t value) { run_status_ = value; }
 
 private:
   StreamerStatusType current;
   StreamerStatusType last;
   std::mutex m;
-  uint32_t partitions;
   std::chrono::system_clock::time_point last_time;
-};
+  uint32_t partitions;
+  int8_t run_status_;
+}; // namespace Status
 
 } // namespace Status
 } // namespace FileWriter

@@ -20,7 +20,6 @@ class TopicPartition;
 namespace FileWriter {
 
 struct Streamer {
-  using status_type = std::map<std::string, int32_t>;
 
   Streamer(){};
   Streamer(const std::string &, const std::string &,
@@ -53,7 +52,6 @@ struct Streamer {
     }
     return StatusCode::STOPPED;
   }
-  status_type &status();
 
 private:
   RdKafka::KafkaConsumer *_consumer{nullptr};
@@ -64,7 +62,6 @@ private:
   std::vector<RdKafkaOffset> _low;
 
   Status::StreamerStatus s_;
-  status_type status_;
 
   int32_t message_length_{0};
   int32_t n_messages_{0};

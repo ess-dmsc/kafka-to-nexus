@@ -116,8 +116,8 @@ FileWriter::Streamer::Streamer(
                        return this->set_streamer_opt(item);
                      }),
       kafka_options.end());
+  s_.run_status(Status::RunStatusError::stopped);
 
-  status_["status.run"] = 0;
   std::string errstr;
   std::shared_ptr<RdKafka::Conf> conf(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
@@ -144,21 +144,17 @@ FileWriter::Streamer::Streamer(
 
   if (!(_consumer = RdKafka::KafkaConsumer::create(conf.get(), errstr))) {
     LOG(0, "Failed to create consumer: {}", errstr);
-    status_.emplace("status.consumer", -1);
-  } else {
-    status_.emplace("status.consumer", 1);
+    s_.run_status(Status::RunStatusError::consumer_error);
   }
 
   if (!topic_name.empty()) {
-    status_.emplace("status.metadata", 1);
     if (get_metadata() != 0) {
       LOG(1, "Unable to retrieve metadata");
-      status_["status.metadata"] = -1;
+      s_.run_status(Status::RunStatusError::metadata_error);
     }
-    status_.emplace("status.topic_partition", 1);
     if (get_topic_partitions(topic_name) < 0) {
       LOG(1, "Unable to build TopicPartitions structure");
-      status_["status.topic_partition"] = -1;
+      s_.run_status(Status::RunStatusError::topic_partition_error);
     }
     for (auto &i : _tp) {
       i->set_offset(_offset.value());
@@ -167,36 +163,32 @@ FileWriter::Streamer::Streamer(
     RdKafka::ErrorCode err = _consumer->assign(_tp);
     if (err) {
       LOG(0, "Failed to subscribe to {} ", topic_name);
-      status_["status.consumer"] = -1;
+      s_.run_status(Status::RunStatusError::assign_error);
     }
   } else {
     LOG(0, "Topic required");
-    status_["status.consumer"] = -1;
+    s_.run_status(Status::RunStatusError::topic_error);
   }
   if (get_offset_boundaries().value()) {
     LOG(3, "Unable to determine lower and higher offset in topic {}",
         topic_name);
-    status_["status.metadata"] = -1;
+    s_.run_status(Status::RunStatusError::offset_error);
   }
 
-  // prepare status info
-  status_.emplace("status.size", 0);
-  status_.emplace("status.n_messages", 0);
-  status_.emplace("status.n_sources", 0);
 }
 
 FileWriter::Streamer::Streamer(const Streamer &other)
     : _consumer(other._consumer), _tp(other._tp), _offset(other._offset),
-      _begin(other._offset), _low(other._low), status_(other.status_) {}
+      _begin(other._offset), _low(other._low),
+      s_(other.s_) {}
 
 FileWriter::ErrorCode FileWriter::Streamer::closeStream() {
   FileWriter::ErrorCode status;
 
   _tp.clear();
-  status_["status.topic_partition"] = 0;
+  s_.run_status(Status::RunStatusError::stopped);
   if (_consumer) {
     _consumer->close();
-    status_["status.consumer"] = 0;
     delete _consumer;
   }
   return status;
@@ -288,6 +280,7 @@ FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
   }
   auto err = _consumer->offsetsForTimes(_tp, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
+    s_.run_status(Status::RunStatusError::start_time_error);
     LOG(3, "Error searching initial time: {}", err2str(err));
   }
   if (err == RdKafka::ERR_NO_ERROR) {
@@ -303,11 +296,4 @@ FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
   _consumer->assign(_tp);
 
   return m;
-}
-
-FileWriter::Streamer::status_type &FileWriter::Streamer::status() {
-  status_["status.size"] = message_length_;
-  status_["status.n_messages"] = n_messages_;
-  status_["status.n_sources"] = n_sources_;
-  return status_;
 }

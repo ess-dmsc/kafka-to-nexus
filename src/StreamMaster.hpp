@@ -97,21 +97,6 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return !loop.joinable();
   }
 
-  std::map<std::string, typename Streamer::status_type> status() {
-    std::map<std::string, typename Streamer::status_type> stat;
-    for (auto &s : streamer) {
-      stat.emplace(s.first, s.second.status());
-    }
-    return stat;
-  }
-
-  rapidjson::Value
-  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) {
-    return _file_writer_task->stats(a);
-  }
-
-  FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
-
 private:
   ErrorCode stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
@@ -138,9 +123,9 @@ private:
         }
       }
       double total_size(0);
-      for (auto &s : streamer) {
-        total_size += s.second.status()["status.size"];
-      }
+      // for (auto &s : streamer) {
+        // total_size += s.second.status()["status.size"];
+      // }
       std::cout << "Written " << total_size * 1e-6 << "MB @ "
                 << total_size * 1e3 / (system_clock::now() - tp_global).count()
                 << "MB/s\n";
