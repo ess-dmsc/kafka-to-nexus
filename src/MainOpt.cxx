@@ -12,7 +12,7 @@ using uri::URI;
 int MainOpt::parse_config_file(std::string fname) {
   using namespace rapidjson;
   using std::move;
-  if (fname == "") {
+  if (fname.empty()) {
     LOG(3, "given config filename is empty");
     return -1;
   }
