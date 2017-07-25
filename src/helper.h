@@ -13,33 +13,41 @@ std::unique_ptr<T> make_unique(TX &&... tx) {
 
 std::vector<char> gulp(std::string fname);
 
-std::vector<char> binary_to_hex(char const *data, int len);
+std::vector<char> binary_to_hex(char const *data, uint32_t len);
 
 std::vector<std::string> split(std::string const &input, std::string token);
 
 struct get_json_ret_string {
-  operator bool() const;
-  operator std::string() const;
+  explicit operator bool() const;
+  explicit operator std::string() const;
   int err;
   std::string v;
 };
 
 struct get_json_ret_int {
-  operator bool() const;
-  operator int() const;
+  explicit operator bool() const;
+  explicit operator int() const;
   int err;
   int v;
 };
 
+struct get_json_ret_array {
+  explicit operator bool() const;
+  int err = 1;
+  rapidjson::Value const *v = nullptr;
+};
+
 struct get_json_ret_object {
-  operator bool() const;
+  explicit operator bool() const;
   int err = 1;
   rapidjson::Value const *v = nullptr;
 };
 
 get_json_ret_string get_string(rapidjson::Value const *v, std::string path);
 get_json_ret_int get_int(rapidjson::Value const *v, std::string path);
+get_json_ret_array get_array(rapidjson::Value const &v, std::string path);
 get_json_ret_object get_object(rapidjson::Value const &v, std::string path);
+
 std::string pretty_print(rapidjson::Document const *v);
 
 template <typename T>

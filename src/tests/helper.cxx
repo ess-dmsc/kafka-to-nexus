@@ -62,7 +62,7 @@ static Document make_test_doc() {
 }
 
 TEST(helper, make_test_doc) {
-  ASSERT_EQ(false, make_test_doc().HasParseError());
+  ASSERT_FALSE(make_test_doc().HasParseError());
 }
 
 TEST(helper, get_string_01) {

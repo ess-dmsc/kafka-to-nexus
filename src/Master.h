@@ -18,6 +18,7 @@ struct MasterConfig {
   std::string dir_assets = ".";
   rapidjson::Value const *config_file = nullptr;
   std::vector<std::pair<std::string, std::string>> kafka;
+  std::vector<rapidjson::Document> commands_from_config_file;
 };
 
 /// Listens to the Kafka configuration topic.
@@ -29,7 +30,7 @@ public:
   void run();
   void stop();
   void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg);
-  void on_consumer_connected(std::function<void(void)> *cb_on_connected);
+  void handle_command(rapidjson::Document const &cmd);
   std::function<void(void)> cb_on_filewriter_new;
 
   MasterConfig &config;
@@ -37,7 +38,6 @@ public:
 private:
   CommandListener command_listener;
   std::atomic<bool> do_run{true};
-  std::function<void(void)> *_cb_on_connected = nullptr;
   std::vector<std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>>
       stream_masters;
   friend class CommandHandler;
