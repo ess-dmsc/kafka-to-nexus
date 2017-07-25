@@ -248,7 +248,7 @@ public:
       ASSERT_EQ(err, 0);
       H5Dclose(ds_cue_index);
 
-      ASSERT_GT(cue_timestamp_zero.size(), 10);
+      ASSERT_GT(cue_timestamp_zero.size(), 10u);
       ASSERT_EQ(cue_timestamp_zero.size(), cue_index.size());
 
       auto ds_event_time_zero =
@@ -272,10 +272,10 @@ public:
       ASSERT_EQ(err, 0);
       H5Dclose(ds_event_index);
 
-      ASSERT_GT(event_time_zero.size(), 0);
+      ASSERT_GT(event_time_zero.size(), 0u);
       ASSERT_EQ(event_time_zero.size(), event_index.size());
 
-      for (int i1 = 0; i1 < cue_timestamp_zero.size(); ++i1) {
+      for (hsize_t i1 = 0; i1 < cue_timestamp_zero.size(); ++i1) {
         auto ok = check_cue(event_time_zero, event_index,
                             cue_timestamp_zero[i1], cue_index[i1]);
         ASSERT_TRUE(ok);
