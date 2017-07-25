@@ -20,7 +20,7 @@ std::vector<char> gulp(std::string fname) {
   return ret;
 }
 
-std::vector<char> binary_to_hex(char const *data, int len) {
+std::vector<char> binary_to_hex(char const *data, uint32_t len) {
   std::vector<char> ret;
   ret.reserve(len * (64 + 5) / 32 + 32);
   for (uint32_t i1 = 0; i1 < len; ++i1) {
