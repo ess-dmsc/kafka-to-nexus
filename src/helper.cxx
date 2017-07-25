@@ -204,6 +204,8 @@ get_json_ret_object get_object(rapidjson::Value const &v_, std::string path) {
   return ret;
 }
 
+/// During development, I find it sometimes useful to be able to quickly pretty
+/// print some json object.
 std::string pretty_print(rapidjson::Document const *v) {
   rapidjson::StringBuffer buf1;
   rapidjson::PrettyWriter<rapidjson::StringBuffer> wr(buf1);
