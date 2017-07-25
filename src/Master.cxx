@@ -33,8 +33,6 @@ void Master::run() {
     this->handle_command(cmd);
   }
   command_listener.start();
-  if (_cb_on_connected)
-    (*_cb_on_connected)();
   while (do_run) {
     LOG(7, "Master poll");
     auto p = command_listener.poll();
@@ -51,9 +49,5 @@ void Master::run() {
 }
 
 void Master::stop() { do_run = false; }
-
-void Master::on_consumer_connected(std::function<void(void)> *cb_on_connected) {
-  _cb_on_connected = cb_on_connected;
-}
 
 } // namespace FileWriter

@@ -31,7 +31,6 @@ public:
   void stop();
   void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg);
   void handle_command(rapidjson::Document const &cmd);
-  void on_consumer_connected(std::function<void(void)> *cb_on_connected);
   std::function<void(void)> cb_on_filewriter_new;
 
   MasterConfig &config;
@@ -39,7 +38,6 @@ public:
 private:
   CommandListener command_listener;
   std::atomic<bool> do_run{true};
-  std::function<void(void)> *_cb_on_connected = nullptr;
   std::vector<std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>>
       stream_masters;
   friend class CommandHandler;
