@@ -124,8 +124,8 @@ FileWriter::Streamer::Streamer(
 
   using opt_t = std::pair<std::string, std::string>;
   set_conf_opt(conf, opt_t{"metadata.broker.list", broker});
-  set_conf_opt(conf, opt_t{"fetch.message.max.bytes", "2048576000"});
-  set_conf_opt(conf, opt_t{"receive.message.max.bytes", "2048576000"});
+  set_conf_opt(conf, opt_t{"fetch.message.max.bytes", "104857600"});
+  set_conf_opt(conf, opt_t{"receive.message.max.bytes", "104857600"});
   set_conf_opt(conf, opt_t{"api.version.request", "true"});
   set_conf_opt(conf, opt_t{"log_level", "3"});
   set_conf_opt(conf, opt_t{"group.id", topic_name});

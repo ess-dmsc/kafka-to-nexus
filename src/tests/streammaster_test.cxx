@@ -141,6 +141,28 @@ TEST(Streammaster, StartTime) {
   sm.start_time(ESSTimeStamp(10));
 }
 
+TEST(Streammaster, Statistics) {
+  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
+  one_demux[0].add_source("for_example_motor01");
+  one_demux[0].add_source("for_example_temperature02");
+  StreamMaster sm(broker, one_demux);
+  auto queue = sm.statistics(-10);
+  EXPECT_TRUE(queue.empty());
+
+  sm.statistics();
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  queue = sm.statistics();
+  EXPECT_FALSE(queue.empty());
+
+  while (!queue.empty()) {
+    queue.front().pprint();
+    queue.pop();
+  }
+
+  std::this_thread::sleep_for(std::chrono::seconds(1));
+  sm.stop();
+}
+
 int main(int argc, char **argv) {
   rng.seed(1234);
   ::testing::InitGoogleTest(&argc, argv);

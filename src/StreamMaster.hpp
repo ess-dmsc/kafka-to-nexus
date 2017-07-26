@@ -9,10 +9,12 @@
 
 #include <algorithm>
 #include <atomic>
+#include <queue>
 #include <thread>
 
 #include "DemuxTopic.h"
 #include "FileWriterTask.h"
+#include "Status.hpp"
 #include "logger.h"
 #include "utils.h"
 
@@ -54,6 +56,9 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     _stop = true;
     if (loop.joinable()) {
       loop.join();
+    }
+    if (fetch_statistics.joinable()) {
+      fetch_statistics.join();
     }
   }
 
@@ -97,6 +102,19 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return !loop.joinable();
   }
 
+  std::queue<Status::StreamMasterStatus> &statistics(const int &delay = 200) {
+    if (!fetch_statistics.joinable()) {
+      if (delay < 0) {
+        LOG(2,
+            "Required negative delay in statistics collection: nothing to do");
+        return sms;
+      }
+      fetch_statistics = std::thread(std::bind(
+          &StreamMaster<Streamer, Demux>::fetch_statistics_impl, this, delay));
+    }
+    return sms;
+  };
+
 private:
   ErrorCode stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
@@ -122,13 +140,6 @@ private:
           }
         }
       }
-      double total_size(0);
-      // for (auto &s : streamer) {
-        // total_size += s.second.status()["status.size"];
-      // }
-      std::cout << "Written " << total_size * 1e-6 << "MB @ "
-                << total_size * 1e3 / (system_clock::now() - tp_global).count()
-                << "MB/s\n";
     }
   }
 
@@ -145,12 +156,30 @@ private:
     }
   }
 
+  void fetch_statistics_impl(const int &delay = 200) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    Status::StreamMasterStatus sm;
+    while (!_stop) {
+      for (auto &s : streamer) {
+        auto v = s.second.status();
+        // sm.push(v.fetch_status());
+        // sm.push(v.fetch_statistics());
+        //        sms.push(sm);
+        sms.push(Status::StreamMasterStatus(v.fetch_status(),
+                                            v.fetch_statistics(), 1));
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    }
+  }
+
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;
   std::thread loop;
   std::atomic<bool> do_write;
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
+  std::queue<Status::StreamMasterStatus> sms;
+  std::thread fetch_statistics, fetch_status;
 
   milliseconds duration{1000};
 };

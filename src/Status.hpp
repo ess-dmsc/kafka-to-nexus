@@ -45,9 +45,31 @@ class StreamMasterStatus {
     streammaster_error = -1,
     streamer_error = -2
   };
-  int status = 0;
+
+public:
+  StreamMasterStatus() = default;
+  StreamMasterStatus(const StreamerStatusType &status,
+                     const StreamerStatisticsType &statistics,
+                     const int &master)
+      : streamer_status(status), streamer_stats(statistics), status(master) {}
+
+  StreamMasterStatus &push(const StreamerStatusType &value) {
+    streamer_status = value;
+    return *this;
+  }
+  StreamMasterStatus &push(const StreamerStatisticsType &value) {
+    streamer_stats = value;
+    return *this;
+  }
+
+  void pprint() {
+    std::cout << "status :\t" << status << "\n";
+  };
+
+private:
   StreamerStatusType streamer_status;
   StreamerStatisticsType streamer_stats;
+  int status{0};
 };
 
 enum RunStatusError {
@@ -81,7 +103,7 @@ public:
   }
   void error() { current.errors++; }
 
-  StreamerStatusType &&fetch_status() {
+  StreamerStatusType fetch_status() {
     std::unique_lock<std::mutex> lock(m);
     return std::move(last + current);
   }
@@ -104,7 +126,7 @@ public:
     last += current;
     last_time = t;
     current.reset();
-    return st;
+    return std::move(st);
   }
   void run_status(const int8_t value) { run_status_ = value; }
 

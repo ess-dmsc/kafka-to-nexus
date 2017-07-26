@@ -6,8 +6,8 @@
 #include <string>
 
 #include "DemuxTopic.h"
-#include "utils.h"
 #include "Status.hpp"
+#include "utils.h"
 
 // forward definitions
 namespace RdKafka {
@@ -52,6 +52,8 @@ struct Streamer {
     }
     return StatusCode::STOPPED;
   }
+
+  Status::StreamerStatus &status() { return s_; }
 
 private:
   RdKafka::KafkaConsumer *_consumer{nullptr};
