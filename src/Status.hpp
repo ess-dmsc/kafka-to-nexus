@@ -1,17 +1,17 @@
 #pragma once
 
-#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <vector>
 #include <mutex>
 
 namespace FileWriter {
 class Streamer;
 namespace Status {
 
-struct StreamerStatusType {
+class StreamerStatusType {
   StreamerStatusType();
   StreamerStatusType(const StreamerStatusType &other);
   StreamerStatusType(StreamerStatusType &&other) noexcept = default;
@@ -38,40 +38,6 @@ struct StreamerStatisticsType {
   int partitions{0};
 };
 
-class StreamMasterStatus {
-  enum {
-    running = 1,
-    stopped = 0,
-    streammaster_error = -1,
-    streamer_error = -2
-  };
-
-public:
-  StreamMasterStatus() = default;
-  StreamMasterStatus(const StreamerStatusType &status,
-                     const StreamerStatisticsType &statistics,
-                     const int &master)
-      : streamer_status(status), streamer_stats(statistics), status(master) {}
-
-  StreamMasterStatus &push(const StreamerStatusType &value) {
-    streamer_status = value;
-    return *this;
-  }
-  StreamMasterStatus &push(const StreamerStatisticsType &value) {
-    streamer_stats = value;
-    return *this;
-  }
-
-  void pprint() {
-    std::cout << "status :\t" << status << "\n";
-  };
-
-private:
-  StreamerStatusType streamer_status;
-  StreamerStatisticsType streamer_stats;
-  int status{0};
-};
-
 enum RunStatusError {
   running = 1,
   stopped = 0,
@@ -81,7 +47,31 @@ enum RunStatusError {
   assign_error = -4,
   topic_error = -5,
   offset_error = -6,
-  start_time_error = -7
+  start_time_error = -7,
+  streammaster_error = -1000
+};
+
+class StreamMasterStatus {
+  friend void pprint(const StreamMasterStatus &);
+
+public:
+  StreamMasterStatus() = default;
+  StreamMasterStatus(const int &value) : status(value){};
+
+  StreamMasterStatus &push(const std::string topic_name,
+                           const StreamerStatusType &status,
+                           const StreamerStatisticsType &stats) {
+    topic.push_back(topic_name);
+    streamer_status.push_back(status);
+    streamer_stats.push_back(stats);
+    return *this;
+  }
+
+private:
+  std::vector<std::string> topic;
+  std::vector<StreamerStatusType> streamer_status;
+  std::vector<StreamerStatisticsType> streamer_stats;
+  int status{0};
 };
 
 class StreamerStatus {
@@ -94,40 +84,13 @@ public:
       : current{other.current}, last{other.last}, last_time{other.last_time},
         partitions{other.partitions}, run_status_(other.run_status_) {}
 
-  void add_message(const double &bytes) {
-    std::unique_lock<std::mutex> lock(m);
-    current.bytes += bytes;
-    current.bytes2 += bytes * bytes;
-    current.messages += 1;
-    current.messages2 += 1;
-  }
+  void add_message(const double &bytes);
   void error() { current.errors++; }
 
-  StreamerStatusType fetch_status() {
-    std::unique_lock<std::mutex> lock(m);
-    return std::move(last + current);
-  }
+  StreamerStatusType fetch_status();
 
-  StreamerStatisticsType fetch_statistics() {
-    StreamerStatisticsType st;
-    std::unique_lock<std::mutex> lock(m);
+  StreamerStatisticsType fetch_statistics();
 
-    std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
-    auto count = (t - last_time).count();
-    st.size_avg = current.bytes / current.messages;
-    st.size_std = std::sqrt(
-        (current.bytes2 / current.messages - st.size_avg * st.size_avg) /
-        current.messages);
-
-    st.freq_avg = current.messages / count;
-    st.freq_std = std::sqrt(
-        (current.messages / count - st.freq_avg * st.freq_avg) / count);
-
-    last += current;
-    last_time = t;
-    current.reset();
-    return std::move(st);
-  }
   void run_status(const int8_t value) { run_status_ = value; }
 
 private:
@@ -139,5 +102,8 @@ private:
   int8_t run_status_;
 }; // namespace Status
 
+void pprint(const StreamMasterStatus &);
+void pprint(const StreamerStatusType &);
+void pprint(const StreamerStatisticsType &);
 } // namespace Status
 } // namespace FileWriter

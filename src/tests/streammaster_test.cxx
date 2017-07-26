@@ -70,20 +70,6 @@ template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
-  // RdKafka::Message *msg =
-  //     _consumer->consume(_topic, _partition.value(),
-  // consumer_timeout.count());
-  // if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
-  //   //    std::cout << "eof reached" << std::endl;
-  //   return ProcessMessageResult::OK();
-  // }
-  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
-  //   //    std::cout << "Failed to consume message:
-  //   //    "+RdKafka::err2str(msg->err()) << std::endl;
-  //   return ProcessMessageResult::ERR();
-  // }
-  // message_length = msg->len();
-  // return mp.process_message((char *)msg->payload(), msg->len());
   return ProcessMessageResult::ERR();
 }
 
@@ -145,7 +131,9 @@ TEST(Streammaster, Statistics) {
   using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
   one_demux[0].add_source("for_example_motor01");
   one_demux[0].add_source("for_example_temperature02");
-  StreamMaster sm(broker, one_demux);
+  StreamMaster sm(broker, demux);
+  sm.start();
+
   auto queue = sm.statistics(-10);
   EXPECT_TRUE(queue.empty());
 
@@ -153,13 +141,13 @@ TEST(Streammaster, Statistics) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
   queue = sm.statistics();
   EXPECT_FALSE(queue.empty());
+  std::this_thread::sleep_for(std::chrono::seconds(1));
 
   while (!queue.empty()) {
-    queue.front().pprint();
+    pprint(queue.front());
     queue.pop();
   }
 
-  std::this_thread::sleep_for(std::chrono::seconds(1));
   sm.stop();
 }
 

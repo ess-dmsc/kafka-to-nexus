@@ -23,8 +23,8 @@ struct FileWriterCommand;
 
 namespace FileWriter {
 
-template <typename Streamer, typename Demux> struct StreamMaster {
-
+template <typename Streamer, typename Demux> class StreamMaster {
+public:
   StreamMaster() : do_write(false), _stop(false){};
 
   StreamMaster(
@@ -158,16 +158,13 @@ private:
 
   void fetch_statistics_impl(const int &delay = 200) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    Status::StreamMasterStatus sm;
     while (!_stop) {
+      Status::StreamMasterStatus status(_stop.load());
       for (auto &s : streamer) {
         auto v = s.second.status();
-        // sm.push(v.fetch_status());
-        // sm.push(v.fetch_statistics());
-        //        sms.push(sm);
-        sms.push(Status::StreamMasterStatus(v.fetch_status(),
-                                            v.fetch_statistics(), 1));
+        status.push(s.first, v.fetch_status(), v.fetch_statistics());
       }
+      sms.push(status);
       std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     }
   }
