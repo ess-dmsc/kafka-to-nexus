@@ -125,7 +125,7 @@ TEST(Streammaster, StartStop) {
   bool is_joinable = sm.start();
   EXPECT_TRUE(is_joinable);
   std::this_thread::sleep_for(std::chrono::seconds(1));
-  auto value = sm.stop();
+  sm.stop();
 
   for (int item = 0; item < (int64_t)one_demux[0].sources().size(); ++item)
     std::cout << one_demux[0].sources()[item].source() << " : "

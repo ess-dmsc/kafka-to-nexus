@@ -15,6 +15,12 @@ template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
 template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
 template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
+void swap(hsize_t &x, hsize_t &y) {
+  x ^= y;
+  y ^= x;
+  x ^= y;
+}
+
 namespace h5p {
 
 dataset_create::ptr dataset_create::chunked1(hid_t type, hsize_t bytes) {
@@ -72,7 +78,7 @@ template <size_t N> h5s::ptr h5s::simple_unlim(array<hsize_t, N> const &sini) {
   o.sini = {sini.data(), sini.data() + sini.size()};
   o.smax.clear();
   o.smax.resize(o.sini.size(), H5S_UNLIMITED);
-  for (int i1 = 1; i1 < o.sini.size(); ++i1) {
+  for (size_t i1 = 1; i1 < o.sini.size(); ++i1) {
     o.smax[i1] = o.sini[i1];
   }
   o.id = H5Screate_simple(o.sini.size(), o.sini.data(), o.smax.data());

@@ -38,7 +38,7 @@ fb synth::next(uint32_t size) {
   if ((!a1) || (!a2)) {
     LOG(7, "ERROR can not create test data");
   } else {
-    for (int i1 = 0; i1 < size; ++i1) {
+    for (size_t i1 = 0; i1 < size; ++i1) {
       auto eid = impl->rnd();
       a1[i1] = eid & 0xff;
       a2[i1] = (eid >> 8) & 0xff;

@@ -130,7 +130,7 @@ public:
   void start() {
     _stop = false;
     _pause = false;
-    t = std::move(std::thread([this] { this->produce(); }));
+    t = std::thread([this] { this->produce(); });
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
   void pause() { _pause = true; }
@@ -196,7 +196,7 @@ public:
   }
 
   void TearDown() {
-    auto status = _consumer->stop(_topic, _partition);
+    _consumer->stop(_topic, _partition);
     delete _topic;
     delete _consumer;
   }
