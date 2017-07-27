@@ -159,7 +159,11 @@ private:
   void fetch_statistics_impl(const int &delay = 200) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
-      Status::StreamMasterStatus status(_stop.load());
+      int value = 0;
+      if (!_stop && streamer.size() > 0) {
+        value = 1;
+      }
+      Status::StreamMasterStatus status(value);
       for (auto &s : streamer) {
         auto v = s.second.status();
         status.push(s.first, v.fetch_status(), v.fetch_statistics());
@@ -172,13 +176,13 @@ private:
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;
   std::thread loop;
+  std::thread fetch_statistics;
+  std::queue<Status::StreamMasterStatus> sms;
   std::atomic<bool> do_write;
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
-  std::queue<Status::StreamMasterStatus> sms;
-  std::thread fetch_statistics, fetch_status;
 
   milliseconds duration{1000};
-};
+}; // namespace FileWriter
 
 } // namespace FileWriter

@@ -7,6 +7,7 @@
 #include <StreamMaster.hpp>
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
+#include <StatusWriter.hpp>
 
 static std::mt19937_64 rng;
 
@@ -144,9 +145,11 @@ TEST(Streammaster, Statistics) {
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
   while (!queue.empty()) {
-    pprint(queue.front());
+    FileWriter::Status::pprint<FileWriter::Status::StdIOWriter>(queue.front());
+    // writer.pprint(queue.front());
     queue.pop();
   }
+  EXPECT_TRUE(queue.empty());
 
   sm.stop();
 }

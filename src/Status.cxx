@@ -1,4 +1,7 @@
 #include "Status.hpp"
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
 
 FileWriter::Status::StreamerStatusType::StreamerStatusType()
     : bytes{0}, messages{0}, errors{0}, bytes2{0}, messages2{0} {}
@@ -92,28 +95,4 @@ FileWriter::Status::StreamerStatus::fetch_statistics() {
   return std::move(st);
 }
 
-////////////////////////
-// Utility functions
-void FileWriter::Status::pprint(
-    const FileWriter::Status::StreamerStatusType &x) {
-  printf("\tstatus: {\tmessages : %.0lf,\tbytes : %.0lf,\terrors : "
-         "%.0lf},\n",
-         x.messages, x.bytes, x.errors);
-}
-void FileWriter::Status::pprint(
-    const FileWriter::Status::StreamerStatisticsType &x) {
-  printf("\tstatistics: {\tsize average : %.0lf,\tsize std : "
-         "%.0lf,\tfrequency average "
-         ": %.0lf,\tfrequency std : %.0lf}\n",
-         x.size_avg, x.size_std, x.freq_avg, x.freq_std);
-}
-void FileWriter::Status::pprint(
-    const FileWriter::Status::StreamMasterStatus &x) {
-  printf("stream_master : %d,\n", x.status);
-  for (size_t i = 0; i < x.topic.size(); ++i) {
-    printf("%s : {\n", x.topic[i].c_str());
-    pprint(x.streamer_status[i]);
-    pprint(x.streamer_stats[i]);
-    printf("},\n");
-  }
-};
+

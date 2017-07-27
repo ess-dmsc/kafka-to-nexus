@@ -4,14 +4,29 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
-#include <vector>
+#include <memory>
 #include <mutex>
+#include <vector>
 
 namespace FileWriter {
 class Streamer;
 namespace Status {
 
+// class DummyWriter {
+// }
+
+class StdIOWriter;
+class JSONWriter;
+
+class StreamerStatus;
+class StreamMasterStatus;
+
 class StreamerStatusType {
+  friend class StdIOWriter;
+  friend class CJSONWriter;
+  //  friend void pprint(const StreamerStatusType &);
+
+public:
   StreamerStatusType();
   StreamerStatusType(const StreamerStatusType &other);
   StreamerStatusType(StreamerStatusType &&other) noexcept = default;
@@ -25,6 +40,7 @@ class StreamerStatusType {
   StreamerStatusType operator+(const StreamerStatusType &other);
 
   void reset();
+
   double bytes;
   double messages;
   double errors;
@@ -52,7 +68,9 @@ enum RunStatusError {
 };
 
 class StreamMasterStatus {
-  friend void pprint(const StreamMasterStatus &);
+  //  friend void pprint(const StreamMasterStatus &);
+  friend class StdIOWriter;
+  friend class CJSONWriter;
 
 public:
   StreamMasterStatus() = default;
@@ -75,6 +93,8 @@ private:
 };
 
 class StreamerStatus {
+  friend class StdIOWriter;
+  friend class CJSONWriter;
 
 public:
   StreamerStatus()
@@ -91,7 +111,7 @@ public:
 
   StreamerStatisticsType fetch_statistics();
 
-  void run_status(const int8_t value) { run_status_ = value; }
+  void run_status(const int8_t &value) { run_status_ = value; }
 
 private:
   StreamerStatusType current;
@@ -102,8 +122,9 @@ private:
   int8_t run_status_;
 }; // namespace Status
 
-void pprint(const StreamMasterStatus &);
-void pprint(const StreamerStatusType &);
-void pprint(const StreamerStatisticsType &);
+// template <typename W> typename W::return_type pprint(StreamMasterStatus &);
+// template <> typename JSONWriter::return_type pprint<JSONWriter>(StreamMasterStatus &);
+// template <> typename StdIOWriter::return_type pprint<StdIOWriter>(StreamMasterStatus &);
+
 } // namespace Status
 } // namespace FileWriter
