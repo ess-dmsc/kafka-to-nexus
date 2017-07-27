@@ -13,6 +13,8 @@ using std::array;
 using std::vector;
 using std::string;
 
+void swap(hsize_t &, hsize_t &);
+
 namespace h5p {
 
 class dataset_create {
@@ -74,6 +76,9 @@ private:
   h5d();
 };
 
+template <typename T> class h5d_chunked_1d;
+template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y);
+
 template <typename T> class h5d_chunked_1d {
 public:
   typedef unique_ptr<h5d_chunked_1d<T>> ptr;
@@ -81,7 +86,7 @@ public:
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
-  friend void swap(h5d_chunked_1d &x, h5d_chunked_1d &y);
+  friend void swap<>(h5d_chunked_1d &x, h5d_chunked_1d &y);
   append_ret append_data_1d(T const *data, hsize_t nlen);
   int flush_buf();
 
@@ -93,6 +98,9 @@ private:
   hsize_t i0 = 0;
 };
 
+template <typename T> class h5d_chunked_2d;
+template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y);
+
 template <typename T> class h5d_chunked_2d {
 public:
   typedef unique_ptr<h5d_chunked_2d<T>> ptr;
@@ -100,7 +108,7 @@ public:
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();
-  friend void swap(h5d_chunked_2d &x, h5d_chunked_2d &y);
+  friend void swap<>(h5d_chunked_2d &x, h5d_chunked_2d &y);
   append_ret append_data_2d(T const *data, hsize_t nlen);
   int flush_buf();
 
