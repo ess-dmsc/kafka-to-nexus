@@ -58,11 +58,11 @@ private:
   RdKafka::KafkaConsumer *_consumer{nullptr};
   std::shared_ptr<RdKafka::Metadata> _metadata;
   std::vector<RdKafka::TopicPartition *> _tp;
+  RdKafkaOffset _offset{RdKafkaOffsetEnd};
+  RdKafkaOffset _begin;
   std::vector<RdKafkaOffset> _low;
   status_type status_;
 
-  RdKafkaOffset _offset{RdKafkaOffsetEnd};
-  RdKafkaOffset _begin;
   int32_t message_length_{0};
   int32_t n_messages_{0};
   int32_t n_sources_{0};
