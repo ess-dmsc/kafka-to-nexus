@@ -196,7 +196,7 @@ public:
   }
 
   void TearDown() {
-    auto status = _consumer->stop(_topic, _partition);
+    _consumer->stop(_topic, _partition);
     delete _topic;
     delete _consumer;
   }
