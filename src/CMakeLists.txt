@@ -185,22 +185,6 @@ if (have_gtest)
     add_gtest_to_target(${tgt})
 endif()
 
-
-
-set(tgt "dummy")
-set(sources
-    dummy.cxx
-    $<TARGET_OBJECTS:kafka_to_nexus__objects>
-)
-add_executable(${tgt} ${sources})
-add_dependencies(${tgt} flatbuffers_generate)
-add_dependencies(${tgt} git_commit_current)
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
-
-
-
 if (have_gtest)
     add_subdirectory(tests)
 endif()
