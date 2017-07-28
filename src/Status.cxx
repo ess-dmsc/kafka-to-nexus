@@ -80,19 +80,23 @@ FileWriter::Status::StreamerStatus::fetch_statistics() {
 
   std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
   auto count = (t - last_time).count();
-  st.size_avg = current.bytes / current.messages;
-  st.size_std = std::sqrt(
-      (current.bytes2 / current.messages - st.size_avg * st.size_avg) /
-      current.messages);
+  if (current.messages > 0) {
+    st.size_avg = current.bytes / current.messages;
+    st.size_std = std::sqrt(
+        (current.bytes2 / current.messages - st.size_avg * st.size_avg) /
+        current.messages);
 
-  st.freq_avg = current.messages / count;
-  st.freq_std =
-      std::sqrt((current.messages / count - st.freq_avg * st.freq_avg) / count);
-
+    st.freq_avg = current.messages / count;
+    st.freq_std = std::sqrt(
+        (current.messages / count - st.freq_avg * st.freq_avg) / count);
+  } else {
+    st.size_avg = -1.;
+    st.size_std = -1.;
+    st.freq_avg = -1.;
+    st.freq_std = -1.;
+  }
   last += current;
   last_time = t;
   current.reset();
   return std::move(st);
 }
-
-

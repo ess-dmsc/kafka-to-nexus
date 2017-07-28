@@ -23,7 +23,7 @@ class StreamMasterStatus;
 
 class StreamerStatusType {
   friend class StdIOWriter;
-  friend class CJSONWriter;
+  friend class JSONWriter;
   //  friend void pprint(const StreamerStatusType &);
 
 public:
@@ -55,6 +55,9 @@ struct StreamerStatisticsType {
 };
 
 enum RunStatusError {
+  has_finished = 2,
+  writing = 1,
+  not_started = 0,
   running = 1,
   stopped = 0,
   consumer_error = -1,
@@ -70,7 +73,7 @@ enum RunStatusError {
 class StreamMasterStatus {
   //  friend void pprint(const StreamMasterStatus &);
   friend class StdIOWriter;
-  friend class CJSONWriter;
+  friend class JSONWriter;
 
 public:
   StreamMasterStatus() = default;
@@ -94,7 +97,7 @@ private:
 
 class StreamerStatus {
   friend class StdIOWriter;
-  friend class CJSONWriter;
+  friend class JSONWriter;
 
 public:
   StreamerStatus()
@@ -121,10 +124,6 @@ private:
   uint32_t partitions;
   int8_t run_status_;
 }; // namespace Status
-
-// template <typename W> typename W::return_type pprint(StreamMasterStatus &);
-// template <> typename JSONWriter::return_type pprint<JSONWriter>(StreamMasterStatus &);
-// template <> typename StdIOWriter::return_type pprint<StdIOWriter>(StreamMasterStatus &);
 
 } // namespace Status
 } // namespace FileWriter

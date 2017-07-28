@@ -4,12 +4,25 @@
 #include <random>
 #include <stdexcept>
 
+#include <StatusWriter.hpp>
 #include <StreamMaster.hpp>
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
-#include <StatusWriter.hpp>
+
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
 
 static std::mt19937_64 rng;
+
+std::ostream &operator<<(std::ostream &os,
+                         rapidjson::Document const &document) {
+  using namespace rapidjson;
+  StringBuffer buffer;
+  PrettyWriter<StringBuffer> wr(buffer);
+  document.Accept(wr);
+  std::cout << buffer.GetString() << "\n";
+  return os;
+}
 
 namespace FileWriter {
 class MockSource {
@@ -144,9 +157,13 @@ TEST(Streammaster, Statistics) {
   EXPECT_FALSE(queue.empty());
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
+  // using Output = FileWriter::Status::StdIOWriter;
+  using Output = FileWriter::Status::JSONWriter;
   while (!queue.empty()) {
-    FileWriter::Status::pprint<FileWriter::Status::StdIOWriter>(queue.front());
-    // writer.pprint(queue.front());
+    // verbose form
+    // auto json = FileWriter::Status::pprint<Output>(queue.front());
+    // std::cout << json << "\n";
+    std::cout << FileWriter::Status::pprint<Output>(queue.front()) << "\n";
     queue.pop();
   }
   EXPECT_TRUE(queue.empty());

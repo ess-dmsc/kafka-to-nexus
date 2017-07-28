@@ -25,13 +25,16 @@ namespace FileWriter {
 
 template <typename Streamer, typename Demux> class StreamMaster {
 public:
-  StreamMaster() : do_write(false), _stop(false){};
+  StreamMaster()
+      : runstatus{Status::RunStatusError::not_started}, do_write{false},
+        _stop{false} {};
 
   StreamMaster(
       std::string &broker, std::vector<Demux> &_demux,
       std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
-      : demux(_demux), do_write(false), _stop(false) {
+      : demux(_demux), runstatus{Status::RunStatusError::not_started},
+        do_write(false), _stop(false) {
 
     for (auto &d : demux) {
       streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
@@ -43,8 +46,9 @@ public:
       std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
       std::vector<std::pair<std::string, std::string>> kafka_options = {},
       const RdKafkaOffset &offset = RdKafkaOffsetEnd)
-      : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
-        _file_writer_task(std::move(file_writer_task)) {
+      : demux(file_writer_task->demuxers()),
+        runstatus{Status::RunStatusError::not_started}, do_write(false),
+        _stop(false), _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
       streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
@@ -54,6 +58,7 @@ public:
 
   ~StreamMaster() {
     _stop = true;
+    //    runstatus = Status::RunStatusError::has_finished;
     if (loop.joinable()) {
       loop.join();
     }
@@ -123,6 +128,7 @@ private:
 
   void run() {
     using namespace std::chrono;
+    runstatus = Status::RunStatusError::writing;
     system_clock::time_point tp, tp_global(system_clock::now());
 
     while (!_stop) {
@@ -141,6 +147,7 @@ private:
         }
       }
     }
+    runstatus = Status::RunStatusError::has_finished;
   }
 
   ErrorCode remove_source(const std::string &topic) {
@@ -152,6 +159,9 @@ private:
       LOG(3, "All sources in {} have expired, remove streamer", topic);
       stop_streamer(s);
       streamer.erase(topic);
+      if (streamer.size() == 0) {
+	runstatus = Status::RunStatusError::has_finished;
+      }
       return ErrorCode(StatusCode::STOPPED);
     }
   }
@@ -159,11 +169,7 @@ private:
   void fetch_statistics_impl(const int &delay = 200) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
-      int value = 0;
-      if (!_stop && streamer.size() > 0) {
-        value = 1;
-      }
-      Status::StreamMasterStatus status(value);
+      Status::StreamMasterStatus status(runstatus.load());
       for (auto &s : streamer) {
         auto v = s.second.status();
         status.push(s.first, v.fetch_status(), v.fetch_statistics());
@@ -178,6 +184,7 @@ private:
   std::thread loop;
   std::thread fetch_statistics;
   std::queue<Status::StreamMasterStatus> sms;
+  std::atomic<int> runstatus;
   std::atomic<bool> do_write;
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
