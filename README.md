@@ -362,6 +362,16 @@ the list of brokers from Kafka.
   - Streammaster::duration milliseconds have been elapsed
 * when receives a **termination** command from Master closes all the streamers
 
+StreamMaster exposes a ``queue<StreamMasterStatus>`` which contains
+information on:
+* StreamMaster not yet running, running or finished
+* status of each Streamer (number of sent messages, errors and total
+  received bytes)
+* statistics for each Streamer (message size average and message
+frequency int the last 200ms, configurable).  The StreamMasterStatus
+can be serialised as a rapidJSON object (or printed on the screen)
+using the ``pprint<OutputType>`` function.
+
 
 More tests involing the network:
 ```
