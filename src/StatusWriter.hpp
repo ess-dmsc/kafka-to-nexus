@@ -1,4 +1,5 @@
 #pragma once
+#include "schemas/writer_status_generated.h"
 #include <rapidjson/document.h>
 
 namespace FileWriter {
@@ -33,26 +34,17 @@ private:
 class FlatbuffersWriter {
 
 public:
-  using return_type = void;
+  using return_type = flatbuffers::Offset<StatusInfo>;
   return_type write(const StreamMasterStatus &);
 
 private:
 };
 
-template <class W> struct print_value { using type = void; };
-template <> struct print_value<JSONWriter> {
-  using type = rapidjson::Document;
-};
-
 template <class W>
-typename print_value<W>::type pprint(const StreamMasterStatus &x);
-
-template <>
-typename StdIOWriter::return_type
-pprint<StdIOWriter>(const StreamMasterStatus &x);
-template <>
-typename JSONWriter::return_type
-pprint<JSONWriter>(const StreamMasterStatus &x);
+typename W::return_type pprint(const StreamMasterStatus &x) {
+  W writer;
+  return writer.write(x);
+}
 
 } // namespace Status
 } // namespace FileWriter

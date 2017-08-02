@@ -157,13 +157,14 @@ TEST(Streammaster, Statistics) {
   EXPECT_FALSE(queue.empty());
   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  // using Output = FileWriter::Status::StdIOWriter;
-  using Output = FileWriter::Status::JSONWriter;
+  using Output1 = FileWriter::Status::StdIOWriter;
+  using Output2 = FileWriter::Status::FlatbuffersWriter;
+  using Output3 = FileWriter::Status::JSONWriter;
   while (!queue.empty()) {
-    // verbose form
-    // auto json = FileWriter::Status::pprint<Output>(queue.front());
-    // std::cout << json << "\n";
-    std::cout << FileWriter::Status::pprint<Output>(queue.front()) << "\n";
+    FileWriter::Status::pprint<Output1>(queue.front());
+    FileWriter::Status::pprint<Output2>(queue.front());
+    FileWriter::Status::pprint<Output3>(queue.front());
+    std::cout << FileWriter::Status::pprint<Output3>(queue.front()) << "\n";
     queue.pop();
   }
   EXPECT_TRUE(queue.empty());

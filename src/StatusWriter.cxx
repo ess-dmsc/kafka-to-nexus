@@ -93,23 +93,29 @@ rapidjson::Value JSONWriter::to_json(const StreamerStatisticsType &x,
   return value;
 }
 
-template <class W>
-typename print_value<W>::type pprint(const StreamMasterStatus &x) {
-  W writer;
-  writer.write();
-}
+flatbuffers::Offset<StatusInfo>
+FlatbuffersWriter::write(const StreamMasterStatus &data) {
 
-template <>
-StdIOWriter::return_type pprint<StdIOWriter>(const StreamMasterStatus &x) {
-  StdIOWriter writer;
-  writer.write(x);
-}
+  flatbuffers::FlatBufferBuilder builder(1024);
+  std::vector<flatbuffers::Offset<StreamerInfo>> streamers;
 
-template <>
-typename JSONWriter::return_type
-pprint<JSONWriter>(const StreamMasterStatus &x) {
-  JSONWriter writer;
-  return writer.write(x);
+  for (size_t i = 0; i < data.topic.size(); ++i) {
+    auto t = builder.CreateString(data.topic[i]);
+    auto msg_size = Statistics(data.streamer_stats[i].size_avg,
+                               data.streamer_stats[i].size_std);
+    auto msg_freq = Statistics(data.streamer_stats[i].freq_avg,
+                               data.streamer_stats[i].freq_std);
+    auto s = CreateStreamerInfo(
+        builder, t, int(data.streamer_status[i].messages),
+        int(data.streamer_status[i].bytes), int(data.streamer_status[i].errors),
+        &msg_size, &msg_freq);
+    streamers.push_back(s);
+  }
+  auto fbs =
+      CreateStatusInfo(builder, data.status, builder.CreateVector(streamers));
+  FinishStatusInfoBuffer(builder, fbs);
+  builder.Clear();
+  return fbs;
 }
 
 } // namespace Status

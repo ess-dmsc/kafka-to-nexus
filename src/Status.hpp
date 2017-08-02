@@ -12,11 +12,9 @@ namespace FileWriter {
 class Streamer;
 namespace Status {
 
-// class DummyWriter {
-// }
-
 class StdIOWriter;
 class JSONWriter;
+class FlatbuffersWriter;
 
 class StreamerStatus;
 class StreamMasterStatus;
@@ -24,7 +22,7 @@ class StreamMasterStatus;
 class StreamerStatusType {
   friend class StdIOWriter;
   friend class JSONWriter;
-  //  friend void pprint(const StreamerStatusType &);
+  friend class FlatbuffersWriter;
 
 public:
   StreamerStatusType();
@@ -71,9 +69,9 @@ enum RunStatusError {
 };
 
 class StreamMasterStatus {
-  //  friend void pprint(const StreamMasterStatus &);
   friend class StdIOWriter;
   friend class JSONWriter;
+  friend class FlatbuffersWriter;
 
 public:
   StreamMasterStatus() = default;
@@ -98,6 +96,7 @@ private:
 class StreamerStatus {
   friend class StdIOWriter;
   friend class JSONWriter;
+  friend class FlatbuffersWriter;
 
 public:
   StreamerStatus()
