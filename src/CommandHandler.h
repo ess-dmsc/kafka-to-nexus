@@ -1,5 +1,6 @@
 #pragma once
 
+#include "MainOpt.h"
 #include "Master.h"
 #include <memory>
 #include <rapidjson/document.h>
@@ -15,16 +16,16 @@ namespace FileWriter {
 /// Stub, will perform the JSON parsing and then take appropriate action.
 class CommandHandler : public FileWriterCommandHandler {
 public:
-  CommandHandler(Master *master, rapidjson::Value const *config_file);
+  CommandHandler(MainOpt &config, Master *master);
   void handle_new(rapidjson::Document const &d);
   void handle_exit(rapidjson::Document const &d);
   void handle(Msg const &msg);
   void handle(rapidjson::Document const &cmd);
 
 private:
+  MainOpt &config;
   std::unique_ptr<rapidjson::SchemaDocument> schema_command;
-  Master *master;
-  rapidjson::Value const *config_file = nullptr;
+  Master *master = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> file_writer_tasks;
   friend class ::T_CommandHandler;
 };

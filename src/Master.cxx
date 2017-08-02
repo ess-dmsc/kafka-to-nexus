@@ -15,16 +15,15 @@ using std::string;
 
 std::string &CmdMsg_K::str() { return _str; }
 
-Master::Master(MasterConfig &config)
-    : config(config), command_listener(config.command_listener) {}
+Master::Master(MainOpt &config) : config(config), command_listener(config) {}
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
-  CommandHandler command_handler(this, config.config_file);
+  CommandHandler command_handler(config, this);
   command_handler.handle({(char *)msg->data(), (int32_t)msg->size()});
 }
 
 void Master::handle_command(rapidjson::Document const &cmd) {
-  CommandHandler command_handler(this, config.config_file);
+  CommandHandler command_handler(config, this);
   command_handler.handle(cmd);
 }
 

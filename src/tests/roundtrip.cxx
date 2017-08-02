@@ -1,5 +1,6 @@
 #include "roundtrip.h"
 #include "../KafkaW.h"
+#include "../Master.h"
 #include "../helper.h"
 #include "../logger.h"
 #include "../schemas/ev42/ev42_synth.h"
@@ -67,12 +68,11 @@ void roundtrip_simple_01(MainOpt &opt) {
   using namespace BrightnESS::FlatBufs::f141_epics_nt;
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
-  Master m(opt.master_config);
+  Master m(opt);
   opt.master = &m;
   auto fn_cmd = "tests/msg-conf-new-01.json";
-  auto of = produce_command_from_file(opt.master_config.command_listener.broker,
-                                      fn_cmd);
-  opt.master_config.command_listener.start_at_command_offset = of - 1;
+  auto of = produce_command_from_file(opt.command_broker_uri, fn_cmd);
+  opt.start_at_command_offset = of - 1;
   std::thread t1([&m] { ASSERT_NO_THROW(m.run()); });
 
   // We want the streamers to be ready
@@ -161,7 +161,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   using std::string;
 
   // One broker for commands and data for this test
-  auto &broker_common = opt.master_config.command_listener.broker;
+  auto &broker_common = opt.command_broker_uri;
 
   auto json_data = gulp(fn_cmd);
   Document d;
@@ -178,8 +178,8 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   d.Accept(wr);
 
   auto of = produce_command_from_string(broker_common, cmd_buf1.GetString());
-  opt.master_config.command_listener.start_at_command_offset = of - 1;
-  Master m(opt.master_config);
+  opt.start_at_command_offset = of - 1;
+  Master m(opt);
   opt.master = &m;
   std::thread t1([&m] { ASSERT_NO_THROW(m.run()); });
 

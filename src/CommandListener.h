@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KafkaW.h"
+#include "MainOpt.h"
 #include "Master_handler.h"
 #include "uri.h"
 #include <thread>
@@ -11,15 +12,6 @@ class MessageCallback {
 public:
   virtual void operator()(int partition, std::string const &topic,
                           std::string const &msg) = 0;
-};
-
-/// Settings for the Kafka command broker and topic.
-struct CommandListenerConfig {
-  uri::URI broker;
-  std::function<void(rd_kafka_topic_partition_list_s *)> on_rebalance_assign;
-  int64_t start_at_command_offset = -1;
-  CommandListenerConfig()
-      : broker("kafka://localhost:9092/kafka-to-nexus.command") {}
 };
 
 class PollStatus {
@@ -44,7 +36,7 @@ private:
 /// Check for new commands on the topic, return them to the Master.
 class CommandListener {
 public:
-  CommandListener(CommandListenerConfig);
+  CommandListener(MainOpt &config);
   ~CommandListener();
   /// Start listening to command messages.
   void start();
@@ -53,7 +45,7 @@ public:
   KafkaW::PollStatus poll();
 
 private:
-  CommandListenerConfig config;
+  MainOpt &config;
   std::unique_ptr<KafkaW::Consumer> consumer;
 };
 

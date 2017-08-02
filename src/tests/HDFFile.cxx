@@ -2,6 +2,7 @@
 #include "../CommandHandler.h"
 #include "../HDFFile_impl.h"
 #include "../KafkaW.h"
+#include "../MainOpt.h"
 #include "../SchemaRegistry.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
@@ -57,7 +58,8 @@ public:
     char const *fname = d["file_attributes"]["file_name"].GetString();
     // char const * source_name = d["streams"][0]["source"].GetString();
     unlink(fname);
-    FileWriter::CommandHandler ch(nullptr, nullptr);
+    MainOpt main_opt;
+    FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle({cmd.data(), (int32_t)cmd.size()});
   }
 
@@ -70,7 +72,8 @@ public:
     char const *fname = d["file_attributes"]["file_name"].GetString();
     char const *source_name = d["streams"][0]["source"].GetString();
     unlink(fname);
-    FileWriter::CommandHandler ch(nullptr, nullptr);
+    MainOpt main_opt;
+    FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle({cmd.data(), (int32_t)cmd.size()});
 
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
@@ -120,19 +123,18 @@ public:
     using std::array;
     using std::vector;
     using std::string;
+    MainOpt main_opt;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
     auto fname = get_string(&d, "file_attributes.file_name");
     auto source_name = get_string(&d, "streams.0.source");
-    // char const * fname = d["file_attributes"]["file_name"].GetString();
-    // char const * source_name = d["streams"][0]["source"].GetString();
     unlink(string(fname).c_str());
-    rapidjson::Document config_file;
-    config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
-    ASSERT_FALSE(config_file.HasParseError());
-    FileWriter::CommandHandler ch(nullptr, &config_file);
+    main_opt.config_file.Parse(
+        "{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
+    ASSERT_FALSE(main_opt.config_file.HasParseError());
+    FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle({cmd.data(), (int32_t)cmd.size()});
 
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
