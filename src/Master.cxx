@@ -26,6 +26,15 @@ void Master::handle_command(rapidjson::Document const &cmd) {
 }
 
 void Master::run() {
+  if (config.do_kafka_status) {
+    LOG(3, "Publishing status to kafka://{}/{}",
+        config.kafka_status_uri.host_port, config.kafka_status_uri.topic);
+    KafkaW::BrokerOpt bopt;
+    bopt.address = config.kafka_status_uri.host_port;
+    auto producer = std::make_shared<KafkaW::Producer>(bopt);
+    status_producer = std::make_shared<KafkaW::ProducerTopic>(
+        producer, config.kafka_status_uri.topic);
+  }
   for (auto const &cmd : config.commands_from_config_file) {
     this->handle_command(cmd);
   }
