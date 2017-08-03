@@ -20,6 +20,7 @@ std::vector<std::string> split(std::string const &input, std::string token);
 struct get_json_ret_string {
   explicit operator bool() const;
   explicit operator std::string() const;
+  bool found() const;
   int err;
   std::string v;
 };
@@ -27,18 +28,21 @@ struct get_json_ret_string {
 struct get_json_ret_int {
   explicit operator bool() const;
   explicit operator int() const;
+  bool found() const;
   int err;
   int v;
 };
 
 struct get_json_ret_array {
   explicit operator bool() const;
+  bool found() const;
   int err = 1;
   rapidjson::Value const *v = nullptr;
 };
 
 struct get_json_ret_object {
   explicit operator bool() const;
+  bool found() const;
   int err = 1;
   rapidjson::Value const *v = nullptr;
 };

@@ -67,14 +67,18 @@ std::vector<std::string> split(std::string const &input, std::string token) {
   return ret;
 }
 
+bool get_json_ret_string::found() const { return err == 0; }
 get_json_ret_string::operator bool() const { return err == 0; }
 get_json_ret_string::operator std::string() const { return v; }
 
+bool get_json_ret_int::found() const { return err == 0; }
 get_json_ret_int::operator bool() const { return err == 0; }
-
 get_json_ret_int::operator int() const { return v; }
 
+bool get_json_ret_array::found() const { return err == 0; }
 get_json_ret_array::operator bool() const { return err == 0; }
+
+bool get_json_ret_object::found() const { return err == 0; }
 get_json_ret_object::operator bool() const { return err == 0; }
 
 get_json_ret_string get_string(rapidjson::Value const *v, std::string path) {
