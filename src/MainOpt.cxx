@@ -25,10 +25,22 @@ int MainOpt::parse_config_file(std::string fname) {
     LOG(3, "configuration is not well formed");
     return -5;
   }
-  if (auto o = get_string(&d, "broker-command")) {
-    URI uri("//localhost:9092/kafka-to-nexus.command");
+  {
+    auto o = get_string(&d, "broker-command");
+    if (!o.found()) {
+      o = get_string(&d, "command-uri");
+    }
+    if (o.found()) {
+      URI uri("//localhost:9092/kafka-to-nexus.command");
+      uri.parse(o.v);
+      command_broker_uri = uri;
+    }
+  }
+  if (auto o = get_string(&d, "status-update-uri")) {
+    URI uri("//localhost:9092/kafka-to-nexus.status");
     uri.parse(o.v);
-    command_broker_uri = uri;
+    kafka_status_uri = uri;
+    do_kafka_status = true;
   }
   if (auto o = get_object(d, "kafka")) {
     for (auto &m : o.v->GetObject()) {
