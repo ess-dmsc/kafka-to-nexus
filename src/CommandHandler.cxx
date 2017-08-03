@@ -127,6 +127,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       config_kafka_vec.emplace_back(x.first, x.second);
     }
 
+    // TODO
+    // Actually pass master->status_producer to StreamMaster here
+
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
                                                config_kafka_vec));
