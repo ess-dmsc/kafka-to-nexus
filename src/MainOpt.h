@@ -43,6 +43,11 @@ struct MainOpt {
   /// Kafka broker and topic where file writer commands are published.
   uri::URI command_broker_uri{"kafka://localhost:9092/kafka-to-nexus.command"};
 
+  /// Whether we want to publish status to Kafka
+  bool do_kafka_status = false;
+  /// Kafka topic where status updates are to be published
+  uri::URI kafka_status_uri{"kafka://localhost:9092/kafka-to-nexus.status"};
+
   // For testing.
   std::function<void(rd_kafka_topic_partition_list_s *)> on_rebalance_assign;
   // For testing.
