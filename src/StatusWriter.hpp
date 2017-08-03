@@ -1,6 +1,6 @@
 #pragma once
-#include "schemas/writer_status_generated.h"
-#include <rapidjson/document.h>
+#include "schemas/fws0_fwr_status_generated.h"
+#include "rapidjson/document.h"
 
 namespace FileWriter {
 namespace Status {
@@ -26,9 +26,17 @@ public:
   using return_type = rapidjson::Document;
   return_type write(const StreamMasterStatus &);
 
-private:
+protected:
+  return_type write_impl(const StreamMasterStatus &);
   rapidjson::Value to_json(const StreamerStatusType &, return_type &);
   rapidjson::Value to_json(const StreamerStatisticsType &, return_type &);
+};
+
+class JSONStreamWriter : public JSONWriter {
+
+public:
+  using return_type = std::string;
+  return_type write(const StreamMasterStatus &);
 };
 
 class FlatbuffersWriter {
@@ -40,8 +48,7 @@ public:
 private:
 };
 
-template <class W>
-typename W::return_type pprint(const StreamMasterStatus &x) {
+template <class W> typename W::return_type pprint(const StreamMasterStatus &x) {
   W writer;
   return writer.write(x);
 }

@@ -2,6 +2,8 @@
 
 #include "Status.hpp"
 #include "StatusWriter.hpp"
+#include "rapidjson/stringbuffer.h"
+#include "rapidjson/writer.h"
 
 namespace FileWriter {
 namespace Status {
@@ -31,6 +33,10 @@ void StdIOWriter::print(const StreamerStatisticsType &x) {
 }
 
 rapidjson::Document JSONWriter::write(const StreamMasterStatus &data) {
+  return write_impl(data);
+}
+
+rapidjson::Document JSONWriter::write_impl(const StreamMasterStatus &data) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
@@ -91,6 +97,15 @@ rapidjson::Value JSONWriter::to_json(const StreamerStatisticsType &x,
     value.AddMember("freq", freq, a);
   }
   return value;
+}
+
+std::string JSONStreamWriter::write(const StreamMasterStatus &data) {
+  auto value = write_impl(data);
+  rapidjson::StringBuffer buffer;
+  rapidjson::Writer<rapidjson::StringBuffer> w(buffer);
+  value.Accept(w);
+  std::string s{buffer.GetString()};
+  return std::move(s);
 }
 
 flatbuffers::Offset<StatusInfo>
