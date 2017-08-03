@@ -1,3 +1,4 @@
+#include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "roundtrip.h"
 #include <gtest/gtest.h>

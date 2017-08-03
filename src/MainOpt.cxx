@@ -30,17 +30,15 @@ int MainOpt::parse_config_file(std::string fname) {
     x.default_host("localhost");
     x.default_port(9092);
     x.default_path("kafka-to-nexus.command");
-    master_config.command_listener.broker = x;
+    command_broker_uri = x;
   }
   if (auto o = get_object(d, "kafka")) {
     for (auto &m : o.v->GetObject()) {
       if (m.value.IsString()) {
-        master_config.kafka.emplace_back(m.name.GetString(),
-                                         m.value.GetString());
+        kafka[m.name.GetString()] = m.value.GetString();
       }
       if (m.value.IsInt()) {
-        master_config.kafka.emplace_back(m.name.GetString(),
-                                         fmt::format("{}", m.value.GetInt()));
+        kafka[m.name.GetString()] = fmt::format("{}", m.value.GetInt());
       }
     }
   }
@@ -48,7 +46,7 @@ int MainOpt::parse_config_file(std::string fname) {
     for (auto &e : a.v->GetArray()) {
       Document js_command;
       js_command.CopyFrom(e, js_command.GetAllocator());
-      master_config.commands_from_config_file.push_back(std::move(js_command));
+      commands_from_config_file.push_back(std::move(js_command));
     }
   }
   return 0;
@@ -72,7 +70,6 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"graylog-logger-address", required_argument, 0, 0},
       {"use-signal-handler", required_argument, 0, 0},
       {"teamid", required_argument, 0, 0},
-      {"assets-dir", required_argument, 0, 0},
       {0, 0, 0, 0},
   };
   std::string cmd;
@@ -110,7 +107,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
         x.default_host("localhost");
         x.default_port(9092);
         x.default_path("kafka-to-nexus.command");
-        opt->master_config.command_listener.broker = x;
+        opt->command_broker_uri = x;
       }
       if (std::string("kafka-gelf") == lname) {
         opt->kafka_gelf = optarg;
@@ -122,10 +119,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
         opt->use_signal_handler = (bool)strtoul(optarg, nullptr, 0);
       }
       if (std::string("teamid") == lname) {
-        opt->master_config.teamid = strtoul(optarg, nullptr, 0);
-      }
-      if (std::string("assets-dir") == lname) {
-        opt->master_config.dir_assets = optarg;
+        opt->teamid = strtoul(optarg, nullptr, 0);
       }
       break;
     }
@@ -136,8 +130,6 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
     opt->help = true;
     ret.first = 1;
   }
-
-  opt->master_config.config_file = &opt->config_file;
 
   return ret;
 }

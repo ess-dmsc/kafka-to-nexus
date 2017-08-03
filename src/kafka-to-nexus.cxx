@@ -1,5 +1,6 @@
 #include "kafka-to-nexus.h"
 #include "MainOpt.h"
+#include "Master.h"
 #include "logger.h"
 #include <csignal>
 #include <cstdio>
@@ -36,8 +37,8 @@ int main(int argc, char **argv) {
            "      Kafka brokers to connect with for configuration updates.\n"
            "      Default: //%s/%s\n"
            "\n",
-           opt->master_config.command_listener.broker.host_port.c_str(),
-           opt->master_config.command_listener.broker.topic.c_str());
+           opt->command_broker_uri.host_port.c_str(),
+           opt->command_broker_uri.topic.c_str());
 
     printf("  --kafka-gelf                <//host[:port]/topic>\n"
            "      Log to Graylog via Kafka GELF adapter.\n"
@@ -46,16 +47,6 @@ int main(int argc, char **argv) {
     printf("  --graylog-logger-address    <host:port>\n"
            "      Log to Graylog via graylog_logger library.\n"
            "\n");
-
-    if (false) {
-      // probably removed soon...
-      printf("  --assets-dir                <path>\n"
-             "      Path where program can find some supplementary files.\n"
-             "      Should point e.g. to the build or install directory.\n"
-             "      Default: %s\n"
-             "\n",
-             opt->master_config.dir_assets.c_str());
-    }
 
     printf("  -v\n"
            "      Increase verbosity\n"
@@ -74,7 +65,7 @@ int main(int argc, char **argv) {
 
   setup_logger_from_options(*opt);
 
-  FileWriter::Master m(opt->master_config);
+  FileWriter::Master m(*opt);
   opt->master = &m;
   std::thread t1([&m] { m.run(); });
   t1.join();

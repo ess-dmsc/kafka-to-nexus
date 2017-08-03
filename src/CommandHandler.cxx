@@ -7,12 +7,12 @@ namespace FileWriter {
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
-CommandHandler::CommandHandler(Master *master,
-                               rapidjson::Value const *config_file)
-    : master(master), config_file(config_file) {
+CommandHandler::CommandHandler(MainOpt &config, Master *master)
+    : config(config), master(master) {
+  // Will take care of this in upcoming PR.
   if (false) {
     using namespace rapidjson;
-    auto buf1 = gulp(master->config.dir_assets + "/test/schema-command.json");
+    auto buf1 = gulp("/test/schema-command.json");
     auto doc = make_unique<rapidjson::Document>();
     ParseResult err = doc->Parse(buf1.data(), buf1.size());
     if (err.Code() != ParseErrorCode::kParseErrorNone) {
@@ -27,6 +27,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // if (g_N_HANDLED > 0) return;
   using namespace rapidjson;
   using std::move;
+  using std::string;
   if (schema_command) {
     SchemaValidator vali(*schema_command);
     if (!d.Accept(vali)) {
@@ -64,7 +65,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
             s._hdf_path = m->value.GetString();
           }
         }
-        s.config_file(config_file);
+        s.config_file(&config.config_file);
         rapidjson::Document j1;
         j1.CopyFrom(st, j1.GetAllocator());
         s.config_stream(std::move(j1));
@@ -119,9 +120,16 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         br = s;
       }
     }
+
+    auto config_kafka = config.kafka;
+    std::vector<std::pair<string, string>> config_kafka_vec;
+    for (auto &x : config_kafka) {
+      config_kafka_vec.emplace_back(x.first, x.second);
+    }
+
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
-                                               master->config.kafka));
+                                               config_kafka_vec));
     if (start_time.count()) {
       LOG(3, "start time :\t{}", start_time.count());
       s->start_time(start_time);
