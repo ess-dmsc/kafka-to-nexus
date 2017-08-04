@@ -26,6 +26,24 @@ For example:
 ./kafka-to-nexus --command-uri //kafka-host/filewriter-commands
 ```
 
+
+### Configuration File
+
+The file writer can be configured via `--config-file <json>`
+
+Available options include:
+
+```
+{
+  "command-uri": "//broker[:port]/command-topic",
+  "status-uri": "//broker[:port]/status-topic",
+  "commands": [
+    "a list of commands as discussed below."
+  ]
+}
+```
+
+
 ### Send command to kafka-to-nexus
 
 Commands in the form of JSON messages are used to start and stop file writing.
@@ -94,7 +112,7 @@ Commands can be given in the configuration file as well:
 ```json
 {
   "commands": [
-    { <some command as discussed above> }
+    { "some command": "as discussed above" }
   ]
 }
 ```
