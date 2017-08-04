@@ -35,9 +35,6 @@ public:
   URI();
   URI(string uri);
   void parse(string uri);
-  void default_host(std::string host);
-  void default_port(int port);
-  void default_path(std::string path);
   bool is_kafka_with_topic() const;
   std::string scheme;
   std::string host;

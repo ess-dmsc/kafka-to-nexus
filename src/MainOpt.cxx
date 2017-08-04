@@ -26,11 +26,9 @@ int MainOpt::parse_config_file(std::string fname) {
     return -5;
   }
   if (auto o = get_string(&d, "broker-command")) {
-    URI x(o.v);
-    x.default_host("localhost");
-    x.default_port(9092);
-    x.default_path("kafka-to-nexus.command");
-    command_broker_uri = x;
+    URI uri("//localhost:9092/kafka-to-nexus.command");
+    uri.parse(o.v);
+    command_broker_uri = uri;
   }
   if (auto o = get_object(d, "kafka")) {
     for (auto &m : o.v->GetObject()) {
@@ -103,11 +101,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
         }
       }
       if (std::string("broker-command") == lname) {
-        URI x(optarg);
-        x.default_host("localhost");
-        x.default_port(9092);
-        x.default_path("kafka-to-nexus.command");
-        opt->command_broker_uri = x;
+        URI uri("//localhost:9092/kafka-to-nexus.command");
+        uri.parse(optarg);
+        opt->command_broker_uri = uri;
       }
       if (std::string("kafka-gelf") == lname) {
         opt->kafka_gelf = optarg;

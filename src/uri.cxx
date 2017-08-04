@@ -134,24 +134,4 @@ Re URI::re_host_no_slashes(&patterns.re_host_no_slashes);
 Re URI::re_no_host(&patterns.re_no_host);
 Re URI::re_topic(&patterns.re_topic);
 
-void URI::default_port(int port_) {
-  if (port == 0) {
-    port = port_;
-  }
-  update_deps();
-}
-
-void URI::default_path(std::string path_) {
-  if (path.size() == 0) {
-    path = path_;
-  }
-  update_deps();
-}
-
-void URI::default_host(std::string host_) {
-  if (host.size() == 0) {
-    host = host_;
-  }
-  update_deps();
-}
 }
