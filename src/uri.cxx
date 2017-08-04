@@ -59,7 +59,6 @@ Re &Re::operator=(Re &&x) {
 
 void swap(Re &x, Re &y) {
   swap(x.re, y.re);
-  swap(x.regex_str, y.regex_str);
 }
 
 void URI::update_deps() {
@@ -74,8 +73,6 @@ void URI::update_deps() {
     topic = md.substr(1);
   }
 }
-
-URI::~URI() {}
 
 URI::URI() {}
 

@@ -23,19 +23,15 @@ struct Re {
   Re(Re &&);
   Re &operator=(Re &&);
   MD match(string const &s);
-  std::string regex_str;
   std::regex *re = nullptr;
   friend void swap(Re &x, Re &y);
 };
 
 class URI {
 public:
-  using uchar = unsigned char;
-  ~URI();
   URI();
   URI(string uri);
   void parse(string uri);
-  bool is_kafka_with_topic() const;
   std::string scheme;
   std::string host;
   std::string host_port;
