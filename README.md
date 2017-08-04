@@ -113,8 +113,6 @@ Commands can be given in the configuration file as well:
 - libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
 - `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
   and `streaming-data-types` are in the same directory)
-- pcre2 (`yum install pcre2 pcre2-devel` or `brew install pcre2`)
-  (Needed because we support GCC < 4.9 where std regex is incomplete)
 - Optional `graylog_logger`
 
 

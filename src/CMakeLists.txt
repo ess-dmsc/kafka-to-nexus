@@ -14,7 +14,6 @@ find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
 find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
-find_package(PCREX REQUIRED)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
 
@@ -38,7 +37,6 @@ ${HDF5_INCLUDE_DIRS}
 ${FLATBUFFERS_INCLUDE_DIR}
 ${RAPIDJSON_INCLUDE_DIR}
 ${CURL_INCLUDE_DIRS}
-${PCREX_INCLUDE_DIRS}
 ${PROJECT_SOURCE_DIR}/src
 ${PROJECT_BINARY_DIR}/src
 )
@@ -48,17 +46,11 @@ ${RDKAFKA_LIBRARIES}
 ${HDF5_C_LIBRARIES}
 ${HDF5_CXX_LIBRARIES}
 ${CURL_LIBRARIES}
-${PCREX_LIBRARIES}
 pthread
 z
 )
 
-set(compile_defs_common "${PCREX_COMPILER_DEFINITIONS}")
-list(APPEND compile_defs_common "HAS_REMOTE_API=0")
-
-if (PCREX_MAJOR EQUAL 2)
-	list(APPEND compile_defs_common "use_pcre2=1")
-endif()
+set(compile_defs_common "HAS_REMOTE_API=0")
 
 if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
 	message(STATUS "Using graylog_logger")
