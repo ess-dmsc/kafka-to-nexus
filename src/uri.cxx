@@ -8,122 +8,58 @@ using std::array;
 using std::move;
 using std::swap;
 
-struct CG {
-  PCREX_SIZE a, b, n;
-  char const *s;
-  std::string substr(char const *p0) { return std::string(p0 + a, n); }
-  std::string substr() { return std::string(s + a, n); }
+struct Patterns {
+std::regex empty{".*"};
+std::regex full{"^\\s*(([a-z]+):)?//(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$"};
+std::regex re_host_no_slashes {"^\\s*(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$"};
+std::regex re_no_host {"^/?([-./_A-Za-z0-9]*)$"};
+std::regex re_topic {"^/?([-._A-Za-z0-9]+)$"};
 };
 
-#if use_pcre2
-MD::MD(PCREX_SPTR subject) : subject(subject) {
-  md = pcre2_match_data_create(16, nullptr);
-  if (!md) {
-    throw std::runtime_error("allocation failed");
-  }
-}
-MD::~MD() { pcre2_match_data_free(md); }
-string MD::substr(int i) {
-  if (!ok)
-    string();
-  if (i >= ncap)
-    string();
-  auto ov = pcre2_get_ovector_pointer(md) + 2 * i;
-  if (ov[0] == PCRE2_UNSET)
-    return string();
-  string::size_type n(ov[1] - ov[0]);
-  if (n > 0)
-    return {(char *)subject + ov[0], n};
-  return string();
-}
-#else
-MD::MD(PCREX_SPTR subject) : subject(subject) {}
-string MD::substr(int i) {
-  if (!ok)
-    string();
-  if (i >= ncap)
-    string();
-  auto ov = ovec.data() + 2 * i;
-  if (ov[0] < 0)
-    return string();
-  string::size_type n(ov[1] - ov[0]);
-  if (n > 0)
-    return {subject + ov[0], n};
-  return string();
-}
-#endif
+static Patterns patterns;
 
-#if use_pcre2
-void p_regerr(int err) {
-  std::array<unsigned char, 256> s1;
-  auto n = pcre2_get_error_message(err, s1.data(), s1.size());
-  fmt::print("err in regex: [{}, {}] {:.{}}\n", err, n, (char *)s1.data(), n);
+MD::MD(char const * subject) : subject(subject) {
 }
-#else
-void p_regerr(char const *s1) { fmt::print("err in regex: {}\n", s1); }
-#endif
 
-#if use_pcre2
-Re::Re(char const *s) { init((rchar const *)s); }
-Re::Re(rchar const *s) { init(s); }
-void Re::init(rchar const *s) {
-  int err = 0;
-  pcre_erroff_t errpos = 0;
-  re = pcre2_compile_8(s, PCRE2_ZERO_TERMINATED, 0, &err, &errpos, nullptr);
-  if (!re) {
-    p_regerr(err);
-    throw std::runtime_error("can not compile regex");
+string MD::substr(uint8_t i) {
+  if (!ok) {
+    string();
   }
+  if (i >= matches.size()) {
+    return  string();
+  }
+  return matches[i];
 }
-Re::~Re() { pcre2_code_free(re); }
-MD Re::match(string const &s) {
-  MD md((PCREX_SPTR)s.data());
-  auto x =
-      pcre2_match(re, (PCREX_SPTR)s.data(), s.size(), 0, 0, md.md, nullptr);
-  if (x >= 0) {
-    md.ok = true;
-  }
-  return md;
+
+Re::Re(std::regex * re) : re(re) {
 }
-#else
-Re::Re(rchar const *s) {
-  if (!s) {
-    throw std::runtime_error("empty regular expression");
-  }
-  char const *errptr = nullptr;
-  pcre_erroff_t errpos = 0;
-  re = pcre_compile(s, 0, &errptr, &errpos, nullptr);
-  if (!re) {
-    p_regerr(errptr);
-    throw std::runtime_error("can not compile regex");
-  }
-}
-Re::~Re() { pcre_free(re); }
+
 MD Re::match(string const &s) {
   MD md(s.data());
-  auto x = pcre_exec(re, nullptr, s.data(), s.size(), 0, 0, md.ovec.data(),
-                     md.ovec.size());
-  if (x > 0) {
+  std::smatch m;
+  auto str = string(s.data(), s.size());
+  auto matched = std::regex_match(str, m, *re);
+  if (matched) {
     md.ok = true;
-    md.ncap = x;
+    for (auto & it : m) {
+      md.matches.push_back(it.str());
+    }
   }
   return md;
 }
-#endif
-Re::Re(Re &&x) { swap(*this, x); }
+
+Re::Re(Re &&x) {
+  swap(*this, x);
+}
+
 Re &Re::operator=(Re &&x) {
   swap(*this, x);
   return *this;
 }
-void swap(Re &x, Re &y) { swap(x.re, y.re); }
 
-static_ini::static_ini() {
-  URI::re1 = Re((rchar *)"^\\s*(([a-z]+):)?//(([-._A-Za-z0-9]+)(:([0-9]+))?)(/"
-                         "[-./_A-Za-z0-9]*)?\\s*$");
-  URI::re_host_no_slashes = Re(
-      (rchar *)"^\\s*(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$");
-  URI::re_no_host = Re((rchar *)"^/?([-./_A-Za-z0-9]*)$");
-  URI::re_topic = Re((rchar *)"^/?([-._A-Za-z0-9]+)$");
+void swap(Re &x, Re &y) {
+  swap(x.re, y.re);
+  swap(x.regex_str, y.regex_str);
 }
 
 void URI::update_deps() {
@@ -143,14 +79,14 @@ URI::~URI() {}
 
 URI::URI() {}
 
-URI::URI(std::string uri) { init(uri); }
+URI::URI(string uri) {
+  parse(uri);
+}
 
-void URI::init(std::string uri) {
-  using std::vector;
-  using std::string;
+void URI::parse(string uri) {
   bool match = false;
   if (!match) {
-    auto md = re1.match(uri);
+    auto md = re_full.match(uri);
     if (md.ok) {
       match = true;
       scheme = md.substr(2);
@@ -159,7 +95,10 @@ void URI::init(std::string uri) {
       if (port_s.size() > 0) {
         port = strtoul(port_s.data(), nullptr, 10);
       }
-      path = md.substr(7);
+      auto path_str = md.substr(7);
+      if (!path_str.empty()) {
+        path = path_str;
+      }
     }
   }
   if (!match && !require_host_slashes) {
@@ -171,23 +110,29 @@ void URI::init(std::string uri) {
       if (port_s.size() > 0) {
         port = strtoul(port_s.data(), nullptr, 10);
       }
-      path = md.substr(5);
+      auto path_str = md.substr(5);
+      if (!path_str.empty()) {
+        path = path_str;
+      }
     }
   }
   if (!match) {
     auto md = re_no_host.match(uri);
     if (md.ok) {
       match = true;
-      path = md.substr(0);
+      auto path_str = md.substr(0);
+      if (!path_str.empty()) {
+        path = path_str;
+      }
     }
   }
   update_deps();
 }
 
-Re URI::re1(".");
-Re URI::re_host_no_slashes(".");
-Re URI::re_no_host(".");
-Re URI::re_topic(".");
+Re URI::re_full(&patterns.full);
+Re URI::re_host_no_slashes(&patterns.re_host_no_slashes);
+Re URI::re_no_host(&patterns.re_no_host);
+Re URI::re_topic(&patterns.re_topic);
 
 void URI::default_port(int port_) {
   if (port == 0) {
@@ -209,6 +154,4 @@ void URI::default_host(std::string host_) {
   }
   update_deps();
 }
-
-static_ini URI::compiled;
 }

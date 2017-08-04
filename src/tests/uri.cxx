@@ -24,7 +24,7 @@ TEST(URI, host_port) {
 TEST(URI, host_port_noslashes) {
   URI u1;
   u1.require_host_slashes = false;
-  u1.init("myhost:345");
+  u1.parse("myhost:345");
   ASSERT_EQ(u1.scheme, "");
   ASSERT_EQ(u1.host, "myhost");
   ASSERT_EQ(u1.port, (uint32_t)345);
