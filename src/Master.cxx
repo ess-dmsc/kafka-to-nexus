@@ -81,11 +81,15 @@ void Master::statistics() {
   rapidjson::Document js_status;
   js_status.SetObject();
   auto &a = js_status.GetAllocator();
+  Value js_files;
+  js_files.SetObject();
   for (auto &stream_master : stream_masters) {
-    js_status.AddMember(
-        Value(stream_master->file_writer_task().hdf_filename().c_str(), a),
-        stream_master->file_writer_task().stats(a), a);
+    auto fwt_id_str =
+        fmt::format("{:016x}", stream_master->file_writer_task().id());
+    js_files.AddMember(Value(fwt_id_str.c_str(), a),
+                       stream_master->file_writer_task().stats(a), a);
   }
+  js_status.AddMember("files", js_files, a);
   rapidjson::StringBuffer buffer;
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
   writer.SetIndent(' ', 2);
