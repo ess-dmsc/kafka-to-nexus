@@ -75,7 +75,10 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   static struct option long_options[] = {
       {"help", no_argument, 0, 'h'},
       {"config-file", required_argument, 0, 0},
+      {"command-uri", required_argument, 0, 0},
+      // Legacy alias for 'command-uri'
       {"broker-command", required_argument, 0, 0},
+      {"status-uri", required_argument, 0, 0},
       {"kafka-gelf", required_argument, 0, 0},
       {"graylog-logger-address", required_argument, 0, 0},
       {"use-signal-handler", required_argument, 0, 0},
@@ -112,8 +115,14 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
           ret.first = 1;
         }
       }
-      if (std::string("broker-command") == lname) {
+      if (std::string("command-uri") == lname ||
+          std::string("broker-command") == lname) {
         URI uri("//localhost:9092/kafka-to-nexus.command");
+        uri.parse(optarg);
+        opt->command_broker_uri = uri;
+      }
+      if (std::string("status-uri") == lname) {
+        URI uri("//localhost:9092/kafka-to-nexus.status");
         uri.parse(optarg);
         opt->command_broker_uri = uri;
       }
