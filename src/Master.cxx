@@ -5,6 +5,8 @@
 #include "commandproducer.h"
 #include "logger.h"
 #include <chrono>
+#include <sys/types.h>
+#include <unistd.h>
 
 namespace FileWriter {
 
@@ -13,7 +15,19 @@ using std::string;
 
 std::string &CmdMsg_K::str() { return _str; }
 
-Master::Master(MainOpt &config) : config(config), command_listener(config) {}
+Master::Master(MainOpt &config) : config(config), command_listener(config) {
+  std::vector<char> buffer;
+  buffer.resize(128);
+  gethostname(buffer.data(), buffer.size());
+  if (buffer.back() != 0) {
+    // likely an error
+    buffer.back() = 0;
+  }
+  std::string hostname(buffer.data());
+  file_writer_process_id_ =
+      fmt::format("kafka-to-nexus--{}--{}", hostname, getpid());
+  LOG(6, "file_writer_process_id: {}", file_writer_process_id());
+}
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
   CommandHandler command_handler(config, this);
@@ -55,5 +69,9 @@ void Master::run() {
 }
 
 void Master::stop() { do_run = false; }
+
+std::string Master::file_writer_process_id() const {
+  return file_writer_process_id_;
+}
 
 } // namespace FileWriter

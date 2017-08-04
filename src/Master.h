@@ -27,6 +27,9 @@ public:
   std::function<void(void)> cb_on_filewriter_new;
   std::shared_ptr<KafkaW::ProducerTopic> status_producer;
 
+  /// A string which uniquely identifies this file writer on the network
+  std::string file_writer_process_id() const;
+
   MainOpt &config;
 
 private:
@@ -34,6 +37,7 @@ private:
   std::atomic<bool> do_run{true};
   std::vector<std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>>
       stream_masters;
+  std::string file_writer_process_id_;
   friend class CommandHandler;
 };
 
