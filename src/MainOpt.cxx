@@ -26,9 +26,9 @@ int MainOpt::parse_config_file(std::string fname) {
     return -5;
   }
   {
-    auto o = get_string(&d, "broker-command");
+    auto o = get_string(&d, "command-uri");
     if (!o.found()) {
-      o = get_string(&d, "command-uri");
+      o = get_string(&d, "broker-command");
     }
     if (o.found()) {
       URI uri("//localhost:9092/kafka-to-nexus.command");
