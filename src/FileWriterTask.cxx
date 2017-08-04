@@ -84,7 +84,7 @@ void FileWriterTask::file_flush() {
 uint64_t FileWriterTask::id() const { return _id; }
 
 rapidjson::Value FileWriterTask::stats(
-    rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) {
+    rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const {
   using namespace rapidjson;
   Value js_topics;
   js_topics.SetObject();

@@ -32,7 +32,7 @@ public:
   void file_close();
   uint64_t id() const;
   rapidjson::Value
-  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a);
+  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
 
 private:
   std::vector<DemuxTopic> _demuxers;
