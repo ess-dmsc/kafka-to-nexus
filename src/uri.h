@@ -1,47 +1,73 @@
 #pragma once
 
+#include <array>
 #include <string>
-#define PCRE2_CODE_UNIT_WIDTH 8
-#include <pcre2.h>
-
-#if HAVE_GTEST
-#include <gtest/gtest.h>
-#endif
+#include <regex>
 
 namespace uri {
 
-struct static_ini {
-  static_ini();
-  ~static_ini();
+using std::array;
+using std::vector;
+using std::string;
+
+/// Match data from a regex_match
+struct MD {
+  /// Keep the pointer to the haystack
+  MD(char const * subject);
+  /// Whether the match was successful or not
+  bool ok = false;
+  /// Returns the ith match or string() if out of bounds
+  string substr(uint8_t i);
+  /// Holds the matched substrings
+  vector<string> matches;
+  /// The haystack
+  char const * subject;
 };
 
+/// Wraps a std::regex
+struct Re {
+  Re(std::regex * re);
+  Re(Re &&);
+  Re &operator=(Re &&);
+  MD match(string const &s);
+  std::regex *re = nullptr;
+  friend void swap(Re &x, Re &y);
+};
+
+/// Thin parser for URIs.
 class URI {
 public:
-  using uchar = unsigned char;
-  ~URI();
+  /// Creates a default URI with all members empty. You can (should) run
+  /// URI::parse to fill it
   URI();
-  URI(std::string uri);
-  void init(std::string uri);
-  void default_host(std::string host);
-  void default_port(int port);
-  void default_path(std::string path);
-  bool is_kafka_with_topic() const;
+  /// Creates and parses the given URI
+  URI(string uri);
+  /// Parses the given `uri`
+  void parse(string uri);
+  /// Given a `http://www.example.com` scheme will contain `http`
   std::string scheme;
+  /// Just the parsed hostname
   std::string host;
+  /// If port was specified (or already non-zero before `URI::parse`) it
+  /// contains `host:port`
   std::string host_port;
+  /// The port number if specified, or zero to indicate that the port is not
+  /// specified
   uint32_t port = 0;
+  /// The path of the URL
   std::string path;
+  /// If the path can be a valid Kafka topic name, then it is non-empty
   std::string topic;
+  /// Whether we require two slashes before the hostname, as required by the
+  /// standard.  Otherwise ambiguous because `host/path` could also be a
+  /// `path/path`.
   bool require_host_slashes = true;
 
 private:
-  static pcre2_code *re1;
-  static pcre2_code *re_host_no_slashes;
-  static pcre2_code *re_no_host;
-  static pcre2_code *re_topic;
-  static static_ini compiled;
+  static Re re_full;
+  static Re re_host_no_slashes;
+  static Re re_no_host;
+  static Re re_topic;
   void update_deps();
-  friend struct static_ini;
 };
-
-} // namespace uri
+}
