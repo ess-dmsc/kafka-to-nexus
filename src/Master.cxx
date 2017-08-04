@@ -86,8 +86,14 @@ void Master::statistics() {
   for (auto &stream_master : stream_masters) {
     auto fwt_id_str =
         fmt::format("{:016x}", stream_master->file_writer_task().id());
-    js_files.AddMember(Value(fwt_id_str.c_str(), a),
-                       stream_master->file_writer_task().stats(a), a);
+    auto fwt = stream_master->file_writer_task().stats(a);
+    // TODO
+    // Add status when DM-450 lands.
+    fwt.AddMember(
+        "status",
+        StringRef("[to-be-filled-when-StreamMaster-makes-status-available]"),
+        a);
+    js_files.AddMember(Value(fwt_id_str.c_str(), a), fwt, a);
   }
   js_status.AddMember("files", js_files, a);
   rapidjson::StringBuffer buffer;
