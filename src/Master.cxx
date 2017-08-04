@@ -77,16 +77,20 @@ void Master::run() {
 }
 
 void Master::statistics() {
+  using namespace rapidjson;
   rapidjson::Document js_status;
   js_status.SetObject();
   auto &a = js_status.GetAllocator();
   for (auto &stream_master : stream_masters) {
-    js_status.AddMember("topics", stream_master->stats(a), a);
+    js_status.AddMember(
+        Value(stream_master->file_writer_task().hdf_filename().c_str(), a),
+        stream_master->file_writer_task().stats(a), a);
   }
-  rapidjson::StringBuffer buf1;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> wr(buf1);
-  js_status.Accept(wr);
-  LOG(3, "status is: {}", buf1.GetString());
+  rapidjson::StringBuffer buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
+  writer.SetIndent(' ', 2);
+  js_status.Accept(writer);
+  LOG(3, "status is: {}", buffer.GetString());
 }
 
 void Master::stop() { do_run = false; }
