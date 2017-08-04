@@ -16,20 +16,21 @@
 ## Usage
 
 ### Running kafka-to-nexus
+
 ```
 ./kafka-to-nexus -h
 ```
 
 For example:
 ```
-./kafka-to-nexus --broker-command //kafka-host/filewriter-commands
+./kafka-to-nexus --command-uri //kafka-host/filewriter-commands
 ```
 
 ### Send command to kafka-to-nexus
 
 Commands in the form of JSON messages are used to start and stop file writing.
 Commands can be send through Kafka via the broker/topic specified by the
-`--broker-command` option.  Commands can also be given in the configuration
+`--command-uri` option.  Commands can also be given in the configuration
 file specified by `--config-file <file.json>` (see a bit later in this
 section).
 
