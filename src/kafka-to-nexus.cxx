@@ -33,12 +33,19 @@ int main(int argc, char **argv) {
            "\n"
            "  --config-file               <filename.json>\n"
            "\n"
-           "  --broker-command            <//host[:port][/topic]>\n"
-           "      Kafka brokers to connect with for configuration updates.\n"
+           "  --command-uri               <//host[:port][/topic]>\n"
+           "      Kafka broker/topic to listen for commands.\n"
+           "      Default: //%s/%s\n"
+           "      Legacy alias: --broker-command\n"
+           "\n"
+           "  --status-uri                <//host[:port][/topic]>\n"
+           "      Kafka broker/topic to publish status updates on.\n"
            "      Default: //%s/%s\n"
            "\n",
            opt->command_broker_uri.host_port.c_str(),
-           opt->command_broker_uri.topic.c_str());
+           opt->command_broker_uri.topic.c_str(),
+           opt->kafka_status_uri.host_port.c_str(),
+           opt->kafka_status_uri.topic.c_str());
 
     printf("  --kafka-gelf                <//host[:port]/topic>\n"
            "      Log to Graylog via Kafka GELF adapter.\n"
