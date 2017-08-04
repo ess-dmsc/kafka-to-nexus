@@ -1,8 +1,8 @@
 #pragma once
 
 #include <array>
-#include <string>
 #include <regex>
+#include <string>
 
 namespace uri {
 
@@ -13,7 +13,7 @@ using std::string;
 /// Match data from a regex_match
 struct MD {
   /// Keep the pointer to the haystack
-  MD(char const * subject);
+  MD(char const *subject);
   /// Whether the match was successful or not
   bool ok = false;
   /// Returns the ith match or string() if out of bounds
@@ -21,12 +21,12 @@ struct MD {
   /// Holds the matched substrings
   vector<string> matches;
   /// The haystack
-  char const * subject;
+  char const *subject;
 };
 
 /// Wraps a std::regex
 struct Re {
-  Re(std::regex * re);
+  Re(std::regex *re);
   Re(Re &&);
   Re &operator=(Re &&);
   MD match(string const &s);

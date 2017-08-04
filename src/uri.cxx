@@ -9,30 +9,30 @@ using std::move;
 using std::swap;
 
 struct Patterns {
-std::regex empty{".*"};
-std::regex full{"^\\s*(([a-z]+):)?//(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$"};
-std::regex re_host_no_slashes {"^\\s*(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$"};
-std::regex re_no_host {"^/?([-./_A-Za-z0-9]*)$"};
-std::regex re_topic {"^/?([-._A-Za-z0-9]+)$"};
+  std::regex empty{".*"};
+  std::regex full{"^\\s*(([a-z]+):)?//(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./"
+                  "_A-Za-z0-9]*)?\\s*$"};
+  std::regex re_host_no_slashes{
+      "^\\s*(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$"};
+  std::regex re_no_host{"^/?([-./_A-Za-z0-9]*)$"};
+  std::regex re_topic{"^/?([-._A-Za-z0-9]+)$"};
 };
 
 static Patterns patterns;
 
-MD::MD(char const * subject) : subject(subject) {
-}
+MD::MD(char const *subject) : subject(subject) {}
 
 string MD::substr(uint8_t i) {
   if (!ok) {
     string();
   }
   if (i >= matches.size()) {
-    return  string();
+    return string();
   }
   return matches[i];
 }
 
-Re::Re(std::regex * re) : re(re) {
-}
+Re::Re(std::regex *re) : re(re) {}
 
 MD Re::match(string const &s) {
   MD md(s.data());
@@ -41,25 +41,21 @@ MD Re::match(string const &s) {
   auto matched = std::regex_match(str, m, *re);
   if (matched) {
     md.ok = true;
-    for (auto & it : m) {
+    for (auto &it : m) {
       md.matches.push_back(it.str());
     }
   }
   return md;
 }
 
-Re::Re(Re &&x) {
-  swap(*this, x);
-}
+Re::Re(Re &&x) { swap(*this, x); }
 
 Re &Re::operator=(Re &&x) {
   swap(*this, x);
   return *this;
 }
 
-void swap(Re &x, Re &y) {
-  swap(x.re, y.re);
-}
+void swap(Re &x, Re &y) { swap(x.re, y.re); }
 
 void URI::update_deps() {
   if (port != 0) {
@@ -76,9 +72,7 @@ void URI::update_deps() {
 
 URI::URI() {}
 
-URI::URI(string uri) {
-  parse(uri);
-}
+URI::URI(string uri) { parse(uri); }
 
 void URI::parse(string uri) {
   bool match = false;
@@ -130,5 +124,4 @@ Re URI::re_full(&patterns.full);
 Re URI::re_host_no_slashes(&patterns.re_host_no_slashes);
 Re URI::re_no_host(&patterns.re_no_host);
 Re URI::re_topic(&patterns.re_topic);
-
 }
