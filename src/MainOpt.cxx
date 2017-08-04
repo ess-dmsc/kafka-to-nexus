@@ -36,7 +36,7 @@ int MainOpt::parse_config_file(std::string fname) {
       command_broker_uri = uri;
     }
   }
-  if (auto o = get_string(&d, "status-update-uri")) {
+  if (auto o = get_string(&d, "status-uri")) {
     URI uri("//localhost:9092/kafka-to-nexus.status");
     uri.parse(o.v);
     kafka_status_uri = uri;
