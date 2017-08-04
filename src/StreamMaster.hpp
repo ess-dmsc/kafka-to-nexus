@@ -110,6 +110,8 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return _file_writer_task->stats(a);
   }
 
+  FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
+
 private:
   ErrorCode stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
