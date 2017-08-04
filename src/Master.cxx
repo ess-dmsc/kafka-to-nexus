@@ -100,7 +100,10 @@ void Master::statistics() {
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
   writer.SetIndent(' ', 2);
   js_status.Accept(writer);
-  LOG(3, "status is: {}", buffer.GetString());
+  if (status_producer) {
+    status_producer->produce((KafkaW::uchar *)buffer.GetString(),
+                             buffer.GetSize());
+  }
 }
 
 void Master::stop() { do_run = false; }
