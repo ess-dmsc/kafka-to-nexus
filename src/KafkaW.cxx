@@ -621,7 +621,7 @@ struct Msg_ : public Producer::Msg {
   }
 };
 
-int ProducerTopic::produce(uchar *msg_data, int msg_size, bool print_err) {
+int ProducerTopic::produce(uchar *msg_data, size_t msg_size, bool print_err) {
   auto p = new Msg_;
   std::copy(msg_data, msg_data + msg_size, std::back_inserter(p->v));
   p->finalize();
