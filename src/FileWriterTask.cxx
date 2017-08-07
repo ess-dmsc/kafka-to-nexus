@@ -34,8 +34,9 @@ std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
 
 FileWriterTask::FileWriterTask() {
   using namespace std::chrono;
-  _id = duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
-            .count();
+  _id = static_cast<uint64_t>(
+      duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
+          .count());
   _id = (_id & uint64_t(-1) << 16) | (n_FileWriterTask_created & 0xffff);
   ++n_FileWriterTask_created;
   impl.reset(new FileWriterTask_impl);
