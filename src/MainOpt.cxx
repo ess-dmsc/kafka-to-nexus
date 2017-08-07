@@ -76,17 +76,17 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   // For the signal handler
   g_main_opt.store(opt.get());
   static struct option long_options[] = {
-      {"help", no_argument, 0, 'h'},
-      {"config-file", required_argument, 0, 0},
-      {"command-uri", required_argument, 0, 0},
+      {"help", no_argument, nullptr, 'h'},
+      {"config-file", required_argument, nullptr, 0},
+      {"command-uri", required_argument, nullptr, 0},
       // Legacy alias for 'command-uri'
-      {"broker-command", required_argument, 0, 0},
-      {"status-uri", required_argument, 0, 0},
-      {"kafka-gelf", required_argument, 0, 0},
-      {"graylog-logger-address", required_argument, 0, 0},
-      {"use-signal-handler", required_argument, 0, 0},
-      {"teamid", required_argument, 0, 0},
-      {0, 0, 0, 0},
+      {"broker-command", required_argument, nullptr, 0},
+      {"status-uri", required_argument, nullptr, 0},
+      {"kafka-gelf", required_argument, nullptr, 0},
+      {"graylog-logger-address", required_argument, nullptr, 0},
+      {"use-signal-handler", required_argument, nullptr, 0},
+      {"teamid", required_argument, nullptr, 0},
+      {nullptr, 0, nullptr, 0},
   };
   std::string cmd;
   int option_index = 0;
