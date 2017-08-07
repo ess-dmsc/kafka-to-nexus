@@ -77,11 +77,6 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure) {
   return 0;
 }
 
-void FileWriterTask::file_flush() {
-  if (impl)
-    impl->hdf_file.flush();
-}
-
 uint64_t FileWriterTask::id() const { return _id; }
 
 std::string const &FileWriterTask::hdf_filename() const {
