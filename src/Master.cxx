@@ -1,8 +1,5 @@
 #include "Master.h"
 #include "CommandHandler.h"
-#include "FileWriterTask.h"
-#include "Source.h"
-#include "commandproducer.h"
 #include "logger.h"
 #include <chrono>
 #include <rapidjson/document.h>
