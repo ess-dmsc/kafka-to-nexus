@@ -27,9 +27,6 @@ int MainOpt::parse_config_file(std::string fname) {
   }
   {
     auto o = get_string(&d, "command-uri");
-    if (!o.found()) {
-      o = get_string(&d, "broker-command");
-    }
     if (o.found()) {
       URI uri("//localhost:9092/kafka-to-nexus.command");
       uri.parse(o.v);
@@ -79,8 +76,6 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"help", no_argument, nullptr, 'h'},
       {"config-file", required_argument, nullptr, 0},
       {"command-uri", required_argument, nullptr, 0},
-      // Legacy alias for 'command-uri'
-      {"broker-command", required_argument, nullptr, 0},
       {"status-uri", required_argument, nullptr, 0},
       {"kafka-gelf", required_argument, nullptr, 0},
       {"graylog-logger-address", required_argument, nullptr, 0},
@@ -118,8 +113,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
           ret.first = 1;
         }
       }
-      if (std::string("command-uri") == lname ||
-          std::string("broker-command") == lname) {
+      if (std::string("command-uri") == lname) {
         URI uri("//localhost:9092/kafka-to-nexus.command");
         uri.parse(optarg);
         opt->command_broker_uri = uri;
