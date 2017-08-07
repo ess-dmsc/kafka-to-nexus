@@ -24,6 +24,7 @@ Master::Master(MainOpt &config) : config(config), command_listener(config) {
   if (buffer.back() != 0) {
     // likely an error
     buffer.back() = 0;
+    LOG(4, "Hostname got truncated: {}", buffer.data());
   }
   std::string hostname(buffer.data());
   file_writer_process_id_ =
