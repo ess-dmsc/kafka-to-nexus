@@ -64,7 +64,8 @@ void Master::run() {
       LOG(7, "Handle a command");
       this->handle_command_message(std::move(msg));
     }
-    if (Clock::now() - t_last_statistics > std::chrono::milliseconds(2000)) {
+    if (Clock::now() - t_last_statistics >
+        std::chrono::milliseconds(config.status_master_interval)) {
       t_last_statistics = Clock::now();
       statistics();
     }

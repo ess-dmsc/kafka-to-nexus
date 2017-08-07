@@ -42,6 +42,9 @@ int MainOpt::parse_config_file(std::string fname) {
     kafka_status_uri = uri;
     do_kafka_status = true;
   }
+  if (auto o = get_int(&d, "status-master-interval")) {
+    status_master_interval = o.v;
+  }
   if (auto o = get_object(d, "kafka")) {
     for (auto &m : o.v->GetObject()) {
       if (m.value.IsString()) {

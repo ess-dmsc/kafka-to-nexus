@@ -37,11 +37,16 @@ Available options include:
 {
   "command-uri": "//broker[:port]/command-topic",
   "status-uri": "//broker[:port]/status-topic",
+  "status-master-interval": 2000,
   "commands": [
     "a list of commands as discussed below."
   ]
 }
 ```
+
+- `command-uri` Kafka URI where the file writer listens for commands
+- `status-uri` Kafka URI where to publish status updates
+- `status-master-interval` Interval in milliseconds for status updates
 
 
 ### Send command to kafka-to-nexus
