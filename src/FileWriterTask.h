@@ -29,7 +29,6 @@ public:
   /// Used by Streamer to get the list of demuxers
   std::vector<DemuxTopic> &demuxers();
   uint64_t id() const;
-  std::string const &hdf_filename() const;
   rapidjson::Value
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
 
