@@ -26,11 +26,11 @@ struct MD {
 
 /// Wraps a std::regex
 struct Re {
-  Re(std::regex *re);
+  Re(std::regex const *re);
   Re(Re &&);
   Re &operator=(Re &&);
-  MD match(string const &s);
-  std::regex *re = nullptr;
+  MD match(string const &s) const;
+  std::regex const *re = nullptr;
   friend void swap(Re &x, Re &y);
 };
 
@@ -63,11 +63,15 @@ public:
   /// `path/path`.
   bool require_host_slashes = true;
 
+  /// Test the regular expression library at runtime.
+  /// Some implementors ship a non-functional regex lib.
+  static bool test();
+
 private:
-  static Re re_full;
-  static Re re_host_no_slashes;
-  static Re re_no_host;
-  static Re re_topic;
+  static Re const re_full;
+  static Re const re_host_no_slashes;
+  static Re const re_no_host;
+  static Re const re_topic;
   void update_deps();
 };
 }
