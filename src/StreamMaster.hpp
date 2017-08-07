@@ -110,8 +110,7 @@ public:
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const int &delay = 200) {
-    std::string topicname{"streammaster.0.report"};
+              const int &delay = 1000) {
     _report = p;
     if (!fetch_statistics.joinable()) {
       if (delay < 0) {
@@ -119,11 +118,14 @@ public:
             "Required negative delay in statistics collection: nothing to do");
         return;
       }
-      fetch_statistics = std::thread(std::bind(
-          &StreamMaster<Streamer, Demux>::fetch_statistics_impl, this, delay));
+      fetch_statistics = std::thread(
+          std::bind(&StreamMaster<Streamer, Demux>::fetch_statistics_impl, this,
+                    std::ref(_report), std::ref(delay)));
     }
     return;
   };
+
+  FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
 private:
   ErrorCode stop_streamer(const std::string &topic) {
@@ -171,8 +173,8 @@ private:
     }
   }
 
-  void fetch_statistics_impl(std::unique_ptr<KafkaW::Producer> p,
-                             const int &delay = 200) {
+  void fetch_statistics_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
+                             const int &delay) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
       Status::StreamMasterStatus status(runstatus.load());
@@ -181,7 +183,9 @@ private:
         status.push(s.first, v.fetch_status(), v.fetch_statistics());
       }
       auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      _report->produce(static_cast<KafkaW::uchar*>(&value[0]), value.size());
+      std::cout << &value[0] << "\t" <<value.size() << std::endl;
+      _report->produce(reinterpret_cast<unsigned char *>(&value[0]),
+                       value.size());
       std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     }
   }
