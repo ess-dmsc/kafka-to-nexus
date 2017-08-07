@@ -141,36 +141,36 @@ TEST(Streammaster, StartTime) {
   sm.start_time(ESSTimeStamp(10));
 }
 
-TEST(Streammaster, Statistics) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  one_demux[0].add_source("for_example_motor01");
-  one_demux[0].add_source("for_example_temperature02");
-  StreamMaster sm(broker, demux);
-  sm.start();
+// TEST(Streammaster, Statistics) {
+//   using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
+//   one_demux[0].add_source("for_example_motor01");
+//   one_demux[0].add_source("for_example_temperature02");
+//   StreamMaster sm(broker, demux);
+//   sm.start();
 
-  auto queue = sm.statistics(-10);
-  EXPECT_TRUE(queue.empty());
+//   auto queue = sm.statistics(-10);
+//   EXPECT_TRUE(queue.empty());
 
-  sm.statistics();
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  queue = sm.statistics();
-  EXPECT_FALSE(queue.empty());
-  std::this_thread::sleep_for(std::chrono::seconds(1));
+//   sm.statistics();
+//   std::this_thread::sleep_for(std::chrono::seconds(1));
+//   queue = sm.statistics();
+//   EXPECT_FALSE(queue.empty());
+//   std::this_thread::sleep_for(std::chrono::seconds(1));
 
-  using Output1 = FileWriter::Status::StdIOWriter;
-  using Output2 = FileWriter::Status::FlatbuffersWriter;
-  using Output3 = FileWriter::Status::JSONWriter;
-  while (!queue.empty()) {
-    FileWriter::Status::pprint<Output1>(queue.front());
-    FileWriter::Status::pprint<Output2>(queue.front());
-    FileWriter::Status::pprint<Output3>(queue.front());
-    std::cout << FileWriter::Status::pprint<Output3>(queue.front()) << "\n";
-    queue.pop();
-  }
-  EXPECT_TRUE(queue.empty());
+//   using Output1 = FileWriter::Status::StdIOWriter;
+//   using Output2 = FileWriter::Status::FlatbuffersWriter;
+//   using Output3 = FileWriter::Status::JSONWriter;
+//   while (!queue.empty()) {
+//     FileWriter::Status::pprint<Output1>(queue.front());
+//     FileWriter::Status::pprint<Output2>(queue.front());
+//     FileWriter::Status::pprint<Output3>(queue.front());
+//     std::cout << FileWriter::Status::pprint<Output3>(queue.front()) << "\n";
+//     queue.pop();
+//   }
+//   EXPECT_TRUE(queue.empty());
 
-  sm.stop();
-}
+//   sm.stop();
+// }
 
 int main(int argc, char **argv) {
   rng.seed(1234);

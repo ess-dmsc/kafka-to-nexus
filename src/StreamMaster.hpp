@@ -14,7 +14,9 @@
 
 #include "DemuxTopic.h"
 #include "FileWriterTask.h"
+#include "KafkaW.h"
 #include "Status.hpp"
+#include "StatusWriter.hpp"
 #include "logger.h"
 #include "utils.h"
 
@@ -107,17 +109,20 @@ public:
     return !loop.joinable();
   }
 
-  std::queue<Status::StreamMasterStatus> &statistics(const int &delay = 200) {
+  void report(std::shared_ptr<KafkaW::ProducerTopic> p,
+              const int &delay = 200) {
+    std::string topicname{"streammaster.0.report"};
+    _report = p;
     if (!fetch_statistics.joinable()) {
       if (delay < 0) {
         LOG(2,
             "Required negative delay in statistics collection: nothing to do");
-        return sms;
+        return;
       }
       fetch_statistics = std::thread(std::bind(
           &StreamMaster<Streamer, Demux>::fetch_statistics_impl, this, delay));
     }
-    return sms;
+    return;
   };
 
 private:
@@ -160,13 +165,14 @@ private:
       stop_streamer(s);
       streamer.erase(topic);
       if (streamer.size() == 0) {
-	runstatus = Status::RunStatusError::has_finished;
+        runstatus = Status::RunStatusError::has_finished;
       }
       return ErrorCode(StatusCode::STOPPED);
     }
   }
 
-  void fetch_statistics_impl(const int &delay = 200) {
+  void fetch_statistics_impl(std::unique_ptr<KafkaW::Producer> p,
+                             const int &delay = 200) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
       Status::StreamMasterStatus status(runstatus.load());
@@ -174,7 +180,8 @@ private:
         auto v = s.second.status();
         status.push(s.first, v.fetch_status(), v.fetch_statistics());
       }
-      sms.push(status);
+      auto value = Status::pprint<Status::JSONStreamWriter>(status);
+      _report->produce(static_cast<KafkaW::uchar*>(&value[0]), value.size());
       std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     }
   }
@@ -183,11 +190,11 @@ private:
   std::vector<Demux> &demux;
   std::thread loop;
   std::thread fetch_statistics;
-  std::queue<Status::StreamMasterStatus> sms;
   std::atomic<int> runstatus;
   std::atomic<bool> do_write;
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
+  std::shared_ptr<KafkaW::ProducerTopic> _report;
 
   milliseconds duration{1000};
 }; // namespace FileWriter
