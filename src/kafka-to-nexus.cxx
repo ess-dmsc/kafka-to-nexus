@@ -20,44 +20,43 @@ int main(int argc, char **argv) {
   auto po = parse_opt(argc, argv);
   auto opt = std::move(po.second);
 
-  printf("kafka-to-nexus-0.0.1 %.7s (ESS, BrightnESS)\n", GIT_COMMIT);
-  printf("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
+  fmt::print("kafka-to-nexus {:.7} (ESS, BrightnESS)\n", GIT_COMMIT);
+  fmt::print("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
 
   if (opt->help) {
-    printf("Forwards EPICS process variables to Kafka topics.\n"
-           "Controlled via JSON packets sent over the configuration topic.\n"
-           "\n"
-           "\n"
-           "kafka-to-nexus\n"
-           "  --help, -h\n"
-           "\n"
-           "  --config-file               <filename.json>\n"
-           "\n"
-           "  --command-uri               <//host[:port][/topic]>\n"
-           "      Kafka broker/topic to listen for commands.\n"
-           "      Default: //%s/%s\n"
-           "      Legacy alias: --broker-command\n"
-           "\n"
-           "  --status-uri                <//host[:port][/topic]>\n"
-           "      Kafka broker/topic to publish status updates on.\n"
-           "      Default: //%s/%s\n"
-           "\n",
-           opt->command_broker_uri.host_port.c_str(),
-           opt->command_broker_uri.topic.c_str(),
-           opt->kafka_status_uri.host_port.c_str(),
-           opt->kafka_status_uri.topic.c_str());
+    fmt::print(
+        "Forwards EPICS process variables to Kafka topics.\n"
+        "Controlled via JSON packets sent over the configuration topic.\n"
+        "\n"
+        "\n"
+        "kafka-to-nexus\n"
+        "  --help, -h\n"
+        "\n"
+        "  --config-file               <filename.json>\n"
+        "\n"
+        "  --command-uri               <//host[:port][/topic]>\n"
+        "      Kafka broker/topic to listen for commands.\n"
+        "      Default: //{}/{}\n"
+        "      Legacy alias: --broker-command\n"
+        "\n"
+        "  --status-uri                <//host[:port][/topic]>\n"
+        "      Kafka broker/topic to publish status updates on.\n"
+        "      Default: //{}/{}\n"
+        "\n",
+        opt->command_broker_uri.host_port, opt->command_broker_uri.topic,
+        opt->kafka_status_uri.host_port, opt->kafka_status_uri.topic);
 
-    printf("  --kafka-gelf                <//host[:port]/topic>\n"
-           "      Log to Graylog via Kafka GELF adapter.\n"
-           "\n");
+    fmt::print("  --kafka-gelf                <//host[:port]/topic>\n"
+               "      Log to Graylog via Kafka GELF adapter.\n"
+               "\n");
 
-    printf("  --graylog-logger-address    <host:port>\n"
-           "      Log to Graylog via graylog_logger library.\n"
-           "\n");
+    fmt::print("  --graylog-logger-address    <host:port>\n"
+               "      Log to Graylog via graylog_logger library.\n"
+               "\n");
 
-    printf("  -v\n"
-           "      Increase verbosity\n"
-           "\n");
+    fmt::print("  -v\n"
+               "      Increase verbosity\n"
+               "\n");
     return 1;
   }
 
