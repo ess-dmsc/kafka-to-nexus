@@ -105,6 +105,13 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return stat;
   }
 
+  rapidjson::Value
+  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) {
+    return _file_writer_task->stats(a);
+  }
+
+  FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
+
 private:
   ErrorCode stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();

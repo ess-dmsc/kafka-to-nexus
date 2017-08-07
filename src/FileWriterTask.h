@@ -28,8 +28,9 @@ public:
   FileWriterTask &set_hdf_filename(std::string hdf_filename);
   /// Used by Streamer to get the list of demuxers
   std::vector<DemuxTopic> &demuxers();
-  void file_flush();
-  void file_close();
+  uint64_t id() const;
+  rapidjson::Value
+  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
 
 private:
   std::vector<DemuxTopic> _demuxers;
@@ -37,6 +38,7 @@ private:
   void add_source(Source &&source);
   /// Called by CommandHandler on setup.
   int hdf_init(rapidjson::Value const &nexus_structure);
+  uint64_t _id;
 };
 
 } // namespace FileWriter

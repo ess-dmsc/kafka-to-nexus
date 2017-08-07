@@ -16,20 +16,44 @@
 ## Usage
 
 ### Running kafka-to-nexus
+
 ```
 ./kafka-to-nexus -h
 ```
 
 For example:
 ```
-./kafka-to-nexus --broker-command //kafka-host/filewriter-commands
+./kafka-to-nexus --command-uri //kafka-host/filewriter-commands
 ```
+
+
+### Configuration File
+
+The file writer can be configured via `--config-file <json>`
+
+Available options include:
+
+```
+{
+  "command-uri": "//broker[:port]/command-topic",
+  "status-uri": "//broker[:port]/status-topic",
+  "status-master-interval": 2000,
+  "commands": [
+    "a list of commands as discussed below."
+  ]
+}
+```
+
+- `command-uri` Kafka URI where the file writer listens for commands
+- `status-uri` Kafka URI where to publish status updates
+- `status-master-interval` Interval in milliseconds for status updates
+
 
 ### Send command to kafka-to-nexus
 
 Commands in the form of JSON messages are used to start and stop file writing.
 Commands can be send through Kafka via the broker/topic specified by the
-`--broker-command` option.  Commands can also be given in the configuration
+`--command-uri` option.  Commands can also be given in the configuration
 file specified by `--config-file <file.json>` (see a bit later in this
 section).
 
@@ -93,7 +117,7 @@ Commands can be given in the configuration file as well:
 ```json
 {
   "commands": [
-    { <some command as discussed above> }
+    { "some command": "as discussed above" }
   ]
 }
 ```

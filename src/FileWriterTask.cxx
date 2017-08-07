@@ -2,14 +2,17 @@
 #include "HDFFile.h"
 #include "Source.h"
 #include "logger.h"
+#include <atomic>
+#include <chrono>
 
 namespace FileWriter {
 
 using std::string;
 using std::vector;
 
+std::atomic<uint32_t> n_FileWriterTask_created{0};
+
 class FileWriterTask_impl {
-  std::vector<Source> _sources;
   friend class FileWriterTask;
   friend class ::Test___FileWriterTask___Create01;
   std::string hdf_filename;
@@ -29,7 +32,15 @@ Source SourceFactory_by_FileWriterTask::create(string topic,
 
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
 
-FileWriterTask::FileWriterTask() { impl.reset(new FileWriterTask_impl); }
+FileWriterTask::FileWriterTask() {
+  using namespace std::chrono;
+  _id = static_cast<uint64_t>(
+      duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
+          .count());
+  _id = (_id & uint64_t(-1) << 16) | (n_FileWriterTask_created & 0xffff);
+  ++n_FileWriterTask_created;
+  impl.reset(new FileWriterTask_impl);
+}
 
 FileWriterTask::~FileWriterTask() { LOG(9, "~FileWriterTask"); }
 
@@ -66,9 +77,21 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure) {
   return 0;
 }
 
-void FileWriterTask::file_flush() {
-  if (impl)
-    impl->hdf_file.flush();
+uint64_t FileWriterTask::id() const { return _id; }
+
+rapidjson::Value FileWriterTask::stats(
+    rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const {
+  using namespace rapidjson;
+  Value js_topics;
+  js_topics.SetObject();
+  for (auto &d : _demuxers) {
+    js_topics.AddMember(Value(d.topic().c_str(), a), Value(0), a);
+  }
+  Value js_fwt;
+  js_fwt.SetObject();
+  js_fwt.AddMember("filename", Value(impl->hdf_filename.c_str(), a), a);
+  js_fwt.AddMember("topics", js_topics, a);
+  return js_fwt;
 }
 
 } // namespace FileWriter

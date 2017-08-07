@@ -25,10 +25,22 @@ int MainOpt::parse_config_file(std::string fname) {
     LOG(3, "configuration is not well formed");
     return -5;
   }
-  if (auto o = get_string(&d, "broker-command")) {
-    URI uri("//localhost:9092/kafka-to-nexus.command");
+  {
+    auto o = get_string(&d, "command-uri");
+    if (o.found()) {
+      URI uri("//localhost:9092/kafka-to-nexus.command");
+      uri.parse(o.v);
+      command_broker_uri = uri;
+    }
+  }
+  if (auto o = get_string(&d, "status-uri")) {
+    URI uri("//localhost:9092/kafka-to-nexus.status");
     uri.parse(o.v);
-    command_broker_uri = uri;
+    kafka_status_uri = uri;
+    do_kafka_status = true;
+  }
+  if (auto o = get_int(&d, "status-master-interval")) {
+    status_master_interval = o.v;
   }
   if (auto o = get_object(d, "kafka")) {
     for (auto &m : o.v->GetObject()) {
@@ -61,14 +73,15 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   // For the signal handler
   g_main_opt.store(opt.get());
   static struct option long_options[] = {
-      {"help", no_argument, 0, 'h'},
-      {"config-file", required_argument, 0, 0},
-      {"broker-command", required_argument, 0, 0},
-      {"kafka-gelf", required_argument, 0, 0},
-      {"graylog-logger-address", required_argument, 0, 0},
-      {"use-signal-handler", required_argument, 0, 0},
-      {"teamid", required_argument, 0, 0},
-      {0, 0, 0, 0},
+      {"help", no_argument, nullptr, 'h'},
+      {"config-file", required_argument, nullptr, 0},
+      {"command-uri", required_argument, nullptr, 0},
+      {"status-uri", required_argument, nullptr, 0},
+      {"kafka-gelf", required_argument, nullptr, 0},
+      {"graylog-logger-address", required_argument, nullptr, 0},
+      {"use-signal-handler", required_argument, nullptr, 0},
+      {"teamid", required_argument, nullptr, 0},
+      {nullptr, 0, nullptr, 0},
   };
   std::string cmd;
   int option_index = 0;
@@ -100,8 +113,13 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
           ret.first = 1;
         }
       }
-      if (std::string("broker-command") == lname) {
+      if (std::string("command-uri") == lname) {
         URI uri("//localhost:9092/kafka-to-nexus.command");
+        uri.parse(optarg);
+        opt->command_broker_uri = uri;
+      }
+      if (std::string("status-uri") == lname) {
+        URI uri("//localhost:9092/kafka-to-nexus.status");
         uri.parse(optarg);
         opt->command_broker_uri = uri;
       }
