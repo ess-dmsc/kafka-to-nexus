@@ -36,6 +36,9 @@ node('kafka-to-nexus') {
         }
 
         stage("Test") {
+            sh "uname -a"
+            sh "ldd ./kafka-to-nexus"
+            sh "ldd ./tests/tests"
             sh "./tests/tests"
         }
 
