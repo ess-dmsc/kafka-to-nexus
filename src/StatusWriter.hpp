@@ -1,5 +1,5 @@
 #pragma once
-#include "schemas/fws0_fwr_status_generated.h"
+// #include "schemas/fws0_fwr_status_generated.h"
 #include "rapidjson/document.h"
 
 namespace FileWriter {
@@ -39,14 +39,14 @@ public:
   return_type write(const StreamMasterStatus &);
 };
 
-class FlatbuffersWriter {
+// class FlatbuffersWriter {
 
-public:
-  using return_type = flatbuffers::Offset<StatusInfo>;
-  return_type write(const StreamMasterStatus &);
+// public:
+//   using return_type = flatbuffers::Offset<StatusInfo>;
+//   return_type write(const StreamMasterStatus &);
 
-private:
-};
+// private:
+// };
 
 template <class W> typename W::return_type pprint(const StreamMasterStatus &x) {
   W writer;
