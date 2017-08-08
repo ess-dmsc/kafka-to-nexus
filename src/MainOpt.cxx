@@ -121,7 +121,8 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       if (std::string("status-uri") == lname) {
         URI uri("//localhost:9092/kafka-to-nexus.status");
         uri.parse(optarg);
-        opt->command_broker_uri = uri;
+        opt->kafka_status_uri = uri;
+        opt->do_kafka_status = true;
       }
       if (std::string("kafka-gelf") == lname) {
         opt->kafka_gelf = optarg;
