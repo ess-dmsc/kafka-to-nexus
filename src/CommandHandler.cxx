@@ -131,8 +131,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
                                                config_kafka_vec));
-    s->report(master->status_producer, config.status_master_interval);
-
+    if (master->status_producer) {
+      s->report(master->status_producer, config.status_master_interval);
+    }
     if (start_time.count()) {
       LOG(3, "start time :\t{}", start_time.count());
       s->start_time(start_time);

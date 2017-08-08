@@ -7,7 +7,6 @@
 
 #include "DemuxTopic.h"
 #include "Status.hpp"
-#include "utils.h"
 
 // forward definitions
 namespace RdKafka {
@@ -20,7 +19,6 @@ class TopicPartition;
 namespace FileWriter {
 
 struct Streamer {
-
   Streamer(){};
   Streamer(const std::string &, const std::string &,
            std::vector<std::pair<std::string, std::string>> kafka_options = {});
@@ -54,6 +52,7 @@ struct Streamer {
   }
 
   Status::StreamerStatus &status() { return s_; }
+  const StreamerError &runstatus() { return s_.run_status(); }
 
 private:
   RdKafka::KafkaConsumer *_consumer{nullptr};

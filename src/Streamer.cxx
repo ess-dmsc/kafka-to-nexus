@@ -116,12 +116,14 @@ FileWriter::Streamer::Streamer(
                        return this->set_streamer_opt(item);
                      }),
       kafka_options.end());
-  s_.run_status(Status::RunStatusError::stopped);
+  s_.run_status(StreamerError(Status::StreamerErrorCode::stopped));
 
   std::string errstr;
   std::shared_ptr<RdKafka::Conf> conf(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
-
+  if (!conf) {
+    s_.run_status(StreamerError(Status::StreamerErrorCode::configuration_error));
+  }
   using opt_t = std::pair<std::string, std::string>;
   set_conf_opt(conf, opt_t{"metadata.broker.list", broker});
   set_conf_opt(conf, opt_t{"fetch.message.max.bytes", "104857600"});
@@ -144,17 +146,17 @@ FileWriter::Streamer::Streamer(
 
   if (!(_consumer = RdKafka::KafkaConsumer::create(conf.get(), errstr))) {
     LOG(0, "Failed to create consumer: {}", errstr);
-    s_.run_status(Status::RunStatusError::consumer_error);
+    s_.run_status(StreamerError(Status::StreamerErrorCode::consumer_error));
   }
 
   if (!topic_name.empty()) {
     if (get_metadata() != 0) {
       LOG(1, "Unable to retrieve metadata");
-      s_.run_status(Status::RunStatusError::metadata_error);
+      s_.run_status(StreamerError(Status::StreamerErrorCode::metadata_error));
     }
     if (get_topic_partitions(topic_name) < 0) {
       LOG(1, "Unable to build TopicPartitions structure");
-      s_.run_status(Status::RunStatusError::topic_partition_error);
+      s_.run_status(StreamerError(Status::StreamerErrorCode::topic_partition_error));
     }
     for (auto &i : _tp) {
       i->set_offset(_offset.value());
@@ -163,30 +165,28 @@ FileWriter::Streamer::Streamer(
     RdKafka::ErrorCode err = _consumer->assign(_tp);
     if (err) {
       LOG(0, "Failed to subscribe to {} ", topic_name);
-      s_.run_status(Status::RunStatusError::assign_error);
+      s_.run_status(StreamerError(Status::StreamerErrorCode::assign_error));
     }
   } else {
     LOG(0, "Topic required");
-    s_.run_status(Status::RunStatusError::topic_error);
+    s_.run_status(StreamerError(Status::StreamerErrorCode::topic_error));
   }
   if (get_offset_boundaries().value()) {
     LOG(3, "Unable to determine lower and higher offset in topic {}",
         topic_name);
-    s_.run_status(Status::RunStatusError::offset_error);
+    s_.run_status(StreamerError(Status::StreamerErrorCode::offset_error));
   }
-
 }
 
 FileWriter::Streamer::Streamer(const Streamer &other)
     : _consumer(other._consumer), _tp(other._tp), _offset(other._offset),
-      _begin(other._offset), _low(other._low),
-      s_(other.s_) {}
+      _begin(other._offset), _low(other._low), s_(other.s_) {}
 
 FileWriter::ErrorCode FileWriter::Streamer::closeStream() {
   FileWriter::ErrorCode status;
 
   _tp.clear();
-  s_.run_status(Status::RunStatusError::stopped);
+  s_.run_status(StreamerError(Status::StreamerErrorCode::stopped));
   if (_consumer) {
     _consumer->close();
     delete _consumer;
@@ -254,7 +254,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
-    s_.error();
+    s_.run_status(StreamerError(Status::StreamerErrorCode::message_error));
     return ProcessMessageResult::ERR();
   }
   s_.add_message(msg->len());
@@ -264,7 +264,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
   if (!result.is_OK()) {
-    s_.error();
+    s_.run_status(StreamerError(Status::StreamerErrorCode::write_error));
   }
   return result;
 }
@@ -280,16 +280,12 @@ FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
   }
   auto err = _consumer->offsetsForTimes(_tp, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
-    s_.run_status(Status::RunStatusError::start_time_error);
+    s_.run_status(StreamerError(Status::StreamerErrorCode::start_time_error));
     LOG(3, "Error searching initial time: {}", err2str(err));
   }
   if (err == RdKafka::ERR_NO_ERROR) {
-    // for (auto &i : _low) {
-    //   fprintf(stderr, "Lower timestamp in partition : %ld\n", i.value());
-    // }
     for (auto &i : _tp) {
       auto offset = i->offset();
-      // fprintf(stderr, "Found offset : %ld\n", offset);
       i->set_offset(offset);
     }
   }
