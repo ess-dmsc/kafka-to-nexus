@@ -35,6 +35,13 @@ node('kafka-to-nexus') {
             sh "make VERBOSE=1"
         }
 
+        stage("Test") {
+            sh "uname -a"
+            sh "ldd ./kafka-to-nexus"
+            sh "ldd ./tests/tests"
+            sh "./tests/tests"
+        }
+
         stage("Archive") {
             sh "rm -rf file-writer; mkdir file-writer"
             sh "cp kafka-to-nexus send-command file-writer/"

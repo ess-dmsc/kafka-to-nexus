@@ -18,10 +18,19 @@ find_package(GraylogLogger)
 find_package(GitCommitExtract)
 
 
-
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
+if (DEFINED _GLIBCXX_USE_CXX11_ABI)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=${_GLIBCXX_USE_CXX11_ABI}")
+endif()
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O3 -D_GLIBCXX_USE_NANOSLEEP")
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+  if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.0")
+    message(FATAL_ERROR "GCC below 4.9.0 does not fully support c++11.")
+  endif()
+endif()
 
 if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.3")
 else ()

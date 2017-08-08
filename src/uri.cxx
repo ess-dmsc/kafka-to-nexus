@@ -1,6 +1,8 @@
 #include "uri.h"
 #include "logger.h"
 #include <array>
+#include <mutex>
+#include <iostream>
 
 namespace uri {
 
@@ -18,7 +20,16 @@ struct Patterns {
   std::regex re_topic{"^/?([-._A-Za-z0-9]+)$"};
 };
 
-static Patterns patterns;
+Patterns const & patterns() {
+  try {
+    static Patterns patterns;
+    return patterns;
+  }
+  catch (std::regex_error & e) {
+    std::cout << "Can not initialize regular expression patterns. Maybe your c++ runtime library is not complete." << std::endl << e.what() << std::endl;
+    throw e;
+  }
+}
 
 MD::MD(char const *subject) : subject(subject) {}
 
@@ -32,9 +43,9 @@ string MD::substr(uint8_t i) {
   return matches[i];
 }
 
-Re::Re(std::regex *re) : re(re) {}
+Re::Re(std::regex const *re) : re(re) {}
 
-MD Re::match(string const &s) {
+MD Re::match(string const &s) const {
   MD md(s.data());
   std::smatch m;
   auto str = string(s.data(), s.size());
@@ -120,8 +131,13 @@ void URI::parse(string uri) {
   update_deps();
 }
 
-Re URI::re_full(&patterns.full);
-Re URI::re_host_no_slashes(&patterns.re_host_no_slashes);
-Re URI::re_no_host(&patterns.re_no_host);
-Re URI::re_topic(&patterns.re_topic);
+Re const URI::re_full(&patterns().full);
+Re const URI::re_host_no_slashes(&patterns().re_host_no_slashes);
+Re const URI::re_no_host(&patterns().re_no_host);
+Re const URI::re_topic(&patterns().re_topic);
+
+bool URI::test() {
+  return true;
+}
+
 }
