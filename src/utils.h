@@ -15,7 +15,7 @@ public:
   StrongType() {}
   StrongType(T value) : m_value{value} {}
   StrongType(const StrongType &other) : m_value(other.m_value) {}
-  inline const T &value() { return m_value; }
+  inline const T &value() const { return m_value; }
   StrongType &operator=(const StrongType &other) {
     m_value = other.m_value;
     return *this;

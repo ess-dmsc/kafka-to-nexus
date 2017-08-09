@@ -41,6 +41,11 @@ rapidjson::Document JSONWriter::write_impl(const StreamMasterStatus &data) {
   Document d;
   auto &a = d.GetAllocator();
   d.SetObject();
+  { // message type
+    Value sm;
+    sm.SetObject();
+    d.AddMember("type","filewriter_streammaster_status", a);
+  }
   { // stream master info
     Value sm;
     sm.SetObject();

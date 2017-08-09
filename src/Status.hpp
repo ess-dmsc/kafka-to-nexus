@@ -45,6 +45,9 @@ enum StreamerErrorCode {
   write_error = -10,
 };
 
+const std::string Err2Str(const FileWriter::StreamMasterError &);
+const std::string Err2Str(const FileWriter::StreamerError &);
+
 // Data type for collecting informations about the streamer
 class StreamerStatusType {
   friend class StdIOWriter;
