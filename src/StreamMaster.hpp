@@ -128,7 +128,9 @@ public:
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
-  const StreamMasterError &status() { return StreamMasterError(runstatus.load()); }
+  const StreamMasterError &status() {
+    return StreamMasterError{runstatus.load()};
+  }
 
 private:
   ErrorCode stop_streamer(const std::string &topic) {
@@ -149,7 +151,7 @@ private:
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
-	    //            runstatus.store(int(s.status()));
+            //       runstatus.store(int(s.status()));
             if (_value.is_STOP() &&
                 (remove_source(d.topic()) != StatusCode::RUNNING)) {
               break;
@@ -178,7 +180,7 @@ private:
   }
 
   void fetch_statistics_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
-                             const int &delay) {
+                             const int delay = 1000) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
       Status::StreamMasterStatus status(runstatus.load());
@@ -187,7 +189,6 @@ private:
         status.push(s.first, v.fetch_status(), v.fetch_statistics());
       }
       auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      std::cout << &value[0] << "\t" << value.size() << std::endl;
       if (!_report) {
         LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
         runstatus = Error::statistics_failure;
