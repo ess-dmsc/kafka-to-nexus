@@ -1,8 +1,8 @@
 #include "uri.h"
 #include "logger.h"
 #include <array>
-#include <mutex>
 #include <iostream>
+#include <mutex>
 
 namespace uri {
 
@@ -20,13 +20,15 @@ struct Patterns {
   std::regex re_topic{"^/?([-._A-Za-z0-9]+)$"};
 };
 
-Patterns const & patterns() {
+Patterns const &patterns() {
   try {
     static Patterns patterns;
     return patterns;
-  }
-  catch (std::regex_error & e) {
-    std::cout << "Can not initialize regular expression patterns. Maybe your c++ runtime library is not complete." << std::endl << e.what() << std::endl;
+  } catch (std::regex_error &e) {
+    std::cout << "Can not initialize regular expression patterns. Maybe your "
+                 "c++ runtime library is not complete."
+              << std::endl
+              << e.what() << std::endl;
     throw e;
   }
 }
@@ -136,8 +138,5 @@ Re const URI::re_host_no_slashes(&patterns().re_host_no_slashes);
 Re const URI::re_no_host(&patterns().re_no_host);
 Re const URI::re_topic(&patterns().re_topic);
 
-bool URI::test() {
-  return true;
-}
-
+bool URI::test() { return true; }
 }
