@@ -42,14 +42,14 @@ rapidjson::Document JSONWriter::write_impl(const StreamMasterStatus &data) {
   auto &a = d.GetAllocator();
   d.SetObject();
   { // message type
-    Value sm;
-    sm.SetObject();
-    d.AddMember("type","filewriter_streammaster_status", a);
+    d.AddMember("type", "filewriter_streammaster_status", a);
   }
   { // stream master info
-    Value sm;
+    Value sm,ss;
     sm.SetObject();
-    sm.AddMember("status", data.status, a);
+    std::string s{Err2Str(StreamMasterError{data.status})};
+    ss.SetString(s.c_str(),s.size(),a);
+    sm.AddMember("status", ss, a);
     d.AddMember("streammaster", sm, a);
   }
   { // streamers info
@@ -127,12 +127,13 @@ std::string JSONStreamWriter::write(const StreamMasterStatus &data) {
 //                                data.streamer_stats[i].freq_std);
 //     auto s = CreateStreamerInfo(
 //         builder, t, int(data.streamer_status[i].messages),
-//         int(data.streamer_status[i].bytes), int(data.streamer_status[i].errors),
-//         &msg_size, &msg_freq);
+//         int(data.streamer_status[i].bytes),
+//         int(data.streamer_status[i].errors), &msg_size, &msg_freq);
 //     streamers.push_back(s);
 //   }
 //   auto fbs =
-//       CreateStatusInfo(builder, data.status, builder.CreateVector(streamers));
+//       CreateStatusInfo(builder, data.status,
+//       builder.CreateVector(streamers));
 //   FinishStatusInfoBuffer(builder, fbs);
 //   builder.Clear();
 //   return fbs;
