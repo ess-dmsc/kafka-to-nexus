@@ -4,6 +4,7 @@
 #include "SchemaRegistry.h"
 #include "date/date.h"
 #include "helper.h"
+#include "json.h"
 #include "logger.h"
 #include <array>
 #include <chrono>
@@ -141,7 +142,93 @@ int HDFFile::init(std::string filename,
 
   auto f1 = x;
 
+  std::function<void(Value const *, hid_t, uint16_t)> create_hdf_structures =
+      [&lcpl, &create_hdf_structures](Value const *value, hid_t hdf_parent,
+                                      uint16_t level) {
+        LOG(6, "level: {}", level);
+
+        // The HDF object that we will maybe create at the current level.
+        hid_t hdf_this = -1;
+        // Keeps the HDF object id if we create a new collection-like object
+        // which
+        // can be used as the parent for the next level of recursion. The only
+        // case
+        // currently is when we create a group.
+        hid_t hdf_next_parent = -1;
+        {
+          if (auto type = get_string(value, "type")) {
+            if (type.v == "group") {
+              LOG(4, "group: {}", json_to_string(*value));
+              if (auto name = get_string(value, "name")) {
+                hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl,
+                                      H5P_DEFAULT, H5P_DEFAULT);
+                hdf_next_parent = hdf_this;
+              }
+            }
+            if (type.v == "stream") {
+              LOG(4, "stream: {}", json_to_string(*value));
+              if (auto name = get_string(value, "name")) {
+                // TODO
+                // Let file writer module create the actual dataset.
+              }
+            }
+            if (type.v == "dataset") {
+              LOG(3, "DATASET not yet implemented");
+            }
+          }
+        }
+
+        if (hdf_this >= 0) {
+          auto attributes_member = value->FindMember("attributes");
+          if (attributes_member != value->MemberEnd()) {
+            auto &attributes = attributes_member->value;
+            if (attributes.IsObject()) {
+              for (auto &attr : attributes.GetObject()) {
+                if (attr.value.IsString()) {
+                  write_attribute_str(hdf_this, attr.name.GetString(),
+                                      attr.value.GetString());
+                }
+                if (attr.value.IsInt64()) {
+                  write_attribute(hdf_this, attr.name.GetString(),
+                                  attr.value.GetInt64());
+                }
+                if (attr.value.IsDouble()) {
+                  write_attribute(hdf_this, attr.name.GetString(),
+                                  attr.value.GetDouble());
+                }
+              }
+            }
+          }
+        }
+
+        // If the current level in the HDF can act as a parent, then continue
+        // the
+        // recursion with the (optional) "children" array.
+        if (hdf_next_parent >= 0) {
+          auto mem = value->FindMember("children");
+          if (mem != value->MemberEnd()) {
+            if (mem->value.IsArray()) {
+              for (auto &child : mem->value.GetArray()) {
+                create_hdf_structures(&child, hdf_this, level + 1);
+              }
+            }
+          }
+        }
+      };
+
   if (nexus_structure.IsObject()) {
+    auto value = &nexus_structure;
+    auto mem = value->FindMember("children");
+    if (mem != value->MemberEnd()) {
+      if (mem->value.IsArray()) {
+        for (auto &child : mem->value.GetArray()) {
+          create_hdf_structures(&child, impl->h5file, 0);
+        }
+      }
+    }
+  }
+
+  if (false && nexus_structure.IsObject()) {
     // Traverse nexus_structure
     // The rapidjson visitor interface is not flexible enough unfortunately
     struct SE {
@@ -164,13 +251,16 @@ int HDFFile::init(std::string filename,
     stack.push_back(SE{"/", &nexus_structure, -1});
     stack.back().nxv = f1;
     while (stack.size() > 0) {
+      LOG(6, "stack.size(): {}", stack.size());
       auto &se = stack.back();
+      /*
       for (auto &x : stack) {
         string itrname = "[empty]";
         if (x.itr != x.jsv->MemberEnd()) {
           itrname = x.itr->name.GetString();
         }
       }
+      */
       auto &jsv = se.jsv;
       if (!se.basics) {
         auto mem = jsv->FindMember("NX_type");
@@ -187,8 +277,6 @@ int HDFFile::init(std::string filename,
 
         if (se.nxv == -1) {
           if (se.nx_type == "group") {
-            se.nxv = H5Gcreate2(se.nxparent, se.name.c_str(), lcpl, H5P_DEFAULT,
-                                H5P_DEFAULT);
           }
         }
 
@@ -199,30 +287,6 @@ int HDFFile::init(std::string filename,
             write_attribute_str(se.nxv, "NX_class", nx_class.GetString());
           }
         }
-
-        mem = jsv->FindMember("NX_attributes");
-        if (mem != jsv->MemberEnd()) {
-          auto &a = mem->value;
-          if (a.IsObject()) {
-            for (auto &at : a.GetObject()) {
-              if (at.value.IsString()) {
-                write_attribute_str(se.nxv, at.name.GetString(),
-                                    at.value.GetString());
-              }
-              if (at.value.IsInt64()) {
-                write_attribute(se.nxv, at.name.GetString(),
-                                at.value.GetInt64());
-              }
-              if (at.value.IsDouble()) {
-                write_attribute(se.nxv, at.name.GetString(),
-                                at.value.GetDouble());
-              }
-            }
-          }
-        }
-
-        // TODO
-        // Check if there are NX_attributes and set them
 
         se.basics = true;
       }
