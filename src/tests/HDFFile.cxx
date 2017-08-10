@@ -257,22 +257,89 @@ public:
       j.SetObject();
       Value nexus_structure;
       nexus_structure.SetObject();
-      Value streams;
-      streams.SetArray();
-      for (auto &source : sources) {
-        Value v;
-        v.SetObject();
-        nexus_structure.AddMember(StringRef(source.source.c_str()), v, a);
-        Value v2;
-        v2.SetObject();
-        v2.AddMember("topic", StringRef(source.topic.c_str()), a);
-        v2.AddMember("source", StringRef(source.source.c_str()), a);
-        v2.AddMember("nexus_path",
-                     Value(fmt::format("/{}", source.source).c_str(), a), a);
-        streams.PushBack(v2, a);
+
+      Value children;
+      children.SetArray();
+
+      {
+        Value g1;
+        g1.SetObject();
+        g1.AddMember("type", "group", a);
+        g1.AddMember("name", "some_group", a);
+        Value attr;
+        attr.SetObject();
+        attr.AddMember("NX_class", "NXinstrument", a);
+        g1.AddMember("attributes", attr, a);
+        Value ch;
+        ch.SetArray();
+        {
+          auto &children = ch;
+          Value ds1;
+          ds1.SetObject();
+          ds1.AddMember("type", "dataset", a);
+          ds1.AddMember("name", "created_by_filewriter", a);
+          Value attr;
+          attr.SetObject();
+          attr.AddMember("NX_class", "NXdetector", a);
+          attr.AddMember("this_will_be_a_double", Value(0.123), a);
+          attr.AddMember("this_will_be_a_int64", Value(123), a);
+          ds1.AddMember("attributes", attr, a);
+          Value dataset;
+          dataset.SetObject();
+          dataset.AddMember("space", "simple", a);
+          dataset.AddMember("type", "uint64", a);
+          Value dataset_size;
+          dataset_size.SetArray();
+          dataset_size.PushBack("unlimited", a);
+          dataset_size.PushBack(Value(4), a);
+          dataset_size.PushBack(Value(2), a);
+          dataset.AddMember("size", dataset_size, a);
+          ds1.AddMember("dataset", dataset, a);
+          children.PushBack(ds1, a);
+        }
+        g1.AddMember("children", ch, a);
+        children.PushBack(g1, a);
       }
+
+      auto json_stream = [&a](string source, string topic,
+                              string module) -> Value {
+        Value g1;
+        g1.SetObject();
+        g1.AddMember("type", "group", a);
+        g1.AddMember("name", Value(source.c_str(), a), a);
+        Value attr;
+        attr.SetObject();
+        attr.AddMember("NX_class", "NXinstrument", a);
+        g1.AddMember("attributes", attr, a);
+        Value ch;
+        ch.SetArray();
+        {
+          auto &children = ch;
+          Value ds1;
+          ds1.SetObject();
+          ds1.AddMember("type", "stream", a);
+          Value attr;
+          attr.SetObject();
+          attr.AddMember("this_will_be_a_double", Value(0.123), a);
+          attr.AddMember("this_will_be_a_int64", Value(123), a);
+          ds1.AddMember("attributes", attr, a);
+          Value stream;
+          stream.SetObject();
+          stream.AddMember("topic", Value(topic.c_str(), a), a);
+          stream.AddMember("source", Value(source.c_str(), a), a);
+          stream.AddMember("module", Value(module.c_str(), a), a);
+          ds1.AddMember("stream", stream, a);
+          children.PushBack(ds1, a);
+        }
+        g1.AddMember("children", ch, a);
+        return g1;
+      };
+
+      for (auto &source : sources) {
+        children.PushBack(json_stream(source.source, source.topic, "ev42"), a);
+      }
+      nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
-      j.AddMember("streams", streams, a);
       {
         Value v;
         v.SetObject();
