@@ -178,35 +178,60 @@ public:
     using std::array;
     using std::vector;
     using std::string;
-    MainOpt main_opt;
+    MainOpt &main_opt = *g_main_opt.load();
     bool do_verification = true;
-    auto &g_config_file = g_main_opt.load()->config_file;
 
-    if (auto x = get_int(&g_config_file, "unit_test.hdf.do_verification")) {
+    // Defaults such that the test has a chance to succeed
+    {
+      rapidjson::Document cfg;
+      cfg.Parse(R""(
+      {
+        "nexus": {
+          "indices": {
+            "index_every_kb": 1
+          },
+          "chunk": {
+            "chunk_n_elements": 64
+          }
+        },
+        "unit_test": {
+          "n_events_per_message": 32,
+          "n_msgs_per_source": 128,
+          "n_sources": 8,
+          "n_msgs_per_batch": 1
+        }
+      })"");
+      main_opt.config_file = merge(cfg, main_opt.config_file);
+    }
+
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
       LOG(4, "do_verification: {}", do_verification);
     }
 
     int n_msgs_per_source = 1;
-    if (auto x = get_int(&g_config_file, "unit_test.n_msgs_per_source")) {
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
       LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = x.v;
     }
 
     int n_sources = 1;
-    if (auto x = get_int(&g_config_file, "unit_test.n_sources")) {
+    if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
       LOG(4, "unit_test.n_sources: {}", x.v);
       n_sources = x.v;
     }
 
     int n_events_per_message = 1;
-    if (auto x = get_int(&g_config_file, "unit_test.n_events_per_message")) {
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.n_events_per_message")) {
       LOG(4, "unit_test.n_events_per_message: {}", x.v);
       n_events_per_message = x.v;
     }
 
     int n_msgs_per_batch = 1;
-    if (auto x = get_int(&g_config_file, "unit_test.n_msgs_per_batch")) {
+    if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
       LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
       n_msgs_per_batch = x.v;
     }
