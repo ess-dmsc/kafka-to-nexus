@@ -149,6 +149,17 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   g_N_HANDLED += 1;
 }
 
+void CommandHandler::handle_file_writer_task_clear_all(
+    rapidjson::Document const &d) {
+  using namespace rapidjson;
+  if (master) {
+    for (auto &x : master->stream_masters) {
+      x->stop();
+    }
+  }
+  file_writer_tasks.clear();
+}
+
 void CommandHandler::handle_exit(rapidjson::Document const &d) {
   if (master)
     master->stop();
@@ -188,6 +199,20 @@ void CommandHandler::handle(rapidjson::Document const &d) {
       }
     }
   }
+
+  {
+    if (auto dt = get_string(&d, "recv_type")) {
+      if (dt.v == "FileWriter") {
+        if (auto cmd = get_string(&d, "cmd")) {
+          if (cmd.v == "file_writer_tasks_clear_all") {
+            handle_file_writer_task_clear_all(d);
+            return;
+          }
+        }
+      }
+    }
+  }
+
   {
     StringBuffer buffer;
     PrettyWriter<StringBuffer> writer(buffer);

@@ -68,22 +68,25 @@ rapidjson::Document merge(rapidjson::Value const &v1,
           if (second_doc_member_value.IsObject()) {
             // If both 1st and 2nd input are json objects at this level then we
             // recursively continue the comparison.
-            stack_element e{first_doc_member_value.MemberBegin(),
-                            &se.v1->operator[](first_doc_member_name.GetString()),
-                            &second_doc_member_value,
-                            {}};
+            stack_element e{
+                first_doc_member_value.MemberBegin(),
+                &se.v1->operator[](first_doc_member_name.GetString()),
+                &second_doc_member_value,
+                {}};
             stack.push_back(e);
           } else {
             // it2->value is not a json object, even though it1->value is.
             // We therefore remember that we want to use it to replace whatever
             // is currently stored at the key se.it1->name.
-            se.to_copy.push_back({first_doc_member_name.GetString(), &second_doc_member_value});
+            se.to_copy.push_back(
+                {first_doc_member_name.GetString(), &second_doc_member_value});
           }
         } else {
           // it1->value is not a json object.
           // We therefore remember that we want to use it2->value to replace
           // what is currently stored at the key se.it1->name.
-          se.to_copy.push_back({first_doc_member_name.GetString(), &second_doc_member_value});
+          se.to_copy.push_back(
+              {first_doc_member_name.GetString(), &second_doc_member_value});
         }
       }
       // Advance the iterator over the elements at the current level of the 1st
