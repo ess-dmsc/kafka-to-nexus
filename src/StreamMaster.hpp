@@ -40,7 +40,10 @@ public:
         _stop(false) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
+      // streamer.emplace(d.topic(), broker, d.topic(), kafka_options);
+      streamer.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(d.topic()),
+                       std::forward_as_tuple(broker, d.topic(), kafka_options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
@@ -54,7 +57,12 @@ public:
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
+      //      Streamer item{broker, d.topic(), kafka_options};
+      //      streamer.emplace(d.topic(), Streamer{broker, d.topic(),
+      //      kafka_options});
+      streamer.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(d.topic()),
+                       std::forward_as_tuple(broker, d.topic(), kafka_options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
@@ -65,8 +73,8 @@ public:
     if (loop.joinable()) {
       loop.join();
     }
-    if (fetch_statistics.joinable()) {
-      fetch_statistics.join();
+    if (report_thread_.joinable()) {
+      report_thread_.join();
     }
   }
 
@@ -100,28 +108,41 @@ public:
   bool stop() {
     do_write = false;
     _stop = true;
+    if (report_thread_.joinable()) {
+      report_thread_.join();
+    }
     if (loop.joinable()) {
       loop.join();
     }
+    for (auto &s : streamer) {
+      LOG(7, "Shut down {} : {}", s.first);
+      auto v = stop_streamer(s.second);
+      if (v != typename Streamer::Error(Streamer::ErrorCode::stopped)) {
+        LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
+      } else {
+        LOG(7, "\t...done");
+      }
+    }
     for (auto &d : demux) {
-      this->stop_streamer(streamer[d.topic()]);
+      LOG(7, "Destroy {}", d.topic());
       streamer.erase(d.topic());
+      LOG(7, "\t...done");
     }
     return !loop.joinable();
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const int &delay = 1000) {
-    _report = p;
-    if (!fetch_statistics.joinable()) {
+    report_producer_ = p;
+    if (!report_thread_.joinable()) {
       if (delay < 0) {
         LOG(2,
             "Required negative delay in statistics collection: nothing to do");
         return;
       }
-      fetch_statistics = std::thread(
-          std::bind(&StreamMaster<Streamer, Demux>::fetch_statistics_impl, this,
-                    std::ref(_report), std::ref(delay)));
+      report_thread_ = std::thread(
+          std::bind(&StreamMaster<Streamer, Demux>::report_impl, this,
+                    std::ref(report_producer_), std::ref(delay)));
     }
     return;
   };
@@ -133,10 +154,12 @@ public:
   }
 
 private:
-  ErrorCode stop_streamer(const std::string &topic) {
+  typename Streamer::Error stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
   }
-  ErrorCode stop_streamer(Streamer &s) { return s.closeStream(); }
+  typename Streamer::Error stop_streamer(Streamer &s) {
+    return s.closeStream();
+  }
 
   void run() {
     using namespace std::chrono;
@@ -179,8 +202,8 @@ private:
     }
   }
 
-  void fetch_statistics_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
-                             const int delay = 1000) {
+  void report_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
+                   const int delay = 1000) {
     std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
       Status::StreamMasterStatus status(runstatus.load());
@@ -189,26 +212,27 @@ private:
         status.push(s.first, v.fetch_status(), v.fetch_statistics());
       }
       auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      if (!_report) {
+      if (!report_producer_) {
         LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
         runstatus = Error::statistics_failure;
         return;
       }
-      _report->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                       value.size());
+      report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
+                                value.size());
       std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     }
+    return;
   }
 
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;
   std::thread loop;
-  std::thread fetch_statistics;
+  std::thread report_thread_;
   std::atomic<int> runstatus;
   std::atomic<bool> do_write;
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
-  std::shared_ptr<KafkaW::ProducerTopic> _report;
+  std::shared_ptr<KafkaW::ProducerTopic> report_producer_;
 
   milliseconds duration{1000};
 }; // namespace FileWriter

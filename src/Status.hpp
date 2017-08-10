@@ -31,6 +31,7 @@ enum StreamMasterErrorCode {
   streammaster_error = -1000
 };
 enum StreamerErrorCode {
+  no_error = 1001,
   writing = 1,
   stopped = 0,
   configuration_error = -1,
@@ -43,6 +44,7 @@ enum StreamerErrorCode {
   start_time_error = -8,
   message_error = -9,
   write_error = -10,
+  not_initialized = -11,
 };
 
 const std::string Err2Str(const FileWriter::StreamMasterError &);
@@ -127,6 +129,11 @@ public:
 
   void add_message(const double &bytes);
   void error() { current.errors++; }
+  void error(const StreamerError &value) {
+    run_status_ = value;
+    error();
+    return;
+  }
 
   StreamerStatusType fetch_status();
 

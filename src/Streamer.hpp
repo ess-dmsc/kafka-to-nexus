@@ -3,7 +3,9 @@
 #include <functional>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <string>
+#include <thread>
 
 #include "DemuxTopic.h"
 #include "Status.hpp"
@@ -19,23 +21,23 @@ class TopicPartition;
 namespace FileWriter {
 
 struct Streamer {
+  using option_t = std::pair<std::string, std::string>;
+  using Error = StreamerError;
+  using ErrorCode = Status::StreamerErrorCode;
+
   Streamer(){};
   Streamer(const std::string &, const std::string &,
            std::vector<std::pair<std::string, std::string>> kafka_options = {});
-  Streamer(const Streamer &);
+  Streamer(const Streamer &) = delete;
 
-  ~Streamer() = default;
+  ~Streamer();
 
   template <class T> ProcessMessageResult write(T &f) {
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
 
-  int connect(const std::string &topic,
-              const RdKafkaOffset & = RdKafkaOffsetEnd,
-              const RdKafkaPartition & = RdKafkaPartition(0));
-
-  ErrorCode closeStream();
+  Error closeStream();
 
   template <class T>
   std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
@@ -55,7 +57,7 @@ struct Streamer {
   const StreamerError &runstatus() { return s_.run_status(); }
 
 private:
-  RdKafka::KafkaConsumer *_consumer{nullptr};
+  std::shared_ptr<RdKafka::KafkaConsumer> _consumer;
   std::shared_ptr<RdKafka::Metadata> _metadata;
   std::vector<RdKafka::TopicPartition *> _tp;
   RdKafkaOffset _offset{RdKafkaOffsetEnd};
@@ -63,6 +65,8 @@ private:
   std::vector<RdKafkaOffset> _low;
 
   Status::StreamerStatus s_;
+  std::thread connect_;
+  std::mutex guard_;
 
   int32_t message_length_{0};
   int32_t n_messages_{0};
@@ -70,18 +74,20 @@ private:
   ESSTimeStamp _timestamp_delay{3000};
   milliseconds consumer_timeout{1000};
 
-  // sets options for the Streamer object
+  void connect(const std::string,
+               std::vector<std::pair<std::string, std::string>> kafka_options);
+  // sets options for Kafka consumer and the Streamer
+  std::shared_ptr<RdKafka::Conf>
+  initialize_configuration(std::vector<option_t> &);
   bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
-
-  // sets Kafka configuration options
   bool set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
                     const std::pair<std::string, std::string> &option);
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
-  int get_metadata(int retry = 10);
+  int get_metadata(int retry = 5);
   int get_topic_partitions(const std::string &topic);
 
-  FileWriter::ErrorCode get_offset_boundaries();
+  Error get_offset_boundaries();
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
