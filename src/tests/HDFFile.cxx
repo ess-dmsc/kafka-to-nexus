@@ -7,10 +7,15 @@
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f141/synth.h"
+#include <chrono>
 #include <gtest/gtest.h>
 #include <random>
 #include <rapidjson/document.h>
 #include <unistd.h>
+
+using std::chrono::steady_clock;
+using std::chrono::milliseconds;
+using std::chrono::duration_cast;
 
 // Verify
 TEST(HDFFile, create) {
@@ -129,55 +134,78 @@ public:
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
     auto fname = get_string(&d, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
     auto source_name = get_string(&d, "streams.0.source");
-    unlink(string(fname).c_str());
-    main_opt.config_file.Parse(
-        "{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
-    ASSERT_FALSE(main_opt.config_file.HasParseError());
+    // char const * fname = d["file_attributes"]["file_name"].GetString();
+    // char const * source_name = d["streams"][0]["source"].GetString();
+    rapidjson::Document config_file;
+    config_file.Parse("{\"nexus\":{\"indices\":{\"index_every_kb\":1000}}}");
+    ASSERT_FALSE(config_file.HasParseError());
+    // rapidjson::Document cmd_fwt_clear;
+    // cmd_fwt_clear.Parse("{\"recv_type\":\"FileWriter\",
+    // \"cmd\":\"file_writer_tasks_clear_all\"}");
+    // ASSERT_FALSE(cmd_fwt_clear.HasParseError());
+
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({cmd.data(), (int32_t)cmd.size()});
 
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
-
-    auto &fwt = ch.file_writer_tasks.at(0);
-    ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
+    using DT = uint32_t;
+    int const SP = 4 * 1024;
+    int const feed_msgs_times = 5;
+    int const seed = 2;
+    std::mt19937 rnd_nn;
 
     std::vector<FlatBufs::ev42::fb> fbs;
     std::vector<FileWriter::Msg> msgs;
 
-    using DT = uint32_t;
-    int const SP = 256 * 1024;
-    int seed = 1;
-    std::mt19937 rnd_nn;
-    rnd_nn.seed(0);
-    auto &reg = FileWriter::Schemas::SchemaRegistry::items();
-    std::array<char, 4> fbid{{'e', 'v', '4', '2'}};
-    auto writer = reg.at(fbid)->create_reader()->create_writer();
-    FlatBufs::ev42::synth synth(string(source_name), seed);
-    LOG(7, "generating...");
+    LOG(6, "generating...");
+    FlatBufs::ev42::synth synth(source_name.v, seed);
+    rnd_nn.seed(seed);
     for (int i1 = 0; i1 < SP; ++i1) {
       fbs.push_back(synth.next(rnd_nn() >> 24));
       auto &fb = fbs.back();
       msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
                                      (int32_t)fb.builder->GetSize()});
     }
-    LOG(7, "processing...");
-    using CLK = std::chrono::steady_clock;
-    using MS = std::chrono::milliseconds;
-    auto t1 = CLK::now();
-    for (auto &msg : msgs) {
-      if (false) {
-        auto v = binary_to_hex(msg.data, msg.size);
-        LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+
+    for (int file_i = 0; file_i < 1; ++file_i) {
+      unlink(string(fname).c_str());
+
+      ch.handle({cmd.data(), (int32_t)cmd.size()});
+      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+
+      auto &fwt = ch.file_writer_tasks.at(0);
+      ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
+
+      auto &reg = FileWriter::Schemas::SchemaRegistry::items();
+      std::array<char, 4> fbid{{'e', 'v', '4', '2'}};
+      auto writer = reg.at(fbid)->create_reader()->create_writer();
+      LOG(6, "processing...");
+      using CLK = std::chrono::steady_clock;
+      using MS = std::chrono::milliseconds;
+      auto t1 = CLK::now();
+      for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
+        for (auto &msg : msgs) {
+          if (false) {
+            auto v = binary_to_hex(msg.data, msg.size);
+            LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+          }
+          fwt->demuxers().at(0).process_message(msg.data, msg.size);
+        }
       }
-      fwt->demuxers().at(0).process_message(msg.data, msg.size);
+      auto t2 = CLK::now();
+      LOG(6, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
+      LOG(6, "finishing...");
+      {
+        string cmd("{\"recv_type\":\"FileWriter\", "
+                   "\"cmd\":\"file_writer_tasks_clear_all\"}");
+        ch.handle({(char *)cmd.data(), (int32_t)cmd.size()});
+      }
+      auto t3 = CLK::now();
+      LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
+      LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
     }
-    auto t2 = CLK::now();
-    LOG(7, "processing done in {}",
-        std::chrono::duration_cast<MS>(t2 - t1).count());
-    LOG(7, "finishing...");
-    fwt.reset();
-    LOG(7, "done.");
+
+    return;
 
     herr_t err;
 
@@ -213,7 +241,7 @@ public:
     ASSERT_GE(err, 0);
 
     {
-      rnd_nn.seed(0);
+      rnd_nn.seed(seed);
       size_t n1 = 0;
       FlatBufs::ev42::synth synth(string(source_name), seed);
       for (int i1 = 0; i1 < SP; ++i1) {
@@ -222,7 +250,7 @@ public:
         auto a = fb->detector_id();
         for (size_t i2 = 0; i2 < a->size(); ++i2) {
           // LOG(3, "{}, {}, {}", i2, data.at(i2), a->Get(i2));
-          ASSERT_EQ(a->Get(i2), data.at(n1));
+          ASSERT_EQ(a->Get(i2), data.at(n1 % data.size()));
           ++n1;
         }
       }
