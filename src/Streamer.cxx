@@ -54,23 +54,27 @@ bool FileWriter::Streamer::set_streamer_opt(
   return false;
 }
 
-int FileWriter::Streamer::get_metadata(int retry) {
+std::unique_ptr<RdKafka::Metadata>
+FileWriter::Streamer::get_metadata(int retry) {
   RdKafka::Metadata *md;
+  std::unique_ptr<RdKafka::Metadata> metadata{nullptr};
   std::unique_ptr<RdKafka::Topic> ptopic;
   auto err = _consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
     LOG(3, "Can't request metadata");
-    if (retry) {
-      get_metadata(retry - 1);
-    } else {
-      return -1;
-    }
+    // if (retry) {
+    //   get_metadata(retry - 1);
+    // } else {
+    //   return -1;
+    // }
+  } else {
+    metadata.reset(md);
   }
-  _metadata.reset(md);
-  return !_metadata;
+  return metadata;
 }
 
-int FileWriter::Streamer::get_topic_partitions(const std::string &topic) {
+int FileWriter::Streamer::get_topic_partitions(
+    const std::string &topic, std::unique_ptr<RdKafka::Metadata> _metadata) {
   bool topic_found = false;
   if (!_metadata) {
     LOG(3, "Missing metadata informations");
@@ -99,8 +103,9 @@ FileWriter::Streamer::Error FileWriter::Streamer::get_offset_boundaries() {
     auto err = _consumer->query_watermark_offsets(i->topic(), i->partition(),
                                                   &low, &high, 5000);
     if (err) {
-      LOG(1, "Unable to get topic boundaries (topic : {}, partition : {})",
-          i->topic(), i->partition())
+      LOG(1, "Unable to get boundaries for topic {}, partition {} : {}",
+          i->topic(), i->partition(), RdKafka::err2str(err));
+      return Error(ErrorCode::topic_partition_error);
     }
     _low.push_back(RdKafkaOffset(low));
   }
@@ -141,7 +146,7 @@ FileWriter::Streamer::Streamer(
   s_.run_status(StreamerError(Status::StreamerErrorCode::not_initialized));
   if (topic_name.empty() || broker.empty()) {
     LOG(0, "Broker and topic required");
-    //    s_.run_status(Status::RunStatusError::generic_error);
+    s_.run_status(Error(ErrorCode::not_initialized));
     return;
   }
   kafka_options.push_back(
@@ -188,12 +193,13 @@ void FileWriter::Streamer::connect(
   }
 
   // Retrieve informations
-  if (get_metadata() != 0) {
+  std::unique_ptr<RdKafka::Metadata> metadata = get_metadata();
+  if (!metadata) {
     LOG(1, "Unable to retrieve metadata");
     s_.run_status(Status::StreamerErrorCode::metadata_error);
     return;
   }
-  if (get_topic_partitions(topic_name) < 0) {
+  if (get_topic_partitions(topic_name, std::move(metadata)) < 0) {
     LOG(1, "Unable to build TopicPartitions structure");
     s_.run_status(Status::StreamerErrorCode::topic_partition_error);
     return;
@@ -208,10 +214,9 @@ void FileWriter::Streamer::connect(
     s_.run_status(Status::StreamerErrorCode::assign_error);
     return;
   }
-  if (get_offset_boundaries().value()) {
-    LOG(3, "Unable to determine lower and higher offset in topic {}",
-        topic_name);
-    s_.run_status(Status::StreamerErrorCode::offset_error);
+  auto val = get_offset_boundaries();
+  if (val.value() != ErrorCode::no_error) {
+    s_.run_status(val);
     return;
   }
 

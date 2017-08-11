@@ -58,7 +58,6 @@ struct Streamer {
 
 private:
   std::shared_ptr<RdKafka::KafkaConsumer> _consumer;
-  std::shared_ptr<RdKafka::Metadata> _metadata;
   std::vector<RdKafka::TopicPartition *> _tp;
   RdKafkaOffset _offset{RdKafkaOffsetEnd};
   RdKafkaOffset _begin;
@@ -84,8 +83,8 @@ private:
                     const std::pair<std::string, std::string> &option);
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
-  int get_metadata(int retry = 5);
-  int get_topic_partitions(const std::string &topic);
+  std::unique_ptr<RdKafka::Metadata> get_metadata(int retry = 5);
+  int get_topic_partitions(const std::string &topic, std::unique_ptr<RdKafka::Metadata> metadata);
 
   Error get_offset_boundaries();
 };
