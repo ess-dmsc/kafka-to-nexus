@@ -270,16 +270,14 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
   if (!result.is_OK()) {
-    s_.run_status(StreamerError(Status::StreamerErrorCode::write_error));
+    s_.run_status(Error(ErrorCode::write_error));
   }
   return result;
 }
 
-template <>
-std::map<std::string, int64_t>
-FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
-                                       const ESSTimeStamp timepoint) {
-  std::map<std::string, int64_t> m;
+FileWriter::Streamer::Error
+FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
+  std::lock_guard<std::mutex> lock(guard_); // make sure connnection is done
 
   for (auto &i : _tp) {
     i->set_offset(timepoint.count() - _timestamp_delay.count());
@@ -288,6 +286,12 @@ FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
   if (err != RdKafka::ERR_NO_ERROR) {
     s_.run_status(StreamerError(Status::StreamerErrorCode::start_time_error));
     LOG(3, "Error searching initial time: {}", err2str(err));
+    for (auto &i : _tp) {
+      LOG(3, "TopicPartition {}-{} : {}", i->topic(), i->partition(),
+          RdKafka::err2str(i->err()));
+    }
+    s_.run_status(Error(ErrorCode::start_time_error));
+    return Error(ErrorCode::start_time_error);
   }
   if (err == RdKafka::ERR_NO_ERROR) {
     for (auto &i : _tp) {
@@ -295,7 +299,11 @@ FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp,
       i->set_offset(offset);
     }
   }
-  _consumer->assign(_tp);
-
-  return m;
+  err = _consumer->assign(_tp);
+  if (err != RdKafka::ERR_NO_ERROR) {
+    LOG(3, "Error assigning initial time: {}", err2str(err));
+    s_.run_status(Error(ErrorCode::start_time_error));
+    return Error(ErrorCode::start_time_error);
+  }
+  return Error(ErrorCode::no_error);
 }

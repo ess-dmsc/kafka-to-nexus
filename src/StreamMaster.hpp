@@ -76,10 +76,13 @@ public:
   }
 
   bool start_time(const ESSTimeStamp &start) {
-    for (auto &d : demux) {
-      auto result = streamer[d.topic()].set_start_time(d, start);
+    for (auto &s : streamer) {
+      auto result = s.second.set_start_time(start);
+      if (result.value() != Streamer::ErrorCode::no_error) {
+        return false;
+      }
     }
-    return false;
+    return true;
   }
   bool stop_time(const ESSTimeStamp &stop) {
     if (stop.count() < 0) {
@@ -92,6 +95,7 @@ public:
   }
 
   bool start() {
+    LOG(7, "StreamMaster: start");
     do_write = true;
     _stop = false;
 
@@ -104,6 +108,7 @@ public:
 
   bool stop() {
     std::lock_guard<std::mutex> lock(stop_guard_);
+    LOG(7, "StreamMaster: stop");
     do_write = false;
     _stop = true;
     if (report_thread_.joinable()) {
@@ -130,9 +135,8 @@ public:
     report_producer_ = p;
     if (!report_thread_.joinable()) {
       if (delay < 0) {
-        LOG(2,
-            "Required negative delay in statistics collection: nothing to do");
-        return;
+        LOG(2, "Required negative delay in statistics collection: use default");
+        return report(p);
       }
       report_thread_ = std::thread(
           std::bind(&StreamMaster<Streamer, Demux>::report_impl, this,
@@ -144,6 +148,11 @@ public:
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
   const StreamMasterError &status() {
+    for (auto &s : streamer) {
+      if (s.second.runstatus().value() < 0) {
+        runstatus = Error::streamer_error;
+      }
+    }
     return StreamMasterError{runstatus.load()};
   }
 
@@ -175,12 +184,13 @@ private:
             }
           }
         }
-        // if (s.runstatus().value() < 0) {
-        //   LOG(0, "Error in topic {} : {}", d.topic(),
-        //       Status::Err2Str(s.runstatus()));
-        //   remove_source(d.topic());
-        //   continue;
-        // }
+        if (s.runstatus().value() < 0) {
+          runstatus = Error::streamer_error;
+          LOG(0, "Error in topic {} : {}", d.topic(),
+              Status::Err2Str(s.runstatus()));
+          remove_source(d.topic());
+          continue;
+        }
       }
     }
     runstatus = Error::has_finished;

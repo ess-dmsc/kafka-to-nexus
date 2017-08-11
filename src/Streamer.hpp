@@ -39,11 +39,7 @@ struct Streamer {
 
   Error closeStream();
 
-  template <class T>
-  std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
-    std::cout << "no initial timepoint\n";
-    return std::map<std::string, int64_t>();
-  }
+  Error set_start_time(const ESSTimeStamp& tp);
 
   int32_t &n_sources() { return n_sources_; }
   int run_status() {
@@ -54,7 +50,7 @@ struct Streamer {
   }
 
   Status::StreamerStatus &status() { return s_; }
-  const StreamerError &runstatus() { return s_.run_status(); }
+  const Error &runstatus() { return s_.run_status(); }
 
 private:
   std::shared_ptr<RdKafka::KafkaConsumer> _consumer;
@@ -84,14 +80,12 @@ private:
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
   std::unique_ptr<RdKafka::Metadata> get_metadata(int retry = 5);
-  int get_topic_partitions(const std::string &topic, std::unique_ptr<RdKafka::Metadata> metadata);
+  int get_topic_partitions(const std::string &topic,
+                           std::unique_ptr<RdKafka::Metadata> metadata);
 
   Error get_offset_boundaries();
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
 
-template <>
-std::map<std::string, int64_t>
-Streamer::set_start_time<>(FileWriter::DemuxTopic &, const ESSTimeStamp);
 } // namespace FileWriter
