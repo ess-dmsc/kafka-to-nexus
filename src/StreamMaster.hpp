@@ -170,6 +170,12 @@ private:
 
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
+        if (s.runstatus().value() < 0) {
+          LOG(0, "Error in topic {} : {}", d.topic(),
+              Status::Err2Str(s.runstatus()));
+          remove_source(d.topic());
+	  continue;
+        }
         if (s.run_status() == StatusCode::RUNNING) {
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {

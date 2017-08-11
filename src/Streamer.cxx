@@ -239,8 +239,13 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   std::lock_guard<std::mutex> lock(
       guard_); // make sure that connect is completed
 
+  if (s_.run_status().value() < 0) {
+    return ProcessMessageResult::ERR();
+  }
+
   std::unique_ptr<RdKafka::Message> msg{
       _consumer->consume(consumer_timeout.count())};
+
   LOG(6, "{} : event timestamp : {}", _tp[0]->topic(),
       msg->timestamp().timestamp);
 
