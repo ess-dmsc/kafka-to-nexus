@@ -326,16 +326,10 @@ According to the design the Streamer connects to Kafka (other
 sources to be implemented) and consumes a message in the specified topic. Some features:
 * one Streamer per topic
 * multiple Source per streamer
-* has to be able to search back in the kafka queue for the first message. Some
-  slow sources can be (much) older than the DAQ starts and updated not
-  frequently, we must be able to retrieve the
-  informations. ```search_backward(f)``` implements some algorithm that uses the
-  function ```f``` to find the older message with good timestamp. Different
-  sources can have data in different point of the queue: Source has to discard
-  invalid (according to timestamp) data
-* if the broker is not valid (_e.g._ a change of IP address) it should notify
-  the FileMaster, retrieve the new configuration and reconnect
-
+* initial timestamp can be specified using ``set_start_time``
+* connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
+* Kafka and streamer specific options for the consumer can be passed
+  via the constructor's ``kafka_options``
 
 ## DemuxTopic
 Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.
@@ -362,15 +356,13 @@ the list of brokers from Kafka.
   - Streammaster::duration milliseconds have been elapsed
 * when receives a **termination** command from Master closes all the streamers
 
-StreamMaster exposes a ``queue<StreamMasterStatus>`` which contains
-information on:
+If required StreamMaster streams its status on a Kafka topic. In particular:
 * StreamMaster not yet running, running or finished
 * status of each Streamer (number of sent messages, errors and total
   received bytes)
 * statistics for each Streamer (message size average and message
-frequency int the last 200ms, configurable).  The StreamMasterStatus
-can be serialised as a rapidJSON object (or printed on the screen)
-using the ``pprint<OutputType>`` function.
+frequency int the last 200ms, configurable). 
+The message format is (so far) JSON. 
 
 
 More tests involing the network:
