@@ -57,9 +57,6 @@ public:
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
-      //      Streamer item{broker, d.topic(), kafka_options};
-      //      streamer.emplace(d.topic(), Streamer{broker, d.topic(),
-      //      kafka_options});
       streamer.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
                        std::forward_as_tuple(broker, d.topic(), kafka_options));
@@ -106,6 +103,7 @@ public:
   }
 
   bool stop() {
+    std::lock_guard<std::mutex> lock(stop_guard_);
     do_write = false;
     _stop = true;
     if (report_thread_.joinable()) {
@@ -123,11 +121,7 @@ public:
         LOG(7, "\t...done");
       }
     }
-    for (auto &d : demux) {
-      LOG(7, "Destroy {}", d.topic());
-      streamer.erase(d.topic());
-      LOG(7, "\t...done");
-    }
+    streamer.clear();
     return !loop.joinable();
   }
 
@@ -239,6 +233,7 @@ private:
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_;
+  std::mutex stop_guard_;
 
   milliseconds duration{1000};
 }; // namespace FileWriter
