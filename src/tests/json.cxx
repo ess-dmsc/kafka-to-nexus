@@ -4,7 +4,7 @@
 
 using namespace rapidjson;
 
-TEST(json, merge_01) {
+TEST(json, merge_with_exactly_one_conflicting_key) {
   Document jd1, jd2;
   jd1.Parse(R""({"k1": "string1"})"");
   jd2.Parse(R""({"k1": "string2"})"");
@@ -13,7 +13,7 @@ TEST(json, merge_01) {
   ASSERT_TRUE(jd3 == jd2);
 }
 
-TEST(json, merge_02) {
+TEST(json, merge_two_different_keys) {
   Document jd1, jd2, jde;
   jd1.Parse(R""({"k1": "string1"})"");
   jd2.Parse(R""({"k2": "string2"})"");
@@ -26,21 +26,28 @@ TEST(json, merge_02) {
   ASSERT_TRUE(jd3 == jde);
 }
 
-TEST(json, merge_03) {
+TEST(json, merge_3_keys_with_more_complicated_structures) {
   Document jd1, jd2, jde;
   jd1.Parse(R""({
-  "k1": "string1"
+  "k1": 500,
+  "k3": [ "this", {"is":"more"}, "complicated"]
 })"");
   jd2.Parse(R""({
+  "k3": null,
   "k2": {
     "some": {
       "more": "stuff"
     }
   },
-  "k1": "string1"
+  "k1": {
+    "result": 600
+  }
 })"");
   jde.Parse(R""({
-  "k1": "string1",
+  "k1": {
+    "result": 600
+  },
+  "k3": null,
   "k2": {
     "some": {
       "more": "stuff"
@@ -52,7 +59,7 @@ TEST(json, merge_03) {
   ASSERT_TRUE(jd3 == jde);
 }
 
-TEST(json, merge_04) {
+TEST(json, merge_deeper_nested_keys) {
   Document jd1, jd2, jde;
 
   jd1.Parse(R""({
