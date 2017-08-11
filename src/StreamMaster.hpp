@@ -173,21 +173,25 @@ private:
 
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
-        if (s.run_status() == StatusCode::RUNNING) {
+        if (s.runstatus().value() == Streamer::ErrorCode::writing) {
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
             //       runstatus.store(int(s.status()));
-            if (_value.is_STOP() &&
-                (remove_source(d.topic()) != StatusCode::RUNNING)) {
+            if (_value.is_STOP() && (remove_source(d.topic()).value() !=
+                                     Streamer::ErrorCode::stopped)) {
               break;
             }
           }
         }
-        if (s.runstatus().value() < 0) {
+        if (s.runstatus().value() == Streamer::ErrorCode::not_initialized) {
+          std::this_thread::sleep_for(duration);
+          continue;
+        }
+        if (s.runstatus().value() < 0 &&
+            s.runstatus().value() != Streamer::ErrorCode::not_initialized) {
           runstatus = Error::streamer_error;
-          LOG(0, "Error in topic {} : {}", d.topic(),
-              Status::Err2Str(s.runstatus()));
+          LOG(0, "Error in topic {} : {}", d.topic(), s.runstatus().value());
           remove_source(d.topic());
           continue;
         }
@@ -196,11 +200,15 @@ private:
     runstatus = Error::has_finished;
   }
 
+  // ErrorCode remove_source(std::map<std::string, Streamer>::iterator &iter) {
+  //   iter.second->remove_source();
+  // }
+
   ErrorCode remove_source(const std::string &topic) {
     auto &s(streamer[topic]);
     if (s.n_sources() > 1) {
       s.n_sources()--;
-      return ErrorCode(StatusCode::RUNNING);
+      return Streamer::ErrorCode::writing;
     } else {
       LOG(3, "All sources in {} have expired, remove streamer", topic);
       stop_streamer(s);
@@ -208,7 +216,7 @@ private:
       if (streamer.size() == 0) {
         runstatus = Error::has_finished;
       }
-      return ErrorCode(StatusCode::STOPPED);
+      return Streamer::ErrorCode::stopped;
     }
   }
 

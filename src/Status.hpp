@@ -44,7 +44,7 @@ enum StreamerErrorCode {
   start_time_error = -8,
   message_error = -9,
   write_error = -10,
-  not_initialized = -11,
+  not_initialized = -1000,
 };
 
 const std::string Err2Str(const FileWriter::StreamMasterError &);

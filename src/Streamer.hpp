@@ -39,15 +39,10 @@ struct Streamer {
 
   Error closeStream();
 
-  Error set_start_time(const ESSTimeStamp& tp);
+  Error set_start_time(const ESSTimeStamp &tp);
 
   int32_t &n_sources() { return n_sources_; }
-  int run_status() {
-    if (n_sources_ > 0) {
-      return StatusCode::RUNNING;
-    }
-    return StatusCode::STOPPED;
-  }
+  Error remove_source();
 
   Status::StreamerStatus &status() { return s_; }
   const Error &runstatus() { return s_.run_status(); }

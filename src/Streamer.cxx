@@ -221,7 +221,7 @@ void FileWriter::Streamer::connect(
   }
 
   LOG(7, "Connected to topic {}", topic_name);
-  s_.run_status(Status::StreamerErrorCode::stopped);
+  s_.run_status(Status::StreamerErrorCode::writing);
   return;
 }
 
@@ -306,4 +306,14 @@ FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
     return Error(ErrorCode::start_time_error);
   }
   return Error(ErrorCode::no_error);
+}
+
+FileWriter::Streamer::Error FileWriter::Streamer::remove_source() {
+  if (n_sources_ > 1) {
+    n_sources_--;
+    return Error(ErrorCode::writing);
+  } else {
+    n_sources_ = 0;
+    return Error(ErrorCode::stopped);
+  }
 }

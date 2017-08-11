@@ -51,10 +51,11 @@ const RdKafkaOffset RdKafkaOffsetEnd(-1);
 const RdKafkaOffset RdKafkaOffsetBegin(-2);
 typedef nanoseconds ESSTimeStamp;
 
-enum StatusCode {
-  NO_ERROR = 1000,
-  RUNNING = 1,
-  STOPPED = 0,
-  ERROR = -1,
-};
+/* enum StatusCode { */
+/*   NO_ERROR = 1000, */
+/*   RUNNING = 1, */
+/*   STOPPED = 0, */
+/*   ERROR = -1, */
+/* }; */
+
 } // namespace FileWriter
