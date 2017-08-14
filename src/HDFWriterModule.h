@@ -2,6 +2,8 @@
 
 #include "Msg.h"
 #include <H5Ipublic.h>
+#include <fmt/format.h>
+#include <map>
 #include <memory>
 #include <rapidjson/document.h>
 
@@ -23,7 +25,6 @@ public:
   typedef std::unique_ptr<HDFWriterModule> ptr;
   typedef HDFWriterModule_detail::WriteResult WriteResult;
   static std::unique_ptr<HDFWriterModule> create();
-  virtual ~HDFWriterModule();
 
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
@@ -59,11 +60,12 @@ public:
 
 class HDFWriterModuleRegistry {
 public:
-  typedef std::function<std::unique_ptr<HDFWriterModule>()> TV;
-  static std::map<std::string, TV> &items();
-  static FlatbufferReader::ptr &find(std::string const &key);
+  typedef std::string K;
+  typedef std::unique_ptr<HDFWriterModule> V;
+  static std::map<K, V> &items();
+  static HDFWriterModule::ptr &find(K const &key);
 
-  static void registrate(std::string key, TV value) {
+  static void registrate(K key, V value) {
     auto &m = items();
     if (m.find(key) != m.end()) {
       auto s = fmt::format("ERROR entry for key [{}] exists already", key);
@@ -74,9 +76,7 @@ public:
 
   template <typename T> class Registrar {
   public:
-    Registrar(std::string key) {
-      HDFWriterModuleRegistry::registrate(key, nullptr);
-    }
+    Registrar(K key) { HDFWriterModuleRegistry::registrate(key, V(new T)); }
   };
 };
 }
