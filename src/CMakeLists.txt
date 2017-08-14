@@ -86,6 +86,7 @@ DemuxTopic.cxx
 HDFFile.cxx
 SchemaRegistry.cxx
 FlatbufferReader.cxx
+HDFWriterModule.cxx
 KafkaW.cxx
 helper.cxx
 logger.cxx
