@@ -2,6 +2,11 @@
 
 namespace FileWriter {
 
+namespace HDFWriterModule_detail {
+
+struct WriteResult {};
+}
+
 /// Base class for the writer modules which are responsible for actually
 /// writing a flatbuffer message to the HDF file.  A HDFWriterModule is
 /// instantiated for each 'stream' which is configured in a file writer json
@@ -11,6 +16,7 @@ namespace FileWriter {
 class HDFWriterModule {
 public:
   typedef std::unique_ptr<HDFWriterModule> ptr;
+  typedef HDFWriterModule_detail::WriteResult WriteResult;
   static std::unique_ptr<HDFWriterModule> create();
   virtual ~HDFWriterModule();
 
