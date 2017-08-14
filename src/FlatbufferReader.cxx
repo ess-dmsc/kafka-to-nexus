@@ -10,15 +10,18 @@ FBID fbid_from_str(char const *x) {
   return ret;
 }
 
-std::map<FBID, FlatbufferReader::ptr> &FlatbufferReaderRegistry::items() {
-  static std::map<FBID, FlatbufferReader::ptr> _items;
+std::map<FlatbufferReaderRegistry::K, FlatbufferReaderRegistry::V> &
+FlatbufferReaderRegistry::items() {
+  static std::map<FlatbufferReaderRegistry::K, FlatbufferReaderRegistry::V>
+      _items;
   return _items;
 }
 
-FlatbufferReader::ptr &FlatbufferReaderRegistry::find(FBID const &fbid) {
-  static FlatbufferReader::ptr empty;
+FlatbufferReaderRegistry::V &
+FlatbufferReaderRegistry::find(FlatbufferReaderRegistry::K const &key) {
+  static FlatbufferReaderRegistry::V empty;
   auto &_items = items();
-  auto f = _items.find(fbid);
+  auto f = _items.find(key);
   if (f == _items.end()) {
     return empty;
   }
