@@ -1,5 +1,10 @@
 #pragma once
 
+#include "Msg.h"
+#include <H5Ipublic.h>
+#include <memory>
+#include <rapidjson/document.h>
+
 namespace FileWriter {
 
 namespace HDFWriterModule_detail {
@@ -50,5 +55,28 @@ public:
   // Please close all open HDF handles, datasets, dataspaces, groups,
   // everything.
   virtual int close() = 0;
+};
+
+class HDFWriterModuleRegistry {
+public:
+  typedef std::function<std::unique_ptr<HDFWriterModule>()> TV;
+  static std::map<std::string, TV> &items();
+  static FlatbufferReader::ptr &find(std::string const &key);
+
+  static void registrate(std::string key, TV value) {
+    auto &m = items();
+    if (m.find(key) != m.end()) {
+      auto s = fmt::format("ERROR entry for key [{}] exists already", key);
+      throw std::runtime_error(s);
+    }
+    m[key] = std::move(value);
+  }
+
+  template <typename T> class Registrar {
+  public:
+    Registrar(std::string key) {
+      HDFWriterModuleRegistry::registrate(key, nullptr);
+    }
+  };
 };
 }
