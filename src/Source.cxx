@@ -16,7 +16,8 @@ Source::Source(std::string topic, std::string source)
 Source::Source(Source &&x)
     : _topic(std::move(x._topic)), _source(std::move(x._source)),
       _broker(std::move(x._broker)), _hdf_path(std::move(x._hdf_path)),
-      _schema_writer(std::move(x._schema_writer)) {
+      _schema_writer(std::move(x._schema_writer)),
+      _hdf_writer_module(std::move(x._hdf_writer_module)) {
   using std::swap;
   swap(_config_file, x._config_file);
   swap(_config_stream, x._config_stream);
