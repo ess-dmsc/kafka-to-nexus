@@ -85,6 +85,7 @@ Source.cxx
 DemuxTopic.cxx
 HDFFile.cxx
 SchemaRegistry.cxx
+FlatbufferReader.cxx
 KafkaW.cxx
 helper.cxx
 logger.cxx
