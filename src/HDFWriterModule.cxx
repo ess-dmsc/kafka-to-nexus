@@ -1,16 +1,21 @@
 #include "HDFWriterModule.h"
 
-std::map<std::string, TV> &HDFWriterModule::items() {
-  static std::map<std::string, TV> _items;
+namespace FileWriter {
+
+std::map<HDFWriterModuleRegistry::K, HDFWriterModuleRegistry::V> &
+HDFWriterModuleRegistry::items() {
+  static std::map<HDFWriterModuleRegistry::K, HDFWriterModuleRegistry::V>
+      _items;
   return _items;
 }
 
-SchemaRegistry::TV &SchemaRegistry::find(std::string const &key) {
-  static SchemaInfo::ptr empty;
+HDFWriterModuleRegistry::V &
+HDFWriterModuleRegistry::find(HDFWriterModuleRegistry::K const &key) {
+  static HDFWriterModuleRegistry::V empty;
   auto &_items = items();
-  auto f = _items.find(fbid);
+  auto f = _items.find(key);
   if (f == _items.end()) {
-    return nullptr;
+    return empty;
   }
   return f->second;
 }
