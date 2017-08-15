@@ -355,6 +355,9 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
   return fbuf->timestamp();
 }
 
+FlatbufferReaderRegistry::Registrar<FlatbufferReader>
+    g_registrar_FlatbufferReader(fbid_from_str("f142"));
+
 } // namespace f142
 } // namespace Schemas
 } // namespace FileWriter
