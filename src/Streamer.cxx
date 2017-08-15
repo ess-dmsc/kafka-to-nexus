@@ -247,6 +247,9 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   if (s_.run_status().value() < 0) {
     return ProcessMessageResult::ERR();
   }
+  if (s_.run_status().value() == ErrorCode::stopped) {
+    return ProcessMessageResult::OK();
+  }
 
   std::unique_ptr<RdKafka::Message> msg{
       _consumer->consume(consumer_timeout.count())};
@@ -257,7 +260,6 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
     LOG(5, "consume :\t{}", RdKafka::err2str(msg->err()));
-
     return ProcessMessageResult::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
@@ -279,8 +281,10 @@ FileWriter::Streamer::Error
 FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
   std::lock_guard<std::mutex> lock(guard_); // make sure connnection is done
 
+  auto value =
+      std::chrono::duration_cast<KafkaTimeStamp>(timepoint - _timestamp_delay);
   for (auto &i : _tp) {
-    i->set_offset(timepoint.count() - _timestamp_delay.count());
+    i->set_offset(value.count());
   }
   auto err = _consumer->offsetsForTimes(_tp, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
@@ -306,14 +310,4 @@ FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
     return Error(ErrorCode::start_time_error);
   }
   return Error(ErrorCode::no_error);
-}
-
-FileWriter::Streamer::Error FileWriter::Streamer::remove_source() {
-  if (n_sources_ > 1) {
-    n_sources_--;
-    return Error(ErrorCode::writing);
-  } else {
-    n_sources_ = 0;
-    return Error(ErrorCode::stopped);
-  }
 }

@@ -9,6 +9,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <exception>
 #include <queue>
 #include <thread>
 
@@ -40,7 +41,6 @@ public:
         _stop(false) {
 
     for (auto &d : demux) {
-      // streamer.emplace(d.topic(), broker, d.topic(), kafka_options);
       streamer.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
                        std::forward_as_tuple(broker, d.topic(), kafka_options));
@@ -66,7 +66,6 @@ public:
 
   ~StreamMaster() {
     _stop = true;
-    //    runstatus = Status::RunStatusError::has_finished;
     if (loop.joinable()) {
       loop.join();
     }
@@ -106,28 +105,15 @@ public:
     return loop.joinable();
   }
 
-  bool stop() {
-    std::lock_guard<std::mutex> lock(stop_guard_);
-    LOG(7, "StreamMaster: stop");
-    do_write = false;
-    _stop = true;
-    if (report_thread_.joinable()) {
-      report_thread_.join();
+  int stop(void) {
+    try {
+      std::call_once(stop_once_guard,
+                     &FileWriter::StreamMaster<Streamer, Demux>::stop_impl,
+                     this);
+    } catch (std::exception &e) {
+      LOG(0, "Error while stopping: {}", e.what());
     }
-    if (loop.joinable()) {
-      loop.join();
-    }
-    for (auto &s : streamer) {
-      LOG(7, "Shut down {} : {}", s.first);
-      auto v = stop_streamer(s.second);
-      if (v != typename Streamer::Error(Streamer::ErrorCode::stopped)) {
-        LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
-      } else {
-        LOG(7, "\t...done");
-      }
-    }
-    streamer.clear();
-    return !loop.joinable();
+    return !(loop.joinable() || report_thread_.joinable());
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
@@ -141,6 +127,8 @@ public:
       report_thread_ = std::thread(
           std::bind(&StreamMaster<Streamer, Demux>::report_impl, this,
                     std::ref(report_producer_), std::ref(delay)));
+    } else {
+      LOG(5, "Status report already started, nothing to do");
     }
     return;
   };
@@ -200,10 +188,6 @@ private:
     runstatus = Error::has_finished;
   }
 
-  // ErrorCode remove_source(std::map<std::string, Streamer>::iterator &iter) {
-  //   iter.second->remove_source();
-  // }
-
   ErrorCode remove_source(const std::string &topic) {
     auto &s(streamer[topic]);
     if (s.n_sources() > 1) {
@@ -242,6 +226,28 @@ private:
     return;
   }
 
+  void stop_impl(void) {
+    LOG(7, "StreamMaster: stop");
+    do_write = false;
+    _stop = true;
+    if (report_thread_.joinable()) {
+      report_thread_.join();
+    }
+    if (loop.joinable()) {
+      loop.join();
+    }
+    for (auto &s : streamer) {
+      LOG(7, "Shut down {} : {}", s.first);
+      auto v = stop_streamer(s.second);
+      if (v != typename Streamer::Error(Streamer::ErrorCode::stopped)) {
+        LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
+      } else {
+        LOG(7, "\t...done");
+      }
+    }
+    streamer.clear();
+  }
+
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;
   std::thread loop;
@@ -251,7 +257,7 @@ private:
   std::atomic<bool> _stop;
   std::unique_ptr<FileWriterTask> _file_writer_task;
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_;
-  std::mutex stop_guard_;
+  std::once_flag stop_once_guard;
 
   milliseconds duration{1000};
 }; // namespace FileWriter
