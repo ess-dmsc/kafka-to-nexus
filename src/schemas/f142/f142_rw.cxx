@@ -1,6 +1,7 @@
 #include "../../FlatbufferReader.h"
 #include "../../HDFFile.h"
 #include "../../HDFFile_h5.h"
+#include "../../HDFWriterModule.h"
 #include "../../SchemaRegistry.h"
 #include "../../h5.h"
 #include "../../helper.h"
@@ -357,6 +358,21 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
 
 FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     g_registrar_FlatbufferReader(fbid_from_str("f142"));
+
+class HDFWriterModule : public FileWriter::HDFWriterModule {
+public:
+  static FileWriter::HDFWriterModule::ptr create();
+  InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+                      rapidjson::Value const &config_file);
+  WriteResult write(Msg const &msg);
+  int32_t flush();
+  int32_t close();
+};
+
+FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {}
+
+HDFWriterModuleRegistry::Registrar
+    g_registrar_HDFWriterModule("f142_default", HDFWriterModule::create);
 
 } // namespace f142
 } // namespace Schemas
