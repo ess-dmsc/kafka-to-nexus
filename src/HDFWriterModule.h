@@ -86,9 +86,6 @@ public:
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
-  /// TODO
-  /// - Possible return types?
-  ///   OK, MISSING_CONFIG(string), COULD_NOT, IOERROR
   /**
   Help text for `config_stream`:
   Contains all the options set for the stream that this FBSchemaWriter
@@ -99,17 +96,12 @@ public:
                               rapidjson::Value const &config_file) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
-  /// TODO
-  /// - More possible return types
-  ///   OK, IOERROR, CORRUPT_FLATBUFFER, UNEXPECTED_DATA
   virtual WriteResult write(Msg const &msg) = 0;
 
-  // TODO return values?
   // You are expected to flush all your internal buffers which you may have to
   // the HDF file.
   virtual int32_t flush() = 0;
 
-  // TODO return values?
   // Please close all open HDF handles, datasets, dataspaces, groups,
   // everything.
   virtual int32_t close() = 0;
