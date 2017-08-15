@@ -55,6 +55,15 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->set_hdf_filename(fname);
 
   {
+    auto &nexus_structure = d.FindMember("nexus_structure")->value;
+    auto x = fwt->hdf_init(nexus_structure);
+    if (x) {
+      LOG(7, "ERROR hdf init failed, cancel this write command");
+      return;
+    }
+  }
+
+  {
     auto m1 = d.FindMember("streams");
     if (m1 != d.MemberEnd() && m1->value.IsArray()) {
       for (auto &st : m1->value.GetArray()) {
@@ -71,24 +80,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         s.config_stream(std::move(j1));
         fwt->add_source(move(s));
       }
-    }
-  }
-  uint64_t teamid = 0;
-  if (master) {
-    teamid = master->config.teamid;
-  }
-  for (auto &d : fwt->demuxers()) {
-    for (auto &s : d.sources()) {
-      s.second.teamid = teamid;
-    }
-  }
-
-  {
-    Value const &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x = fwt->hdf_init(nexus_structure);
-    if (x) {
-      LOG(7, "ERROR hdf init failed, cancel this write command");
-      return;
     }
   }
 
