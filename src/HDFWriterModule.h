@@ -12,6 +12,28 @@ namespace FileWriter {
 
 namespace HDFWriterModule_detail {
 
+class InitResult {
+public:
+  /// Everything was fine.
+  static InitResult OK() { return InitResult(0); }
+  /// I/O error, for example if libhdf returned with a I/O error.
+  static inline InitResult ERROR_IO() { return InitResult(-1); }
+  /// The writer module needs more configuration that was is available.
+  static inline InitResult ERROR_INCOMPLETE_CONFIGURATION() {
+    return InitResult(-2);
+  }
+  inline bool is_OK() { return v == 0; }
+  /// `true` if any error has occurred. More specific query function will come
+  /// as need arises.
+  inline bool is_ERR() { return v < 0; }
+  /// Used for status reports.
+  std::string to_str() const;
+
+private:
+  explicit inline InitResult(uint64_t v) : v(v) {}
+  int64_t v = -1;
+};
+
 class WriteResult {
 public:
   /// Everything was fine.
@@ -57,6 +79,7 @@ private:
 class HDFWriterModule {
 public:
   typedef std::unique_ptr<HDFWriterModule> ptr;
+  typedef HDFWriterModule_detail::InitResult InitResult;
   typedef HDFWriterModule_detail::WriteResult WriteResult;
   static std::unique_ptr<HDFWriterModule> create();
 
@@ -72,8 +95,8 @@ public:
   should write to HDF.  If your plugin needs to be configurable, this is where
   you can access the options.
   */
-  virtual int init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                       rapidjson::Value const &config_file) = 0;
+  virtual InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+                              rapidjson::Value const &config_file) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   /// TODO
