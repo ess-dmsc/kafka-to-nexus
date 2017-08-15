@@ -35,7 +35,6 @@ public:
   static inline WriteResult ERROR_DATA_TYPE_MISMATCH() {
     return WriteResult(-4);
   }
-  explicit inline WriteResult(uint64_t v) : v(v) {}
   inline bool is_OK() { return v == 0; }
   /// `true` if any error has occurred. More specific query function will come
   /// as need arises.
@@ -44,6 +43,7 @@ public:
   std::string to_str() const;
 
 private:
+  explicit inline WriteResult(uint64_t v) : v(v) {}
   int64_t v = -1;
 };
 }
