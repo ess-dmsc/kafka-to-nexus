@@ -1,3 +1,4 @@
+#include "../../FlatbufferReader.h"
 #include "../../HDFFile.h"
 #include "../../HDFFile_h5.h"
 #include "../../SchemaRegistry.h"
@@ -324,6 +325,35 @@ FBSchemaReader::ptr Info::create_reader() {
 }
 
 SchemaRegistry::Registrar<Info> g_registrar(fbid_from_str("f142"));
+
+class FlatbufferReader : public FileWriter::FlatbufferReader {
+  bool verify(Msg const &msg) const;
+  std::string sourcename(Msg const &msg) const;
+  uint64_t timestamp(Msg const &msg) const;
+};
+
+bool FlatbufferReader::verify(Msg const &msg) const {
+  auto veri = flatbuffers::Verifier((uint8_t *)msg.data, msg.size);
+  if (VerifyLogDataBuffer(veri)) {
+    return true;
+  }
+  return false;
+}
+
+std::string FlatbufferReader::sourcename(Msg const &msg) const {
+  auto fbuf = get_fbuf(msg.data);
+  auto s1 = fbuf->source_name();
+  if (!s1) {
+    LOG(4, "message has no source name");
+    return "";
+  }
+  return s1->str();
+}
+
+uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
+  auto fbuf = get_fbuf(msg.data);
+  return fbuf->timestamp();
+}
 
 } // namespace f142
 } // namespace Schemas
