@@ -8,9 +8,31 @@
 #include "helper.h"
 #include <unistd.h>
 
+bool FileWriter::Streamer::set_streamer_opt(
+    const FileWriter::Streamer::option_t &option) {
+  // Note: to_int<> returns a pair (validity of conversion,value).
+  // First element notifies if the conversion is defined
+
+  if (option.first == "streamer.timestamp.delay") {
+    auto value = to_num<int>(option.second);
+    if (value.first && (value.second > 0)) {
+      _timestamp_delay = ESSTimeStamp(value.second);
+      return true;
+    }
+  }
+  if (option.first == "streamer.metadata.retry") {
+    auto value = to_num<int>(option.second);
+    if (value.first && (value.second > 0)) {
+      metadata_retry = value.second;
+      return true;
+    }
+  }
+  return false;
+}
+
 bool FileWriter::Streamer::set_conf_opt(
     std::shared_ptr<RdKafka::Conf> conf,
-    const std::pair<std::string, std::string> &option) {
+    const FileWriter::Streamer::option_t &option) {
   std::string errstr;
   if (!(option.first.empty() || option.second.empty())) {
     auto result = conf->set(option.first, option.second, errstr);
@@ -23,50 +45,19 @@ bool FileWriter::Streamer::set_conf_opt(
   return true;
 }
 
-bool FileWriter::Streamer::set_streamer_opt(
-    const std::pair<std::string, std::string> &option) {
-
-  if (option.first == "start.offset") {
-    LOG(5, "set streamer config: {} = {}", option.first, option.second);
-    if (option.second == "beginning") {
-      _offset = RdKafkaOffsetBegin;
-      return true;
-    } else {
-      if (option.second == "end") {
-        _offset = RdKafkaOffsetEnd;
-        return true;
-      } else {
-        auto value = to_num<int>(option.second);
-        if (value.first && value.second >= 0) {
-          _offset = RdKafkaOffset(RdKafka::Consumer::OffsetTail(value.second));
-          return true;
-        }
-      }
-    }
-  }
-  if (option.first == "timestamp_delay") {
-    auto value = to_num<int>(option.second);
-    if (value.first && value.second > 0) {
-      _timestamp_delay = ESSTimeStamp(value.second);
-      return true;
-    }
-  }
-  return false;
-}
-
 std::unique_ptr<RdKafka::Metadata>
-FileWriter::Streamer::get_metadata(int retry) {
+FileWriter::Streamer::get_metadata(const int &retry) {
   RdKafka::Metadata *md;
   std::unique_ptr<RdKafka::Metadata> metadata{nullptr};
   std::unique_ptr<RdKafka::Topic> ptopic;
   auto err = _consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
     LOG(3, "Can't request metadata");
-    // if (retry) {
-    //   get_metadata(retry - 1);
-    // } else {
-    //   return -1;
-    // }
+    if (retry) {
+      get_metadata(retry - 1);
+    } else {
+      return metadata;
+    }
   } else {
     metadata.reset(md);
   }
@@ -113,24 +104,15 @@ FileWriter::Streamer::Error FileWriter::Streamer::get_offset_boundaries() {
 }
 
 std::shared_ptr<RdKafka::Conf> FileWriter::Streamer::initialize_configuration(
-    std::vector<option_t> &kafka_options) {
+    FileWriter::Streamer::Options &kafka_options) {
 
   std::shared_ptr<RdKafka::Conf> conf(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
-
-  kafka_options.erase(
-      std::remove_if(kafka_options.begin(), kafka_options.end(),
-                     [&](std::pair<std::string, std::string> &item) -> bool {
-                       return this->set_streamer_opt(item);
-                     }),
-      kafka_options.end());
-
-  kafka_options.erase(
-      std::remove_if(kafka_options.begin(), kafka_options.end(),
-                     [&](std::pair<std::string, std::string> &item) -> bool {
-                       return this->set_conf_opt(conf, item);
-                     }),
-      kafka_options.end());
+  kafka_options.erase(std::remove_if(kafka_options.begin(), kafka_options.end(),
+                                     [&](option_t &item) -> bool {
+                                       return this->set_conf_opt(conf, item);
+                                     }),
+                      kafka_options.end());
   if (!kafka_options.empty()) {
     for (auto &item : kafka_options) {
       LOG(3, "Unknown option: {} [{}]", item.first, item.second);
@@ -139,9 +121,26 @@ std::shared_ptr<RdKafka::Conf> FileWriter::Streamer::initialize_configuration(
   return conf;
 }
 
+void FileWriter::Streamer::initialize_streamer(
+    FileWriter::Streamer::Options &filewriter_options) {
+  filewriter_options.erase(std::remove_if(filewriter_options.begin(),
+                                          filewriter_options.end(),
+                                          [&](option_t &item) -> bool {
+                                            return this->set_streamer_opt(item);
+                                          }),
+                           filewriter_options.end());
+  if (!filewriter_options.empty()) {
+    for (auto &item : filewriter_options) {
+      LOG(3, "Unknown option: {} [{}]", item.first, item.second);
+    }
+  }
+  return;
+}
+
 FileWriter::Streamer::Streamer(
     const std::string &broker, const std::string &topic_name,
-    std::vector<std::pair<std::string, std::string>> kafka_options) {
+    FileWriter::Streamer::Options kafka_options,
+    FileWriter::Streamer::Options filewriter_options) {
 
   s_.run_status(StreamerError(Status::StreamerErrorCode::not_initialized));
   if (topic_name.empty() || broker.empty()) {
@@ -157,7 +156,7 @@ FileWriter::Streamer::Streamer(
       FileWriter::Streamer::option_t{"group.id", topic_name});
 
   connect_ = std::thread([&] {
-    this->connect(topic_name, kafka_options);
+    this->connect(topic_name, kafka_options, filewriter_options);
     return;
   });
   std::this_thread::sleep_for(milliseconds(10));
@@ -166,14 +165,20 @@ FileWriter::Streamer::Streamer(
 FileWriter::Streamer::~Streamer(){};
 
 void FileWriter::Streamer::connect(
-    const std::string topic_name,
-    std::vector<FileWriter::Streamer::option_t> kafka_options) {
+    const std::string topic_name, FileWriter::Streamer::Options kafka_options,
+    FileWriter::Streamer::Options filewriter_options) {
   std::lock_guard<std::mutex> lock(guard_);
 
   LOG(7, "Connecting to {}", topic_name);
+  for (auto &i : filewriter_options) {
+    LOG(7, "{} :\t{}", i.first, i.second);
+  }
   for (auto &i : kafka_options) {
     LOG(7, "{} :\t{}", i.first, i.second);
   }
+
+  // set streamer options
+  initialize_streamer(filewriter_options);
 
   std::string errstr;
   // Initialize configuration and consumer
@@ -193,7 +198,7 @@ void FileWriter::Streamer::connect(
   }
 
   // Retrieve informations
-  std::unique_ptr<RdKafka::Metadata> metadata = get_metadata();
+  std::unique_ptr<RdKafka::Metadata> metadata = get_metadata(metadata_retry);
   if (!metadata) {
     LOG(1, "Unable to retrieve metadata");
     s_.run_status(Status::StreamerErrorCode::metadata_error);

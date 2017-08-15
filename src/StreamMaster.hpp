@@ -28,30 +28,31 @@ namespace FileWriter {
 
 template <typename Streamer, typename Demux> class StreamMaster {
   using Error = Status::StreamMasterErrorCode;
+  using Options = typename Streamer::Options;
 
 public:
   StreamMaster()
       : runstatus{Error::not_started}, do_write{false}, _stop{false} {};
 
-  StreamMaster(
-      std::string &broker, std::vector<Demux> &_demux,
-      std::vector<std::pair<std::string, std::string>> kafka_options = {},
-      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
+  StreamMaster(std::string &broker, std::vector<Demux> &_demux,
+               const Options &kafka_options = {},
+               const Options &filewriter_options = {})
       : demux(_demux), runstatus{Error::not_started}, do_write(false),
         _stop(false) {
 
     for (auto &d : demux) {
       streamer.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
-                       std::forward_as_tuple(broker, d.topic(), kafka_options));
+                       std::forward_as_tuple(broker, d.topic(), kafka_options,
+                                             filewriter_options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
   };
 
-  StreamMaster(
-      std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
-      std::vector<std::pair<std::string, std::string>> kafka_options = {},
-      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
+  StreamMaster(std::string &broker,
+               std::unique_ptr<FileWriterTask> file_writer_task,
+               const Options &kafka_options = {},
+               const Options &filewriter_options = {})
       : demux(file_writer_task->demuxers()), runstatus{Error::not_started},
         do_write(false), _stop(false),
         _file_writer_task(std::move(file_writer_task)) {
@@ -59,7 +60,8 @@ public:
     for (auto &d : demux) {
       streamer.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
-                       std::forward_as_tuple(broker, d.topic(), kafka_options));
+                       std::forward_as_tuple(broker, d.topic(), kafka_options,
+                                             filewriter_options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
   };

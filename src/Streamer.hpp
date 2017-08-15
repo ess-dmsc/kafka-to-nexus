@@ -22,12 +22,13 @@ namespace FileWriter {
 
 struct Streamer {
   using option_t = std::pair<std::string, std::string>;
+  using Options = std::vector<option_t>;
   using Error = StreamerError;
   using ErrorCode = Status::StreamerErrorCode;
 
   Streamer(){};
-  Streamer(const std::string &, const std::string &,
-           std::vector<std::pair<std::string, std::string>> kafka_options = {});
+  Streamer(const std::string &, const std::string &, Options kafka_options = {},
+           Options filewriter_options = {});
   Streamer(const Streamer &) = delete;
 
   ~Streamer();
@@ -63,18 +64,19 @@ private:
   int32_t n_sources_{0};
   ESSTimeStamp _timestamp_delay{3000};
   milliseconds consumer_timeout{1000};
+  int metadata_retry{5};
 
-  void connect(const std::string,
-               std::vector<std::pair<std::string, std::string>> kafka_options);
+  void connect(const std::string, Options kafka_options,
+               Options filewriter_options);
   // sets options for Kafka consumer and the Streamer
-  std::shared_ptr<RdKafka::Conf>
-  initialize_configuration(std::vector<option_t> &);
-  bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
+  void initialize_streamer(Options &);
+  std::shared_ptr<RdKafka::Conf> initialize_configuration(Options &);
+  bool set_streamer_opt(const option_t &opt);
   bool set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
-                    const std::pair<std::string, std::string> &option);
+                    const option_t &option);
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
-  std::unique_ptr<RdKafka::Metadata> get_metadata(int retry = 5);
+  std::unique_ptr<RdKafka::Metadata> get_metadata(const int& retry);
   int get_topic_partitions(const std::string &topic,
                            std::unique_ptr<RdKafka::Metadata> metadata);
 
