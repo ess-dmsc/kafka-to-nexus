@@ -247,8 +247,10 @@ public:
       s.pregenerate(n_msgs_per_source, n_events_per_message);
     }
 
-    for (auto &source : sources) {
-      // LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
+    if (false) {
+      for (auto &source : sources) {
+        LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
+      }
     }
 
     rapidjson::Document json_command;
@@ -363,7 +365,7 @@ public:
 
     using DT = uint32_t;
     int const feed_msgs_times = 1;
-    int const seed = 2;
+    // int const seed = 2;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
@@ -452,7 +454,7 @@ public:
       auto dsp = H5Dget_space(ds);
       ASSERT_GT(dsp, 0);
       ASSERT_EQ(H5Sis_simple(dsp), 1);
-      auto nn = H5Sget_simple_extent_npoints(dsp);
+      // auto nn = H5Sget_simple_extent_npoints(dsp);
 
       using A = array<hsize_t, 1>;
       A sini = {{(hsize_t)n_events_per_message}};
@@ -468,7 +470,7 @@ public:
 
       // LOG(4, "have {} messages", source.msgs.size());
       for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-        auto &msg = source.msgs.at(msg_i);
+        // auto &msg = source.msgs.at(msg_i);
         auto &fb = source.fbs.at(msg_i);
         A start = {{(hsize_t)msg_i * n_events_per_message}};
         err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
