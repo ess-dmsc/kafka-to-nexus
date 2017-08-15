@@ -41,7 +41,8 @@ TEST(HDFFile, create) {
   unlink(fname);
   using namespace FileWriter;
   HDFFile f1;
-  f1.init("tmp-test.h5", rapidjson::Value());
+  std::vector<StreamHDFInfo> stream_hdf_info;
+  f1.init("tmp-test.h5", rapidjson::Value(), stream_hdf_info);
 }
 
 class T_HDFFile : public testing::Test {
@@ -52,7 +53,8 @@ public:
     unlink(fname);
     using namespace FileWriter;
     FileWriter::HDFFile f1;
-    f1.init(fname, rapidjson::Value());
+    std::vector<StreamHDFInfo> stream_hdf_info;
+    f1.init(fname, rapidjson::Value(), stream_hdf_info);
     auto &reg = FileWriter::Schemas::SchemaRegistry::items();
     std::array<char, 4> fbid{{'f', '1', '4', '1'}};
     auto writer = reg.at(fbid)->create_reader()->create_writer();

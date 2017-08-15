@@ -39,18 +39,15 @@ public:
   /// found.
   std::string const &broker() const;
   uint32_t processed_messages_count() const;
-  ProcessMessageResult process_message(Msg msg);
+  ProcessMessageResult process_message(Msg const &msg);
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
-  uint64_t teamid = 0;
   void config_file(rapidjson::Value const *config_file);
   void config_stream(rapidjson::Document &&config_stream);
 
 private:
   Source(std::string topic, std::string source);
-  /// Used by FileWriterTask during setup.
-  void hdf_init(HDFFile &hdf_file);
 
   std::string _topic;
   std::string _source;
@@ -61,7 +58,6 @@ private:
   uint64_t _processed_messages_count = 0;
   uint64_t _cnt_msg_written = 0;
 
-  HDFFile *_hdf_file = nullptr;
   rapidjson::Value const *_config_file = nullptr;
   rapidjson::Document _config_stream;
 

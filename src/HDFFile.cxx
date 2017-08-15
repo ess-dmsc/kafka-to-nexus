@@ -116,8 +116,8 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   H5Pclose(acpl);
 }
 
-int HDFFile::init(std::string filename,
-                  rapidjson::Value const &nexus_structure) {
+int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
+                  std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
   using std::vector;
   using rapidjson::Value;
@@ -143,8 +143,8 @@ int HDFFile::init(std::string filename,
   auto f1 = x;
 
   std::function<void(Value const *, hid_t, uint16_t)> create_hdf_structures =
-      [&lcpl, &create_hdf_structures](Value const *value, hid_t hdf_parent,
-                                      uint16_t level) {
+      [&lcpl, &create_hdf_structures,
+       &stream_hdf_info](Value const *value, hid_t hdf_parent, uint16_t level) {
         LOG(6, "level: {}", level);
 
         // The HDF object that we will maybe create at the current level.
@@ -168,8 +168,7 @@ int HDFFile::init(std::string filename,
             if (type.v == "stream") {
               LOG(4, "stream: {}", json_to_string(*value));
               if (auto name = get_string(value, "name")) {
-                // TODO
-                // Let file writer module create the actual dataset.
+                stream_hdf_info.push_back(StreamHDFInfo{hdf_parent, value});
               }
             }
             if (type.v == "dataset") {

@@ -65,14 +65,11 @@ void FileWriterTask::add_source(Source &&source) {
 }
 
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure) {
-  auto x = impl->hdf_file.init(impl->hdf_filename, nexus_structure);
+  std::vector<StreamHDFInfo> stream_hdf_info;
+  auto x =
+      impl->hdf_file.init(impl->hdf_filename, nexus_structure, stream_hdf_info);
   if (x) {
     return x;
-  }
-  for (auto &d : demuxers()) {
-    for (auto &s : d.sources()) {
-      s.second.hdf_init(impl->hdf_file);
-    }
   }
   return 0;
 }

@@ -16,7 +16,6 @@ Source::Source(std::string topic, std::string source)
 Source::Source(Source &&x)
     : _topic(std::move(x._topic)), _source(std::move(x._source)),
       _broker(std::move(x._broker)), _hdf_path(std::move(x._hdf_path)),
-      _schema_writer(std::move(x._schema_writer)),
       _hdf_writer_module(std::move(x._hdf_writer_module)) {
   using std::swap;
   swap(_config_file, x._config_file);
@@ -31,47 +30,27 @@ std::string const &Source::broker() const { return _broker; }
 
 Source::~Source() {}
 
-ProcessMessageResult Source::process_message(Msg msg) {
-  if (!_schema_reader) {
-    _schema_reader = FBSchemaReader::create(msg);
-    if (_schema_writer) {
-      LOG(0, "ERROR _schema_writer should not exist");
-    }
-    if (!_hdf_file) {
-      throw "SHOULD NEVER HAPPEN AT LEAST CURRENTLY, HDF FILE SHOULD ALREADY "
-            "BE OPEN";
-    }
-    _schema_writer = _schema_reader->create_writer();
+ProcessMessageResult Source::process_message(Msg const &msg) {
+  if (!_hdf_writer_module) {
+    throw "ASSERT FAIL: _hdf_writer_module";
   }
-  if (!_schema_reader->verify(msg)) {
+  auto &reader = FlatbufferReaderRegistry::find(msg);
+  if (!reader->verify(msg)) {
     LOG(5, "buffer not verified");
     return ProcessMessageResult::ERR();
   }
-  if (teamid == _schema_reader->teamid(msg)) {
-    if (_cnt_msg_written == 0) {
-      _schema_writer->init(_hdf_file, _hdf_path, source(), msg, _config_file,
-                           &_config_stream);
-    }
-    auto ret = _schema_writer->write(msg);
-    _cnt_msg_written += 1;
-    _processed_messages_count += 1;
-    if (ret.ts < 0) {
-      return ProcessMessageResult::ERR();
-    }
-    return ProcessMessageResult::OK(ret.ts);
-  } else {
-    // If it's not on the team, still fake success because otherwise
-    // Streamer currently aborts.
-    return ProcessMessageResult::OK(_schema_reader->ts(msg));
+  auto ret = _hdf_writer_module->write(msg);
+  _cnt_msg_written += 1;
+  _processed_messages_count += 1;
+  if (ret.is_ERR()) {
+    return ProcessMessageResult::ERR();
   }
-  return ProcessMessageResult::ERR();
+  return ProcessMessageResult::OK();
 }
 
 uint32_t Source::processed_messages_count() const {
   return _processed_messages_count;
 }
-
-void Source::hdf_init(HDFFile &hdf_file) { _hdf_file = &hdf_file; }
 
 void Source::config_file(rapidjson::Value const *config_file) {
   this->_config_file = config_file;
