@@ -1,6 +1,5 @@
 #pragma once
 
-#include "HDFFile.h"
 #include "Msg.h"
 #include "logger.h"
 #include <array>
@@ -36,6 +35,7 @@ public:
   typedef FlatbufferReader::ptr V;
   static std::map<K, V> &items();
   static FlatbufferReader::ptr &find(FBID const &fbid);
+  static FlatbufferReader::ptr &find(Msg const &msg);
 
   static void registrate(FBID fbid, FlatbufferReader::ptr &&item) {
     auto &m = items();

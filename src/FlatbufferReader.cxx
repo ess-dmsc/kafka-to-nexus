@@ -1,4 +1,5 @@
 #include "FlatbufferReader.h"
+#include <flatbuffers/flatbuffers.h>
 
 namespace FileWriter {
 
@@ -26,5 +27,17 @@ FlatbufferReaderRegistry::find(FlatbufferReaderRegistry::K const &key) {
     return empty;
   }
   return f->second;
+}
+
+FlatbufferReader::ptr &FlatbufferReaderRegistry::find(Msg const &msg) {
+  static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
+  if (msg.size < 8) {
+    LOG(4, "flatbuffer message is too small: {} expect at least 8", msg.size);
+    static FlatbufferReader::ptr empty;
+    return empty;
+  }
+  FlatbufferReaderRegistry::K key;
+  memcpy(&key, msg.data + 4, 4);
+  return find(key);
 }
 }
