@@ -363,13 +363,13 @@ class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                      rapidjson::Value const &config_file);
+                      rapidjson::Value const &config_module);
   WriteResult write(Msg const &msg);
   int32_t flush();
   int32_t close();
 };
 
-FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {}
+FileWriter::HDFWriterModule::ptr HDFWriterModule::create() { return nullptr; }
 
 HDFWriterModuleRegistry::Registrar
     g_registrar_HDFWriterModule("f142_default", HDFWriterModule::create);
