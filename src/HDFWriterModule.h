@@ -107,12 +107,12 @@ public:
   // TODO return values?
   // You are expected to flush all your internal buffers which you may have to
   // the HDF file.
-  virtual int flush() = 0;
+  virtual int32_t flush() = 0;
 
   // TODO return values?
   // Please close all open HDF handles, datasets, dataspaces, groups,
   // everything.
-  virtual int close() = 0;
+  virtual int32_t close() = 0;
 };
 
 class HDFWriterModuleRegistry {
