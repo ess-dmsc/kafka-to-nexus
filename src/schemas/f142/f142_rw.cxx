@@ -363,13 +363,43 @@ class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                      rapidjson::Value const &config_module);
-  WriteResult write(Msg const &msg);
-  int32_t flush();
-  int32_t close();
+                      rapidjson::Value const &config_module) override;
+  WriteResult write(Msg const &msg) override;
+  int32_t flush() override;
+  int32_t close() override;
+
+  uptr<writer_typed_base> impl;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_data;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
+  uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
+  bool do_flush_always = false;
+  bool do_writer_forwarder_internal = false;
+  uint64_t total_written_bytes = 0;
+  uint64_t index_at_bytes = 0;
+  uint64_t index_every_bytes = !0;
+  uint64_t ts_max = 0;
 };
 
-FileWriter::HDFWriterModule::ptr HDFWriterModule::create() { return nullptr; }
+FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
+  return FileWriter::HDFWriterModule::ptr(new HDFWriterModule);
+}
+
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+                          rapidjson::Value const &config_module) {
+  return HDFWriterModule::InitResult::OK();
+}
+
+HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
+  return HDFWriterModule::WriteResult::OK();
+}
+
+int32_t HDFWriterModule::flush() { return 0; }
+
+int32_t HDFWriterModule::close() { return 0; }
 
 HDFWriterModuleRegistry::Registrar
     g_registrar_HDFWriterModule("f142_default", HDFWriterModule::create);
