@@ -390,6 +390,21 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
                           rapidjson::Value const &config_module) {
+  // TODO
+  // - Choose our impl depending on the config_stream.
+  // - Create HDF structures now!
+  auto str = get_string(&config_stream, "source");
+  if (!str) {
+    return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
+  }
+  auto sourcename = str.v;
+  str = get_string(&config_stream, "type");
+  if (!str) {
+    return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
+  }
+  auto type = str.v;
+  LOG(3, "sourcename: {}", sourcename);
+  LOG(3, "type: {}", type);
   return HDFWriterModule::InitResult::OK();
 }
 
