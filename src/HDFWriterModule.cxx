@@ -19,4 +19,24 @@ HDFWriterModuleRegistry::find(HDFWriterModuleRegistry::K const &key) {
   }
   return f->second;
 }
+
+namespace HDFWriterModule_detail {
+
+static std::map<uint64_t, std::string> const g_WriteResult_strings{
+    {0, "OK"},
+    {-1, "ERROR_IO"},
+    {-2, "ERROR_BAD_FLATBUFFER"},
+    {-3, "ERROR_DATA_STRUCTURE_MISMATCH"},
+    {-4, "ERROR_DATA_TYPE_MISMATCH"},
+};
+
+std::string WriteResult::to_str() const {
+  auto const &m = g_WriteResult_strings;
+  auto const it = m.find(v);
+  if (it == m.end()) {
+    return "ERROR_UNKNOWN_VALUE";
+  }
+  return it->second;
+}
+}
 }

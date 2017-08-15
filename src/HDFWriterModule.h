@@ -6,12 +6,46 @@
 #include <map>
 #include <memory>
 #include <rapidjson/document.h>
+#include <string>
 
 namespace FileWriter {
 
 namespace HDFWriterModule_detail {
 
-struct WriteResult {};
+class WriteResult {
+public:
+  /// Everything was fine.
+  static WriteResult OK() { return WriteResult(0); }
+  /// I/O error, for example if libhdf returned with a I/O error.
+  static inline WriteResult ERROR_IO() { return WriteResult(-1); }
+  /// Indicates that the flatbuffer contained semantically invalid data, even
+  /// though the flatbuffer is technically valid.
+  /// The case that the flatbuffer itself is invalid should not occur as that
+  /// is already checked for before passing the flatbuffer to the
+  /// `HDFWriterModule`.
+  static inline WriteResult ERROR_BAD_FLATBUFFER() { return WriteResult(-2); }
+  /// Indicates that the data is structurally invalid, for example if it has
+  /// the wrong array sizes.
+  static inline WriteResult ERROR_DATA_STRUCTURE_MISMATCH() {
+    return WriteResult(-3);
+  }
+  /// More a special case of `ERROR_DATA_STRUCTURE_MISMATCH` to indicate that
+  /// the data type does not match, for example a float instead of the expected
+  /// double.
+  static inline WriteResult ERROR_DATA_TYPE_MISMATCH() {
+    return WriteResult(-4);
+  }
+  explicit inline WriteResult(uint64_t v) : v(v) {}
+  inline bool is_OK() { return v == 0; }
+  /// `true` if any error has occurred. More specific query function will come
+  /// as need arises.
+  inline bool is_ERR() { return v < 0; }
+  /// Used for status reports.
+  std::string to_str() const;
+
+private:
+  int64_t v = -1;
+};
 }
 
 /// Base class for the writer modules which are responsible for actually
