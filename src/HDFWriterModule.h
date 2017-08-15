@@ -3,6 +3,7 @@
 #include "Msg.h"
 #include <H5Ipublic.h>
 #include <fmt/format.h>
+#include <functional>
 #include <map>
 #include <memory>
 #include <rapidjson/document.h>
@@ -110,9 +111,9 @@ public:
 class HDFWriterModuleRegistry {
 public:
   typedef std::string K;
-  typedef std::unique_ptr<HDFWriterModule> V;
+  typedef std::function<std::unique_ptr<HDFWriterModule>()> V;
   static std::map<K, V> &items();
-  static HDFWriterModule::ptr &find(K const &key);
+  static V &find(K const &key);
 
   static void registrate(K key, V value) {
     auto &m = items();
@@ -123,9 +124,11 @@ public:
     m[key] = std::move(value);
   }
 
-  template <typename T> class Registrar {
+  class Registrar {
   public:
-    Registrar(K key) { HDFWriterModuleRegistry::registrate(key, V(new T)); }
+    Registrar(K key, V value) {
+      HDFWriterModuleRegistry::registrate(key, value);
+    }
   };
 };
 }
