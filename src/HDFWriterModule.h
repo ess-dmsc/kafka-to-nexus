@@ -82,19 +82,20 @@ public:
   typedef std::unique_ptr<HDFWriterModule> ptr;
   typedef HDFWriterModule_detail::InitResult InitResult;
   typedef HDFWriterModule_detail::WriteResult WriteResult;
+
   static std::unique_ptr<HDFWriterModule> create();
 
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
-  /**
-  Help text for `config_stream`:
-  Contains all the options set for the stream that this FBSchemaWriter
-  should write to HDF.  If your plugin needs to be configurable, this is where
-  you can access the options.
-  */
+  /// @param hid HDF object id into which the HDFWriterModule should put its
+  /// data.
+  /// @param config_stream Configuration from the write file command for this
+  /// stream.
+  /// @param config_module Configuration for all instances of this
+  /// HDFWriterModule.
   virtual InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                              rapidjson::Value const &config_file) = 0;
+                              rapidjson::Value const &config_module) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
