@@ -6,8 +6,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
-FileWriter::Status::StreamerStatusType::StreamerStatusType()
-    : bytes{0}, messages{0}, errors{0}, bytes2{0}, messages2{0} {}
+FileWriter::Status::StreamerStatusType::StreamerStatusType() {}
 
 FileWriter::Status::StreamerStatusType::StreamerStatusType(
     const FileWriter::Status::StreamerStatusType &other)
@@ -128,18 +127,20 @@ static const std::map<const int, std::string> streamer_error_lookup_{
     {FileWriter::Status::StreamerErrorCode::start_time_error,
      "start_time_error"},
     {FileWriter::Status::StreamerErrorCode::message_error, "message_error"},
-      {FileWriter::Status::StreamerErrorCode::write_error, "write_error"},
-    {FileWriter::Status::StreamerErrorCode::not_initialized, "not_initialized"}
-};
+    {FileWriter::Status::StreamerErrorCode::write_error, "write_error"},
+    {FileWriter::Status::StreamerErrorCode::not_initialized,
+     "not_initialized"}};
 
-const std::string FileWriter::Status::Err2Str(const FileWriter::StreamMasterError &error) {
+const std::string
+FileWriter::Status::Err2Str(const FileWriter::StreamMasterError &error) {
   auto it = stream_master_error_lookup_.find(error.value());
   if (it != stream_master_error_lookup_.end()) {
     return it->second;
   }
   return "Unknown error code";
 };
-const std::string FileWriter::Status::Err2Str(const FileWriter::StreamerError &error) {
+const std::string
+FileWriter::Status::Err2Str(const FileWriter::StreamerError &error) {
   auto it = stream_master_error_lookup_.find(error.value());
   if (it != stream_master_error_lookup_.end()) {
     return it->second;

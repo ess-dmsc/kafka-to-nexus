@@ -340,32 +340,36 @@ Both receive the message payload and size. Return values are ProcessMessageResul
 
 ## Source
 
-## StreamMaster
-The StreamMaster receives the array of DemuxTopic from FileWriterCommand and
-instantiates the Streamer array according to the topics. Eventually retrieves
-the list of brokers from Kafka.
+## StreamMaster 
 
-* ``the timestamp_list`` is useful for look for initial status of sources in the
-  Kafka queue. It has to be used in combination with Streamer
-  ``search_backward``. It maps the topic with the vector of pairs
-  source-timestamp difference _w.r.t._ the offset of DAQ start provided by ECP
-* after instantiation **searches** in the Kafka queue the _OFFSET_ of the oldest
-  "good" value (due to synchronisation issues, slow sensors, etc)
-* for each topic iterates over the Sources . Listen on each Source until
-  - the message queue is empty
-  - Streammaster::duration milliseconds have been elapsed
-* when receives a **termination** command from Master closes all the streamers
+The StreamMaster receives the array of DemuxTopic from
+FileWriterCommand and instantiates the Streamer array according to the
+topics. Eventually retrieves the list of brokers from Kafka.
 
-If required StreamMaster streams its status on a Kafka topic. In particular:
-* StreamMaster not yet running, running or finished
-* status of each Streamer (number of sent messages, errors and total
-  received bytes)
-* statistics for each Streamer (message size average and message
-frequency int the last 200ms, configurable). 
-The message format is (so far) JSON. 
+* `start_time` and `stop_time` can be used to set a the timestamp of
+the fist and last event to be written (caution: actually events
+with timestamp earlier than request will be written);
+* upon a `stop` message the ``Master`` can stop the writing;
+* if a `status-uri` is configured sends a (JSON formatted) status
+  report on the corresponding topic;
+* a global `status` flag report the status of
+``StreamMaster``. Definitions are in
+`Status::StreamMasterErrorCode` (the function `Err2Str`
+converts the error code into a human readable string). Possible values:
+
+| Code                 |
+|----------------------|
+|  not_started         | 
+|  running             |
+|  has\_finished       |
+|  streamer\_error     |
+|  statistics\_failure |
+|  streammaster\_error |
 
 
-More tests involing the network:
+	
+
+More tests involving the network:
 ```
 tests/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
 tests/streammaster_test --kafka_broker=<broker>:<port>"

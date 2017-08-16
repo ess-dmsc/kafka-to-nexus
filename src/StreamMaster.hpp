@@ -31,14 +31,12 @@ template <typename Streamer, typename Demux> class StreamMaster {
   using Options = typename Streamer::Options;
 
 public:
-  StreamMaster()
-      : runstatus{Error::not_started}, do_write{false}, _stop{false} {};
+  StreamMaster(){};
 
   StreamMaster(std::string &broker, std::vector<Demux> &_demux,
                const Options &kafka_options = {},
                const Options &filewriter_options = {})
-      : demux(_demux), runstatus{Error::not_started}, do_write(false),
-        _stop(false) {
+      : demux(_demux) {
 
     for (auto &d : demux) {
       streamer.emplace(std::piecewise_construct,
@@ -53,8 +51,7 @@ public:
                std::unique_ptr<FileWriterTask> file_writer_task,
                const Options &kafka_options = {},
                const Options &filewriter_options = {})
-      : demux(file_writer_task->demuxers()), runstatus{Error::not_started},
-        do_write(false), _stop(false),
+      : demux(file_writer_task->demuxers()),
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
@@ -201,6 +198,7 @@ private:
       streamer.erase(topic);
       if (streamer.size() == 0) {
         runstatus = Error::has_finished;
+        _stop = true;
       }
       return Streamer::ErrorCode::stopped;
     }
@@ -224,6 +222,22 @@ private:
       report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
                                 value.size());
       std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+    }
+    // temination message
+    {
+      Status::StreamMasterStatus status(runstatus.load());
+      for (auto &s : streamer) {
+        auto v = s.second.status();
+        status.push(s.first, v.fetch_status(), v.fetch_statistics());
+      }
+      auto value = Status::pprint<Status::JSONStreamWriter>(status);
+      if (!report_producer_) {
+        LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
+        runstatus = Error::statistics_failure;
+        return;
+      }
+      report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
+                                value.size());
     }
     return;
   }
@@ -254,11 +268,11 @@ private:
   std::vector<Demux> &demux;
   std::thread loop;
   std::thread report_thread_;
-  std::atomic<int> runstatus;
-  std::atomic<bool> do_write;
-  std::atomic<bool> _stop;
-  std::unique_ptr<FileWriterTask> _file_writer_task;
-  std::shared_ptr<KafkaW::ProducerTopic> report_producer_;
+  std::atomic<int> runstatus{Error::not_started};
+  std::atomic<bool> do_write{false};
+  std::atomic<bool> _stop{false};
+  std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
+  std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
   std::once_flag stop_once_guard;
 
   milliseconds duration{1000};

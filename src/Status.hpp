@@ -71,11 +71,11 @@ public:
 
   void reset();
 
-  double bytes;
-  double messages;
-  double errors;
-  double bytes2;
-  double messages2;
+  double bytes{0.0};
+  double messages{0.0};
+  double errors{0.0};
+  double bytes2{0.0};
+  double messages2{0.0};
 };
 
 // Data type for extracting statistics about the streamer
