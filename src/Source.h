@@ -32,7 +32,7 @@ public:
   Source(Source &&);
   ~Source();
   std::string const &topic() const;
-  std::string const &source() const;
+  std::string const &sourcename() const;
   /// If non-empty, specifies the broker where the data of this Source can be
   /// found.
   std::string const &broker() const;
@@ -43,10 +43,10 @@ public:
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
 
 private:
-  Source(HDFWriterModule::ptr hdf_writer_module);
+  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
 
   std::string _topic;
-  std::string _source;
+  std::string _sourcename;
   std::unique_ptr<HDFWriterModule> _hdf_writer_module;
 
   uint64_t _processed_messages_count = 0;

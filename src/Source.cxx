@@ -10,16 +10,17 @@ Result Result::Ok() {
   return ret;
 }
 
-Source::Source(HDFWriterModule::ptr hdf_writer_module)
-    : _hdf_writer_module(std::move(hdf_writer_module)) {}
+Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
+    : _sourcename(sourcename),
+      _hdf_writer_module(std::move(hdf_writer_module)) {}
 
 Source::Source(Source &&x)
-    : _topic(std::move(x._topic)), _source(std::move(x._source)),
+    : _topic(std::move(x._topic)), _sourcename(std::move(x._sourcename)),
       _hdf_writer_module(std::move(x._hdf_writer_module)) {}
 
 std::string const &Source::topic() const { return _topic; }
 
-std::string const &Source::source() const { return _source; }
+std::string const &Source::sourcename() const { return _sourcename; }
 
 Source::~Source() {}
 
@@ -58,7 +59,7 @@ Source::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
   auto &v = jd;
   v.AddMember("__KLASS__", "Source", a);
   v.AddMember("topic", Value().SetString(topic().data(), a), a);
-  v.AddMember("source", Value().SetString(source().data(), a), a);
+  v.AddMember("source", Value().SetString(sourcename().data(), a), a);
   return jd;
 }
 

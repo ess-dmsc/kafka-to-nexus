@@ -67,19 +67,26 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
+  LOG(3, "found {} streams", stream_hdf_info.size());
   for (auto &stream : stream_hdf_info) {
-    auto &config_stream = stream.config_stream;
-    auto topic = get_string(config_stream, "topic");
+    auto config_stream_value = get_object(*stream.config_stream, "stream");
+    if (!config_stream_value) {
+      LOG(5, "Missing stream specification");
+      continue;
+    }
+    auto &config_stream = *config_stream_value.v;
+    LOG(3, "HAVE STREAM: {}", json_to_string(config_stream));
+    auto topic = get_string(&config_stream, "topic");
     if (!topic) {
       LOG(5, "Missing topic on stream specification");
       continue;
     }
-    auto source = get_string(config_stream, "source");
+    auto source = get_string(&config_stream, "source");
     if (!source) {
       LOG(5, "Missing source on stream specification");
       continue;
     }
-    auto module = get_string(config_stream, "module");
+    auto module = get_string(&config_stream, "module");
     if (!module) {
       LOG(5, "Missing module on stream specification");
       continue;
@@ -87,7 +94,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
     auto module_factory = HDFWriterModuleRegistry::find(module.v);
     if (!module_factory) {
-      LOG(5, "Module '{}' is not available");
+      LOG(5, "Module '{}' is not available", module.v);
       continue;
     }
 
@@ -97,10 +104,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
-    hdf_writer_module->init_hdf(stream.hdf_parent_object, *config_stream,
+    hdf_writer_module->init_hdf(stream.hdf_parent_object, config_stream,
                                 nullptr);
 
-    auto s = Source(move(hdf_writer_module));
+    auto s = Source(source.v, move(hdf_writer_module));
     fwt->add_source(move(s));
   }
 

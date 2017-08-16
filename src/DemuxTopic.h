@@ -31,12 +31,14 @@ public:
   /// Implements TimeDifferenceFromMessage.
   DT time_difference_from_message(char *msg_data, int msg_size);
   std::unordered_map<std::string, Source> &sources();
+
   Source &add_source(Source &&source) {
     using std::move;
-    auto k = source.source();
+    auto k = source.sourcename();
     std::pair<std::string, Source> v{k, move(source)};
     return _sources_map.insert(move(v)).first->second;
   }
+
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;
