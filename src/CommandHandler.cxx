@@ -94,16 +94,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
           }
 
           auto s = Source(module_factory());
-          auto m = st.FindMember("nexus_path");
-          if (m != st.MemberEnd()) {
-            if (m->value.IsString()) {
-              s._hdf_path = m->value.GetString();
-            }
-          }
-          s.config_file(&config.config_file);
           rapidjson::Document j1;
           j1.CopyFrom(st, j1.GetAllocator());
-          s.config_stream(std::move(j1));
           fwt->add_source(move(s));
         }
       }

@@ -41,23 +41,16 @@ public:
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
-  void config_file(rapidjson::Value const *config_file);
-  void config_stream(rapidjson::Document &&config_stream);
 
 private:
   Source(HDFWriterModule::ptr hdf_writer_module);
 
   std::string _topic;
   std::string _source;
-  std::string _broker;
-  std::string _hdf_path;
   std::unique_ptr<HDFWriterModule> _hdf_writer_module;
 
   uint64_t _processed_messages_count = 0;
   uint64_t _cnt_msg_written = 0;
-
-  rapidjson::Value const *_config_file = nullptr;
-  rapidjson::Document _config_stream;
 
   friend class CommandHandler;
   friend class FileWriterTask;
