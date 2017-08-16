@@ -37,7 +37,8 @@ private:
   std::unique_ptr<FileWriterTask_impl> impl;
   void add_source(Source &&source);
   /// Called by CommandHandler on setup.
-  int hdf_init(rapidjson::Value const &nexus_structure);
+  int hdf_init(rapidjson::Value const &nexus_structure,
+               std::vector<StreamHDFInfo> &stream_hdf_info);
   uint64_t _id;
 };
 

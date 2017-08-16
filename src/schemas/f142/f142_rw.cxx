@@ -363,7 +363,7 @@ class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                      rapidjson::Value const &config_module) override;
+                      rapidjson::Value const *config_module) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -389,7 +389,7 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                          rapidjson::Value const &config_module) {
+                          rapidjson::Value const *config_module) {
   // TODO
   // - Choose our impl depending on the config_stream.
   // - Create HDF structures now!

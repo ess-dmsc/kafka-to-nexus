@@ -55,51 +55,53 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   }
   fwt->set_hdf_filename(fname);
 
+  // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
+  // the list of streams which have been found in the `nexus_structure`.
+  std::vector<StreamHDFInfo> stream_hdf_info;
   {
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x = fwt->hdf_init(nexus_structure);
+    auto x = fwt->hdf_init(nexus_structure, stream_hdf_info);
     if (x) {
       LOG(7, "ERROR hdf init failed, cancel this write command");
       return;
     }
   }
 
-  {
-    auto m1 = d.FindMember("streams");
-    if (m1 != d.MemberEnd()) {
-      if (m1->value.IsArray()) {
-        for (auto &st : m1->value.GetArray()) {
-          auto topic = get_string(&st, "topic");
-          if (!topic) {
-            LOG(5, "Missing topic on stream specification");
-            continue;
-          }
-          auto source = get_string(&st, "source");
-          if (!source) {
-            LOG(5, "Missing source on stream specification");
-            continue;
-          }
-          auto module = get_string(&st, "module");
-          if (!module) {
-            LOG(5, "Missing module on stream specification");
-            continue;
-          }
-
-          // TODO
-          // Create HDFWriterModule and pass to Source
-          auto module_factory = HDFWriterModuleRegistry::find(module.v);
-          if (!module_factory) {
-            LOG(5, "Module '{}' is not available");
-            continue;
-          }
-
-          auto s = Source(module_factory());
-          rapidjson::Document j1;
-          j1.CopyFrom(st, j1.GetAllocator());
-          fwt->add_source(move(s));
-        }
-      }
+  for (auto &stream : stream_hdf_info) {
+    auto &config_stream = stream.config_stream;
+    auto topic = get_string(config_stream, "topic");
+    if (!topic) {
+      LOG(5, "Missing topic on stream specification");
+      continue;
     }
+    auto source = get_string(config_stream, "source");
+    if (!source) {
+      LOG(5, "Missing source on stream specification");
+      continue;
+    }
+    auto module = get_string(config_stream, "module");
+    if (!module) {
+      LOG(5, "Missing module on stream specification");
+      continue;
+    }
+
+    auto module_factory = HDFWriterModuleRegistry::find(module.v);
+    if (!module_factory) {
+      LOG(5, "Module '{}' is not available");
+      continue;
+    }
+
+    auto hdf_writer_module = module_factory();
+    if (!hdf_writer_module) {
+      LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
+      continue;
+    }
+
+    hdf_writer_module->init_hdf(stream.hdf_parent_object, *config_stream,
+                                nullptr);
+
+    auto s = Source(move(hdf_writer_module));
+    fwt->add_source(move(s));
   }
 
   if (master) {

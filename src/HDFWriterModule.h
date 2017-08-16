@@ -97,7 +97,7 @@ public:
   /// @param config_module Configuration for all instances of this
   /// HDFWriterModule.
   virtual InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
-                              rapidjson::Value const &config_module) = 0;
+                              rapidjson::Value const *config_module) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
