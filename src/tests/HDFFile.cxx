@@ -327,8 +327,21 @@ public:
           attr.AddMember("this_will_be_a_double", Value(0.123), a);
           attr.AddMember("this_will_be_a_int64", Value(123), a);
           ds1.AddMember("attributes", attr, a);
+          Document cfg_nexus;
+          cfg_nexus.Parse(R""(
+            {
+              "nexus": {
+                "indices": {
+                  "index_every_kb": 1
+                },
+                "chunk": {
+                  "chunk_n_elements": 64
+                }
+              }
+            }
+          )"");
           Value stream;
-          stream.SetObject();
+          stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("module", Value(module.c_str(), a), a);
