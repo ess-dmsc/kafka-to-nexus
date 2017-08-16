@@ -145,8 +145,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   std::function<void(Value const *, hid_t, uint16_t)> create_hdf_structures =
       [&lcpl, &create_hdf_structures,
        &stream_hdf_info](Value const *value, hid_t hdf_parent, uint16_t level) {
-        LOG(6, "level: {}", level);
-
         // The HDF object that we will maybe create at the current level.
         hid_t hdf_this = -1;
         // Keeps the HDF object id if we create a new collection-like object
@@ -158,7 +156,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
         {
           if (auto type = get_string(value, "type")) {
             if (type.v == "group") {
-              LOG(4, "group: {}", json_to_string(*value));
               if (auto name = get_string(value, "name")) {
                 hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl,
                                       H5P_DEFAULT, H5P_DEFAULT);
@@ -166,10 +163,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
               }
             }
             if (type.v == "stream") {
-              LOG(4, "stream: {}", json_to_string(*value));
-              if (auto name = get_string(value, "name")) {
-                stream_hdf_info.push_back(StreamHDFInfo{hdf_parent, value});
-              }
+              stream_hdf_info.push_back(StreamHDFInfo{hdf_parent, value});
             }
             if (type.v == "dataset") {
               LOG(3, "DATASET not yet implemented");
