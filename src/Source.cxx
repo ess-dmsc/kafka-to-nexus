@@ -10,8 +10,8 @@ Result Result::Ok() {
   return ret;
 }
 
-Source::Source(std::string topic, std::string source)
-    : _topic(topic), _source(source) {}
+Source::Source(HDFWriterModule::ptr hdf_writer_module)
+    : _hdf_writer_module(std::move(hdf_writer_module)) {}
 
 Source::Source(Source &&x)
     : _topic(std::move(x._topic)), _source(std::move(x._source)),

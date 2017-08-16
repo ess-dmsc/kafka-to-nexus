@@ -19,17 +19,6 @@ class FileWriterTask_impl {
   HDFFile hdf_file;
 };
 
-class SourceFactory_by_FileWriterTask {
-private:
-  Source create(string topic, string sourcename);
-  friend class FileWriterTask;
-};
-
-Source SourceFactory_by_FileWriterTask::create(string topic,
-                                               string sourcename) {
-  return {topic, sourcename};
-}
-
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
 
 FileWriterTask::FileWriterTask() {

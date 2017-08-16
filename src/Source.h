@@ -13,8 +13,6 @@ class Test___FileWriterTask___Create01;
 
 namespace FileWriter {
 
-class SourceFactory_by_FileWriterTask;
-
 class Result {
 public:
   static Result Ok();
@@ -47,7 +45,7 @@ public:
   void config_stream(rapidjson::Document &&config_stream);
 
 private:
-  Source(std::string topic, std::string source);
+  Source(HDFWriterModule::ptr hdf_writer_module);
 
   std::string _topic;
   std::string _source;
@@ -63,7 +61,6 @@ private:
 
   friend class CommandHandler;
   friend class FileWriterTask;
-  friend class SourceFactory_by_FileWriterTask;
   friend class ::Test___FileWriterTask___Create01;
 };
 

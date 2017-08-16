@@ -1,4 +1,5 @@
 #include "CommandHandler.h"
+#include "HDFWriterModule.h"
 #include "helper.h"
 #include "utils.h"
 
@@ -65,20 +66,46 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
   {
     auto m1 = d.FindMember("streams");
-    if (m1 != d.MemberEnd() && m1->value.IsArray()) {
-      for (auto &st : m1->value.GetArray()) {
-        auto s = Source(st["topic"].GetString(), st["source"].GetString());
-        auto m = st.FindMember("nexus_path");
-        if (m != st.MemberEnd()) {
-          if (m->value.IsString()) {
-            s._hdf_path = m->value.GetString();
+    if (m1 != d.MemberEnd()) {
+      if (m1->value.IsArray()) {
+        for (auto &st : m1->value.GetArray()) {
+          auto topic = get_string(&st, "topic");
+          if (!topic) {
+            LOG(5, "Missing topic on stream specification");
+            continue;
           }
+          auto source = get_string(&st, "source");
+          if (!source) {
+            LOG(5, "Missing source on stream specification");
+            continue;
+          }
+          auto module = get_string(&st, "module");
+          if (!module) {
+            LOG(5, "Missing module on stream specification");
+            continue;
+          }
+
+          // TODO
+          // Create HDFWriterModule and pass to Source
+          auto module_factory = HDFWriterModuleRegistry::find(module.v);
+          if (!module_factory) {
+            LOG(5, "Module '{}' is not available");
+            continue;
+          }
+
+          auto s = Source(module_factory());
+          auto m = st.FindMember("nexus_path");
+          if (m != st.MemberEnd()) {
+            if (m->value.IsString()) {
+              s._hdf_path = m->value.GetString();
+            }
+          }
+          s.config_file(&config.config_file);
+          rapidjson::Document j1;
+          j1.CopyFrom(st, j1.GetAllocator());
+          s.config_stream(std::move(j1));
+          fwt->add_source(move(s));
         }
-        s.config_file(&config.config_file);
-        rapidjson::Document j1;
-        j1.CopyFrom(st, j1.GetAllocator());
-        s.config_stream(std::move(j1));
-        fwt->add_source(move(s));
       }
     }
   }
