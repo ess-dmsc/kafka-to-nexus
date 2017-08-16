@@ -164,7 +164,6 @@ private:
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
-            //       runstatus.store(int(s.status()));
             if (_value.is_STOP() && (remove_source(d.topic()).value() !=
                                      Streamer::ErrorCode::stopped)) {
               break;
@@ -246,11 +245,11 @@ private:
     LOG(7, "StreamMaster: stop");
     do_write = false;
     _stop = true;
-    if (report_thread_.joinable()) {
-      report_thread_.join();
-    }
     if (loop.joinable()) {
       loop.join();
+    }
+    if (report_thread_.joinable()) {
+      report_thread_.join();
     }
     for (auto &s : streamer) {
       LOG(7, "Shut down {} : {}", s.first);

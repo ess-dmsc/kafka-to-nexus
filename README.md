@@ -326,10 +326,9 @@ According to the design the Streamer connects to Kafka (other
 sources to be implemented) and consumes a message in the specified topic. Some features:
 * one Streamer per topic
 * multiple Source per streamer
-* initial timestamp can be specified using ``set_start_time``
+* initial timestamp is specified using ``set_start_time``
 * connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
-* Kafka and streamer specific options for the consumer can be passed
-  via the constructor's ``kafka_options``
+* Kafka::Config ans streamer options can be passed using the constructor ``kafka_options`` and ``filewriter_options`` respectively.
 
 ## DemuxTopic
 Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.

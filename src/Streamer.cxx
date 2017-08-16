@@ -69,7 +69,7 @@ int FileWriter::Streamer::get_topic_partitions(
   bool topic_found = false;
   if (!_metadata) {
     LOG(3, "Missing metadata informations");
-    return -1;
+    return ErrorCode::metadata_error;
   }
   auto partition_metadata = _metadata->topics()->at(0)->partitions();
   for (auto &i : *_metadata->topics()) {
@@ -80,12 +80,12 @@ int FileWriter::Streamer::get_topic_partitions(
   }
   if (!topic_found) {
     LOG(3, "Can't find topic : {}", topic);
-    return -2;
+    return ErrorCode::topic_error;
   }
   for (auto &i : (*partition_metadata)) {
     _tp.push_back(RdKafka::TopicPartition::create(topic, i->id()));
   }
-  return 0;
+  return ErrorCode::no_error;
 }
 
 FileWriter::Streamer::Error FileWriter::Streamer::get_offset_boundaries() {
@@ -142,7 +142,7 @@ FileWriter::Streamer::Streamer(
     FileWriter::Streamer::Options kafka_options,
     FileWriter::Streamer::Options filewriter_options) {
 
-  s_.run_status(StreamerError(Status::StreamerErrorCode::not_initialized));
+  s_.run_status(Error(ErrorCode::not_initialized));
   if (topic_name.empty() || broker.empty()) {
     LOG(0, "Broker and topic required");
     s_.run_status(Error(ErrorCode::not_initialized));
@@ -185,7 +185,7 @@ void FileWriter::Streamer::connect(
   auto conf = initialize_configuration(kafka_options);
   if (!conf) {
     LOG(0, "Unable to initialize configuration ({})", topic_name);
-    s_.run_status(Status::StreamerErrorCode::configuration_error);
+    s_.run_status(ErrorCode::configuration_error);
     return;
   }
   RdKafka::KafkaConsumer *c =
@@ -193,7 +193,7 @@ void FileWriter::Streamer::connect(
   _consumer.reset(c);
   if (!_consumer) {
     LOG(0, "Failed to create consumer: {}", errstr);
-    s_.run_status(Status::StreamerErrorCode::consumer_error);
+    s_.run_status(ErrorCode::consumer_error);
     return;
   }
 
@@ -201,12 +201,13 @@ void FileWriter::Streamer::connect(
   std::unique_ptr<RdKafka::Metadata> metadata = get_metadata(metadata_retry);
   if (!metadata) {
     LOG(1, "Unable to retrieve metadata");
-    s_.run_status(Status::StreamerErrorCode::metadata_error);
+    s_.run_status(ErrorCode::metadata_error);
     return;
   }
-  if (get_topic_partitions(topic_name, std::move(metadata)) < 0) {
+  if (get_topic_partitions(topic_name, std::move(metadata)) !=
+      ErrorCode::no_error) {
     LOG(1, "Unable to build TopicPartitions structure");
-    s_.run_status(Status::StreamerErrorCode::topic_partition_error);
+    s_.run_status(ErrorCode::topic_partition_error);
     return;
   }
   // Assign consumer
@@ -216,23 +217,23 @@ void FileWriter::Streamer::connect(
   auto err = _consumer->assign(_tp);
   if (err) {
     LOG(0, "Failed to subscribe to {} ", topic_name);
-    s_.run_status(Status::StreamerErrorCode::assign_error);
+    s_.run_status(ErrorCode::assign_error);
     return;
   }
   auto val = get_offset_boundaries();
-  if (val.value() != ErrorCode::no_error) {
+  if (val != ErrorCode::no_error) {
     s_.run_status(val);
     return;
   }
 
   LOG(7, "Connected to topic {}", topic_name);
-  s_.run_status(Status::StreamerErrorCode::writing);
+  s_.run_status(ErrorCode::writing);
   return;
 }
 
 FileWriter::Streamer::Error FileWriter::Streamer::closeStream() {
   std::lock_guard<std::mutex> lock(guard_);
-  s_.run_status(StreamerError(Status::StreamerErrorCode::stopped));
+  s_.run_status(Error(ErrorCode::stopped));
   if (connect_.joinable()) {
     connect_.join();
   }
@@ -269,7 +270,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
     LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
-    s_.error(StreamerError(Status::StreamerErrorCode::message_error));
+    s_.error(Error(ErrorCode::message_error));
     return ProcessMessageResult::ERR();
   }
   s_.add_message(msg->len());
@@ -293,7 +294,7 @@ FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
   }
   auto err = _consumer->offsetsForTimes(_tp, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
-    s_.run_status(StreamerError(Status::StreamerErrorCode::start_time_error));
+    s_.run_status(Error(ErrorCode::start_time_error));
     LOG(3, "Error searching initial time: {}", err2str(err));
     for (auto &i : _tp) {
       LOG(3, "TopicPartition {}-{} : {}", i->topic(), i->partition(),
