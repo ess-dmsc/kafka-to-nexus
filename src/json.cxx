@@ -57,37 +57,33 @@ rapidjson::Document merge(rapidjson::Value const &v1,
   while (stack.size() > 0) {
     auto &se = stack.back();
     if (se.it1 != se.v1->MemberEnd()) {
-      // Naming scheme:
-      // m for 'member'
-      // (1|2) if it is out of 1st or 2nd input document.
-      // (n|v) name or value.
-      auto &m1n = se.it1->name;
-      auto &m1v = se.it1->value;
+      auto &first_doc_member_name = se.it1->name;
+      auto &first_doc_member_value = se.it1->value;
       // Let's see if the 2nd input document has a member of the same name. If
       // not, there is nothing to do.
       auto it2 = se.v2->FindMember(se.it1->name.GetString());
       if (it2 != se.v2->MemberEnd()) {
-        auto &m2v = it2->value;
-        if (m1v.IsObject()) {
-          if (m2v.IsObject()) {
+        auto &second_doc_member_value = it2->value;
+        if (first_doc_member_value.IsObject()) {
+          if (second_doc_member_value.IsObject()) {
             // If both 1st and 2nd input are json objects at this level then we
             // recursively continue the comparison.
-            stack_element e{m1v.MemberBegin(),
-                            &se.v1->operator[](m1n.GetString()),
-                            &m2v,
+            stack_element e{first_doc_member_value.MemberBegin(),
+                            &se.v1->operator[](first_doc_member_name.GetString()),
+                            &second_doc_member_value,
                             {}};
             stack.push_back(e);
           } else {
             // it2->value is not a json object, even though it1->value is.
             // We therefore remember that we want to use it to replace whatever
             // is currently stored at the key se.it1->name.
-            se.to_copy.push_back({m1n.GetString(), &m2v});
+            se.to_copy.push_back({first_doc_member_name.GetString(), &second_doc_member_value});
           }
         } else {
           // it1->value is not a json object.
           // We therefore remember that we want to use it2->value to replace
           // what is currently stored at the key se.it1->name.
-          se.to_copy.push_back({m1n.GetString(), &m2v});
+          se.to_copy.push_back({first_doc_member_name.GetString(), &second_doc_member_value});
         }
       }
       // Advance the iterator over the elements at the current level of the 1st
