@@ -39,15 +39,6 @@ public:
   return_type write(const StreamMasterStatus &);
 };
 
-// class FlatbuffersWriter {
-
-// public:
-//   using return_type = flatbuffers::Offset<StatusInfo>;
-//   return_type write(const StreamMasterStatus &);
-
-// private:
-// };
-
 template <class W> typename W::return_type pprint(const StreamMasterStatus &x) {
   W writer;
   return writer.write(x);

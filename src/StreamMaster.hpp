@@ -21,17 +21,17 @@
 #include "logger.h"
 #include "utils.h"
 
-struct Streamer;
 struct FileWriterCommand;
 
 namespace FileWriter {
 
 template <typename Streamer, typename Demux> class StreamMaster {
-  using Error = Status::StreamMasterErrorCode;
+  using ErrorCode = Status::StreamMasterErrorCode;
+  using Error = StreamMasterError;
   using Options = typename Streamer::Options;
 
 public:
-  StreamMaster(){};
+  StreamMaster() {}
 
   StreamMaster(std::string &broker, std::vector<Demux> &_demux,
                const Options &kafka_options = {},
@@ -45,7 +45,7 @@ public:
                                              filewriter_options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
-  };
+  }
 
   StreamMaster(std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
@@ -61,7 +61,7 @@ public:
                                              filewriter_options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
-  };
+  }
 
   ~StreamMaster() {
     _stop = true;
@@ -104,7 +104,7 @@ public:
     return loop.joinable();
   }
 
-  int stop(void) {
+  int stop() {
     try {
       std::call_once(stop_once_guard,
                      &FileWriter::StreamMaster<Streamer, Demux>::stop_impl,
@@ -129,18 +129,17 @@ public:
     } else {
       LOG(5, "Status report already started, nothing to do");
     }
-    return;
   };
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
-  const StreamMasterError &status() {
+  const Error &status() {
     for (auto &s : streamer) {
       if (s.second.runstatus().value() < 0) {
-        runstatus = Error::streamer_error;
+        runstatus = ErrorCode::streamer_error;
       }
     }
-    return StreamMasterError{runstatus.load()};
+    return Error{runstatus.load()};
   }
 
 private:
@@ -153,22 +152,22 @@ private:
 
   void run() {
     using namespace std::chrono;
-    runstatus = Error::running;
+    runstatus = ErrorCode::running;
     system_clock::time_point tp, tp_global(system_clock::now());
 
     while (!_stop) {
-
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
         if (s.runstatus().value() == Streamer::ErrorCode::writing) {
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
-            if (_value.is_STOP() && (remove_source(d.topic()).value() !=
-                                     Streamer::ErrorCode::stopped)) {
+            if (_value.is_STOP() &&
+                (remove_source(d.topic()) != Error{ErrorCode::running})) {
               break;
             }
           }
+          continue;
         }
         if (s.runstatus().value() == Streamer::ErrorCode::not_initialized) {
           std::this_thread::sleep_for(duration);
@@ -176,105 +175,106 @@ private:
         }
         if (s.runstatus().value() < 0 &&
             s.runstatus().value() != Streamer::ErrorCode::not_initialized) {
-          runstatus = Error::streamer_error;
+          runstatus = ErrorCode::streamer_error;
           LOG(0, "Error in topic {} : {}", d.topic(), s.runstatus().value());
           remove_source(d.topic());
           continue;
         }
       }
     }
-    runstatus = Error::has_finished;
+    runstatus = ErrorCode::has_finished;
   }
 
-  ErrorCode remove_source(const std::string &topic) {
-    auto &s(streamer[topic]);
-    if (s.n_sources() > 1) {
-      s.n_sources()--;
-      return Streamer::ErrorCode::writing;
+  Error remove_source(const std::string &topic) {
+  auto &s(streamer[topic]);
+  if (s.n_sources() > 1) {
+    s.n_sources()--;
+    return Error{ErrorCode::running};
+  } else {
+    LOG(3, "All sources in {} have expired, remove streamer", topic);
+    stop_streamer(s);
+    streamer.erase(topic);
+    if (streamer.size() != 0) {
+      return Error{ErrorCode::empty_streamer};
     } else {
-      LOG(3, "All sources in {} have expired, remove streamer", topic);
-      stop_streamer(s);
-      streamer.erase(topic);
-      if (streamer.size() == 0) {
-        runstatus = Error::has_finished;
-        _stop = true;
-      }
-      return Streamer::ErrorCode::stopped;
+      runstatus = ErrorCode::has_finished;
+      _stop = true;
+      return Error{ErrorCode::has_finished};
     }
   }
+}
 
-  void report_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
-                   const int delay = 1000) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    while (!_stop) {
-      Status::StreamMasterStatus status(runstatus.load());
-      for (auto &s : streamer) {
-        auto v = s.second.status();
-        status.push(s.first, v.fetch_status(), v.fetch_statistics());
-      }
-      auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      if (!report_producer_) {
-        LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
-        runstatus = Error::statistics_failure;
-        return;
-      }
-      report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                                value.size());
-      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    }
-    // temination message
-    {
-      Status::StreamMasterStatus status(runstatus.load());
-      for (auto &s : streamer) {
-        auto v = s.second.status();
-        status.push(s.first, v.fetch_status(), v.fetch_statistics());
-      }
-      auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      if (!report_producer_) {
-        LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
-        runstatus = Error::statistics_failure;
-        return;
-      }
-      report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                                value.size());
-    }
-    return;
-  }
-
-  void stop_impl(void) {
-    LOG(7, "StreamMaster: stop");
-    do_write = false;
-    _stop = true;
-    if (loop.joinable()) {
-      loop.join();
-    }
-    if (report_thread_.joinable()) {
-      report_thread_.join();
-    }
+void report_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
+                 const int delay = 1000) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(delay));
+  while (!_stop) {
+    Status::StreamMasterStatus status(runstatus.load());
     for (auto &s : streamer) {
-      LOG(7, "Shut down {} : {}", s.first);
-      auto v = stop_streamer(s.second);
-      if (v != typename Streamer::Error(Streamer::ErrorCode::stopped)) {
-        LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
-      } else {
-        LOG(7, "\t...done");
-      }
+      auto v = s.second.status();
+      status.push(s.first, v.fetch_status(), v.fetch_statistics());
     }
-    streamer.clear();
+    auto value = Status::pprint<Status::JSONStreamWriter>(status);
+    if (!report_producer_) {
+      LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
+      runstatus = ErrorCode::statistics_failure;
+      return;
+    }
+    report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
+                              value.size());
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
   }
+  // termination message
+  {
+    Status::StreamMasterStatus status(runstatus.load());
+    for (auto &s : streamer) {
+      auto v = s.second.status();
+      status.push(s.first, v.fetch_status(), v.fetch_statistics());
+    }
+    auto value = Status::pprint<Status::JSONStreamWriter>(status);
+    if (!report_producer_) {
+      LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
+      runstatus = ErrorCode::statistics_failure;
+      return;
+    }
+    report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
+                              value.size());
+  }
+}
 
-  std::map<std::string, Streamer> streamer;
-  std::vector<Demux> &demux;
-  std::thread loop;
-  std::thread report_thread_;
-  std::atomic<int> runstatus{Error::not_started};
-  std::atomic<bool> do_write{false};
-  std::atomic<bool> _stop{false};
-  std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
-  std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
-  std::once_flag stop_once_guard;
+void stop_impl() {
+  LOG(7, "StreamMaster: stop");
+  do_write = false;
+  _stop = true;
+  if (loop.joinable()) {
+    loop.join();
+  }
+  if (report_thread_.joinable()) {
+    report_thread_.join();
+  }
+  for (auto &s : streamer) {
+    LOG(7, "Shut down {} : {}", s.first);
+    auto v = stop_streamer(s.second);
+    if (v != typename Streamer::Error(Streamer::ErrorCode::stopped)) {
+      LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
+    } else {
+      LOG(7, "\t...done");
+    }
+  }
+  streamer.clear();
+}
 
-  milliseconds duration{1000};
+std::map<std::string, Streamer> streamer;
+std::vector<Demux> &demux;
+std::thread loop;
+std::thread report_thread_;
+std::atomic<int> runstatus{ErrorCode::not_started};
+std::atomic<bool> do_write{false};
+std::atomic<bool> _stop{false};
+std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
+std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
+std::once_flag stop_once_guard;
+
+milliseconds duration{1000};
 }; // namespace FileWriter
 
 } // namespace FileWriter

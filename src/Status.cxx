@@ -3,32 +3,20 @@
 #include "Status.hpp"
 
 #include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-
-FileWriter::Status::StreamerStatusType::StreamerStatusType() {}
 
 FileWriter::Status::StreamerStatusType::StreamerStatusType(
     const FileWriter::Status::StreamerStatusType &other)
     : bytes{other.bytes}, messages{other.messages}, errors{other.errors},
-      bytes2{other.bytes2}, messages2{other.messages2} {}
+      bytes_squared{other.bytes_squared}, messages_squared{
+                                              other.messages_squared} {}
 
 FileWriter::Status::StreamerStatusType &FileWriter::Status::StreamerStatusType::
-operator=(const FileWriter::Status::StreamerStatusType &other) {
-  bytes = other.bytes;
-  messages = other.messages;
-  errors = other.errors;
-  bytes2 = other.bytes2;
-  messages2 = other.messages2;
-  return *this;
-}
-FileWriter::Status::StreamerStatusType &FileWriter::Status::StreamerStatusType::
-operator=(FileWriter::Status::StreamerStatusType &&other) {
+operator=(FileWriter::Status::StreamerStatusType &&other) noexcept {
   bytes = std::move(other.bytes);
   messages = std::move(other.messages);
   errors = std::move(other.errors);
-  bytes2 = std::move(other.bytes2);
-  messages2 = std::move(other.messages2);
+  bytes_squared = std::move(other.bytes_squared);
+  messages_squared = std::move(other.messages_squared);
   return *this;
 }
 FileWriter::Status::StreamerStatusType &FileWriter::Status::StreamerStatusType::
@@ -36,8 +24,8 @@ operator+=(const FileWriter::Status::StreamerStatusType &other) {
   bytes += other.bytes;
   messages += other.messages;
   errors += other.errors;
-  bytes2 += other.bytes2;
-  messages2 += other.messages2;
+  bytes_squared += other.bytes_squared;
+  messages_squared += other.messages_squared;
   return *this;
 }
 FileWriter::Status::StreamerStatusType &FileWriter::Status::StreamerStatusType::
@@ -45,8 +33,8 @@ operator-=(const FileWriter::Status::StreamerStatusType &other) {
   bytes -= other.bytes;
   messages -= other.messages;
   errors -= other.errors;
-  bytes2 -= other.bytes2;
-  messages2 -= other.messages2;
+  bytes_squared -= other.bytes_squared;
+  messages_squared -= other.messages_squared;
   return *this;
 }
 FileWriter::Status::StreamerStatusType FileWriter::Status::StreamerStatusType::
@@ -55,8 +43,7 @@ operator+(const FileWriter::Status::StreamerStatusType &other) {
   return std::move(result += other);
 }
 void FileWriter::Status::StreamerStatusType::reset() {
-  bytes = messages = errors = bytes2 = messages2 = 0;
-  return;
+  bytes = messages = errors = bytes_squared = messages_squared = 0;
 }
 
 ////////////////////////////////
@@ -70,37 +57,41 @@ FileWriter::Status::StreamerStatus::fetch_status() {
 void FileWriter::Status::StreamerStatus::add_message(const double &bytes) {
   std::unique_lock<std::mutex> lock(m);
   current.bytes += bytes;
-  current.bytes2 += bytes * bytes;
+  current.bytes_squared += bytes * bytes;
   current.messages += 1;
-  current.messages2 += 1;
+  current.messages_squared += 1;
 }
 
 FileWriter::Status::StreamerStatisticsType
 FileWriter::Status::StreamerStatus::fetch_statistics() {
   FileWriter::Status::StreamerStatisticsType st;
   std::unique_lock<std::mutex> lock(m);
+  using namespace std::chrono;
 
-  std::chrono::system_clock::time_point t = std::chrono::system_clock::now();
-  auto count = (t - last_time).count();
+  system_clock::time_point t = system_clock::now();
+  auto count = duration_cast<seconds>(t - last_time).count();
   if (current.messages > 0) {
-    st.size_avg = current.bytes / current.messages;
-    st.size_std = std::sqrt(
-        (current.bytes2 / current.messages - st.size_avg * st.size_avg) /
-        current.messages);
+    st.average_message_size = current.bytes / current.messages;
+    st.standard_deviation_message_size =
+        std::sqrt((current.bytes_squared / current.messages -
+                   st.average_message_size * st.average_message_size) /
+                  current.messages);
 
-    st.freq_avg = current.messages / count;
-    st.freq_std = std::sqrt(
-        (current.messages / count - st.freq_avg * st.freq_avg) / count);
+    st.average_message_frequency = current.messages / count;
+    st.standard_deviation_message_frequency = std::sqrt(
+        (current.messages / count -
+         st.average_message_frequency * st.average_message_frequency) /
+        count);
   } else {
-    st.size_avg = -1.;
-    st.size_std = -1.;
-    st.freq_avg = -1.;
-    st.freq_std = -1.;
+    st.average_message_size = -1.;
+    st.standard_deviation_message_size = -1.;
+    st.average_message_frequency = -1.;
+    st.standard_deviation_message_frequency = -1.;
   }
   last += current;
   last_time = t;
   current.reset();
-  return std::move(st);
+  return st;
 }
 
 static const std::map<const int, std::string> stream_master_error_lookup_{

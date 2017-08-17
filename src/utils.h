@@ -34,19 +34,19 @@ private:
 struct OffsetType {};
 struct PartitionType {};
 struct Timestamp {};
-struct FileWriterErrorType {};
  
- struct StreamerErrorType{};
- struct StreamMasterErrorType{};
+struct FileWriterErrorType {};
+struct StreamerErrorType{};
+struct StreamMasterErrorType{};
 
- struct ESSTimeStampType{};
- struct KafkaTimeStampType{};
+struct ESSTimeStampType{};
+struct KafkaTimeStampType{};
 
 } // namespace utils
 
 using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
-using RdKafkaPartition = utils::StrongType<int32_t, utils::PartitionType>;
-using ErrorCode = utils::StrongType<int32_t, utils::FileWriterErrorType>;
+//using RdKafkaPartition = utils::StrongType<int32_t, utils::PartitionType>;
+//using ErrorCode = utils::StrongType<int32_t, utils::FileWriterErrorType>;
 using StreamerError = utils::StrongType<int32_t, utils::StreamerErrorType>;
 using StreamMasterError = utils::StrongType<int32_t, utils::StreamMasterErrorType>;
  using ESSTimeStamp = nanoseconds;
@@ -54,14 +54,5 @@ using StreamMasterError = utils::StrongType<int32_t, utils::StreamMasterErrorTyp
  
 const RdKafkaOffset RdKafkaOffsetEnd(-1);
 const RdKafkaOffset RdKafkaOffsetBegin(-2);
-
-
-
-/* enum StatusCode { */
-/*   NO_ERROR = 1000, */
-/*   RUNNING = 1, */
-/*   STOPPED = 0, */
-/*   ERROR = -1, */
-/* }; */
 
 } // namespace FileWriter

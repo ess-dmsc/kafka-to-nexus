@@ -26,10 +26,10 @@ void StdIOWriter::print(const StreamerStatusType &x) {
 }
 void StdIOWriter::print(const StreamerStatisticsType &x) {
   std::cout << "\tstatistics :\n"
-            << "\t\tsize average :\t" << x.size_avg << "\n"
-            << "\t\tsize std :\t" << x.size_std << "\n"
-            << "\t\tfrequency average :\t" << x.freq_avg << "\n"
-            << "\t\tfrequency std :\t\t" << x.freq_std << "\n";
+            << "\t\tsize average :\t" << x.average_message_size << "\n"
+            << "\t\tsize std :\t" << x.standard_deviation_message_size << "\n"
+            << "\t\tfrequency average :\t" << x.average_message_frequency << "\n"
+            << "\t\tfrequency std :\t\t" << x.standard_deviation_message_frequency << "\n";
 }
 
 rapidjson::Document JSONWriter::write(const StreamMasterStatus &data) {
@@ -90,15 +90,15 @@ rapidjson::Value JSONWriter::to_json(const StreamerStatisticsType &x,
   {
     Value size;
     size.SetObject();
-    size.AddMember("avg", x.size_avg, a);
-    size.AddMember("std", x.size_std, a);
+    size.AddMember("avg", x.average_message_size, a);
+    size.AddMember("std", x.standard_deviation_message_size, a);
     value.AddMember("size", size, a);
   }
   {
     Value freq;
     freq.SetObject();
-    freq.AddMember("avg", x.freq_avg, a);
-    freq.AddMember("std", x.freq_std, a);
+    freq.AddMember("avg", x.average_message_frequency, a);
+    freq.AddMember("std", x.standard_deviation_message_frequency, a);
     value.AddMember("freq", freq, a);
   }
   return value;
@@ -112,32 +112,6 @@ std::string JSONStreamWriter::write(const StreamMasterStatus &data) {
   std::string s{buffer.GetString()};
   return std::move(s);
 }
-
-// flatbuffers::Offset<StatusInfo>
-// FlatbuffersWriter::write(const StreamMasterStatus &data) {
-
-//   flatbuffers::FlatBufferBuilder builder(1024);
-//   std::vector<flatbuffers::Offset<StreamerInfo>> streamers;
-
-//   for (size_t i = 0; i < data.topic.size(); ++i) {
-//     auto t = builder.CreateString(data.topic[i]);
-//     auto msg_size = Statistics(data.streamer_stats[i].size_avg,
-//                                data.streamer_stats[i].size_std);
-//     auto msg_freq = Statistics(data.streamer_stats[i].freq_avg,
-//                                data.streamer_stats[i].freq_std);
-//     auto s = CreateStreamerInfo(
-//         builder, t, int(data.streamer_status[i].messages),
-//         int(data.streamer_status[i].bytes),
-//         int(data.streamer_status[i].errors), &msg_size, &msg_freq);
-//     streamers.push_back(s);
-//   }
-//   auto fbs =
-//       CreateStatusInfo(builder, data.status,
-//       builder.CreateVector(streamers));
-//   FinishStatusInfoBuffer(builder, fbs);
-//   builder.Clear();
-//   return fbs;
-// }
 
 } // namespace Status
 

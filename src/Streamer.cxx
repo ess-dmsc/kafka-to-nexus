@@ -134,7 +134,6 @@ void FileWriter::Streamer::initialize_streamer(
       LOG(3, "Unknown option: {} [{}]", item.first, item.second);
     }
   }
-  return;
 }
 
 FileWriter::Streamer::Streamer(
@@ -228,7 +227,6 @@ void FileWriter::Streamer::connect(
 
   LOG(7, "Connected to topic {}", topic_name);
   s_.run_status(ErrorCode::writing);
-  return;
 }
 
 FileWriter::Streamer::Error FileWriter::Streamer::closeStream() {

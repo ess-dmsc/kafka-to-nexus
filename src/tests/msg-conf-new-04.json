@@ -1,7 +1,7 @@
 {
     "cmd": "FileWriter_new",
-    "start_time" : 1234,
-    "stop_time" : 12345,
+    "start_time" : 1502977633005938991,
+    "stop_time" : 1502977645005919707,
     "broker": "129.129.188.59:9092",
     "streams": [
 	{

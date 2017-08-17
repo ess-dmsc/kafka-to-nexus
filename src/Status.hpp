@@ -26,6 +26,7 @@ enum StreamMasterErrorCode {
   not_started = 0,
   running = 1,
   has_finished = 2,
+  empty_streamer = 3,
   streamer_error = -1,
   statistics_failure = -10,
   streammaster_error = -1000
@@ -50,21 +51,27 @@ enum StreamerErrorCode {
 const std::string Err2Str(const FileWriter::StreamMasterError &);
 const std::string Err2Str(const FileWriter::StreamerError &);
 
-// Data type for collecting informations about the streamer
+// Data type for collecting informations about the streamer. `bytes`
+// and `messages` store the total number of bytes and messages
+// received, and `errors` the total number of errors while processing
+// the message, `bytes_squared` and `messages_squared` are the sum of
+// the square of the corresponding quantities.  Given these values one
+// can compute the average message size (in bytes), the average
+// message frequency and their corresponding standard deviation.
 class StreamerStatusType {
   friend class StdIOWriter;
   friend class JSONWriter;
   friend class FlatbuffersWriter;
 
 public:
-  StreamerStatusType();
+  StreamerStatusType() = default;
   StreamerStatusType(const StreamerStatusType &other);
   StreamerStatusType(StreamerStatusType &&other) noexcept = default;
 
   ~StreamerStatusType() = default;
 
-  StreamerStatusType &operator=(const StreamerStatusType &other);
-  StreamerStatusType &operator=(StreamerStatusType &&other);
+  StreamerStatusType &operator=(const StreamerStatusType &other) = default;
+  StreamerStatusType &operator=(StreamerStatusType &&other) noexcept;
   StreamerStatusType &operator+=(const StreamerStatusType &other);
   StreamerStatusType &operator-=(const StreamerStatusType &other);
   StreamerStatusType operator+(const StreamerStatusType &other);
@@ -74,15 +81,16 @@ public:
   double bytes{0.0};
   double messages{0.0};
   double errors{0.0};
-  double bytes2{0.0};
-  double messages2{0.0};
+  double bytes_squared{0.0};
+  double messages_squared{0.0};
 };
 
 // Data type for extracting statistics about the streamer
 struct StreamerStatisticsType {
-  double size_avg{0}, size_std{0};
-  double freq_avg{0}, freq_std{0};
-  int partitions{0};
+  double average_message_size{0};
+  double standard_deviation_message_size{0};
+  double average_message_frequency{0};
+  double standard_deviation_message_frequency{0};
 };
 
 class StreamMasterStatus {
@@ -92,9 +100,9 @@ class StreamMasterStatus {
 
 public:
   StreamMasterStatus() = default;
-  StreamMasterStatus(const int &value) : status(value){};
+  explicit StreamMasterStatus(const int &value) : status(value){};
 
-  StreamMasterStatus &push(const std::string topic_name,
+  StreamMasterStatus &push(const std::string &topic_name,
                            const StreamerStatusType &status,
                            const StreamerStatisticsType &stats) {
     topic.push_back(topic_name);
@@ -121,18 +129,17 @@ class StreamerStatus {
 
 public:
   StreamerStatus()
-      : last_time{std::chrono::system_clock::now()}, partitions{0},
+      : last_time{std::chrono::system_clock::now()},
         run_status_(StreamerError(StreamerErrorCode::stopped)) {}
   StreamerStatus(const StreamerStatus &other)
       : current{other.current}, last{other.last}, last_time{other.last_time},
-        partitions{other.partitions}, run_status_(other.run_status_) {}
+        run_status_(other.run_status_) {}
 
   void add_message(const double &bytes);
   void error() { current.errors++; }
   void error(const StreamerError &value) {
     run_status_ = value;
     error();
-    return;
   }
 
   StreamerStatusType fetch_status();
@@ -147,7 +154,6 @@ private:
   StreamerStatusType last;
   std::mutex m;
   std::chrono::system_clock::time_point last_time;
-  uint32_t partitions;
   StreamerError run_status_;
 }; // namespace Status
 

@@ -1,9 +1,8 @@
-#include <Status.hpp>
+#include <thread>
 
 #include <gtest/gtest.h>
 
-#include <random>
-#include <thread>
+#include <Status.hpp>
 
 using namespace FileWriter;
 const int n_messages = 10000;
@@ -29,7 +28,7 @@ void collect(Status::StreamerStatus &s, double &x) {
   return;
 }
 
-void continous_collect(Status::StreamerStatus &s, bool &terminate) {
+void continuous_collect(Status::StreamerStatus &s, bool &terminate) {
   int i{0};
   while (!terminate) {
     // std::this_thread::sleep_for(std::chrono::milliseconds(10));
@@ -52,7 +51,7 @@ void fetch(Status::StreamerStatus &s, double &x) {
   EXPECT_EQ(v.errors, n_messages / error_ratio);
 }
 
-void continous_fetch(Status::StreamerStatus &s, bool &terminate) {
+void continuous_fetch(Status::StreamerStatus &s, bool &terminate) {
   Status::StreamerStatusType old;
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   while (!terminate) {
@@ -65,14 +64,14 @@ void continous_fetch(Status::StreamerStatus &s, bool &terminate) {
   }
 }
 
-void continous_statistics(Status::StreamerStatus &s, bool &terminate) {
+void continuous_statistics(Status::StreamerStatus &s, bool &terminate) {
 
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   while (!terminate) {
     auto v = s.fetch_statistics();
     // with 5\sigma we expect >99.99..% of evts ok
-    EXPECT_TRUE(v.size_avg - 5 * v.size_std < bernoulli_avg);
-    EXPECT_TRUE(v.size_avg + 5 * v.size_std > bernoulli_avg);
+    EXPECT_TRUE(v.average_message_size - 5 * v.standard_deviation_message_size < bernoulli_avg);
+    EXPECT_TRUE(v.average_message_size + 5 * v.standard_deviation_message_size > bernoulli_avg);
     std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   }
 }
@@ -89,8 +88,8 @@ TEST(StreamerStatus, Counters) {
 TEST(StreamerStatus, ContinousCounters) {
   Status::StreamerStatus s_;
   bool stop = false;
-  std::thread update(continous_collect, std::ref(s_), std::ref(stop));
-  std::thread test(continous_fetch, std::ref(s_), std::ref(stop));
+  std::thread update(continuous_collect, std::ref(s_), std::ref(stop));
+  std::thread test(continuous_fetch, std::ref(s_), std::ref(stop));
   std::this_thread::sleep_for(std::chrono::seconds(2));
   stop = true;
   update.join();
@@ -100,9 +99,9 @@ TEST(StreamerStatus, ContinousCounters) {
 TEST(StreamerStatus, ContinousStatistics) {
   Status::StreamerStatus s_;
   bool stop = false;
-  std::thread update(continous_collect, std::ref(s_), std::ref(stop));
-  std::thread test(continous_fetch, std::ref(s_), std::ref(stop));
-  std::thread stat(continous_statistics, std::ref(s_), std::ref(stop));
+  std::thread update(continuous_collect, std::ref(s_), std::ref(stop));
+  std::thread test(continuous_fetch, std::ref(s_), std::ref(stop));
+  std::thread stat(continuous_statistics, std::ref(s_), std::ref(stop));
   std::this_thread::sleep_for(std::chrono::seconds(5));
   stop = true;
   update.join();

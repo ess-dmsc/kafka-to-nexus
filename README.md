@@ -210,8 +210,8 @@ The filewriter can be installed using the ansible playbook defined in
 `ansible`. The file `roles/kafka-to-nexus/defaults/main.yml` defines
 the variables used during installation. The variables `<dep>_src` and
 `<dep>_version` are the remote source and the required version of the
-dependancy, `<dep>` the install location. The sources and builds of
-the dependancies are kept in `sources` and `builds`.
+dependency, `<dep>` the install location. The sources and builds of
+the dependencies are kept in `sources` and `builds`.
 
 `filewriter_inc`, `filewriter_lib` and `filewriter_bin` defines
 `CMAKE_INCLUDE_PATH`, `CMAKE_LIBRARY_PATH` and `CMAKE_PROGRAM_PATH`.
@@ -235,7 +235,7 @@ The default installation has the following structure
 ## Flatbuffer Schema Plugins
 
 The actual parsing of the different FlatBuffer schemata is handled by plugins
-which register themself via the `SchemaRegistry`.
+which register themselves via the `SchemaRegistry`.
 See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
 Support for new schemas can be added in the same way.
 
@@ -328,7 +328,7 @@ sources to be implemented) and consumes a message in the specified topic. Some f
 * multiple Source per streamer
 * initial timestamp is specified using ``set_start_time``
 * connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
-* Kafka::Config ans streamer options can be passed using the constructor ``kafka_options`` and ``filewriter_options`` respectively.
+* Kafka::Config and streamer options can be passed using the constructor ``kafka_options`` and ``filewriter_options`` respectively.
 
 ## DemuxTopic
 Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.
@@ -345,8 +345,8 @@ The StreamMaster receives the array of DemuxTopic from
 FileWriterCommand and instantiates the Streamer array according to the
 topics. Eventually retrieves the list of brokers from Kafka.
 
-* `start_time` and `stop_time` can be used to set a the timestamp of
-the fist and last event to be written (caution: actually events
+* `start_time` and `stop_time` can be used to set the timestamp of
+the first and last event to be written (caution: actually events
 with timestamp earlier than request will be written);
 * upon a `stop` message the ``Master`` can stop the writing;
 * if a `status-uri` is configured sends a (JSON formatted) status
