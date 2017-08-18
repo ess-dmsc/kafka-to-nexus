@@ -28,9 +28,10 @@ struct get_json_ret_string {
 struct get_json_ret_int {
   explicit operator bool() const;
   explicit operator int() const;
+  explicit operator int64_t() const;
   bool found() const;
   int err;
-  int v;
+  int64_t v;
 };
 
 struct get_json_ret_array {

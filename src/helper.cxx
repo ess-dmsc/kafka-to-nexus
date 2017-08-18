@@ -74,6 +74,7 @@ get_json_ret_string::operator std::string() const { return v; }
 bool get_json_ret_int::found() const { return err == 0; }
 get_json_ret_int::operator bool() const { return err == 0; }
 get_json_ret_int::operator int() const { return v; }
+get_json_ret_int::operator int64_t() const { return v; }
 
 bool get_json_ret_array::found() const { return err == 0; }
 get_json_ret_array::operator bool() const { return err == 0; }

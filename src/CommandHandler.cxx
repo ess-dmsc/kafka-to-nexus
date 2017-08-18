@@ -173,11 +173,8 @@ void CommandHandler::handle(rapidjson::Document const &d) {
   if (master) {
     teamid = master->config.teamid;
   }
-  {
-    auto m = d.FindMember("teamid");
-    if (m != d.MemberEnd() && m->value.IsInt()) {
-      cmd_teamid = m->value.GetUint64();
-    }
+  if (auto i = get_int(&d, "teamid")) {
+    cmd_teamid = int64_t(i);
   }
   if (cmd_teamid != teamid) {
     LOG(1, "INFO command is for teamid {:016x}, we are {:016x}", cmd_teamid,
@@ -185,40 +182,36 @@ void CommandHandler::handle(rapidjson::Document const &d) {
     return;
   }
 
-  {
-    auto m = d.FindMember("cmd");
-    if (m != d.MemberEnd() && m->value.IsString()) {
-      string cmd(m->value.GetString());
-      if (cmd == "FileWriter_new") {
-        handle_new(d);
-        return;
-      }
-      if (cmd == "FileWriter_exit") {
-        handle_exit(d);
-        return;
-      }
+  // The ways to give commands will be unified in upcoming PR.
+  if (auto s = get_string(&d, "cmd")) {
+    auto cmd = string(s);
+    if (cmd == "FileWriter_new") {
+      handle_new(d);
+      return;
+    }
+    if (cmd == "FileWriter_exit") {
+      handle_exit(d);
+      return;
     }
   }
 
-  {
-    if (auto dt = get_string(&d, "recv_type")) {
-      if (dt.v == "FileWriter") {
-        if (auto cmd = get_string(&d, "cmd")) {
-          if (cmd.v == "file_writer_tasks_clear_all") {
-            handle_file_writer_task_clear_all(d);
-            return;
-          }
+  if (auto s = get_string(&d, "recv_type")) {
+    auto recv_type = string(s);
+    if (recv_type == "FileWriter") {
+      if (auto s = get_string(&d, "cmd")) {
+        auto cmd = string(s);
+        if (cmd == "file_writer_tasks_clear_all") {
+          handle_file_writer_task_clear_all(d);
+          return;
         }
       }
     }
   }
 
-  {
-    StringBuffer buffer;
-    PrettyWriter<StringBuffer> writer(buffer);
-    d.Accept(writer);
-    LOG(3, "ERROR could not figure out this command: {}", buffer.GetString());
-  }
+  StringBuffer buffer;
+  PrettyWriter<StringBuffer> writer(buffer);
+  d.Accept(writer);
+  LOG(3, "ERROR could not figure out this command: {}", buffer.GetString());
 }
 
 void CommandHandler::handle(Msg const &msg) {
