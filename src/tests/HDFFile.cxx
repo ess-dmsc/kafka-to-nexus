@@ -163,7 +163,7 @@ public:
         // Number of events per message:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
-        size_t n_ele = n_events_per_message;
+        auto n_ele = n_events_per_message;
         fbs.push_back(synth.next(n_ele));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
