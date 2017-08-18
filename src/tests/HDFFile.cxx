@@ -156,7 +156,7 @@ public:
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(int n, int n_events_per_message) {
-      // LOG(4, "generating {} {}...", topic, source);
+      LOG(7, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
