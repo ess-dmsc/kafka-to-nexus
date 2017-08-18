@@ -91,7 +91,6 @@ public:
   int flush_buf();
 
 private:
-  h5d_chunked_1d();
   h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5d ds);
   h5s dsp_wr;
   size_t const buf_MAXPKG = 4 * 1024;
@@ -116,7 +115,6 @@ public:
   int flush_buf();
 
 private:
-  h5d_chunked_2d();
   h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
                  h5d ds);
   h5s dsp_wr;
