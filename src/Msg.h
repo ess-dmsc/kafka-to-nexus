@@ -1,12 +1,13 @@
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 
 namespace FileWriter {
 
 struct Msg {
   char *data;
-  int32_t size;
+  size_t size;
 };
 
 } // namespace FileWriter

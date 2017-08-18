@@ -62,7 +62,7 @@ public:
         BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
     auto fb = synth.next<double>(0);
     msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                          (int32_t)fb.builder->GetSize()};
+                          fb.builder->GetSize()};
     // f1.impl->h5file
     writer->init(&f1, "/", source_name, msg, nullptr, nullptr);
   }
@@ -83,7 +83,7 @@ public:
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({cmd.data(), (int32_t)cmd.size()});
+    ch.handle({cmd.data(), cmd.size()});
   }
 
   static void new_03_data() {
@@ -97,7 +97,7 @@ public:
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({cmd.data(), (int32_t)cmd.size()});
+    ch.handle({cmd.data(), cmd.size()});
 
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
@@ -119,7 +119,7 @@ public:
         BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
     auto fb = synth.next<double>(0);
     msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                          (int32_t)fb.builder->GetSize()};
+                          fb.builder->GetSize()};
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -167,8 +167,7 @@ public:
         fbs.push_back(synth.next(n_ele));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                       (int32_t)fb.builder->GetSize()});
-        // LOG(4, "GetSize: {}", fb.builder->GetSize());
+                                       fb.builder->GetSize()});
       }
     }
   };
@@ -344,7 +343,7 @@ public:
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
-        ch.handle({(char *)cmd.data(), (int32_t)cmd.size()});
+        ch.handle({(char *)cmd.data(), cmd.size()});
       }
       auto t3 = CLK::now();
       LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
