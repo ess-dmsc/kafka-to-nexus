@@ -1,5 +1,10 @@
 #pragma once
 // #include "schemas/fws0_fwr_status_generated.h"
+
+#if RAPIDJSON_HAS_STDSTRING == 0
+#undef RAPIDJSON_HAS_STDSTRING
+#define RAPIDJSON_HAS_STDSTRING 1
+#endif
 #include "rapidjson/document.h"
 
 namespace FileWriter {

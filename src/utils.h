@@ -45,8 +45,6 @@ struct KafkaTimeStampType{};
 } // namespace utils
 
 using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
-//using RdKafkaPartition = utils::StrongType<int32_t, utils::PartitionType>;
-//using ErrorCode = utils::StrongType<int32_t, utils::FileWriterErrorType>;
 using StreamerError = utils::StrongType<int32_t, utils::StreamerErrorType>;
 using StreamMasterError = utils::StrongType<int32_t, utils::StreamMasterErrorType>;
  using ESSTimeStamp = nanoseconds;

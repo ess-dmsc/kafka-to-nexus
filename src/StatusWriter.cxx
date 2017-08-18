@@ -2,6 +2,7 @@
 
 #include "Status.hpp"
 #include "StatusWriter.hpp"
+
 #include "rapidjson/stringbuffer.h"
 #include "rapidjson/writer.h"
 
@@ -28,8 +29,10 @@ void StdIOWriter::print(const StreamerStatisticsType &x) {
   std::cout << "\tstatistics :\n"
             << "\t\tsize average :\t" << x.average_message_size << "\n"
             << "\t\tsize std :\t" << x.standard_deviation_message_size << "\n"
-            << "\t\tfrequency average :\t" << x.average_message_frequency << "\n"
-            << "\t\tfrequency std :\t\t" << x.standard_deviation_message_frequency << "\n";
+            << "\t\tfrequency average :\t" << x.average_message_frequency
+            << "\n"
+            << "\t\tfrequency std :\t\t"
+            << x.standard_deviation_message_frequency << "\n";
 }
 
 rapidjson::Document JSONWriter::write(const StreamMasterStatus &data) {
@@ -45,11 +48,10 @@ rapidjson::Document JSONWriter::write_impl(const StreamMasterStatus &data) {
     d.AddMember("type", "filewriter_streammaster_status", a);
   }
   { // stream master info
-    Value sm,ss;
+    Value sm, ss;
     sm.SetObject();
     std::string s{Err2Str(StreamMasterError{data.status})};
-    ss.SetString(s.c_str(),s.size(),a);
-    sm.AddMember("status", ss, a);
+    sm.AddMember("status", StringRef(s), a);
     d.AddMember("streammaster", sm, a);
   }
   { // streamers info
