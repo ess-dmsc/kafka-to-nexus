@@ -147,7 +147,7 @@ public:
   public:
     string topic;
     string source;
-    int seed = 0;
+    uint64_t seed = 0;
     std::mt19937 rnd;
     vector<FlatBufs::ev42::fb> fbs;
     vector<FileWriter::Msg> msgs;
