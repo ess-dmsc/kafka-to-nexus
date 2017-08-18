@@ -323,12 +323,12 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y) {
 template <typename T>
 append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   append_ret ret{-1};
-  uint32_t nbytes = nlen * sizeof(T);
+  auto nbytes = nlen * sizeof(T);
   bool do_buf = nbytes <= buf_MAXPKG;
   if (do_buf) {
     auto p1 = (char *)data;
     auto p2 = buf.data() + buf_n;
-    for (uint32_t i1 = 0; i1 < nbytes; ++i1) {
+    for (size_t i1 = 0; i1 < nbytes; ++i1) {
       p2[i1] = p1[i1];
     }
     buf_n += nbytes;
