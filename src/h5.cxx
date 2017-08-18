@@ -333,7 +333,9 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
     }
     buf_n += nbytes;
   }
-  if (buf_n >= buf_SIZE - 2 * buf_MAXPKG || (!do_buf && buf_n > 0)) {
+  // Flush the buffer if there is a chance that it will be full on the next
+  // iteration.
+  if (buf_n > buf_SIZE - buf_MAXPKG || (!do_buf && buf_n > 0)) {
     if (flush_buf() != 0) {
       return {-1};
     }
