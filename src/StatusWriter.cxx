@@ -9,7 +9,7 @@
 namespace FileWriter {
 namespace Status {
 
-void StdIOWriter::write(const StreamMasterStatus &data) {
+StdIOWriter::return_type StdIOWriter::write(const StreamMasterStatus &data) {
   std::cout << "stream_master :\t" << data.status << "\n";
   for (size_t i = 0; i < data.topic.size(); ++i) {
     std::cout << data.topic[i] << ":\n";
@@ -35,11 +35,7 @@ void StdIOWriter::print(const StreamerStatisticsType &x) {
             << x.standard_deviation_message_frequency << "\n";
 }
 
-rapidjson::Document JSONWriter::write(const StreamMasterStatus &data) {
-  return write_impl(data);
-}
-
-rapidjson::Document JSONWriter::write_impl(const StreamMasterStatus &data) {
+rapidjson::Document JSONWriterBase::write_impl(const StreamMasterStatus &data) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
@@ -70,7 +66,7 @@ rapidjson::Document JSONWriter::write_impl(const StreamMasterStatus &data) {
   return d;
 }
 
-rapidjson::Value JSONWriter::to_json(const StreamerStatusType &x,
+rapidjson::Value JSONWriterBase::to_json(const StreamerStatusType &x,
                                      return_type &d) {
   using namespace rapidjson;
   auto &a = d.GetAllocator();
@@ -82,7 +78,7 @@ rapidjson::Value JSONWriter::to_json(const StreamerStatusType &x,
   return value;
 }
 
-rapidjson::Value JSONWriter::to_json(const StreamerStatisticsType &x,
+rapidjson::Value JSONWriterBase::to_json(const StreamerStatisticsType &x,
                                      return_type &d) {
   using namespace rapidjson;
   auto &a = d.GetAllocator();
@@ -106,7 +102,12 @@ rapidjson::Value JSONWriter::to_json(const StreamerStatisticsType &x,
   return value;
 }
 
-std::string JSONStreamWriter::write(const StreamMasterStatus &data) {
+JSONWriter::return_type JSONWriter::write(const StreamMasterStatus &data) {
+  return write_impl(data);
+}
+
+JSONStreamWriter::return_type
+JSONStreamWriter::write(const StreamMasterStatus &data) {
   auto value = write_impl(data);
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> w(buffer);

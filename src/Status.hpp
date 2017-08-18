@@ -15,8 +15,7 @@ class Streamer;
 namespace Status {
 
 class StdIOWriter;
-class JSONWriter;
-class FlatbuffersWriter;
+class JSONWriterBase;
 
 class StreamerStatus;
 class StreamMasterStatus;
@@ -60,8 +59,7 @@ const std::string Err2Str(const FileWriter::StreamerError &);
 // message frequency and their corresponding standard deviation.
 class StreamerStatusType {
   friend class StdIOWriter;
-  friend class JSONWriter;
-  friend class FlatbuffersWriter;
+  friend class JSONWriterBase;
 
 public:
   StreamerStatusType() = default;
@@ -95,8 +93,7 @@ struct StreamerStatisticsType {
 
 class StreamMasterStatus {
   friend class StdIOWriter;
-  friend class JSONWriter;
-  friend class FlatbuffersWriter;
+  friend class JSONWriterBase;
 
 public:
   StreamMasterStatus() = default;
@@ -124,8 +121,7 @@ class StreamerStatus {
   using StreamerError = FileWriter::StreamerError;
 
   friend class StdIOWriter;
-  friend class JSONWriter;
-  friend class FlatbuffersWriter;
+  friend class JSONWriterBase;
 
 public:
   StreamerStatus()
