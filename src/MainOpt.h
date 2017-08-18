@@ -40,6 +40,8 @@ struct MainOpt {
   std::vector<rapidjson::Document> commands_from_config_file;
   /// Called on startup when a `--config-file` is found.
   int parse_config_file(std::string fname);
+  /// Used in turn by `parse_config_file` to parse the json data.
+  int parse_config_json(std::string json);
   /// Kafka broker and topic where file writer commands are published.
   uri::URI command_broker_uri{"kafka://localhost:9092/kafka-to-nexus.command"};
 

@@ -304,7 +304,9 @@ h5d_chunked_1d<T>::create(hid_t loc, string name, hsize_t chunk_bytes) {
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes,
                                   h5d ds)
-    : ds(move(ds)), dsp_wr(this->ds) {}
+    : ds(move(ds)), dsp_wr(this->ds) {
+  buf.resize(buf_SIZE);
+}
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
@@ -321,11 +323,19 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y) {
 template <typename T>
 append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   append_ret ret{-1};
-  bool do_buf = nlen * sizeof(T) < 4 * 1024;
+  auto nbytes = nlen * sizeof(T);
+  bool do_buf = nbytes <= buf_MAXPKG;
   if (do_buf) {
-    std::copy(data, data + nlen, std::back_inserter(buf));
+    auto p1 = (char *)data;
+    auto p2 = buf.data() + buf_n;
+    for (size_t i1 = 0; i1 < nbytes; ++i1) {
+      p2[i1] = p1[i1];
+    }
+    buf_n += nbytes;
   }
-  if (buf.size() > 128 * 1024 || (!do_buf && buf.size() > 0)) {
+  // Flush the buffer if there is a chance that it will be full on the next
+  // iteration.
+  if (buf_n > buf_SIZE - buf_MAXPKG || (!do_buf && buf_n > 0)) {
     if (flush_buf() != 0) {
       return {-1};
     }
@@ -338,17 +348,17 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   }
   ret.status = 0;
   ret.ix0 = i0;
-  ret.written_bytes = sizeof(T) * nlen;
+  ret.written_bytes = nbytes;
   i0 += nlen;
   return ret;
 }
 
 template <typename T> int h5d_chunked_1d<T>::flush_buf() {
-  auto wr = ds.append_data_1d(buf.data(), buf.size());
+  auto wr = ds.append_data_1d((T *)buf.data(), buf_n / sizeof(T));
   if (!wr) {
     return -1;
   }
-  buf.clear();
+  buf_n = 0;
   return 0;
 }
 

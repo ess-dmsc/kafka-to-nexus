@@ -37,8 +37,9 @@ HDFFile::~HDFFile() {
   if (impl->h5file >= 0) {
     std::array<char, 512> fname;
     H5Fget_name(impl->h5file, fname.data(), fname.size());
-    LOG(5, "flush file {}", fname.data());
+    LOG(6, "flush file {}", fname.data());
     H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
+    LOG(6, "close file {}", fname.data());
     H5Fclose(impl->h5file);
   }
 }

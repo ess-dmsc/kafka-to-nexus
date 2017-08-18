@@ -91,10 +91,12 @@ public:
   int flush_buf();
 
 private:
-  h5d_chunked_1d();
   h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5d ds);
   h5s dsp_wr;
-  std::vector<T> buf;
+  size_t const buf_MAXPKG = 4 * 1024;
+  size_t const buf_SIZE = 160 * 1024;
+  size_t buf_n = 0;
+  std::vector<char> buf;
   hsize_t i0 = 0;
 };
 
@@ -113,7 +115,6 @@ public:
   int flush_buf();
 
 private:
-  h5d_chunked_2d();
   h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
                  h5d ds);
   h5s dsp_wr;

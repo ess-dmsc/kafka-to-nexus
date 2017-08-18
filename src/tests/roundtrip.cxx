@@ -212,7 +212,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
       for (int i1 = 0; i1 < 32; ++i1) {
         auto fb = synth.next(64);
         msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                              (int32_t)fb.builder->GetSize()};
+                              fb.builder->GetSize()};
         {
           auto v = binary_to_hex(msg.data, msg.size);
           LOG(7, "msg:\n{:.{}}", v.data(), v.size());

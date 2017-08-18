@@ -19,6 +19,7 @@ public:
   CommandHandler(MainOpt &config, Master *master);
   void handle_new(rapidjson::Document const &d);
   void handle_exit(rapidjson::Document const &d);
+  void handle_file_writer_task_clear_all(rapidjson::Document const &d);
   void handle(Msg const &msg);
   void handle(rapidjson::Document const &cmd);
 

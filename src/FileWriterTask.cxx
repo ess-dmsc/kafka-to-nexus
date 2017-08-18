@@ -42,7 +42,7 @@ FileWriterTask::FileWriterTask() {
   impl.reset(new FileWriterTask_impl);
 }
 
-FileWriterTask::~FileWriterTask() { LOG(9, "~FileWriterTask"); }
+FileWriterTask::~FileWriterTask() { LOG(6, "~FileWriterTask"); }
 
 FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_filename) {
   impl->hdf_filename = hdf_filename;

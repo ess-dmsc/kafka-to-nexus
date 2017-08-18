@@ -10,17 +10,21 @@
 using uri::URI;
 
 int MainOpt::parse_config_file(std::string fname) {
-  using namespace rapidjson;
   if (fname.empty()) {
     LOG(3, "given config filename is empty");
     return -1;
   }
+  auto jsontxt = gulp(fname);
+  return parse_config_json(std::string(jsontxt.data(), jsontxt.size()));
+}
+
+int MainOpt::parse_config_json(std::string json) {
+  using namespace rapidjson;
   // Parse the JSON configuration and extract parameters.
   // Currently, these parameters take precedence over what is given on the
   // command line.
-  auto jsontxt = gulp(fname);
   auto &d = config_file;
-  d.Parse(jsontxt.data(), jsontxt.size());
+  d.Parse(json.data(), json.size());
   if (d.HasParseError()) {
     LOG(3, "configuration is not well formed");
     return -5;
