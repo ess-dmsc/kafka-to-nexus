@@ -354,19 +354,8 @@ with timestamp earlier than request will be written);
 * a global `status` flag report the status of
 ``StreamMaster``. Definitions are in
 `Status::StreamMasterErrorCode` (the function `Err2Str`
-converts the error code into a human readable string). Possible values:
+converts the error code into a human readable string). 
 
-| Code                 |
-|----------------------|
-|  not_started         | 
-|  running             |
-|  has\_finished       |
-|  streamer\_error     |
-|  statistics\_failure |
-|  streammaster\_error |
-
-
-	
 
 More tests involving the network:
 ```
