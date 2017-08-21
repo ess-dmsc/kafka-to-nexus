@@ -4,6 +4,7 @@
 #include <iostream>
 #include <map>
 #include <mutex>
+#include <condition_variable>
 #include <string>
 #include <thread>
 
@@ -20,7 +21,8 @@ class TopicPartition;
 
 namespace FileWriter {
 
-struct Streamer {
+class Streamer {
+public:
   using option_t = std::pair<std::string, std::string>;
   using Options = std::vector<option_t>;
   using Error = StreamerError;
@@ -59,6 +61,10 @@ private:
   std::thread connect_;
   std::mutex guard_;
 
+  std::mutex connection_lock_;
+  std::condition_variable connection_ready_;
+  std::atomic<bool> ready_{false};
+
   int32_t message_length_{0};
   int32_t n_messages_{0};
   int32_t n_sources_{0};
@@ -66,7 +72,7 @@ private:
   milliseconds consumer_timeout{1000};
   int metadata_retry{5};
 
-  void connect(const std::string, Options kafka_options,
+  void connect(const std::string broker, Options kafka_options,
                Options filewriter_options);
   // sets options for Kafka consumer and the Streamer
   void initialize_streamer(Options &);
@@ -76,7 +82,7 @@ private:
                     const option_t &option);
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
-  std::unique_ptr<RdKafka::Metadata> get_metadata(const int& retry);
+  std::unique_ptr<RdKafka::Metadata> get_metadata(const int &retry);
   int get_topic_partitions(const std::string &topic,
                            std::unique_ptr<RdKafka::Metadata> metadata);
 

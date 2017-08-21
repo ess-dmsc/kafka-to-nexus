@@ -84,7 +84,8 @@ public:
 };
 
 // Data type for extracting statistics about the streamer
-struct StreamerStatisticsType {
+class StreamerStatisticsType {
+public:
   double average_message_size{0};
   double standard_deviation_message_size{0};
   double average_message_frequency{0};

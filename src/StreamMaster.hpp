@@ -33,7 +33,7 @@ template <typename Streamer, typename Demux> class StreamMaster {
 public:
   StreamMaster() {}
 
-  StreamMaster(std::string &broker, std::vector<Demux> &_demux,
+  StreamMaster(const std::string &broker, std::vector<Demux> &_demux,
                const Options &kafka_options = {},
                const Options &filewriter_options = {})
       : demux(_demux) {
@@ -47,7 +47,7 @@ public:
     }
   }
 
-  StreamMaster(std::string &broker,
+  StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
                const Options &kafka_options = {},
                const Options &filewriter_options = {})
@@ -133,7 +133,7 @@ public:
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
-  const Error &status() {
+  const Error status() {
     for (auto &s : streamer) {
       if (s.second.runstatus().value() < 0) {
         runstatus = ErrorCode::streamer_error;
@@ -153,7 +153,7 @@ private:
   void run() {
     using namespace std::chrono;
     runstatus = ErrorCode::running;
-    system_clock::time_point tp, tp_global(system_clock::now());
+    system_clock::time_point tp;
 
     while (!_stop) {
       for (auto &d : demux) {
@@ -206,8 +206,8 @@ private:
 
   void report_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
                    const int delay = 1000) {
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     while (!_stop) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
       Status::StreamMasterStatus status(runstatus.load());
       for (auto &s : streamer) {
         auto v = s.second.status();
@@ -221,8 +221,8 @@ private:
       }
       report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
                                 value.size());
-      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     }
+    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
     // termination message
     {
       Status::StreamMasterStatus status(runstatus.load());

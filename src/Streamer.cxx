@@ -158,7 +158,9 @@ FileWriter::Streamer::Streamer(
     this->connect(topic_name, kafka_options, filewriter_options);
     return;
   });
-  std::this_thread::sleep_for(milliseconds(10));
+
+  std::unique_lock<std::mutex> lk(connection_lock_);
+  connection_ready_.wait(lk, [&] { return this->ready_.load(); });
 }
 
 FileWriter::Streamer::~Streamer(){};
@@ -167,6 +169,10 @@ void FileWriter::Streamer::connect(
     const std::string topic_name, FileWriter::Streamer::Options kafka_options,
     FileWriter::Streamer::Options filewriter_options) {
   std::lock_guard<std::mutex> lock(guard_);
+
+  std::lock_guard<std::mutex> lk(connection_lock_);
+  connection_ready_.notify_all();
+  ready_ = true;
 
   LOG(7, "Connecting to {}", topic_name);
   for (auto &i : filewriter_options) {
@@ -245,6 +251,10 @@ FileWriter::Streamer::Error FileWriter::Streamer::closeStream() {
 template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
+
+  if (s_.run_status().value() != ErrorCode::writing) {
+    return ProcessMessageResult::OK();
+  }
   std::lock_guard<std::mutex> lock(
       guard_); // make sure that connect is completed
 
