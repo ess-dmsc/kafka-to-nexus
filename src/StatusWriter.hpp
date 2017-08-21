@@ -13,6 +13,9 @@ class StreamMasterStatus;
 class StreamerStatusType;
 class StreamerStatisticsType;
 
+class JSONWriter;
+class JSONStreamWriter;
+
 class StdIOWriter {
 public:
   using return_type = void;
@@ -24,25 +27,33 @@ private:
 };
 
 class JSONWriterBase {
+  friend class JSONWriter;
+  friend class JSONStreamWriter;
+
 private:
   using return_type = rapidjson::Document;
 
-protected:
   return_type write_impl(const StreamMasterStatus &);
   rapidjson::Value to_json(const StreamerStatusType &, return_type &);
   rapidjson::Value to_json(const StreamerStatisticsType &, return_type &);
 };
 
-class JSONWriter : private JSONWriterBase {
+class JSONWriter {
 public:
   using return_type = rapidjson::Document;
   return_type write(const StreamMasterStatus &);
+
+private:
+  JSONWriterBase base;
 };
 
-class JSONStreamWriter : private JSONWriterBase {
+class JSONStreamWriter {
 public:
   using return_type = std::string;
   return_type write(const StreamMasterStatus &);
+
+private:
+  JSONWriterBase base;
 };
 
 template <class W> typename W::return_type pprint(const StreamMasterStatus &x) {

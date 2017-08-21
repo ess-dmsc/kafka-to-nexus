@@ -35,6 +35,7 @@ void StdIOWriter::print(const StreamerStatisticsType &x) {
             << x.standard_deviation_message_frequency << "\n";
 }
 
+
 rapidjson::Document JSONWriterBase::write_impl(const StreamMasterStatus &data) {
   using namespace rapidjson;
   Document d;
@@ -67,7 +68,7 @@ rapidjson::Document JSONWriterBase::write_impl(const StreamMasterStatus &data) {
 }
 
 rapidjson::Value JSONWriterBase::to_json(const StreamerStatusType &x,
-                                     return_type &d) {
+                                         return_type &d) {
   using namespace rapidjson;
   auto &a = d.GetAllocator();
   Value value;
@@ -79,7 +80,7 @@ rapidjson::Value JSONWriterBase::to_json(const StreamerStatusType &x,
 }
 
 rapidjson::Value JSONWriterBase::to_json(const StreamerStatisticsType &x,
-                                     return_type &d) {
+                                         return_type &d) {
   using namespace rapidjson;
   auto &a = d.GetAllocator();
 
@@ -103,12 +104,12 @@ rapidjson::Value JSONWriterBase::to_json(const StreamerStatisticsType &x,
 }
 
 JSONWriter::return_type JSONWriter::write(const StreamMasterStatus &data) {
-  return write_impl(data);
+  return base.write_impl(data);
 }
 
 JSONStreamWriter::return_type
 JSONStreamWriter::write(const StreamMasterStatus &data) {
-  auto value = write_impl(data);
+  auto value = base.write_impl(data);
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> w(buffer);
   value.Accept(w);
