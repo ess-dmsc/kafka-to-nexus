@@ -2,6 +2,10 @@
 #include "helper.h"
 #include "logger.h"
 
+#ifndef SOURCE_DO_PROCESS_MESSAGE
+#define SOURCE_DO_PROCESS_MESSAGE 1
+#endif
+
 namespace FileWriter {
 
 Result Result::Ok() {
@@ -12,11 +16,16 @@ Result Result::Ok() {
 
 Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
     : _sourcename(std::move(sourcename)),
-      _hdf_writer_module(std::move(hdf_writer_module)) {}
+      _hdf_writer_module(std::move(hdf_writer_module)) {
+  if (SOURCE_DO_PROCESS_MESSAGE == 0) {
+    do_process_message = false;
+  }
+}
 
 Source::Source(Source &&x) noexcept
     : _topic(std::move(x._topic)), _sourcename(std::move(x._sourcename)),
-      _hdf_writer_module(std::move(x._hdf_writer_module)) {}
+      _hdf_writer_module(std::move(x._hdf_writer_module)),
+      do_process_message(x.do_process_message) {}
 
 std::string const &Source::topic() const { return _topic; }
 
@@ -30,6 +39,9 @@ ProcessMessageResult Source::process_message(Msg const &msg) {
   if (!reader->verify(msg)) {
     LOG(5, "buffer not verified");
     return ProcessMessageResult::ERR();
+  }
+  if (!do_process_message) {
+    return ProcessMessageResult::OK();
   }
   auto ret = _hdf_writer_module->write(msg);
   _cnt_msg_written += 1;
