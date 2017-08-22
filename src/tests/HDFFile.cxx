@@ -501,18 +501,23 @@ public:
       ASSERT_GE(err, 0);
 
       // LOG(4, "have {} messages", source.msgs.size());
-      for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-        auto &fb = source.fbs.at(msg_i);
-        A start = {{(hsize_t)msg_i * n_events_per_message}};
-        err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
-                                  count.data(), nullptr);
-        ASSERT_GE(err, 0);
-        err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
-        ASSERT_GE(err, 0);
-        auto fbd = fb.root()->detector_id();
-        for (int i1 = 0; i1 < n_events_per_message; ++i1) {
-          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
-          ASSERT_EQ(data.at(i1), fbd->Get(i1));
+      for (size_t feed_i = 0; feed_i < feed_msgs_times; ++feed_i) {
+        for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
+          auto &fb = source.fbs.at(msg_i);
+          A start = {
+              {hsize_t(msg_i * n_events_per_message +
+                       feed_i * n_events_per_message * source.msgs.size())}};
+          err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
+                                    count.data(), nullptr);
+          ASSERT_GE(err, 0);
+          err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+          ASSERT_GE(err, 0);
+          auto fbd = fb.root()->detector_id();
+          for (int i1 = 0; i1 < n_events_per_message; ++i1) {
+            // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
+            // fbd->Get(i1));
+            ASSERT_EQ(data.at(i1), fbd->Get(i1));
+          }
         }
       }
 
