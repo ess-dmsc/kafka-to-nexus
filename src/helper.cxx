@@ -80,6 +80,9 @@ bool get_json_ret_uint::found() const { return err == 0; }
 get_json_ret_uint::operator bool() const { return err == 0; }
 get_json_ret_uint::operator uint64_t() const { return v; }
 
+bool get_json_ret_bool::found() const { return v >= 0; }
+get_json_ret_bool::operator bool() const { return v >= 0; }
+
 bool get_json_ret_array::found() const { return err == 0; }
 get_json_ret_array::operator bool() const { return err == 0; }
 
@@ -178,6 +181,29 @@ get_json_ret_uint get_uint(rapidjson::Value const *v, std::string path) {
     ++i1;
   }
   return {1, 0};
+}
+
+get_json_ret_bool get_bool(rapidjson::Value const *v, std::string path) {
+  auto a = split(path, ".");
+  uint32_t i1 = 0;
+  for (auto &x : a) {
+    if (!v->IsObject()) {
+      return {-1};
+    }
+    auto it = v->FindMember(x.c_str());
+    if (it == v->MemberEnd()) {
+      return {-1};
+    }
+    if (i1 == a.size() - 1) {
+      if (it->value.IsBool()) {
+        return {it->value.GetBool()};
+      }
+    } else {
+      v = &it->value;
+    }
+    ++i1;
+  }
+  return {-1};
 }
 
 get_json_ret_array get_array(rapidjson::Value const &v_, std::string path) {
