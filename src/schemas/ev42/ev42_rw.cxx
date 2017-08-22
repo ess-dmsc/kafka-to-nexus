@@ -98,10 +98,8 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
   }
   auto type = str.v;
-  LOG(3, "sourcename: {}", sourcename);
-  LOG(3, "type: {}", type);
-
-  LOG(7, "ev42::init_impl");
+  LOG(7, "ev42::HDFWriterModule::init_hdf  sourcename: {}  type: {}",
+      sourcename, type);
 
   hsize_t chunk_n_elements = 1;
 

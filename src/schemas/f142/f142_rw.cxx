@@ -183,7 +183,7 @@ HDFWriterModule::init_hdf(hid_t hdf_group,
   if (auto x = get_uint(&config_stream, "array_size")) {
     array_size = x.v;
   }
-  LOG(3,
+  LOG(7,
       "HDFWriterModule::init_hdf f142 sourcename: {}  type: {}  array_size: {}",
       sourcename, type, array_size);
 

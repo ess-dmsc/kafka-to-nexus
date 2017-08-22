@@ -67,7 +67,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
-  LOG(3, "found {} streams", stream_hdf_info.size());
+  LOG(6, "Command contains {} streams", stream_hdf_info.size());
   for (auto &stream : stream_hdf_info) {
     auto config_stream_value = get_object(*stream.config_stream, "stream");
     if (!config_stream_value) {
@@ -75,7 +75,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
     auto &config_stream = *config_stream_value.v;
-    LOG(3, "HAVE STREAM: {}", json_to_string(config_stream));
+    LOG(7, "Adding stream: {}", json_to_string(config_stream));
     auto topic = get_string(&config_stream, "topic");
     if (!topic) {
       LOG(5, "Missing topic on stream specification");
