@@ -163,7 +163,7 @@ FileWriter::Streamer::Streamer(
   connection_ready_.wait(lk, [&] { return this->ready_.load(); });
 }
 
-FileWriter::Streamer::~Streamer(){};
+FileWriter::Streamer::~Streamer() { closeStream(); }
 
 void FileWriter::Streamer::connect(
     const std::string topic_name, FileWriter::Streamer::Options kafka_options,
@@ -237,7 +237,7 @@ void FileWriter::Streamer::connect(
 
 FileWriter::Streamer::Error FileWriter::Streamer::closeStream() {
   std::lock_guard<std::mutex> lock(guard_);
-  s_.run_status(Error(ErrorCode::stopped));
+  //  s_.run_status(Error(ErrorCode::stopped));
   if (connect_.joinable()) {
     connect_.join();
   }

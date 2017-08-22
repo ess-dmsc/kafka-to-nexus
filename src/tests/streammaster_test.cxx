@@ -91,7 +91,7 @@ FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
 using namespace FileWriter;
 
-std::string broker;
+std::string broker{"localhost"};
 std::vector<std::string> no_topic = {""};
 std::vector<std::string> topic = {"area_detector", "tof_detector", "motor1",
                                   "motor2", "temp"};
@@ -104,73 +104,49 @@ std::vector<MockDemuxTopic> demux = {
     MockDemuxTopic("area_detector"), MockDemuxTopic("tof_detector"),
     MockDemuxTopic("motor1"), MockDemuxTopic("motor2"), MockDemuxTopic("temp")};
 
-TEST(Streammaster, NotAllocatedFailure) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  EXPECT_THROW(StreamMaster sm(broker, no_demux), std::runtime_error);
+using MockStreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
+
+TEST(StreamMaster, streamer_report_failure_if_missing_broker_or_topic) {
+  {
+    MockStreamMaster sm("", one_demux);
+    std::this_thread::sleep_for(milliseconds(10));
+    EXPECT_EQ(sm.status().value(),
+              FileWriter::Status::StreamMasterErrorCode::streamer_error);
+  }
+  {
+    MockStreamMaster sm(broker, no_demux);
+    std::this_thread::sleep_for(milliseconds(10));
+    EXPECT_EQ(sm.status().value(),
+              FileWriter::Status::StreamMasterErrorCode::streamer_error);
+  }
 }
 
-TEST(Streammaster, Constructor) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  EXPECT_NO_THROW(StreamMaster sm(broker, demux));
+TEST(StreamMaster, streamer_report_failure_if_wrong_broker) {
+  MockStreamMaster sm("no_host", one_demux);
+  std::this_thread::sleep_for(milliseconds(10));
+  EXPECT_EQ(sm.status().value(),
+            FileWriter::Status::StreamMasterErrorCode::streamer_error);
 }
 
-TEST(Streammaster, StartStop) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  EXPECT_TRUE(one_demux[0].sources().size() == 0);
+TEST(StreamMaster, streamer_report_success_if_broker_and_topic_correct) {
+  if (broker == "localhost") {
+    std::cerr << "\nWarning: broker not defined, using localhost\n\n";
+  }
+  MockStreamMaster sm(broker, one_demux);
+  std::this_thread::sleep_for(milliseconds(10));
+  EXPECT_EQ(sm.status().value(),
+            FileWriter::Status::StreamMasterErrorCode::not_started);
+}
+
+TEST(StreamMaster, success_setting_start_time) {
   one_demux[0].add_source("for_example_motor01");
   one_demux[0].add_source("for_example_temperature02");
-  EXPECT_FALSE(one_demux[0].sources().size() == 0);
-
-  StreamMaster sm(broker, one_demux);
-  bool is_joinable = sm.start();
-  EXPECT_TRUE(is_joinable);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  sm.stop();
-
-  for (int item = 0; item < (int64_t)one_demux[0].sources().size(); ++item)
-    std::cout << one_demux[0].sources()[item].source() << " : "
-              << one_demux[0].sources()[item].processed_messages_count()
-              << "\n";
+  if (broker == "localhost") {
+    std::cerr << "\nWarning: broker not defined, using localhost\n\n";
+  }
+  MockStreamMaster sm(broker, one_demux);
+  EXPECT_TRUE(sm.start_time(ESSTimeStamp(10)));
 }
-
-TEST(Streammaster, StartTime) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  one_demux[0].add_source("for_example_motor01");
-  one_demux[0].add_source("for_example_temperature02");
-  StreamMaster sm(broker, one_demux);
-  sm.start_time(ESSTimeStamp(10));
-}
-
-// TEST(Streammaster, Statistics) {
-//   using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-//   one_demux[0].add_source("for_example_motor01");
-//   one_demux[0].add_source("for_example_temperature02");
-//   StreamMaster sm(broker, demux);
-//   sm.start();
-
-//   auto queue = sm.statistics(-10);
-//   EXPECT_TRUE(queue.empty());
-
-//   sm.statistics();
-//   std::this_thread::sleep_for(std::chrono::seconds(1));
-//   queue = sm.statistics();
-//   EXPECT_FALSE(queue.empty());
-//   std::this_thread::sleep_for(std::chrono::seconds(1));
-
-//   using Output1 = FileWriter::Status::StdIOWriter;
-//   using Output2 = FileWriter::Status::FlatbuffersWriter;
-//   using Output3 = FileWriter::Status::JSONWriter;
-//   while (!queue.empty()) {
-//     FileWriter::Status::pprint<Output1>(queue.front());
-//     FileWriter::Status::pprint<Output2>(queue.front());
-//     FileWriter::Status::pprint<Output3>(queue.front());
-//     std::cout << FileWriter::Status::pprint<Output3>(queue.front()) << "\n";
-//     queue.pop();
-//   }
-//   EXPECT_TRUE(queue.empty());
-
-//   sm.stop();
-// }
 
 int main(int argc, char **argv) {
   rng.seed(1234);
@@ -180,14 +156,10 @@ int main(int argc, char **argv) {
     size_t found = opt.find("=");
     if (opt.substr(0, found) == "--kafka_broker")
       broker = opt.substr(found + 1);
-    // if( opt.substr(0,found) ==  "--kafka_topic")
-    //   topic = opt.substr(found+1);
     if (opt.substr(0, found) == "--help") {
       std::cout << "\nOptions: "
                 << "\n"
-                << "\t--kafka_broker=<host>:<port>[default = 9092]\n"
-          // << "\t--kafka_topic=<topic>\n"
-          ;
+                << "\t--kafka_broker=<host>:<port>[default = 9092]\n";
     }
   }
 

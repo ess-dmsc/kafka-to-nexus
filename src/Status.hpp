@@ -109,11 +109,20 @@ public:
     return *this;
   }
 
-private:
+  const int size() {
+    if (streamer_status.size() == streamer_stats.size() &&
+        streamer_status.size() == topic.size()) {
+      return topic.size();
+    } else {
+      return -1;
+    }
+  }
+
+protected:
   std::vector<std::string> topic;
   std::vector<StreamerStatusType> streamer_status;
   std::vector<StreamerStatisticsType> streamer_stats;
-  int status{0};
+  int status{StreamMasterErrorCode::not_started};
 };
 
 // Collects informations about the StreamMaster and the Streamers,
