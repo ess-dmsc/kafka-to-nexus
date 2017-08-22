@@ -35,7 +35,6 @@ void StdIOWriter::print(const StreamerStatisticsType &x) {
             << x.standard_deviation_message_frequency << "\n";
 }
 
-
 rapidjson::Document JSONWriterBase::write_impl(const StreamMasterStatus &data) {
   using namespace rapidjson;
   Document d;

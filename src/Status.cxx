@@ -7,8 +7,8 @@
 FileWriter::Status::StreamerStatusType::StreamerStatusType(
     const FileWriter::Status::StreamerStatusType &other)
     : bytes{other.bytes}, messages{other.messages}, errors{other.errors},
-      bytes_squared{other.bytes_squared}, messages_squared{
-                                              other.messages_squared} {}
+      bytes_squared{other.bytes_squared},
+      messages_squared{other.messages_squared} {}
 
 FileWriter::Status::StreamerStatusType &FileWriter::Status::StreamerStatusType::
 operator=(FileWriter::Status::StreamerStatusType &&other) noexcept {
