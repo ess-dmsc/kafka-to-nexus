@@ -302,6 +302,12 @@ public:
       n_msgs_per_batch = x.v;
     }
 
+    int feed_msgs_times = 1;
+    if (auto x = get_int(&main_opt.config_file, "unit_test.feed_msgs_times")) {
+      LOG(4, "unit_test.feed_msgs_times: {}", x.v);
+      feed_msgs_times = x.v;
+    }
+
     vector<SourceDataGen> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -403,7 +409,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(4, "command: {}", cmd);
+    LOG(8, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -412,7 +418,6 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     using DT = uint32_t;
-    int const feed_msgs_times = 2;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
@@ -466,7 +471,7 @@ public:
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
 
-    vector<DT> data((size_t)32000);
+    vector<DT> data((size_t)(n_events_per_message));
 
     for (auto &source : sources) {
       string base_path = "/";
