@@ -9,9 +9,9 @@
 namespace FileWriter {
 namespace Status {
 
-class StreamMasterStatus;
-class StreamerStatusType;
-class StreamerStatisticsType;
+struct StreamMasterStatus;
+struct StreamerStatusType;
+struct StreamerStatisticsType;
 
 class JSONWriter;
 class JSONStreamWriter;
