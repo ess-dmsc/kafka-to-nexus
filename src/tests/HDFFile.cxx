@@ -345,8 +345,8 @@ public:
         children.PushBack(g1, a);
       }
 
-      auto json_stream = [&a](string source, string topic,
-                              string module) -> Value {
+      auto json_stream = [&a, &main_opt](string source, string topic,
+                                         string module) -> Value {
         Value g1;
         g1.SetObject();
         g1.AddMember("type", "group", a);
@@ -368,20 +368,16 @@ public:
           attr.AddMember("this_will_be_a_int64", Value(123), a);
           ds1.AddMember("attributes", attr, a);
           Document cfg_nexus;
-          cfg_nexus.Parse(R""(
-            {
-              "nexus": {
-                "indices": {
-                  "index_every_kb": 1
-                },
-                "chunk": {
-                  "chunk_n_elements": 64
-                }
-              }
-            }
-          )"");
+          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
+            cfg_nexus.CopyFrom(*main_nexus.v, cfg_nexus.GetAllocator());
+          }
           Value stream;
-          stream.CopyFrom(cfg_nexus, a);
+          stream.SetObject();
+          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
+            Value nx;
+            nx.CopyFrom(*main_nexus.v, a);
+            stream.AddMember("nexus", std::move(nx), a);
+          }
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("module", Value(module.c_str(), a), a);
