@@ -153,6 +153,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto s = Source(source.v, move(hdf_writer_module));
     // Can this be done in a better way?
     s._topic = string(topic);
+    s.do_process_message = config.source_do_process_message;
     fwt->add_source(move(s));
   }
 
