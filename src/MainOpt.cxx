@@ -63,6 +63,9 @@ int MainOpt::parse_config_json(std::string json) {
       commands_from_config_file.push_back(std::move(js_command));
     }
   }
+  if (auto o = get_bool(&d, "source_do_process_message")) {
+    source_do_process_message = o.v;
+  }
   return 0;
 }
 
