@@ -264,7 +264,8 @@ public:
           "n_events_per_message": 32,
           "n_msgs_per_source": 128,
           "n_sources": 8,
-          "n_msgs_per_batch": 1
+          "n_msgs_per_batch": 1,
+          "filename": "tmp-ev42.h5"
         }
       })"");
       main_opt.config_file = merge(cfg, main_opt.config_file);
@@ -306,6 +307,12 @@ public:
     if (auto x = get_int(&main_opt.config_file, "unit_test.feed_msgs_times")) {
       LOG(4, "unit_test.feed_msgs_times: {}", x.v);
       feed_msgs_times = x.v;
+    }
+
+    string filename = "tmp-ev42.h5";
+    if (auto x = get_string(&main_opt.config_file, "unit_test.filename")) {
+      LOG(4, "unit_test.filename: {}", x.v);
+      filename = x.v;
     }
 
     vector<SourceDataGen> sources;
@@ -397,7 +404,7 @@ public:
       {
         Value v;
         v.SetObject();
-        v.AddMember("file_name", StringRef("tmp-ev42.h5"), a);
+        v.AddMember("file_name", Value(filename.c_str(), a), a);
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
