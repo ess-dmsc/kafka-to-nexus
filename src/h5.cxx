@@ -312,7 +312,13 @@ template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
     : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
 
-template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() { flush_buf(); }
+template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() {
+  LOG(7, "~h5d_chunked_1d  count_append_calls: {}, count_append_bytes: {}, "
+         "count_buffer_copy_calls: {}, count_buffer_copy_bytes: {}",
+      count_append_calls, count_append_bytes, count_buffer_copy_calls,
+      count_buffer_copy_bytes);
+  flush_buf();
+}
 
 template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y) {
   swap(x.ds, y.ds);
@@ -332,6 +338,8 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
       p2[i1] = p1[i1];
     }
     buf_n += nbytes;
+    count_buffer_copy_calls += 1;
+    count_buffer_copy_bytes += nbytes;
   }
   // Flush the buffer if there is a chance that it will be full on the next
   // iteration.
@@ -350,6 +358,8 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   ret.ix0 = i0;
   ret.written_bytes = nbytes;
   i0 += nlen;
+  count_append_calls += 1;
+  count_append_bytes += nbytes;
   return ret;
 }
 

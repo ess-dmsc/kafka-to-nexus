@@ -98,6 +98,10 @@ private:
   size_t buf_n = 0;
   std::vector<char> buf;
   hsize_t i0 = 0;
+  uint64_t count_buffer_copy_calls = 0;
+  uint64_t count_buffer_copy_bytes = 0;
+  uint64_t count_append_calls = 0;
+  uint64_t count_append_bytes = 0;
 };
 
 template <typename T> class h5d_chunked_2d;
