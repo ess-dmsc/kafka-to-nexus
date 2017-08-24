@@ -494,6 +494,44 @@ HDFWriterModule::init_hdf(hid_t hdf_group,
 }
 
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
+  auto fbuf = get_fbuf(msg.data);
+  if (!impl) {
+    LOG(5, "sorry, but we were unable to initialize for this kind of messages");
+    return HDFWriterModule::WriteResult::ERROR_IO();
+  }
+  auto wret = impl->write_impl(fbuf);
+  if (!wret) {
+    LOG(5, "write failed");
+  }
+  total_written_bytes += wret.written_bytes;
+  ts_max = std::max(fbuf->timestamp(), ts_max);
+  if (total_written_bytes > index_at_bytes + index_every_bytes) {
+    this->ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
+    this->ds_cue_index->append_data_1d(&wret.ix0, 1);
+    index_at_bytes = total_written_bytes;
+  }
+  {
+    auto x = fbuf->timestamp();
+    this->ds_timestamp->append_data_1d(&x, 1);
+  }
+  if (do_writer_forwarder_internal) {
+    if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
+      auto fi = (fwdinfo_1_t *)fbuf->fwdinfo();
+      {
+        auto x = fi->seq_data();
+        this->ds_seq_data->append_data_1d(&x, 1);
+      }
+      {
+        auto x = fi->seq_fwd();
+        this->ds_seq_fwd->append_data_1d(&x, 1);
+      }
+      {
+        auto x = fi->ts_data();
+        this->ds_ts_data->append_data_1d(&x, 1);
+      }
+    }
+  }
+
   return HDFWriterModule::WriteResult::OK();
 }
 
