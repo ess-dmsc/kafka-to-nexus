@@ -37,7 +37,8 @@ public:
 template <typename DT, typename FV>
 class writer_typed_array : public writer_typed_base {
 public:
-  writer_typed_array(hid_t hdf_group, std::string const &sourcename, FV *fbval);
+  writer_typed_array(hid_t hdf_group, std::string const &sourcename,
+                     hsize_t ncols);
   ~writer_typed_array();
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
@@ -46,8 +47,7 @@ public:
 template <typename DT, typename FV>
 class writer_typed_scalar : public writer_typed_base {
 public:
-  writer_typed_scalar(hid_t hdf_group, std::string const &sourcename,
-                      FV *fbval);
+  writer_typed_scalar(hid_t hdf_group, std::string const &sourcename);
   ~writer_typed_scalar();
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
@@ -137,49 +137,49 @@ void writer::init_impl(string const &sourcename, hid_t hdf_group, Msg msg) {
     }
   }
 
-  auto impl_fac = [&hg, &s, &fbuf](Value x) {
+  auto impl_fac = [&hg, &s](Value x) {
     using R = writer_typed_base *;
-    void const *v = fbuf->value();
     if (x == Value::Byte)
-      return (R) new WS<int8_t, Byte>(hg, s, (Byte *)v);
+      return (R) new WS<int8_t, Byte>(hg, s);
     if (x == Value::Short)
-      return (R) new WS<int16_t, Short>(hg, s, (Short *)v);
+      return (R) new WS<int16_t, Short>(hg, s);
     if (x == Value::Int)
-      return (R) new WS<int32_t, Int>(hg, s, (Int *)v);
+      return (R) new WS<int32_t, Int>(hg, s);
     if (x == Value::Long)
-      return (R) new WS<int64_t, Long>(hg, s, (Long *)v);
+      return (R) new WS<int64_t, Long>(hg, s);
     if (x == Value::UByte)
-      return (R) new WS<uint8_t, UByte>(hg, s, (UByte *)v);
+      return (R) new WS<uint8_t, UByte>(hg, s);
     if (x == Value::UShort)
-      return (R) new WS<uint16_t, UShort>(hg, s, (UShort *)v);
+      return (R) new WS<uint16_t, UShort>(hg, s);
     if (x == Value::UInt)
-      return (R) new WS<uint32_t, UInt>(hg, s, (UInt *)v);
+      return (R) new WS<uint32_t, UInt>(hg, s);
     if (x == Value::ULong)
-      return (R) new WS<uint64_t, ULong>(hg, s, (ULong *)v);
+      return (R) new WS<uint64_t, ULong>(hg, s);
     if (x == Value::Double)
-      return (R) new WS<double, Double>(hg, s, (Double *)v);
+      return (R) new WS<double, Double>(hg, s);
     if (x == Value::Float)
-      return (R) new WS<float, Float>(hg, s, (Float *)v);
+      return (R) new WS<float, Float>(hg, s);
+    hsize_t ncols = 1;
     if (x == Value::ArrayByte)
-      return (R) new WA<int8_t, ArrayByte>(hg, s, (ArrayByte *)v);
+      return (R) new WA<int8_t, ArrayByte>(hg, s, ncols);
     if (x == Value::ArrayShort)
-      return (R) new WA<int16_t, ArrayShort>(hg, s, (ArrayShort *)v);
+      return (R) new WA<int16_t, ArrayShort>(hg, s, ncols);
     if (x == Value::ArrayInt)
-      return (R) new WA<int32_t, ArrayInt>(hg, s, (ArrayInt *)v);
+      return (R) new WA<int32_t, ArrayInt>(hg, s, ncols);
     if (x == Value::ArrayLong)
-      return (R) new WA<int64_t, ArrayLong>(hg, s, (ArrayLong *)v);
+      return (R) new WA<int64_t, ArrayLong>(hg, s, ncols);
     if (x == Value::ArrayUByte)
-      return (R) new WA<uint8_t, ArrayUByte>(hg, s, (ArrayUByte *)v);
+      return (R) new WA<uint8_t, ArrayUByte>(hg, s, ncols);
     if (x == Value::ArrayUShort)
-      return (R) new WA<uint16_t, ArrayUShort>(hg, s, (ArrayUShort *)v);
+      return (R) new WA<uint16_t, ArrayUShort>(hg, s, ncols);
     if (x == Value::ArrayUInt)
-      return (R) new WA<uint32_t, ArrayUInt>(hg, s, (ArrayUInt *)v);
+      return (R) new WA<uint32_t, ArrayUInt>(hg, s, ncols);
     if (x == Value::ArrayULong)
-      return (R) new WA<uint64_t, ArrayULong>(hg, s, (ArrayULong *)v);
+      return (R) new WA<uint64_t, ArrayULong>(hg, s, ncols);
     if (x == Value::ArrayDouble)
-      return (R) new WA<double, ArrayDouble>(hg, s, (ArrayDouble *)v);
+      return (R) new WA<double, ArrayDouble>(hg, s, ncols);
     if (x == Value::ArrayFloat)
-      return (R) new WA<float, ArrayFloat>(hg, s, (ArrayFloat *)v);
+      return (R) new WA<float, ArrayFloat>(hg, s, ncols);
     return (writer_typed_base *)nullptr;
   };
   impl.reset(impl_fac(fbuf->value_type()));
@@ -220,13 +220,12 @@ writer_typed_array<DT, FV>::~writer_typed_array() {}
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                std::string const &dataset_name,
-                                               FV *fv) {
-  hsize_t ncols = fv->value()->size();
+                                               hsize_t ncols) {
   if (ncols <= 0) {
     LOG(4, "can not handle number of columns ncols == {}", ncols);
     return;
   }
-  LOG(7, "f142 init_impl  v.size(): {}", ncols);
+  LOG(7, "f142 init_impl  ncols: {}", ncols);
   this->ds =
       h5::h5d_chunked_2d<DT>::create(hdf_group, dataset_name, ncols, 64 * 1024);
 }
@@ -252,7 +251,7 @@ writer_typed_scalar<DT, FV>::~writer_typed_scalar() {}
 
 template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(
-    hid_t hdf_group, std::string const &dataset_name, FV *fv) {
+    hid_t hdf_group, std::string const &dataset_name) {
   LOG(7, "f142 init_impl  scalar");
   this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, dataset_name, 64 * 1024);
 }
@@ -388,11 +387,9 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+HDFWriterModule::init_hdf(hid_t hdf_group,
+                          rapidjson::Value const &config_stream,
                           rapidjson::Value const *config_module) {
-  // TODO
-  // - Choose our impl depending on the config_stream.
-  // - Create HDF structures now!
   auto str = get_string(&config_stream, "source");
   if (!str) {
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
@@ -403,8 +400,93 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
   }
   auto type = str.v;
-  LOG(3, "sourcename: {}", sourcename);
-  LOG(3, "type: {}", type);
+  uint32_t array_size = 0;
+  if (auto x = get_uint(&config_stream, "array_size")) {
+    array_size = x.v;
+  }
+  LOG(3,
+      "HDFWriterModule::init_hdf f142 sourcename: {}  type: {}  array_size: {}",
+      sourcename, type, array_size);
+
+  string s("value");
+
+  if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
+    index_every_bytes = (int)x * 1024 * 1024;
+  }
+
+  auto impl_fac = [hdf_group, array_size, &s](string type) {
+    using R = writer_typed_base *;
+    auto &hg = hdf_group;
+    if (type == "int8")
+      return (R) new WS<int8_t, Byte>(hg, s);
+    if (type == "int16")
+      return (R) new WS<int16_t, Short>(hg, s);
+    if (type == "int32")
+      return (R) new WS<int32_t, Int>(hg, s);
+    if (type == "int64")
+      return (R) new WS<int64_t, Long>(hg, s);
+    if (type == "uint8")
+      return (R) new WS<uint8_t, UByte>(hg, s);
+    if (type == "uint16")
+      return (R) new WS<uint16_t, UShort>(hg, s);
+    if (type == "uint32")
+      return (R) new WS<uint32_t, UInt>(hg, s);
+    if (type == "uint64")
+      return (R) new WS<uint64_t, ULong>(hg, s);
+    if (type == "double")
+      return (R) new WS<double, Double>(hg, s);
+    if (type == "float")
+      return (R) new WS<float, Float>(hg, s);
+    if (type == "int8")
+      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size);
+    if (type == "int16")
+      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size);
+    if (type == "int32")
+      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size);
+    if (type == "int64")
+      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size);
+    if (type == "uint8")
+      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size);
+    if (type == "uint16")
+      return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size);
+    if (type == "uint32")
+      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size);
+    if (type == "uint64")
+      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size);
+    if (type == "double")
+      return (R) new WA<double, ArrayDouble>(hg, s, array_size);
+    if (type == "float")
+      return (R) new WA<float, ArrayFloat>(hg, s, array_size);
+    return (writer_typed_base *)nullptr;
+  };
+  impl.reset(impl_fac(type));
+  if (!impl) {
+    LOG(4, "Could not create a writer implementation for value_type {}", type);
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
+
+  this->ds_timestamp =
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024);
+  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+      hdf_group, "cue_timestamp_zero", 64 * 1024);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "cue_index", 64 * 1024);
+  if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
+    impl.reset();
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
+  if (do_writer_forwarder_internal) {
+    this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
+        hdf_group, sourcename + "__fwdinfo_seq_data", 64 * 1024);
+    this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
+        hdf_group, sourcename + "__fwdinfo_seq_fwd", 64 * 1024);
+    this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
+        hdf_group, sourcename + "__fwdinfo_ts_data", 64 * 1024);
+    if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+      impl.reset();
+      return HDFWriterModule::InitResult::ERROR_IO();
+    }
+  }
   return HDFWriterModule::InitResult::OK();
 }
 
