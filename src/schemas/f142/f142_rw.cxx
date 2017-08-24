@@ -417,46 +417,49 @@ HDFWriterModule::init_hdf(hid_t hdf_group,
   auto impl_fac = [hdf_group, array_size, &s](string type) {
     using R = writer_typed_base *;
     auto &hg = hdf_group;
-    if (type == "int8")
-      return (R) new WS<int8_t, Byte>(hg, s);
-    if (type == "int16")
-      return (R) new WS<int16_t, Short>(hg, s);
-    if (type == "int32")
-      return (R) new WS<int32_t, Int>(hg, s);
-    if (type == "int64")
-      return (R) new WS<int64_t, Long>(hg, s);
-    if (type == "uint8")
-      return (R) new WS<uint8_t, UByte>(hg, s);
-    if (type == "uint16")
-      return (R) new WS<uint16_t, UShort>(hg, s);
-    if (type == "uint32")
-      return (R) new WS<uint32_t, UInt>(hg, s);
-    if (type == "uint64")
-      return (R) new WS<uint64_t, ULong>(hg, s);
-    if (type == "double")
-      return (R) new WS<double, Double>(hg, s);
-    if (type == "float")
-      return (R) new WS<float, Float>(hg, s);
-    if (type == "int8")
-      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size);
-    if (type == "int16")
-      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size);
-    if (type == "int32")
-      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size);
-    if (type == "int64")
-      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size);
-    if (type == "uint8")
-      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size);
-    if (type == "uint16")
-      return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size);
-    if (type == "uint32")
-      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size);
-    if (type == "uint64")
-      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size);
-    if (type == "double")
-      return (R) new WA<double, ArrayDouble>(hg, s, array_size);
-    if (type == "float")
-      return (R) new WA<float, ArrayFloat>(hg, s, array_size);
+    if (array_size == 0) {
+      if (type == "int8")
+        return (R) new WS<int8_t, Byte>(hg, s);
+      if (type == "int16")
+        return (R) new WS<int16_t, Short>(hg, s);
+      if (type == "int32")
+        return (R) new WS<int32_t, Int>(hg, s);
+      if (type == "int64")
+        return (R) new WS<int64_t, Long>(hg, s);
+      if (type == "uint8")
+        return (R) new WS<uint8_t, UByte>(hg, s);
+      if (type == "uint16")
+        return (R) new WS<uint16_t, UShort>(hg, s);
+      if (type == "uint32")
+        return (R) new WS<uint32_t, UInt>(hg, s);
+      if (type == "uint64")
+        return (R) new WS<uint64_t, ULong>(hg, s);
+      if (type == "double")
+        return (R) new WS<double, Double>(hg, s);
+      if (type == "float")
+        return (R) new WS<float, Float>(hg, s);
+    } else {
+      if (type == "int8")
+        return (R) new WA<int8_t, ArrayByte>(hg, s, array_size);
+      if (type == "int16")
+        return (R) new WA<int16_t, ArrayShort>(hg, s, array_size);
+      if (type == "int32")
+        return (R) new WA<int32_t, ArrayInt>(hg, s, array_size);
+      if (type == "int64")
+        return (R) new WA<int64_t, ArrayLong>(hg, s, array_size);
+      if (type == "uint8")
+        return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size);
+      if (type == "uint16")
+        return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size);
+      if (type == "uint32")
+        return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size);
+      if (type == "uint64")
+        return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size);
+      if (type == "double")
+        return (R) new WA<double, ArrayDouble>(hg, s, array_size);
+      if (type == "float")
+        return (R) new WA<float, ArrayFloat>(hg, s, array_size);
+    }
     return (writer_typed_base *)nullptr;
   };
   impl.reset(impl_fac(type));
