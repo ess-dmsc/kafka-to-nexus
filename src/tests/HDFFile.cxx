@@ -7,6 +7,7 @@
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f141/synth.h"
+#include "../schemas/f142/f142_synth.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -564,6 +565,298 @@ public:
 
     H5Fclose(fid);
   }
+
+  /// Can supply pre-generated test data for a source on a topic to profile the
+  /// writing.
+  class SourceDataGen_f142 {
+  public:
+    string topic;
+    string source;
+    uint64_t seed = 0;
+    std::mt19937 rnd;
+    vector<FlatBufs::f142::fb> fbs;
+    vector<FileWriter::Msg> msgs;
+    // Number of messages already fed into file writer during testing
+    size_t n_fed = 0;
+    /// Generates n test messages which we can later feed from memory into the
+    /// file writer.
+    void pregenerate(int n) {
+      LOG(7, "generating {} {}...", topic, source);
+      int size = 4;
+      FlatBufs::f142::synth synth(source, FlatBufs::f142::Value::ArrayDouble,
+                                  size);
+      rnd.seed(seed);
+      for (int i1 = 0; i1 < n; ++i1) {
+        // Number of events per message:
+        // size_t n_ele = rnd() >> 24;
+        // Currently fixed, have to adapt verification code first.
+        fbs.push_back(synth.next(i1));
+        auto &fb = fbs.back();
+        msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
+                                       fb.builder->GetSize()});
+      }
+    }
+  };
+
+  static void data_f142() {
+    using namespace FileWriter;
+    using std::array;
+    using std::vector;
+    using std::string;
+    MainOpt &main_opt = *g_main_opt.load();
+    bool do_verification = true;
+
+    // Defaults such that the test has a chance to succeed
+    {
+      rapidjson::Document cfg;
+      cfg.Parse(R""(
+      {
+        "nexus": {
+          "chunk": {
+            "chunk_n_elements": 64
+          }
+        },
+        "unit_test": {
+          "n_events_per_message": 32,
+          "n_msgs_per_source": 128,
+          "n_sources": 1,
+          "n_msgs_per_batch": 1
+        }
+      })"");
+      main_opt.config_file = merge(cfg, main_opt.config_file);
+    }
+
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
+      do_verification = x.v == 1;
+      LOG(4, "do_verification: {}", do_verification);
+    }
+
+    int n_msgs_per_source = 1;
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
+      LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
+      n_msgs_per_source = x.v;
+    }
+
+    int n_sources = 1;
+    if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
+      LOG(4, "unit_test.n_sources: {}", x.v);
+      n_sources = x.v;
+    }
+
+    int n_events_per_message = 1;
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.n_events_per_message")) {
+      LOG(4, "unit_test.n_events_per_message: {}", x.v);
+      n_events_per_message = x.v;
+    }
+
+    int n_msgs_per_batch = 1;
+    if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
+      LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
+      n_msgs_per_batch = x.v;
+    }
+
+    vector<SourceDataGen_f142> sources;
+    for (int i1 = 0; i1 < n_sources; ++i1) {
+      sources.emplace_back();
+      auto &s = sources.back();
+      // Currently, we assume only one topic!
+      s.topic = "topic.with.multiple.sources";
+      s.source = fmt::format("for_example_motor_{:04}", i1);
+      s.pregenerate(n_msgs_per_source);
+    }
+
+    if (false) {
+      for (auto &source : sources) {
+        LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
+      }
+    }
+
+    rapidjson::Document json_command;
+    {
+      using namespace rapidjson;
+      auto &j = json_command;
+      auto &a = j.GetAllocator();
+      j.SetObject();
+      Value nexus_structure;
+      nexus_structure.SetObject();
+
+      Value children;
+      children.SetArray();
+
+      {
+        Value g1;
+        g1.SetObject();
+        g1.AddMember("type", "group", a);
+        g1.AddMember("name", "some_group", a);
+        Value attr;
+        attr.SetObject();
+        attr.AddMember("NX_class", "NXinstrument", a);
+        g1.AddMember("attributes", attr, a);
+        Value ch;
+        ch.SetArray();
+        {
+          auto &children = ch;
+          Value ds1;
+          ds1.SetObject();
+          ds1.AddMember("type", "dataset", a);
+          ds1.AddMember("name", "created_by_filewriter", a);
+          Value attr;
+          attr.SetObject();
+          attr.AddMember("NX_class", "NXdetector", a);
+          attr.AddMember("this_will_be_a_double", Value(0.123), a);
+          attr.AddMember("this_will_be_a_int64", Value(123), a);
+          ds1.AddMember("attributes", attr, a);
+          Value dataset;
+          dataset.SetObject();
+          dataset.AddMember("space", "simple", a);
+          dataset.AddMember("type", "uint64", a);
+          Value dataset_size;
+          dataset_size.SetArray();
+          dataset_size.PushBack("unlimited", a);
+          dataset_size.PushBack(Value(4), a);
+          dataset_size.PushBack(Value(2), a);
+          dataset.AddMember("size", dataset_size, a);
+          ds1.AddMember("dataset", dataset, a);
+          children.PushBack(ds1, a);
+        }
+        g1.AddMember("children", ch, a);
+        children.PushBack(g1, a);
+      }
+
+      auto json_stream = [&a](string source, string topic,
+                              string module) -> Value {
+        Value g1;
+        g1.SetObject();
+        g1.AddMember("type", "group", a);
+        g1.AddMember("name", Value(source.c_str(), a), a);
+        Value attr;
+        attr.SetObject();
+        attr.AddMember("NX_class", "NXinstrument", a);
+        g1.AddMember("attributes", attr, a);
+        Value ch;
+        ch.SetArray();
+        {
+          auto &children = ch;
+          Value ds1;
+          ds1.SetObject();
+          ds1.AddMember("type", "stream", a);
+          Value attr;
+          attr.SetObject();
+          attr.AddMember("this_will_be_a_double", Value(0.123), a);
+          attr.AddMember("this_will_be_a_int64", Value(123), a);
+          ds1.AddMember("attributes", attr, a);
+          Document cfg_nexus;
+          cfg_nexus.Parse(R""(
+            {
+              "nexus": {
+                "indices": {
+                  "index_every_mb": 1
+                },
+                "chunk": {
+                  "chunk_n_elements": 64
+                }
+              }
+            }
+          )"");
+          Value stream;
+          stream.CopyFrom(cfg_nexus, a);
+          stream.AddMember("topic", Value(topic.c_str(), a), a);
+          stream.AddMember("source", Value(source.c_str(), a), a);
+          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("type", Value("double", a), a);
+          stream.AddMember("array_size", Value(4), a);
+          ds1.AddMember("stream", stream, a);
+          children.PushBack(ds1, a);
+        }
+        g1.AddMember("children", ch, a);
+        return g1;
+      };
+
+      for (auto &source : sources) {
+        children.PushBack(
+            json_stream(source.source, source.topic, "f142_default"), a);
+      }
+      nexus_structure.AddMember("children", children, a);
+      j.AddMember("nexus_structure", nexus_structure, a);
+      {
+        Value v;
+        v.SetObject();
+        v.AddMember("file_name", StringRef("tmp-f142.h5"), a);
+        j.AddMember("file_attributes", v, a);
+      }
+      j.AddMember("cmd", StringRef("FileWriter_new"), a);
+    }
+
+    auto cmd = json_to_string(json_command);
+    // LOG(4, "command: {}", cmd);
+
+    auto &d = json_command;
+    auto fname = get_string(&d, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
+
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+
+    int const feed_msgs_times = 1;
+    // int const seed = 2;
+    std::mt19937 rnd_nn;
+
+    for (int file_i = 0; file_i < 1; ++file_i) {
+      unlink(string(fname).c_str());
+
+      Msg msg;
+      msg.data = (char *)cmd.data();
+      msg.size = cmd.size();
+      ch.handle(msg);
+      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+
+      auto &fwt = ch.file_writer_tasks.at(0);
+      ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
+
+      auto &reg = FileWriter::Schemas::SchemaRegistry::items();
+      std::array<char, 4> fbid{{'f', '1', '4', '2'}};
+      auto writer = reg.at(fbid)->create_reader()->create_writer();
+      LOG(6, "processing...");
+      using CLK = std::chrono::steady_clock;
+      using MS = std::chrono::milliseconds;
+      auto t1 = CLK::now();
+      for (;;) {
+        bool change = false;
+        for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
+          for (auto &source : sources) {
+            for (int i2 = 0;
+                 i2 < n_msgs_per_batch && source.n_fed < source.msgs.size();
+                 ++i2) {
+              auto &msg = source.msgs[source.n_fed];
+              if (false) {
+                auto v = binary_to_hex(msg.data, msg.size);
+                LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+              }
+              fwt->demuxers().at(0).process_message(msg.data, msg.size);
+              source.n_fed++;
+              change = true;
+            }
+          }
+        }
+        if (!change) {
+          break;
+        }
+      }
+      auto t2 = CLK::now();
+      LOG(6, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
+      LOG(6, "finishing...");
+      {
+        string cmd("{\"recv_type\":\"FileWriter\", "
+                   "\"cmd\":\"file_writer_tasks_clear_all\"}");
+        ch.handle({(char *)cmd.data(), cmd.size()});
+      }
+      auto t3 = CLK::now();
+      LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
+      LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+    }
+  }
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
@@ -571,3 +864,5 @@ TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
 TEST_F(T_CommandHandler, new_03_data) { T_CommandHandler::new_03_data(); }
 
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
+
+TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
