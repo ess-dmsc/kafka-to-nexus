@@ -1,10 +1,12 @@
 #pragma once
-#include "schemas/f142_logdata_generated.h"
+#include <flatbuffers/flatbuffers.h>
 #include <memory>
 #include <string>
 
 namespace FlatBufs {
 namespace f142 {
+
+#include "schemas/f142_logdata_generated.h"
 
 class fb {
 public:
