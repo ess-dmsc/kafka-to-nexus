@@ -776,8 +776,7 @@ public:
       };
 
       for (auto &source : sources) {
-        children.PushBack(
-            json_stream(source.source, source.topic, "f142_default"), a);
+        children.PushBack(json_stream(source.source, source.topic, "f142"), a);
       }
       {
         Document d;

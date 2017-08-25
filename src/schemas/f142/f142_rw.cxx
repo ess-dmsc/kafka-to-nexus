@@ -540,7 +540,7 @@ int32_t HDFWriterModule::flush() { return 0; }
 int32_t HDFWriterModule::close() { return 0; }
 
 HDFWriterModuleRegistry::Registrar
-    g_registrar_HDFWriterModule("f142_default", HDFWriterModule::create);
+    g_registrar_HDFWriterModule("f142", HDFWriterModule::create);
 
 } // namespace f142
 } // namespace Schemas
