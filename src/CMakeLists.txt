@@ -97,7 +97,7 @@ date/tz.cpp
 date/tzblobs.cpp
 schemas/f142/f142_rw.cxx
 schemas/f142/f142_synth.cxx
-schemas/f143/f143_rw.cxx
+#schemas/f143/f143_rw.cxx
 schemas/ev42/ev42_rw.cxx
 schemas/ev42/ev42_synth.cxx
 MainOpt.cxx
