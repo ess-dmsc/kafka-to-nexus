@@ -1,5 +1,13 @@
 Breaking changes are tagged by `[breaking]`.
 
+## 2017-08-25
+
+- `[breaking]` `FBSchemaReader` is superceded by `FlatbufferReader`.
+- `[breaking]` `FBSchemaWriter` is superceded by `HDFWriterModule`.
+- `[breaking]` `SchemaRegistry` is superceded by `FlatbufferReaderRegistry` and
+  `HDFWriterModuleRegistry`.
+- `[breaking]` The JSON command format has changed, see `README.md`.
+
 ## 2017-08-07 e5fdb17
 
 - `[breaking]` Change option `broker-command` to `command-uri` to be better in
