@@ -84,7 +84,6 @@ FileWriterTask.cxx
 Source.cxx
 DemuxTopic.cxx
 HDFFile.cxx
-SchemaRegistry.cxx
 FlatbufferReader.cxx
 HDFWriterModule.cxx
 KafkaW.cxx

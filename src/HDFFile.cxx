@@ -1,7 +1,6 @@
 #include "HDFFile.h"
 #include "HDFFile_h5.h"
 #include "HDFFile_impl.h"
-#include "SchemaRegistry.h"
 #include "date/date.h"
 #include "helper.h"
 #include "json.h"
@@ -357,72 +356,5 @@ HDFFile_h5 HDFFile::h5file_detail() { return HDFFile_h5(impl->h5file); }
 HDFFile_h5::HDFFile_h5(hid_t h5file) : _h5file(h5file) {}
 
 hid_t HDFFile_h5::h5file() { return _h5file; }
-
-std::unique_ptr<FBSchemaReader> FBSchemaReader::create(Msg msg) {
-  static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
-  if (msg.size < 8) {
-    LOG(4, "ERROR message is too small");
-    return nullptr;
-  }
-  Schemas::FBID fbid;
-  memcpy(&fbid, msg.data + 4, 4);
-  if (auto &cr = Schemas::SchemaRegistry::find(fbid)) {
-    return cr->create_reader();
-  }
-  LOG(5, "does not seem like a known schema id: {:0x}  {:4.4s}",
-      uint32_t((uint64_t)fbid.data()), (char *)fbid.data());
-  return nullptr;
-}
-
-std::unique_ptr<FBSchemaWriter> FBSchemaReader::create_writer() {
-  return create_writer_impl();
-}
-
-FBSchemaReader::~FBSchemaReader() {}
-
-bool FBSchemaReader::verify(Msg msg) { return verify_impl(msg); }
-
-bool FBSchemaReader::verify_impl(Msg msg) { return false; }
-
-std::string FBSchemaReader::sourcename(Msg msg) { return sourcename_impl(msg); }
-
-uint64_t FBSchemaReader::ts(Msg msg) { return ts_impl(msg); }
-
-uint64_t FBSchemaReader::teamid(Msg &msg) { return teamid_impl(msg); }
-
-uint64_t FBSchemaReader::teamid_impl(Msg &msg) { return 0; }
-
-FBSchemaWriter::FBSchemaWriter() {}
-
-FBSchemaWriter::~FBSchemaWriter() {
-  if (group_event_data != -1)
-    H5Gclose(group_event_data);
-}
-
-void FBSchemaWriter::init(HDFFile *hdf_file, std::string const &hdf_path,
-                          std::string const &sourcename, Msg msg,
-                          rapidjson::Value const *config_file,
-                          rapidjson::Document *config_stream) {
-  this->config_file = config_file;
-  this->config_stream = config_stream;
-  this->hdf_file = hdf_file;
-  auto f1 = hdf_file->h5file_detail().h5file();
-
-  // if it proves useful, factor out
-  H5E_auto2_t _f;
-  void *_d;
-  H5Eget_auto2(H5E_DEFAULT, &_f, &_d);
-  H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
-  hid_t gid = H5Gopen2(f1, hdf_path.c_str(), H5P_DEFAULT);
-  if (gid < 0) {
-    LOG(2, "can not find group {}, using file root instead", hdf_path);
-    gid = f1;
-  }
-  H5Eset_auto2(H5E_DEFAULT, _f, _d);
-
-  init_impl(sourcename, gid, msg);
-}
-
-WriteResult FBSchemaWriter::write(Msg msg) { return write_impl(msg); }
 
 } // namespace FileWriter
