@@ -779,6 +779,12 @@ public:
         children.PushBack(
             json_stream(source.source, source.topic, "f142_default"), a);
       }
+      {
+        Document d;
+        d.Parse(
+            R"({"type":"group", "name":"a-subgroup", "children":[{"type":"group","name":"another-subgroup"}]})");
+        children.PushBack(Value().CopyFrom(d, a), a);
+      }
       nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
       {
