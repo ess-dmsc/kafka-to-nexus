@@ -6,7 +6,6 @@
 #include "../SchemaRegistry.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
-#include "../schemas/f141/synth.h"
 #include "../schemas/f142/f142_synth.h"
 #include <array>
 #include <chrono>
@@ -46,33 +45,6 @@ TEST(HDFFile, create) {
   f1.init("tmp-test.h5", rapidjson::Value(), stream_hdf_info);
 }
 
-class T_HDFFile : public testing::Test {
-public:
-  static void write_f141() {
-    auto fname = "tmp-test.h5";
-    auto source_name = "some-sourcename";
-    unlink(fname);
-    using namespace FileWriter;
-    FileWriter::HDFFile f1;
-    std::vector<StreamHDFInfo> stream_hdf_info;
-    f1.init(fname, rapidjson::Value(), stream_hdf_info);
-    auto &reg = FileWriter::Schemas::SchemaRegistry::items();
-    std::array<char, 4> fbid{{'f', '1', '4', '1'}};
-    auto writer = reg.at(fbid)->create_reader()->create_writer();
-    FileWriter::Msg msg;
-    FlatBufs::f141_epics_nt::synth synth(
-        source_name,
-        BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
-    auto fb = synth.next<double>(0);
-    msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                          fb.builder->GetSize()};
-    // f1.impl->h5file
-    writer->init(&f1, "/", source_name, msg, nullptr, nullptr);
-  }
-};
-
-TEST_F(T_HDFFile, write_f141) { T_HDFFile::write_f141(); }
-
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
@@ -87,42 +59,6 @@ public:
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle({cmd.data(), cmd.size()});
-  }
-
-  static void new_03_data() {
-    using namespace FileWriter;
-    auto cmd = gulp("tests/msg-cmd-new-03.json");
-    LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
-    rapidjson::Document d;
-    d.Parse(cmd.data(), cmd.size());
-    char const *fname = d["file_attributes"]["file_name"].GetString();
-    char const *source_name = d["streams"][0]["source"].GetString();
-    unlink(fname);
-    MainOpt main_opt;
-    FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({cmd.data(), cmd.size()});
-
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
-
-    auto &fwt = ch.file_writer_tasks.at(0);
-    ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
-
-    // TODO
-    // Make demuxer process the test message.
-
-    // From here, I need the file writer task instance
-    return;
-
-    auto &reg = FileWriter::Schemas::SchemaRegistry::items();
-    std::array<char, 4> fbid{{'f', '1', '4', '1'}};
-    auto writer = reg.at(fbid)->create_reader()->create_writer();
-    FileWriter::Msg msg;
-    FlatBufs::f141_epics_nt::synth synth(
-        source_name,
-        BrightnESS::FlatBufs::f141_epics_nt::PV::NTScalarArrayDouble, 1, 1);
-    auto fb = synth.next<double>(0);
-    msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                          fb.builder->GetSize()};
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -872,8 +808,6 @@ public:
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
-
-TEST_F(T_CommandHandler, new_03_data) { T_CommandHandler::new_03_data(); }
 
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 

@@ -95,14 +95,11 @@ uri.cxx
 h5.cxx
 date/tz.cpp
 date/tzblobs.cpp
-schemas/f141/f141_rw.cxx
-schemas/f141/synth.cxx
 schemas/f142/f142_rw.cxx
 schemas/f142/f142_synth.cxx
 schemas/f143/f143_rw.cxx
 schemas/ev42/ev42_rw.cxx
 schemas/ev42/ev42_synth.cxx
-#schemas/events/schema_amo0.cxx
 MainOpt.cxx
 ${FMT_SRC}
 ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
