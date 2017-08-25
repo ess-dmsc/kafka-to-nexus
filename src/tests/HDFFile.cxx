@@ -3,7 +3,6 @@
 #include "../HDFFile_impl.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
-#include "../SchemaRegistry.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
@@ -330,9 +329,6 @@ public:
       auto &fwt = ch.file_writer_tasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      auto &reg = FileWriter::Schemas::SchemaRegistry::items();
-      std::array<char, 4> fbid{{'e', 'v', '4', '2'}};
-      auto writer = reg.at(fbid)->create_reader()->create_writer();
       LOG(6, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
@@ -763,9 +759,6 @@ public:
       auto &fwt = ch.file_writer_tasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      auto &reg = FileWriter::Schemas::SchemaRegistry::items();
-      std::array<char, 4> fbid{{'f', '1', '4', '2'}};
-      auto writer = reg.at(fbid)->create_reader()->create_writer();
       LOG(6, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
