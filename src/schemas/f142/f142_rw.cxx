@@ -4,13 +4,15 @@
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "../../helper.h"
-#include "schemas/f142_logdata_generated.h"
+#include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
 #include <limits>
 
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
+
+#include "schemas/f142_logdata_generated.h"
 
 using std::array;
 using std::vector;
