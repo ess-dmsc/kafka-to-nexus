@@ -56,7 +56,7 @@ public:
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({cmd.data(), cmd.size()});
+    ch.handle(Msg::owned(cmd.data(), cmd.size()));
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -169,16 +169,14 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    Msg msg;
-    msg.data = (char *)cmd.data();
-    msg.size = cmd.size();
+    auto msg = Msg::owned(cmd.data(), cmd.size());
     ch.handle(msg);
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     {
       string cmd("{\"recv_type\":\"FileWriter\", "
                  "\"cmd\":\"file_writer_tasks_clear_all\", "
                  "\"job_id\":\"000000000dataset\" }");
-      ch.handle({(char *)cmd.data(), cmd.size()});
+      ch.handle(Msg::owned(cmd.data(), cmd.size()));
     }
 
     // Verification
@@ -222,8 +220,9 @@ public:
         auto n_ele = n_events_per_message;
         fbs.push_back(synth.next(n_ele));
         auto &fb = fbs.back();
-        msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                       fb.builder->GetSize()});
+        msgs.push_back(
+            FileWriter::Msg::owned((char const *)fb.builder->GetBufferPointer(),
+                                   fb.builder->GetSize()));
       }
     }
   };
@@ -416,12 +415,15 @@ public:
     int const feed_msgs_times = 1;
     std::mt19937 rnd_nn;
 
+    if (feed_msgs_times > 1) {
+      LOG(4, "Sorry, can feed messages currently only once");
+      exit(1);
+    }
+
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      Msg msg;
-      msg.data = (char *)cmd.data();
-      msg.size = cmd.size();
+      auto msg = Msg::owned((char const *)cmd.data(), cmd.size());
       ch.handle(msg);
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
@@ -441,10 +443,10 @@ public:
                  ++i2) {
               auto &msg = source.msgs[source.n_fed];
               if (false) {
-                auto v = binary_to_hex(msg.data, msg.size);
+                auto v = binary_to_hex(msg.data(), msg.size());
                 LOG(7, "msg:\n{:.{}}", v.data(), v.size());
               }
-              fwt->demuxers().at(0).process_message(msg.data, msg.size);
+              fwt->demuxers().at(0).process_message(std::move(msg));
               source.n_fed++;
               change = true;
             }
@@ -460,7 +462,7 @@ public:
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
-        ch.handle({(char *)cmd.data(), cmd.size()});
+        ch.handle(Msg::owned((char const *)cmd.data(), cmd.size()));
       }
       auto t3 = CLK::now();
       LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
@@ -625,8 +627,9 @@ public:
         // Currently fixed, have to adapt verification code first.
         fbs.push_back(synth.next(i1));
         auto &fb = fbs.back();
-        msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                       fb.builder->GetSize()});
+        msgs.push_back(
+            FileWriter::Msg::owned((char const *)fb.builder->GetBufferPointer(),
+                                   fb.builder->GetSize()));
       }
     }
   };
@@ -839,12 +842,15 @@ public:
     int const feed_msgs_times = 1;
     std::mt19937 rnd_nn;
 
+    if (feed_msgs_times > 1) {
+      LOG(4, "Sorry, can feed messages currently only once");
+      exit(1);
+    }
+
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      Msg msg;
-      msg.data = (char *)cmd.data();
-      msg.size = cmd.size();
+      auto msg = Msg::owned((char const *)cmd.data(), cmd.size());
       ch.handle(msg);
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
@@ -864,10 +870,10 @@ public:
                  ++i2) {
               auto &msg = source.msgs[source.n_fed];
               if (false) {
-                auto v = binary_to_hex(msg.data, msg.size);
+                auto v = binary_to_hex(msg.data(), msg.size());
                 LOG(7, "msg:\n{:.{}}", v.data(), v.size());
               }
-              fwt->demuxers().at(0).process_message(msg.data, msg.size);
+              fwt->demuxers().at(0).process_message(std::move(msg));
               source.n_fed++;
               change = true;
             }
@@ -883,7 +889,7 @@ public:
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
-        ch.handle({(char *)cmd.data(), cmd.size()});
+        ch.handle(Msg::owned((char const *)cmd.data(), cmd.size()));
       }
       auto t3 = CLK::now();
       LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());

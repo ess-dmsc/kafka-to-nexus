@@ -1,5 +1,6 @@
 #include "Master.h"
 #include "CommandHandler.h"
+#include "Msg.h"
 #include "logger.h"
 #include <chrono>
 #include <rapidjson/document.h>
@@ -31,7 +32,7 @@ Master::Master(MainOpt &config) : config(config), command_listener(config) {
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
   CommandHandler command_handler(config, this);
-  command_handler.handle({(char *)msg->data(), msg->size()});
+  command_handler.handle(Msg::owned((char const *)msg->data(), msg->size()));
 }
 
 void Master::handle_command(rapidjson::Document const &cmd) {

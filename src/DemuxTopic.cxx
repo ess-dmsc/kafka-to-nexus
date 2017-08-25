@@ -36,9 +36,7 @@ ProcessMessageResult ProcessMessageResult::STOP() {
 DemuxTopic::DemuxTopic(std::string topic)
     : _topic(topic), _stop_time(std::numeric_limits<uint64_t>::max()) {}
 
-DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
-                                                        int msg_size) {
-  Msg msg{msg_data, size_t(msg_size)};
+DemuxTopic::DT DemuxTopic::time_difference_from_message(Msg const &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     LOG(4, "ERROR unknown schema id?");
@@ -50,8 +48,7 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
 
 std::string const &DemuxTopic::topic() const { return _topic; }
 
-ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
-  Msg const msg{msg_data, size_t(msg_size)};
+ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     return ProcessMessageResult::ERR();

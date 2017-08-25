@@ -46,7 +46,7 @@ public:
   uptr<h5::h5d_chunked_1d<DT>> ds;
 };
 
-static FBUF const *get_fbuf(char *data) { return GetLogData(data); }
+static FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
@@ -101,12 +101,12 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 };
 
 bool FlatbufferReader::verify(Msg const &msg) const {
-  auto veri = flatbuffers::Verifier((uint8_t *)msg.data, msg.size);
+  auto veri = flatbuffers::Verifier((uint8_t *)msg.data(), msg.size());
   return VerifyLogDataBuffer(veri);
 }
 
 std::string FlatbufferReader::sourcename(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
     LOG(4, "message has no source name");
@@ -116,7 +116,7 @@ std::string FlatbufferReader::sourcename(Msg const &msg) const {
 }
 
 uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   return fbuf->timestamp();
 }
 
@@ -271,7 +271,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
 }
 
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   if (!impl) {
     LOG(5, "sorry, but we were unable to initialize for this kind of messages");
     return HDFWriterModule::WriteResult::ERROR_IO();

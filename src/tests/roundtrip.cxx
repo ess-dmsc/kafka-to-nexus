@@ -1,6 +1,7 @@
 #include "roundtrip.h"
 #include "../KafkaW.h"
 #include "../Master.h"
+#include "../Msg.h"
 #include "../helper.h"
 #include "../logger.h"
 #include "../schemas/ev42/ev42_synth.h"
@@ -206,19 +207,19 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);
       topic.do_copy();
       auto &sourcename = test_sourcenames[i3];
-      FileWriter::Msg msg;
       FlatBufs::ev42::synth synth(sourcename, 1);
 
       for (int i1 = 0; i1 < 32; ++i1) {
         auto fb = synth.next(64);
-        msg = FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                              fb.builder->GetSize()};
+        auto msg =
+            FileWriter::Msg::owned((char const *)fb.builder->GetBufferPointer(),
+                                   fb.builder->GetSize());
         {
-          auto v = binary_to_hex(msg.data, msg.size);
+          auto v = binary_to_hex(msg.data(), msg.size());
           LOG(7, "msg:\n{:.{}}", v.data(), v.size());
         }
         if (true) {
-          topic.produce((uint8_t *)msg.data, msg.size);
+          topic.produce((uint8_t *)msg.data(), msg.size());
           prod->poll();
         }
       }

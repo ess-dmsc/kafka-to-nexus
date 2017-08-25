@@ -292,7 +292,7 @@ void CommandHandler::handle(Msg const &msg) {
   using std::string;
   using namespace rapidjson;
   auto doc = make_unique<Document>();
-  ParseResult err = doc->Parse((char *)msg.data, msg.size);
+  ParseResult err = doc->Parse((char *)msg.data(), msg.size());
   if (doc->HasParseError()) {
     LOG(2, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
     return;

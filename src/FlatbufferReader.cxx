@@ -34,13 +34,13 @@ find(FlatbufferReaderRegistry::Key const &key) {
 
 FlatbufferReader::ptr &find(Msg const &msg) {
   static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
-  if (msg.size < 8) {
-    LOG(4, "flatbuffer message is too small: {} expect at least 8", msg.size);
+  if (msg.size() < 8) {
+    LOG(4, "flatbuffer message is too small: {} expect at least 8", msg.size());
     static FlatbufferReader::ptr empty;
     return empty;
   }
   FlatbufferReaderRegistry::Key key;
-  memcpy(&key, msg.data + 4, 4);
+  memcpy(&key, msg.data() + 4, 4);
   return find(key);
 }
 

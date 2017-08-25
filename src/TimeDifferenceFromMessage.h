@@ -1,4 +1,6 @@
 #pragma once
+
+#include "Msg.h"
 #include <string>
 
 namespace FileWriter {
@@ -22,7 +24,7 @@ public:
   /// Given a message, returns the sourcename and the time difference
   /// `dt = tm - t0` (milliseconds) between the message `tm` and the
   /// time at which `sourcename` would like to start to consume data.
-  virtual DT time_difference_from_message(char *msg_data, int msg_size) = 0;
+  virtual DT time_difference_from_message(Msg const &msg) = 0;
 };
 
 } // namespace FileWriter

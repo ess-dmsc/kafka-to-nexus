@@ -13,8 +13,7 @@ namespace FileWriter {
 
 class MessageProcessor {
 public:
-  virtual ProcessMessageResult process_message(char *msg_data,
-                                               int msg_size) = 0;
+  virtual ProcessMessageResult process_message(Msg &&msg) = 0;
 };
 
 /// Represents a sourcename on a topic.
@@ -28,9 +27,9 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(char *msg_data, int msg_size) override;
+  ProcessMessageResult process_message(Msg &&msg) override;
   /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(char *msg_data, int msg_size) override;
+  DT time_difference_from_message(Msg const &msg) override;
   std::unordered_map<std::string, Source> &sources();
 
   Source &add_source(Source &&source) {

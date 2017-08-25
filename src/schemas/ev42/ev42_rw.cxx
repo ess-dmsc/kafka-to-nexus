@@ -34,12 +34,12 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 };
 
 bool FlatbufferReader::verify(Msg const &msg) const {
-  flatbuffers::Verifier veri((uint8_t *)msg.data, msg.size);
+  flatbuffers::Verifier veri((uint8_t *)msg.data(), msg.size());
   return VerifyEventMessageBuffer(veri);
 }
 
 std::string FlatbufferReader::sourcename(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
     LOG(4, "message has no source name");
@@ -49,7 +49,7 @@ std::string FlatbufferReader::sourcename(Msg const &msg) const {
 }
 
 uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   return fbuf->pulse_time();
 }
 
@@ -133,7 +133,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   if (!ds_event_time_offset) {
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   // int64_t ts = fbuf->pulse_time();
   auto w1ret = this->ds_event_time_offset->append_data_1d(
       fbuf->time_of_flight()->data(), fbuf->time_of_flight()->size());
