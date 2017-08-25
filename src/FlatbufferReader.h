@@ -11,9 +11,8 @@
 namespace FileWriter {
 
 /// Interface for reading essential information from the flatbuffer which is
-/// needed for example to extract timing information and to identify the
-/// responsible `HDFWriterModule`.
-/// Example: Please see `./f142/f142_rw.cxx`
+/// needed for example to extract timing information and name of the source.
+/// Example: Please see `src/schemas/ev42/ev42_rw.cxx`.
 
 class FlatbufferReader {
 public:
@@ -28,6 +27,11 @@ public:
 
 using FBID = std::array<char, 4>;
 FBID fbid_from_str(char const *x);
+
+/// \brief Keeps track of the registered FlatbufferReader instances.
+
+/// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
+/// FlatbufferReaderRegistry.
 
 class FlatbufferReaderRegistry {
 public:
