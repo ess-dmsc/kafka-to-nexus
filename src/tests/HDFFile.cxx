@@ -580,11 +580,13 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(int n) {
+    void pregenerate(size_t array_size, int n) {
       LOG(7, "generating {} {}...", topic, source);
-      int size = 4;
-      FlatBufs::f142::synth synth(source, FlatBufs::f142::Value::ArrayDouble,
-                                  size);
+      auto ty = FlatBufs::f142::Value::Double;
+      if (array_size > 0) {
+        ty = FlatBufs::f142::Value::ArrayFloat;
+      }
+      FlatBufs::f142::synth synth(source, ty, array_size);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
@@ -658,6 +660,7 @@ public:
       n_msgs_per_batch = x.v;
     }
 
+    size_t array_size = 4;
     vector<SourceDataGen_f142> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -665,7 +668,7 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(n_msgs_per_source);
+      s.pregenerate(array_size, n_msgs_per_source);
     }
 
     if (false) {
@@ -726,8 +729,8 @@ public:
         children.PushBack(g1, a);
       }
 
-      auto json_stream = [&a](string source, string topic,
-                              string module) -> Value {
+      auto json_stream = [&a, array_size](string source, string topic,
+                                          string module) -> Value {
         Value g1;
         g1.SetObject();
         g1.AddMember("type", "group", a);
@@ -766,8 +769,12 @@ public:
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("module", Value(module.c_str(), a), a);
-          stream.AddMember("type", Value("double", a), a);
-          stream.AddMember("array_size", Value(4), a);
+          if (array_size == 0) {
+            stream.AddMember("type", Value("double", a), a);
+          } else {
+            stream.AddMember("type", Value("float", a), a);
+            stream.AddMember("array_size", Value(array_size), a);
+          }
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
         }
