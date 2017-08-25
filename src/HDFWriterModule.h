@@ -71,11 +71,16 @@ private:
 };
 }
 
+/// \brief Writes a given flatbuffer to HDF.
+
 /// Base class for the writer modules which are responsible for actually
 /// writing a flatbuffer message to the HDF file.  A HDFWriterModule is
 /// instantiated for each 'stream' which is configured in a file writer json
 /// command.  The HDFWriterModule class registers itself via a string id which
-/// must be unique.  This id is used in the file writer json command.
+/// must be unique.  This id is used in the file writer json command.  The id
+/// can be arbitrary but should as a convention contain the flatbuffer schema
+/// id (`FBID`) like `FBID_<writer-module-name>`.
+/// Example: Please see `src/schemas/ev42/ev42_rw.cxx`.
 
 class HDFWriterModule {
 public:
@@ -110,6 +115,11 @@ public:
   // everything.
   virtual int32_t close() = 0;
 };
+
+/// \brief Keeps track of the registered FlatbufferReader instances.
+
+/// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
+/// HDFWriterModuleRegistry.
 
 class HDFWriterModuleRegistry {
 public:
