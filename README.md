@@ -210,9 +210,10 @@ The default installation has the following structure
 ## Flatbuffer Schema Plugins
 
 The actual parsing of the different FlatBuffer schemata is handled by plugins
-which register themself via the `FlatbufferReader` and `HDFWriterModule`.
-See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
-Support for new schemas can be added in the same way.
+which register themself via the `FileWriter::FlatbufferReaderRegistry` and
+`FileWriter::HDFWriterModuleRegistry`.  See for example
+`kafka-to-nexus/src/schemas/ev42/ev42_rw.cxx` and search for `Registrar` in
+the code.  Support for new schemas can be added in the same way.
 
 ### Options for Schema Plugins
 
