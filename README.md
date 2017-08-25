@@ -57,52 +57,51 @@ Commands can be send through Kafka via the broker/topic specified by the
 file specified by `--config-file <file.json>` (see a bit later in this
 section).
 
-In the "streams" section of the command:
-- `topic`: Kafka topic from which the data comes.
-- `source`: Use only Kafka messages where source name matches, important
-  because topics are in general multiplexed.
-- `nexus_path`: Location of the written data within the HDF tree.
+In the command, the `nexus_structure` defines the HDF hierarchy.
+The `nexus_structure` represents the HDF root object.  The following example
+shows how the HDF tree can be constructed using `children`.
+A child of type `stream` is a marker that some `HDFWriterModule` will insert
+the data from a Kafka stream at that point in the hierarchy.  The options under
+the key `stream` specify the details, at least the topic, the source name and
+the `HDFWriterModule` which should be used for writing.
+Depending on the `HDFWriterModule`, there will be more options specific to the
+`HDFWriterModule`.
 
 Command to start writing a file:
 
 ```json
 {
-	"cmd": "FileWriter_new",
-	"broker": "broker-where-data-is-coming-from:9092",
-	"streams": [
-		{
-			"topic": "some.topic.with.multiple.sources",
-			"source": "for_example_motor01",
-			"nexus_path": "/entry-01/instrument-01/events-01"
-		}
-	],
-
-	"nexus_structure": {
-		"some_string_field": "the-field-value",
-		"some_int_field": 88004400,
-		"some_double_field": 55.11,
-		"entry-01": {
-			"NX_class": "NXentry",
-			"instrument-01": {
-				"NX_class": "NXinstrument",
-				"events-01": {
-					"NX_class": "NXevent_data"
-				}
-			},
-			"instrument-02": {
-				"NX_class": "NXinstrument",
-				"NX_attributes": {
-					"notes": "some notes in form of an attribute",
-					"attribute_integer": 42,
-					"attribute_double": 42.0
-				}
-			}
-		}
-	},
-
-	"file_attributes": {
-		"file_name": "tmp-new-03.h5"
-	}
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "for_example_motor_0000",
+        "attributes": {
+          "NX_class": "NXinstrument"
+        },
+        "children": [
+          {
+            "type": "stream",
+            "attributes": {
+              "this_will_be_a_double": 0.123,
+              "this_will_be_a_int64": 123
+            },
+            "stream": {
+              "topic": "topic.with.multiple.sources",
+              "source": "for_example_motor",
+              "module": "f142",
+              "type": "float",
+              "array_size": 4
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "file_attributes": {
+    "file_name": "some.h5"
+  },
+  "cmd": "FileWriter_new"
 }
 ```
 
@@ -122,6 +121,13 @@ Commands can be given in the configuration file as well:
 }
 ```
 
+
+
+### Options for the f142 writer module
+
+- `type`: The data type contained in the flat buffer. Can be `int8` to `int64`,
+  similar for `uint8`, `float` and `double`.
+- `array_size`: The size of the array. Scalar if not specified or `0`.
 
 
 ## Installation
