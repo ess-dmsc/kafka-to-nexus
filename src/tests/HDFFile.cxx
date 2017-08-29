@@ -323,7 +323,19 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(n_msgs_per_source, n_events_per_message);
+    }
+    vector<std::thread> threads_pregen;
+    for (int i1 = 0; i1 < n_sources; ++i1) {
+      auto &s = sources.back();
+      LOG(7, "push pregen {}", i1);
+      threads_pregen.push_back(
+          std::thread([&s, n_msgs_per_source, n_events_per_message] {
+            s.pregenerate(n_msgs_per_source, n_events_per_message);
+          }));
+    }
+    for (auto &x : threads_pregen) {
+      LOG(7, "join pregen");
+      x.join();
     }
 
     rapidjson::Document json_command;
