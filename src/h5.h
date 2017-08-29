@@ -103,8 +103,8 @@ public:
 private:
   h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5d ds);
   h5s dsp_wr;
-  size_t const buf_MAXPKG = 4 * 1024 * 1024;
-  size_t const buf_SIZE = 160 * 1024 * 1024;
+  size_t const buf_MAXPKG = 0;
+  size_t const buf_SIZE = 1024 * 1024;
   size_t buf_n = 0;
   std::vector<char> buf;
   hsize_t i0 = 0;
