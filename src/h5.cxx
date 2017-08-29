@@ -116,9 +116,11 @@ h5s::~h5s() {
 
 h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
                      h5p::dataset_create dcpl) {
+  // LOG(3, "h5d::create");
   auto ret = ptr(new h5d);
   auto &o = *ret;
   o.type = type;
+  o.name = name;
   o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
   if (o.id == -1) {
     LOG(3, "H5Dcreate1 failed");
@@ -127,10 +129,12 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   }
   o.dsp_tgt = H5Dget_space(o.id);
   o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
-  H5Sget_simple_extent_dims(o.dsp_tgt, o.snow.data(), o.smax.data());
+  o.snow = {{0, 0}};
+  H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:3}", o.snow.at(i1));
+      LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
+          o.type, i1, o.sext.at(i1), o.smax.at(i1));
     }
   }
   o.mem_max = {{100000000, 100000000}};
@@ -146,6 +150,12 @@ h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
   if (id != -1) {
+    herr_t err = H5Dset_extent(id, snow.data());
+    if (err < 0) {
+      LOG(3, "H5Dset_extent failed");
+    }
+  }
+  if (id != -1) {
     H5Dclose(id);
     id = -1;
   }
@@ -160,18 +170,21 @@ h5d::h5d() {}
 void swap(h5d &x, h5d &y) {
   using std::swap;
   swap(x.id, y.id);
+  swap(x.name, y.name);
   swap(x.type, y.type);
   swap(x.pl_transfer, y.pl_transfer);
   swap(x.ndims, y.ndims);
   swap(x.dsp_mem, y.dsp_mem);
   swap(x.dsp_tgt, y.dsp_tgt);
   swap(x.snow, y.snow);
+  swap(x.smax, y.smax);
   swap(x.mem_max, y.mem_max);
   swap(x.mem_now, y.mem_now);
 }
 
 template <typename T>
 append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
+  // LOG(3, "append_data_1d");
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -182,12 +195,33 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using A1 = array<hsize_t, 1>;
   herr_t err;
   snow[0] += nlen;
-  err = H5Dset_extent(id, snow.data());
-  if (err < 0) {
-    LOG(3, "can not extend dataset");
-    return {-1};
+  if (snow[0] > sext[0]) {
+    size_t const BLOCK = 1 * 1024 * 1024;
+    sext[0] = (snow[0] * 2 / BLOCK + 1) * BLOCK;
+    // sext[0] = 2 * sext[0];
+    // LOG(3, "snow: {:12}  set_extent from: {:12}  to: {:12}", snow[0],
+    // sext_old, sext[0]);
+    err = H5Dset_extent(id, sext.data());
+    if (err < 0) {
+      LOG(3, "can not extend dataset");
+      return {-1};
+    }
+    dsp_tgt = H5Dget_space(id);
   }
-  dsp_tgt = H5Dget_space(id);
+
+  /*
+  {
+    A1 sext, smax;
+    H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+    if (log_level >= 3) {
+      for (size_t i1 = 0; i1 < ndims; ++i1) {
+        LOG(3, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
+  type, i1, sext.at(i1), smax.at(i1));
+      }
+    }
+  }
+  */
+
   {
     A1 start{{0}};
     A1 count{{nlen}};
@@ -200,6 +234,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
   A1 tgt_start{{snow[0] - nlen}};
   A1 tgt_count{{nlen}};
+  // LOG(3, "tgt start, count: {}, {}", tgt_start[0], tgt_count[0]);
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
@@ -211,11 +246,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     LOG(3, "write failed");
     return {-4};
   }
+  // LOG(3, "append_data_1d DONE");
   return {0, sizeof(T) * nlen, tgt_start[0]};
 }
 
 template <typename T>
 append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
+  LOG(3, "append_data_2d");
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -232,12 +269,16 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
   }
   hsize_t nrows = nlen / ncols;
   snow[0] += nrows;
-  err = H5Dset_extent(id, snow.data());
-  if (err < 0) {
-    LOG(3, "can not extend dataset");
-    return {-1};
+  if (snow[0] > sext[0]) {
+    size_t const BLOCK = 1 * 1024 * 1024;
+    sext[0] = (snow[0] * 3 / 2 / BLOCK + 1) * BLOCK;
+    err = H5Dset_extent(id, snow.data());
+    if (err < 0) {
+      LOG(3, "can not extend dataset");
+      return {-1};
+    }
+    dsp_tgt = H5Dget_space(id);
   }
-  dsp_tgt = H5Dget_space(id);
   {
     A1 start{{0, 0}};
     A1 count{{nrows, ncols}};
