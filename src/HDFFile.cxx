@@ -431,6 +431,9 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   } else {
     LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
   }
+  // TODO
+  // Only in 1.10.1
+  // err = H5Pset_page_buffer_size(fapl, 32*1024*1024, 0, 0);
   auto f1 =
       H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
   if (f1 < 0) {

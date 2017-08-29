@@ -144,6 +144,7 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   if (o.dsp_mem < 0) {
     LOG(3, "H5Screate_simple dsp_mem failed");
   }
+  o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
   return ret;
 }
 
@@ -163,6 +164,10 @@ h5d::~h5d() {
   if (dsp_mem != -1) {
     H5Sclose(dsp_mem);
     dsp_mem = -1;
+  }
+  if (pl_transfer != -1) {
+    H5Pclose(pl_transfer);
+    pl_transfer = -1;
   }
 }
 
