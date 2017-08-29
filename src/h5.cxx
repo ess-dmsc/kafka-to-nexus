@@ -1,5 +1,6 @@
 #include "h5.h"
 #include "logger.h"
+#include <chrono>
 
 namespace h5 {
 
@@ -185,6 +186,10 @@ void swap(h5d &x, h5d &y) {
 
 template <typename T>
 append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
+  using namespace std::chrono;
+  using CLK = steady_clock;
+  using MS = milliseconds;
+  auto t1 = CLK::now();
   LOG(9, "append_data_1d");
   if (log_level >= 9) {
     array<char, 64> buf1;
@@ -197,6 +202,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   herr_t err;
   snow[0] += nlen;
   if (snow[0] > sext[0]) {
+    auto t1 = CLK::now();
     auto sext_old = sext[0];
     size_t const BLOCK = 1 * 1024 * 1024;
     sext[0] = (snow[0] * 3 / 2 / BLOCK + 1) * BLOCK;
@@ -207,7 +213,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       LOG(3, "can not extend dataset");
       return {-1};
     }
+    auto t2 = CLK::now();
     dsp_tgt = H5Dget_space(id);
+    auto t3 = CLK::now();
+    LOG(7, "h5d::append_data_1d set_extent: {} + {}",
+        duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
   }
 
   if (log_level >= 9) {
@@ -238,12 +248,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     LOG(3, "can not select tgt hyperslab");
     return {-3};
   }
+  auto t2 = CLK::now();
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, H5P_DEFAULT, data);
   if (err < 0) {
     LOG(3, "write failed");
     return {-4};
   }
-  LOG(9, "append_data_1d DONE");
+  auto t3 = CLK::now();
+  auto dt1 = duration_cast<MS>(t2 - t1).count();
+  auto dt2 = duration_cast<MS>(t3 - t2).count();
+  if (dt1 > 0 or dt2 > 0) {
+    LOG(7, "append_data_1d DONE  {} + {}", dt1, dt2);
+  }
   return {0, sizeof(T) * nlen, tgt_start[0]};
 }
 
