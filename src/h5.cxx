@@ -116,7 +116,6 @@ h5s::~h5s() {
 
 h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
                      h5p::dataset_create dcpl) {
-  // LOG(3, "h5d::create");
   auto ret = ptr(new h5d);
   auto &o = *ret;
   o.type = type;
@@ -140,7 +139,6 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   if (o.dsp_mem < 0) {
     LOG(3, "H5Screate_simple dsp_mem failed");
   }
-  // LOG(3, "dsp_mem: {}", o.dsp_mem);
   return ret;
 }
 
@@ -193,7 +191,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   {
     A1 start{{0}};
     A1 count{{nlen}};
-    // LOG(2, "select mem  {}  {} .. {}", dsp_mem, start[0], count[0]);
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
@@ -203,7 +200,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
   A1 tgt_start{{snow[0] - nlen}};
   A1 tgt_count{{nlen}};
-  // LOG(2, "select tgt {} .. {}", tgt_start[0], tgt_count[0]);
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
