@@ -178,13 +178,14 @@ void swap(h5d &x, h5d &y) {
   swap(x.dsp_tgt, y.dsp_tgt);
   swap(x.snow, y.snow);
   swap(x.smax, y.smax);
+  swap(x.sext, y.sext);
   swap(x.mem_max, y.mem_max);
   swap(x.mem_now, y.mem_now);
 }
 
 template <typename T>
 append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
-  // LOG(3, "append_data_1d");
+  LOG(9, "append_data_1d");
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -196,11 +197,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   herr_t err;
   snow[0] += nlen;
   if (snow[0] > sext[0]) {
+    auto sext_old = sext[0];
     size_t const BLOCK = 1 * 1024 * 1024;
-    sext[0] = (snow[0] * 2 / BLOCK + 1) * BLOCK;
-    // sext[0] = 2 * sext[0];
-    // LOG(3, "snow: {:12}  set_extent from: {:12}  to: {:12}", snow[0],
-    // sext_old, sext[0]);
+    sext[0] = (snow[0] * 3 / 2 / BLOCK + 1) * BLOCK;
+    LOG(7, "snow: {:12}  set_extent from: {:12}  to: {:12}", snow[0], sext_old,
+        sext[0]);
     err = H5Dset_extent(id, sext.data());
     if (err < 0) {
       LOG(3, "can not extend dataset");
@@ -209,18 +210,14 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     dsp_tgt = H5Dget_space(id);
   }
 
-  /*
-  {
+  if (log_level >= 9) {
     A1 sext, smax;
     H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-    if (log_level >= 3) {
-      for (size_t i1 = 0; i1 < ndims; ++i1) {
-        LOG(3, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
-  type, i1, sext.at(i1), smax.at(i1));
-      }
+    for (size_t i1 = 0; i1 < ndims; ++i1) {
+      LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
+          type, i1, sext.at(i1), smax.at(i1));
     }
   }
-  */
 
   {
     A1 start{{0}};
@@ -246,7 +243,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     LOG(3, "write failed");
     return {-4};
   }
-  // LOG(3, "append_data_1d DONE");
+  LOG(9, "append_data_1d DONE");
   return {0, sizeof(T) * nlen, tgt_start[0]};
 }
 
