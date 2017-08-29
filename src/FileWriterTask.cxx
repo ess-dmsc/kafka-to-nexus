@@ -46,8 +46,10 @@ void FileWriterTask::add_source(Source &&source) {
 }
 
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
+                             rapidjson::Value const &config_file,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
-  auto x = hdf_file.init(hdf_filename, nexus_structure, stream_hdf_info);
+  auto x = hdf_file.init(hdf_filename, nexus_structure, config_file,
+                         stream_hdf_info);
   if (x) {
     LOG(3, "can not initialize hdf file  filename: {}", hdf_filename);
     return x;

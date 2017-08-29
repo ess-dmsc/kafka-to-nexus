@@ -102,8 +102,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
   {
+    rapidjson::Value config_file;
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x = fwt->hdf_init(nexus_structure, stream_hdf_info);
+    auto x = fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
     if (x) {
       LOG(7, "ERROR hdf init failed, cancel this write command");
       return;

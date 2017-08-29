@@ -416,19 +416,31 @@ static void create_hdf_structures(rapidjson::Value const *value,
 }
 
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
+                  rapidjson::Value const &config_file,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
   using std::vector;
   using rapidjson::Value;
-  auto x = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  if (x < 0) {
+  herr_t err;
+  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  hsize_t threshold;
+  hsize_t alignment;
+  err = H5Pget_alignment(fapl, &threshold, &alignment);
+  if (err < 0) {
+    LOG(7, "could not get alignment");
+  } else {
+    LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
+  }
+  auto f1 =
+      H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  if (f1 < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
     LOG(0, "ERROR could not create the HDF file: {}  cwd: {}", filename,
         cwd.data());
     return -1;
   }
-  h5file = x;
+  h5file = f1;
 
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
@@ -438,8 +450,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, 1);
   auto dsp_sc = H5Screate(H5S_SCALAR);
-
-  auto f1 = x;
 
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
