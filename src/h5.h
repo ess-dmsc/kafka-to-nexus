@@ -71,6 +71,14 @@ public:
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
   hid_t id = -1;
   hid_t type = -1;
+  hid_t pl_transfer = -1;
+  int ndims = -1;
+  hid_t dsp_mem = -1;
+  hid_t dsp_tgt = -1;
+  std::array<hsize_t, 2> snow;
+  std::array<hsize_t, 2> smax;
+  std::array<hsize_t, 2> mem_max;
+  std::array<hsize_t, 2> mem_now;
 
 private:
   h5d();

@@ -116,21 +116,45 @@ h5s::~h5s() {
 
 h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
                      h5p::dataset_create dcpl) {
+  // LOG(3, "h5d::create");
   auto ret = ptr(new h5d);
   auto &o = *ret;
   o.type = type;
   o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
   if (o.id == -1) {
+    LOG(3, "H5Dcreate1 failed");
     ret.reset();
+    return ret;
   }
+  o.dsp_tgt = H5Dget_space(o.id);
+  o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
+  H5Sget_simple_extent_dims(o.dsp_tgt, o.snow.data(), o.smax.data());
+  if (log_level >= 9) {
+    for (size_t i1 = 0; i1 < o.ndims; ++i1) {
+      LOG(9, "H5Sget_simple_extent_dims {:3}", o.snow.at(i1));
+    }
+  }
+  o.mem_max = {{100000000, 100000000}};
+  o.mem_now = {{0, 0}};
+  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
+  if (o.dsp_mem < 0) {
+    LOG(3, "H5Screate_simple dsp_mem failed");
+  }
+  // LOG(3, "dsp_mem: {}", o.dsp_mem);
   return ret;
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
-  if (id != -1)
+  if (id != -1) {
     H5Dclose(id);
+    id = -1;
+  }
+  if (dsp_mem != -1) {
+    H5Sclose(dsp_mem);
+    dsp_mem = -1;
+  }
 }
 
 h5d::h5d() {}
@@ -139,6 +163,13 @@ void swap(h5d &x, h5d &y) {
   using std::swap;
   swap(x.id, y.id);
   swap(x.type, y.type);
+  swap(x.pl_transfer, y.pl_transfer);
+  swap(x.ndims, y.ndims);
+  swap(x.dsp_mem, y.dsp_mem);
+  swap(x.dsp_tgt, y.dsp_tgt);
+  swap(x.snow, y.snow);
+  swap(x.mem_max, y.mem_max);
+  swap(x.mem_now, y.mem_now);
 }
 
 template <typename T>
@@ -150,36 +181,19 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       LOG(9, "append_data_1d {} for dataset {:.{}}", nlen, buf1.data(), n1);
     }
   }
-  auto tgt = H5Dget_space(id);
-  // auto ndims = H5Sget_simple_extent_ndims(tgt);
   using A1 = array<hsize_t, 1>;
-  A1 snow;
-  A1 smax;
   herr_t err;
-  H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
-  if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < snow.size(); ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
-    }
-  }
-
   snow[0] += nlen;
-  err = H5Dextend(id, snow.data());
+  err = H5Dset_extent(id, snow.data());
   if (err < 0) {
     LOG(3, "can not extend dataset");
-    H5Sclose(tgt);
     return {-1};
   }
-
-  H5Sclose(tgt);
-
-  tgt = H5Dget_space(id);
-  A1 mem = {{nlen}};
-
-  auto dsp_mem = H5Screate_simple(mem.size(), mem.data(), nullptr);
+  dsp_tgt = H5Dget_space(id);
   {
     A1 start{{0}};
     A1 count{{nlen}};
+    // LOG(2, "select mem  {}  {} .. {}", dsp_mem, start[0], count[0]);
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
@@ -187,19 +201,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       return {-3};
     }
   }
-
-  A1 tgt_start{{snow.at(0) - nlen}};
+  A1 tgt_start{{snow[0] - nlen}};
   A1 tgt_count{{nlen}};
-  err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
+  // LOG(2, "select tgt {} .. {}", tgt_start[0], tgt_count[0]);
+  err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(3, "can not select tgt hyperslab");
     return {-3};
   }
-
-  err = H5Dwrite(id, type, dsp_mem, tgt, H5P_DEFAULT, data);
+  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, H5P_DEFAULT, data);
   if (err < 0) {
-    LOG(3, "writing failed");
+    LOG(3, "write failed");
     return {-4};
   }
   return {0, sizeof(T) * nlen, tgt_start[0]};
@@ -214,45 +227,21 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
       LOG(9, "append_data_2d {} for dataset {:.{}}", nlen, buf1.data(), n1);
     }
   }
-  auto tgt = H5Dget_space(id);
-  uint8_t const NDIM = 2;
-  using A1 = array<hsize_t, NDIM>;
-  A1 snow;
-  A1 smax;
+  using A1 = array<hsize_t, 2>;
   herr_t err;
-  if (NDIM != H5Sget_simple_extent_ndims(tgt)) {
-    LOG(3, "dataset dimensions do not match");
-    return {-1};
-  }
-  H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
-  if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < snow.size(); ++i1) {
-      LOG(9, "snow {} {:3}", i1, snow.at(i1));
-    }
-  }
-
   hsize_t ncols = snow[1];
   if (nlen % ncols != 0) {
     LOG(3, "dataset dimensions do not match");
     return {-1};
   }
-
   hsize_t nrows = nlen / ncols;
-
   snow[0] += nrows;
-  err = H5Dextend(id, snow.data());
+  err = H5Dset_extent(id, snow.data());
   if (err < 0) {
     LOG(3, "can not extend dataset");
-    H5Sclose(tgt);
     return {-1};
   }
-
-  H5Sclose(tgt);
-
-  tgt = H5Dget_space(id);
-  A1 mem = {{nrows, ncols}};
-
-  auto dsp_mem = H5Screate_simple(mem.size(), mem.data(), nullptr);
+  dsp_tgt = H5Dget_space(id);
   {
     A1 start{{0, 0}};
     A1 count{{nrows, ncols}};
@@ -263,17 +252,15 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
       return {-3};
     }
   }
-
   A1 tgt_start{{snow[0] - nrows, 0}};
   A1 tgt_count{{nrows, ncols}};
-  err = H5Sselect_hyperslab(tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
+  err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(3, "can not select tgt hyperslab");
     return {-3};
   }
-
-  err = H5Dwrite(id, type, dsp_mem, tgt, H5P_DEFAULT, data);
+  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, H5P_DEFAULT, data);
   if (err < 0) {
     LOG(3, "writing failed");
     return {-4};
