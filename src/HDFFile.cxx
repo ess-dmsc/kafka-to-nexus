@@ -466,7 +466,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     }
   }
   if (true) {
-    err = H5Pset_cache(fapl, 0, 521, 32 * PAGE_SIZE, 1.0);
+    err = H5Pset_cache(fapl, 0, 1483, 1024 * PAGE_SIZE, 0.0);
     if (err < 0) {
       LOG(7, "failed H5Pset_cache");
     }
