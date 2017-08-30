@@ -262,8 +262,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t3 = CLK::now();
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
-  if (dt1 > 0 or dt2 > 0) {
-    LOG(7, "append_data_1d DONE  {} + {}", dt1, dt2);
+  if (dt1 > 20 or dt2 > 20) {
+    LOG(7, "append_data_1d DONE  {} ms + {} ms", dt1, dt2);
   }
   return {0, sizeof(T) * nlen, tgt_start[0]};
 }
