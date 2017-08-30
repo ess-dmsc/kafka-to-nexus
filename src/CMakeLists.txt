@@ -47,7 +47,6 @@ set(path_include_common
 set(libraries_common
     ${RDKAFKA_LIBRARIES}
     ${HDF5_C_LIBRARIES}
-    ${HDF5_CXX_LIBRARIES}
     ${CURL_LIBRARIES}
     pthread
     z
