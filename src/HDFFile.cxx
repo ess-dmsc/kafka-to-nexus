@@ -421,21 +421,57 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   using std::string;
   using std::vector;
   using rapidjson::Value;
-  herr_t err;
-  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-  hsize_t threshold;
-  hsize_t alignment;
-  err = H5Pget_alignment(fapl, &threshold, &alignment);
-  if (err < 0) {
-    LOG(7, "could not get alignment");
-  } else {
-    LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
+  herr_t err = 0;
+  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
+  size_t const PAGE_SIZE = 4 * 1024 * 1024;
+  // H5F_FSPACE_STRATEGY_FSM_AGGR
+  // H5F_FSPACE_STRATEGY_PAGE
+  // H6F_FSPACE_STRATEGY_AGGR
+  // H5F_FSPACE_STRATEGY_NONE
+  // H5F_FSPACE_STRATEGY_NTYPES
+  if (true) {
+    err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
+                                     1024 * 1024);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_file_space_strategy");
+    }
   }
-  // TODO
-  // Only in 1.10.1
-  // err = H5Pset_page_buffer_size(fapl, 32*1024*1024, 0, 0);
-  auto f1 =
-      H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  if (true) {
+    err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_file_space_page_size");
+    }
+  }
+  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  if (false) {
+    hsize_t threshold;
+    hsize_t alignment;
+    err = H5Pget_alignment(fapl, &threshold, &alignment);
+    if (err < 0) {
+      LOG(7, "could not get alignment");
+    } else {
+      LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
+    }
+  }
+  if (true) {
+    err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_alignment");
+    }
+  }
+  if (true) {
+    err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_page_buffer_size");
+    }
+  }
+  if (true) {
+    err = H5Pset_cache(fapl, 0, 521, 32 * PAGE_SIZE, 1.0);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_cache");
+    }
+  }
+  auto f1 = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
   if (f1 < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
