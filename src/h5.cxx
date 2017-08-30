@@ -123,6 +123,10 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   herr_t err = 0;
   o.type = type;
   o.name = name;
+  err = H5Pset_fill_value(dcpl.id, type, nullptr);
+  if (err < 0) {
+    LOG(7, "failed H5Pset_fill_value");
+  }
   o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
   if (o.id == -1) {
     LOG(3, "H5Dcreate1 failed");
