@@ -120,6 +120,7 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   // LOG(3, "h5d::create");
   auto ret = ptr(new h5d);
   auto &o = *ret;
+  herr_t err = 0;
   o.type = type;
   o.name = name;
   o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
@@ -145,6 +146,10 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     LOG(3, "H5Screate_simple dsp_mem failed");
   }
   o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
+  err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
+  if (err < 0) {
+    LOG(7, "failed H5Pset_edc_check");
+  }
   return ret;
 }
 
@@ -254,7 +259,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     return {-3};
   }
   auto t2 = CLK::now();
-  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, H5P_DEFAULT, data);
+  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     LOG(3, "write failed");
     return {-4};
@@ -315,7 +320,7 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
     LOG(3, "can not select tgt hyperslab");
     return {-3};
   }
-  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, H5P_DEFAULT, data);
+  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     LOG(3, "writing failed");
     return {-4};
