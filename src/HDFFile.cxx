@@ -432,7 +432,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   if (true) {
     // H5F_FSPACE_STRATEGY_NONE
     // H5F_FSPACE_STRATEGY_PAGE
-    err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_NONE, false,
+    err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
                                      1024 * 1024);
     if (err < 0) {
       LOG(7, "failed H5Pset_file_space_strategy");
@@ -461,14 +461,15 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (false) {
+  if (true) {
     err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
     if (err < 0) {
       LOG(7, "failed H5Pset_page_buffer_size");
     }
   }
   if (true) {
-    err = H5Pset_cache(fapl, 0, 1483, 1024 * PAGE_SIZE, 0.0);
+    // 521  1483  9973
+    err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
     if (err < 0) {
       LOG(7, "failed H5Pset_cache");
     }
