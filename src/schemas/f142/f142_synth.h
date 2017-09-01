@@ -18,12 +18,11 @@ class synth_impl;
 
 class synth {
 public:
-  synth(std::string name, Value type, int size);
+  synth(std::string name, Value type);
   ~synth();
-  fb next(uint64_t seq);
+  fb next(uint64_t seq, size_t nele);
   std::unique_ptr<synth_impl> impl;
   std::string name;
-  int size;
 };
 
 } // namespace f142

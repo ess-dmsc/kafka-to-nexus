@@ -12,14 +12,14 @@ class synth_impl {
   Value type;
 };
 
-synth::synth(std::string name, Value type, int size) : name(name), size(size) {
+synth::synth(std::string name, Value type) : name(name) {
   impl.reset(new synth_impl);
   impl->type = type;
 }
 
 synth::~synth() {}
 
-fb synth::next(uint64_t seq) {
+fb synth::next(uint64_t seq, size_t nele) {
   impl->rnd.seed(seq);
   fb ret;
   ret.builder.reset(new flatbuffers::FlatBufferBuilder);
@@ -35,9 +35,9 @@ fb synth::next(uint64_t seq) {
   case Value::ArrayInt: {
     using T = int32_t;
     T *a1 = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(size, sizeof(T),
+    auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
                                                      (uint8_t **)&a1);
-    for (int i1 = 0; i1 < size; ++i1) {
+    for (int i1 = 0; i1 < nele; ++i1) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }
@@ -49,9 +49,9 @@ fb synth::next(uint64_t seq) {
   case Value::ArrayDouble: {
     using T = double;
     T *a1 = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(size, sizeof(T),
+    auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
                                                      (uint8_t **)&a1);
-    for (int i1 = 0; i1 < size; ++i1) {
+    for (int i1 = 0; i1 < nele; ++i1) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }
@@ -63,9 +63,9 @@ fb synth::next(uint64_t seq) {
   case Value::ArrayFloat: {
     using T = float;
     T *a1 = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(size, sizeof(T),
+    auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
                                                      (uint8_t **)&a1);
-    for (int i1 = 0; i1 < size; ++i1) {
+    for (int i1 = 0; i1 < nele; ++i1) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }

@@ -634,13 +634,13 @@ public:
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
       }
-      FlatBufs::f142::synth synth(source, ty, int(array_size));
+      FlatBufs::f142::synth synth(source, ty);
       rnd.seed(seed);
       for (uint64_t i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
-        fbs.push_back(synth.next(i1));
+        fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg::shared(
             (char const *)fb.builder->GetBufferPointer(),
