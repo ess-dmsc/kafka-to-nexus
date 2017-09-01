@@ -119,8 +119,9 @@ public:
       return report(p);
     }
     if (!report_thread_.joinable()) {
-      report_.reset(new Report(p,delay));
-      report_thread_ = std::thread([&]{ report_->report(streamer,stop_,runstatus); });
+      report_.reset(new Report(p, delay));
+      report_thread_ =
+          std::thread([&] { report_->report(streamer, stop_, runstatus); });
     } else {
       LOG(5, "Status report already started, nothing to do");
     }

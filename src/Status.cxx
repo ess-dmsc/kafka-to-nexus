@@ -47,12 +47,11 @@ void FileWriter::Status::StreamerStatusType::reset() {
 ////////////////////////////////
 // StreamerStatus implementation
 
-double average(const double& sum, const double& N) {
-  return sum/N;
-}
+double average(const double &sum, const double &N) { return sum / N; }
 
-double standard_deviation(const double& sum, const double& sum_squared, const double& N) {
-  return std::sqrt( (N*sum_squared - sum*sum)/(N*(N-1)) );
+double standard_deviation(const double &sum, const double &sum_squared,
+                          const double &N) {
+  return std::sqrt((N * sum_squared - sum * sum) / (N * (N - 1)));
 }
 
 FileWriter::Status::StreamerStatusType
@@ -77,12 +76,14 @@ FileWriter::Status::StreamerStatus::fetch_statistics() {
 
   system_clock::time_point t = system_clock::now();
   if (current.messages > 0) {
-    st.average_message_size = average(current.bytes,current.messages);
-    st.standard_deviation_message_size = standard_deviation(current.bytes, current.bytes_squared, current.messages);
+    st.average_message_size = average(current.bytes, current.messages);
+    st.standard_deviation_message_size = standard_deviation(
+        current.bytes, current.bytes_squared, current.messages);
 
     double elapsed_time = duration_cast<seconds>(t - last_time).count();
     st.average_message_frequency = average(current.messages, elapsed_time);
-    st.standard_deviation_message_frequency = standard_deviation(current.messages, current.messages_squared, elapsed_time);
+    st.standard_deviation_message_frequency = standard_deviation(
+        current.messages, current.messages_squared, elapsed_time);
   } else {
     st.average_message_size = 0.;
     st.standard_deviation_message_size = 0.;
@@ -98,10 +99,11 @@ FileWriter::Status::StreamerStatus::fetch_statistics() {
 //////////////////////
 // StreamMasterStatus
 
-FileWriter::Status::StreamMasterStatus& 
-FileWriter::Status::StreamMasterStatus::push(const std::string &topic_name,
-					     const FileWriter::Status::StreamerStatusType &status,
-					     const FileWriter::Status::StreamerStatisticsType &stats) {
+FileWriter::Status::StreamMasterStatus &
+FileWriter::Status::StreamMasterStatus::push(
+    const std::string &topic_name,
+    const FileWriter::Status::StreamerStatusType &status,
+    const FileWriter::Status::StreamerStatisticsType &stats) {
   topic.push_back(topic_name);
   streamer_status.push_back(status);
   streamer_stats.push_back(stats);

@@ -38,6 +38,5 @@ enum StreamerErrorCode {
 
 const std::string Err2Str(const FileWriter::StreamMasterError &);
 const std::string Err2Str(const FileWriter::StreamerError &);
-
 }
 }
