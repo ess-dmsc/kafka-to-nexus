@@ -16,10 +16,7 @@
 #include "DemuxTopic.h"
 #include "FileWriterTask.h"
 #include "KafkaW.h"
-#include "Status.hpp"
-#include "StatusWriter.hpp"
-#include "logger.h"
-#include "utils.h"
+#include "Report.hpp"
 
 struct FileWriterCommand;
 
@@ -64,7 +61,7 @@ public:
   }
 
   ~StreamMaster() {
-    _stop = true;
+    stop_ = true;
     if (loop.joinable()) {
       loop.join();
     }
@@ -95,7 +92,7 @@ public:
   bool start() {
     LOG(7, "StreamMaster: start");
     do_write = true;
-    _stop = false;
+    stop_ = false;
 
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
@@ -117,15 +114,13 @@ public:
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const int &delay = 1000) {
-    report_producer_ = p;
+    if (delay < 0) {
+      LOG(2, "Required negative delay in statistics collection: use default");
+      return report(p);
+    }
     if (!report_thread_.joinable()) {
-      if (delay < 0) {
-        LOG(2, "Required negative delay in statistics collection: use default");
-        return report(p);
-      }
-      report_thread_ = std::thread(
-          std::bind(&StreamMaster<Streamer, Demux>::report_impl, this,
-                    std::ref(report_producer_), std::ref(delay)));
+      report_.reset(new Report(p,delay));
+      report_thread_ = std::thread([&]{ report_->report(streamer,stop_,runstatus); });
     } else {
       LOG(5, "Status report already started, nothing to do");
     }
@@ -155,7 +150,7 @@ private:
     runstatus = ErrorCode::running;
     system_clock::time_point tp;
 
-    while (!_stop) {
+    while (!stop_) {
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
         if (s.runstatus().value() == Streamer::ErrorCode::writing) {
@@ -198,53 +193,16 @@ private:
         return Error{ErrorCode::empty_streamer};
       } else {
         runstatus = ErrorCode::has_finished;
-        _stop = true;
+        stop_ = true;
         return Error{ErrorCode::has_finished};
       }
-    }
-  }
-
-  void report_impl(std::shared_ptr<KafkaW::ProducerTopic> p,
-                   const int delay = 1000) {
-    while (!_stop) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-      Status::StreamMasterStatus status(runstatus.load());
-      for (auto &s : streamer) {
-        auto v = s.second.status();
-        status.push(s.first, v.fetch_status(), v.fetch_statistics());
-      }
-      auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      if (!report_producer_) {
-        LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
-        runstatus = ErrorCode::statistics_failure;
-        return;
-      }
-      report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                                value.size());
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(delay));
-    // termination message
-    {
-      Status::StreamMasterStatus status(runstatus.load());
-      for (auto &s : streamer) {
-        auto v = s.second.status();
-        status.push(s.first, v.fetch_status(), v.fetch_statistics());
-      }
-      auto value = Status::pprint<Status::JSONStreamWriter>(status);
-      if (!report_producer_) {
-        LOG(1, "ProucerTopic error: can't produce StreamMaster status report")
-        runstatus = ErrorCode::statistics_failure;
-        return;
-      }
-      report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                                value.size());
     }
   }
 
   void stop_impl() {
     LOG(7, "StreamMaster: stop");
     do_write = false;
-    _stop = true;
+    stop_ = true;
     if (loop.joinable()) {
       loop.join();
     }
@@ -269,10 +227,10 @@ private:
   std::thread report_thread_;
   std::atomic<int> runstatus{ErrorCode::not_started};
   std::atomic<bool> do_write{false};
-  std::atomic<bool> _stop{false};
+  std::atomic<bool> stop_{false};
   std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
-  std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
   std::once_flag stop_once_guard;
+  std::unique_ptr<Report> report_{nullptr};
 
   milliseconds duration{1000};
 };

@@ -8,7 +8,7 @@
 #include <mutex>
 #include <vector>
 
-#include "utils.h"
+#include "Errors.hpp"
 
 namespace FileWriter {
 class Streamer;
@@ -16,39 +16,6 @@ namespace Status {
 
 class StdIOWriter;
 class JSONWriterBase;
-
-class StreamerStatus;
-class StreamMasterStatus;
-
-// Error codes for the StreamMaster and Streamers
-enum StreamMasterErrorCode {
-  not_started = 0,
-  running = 1,
-  has_finished = 2,
-  empty_streamer = 3,
-  streamer_error = -1,
-  statistics_failure = -10,
-  streammaster_error = -1000
-};
-enum StreamerErrorCode {
-  no_error = 1001,
-  writing = 1,
-  stopped = 0,
-  configuration_error = -1,
-  consumer_error = -2,
-  metadata_error = -3,
-  topic_partition_error = -4,
-  assign_error = -5,
-  topic_error = -6,
-  offset_error = -7,
-  start_time_error = -8,
-  message_error = -9,
-  write_error = -10,
-  not_initialized = -1000,
-};
-
-const std::string Err2Str(const FileWriter::StreamMasterError &);
-const std::string Err2Str(const FileWriter::StreamerError &);
 
 // Data type for collecting informations about the streamer. `bytes`
 // and `messages` store the total number of bytes and messages
@@ -102,13 +69,7 @@ public:
 
   StreamMasterStatus &push(const std::string &topic_name,
                            const StreamerStatusType &status,
-                           const StreamerStatisticsType &stats) {
-    topic.push_back(topic_name);
-    streamer_status.push_back(status);
-    streamer_stats.push_back(stats);
-    return *this;
-  }
-
+                           const StreamerStatisticsType &stats);
   const int size() {
     if (streamer_status.size() == streamer_stats.size() &&
         streamer_status.size() == topic.size()) {
