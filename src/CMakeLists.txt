@@ -13,6 +13,7 @@ find_package(Rapidjson REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
+find_package(MPI REQUIRED)
 find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
@@ -37,6 +38,7 @@ set(path_include_common
     ${FMT_INCLUDE_DIR}
     ${RDKAFKA_INCLUDE_DIR}
     ${HDF5_INCLUDE_DIRS}
+    ${MPI_INCLUDE_DIR}
     ${FLATBUFFERS_INCLUDE_DIR}
     ${RAPIDJSON_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
@@ -47,6 +49,7 @@ set(path_include_common
 set(libraries_common
     ${RDKAFKA_LIBRARIES}
     ${HDF5_C_LIBRARIES}
+    ${MPI_LIBRARIES}
     ${CURL_LIBRARIES}
     pthread
     z
