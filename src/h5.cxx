@@ -161,13 +161,22 @@ h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
   if (id != -1) {
+    LOG(7, "~h5d ds");
     herr_t err = H5Dset_extent(id, snow.data());
     if (err < 0) {
       LOG(3, "H5Dset_extent failed");
     }
-  }
-  if (id != -1) {
-    H5Dclose(id);
+    char buf[512];
+    auto bufn = H5Iget_name(id, buf, 512);
+    H5O_info_t oi;
+    H5Oget_info(id, &oi);
+    err = H5Dclose(id);
+    if (err < 0) {
+      LOG(3, "Could not close dataset: {}");
+      LOG(7, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
+             "H5O_info_t.rc: {}",
+          id, buf, bufn, H5Iget_ref(id), oi.rc);
+    }
     id = -1;
   }
   if (dsp_mem != -1) {
