@@ -499,6 +499,9 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   }
   h5file = f1;
 
+  H5Pclose(fcpl);
+  H5Pclose(fapl);
+
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
