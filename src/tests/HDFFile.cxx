@@ -41,8 +41,9 @@ TEST(HDFFile, create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
+  std::vector<hid_t> groups;
   f1.init("tmp-test.h5", rapidjson::Value(), rapidjson::Value(),
-          stream_hdf_info);
+          stream_hdf_info, groups);
 }
 
 class T_CommandHandler : public testing::Test {

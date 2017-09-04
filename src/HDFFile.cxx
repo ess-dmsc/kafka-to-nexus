@@ -417,7 +417,8 @@ static void create_hdf_structures(rapidjson::Value const *value,
 
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
                   rapidjson::Value const &config_file,
-                  std::vector<StreamHDFInfo> &stream_hdf_info) {
+                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                  std::vector<hid_t> &groups) {
   using std::string;
   using std::vector;
   using rapidjson::Value;

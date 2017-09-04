@@ -2,6 +2,7 @@
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include "utils.h"
+#include <h5.h>
 
 #include <future>
 
@@ -101,10 +102,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
+  std::vector<hid_t> groups;
   {
     rapidjson::Value config_file;
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x = fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
+    auto x =
+        fwt->hdf_init(nexus_structure, config_file, stream_hdf_info, groups);
     if (x) {
       LOG(7, "ERROR hdf init failed, cancel this write command");
       return;
@@ -156,6 +159,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     s._topic = string(topic);
     s.do_process_message = config.source_do_process_message;
     fwt->add_source(move(s));
+  }
+
+  for (auto &id : groups) {
+    herr_t err = 0;
+    err = H5Gclose(id);
+    if (err < 0) {
+      LOG(3, "failed H5Gclose");
+    }
   }
 
   if (master) {

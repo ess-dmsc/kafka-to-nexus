@@ -39,7 +39,8 @@ private:
   /// Called by CommandHandler on setup.
   int hdf_init(rapidjson::Value const &nexus_structure,
                rapidjson::Value const &config_file,
-               std::vector<StreamHDFInfo> &stream_hdf_info);
+               std::vector<StreamHDFInfo> &stream_hdf_info,
+               std::vector<hid_t> &groups);
   void job_id_init(const std::string &);
   uint64_t _id;
   std::string _job_id;
