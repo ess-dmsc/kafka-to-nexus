@@ -489,6 +489,9 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "failed H5Pset_cache");
     }
   }
+  if (true) {
+    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  }
   auto f1 = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
   if (f1 < 0) {
     std::array<char, 256> cwd;
