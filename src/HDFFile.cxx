@@ -429,7 +429,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   // H6F_FSPACE_STRATEGY_AGGR
   // H5F_FSPACE_STRATEGY_NONE
   // H5F_FSPACE_STRATEGY_NTYPES
-  if (true) {
+  if (false) {
     // H5F_FSPACE_STRATEGY_NONE
     // H5F_FSPACE_STRATEGY_PAGE
     err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
@@ -438,7 +438,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "failed H5Pset_file_space_strategy");
     }
   }
-  if (true) {
+  if (false) {
     err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_file_space_page_size");
@@ -455,19 +455,19 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
     }
   }
-  if (true) {
+  if (false) {
     err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (true) {
+  if (false) {
     err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
     if (err < 0) {
       LOG(7, "failed H5Pset_page_buffer_size");
     }
   }
-  if (true) {
+  if (false) {
     // 521  1483  9973
     err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
     if (err < 0) {
