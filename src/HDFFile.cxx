@@ -31,7 +31,21 @@ HDFFile::HDFFile() {
 #endif
 }
 
+herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
+                         void *op_data) {
+  LOG(3, "obj refs: {:2}  name: {}", oi->rc, name);
+  return 0;
+}
+
 HDFFile::~HDFFile() {
+  herr_t err = 0;
+  if (false) {
+    err = H5Ovisit(h5file, H5_INDEX_NAME, H5_ITER_NATIVE, visitor_show_name,
+                   nullptr);
+    if (err < 0) {
+      LOG(3, "visit failed");
+    }
+  }
   if (h5file >= 0) {
     std::array<char, 512> fname;
     H5Fget_name(h5file, fname.data(), fname.size());
