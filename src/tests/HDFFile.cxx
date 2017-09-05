@@ -611,7 +611,7 @@ public:
     }
 
     H5Fclose(fid);
-
+    LOG(7, "data_ev42 verification done");
     ASSERT_EQ(recreate_file(&json_command), 0);
   }
 
