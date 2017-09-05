@@ -101,16 +101,19 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     std::array<int, 10> mpi_return_codes;
     char arg1[32];
     strncpy(arg1, "--mpi", 5);
-    char *argv[] = {arg1};
+    char *argv[] = {
+        arg1, nullptr,
+    };
     LOG(3, "Spawning as: {}", getpid());
     FILE *f1 = fopen("tmp-pid.txt", "wb");
     auto pidstr = fmt::format("{}", getpid());
     fwrite(pidstr.data(), pidstr.size(), 1, f1);
     fclose(f1);
+    uint8_t nspawns = 4;
     // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     LOG(3, "go on as: {}", getpid());
     auto err =
-        MPI_Comm_spawn("./mpi-worker", MPI_ARGV_NULL, 1, MPI_INFO_NULL, 0,
+        MPI_Comm_spawn("./mpi-worker", argv, nspawns, MPI_INFO_NULL, 0,
                        MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
     if (err != MPI_SUCCESS) {
       LOG(3, "can not spawn");
@@ -126,10 +129,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
     }
     std::string msg("Hi child!");
-    MPI_Send(msg.data(), msg.size(), MPI_CHAR, 0, 0, comm_spawned);
+    for (int s = 0; s < nspawns; ++s) {
+      MPI_Send(msg.data(), msg.size(), MPI_CHAR, s, 0, comm_spawned);
+    }
     // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    MPI_Finalize();
-    exit(1);
+    // MPI_Finalize();
+    // exit(1);
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
