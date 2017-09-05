@@ -132,6 +132,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     for (int s = 0; s < nspawns; ++s) {
       MPI_Send(msg.data(), msg.size(), MPI_CHAR, s, 0, comm_spawned);
     }
+    MPI_Comm_disconnect(&comm_spawned);
     // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     // MPI_Finalize();
     // exit(1);

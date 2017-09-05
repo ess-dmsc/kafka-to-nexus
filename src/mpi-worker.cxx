@@ -20,7 +20,9 @@ int main(int argc, char **argv) {
   LOG(3, "status: {}, {}, {}, count: {}", status.MPI_SOURCE, status.MPI_TAG,
       status.MPI_ERROR, count);
   LOG(3, "received: {}", buf.data());
+  MPI_Comm_disconnect(&comm);
+  LOG(3, "finalizing {}", rank);
   MPI_Finalize();
-  LOG(3, "mpi worker after finalize");
+  LOG(3, "after finalize {}", rank);
   return 42;
 }
