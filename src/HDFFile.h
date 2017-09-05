@@ -12,9 +12,14 @@ namespace FileWriter {
 
 // POD
 struct StreamHDFInfo {
-  // hid_t hdf_parent_object;
-  std::string name;
+  std::string hdf_parent_name;
   rapidjson::Value const *config_stream;
+};
+
+// Basically POD
+class WriteResult {
+public:
+  int64_t ts;
 };
 
 class HDFFile final {
@@ -26,7 +31,11 @@ public:
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
   void flush();
+
+private:
   hid_t h5file = -1;
+  friend class ::T_HDFFile;
+  friend class CommandHandler;
 };
 
 } // namespace FileWriter

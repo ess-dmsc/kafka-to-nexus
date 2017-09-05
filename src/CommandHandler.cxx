@@ -1,4 +1,5 @@
 #include "CommandHandler.h"
+#include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include "utils.h"
@@ -203,7 +204,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
-    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.name,
+    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
                                 config_stream, nullptr);
 
     auto s = Source(source.v, move(hdf_writer_module));

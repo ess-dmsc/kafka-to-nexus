@@ -58,7 +58,7 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name,
                       rapidjson::Value const &config_stream,
                       rapidjson::Value const *config_module) override;
   WriteResult write(Msg const &msg) override;
