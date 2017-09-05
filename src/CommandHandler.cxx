@@ -112,7 +112,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto pidstr = fmt::format("{}", getpid());
     fwrite(pidstr.data(), pidstr.size(), 1, f1);
     fclose(f1);
-    uint8_t nspawns = 4;
+    uint8_t nspawns = 1;
     // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     LOG(3, "go on as: {}", getpid());
     auto err =
@@ -133,8 +133,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
 
     // create shared memory
-    size_t mmap_size = 80 * 1024 * 1024;
-    auto shm_ptr = (char *)mmap64(nullptr, mmap_size, PROT_READ | PROT_WRITE,
+    size_t shm_size = 1 * 1024 * 1024;
+    auto shm_ptr = (char *)mmap64(nullptr, shm_size, PROT_READ | PROT_WRITE,
                                   MAP_ANONYMOUS | MAP_SHARED, -1, 0);
     if (sizeof(char *) != 8) {
       LOG(3, "just making sure");
@@ -156,21 +156,60 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       exit(1);
     }
     strcpy(shm_ptr, "Hallo Shared!");
+    // TODO treat shm as resource
+    if (munmap(shm_ptr, shm_size) != 0) {
+      LOG(3, "munmap failed");
+      exit(1);
+    }
 
     std::string msg("Hi child!");
     for (int s = 0; s < nspawns; ++s) {
       MPI_Send(msg.data(), msg.size(), MPI_CHAR, s, 0, comm_spawned);
       MPI_Send(&shm_ptr, 8, MPI_CHAR, s, 0, comm_spawned);
     }
+
+    // mpi shared
+
+    {
+      int n = 0;
+      MPI_Comm_size(comm_spawned, &n);
+      LOG(3, "size of spawned: {}", n);
+    }
+
+    MPI_Comm MPI_COMM_NODE;
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL,
+                        &MPI_COMM_NODE);
+
+    {
+      int n = 0;
+      MPI_Comm_size(MPI_COMM_NODE, &n);
+      LOG(3, "size of MPI_COMM_NODE: {}", n);
+    }
+
+    MPI_Comm shm_comm = MPI_COMM_WORLD; // or MPI_COMM_NODE
+
+    MPI_Win mpi_win;
+    MPI_Info win_info;
+    MPI_Info_create(&win_info);
+    // MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
+    LOG(3, "MPI_Win_allocate_shared main");
+    err = MPI_Win_allocate_shared(shm_size, 1, win_info, shm_comm, &shm_ptr,
+                                  &mpi_win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "failed MPI_Win_allocate_shared");
+      exit(1);
+    }
+    LOG(3, "MPI_Win_allocate_shared main DONE");
+    MPI_Info_free(&win_info);
+
+    MPI_Win_lock_all(0, mpi_win);
+    MPI_Win_sync(mpi_win);
+    MPI_Barrier(comm_spawned);
+
     MPI_Comm_disconnect(&comm_spawned);
     // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     // MPI_Finalize();
     // exit(1);
-    // TODO treat shm as resource
-    if (munmap(shm_ptr, mmap_size) != 0) {
-      LOG(3, "munmap failed");
-      exit(1);
-    }
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
