@@ -215,13 +215,19 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     fwt->add_source(move(s));
   }
 
-  for (auto &id : groups) {
-    herr_t err = 0;
-    err = H5Gclose(id);
-    if (err < 0) {
-      LOG(3, "failed H5Gclose");
-    }
-  }
+  // close all writer modules
+  // close hdf file
+
+  // for each stream:
+  //   either re-open in this main process
+  //     Re-create HDFWriterModule
+  //     Re-parse the stream config
+  //     Re-open HDF items
+  //     Create a Source which feeds directly to that module
+  //   or re-open in one or more separate mpi workers
+  //     Send command to create HDFWriterModule, all the json config as text,
+  //     let it re-open hdf items
+  //     Create a Source which puts messages on a queue
 
   if (master) {
     auto br = find_broker(d);
