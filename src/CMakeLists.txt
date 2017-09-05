@@ -108,7 +108,6 @@ set(kafka_to_nexus_INC
     FileWriterTask.h
     FlatbufferReader.h
     h5.h
-    HDFFile_h5.h
     HDFFile.h
     HDFWriterModule.h
     helper.h
