@@ -128,6 +128,7 @@ public:
   InitResult init_hdf(hid_t hdf_file, string hdf_parent_name) override;
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
+  InitResult reopen(hid_t hdf_file, string hdf_parent_name) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -267,6 +268,14 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
     }
   }
   H5Gclose(hdf_group);
+  return HDFWriterModule::InitResult::OK();
+}
+
+HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
+                                                    string hdf_parent_name) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+  // TODO
+  H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
 }
 

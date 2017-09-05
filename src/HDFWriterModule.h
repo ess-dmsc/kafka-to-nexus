@@ -113,6 +113,8 @@ public:
   /// should put its data.
   virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name) = 0;
 
+  virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name) = 0;
+
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
 

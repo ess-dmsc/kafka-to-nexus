@@ -50,7 +50,10 @@ HDFFile::~HDFFile() {
     LOG(6, "flush file {}", fname.data());
     H5Fflush(h5file, H5F_SCOPE_LOCAL);
     LOG(6, "close file {}", fname.data());
-    H5Fclose(h5file);
+    err = H5Fclose(h5file);
+    if (err < 0) {
+      LOG(3, "can not close file {}", fname.data());
+    }
   }
 }
 
@@ -527,6 +530,9 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   }
 
   for (auto x : groups) {
+    array<char, 256> b;
+    H5Iget_name(x, b.data(), b.size());
+    LOG(3, "closing refs: {}  name: {}", H5Iget_ref(x), b.data());
     H5Gclose(x);
   }
   groups.clear();
@@ -543,6 +549,81 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   H5Pclose(lcpl);
   H5Pclose(acpl);
 
+  return 0;
+}
+
+int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
+  using std::string;
+  using std::vector;
+  using rapidjson::Value;
+  herr_t err = 0;
+  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
+  size_t const PAGE_SIZE = 4 * 1024 * 1024;
+  // H5F_FSPACE_STRATEGY_FSM_AGGR
+  // H5F_FSPACE_STRATEGY_PAGE
+  // H6F_FSPACE_STRATEGY_AGGR
+  // H5F_FSPACE_STRATEGY_NONE
+  // H5F_FSPACE_STRATEGY_NTYPES
+  if (false) {
+    // H5F_FSPACE_STRATEGY_NONE
+    // H5F_FSPACE_STRATEGY_PAGE
+    err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
+                                     1024 * 1024);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_file_space_strategy");
+    }
+  }
+  if (false) {
+    err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_file_space_page_size");
+    }
+  }
+  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  if (false) {
+    hsize_t threshold;
+    hsize_t alignment;
+    err = H5Pget_alignment(fapl, &threshold, &alignment);
+    if (err < 0) {
+      LOG(7, "could not get alignment");
+    } else {
+      LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
+    }
+  }
+  if (false) {
+    err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_alignment");
+    }
+  }
+  if (false) {
+    err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_page_buffer_size");
+    }
+  }
+  if (false) {
+    // 521  1483  9973
+    err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_cache");
+    }
+  }
+  if (false) {
+    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  }
+  auto f1 = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);
+  if (f1 < 0) {
+    std::array<char, 256> cwd;
+    getcwd(cwd.data(), cwd.size());
+    LOG(0, "ERROR could not create the HDF file: {}  cwd: {}", filename,
+        cwd.data());
+    return -1;
+  }
+  h5file = f1;
+
+  H5Pclose(fcpl);
+  H5Pclose(fapl);
   return 0;
 }
 

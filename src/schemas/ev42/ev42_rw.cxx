@@ -61,6 +61,7 @@ public:
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
   InitResult init_hdf(hid_t hdf_file, string hdf_parent_name) override;
+  InitResult reopen(hid_t hdf_file, string hdf_parent_name) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -114,6 +115,33 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
       hid, "cue_index", chunk_n_elements * sizeof(uint32_t));
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
       hid, "cue_timestamp_zero", chunk_n_elements * sizeof(uint64_t));
+
+  if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
+      !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
+    ds_event_time_offset.reset();
+    ds_event_id.reset();
+    ds_event_time_zero.reset();
+    ds_event_index.reset();
+    ds_cue_index.reset();
+    ds_cue_timestamp_zero.reset();
+  }
+  H5Gclose(hid);
+  return HDFWriterModule::InitResult::OK();
+}
+
+HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
+                                                    string hdf_parent_name) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+
+  this->ds_event_time_offset =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "event_time_offset");
+  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(hid, "event_id");
+  this->ds_event_time_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(hid, "event_time_zero");
+  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::open(hid, "event_index");
+  this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::open(hid, "cue_index");
+  this->ds_cue_timestamp_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(hid, "cue_timestamp_zero");
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {

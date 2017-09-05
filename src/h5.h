@@ -64,6 +64,7 @@ public:
   typedef unique_ptr<h5d> ptr;
   static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
                     h5p::dataset_create dcpl);
+  static ptr open(hid_t loc, string name);
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);
@@ -93,6 +94,7 @@ template <typename T> class h5d_chunked_1d {
 public:
   typedef unique_ptr<h5d_chunked_1d<T>> ptr;
   static ptr create(hid_t loc, string name, hsize_t chunk_bytes);
+  static ptr open(hid_t loc, string name);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -101,7 +103,7 @@ public:
   int flush_buf();
 
 private:
-  h5d_chunked_1d(hid_t loc, string name, hsize_t chunk_bytes, h5d ds);
+  h5d_chunked_1d(hid_t loc, string name, h5d ds);
   h5s dsp_wr;
   size_t const buf_MAXPKG = 0;
   size_t const buf_SIZE = 1024 * 1024;

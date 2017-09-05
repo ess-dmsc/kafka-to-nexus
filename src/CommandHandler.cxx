@@ -205,29 +205,91 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
 
     hdf_writer_module->parse_config(config_stream, nullptr);
-
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name);
+    hdf_writer_module->close();
+    hdf_writer_module.reset();
+  }
 
+  auto old_fid = fwt->hdf_file.h5file;
+  auto print = [](std::string s, hid_t oid) {
+    H5O_info_t i;
+    H5Oget_info(oid, &i);
+    LOG(3, "{} refs: {}", s, i.rc);
+  };
+
+  print("before", old_fid);
+
+  std::vector<hid_t> obj_id_list(1024);
+  auto nopen = H5Fget_obj_ids(old_fid, H5F_OBJ_ALL, obj_id_list.size(),
+                              obj_id_list.data());
+  for (int i1 = 0; i1 < nopen; ++i1) {
+    auto id = obj_id_list[i1];
+    std::vector<char> name(512);
+    H5Iget_name(id, name.data(), name.size());
+    LOG(3, "{}:  {}", i1, name.data());
+    // H5Oclose(id);
+  }
+
+  fwt->hdf_filename = fname;
+  fwt->hdf_file.reopen(fname, Value());
+
+  for (auto &stream : stream_hdf_info) {
+    // TODO
+    // Refactor with the above loop..
+    auto config_stream_value = get_object(*stream.config_stream, "stream");
+    if (!config_stream_value) {
+      LOG(5, "Missing stream specification");
+      continue;
+    }
+    auto &config_stream = *config_stream_value.v;
+    // LOG(7, "Adding stream: {}", json_to_string(config_stream));
+    auto topic = get_string(&config_stream, "topic");
+    if (!topic) {
+      LOG(5, "Missing topic on stream specification");
+      continue;
+    }
+    auto source = get_string(&config_stream, "source");
+    if (!source) {
+      LOG(5, "Missing source on stream specification");
+      continue;
+    }
+    auto module = get_string(&config_stream, "module");
+    if (!module) {
+      LOG(5, "Missing module on stream specification");
+      continue;
+    }
+
+    auto module_factory = HDFWriterModuleRegistry::find(module.v);
+    if (!module_factory) {
+      LOG(5, "Module '{}' is not available", module.v);
+      continue;
+    }
+
+    auto hdf_writer_module = module_factory();
+    if (!hdf_writer_module) {
+      LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
+      continue;
+    }
+
+    hdf_writer_module->parse_config(config_stream, nullptr);
+    hdf_writer_module->reopen(fwt->hdf_file.h5file, stream.hdf_parent_name);
+
+    // for each stream:
+    //   either re-open in this main process
+    //     Re-create HDFWriterModule
+    //     Re-parse the stream config
+    //     Re-open HDF items
+    //     Create a Source which feeds directly to that module
     auto s = Source(source.v, move(hdf_writer_module));
-    // Can this be done in a better way?
     s._topic = string(topic);
     s.do_process_message = config.source_do_process_message;
     fwt->add_source(move(s));
+
+    //   or re-open in one or more separate mpi workers
+    //     Send command to create HDFWriterModule, all the json config as text,
+    //     let it re-open hdf items
+    //     Create a Source which puts messages on a queue
   }
-
-  // close all writer modules
-  // close hdf file
-
-  // for each stream:
-  //   either re-open in this main process
-  //     Re-create HDFWriterModule
-  //     Re-parse the stream config
-  //     Re-open HDF items
-  //     Create a Source which feeds directly to that module
-  //   or re-open in one or more separate mpi workers
-  //     Send command to create HDFWriterModule, all the json config as text,
-  //     let it re-open hdf items
-  //     Create a Source which puts messages on a queue
 
   if (master) {
     auto br = find_broker(d);
