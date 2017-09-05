@@ -1,6 +1,5 @@
 #include "../HDFFile.h"
 #include "../CommandHandler.h"
-#include "../HDFFile_impl.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "../helper.h"
@@ -9,6 +8,7 @@
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <hdf5.h>
 #include <random>
 #include <rapidjson/document.h>
 #include <string>

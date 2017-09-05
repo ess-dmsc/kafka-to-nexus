@@ -27,10 +27,6 @@ public:
            std::vector<hid_t> &groups);
   void flush();
   hid_t h5file = -1;
-
-private:
-  friend class ::T_HDFFile;
-  friend class CommandHandler;
 };
 
 } // namespace FileWriter
