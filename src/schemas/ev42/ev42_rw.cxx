@@ -58,9 +58,9 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name,
-                      rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module) override;
+  void parse_config(rapidjson::Value const &config_stream,
+                    rapidjson::Value const *config_module) override;
+  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -71,6 +71,7 @@ public:
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_index;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
+  hsize_t chunk_n_elements = 1000000;
   bool do_flush_always = false;
   uint64_t total_written_bytes = 0;
   uint64_t index_at_bytes = 0;
@@ -82,14 +83,8 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
   return FileWriter::HDFWriterModule::ptr(new HDFWriterModule);
 }
 
-HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                          rapidjson::Value const &config_stream,
-                          rapidjson::Value const *config_module) {
-  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-
-  hsize_t chunk_n_elements = 1;
-
+void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
+                                   rapidjson::Value const *config_module) {
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v * 1024);
     LOG(7, "index_every_bytes: {}", index_every_bytes);
@@ -101,6 +96,11 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     chunk_n_elements = hsize_t(x.v);
     LOG(7, "chunk_n_elements: {}", chunk_n_elements);
   }
+}
+
+HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
+                                                      string hdf_parent_name) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
       hid, "event_time_offset", chunk_n_elements * sizeof(uint32_t));
@@ -157,7 +157,15 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
 
 int32_t HDFWriterModule::flush() { return 0; }
 
-int32_t HDFWriterModule::close() { return 0; }
+int32_t HDFWriterModule::close() {
+  ds_event_time_offset.reset();
+  ds_event_id.reset();
+  ds_event_time_zero.reset();
+  ds_event_index.reset();
+  ds_cue_index.reset();
+  ds_cue_timestamp_zero.reset();
+  return 0;
+}
 
 HDFWriterModuleRegistry::Registrar
     g_registrar_HDFWriterModule("ev42", HDFWriterModule::create);

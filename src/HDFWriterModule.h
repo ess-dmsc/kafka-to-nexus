@@ -98,19 +98,20 @@ public:
 
   virtual ~HDFWriterModule() = default;
 
+  /// @param config_stream Configuration from the write file command for this
+  /// stream.
+  /// @param config_module Configuration for all instances of this
+  /// HDFWriterModule.
+  virtual void parse_config(rapidjson::Value const &config_stream,
+                            rapidjson::Value const *config_module) = 0;
+
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   /// @param hdf_file The HDF file handle.
   /// @param hdf_parent_name Path to the group into which this HDFWriterModule
   /// should put its data.
-  /// @param config_stream Configuration from the write file command for this
-  /// stream.
-  /// @param config_module Configuration for all instances of this
-  /// HDFWriterModule.
-  virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                              rapidjson::Value const &config_stream,
-                              rapidjson::Value const *config_module) = 0;
+  virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;

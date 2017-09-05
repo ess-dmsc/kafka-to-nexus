@@ -125,9 +125,9 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                      rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module) override;
+  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name) override;
+  void parse_config(rapidjson::Value const &config_stream,
+                    rapidjson::Value const *config_module) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -146,6 +146,9 @@ public:
   // set by default to a large value:
   uint64_t index_every_bytes = !0;
   uint64_t ts_max = 0;
+  size_t array_size = 0;
+  std::string sourcename;
+  std::string type;
 };
 
 FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
@@ -205,23 +208,18 @@ writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size, string type,
   return (writer_typed_base *)nullptr;
 }
 
-HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                          rapidjson::Value const &config_stream,
-                          rapidjson::Value const *config_module) {
-  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-  auto &hdf_group = hid;
+void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
+                                   rapidjson::Value const *config_module) {
   auto str = get_string(&config_stream, "source");
   if (!str) {
-    return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
+    return;
   }
-  auto sourcename = str.v;
+  sourcename = str.v;
   str = get_string(&config_stream, "type");
   if (!str) {
-    return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
+    return;
   }
-  auto type = str.v;
-  size_t array_size = 0;
+  type = str.v;
   if (auto x = get_uint(&config_stream, "array_size")) {
     array_size = size_t(x.v);
   }
@@ -229,20 +227,23 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
       "HDFWriterModule::init_hdf f142 sourcename: {}  type: {}  array_size: {}",
       sourcename, type, array_size);
 
-  string s("value");
-
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v) * 1024;
   } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
     index_every_bytes = uint64_t(x.v) * 1024 * 1024;
   }
+}
 
+HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
+                                                      string hdf_parent_name) {
+  auto hdf_group = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+
+  string s("value");
   impl.reset(impl_fac(hdf_group, array_size, type, s));
   if (!impl) {
     LOG(4, "Could not create a writer implementation for value_type {}", type);
     return HDFWriterModule::InitResult::ERROR_IO();
   }
-
   this->ds_timestamp =
       h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
@@ -265,7 +266,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
       return HDFWriterModule::InitResult::ERROR_IO();
     }
   }
-  H5Gclose(hid);
+  H5Gclose(hdf_group);
   return HDFWriterModule::InitResult::OK();
 }
 

@@ -204,8 +204,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
-    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
-                                config_stream, nullptr);
+    hdf_writer_module->parse_config(config_stream, nullptr);
+
+    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name);
 
     auto s = Source(source.v, move(hdf_writer_module));
     // Can this be done in a better way?
