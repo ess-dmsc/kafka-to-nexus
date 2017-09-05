@@ -6,6 +6,10 @@
 
 #include <future>
 
+// getpid()
+#include <sys/types.h>
+#include <unistd.h>
+
 namespace FileWriter {
 
 std::string find_filename(rapidjson::Document const &d) {
@@ -84,6 +88,48 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
     }
+  }
+
+  {
+    // Spawn MPI here.
+    MPI_Info mpi_info;
+    if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
+      LOG(3, "ERROR can not init MPI_Info");
+      exit(1);
+    }
+    MPI_Comm comm_spawned;
+    std::array<int, 10> mpi_return_codes;
+    char arg1[32];
+    strncpy(arg1, "--mpi", 5);
+    char *argv[] = {arg1};
+    LOG(3, "Spawning as: {}", getpid());
+    FILE *f1 = fopen("tmp-pid.txt", "wb");
+    auto pidstr = fmt::format("{}", getpid());
+    fwrite(pidstr.data(), pidstr.size(), 1, f1);
+    fclose(f1);
+    // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+    LOG(3, "go on as: {}", getpid());
+    auto err =
+        MPI_Comm_spawn("./mpi-worker", MPI_ARGV_NULL, 1, MPI_INFO_NULL, 0,
+                       MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
+    if (err != MPI_SUCCESS) {
+      LOG(3, "can not spawn");
+      exit(1);
+    }
+    {
+      int rank, size;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      MPI_Comm_size(MPI_COMM_WORLD, &size);
+      LOG(3, "I am rank {} of {}", rank, size);
+      if (comm_spawned == MPI_COMM_WORLD) {
+        LOG(3, "Weird, child comm is MPI_COMM_WORLD");
+      }
+    }
+    std::string msg("Hi child!");
+    MPI_Send(msg.data(), msg.size(), MPI_CHAR, 0, 0, comm_spawned);
+    // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+    MPI_Finalize();
+    exit(1);
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
