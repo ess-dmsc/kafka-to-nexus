@@ -20,6 +20,13 @@ int main(int argc, char **argv) {
   LOG(3, "status: {}, {}, {}, count: {}", status.MPI_SOURCE, status.MPI_TAG,
       status.MPI_ERROR, count);
   LOG(3, "received: {}", buf.data());
+
+  LOG(3, "wait for pointer");
+  char *shm_ptr = 0;
+  MPI_Recv(&shm_ptr, 8, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &status);
+  // LOG(3, "read shared data: {}", shm_ptr);
+  LOG(3, "recv shm_ptr: {}", (void *)shm_ptr);
+
   MPI_Comm_disconnect(&comm);
   LOG(3, "finalizing {}", rank);
   MPI_Finalize();

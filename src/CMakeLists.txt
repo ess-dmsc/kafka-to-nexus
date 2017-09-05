@@ -14,6 +14,7 @@ find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
 find_package(MPI REQUIRED)
+find_package(Jemalloc REQUIRED)
 find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
@@ -170,6 +171,7 @@ set(tgt "kafka-to-nexus")
 set(sources
     kafka-to-nexus.cxx
     $<TARGET_OBJECTS:kafka_to_nexus__objects>
+    ${JEMALLOC_LIBRARIES}
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
@@ -188,6 +190,7 @@ set(tgt "mpi-worker")
 set(sources
 mpi-worker.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
+${JEMALLOC_LIBRARIES}
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)

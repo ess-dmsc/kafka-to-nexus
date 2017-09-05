@@ -11,6 +11,8 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <sys/mman.h>
+
 namespace FileWriter {
 
 std::string find_filename(rapidjson::Document const &d) {
@@ -129,14 +131,46 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         LOG(3, "Weird, child comm is MPI_COMM_WORLD");
       }
     }
+
+    // create shared memory
+    size_t mmap_size = 80 * 1024 * 1024;
+    auto shm_ptr = (char *)mmap64(nullptr, mmap_size, PROT_READ | PROT_WRITE,
+                                  MAP_ANONYMOUS | MAP_SHARED, -1, 0);
+    if (sizeof(char *) != 8) {
+      LOG(3, "just making sure");
+      exit(1);
+    }
+    if (shm_ptr == MAP_FAILED) {
+      LOG(3, "mmap failed");
+      exit(1);
+    }
+    LOG(3, "shm_ptr: {}", (void *)shm_ptr);
+
+    int mpi_size = -1;
+    if (MPI_Type_size(MPI_CHAR, &mpi_size) != MPI_SUCCESS) {
+      LOG(3, "problem with type size");
+      exit(1);
+    }
+    if (mpi_size != 1) {
+      LOG(3, "weird size");
+      exit(1);
+    }
+    strcpy(shm_ptr, "Hallo Shared!");
+
     std::string msg("Hi child!");
     for (int s = 0; s < nspawns; ++s) {
       MPI_Send(msg.data(), msg.size(), MPI_CHAR, s, 0, comm_spawned);
+      MPI_Send(&shm_ptr, 8, MPI_CHAR, s, 0, comm_spawned);
     }
     MPI_Comm_disconnect(&comm_spawned);
     // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
     // MPI_Finalize();
     // exit(1);
+    // TODO treat shm as resource
+    if (munmap(shm_ptr, mmap_size) != 0) {
+      LOG(3, "munmap failed");
+      exit(1);
+    }
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
@@ -232,6 +266,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
   fwt->hdf_filename = fname;
   fwt->hdf_file.reopen(fname, Value());
+
+  /*
+  TODO
+  - Setup the shared memory arena
+  - Test that it really works
+  - Init jemalloc
+  - Package info about that for the workers
+  */
 
   for (auto &stream : stream_hdf_info) {
     // TODO
