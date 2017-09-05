@@ -1,5 +1,4 @@
 #include "HDFFile.h"
-#include "HDFFile_h5.h"
 #include "HDFFile_impl.h"
 #include "date/date.h"
 #include "helper.h"
@@ -544,9 +543,5 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 }
 
 void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
-
-HDFFile_h5::HDFFile_h5(hid_t h5file) : _h5file(h5file) {}
-
-hid_t HDFFile_h5::h5file() { return _h5file; }
 
 } // namespace FileWriter
