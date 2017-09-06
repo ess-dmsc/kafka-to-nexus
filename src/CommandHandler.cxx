@@ -1,6 +1,7 @@
 #include "CommandHandler.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
+#include "Jemalloc.h"
 #include "MMap.h"
 #include "helper.h"
 #include "utils.h"
@@ -11,8 +12,6 @@
 // getpid()
 #include <sys/types.h>
 #include <unistd.h>
-
-#include <jemalloc/jemalloc.h>
 
 namespace FileWriter {
 
@@ -74,26 +73,6 @@ CommandHandler::CommandHandler(MainOpt &config, Master *master)
     }
     schema_command.reset(new SchemaDocument(*doc));
   }
-}
-
-void jemcb(void *cbd, char const *s) { fwrite(s, 1, strlen(s), stdout); }
-
-void *g_alloc_base = nullptr;
-void *g_alloc_max = nullptr;
-
-void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
-                   size_t align, bool *zero, bool *commit, unsigned arena) {
-  LOG(3, "extent_alloc arena: {}  size: {}  align: {}  zero: {}  commit: {}",
-      arena, size, align, *zero, *commit);
-  void *q = new char[size];
-  if (*zero) {
-    std::memset(q, 0, size);
-  }
-  if (addr != nullptr) {
-    LOG(3, "error addr is set");
-    exit(1);
-  }
-  return q;
 }
 
 void CommandHandler::handle_new(rapidjson::Document const &d) {
@@ -189,55 +168,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       m1->store(m1->load() + 1);
     }
 
-    {
-      char const *jemalloc_version = nullptr;
-      ;
-      size_t n = sizeof(char const *);
-      mallctl("version", &jemalloc_version, &n, nullptr, 0);
-      LOG(3, "jemalloc version: {}", jemalloc_version);
-      unsigned narenas = 0;
-      n = sizeof(narenas);
-      mallctl("arenas.narenas", &narenas, &n, nullptr, 0);
-      LOG(3, "arenas.narenas: {}", narenas);
-
-      // malloc_stats_print(jemcb, nullptr, "");
-
-      extent_hooks_t hooks;
-      std::memset(&hooks, 0, sizeof(extent_hooks_t));
-      hooks.alloc = extent_alloc;
-      extent_hooks_t *hooks_ptr = &hooks;
-      unsigned aix = 0;
-      n = sizeof(aix);
-      int err = mallctl("arenas.create", &aix, &n, &hooks_ptr,
-                        sizeof(extent_hooks_t *));
-      // int err = mallctl("arenas.create", &aix, &n, nullptr, 0);
-      if (err != 0) {
-        LOG(3, "error in mallctl arenas.create");
-        switch (err) {
-        case EINVAL:
-          LOG(3, "EINVAL");
-          break;
-        case ENOENT:
-          LOG(3, "ENOENT");
-          break;
-        case EPERM:
-          LOG(3, "EPERM");
-          break;
-        case EAGAIN:
-          LOG(3, "EAGAIN");
-          break;
-        case EFAULT:
-          LOG(3, "EFAULT");
-          break;
-        }
-        exit(1);
-      }
-      LOG(3, "arena created: {}", aix);
-
-      // void * big = mallocx(80 * 1024 * 1024, MALLOCX_ARENA(aix));
-
-      // malloc_stats_print(jemcb, nullptr, "");
-    }
+    MPI_Barrier(comm_all);
+    LOG(3, "alloc init");
+    auto jm = Jemalloc::create(shm->addr(),
+                               (void *)((uint8_t *)shm->addr() + shm->size()));
 
     MPI_Barrier(comm_all);
     LOG(3, "ask for disconnect");

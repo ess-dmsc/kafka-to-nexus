@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
   }
 
   MPI_Barrier(comm_all);
-
+  LOG(3, "wait for parent mmap");
   MPI_Barrier(comm_all);
   LOG(3, "mmap");
 
@@ -160,6 +160,9 @@ int main(int argc, char **argv) {
     m1->store(m1->load() + 1);
   }
   LOG(3, "final: value: {}", m1->load());
+
+  MPI_Barrier(comm_all);
+  LOG(3, "alloc init");
 
   MPI_Barrier(comm_all);
   LOG(3, "ask for disconnect");
