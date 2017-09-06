@@ -260,14 +260,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->hdf_filename = fname;
   fwt->hdf_file.reopen(fname, Value());
 
-  /*
-  TODO
-  - Setup the shared memory arena
-  - Test that it really works
-  - Init jemalloc
-  - Package info about that for the workers
-  */
-
   for (auto &stream : stream_hdf_info) {
     // TODO
     // Refactor with the above loop..
@@ -315,15 +307,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
-    auto s = Source(source.v, move(hdf_writer_module));
-    s._topic = string(topic);
-    s.do_process_message = config.source_do_process_message;
-    fwt->add_source(move(s));
-
     //   or re-open in one or more separate mpi workers
     //     Send command to create HDFWriterModule, all the json config as text,
     //     let it re-open hdf items
     //     Create a Source which puts messages on a queue
+    auto s = Source(source.v, move(hdf_writer_module), config.jm);
+    s._topic = string(topic);
+    s.do_process_message = config.source_do_process_message;
+    fwt->add_source(move(s));
   }
 
   if (master) {

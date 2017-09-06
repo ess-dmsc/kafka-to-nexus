@@ -3,7 +3,9 @@
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
+#include "Jemalloc.h"
 #include "Msg.h"
+#include "MsgQueue.h"
 #include "ProcessMessageResult.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
@@ -41,7 +43,8 @@ public:
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
 
 private:
-  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
+  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
+         Jemalloc::sptr);
 
   std::string _topic;
   std::string _sourcename;
@@ -51,6 +54,8 @@ private:
   uint64_t _cnt_msg_written = 0;
 
   bool do_process_message = true;
+  Jemalloc::sptr jm;
+  MsgQueue queue;
 
   friend class CommandHandler;
   friend class FileWriterTask;

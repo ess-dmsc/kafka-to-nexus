@@ -14,18 +14,23 @@ Result Result::Ok() {
   return ret;
 }
 
-Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
+Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
+               Jemalloc::sptr jm)
     : _sourcename(std::move(sourcename)),
-      _hdf_writer_module(std::move(hdf_writer_module)) {
+      _hdf_writer_module(std::move(hdf_writer_module)), jm(jm) {
   if (SOURCE_DO_PROCESS_MESSAGE == 0) {
     do_process_message = false;
   }
+
+  // create the queue which can be used by demux
+
+  // spawn the mpi workers
 }
 
 Source::Source(Source &&x) noexcept
     : _topic(std::move(x._topic)), _sourcename(std::move(x._sourcename)),
       _hdf_writer_module(std::move(x._hdf_writer_module)),
-      do_process_message(x.do_process_message) {}
+      do_process_message(x.do_process_message), jm(x.jm) {}
 
 std::string const &Source::topic() const { return _topic; }
 

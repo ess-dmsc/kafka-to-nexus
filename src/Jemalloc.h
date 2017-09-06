@@ -35,9 +35,10 @@ static char const *errname(int err) {
 class Jemalloc {
 public:
   using ptr = std::unique_ptr<Jemalloc>;
+  using sptr = std::shared_ptr<Jemalloc>;
 
-  static ptr create(void *base, void *ceil) {
-    auto ret = ptr(new Jemalloc);
+  static sptr create(void *base, void *ceil) {
+    auto ret = sptr(new Jemalloc);
     ret->base = base;
     ret->alloc_base = ret->base;
     ret->alloc_ceil = ceil;

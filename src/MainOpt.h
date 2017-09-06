@@ -63,7 +63,7 @@ struct MainOpt {
   uint64_t teamid = 0;
   bool source_do_process_message = true;
   MMap::ptr shm;
-  Jemalloc::ptr jm;
+  Jemalloc::sptr jm;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
