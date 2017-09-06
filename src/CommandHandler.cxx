@@ -182,7 +182,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
     std::this_thread::sleep_for(std::chrono::milliseconds(200));
     MPI_Finalize();
-    exit(1);
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
