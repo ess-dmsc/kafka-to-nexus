@@ -40,6 +40,7 @@ set(path_include_common
     ${RDKAFKA_INCLUDE_DIR}
     ${HDF5_INCLUDE_DIRS}
     ${MPI_INCLUDE_DIR}
+    ${JEMALLOC_INCLUDE_DIR}
     ${FLATBUFFERS_INCLUDE_DIR}
     ${RAPIDJSON_INCLUDE_DIR}
     ${CURL_INCLUDE_DIRS}
@@ -51,6 +52,7 @@ set(libraries_common
     ${RDKAFKA_LIBRARIES}
     ${HDF5_C_LIBRARIES}
     ${MPI_LIBRARIES}
+    ${JEMALLOC_LIBRARIES}
     ${CURL_LIBRARIES}
     pthread
     z
@@ -153,7 +155,6 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 
-
 set(tgt "send-command")
 set(sources
     send-command.cxx
@@ -164,7 +165,6 @@ add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common})
-
 
 
 set(tgt "kafka-to-nexus")
@@ -190,7 +190,6 @@ set(tgt "mpi-worker")
 set(sources
 mpi-worker.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
-${JEMALLOC_LIBRARIES}
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)

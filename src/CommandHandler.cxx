@@ -1,6 +1,7 @@
 #include "CommandHandler.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
+#include "MMap.h"
 #include "helper.h"
 #include "utils.h"
 #include <h5.h>
@@ -11,7 +12,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <sys/mman.h>
+#include <jemalloc/jemalloc.h>
 
 namespace FileWriter {
 
@@ -75,6 +76,26 @@ CommandHandler::CommandHandler(MainOpt &config, Master *master)
   }
 }
 
+void jemcb(void *cbd, char const *s) { fwrite(s, 1, strlen(s), stdout); }
+
+void *g_alloc_base = nullptr;
+void *g_alloc_max = nullptr;
+
+void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
+                   size_t align, bool *zero, bool *commit, unsigned arena) {
+  LOG(3, "extent_alloc arena: {}  size: {}  align: {}  zero: {}  commit: {}",
+      arena, size, align, *zero, *commit);
+  void *q = new char[size];
+  if (*zero) {
+    std::memset(q, 0, size);
+  }
+  if (addr != nullptr) {
+    LOG(3, "error addr is set");
+    exit(1);
+  }
+  return q;
+}
+
 void CommandHandler::handle_new(rapidjson::Document const &d) {
   // if (g_N_HANDLED > 0) return;
   using namespace rapidjson;
@@ -112,9 +133,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto pidstr = fmt::format("{}", getpid());
     fwrite(pidstr.data(), pidstr.size(), 1, f1);
     fclose(f1);
-    uint8_t nspawns = 1;
     // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
     LOG(3, "go on as: {}", getpid());
+
+    uint8_t nspawns = 1;
     auto err =
         MPI_Comm_spawn("./mpi-worker", argv, nspawns, MPI_INFO_NULL, 0,
                        MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
@@ -132,84 +154,101 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
     }
 
-    // create shared memory
-    size_t shm_size = 1 * 1024 * 1024;
-    auto shm_ptr = (char *)mmap64(nullptr, shm_size, PROT_READ | PROT_WRITE,
-                                  MAP_ANONYMOUS | MAP_SHARED, -1, 0);
-    if (sizeof(char *) != 8) {
-      LOG(3, "just making sure");
-      exit(1);
-    }
-    if (shm_ptr == MAP_FAILED) {
-      LOG(3, "mmap failed");
-      exit(1);
-    }
-    LOG(3, "shm_ptr: {}", (void *)shm_ptr);
-
-    int mpi_size = -1;
-    if (MPI_Type_size(MPI_CHAR, &mpi_size) != MPI_SUCCESS) {
-      LOG(3, "problem with type size");
-      exit(1);
-    }
-    if (mpi_size != 1) {
-      LOG(3, "weird size");
-      exit(1);
-    }
-    strcpy(shm_ptr, "Hallo Shared!");
-    // TODO treat shm as resource
-    if (munmap(shm_ptr, shm_size) != 0) {
-      LOG(3, "munmap failed");
-      exit(1);
+    {
+      int rank, size;
+      MPI_Comm_rank(comm_spawned, &rank);
+      MPI_Comm_size(comm_spawned, &size);
+      LOG(3, "comm_spawned rank: {}  size: {}", rank, size);
     }
 
-    std::string msg("Hi child!");
-    for (int s = 0; s < nspawns; ++s) {
-      MPI_Send(msg.data(), msg.size(), MPI_CHAR, s, 0, comm_spawned);
-      MPI_Send(&shm_ptr, 8, MPI_CHAR, s, 0, comm_spawned);
+    MPI_Comm comm_all;
+    { err = MPI_Intercomm_merge(comm_spawned, 0, &comm_all); }
+    {
+      int rank, size;
+      MPI_Comm_rank(comm_all, &rank);
+      MPI_Comm_size(comm_all, &size);
+      LOG(3, "comm_all rank: {}  size: {}", rank, size);
     }
 
-    // mpi shared
+    MPI_Barrier(comm_all);
+    LOG(3, "mmap");
+    auto shm = MMap::create("tmp-mmap", 80 * 1024 * 1024);
+    std::memset(shm->addr(), 'a', 1024);
+
+    MPI_Barrier(comm_all);
+    LOG(3, "wait for other mmap");
+
+    MPI_Barrier(comm_all);
+    LOG(3, "continue");
+
+    auto m1 = (std::atomic<uint32_t> *)shm->addr();
+    m1->store(97);
+    while (m1->load() < 110) {
+      while (m1->load() % 2 == 1) {
+      }
+      m1->store(m1->load() + 1);
+    }
 
     {
-      int n = 0;
-      MPI_Comm_size(comm_spawned, &n);
-      LOG(3, "size of spawned: {}", n);
+      char const *jemalloc_version = nullptr;
+      ;
+      size_t n = sizeof(char const *);
+      mallctl("version", &jemalloc_version, &n, nullptr, 0);
+      LOG(3, "jemalloc version: {}", jemalloc_version);
+      unsigned narenas = 0;
+      n = sizeof(narenas);
+      mallctl("arenas.narenas", &narenas, &n, nullptr, 0);
+      LOG(3, "arenas.narenas: {}", narenas);
+
+      // malloc_stats_print(jemcb, nullptr, "");
+
+      extent_hooks_t hooks;
+      std::memset(&hooks, 0, sizeof(extent_hooks_t));
+      hooks.alloc = extent_alloc;
+      extent_hooks_t *hooks_ptr = &hooks;
+      unsigned aix = 0;
+      n = sizeof(aix);
+      int err = mallctl("arenas.create", &aix, &n, &hooks_ptr,
+                        sizeof(extent_hooks_t *));
+      // int err = mallctl("arenas.create", &aix, &n, nullptr, 0);
+      if (err != 0) {
+        LOG(3, "error in mallctl arenas.create");
+        switch (err) {
+        case EINVAL:
+          LOG(3, "EINVAL");
+          break;
+        case ENOENT:
+          LOG(3, "ENOENT");
+          break;
+        case EPERM:
+          LOG(3, "EPERM");
+          break;
+        case EAGAIN:
+          LOG(3, "EAGAIN");
+          break;
+        case EFAULT:
+          LOG(3, "EFAULT");
+          break;
+        }
+        exit(1);
+      }
+      LOG(3, "arena created: {}", aix);
+
+      // void * big = mallocx(80 * 1024 * 1024, MALLOCX_ARENA(aix));
+
+      // malloc_stats_print(jemcb, nullptr, "");
     }
 
-    MPI_Comm MPI_COMM_NODE;
-    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL,
-                        &MPI_COMM_NODE);
-
-    {
-      int n = 0;
-      MPI_Comm_size(MPI_COMM_NODE, &n);
-      LOG(3, "size of MPI_COMM_NODE: {}", n);
-    }
-
-    MPI_Comm shm_comm = MPI_COMM_WORLD; // or MPI_COMM_NODE
-
-    MPI_Win mpi_win;
-    MPI_Info win_info;
-    MPI_Info_create(&win_info);
-    // MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
-    LOG(3, "MPI_Win_allocate_shared main");
-    err = MPI_Win_allocate_shared(shm_size, 1, win_info, shm_comm, &shm_ptr,
-                                  &mpi_win);
+    MPI_Barrier(comm_all);
+    LOG(3, "ask for disconnect");
+    err = MPI_Comm_disconnect(&comm_spawned);
     if (err != MPI_SUCCESS) {
-      LOG(3, "failed MPI_Win_allocate_shared");
+      LOG(3, "fail MPI_Comm_disconnect");
       exit(1);
     }
-    LOG(3, "MPI_Win_allocate_shared main DONE");
-    MPI_Info_free(&win_info);
-
-    MPI_Win_lock_all(0, mpi_win);
-    MPI_Win_sync(mpi_win);
-    MPI_Barrier(comm_spawned);
-
-    MPI_Comm_disconnect(&comm_spawned);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(2000));
-    // MPI_Finalize();
-    // exit(1);
+    std::this_thread::sleep_for(std::chrono::milliseconds(200));
+    MPI_Finalize();
+    exit(1);
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);

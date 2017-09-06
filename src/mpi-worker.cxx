@@ -1,6 +1,122 @@
+#include "MMap.h"
 #include "logger.h"
+#include <atomic>
 #include <mpi.h>
+#include <thread>
 #include <vector>
+
+// getpid()
+#include <sys/types.h>
+#include <unistd.h>
+
+#include <sys/mman.h>
+
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+
+void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
+  std::vector<char> buf(128);
+  int rank, size;
+  int err;
+  // MPI_STATUS_IGNORE
+  MPI_Status status;
+  MPI_Recv(buf.data(), buf.size(), MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
+           comm_parent, &status);
+  int count;
+  MPI_Get_count(&status, MPI_CHAR, &count);
+  LOG(3, "status: {}, {}, {}, count: {}", status.MPI_SOURCE, status.MPI_TAG,
+      status.MPI_ERROR, count);
+  LOG(3, "received: {}", buf.data());
+
+  LOG(3, "wait for pointer");
+  void *shm_ptr = nullptr;
+  MPI_Recv(&shm_ptr, 8, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, comm_parent,
+           &status);
+  // LOG(3, "read shared data: {}", shm_ptr);
+  LOG(3, "recv shm_ptr: {}", (void *)shm_ptr);
+
+  auto &shm_comm = comm_all;
+  int shm_rank = -1;
+  {
+    int rank, size;
+    MPI_Comm_rank(shm_comm, &rank);
+    MPI_Comm_size(shm_comm, &size);
+    LOG(3, "mpi-worker in shm_comm rank: {}  size: {}", rank, size);
+    shm_rank = rank;
+  }
+
+  // TODO
+  // Share the setup code with the main process
+  size_t shm_size = 0 * 1024 * 1024;
+  MPI_Win mpi_win;
+  MPI_Info win_info;
+  MPI_Info_create(&win_info);
+  MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
+  LOG(3, "MPI_Win_allocate_shared {}", rank);
+  err = MPI_Win_allocate_shared(shm_size, 1, win_info, shm_comm, &shm_ptr,
+                                &mpi_win);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Win_allocate_shared");
+    exit(1);
+  }
+  LOG(3, "MPI_Win_allocate_shared {} DONE", rank);
+
+  {
+    MPI_Group g;
+    err = MPI_Win_get_group(mpi_win, &g);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Win_get_group");
+      exit(1);
+    }
+    int rank = -1;
+    err = MPI_Group_rank(g, &rank);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Group_rank");
+      exit(1);
+    }
+    LOG(3, "our rank in mpi_win is: {}", rank);
+  }
+
+  MPI_Aint shm_size_q = 0;
+  int disp_unit = 0;
+  err = MPI_Win_shared_query(mpi_win, 1, &shm_size_q, &disp_unit, &shm_ptr);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Win_shared_query");
+    exit(1);
+  }
+  LOG(3, "queried shm_ptr: {:p}", shm_ptr);
+  if (shm_size_q != shm_size) {
+    LOG(3, "shm_size_q != shm_size : {} != {}", shm_size_q, shm_size);
+    // exit(1);
+  }
+  LOG(3, "MPI_Win_shared_query DONE  disp_unit: {}", disp_unit);
+
+  MPI_Win_lock_all(0, mpi_win);
+  MPI_Win_sync(mpi_win);
+  MPI_Barrier(shm_comm);
+  LOG(3, "after barrier");
+
+  FILE *f1 = fopen("tmp-pid2.txt", "wb");
+  auto pidstr = fmt::format("{}", getpid());
+  fwrite(pidstr.data(), pidstr.size(), 1, f1);
+  fclose(f1);
+  // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
+
+  if (false) {
+    auto m1 = (std::atomic<uint32_t> *)shm_ptr;
+    while (m1->load() != 1) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      LOG(3, "value: {}", m1->load());
+    }
+    LOG(3, "value: {}", m1->load());
+  }
+
+  MPI_Barrier(shm_comm);
+  LOG(3, "after barrier 2");
+
+  MPI_Info_free(&win_info);
+}
 
 int main(int argc, char **argv) {
   int err = MPI_SUCCESS;
@@ -14,61 +130,40 @@ int main(int argc, char **argv) {
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
   LOG(3, "mpi-worker as {} of {}", rank, size);
-  std::vector<char> buf(128);
-  MPI_Comm comm;
-  MPI_Comm_get_parent(&comm);
+  MPI_Comm comm_parent;
+  MPI_Comm_get_parent(&comm_parent);
 
-  // or MPI_STATUS_IGNORE
-  MPI_Status status;
-  MPI_Recv(buf.data(), buf.size(), MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, comm,
-           &status);
-  int count;
-  MPI_Get_count(&status, MPI_CHAR, &count);
-  LOG(3, "status: {}, {}, {}, count: {}", status.MPI_SOURCE, status.MPI_TAG,
-      status.MPI_ERROR, count);
-  LOG(3, "received: {}", buf.data());
-
-  LOG(3, "wait for pointer");
-  void *shm_ptr = nullptr;
-  MPI_Recv(&shm_ptr, 8, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, comm, &status);
-  // LOG(3, "read shared data: {}", shm_ptr);
-  LOG(3, "recv shm_ptr: {}", (void *)shm_ptr);
-
+  MPI_Comm comm_all;
+  { err = MPI_Intercomm_merge(comm_parent, 1, &comm_all); }
   {
-    int n = 0;
-    MPI_Comm_size(comm, &n);
-    LOG(3, "size of spawned: {}", n);
+    int rank, size;
+    MPI_Comm_rank(comm_all, &rank);
+    MPI_Comm_size(comm_all, &size);
+    LOG(3, "comm_all rank: {}  size: {}", rank, size);
   }
 
-  {
-    int n = 0;
-    MPI_Comm_size(MPI_COMM_NODE, &n);
-    LOG(3, "size of MPI_COMM_NODE: {}", n);
+  MPI_Barrier(comm_all);
+
+  MPI_Barrier(comm_all);
+  LOG(3, "mmap");
+
+  auto shm = MMap::create("tmp-mmap", 80 * 1024 * 1024);
+
+  MPI_Barrier(comm_all);
+  LOG(3, "memory ready");
+
+  auto m1 = (std::atomic<uint32_t> *)shm->addr();
+  while (m1->load() < 110) {
+    while (m1->load() % 2 == 0) {
+    }
+    LOG(3, "store");
+    m1->store(m1->load() + 1);
   }
+  LOG(3, "final: value: {}", m1->load());
 
-  MPI_Comm shm_comm = MPI_COMM_WORLD; // or MPI_COMM_NODE
-  // TODO
-  // Share the setup code with the main process
-  size_t shm_size = 1 * 1024 * 1024;
-  MPI_Win mpi_win;
-  MPI_Info win_info;
-  MPI_Info_create(&win_info);
-  // MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
-  LOG(3, "MPI_Win_allocate_shared {}", rank);
-  err = MPI_Win_allocate_shared(shm_size, 1, win_info, shm_comm, &shm_ptr,
-                                &mpi_win);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "failed MPI_Win_allocate_shared");
-    exit(1);
-  }
-  LOG(3, "MPI_Win_allocate_shared {} DONE", rank);
-  MPI_Info_free(&win_info);
-
-  MPI_Win_lock_all(0, mpi_win);
-  MPI_Win_sync(mpi_win);
-  MPI_Barrier(comm);
-
-  MPI_Comm_disconnect(&comm);
+  MPI_Barrier(comm_all);
+  LOG(3, "ask for disconnect");
+  MPI_Comm_disconnect(&comm_parent);
   LOG(3, "finalizing {}", rank);
   MPI_Finalize();
   LOG(3, "after finalize {}", rank);
