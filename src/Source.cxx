@@ -27,10 +27,17 @@ Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
   // spawn the mpi workers
 }
 
-Source::Source(Source &&x) noexcept
-    : _topic(std::move(x._topic)), _sourcename(std::move(x._sourcename)),
-      _hdf_writer_module(std::move(x._hdf_writer_module)),
-      do_process_message(x.do_process_message), jm(x.jm) {}
+Source::Source(Source &&x) noexcept { swap(*this, x); }
+
+void swap(Source &x, Source &y) {
+  using std::swap;
+  swap(x._topic, y._topic);
+  swap(x._sourcename, y._sourcename);
+  swap(x._hdf_writer_module, y._hdf_writer_module);
+  swap(x._sourcename, y._sourcename);
+  swap(x.jm, y.jm);
+  swap(x.queue, y.queue);
+}
 
 std::string const &Source::topic() const { return _topic; }
 

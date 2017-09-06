@@ -63,7 +63,7 @@ private:
   friend std::vector<std::unique_ptr<Source>>
   find_source(rapidjson::Document const &, rapidjson::Document const *);
   friend class ::Test___FileWriterTask___Create01;
-  friend class ::CommandHandler_Test;
+  friend void swap(Source &x, Source &y);
 };
 
 } // namespace FileWriter

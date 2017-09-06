@@ -85,6 +85,7 @@ set(kafka_to_nexus_SRC
     FlatbufferReader.cxx
     HDFFile.cxx
     HDFWriterModule.cxx
+    MsgQueue.cxx
     KafkaW.cxx
     helper.cxx
     logger.cxx
