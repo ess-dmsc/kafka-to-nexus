@@ -13,16 +13,25 @@ static void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
                           unsigned arena) {
   LOG(3, "extent_alloc arena: {}  size: {}  align: {}  zero: {}  commit: {}",
       arena, size, align, *zero, *commit);
-  void *q = new char[size];
-  if (*zero) {
-    std::memset(q, 0, size);
-  }
   if (addr != nullptr) {
     LOG(3, "error addr is set");
     exit(1);
   }
+  auto base = (char const *)g_alloc_base;
+  auto ceil = (char const *)g_alloc_ceil;
+  if (base + size > ceil) {
+    return nullptr;
+  }
+  auto q = (void *)base;
+  base += size;
+  g_alloc_base = (void *)base;
+  if (*zero) {
+    std::memset(q, 0, size);
+  }
   return q;
 }
+
+static extent_hooks_t g_hooks;
 
 static char const *errname(int err) {
   switch (err) {
@@ -60,10 +69,9 @@ public:
     mallctl("arenas.narenas", &narenas, &n, nullptr, 0);
     LOG(3, "arenas.narenas: {}", narenas);
 
-    extent_hooks_t hooks;
-    std::memset(&hooks, 0, sizeof(extent_hooks_t));
-    hooks.alloc = extent_alloc;
-    extent_hooks_t *hooks_ptr = &hooks;
+    std::memset(&g_hooks, 0, sizeof(extent_hooks_t));
+    g_hooks.alloc = extent_alloc;
+    extent_hooks_t *hooks_ptr = &g_hooks;
     n = sizeof(unsigned);
     int err = mallctl("arenas.create", &ret->aix, &n, &hooks_ptr,
                       sizeof(extent_hooks_t *));

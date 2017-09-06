@@ -151,7 +151,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
     MPI_Barrier(comm_all);
     LOG(3, "mmap");
-    auto shm = MMap::create("tmp-mmap", 80 * 1024 * 1024);
+    auto shm = MMap::create("tmp-mmap", 5 * 1024 * 1024 * 1024);
     std::memset(shm->addr(), 'a', 1024);
 
     MPI_Barrier(comm_all);
@@ -172,6 +172,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     LOG(3, "alloc init");
     auto jm = Jemalloc::create(shm->addr(),
                                (void *)((uint8_t *)shm->addr() + shm->size()));
+    jm->alloc(1 * 1024 * 1024);
 
     MPI_Barrier(comm_all);
     LOG(3, "ask for disconnect");

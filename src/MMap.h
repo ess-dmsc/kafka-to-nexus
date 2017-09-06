@@ -57,9 +57,11 @@ private:
       LOG(3, "open failed");
       exit(1);
     }
-    if (ftruncate(ret->fd, ret->shm_size) != 0) {
-      LOG(3, "fail truncate");
-      exit(1);
+    if (create) {
+      if (ftruncate(ret->fd, ret->shm_size) != 0) {
+        LOG(3, "fail truncate");
+        exit(1);
+      }
     }
     ret->shm_ptr = mmap64(nullptr, ret->shm_size, PROT_READ | PROT_WRITE,
                           MAP_SHARED, ret->fd, 0);
