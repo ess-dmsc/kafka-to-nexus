@@ -172,7 +172,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     LOG(3, "alloc init");
     auto jm = Jemalloc::create(shm->addr(),
                                (void *)((uint8_t *)shm->addr() + shm->size()));
-    jm->alloc(1 * 1024 * 1024);
+    auto a = jm->alloc(1 * 1024 * 1024);
+    if (a < shm->addr() ||
+        a >= (void *)((uint8_t *)shm->addr() + shm->size())) {
+      LOG(3, "error alloc out of range");
+      exit(1);
+    }
 
     MPI_Barrier(comm_all);
     LOG(3, "ask for disconnect");
