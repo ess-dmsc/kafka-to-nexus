@@ -1,8 +1,6 @@
 #include "CommandHandler.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
-#include "Jemalloc.h"
-#include "MMap.h"
 #include "helper.h"
 #include "utils.h"
 #include <h5.h>
@@ -10,8 +8,8 @@
 #include <future>
 
 // getpid()
-#include <sys/types.h>
-#include <unistd.h>
+//#include <sys/types.h>
+//#include <unistd.h>
 
 namespace FileWriter {
 
@@ -93,7 +91,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
-  {
+  if (false) {
     // Spawn MPI here.
     MPI_Info mpi_info;
     if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
@@ -150,34 +148,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
 
     MPI_Barrier(comm_all);
-    LOG(3, "mmap");
-    auto shm = MMap::create("tmp-mmap", 5 * 1024 * 1024 * 1024);
-    std::memset(shm->addr(), 'a', 1024);
 
     MPI_Barrier(comm_all);
     LOG(3, "wait for other mmap");
 
     MPI_Barrier(comm_all);
     LOG(3, "continue");
-
-    auto m1 = (std::atomic<uint32_t> *)shm->addr();
-    m1->store(97);
-    while (m1->load() < 110) {
-      while (m1->load() % 2 == 1) {
-      }
-      m1->store(m1->load() + 1);
-    }
-
-    MPI_Barrier(comm_all);
-    LOG(3, "alloc init");
-    auto jm = Jemalloc::create(shm->addr(),
-                               (void *)((uint8_t *)shm->addr() + shm->size()));
-    auto a = jm->alloc(1 * 1024 * 1024);
-    if (a < shm->addr() ||
-        a >= (void *)((uint8_t *)shm->addr() + shm->size())) {
-      LOG(3, "error alloc out of range");
-      exit(1);
-    }
 
     MPI_Barrier(comm_all);
     LOG(3, "ask for disconnect");

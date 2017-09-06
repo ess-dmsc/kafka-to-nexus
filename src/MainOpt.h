@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Jemalloc.h"
+#include "MMap.h"
 #include "logger.h"
 #include "uri.h"
 #include <atomic>
@@ -60,6 +62,8 @@ struct MainOpt {
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
   bool source_do_process_message = true;
+  MMap::ptr shm;
+  Jemalloc::ptr jm;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
