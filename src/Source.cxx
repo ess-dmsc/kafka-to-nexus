@@ -186,9 +186,6 @@ void Source::mpi_stop() {
 }
 
 ProcessMessageResult Source::process_message(Msg const &msg) {
-  if (!_hdf_writer_module) {
-    throw "ASSERT FAIL: _hdf_writer_module";
-  }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
     LOG(5, "buffer not verified");
@@ -196,6 +193,13 @@ ProcessMessageResult Source::process_message(Msg const &msg) {
   }
   if (!do_process_message) {
     return ProcessMessageResult::OK();
+  }
+  bool do_mpi = true;
+  if (do_mpi) {
+    return ProcessMessageResult::OK();
+  }
+  if (!_hdf_writer_module) {
+    throw "ASSERT FAIL: _hdf_writer_module";
   }
   auto ret = _hdf_writer_module->write(msg);
   _cnt_msg_written += 1;

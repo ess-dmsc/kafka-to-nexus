@@ -64,6 +64,10 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(Msg const &msg) {
 std::string const &DemuxTopic::topic() const { return _topic; }
 
 ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
+  if (msg.size() < 8) {
+    LOG(3, "error");
+    exit(1);
+  }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     return ProcessMessageResult::ERR();

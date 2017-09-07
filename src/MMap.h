@@ -23,6 +23,7 @@ public:
   }
 
   ~MMap() {
+    return;
     if (munmap(shm_ptr, shm_size) != 0) {
       LOG(3, "munmap failed");
       exit(1);

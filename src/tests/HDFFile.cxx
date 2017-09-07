@@ -1,5 +1,6 @@
 #include "../HDFFile.h"
 #include "../CommandHandler.h"
+#include "../Jemalloc.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "../helper.h"
@@ -211,7 +212,8 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(int n, int n_events_per_message) {
+    void pregenerate(int n, int n_events_per_message,
+                     std::shared_ptr<Jemalloc> &jm) {
       LOG(7, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
@@ -222,9 +224,15 @@ public:
         auto n_ele = n_events_per_message;
         fbs.push_back(synth.next(n_ele));
         auto &fb = fbs.back();
+
+        // Allocate memory on JM AND CHECK IT!
         msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(),
-            fb.builder->GetSize()));
+            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
+            jm));
+        if (msgs.back().size() < 8) {
+          LOG(3, "error");
+          exit(1);
+        }
       }
     }
   };
@@ -265,10 +273,13 @@ public:
         },
         "unit_test": {
           "n_events_per_message": 32,
-          "n_msgs_per_source": 128,
+          "n_msgs_per_source": 2,
           "n_sources": 1,
           "n_msgs_per_batch": 1,
-          "filename": "tmp-ev42.h5"
+          "filename": "tmp-ev42.h5",
+          "hdf": {
+            "do_verification": 0
+          }
         },
         "shm": {
           "fname": "tmp-mmap"
@@ -328,6 +339,7 @@ public:
       filename = x.v;
     }
 
+    auto &jm = main_opt.jm;
     vector<SourceDataGen> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -335,7 +347,7 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(n_msgs_per_source, n_events_per_message);
+      s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
     }
     if (false) {
       vector<std::thread> threads_pregen;
@@ -343,8 +355,8 @@ public:
         auto &s = sources.back();
         LOG(7, "push pregen {}", i1);
         threads_pregen.push_back(
-            std::thread([&s, n_msgs_per_source, n_events_per_message] {
-              s.pregenerate(n_msgs_per_source, n_events_per_message);
+            std::thread([&jm, &s, n_msgs_per_source, n_events_per_message] {
+              s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
             }));
       }
       for (auto &x : threads_pregen) {
@@ -473,7 +485,11 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(7, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(Msg::shared(msg));
+            if (msg.size() < 8) {
+              LOG(3, "error");
+              exit(1);
+            }
+            fwt->demuxers().at(0).process_message(Msg::shared(msg, jm));
             source.n_fed++;
           }
         }
@@ -654,9 +670,11 @@ public:
         // Currently fixed, have to adapt verification code first.
         fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
-        msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(),
-            fb.builder->GetSize()));
+        LOG(3, "error NOT IMPLEMENTED, jm missing!");
+        exit(1);
+        // msgs.push_back(FileWriter::Msg::shared((char const
+        // *)fb.builder->GetBufferPointer(),
+        //                               fb.builder->GetSize()));
       }
     }
   };
@@ -896,7 +914,8 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(7, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(Msg::shared(msg));
+            fwt->demuxers().at(0).process_message(
+                Msg::shared(msg, main_opt.jm));
             source.n_fed++;
           }
         }
