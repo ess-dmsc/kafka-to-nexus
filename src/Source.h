@@ -4,6 +4,7 @@
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
 #include "Jemalloc.h"
+#include "MMap.h"
 #include "Msg.h"
 #include "MsgQueue.h"
 #include "ProcessMessageResult.h"
@@ -48,7 +49,7 @@ public:
 
 private:
   Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
-         Jemalloc::sptr);
+         Jemalloc::sptr, MMap::sptr);
 
   std::string _topic;
   std::string _sourcename;
@@ -59,6 +60,7 @@ private:
 
   bool do_process_message = true;
   Jemalloc::sptr jm;
+  MMap::sptr mmap;
   MsgQueue queue;
   MPI_Comm comm_spawned;
   MPI_Comm comm_all;

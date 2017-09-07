@@ -48,6 +48,11 @@ public:
     n = sizeof(char const *);
     mallctl("version", &jemalloc_version, &n, nullptr, 0);
     LOG(3, "jemalloc version: {}", jemalloc_version);
+
+    n = sizeof(unsigned);
+    mallctl("thread.arena", &ret->default_thread_arena, &n, nullptr, 0);
+    LOG(3, "thread.arena: {}", ret->default_thread_arena);
+
     unsigned narenas = 0;
     n = sizeof(narenas);
     mallctl("arenas.narenas", &narenas, &n, nullptr, 0);
@@ -87,6 +92,18 @@ public:
     return addr;
   }
 
+  void use_this() {
+    size_t n = sizeof(unsigned);
+    mallctl("arenas.narenas", nullptr, nullptr, &aix, n);
+    LOG(3, "use_this: {}", aix);
+  }
+
+  void use_default() {
+    size_t n = sizeof(unsigned);
+    mallctl("arenas.narenas", nullptr, nullptr, &default_thread_arena, n);
+    LOG(3, "use_default: {}", default_thread_arena);
+  }
+
   void *alloc_base = nullptr;
   void *alloc_ceil = nullptr;
 
@@ -98,6 +115,7 @@ private:
   std::function<void *(extent_hooks_t *extent_hooks, void *addr, size_t size,
                        size_t align, bool *zero, bool *commit, unsigned arena)>
       f_alloc;
+  unsigned default_thread_arena = -1;
 };
 
 static void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,

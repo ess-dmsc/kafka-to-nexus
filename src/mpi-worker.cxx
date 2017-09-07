@@ -166,8 +166,8 @@ int main(int argc, char **argv) {
   }
 
   LOG(3, "mmap");
-  auto shm = MMap::create(jconf["shm"]["fname"].GetString(),
-                          jconf["shm"]["size"].GetInt64());
+  auto shm = MMap::create(jconf["config_file"]["shm"]["fname"].GetString(),
+                          jconf["config_file"]["shm"]["size"].GetInt64());
   LOG(3, "memory ready");
 
   using namespace FileWriter;

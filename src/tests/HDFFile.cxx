@@ -252,6 +252,7 @@ public:
     // Defaults such that the test has a chance to succeed
     {
       rapidjson::Document cfg;
+      auto &a = cfg.GetAllocator();
       cfg.Parse(R""(
       {
         "nexus": {
@@ -268,10 +269,18 @@ public:
           "n_sources": 1,
           "n_msgs_per_batch": 1,
           "filename": "tmp-ev42.h5"
+        },
+        "shm": {
+          "fname": "tmp-mmap"
         }
       })"");
+      cfg["shm"].AddMember("size", rapidjson::Value(90 * 1024 * 1024), a);
       main_opt.config_file = merge(cfg, main_opt.config_file);
     }
+
+    // TODO
+    // This must go somewhere else...
+    main_opt.init();
 
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {

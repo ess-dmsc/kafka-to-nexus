@@ -21,6 +21,7 @@ class Master;
 
 // POD
 struct MainOpt {
+  void init();
   bool help = false;
   bool verbose = false;
   bool gtest = false;
@@ -62,7 +63,7 @@ struct MainOpt {
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
   bool source_do_process_message = true;
-  MMap::ptr shm;
+  MMap::sptr shm;
   Jemalloc::sptr jm;
 };
 

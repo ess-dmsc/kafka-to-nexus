@@ -9,6 +9,36 @@
 
 using uri::URI;
 
+void MainOpt::init() {
+  // TODO
+  // Do this somewhere else, after parsing all conf including the possibly
+  // changed conf in tests
+  LOG(3, "mmap");
+  shm = MMap::create("tmp-mmap", 5 * 1024 * 1024 * 1024);
+  std::memset(shm->addr(), 'a', 1024);
+
+  jm = Jemalloc::create(shm->addr(),
+                        (void *)((uint8_t *)shm->addr() + shm->size()));
+
+  /*
+  auto m1 = (std::atomic<uint32_t> *) shm->addr();
+  m1->store(97);
+  while (m1->load() < 110) {
+    while(m1->load() % 2 == 1) {
+    }
+    m1->store(m1->load() + 1);
+  }
+
+  MPI_Barrier(comm_all);
+  LOG(3, "alloc init");
+  auto a = jm->alloc(1 * 1024 * 1024);
+  if (a < shm->addr() || a >= (void*)((uint8_t*)shm->addr() + shm->size())) {
+    LOG(3, "error alloc out of range");
+    exit(1);
+  }
+  */
+}
+
 int MainOpt::parse_config_file(std::string fname) {
   if (fname.empty()) {
     LOG(3, "given config filename is empty");
@@ -66,31 +96,6 @@ int MainOpt::parse_config_json(std::string json) {
   if (auto o = get_bool(&d, "source_do_process_message")) {
     source_do_process_message = o.v;
   }
-
-  LOG(3, "mmap");
-  shm = MMap::create("tmp-mmap", 5 * 1024 * 1024 * 1024);
-  std::memset(shm->addr(), 'a', 1024);
-
-  jm = Jemalloc::create(shm->addr(),
-                        (void *)((uint8_t *)shm->addr() + shm->size()));
-
-  /*
-  auto m1 = (std::atomic<uint32_t> *) shm->addr();
-  m1->store(97);
-  while (m1->load() < 110) {
-    while(m1->load() % 2 == 1) {
-    }
-    m1->store(m1->load() + 1);
-  }
-
-  MPI_Barrier(comm_all);
-  LOG(3, "alloc init");
-  auto a = jm->alloc(1 * 1024 * 1024);
-  if (a < shm->addr() || a >= (void*)((uint8_t*)shm->addr() + shm->size())) {
-    LOG(3, "error alloc out of range");
-    exit(1);
-  }
-  */
 
   return 0;
 }

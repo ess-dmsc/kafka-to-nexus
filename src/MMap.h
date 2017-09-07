@@ -11,13 +11,14 @@
 class MMap {
 public:
   using ptr = std::unique_ptr<MMap>;
+  using sptr = std::shared_ptr<MMap>;
   using string = std::string;
 
-  static ptr open(string fname, size_t size) {
+  static sptr open(string fname, size_t size) {
     return create_inner(fname, size);
   }
 
-  static ptr create(string fname, size_t size) {
+  static sptr create(string fname, size_t size) {
     return create_inner(fname, size, true);
   }
 
@@ -43,7 +44,7 @@ private:
   void *shm_ptr;
   size_t shm_size = 0;
   MMap() {}
-  static ptr create_inner(string fname, size_t size, bool create = false) {
+  static sptr create_inner(string fname, size_t size, bool create = false) {
     auto ret = ptr(new MMap);
     ret->fd = -1;
     ret->shm_ptr = nullptr;

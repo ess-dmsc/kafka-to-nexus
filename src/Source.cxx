@@ -20,9 +20,9 @@ Result Result::Ok() {
 }
 
 Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
-               Jemalloc::sptr jm)
-    : _sourcename(std::move(sourcename)),
-      _hdf_writer_module(std::move(hdf_writer_module)), jm(jm) {
+               Jemalloc::sptr jm, MMap::sptr mmap)
+    : _sourcename(sourcename), _hdf_writer_module(std::move(hdf_writer_module)),
+      jm(jm), mmap(mmap) {
   if (SOURCE_DO_PROCESS_MESSAGE == 0) {
     do_process_message = false;
   }
@@ -39,6 +39,7 @@ void swap(Source &x, Source &y) {
   swap(x._cnt_msg_written, y._cnt_msg_written);
   swap(x.do_process_message, y.do_process_message);
   swap(x.jm, y.jm);
+  swap(x.mmap, y.mmap);
   swap(x.queue, y.queue);
   swap(x.comm_spawned, y.comm_spawned);
   swap(x.comm_all, y.comm_all);
@@ -54,7 +55,6 @@ void Source::mpi_start(rapidjson::Document config_file,
                        rapidjson::Document command,
                        rapidjson::Document config_stream) {
   LOG(3, "Source::mpi_start()");
-  size_t shm_size = 80 * 1024 * 1024;
   rapidjson::StringBuffer sbuf;
   {
     LOG(3, "config_file: {}", json_to_string(config_file));
@@ -66,7 +66,7 @@ void Source::mpi_start(rapidjson::Document config_file,
     jconf["hdf"].AddMember("fname", command["file_attributes"]["file_name"],
                            jconf.GetAllocator());
     jconf.AddMember("stream", config_stream, jconf.GetAllocator());
-    jconf["shm"].AddMember("size", Value(shm_size), jconf.GetAllocator());
+    jconf.AddMember("config_file", config_file, jconf.GetAllocator());
     Writer<StringBuffer> wr(sbuf);
     jconf.Accept(wr);
     // LOG(3, "config for mpi: {}", sbuf.GetString());
