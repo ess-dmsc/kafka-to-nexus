@@ -2,6 +2,7 @@
 
 #include "Jemalloc.h"
 #include "logger.h"
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <librdkafka/rdkafkacpp.h>
@@ -54,13 +55,13 @@ public:
     return msg;
   }
 
-  static Msg shared(Msg const &msg, std::shared_ptr<Jemalloc> &jm) {
+  static Msg cheap(Msg const &msg, std::shared_ptr<Jemalloc> &jm) {
     if (msg.type != 2) {
       throw 1;
     }
     Msg ret;
-    ret.type = 2;
-    ret.var.shared = new std::shared_ptr<char>(*msg.var.shared);
+    ret.type = 22;
+    ret.var.cheap = msg.var.shared->get();
     ret._size = msg._size;
     return ret;
   }
@@ -82,12 +83,13 @@ public:
     // LOG(3, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
   }
 
-  inline void swap(Msg &x, Msg &y) {
+  inline void swap(Msg &y) {
+    auto &x = *this;
     if (x.type != -1 && x.type != y.type) {
       LOG(1, "sorry, can not swap that");
       exit(1);
     }
-    LOG(3, "swap {} / {}   {} / {}", type, _size, x.type, x._size);
+    LOG(3, "swap {} / {}   {} / {}", x.type, x._size, y.type, y._size);
     using std::swap;
     swap(x.type, y.type);
     swap(x.var, y.var);
@@ -102,8 +104,10 @@ public:
       return var.owned;
     case 2:
       return (*var.shared).get();
+    case 22:
+      return var.cheap;
     default:
-      LOG(3, "error");
+      LOG(3, "error at type: {}", type);
       exit(1);
     }
     return "";
@@ -117,8 +121,10 @@ public:
       return _size;
     case 2:
       return _size;
+    case 22:
+      return _size;
     default:
-      LOG(3, "error");
+      LOG(3, "error at type: {}", type);
       exit(1);
     }
     return 0;
@@ -129,6 +135,7 @@ public:
     RdKafka::Message *rdkafka_msg;
     char const *owned;
     std::shared_ptr<char> *shared;
+    char const *cheap;
   } var;
   size_t _size = 0;
 
@@ -145,13 +152,18 @@ public:
       delete var.owned;
       break;
     case 2:
+      // TODO
+      // control block is on separate allocation, but I try to dealloc on
+      // worker..
       // var.shared.~shared_ptr<std::vector<char>>();
       delete var.shared;
+      break;
+    case 22:
       break;
     case -1:
       break;
     default:
-      LOG(3, "error");
+      LOG(3, "error at type: {}", type);
       exit(1);
     }
   }

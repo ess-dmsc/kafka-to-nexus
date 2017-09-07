@@ -22,7 +22,10 @@
 
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
+#include "MsgQueue.h"
+#include "helper.h"
 #include "json.h"
+#include "logpid.h"
 
 using std::array;
 using std::vector;
@@ -163,6 +166,10 @@ int main(int argc, char **argv) {
     MPI_Comm_rank(comm_all, &rank);
     MPI_Comm_size(comm_all, &size);
     LOG(3, "comm_all rank: {}  size: {}", rank, size);
+
+    logpid(fmt::format("tmp-pid-{}.txt", rank).c_str());
+    LOG(3, "sleep 5");
+    // sleep_ms(5000);
   }
 
   LOG(3, "mmap");
@@ -173,8 +180,8 @@ int main(int argc, char **argv) {
   using namespace FileWriter;
 
   auto hdf_fname = jconf["hdf"]["fname"].GetString();
-  HDFFile hdf_file;
-  hdf_file.reopen(hdf_fname, Value());
+  auto hdf_file = std::unique_ptr<HDFFile>(new HDFFile);
+  hdf_file->reopen(hdf_fname, Value());
 
   auto module = jconf["stream"]["module"].GetString();
 
@@ -191,13 +198,40 @@ int main(int argc, char **argv) {
   }
 
   hdf_writer_module->parse_config(jconf["stream"], nullptr);
-  hdf_writer_module->reopen(hdf_file.h5file,
+  hdf_writer_module->reopen(hdf_file->h5file,
                             jconf["stream"]["hdf_parent_name"].GetString());
   // jconf["stream"]["hdf_parent_name"].GetString()
+
+  auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
 
   LOG(3, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 1 AFTER");
+
+  for (int i1 = 0; i1 < 100; ++i1) {
+    auto n = queue->n.load();
+    if (n > 0) {
+      LOG(3, "Queue size: {}", n);
+      std::vector<Msg> all;
+      queue->all(all);
+      LOG(3, "after call..........");
+      for (auto &m : all) {
+        LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type, m._size,
+            (void *)m.data());
+        hdf_writer_module->write(m);
+      }
+    } else {
+      if (queue->open != 1) {
+        LOG(3, "queue closed");
+        break;
+      } else {
+        sleep_ms(10);
+      }
+    }
+  }
+
+  hdf_writer_module.reset();
+  hdf_file.reset();
 
   LOG(3, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);

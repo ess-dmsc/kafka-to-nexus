@@ -1,9 +1,13 @@
 #pragma once
+#include <chrono>
 #include <memory>
 #include <rapidjson/document.h>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
+
+void sleep_ms(size_t ms);
 
 // note: this implementation does not disable this overload for array types
 template <typename T, typename... TX>

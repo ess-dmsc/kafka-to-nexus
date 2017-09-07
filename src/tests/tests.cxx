@@ -1,5 +1,6 @@
 #include "../KafkaW.h"
 #include "../MainOpt.h"
+#include "helper.h"
 #include "logpid.h"
 #include "roundtrip.h"
 #include <gtest/gtest.h>
@@ -22,7 +23,7 @@ int main(int argc, char **argv) {
 
   logpid("tmp-pid.txt");
   LOG(3, "sleep 5");
-  // sleep_ms(5000);
+  sleep_ms(1000);
 
   Roundtrip::opt = opt.get();
 

@@ -6,6 +6,10 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 
+void sleep_ms(size_t ms) {
+  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
+}
+
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;
   std::ifstream ifs(fname, std::ios::binary | std::ios::ate);

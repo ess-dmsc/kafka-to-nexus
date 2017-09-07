@@ -114,6 +114,9 @@ void Source::mpi_start(rapidjson::Document config_file,
                            jconf.GetAllocator());
     jconf.AddMember("stream", config_stream, jconf.GetAllocator());
     jconf.AddMember("config_file", config_file, jconf.GetAllocator());
+    LOG(3, "queue_addr: {}", uint64_t(queue.get()));
+    jconf.AddMember("queue_addr", Value().SetUint64(uint64_t(queue.get())),
+                    jconf.GetAllocator());
     Writer<StringBuffer> wr(sbuf);
     jconf.Accept(wr);
     // LOG(3, "config for mpi: {}", sbuf.GetString());
@@ -169,6 +172,7 @@ void Source::mpi_start(rapidjson::Document config_file,
 void Source::mpi_stop() {
   LOG(3, "Source::mpi_stop()");
   // send stop command, wait for group size zero?
+  queue->open.store(0);
   int err = MPI_SUCCESS;
   LOG(3, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);
@@ -181,7 +185,7 @@ void Source::mpi_stop() {
     exit(1);
   }
   LOG(3, "sleeping");
-  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // MPI_Finalize();
 }
 
@@ -196,7 +200,13 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   }
   bool do_mpi = true;
   if (do_mpi) {
-    queue->push(std::move(msg));
+    // TODO yield on contention
+    for (int i1 = 0; i1 < 1024; ++i1) {
+      if (queue->push(msg) == 0) {
+        break;
+      }
+      sleep_ms(10);
+    }
     return ProcessMessageResult::OK();
   }
   if (!_hdf_writer_module) {

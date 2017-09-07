@@ -278,7 +278,7 @@ public:
           "n_msgs_per_batch": 1,
           "filename": "tmp-ev42.h5",
           "hdf": {
-            "do_verification": 0
+            "do_verification": 1
           }
         },
         "shm": {
@@ -489,7 +489,7 @@ public:
               LOG(3, "error");
               exit(1);
             }
-            fwt->demuxers().at(0).process_message(Msg::shared(msg, jm));
+            fwt->demuxers().at(0).process_message(Msg::cheap(msg, jm));
             source.n_fed++;
           }
         }
@@ -914,8 +914,7 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(7, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(
-                Msg::shared(msg, main_opt.jm));
+            fwt->demuxers().at(0).process_message(Msg::cheap(msg, main_opt.jm));
             source.n_fed++;
           }
         }
