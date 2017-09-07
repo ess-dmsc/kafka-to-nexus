@@ -41,7 +41,9 @@ public:
     auto ret = sptr(new Jemalloc);
     ret->base = base;
     ret->alloc_base = ret->base;
+    ret->alloc_now = ret->base;
     ret->alloc_ceil = ceil;
+    int err = 0;
     char const *jemalloc_version = nullptr;
     ;
     size_t n = 0;
@@ -49,9 +51,27 @@ public:
     mallctl("version", &jemalloc_version, &n, nullptr, 0);
     LOG(3, "jemalloc version: {}", jemalloc_version);
 
+    if (false) {
+      bool v = false;
+      n = sizeof(bool);
+      err = mallctl("thread.tcache.enabled", &v, &n, nullptr, 0);
+      if (err != 0) {
+        LOG(3, "fail thread.tcache.enabled");
+        exit(1);
+      }
+    }
+
     n = sizeof(unsigned);
     mallctl("thread.arena", &ret->default_thread_arena, &n, nullptr, 0);
     LOG(3, "thread.arena: {}", ret->default_thread_arena);
+
+    if (false) {
+      err = mallctl("arena.0.destroy", nullptr, nullptr, nullptr, 0);
+      if (err != 0) {
+        LOG(3, "could not destroy arena");
+        exit(1);
+      }
+    }
 
     unsigned narenas = 0;
     n = sizeof(narenas);
@@ -67,8 +87,8 @@ public:
     ret->hooks.alloc = extent_alloc;
     extent_hooks_t *hooks_ptr = &ret->hooks;
     n = sizeof(unsigned);
-    int err = mallctl("arenas.create", &ret->aix, &n, &hooks_ptr,
-                      sizeof(extent_hooks_t *));
+    err = mallctl("arenas.create", &ret->aix, &n, &hooks_ptr,
+                  sizeof(extent_hooks_t *));
     // int err = mallctl("arenas.create", &aix, &n, nullptr, 0);
     if (err != 0) {
       LOG(3, "error in mallctl arenas.create: {}", errname(err));
@@ -84,6 +104,7 @@ public:
   void stats() const { malloc_stats_print(jemcb, nullptr, ""); }
 
   void *alloc(size_t size) {
+    LOG(3, "alloc from arena {}", aix);
     auto addr = mallocx(size, MALLOCX_ARENA(aix));
     if (addr == nullptr) {
       LOG(3, "fail alloc size: {}", size);
@@ -94,17 +115,35 @@ public:
 
   void use_this() {
     size_t n = sizeof(unsigned);
-    mallctl("arenas.narenas", nullptr, nullptr, &aix, n);
+    int err;
+    err = mallctl("thread.arena", nullptr, nullptr, &aix, n);
+    if (err != 0) {
+      LOG(3, "can not set arena");
+      exit(1);
+    }
     LOG(3, "use_this: {}", aix);
   }
 
   void use_default() {
     size_t n = sizeof(unsigned);
-    mallctl("arenas.narenas", nullptr, nullptr, &default_thread_arena, n);
+    int err;
+    err = mallctl("thread.arena", nullptr, nullptr, &default_thread_arena, n);
+    if (err != 0) {
+      LOG(3, "can not set arena");
+      exit(1);
+    }
     LOG(3, "use_default: {}", default_thread_arena);
   }
 
+  bool check_in_range(void *p) {
+    using P = uint8_t *;
+    bool ret = P(p) >= P(alloc_base) && P(p) < P(alloc_ceil);
+    // LOG(3, "check_in_range: {}  {}  {}  {}", ret, alloc_base, p, alloc_ceil);
+    return ret;
+  }
+
   void *alloc_base = nullptr;
+  void *alloc_now = nullptr;
   void *alloc_ceil = nullptr;
 
 private:
@@ -121,7 +160,8 @@ private:
 static void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
                           size_t align, bool *zero, bool *commit,
                           unsigned arena) {
-  LOG(3, "extent_alloc arena: {}  size: {}  align: {}  zero: {}  commit: {}",
+  LOG(3, "extent_alloc arena: {}  size: {:8}  align: {:4}  zero: {:5}  commit: "
+         "{:5}",
       arena, size, align, *zero, *commit);
   if (addr != nullptr) {
     LOG(3, "error addr is set");
@@ -129,14 +169,22 @@ static void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
   }
   std::unique_lock<std::mutex> lock(g_mx);
   auto jm = g_jems[extent_hooks];
-  auto base = (char const *)jm->alloc_base;
+  auto now = (char const *)jm->alloc_now;
   auto ceil = (char const *)jm->alloc_ceil;
-  if (base + size > ceil) {
+  if (now + size > ceil) {
+    LOG(3, "sorry, no more extents");
+    exit(1);
     return nullptr;
   }
-  auto q = (void *)base;
-  base += size;
-  jm->alloc_base = (void *)base;
+  if (size_t(now) % align != 0) {
+    // let's see if that ever happens in tests...
+    LOG(3, "sorry, bad alignment");
+    exit(1);
+  }
+  auto q = (void *)now;
+  LOG(3, "extent: {}", q);
+  now += size;
+  jm->alloc_now = (void *)now;
   if (*zero) {
     std::memset(q, 0, size);
   }
