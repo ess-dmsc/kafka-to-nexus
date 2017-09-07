@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Msg.h"
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -9,13 +10,18 @@ void swap(MsgQueue &x, MsgQueue &y);
 
 class MsgQueue {
 public:
+  using ptr = std::unique_ptr<MsgQueue>;
   using Msg = FileWriter::Msg;
   using LK = std::unique_lock<std::mutex>;
   MsgQueue() {}
   MsgQueue(MsgQueue &&x) { swap(*this, x); }
-  void push(Msg &&msg) {
+  int push(Msg &&msg) {
     LK lk(mx);
-    items.push_back(std::move(msg));
+    if (n >= items.size()) {
+      return 1;
+    }
+    // items[n] = std::move(msg);
+    return 0;
   }
   std::vector<Msg> all() {
     LK lk(mx);
@@ -23,12 +29,12 @@ public:
     for (auto &x : items) {
       ret.push_back(std::move(x));
     }
-    items.clear();
     return ret;
   }
 
 private:
   std::mutex mx;
-  std::vector<Msg> items;
+  std::array<Msg, 1024> items;
+  size_t n = 0;
   friend void swap(MsgQueue &x, MsgQueue &y);
 };

@@ -11,6 +11,13 @@
 #define SOURCE_DO_PROCESS_MESSAGE 1
 #endif
 
+/*
+void * operator new(std::size_t n) throw(std::bad_alloc) {
+}
+void operator delete(void * p) throw() {
+}
+*/
+
 namespace FileWriter {
 
 Result Result::Ok() {
@@ -55,6 +62,46 @@ void Source::mpi_start(rapidjson::Document config_file,
                        rapidjson::Document command,
                        rapidjson::Document config_stream) {
   LOG(3, "Source::mpi_start()");
+  jm->use_this();
+  char *x;
+
+  while (true) {
+    x = (char *)malloc(sizeof(char));
+    // x = (char*)jm->alloc(8 * 1024 * sizeof(char));
+    if (jm->check_in_range(x))
+      break;
+  }
+
+  while (true) {
+    x = (char *)new MsgQueue;
+    if (jm->check_in_range(x))
+      break;
+  }
+
+  for (int i1 = 0; i1 < 0; ++i1) {
+    LOG(3, "alloc chunk {}", i1);
+    x = (char *)malloc(10 * 1024 * 1024 * sizeof(char));
+    // x = (char*)jm->alloc(8 * 1024 * sizeof(char));
+    if (not jm->check_in_range(x)) {
+      LOG(3, "fail check_in_range");
+      exit(1);
+    }
+  }
+
+  // x = (char*)malloc(32 * 1024 * sizeof(char));
+  // x = (char*)jm->alloc(32 * 1024 * sizeof(char));
+  // jm->check_in_range(x);
+
+  // jm->use_default();
+
+  // jm->use_this();
+  queue = MsgQueue::ptr(new MsgQueue);
+  if (not jm->check_in_range(queue.get())) {
+    LOG(3, "mem error");
+    exit(1);
+  }
+  jm->use_default();
+
   rapidjson::StringBuffer sbuf;
   {
     LOG(3, "config_file: {}", json_to_string(config_file));

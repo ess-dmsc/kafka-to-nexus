@@ -1,5 +1,6 @@
 #include "../KafkaW.h"
 #include "../MainOpt.h"
+#include "logpid.h"
 #include "roundtrip.h"
 #include <gtest/gtest.h>
 #include <mpi.h>
@@ -18,6 +19,11 @@ int main(int argc, char **argv) {
   }
   auto opt = std::move(po.second);
   setup_logger_from_options(*opt);
+
+  logpid("tmp-pid.txt");
+  LOG(3, "sleep 5");
+  // sleep_ms(5000);
+
   Roundtrip::opt = opt.get();
 
   MPI_Init(&argc, &argv);

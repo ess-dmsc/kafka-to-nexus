@@ -1,6 +1,7 @@
 #pragma once
 
 #include "logger.h"
+#include <thread>
 
 void logpid(char const *fname) {
   FILE *f1 = fopen(fname, "wb");

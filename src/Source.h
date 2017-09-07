@@ -61,7 +61,7 @@ private:
   bool do_process_message = true;
   Jemalloc::sptr jm;
   MMap::sptr mmap;
-  MsgQueue queue;
+  MsgQueue::ptr queue;
   MPI_Comm comm_spawned;
   MPI_Comm comm_all;
   uint32_t nspawns = 1;

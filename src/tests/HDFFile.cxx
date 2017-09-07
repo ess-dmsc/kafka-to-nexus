@@ -274,7 +274,9 @@ public:
           "fname": "tmp-mmap"
         }
       })"");
-      cfg["shm"].AddMember("size", rapidjson::Value(90 * 1024 * 1024), a);
+      rapidjson::Value v2;
+      v2.SetUint64(uint64_t(2) * 1024 * 1024 * 1024);
+      cfg["shm"].AddMember("size", std::move(v2), a);
       main_opt.config_file = merge(cfg, main_opt.config_file);
     }
 

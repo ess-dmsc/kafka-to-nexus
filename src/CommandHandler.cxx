@@ -2,7 +2,6 @@
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "helper.h"
-#include "logpid.h"
 #include "utils.h"
 #include <h5.h>
 
@@ -91,9 +90,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       return;
     }
   }
-
-  // logpid("tmp-pid.txt");
-  // sleep_ms(5000);
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 
