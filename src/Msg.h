@@ -29,7 +29,7 @@ public:
     while (true) {
       p1 = (char *)jm->alloc(len * sizeof(char));
       if (not jm->check_in_range(p1)) {
-        LOG(3, "error");
+        LOG(3, "try again...");
         // exit(1);
       } else
         break;
@@ -38,7 +38,7 @@ public:
     while (true) {
       p2 = (std::shared_ptr<char> *)jm->alloc(sizeof(std::shared_ptr<char>));
       if (not jm->check_in_range(p2)) {
-        LOG(3, "error");
+        LOG(3, "try again...");
         // exit(1);
       } else
         break;

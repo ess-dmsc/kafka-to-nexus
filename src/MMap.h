@@ -65,8 +65,9 @@ private:
         exit(1);
       }
     }
-    ret->shm_ptr = mmap64(nullptr, ret->shm_size, PROT_READ | PROT_WRITE,
-                          MAP_SHARED, ret->fd, 0);
+    ret->shm_ptr =
+        mmap64((void *)0x662233000000, ret->shm_size, PROT_READ | PROT_WRITE,
+               MAP_FIXED | MAP_SHARED, ret->fd, 0);
     if (sizeof(char *) != 8) {
       LOG(3, "just making sure");
       exit(1);

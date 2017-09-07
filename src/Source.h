@@ -42,7 +42,7 @@ public:
   void mpi_start(rapidjson::Document config_file, rapidjson::Document command,
                  rapidjson::Document config_stream);
   void mpi_stop();
-  ProcessMessageResult process_message(Msg const &msg);
+  ProcessMessageResult process_message(Msg &msg);
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;

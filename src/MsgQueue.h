@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Msg.h"
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <vector>
@@ -20,7 +21,10 @@ public:
     if (n >= items.size()) {
       return 1;
     }
-    // items[n] = std::move(msg);
+    // TODO fix mistake in declaration....
+    items[n].swap(items[n], msg);
+    n += 1;
+    LOG(3, "now have {} in queue", n.load());
     return 0;
   }
   std::vector<Msg> all() {
@@ -35,6 +39,6 @@ public:
 private:
   std::mutex mx;
   std::array<Msg, 1024> items;
-  size_t n = 0;
+  std::atomic<size_t> n{0};
   friend void swap(MsgQueue &x, MsgQueue &y);
 };

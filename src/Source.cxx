@@ -185,7 +185,7 @@ void Source::mpi_stop() {
   // MPI_Finalize();
 }
 
-ProcessMessageResult Source::process_message(Msg const &msg) {
+ProcessMessageResult Source::process_message(Msg &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
     LOG(5, "buffer not verified");
@@ -196,6 +196,7 @@ ProcessMessageResult Source::process_message(Msg const &msg) {
   }
   bool do_mpi = true;
   if (do_mpi) {
+    queue->push(std::move(msg));
     return ProcessMessageResult::OK();
   }
   if (!_hdf_writer_module) {
