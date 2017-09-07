@@ -36,6 +36,21 @@ ProcessMessageResult ProcessMessageResult::STOP() {
 DemuxTopic::DemuxTopic(std::string topic)
     : _topic(topic), _stop_time(std::numeric_limits<uint64_t>::max()) {}
 
+DemuxTopic::~DemuxTopic() {
+  for (auto &x : _sources_map) {
+    x.second.mpi_stop();
+  }
+}
+
+DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
+
+void swap(DemuxTopic &x, DemuxTopic &y) {
+  using std::swap;
+  swap(x._topic, y._topic);
+  swap(x._sources_map, y._sources_map);
+  swap(x._stop_time, y._stop_time);
+}
+
 DemuxTopic::DT DemuxTopic::time_difference_from_message(Msg const &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {

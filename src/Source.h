@@ -7,6 +7,7 @@
 #include "Msg.h"
 #include "MsgQueue.h"
 #include "ProcessMessageResult.h"
+#include "SHMP.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
 #include <string>
@@ -37,6 +38,9 @@ public:
   std::string const &topic() const;
   std::string const &sourcename() const;
   uint64_t processed_messages_count() const;
+  void mpi_start(rapidjson::Document config_file, rapidjson::Document command,
+                 rapidjson::Document config_stream);
+  void mpi_stop();
   ProcessMessageResult process_message(Msg const &msg);
   std::string to_str() const;
   rapidjson::Document
@@ -56,6 +60,10 @@ private:
   bool do_process_message = true;
   Jemalloc::sptr jm;
   MsgQueue queue;
+  MPI_Comm comm_spawned;
+  MPI_Comm comm_all;
+  uint32_t nspawns = 1;
+  std::vector<int> mpi_return_codes;
 
   friend class CommandHandler;
   friend class FileWriterTask;

@@ -1,6 +1,11 @@
 #include "Source.h"
 #include "helper.h"
 #include "logger.h"
+#include <chrono>
+#include <rapidjson/document.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+#include <thread>
 
 #ifndef SOURCE_DO_PROCESS_MESSAGE
 #define SOURCE_DO_PROCESS_MESSAGE 1
@@ -21,10 +26,6 @@ Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
   if (SOURCE_DO_PROCESS_MESSAGE == 0) {
     do_process_message = false;
   }
-
-  // create the queue which can be used by demux
-
-  // spawn the mpi workers
 }
 
 Source::Source(Source &&x) noexcept { swap(*this, x); }
@@ -34,14 +35,108 @@ void swap(Source &x, Source &y) {
   swap(x._topic, y._topic);
   swap(x._sourcename, y._sourcename);
   swap(x._hdf_writer_module, y._hdf_writer_module);
-  swap(x._sourcename, y._sourcename);
+  swap(x._processed_messages_count, y._processed_messages_count);
+  swap(x._cnt_msg_written, y._cnt_msg_written);
+  swap(x.do_process_message, y.do_process_message);
   swap(x.jm, y.jm);
   swap(x.queue, y.queue);
+  swap(x.comm_spawned, y.comm_spawned);
+  swap(x.comm_all, y.comm_all);
+  swap(x.nspawns, y.nspawns);
+  swap(x.mpi_return_codes, y.mpi_return_codes);
 }
 
 std::string const &Source::topic() const { return _topic; }
 
 std::string const &Source::sourcename() const { return _sourcename; }
+
+void Source::mpi_start(rapidjson::Document config_file,
+                       rapidjson::Document command,
+                       rapidjson::Document config_stream) {
+  LOG(3, "Source::mpi_start()");
+  size_t shm_size = 80 * 1024 * 1024;
+  rapidjson::StringBuffer sbuf;
+  {
+    LOG(3, "config_file: {}", json_to_string(config_file));
+    LOG(3, "command: {}", json_to_string(command));
+    LOG(3, "config_stream: {}", json_to_string(config_stream));
+    using namespace rapidjson;
+    Document jconf;
+    jconf.Parse(R""({"hdf":{},"shm":{"fname":"tmp-mmap"}})"");
+    jconf["hdf"].AddMember("fname", command["file_attributes"]["file_name"],
+                           jconf.GetAllocator());
+    jconf.AddMember("stream", config_stream, jconf.GetAllocator());
+    jconf["shm"].AddMember("size", Value(shm_size), jconf.GetAllocator());
+    Writer<StringBuffer> wr(sbuf);
+    jconf.Accept(wr);
+    // LOG(3, "config for mpi: {}", sbuf.GetString());
+  }
+  int err = MPI_SUCCESS;
+  MPI_Info mpi_info;
+  if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
+    LOG(3, "ERROR can not init MPI_Info");
+    exit(1);
+  }
+  char arg1[32];
+  strcpy(arg1, "--mpi");
+  char *argv[] = {
+      arg1, (char *)sbuf.GetString(), nullptr,
+  };
+  err = MPI_Comm_spawn("./mpi-worker", argv, nspawns, MPI_INFO_NULL, 0,
+                       MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
+  if (err != MPI_SUCCESS) {
+    LOG(3, "can not spawn");
+    exit(1);
+  }
+  {
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    LOG(3, "After spawn in main MPI_COMM_WORLD  rank: {}  size: {}", rank,
+        size);
+  }
+  {
+    int rank, size;
+    MPI_Comm_rank(comm_spawned, &rank);
+    MPI_Comm_size(comm_spawned, &size);
+    LOG(3, "comm_spawned  rank: {}  size: {}", rank, size);
+  }
+  err = MPI_Intercomm_merge(comm_spawned, 0, &comm_all);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Intercomm_merge");
+    exit(1);
+  }
+  {
+    int rank, size;
+    MPI_Comm_rank(comm_all, &rank);
+    MPI_Comm_size(comm_all, &size);
+    LOG(3, "comm_all rank: {}  size: {}", rank, size);
+  }
+  LOG(3, "Barrier 1 BEFORE");
+  MPI_Barrier(comm_all);
+  LOG(3, "Barrier 1 AFTER");
+  // exchange config
+  // wait for their ok that they opened file
+}
+
+void Source::mpi_stop() {
+  LOG(3, "Source::mpi_stop()");
+  // send stop command, wait for group size zero?
+  int err = MPI_SUCCESS;
+  LOG(3, "Barrier 2 BEFORE");
+  MPI_Barrier(comm_all);
+  LOG(3, "Barrier 2 AFTER");
+  LOG(3, "ask for disconnect");
+  err = MPI_Comm_disconnect(&comm_all);
+  // err = MPI_Comm_disconnect(&comm_spawned);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Comm_disconnect");
+    exit(1);
+  }
+  LOG(3, "sleeping");
+  std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  // MPI_Finalize();
+}
 
 ProcessMessageResult Source::process_message(Msg const &msg) {
   if (!_hdf_writer_module) {

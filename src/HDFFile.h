@@ -32,9 +32,9 @@ public:
            std::vector<hid_t> &groups);
   int reopen(std::string filename, rapidjson::Value const &config_file);
   void flush();
+  hid_t h5file = -1;
 
 private:
-  hid_t h5file = -1;
   friend class ::T_HDFFile;
   friend class CommandHandler;
 };

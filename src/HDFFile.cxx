@@ -490,7 +490,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "failed H5Pset_cache");
     }
   }
-  if (false) {
+  if (true) {
     H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
   }
   auto f1 = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
@@ -609,7 +609,7 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
       LOG(7, "failed H5Pset_cache");
     }
   }
-  if (false) {
+  if (true) {
     H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
   }
   auto f1 = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);

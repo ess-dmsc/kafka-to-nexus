@@ -2,6 +2,7 @@
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "helper.h"
+#include "logpid.h"
 #include "utils.h"
 #include <h5.h>
 
@@ -91,80 +92,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
-  if (false) {
-    // Spawn MPI here.
-    MPI_Info mpi_info;
-    if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
-      LOG(3, "ERROR can not init MPI_Info");
-      exit(1);
-    }
-    MPI_Comm comm_spawned;
-    std::array<int, 10> mpi_return_codes;
-    char arg1[32];
-    strncpy(arg1, "--mpi", 5);
-    char *argv[] = {
-        arg1, nullptr,
-    };
-    LOG(3, "Spawning as: {}", getpid());
-    FILE *f1 = fopen("tmp-pid.txt", "wb");
-    auto pidstr = fmt::format("{}", getpid());
-    fwrite(pidstr.data(), pidstr.size(), 1, f1);
-    fclose(f1);
-    // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-    LOG(3, "go on as: {}", getpid());
-
-    uint8_t nspawns = 1;
-    auto err =
-        MPI_Comm_spawn("./mpi-worker", argv, nspawns, MPI_INFO_NULL, 0,
-                       MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
-    if (err != MPI_SUCCESS) {
-      LOG(3, "can not spawn");
-      exit(1);
-    }
-    {
-      int rank, size;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      MPI_Comm_size(MPI_COMM_WORLD, &size);
-      LOG(3, "I am rank {} of {}", rank, size);
-      if (comm_spawned == MPI_COMM_WORLD) {
-        LOG(3, "Weird, child comm is MPI_COMM_WORLD");
-      }
-    }
-
-    {
-      int rank, size;
-      MPI_Comm_rank(comm_spawned, &rank);
-      MPI_Comm_size(comm_spawned, &size);
-      LOG(3, "comm_spawned rank: {}  size: {}", rank, size);
-    }
-
-    MPI_Comm comm_all;
-    { err = MPI_Intercomm_merge(comm_spawned, 0, &comm_all); }
-    {
-      int rank, size;
-      MPI_Comm_rank(comm_all, &rank);
-      MPI_Comm_size(comm_all, &size);
-      LOG(3, "comm_all rank: {}  size: {}", rank, size);
-    }
-
-    MPI_Barrier(comm_all);
-
-    MPI_Barrier(comm_all);
-    LOG(3, "wait for other mmap");
-
-    MPI_Barrier(comm_all);
-    LOG(3, "continue");
-
-    MPI_Barrier(comm_all);
-    LOG(3, "ask for disconnect");
-    err = MPI_Comm_disconnect(&comm_spawned);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Comm_disconnect");
-      exit(1);
-    }
-    std::this_thread::sleep_for(std::chrono::milliseconds(200));
-    // MPI_Finalize();
-  }
+  logpid("tmp-pid.txt");
+  sleep_ms(5000);
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 
@@ -286,35 +215,55 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
-    auto module_factory = HDFWriterModuleRegistry::find(module.v);
-    if (!module_factory) {
-      LOG(5, "Module '{}' is not available", module.v);
-      continue;
-    }
-
-    auto hdf_writer_module = module_factory();
-    if (!hdf_writer_module) {
-      LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
-      continue;
-    }
-
-    hdf_writer_module->parse_config(config_stream, nullptr);
-    hdf_writer_module->reopen(fwt->hdf_file.h5file, stream.hdf_parent_name);
-
     // for each stream:
     //   either re-open in this main process
     //     Re-create HDFWriterModule
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
-    //   or re-open in one or more separate mpi workers
-    //     Send command to create HDFWriterModule, all the json config as text,
-    //     let it re-open hdf items
-    //     Create a Source which puts messages on a queue
-    auto s = Source(source.v, move(hdf_writer_module), config.jm);
-    s._topic = string(topic);
-    s.do_process_message = config.source_do_process_message;
-    fwt->add_source(move(s));
+    if (false) {
+      auto module_factory = HDFWriterModuleRegistry::find(module.v);
+      if (!module_factory) {
+        LOG(5, "Module '{}' is not available", module.v);
+        continue;
+      }
+
+      auto hdf_writer_module = module_factory();
+      if (!hdf_writer_module) {
+        LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
+        continue;
+      }
+
+      hdf_writer_module->parse_config(config_stream, nullptr);
+      hdf_writer_module->reopen(fwt->hdf_file.h5file, stream.hdf_parent_name);
+      auto s = Source(source.v, move(hdf_writer_module), config.jm);
+      s._topic = string(topic);
+      s.do_process_message = config.source_do_process_message;
+      fwt->add_source(move(s));
+    }
+
+    else {
+      //   or re-open in one or more separate mpi workers
+      //     Send command to create HDFWriterModule, all the json config as
+      //     text, let it re-open hdf items
+      //     Create a Source which puts messages on a queue
+      auto s = Source(source.v, {}, config.jm);
+      s._topic = string(topic);
+      s.do_process_message = config.source_do_process_message;
+      {
+        Document c1;
+        c1.CopyFrom(config.config_file, c1.GetAllocator());
+        Document c2;
+        c2.CopyFrom(d, c2.GetAllocator());
+        Document c3;
+        auto &c3a = c3.GetAllocator();
+        c3.CopyFrom(config_stream, c3a);
+        c3.AddMember("hdf_parent_name",
+                     Value(stream.hdf_parent_name.c_str(), c3a), c3a);
+        s.mpi_start(move(c1), move(c2), move(c3));
+      }
+      fwt->add_source(move(s));
+    }
   }
 
   if (master) {

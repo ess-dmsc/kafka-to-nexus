@@ -15,6 +15,19 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+#include <rapidjson/writer.h>
+
+#include "HDFFile.h"
+#include "HDFWriterModule.h"
+#include "json.h"
+
+using std::array;
+using std::vector;
+using std::string;
+
 void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
   std::vector<char> buf(128);
   int rank, size;
@@ -119,6 +132,16 @@ void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
 }
 
 int main(int argc, char **argv) {
+  if (argc < 3) {
+    LOG(3, "not enough arguments");
+    return -1;
+  }
+  // LOG(3, "conf: {}", argv[2]);
+  using namespace rapidjson;
+  Document jconf;
+  jconf.Parse(argv[2]);
+  LOG(3, "jconf: {}", json_to_string(jconf));
+
   int err = MPI_SUCCESS;
   MPI_Init(&argc, &argv);
 
@@ -142,15 +165,59 @@ int main(int argc, char **argv) {
     LOG(3, "comm_all rank: {}  size: {}", rank, size);
   }
 
+  LOG(3, "mmap");
+  auto shm = MMap::create(jconf["shm"]["fname"].GetString(),
+                          jconf["shm"]["size"].GetInt64());
+  LOG(3, "memory ready");
+
+  using namespace FileWriter;
+
+  auto hdf_fname = jconf["hdf"]["fname"].GetString();
+  HDFFile hdf_file;
+  hdf_file.reopen(hdf_fname, Value());
+
+  auto module = jconf["stream"]["module"].GetString();
+
+  auto module_factory = HDFWriterModuleRegistry::find(module);
+  if (!module_factory) {
+    LOG(5, "Module '{}' is not available", module);
+    exit(1);
+  }
+
+  auto hdf_writer_module = module_factory();
+  if (!hdf_writer_module) {
+    LOG(5, "Can not create a HDFWriterModule for '{}'", module);
+    exit(1);
+  }
+
+  hdf_writer_module->parse_config(jconf["stream"], nullptr);
+  hdf_writer_module->reopen(hdf_file.h5file,
+                            jconf["stream"]["hdf_parent_name"].GetString());
+  // jconf["stream"]["hdf_parent_name"].GetString()
+
+  LOG(3, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);
+  LOG(3, "Barrier 1 AFTER");
+
+  LOG(3, "Barrier 2 BEFORE");
+  MPI_Barrier(comm_all);
+  LOG(3, "Barrier 2 AFTER");
+
+  LOG(3, "ask for disconnect");
+  // MPI_Comm_disconnect(&comm_parent);
+  MPI_Comm_disconnect(&comm_all);
+  if (false) {
+    LOG(3, "finalizing {}", rank);
+    MPI_Finalize();
+    LOG(3, "after finalize {}", rank);
+  }
+  LOG(3, "return");
+  return 42;
+
   LOG(3, "wait for parent mmap");
   MPI_Barrier(comm_all);
-  LOG(3, "mmap");
-
-  auto shm = MMap::create("tmp-mmap", 80 * 1024 * 1024);
 
   MPI_Barrier(comm_all);
-  LOG(3, "memory ready");
 
   auto m1 = (std::atomic<uint32_t> *)shm->addr();
   while (m1->load() < 110) {
@@ -167,6 +234,7 @@ int main(int argc, char **argv) {
   MPI_Barrier(comm_all);
   LOG(3, "ask for disconnect");
   MPI_Comm_disconnect(&comm_parent);
+  MPI_Comm_disconnect(&comm_all);
   LOG(3, "finalizing {}", rank);
   MPI_Finalize();
   LOG(3, "after finalize {}", rank);

@@ -23,6 +23,8 @@ public:
 class DemuxTopic : public TimeDifferenceFromMessage, public MessageProcessor {
 public:
   DemuxTopic(std::string topic);
+  DemuxTopic(DemuxTopic &&x);
+  ~DemuxTopic();
   std::string const &topic() const;
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
@@ -48,6 +50,7 @@ private:
   std::string _topic;
   std::unordered_map<std::string, Source> _sources_map;
   ESSTimeStamp _stop_time;
+  friend void swap(DemuxTopic &x, DemuxTopic &y);
 };
 
 } // namespace FileWriter
