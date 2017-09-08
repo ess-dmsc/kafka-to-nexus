@@ -54,7 +54,7 @@ private:
     if (create) {
       flags |= O_CREAT;
     }
-    ret->fd = ::open(fname.data(), flags);
+    ret->fd = ::open(fname.data(), flags, S_IRUSR | S_IWUSR);
     if (ret->fd == -1) {
       LOG(3, "open failed");
       exit(1);

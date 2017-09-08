@@ -172,9 +172,11 @@ int main(int argc, char **argv) {
     // sleep_ms(5000);
   }
 
-  LOG(3, "mmap");
-  auto shm = MMap::create(jconf["config_file"]["shm"]["fname"].GetString(),
-                          jconf["config_file"]["shm"]["size"].GetInt64());
+  auto config_file = jconf["config_file"].GetObject();
+  auto shm_fname = config_file["shm"]["fname"].GetString();
+  auto shm_size = config_file["shm"]["size"].GetInt64();
+  LOG(3, "mmap {} / {}", shm_fname, shm_size);
+  auto shm = MMap::create(shm_fname, shm_size);
   LOG(3, "memory ready");
 
   using namespace FileWriter;
@@ -208,16 +210,16 @@ int main(int argc, char **argv) {
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 1 AFTER");
 
-  for (int i1 = 0; i1 < 100; ++i1) {
+  size_t empties = 0;
+  for (int i1 = 0; i1 < 10000; ++i1) {
     auto n = queue->n.load();
     if (n > 0) {
       LOG(3, "Queue size: {}", n);
       std::vector<Msg> all;
       queue->all(all);
-      LOG(3, "after call..........");
       for (auto &m : all) {
-        LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type, m._size,
-            (void *)m.data());
+        // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
+        // m._size, (void*)m.data());
         hdf_writer_module->write(m);
       }
     } else {
@@ -225,7 +227,11 @@ int main(int argc, char **argv) {
         LOG(3, "queue closed");
         break;
       } else {
-        sleep_ms(10);
+        if (empties % 1000 == 0) {
+          LOG(3, "empty {}", empties);
+        }
+        empties += 1;
+        sleep_ms(1);
       }
     }
   }

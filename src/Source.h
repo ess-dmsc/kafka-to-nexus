@@ -11,6 +11,7 @@
 #include "SHMP.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
+#include <mpi.h>
 #include <string>
 
 class Test___FileWriterTask___Create01;

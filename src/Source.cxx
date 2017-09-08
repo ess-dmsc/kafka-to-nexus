@@ -95,6 +95,8 @@ void Source::mpi_start(rapidjson::Document config_file,
   // jm->use_default();
 
   // jm->use_this();
+
+  LOG(3, "place MsgQueue");
   queue = MsgQueue::ptr(new MsgQueue);
   if (not jm->check_in_range(queue.get())) {
     LOG(3, "mem error");
@@ -102,6 +104,10 @@ void Source::mpi_start(rapidjson::Document config_file,
   }
   jm->use_default();
 
+  auto bin =
+      fmt::format("{}/mpi-worker", config_file["mpi"]["path_bin"].GetString());
+
+  LOG(3, "make jconf");
   rapidjson::StringBuffer sbuf;
   {
     LOG(3, "config_file: {}", json_to_string(config_file));
@@ -132,7 +138,8 @@ void Source::mpi_start(rapidjson::Document config_file,
   char *argv[] = {
       arg1, (char *)sbuf.GetString(), nullptr,
   };
-  err = MPI_Comm_spawn("./mpi-worker", argv, nspawns, MPI_INFO_NULL, 0,
+  LOG(3, "spawn {}", bin);
+  err = MPI_Comm_spawn(bin.c_str(), argv, nspawns, MPI_INFO_NULL, 0,
                        MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
   if (err != MPI_SUCCESS) {
     LOG(3, "can not spawn");
@@ -201,11 +208,15 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   bool do_mpi = true;
   if (do_mpi) {
     // TODO yield on contention
-    for (int i1 = 0; i1 < 1024; ++i1) {
+    for (int i1 = 0; true; ++i1) {
       if (queue->push(msg) == 0) {
         break;
       }
-      sleep_ms(10);
+      if (i1 >= 10000) {
+        LOG(3, "QUEUE IS FULL FOR TOO LONG TIME");
+        break;
+      }
+      sleep_ms(1);
     }
     return ProcessMessageResult::OK();
   }

@@ -272,8 +272,8 @@ public:
           }
         },
         "unit_test": {
-          "n_events_per_message": 32,
-          "n_msgs_per_source": 2,
+          "n_events_per_message": 100100,
+          "n_msgs_per_source": 400,
           "n_sources": 1,
           "n_msgs_per_batch": 1,
           "filename": "tmp-ev42.h5",
@@ -283,6 +283,9 @@ public:
         },
         "shm": {
           "fname": "tmp-mmap"
+        },
+        "mpi": {
+          "path_bin": "."
         }
       })"");
       rapidjson::Value v2;

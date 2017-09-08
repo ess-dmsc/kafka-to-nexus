@@ -9,6 +9,7 @@
 #include <deque>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
+#include <mpi.h>
 #include <unistd.h>
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
@@ -430,22 +431,15 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 }
 
-int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
-                  rapidjson::Value const &config_file,
-                  std::vector<StreamHDFInfo> &stream_hdf_info,
-                  std::vector<hid_t> &groups) {
-  using std::string;
-  using std::vector;
-  using rapidjson::Value;
+static void set_common_props(hid_t fcpl, hid_t fapl) {
   herr_t err = 0;
-  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
   size_t const PAGE_SIZE = 4 * 1024 * 1024;
   // H5F_FSPACE_STRATEGY_FSM_AGGR
   // H5F_FSPACE_STRATEGY_PAGE
   // H6F_FSPACE_STRATEGY_AGGR
   // H5F_FSPACE_STRATEGY_NONE
   // H5F_FSPACE_STRATEGY_NTYPES
-  if (false) {
+  if (true) {
     // H5F_FSPACE_STRATEGY_NONE
     // H5F_FSPACE_STRATEGY_PAGE
     err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
@@ -454,14 +448,13 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "failed H5Pset_file_space_strategy");
     }
   }
-  if (false) {
+  if (true) {
     err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_file_space_page_size");
     }
   }
-  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-  if (false) {
+  if (true) {
     hsize_t threshold;
     hsize_t alignment;
     err = H5Pget_alignment(fapl, &threshold, &alignment);
@@ -471,28 +464,41 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
       LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
     }
   }
-  if (false) {
+  if (true) {
     err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (false) {
+  if (true) {
     err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
     if (err < 0) {
       LOG(7, "failed H5Pset_page_buffer_size");
     }
   }
-  if (false) {
+  if (true) {
     // 521  1483  9973
     err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
     if (err < 0) {
       LOG(7, "failed H5Pset_cache");
     }
   }
-  if (true) {
+#if 0
     H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
   }
+#endif
+}
+
+int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
+                  rapidjson::Value const &config_file,
+                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                  std::vector<hid_t> &groups) {
+  using std::string;
+  using std::vector;
+  using rapidjson::Value;
+  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
+  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  set_common_props(fcpl, fapl);
   auto f1 = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
   if (f1 < 0) {
     std::array<char, 256> cwd;
@@ -556,62 +562,9 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
   using std::string;
   using std::vector;
   using rapidjson::Value;
-  herr_t err = 0;
   auto fcpl = H5Pcreate(H5P_FILE_CREATE);
-  size_t const PAGE_SIZE = 4 * 1024 * 1024;
-  // H5F_FSPACE_STRATEGY_FSM_AGGR
-  // H5F_FSPACE_STRATEGY_PAGE
-  // H6F_FSPACE_STRATEGY_AGGR
-  // H5F_FSPACE_STRATEGY_NONE
-  // H5F_FSPACE_STRATEGY_NTYPES
-  if (false) {
-    // H5F_FSPACE_STRATEGY_NONE
-    // H5F_FSPACE_STRATEGY_PAGE
-    err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
-                                     1024 * 1024);
-    if (err < 0) {
-      LOG(7, "failed H5Pset_file_space_strategy");
-    }
-  }
-  if (false) {
-    err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
-    if (err < 0) {
-      LOG(7, "failed H5Pset_file_space_page_size");
-    }
-  }
   auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-  if (false) {
-    hsize_t threshold;
-    hsize_t alignment;
-    err = H5Pget_alignment(fapl, &threshold, &alignment);
-    if (err < 0) {
-      LOG(7, "could not get alignment");
-    } else {
-      LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
-    }
-  }
-  if (false) {
-    err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
-    if (err < 0) {
-      LOG(7, "failed H5Pset_alignment");
-    }
-  }
-  if (false) {
-    err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
-    if (err < 0) {
-      LOG(7, "failed H5Pset_page_buffer_size");
-    }
-  }
-  if (false) {
-    // 521  1483  9973
-    err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
-    if (err < 0) {
-      LOG(7, "failed H5Pset_cache");
-    }
-  }
-  if (true) {
-    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
-  }
+  set_common_props(fcpl, fapl);
   auto f1 = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);
   if (f1 < 0) {
     std::array<char, 256> cwd;

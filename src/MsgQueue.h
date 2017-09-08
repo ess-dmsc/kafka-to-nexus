@@ -58,6 +58,6 @@ public:
 
 private:
   std::mutex mx;
-  std::array<Msg, 1024> items;
+  std::array<Msg, 256> items;
   friend void swap(MsgQueue &x, MsgQueue &y);
 };

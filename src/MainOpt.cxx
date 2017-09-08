@@ -13,8 +13,11 @@ void MainOpt::init() {
   // TODO
   // Do this somewhere else, after parsing all conf including the possibly
   // changed conf in tests
-  LOG(3, "mmap");
-  shm = MMap::create("tmp-mmap", 5 * 1024 * 1024 * 1024);
+  auto shm_fname = config_file["shm"]["fname"].GetString();
+  auto shm_size = config_file["shm"]["size"].GetInt64();
+  LOG(3, "mmap {} / {}", shm_fname, shm_size);
+  shm = MMap::create(shm_fname, shm_size);
+
   std::memset(shm->addr(), 'a', 1024);
 
   jm = Jemalloc::create(shm->addr(),

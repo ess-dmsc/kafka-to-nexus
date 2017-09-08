@@ -35,21 +35,11 @@ public:
       } else
         break;
     }
-    std::shared_ptr<char> *p2;
-    while (true) {
-      p2 = (std::shared_ptr<char> *)jm->alloc(sizeof(std::shared_ptr<char>));
-      if (not jm->check_in_range(p2)) {
-        LOG(3, "try again...");
-        // exit(1);
-      } else
-        break;
-    }
 
     Msg msg;
     msg.type = 2;
-    msg.var.shared =
-        new (p2) std::shared_ptr<char>(p1, std::default_delete<char[]>());
-    std::memcpy((*msg.var.shared).get(), data, len);
+    msg.var.shared = p1;
+    std::memcpy((void *)msg.var.shared, data, len);
     msg._size = len;
     // LOG(3, "shared, set size to: {}", msg._size);
     return msg;
@@ -61,7 +51,7 @@ public:
     }
     Msg ret;
     ret.type = 22;
-    ret.var.cheap = msg.var.shared->get();
+    ret.var.cheap = msg.var.shared;
     ret._size = msg._size;
     return ret;
   }
@@ -89,7 +79,7 @@ public:
       LOG(1, "sorry, can not swap that");
       exit(1);
     }
-    LOG(3, "swap {} / {}   {} / {}", x.type, x._size, y.type, y._size);
+    // LOG(3, "swap {} / {}   {} / {}", x.type, x._size, y.type, y._size);
     using std::swap;
     swap(x.type, y.type);
     swap(x.var, y.var);
@@ -103,7 +93,7 @@ public:
     case 0:
       return var.owned;
     case 2:
-      return (*var.shared).get();
+      return var.shared;
     case 22:
       return var.cheap;
     default:
@@ -134,7 +124,7 @@ public:
   union Var {
     RdKafka::Message *rdkafka_msg;
     char const *owned;
-    std::shared_ptr<char> *shared;
+    char const *shared;
     char const *cheap;
   } var;
   size_t _size = 0;

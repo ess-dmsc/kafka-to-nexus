@@ -183,7 +183,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   }
 
   fwt->hdf_filename = fname;
-  fwt->hdf_file.reopen(fname, Value());
 
   for (auto &stream : stream_hdf_info) {
     // TODO
