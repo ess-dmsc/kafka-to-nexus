@@ -65,6 +65,7 @@ public:
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
+  void enable_cq(CollectiveQueue *cq, int mpi_rank) override;
 
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_id;
@@ -78,6 +79,7 @@ public:
   uint64_t index_at_bytes = 0;
   uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
   uint64_t ts_max = 0;
+  CollectiveQueue *cq = nullptr;
 };
 
 FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
@@ -193,6 +195,22 @@ int32_t HDFWriterModule::close() {
   ds_cue_index.reset();
   ds_cue_timestamp_zero.reset();
   return 0;
+}
+
+void HDFWriterModule::enable_cq(CollectiveQueue *cq, int mpi_rank) {
+  this->cq = cq;
+  ds_event_time_offset->ds.cq = cq;
+  ds_event_time_offset->ds.mpi_rank = mpi_rank;
+  ds_event_id->ds.cq = cq;
+  ds_event_id->ds.mpi_rank = mpi_rank;
+  ds_event_time_zero->ds.cq = cq;
+  ds_event_time_zero->ds.mpi_rank = mpi_rank;
+  ds_event_index->ds.cq = cq;
+  ds_event_index->ds.mpi_rank = mpi_rank;
+  ds_cue_index->ds.cq = cq;
+  ds_cue_index->ds.mpi_rank = mpi_rank;
+  ds_cue_timestamp_zero->ds.cq = cq;
+  ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
 }
 
 HDFWriterModuleRegistry::Registrar

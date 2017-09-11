@@ -1,4 +1,6 @@
 #pragma once
+
+#include "CollectiveQueue.h"
 #include <array>
 #include <hdf5.h>
 #include <memory>
@@ -82,6 +84,8 @@ public:
   std::array<hsize_t, 2> sext;
   std::array<hsize_t, 2> mem_max;
   std::array<hsize_t, 2> mem_now;
+  CollectiveQueue *cq = nullptr;
+  int mpi_rank = -1;
 
 private:
   h5d();

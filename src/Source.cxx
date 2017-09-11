@@ -27,9 +27,9 @@ Result Result::Ok() {
 }
 
 Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
-               Jemalloc::sptr jm, MMap::sptr mmap)
+               Jemalloc::sptr jm, MMap::sptr mmap, CollectiveQueue *cq)
     : _sourcename(sourcename), _hdf_writer_module(std::move(hdf_writer_module)),
-      jm(jm), mmap(mmap) {
+      jm(jm), mmap(mmap), cq(cq) {
   if (SOURCE_DO_PROCESS_MESSAGE == 0) {
     do_process_message = false;
   }
@@ -52,6 +52,7 @@ void swap(Source &x, Source &y) {
   swap(x.comm_all, y.comm_all);
   swap(x.nspawns, y.nspawns);
   swap(x.mpi_return_codes, y.mpi_return_codes);
+  swap(x.cq, y.cq);
 }
 
 std::string const &Source::topic() const { return _topic; }
@@ -120,6 +121,8 @@ void Source::mpi_start(rapidjson::Document config_file,
     jconf.AddMember("config_file", config_file, jconf.GetAllocator());
     LOG(3, "queue_addr: {}", uint64_t(queue.get()));
     jconf.AddMember("queue_addr", Value().SetUint64(uint64_t(queue.get())),
+                    jconf.GetAllocator());
+    jconf.AddMember("cq_addr", Value().SetUint64(uint64_t(cq)),
                     jconf.GetAllocator());
     Writer<StringBuffer> wr(sbuf);
     jconf.Accept(wr);

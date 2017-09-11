@@ -183,6 +183,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   }
 
   fwt->hdf_filename = fname;
+  fwt->hdf_file.create_collective_queue(config.jm);
 
   for (auto &stream : stream_hdf_info) {
     // TODO
@@ -231,7 +232,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
       hdf_writer_module->parse_config(config_stream, nullptr);
       hdf_writer_module->reopen(fwt->hdf_file.h5file, stream.hdf_parent_name);
-      auto s = Source(source.v, move(hdf_writer_module), config.jm, config.shm);
+      auto s = Source(source.v, move(hdf_writer_module), config.jm, config.shm,
+                      fwt->impl->hdf_file.cq.get());
       s._topic = string(topic);
       s.do_process_message = config.source_do_process_message;
       fwt->add_source(move(s));
@@ -242,7 +244,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       //     Send command to create HDFWriterModule, all the json config as
       //     text, let it re-open hdf items
       //     Create a Source which puts messages on a queue
-      auto s = Source(source.v, {}, config.jm, config.shm);
+      auto s = Source(source.v, {}, config.jm, config.shm,
+                      fwt->impl->hdf_file.cq.get());
       s._topic = string(topic);
       s.do_process_message = config.source_do_process_message;
       {

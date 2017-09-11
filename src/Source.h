@@ -50,7 +50,7 @@ public:
 
 private:
   Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
-         Jemalloc::sptr, MMap::sptr);
+         Jemalloc::sptr, MMap::sptr, CollectiveQueue *cq);
 
   std::string _topic;
   std::string _sourcename;
@@ -67,6 +67,7 @@ private:
   MPI_Comm comm_all;
   uint32_t nspawns = 1;
   std::vector<int> mpi_return_codes;
+  CollectiveQueue *cq = nullptr;
 
   friend class CommandHandler;
   friend class FileWriterTask;

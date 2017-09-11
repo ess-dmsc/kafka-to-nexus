@@ -20,6 +20,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 
+#include "CollectiveQueue.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
 #include "MsgQueue.h"
@@ -152,20 +153,32 @@ int main(int argc, char **argv) {
   MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0 /* key */,
                       MPI_INFO_NULL, &MPI_COMM_NODE);
 
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  LOG(3, "mpi-worker as {} of {}", rank, size);
+  TODO
+
+      // TODO
+      // make sure that when I spawn more processes, that only the spawns are in
+      // world, so that I can be sure that the rank_world == 0 is one of the mpi
+      // workers, and not the main process.
+      int rank_world,
+      size_world;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank_world);
+  MPI_Comm_size(MPI_COMM_WORLD, &size_world);
+  LOG(3, "mpi-worker  rank_world: {}  size_world: {}", rank_world, size_world);
   MPI_Comm comm_parent;
   MPI_Comm_get_parent(&comm_parent);
 
+  int rank_merged, size_merged;
   MPI_Comm comm_all;
-  { err = MPI_Intercomm_merge(comm_parent, 1, &comm_all); }
   {
-    int rank, size;
-    MPI_Comm_rank(comm_all, &rank);
-    MPI_Comm_size(comm_all, &size);
-    LOG(3, "comm_all rank: {}  size: {}", rank, size);
+    err = MPI_Intercomm_merge(comm_parent, 1, &comm_all);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Intercomm_merge");
+      exit(1);
+    }
+    MPI_Comm_rank(comm_all, &rank_merged);
+    MPI_Comm_size(comm_all, &size_merged);
+    LOG(3, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
+        size_merged);
 
     logpid(fmt::format("tmp-pid-{}.txt", rank).c_str());
     LOG(3, "sleep 5");
@@ -205,6 +218,9 @@ int main(int argc, char **argv) {
   // jconf["stream"]["hdf_parent_name"].GetString()
 
   auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
+  auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
+
+  hdf_writer_module->enable_cq(cq, rank_merged);
 
   LOG(3, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);

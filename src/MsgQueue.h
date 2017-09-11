@@ -13,7 +13,6 @@ class MsgQueue {
 public:
   using ptr = std::unique_ptr<MsgQueue>;
   using Msg = FileWriter::Msg;
-  using LK = std::unique_lock<std::mutex>;
   MsgQueue() {
     pthread_mutexattr_t mx_attr;
     if (pthread_mutexattr_init(&mx_attr) != 0) {

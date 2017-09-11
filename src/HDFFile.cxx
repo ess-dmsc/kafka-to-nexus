@@ -1,4 +1,5 @@
 #include "HDFFile.h"
+#include "CollectiveQueue.h"
 #include "date/date.h"
 #include "helper.h"
 #include "json.h"
@@ -439,7 +440,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
   // H6F_FSPACE_STRATEGY_AGGR
   // H5F_FSPACE_STRATEGY_NONE
   // H5F_FSPACE_STRATEGY_NTYPES
-  if (1) {
+  if (0) {
     // H5F_FSPACE_STRATEGY_NONE
     // H5F_FSPACE_STRATEGY_PAGE
     err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
@@ -448,13 +449,13 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_file_space_strategy");
     }
   }
-  if (1) {
+  if (0) {
     err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_file_space_page_size");
     }
   }
-  if (1) {
+  if (0) {
     err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
     if (err < 0) {
       LOG(7, "failed H5Pset_page_buffer_size");
@@ -476,15 +477,15 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (true) {
+  if (1) {
     // 521  1483  9973
     err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
     if (err < 0) {
       LOG(7, "failed H5Pset_cache");
     }
   }
-#if 0
-    H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+#if 1
+  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
 #endif
 }
 
@@ -580,5 +581,14 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
 }
 
 void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
+
+void HDFFile::create_collective_queue(Jemalloc::sptr jm) {
+  LOG(3, "HDFFile::create_collective_queue");
+  jm->use_this();
+  Jemalloc::tcache_flush();
+  cq = CollectiveQueue::ptr(new CollectiveQueue);
+  jm->use_default();
+  Jemalloc::tcache_flush();
+}
 
 } // namespace FileWriter
