@@ -439,7 +439,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
   // H6F_FSPACE_STRATEGY_AGGR
   // H5F_FSPACE_STRATEGY_NONE
   // H5F_FSPACE_STRATEGY_NTYPES
-  if (true) {
+  if (1) {
     // H5F_FSPACE_STRATEGY_NONE
     // H5F_FSPACE_STRATEGY_PAGE
     err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
@@ -448,13 +448,19 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_file_space_strategy");
     }
   }
-  if (true) {
+  if (1) {
     err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_file_space_page_size");
     }
   }
-  if (true) {
+  if (1) {
+    err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_page_buffer_size");
+    }
+  }
+  if (0) {
     hsize_t threshold;
     hsize_t alignment;
     err = H5Pget_alignment(fapl, &threshold, &alignment);
@@ -464,16 +470,10 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
     }
   }
-  if (true) {
+  if (0) {
     err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
     if (err < 0) {
       LOG(7, "failed H5Pset_alignment");
-    }
-  }
-  if (true) {
-    err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
-    if (err < 0) {
-      LOG(7, "failed H5Pset_page_buffer_size");
     }
   }
   if (true) {
@@ -485,7 +485,6 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
   }
 #if 0
     H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
-  }
 #endif
 }
 
