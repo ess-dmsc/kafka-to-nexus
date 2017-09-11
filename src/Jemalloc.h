@@ -51,16 +51,6 @@ public:
     mallctl("version", &jemalloc_version, &n, nullptr, 0);
     LOG(3, "jemalloc version: {}", jemalloc_version);
 
-    if (false) {
-      bool v = false;
-      n = sizeof(bool);
-      err = mallctl("thread.tcache.enabled", &v, &n, nullptr, 0);
-      if (err != 0) {
-        LOG(3, "fail thread.tcache.enabled");
-        exit(1);
-      }
-    }
-
     n = sizeof(unsigned);
     mallctl("thread.arena", &ret->default_thread_arena, &n, nullptr, 0);
     LOG(3, "thread.arena: {}", ret->default_thread_arena);
@@ -77,6 +67,8 @@ public:
     n = sizeof(narenas);
     mallctl("arenas.narenas", &narenas, &n, nullptr, 0);
     LOG(3, "arenas.narenas: {}", narenas);
+
+    // tcache_flush();
 
     std::memset(&ret->hooks, 0, sizeof(extent_hooks_t));
     auto self = ret.get();
@@ -96,6 +88,8 @@ public:
     }
     LOG(3, "arena created: {}", ret->aix);
 
+    // tcache_flush();
+
     // void * big = mallocx(80 * 1024 * 1024, );
 
     return ret;
@@ -103,8 +97,28 @@ public:
 
   void stats() const { malloc_stats_print(jemcb, nullptr, ""); }
 
+  static void tcache_flush() {
+    int err = 0;
+    err = mallctl("thread.tcache.flush", nullptr, nullptr, nullptr, 0);
+    if (err != 0) {
+      LOG(3, "fail thread.tcache.flush");
+      exit(1);
+    }
+  }
+
+  static void tcache_disable() {
+    int err = 0;
+    bool v = false;
+    size_t n = sizeof(bool);
+    err = mallctl("thread.tcache.enabled", &v, &n, nullptr, 0);
+    if (err != 0) {
+      LOG(3, "fail thread.tcache.enabled");
+      exit(1);
+    }
+  }
+
   void *alloc(size_t size) {
-    LOG(3, "alloc from arena {}", aix);
+    // LOG(3, "alloc from arena {}", aix);
     auto addr = mallocx(size, MALLOCX_ARENA(aix));
     if (addr == nullptr) {
       LOG(3, "fail alloc size: {}", size);
@@ -160,9 +174,8 @@ private:
 static void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
                           size_t align, bool *zero, bool *commit,
                           unsigned arena) {
-  LOG(3, "extent_alloc arena: {}  size: {:8}  align: {:4}  zero: {:5}  commit: "
-         "{:5}",
-      arena, size, align, *zero, *commit);
+  // LOG(3, "extent_alloc arena: {}  size: {:8}  align: {:4}  zero: {:5}
+  // commit: {:5}", arena, size, align, *zero, *commit);
   if (addr != nullptr) {
     LOG(3, "error addr is set");
     exit(1);
@@ -182,7 +195,7 @@ static void *extent_alloc(extent_hooks_t *extent_hooks, void *addr, size_t size,
     exit(1);
   }
   auto q = (void *)now;
-  LOG(3, "extent: {}", q);
+  // LOG(3, "extent: {}", q);
   now += size;
   jm->alloc_now = (void *)now;
   if (*zero) {

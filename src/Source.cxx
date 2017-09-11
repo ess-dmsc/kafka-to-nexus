@@ -63,6 +63,7 @@ void Source::mpi_start(rapidjson::Document config_file,
                        rapidjson::Document config_stream) {
   LOG(3, "Source::mpi_start()");
   jm->use_this();
+  Jemalloc::tcache_flush();
   char *x;
 
   while (true) {
@@ -70,12 +71,16 @@ void Source::mpi_start(rapidjson::Document config_file,
     // x = (char*)jm->alloc(8 * 1024 * sizeof(char));
     if (jm->check_in_range(x))
       break;
+    LOG(3, "fail malloc");
+    exit(1);
   }
 
   while (true) {
     x = (char *)new MsgQueue;
     if (jm->check_in_range(x))
       break;
+    LOG(3, "fail malloc");
+    exit(1);
   }
 
   for (int i1 = 0; i1 < 0; ++i1) {
@@ -88,14 +93,6 @@ void Source::mpi_start(rapidjson::Document config_file,
     }
   }
 
-  // x = (char*)malloc(32 * 1024 * sizeof(char));
-  // x = (char*)jm->alloc(32 * 1024 * sizeof(char));
-  // jm->check_in_range(x);
-
-  // jm->use_default();
-
-  // jm->use_this();
-
   LOG(3, "place MsgQueue");
   queue = MsgQueue::ptr(new MsgQueue);
   if (not jm->check_in_range(queue.get())) {
@@ -103,6 +100,7 @@ void Source::mpi_start(rapidjson::Document config_file,
     exit(1);
   }
   jm->use_default();
+  Jemalloc::tcache_flush();
 
   auto bin =
       fmt::format("{}/mpi-worker", config_file["mpi"]["path_bin"].GetString());
