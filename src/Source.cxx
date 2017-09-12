@@ -135,7 +135,9 @@ void Source::mpi_start(rapidjson::Document config_file,
     exit(1);
   }
   char arg1[32];
+  char arg2[32];
   strcpy(arg1, "--mpi");
+  strcpy(arg2, "-vvvv");
   char *argv[] = {
       arg1, (char *)sbuf.GetString(), nullptr,
   };

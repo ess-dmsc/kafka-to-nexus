@@ -117,6 +117,8 @@ h5s::~h5s() {
 
 h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
                      h5p::dataset_create dcpl) {
+  // Creation is done in single process mode.
+  // Can do set_extent here.
   // LOG(3, "h5d::create");
   auto ret = ptr(new h5d);
   auto &o = *ret;
@@ -133,7 +135,24 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     ret.reset();
     return ret;
   }
+
+  {
+    hid_t dsp_tgt = H5Dget_space(o.id);
+    hid_t id = o.id;
+    herr_t err = 0;
+    std::array<hsize_t, 2> sext;
+    std::array<hsize_t, 2> smax;
+    H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+    sext[0] += 32;
+    err = H5Dset_extent(id, sext.data());
+    if (err < 0) {
+      LOG(3, "fail H5Dset_extent");
+      exit(1);
+    }
+  }
+
   o.dsp_tgt = H5Dget_space(o.id);
+
   o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
   o.snow = {{0, 0}};
   H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
@@ -277,53 +296,116 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   static size_t const CQSNOWIX = 0;
 
-  // TODO
-  // coordinate with the others about where to write
-  // compare and swap until I get my
-  hsize_t snext = -1;
-  while (true) {
+  // Check first if the extent would be sufficient
+  size_t snext;
+
+  if (not cq) {
+    snext = snow[0];
+  }
+
+  else {
     snext = cq->snow[CQSNOWIX].load();
-    if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
-      break;
+    if (snext + nlen > sext[0]) {
+      // Try to reload, maybe a set_extent has happened
+      LOG(3, "RELOAD, MAYBE SOMETHING CHANGED");
+      dsp_tgt = H5Dget_space(id);
+      H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     }
   }
 
-  snow[0] += nlen;
-  if (snow[0] > sext[0]) {
+  if (snext + nlen > sext[0]) {
+    // Still not good enough
     auto t1 = CLK::now();
-    auto sext_old = sext[0];
     size_t const BLOCK = 4 * 1024 * 1024;
-    sext[0] = (snow[0] * 3 / 2 / BLOCK + 1) * BLOCK;
-    LOG(7, "snow: {:12}  set_extent from: {:12}  to: {:12}", snow[0], sext_old,
-        sext[0]);
+    std::array<hsize_t, 2> sext2;
+    sext2[0] = sext[0];
+    sext2[1] = sext[1];
+    sext2[0] = ((snext + nlen) * 3 / 2 / BLOCK + 1) * BLOCK;
+    LOG(7, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext, sext[0],
+        sext2[0]);
 
-    char buf[512];
-    auto bufn = H5Iget_name(id, buf, 512);
-    buf[bufn] = '\0';
-    H5O_info_t oi;
-    H5Oget_info(id, &oi);
+    auto t2 = CLK::now();
     if (not cq) {
-      err = H5Dset_extent(id, sext.data());
+      err = H5Dset_extent(id, sext2.data());
       if (err < 0) {
         LOG(3, "H5Dset_extent failed");
         return {AppendResult::ERROR};
       }
+      dsp_tgt = H5Dget_space(id);
+      H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     } else {
       if (mpi_rank == 1) {
-        cq->push(CollectiveCommand::set_extent(buf, sext.size(), sext.data()));
-        // TODO
-        execute pending commands right here
+        char buf[512];
+        auto bufn = H5Iget_name(id, buf, 512);
+        buf[bufn] = '\0';
+        H5O_info_t oi;
+        H5Oget_info(id, &oi);
+        LOG(3, "cq->push");
+        cq->push(
+            CollectiveCommand::set_extent(buf, sext2.size(), sext2.data()));
       }
       LOG(3, "RETURN WAIT FOR EXTENT");
       return {AppendResult::WAIT_FOR_EXTENT};
     }
-
-    auto t2 = CLK::now();
-    dsp_tgt = H5Dget_space(id);
     auto t3 = CLK::now();
     LOG(7, "h5d::append_data_1d set_extent: {} + {}",
         duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
   }
+
+  if (not cq) {
+  }
+
+  else {
+    // Try to CAS allocate within available extent
+
+    // TODO
+    // coordinate with the others about where to write
+    // compare and swap until I get my
+    LOG(3, "CAS allocate...");
+    snext = -1;
+    while (true) {
+      snext = cq->snow[CQSNOWIX].load();
+      if (snext + nlen <= sext[0]) {
+        if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
+          break;
+        }
+      } else {
+        snext = -1;
+        break;
+      }
+    }
+  }
+
+  if (snext == -1) {
+    LOG(3, "CAS alloc failed, could not get free space");
+    // TODO
+    // Can I return WAIT_FOR_EXTENT here?
+    // Should I try to issue an extent here again?
+
+    // NOTE
+    // This code is copied from above. Unify!
+    if (mpi_rank == 1) {
+      size_t const BLOCK = 4 * 1024 * 1024;
+      std::array<hsize_t, 2> sext2;
+      sext2[0] = sext[0];
+      sext2[1] = sext[1];
+      sext2[0] = ((snext + nlen) * 3 / 2 / BLOCK + 1) * BLOCK;
+      LOG(7, "snext: {:12}  set_extent from: {:12}  to: {:12}   AFTER CAS FAIL",
+          snext, sext[0], sext2[0]);
+
+      char buf[512];
+      auto bufn = H5Iget_name(id, buf, 512);
+      buf[bufn] = '\0';
+      H5O_info_t oi;
+      H5Oget_info(id, &oi);
+      LOG(3, "cq->push");
+      cq->push(CollectiveCommand::set_extent(buf, sext2.size(), sext2.data()));
+    }
+    LOG(3, "RETURN WAIT FOR EXTENT");
+    return {AppendResult::WAIT_FOR_EXTENT};
+  }
+
+  LOG(3, "CAS allocate: {}", snext);
 
   if (log_level >= 9) {
     A1 sext, smax;
@@ -356,7 +438,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t2 = CLK::now();
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
-    LOG(3, "write failed");
+    LOG(3, "write failed  log_level: {}", log_level);
+    if (log_level >= 3) {
+      LOG(3, "write failed");
+      std::array<hsize_t, 4> sext;
+      std::array<hsize_t, 4> smax;
+      hid_t dsp = H5Dget_space(id);
+      H5Sget_simple_extent_dims(dsp, sext.data(), smax.data());
+      for (size_t i1 = 0; i1 < 1; ++i1) {
+        LOG(3, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
+            smax.at(i1));
+      }
+    }
     return {AppendResult::ERROR};
   }
   auto t3 = CLK::now();

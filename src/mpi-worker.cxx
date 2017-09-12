@@ -140,6 +140,8 @@ void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
 }
 
 int main(int argc, char **argv) {
+  log_level = 7;
+
   if (argc < 3) {
     LOG(3, "not enough arguments");
     return -1;
@@ -240,12 +242,17 @@ int main(int argc, char **argv) {
       queue->all(all);
       for (auto &m : all) {
         auto t_now = CLK::now();
-        if (t_now - t_last > MS(100)) {
+        // execute all pending commands before the next message
+        if (true || t_now - t_last > MS(100)) {
           t_last = t_now;
           LOG(3, "execute collective");
+          cq->execute_for(cqid, hdf_file->h5file);
         }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
+        LOG(3, "hdf_writer_module->write(m) "
+               "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
+               "~");
         hdf_writer_module->write(m);
       }
     } else {
@@ -262,12 +269,18 @@ int main(int argc, char **argv) {
     }
   }
 
+  cq->execute_for(cqid, hdf_file->h5file);
+  LOG(3, "===============================  CLOSING   "
+         "=========================================");
+
   hdf_writer_module.reset();
   hdf_file.reset();
 
   LOG(3, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 2 AFTER");
+
+  cq->execute_for(cqid, hdf_file->h5file);
 
   LOG(3, "ask for disconnect");
   // MPI_Comm_disconnect(&comm_parent);

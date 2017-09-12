@@ -57,6 +57,40 @@ struct CollectiveCommand {
     }
     return ret;
   }
+
+  void execute_for(size_t ix, hid_t h5file) {
+    herr_t err = 0;
+    hid_t id = -1;
+    hid_t dsp_tgt = -1;
+    std::array<hsize_t, 2> sext;
+    std::array<hsize_t, 2> smax;
+    switch (type) {
+    case CollectiveCommandType::SetExtent:
+      LOG(3, "execute {}", to_string());
+      id = H5Dopen2(h5file, v.set_extent.name, H5P_DEFAULT);
+      if (id < 0) {
+        LOG(3, "H5Dopen2 failed");
+        exit(1);
+      }
+      dsp_tgt = H5Dget_space(id);
+      H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+      sext[0] = v.set_extent.size[0];
+      err = H5Dset_extent(id, sext.data());
+      if (err < 0) {
+        LOG(3, "fail H5Dset_extent");
+        exit(1);
+      }
+      H5Dclose(id);
+      if (err < 0) {
+        LOG(3, "fail H5Dclose");
+        exit(1);
+      }
+      break;
+    default:
+      LOG(3, "unhandled");
+      exit(1);
+    }
+  }
 };
 
 class CollectiveQueue {
@@ -156,6 +190,16 @@ public:
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
+    }
+  }
+
+  void execute_for(size_t ix, hid_t h5file) {
+    LOG(3, "execute_for: {}", ix);
+    std::vector<CollectiveCommand> cmds;
+    all_for(ix, cmds);
+    LOG(3, "execute_for: {}  cmds: {}", ix, cmds.size());
+    for (auto &cmd : cmds) {
+      cmd.execute_for(ix, h5file);
     }
   }
 
