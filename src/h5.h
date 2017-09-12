@@ -54,11 +54,17 @@ private:
   h5s();
 };
 
+enum class AppendResult : uint32_t {
+  OK,
+  ERROR,
+  WAIT_FOR_EXTENT,
+};
+
 struct append_ret {
-  int status;
+  AppendResult status;
   uint64_t written_bytes;
   uint64_t ix0;
-  operator bool() const { return status == 0; }
+  operator bool() const { return status == AppendResult::OK; }
 };
 
 class h5d {
@@ -104,13 +110,13 @@ public:
   ~h5d_chunked_1d();
   friend void swap<>(h5d_chunked_1d &x, h5d_chunked_1d &y);
   append_ret append_data_1d(T const *data, hsize_t nlen);
-  int flush_buf();
+  AppendResult flush_buf();
 
 private:
   h5d_chunked_1d(hid_t loc, string name, h5d ds);
   h5s dsp_wr;
   size_t const buf_MAXPKG = 0;
-  size_t const buf_SIZE = 1024 * 1024;
+  size_t const buf_SIZE = 20 * 1024 * 1024;
   size_t buf_n = 0;
   std::vector<char> buf;
   hsize_t i0 = 0;

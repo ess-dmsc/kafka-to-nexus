@@ -26,6 +26,8 @@ public:
 
   static Msg shared(char const *data, size_t len,
                     std::shared_ptr<Jemalloc> &jm) {
+    jm->use_this();
+    Jemalloc::tcache_flush();
     char *p1;
     while (true) {
       p1 = (char *)jm->alloc(len * sizeof(char));
@@ -35,6 +37,8 @@ public:
       } else
         break;
     }
+    jm->use_default();
+    Jemalloc::tcache_flush();
 
     Msg msg;
     msg.type = 2;

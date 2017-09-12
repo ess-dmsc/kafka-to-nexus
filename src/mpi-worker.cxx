@@ -1,6 +1,7 @@
 #include "MMap.h"
 #include "logger.h"
 #include <atomic>
+#include <chrono>
 #include <mpi.h>
 #include <thread>
 #include <vector>
@@ -31,6 +32,9 @@
 using std::array;
 using std::vector;
 using std::string;
+
+using CLK = std::chrono::steady_clock;
+using MS = std::chrono::milliseconds;
 
 void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
   std::vector<char> buf(128);
@@ -153,14 +157,7 @@ int main(int argc, char **argv) {
   MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0 /* key */,
                       MPI_INFO_NULL, &MPI_COMM_NODE);
 
-  TODO
-
-      // TODO
-      // make sure that when I spawn more processes, that only the spawns are in
-      // world, so that I can be sure that the rank_world == 0 is one of the mpi
-      // workers, and not the main process.
-      int rank_world,
-      size_world;
+  int rank_world, size_world;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_world);
   MPI_Comm_size(MPI_COMM_WORLD, &size_world);
   LOG(3, "mpi-worker  rank_world: {}  size_world: {}", rank_world, size_world);
@@ -180,7 +177,7 @@ int main(int argc, char **argv) {
     LOG(3, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
         size_merged);
 
-    logpid(fmt::format("tmp-pid-{}.txt", rank).c_str());
+    logpid(fmt::format("tmp-pid-{}.txt", rank_merged).c_str());
     LOG(3, "sleep 5");
     // sleep_ms(5000);
   }
@@ -219,6 +216,8 @@ int main(int argc, char **argv) {
 
   auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
   auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
+  auto cqid = cq->open();
+  LOG(3, "rank_merged: {}  cqid: {}", rank_merged, cqid);
 
   hdf_writer_module->enable_cq(cq, rank_merged);
 
@@ -226,14 +225,25 @@ int main(int argc, char **argv) {
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 1 AFTER");
 
+  auto t_last = CLK::now();
+
   size_t empties = 0;
+  // NOTE
+  // This loop will prevent it from running a long time on idle;
   for (int i1 = 0; i1 < 10000; ++i1) {
     auto n = queue->n.load();
     if (n > 0) {
+      // reset idle counter
+      i1 = 0;
       LOG(3, "Queue size: {}", n);
       std::vector<Msg> all;
       queue->all(all);
       for (auto &m : all) {
+        auto t_now = CLK::now();
+        if (t_now - t_last > MS(100)) {
+          t_last = t_now;
+          LOG(3, "execute collective");
+        }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
         hdf_writer_module->write(m);
@@ -263,9 +273,9 @@ int main(int argc, char **argv) {
   // MPI_Comm_disconnect(&comm_parent);
   MPI_Comm_disconnect(&comm_all);
   if (false) {
-    LOG(3, "finalizing {}", rank);
+    LOG(3, "finalizing {}", rank_merged);
     MPI_Finalize();
-    LOG(3, "after finalize {}", rank);
+    LOG(3, "after finalize {}", rank_merged);
   }
   LOG(3, "return");
   return 42;
@@ -291,8 +301,8 @@ int main(int argc, char **argv) {
   LOG(3, "ask for disconnect");
   MPI_Comm_disconnect(&comm_parent);
   MPI_Comm_disconnect(&comm_all);
-  LOG(3, "finalizing {}", rank);
+  LOG(3, "finalizing {}", rank_merged);
   MPI_Finalize();
-  LOG(3, "after finalize {}", rank);
+  LOG(3, "after finalize {}", rank_merged);
   return 42;
 }
