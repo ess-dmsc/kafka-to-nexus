@@ -249,7 +249,6 @@ int main(int argc, char **argv) {
         // execute all pending commands before the next message
         if (true || t_now - t_last > MS(100)) {
           t_last = t_now;
-          LOG(7, "execute collective");
           cq->execute_for(hdf_store);
         }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
