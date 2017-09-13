@@ -184,6 +184,12 @@ void Source::mpi_stop() {
   // send stop command, wait for group size zero?
   queue->open.store(0);
   int err = MPI_SUCCESS;
+
+  LOG(3, ".....................  wait for  CLOSING");
+  MPI_Barrier(comm_all);
+  LOG(3, "===============================  CLOSING   "
+         "=========================================");
+
   LOG(3, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 2 AFTER");

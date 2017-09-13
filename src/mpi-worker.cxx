@@ -272,11 +272,14 @@ int main(int argc, char **argv) {
     }
   }
 
-  cq->execute_for(hdf_store);
+  LOG(3, ".....................  wait for  CLOSING");
+  MPI_Barrier(comm_all);
   LOG(3, "===============================  CLOSING   "
          "=========================================");
 
   hdf_writer_module.reset();
+  cq->execute_for(hdf_store);
+
   hdf_file.reset();
 
   LOG(3, "Barrier 2 BEFORE");

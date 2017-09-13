@@ -22,6 +22,7 @@ enum struct CollectiveCommandType : uint8_t {
   Unknown,
   SetExtent,
   H5Dopen2,
+  H5Dclose,
 };
 
 struct CollectiveCommand {
@@ -40,11 +41,17 @@ struct CollectiveCommand {
     return ret;
   }
 
-  static CollectiveCommand H5Dopen2(hid_t loc, char const *name) {
+  static CollectiveCommand H5Dopen2(char const *name) {
     CollectiveCommand ret;
     ret.type = CollectiveCommandType::H5Dopen2;
-    ret.v.H5Dopen2.loc = loc;
     strncpy(ret.v.H5Dopen2.name, name, STR_NAME_MAX);
+    return ret;
+  }
+
+  static CollectiveCommand H5Dclose(char const *name) {
+    CollectiveCommand ret;
+    ret.type = CollectiveCommandType::H5Dclose;
+    strncpy(ret.v.H5Dclose.name, name, STR_NAME_MAX);
     return ret;
   }
 
@@ -57,9 +64,11 @@ struct CollectiveCommand {
       hsize_t size[8];
     } set_extent;
     struct {
-      hid_t loc;
       char name[STR_NAME_MAX];
     } H5Dopen2;
+    struct {
+      char name[STR_NAME_MAX];
+    } H5Dclose;
   } v;
 
   bool done = false;
@@ -75,7 +84,10 @@ struct CollectiveCommand {
                         v.set_extent.ndims, v.set_extent.size[0]);
       break;
     case CollectiveCommandType::H5Dopen2:
-      ret = fmt::format("H5Dopen2({}, {})", v.H5Dopen2.loc, v.H5Dopen2.name);
+      ret = fmt::format("H5Dopen2({})", v.H5Dopen2.name);
+      break;
+    case CollectiveCommandType::H5Dclose:
+      ret = fmt::format("H5Dclose({})", v.H5Dclose.name);
       break;
     default:
       LOG(3, "unhandled");
@@ -84,41 +96,56 @@ struct CollectiveCommand {
     return ret;
   }
 
+  bool equivalent(CollectiveCommand &x) {
+    if (type != x.type)
+      return false;
+    switch (type) {
+    case CollectiveCommandType::SetExtent:
+      if (strncmp(v.set_extent.name, x.v.set_extent.name, STR_NAME_MAX) != 0) {
+        return false;
+      }
+      if (v.set_extent.ndims != x.v.set_extent.ndims) {
+        return false;
+      }
+      if (v.set_extent.size[0] != x.v.set_extent.size[0]) {
+        return false;
+      }
+      break;
+    case CollectiveCommandType::H5Dopen2:
+      if (strncmp(v.H5Dopen2.name, x.v.H5Dopen2.name, STR_NAME_MAX) != 0) {
+        return false;
+      }
+      break;
+    case CollectiveCommandType::H5Dclose:
+      if (strncmp(v.H5Dclose.name, x.v.H5Dclose.name, STR_NAME_MAX) != 0) {
+        return false;
+      }
+      break;
+    default:
+      LOG(3, "unhandled");
+      exit(1);
+    }
+    return true;
+  }
+
   void execute_for(HDFIDStore &store) {
     if (type == CollectiveCommandType::SetExtent) {
       LOG(3, "execute {}", to_string());
-      LOG(3, "not implemented");
-      exit(1);
-      // check in store if already open, then use that id.
-      // if not, open and keep in cache. (but do not issue a close later! h5d
-      // classes will issue the close)
-      /*
+      // the dataset must be open because it must have been created by another
+      // collective call.
       herr_t err = 0;
-      hid_t id = -1;
-      hid_t dsp_tgt = -1;
-      std::array<hsize_t, 2> sext;
-      std::array<hsize_t, 2> smax;
-      id = H5Dopen2(h5file, v.set_extent.name, H5P_DEFAULT);
-      if (id < 0) {
-        LOG(3, "H5Dopen2 failed");
-        exit(1);
-      }
-      dsp_tgt = H5Dget_space(id);
-      H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-      sext[0] = v.set_extent.size[0];
-      err = H5Dset_extent(id, sext.data());
+      hid_t id = store.datasetname_to_ds_id[v.set_extent.name];
+      // hid_t dsp_tgt = store.datasetname_to_dsp_id[v.set_extent.name];
+      // std::array<hsize_t, 2> sext;
+      // std::array<hsize_t, 2> smax;
+      err = H5Dset_extent(id, v.set_extent.size);
       if (err < 0) {
         LOG(3, "fail H5Dset_extent");
         exit(1);
       }
-      H5Dclose(id);
-      if (err < 0) {
-        LOG(3, "fail H5Dclose");
-        exit(1);
-      }
-      */
+      store.datasetname_to_dsp_id[v.set_extent.name] = H5Dget_space(id);
     } else if (type == CollectiveCommandType::H5Dopen2) {
-      auto id = ::H5Dopen2(v.H5Dopen2.loc, v.H5Dopen2.name, H5P_DEFAULT);
+      auto id = ::H5Dopen2(store.h5file, v.H5Dopen2.name, H5P_DEFAULT);
       if (id < 0) {
         LOG(3, "H5Dopen2 failed");
       }
@@ -129,6 +156,15 @@ struct CollectiveCommand {
       }
       LOG(3, "opened as name: {}", buf);
       store.datasetname_to_ds_id[buf] = id;
+      store.datasetname_to_dsp_id[buf] = H5Dget_space(id);
+    } else if (type == CollectiveCommandType::H5Dclose) {
+      auto &name = v.H5Dclose.name;
+      auto id = ::H5Dclose(store.datasetname_to_ds_id[name]);
+      if (id < 0) {
+        LOG(3, "H5Dclose failed");
+      }
+      store.datasetname_to_ds_id.erase(name);
+      store.datasetname_to_dsp_id.erase(name);
     } else {
       LOG(3, "unhandled");
       exit(1);
@@ -201,10 +237,25 @@ public:
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
-    LOG(3, "push new ccmd: {}", item.to_string());
-    items[n1] = item;
-    n1 += 1;
-    // LOG(3, "now have {} in queue", n.load());
+
+    bool do_insert = true;
+    // check for doubles
+    {
+      for (size_t i1 = 0; i1 < n1; ++i1) {
+        if (item.equivalent(items[i1])) {
+          LOG(3, "found equivalent command");
+          do_insert = false;
+          break;
+        }
+      }
+    }
+
+    if (do_insert) {
+      LOG(3, "push new ccmd: {}", item.to_string());
+      items[n1] = item;
+      n1 += 1;
+      // LOG(3, "now have {} in queue", n.load());
+    }
 
     // TODO
     // trigger cleanup when reaching queue full

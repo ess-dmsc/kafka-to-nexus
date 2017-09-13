@@ -200,7 +200,7 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     full_path += "/";
     full_path += name;
     LOG(3, "h5d::open collective [{}]", full_path);
-    cq->push(CollectiveCommand::H5Dopen2(loc, name.c_str()));
+    cq->push(CollectiveCommand::H5Dopen2(full_path.c_str()));
     cq->execute_for(*hdf_store);
 
     auto ret = ptr(new h5d);
@@ -277,7 +277,8 @@ h5d::~h5d() {
   if (id != -1) {
     LOG(7, "~h5d ds");
     herr_t err = 0;
-    char buf[512];
+    char ds_name[512];
+    auto &buf = ds_name;
     auto bufn = H5Iget_name(id, buf, 512);
     H5O_info_t oi;
     H5Oget_info(id, &oi);
@@ -286,21 +287,24 @@ h5d::~h5d() {
       if (err < 0) {
         LOG(3, "H5Dset_extent failed");
       }
-    } else if (mpi_rank == 1) {
-      // TODO
-      // This must wait for the other writers to finish!
-      // Otherwise the shared snow is not accurate.
-      snow[0] = cq->snow[0].load();
-      cq->push(CollectiveCommand::set_extent(buf, snow.size(), snow.data()));
+      err = H5Dclose(id);
+      if (err < 0) {
+        LOG(3, "Could not close dataset: {}");
+        LOG(7, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
+               "H5O_info_t.rc: {}",
+            id, buf, bufn, H5Iget_ref(id), oi.rc);
+      }
+      id = -1;
+    } else {
+      size_t CQSNOWIX = -1;
+      lookup_cqsnowix(ds_name, CQSNOWIX);
+      snow[0] = cq->snow[CQSNOWIX].load();
+      cq->push(
+          CollectiveCommand::set_extent(ds_name, snow.size(), snow.data()));
+      cq->push(CollectiveCommand::H5Dclose(ds_name));
+      cq->execute_for(*hdf_store);
+      id = -1;
     }
-    err = H5Dclose(id);
-    if (err < 0) {
-      LOG(3, "Could not close dataset: {}");
-      LOG(7, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
-             "H5O_info_t.rc: {}",
-          id, buf, bufn, H5Iget_ref(id), oi.rc);
-    }
-    id = -1;
   }
   if (dsp_mem != -1) {
     H5Sclose(dsp_mem);
@@ -367,32 +371,41 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     buf[bufn] = '\0';
   }
 
+  // TODO
+  // Is there still a need to look up the DSP because some extent might have
+  // happened in some other process? Yes, sure!!
+  // Therefore, always lookup the dataspace from the hdf_store!
+
   size_t CQSNOWIX = -1;
   if (cq) {
     lookup_cqsnowix(ds_name, CQSNOWIX);
+    dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
+    // Not necessary, just for testing:
+    LOG(3, "try to get the dsp dims:");
+    err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+    if (err < 0) {
+      LOG(3, "fail H5Sget_simple_extent_dims");
+      exit(1);
+    }
   } else {
     LOG(3, "DO NOT LOOKUP CQSNOWIX");
   }
 
-  // Check first if the extent would be sufficient
-  size_t snext;
-
+  size_t snext = -1;
   if (not cq) {
     snext = snow[0];
-  }
-
-  else {
-    snext = cq->snow[CQSNOWIX].load();
-    if (snext + nlen > sext[0]) {
-      // Try to reload, maybe a set_extent has happened
-      LOG(3, "RELOAD, MAYBE SOMETHING CHANGED");
-      dsp_tgt = H5Dget_space(id);
-      H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+  } else {
+    LOG(3, "CAS allocate...");
+    while (true) {
+      snext = cq->snow[CQSNOWIX].load();
+      if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
+        break;
+      }
     }
+    LOG(3, "CAS allocated: {}", snext);
   }
 
   if (snext + nlen > sext[0]) {
-    // Still not good enough
     auto t1 = CLK::now();
     size_t const BLOCK = 4 * 1024 * 1024;
     std::array<hsize_t, 2> sext2;
@@ -410,86 +423,42 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         return {AppendResult::ERROR};
       }
       dsp_tgt = H5Dget_space(id);
-      H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-    } else {
-      if (mpi_rank == 1) {
-        char buf[512];
-        auto bufn = H5Iget_name(id, buf, 512);
-        buf[bufn] = '\0';
-        H5O_info_t oi;
-        H5Oget_info(id, &oi);
-        LOG(3, "cq->push");
-        cq->push(
-            CollectiveCommand::set_extent(buf, sext2.size(), sext2.data()));
+      LOG(3, "try to get the dsp dims:");
+      err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+      if (err < 0) {
+        LOG(3, "fail H5Sget_simple_extent_dims");
+        exit(1);
       }
-      LOG(3, "RETURN WAIT FOR EXTENT");
-      return {AppendResult::WAIT_FOR_EXTENT};
+    } else {
+      // H5O_info_t oi;
+      // H5Oget_info(id, &oi);
+      cq->push(
+          CollectiveCommand::set_extent(ds_name, sext2.size(), sext2.data()));
+      cq->execute_for(*hdf_store);
+      dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
+      // Not necessary, just for testing:
+      LOG(3, "try to get the dsp dims:");
+      err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+      if (err < 0) {
+        LOG(3, "fail H5Sget_simple_extent_dims");
+        exit(1);
+      }
     }
     auto t3 = CLK::now();
     LOG(7, "h5d::append_data_1d set_extent: {} + {}",
         duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
   }
 
-  if (not cq) {
-  }
-
-  else {
-    // Try to CAS allocate within available extent
-
-    // TODO
-    // coordinate with the others about where to write
-    // compare and swap until I get my
-    LOG(3, "CAS allocate...");
-    snext = -1;
-    while (true) {
-      snext = cq->snow[CQSNOWIX].load();
-      if (snext + nlen <= sext[0]) {
-        if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
-          break;
-        }
-      } else {
-        snext = -1;
-        break;
-      }
-    }
-  }
-
-  if (snext == -1) {
-    LOG(3, "CAS alloc failed, could not get free space");
-    // TODO
-    // Can I return WAIT_FOR_EXTENT here?
-    // Should I try to issue an extent here again?
-
-    // NOTE
-    // This code is copied from above. Unify!
-    if (mpi_rank == 1) {
-      size_t const BLOCK = 4 * 1024 * 1024;
-      std::array<hsize_t, 2> sext2;
-      sext2[0] = sext[0];
-      sext2[1] = sext[1];
-      sext2[0] = ((snext + nlen) * 3 / 2 / BLOCK + 1) * BLOCK;
-      LOG(7, "snext: {:12}  set_extent from: {:12}  to: {:12}   AFTER CAS FAIL",
-          snext, sext[0], sext2[0]);
-
-      char buf[512];
-      auto bufn = H5Iget_name(id, buf, 512);
-      buf[bufn] = '\0';
-      H5O_info_t oi;
-      H5Oget_info(id, &oi);
-      LOG(3, "cq->push");
-      cq->push(CollectiveCommand::set_extent(buf, sext2.size(), sext2.data()));
-    }
-    LOG(3, "RETURN WAIT FOR EXTENT");
-    return {AppendResult::WAIT_FOR_EXTENT};
-  }
-
-  LOG(3, "CAS allocate: {}", snext);
-
-  if (log_level >= 9) {
+  if (log_level >= 3) {
     A1 sext, smax;
-    H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+    LOG(3, "try to get the dsp dims:");
+    err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+    if (err < 0) {
+      LOG(3, "fail H5Sget_simple_extent_dims");
+      exit(1);
+    }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
+      LOG(3, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
           type, i1, sext.at(i1), smax.at(i1));
     }
   }
@@ -504,9 +473,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       return {AppendResult::ERROR};
     }
   }
-  A1 tgt_start{{snow[0] - nlen}};
+
+  A1 tgt_start{{snext}};
   A1 tgt_count{{nlen}};
-  // LOG(3, "tgt start, count: {}, {}", tgt_start[0], tgt_count[0]);
+  for (size_t i1 = 0; i1 < ndims; ++i1) {
+    LOG(3, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
+        tgt_count[0]);
+  }
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
@@ -516,20 +489,25 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t2 = CLK::now();
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
-    LOG(3, "write failed  log_level: {}", log_level);
+    LOG(3, "write failed");
     if (log_level >= 3) {
-      LOG(3, "write failed");
       std::array<hsize_t, 4> sext;
       std::array<hsize_t, 4> smax;
       hid_t dsp = H5Dget_space(id);
-      H5Sget_simple_extent_dims(dsp, sext.data(), smax.data());
+      err = H5Sget_simple_extent_dims(dsp, sext.data(), smax.data());
+      if (err < 0) {
+        LOG(3, "fail H5Sget_simple_extent_dims");
+        exit(1);
+      }
       for (size_t i1 = 0; i1 < 1; ++i1) {
         LOG(3, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
             smax.at(i1));
       }
     }
+    exit(1);
     return {AppendResult::ERROR};
   }
+  snow[0] = snext + nlen;
   auto t3 = CLK::now();
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
