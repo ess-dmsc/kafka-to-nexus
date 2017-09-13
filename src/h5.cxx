@@ -205,6 +205,8 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
 
     auto ret = ptr(new h5d);
     auto &o = *ret;
+    o.cq = cq;
+    o.hdf_store = hdf_store;
     o.name = name;
     o.id = hdf_store->datasetname_to_ds_id[full_path];
     LOG(3, "that created id: {}", o.id);
@@ -338,15 +340,7 @@ void swap(h5d &x, h5d &y) {
 
 void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
   LOG(3, "using cq: {}", (void *)cq);
-  auto &m = cq->datasetname_to_snow_a_ix;
-  auto it = m.find(ds_name);
-  if (it != m.end()) {
-    cqsnowix = it->second;
-    LOG(3, "CQSNOWIX: {}", cqsnowix);
-  } else {
-    LOG(3, "can not find CQSNOWIX");
-    exit(1);
-  }
+  cqsnowix = cq->find_snowix_for_datasetname(ds_name);
 }
 
 template <typename T>

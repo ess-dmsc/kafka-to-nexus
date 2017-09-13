@@ -247,12 +247,22 @@ public:
   }
 
   void register_datasetname(std::string name) {
-    auto n = datasetname_to_snow_a_ix.size();
+    auto n = datasetname_to_snow_a_ix__n++;
     LOG(3, "register dataset {} as snow_a_ix {}", name, n);
-    jm->use_this();
-    std::string name2(name);
-    datasetname_to_snow_a_ix[name2] = n;
-    jm->use_default();
+    std::strncpy(datasetname_to_snow_a_ix_name[n].data(), name.data(), 256);
+  }
+
+  size_t find_snowix_for_datasetname(std::string name) {
+    LOG(3, "find_snowix_for_datasetname {}", name);
+    for (size_t i1 = 0; i1 < datasetname_to_snow_a_ix__n; ++i1) {
+      if (std::strncmp(name.data(), datasetname_to_snow_a_ix_name[i1].data(),
+                       256) == 0) {
+        LOG(3, "found ix: {}", i1);
+        return i1;
+      }
+    }
+    LOG(3, "error not found");
+    exit(1);
   }
 
   std::atomic<size_t> n{0};
@@ -271,5 +281,6 @@ public:
   // hitch-hiker:
   using AT = std::atomic<size_t>;
   std::array<AT, 1024> snow;
-  std::map<std::string, size_t> datasetname_to_snow_a_ix;
+  std::array<std::array<char, 256>, 32> datasetname_to_snow_a_ix_name;
+  size_t datasetname_to_snow_a_ix__n = 0;
 };

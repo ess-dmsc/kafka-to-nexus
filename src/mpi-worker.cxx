@@ -175,11 +175,11 @@ int main(int argc, char **argv) {
     MPI_Comm_size(comm_all, &size_merged);
     LOG(3, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
         size_merged);
-
-    logpid(fmt::format("tmp-pid-{}.txt", rank_merged).c_str());
-    LOG(3, "sleep 5");
-    // sleep_ms(5000);
   }
+
+  logpid(fmt::format("tmp-pid-worker-{}.txt", rank_merged).c_str());
+  LOG(3, "logpid sleep ...");
+  sleep_ms(3000);
 
   auto config_file = jconf["config_file"].GetObject();
   auto shm_fname = config_file["shm"]["fname"].GetString();
@@ -192,6 +192,7 @@ int main(int argc, char **argv) {
 
   auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
   auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
+  LOG(3, "got cq at: {}", (void *)cq);
   HDFIDStore hdf_store;
   hdf_store.cqid = cq->open();
   LOG(3, "rank_merged: {}  cqid: {}", rank_merged, hdf_store.cqid);
