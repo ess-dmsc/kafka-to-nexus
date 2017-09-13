@@ -1,10 +1,10 @@
 # Relative to build root
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ..)
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ..)
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ..)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
 
 if (NOT CMAKE_BUILD_TYPE)
-set(CMAKE_BUILD_TYPE Debug)
+    set(CMAKE_BUILD_TYPE Debug)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
@@ -28,7 +28,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O3 -D_GLIBCX
 
 if (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
   if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.0")
-    message(FATAL_ERROR "GCC below 4.9.0 does not fully support c++11.")
+      message(FATAL_ERROR "GCC below 4.9.0 does not fully support c++11.")
   endif()
 endif()
 
@@ -40,23 +40,23 @@ endif()
 
 
 set(path_include_common
-${FMT_INCLUDE_DIR}
-${RDKAFKA_INCLUDE_DIR}
-${HDF5_INCLUDE_DIRS}
-${FLATBUFFERS_INCLUDE_DIR}
-${RAPIDJSON_INCLUDE_DIR}
-${CURL_INCLUDE_DIRS}
-${PROJECT_SOURCE_DIR}/src
-${PROJECT_BINARY_DIR}/src
+    ${FMT_INCLUDE_DIR}
+    ${RDKAFKA_INCLUDE_DIR}
+    ${HDF5_INCLUDE_DIRS}
+    ${FLATBUFFERS_INCLUDE_DIR}
+    ${RAPIDJSON_INCLUDE_DIR}
+    ${CURL_INCLUDE_DIRS}
+    ${PROJECT_SOURCE_DIR}/src
+    ${PROJECT_BINARY_DIR}/src
 )
 
 set(libraries_common
-${RDKAFKA_LIBRARIES}
-${HDF5_C_LIBRARIES}
-${HDF5_CXX_LIBRARIES}
-${CURL_LIBRARIES}
-pthread
-z
+    ${RDKAFKA_LIBRARIES}
+    ${HDF5_C_LIBRARIES}
+    ${HDF5_CXX_LIBRARIES}
+    ${CURL_LIBRARIES}
+    pthread
+    z
 )
 
 set(compile_defs_common "HAS_REMOTE_API=0")
@@ -70,41 +70,85 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 	message(WARNING "graylog_logger requested but not found")
 endif()
 
+set(kafka_to_nexus_SRC
+    Streamer.cxx
+    StreamMaster.cxx
+    kafka_util.cxx
+    Master.cxx
+    CommandListener.cxx
+    CommandHandler.cxx
+    TimeDifferenceFromMessage.cxx
+    FileWriterTask.cxx
+    Source.cxx
+    DemuxTopic.cxx
+    HDFFile.cxx
+    SchemaRegistry.cxx
+    KafkaW.cxx
+    helper.cxx
+    logger.cxx
+    json.cxx
+    uri.cxx
+    h5.cxx
+    date/tz.cpp
+    date/tzblobs.cpp
+    schemas/f141/f141_rw.cxx
+    schemas/f141/synth.cxx
+    schemas/f142/f142_rw.cxx
+    schemas/f142/f142_synth.cxx
+    schemas/f143/f143_rw.cxx
+    schemas/ev42/ev42_rw.cxx
+    schemas/ev42/ev42_synth.cxx
+    #schemas/events/schema_amo0.cxx
+    MainOpt.cxx
+    ${FMT_SRC}
+    ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+)
+
+set(kafka_to_nexus_INC
+    CommandHandler.h
+    CommandListener.h
+    commandproducer.h
+    DemuxTopic.h
+    FileWriterTask.h
+    h5.h
+    HDFFile_h5.h
+    HDFFile.h
+    helper.h
+    json.h
+    kafka_util.h
+    kafka-to-nexus.h
+    KafkaW.h
+    logger.h
+    MainOpt.h
+    Master_handler.h
+    Master.h
+    Msg.h
+    MsgParser.h
+    ProcessMessageResult.h
+    SchemaRegistry.h
+    Source.h
+    Streamer.hpp
+    StreamMaster.hpp
+    TimeDifferenceFromMessage.h
+    TopicReader.h
+    uri.h
+    utils.h
+    date/date.h
+    date/ios.h
+    date/tz_private.h
+    date/tz.h
+    date/tzblobs.h
+    schemas/ev42/ev42_synth.h
+    schemas/f141/synth.h
+    schemas/f142/f142_synth.h
+)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
-Streamer.cxx
-StreamMaster.cxx
-kafka_util.cxx
-Master.cxx
-CommandListener.cxx
-CommandHandler.cxx
-TimeDifferenceFromMessage.cxx
-FileWriterTask.cxx
-Source.cxx
-DemuxTopic.cxx
-HDFFile.cxx
-SchemaRegistry.cxx
-KafkaW.cxx
-helper.cxx
-logger.cxx
-json.cxx
-uri.cxx
-h5.cxx
-date/tz.cpp
-date/tzblobs.cpp
-schemas/f141/f141_rw.cxx
-schemas/f141/synth.cxx
-schemas/f142/f142_rw.cxx
-schemas/f142/f142_synth.cxx
-schemas/f143/f143_rw.cxx
-schemas/ev42/ev42_rw.cxx
-schemas/ev42/ev42_synth.cxx
-#schemas/events/schema_amo0.cxx
-MainOpt.cxx
-${FMT_SRC}
-${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+    ${kafka_to_nexus_SRC}
+    ${kafka_to_nexus_INC}
 )
+
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
@@ -113,8 +157,8 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 set(tgt "send-command")
 set(sources
-send-command.cxx
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
+    send-command.cxx
+    $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
@@ -126,8 +170,8 @@ target_link_libraries(${tgt} ${libraries_common})
 
 set(tgt "kafka-to-nexus")
 set(sources
-kafka-to-nexus.cxx
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
+    kafka-to-nexus.cxx
+    $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
@@ -137,15 +181,15 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common})
 
 if (have_gtest)
-add_gtest_to_target(${tgt})
+    add_gtest_to_target(${tgt})
 endif()
 
 
 
 set(tgt "dummy")
 set(sources
-dummy.cxx
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
+    dummy.cxx
+    $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
@@ -157,5 +201,5 @@ target_link_libraries(${tgt} ${libraries_common})
 
 
 if (have_gtest)
-add_subdirectory(tests)
+    add_subdirectory(tests)
 endif()
