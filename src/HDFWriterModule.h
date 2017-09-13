@@ -112,9 +112,11 @@ public:
   /// @param hdf_file The HDF file handle.
   /// @param hdf_parent_name Path to the group into which this HDFWriterModule
   /// should put its data.
-  virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name) = 0;
+  virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                              CollectiveQueue *cq) = 0;
 
-  virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name) = 0;
+  virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,
+                            CollectiveQueue *cq, HDFIDStore *hdf_store) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
@@ -127,7 +129,8 @@ public:
   // everything.
   virtual int32_t close() = 0;
 
-  virtual void enable_cq(CollectiveQueue *cq, int mpi_rank) = 0;
+  virtual void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                         int mpi_rank) = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.

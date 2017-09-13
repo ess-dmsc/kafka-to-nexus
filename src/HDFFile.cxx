@@ -582,13 +582,4 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
 
 void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
 
-void HDFFile::create_collective_queue(Jemalloc::sptr jm) {
-  LOG(3, "HDFFile::create_collective_queue");
-  jm->use_this();
-  Jemalloc::tcache_flush();
-  cq = CollectiveQueue::ptr(new CollectiveQueue);
-  jm->use_default();
-  Jemalloc::tcache_flush();
-}
-
 } // namespace FileWriter

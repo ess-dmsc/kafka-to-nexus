@@ -94,8 +94,8 @@ set(kafka_to_nexus_SRC
     h5.cxx
     date/tz.cpp
     date/tzblobs.cpp
-    schemas/f142/f142_rw.cxx
-    schemas/f142/f142_synth.cxx
+    #schemas/f142/f142_rw.cxx
+    #schemas/f142/f142_synth.cxx
     schemas/ev42/ev42_rw.cxx
     schemas/ev42/ev42_synth.cxx
     MainOpt.cxx
@@ -142,7 +142,7 @@ set(kafka_to_nexus_INC
     date/tz.h
     date/tzblobs.h
     schemas/ev42/ev42_synth.h
-    schemas/f142/f142_synth.h
+    #schemas/f142/f142_synth.h
 )
 
 set(tgt "kafka_to_nexus__objects")

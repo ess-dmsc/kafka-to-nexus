@@ -71,11 +71,13 @@ class h5d {
 public:
   typedef unique_ptr<h5d> ptr;
   static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
-                    h5p::dataset_create dcpl);
-  static ptr open(hid_t loc, string name);
+                    h5p::dataset_create dcpl, CollectiveQueue *cq);
+  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+                  HDFIDStore *hdf_store);
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);
+  void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
   string name;
@@ -91,6 +93,7 @@ public:
   std::array<hsize_t, 2> mem_max;
   std::array<hsize_t, 2> mem_now;
   CollectiveQueue *cq = nullptr;
+  HDFIDStore *hdf_store = nullptr;
   int mpi_rank = -1;
 
 private:
@@ -103,8 +106,10 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y);
 template <typename T> class h5d_chunked_1d {
 public:
   typedef unique_ptr<h5d_chunked_1d<T>> ptr;
-  static ptr create(hid_t loc, string name, hsize_t chunk_bytes);
-  static ptr open(hid_t loc, string name);
+  static ptr create(hid_t loc, string name, hsize_t chunk_bytes,
+                    CollectiveQueue *cq);
+  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+                  HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -132,7 +137,8 @@ template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y);
 template <typename T> class h5d_chunked_2d {
 public:
   typedef unique_ptr<h5d_chunked_2d<T>> ptr;
-  static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes);
+  static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
+                    CollectiveQueue *cq);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();

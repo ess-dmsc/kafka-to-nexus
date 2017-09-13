@@ -661,6 +661,7 @@ public:
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
       LOG(7, "generating {} {}...", topic, source);
+#if 0
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
@@ -675,10 +676,10 @@ public:
         auto &fb = fbs.back();
         LOG(3, "error NOT IMPLEMENTED, jm missing!");
         exit(1);
-        // msgs.push_back(FileWriter::Msg::shared((char const
-        // *)fb.builder->GetBufferPointer(),
+        //msgs.push_back(FileWriter::Msg::shared((char const *)fb.builder->GetBufferPointer(),
         //                               fb.builder->GetSize()));
       }
+#endif
     }
   };
 

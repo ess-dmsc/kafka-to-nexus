@@ -60,12 +60,15 @@ public:
   static FileWriter::HDFWriterModule::ptr create();
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
-  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name) override;
-  InitResult reopen(hid_t hdf_file, string hdf_parent_name) override;
+  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name,
+                      CollectiveQueue *cq) override;
+  InitResult reopen(hid_t hdf_file, string hdf_parent_name, CollectiveQueue *cq,
+                    HDFIDStore *hdf_store) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
-  void enable_cq(CollectiveQueue *cq, int mpi_rank) override;
+  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                 int mpi_rank) override;
 
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_id;
@@ -102,21 +105,22 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
 }
 
 HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
-                                                      string hdf_parent_name) {
+                                                      string hdf_parent_name,
+                                                      CollectiveQueue *cq) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_time_offset", chunk_n_elements * sizeof(uint32_t));
+      hid, "event_time_offset", chunk_n_elements * sizeof(uint32_t), cq);
   this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_id", chunk_n_elements * sizeof(uint32_t));
+      hid, "event_id", chunk_n_elements * sizeof(uint32_t), cq);
   this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hid, "event_time_zero", chunk_n_elements * sizeof(uint64_t));
+      hid, "event_time_zero", chunk_n_elements * sizeof(uint64_t), cq);
   this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_index", chunk_n_elements * sizeof(uint32_t));
+      hid, "event_index", chunk_n_elements * sizeof(uint32_t), cq);
   this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "cue_index", chunk_n_elements * sizeof(uint32_t));
+      hid, "cue_index", chunk_n_elements * sizeof(uint32_t), cq);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hid, "cue_timestamp_zero", chunk_n_elements * sizeof(uint64_t));
+      hid, "cue_timestamp_zero", chunk_n_elements * sizeof(uint64_t), cq);
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
@@ -132,18 +136,23 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
 }
 
 HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
-                                                    string hdf_parent_name) {
+                                                    string hdf_parent_name,
+                                                    CollectiveQueue *cq,
+                                                    HDFIDStore *hdf_store) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 
-  this->ds_event_time_offset =
-      h5::h5d_chunked_1d<uint32_t>::open(hid, "event_time_offset");
-  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(hid, "event_id");
+  this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
+      hid, "event_time_offset", cq, hdf_store);
+  this->ds_event_id =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "event_id", cq, hdf_store);
   this->ds_event_time_zero =
-      h5::h5d_chunked_1d<uint64_t>::open(hid, "event_time_zero");
-  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::open(hid, "event_index");
-  this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::open(hid, "cue_index");
-  this->ds_cue_timestamp_zero =
-      h5::h5d_chunked_1d<uint64_t>::open(hid, "cue_timestamp_zero");
+      h5::h5d_chunked_1d<uint64_t>::open(hid, "event_time_zero", cq, hdf_store);
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "event_index", cq, hdf_store);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "cue_index", cq, hdf_store);
+  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
+      hid, "cue_timestamp_zero", cq, hdf_store);
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
@@ -197,19 +206,31 @@ int32_t HDFWriterModule::close() {
   return 0;
 }
 
-void HDFWriterModule::enable_cq(CollectiveQueue *cq, int mpi_rank) {
+void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                                int mpi_rank) {
   this->cq = cq;
   ds_event_time_offset->ds.cq = cq;
+  ds_event_time_offset->ds.hdf_store = hdf_store;
   ds_event_time_offset->ds.mpi_rank = mpi_rank;
+
   ds_event_id->ds.cq = cq;
+  ds_event_id->ds.hdf_store = hdf_store;
   ds_event_id->ds.mpi_rank = mpi_rank;
+
   ds_event_time_zero->ds.cq = cq;
+  ds_event_time_zero->ds.hdf_store = hdf_store;
   ds_event_time_zero->ds.mpi_rank = mpi_rank;
+
   ds_event_index->ds.cq = cq;
+  ds_event_index->ds.hdf_store = hdf_store;
   ds_event_index->ds.mpi_rank = mpi_rank;
+
   ds_cue_index->ds.cq = cq;
+  ds_cue_index->ds.hdf_store = hdf_store;
   ds_cue_index->ds.mpi_rank = mpi_rank;
+
   ds_cue_timestamp_zero->ds.cq = cq;
+  ds_cue_timestamp_zero->ds.hdf_store = hdf_store;
   ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
 }
 

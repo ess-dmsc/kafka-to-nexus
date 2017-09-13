@@ -136,6 +136,7 @@ public:
       exit(1);
     }
     LOG(3, "use_this: {}", aix);
+    Jemalloc::tcache_flush();
   }
 
   void use_default() {
@@ -147,6 +148,7 @@ public:
       exit(1);
     }
     LOG(3, "use_default: {}", default_thread_arena);
+    Jemalloc::tcache_flush();
   }
 
   bool check_in_range(void *p) {

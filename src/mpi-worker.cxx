@@ -59,13 +59,10 @@ void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
 
   auto &shm_comm = comm_all;
   int shm_rank = -1;
-  {
-    int rank, size;
-    MPI_Comm_rank(shm_comm, &rank);
-    MPI_Comm_size(shm_comm, &size);
-    LOG(3, "mpi-worker in shm_comm rank: {}  size: {}", rank, size);
-    shm_rank = rank;
-  }
+  MPI_Comm_rank(shm_comm, &rank);
+  MPI_Comm_size(shm_comm, &size);
+  LOG(3, "mpi-worker in shm_comm rank: {}  size: {}", rank, size);
+  shm_rank = rank;
 
   // TODO
   // Share the setup code with the main process
@@ -193,9 +190,18 @@ int main(int argc, char **argv) {
 
   using namespace FileWriter;
 
+  auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
+  auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
+  HDFIDStore hdf_store;
+  hdf_store.cqid = cq->open();
+  LOG(3, "rank_merged: {}  cqid: {}", rank_merged, hdf_store.cqid);
+
   auto hdf_fname = jconf["hdf"]["fname"].GetString();
   auto hdf_file = std::unique_ptr<HDFFile>(new HDFFile);
+  // no need to set the cq ptr on hdffile here, it is just the resource owner in
+  // main process.
   hdf_file->reopen(hdf_fname, Value());
+  hdf_store.h5file = hdf_file->h5file;
 
   auto module = jconf["stream"]["module"].GetString();
 
@@ -213,15 +219,11 @@ int main(int argc, char **argv) {
 
   hdf_writer_module->parse_config(jconf["stream"], nullptr);
   hdf_writer_module->reopen(hdf_file->h5file,
-                            jconf["stream"]["hdf_parent_name"].GetString());
+                            jconf["stream"]["hdf_parent_name"].GetString(), cq,
+                            &hdf_store);
   // jconf["stream"]["hdf_parent_name"].GetString()
 
-  auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
-  auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
-  auto cqid = cq->open();
-  LOG(3, "rank_merged: {}  cqid: {}", rank_merged, cqid);
-
-  hdf_writer_module->enable_cq(cq, rank_merged);
+  hdf_writer_module->enable_cq(cq, &hdf_store, rank_merged);
 
   LOG(3, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);
@@ -246,7 +248,7 @@ int main(int argc, char **argv) {
         if (true || t_now - t_last > MS(100)) {
           t_last = t_now;
           LOG(3, "execute collective");
-          cq->execute_for(cqid, hdf_file->h5file);
+          cq->execute_for(hdf_store);
         }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
@@ -269,7 +271,7 @@ int main(int argc, char **argv) {
     }
   }
 
-  cq->execute_for(cqid, hdf_file->h5file);
+  cq->execute_for(hdf_store);
   LOG(3, "===============================  CLOSING   "
          "=========================================");
 
@@ -280,7 +282,7 @@ int main(int argc, char **argv) {
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 2 AFTER");
 
-  cq->execute_for(cqid, hdf_file->h5file);
+  cq->execute_for(hdf_store);
 
   LOG(3, "ask for disconnect");
   // MPI_Comm_disconnect(&comm_parent);
