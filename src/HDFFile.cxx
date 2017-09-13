@@ -477,7 +477,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (1) {
+  if (0) {
     // 521  1483  9973
     err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
     if (err < 0) {
@@ -485,7 +485,21 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
     }
   }
 #if 1
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, MPI_INFO_NULL);
+  MPI_Info info;
+  MPI_Info_create(&info);
+  // MPI_Info_set(info, "direct_write", "true");
+  // MPI_Info_set(info, "cb_nodes", "8");
+  // MPI_Info_set(info, "striping_unit", "1048576");
+  // MPI_Info_set(info, "striping_factor", "8");
+  // MPI_Info_set(info, "cb_buffer_size", "268435456");
+  // not tested: MPI_Info_set(info, "striping_factor", "4");
+  //     MPI_Info_set(info, "start_iodevice", "2");
+  //     MPI_Info_set(info, "ind_rd_buffer_size", "2097152");
+  //     MPI_Info_set(info, "ind_wr_buffer_size", "1048576");
+  // MPI_Info_set(info, "ind_wr_buffer_size", "268435456");
+  MPI_Info_set(info, "romio_cb_write", "enable");
+  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, info);
+// MPI_Info_free(&info);
 #endif
 }
 

@@ -184,6 +184,12 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   if (err < 0) {
     LOG(7, "failed H5Pset_edc_check");
   }
+  if (false) {
+    err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
+    if (err < 0) {
+      LOG(7, "failed H5Pset_dxpl_mpio");
+    }
+  }
   return ret;
 }
 
@@ -233,6 +239,12 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     if (err < 0) {
       LOG(7, "failed H5Pset_edc_check");
     }
+    if (false) {
+      err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
+      if (err < 0) {
+        LOG(7, "failed H5Pset_dxpl_mpio");
+      }
+    }
     return ret;
   } else {
     LOG(3, "h5d::open classic");
@@ -267,6 +279,12 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
     if (err < 0) {
       LOG(7, "failed H5Pset_edc_check");
+    }
+    if (false) {
+      err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
+      if (err < 0) {
+        LOG(7, "failed H5Pset_dxpl_mpio");
+      }
     }
     return ret;
   }

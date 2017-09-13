@@ -268,7 +268,7 @@ public:
             "index_every_kb": 1
           },
           "chunk": {
-            "chunk_n_elements": 64
+            "chunk_n_elements": 1048576
           }
         },
         "unit_test": {
