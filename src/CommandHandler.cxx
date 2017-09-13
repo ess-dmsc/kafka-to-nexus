@@ -1,6 +1,7 @@
 #include "CommandHandler.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
+#include "MPIChild.h"
 #include "helper.h"
 #include "utils.h"
 #include <h5.h>
@@ -10,6 +11,9 @@
 // getpid()
 //#include <sys/types.h>
 //#include <unistd.h>
+
+using std::array;
+using std::vector;
 
 namespace FileWriter {
 
@@ -195,6 +199,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // Move the cq unique pointer here. It must stay valid until the very end.
   fwt->hdf_file.cq = move(cq);
 
+  std::vector<MPIChild::ptr> to_spawn;
+
   for (auto &stream : stream_hdf_info) {
     // TODO
     // Refactor with the above loop..
@@ -269,11 +275,13 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         c3.CopyFrom(config_stream, c3a);
         c3.AddMember("hdf_parent_name",
                      Value(stream.hdf_parent_name.c_str(), c3a), c3a);
-        s.mpi_start(move(c1), move(c2), move(c3));
+        s.mpi_start(move(c1), move(c2), move(c3), to_spawn);
       }
       fwt->add_source(move(s));
     }
   }
+
+  fwt->mpi_start(std::move(to_spawn));
 
   if (master) {
     auto br = find_broker(d);

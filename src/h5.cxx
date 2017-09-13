@@ -209,7 +209,8 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     o.hdf_store = hdf_store;
     o.name = name;
     o.id = hdf_store->datasetname_to_ds_id[full_path];
-    LOG(3, "that created id: {}", o.id);
+    LOG(3, "that created  rank: {}  id: {}  for path: {}", hdf_store->mpi_rank,
+        o.id, full_path);
     o.type = H5Dget_type(o.id);
     o.dsp_tgt = H5Dget_space(o.id);
     o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
@@ -275,7 +276,7 @@ h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
   if (id != -1) {
-    LOG(7, "~h5d ds");
+    LOG(9, "~h5d ds");
     herr_t err = 0;
     char ds_name[512];
     auto &buf = ds_name;
@@ -343,7 +344,7 @@ void swap(h5d &x, h5d &y) {
 }
 
 void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
-  LOG(3, "using cq: {}", (void *)cq);
+  LOG(9, "using cq: {}", (void *)cq);
   cqsnowix = cq->find_snowix_for_datasetname(ds_name);
 }
 
@@ -381,28 +382,28 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     lookup_cqsnowix(ds_name, CQSNOWIX);
     dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
     // Not necessary, just for testing:
-    LOG(3, "try to get the dsp dims:");
+    LOG(9, "try to get the dsp dims:");
     err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     if (err < 0) {
       LOG(3, "fail H5Sget_simple_extent_dims");
       exit(1);
     }
   } else {
-    LOG(3, "DO NOT LOOKUP CQSNOWIX");
+    LOG(9, "DO NOT LOOKUP CQSNOWIX");
   }
 
   size_t snext = -1;
   if (not cq) {
     snext = snow[0];
   } else {
-    LOG(3, "CAS allocate...");
+    LOG(9, "CAS allocate...");
     while (true) {
       snext = cq->snow[CQSNOWIX].load();
       if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
         break;
       }
     }
-    LOG(3, "CAS allocated: {}", snext);
+    LOG(9, "CAS allocated: {}", snext);
   }
 
   if (snext + nlen > sext[0]) {
@@ -423,7 +424,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         return {AppendResult::ERROR};
       }
       dsp_tgt = H5Dget_space(id);
-      LOG(3, "try to get the dsp dims:");
+      LOG(9, "try to get the dsp dims:");
       err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
       if (err < 0) {
         LOG(3, "fail H5Sget_simple_extent_dims");
@@ -437,7 +438,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       cq->execute_for(*hdf_store);
       dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
       // Not necessary, just for testing:
-      LOG(3, "try to get the dsp dims:");
+      LOG(9, "try to get the dsp dims:");
       err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
       if (err < 0) {
         LOG(3, "fail H5Sget_simple_extent_dims");
@@ -451,14 +452,14 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   if (log_level >= 3) {
     A1 sext, smax;
-    LOG(3, "try to get the dsp dims:");
+    LOG(9, "try to get the dsp dims:");
     err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     if (err < 0) {
       LOG(3, "fail H5Sget_simple_extent_dims");
       exit(1);
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(3, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
+      LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
           type, i1, sext.at(i1), smax.at(i1));
     }
   }
@@ -477,7 +478,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   A1 tgt_start{{snext}};
   A1 tgt_count{{nlen}};
   for (size_t i1 = 0; i1 < ndims; ++i1) {
-    LOG(3, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
+    LOG(9, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
         tgt_count[0]);
   }
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
@@ -490,7 +491,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     LOG(3, "write failed");
-    if (log_level >= 3) {
+    if (log_level >= 7) {
       std::array<hsize_t, 4> sext;
       std::array<hsize_t, 4> smax;
       hid_t dsp = H5Dget_space(id);
@@ -500,7 +501,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         exit(1);
       }
       for (size_t i1 = 0; i1 < 1; ++i1) {
-        LOG(3, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
+        LOG(7, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
             smax.at(i1));
       }
     }

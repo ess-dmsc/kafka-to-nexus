@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Jemalloc.h"
+#include "helper.h"
 #include "logger.h"
 #include <atomic>
 #include <hdf5.h>
@@ -16,6 +17,18 @@ struct HDFIDStore {
   std::map<std::string, hid_t> datasetname_to_dsp_id;
   size_t cqid = -1;
   hid_t h5file = -1;
+  int mpi_rank = -1;
+
+  void check_all_empty() {
+    if (datasetname_to_ds_id.size() != 0) {
+      LOG(3, "datasetname_to_ds_id is not empty");
+      exit(1);
+    }
+    if (datasetname_to_dsp_id.size() != 0) {
+      LOG(3, "datasetname_to_dsp_id is not empty");
+      exit(1);
+    }
+  }
 };
 
 enum struct CollectiveCommandType : uint8_t {
@@ -130,7 +143,7 @@ struct CollectiveCommand {
 
   void execute_for(HDFIDStore &store) {
     if (type == CollectiveCommandType::SetExtent) {
-      LOG(3, "execute {}", to_string());
+      LOG(8, "execute {}", to_string());
       // the dataset must be open because it must have been created by another
       // collective call.
       herr_t err = 0;
@@ -138,6 +151,7 @@ struct CollectiveCommand {
       // hid_t dsp_tgt = store.datasetname_to_dsp_id[v.set_extent.name];
       // std::array<hsize_t, 2> sext;
       // std::array<hsize_t, 2> smax;
+      // This seems to trigger a MPI send, recv and barrier!
       err = H5Dset_extent(id, v.set_extent.size);
       if (err < 0) {
         LOG(3, "fail H5Dset_extent");
@@ -154,7 +168,7 @@ struct CollectiveCommand {
         auto bufn = H5Iget_name(id, buf, 512);
         buf[bufn] = '\0';
       }
-      LOG(3, "opened as name: {}", buf);
+      LOG(8, "opened for {:2} as name: {}  id: {}", store.mpi_rank, buf, id);
       store.datasetname_to_ds_id[buf] = id;
       store.datasetname_to_dsp_id[buf] = H5Dget_space(id);
     } else if (type == CollectiveCommandType::H5Dclose) {
@@ -182,6 +196,9 @@ public:
       x = false;
     }
     for (auto &x : snow) {
+      x.store(0);
+    }
+    for (auto &x : barriers) {
       x.store(0);
     }
     pthread_mutexattr_t mx_attr;
@@ -227,8 +244,7 @@ public:
   }
 
   int push(CollectiveCommand item) {
-    auto n1 = n.load();
-    if (n1 >= items.size()) {
+    if (n.load() >= items.size()) {
       LOG(3, "Command queue full");
       exit(1);
       return 1;
@@ -237,13 +253,14 @@ public:
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
+    auto n1 = n.load();
 
     bool do_insert = true;
     // check for doubles
     {
       for (size_t i1 = 0; i1 < n1; ++i1) {
         if (item.equivalent(items[i1])) {
-          LOG(3, "found equivalent command");
+          LOG(7, "found equivalent command");
           do_insert = false;
           break;
         }
@@ -251,10 +268,10 @@ public:
     }
 
     if (do_insert) {
-      LOG(3, "push new ccmd: {}", item.to_string());
+      LOG(8, "push new ccmd  cmd: {}", item.to_string());
       items[n1] = item;
       n1 += 1;
-      // LOG(3, "now have {} in queue", n.load());
+      LOG(8, "now have {} in queue", n.load());
     }
 
     // TODO
@@ -288,10 +305,10 @@ public:
   }
 
   void execute_for(HDFIDStore &store) {
-    LOG(3, "execute_for  cqid: {}", store.cqid);
+    LOG(9, "execute_for  cqid: {}", store.cqid);
     std::vector<CollectiveCommand> cmds;
     all_for(store, cmds);
-    LOG(3, "execute_for  cqid: {}  cmds: {}", store.cqid, cmds.size());
+    LOG(9, "execute_for  cqid: {}  cmds: {}", store.cqid, cmds.size());
     for (auto &cmd : cmds) {
       cmd.execute_for(store);
     }
@@ -299,21 +316,44 @@ public:
 
   void register_datasetname(std::string name) {
     auto n = datasetname_to_snow_a_ix__n++;
-    LOG(3, "register dataset {} as snow_a_ix {}", name, n);
+    LOG(7, "register dataset {} as snow_a_ix {}", name, n);
     std::strncpy(datasetname_to_snow_a_ix_name[n].data(), name.data(), 256);
   }
 
   size_t find_snowix_for_datasetname(std::string name) {
-    LOG(3, "find_snowix_for_datasetname {}", name);
+    LOG(9, "find_snowix_for_datasetname {}", name);
     for (size_t i1 = 0; i1 < datasetname_to_snow_a_ix__n; ++i1) {
       if (std::strncmp(name.data(), datasetname_to_snow_a_ix_name[i1].data(),
                        256) == 0) {
-        LOG(3, "found ix: {}", i1);
+        LOG(9, "found ix: {}", i1);
         return i1;
       }
     }
     LOG(3, "error not found");
     exit(1);
+  }
+
+  void close_for(HDFIDStore &store) { mark_open.at(store.cqid) = false; }
+
+  void wait_for_barrier(HDFIDStore *store, size_t i) {
+    auto &n = barriers.at(i);
+    int i1 = 0;
+    while (true) {
+      auto n1 = n.load();
+      LOG(9, "spinlock: {} vs {}", n1, nclients);
+      if (n1 == nclients) {
+        break;
+      }
+      if (store) {
+        execute_for(*store);
+      }
+      sleep_ms(10);
+      if (i1 > 1000) {
+        LOG(3, "timeout");
+        exit(1);
+      }
+      i1 += 1;
+    }
   }
 
   std::atomic<size_t> n{0};
@@ -334,4 +374,6 @@ public:
   std::array<AT, 1024> snow;
   std::array<std::array<char, 256>, 32> datasetname_to_snow_a_ix_name;
   size_t datasetname_to_snow_a_ix__n = 0;
+
+  std::array<std::atomic<int>, 8> barriers;
 };

@@ -1,4 +1,5 @@
 #include "Source.h"
+#include "MPIChild.h"
 #include "helper.h"
 #include "logger.h"
 #include <chrono>
@@ -61,7 +62,8 @@ std::string const &Source::sourcename() const { return _sourcename; }
 
 void Source::mpi_start(rapidjson::Document config_file,
                        rapidjson::Document command,
-                       rapidjson::Document config_stream) {
+                       rapidjson::Document config_stream,
+                       std::vector<MPIChild::ptr> &spawns) {
   LOG(3, "Source::mpi_start()");
   jm->use_this();
   Jemalloc::tcache_flush();
@@ -128,82 +130,28 @@ void Source::mpi_start(rapidjson::Document config_file,
     jconf.Accept(wr);
     // LOG(3, "config for mpi: {}", sbuf.GetString());
   }
-  int err = MPI_SUCCESS;
-  MPI_Info mpi_info;
-  if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
-    LOG(3, "ERROR can not init MPI_Info");
-    exit(1);
-  }
-  char arg1[32];
-  char arg2[32];
-  strcpy(arg1, "--mpi");
-  strcpy(arg2, "-vvvv");
-  char *argv[] = {
-      arg1, (char *)sbuf.GetString(), nullptr,
-  };
-  LOG(3, "spawn {}", bin);
-  err = MPI_Comm_spawn(bin.c_str(), argv, nspawns, MPI_INFO_NULL, 0,
-                       MPI_COMM_WORLD, &comm_spawned, mpi_return_codes.data());
-  if (err != MPI_SUCCESS) {
-    LOG(3, "can not spawn");
-    exit(1);
+
+  auto child = MPIChild::ptr(new MPIChild);
+  child->cmd = {bin.data(), bin.data() + bin.size() + 1};
+  {
+    child->args.push_back(
+        {sbuf.GetString(), sbuf.GetString() + sbuf.GetSize() + 1});
   }
   {
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    LOG(3, "After spawn in main MPI_COMM_WORLD  rank: {}  size: {}", rank,
-        size);
+    auto s = "--mpi";
+    child->args.push_back({s, s + strlen(s) + 1});
   }
   {
-    int rank, size;
-    MPI_Comm_rank(comm_spawned, &rank);
-    MPI_Comm_size(comm_spawned, &size);
-    LOG(3, "comm_spawned  rank: {}  size: {}", rank, size);
+    auto s = "-vvvv";
+    child->args.push_back({s, s + strlen(s) + 1});
   }
-  err = MPI_Intercomm_merge(comm_spawned, 0, &comm_all);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Intercomm_merge");
-    exit(1);
-  }
-  {
-    int rank, size;
-    MPI_Comm_rank(comm_all, &rank);
-    MPI_Comm_size(comm_all, &size);
-    LOG(3, "comm_all rank: {}  size: {}", rank, size);
-  }
-  LOG(3, "Barrier 1 BEFORE");
-  MPI_Barrier(comm_all);
-  LOG(3, "Barrier 1 AFTER");
-  // exchange config
-  // wait for their ok that they opened file
+  child->argv.push_back(child->args[0].data());
+  child->argv.push_back(child->args[1].data());
+  child->argv.push_back(nullptr);
+  spawns.push_back(std::move(child));
 }
 
-void Source::mpi_stop() {
-  LOG(3, "Source::mpi_stop()");
-  // send stop command, wait for group size zero?
-  queue->open.store(0);
-  int err = MPI_SUCCESS;
-
-  LOG(3, ".....................  wait for  CLOSING");
-  MPI_Barrier(comm_all);
-  LOG(3, "===============================  CLOSING   "
-         "=========================================");
-
-  LOG(3, "Barrier 2 BEFORE");
-  MPI_Barrier(comm_all);
-  LOG(3, "Barrier 2 AFTER");
-  LOG(3, "ask for disconnect");
-  err = MPI_Comm_disconnect(&comm_all);
-  // err = MPI_Comm_disconnect(&comm_spawned);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Comm_disconnect");
-    exit(1);
-  }
-  LOG(3, "sleeping");
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
-  // MPI_Finalize();
-}
+void Source::mpi_stop() { LOG(3, "mpi_stop()  nothing to do"); }
 
 ProcessMessageResult Source::process_message(Msg &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);

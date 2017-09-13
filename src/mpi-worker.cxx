@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
   // LOG(3, "conf: {}", argv[2]);
   using namespace rapidjson;
   Document jconf;
-  jconf.Parse(argv[2]);
+  jconf.Parse(argv[1]);
   LOG(3, "jconf: {}", json_to_string(jconf));
 
   int err = MPI_SUCCESS;
@@ -194,6 +194,7 @@ int main(int argc, char **argv) {
   auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
   LOG(3, "got cq at: {}", (void *)cq);
   HDFIDStore hdf_store;
+  hdf_store.mpi_rank = rank_merged;
   hdf_store.cqid = cq->open();
   LOG(3, "rank_merged: {}  cqid: {}", rank_merged, hdf_store.cqid);
 
@@ -240,7 +241,7 @@ int main(int argc, char **argv) {
     if (n > 0) {
       // reset idle counter
       i1 = 0;
-      LOG(3, "Queue size: {}", n);
+      LOG(9, "Queue size: {}", n);
       std::vector<Msg> all;
       queue->all(all);
       for (auto &m : all) {
@@ -248,23 +249,23 @@ int main(int argc, char **argv) {
         // execute all pending commands before the next message
         if (true || t_now - t_last > MS(100)) {
           t_last = t_now;
-          LOG(3, "execute collective");
+          LOG(7, "execute collective");
           cq->execute_for(hdf_store);
         }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
-        LOG(3, "hdf_writer_module->write(m) "
+        LOG(9, "hdf_writer_module->write(m) "
                "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
                "~");
         hdf_writer_module->write(m);
       }
     } else {
       if (queue->open != 1) {
-        LOG(3, "queue closed");
+        LOG(7, "queue closed");
         break;
       } else {
         if (empties % 1000 == 0) {
-          LOG(3, "empty {}", empties);
+          LOG(7, "empty {}", empties);
         }
         empties += 1;
         sleep_ms(1);
@@ -272,31 +273,41 @@ int main(int argc, char **argv) {
     }
   }
 
-  LOG(3, ".....................  wait for  CLOSING");
-  MPI_Barrier(comm_all);
-  LOG(3, "===============================  CLOSING   "
+  LOG(6, ".....................  wait for  CLOSING");
+  cq->barriers[0]++;
+  cq->wait_for_barrier(&hdf_store, 0);
+  LOG(6, "===============================  CLOSING   "
          "=========================================");
 
   hdf_writer_module.reset();
+  cq->close_for(hdf_store);
+
+  LOG(6, ".....................  wait for  CQ EXEC");
+  cq->barriers[1]++;
+  cq->wait_for_barrier(&hdf_store, 1);
+  LOG(6, "===============================  CQ EXEC   "
+         "=========================================");
+
   cq->execute_for(hdf_store);
+  hdf_store.check_all_empty();
 
   hdf_file.reset();
 
-  LOG(3, "Barrier 2 BEFORE");
+  LOG(6, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);
-  LOG(3, "Barrier 2 AFTER");
+  LOG(6, "Barrier 2 AFTER");
 
   cq->execute_for(hdf_store);
 
-  LOG(3, "ask for disconnect");
+  LOG(6, "ask for disconnect");
   // MPI_Comm_disconnect(&comm_parent);
   MPI_Comm_disconnect(&comm_all);
   if (false) {
-    LOG(3, "finalizing {}", rank_merged);
+    LOG(6, "finalizing {}", rank_merged);
     MPI_Finalize();
-    LOG(3, "after finalize {}", rank_merged);
+    LOG(6, "after finalize {}", rank_merged);
   }
-  LOG(3, "return");
+  LOG(6, "return");
   return 42;
 
   LOG(3, "wait for parent mmap");

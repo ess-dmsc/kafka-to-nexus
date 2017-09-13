@@ -1,4 +1,6 @@
 #pragma once
+
+#include "CollectiveQueue.h"
 #include "DemuxTopic.h"
 #include "Source.h"
 #include <memory>
@@ -32,6 +34,9 @@ public:
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
   std::string hdf_filename;
   HDFFile hdf_file;
+  void mpi_start(std::vector<MPIChild::ptr> &&to_spawn);
+  void mpi_stop();
+  MPI_Comm comm_all;
 
 private:
   std::vector<DemuxTopic> _demuxers;

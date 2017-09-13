@@ -274,7 +274,7 @@ public:
         "unit_test": {
           "n_events_per_message": 1,
           "n_msgs_per_source": 2,
-          "n_sources": 1,
+          "n_sources": 2,
           "n_msgs_per_batch": 1,
           "filename": "tmp-ev42.h5",
           "hdf": {

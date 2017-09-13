@@ -5,6 +5,7 @@
 #include "HDFWriterModule.h"
 #include "Jemalloc.h"
 #include "MMap.h"
+#include "MPIChild.h"
 #include "Msg.h"
 #include "MsgQueue.h"
 #include "ProcessMessageResult.h"
@@ -41,12 +42,15 @@ public:
   std::string const &sourcename() const;
   uint64_t processed_messages_count() const;
   void mpi_start(rapidjson::Document config_file, rapidjson::Document command,
-                 rapidjson::Document config_stream);
+                 rapidjson::Document config_stream,
+                 std::vector<MPIChild::ptr> &spawns);
   void mpi_stop();
   ProcessMessageResult process_message(Msg &msg);
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
+
+  MsgQueue::ptr queue;
 
 private:
   Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
@@ -62,7 +66,6 @@ private:
   bool do_process_message = true;
   Jemalloc::sptr jm;
   MMap::sptr mmap;
-  MsgQueue::ptr queue;
   MPI_Comm comm_spawned;
   MPI_Comm comm_all;
   uint32_t nspawns = 1;
