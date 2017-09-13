@@ -480,9 +480,10 @@ public:
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
-      for (auto &source : sources) {
-        for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
-          LOG(6, "feed {}", i_feed);
+      for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
+        size_t i_source = 0;
+        for (auto &source : sources) {
+          LOG(6, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());
@@ -495,6 +496,7 @@ public:
             fwt->demuxers().at(0).process_message(Msg::cheap(msg, jm));
             source.n_fed++;
           }
+          i_source += 1;
         }
       }
       auto t2 = CLK::now();

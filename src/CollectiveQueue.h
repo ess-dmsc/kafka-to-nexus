@@ -260,7 +260,7 @@ public:
     {
       for (size_t i1 = 0; i1 < n1; ++i1) {
         if (item.equivalent(items[i1])) {
-          LOG(7, "found equivalent command");
+          // LOG(7, "found equivalent command");
           do_insert = false;
           break;
         }

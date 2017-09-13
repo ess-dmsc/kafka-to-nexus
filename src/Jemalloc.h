@@ -49,26 +49,16 @@ public:
     size_t n = 0;
     n = sizeof(char const *);
     mallctl("version", &jemalloc_version, &n, nullptr, 0);
-    LOG(3, "jemalloc version: {}", jemalloc_version);
+    LOG(7, "jemalloc version: {}", jemalloc_version);
 
     n = sizeof(unsigned);
     mallctl("thread.arena", &ret->default_thread_arena, &n, nullptr, 0);
-    LOG(3, "thread.arena: {}", ret->default_thread_arena);
-
-    if (false) {
-      err = mallctl("arena.0.destroy", nullptr, nullptr, nullptr, 0);
-      if (err != 0) {
-        LOG(3, "could not destroy arena");
-        exit(1);
-      }
-    }
+    LOG(7, "thread.arena: {}", ret->default_thread_arena);
 
     unsigned narenas = 0;
     n = sizeof(narenas);
     mallctl("arenas.narenas", &narenas, &n, nullptr, 0);
-    LOG(3, "arenas.narenas: {}", narenas);
-
-    // tcache_flush();
+    LOG(7, "arenas.narenas: {}", narenas);
 
     std::memset(&ret->hooks, 0, sizeof(extent_hooks_t));
     auto self = ret.get();
@@ -81,17 +71,11 @@ public:
     n = sizeof(unsigned);
     err = mallctl("arenas.create", &ret->aix, &n, &hooks_ptr,
                   sizeof(extent_hooks_t *));
-    // int err = mallctl("arenas.create", &aix, &n, nullptr, 0);
     if (err != 0) {
       LOG(3, "error in mallctl arenas.create: {}", errname(err));
       exit(1);
     }
-    LOG(3, "arena created: {}", ret->aix);
-
-    // tcache_flush();
-
-    // void * big = mallocx(80 * 1024 * 1024, );
-
+    LOG(7, "arena created: {}", ret->aix);
     return ret;
   }
 
@@ -118,7 +102,7 @@ public:
   }
 
   void *alloc(size_t size) {
-    // LOG(3, "alloc from arena {}", aix);
+    // LOG(7, "alloc from arena {}", aix);
     auto addr = mallocx(size, MALLOCX_ARENA(aix));
     if (addr == nullptr) {
       LOG(3, "fail alloc size: {}", size);
@@ -135,7 +119,7 @@ public:
       LOG(3, "can not set arena");
       exit(1);
     }
-    LOG(3, "use_this: {}", aix);
+    LOG(9, "use_this: {}", aix);
     Jemalloc::tcache_flush();
   }
 
@@ -147,7 +131,7 @@ public:
       LOG(3, "can not set arena");
       exit(1);
     }
-    LOG(3, "use_default: {}", default_thread_arena);
+    LOG(9, "use_default: {}", default_thread_arena);
     Jemalloc::tcache_flush();
   }
 

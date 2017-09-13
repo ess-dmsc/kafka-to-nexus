@@ -382,11 +382,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     lookup_cqsnowix(ds_name, CQSNOWIX);
     dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
     // Not necessary, just for testing:
-    LOG(9, "try to get the dsp dims:");
-    err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-    if (err < 0) {
-      LOG(3, "fail H5Sget_simple_extent_dims");
-      exit(1);
+    if (false) {
+      LOG(9, "try to get the dsp dims:");
+      err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+      if (err < 0) {
+        LOG(3, "fail H5Sget_simple_extent_dims");
+        exit(1);
+      }
     }
   } else {
     LOG(9, "DO NOT LOOKUP CQSNOWIX");
@@ -412,7 +414,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     std::array<hsize_t, 2> sext2;
     sext2[0] = sext[0];
     sext2[1] = sext[1];
-    sext2[0] = ((snext + nlen) * 3 / 2 / BLOCK + 1) * BLOCK;
+    sext2[0] = ((snext + nlen) * 4 / 3 / BLOCK + 1) * BLOCK;
     LOG(7, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext, sext[0],
         sext2[0]);
 
@@ -424,11 +426,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         return {AppendResult::ERROR};
       }
       dsp_tgt = H5Dget_space(id);
-      LOG(9, "try to get the dsp dims:");
-      err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-      if (err < 0) {
-        LOG(3, "fail H5Sget_simple_extent_dims");
-        exit(1);
+      if (true) {
+        // LOG(9, "try to get the dsp dims:");
+        err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+        if (err < 0) {
+          LOG(3, "fail H5Sget_simple_extent_dims");
+          exit(1);
+        }
       }
     } else {
       // H5O_info_t oi;
@@ -437,12 +441,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           CollectiveCommand::set_extent(ds_name, sext2.size(), sext2.data()));
       cq->execute_for(*hdf_store);
       dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
-      // Not necessary, just for testing:
-      LOG(9, "try to get the dsp dims:");
-      err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-      if (err < 0) {
-        LOG(3, "fail H5Sget_simple_extent_dims");
-        exit(1);
+      if (true) {
+        // LOG(9, "try to get the dsp dims:");
+        err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+        if (err < 0) {
+          LOG(3, "fail H5Sget_simple_extent_dims");
+          exit(1);
+        }
       }
     }
     auto t3 = CLK::now();
@@ -450,7 +455,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
   }
 
-  if (log_level >= 3) {
+  if (log_level >= 9) {
     A1 sext, smax;
     LOG(9, "try to get the dsp dims:");
     err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
@@ -477,9 +482,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   A1 tgt_start{{snext}};
   A1 tgt_count{{nlen}};
-  for (size_t i1 = 0; i1 < ndims; ++i1) {
-    LOG(9, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
-        tgt_count[0]);
+  if (log_level >= 9) {
+    for (size_t i1 = 0; i1 < ndims; ++i1) {
+      LOG(9, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
+          tgt_count[0]);
+    }
   }
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
