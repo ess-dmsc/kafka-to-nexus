@@ -8,13 +8,8 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-find_package(Fmt REQUIRED)
-find_package(Rapidjson REQUIRED)
-find_package(RdKafka REQUIRED)
-find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
 find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
-find_package(GraylogLogger)
 find_package(GitCommitExtract)
 
 
@@ -57,11 +52,12 @@ set(libraries_common
     ${CURL_LIBRARIES}
     pthread
     z
+    ${CONAN_LIBS}
 )
 
 set(compile_defs_common "HAS_REMOTE_API=0")
 
-if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
+if (${USE_GRAYLOG_LOGGER})
 	message(STATUS "Using graylog_logger")
 	list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
 	list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})

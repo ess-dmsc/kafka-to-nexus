@@ -1,0 +1,11 @@
+[requires]
+gtest/1.8.0@psi-ldm/gcc-4.9
+fmt/3.0.2@psi-ldm/gcc-4.9
+FlatBuffers/1.5.0@psi-ldm/gcc-4.9
+hdf5/1.10.1@psi-ldm/gcc-4.9
+librdkafka/0.11.0@psi-ldm/gcc-4.9
+RapidJSON/1.1.0@psi-ldm/gcc-4.9
+pcre/8.41@psi-ldm/gcc-4.9
+
+[generators]
+cmake
