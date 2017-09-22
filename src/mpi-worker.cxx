@@ -178,8 +178,10 @@ int main(int argc, char **argv) {
   }
 
   logpid(fmt::format("tmp-pid-worker-{}.txt", rank_merged).c_str());
-  LOG(3, "logpid sleep ...");
-  sleep_ms(3000);
+  if (jconf.FindMember("logpid-sleep") != jconf.MemberEnd()) {
+    LOG(3, "logpid sleep ...");
+    sleep_ms(3000);
+  }
 
   auto config_file = jconf["config_file"].GetObject();
   auto shm_fname = config_file["shm"]["fname"].GetString();

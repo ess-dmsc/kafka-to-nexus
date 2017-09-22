@@ -22,8 +22,10 @@ int main(int argc, char **argv) {
   setup_logger_from_options(*opt);
 
   logpid("tmp-pid.txt");
-  LOG(3, "sleep 5");
-  sleep_ms(3000);
+  if (opt->logpid_sleep) {
+    LOG(3, "sleep 5");
+    sleep_ms(3000);
+  }
 
   Roundtrip::opt = opt.get();
 

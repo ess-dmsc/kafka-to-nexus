@@ -121,6 +121,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"kafka-gelf", required_argument, nullptr, 0},
       {"graylog-logger-address", required_argument, nullptr, 0},
       {"use-signal-handler", required_argument, nullptr, 0},
+      {"logpid-sleep", required_argument, nullptr, 0},
       {"teamid", required_argument, nullptr, 0},
       {nullptr, 0, nullptr, 0},
   };
@@ -173,6 +174,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       }
       if (std::string("use-signal-handler") == lname) {
         opt->use_signal_handler = (bool)strtoul(optarg, nullptr, 0);
+      }
+      if (std::string("logpid-sleep") == lname) {
+        opt->logpid_sleep = true;
       }
       if (std::string("teamid") == lname) {
         opt->teamid = strtoul(optarg, nullptr, 0);

@@ -65,6 +65,7 @@ struct MainOpt {
   bool source_do_process_message = true;
   MMap::sptr shm;
   Jemalloc::sptr jm;
+  bool logpid_sleep = false;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
