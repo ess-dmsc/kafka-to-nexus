@@ -689,6 +689,10 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y) {
   swap(x.ds, y.ds);
   swap(x.dsp_wr, y.dsp_wr);
   swap(x.i0, y.i0);
+  swap(x.buf_MAXPKG, y.buf_MAXPKG);
+  swap(x.buf_SIZE, y.buf_SIZE);
+  swap(x.buf, y.buf);
+  swap(x.buf_n, y.buf_n);
 }
 
 template <typename T>
