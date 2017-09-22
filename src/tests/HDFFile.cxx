@@ -676,9 +676,9 @@ public:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
         fbs.push_back(synth.next(i1, array_size));
-        auto &fb = fbs.back();
         LOG(3, "error NOT IMPLEMENTED, jm missing!");
         exit(1);
+        //auto &fb = fbs.back();
         //msgs.push_back(FileWriter::Msg::shared((char const *)fb.builder->GetBufferPointer(),
         //                               fb.builder->GetSize()));
       }
