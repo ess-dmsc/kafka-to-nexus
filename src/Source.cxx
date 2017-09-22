@@ -98,24 +98,27 @@ void Source::mpi_start(rapidjson::Document config_file,
     LOG(7, "config for mpi: {}", sbuf.GetString());
   }
 
-  auto child = MPIChild::ptr(new MPIChild);
-  child->cmd = {bin.data(), bin.data() + bin.size() + 1};
-  {
+  int n_child = 1;
+  if (auto x = get_int(&config_stream, "n_mpi_workers")) {
+    n_child = x.v;
+  }
+
+  for (size_t i_child = 0; i_child < n_child; ++i_child) {
+    auto child = MPIChild::ptr(new MPIChild);
+    child->cmd = {bin.data(), bin.data() + bin.size() + 1};
     child->args.push_back(
         {sbuf.GetString(), sbuf.GetString() + sbuf.GetSize() + 1});
-  }
-  {
-    auto s = "--mpi";
+    char const *s;
+    s = "--mpi";
     child->args.push_back({s, s + strlen(s) + 1});
-  }
-  {
-    auto s = "-vvvv";
+    s = "-vvvv";
     child->args.push_back({s, s + strlen(s) + 1});
+    for (auto &x : child->args) {
+      child->argv.push_back(x.data());
+    }
+    child->argv.push_back(nullptr);
+    spawns.push_back(std::move(child));
   }
-  child->argv.push_back(child->args[0].data());
-  child->argv.push_back(child->args[1].data());
-  child->argv.push_back(nullptr);
-  spawns.push_back(std::move(child));
 }
 
 void Source::mpi_stop() { LOG(3, "mpi_stop()  nothing to do"); }
