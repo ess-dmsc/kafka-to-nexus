@@ -432,6 +432,7 @@ public:
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
+          stream.AddMember("n_mpi_workers", Value(2), a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
         }
