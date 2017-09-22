@@ -79,9 +79,9 @@ void Source::mpi_start(rapidjson::Document config_file,
   LOG(3, "make jconf");
   rapidjson::StringBuffer sbuf;
   {
-    LOG(3, "config_file: {}", json_to_string(config_file));
-    LOG(3, "command: {}", json_to_string(command));
-    LOG(3, "config_stream: {}", json_to_string(config_stream));
+    LOG(7, "config_file: {}", json_to_string(config_file));
+    LOG(7, "command: {}", json_to_string(command));
+    LOG(7, "config_stream: {}", json_to_string(config_stream));
     using namespace rapidjson;
     Document jconf;
     jconf.Parse(R""({"hdf":{},"shm":{"fname":"tmp-mmap"}})"");
@@ -89,14 +89,13 @@ void Source::mpi_start(rapidjson::Document config_file,
                            jconf.GetAllocator());
     jconf.AddMember("stream", config_stream, jconf.GetAllocator());
     jconf.AddMember("config_file", config_file, jconf.GetAllocator());
-    LOG(3, "queue_addr: {}", uint64_t(queue.get()));
     jconf.AddMember("queue_addr", Value().SetUint64(uint64_t(queue.get())),
                     jconf.GetAllocator());
     jconf.AddMember("cq_addr", Value().SetUint64(uint64_t(cq)),
                     jconf.GetAllocator());
     Writer<StringBuffer> wr(sbuf);
     jconf.Accept(wr);
-    // LOG(3, "config for mpi: {}", sbuf.GetString());
+    LOG(7, "config for mpi: {}", sbuf.GetString());
   }
 
   auto child = MPIChild::ptr(new MPIChild);
