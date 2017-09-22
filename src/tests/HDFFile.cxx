@@ -276,6 +276,7 @@ public:
           "n_msgs_per_source": 100,
           "n_sources": 1,
           "n_msgs_per_batch": 1,
+          "n_mpi_workers": 1,
           "filename": "tmp-ev42.h5",
           "hdf": {
             "do_verification": 1
@@ -432,7 +433,11 @@ public:
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
-          stream.AddMember("n_mpi_workers", Value(2), a);
+          stream.AddMember(
+              "n_mpi_workers",
+              std::move(Value().CopyFrom(
+                  main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
+              a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
         }

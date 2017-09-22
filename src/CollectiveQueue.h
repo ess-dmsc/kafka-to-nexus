@@ -269,7 +269,9 @@ public:
     {
       for (size_t i1 = 0; i1 < n1; ++i1) {
         if (item.equivalent(items[i1])) {
-          LOG(7, "found equivalent command, skip {}", item.to_string());
+          if (log_level >= 9) {
+            LOG(9, "found equivalent command, skip {}", item.to_string());
+          }
           do_insert = false;
           break;
         }
@@ -303,7 +305,7 @@ public:
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
-    LOG(7, "all_for  cqid: {}  queue: {}", store.cqid, queue);
+    LOG(9, "all_for  cqid: {}  queue: {}", store.cqid, queue);
     auto n1 = n_queued[queue].load();
     auto &items = queues[queue];
     for (size_t i1 = markers.at(queue).at(store.cqid); i1 < n1; ++i1) {

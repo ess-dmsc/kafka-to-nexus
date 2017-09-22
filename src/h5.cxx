@@ -537,7 +537,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
   if (dt1 > 20 or dt2 > 20) {
-    LOG(7, "append_data_1d DONE  {} ms + {} ms", dt1, dt2);
+    LOG(9, "append_data_1d DONE  {} ms + {} ms", dt1, dt2);
   }
   return {AppendResult::OK, sizeof(T) * nlen, tgt_start[0]};
 }

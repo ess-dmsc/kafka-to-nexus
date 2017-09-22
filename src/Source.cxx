@@ -3,9 +3,10 @@
 #include "helper.h"
 #include "logger.h"
 #include <chrono>
+#include <fstream>
 #include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include <thread>
 
 #ifndef SOURCE_DO_PROCESS_MESSAGE
@@ -83,12 +84,12 @@ void Source::mpi_start(rapidjson::Document config_file,
 
   LOG(3, "make jconf");
   rapidjson::StringBuffer sbuf;
+  rapidjson::Document jconf;
   {
     LOG(7, "config_file: {}", json_to_string(config_file));
     LOG(7, "command: {}", json_to_string(command));
     LOG(7, "config_stream: {}", json_to_string(config_stream));
     using namespace rapidjson;
-    Document jconf;
     auto &a = jconf.GetAllocator();
     jconf.Parse(R""({"hdf":{},"shm":{"fname":"tmp-mmap"}})"");
     jconf["hdf"].AddMember("fname", command["file_attributes"]["file_name"], a);
@@ -97,16 +98,21 @@ void Source::mpi_start(rapidjson::Document config_file,
     jconf.AddMember("queue_addr", Value().SetUint64(uint64_t(queue.get())), a);
     jconf.AddMember("cq_addr", Value().SetUint64(uint64_t(cq)), a);
     jconf.AddMember("log_level", Value(log_level), a);
-    Writer<StringBuffer> wr(sbuf);
+    PrettyWriter<StringBuffer> wr(sbuf);
     jconf.Accept(wr);
     LOG(7, "config for mpi: {}", sbuf.GetString());
   }
 
   for (size_t i_child = 0; i_child < n_child; ++i_child) {
+    std::string fname = fmt::format(
+        "tmp-cfg-{}-{}.json", jconf["stream"]["source"].GetString(), i_child);
+    std::ofstream ofs;
+    ofs.open(fname);
+    ofs << std::string(sbuf.GetString(), sbuf.GetString() + sbuf.GetSize() + 1);
+    ofs.close();
     auto child = MPIChild::ptr(new MPIChild);
     child->cmd = {bin.data(), bin.data() + bin.size() + 1};
-    child->args.push_back(
-        {sbuf.GetString(), sbuf.GetString() + sbuf.GetSize() + 1});
+    child->args.push_back({fname.data(), fname.data() + fname.size()});
     char const *s;
     s = "--mpi";
     child->args.push_back({s, s + strlen(s) + 1});

@@ -141,9 +141,11 @@ int main(int argc, char **argv) {
     LOG(3, "not enough arguments");
     return -1;
   }
+  auto jconf_raw = gulp(argv[1]);
+  LOG(9, "jconf_raw: {}", jconf_raw.data());
   using namespace rapidjson;
   Document jconf;
-  jconf.Parse(argv[1]);
+  jconf.Parse(jconf_raw.data(), jconf_raw.size());
   if (auto x = get_int(&jconf, "log_level")) {
     log_level = x.v;
   }
