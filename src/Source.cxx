@@ -66,44 +66,12 @@ void Source::mpi_start(rapidjson::Document config_file,
                        std::vector<MPIChild::ptr> &spawns) {
   LOG(3, "Source::mpi_start()");
   jm->use_this();
-  Jemalloc::tcache_flush();
-  char *x;
-
-  while (true) {
-    x = (char *)malloc(sizeof(char));
-    // x = (char*)jm->alloc(8 * 1024 * sizeof(char));
-    if (jm->check_in_range(x))
-      break;
-    LOG(3, "fail malloc");
-    exit(1);
-  }
-
-  while (true) {
-    x = (char *)new MsgQueue;
-    if (jm->check_in_range(x))
-      break;
-    LOG(3, "fail malloc");
-    exit(1);
-  }
-
-  for (int i1 = 0; i1 < 0; ++i1) {
-    LOG(3, "alloc chunk {}", i1);
-    x = (char *)malloc(10 * 1024 * 1024 * sizeof(char));
-    // x = (char*)jm->alloc(8 * 1024 * sizeof(char));
-    if (not jm->check_in_range(x)) {
-      LOG(3, "fail check_in_range");
-      exit(1);
-    }
-  }
-
-  LOG(3, "place MsgQueue");
   queue = MsgQueue::ptr(new MsgQueue);
   if (not jm->check_in_range(queue.get())) {
     LOG(3, "mem error");
     exit(1);
   }
   jm->use_default();
-  Jemalloc::tcache_flush();
 
   auto bin =
       fmt::format("{}/mpi-worker", config_file["mpi"]["path_bin"].GetString());
