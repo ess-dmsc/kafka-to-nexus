@@ -76,6 +76,11 @@ void Source::mpi_start(rapidjson::Document config_file,
   auto bin =
       fmt::format("{}/mpi-worker", config_file["mpi"]["path_bin"].GetString());
 
+  int n_child = 1;
+  if (auto x = get_int(&config_stream, "n_mpi_workers")) {
+    n_child = x.v;
+  }
+
   LOG(3, "make jconf");
   rapidjson::StringBuffer sbuf;
   {
@@ -96,11 +101,6 @@ void Source::mpi_start(rapidjson::Document config_file,
     Writer<StringBuffer> wr(sbuf);
     jconf.Accept(wr);
     LOG(7, "config for mpi: {}", sbuf.GetString());
-  }
-
-  int n_child = 1;
-  if (auto x = get_int(&config_stream, "n_mpi_workers")) {
-    n_child = x.v;
   }
 
   for (size_t i_child = 0; i_child < n_child; ++i_child) {
