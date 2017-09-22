@@ -8,6 +8,8 @@
 #include <memory>
 #include <pthread.h>
 #include <string>
+#include <sys/types.h>
+#include <unistd.h>
 #include <vector>
 
 // a per-worker store
@@ -142,8 +144,9 @@ struct CollectiveCommand {
   }
 
   void execute_for(HDFIDStore &store) {
+    LOG(8, "execute  cqid: {}  mpi_rank: {}  pid: {}  {}", store.cqid,
+        store.mpi_rank, getpid(), to_string());
     if (type == CollectiveCommandType::SetExtent) {
-      LOG(8, "execute {}", to_string());
       // the dataset must be open because it must have been created by another
       // collective call.
       herr_t err = 0;
@@ -201,6 +204,9 @@ public:
     for (auto &x : barriers) {
       x.store(0);
     }
+    for (auto &x : n_queued) {
+      x.store(0);
+    }
     pthread_mutexattr_t mx_attr;
     if (pthread_mutexattr_init(&mx_attr) != 0) {
       LOG(3, "fail pthread_mutexattr_init");
@@ -234,7 +240,9 @@ public:
     }
     auto n = nclients;
     mark_open[n] = true;
-    markers[n] = 0;
+    for (auto &x : markers) {
+      x[n] = 0;
+    }
     nclients += 1;
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
@@ -243,8 +251,9 @@ public:
     return n;
   }
 
-  int push(CollectiveCommand item) {
-    if (n.load() >= items.size()) {
+  int push(HDFIDStore &store, size_t queue, CollectiveCommand item) {
+    auto &items = queues[queue];
+    if (n_queued[queue].load() >= items.size()) {
       LOG(3, "Command queue full");
       exit(1);
       return 1;
@@ -253,14 +262,14 @@ public:
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
-    auto n1 = n.load();
+    auto n1 = n_queued[queue].load();
 
     bool do_insert = true;
     // check for doubles
     {
       for (size_t i1 = 0; i1 < n1; ++i1) {
         if (item.equivalent(items[i1])) {
-          // LOG(7, "found equivalent command");
+          LOG(7, "found equivalent command, skip {}", item.to_string());
           do_insert = false;
           break;
         }
@@ -268,10 +277,11 @@ public:
     }
 
     if (do_insert) {
-      LOG(8, "push new ccmd  cmd: {}", item.to_string());
+      LOG(8, "push CQ  cqid: {}  queue: {}  n1: {}  cmd: {}", store.cqid, queue,
+          n1, item.to_string());
       items[n1] = item;
       n1 += 1;
-      LOG(8, "now have {} in queue", n.load());
+      n_queued[queue].store(n1);
     }
 
     // TODO
@@ -280,7 +290,6 @@ public:
     //   Move all markers
     //   Set the new 'n'
 
-    n.store(n1);
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
@@ -288,26 +297,29 @@ public:
     return 0;
   }
 
-  void all_for(HDFIDStore &store, std::vector<CollectiveCommand> &ret) {
+  void all_for(HDFIDStore &store, size_t queue,
+               std::vector<CollectiveCommand> &ret) {
     if (pthread_mutex_lock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
-    auto n1 = n.load();
-    for (size_t i1 = markers.at(store.cqid); i1 < n1; ++i1) {
+    LOG(7, "all_for  cqid: {}  queue: {}", store.cqid, queue);
+    auto n1 = n_queued[queue].load();
+    auto &items = queues[queue];
+    for (size_t i1 = markers.at(queue).at(store.cqid); i1 < n1; ++i1) {
       ret.push_back(items[i1]);
     }
-    markers.at(store.cqid) = n1;
+    markers.at(queue).at(store.cqid) = n1;
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
     }
   }
 
-  void execute_for(HDFIDStore &store) {
+  void execute_for(HDFIDStore &store, size_t queue) {
     LOG(9, "execute_for  cqid: {}", store.cqid);
     std::vector<CollectiveCommand> cmds;
-    all_for(store, cmds);
+    all_for(store, queue, cmds);
     LOG(9, "execute_for  cqid: {}  cmds: {}", store.cqid, cmds.size());
     for (auto &cmd : cmds) {
       cmd.execute_for(store);
@@ -335,7 +347,7 @@ public:
 
   void close_for(HDFIDStore &store) { mark_open.at(store.cqid) = false; }
 
-  void wait_for_barrier(HDFIDStore *store, size_t i) {
+  void wait_for_barrier(HDFIDStore *store, size_t i, size_t queue) {
     auto &n = barriers.at(i);
     int i1 = 0;
     while (true) {
@@ -345,7 +357,7 @@ public:
         break;
       }
       if (store) {
-        execute_for(*store);
+        execute_for(*store, queue);
       }
       sleep_ms(10);
       if (i1 > 1000) {
@@ -356,14 +368,15 @@ public:
     }
   }
 
-  std::atomic<size_t> n{0};
+  // std::atomic<size_t> n { 0 };
+  std::array<std::atomic<size_t>, 2> n_queued;
 
 private:
   pthread_mutex_t mx;
   static size_t const ITEMS_MAX = 16000;
-  std::array<CollectiveCommand, ITEMS_MAX> items;
+  std::array<std::array<CollectiveCommand, ITEMS_MAX>, 2> queues;
   // Mark position for each participant
-  std::array<size_t, 256> markers;
+  std::array<std::array<size_t, 256>, 2> markers;
   std::array<bool, 256> mark_open;
   size_t nclients = 0;
   Jemalloc::sptr jm;

@@ -137,17 +137,17 @@ void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
 }
 
 int main(int argc, char **argv) {
-  log_level = 7;
-
-  if (argc < 3) {
+  if (argc < 2) {
     LOG(3, "not enough arguments");
     return -1;
   }
-  // LOG(3, "conf: {}", argv[2]);
   using namespace rapidjson;
   Document jconf;
   jconf.Parse(argv[1]);
-  LOG(3, "jconf: {}", json_to_string(jconf));
+  if (auto x = get_int(&jconf, "log_level")) {
+    log_level = x.v;
+  }
+  LOG(7, "jconf: {}", json_to_string(jconf));
 
   int err = MPI_SUCCESS;
   MPI_Init(&argc, &argv);
@@ -251,7 +251,7 @@ int main(int argc, char **argv) {
         // execute all pending commands before the next message
         if (true || t_now - t_last > MS(100)) {
           t_last = t_now;
-          cq->execute_for(hdf_store);
+          cq->execute_for(hdf_store, 0);
         }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
 
   LOG(6, ".....................  wait for  CLOSING");
   cq->barriers[0]++;
-  cq->wait_for_barrier(&hdf_store, 0);
+  cq->wait_for_barrier(&hdf_store, 0, 0);
   LOG(6, "===============================  CLOSING   "
          "=========================================");
 
@@ -285,20 +285,31 @@ int main(int argc, char **argv) {
 
   LOG(6, ".....................  wait for  CQ EXEC");
   cq->barriers[1]++;
-  cq->wait_for_barrier(&hdf_store, 1);
+  cq->wait_for_barrier(&hdf_store, 1, 0);
   LOG(6, "===============================  CQ EXEC   "
          "=========================================");
 
-  cq->execute_for(hdf_store);
-  hdf_store.check_all_empty();
+  cq->execute_for(hdf_store, 0);
 
+  LOG(6, ".....................  wait for  CQ EXEC 2");
+  cq->barriers[2]++;
+  cq->wait_for_barrier(&hdf_store, 2, 0);
+  LOG(6, "===============================  CQ EXEC 2   "
+         "=======================================");
+
+  cq->execute_for(hdf_store, 1);
+  hdf_store.check_all_empty();
   hdf_file.reset();
+
+  LOG(6, ".....................  wait for  MPI BARRIER");
+  cq->barriers[3]++;
+  cq->wait_for_barrier(&hdf_store, 3, 1);
+  LOG(6, "===============================  MPI BARRIER   "
+         "=====================================");
 
   LOG(6, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);
   LOG(6, "Barrier 2 AFTER");
-
-  cq->execute_for(hdf_store);
 
   LOG(6, "ask for disconnect");
   // MPI_Comm_disconnect(&comm_parent);

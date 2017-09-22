@@ -206,8 +206,8 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     full_path += "/";
     full_path += name;
     LOG(3, "h5d::open collective [{}]", full_path);
-    cq->push(CollectiveCommand::H5Dopen2(full_path.c_str()));
-    cq->execute_for(*hdf_store);
+    cq->push(*hdf_store, 0, CollectiveCommand::H5Dopen2(full_path.c_str()));
+    cq->execute_for(*hdf_store, 0);
 
     auto ret = ptr(new h5d);
     auto &o = *ret;
@@ -318,10 +318,9 @@ h5d::~h5d() {
       size_t CQSNOWIX = -1;
       lookup_cqsnowix(ds_name, CQSNOWIX);
       snow[0] = cq->snow[CQSNOWIX].load();
-      cq->push(
-          CollectiveCommand::set_extent(ds_name, snow.size(), snow.data()));
-      cq->push(CollectiveCommand::H5Dclose(ds_name));
-      cq->execute_for(*hdf_store);
+      cq->push(*hdf_store, 0, CollectiveCommand::set_extent(
+                                  ds_name, snow.size(), snow.data()));
+      cq->push(*hdf_store, 1, CollectiveCommand::H5Dclose(ds_name));
       id = -1;
     }
   }
@@ -455,9 +454,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     } else {
       // H5O_info_t oi;
       // H5Oget_info(id, &oi);
-      cq->push(
-          CollectiveCommand::set_extent(ds_name, sext2.size(), sext2.data()));
-      cq->execute_for(*hdf_store);
+      cq->push(*hdf_store, 0, CollectiveCommand::set_extent(
+                                  ds_name, sext2.size(), sext2.data()));
+      cq->execute_for(*hdf_store, 0);
       dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
       if (true) {
         // LOG(9, "try to get the dsp dims:");
@@ -582,10 +581,8 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
         return {AppendResult::ERROR};
       }
     } else if (mpi_rank == 1) {
-      if (mpi_rank == 1) {
-        cq->push(CollectiveCommand::set_extent(buf, sext.size(), sext.data()));
-      }
-      return {AppendResult::WAIT_FOR_EXTENT};
+      LOG(3, "NOT IMPLEMENTED");
+      exit(1);
     }
 
     err = H5Dset_extent(id, snow.data());

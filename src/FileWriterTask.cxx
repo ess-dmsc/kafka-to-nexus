@@ -166,6 +166,9 @@ void FileWriterTask::mpi_stop() {
 
   auto &cq = hdf_file.cq;
 
+  HDFIDStore *hdf_store = nullptr;
+  // auto & hdf_store = * hdf_store_placeholder;
+
   // not possible to use barriers because parallel HDF also uses barriers.
   LOG(3, ".....................  wait for  CLOSING");
   /*
@@ -182,7 +185,7 @@ void FileWriterTask::mpi_stop() {
   }
   */
   cq->barriers[0]++;
-  cq->wait_for_barrier(nullptr, 0);
+  cq->wait_for_barrier(hdf_store, 0, 0);
   // LOG(3, "sleep before closing");
   // sleep_ms(6000);
   LOG(3, "===============================  CLOSING   "
@@ -202,12 +205,28 @@ void FileWriterTask::mpi_stop() {
   }
   */
   cq->barriers[1]++;
-  cq->wait_for_barrier(nullptr, 1);
+  cq->wait_for_barrier(hdf_store, 1, 0);
   // LOG(3, "sleep before exec");
   // sleep_ms(6000);
   LOG(3, "===============================  CQ EXEC   "
          "=========================================");
   // sleep_ms(600);
+
+  // cq->execute_for(hdf_store, 0);
+
+  LOG(6, ".....................  wait for  CQ EXEC 2");
+  cq->barriers[2]++;
+  cq->wait_for_barrier(hdf_store, 2, 0);
+  LOG(6, "===============================  CQ EXEC 2   "
+         "=======================================");
+
+  // cq->execute_for(hdf_store, 1);
+
+  LOG(6, ".....................  wait for  MPI BARRIER");
+  cq->barriers[3]++;
+  cq->wait_for_barrier(hdf_store, 3, 1);
+  LOG(6, "===============================  MPI BARRIER   "
+         "=====================================");
 
   LOG(3, "Barrier 2 BEFORE");
   MPI_Barrier(comm_all);
@@ -219,8 +238,6 @@ void FileWriterTask::mpi_stop() {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);
   }
-  LOG(3, "sleeping");
-  std::this_thread::sleep_for(std::chrono::milliseconds(1000));
   // MPI_Finalize();
 }
 
