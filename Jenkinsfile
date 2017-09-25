@@ -7,7 +7,7 @@ node('docker && eee') {
         --name ${container_name} \
         --tty \
         --env http_proxy=${env.http_proxy} \
-        --env https_proxy=${env.https_proxy} \"
+        --env https_proxy=${env.https_proxy}"
 
     try {
         container = centos.run(run_args)
