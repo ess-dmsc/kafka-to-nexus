@@ -361,7 +361,7 @@ public:
       if (store) {
         execute_for(*store, queue);
       }
-      sleep_ms(10);
+      sleep_ms(100);
       if (i1 > 1000) {
         LOG(3, "timeout");
         exit(1);
