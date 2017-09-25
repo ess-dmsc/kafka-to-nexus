@@ -39,7 +39,6 @@ node('docker && eee') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                source ${epics_profile_file}
                 cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} sh -c \"${configure_script}\""
