@@ -434,7 +434,7 @@ static void create_hdf_structures(rapidjson::Value const *value,
 
 static void set_common_props(hid_t fcpl, hid_t fapl) {
   herr_t err = 0;
-  size_t const PAGE_SIZE = 4 * 1024 * 1024;
+  size_t const PAGE_SIZE = 1 << 22;
   // H5F_FSPACE_STRATEGY_FSM_AGGR
   // H5F_FSPACE_STRATEGY_PAGE
   // H6F_FSPACE_STRATEGY_AGGR
@@ -444,7 +444,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
     // H5F_FSPACE_STRATEGY_NONE
     // H5F_FSPACE_STRATEGY_PAGE
     err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
-                                     1024 * 1024);
+                                     1 << 20);
     if (err < 0) {
       LOG(7, "failed H5Pset_file_space_strategy");
     }
@@ -477,9 +477,9 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (0) {
+  if (1) {
     // 521  1483  9973
-    err = H5Pset_cache(fapl, 0, 9973, 1024 * PAGE_SIZE, 0.0);
+    err = H5Pset_cache(fapl, 0, 9973, 1 << 33, 0.0);
     if (err < 0) {
       LOG(7, "failed H5Pset_cache");
     }
@@ -497,7 +497,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
   //     MPI_Info_set(info, "ind_rd_buffer_size", "2097152");
   //     MPI_Info_set(info, "ind_wr_buffer_size", "1048576");
   // MPI_Info_set(info, "ind_wr_buffer_size", "268435456");
-  MPI_Info_set(info, "romio_cb_write", "enable");
+  // MPI_Info_set(info, "romio_cb_write", "enable");
   H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, info);
 // MPI_Info_free(&info);
 #endif
