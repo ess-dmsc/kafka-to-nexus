@@ -122,7 +122,7 @@ struct CollectiveCommand {
       if (v.set_extent.ndims != x.v.set_extent.ndims) {
         return false;
       }
-      if (v.set_extent.size[0] != x.v.set_extent.size[0]) {
+      if (v.set_extent.size[0] > x.v.set_extent.size[0]) {
         return false;
       }
       break;
