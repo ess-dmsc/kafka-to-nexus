@@ -39,7 +39,7 @@ node('docker && eee') {
         }
 
         stage('Configure') {
-           sh "bash ../code/build-script/invoke-cmake-from-jenkinsfile.sh"
+           sh "bash ../${project}/build-script/invoke-cmake-from-jenkinsfile.sh"
         }
 
         stage('Build') {
