@@ -39,9 +39,10 @@ node('docker && eee') {
         }
 
         stage('Configure') {
+            sh "scl enable devtoolset-6 $SHELL"
             def configure_script = """
                 cd build
-                scl enable devtoolset-6 -- cmake3 ../${project} -DREQUIRE_GTEST=ON
+                cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} sh -c \"${configure_script}\""
         }
