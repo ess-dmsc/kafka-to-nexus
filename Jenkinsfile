@@ -28,7 +28,7 @@ node('docker && eee') {
                 export https_proxy=''
                 mkdir build
                 cd build
-                scl enable devtoolset-6 $SHELL
+                sh "scl enable devtoolset-6 $SHELL"
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
@@ -40,7 +40,7 @@ node('docker && eee') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                scl enable devtoolset-6 $SHELL
+                sh "scl enable devtoolset-6 $SHELL"
                 cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} sh -c \"${configure_script}\""
