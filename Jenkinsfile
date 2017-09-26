@@ -19,17 +19,16 @@ node('docker && eee') {
                 git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
             """
             sh "docker exec ${container_name} sh -c \"${checkout_script}\""
-            sh "scl enable devtoolset-6 $SHELL"
         }
 
         stage('Get Dependencies') {
-            sh "scl enable devtoolset-6 $SHELL"
             def conan_remote = "ess-dmsc-local"
             def dependencies_script = """
                 export http_proxy=''
                 export https_proxy=''
                 mkdir build
                 cd build
+                scl enable devtoolset-6 $SHELL
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
@@ -39,11 +38,18 @@ node('docker && eee') {
         }
 
         stage('Configure') {
+            def configure_script = """
+                cd build
+                scl enable devtoolset-6 $SHELL
+                cmake3 ../${project} -DREQUIRE_GTEST=ON
+            """
+            sh "docker exec ${container_name} sh -c \"${configure_script}\""
+
            sh "bash ../${project}/build-script/invoke-cmake-from-jenkinsfile.sh"
         }
 
         stage('Build') {
-            def build_script = "make --directory=./build VERBOSE=1"
+            def build_script = "scl enable devtoolset-6 -- make --directory=./build VERBOSE=1"
             sh "docker exec ${container_name} sh -c \"${build_script}\""
         }
 
