@@ -141,14 +141,18 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   if (do_mpi) {
     // TODO yield on contention
     for (int i1 = 0; true; ++i1) {
-      if (queue->push(msg) == 0) {
+      auto n = queue->push(msg);
+      if (n == 0) {
         break;
       }
-      if (i1 >= 10000) {
+      if (i1 % (1 << 7) == 0) {
+        LOG(3, "queue full  i1: {}  n: {}", i1, n);
+      }
+      if (i1 >= (1 << 11)) {
         LOG(3, "QUEUE IS FULL FOR TOO LONG TIME");
         break;
       }
-      sleep_ms(1);
+      sleep_ms(4);
     }
     return ProcessMessageResult::OK();
   }

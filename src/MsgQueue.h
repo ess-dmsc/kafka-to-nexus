@@ -40,17 +40,19 @@ public:
   }
   MsgQueue(MsgQueue &x) { swap(*this, x); }
   int push(Msg &msg) {
-    if (n >= items.size()) {
-      return 1;
-    }
     if (pthread_mutex_lock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
+    if (n >= items.size()) {
+      if (pthread_mutex_unlock(&mx) != 0) {
+        LOG(1, "fail pthread_mutex_unlock");
+        exit(1);
+      }
+      return n;
+    }
     // LOG(3, "queuen msg {} / {}", msg.type, msg._size);
-    // TODO fix mistake in declaration....
     items[n].swap(msg);
-    // LOG(3, "done");
     n += 1;
     // LOG(3, "now have {} in queue", n.load());
     if (pthread_mutex_unlock(&mx) != 0) {
