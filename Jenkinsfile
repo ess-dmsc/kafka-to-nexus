@@ -19,7 +19,7 @@ node('docker && eee') {
                 git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
             """
             sh "docker exec ${container_name} sh -c \"${checkout_script}\""
-            sh "scl enable devtoolset-6"
+            sh "scl enable devtoolset-6 $SHELL"
         }
 
         stage('Get Dependencies') {
