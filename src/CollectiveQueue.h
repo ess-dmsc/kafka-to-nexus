@@ -194,7 +194,11 @@ public:
   using ptr = std::unique_ptr<CollectiveQueue>;
 
   CollectiveQueue(Jemalloc::sptr jm) : jm(jm) {
-    std::memset(markers.data(), 0, markers.size());
+    for (auto &x1 : markers) {
+      for (auto &x2 : x1) {
+        x2 = 0;
+      }
+    }
     for (auto &x : mark_open) {
       x = false;
     }
@@ -239,6 +243,10 @@ public:
       exit(1);
     }
     auto n = nclients;
+    if (n >= mark_open.size()) {
+      LOG(3, "can not register more clients  n: {}", n);
+      exit(1);
+    }
     mark_open[n] = true;
     for (auto &x : markers) {
       x[n] = 0;
@@ -254,9 +262,8 @@ public:
   int push(HDFIDStore &store, size_t queue, CollectiveCommand item) {
     auto &items = queues[queue];
     if (n_queued[queue].load() >= items.size()) {
-      LOG(3, "Command queue full");
+      LOG(3, "Command queue full  n_queued[queue]: {}", n_queued[queue].load());
       exit(1);
-      return 1;
     }
     if (pthread_mutex_lock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_lock");
@@ -329,9 +336,16 @@ public:
   }
 
   void register_datasetname(std::string name) {
-    auto n = datasetname_to_snow_a_ix__n++;
+    auto &n = datasetname_to_snow_a_ix__n;
+    auto &a = datasetname_to_snow_a_ix_name;
+    if (n >= a.size()) {
+      LOG(3, "can not register more datasets");
+      exit(1);
+    }
     LOG(7, "register dataset {} as snow_a_ix {}", name, n);
-    std::strncpy(datasetname_to_snow_a_ix_name[n].data(), name.data(), 256);
+    std::strncpy(a[n].data(), name.data(), a[n].size());
+    a[n][a[n].size() - 1] = 0;
+    ++n;
   }
 
   size_t find_snowix_for_datasetname(std::string name) {
@@ -387,7 +401,7 @@ public:
   // hitch-hiker:
   using AT = std::atomic<size_t>;
   std::array<AT, 1024> snow;
-  std::array<std::array<char, 256>, 32> datasetname_to_snow_a_ix_name;
+  std::array<std::array<char, 256>, 128> datasetname_to_snow_a_ix_name;
   size_t datasetname_to_snow_a_ix__n = 0;
 
   std::array<std::atomic<int>, 8> barriers;

@@ -318,7 +318,7 @@ h5d::~h5d() {
       size_t CQSNOWIX = -1;
       lookup_cqsnowix(ds_name, CQSNOWIX);
       snow[0] = cq->snow[CQSNOWIX].load();
-      cq->push(*hdf_store, 0, CollectiveCommand::set_extent(
+      cq->push(*hdf_store, 1, CollectiveCommand::set_extent(
                                   ds_name, snow.size(), snow.data()));
       cq->push(*hdf_store, 1, CollectiveCommand::H5Dclose(ds_name));
       id = -1;
@@ -427,11 +427,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   if (snext + nlen > sext[0]) {
     auto t1 = CLK::now();
-    size_t const BLOCK = 4 * 1024 * 1024;
+    // TODO
+    // Make these configurable, and the default much smaller than it is right
+    // now.
+    uint32_t const BLOCK = 22;
+    uint32_t const MAX = BLOCK + 7;
     std::array<hsize_t, 2> sext2;
     sext2[0] = sext[0];
     sext2[1] = sext[1];
-    sext2[0] = ((snext + nlen) * 4 / 3 / BLOCK + 1) * BLOCK;
+    sext2[0] = (1 + (((snext + nlen) * 4 / 3) >> BLOCK)) << BLOCK;
+    if (sext2[0] - sext[0] > (1 << MAX)) {
+      sext2[0] = sext[0] + (1 << MAX);
+    }
     LOG(7, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext, sext[0],
         sext2[0]);
 
@@ -536,9 +543,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t3 = CLK::now();
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
-  if (dt1 > 20 or dt2 > 20) {
-    LOG(9, "append_data_1d DONE  {} ms + {} ms", dt1, dt2);
-  }
+  // TODO gather stats
+  // LOG(9, "append_data_1d DONE  {} ms + {} ms", dt1, dt2);
   return {AppendResult::OK, sizeof(T) * nlen, tgt_start[0]};
 }
 

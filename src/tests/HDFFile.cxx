@@ -489,7 +489,8 @@ public:
       for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
         size_t i_source = 0;
         for (auto &source : sources) {
-          LOG(6, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
+          LOG(8 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
+              i_feed, i_source);
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());

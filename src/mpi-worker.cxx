@@ -206,29 +206,35 @@ int main(int argc, char **argv) {
   auto hdf_file = std::unique_ptr<HDFFile>(new HDFFile);
   // no need to set the cq ptr on hdffile here, it is just the resource owner in
   // main process.
+  LOG(7, "hdf_file->reopen()  {}", hdf_fname);
   hdf_file->reopen(hdf_fname, Value());
   hdf_store.h5file = hdf_file->h5file;
 
   auto module = jconf["stream"]["module"].GetString();
 
+  LOG(7, "HDFWriterModuleRegistry::find(module)  {}", module);
   auto module_factory = HDFWriterModuleRegistry::find(module);
   if (!module_factory) {
     LOG(5, "Module '{}' is not available", module);
     exit(1);
   }
 
+  LOG(7, "module_factory()");
   auto hdf_writer_module = module_factory();
   if (!hdf_writer_module) {
     LOG(5, "Can not create a HDFWriterModule for '{}'", module);
     exit(1);
   }
 
+  LOG(7, "hdf_writer_module->parse_config()");
   hdf_writer_module->parse_config(jconf["stream"], nullptr);
+  LOG(7, "hdf_writer_module->reopen()");
   hdf_writer_module->reopen(hdf_file->h5file,
                             jconf["stream"]["hdf_parent_name"].GetString(), cq,
                             &hdf_store);
   // jconf["stream"]["hdf_parent_name"].GetString()
 
+  LOG(7, "hdf_writer_module->enable_cq()");
   hdf_writer_module->enable_cq(cq, &hdf_store, rank_merged);
 
   LOG(3, "Barrier 1 BEFORE");
