@@ -32,7 +32,7 @@ node('docker && eee') {
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
-                conan install ../${project}/conan --build=missing -s compiler.version=6.2
+                sh "scl enable devtoolset-6 -- conan install ../${project}/conan --build=missing"
             """
             sh "docker exec ${container_name} sh -c \"${dependencies_script}\""
         }
@@ -40,7 +40,7 @@ node('docker && eee') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                cmake3 ../${project} -DREQUIRE_GTEST=ON
+                sh "scl enable devtoolset-6 -- cmake3 ../${project} -DREQUIRE_GTEST=ON"
             """
             sh "docker exec ${container_name} sh -c \"${configure_script}\""
         }
