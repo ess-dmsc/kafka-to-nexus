@@ -19,6 +19,7 @@ node('docker && eee') {
                 git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
             """
             sh "docker exec ${container_name} sh -c \"${checkout_script}\""
+            sh "scl enable devtoolset-6"
         }
 
         stage('Get Dependencies') {
@@ -26,7 +27,6 @@ node('docker && eee') {
             def dependencies_script = """
                 export http_proxy=''
                 export https_proxy=''
-	        scl enable devtoolset-6
                 mkdir build
                 cd build
                 conan remote add \
@@ -40,7 +40,7 @@ node('docker && eee') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                scl enable devtoolset-6 -- cmake3 ../${project} -DREQUIRE_GTEST=ON
+                cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} sh -c \"${configure_script}\""
         }
