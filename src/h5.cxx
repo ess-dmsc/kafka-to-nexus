@@ -431,7 +431,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     // Make these configurable, and the default much smaller than it is right
     // now.
     uint32_t const BLOCK = 22;
-    uint32_t const MAX = BLOCK + 7;
+    uint32_t const MAX = BLOCK + 8;
     std::array<hsize_t, 2> sext2;
     sext2[0] = sext[0];
     sext2[1] = sext[1];
