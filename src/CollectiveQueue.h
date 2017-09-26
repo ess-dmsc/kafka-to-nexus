@@ -372,7 +372,7 @@ public:
       if (n1 == nclients) {
         break;
       }
-      if (store) {
+      if (store && queue != -1) {
         execute_for(*store, queue);
       }
       sleep_ms(100);

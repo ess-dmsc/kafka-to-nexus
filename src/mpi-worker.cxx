@@ -316,12 +316,23 @@ int main(int argc, char **argv) {
          "=====================================");
 
   LOG(6, "Barrier 2 BEFORE");
-  MPI_Barrier(comm_all);
+  err = MPI_Barrier(comm_all);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Barrier");
+    exit(1);
+  }
   LOG(6, "Barrier 2 AFTER");
 
   LOG(6, "ask for disconnect");
   // MPI_Comm_disconnect(&comm_parent);
-  MPI_Comm_disconnect(&comm_all);
+  err = MPI_Comm_disconnect(&comm_all);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Comm_disconnect");
+    exit(1);
+  }
+  LOG(6, ".....................  wait for  LAST BARRIER");
+  cq->barriers[4]++;
+  cq->wait_for_barrier(&hdf_store, 4, -1);
   if (false) {
     LOG(6, "finalizing {}", rank_merged);
     MPI_Finalize();

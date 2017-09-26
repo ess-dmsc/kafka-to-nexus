@@ -229,11 +229,24 @@ void FileWriterTask::mpi_stop() {
          "=====================================");
 
   LOG(3, "Barrier 2 BEFORE");
-  MPI_Barrier(comm_all);
+  err = MPI_Barrier(comm_all);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Barrier");
+    exit(1);
+  }
   LOG(3, "Barrier 2 AFTER");
   LOG(3, "ask for disconnect");
   err = MPI_Comm_disconnect(&comm_all);
   // err = MPI_Comm_disconnect(&comm_spawned);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Comm_disconnect");
+    exit(1);
+  }
+  LOG(6, ".....................  wait for  LAST BARRIER");
+  cq->barriers[4]++;
+  cq->wait_for_barrier(hdf_store, 4, -1);
+  // LOG(3, "sleep after disconnect");
+  // sleep_ms(2000);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);
