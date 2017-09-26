@@ -32,7 +32,7 @@ node('docker && eee') {
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
-                conan install ../${project}/conan --build=missing
+                conan install ../${project}/conan --build=missing -s compiler.version=4.9
             """
             sh "docker exec ${container_name} sh -c \"${dependencies_script}\""
         }
