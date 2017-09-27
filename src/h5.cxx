@@ -524,7 +524,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t2 = CLK::now();
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
-    LOG(3, "write failed");
+    if (cq) {
+      LOG(3, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid, ds_name);
+    } else {
+      LOG(3, "write failed:");
+    }
     if (log_level >= 7) {
       std::array<hsize_t, 4> sext;
       std::array<hsize_t, 4> smax;
