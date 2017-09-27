@@ -315,12 +315,15 @@ h5d::~h5d() {
       }
       id = -1;
     } else {
+      LOG(9, "~h5d ds  cqid: {}", hdf_store->cqid);
       size_t CQSNOWIX = -1;
       lookup_cqsnowix(ds_name, CQSNOWIX);
       snow[0] = cq->snow[CQSNOWIX].load();
+      // TODO
+      // Trim the final size, needs some more work.
       cq->push(*hdf_store, 1, CollectiveCommand::set_extent(
                                   ds_name, snow.size(), snow.data()));
-      cq->push(*hdf_store, 1, CollectiveCommand::H5Dclose(ds_name));
+      cq->push(*hdf_store, 2, CollectiveCommand::H5Dclose(ds_name));
       id = -1;
     }
   }
