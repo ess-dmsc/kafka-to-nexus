@@ -125,6 +125,9 @@ struct CollectiveCommand {
       }
       if (v.set_extent.size[0] > x.v.set_extent.size[0]) {
         return false;
+      } else {
+        LOG(7, "rejected because {} <= {}", v.set_extent.size[0],
+            x.v.set_extent.size[0]);
       }
       break;
     case CollectiveCommandType::H5Dopen2:
