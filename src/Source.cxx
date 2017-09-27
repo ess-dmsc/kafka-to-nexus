@@ -145,10 +145,10 @@ ProcessMessageResult Source::process_message(Msg &msg) {
       if (n == 0) {
         break;
       }
-      if (i1 % (1 << 7) == 0) {
+      if (i1 % (1 << 9) == 0) {
         LOG(3, "queue full  i1: {}  n: {}", i1, n);
       }
-      if (i1 >= (1 << 11)) {
+      if (i1 >= (1 << 12)) {
         LOG(3, "QUEUE IS FULL FOR TOO LONG TIME");
         break;
       }
