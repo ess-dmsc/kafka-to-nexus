@@ -148,7 +148,7 @@ struct CollectiveCommand {
   }
 
   void execute_for(HDFIDStore &store) {
-    LOG(8, "execute  cqid: {}  mpi_rank: {}  pid: {}  {}", store.cqid,
+    LOG(7, "execute  cqid: {}  mpi_rank: {}  pid: {}  {}", store.cqid,
         store.mpi_rank, getpid(), to_string());
     if (type == CollectiveCommandType::SetExtent) {
       // the dataset must be open because it must have been created by another
@@ -161,7 +161,7 @@ struct CollectiveCommand {
       // This seems to trigger a MPI send, recv and barrier!
       err = H5Dset_extent(id, v.set_extent.size);
       if (err < 0) {
-        LOG(3, "fail H5Dset_extent");
+        LOG(3, "fail H5Dset_extent  cqid: {}  {}", store.cqid, to_string());
         exit(1);
       }
       store.datasetname_to_dsp_id[v.set_extent.name] = H5Dget_space(id);
@@ -290,8 +290,8 @@ public:
     }
 
     if (do_insert) {
-      LOG(8, "push CQ  cqid: {}  queue: {}  n1: {}  cmd: {}", store.cqid, queue,
-          n1, item.to_string());
+      LOG(7, "push CQ  cqid: {:2}  queue: {}  n1: {:4}  cmd: {}", store.cqid,
+          queue, n1, item.to_string());
       items[n1] = item;
       n1 += 1;
       n_queued[queue].store(n1);
@@ -316,13 +316,17 @@ public:
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
-    LOG(9, "all_for  cqid: {}  queue: {}", store.cqid, queue);
     auto n1 = n_queued[queue].load();
+    auto n2 = markers.at(queue).at(store.cqid);
+    LOG(9, "all_for  cqid: {}  queue: {}  n1: {}  n2: {}", store.cqid, queue,
+        n1, n2);
     auto &items = queues[queue];
-    for (size_t i1 = markers.at(queue).at(store.cqid); i1 < n1; ++i1) {
+    for (size_t i1 = n2; i1 < n1; ++i1) {
       ret.push_back(items[i1]);
     }
     markers.at(queue).at(store.cqid) = n1;
+    LOG(9, "all_for  cqid: {}  queue: {}  marker updated: {}", store.cqid,
+        queue, markers.at(queue).at(store.cqid));
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
@@ -386,17 +390,20 @@ public:
       }
       i1 += 1;
     }
+    if (store && queue != -1) {
+      execute_for(*store, queue);
+    }
   }
 
   // std::atomic<size_t> n { 0 };
-  std::array<std::atomic<size_t>, 2> n_queued;
+  std::array<std::atomic<size_t>, 4> n_queued;
 
 private:
   pthread_mutex_t mx;
   static size_t const ITEMS_MAX = 16000;
-  std::array<std::array<CollectiveCommand, ITEMS_MAX>, 2> queues;
+  std::array<std::array<CollectiveCommand, ITEMS_MAX>, 4> queues;
   // Mark position for each participant
-  std::array<std::array<size_t, 256>, 2> markers;
+  std::array<std::array<size_t, 256>, 4> markers;
   std::array<bool, 256> mark_open;
   size_t nclients = 0;
   Jemalloc::sptr jm;
