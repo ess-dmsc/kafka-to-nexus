@@ -675,9 +675,7 @@ typename h5d_chunked_1d<T>::ptr h5d_chunked_1d<T>::open(hid_t loc, string name,
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, h5d ds)
-    : ds(move(ds)), dsp_wr(this->ds) {
-  buf.resize(buf_SIZE);
-}
+    : ds(move(ds)), dsp_wr(this->ds) {}
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
@@ -695,18 +693,25 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y) {
   swap(x.ds, y.ds);
   swap(x.dsp_wr, y.dsp_wr);
   swap(x.i0, y.i0);
-  swap(x.buf_MAXPKG, y.buf_MAXPKG);
-  swap(x.buf_SIZE, y.buf_SIZE);
+  swap(x.buf_packet_max, y.buf_packet_max);
+  swap(x.buf_size, y.buf_size);
   swap(x.buf, y.buf);
   swap(x.buf_n, y.buf_n);
 }
 
 template <typename T>
+void h5d_chunked_1d<T>::buffer_init(size_t buf_size, size_t buf_packet_max) {
+  this->buf_size = buf_size;
+  this->buf_packet_max = buf_packet_max;
+  buf.resize(buf_size);
+}
+
+template <typename T>
 append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   auto nbytes = nlen * sizeof(T);
-  bool do_buf = nbytes <= buf_MAXPKG;
-  auto buffer = [this, &nbytes](T const *data) {
-    if (buf_n + nbytes > buf_SIZE) {
+  bool do_buf = nbytes <= buf_packet_max;
+  auto buffer_append = [this, &nbytes](T const *data) {
+    if (buf_n + nbytes > buf_size) {
       LOG(3, "fail buffer");
       exit(1);
     }
@@ -720,24 +725,14 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
     count_buffer_copy_bytes += nbytes;
   };
   if (do_buf) {
-    buffer(data);
+    buffer_append(data);
   }
   // Flush the buffer if there is a chance that it will be full on the next
   // iteration.
-  if (buf_n > buf_SIZE - 10 * buf_MAXPKG || (!do_buf && buf_n > 0)) {
-    // This can fail if extent is not sufficient.
+  if (buf_n + buf_packet_max > buf_size || (!do_buf && buf_n > 0)) {
     auto res = flush_buf();
     if (res == AppendResult::ERROR) {
-      // hard error
       return {res};
-    } else if (res == AppendResult::WAIT_FOR_EXTENT) {
-      if (!do_buf) {
-        // if not buffered before, buffer it now.
-        // if this fails, we are lost.
-        LOG(3, "!do_buf but flush which gives WAIT_FOR_EXTENT, so buffer");
-        buffer(data);
-      }
-      // fine for now, return in the end as if everything is fine.
     } else if (res != AppendResult::OK) {
       LOG(3, "unhandled error");
       exit(1);
@@ -747,12 +742,6 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
     auto res = ds.append_data_1d(data, nlen);
     if (res.status == AppendResult::ERROR) {
       return {res};
-    } else if (res.status == AppendResult::WAIT_FOR_EXTENT) {
-      LOG(3, "!do_buf but WAIT_FOR_EXTENT, so buffer");
-      buffer(data);
-    } else if (res.status != AppendResult::OK) {
-      LOG(3, "unhandled error");
-      exit(1);
     }
   }
   append_ret ret;

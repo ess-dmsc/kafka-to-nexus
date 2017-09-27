@@ -40,15 +40,15 @@ enum struct CollectiveCommandType : uint8_t {
   H5Dclose,
 };
 
-struct CollectiveCommand {
+#define STR_NAME_MAX_2 255
 
-  static size_t const STR_NAME_MAX = 200;
+struct CollectiveCommand {
 
   static CollectiveCommand set_extent(char const *name, hsize_t const ndims,
                                       hsize_t const *size) {
     CollectiveCommand ret;
     ret.type = CollectiveCommandType::SetExtent;
-    strncpy(ret.v.set_extent.name, name, STR_NAME_MAX);
+    strncpy(ret.v.set_extent.name, name, STR_NAME_MAX_2);
     ret.v.set_extent.ndims = ndims;
     for (size_t i1 = 0; i1 < ndims; ++i1) {
       ret.v.set_extent.size[i1] = size[i1];
@@ -59,14 +59,14 @@ struct CollectiveCommand {
   static CollectiveCommand H5Dopen2(char const *name) {
     CollectiveCommand ret;
     ret.type = CollectiveCommandType::H5Dopen2;
-    strncpy(ret.v.H5Dopen2.name, name, STR_NAME_MAX);
+    strncpy(ret.v.H5Dopen2.name, name, STR_NAME_MAX_2);
     return ret;
   }
 
   static CollectiveCommand H5Dclose(char const *name) {
     CollectiveCommand ret;
     ret.type = CollectiveCommandType::H5Dclose;
-    strncpy(ret.v.H5Dclose.name, name, STR_NAME_MAX);
+    strncpy(ret.v.H5Dclose.name, name, STR_NAME_MAX_2);
     return ret;
   }
 
@@ -74,15 +74,15 @@ struct CollectiveCommand {
 
   union {
     struct {
-      char name[STR_NAME_MAX];
+      char name[STR_NAME_MAX_2];
       hsize_t ndims;
       hsize_t size[8];
     } set_extent;
     struct {
-      char name[STR_NAME_MAX];
+      char name[STR_NAME_MAX_2];
     } H5Dopen2;
     struct {
-      char name[STR_NAME_MAX];
+      char name[STR_NAME_MAX_2];
     } H5Dclose;
   } v;
 
@@ -116,7 +116,8 @@ struct CollectiveCommand {
       return false;
     switch (type) {
     case CollectiveCommandType::SetExtent:
-      if (strncmp(v.set_extent.name, x.v.set_extent.name, STR_NAME_MAX) != 0) {
+      if (strncmp(v.set_extent.name, x.v.set_extent.name, STR_NAME_MAX_2) !=
+          0) {
         return false;
       }
       if (v.set_extent.ndims != x.v.set_extent.ndims) {
@@ -127,12 +128,12 @@ struct CollectiveCommand {
       }
       break;
     case CollectiveCommandType::H5Dopen2:
-      if (strncmp(v.H5Dopen2.name, x.v.H5Dopen2.name, STR_NAME_MAX) != 0) {
+      if (strncmp(v.H5Dopen2.name, x.v.H5Dopen2.name, STR_NAME_MAX_2) != 0) {
         return false;
       }
       break;
     case CollectiveCommandType::H5Dclose:
-      if (strncmp(v.H5Dclose.name, x.v.H5Dclose.name, STR_NAME_MAX) != 0) {
+      if (strncmp(v.H5Dclose.name, x.v.H5Dclose.name, STR_NAME_MAX_2) != 0) {
         return false;
       }
       break;

@@ -57,7 +57,6 @@ private:
 enum class AppendResult : uint32_t {
   OK,
   ERROR,
-  WAIT_FOR_EXTENT,
 };
 
 struct append_ret {
@@ -116,12 +115,13 @@ public:
   friend void swap<>(h5d_chunked_1d &x, h5d_chunked_1d &y);
   append_ret append_data_1d(T const *data, hsize_t nlen);
   AppendResult flush_buf();
+  void buffer_init(size_t buf_size, size_t buf_packet_max);
 
 private:
   h5d_chunked_1d(hid_t loc, string name, h5d ds);
   h5s dsp_wr;
-  size_t const buf_MAXPKG = 0;
-  size_t const buf_SIZE = 20 * 1024 * 1024;
+  size_t buf_size = 0;
+  size_t buf_packet_max = 0;
   size_t buf_n = 0;
   std::vector<char> buf;
   hsize_t i0 = 0;

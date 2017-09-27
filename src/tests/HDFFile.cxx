@@ -269,6 +269,9 @@ public:
           },
           "chunk": {
             "chunk_kb": 1024
+          },
+          "buffer": {
+            "packet_max": 4096
           }
         },
         "unit_test": {
@@ -418,10 +421,6 @@ public:
           attr.AddMember("this_will_be_a_double", Value(0.123), a);
           attr.AddMember("this_will_be_a_int64", Value(123), a);
           ds1.AddMember("attributes", attr, a);
-          Document cfg_nexus;
-          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
-            cfg_nexus.CopyFrom(*main_nexus.v, cfg_nexus.GetAllocator());
-          }
           Value stream;
           stream.SetObject();
           if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
