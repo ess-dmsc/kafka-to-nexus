@@ -282,8 +282,6 @@ int main(int argc, char **argv) {
     }
   }
 
-  log_level = 9;
-
   auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
     LOG(6, "...............................  cqid: {}  wait   {}  {}",
         hdf_store.cqid, id, name);
