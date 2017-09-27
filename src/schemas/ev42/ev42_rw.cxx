@@ -76,7 +76,7 @@ public:
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_index;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
-  hsize_t chunk_n_elements = 1000000;
+  hsize_t chunk_bytes = 1 << 16;
   bool do_flush_always = false;
   uint64_t total_written_bytes = 0;
   uint64_t index_at_bytes = 0;
@@ -99,8 +99,11 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
     LOG(7, "index_every_bytes: {}", index_every_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
-    chunk_n_elements = hsize_t(x.v);
-    LOG(7, "chunk_n_elements: {}", chunk_n_elements);
+    LOG(3, "chunk_n_elements is no longer supported");
+  }
+  if (auto x = get_int(&config_stream, "nexus.chunk.chunk_kb")) {
+    chunk_bytes = (1 << 10) * x.v;
+    LOG(7, "chunk_bytes: {}", chunk_bytes);
   }
 }
 
@@ -110,17 +113,17 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_time_offset", chunk_n_elements * sizeof(uint32_t), cq);
-  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_id", chunk_n_elements * sizeof(uint32_t), cq);
+      hid, "event_time_offset", chunk_bytes, cq);
+  this->ds_event_id =
+      h5::h5d_chunked_1d<uint32_t>::create(hid, "event_id", chunk_bytes, cq);
   this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hid, "event_time_zero", chunk_n_elements * sizeof(uint64_t), cq);
-  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_index", chunk_n_elements * sizeof(uint32_t), cq);
-  this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "cue_index", chunk_n_elements * sizeof(uint32_t), cq);
+      hid, "event_time_zero", chunk_bytes, cq);
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::create(hid, "event_index", chunk_bytes, cq);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint32_t>::create(hid, "cue_index", chunk_bytes, cq);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hid, "cue_timestamp_zero", chunk_n_elements * sizeof(uint64_t), cq);
+      hid, "cue_timestamp_zero", chunk_bytes, cq);
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {

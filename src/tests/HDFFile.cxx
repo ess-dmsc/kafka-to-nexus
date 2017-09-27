@@ -268,7 +268,7 @@ public:
             "index_every_kb": 1
           },
           "chunk": {
-            "chunk_n_elements": 1048576
+            "chunk_kb": 1024
           }
         },
         "unit_test": {
@@ -707,7 +707,7 @@ public:
       {
         "nexus": {
           "chunk": {
-            "chunk_n_elements": 64
+            "chunk_kb": 1024
           }
         },
         "unit_test": {
@@ -844,7 +844,7 @@ public:
                   "index_every_mb": 1
                 },
                 "chunk": {
-                  "chunk_n_elements": 64
+                  "chunk_kb": 1024
                 }
               }
             }
