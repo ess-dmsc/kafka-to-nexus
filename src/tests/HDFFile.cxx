@@ -271,7 +271,8 @@ public:
             "chunk_kb": 1024
           },
           "buffer": {
-            "packet_max": 4096
+            "size_kb": 0,
+            "packet_max_kb": 0
           }
         },
         "unit_test": {

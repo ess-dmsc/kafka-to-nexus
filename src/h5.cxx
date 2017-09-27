@@ -929,6 +929,11 @@ template h5d_chunked_1d<int64_t>::~h5d_chunked_1d();
 template h5d_chunked_1d<float>::~h5d_chunked_1d();
 template h5d_chunked_1d<double>::~h5d_chunked_1d();
 
+template void h5d_chunked_1d<uint32_t>::buffer_init(size_t buf_size,
+                                                    size_t buf_packet_max);
+template void h5d_chunked_1d<uint64_t>::buffer_init(size_t buf_size,
+                                                    size_t buf_packet_max);
+
 template append_ret
 h5d_chunked_1d<uint8_t>::h5d_chunked_1d::append_data_1d(uint8_t const *data,
                                                         hsize_t nlen);

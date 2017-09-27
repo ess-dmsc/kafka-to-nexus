@@ -82,6 +82,8 @@ public:
   uint64_t index_at_bytes = 0;
   uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
   uint64_t ts_max = 0;
+  size_t buffer_size = 0;
+  size_t buffer_packet_max = 0;
   CollectiveQueue *cq = nullptr;
 };
 
@@ -104,6 +106,14 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_kb")) {
     chunk_bytes = (1 << 10) * x.v;
     LOG(7, "chunk_bytes: {}", chunk_bytes);
+  }
+  if (auto x = get_int(&config_stream, "nexus.buffer.size_kb")) {
+    buffer_size = (1 << 10) * x.v;
+    LOG(7, "buffer_size: {}", buffer_size);
+  }
+  if (auto x = get_int(&config_stream, "nexus.buffer.packet_max_kb")) {
+    buffer_packet_max = (1 << 10) * x.v;
+    LOG(7, "buffer_packet_max: {}", buffer_packet_max);
   }
 }
 
@@ -156,6 +166,13 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
       h5::h5d_chunked_1d<uint32_t>::open(hid, "cue_index", cq, hdf_store);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
       hid, "cue_timestamp_zero", cq, hdf_store);
+
+  ds_event_time_offset->buffer_init(buffer_size, buffer_packet_max);
+  ds_event_id->buffer_init(buffer_size, buffer_packet_max);
+  ds_event_time_zero->buffer_init(buffer_size, buffer_packet_max);
+  ds_event_index->buffer_init(buffer_size, buffer_packet_max);
+  ds_cue_index->buffer_init(buffer_size, buffer_packet_max);
+  ds_cue_timestamp_zero->buffer_init(buffer_size, buffer_packet_max);
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
