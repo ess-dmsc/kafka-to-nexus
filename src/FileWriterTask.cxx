@@ -167,10 +167,19 @@ void FileWriterTask::mpi_stop() {
   auto &cq = hdf_file.cq;
 
   HDFIDStore *hdf_store = nullptr;
-  // auto & hdf_store = * hdf_store_placeholder;
+  int cqid = -1;
 
-  // not possible to use barriers because parallel HDF also uses barriers.
-  LOG(3, ".....................  wait for  CLOSING");
+  auto barrier = [&cq, &cqid, &hdf_store](size_t id, size_t queue,
+                                          std::string name) {
+    LOG(6, "...............................  cqid: {}  wait   {}  {}", cqid, id,
+        name);
+    cq->barriers[id]++;
+    cq->wait_for_barrier(hdf_store, id, queue);
+    LOG(6, "===============================  cqid: {}  after  {}  {}", cqid, id,
+        name);
+  };
+
+  barrier(0, 0, "MODULE RESET");
   /*
   MPI_Status status;
   size_t payload = 0;
@@ -184,67 +193,31 @@ void FileWriterTask::mpi_stop() {
     LOG(3, "send a 14 to {}", 1 + i1);
   }
   */
-  cq->barriers[0]++;
-  cq->wait_for_barrier(hdf_store, 0, 0);
-  // LOG(3, "sleep before closing");
-  // sleep_ms(6000);
-  LOG(3, "===============================  CLOSING   "
-         "=========================================");
   // sleep_ms(600);
 
-  LOG(3, ".....................  wait for  CQ EXEC");
-  /*
-  for (int i1 = 0; i1 < size - 1; ++i1) {
-    MPI_Recv(&payload, sizeof(payload), MPI_CHAR, MPI_ANY_SOURCE, 15, comm_all,
-  &status);
-    LOG(3, "recv a 13");
-  }
-  for (int i1 = 0; i1 < size - 1; ++i1) {
-    MPI_Send(&payload, sizeof(payload), MPI_CHAR, 1 + i1, 16, comm_all);
-    LOG(3, "send a 14 to {}", 1 + i1);
-  }
-  */
-  cq->barriers[1]++;
-  cq->wait_for_barrier(hdf_store, 1, 0);
-  // LOG(3, "sleep before exec");
-  // sleep_ms(6000);
-  LOG(3, "===============================  CQ EXEC   "
-         "=========================================");
-  // sleep_ms(600);
-
+  barrier(1, 0, "CQ EXEC");
   // cq->execute_for(hdf_store, 0);
 
-  LOG(6, ".....................  wait for  CQ EXEC 2");
-  cq->barriers[2]++;
-  cq->wait_for_barrier(hdf_store, 2, 0);
-  LOG(6, "===============================  CQ EXEC 2   "
-         "=======================================");
-
+  barrier(2, 0, "CQ EXEC 2");
   // cq->execute_for(hdf_store, 1);
 
-  LOG(6, ".....................  wait for  MPI BARRIER");
-  cq->barriers[3]++;
-  cq->wait_for_barrier(hdf_store, 3, 1);
-  LOG(6, "===============================  MPI BARRIER   "
-         "=====================================");
+  barrier(5, 1, "CQ EXEC 3");
+  // cq->execute_for(hdf_store, 2);
 
-  LOG(3, "Barrier 2 BEFORE");
+  barrier(3, 2, "MPI Barrier");
   err = MPI_Barrier(comm_all);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Barrier");
     exit(1);
   }
-  LOG(3, "Barrier 2 AFTER");
-  LOG(3, "ask for disconnect");
+  LOG(6, "ask for disconnect  cqid: {}", "main");
   err = MPI_Comm_disconnect(&comm_all);
   // err = MPI_Comm_disconnect(&comm_spawned);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);
   }
-  LOG(6, ".....................  wait for  LAST BARRIER");
-  cq->barriers[4]++;
-  cq->wait_for_barrier(hdf_store, 4, -1);
+  barrier(4, -1, "Last CQ barrier");
   // LOG(3, "sleep after disconnect");
   // sleep_ms(2000);
   if (err != MPI_SUCCESS) {

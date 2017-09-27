@@ -282,57 +282,49 @@ int main(int argc, char **argv) {
     }
   }
 
-  LOG(6, ".....................  wait for  CLOSING");
-  cq->barriers[0]++;
-  cq->wait_for_barrier(&hdf_store, 0, 0);
-  LOG(6, "===============================  CLOSING   "
-         "=========================================");
+  log_level = 9;
 
+  auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
+    LOG(6, "...............................  cqid: {}  wait   {}  {}",
+        hdf_store.cqid, id, name);
+    cq->barriers[id]++;
+    cq->wait_for_barrier(&hdf_store, id, queue);
+    LOG(6, "===============================  cqid: {}  after  {}  {}",
+        hdf_store.cqid, id, name);
+  };
+
+  barrier(0, 0, "MODULE RESET");
   hdf_writer_module.reset();
   cq->close_for(hdf_store);
 
-  LOG(6, ".....................  wait for  CQ EXEC");
-  cq->barriers[1]++;
-  cq->wait_for_barrier(&hdf_store, 1, 0);
-  LOG(6, "===============================  CQ EXEC   "
-         "=========================================");
+  barrier(1, 0, "CQ EXEC");
 
-  cq->execute_for(hdf_store, 0);
+  barrier(2, 1, "CQ EXEC 2");
 
-  LOG(6, ".....................  wait for  CQ EXEC 2");
-  cq->barriers[2]++;
-  cq->wait_for_barrier(&hdf_store, 2, 0);
-  LOG(6, "===============================  CQ EXEC 2   "
-         "=======================================");
+  barrier(5, 2, "CQ EXEC 3");
 
-  cq->execute_for(hdf_store, 1);
+  LOG(6, "check_all_empty");
   hdf_store.check_all_empty();
+
+  LOG(6, "hdf_file.reset()");
   hdf_file.reset();
 
-  LOG(6, ".....................  wait for  MPI BARRIER");
-  cq->barriers[3]++;
-  cq->wait_for_barrier(&hdf_store, 3, 1);
-  LOG(6, "===============================  MPI BARRIER   "
-         "=====================================");
-
-  LOG(6, "Barrier 2 BEFORE");
+  barrier(3, 2, "MPI Barrier");
   err = MPI_Barrier(comm_all);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Barrier");
     exit(1);
   }
-  LOG(6, "Barrier 2 AFTER");
 
-  LOG(6, "ask for disconnect");
+  LOG(6, "ask for disconnect  cqid: {}", hdf_store.cqid);
   // MPI_Comm_disconnect(&comm_parent);
   err = MPI_Comm_disconnect(&comm_all);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);
   }
-  LOG(6, ".....................  wait for  LAST BARRIER");
-  cq->barriers[4]++;
-  cq->wait_for_barrier(&hdf_store, 4, -1);
+
+  barrier(4, -1, "Last CQ barrier");
   if (false) {
     LOG(6, "finalizing {}", rank_merged);
     MPI_Finalize();
