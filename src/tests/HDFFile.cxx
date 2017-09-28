@@ -281,6 +281,7 @@ public:
           "n_sources": 1,
           "n_msgs_per_batch": 1,
           "n_mpi_workers": 1,
+          "feed_msgs_seconds": 30,
           "filename": "tmp-ev42.h5",
           "hdf": {
             "do_verification": 1
@@ -339,6 +340,13 @@ public:
     if (auto x = get_int(&main_opt.config_file, "unit_test.feed_msgs_times")) {
       LOG(4, "unit_test.feed_msgs_times: {}", x.v);
       feed_msgs_times = x.v;
+    }
+
+    int feed_msgs_seconds = 1;
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.feed_msgs_seconds")) {
+      LOG(4, "unit_test.feed_msgs_seconds: {}", x.v);
+      feed_msgs_seconds = x.v;
     }
 
     string filename = "tmp-ev42.h5";
@@ -485,6 +493,7 @@ public:
       LOG(6, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
+      auto feed_start = CLK::now();
       auto t1 = CLK::now();
       for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
         size_t i_source = 0;
@@ -504,6 +513,11 @@ public:
             source.n_fed++;
           }
           i_source += 1;
+        }
+        auto now = CLK::now();
+        if (duration_cast<MS>(now - feed_start).count() / 1000 >=
+            feed_msgs_seconds) {
+          break;
         }
       }
       auto t2 = CLK::now();
