@@ -145,7 +145,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
       if (n == 0) {
         break;
       }
-      if (i1 % (1 << 9) == 0) {
+      if (i1 % (1 << 9) == (1 << 9) - 1) {
         LOG(3, "queue full  i1: {}  n: {}", i1, n);
       }
       if (i1 >= (1 << 12)) {
