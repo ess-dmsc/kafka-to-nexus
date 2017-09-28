@@ -46,12 +46,7 @@ public:
     }
     auto nW = nw.load();
     auto nR = nr.load();
-    size_t nn = 0;
-    if (nW > nR) {
-      nn = nW - nR;
-    } else if (nW < nR) {
-      nn = items.size() - nR + nW;
-    }
+    auto nn = size(nW, nR);
     if (nn >= items.size() - 1) {
       if (pthread_mutex_unlock(&mx) != 0) {
         LOG(1, "fail pthread_mutex_unlock");
@@ -85,12 +80,7 @@ public:
     */
     auto nW = nw.load();
     auto nR = nr.load();
-    size_t nn = 0;
-    if (nW > nR) {
-      nn = nW - nR;
-    } else if (nW < nR) {
-      nn = items.size() - nR + nW;
-    }
+    auto nn = size(nW, nR);
     size_t c1 = nn;
     if (c1 > items.size() / fac) {
       c1 = items.size() / fac;
@@ -113,6 +103,15 @@ public:
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
     }
+  }
+  size_t size(size_t nW, size_t nR) {
+    size_t nn = 0;
+    if (nW > nR) {
+      nn = nW - nR;
+    } else if (nW < nR) {
+      nn = items.size() - nR + nW;
+    }
+    return nn;
   }
   std::atomic<size_t> nw{0};
   std::atomic<size_t> nr{0};
