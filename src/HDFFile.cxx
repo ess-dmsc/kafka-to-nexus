@@ -477,9 +477,9 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_alignment");
     }
   }
-  if (0) {
+  if (1) {
     // 521  1483  9973
-    err = H5Pset_cache(fapl, 0, 9973, size_t(1) << 33, 0.0);
+    err = H5Pset_cache(fapl, 0, 9973, size_t(1) << 31, 0.0);
     if (err < 0) {
       LOG(7, "failed H5Pset_cache");
     }

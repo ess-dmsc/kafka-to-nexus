@@ -44,16 +44,25 @@ public:
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
     }
-    if (n >= items.size()) {
+    auto nW = nw.load();
+    auto nR = nr.load();
+    size_t nn = 0;
+    if (nW > nR) {
+      nn = nW - nR;
+    } else if (nW < nR) {
+      nn = items.size() - nR + nW;
+    }
+    if (nn >= items.size() - 1) {
       if (pthread_mutex_unlock(&mx) != 0) {
         LOG(1, "fail pthread_mutex_unlock");
         exit(1);
       }
-      return n;
+      return nn;
     }
     // LOG(3, "queuen msg {} / {}", msg.type, msg._size);
-    items[n].swap(msg);
-    n += 1;
+    items[nW].swap(msg);
+    nW = (nW + 1) % items.size();
+    nw.store(nW);
     // LOG(3, "now have {} in queue", n.load());
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
@@ -61,7 +70,7 @@ public:
     }
     return 0;
   }
-  void all(std::vector<Msg> &ret) {
+  void all(std::vector<Msg> &ret, size_t fac) {
     if (pthread_mutex_lock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
@@ -74,9 +83,23 @@ public:
     (void*)m.data());
     }
     */
-    for (size_t i1 = 0; i1 < n.load(); ++i1) {
-      ret.push_back(std::move(items[i1]));
+    auto nW = nw.load();
+    auto nR = nr.load();
+    size_t nn = 0;
+    if (nW > nR) {
+      nn = nW - nR;
+    } else if (nW < nR) {
+      nn = items.size() - nR + nW;
     }
+    size_t c1 = nn;
+    if (c1 > items.size() / fac) {
+      c1 = items.size() / fac;
+    }
+    for (size_t i1 = 0; i1 < c1; ++i1) {
+      ret.push_back(std::move(items[nR]));
+      nR = (nR + 1) % items.size();
+    }
+    nr.store(nR);
     /*
     LOG(3, "checking all messages in ret {}", ret.size());
     for (size_t i1 = 0; i1 < ret.size(); ++i1) {
@@ -86,17 +109,17 @@ public:
     (void*)m.data());
     }
     */
-    n.store(0);
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
     }
   }
-  std::atomic<size_t> n{0};
+  std::atomic<size_t> nw{0};
+  std::atomic<size_t> nr{0};
   std::atomic<uint32_t> open{1};
 
 private:
   pthread_mutex_t mx;
-  std::array<Msg, 256> items;
+  std::array<Msg, (2 << 10)> items;
   friend void swap(MsgQueue &x, MsgQueue &y);
 };

@@ -247,13 +247,11 @@ int main(int argc, char **argv) {
   // NOTE
   // This loop will prevent it from running a long time on idle;
   for (int i1 = 0; i1 < 10000; ++i1) {
-    auto n = queue->n.load();
-    if (n > 0) {
+    std::vector<Msg> all;
+    queue->all(all, size_merged);
+    if (all.size() > 0) {
       // reset idle counter
       i1 = 0;
-      LOG(9, "Queue size: {}", n);
-      std::vector<Msg> all;
-      queue->all(all);
       for (auto &m : all) {
         auto t_now = CLK::now();
         // execute all pending commands before the next message
@@ -263,9 +261,6 @@ int main(int argc, char **argv) {
         }
         // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
-        LOG(9, "hdf_writer_module->write(m) "
-               "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~"
-               "~");
         hdf_writer_module->write(m);
       }
     } else {
