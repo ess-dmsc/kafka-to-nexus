@@ -493,11 +493,15 @@ public:
       LOG(6, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
+      bool do_run = true;
       auto feed_start = CLK::now();
       auto t1 = CLK::now();
-      for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
+      for (int i_feed = 0; do_run and i_feed < feed_msgs_times; ++i_feed) {
         size_t i_source = 0;
         for (auto &source : sources) {
+          if (not do_run) {
+            break;
+          }
           LOG(8 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
               i_feed, i_source);
           for (auto &msg : source.msgs) {
@@ -507,9 +511,25 @@ public:
             }
             if (msg.size() < 8) {
               LOG(3, "error");
-              exit(1);
+              do_run = false;
             }
-            fwt->demuxers().at(0).process_message(Msg::cheap(msg, jm));
+            auto res =
+                fwt->demuxers().at(0).process_message(Msg::cheap(msg, jm));
+            if (res.is_ERR()) {
+              LOG(3, "is_ERR");
+              do_run = false;
+              break;
+            }
+            if (res.is_ALL_SOURCES_FULL()) {
+              LOG(3, "is_ALL_SOURCES_FULL");
+              do_run = false;
+              break;
+            }
+            if (res.is_STOP()) {
+              LOG(3, "is_STOP");
+              do_run = false;
+              break;
+            }
             source.n_fed++;
           }
           i_source += 1;

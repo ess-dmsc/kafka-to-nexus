@@ -70,6 +70,7 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
   }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
+    LOG(7, "no reader");
     return ProcessMessageResult::ERR();
   }
   if (reader->timestamp(msg) > _stop_time.count()) {
@@ -82,10 +83,7 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
   try {
     auto &s = _sources_map.at(srcn);
     auto ret = s.process_message(msg);
-    if (ret.ts() < 0) {
-      return ProcessMessageResult::ERR();
-    }
-    return ProcessMessageResult::OK(ret.ts());
+    return ret;
   } catch (std::out_of_range &e) {
   }
   return ProcessMessageResult::ERR();
