@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-def centos = docker.image('essdmscdm/centos-build-node:0.5.0')
+def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.2')
 
 node('kafka-to-nexus') {
     def container_name = "${project}-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
@@ -30,7 +30,6 @@ node('kafka-to-nexus') {
                 export https_proxy=''
                 mkdir build
                 cd build
-                scl enable devtoolset-6 $SHELL
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
@@ -42,7 +41,6 @@ node('kafka-to-nexus') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                scl enable devtoolset-6 $SHELL
                 cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} sh -c \"${configure_script}\""
