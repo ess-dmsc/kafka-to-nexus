@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.2')
+def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.3')
 
 node('docker') {
     def container_name = "${project}-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
@@ -27,8 +27,6 @@ node('docker') {
         stage('Get Dependencies') {
             def conan_remote = "ess-dmsc-local"
             def dependencies_script = """
-                export http_proxy=''
-                export https_proxy=''
                 mkdir build
                 cd build
                 conan remote add \
