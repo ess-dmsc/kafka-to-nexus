@@ -1,7 +1,7 @@
 def project = "kafka-to-nexus"
 def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.2')
 
-node('kafka-to-nexus') {
+node('docker') {
     def container_name = "${project}-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
     def run_args = "\
         --name ${container_name} \
