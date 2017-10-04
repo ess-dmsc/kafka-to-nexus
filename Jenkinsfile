@@ -8,7 +8,7 @@ node('docker') {
         --tty \
         --env http_proxy=${env.http_proxy} \
         --env https_proxy=${env.https_proxy}"
-    def sh = "/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash"
+    def sclsh = "/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash"
 
     try {
         container = centos.run(run_args)
@@ -19,7 +19,7 @@ node('docker') {
                     --branch ${env.BRANCH_NAME}
                 git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
             """
-            sh "docker exec ${container_name} ${sh} -c \"${checkout_script}\""
+            sh "docker exec ${container_name} ${sclsh} -c \"${checkout_script}\""
         }
 
         stage('Get Dependencies') {
@@ -34,7 +34,7 @@ node('docker') {
                     ${conan_remote} ${local_conan_server}
                 conan install ../${project}/conan --build=missing
             """
-            sh "docker exec ${container_name} ${sh} -c \"${dependencies_script}\""
+            sh "docker exec ${container_name} ${sclsh} -c \"${dependencies_script}\""
         }
 
         stage('Configure') {
@@ -42,14 +42,14 @@ node('docker') {
                 cd build
                 cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
-            sh "docker exec ${container_name} ${sh} -c \"${configure_script}\""
+            sh "docker exec ${container_name} ${sclsh} -c \"${configure_script}\""
 
            sh "bash ../${project}/build-script/invoke-cmake-from-jenkinsfile.sh"
         }
 
         stage('Build') {
             def build_script = "make --directory=./build VERBOSE=1"
-            sh "docker exec ${container_name} ${sh} -c \"${build_script}\""
+            sh "docker exec ${container_name} ${sclsh} -c \"${build_script}\""
         }
 
         stage('Test') {
@@ -58,7 +58,7 @@ node('docker') {
                 cd build
                 ./tests/tests -- --gtest_output=xml:${test_output}
             """
-            sh "docker exec ${container_name} ${sh} -c \"${test_script}\""
+            sh "docker exec ${container_name} ${sclsh} -c \"${test_script}\""
 
             // Remove file outside container.
             sh "rm -f ${test_output}"
