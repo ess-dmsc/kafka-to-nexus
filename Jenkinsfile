@@ -42,7 +42,7 @@ node('docker') {
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${configure_script}\""
 
-           sh "bash ../${project}/build-script/invoke-cmake-from-jenkinsfile.sh"
+//           sh "bash ../${project}/build-script/invoke-cmake-from-jenkinsfile.sh"
         }
 
         stage('Build') {
