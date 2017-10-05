@@ -43,8 +43,6 @@ node('docker') {
                 cmake3 ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${configure_script}\""
-
-//           sh "bash ../${project}/build-script/invoke-cmake-from-jenkinsfile.sh"
         }
 
         stage('Build') {
@@ -68,6 +66,19 @@ node('docker') {
             junit "${test_output}"
         }
 
+        stage('Archive') {
+            def archive_output = "file-writer.tar.gz"
+            def archive_script = """
+                cd build
+                rm -rf file-writer; mkdir file-writer
+                cp kafka-to-nexus send-command file-writer/
+                tar czf ${archive_output} file-writer
+            """
+            sh "docker exec ${container_name} ${sclsh} -c \"${archive_script}\""       
+            sh "docker cp ${container_name}:/home/jenkins/build/${archive_output} ."
+            archiveArtifacts "${archive_output}"
+        }
+        
     } finally {
         container.stop()
     }
