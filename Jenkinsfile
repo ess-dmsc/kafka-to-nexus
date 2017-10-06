@@ -1,4 +1,6 @@
 node('kafka-to-nexus') {
+    cleanWs()
+    
     stage("Get artifacts") {
         step([
             $class: 'CopyArtifact',
