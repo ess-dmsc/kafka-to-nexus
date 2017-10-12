@@ -180,9 +180,9 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
   string s("value");
 
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
-    index_every_bytes = (int)x * 1024;
+    index_every_bytes = uint64_t(x.v) * 1024;
   } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
-    index_every_bytes = (int)x * 1024 * 1024;
+    index_every_bytes = uint64_t(x.v) * 1024 * 1024;
   }
 
   auto impl_fac = [hdf_group, array_size, &s](string type) {
