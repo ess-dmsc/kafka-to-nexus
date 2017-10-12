@@ -569,26 +569,26 @@ public:
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
       LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
-      n_msgs_per_source = x.v;
+      n_msgs_per_source = int(x.v);
     }
 
     int n_sources = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
       LOG(4, "unit_test.n_sources: {}", x.v);
-      n_sources = x.v;
+      n_sources = int(x.v);
     }
 
     int n_events_per_message = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_events_per_message")) {
       LOG(4, "unit_test.n_events_per_message: {}", x.v);
-      n_events_per_message = x.v;
+      n_events_per_message = int(x.v);
     }
 
     int n_msgs_per_batch = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
       LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
-      n_msgs_per_batch = x.v;
+      n_msgs_per_batch = int(x.v);
     }
 
     size_t array_size = 4;
