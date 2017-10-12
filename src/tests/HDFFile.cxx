@@ -517,7 +517,7 @@ public:
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
       }
-      FlatBufs::f142::synth synth(source, ty, array_size);
+      FlatBufs::f142::synth synth(source, ty, int(array_size));
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
