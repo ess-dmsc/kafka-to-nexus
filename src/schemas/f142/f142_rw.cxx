@@ -155,9 +155,9 @@ template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hdf_group,
-                          rapidjson::Value const &config_stream,
+HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
                           rapidjson::Value const *config_module) {
+  auto &hdf_group = hid;
   auto str = get_string(&config_stream, "source");
   if (!str) {
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
