@@ -95,9 +95,9 @@ append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
 }
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
-  bool verify(Msg const &msg) const;
-  std::string sourcename(Msg const &msg) const;
-  uint64_t timestamp(Msg const &msg) const;
+  bool verify(Msg const &msg) const override;
+  std::string sourcename(Msg const &msg) const override;
+  uint64_t timestamp(Msg const &msg) const override;
 };
 
 bool FlatbufferReader::verify(Msg const &msg) const {
