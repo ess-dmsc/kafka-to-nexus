@@ -110,10 +110,7 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 
 bool FlatbufferReader::verify(Msg const &msg) const {
   auto veri = flatbuffers::Verifier((uint8_t *)msg.data, msg.size);
-  if (VerifyLogDataBuffer(veri)) {
-    return true;
-  }
-  return false;
+  return VerifyLogDataBuffer(veri);
 }
 
 std::string FlatbufferReader::sourcename(Msg const &msg) const {

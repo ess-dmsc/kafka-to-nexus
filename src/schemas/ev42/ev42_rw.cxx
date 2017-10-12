@@ -35,10 +35,7 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 
 bool FlatbufferReader::verify(Msg const &msg) const {
   flatbuffers::Verifier veri((uint8_t *)msg.data, msg.size);
-  if (VerifyEventMessageBuffer(veri)) {
-    return true;
-  }
-  return false;
+  return VerifyEventMessageBuffer(veri);
 }
 
 std::string FlatbufferReader::sourcename(Msg const &msg) const {
