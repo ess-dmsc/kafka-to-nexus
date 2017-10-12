@@ -88,8 +88,6 @@ public:
   typedef HDFWriterModule_detail::InitResult InitResult;
   typedef HDFWriterModule_detail::WriteResult WriteResult;
 
-  static std::unique_ptr<HDFWriterModule> create();
-
   virtual ~HDFWriterModule() = default;
 
   /// Called before any data has arrived with the json configuration of this
