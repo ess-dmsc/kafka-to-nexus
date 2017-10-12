@@ -14,7 +14,7 @@ Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
     : _sourcename(std::move(sourcename)),
       _hdf_writer_module(std::move(hdf_writer_module)) {}
 
-Source::Source(Source &&x)
+Source::Source(Source &&x) noexcept
     : _topic(std::move(x._topic)), _sourcename(std::move(x._sourcename)),
       _hdf_writer_module(std::move(x._hdf_writer_module)) {}
 

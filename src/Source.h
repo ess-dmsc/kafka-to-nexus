@@ -29,7 +29,7 @@ private:
 /// for only one sourcename.
 class Source {
 public:
-  Source(Source &&);
+  Source(Source &&) noexcept;
   ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
