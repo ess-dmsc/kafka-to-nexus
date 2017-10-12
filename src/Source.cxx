@@ -22,8 +22,6 @@ std::string const &Source::topic() const { return _topic; }
 
 std::string const &Source::sourcename() const { return _sourcename; }
 
-Source::~Source() {}
-
 ProcessMessageResult Source::process_message(Msg const &msg) {
   if (!_hdf_writer_module) {
     throw "ASSERT FAIL: _hdf_writer_module";

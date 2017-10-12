@@ -30,7 +30,7 @@ private:
 class Source {
 public:
   Source(Source &&) noexcept;
-  ~Source();
+  ~Source() = default;
   std::string const &topic() const;
   std::string const &sourcename() const;
   /// If non-empty, specifies the broker where the data of this Source can be
