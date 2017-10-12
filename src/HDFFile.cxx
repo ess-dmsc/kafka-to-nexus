@@ -115,6 +115,29 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   H5Pclose(acpl);
 }
 
+static void add_attributes(hid_t hdf_this, rapidjson::Value const *value) {
+  auto attributes_member = value->FindMember("attributes");
+  if (attributes_member != value->MemberEnd()) {
+    auto &attributes = attributes_member->value;
+    if (attributes.IsObject()) {
+      for (auto &attr : attributes.GetObject()) {
+        if (attr.value.IsString()) {
+          write_attribute_str(hdf_this, attr.name.GetString(),
+                              attr.value.GetString());
+        }
+        if (attr.value.IsInt64()) {
+          write_attribute(hdf_this, attr.name.GetString(),
+                          attr.value.GetInt64());
+        }
+        if (attr.value.IsDouble()) {
+          write_attribute(hdf_this, attr.name.GetString(),
+                          attr.value.GetDouble());
+        }
+      }
+    }
+  }
+}
+
 static void create_hdf_structures(rapidjson::Value const *value,
                                   hid_t hdf_parent, uint16_t level, hid_t lcpl,
                                   std::vector<StreamHDFInfo> &stream_hdf_info) {
@@ -143,26 +166,7 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 
   if (hdf_this >= 0) {
-    auto attributes_member = value->FindMember("attributes");
-    if (attributes_member != value->MemberEnd()) {
-      auto &attributes = attributes_member->value;
-      if (attributes.IsObject()) {
-        for (auto &attr : attributes.GetObject()) {
-          if (attr.value.IsString()) {
-            write_attribute_str(hdf_this, attr.name.GetString(),
-                                attr.value.GetString());
-          }
-          if (attr.value.IsInt64()) {
-            write_attribute(hdf_this, attr.name.GetString(),
-                            attr.value.GetInt64());
-          }
-          if (attr.value.IsDouble()) {
-            write_attribute(hdf_this, attr.name.GetString(),
-                            attr.value.GetDouble());
-          }
-        }
-      }
-    }
+    add_attributes(hdf_this, value);
   }
 
   // If the current level in the HDF can act as a parent, then continue
