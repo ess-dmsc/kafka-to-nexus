@@ -101,14 +101,14 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
   hsize_t chunk_n_elements = 1;
 
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
-    index_every_bytes = (int)x * 1024;
+    index_every_bytes = x.v * 1024;
     LOG(7, "index_every_bytes: {}", index_every_bytes);
   } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
-    index_every_bytes = (int)x * 1024 * 1024;
+    index_every_bytes = x.v * 1024 * 1024;
     LOG(7, "index_every_bytes: {}", index_every_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
-    chunk_n_elements = x.v;
+    chunk_n_elements = hsize_t(x.v);
     LOG(7, "chunk_n_elements: {}", chunk_n_elements);
   }
 
