@@ -120,10 +120,8 @@ static void create_hdf_structures(rapidjson::Value const *value,
                                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   // The HDF object that we will maybe create at the current level.
   hid_t hdf_this = -1;
-  // Keeps the HDF object id if we create a new collection-like object
-  // which
-  // can be used as the parent for the next level of recursion. The only
-  // case
+  // Keeps the HDF object id if we create a new collection-like object which
+  // can be used as the parent for the next level of recursion. The only case
   // currently is when we create a group.
   hid_t hdf_next_parent = -1;
   {
