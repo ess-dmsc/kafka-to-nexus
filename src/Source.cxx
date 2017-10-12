@@ -11,7 +11,7 @@ Result Result::Ok() {
 }
 
 Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
-    : _sourcename(sourcename),
+    : _sourcename(std::move(sourcename)),
       _hdf_writer_module(std::move(hdf_writer_module)) {}
 
 Source::Source(Source &&x)
