@@ -171,7 +171,7 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
   auto type = str.v;
   uint32_t array_size = 0;
   if (auto x = get_uint(&config_stream, "array_size")) {
-    array_size = x.v;
+    array_size = uint32_t(x.v);
   }
   LOG(7,
       "HDFWriterModule::init_hdf f142 sourcename: {}  type: {}  array_size: {}",
