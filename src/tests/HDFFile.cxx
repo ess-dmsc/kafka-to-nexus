@@ -511,7 +511,7 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(size_t array_size, int n) {
+    void pregenerate(size_t array_size, uint64_t n) {
       LOG(7, "generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
@@ -519,7 +519,7 @@ public:
       }
       FlatBufs::f142::synth synth(source, ty, int(array_size));
       rnd.seed(seed);
-      for (int i1 = 0; i1 < n; ++i1) {
+      for (uint64_t i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
