@@ -314,7 +314,6 @@ public:
 
     using DT = uint32_t;
     int const feed_msgs_times = 1;
-    // int const seed = 2;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
