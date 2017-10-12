@@ -31,8 +31,8 @@ public:
   std::string to_str() const;
 
 private:
-  explicit inline InitResult(uint64_t v) : v(v) {}
-  int64_t v = -1;
+  explicit inline InitResult(int8_t v) : v(v) {}
+  int8_t v = -1;
 };
 
 class WriteResult {
@@ -66,8 +66,8 @@ public:
   std::string to_str() const;
 
 private:
-  explicit inline WriteResult(uint64_t v) : v(v) {}
-  int64_t v = -1;
+  explicit inline WriteResult(int8_t v) : v(v) {}
+  int8_t v = -1;
 };
 }
 
