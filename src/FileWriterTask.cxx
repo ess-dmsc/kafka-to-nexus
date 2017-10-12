@@ -58,6 +58,7 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
   auto x =
       impl->hdf_file.init(impl->hdf_filename, nexus_structure, stream_hdf_info);
   if (x) {
+    LOG(3, "can not initialize hdf file  filename: {}", impl->hdf_filename);
     return x;
   }
   return 0;
