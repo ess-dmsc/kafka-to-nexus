@@ -705,7 +705,7 @@ public:
             stream.AddMember("type", Value("double", a), a);
           } else {
             stream.AddMember("type", Value("float", a), a);
-            stream.AddMember("array_size", Value(array_size), a);
+            stream.AddMember("array_size", Value().SetInt(array_size), a);
           }
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
