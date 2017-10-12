@@ -32,7 +32,7 @@ class writer_typed_array : public writer_typed_base {
 public:
   writer_typed_array(hid_t hdf_group, std::string const &sourcename,
                      hsize_t ncols);
-  ~writer_typed_array();
+  ~writer_typed_array() override;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
 };
@@ -41,7 +41,7 @@ template <typename DT, typename FV>
 class writer_typed_scalar : public writer_typed_base {
 public:
   writer_typed_scalar(hid_t hdf_group, std::string const &sourcename);
-  ~writer_typed_scalar();
+  ~writer_typed_scalar() override;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
 };
