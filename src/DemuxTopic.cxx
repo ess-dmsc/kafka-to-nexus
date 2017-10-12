@@ -58,7 +58,7 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
     return ProcessMessageResult::ERR();
   }
   if (reader->timestamp(msg) > _stop_time) {
-    LOG(8, "reader->ts(msg) {} > _stop_time {}", reader->timestamp(msg),
+    LOG(8, "reader->timestamp(msg) {} > _stop_time {}", reader->timestamp(msg),
         _stop_time);
     return ProcessMessageResult::STOP();
   }
