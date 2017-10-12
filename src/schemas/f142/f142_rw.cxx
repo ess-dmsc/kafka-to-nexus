@@ -23,7 +23,7 @@ using h5::append_ret;
 
 class writer_typed_base {
 public:
-  virtual ~writer_typed_base();
+  virtual ~writer_typed_base() = default;
   virtual append_ret write_impl(FBUF const *fbuf) = 0;
 };
 
@@ -32,7 +32,7 @@ class writer_typed_array : public writer_typed_base {
 public:
   writer_typed_array(hid_t hdf_group, std::string const &sourcename,
                      hsize_t ncols);
-  ~writer_typed_array() override;
+  ~writer_typed_array() override = default;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
 };
@@ -41,17 +41,12 @@ template <typename DT, typename FV>
 class writer_typed_scalar : public writer_typed_base {
 public:
   writer_typed_scalar(hid_t hdf_group, std::string const &sourcename);
-  ~writer_typed_scalar() override;
+  ~writer_typed_scalar() override = default;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
 };
 
 static FBUF const *get_fbuf(char *data) { return GetLogData(data); }
-
-writer_typed_base::~writer_typed_base() {}
-
-template <typename DT, typename FV>
-writer_typed_array<DT, FV>::~writer_typed_array() {}
 
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
@@ -81,9 +76,6 @@ append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
   }
   return this->ds->append_data_2d(v2->data(), v2->size());
 }
-
-template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::~writer_typed_scalar() {}
 
 template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(
