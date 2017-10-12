@@ -90,7 +90,7 @@ public:
 
   static std::unique_ptr<HDFWriterModule> create();
 
-  virtual ~HDFWriterModule();
+  virtual ~HDFWriterModule() = default;
 
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF

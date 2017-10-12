@@ -2,8 +2,6 @@
 
 namespace FileWriter {
 
-HDFWriterModule::~HDFWriterModule() {}
-
 std::map<HDFWriterModuleRegistry::K, HDFWriterModuleRegistry::V> &
 HDFWriterModuleRegistry::items() {
   static std::map<HDFWriterModuleRegistry::K, HDFWriterModuleRegistry::V>
