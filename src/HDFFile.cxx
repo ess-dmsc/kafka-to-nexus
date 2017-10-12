@@ -115,6 +115,74 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   H5Pclose(acpl);
 }
 
+static void create_hdf_structures(rapidjson::Value const *value,
+                                  hid_t hdf_parent, uint16_t level, hid_t lcpl,
+                                  std::vector<StreamHDFInfo> &stream_hdf_info) {
+  // The HDF object that we will maybe create at the current level.
+  hid_t hdf_this = -1;
+  // Keeps the HDF object id if we create a new collection-like object
+  // which
+  // can be used as the parent for the next level of recursion. The only
+  // case
+  // currently is when we create a group.
+  hid_t hdf_next_parent = -1;
+  {
+    if (auto type = get_string(value, "type")) {
+      if (type.v == "group") {
+        if (auto name = get_string(value, "name")) {
+          hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl, H5P_DEFAULT,
+                                H5P_DEFAULT);
+          hdf_next_parent = hdf_this;
+        }
+      }
+      if (type.v == "stream") {
+        stream_hdf_info.push_back(StreamHDFInfo{hdf_parent, value});
+      }
+      if (type.v == "dataset") {
+        LOG(3, "DATASET not yet implemented");
+      }
+    }
+  }
+
+  if (hdf_this >= 0) {
+    auto attributes_member = value->FindMember("attributes");
+    if (attributes_member != value->MemberEnd()) {
+      auto &attributes = attributes_member->value;
+      if (attributes.IsObject()) {
+        for (auto &attr : attributes.GetObject()) {
+          if (attr.value.IsString()) {
+            write_attribute_str(hdf_this, attr.name.GetString(),
+                                attr.value.GetString());
+          }
+          if (attr.value.IsInt64()) {
+            write_attribute(hdf_this, attr.name.GetString(),
+                            attr.value.GetInt64());
+          }
+          if (attr.value.IsDouble()) {
+            write_attribute(hdf_this, attr.name.GetString(),
+                            attr.value.GetDouble());
+          }
+        }
+      }
+    }
+  }
+
+  // If the current level in the HDF can act as a parent, then continue
+  // the
+  // recursion with the (optional) "children" array.
+  if (hdf_next_parent >= 0) {
+    auto mem = value->FindMember("children");
+    if (mem != value->MemberEnd()) {
+      if (mem->value.IsArray()) {
+        for (auto &child : mem->value.GetArray()) {
+          create_hdf_structures(&child, hdf_this, level + 1, lcpl,
+                                stream_hdf_info);
+        }
+      }
+    }
+  }
+}
+
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
@@ -141,80 +209,13 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 
   auto f1 = x;
 
-  std::function<void(Value const *, hid_t, uint16_t)> create_hdf_structures =
-      [&lcpl, &create_hdf_structures,
-       &stream_hdf_info](Value const *value, hid_t hdf_parent, uint16_t level) {
-        // The HDF object that we will maybe create at the current level.
-        hid_t hdf_this = -1;
-        // Keeps the HDF object id if we create a new collection-like object
-        // which
-        // can be used as the parent for the next level of recursion. The only
-        // case
-        // currently is when we create a group.
-        hid_t hdf_next_parent = -1;
-        {
-          if (auto type = get_string(value, "type")) {
-            if (type.v == "group") {
-              if (auto name = get_string(value, "name")) {
-                hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl,
-                                      H5P_DEFAULT, H5P_DEFAULT);
-                hdf_next_parent = hdf_this;
-              }
-            }
-            if (type.v == "stream") {
-              stream_hdf_info.push_back(StreamHDFInfo{hdf_parent, value});
-            }
-            if (type.v == "dataset") {
-              LOG(3, "DATASET not yet implemented");
-            }
-          }
-        }
-
-        if (hdf_this >= 0) {
-          auto attributes_member = value->FindMember("attributes");
-          if (attributes_member != value->MemberEnd()) {
-            auto &attributes = attributes_member->value;
-            if (attributes.IsObject()) {
-              for (auto &attr : attributes.GetObject()) {
-                if (attr.value.IsString()) {
-                  write_attribute_str(hdf_this, attr.name.GetString(),
-                                      attr.value.GetString());
-                }
-                if (attr.value.IsInt64()) {
-                  write_attribute(hdf_this, attr.name.GetString(),
-                                  attr.value.GetInt64());
-                }
-                if (attr.value.IsDouble()) {
-                  write_attribute(hdf_this, attr.name.GetString(),
-                                  attr.value.GetDouble());
-                }
-              }
-            }
-          }
-        }
-
-        // If the current level in the HDF can act as a parent, then continue
-        // the
-        // recursion with the (optional) "children" array.
-        if (hdf_next_parent >= 0) {
-          auto mem = value->FindMember("children");
-          if (mem != value->MemberEnd()) {
-            if (mem->value.IsArray()) {
-              for (auto &child : mem->value.GetArray()) {
-                create_hdf_structures(&child, hdf_this, level + 1);
-              }
-            }
-          }
-        }
-      };
-
   if (nexus_structure.IsObject()) {
     auto value = &nexus_structure;
     auto mem = value->FindMember("children");
     if (mem != value->MemberEnd()) {
       if (mem->value.IsArray()) {
         for (auto &child : mem->value.GetArray()) {
-          create_hdf_structures(&child, impl->h5file, 0);
+          create_hdf_structures(&child, impl->h5file, 0, lcpl, stream_hdf_info);
         }
       }
     }
