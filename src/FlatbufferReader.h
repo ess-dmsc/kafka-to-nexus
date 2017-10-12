@@ -41,7 +41,7 @@ public:
   static FlatbufferReader::ptr &find(FBID const &fbid);
   static FlatbufferReader::ptr &find(Msg const &msg);
 
-  static void registrate(FBID fbid, FlatbufferReader::ptr &&item) {
+  static void add(FBID fbid, FlatbufferReader::ptr &&item) {
     auto &m = items();
     if (m.find(fbid) != m.end()) {
       auto s =
@@ -54,8 +54,8 @@ public:
 
   template <typename T> class Registrar {
   public:
-    Registrar(FBID fbid) {
-      FlatbufferReaderRegistry::registrate(fbid, std::unique_ptr<T>(new T));
+    explicit Registrar(FBID fbid) {
+      FlatbufferReaderRegistry::add(fbid, std::unique_ptr<T>(new T));
     }
   };
 };
