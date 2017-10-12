@@ -55,7 +55,7 @@ writer_typed_array<DT, FV>::~writer_typed_array() {}
 
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
-                                               std::string const &dataset_name,
+                                               std::string const &sourcename,
                                                hsize_t ncols) {
   if (ncols <= 0) {
     LOG(4, "can not handle number of columns ncols == {}", ncols);
@@ -63,7 +63,7 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
   }
   LOG(7, "f142 init_impl  ncols: {}", ncols);
   this->ds =
-      h5::h5d_chunked_2d<DT>::create(hdf_group, dataset_name, ncols, 64 * 1024);
+      h5::h5d_chunked_2d<DT>::create(hdf_group, sourcename, ncols, 64 * 1024);
 }
 
 template <typename DT, typename FV>
@@ -87,9 +87,9 @@ writer_typed_scalar<DT, FV>::~writer_typed_scalar() {}
 
 template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(
-    hid_t hdf_group, std::string const &dataset_name) {
+    hid_t hdf_group, std::string const &sourcename) {
   LOG(7, "f142 init_impl  scalar");
-  this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, dataset_name, 64 * 1024);
+  this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, sourcename, 64 * 1024);
 }
 
 template <typename DT, typename FV>
