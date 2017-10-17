@@ -3,62 +3,43 @@
 #include "Status.hpp"
 #include "StatusWriter.hpp"
 
-#include "rapidjson/stringbuffer.h"
+#include "rapidjson/filewritestream.h"
+#include "rapidjson/prettywriter.h"
 #include "rapidjson/writer.h"
 
 namespace FileWriter {
 namespace Status {
 
-StdIOWriter::return_type StdIOWriter::write(const StreamMasterStatus &data) {
-  std::cout << "stream_master :\t" << data.status << "\n";
-  for (size_t i = 0; i < data.topic.size(); ++i) {
-    std::cout << data.topic[i] << ":\n";
-    print(data.streamer_status[i]);
-    print(data.streamer_stats[i]);
-    std::cout << "\n";
-  }
-}
-
-void StdIOWriter::print(const StreamerStatusType &x) {
-  std::cout << "\tstatus :\n"
-            << "\t\tmessages :\t" << x.messages << "\n"
-            << "\t\tbytes :\t\t" << x.bytes << "\n"
-            << "\t\terrors :\t" << x.errors << "\n";
-}
-void StdIOWriter::print(const StreamerStatisticsType &x) {
-  std::cout << "\tstatistics :\n"
-            << "\t\tsize average :\t" << x.average_message_size << "\n"
-            << "\t\tsize std :\t" << x.standard_deviation_message_size << "\n"
-            << "\t\tfrequency average :\t" << x.average_message_frequency
-            << "\n"
-            << "\t\tfrequency std :\t\t"
-            << x.standard_deviation_message_frequency << "\n";
-}
-
-rapidjson::Document JSONWriterBase::write_impl(const StreamMasterStatus &data) {
+rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
   d.SetObject();
   { // message type
-    d.AddMember("type", "filewriter_streammaster_status", a);
+    d.AddMember("type", "stream_master_status", a);
   }
+  auto time = info.time();
   { // stream master info
-    Value sm, ss;
+    Value sm;
     sm.SetObject();
-    std::string s{Err2Str(StreamMasterError{data.status})};
-    sm.AddMember("status", StringRef(s), a);
-    d.AddMember("streammaster", sm, a);
+    sm.AddMember("state", StringRef(Err2Str(StreamMasterError{info.status()})),
+                 a);
+    sm.AddMember("status", primary_quantities(info.total(), a), a);
+    sm.AddMember("statistics",
+                 derived_quantities(info.total(), time, a), a);
+    sm.AddMember("refresh_time",time, a);
+    d.AddMember("stream_master", sm, a);
   }
   { // streamers info
     Value ss;
     ss.SetObject();
-    for (size_t i = 0; i < data.topic.size(); ++i) {
-      Value key{data.topic[i].c_str(), a};
+    for (auto &topic : info.info()) {
+      Value key{topic.first.c_str(), a};
       Value val;
       val.SetObject();
-      val.AddMember("status", to_json(data.streamer_status[i], d), a);
-      val.AddMember("statistics", to_json(data.streamer_stats[i], d), a);
+      val.AddMember("status", primary_quantities(topic.second, a), a);
+      val.AddMember("statistics",
+                    derived_quantities(topic.second, time, a), a);
       ss.AddMember(key, val, a);
     }
     d.AddMember("streamer", ss, a);
@@ -66,54 +47,69 @@ rapidjson::Document JSONWriterBase::write_impl(const StreamMasterStatus &data) {
   return d;
 }
 
-rapidjson::Value JSONWriterBase::to_json(const StreamerStatusType &x,
-                                         return_type &d) {
+template <class Allocator>
+rapidjson::Value JSONWriterBase::primary_quantities(MessageInfo &info,
+                                                    Allocator &a) const {
   using namespace rapidjson;
-  auto &a = d.GetAllocator();
   Value value;
   value.SetObject();
-  value.AddMember("messages", int(x.messages), a);
-  value.AddMember("bytes", int(x.bytes), a);
-  value.AddMember("errors", int(x.errors), a);
+  value.AddMember("messages", info.messages().first, a);
+  value.AddMember("Mbytes", info.Mbytes().first, a);
+  value.AddMember("errors", info.errors(), a);
   return value;
 }
 
-rapidjson::Value JSONWriterBase::to_json(const StreamerStatisticsType &x,
-                                         return_type &d) {
+template <class Allocator>
+rapidjson::Value create_derived_quantity(MessageInfo::value_type &value,
+                                           Allocator &a) {
+  rapidjson::Value result;
+  result.SetObject();
+  result.AddMember("average", value.first, a);
+  result.AddMember("stdandard_deviation", value.second, a);
+  return std::move(result);
+}
+
+template <class Allocator>
+rapidjson::Value JSONWriterBase::derived_quantities(MessageInfo &info,
+                                                      double duration,
+                                                      Allocator &a) const {
   using namespace rapidjson;
-  auto &a = d.GetAllocator();
+  auto size = message_size(info);
+  auto frequency = FileWriter::Status::message_frequency(info, duration);
+  auto throughput = FileWriter::Status::message_throughput(info, duration);
 
   Value value;
   value.SetObject();
-  {
-    Value size;
-    size.SetObject();
-    size.AddMember("avg", x.average_message_size, a);
-    size.AddMember("std", x.standard_deviation_message_size, a);
-    value.AddMember("size", size, a);
-  }
-  {
-    Value freq;
-    freq.SetObject();
-    freq.AddMember("avg", x.average_message_frequency, a);
-    freq.AddMember("std", x.standard_deviation_message_frequency, a);
-    value.AddMember("freq", freq, a);
-  }
+
+  value.AddMember("size", create_derived_quantity(size, a), a);
+  value.AddMember("frequency", create_derived_quantity(frequency, a), a);
+  value.AddMember("throughput", create_derived_quantity(throughput, a), a);
+
   return value;
 }
 
-JSONWriter::return_type JSONWriter::write(const StreamMasterStatus &data) {
-  return base.write_impl(data);
+StdIOWriter::return_type StdIOWriter::write(StreamMasterInfo &info) const {
+  auto value = base.write_impl(info);
+  rapidjson::StringBuffer buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> w(buffer);
+  w.SetMaxDecimalPlaces(1);
+  value.Accept(w);
+  std::cout << buffer.GetString() << "\n";
 }
 
 JSONStreamWriter::return_type
-JSONStreamWriter::write(const StreamMasterStatus &data) {
-  auto value = base.write_impl(data);
+JSONStreamWriter::write(StreamMasterInfo &info) const {
+  auto value = base.write_impl(info);
   rapidjson::StringBuffer buffer;
   rapidjson::Writer<rapidjson::StringBuffer> w(buffer);
+  w.SetMaxDecimalPlaces(1);
   value.Accept(w);
   std::string s{buffer.GetString()};
   return std::move(s);
+}
+
+JSONWriter::return_type JSONWriter::write(StreamMasterInfo &info) const {
+  return base.write_impl(info);
 }
 
 } // namespace Status

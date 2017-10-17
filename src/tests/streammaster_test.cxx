@@ -96,7 +96,7 @@ std::vector<std::string> no_topic = {""};
 std::vector<std::string> topic = {"area_detector", "tof_detector", "motor1",
                                   "motor2", "temp"};
 
-#if 1
+// #if 1
 std::vector<MockDemuxTopic> no_demux = {MockDemuxTopic("")};
 std::vector<MockDemuxTopic> one_demux = {
     MockDemuxTopic("topic.with.multiple.sources")};
@@ -148,24 +148,24 @@ TEST(StreamMaster, success_setting_start_time) {
   EXPECT_TRUE(sm.start_time(ESSTimeStamp(10)));
 }
 
-int main(int argc, char **argv) {
-  rng.seed(1234);
-  ::testing::InitGoogleTest(&argc, argv);
-  for (int i = 1; i < argc; ++i) {
-    std::string opt(argv[i]);
-    size_t found = opt.find("=");
-    if (opt.substr(0, found) == "--kafka_broker")
-      broker = opt.substr(found + 1);
-    if (opt.substr(0, found) == "--help") {
-      std::cout << "\nOptions: "
-                << "\n"
-                << "\t--kafka_broker=<host>:<port>[default = 9092]\n";
-    }
-  }
+// int main(int argc, char **argv) {
+//   rng.seed(1234);
+//   ::testing::InitGoogleTest(&argc, argv);
+//   for (int i = 1; i < argc; ++i) {
+//     std::string opt(argv[i]);
+//     size_t found = opt.find("=");
+//     if (opt.substr(0, found) == "--kafka_broker")
+//       broker = opt.substr(found + 1);
+//     if (opt.substr(0, found) == "--help") {
+//       std::cout << "\nOptions: "
+//                 << "\n"
+//                 << "\t--kafka_broker=<host>:<port>[default = 9092]\n";
+//     }
+//   }
 
-  return RUN_ALL_TESTS();
-}
+//   return RUN_ALL_TESTS();
+// }
 
-#else
-int main(int argc, char **argv) {}
-#endif
+// #else
+// int main(int argc, char **argv) {}
+// #endif

@@ -47,8 +47,9 @@ public:
   int32_t &n_sources() { return n_sources_; }
   Error remove_source();
 
-  Status::StreamerStatus &status() { return s_; }
-  const Error &runstatus() { return s_.run_status(); }
+  const Error &runstatus() { return run_status_; }
+
+  Status::MessageInfo& info() { return message_info_; }
 
 private:
   std::shared_ptr<RdKafka::KafkaConsumer> _consumer;
@@ -57,7 +58,10 @@ private:
   RdKafkaOffset _begin;
   std::vector<RdKafkaOffset> _low;
 
-  Status::StreamerStatus s_;
+  //  Status::StreamerStatus s_;
+  Error run_status_{};
+  Status::MessageInfo message_info_;
+
   std::thread connect_;
   std::mutex guard_;
 

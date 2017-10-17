@@ -9,6 +9,8 @@ HDFFile.cxx
 helper.cxx
 json.cxx
 uri.cxx
+status_test.cxx
+status_writer.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
@@ -31,20 +33,6 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common})
 add_gtest_to_target(${tgt})
 
-
-set(tgt "status_test")
-set(sources
-status_test.cxx
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
-)
-add_executable(${tgt} ${sources})
-add_dependencies(${tgt} flatbuffers_generate)
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
-add_gtest_to_target(${tgt})
-
-
 set(tgt "streammaster_test")
 set(sources
 streammaster_test.cxx
@@ -56,7 +44,6 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common})
 add_gtest_to_target(${tgt})
-
 
 configure_file(msg-conf-new-01.json ../../tests/msg-conf-new-01.json)
 configure_file(msg-conf-new-02.json ../../tests/msg-conf-new-02.json)

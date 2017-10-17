@@ -72,6 +72,9 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
+    Status.cxx
+    StatusWriter.cxx
+    Errors.cxx
     Streamer.cxx
     StreamMaster.cxx
     kafka_util.cxx
@@ -110,6 +113,7 @@ set(kafka_to_nexus_INC
     CommandListener.h
     commandproducer.h
     DemuxTopic.h
+    Errors.hpp
     FileWriterTask.h
     h5.h
     HDFFile_h5.h
@@ -126,8 +130,11 @@ set(kafka_to_nexus_INC
     Msg.h
     MsgParser.h
     ProcessMessageResult.h
+    Report.hpp
     SchemaRegistry.h
     Source.h
+    Status.hpp
+    StatusWriter.hpp
     Streamer.hpp
     StreamMaster.hpp
     TimeDifferenceFromMessage.h

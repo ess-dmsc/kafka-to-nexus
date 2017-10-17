@@ -9,39 +9,38 @@
 namespace FileWriter {
 namespace Status {
 
-struct StreamMasterStatus;
-struct StreamerStatusType;
-struct StreamerStatisticsType;
-
-class JSONWriter;
-class JSONStreamWriter;
-
-class StdIOWriter {
-public:
-  using return_type = void;
-  return_type write(const StreamMasterStatus &);
-
-private:
-  void print(const StreamerStatusType &);
-  void print(const StreamerStatisticsType &);
-};
+class StreamMasterInfo;
+class MessageInfo;
 
 class JSONWriterBase {
   friend class JSONWriter;
   friend class JSONStreamWriter;
+  friend class StdIOWriter;
 
 private:
   using return_type = rapidjson::Document;
 
-  return_type write_impl(const StreamMasterStatus &);
-  rapidjson::Value to_json(const StreamerStatusType &, return_type &);
-  rapidjson::Value to_json(const StreamerStatisticsType &, return_type &);
+  return_type write_impl(StreamMasterInfo &) const;
+  template <class Allocator>
+  rapidjson::Value primary_quantities(MessageInfo &, Allocator &) const;
+  template <class Allocator>
+  rapidjson::Value derived_quantities(MessageInfo &, double,
+                                        Allocator &) const;
+};
+
+class StdIOWriter {
+public:
+  using return_type = void;
+  return_type write(StreamMasterInfo &) const;
+
+private:
+  JSONWriterBase base;
 };
 
 class JSONWriter {
 public:
   using return_type = rapidjson::Document;
-  return_type write(const StreamMasterStatus &);
+  return_type write(StreamMasterInfo &) const;
 
 private:
   JSONWriterBase base;
@@ -50,13 +49,13 @@ private:
 class JSONStreamWriter {
 public:
   using return_type = std::string;
-  return_type write(const StreamMasterStatus &);
+  return_type write(StreamMasterInfo &) const;
 
 private:
   JSONWriterBase base;
 };
 
-template <class W> typename W::return_type pprint(const StreamMasterStatus &x) {
+template <class W> typename W::return_type pprint(StreamMasterInfo &x) {
   W writer;
   return writer.write(x);
 }

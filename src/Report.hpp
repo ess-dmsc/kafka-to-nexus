@@ -5,8 +5,13 @@
 #include <thread>
 
 #include "Status.hpp"
+#include "KafkaW.h"
 #include "StatusWriter.hpp"
 #include "logger.h"
+
+namespace KafkaW {
+class ProducerTopic;
+}
 
 namespace FileWriter {
 
@@ -20,25 +25,26 @@ public:
       : report_producer_{producer}, delay_{std::chrono::milliseconds(delay)} {}
   Report(const Report &other) = delete;
   Report(Report &&other) = default;
+  Report &operator=(Report &&other) = default;
   ~Report() = default;
 
   template <class S>
   void report(S &streamer, std::atomic<bool> &stop,
               std::atomic<int> &stream_master_status) {
-    while (!stop.load()) {
-      std::this_thread::sleep_for(delay_);
-      auto error = produce_single_report(streamer, stream_master_status.load());
-      if (error == ErrorCode::report_failure) {
-        stream_master_status = error;
-        return;
-      }
-    }
+  while (!stop.load()) {
     std::this_thread::sleep_for(delay_);
     auto error = produce_single_report(streamer, stream_master_status.load());
-    if (error == ErrorCode::report_failure) { // termination message
+    if (error == ErrorCode::report_failure) {
       stream_master_status = error;
+      return;
     }
-    return;
+  }
+  std::this_thread::sleep_for(delay_);
+  auto error = produce_single_report(streamer, stream_master_status.load());
+  if (error == ErrorCode::report_failure) { // termination message
+    stream_master_status = error;
+  }
+  return;
   }
 
 private:
@@ -48,18 +54,21 @@ private:
       LOG(1, "ProucerTopic error: can't produce StreamMaster status report");
       return ErrorCode::report_failure;
     }
-    Status::StreamMasterStatus status(stream_master_status);
+    
+    Status::StreamMasterInfo info;
+    info.time(delay_);
     for (auto &s : streamer) {
-      auto v = s.second.status();
-      status.push(s.first, v.fetch_status(), v.fetch_statistics());
+      info.add(s.first, s.second.info());
     }
-    auto value = Status::pprint<Status::JSONStreamWriter>(status);
+    
+    Status::pprint<Status::StdIOWriter>(info);
+    auto value = Status::pprint<Status::JSONStreamWriter>(info);
     report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                              value.size());
+			      value.size());  
     return 0;
   }
 
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
   std::chrono::milliseconds delay_{milliseconds(1000)};
 };
-}
+} // namespace FileWriter

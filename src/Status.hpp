@@ -8,6 +8,9 @@
 #include <mutex>
 #include <vector>
 
+#include <chrono>
+#include <map>
+
 #include "Errors.hpp"
 
 namespace FileWriter {
@@ -15,114 +18,60 @@ class Streamer;
 namespace Status {
 
 class StdIOWriter;
-class JSONWriterBase;
+// class JSONWriterBase;
 
-// Data type for collecting informations about the streamer. `bytes`
-// and `messages` store the total number of bytes and messages
-// received, and `errors` the total number of errors while processing
-// the message, `bytes_squared` and `messages_squared` are the sum of
-// the square of the corresponding quantities.  Given these values one
-// can compute the average message size (in bytes), the average
-// message frequency and their corresponding standard deviation.
-class StreamerStatusType {
-  friend class StdIOWriter;
-  friend class JSONWriterBase;
-
+class MessageInfo {
 public:
-  StreamerStatusType() = default;
-  StreamerStatusType(const StreamerStatusType &other);
-  StreamerStatusType(StreamerStatusType &&other) noexcept = default;
+  using value_type = std::pair<double, double>;
+  const MessageInfo &operator=(const MessageInfo &other);
+  const MessageInfo &operator+=(const MessageInfo &other);
 
-  ~StreamerStatusType() = default;
-
-  StreamerStatusType &operator=(const StreamerStatusType &other) = default;
-  StreamerStatusType &operator=(StreamerStatusType &&other) noexcept;
-  StreamerStatusType &operator+=(const StreamerStatusType &other);
-  StreamerStatusType &operator-=(const StreamerStatusType &other);
-  StreamerStatusType operator+(const StreamerStatusType &other);
+  const MessageInfo &message(const double &message_size);
+  const MessageInfo &error();
 
   void reset();
 
-  double bytes{0.0};
-  double messages{0.0};
-  double errors{0.0};
-  double bytes_squared{0.0};
-  double messages_squared{0.0};
-};
-
-// Data type for extracting statistics about the streamer
-class StreamerStatisticsType {
-public:
-  double average_message_size{0};
-  double standard_deviation_message_size{0};
-  double average_message_frequency{0};
-  double standard_deviation_message_frequency{0};
-};
-
-class StreamMasterStatus {
-  friend class StdIOWriter;
-  friend class JSONWriterBase;
-
-public:
-  StreamMasterStatus() = default;
-  explicit StreamMasterStatus(const int &value) : status(value){};
-
-  StreamMasterStatus &push(const std::string &topic_name,
-                           const StreamerStatusType &status,
-                           const StreamerStatisticsType &stats);
-  const int size() {
-    if (streamer_status.size() == streamer_stats.size() &&
-        streamer_status.size() == topic.size()) {
-      return topic.size();
-    } else {
-      return -1;
-    }
-  }
-
-protected:
-  std::vector<std::string> topic;
-  std::vector<StreamerStatusType> streamer_status;
-  std::vector<StreamerStatisticsType> streamer_stats;
-  int status{StreamMasterErrorCode::not_started};
-};
-
-// Collects informations about the StreamMaster and the Streamers,
-// extract statistics
-class StreamerStatus {
-  using StreamerError = FileWriter::StreamerError;
-
-  friend class StdIOWriter;
-  friend class JSONWriterBase;
-
-public:
-  StreamerStatus()
-      : last_time{std::chrono::system_clock::now()},
-        run_status_(StreamerError(StreamerErrorCode::stopped)) {}
-  StreamerStatus(const StreamerStatus &other)
-      : current{other.current}, last{other.last}, last_time{other.last_time},
-        run_status_(other.run_status_) {}
-
-  void add_message(const double &bytes);
-  void error() { current.errors++; }
-  void error(const StreamerError &value) {
-    run_status_ = value;
-    error();
-  }
-
-  StreamerStatusType fetch_status();
-
-  StreamerStatisticsType fetch_statistics();
-
-  void run_status(const StreamerError &value) { run_status_ = value; }
-  const StreamerError &run_status() { return run_status_; }
+  value_type Mbytes() const;
+  value_type messages() const;
+  double errors() const;
+  std::mutex& mutex() { return mutex_; }
 
 private:
-  StreamerStatusType current;
-  StreamerStatusType last;
-  std::mutex m;
-  std::chrono::system_clock::time_point last_time;
-  StreamerError run_status_;
-}; // namespace Status
+  std::atomic<double> messages_{0};
+  std::atomic<double> messages_square_{0};
+  std::atomic<double> Mbytes_{0};
+  std::atomic<double> Mbytes_square_{0};
+  std::atomic<double> errors_{0};
+  std::mutex mutex_;
+};
+
+class StreamMasterInfo {
+public:
+  using value_type = std::map<std::string, MessageInfo>;
+
+  void add(const std::string &topic, MessageInfo &info);
+
+  value_type &info() { return info_; }
+  MessageInfo &total() { return total_; }
+  int &status(const int &other) { return status_ = other; }
+  int &status() { return status_; }
+
+  const double time(const std::chrono::milliseconds& elapsed_time);
+  const double time();
+
+private:
+  MessageInfo total_;
+  value_type info_;
+  std::chrono::milliseconds time_;
+  int status_{StreamMasterErrorCode::not_started};
+};
+
+const std::pair<double, double> message_size(const MessageInfo &);
+const std::pair<double, double> message_frequency(const MessageInfo &,
+                                                  const double);
+const std::pair<double, double> message_throughput(const MessageInfo &,
+                                                   const double);
+
 
 } // namespace Status
 } // namespace FileWriter

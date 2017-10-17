@@ -15,10 +15,14 @@
 
 #include "DemuxTopic.h"
 #include "FileWriterTask.h"
-#include "KafkaW.h"
+//#include "KafkaW.h"
 #include "Report.hpp"
+#include "logger.h"
 
 struct FileWriterCommand;
+namespace KafkaW {
+class ProducerTopic;
+}
 
 namespace FileWriter {
 
@@ -121,7 +125,7 @@ public:
     if (!report_thread_.joinable()) {
       report_.reset(new Report(p, delay));
       report_thread_ =
-          std::thread([&] { report_->report(streamer, stop_, runstatus); });
+	std::thread([&] { report_->report(streamer, stop_, runstatus); });
     } else {
       LOG(5, "Status report already started, nothing to do");
     }
