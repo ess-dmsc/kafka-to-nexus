@@ -1,6 +1,7 @@
 def project = "kafka-to-nexus"
 def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.3')
 
+
 node('docker') {
     def container_name = "${project}-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
     def run_args = "\
@@ -10,19 +11,22 @@ node('docker') {
         --env https_proxy=${env.https_proxy}"
     def sclsh = "/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash"
 
+    cleanWs()
+
+    dir("${project}") {
+	stage('Checkout') {
+            scm_vars = checkout scm
+	}
+    }
+
     try {
         container = centos.run(run_args)
 
-	cleanWs()
-
-        stage('Checkout') {
-            def checkout_script = """
-                git clone https://github.com/ess-dmsc/${project}.git \
-                    --branch ${env.BRANCH_NAME}
-                git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
-            """
-            sh "docker exec ${container_name} ${sclsh} -c \"${checkout_script}\""
-        }
+	// Copy sources to container and change owner and group.
+	sh "docker cp ${project} ${container_name}:/home/jenkins/${project}"
+	sh """docker exec --user root ${container_name} ${sclsh} -c \"
+                chown -R jenkins.jenkins /home/jenkins/${project}
+	\""""
 
         stage('Get Dependencies') {
             def conan_remote = "ess-dmsc-local"
