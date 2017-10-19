@@ -57,6 +57,7 @@ set(libraries_common
     ${CURL_LIBRARIES}
     pthread
     z
+    ${CONAN_LIBS}
 )
 
 set(compile_defs_common "HAS_REMOTE_API=0")

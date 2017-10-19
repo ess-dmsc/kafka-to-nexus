@@ -126,7 +126,7 @@ Commands can be given in the configuration file as well:
 
 ## Installation
 
-### Dependencies
+### Requirements
 
 - cmake (at least 2.8.11)
 - git
@@ -139,13 +139,38 @@ Commands can be given in the configuration file as well:
   and `streaming-data-types` are in the same directory)
 - Optional `graylog_logger`
 
+Tooling
+
+- conan
+- cmake (minimum tested is 2.8.11)
+- C++ compiler with c++11 support
+- Doxygen if you would like to make docs
+
+### Conan repositories
+
+The following remote repositories are required to be configured:
+
+- https://api.bintray.com/conan/ess-dmsc/conan
+- https://api.bintray.com/conan/conan-community/conan
+
+You can add them by running
+```
+conan remote add <local-name> <remote-url>
+```
+where `<local-name>` must be substituted by a locally unique name. Configured
+remotes can be listed with `conan remote list`.
 
 ### Build
 
 As usual `cmake`, `make`.
+```
+conan install <path-to-source>/conan --build=missing
+cmake <path-to-source> [-DREQUIRE_GTEST=TRUE]
+make
+make docs  # optional
+```
 
-
-### Usage of your custom builds of the dependencies
+#### Usage of your custom builds of the dependencies
 
 If you have dependencies in non-standard locations:
 Locations of dependencies can be supplied via the standard
