@@ -16,6 +16,7 @@ node('docker') {
     dir("${project}") {
 	stage('Checkout') {
             scm_vars = checkout scm
+	    println scm_vars
 	}
     }
 
@@ -27,6 +28,13 @@ node('docker') {
 	sh """docker exec --user root ${container_name} ${sclsh} -c \"
                 chown -R jenkins.jenkins /home/jenkins/${project}
 	\""""
+
+        stage('Checkout') {
+            def checkout_script = """
+                git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
+            """
+            sh "docker exec ${container_name} ${sclsh} -c \"${checkout_script}\""
+        }
 
         stage('Get Dependencies') {
             def conan_remote = "ess-dmsc-local"
