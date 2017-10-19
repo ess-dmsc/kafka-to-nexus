@@ -16,7 +16,6 @@ node('docker') {
     dir("${project}") {
 	stage('Checkout') {
             scm_vars = checkout scm
-	    println scm_vars
 	}
     }
 
