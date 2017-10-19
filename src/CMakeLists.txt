@@ -62,7 +62,7 @@ set(libraries_common
 
 set(compile_defs_common "HAS_REMOTE_API=0")
 
-if (${USE_GRAYLOG_LOGGER})
+if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
 	message(STATUS "Using graylog_logger")
 	list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
 	list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})
