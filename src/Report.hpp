@@ -16,7 +16,7 @@ class ProducerTopic;
 namespace FileWriter {
 
 class Report {
-  using ErrorCode = Status::StreamMasterErrorCode;
+  using SMEC = Status::StreamMasterErrorCode;
 
 public:
   Report() {}
@@ -30,18 +30,18 @@ public:
 
   template <class S>
   void report(S &streamer, std::atomic<bool> &stop,
-              std::atomic<int> &stream_master_status) {
+              std::atomic<SMEC> &stream_master_status) {
   while (!stop.load()) {
     std::this_thread::sleep_for(delay_);
     auto error = produce_single_report(streamer, stream_master_status.load());
-    if (error == ErrorCode::report_failure) {
+    if (error == SMEC::report_failure) {
       stream_master_status = error;
       return;
     }
   }
   std::this_thread::sleep_for(delay_);
   auto error = produce_single_report(streamer, stream_master_status.load());
-  if (error == ErrorCode::report_failure) { // termination message
+  if (error != SMEC::no_error) { // termination message
     stream_master_status = error;
   }
   return;
@@ -49,10 +49,10 @@ public:
 
 private:
   template <class S>
-  int produce_single_report(S &streamer, int stream_master_status) {
+  SMEC produce_single_report(S &streamer, SMEC stream_master_status) {
     if (!report_producer_) {
       LOG(1, "ProucerTopic error: can't produce StreamMaster status report");
-      return ErrorCode::report_failure;
+      return SMEC::report_failure;
     }
     
     Status::StreamMasterInfo info;
@@ -60,12 +60,10 @@ private:
     for (auto &s : streamer) {
       info.add(s.first, s.second.info());
     }
-    
-    Status::pprint<Status::StdIOWriter>(info);
     auto value = Status::pprint<Status::JSONStreamWriter>(info);
     report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
 			      value.size());  
-    return 0;
+    return SMEC::no_error;
   }
 
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};

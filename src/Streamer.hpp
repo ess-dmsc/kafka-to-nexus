@@ -32,6 +32,7 @@ public:
   Streamer(const std::string &, const std::string &, Options kafka_options = {},
            Options filewriter_options = {});
   Streamer(const Streamer &) = delete;
+  Streamer(Streamer&& other) = default;
 
   ~Streamer();
 

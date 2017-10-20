@@ -46,6 +46,7 @@ private:
 };
 
 class StreamMasterInfo {
+  using SMEC = StreamMasterErrorCode;
 public:
   using value_type = std::map<std::string, MessageInfo>;
 
@@ -53,8 +54,8 @@ public:
 
   value_type &info() { return info_; }
   MessageInfo &total() { return total_; }
-  int &status(const int &other) { return status_ = other; }
-  int &status() { return status_; }
+  SMEC &status(const SMEC &other) { status_ = other; return status_; }
+  SMEC &status() { return status_; }
 
   const double time(const std::chrono::milliseconds& elapsed_time);
   const double time();
@@ -63,7 +64,7 @@ private:
   MessageInfo total_;
   value_type info_;
   std::chrono::milliseconds time_;
-  int status_{StreamMasterErrorCode::not_started};
+  SMEC status_{SMEC::not_started};
 };
 
 const std::pair<double, double> message_size(const MessageInfo &);

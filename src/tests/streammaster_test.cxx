@@ -110,13 +110,13 @@ TEST(StreamMaster, streamer_report_failure_if_missing_broker_or_topic) {
   {
     MockStreamMaster sm("", one_demux);
     std::this_thread::sleep_for(milliseconds(10));
-    EXPECT_EQ(sm.status().value(),
+    EXPECT_EQ(sm.status(),
               FileWriter::Status::StreamMasterErrorCode::streamer_error);
   }
   {
     MockStreamMaster sm(broker, no_demux);
     std::this_thread::sleep_for(milliseconds(10));
-    EXPECT_EQ(sm.status().value(),
+    EXPECT_EQ(sm.status(),
               FileWriter::Status::StreamMasterErrorCode::streamer_error);
   }
 }
@@ -124,7 +124,7 @@ TEST(StreamMaster, streamer_report_failure_if_missing_broker_or_topic) {
 TEST(StreamMaster, streamer_report_failure_if_wrong_broker) {
   MockStreamMaster sm("no_host", one_demux);
   std::this_thread::sleep_for(milliseconds(10));
-  EXPECT_EQ(sm.status().value(),
+  EXPECT_EQ(sm.status(),
             FileWriter::Status::StreamMasterErrorCode::streamer_error);
 }
 
@@ -134,7 +134,7 @@ TEST(StreamMaster, streamer_report_success_if_broker_and_topic_correct) {
   }
   MockStreamMaster sm(broker, one_demux);
   std::this_thread::sleep_for(milliseconds(10));
-  EXPECT_EQ(sm.status().value(),
+  EXPECT_EQ(sm.status(),
             FileWriter::Status::StreamMasterErrorCode::not_started);
 }
 

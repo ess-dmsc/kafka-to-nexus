@@ -22,7 +22,7 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   { // stream master info
     Value sm;
     sm.SetObject();
-    sm.AddMember("state", StringRef(Err2Str(StreamMasterError{info.status()})),
+    sm.AddMember("state", StringRef(Err2Str(info.status())),
                  a);
     sm.AddMember("status", primary_quantities(info.total(), a), a);
     sm.AddMember("statistics",

@@ -141,7 +141,6 @@ void FileWriter::Status::StreamMasterInfo::add(const std::string &topic, FileWri
 
 const double FileWriter::Status::StreamMasterInfo::time(const std::chrono::milliseconds& elapsed_time) {
   time_ = elapsed_time;
-  std::cout << elapsed_time.count() << "\n";
   return std::chrono::duration_cast<std::chrono::seconds>(time_).count();
 }
 const double FileWriter::Status::StreamMasterInfo::time() {

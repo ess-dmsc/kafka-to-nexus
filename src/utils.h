@@ -37,7 +37,6 @@ struct Timestamp {};
  
 struct FileWriterErrorType {};
 struct StreamerErrorType{};
-struct StreamMasterErrorType{};
 
 struct ESSTimeStampType{};
 struct KafkaTimeStampType{};
@@ -46,7 +45,7 @@ struct KafkaTimeStampType{};
 
 using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
 using StreamerError = utils::StrongType<int32_t, utils::StreamerErrorType>;
-using StreamMasterError = utils::StrongType<int32_t, utils::StreamMasterErrorType>;
+
  using ESSTimeStamp = nanoseconds;
  using KafkaTimeStamp = milliseconds;
  

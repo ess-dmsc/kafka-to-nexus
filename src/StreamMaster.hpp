@@ -27,8 +27,7 @@ class ProducerTopic;
 namespace FileWriter {
 
 template <typename Streamer, typename Demux> class StreamMaster {
-  using ErrorCode = Status::StreamMasterErrorCode;
-  using Error = StreamMasterError;
+  using SMEC = Status::StreamMasterErrorCode;
   using Options = typename Streamer::Options;
 
 public:
@@ -64,6 +63,9 @@ public:
     }
   }
 
+  StreamMaster(const StreamMaster&) = delete;
+  StreamMaster(StreamMaster&&) = default;
+
   ~StreamMaster() {
     stop_ = true;
     if (loop.joinable()) {
@@ -73,6 +75,8 @@ public:
       report_thread_.join();
     }
   }
+
+  StreamMaster& operator=(const StreamMaster&) = delete;
 
   bool start_time(const ESSTimeStamp &start) {
     for (auto &s : streamer) {
@@ -133,13 +137,13 @@ public:
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
-  const Error status() {
+  const SMEC status() {
     for (auto &s : streamer) {
       if (s.second.runstatus().value() < 0) {
-        runstatus = ErrorCode::streamer_error;
+        runstatus = SMEC::streamer_error;
       }
     }
-    return Error{runstatus.load()};
+    return runstatus.load();
   }
 
 private:
@@ -152,7 +156,7 @@ private:
 
   void run() {
     using namespace std::chrono;
-    runstatus = ErrorCode::running;
+    runstatus = SMEC::running;
     system_clock::time_point tp;
 
     while (!stop_) {
@@ -163,7 +167,7 @@ private:
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
             if (_value.is_STOP() &&
-                (remove_source(d.topic()) != Error{ErrorCode::running})) {
+                (remove_source(d.topic()) != SMEC::running)) {
               break;
             }
           }
@@ -175,31 +179,31 @@ private:
         }
         if (s.runstatus().value() < 0 &&
             s.runstatus().value() != Streamer::ErrorCode::not_initialized) {
-          runstatus = ErrorCode::streamer_error;
+          runstatus = SMEC::streamer_error;
           LOG(0, "Error in topic {} : {}", d.topic(), s.runstatus().value());
           remove_source(d.topic());
           continue;
         }
       }
     }
-    runstatus = ErrorCode::has_finished;
+
+    runstatus = SMEC::has_finished;
   }
 
-  Error remove_source(const std::string &topic) {
+  SMEC remove_source(const std::string &topic) {
     auto &s(streamer[topic]);
     if (s.n_sources() > 1) {
       s.n_sources()--;
-      return Error{ErrorCode::running};
+      return SMEC::running;
     } else {
       LOG(3, "All sources in {} have expired, remove streamer", topic);
       stop_streamer(s);
       streamer.erase(topic);
       if (streamer.size() != 0) {
-        return Error{ErrorCode::empty_streamer};
+        return SMEC::empty_streamer;
       } else {
-        runstatus = ErrorCode::has_finished;
         stop_ = true;
-        return Error{ErrorCode::has_finished};
+        return runstatus = SMEC::has_finished;
       }
     }
   }
@@ -230,7 +234,7 @@ private:
   std::vector<Demux> &demux;
   std::thread loop;
   std::thread report_thread_;
-  std::atomic<int> runstatus{ErrorCode::not_started};
+  std::atomic<SMEC> runstatus{SMEC::not_started};
   std::atomic<bool> do_write{false};
   std::atomic<bool> stop_{false};
   std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
