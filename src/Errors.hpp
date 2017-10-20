@@ -8,7 +8,7 @@ namespace Status {
 
 // Error codes for the StreamMaster and Streamers
 enum class StreamMasterErrorCode {
-  no_error  = 1000,
+  no_error = 1000,
   not_started = 0,
   running = 1,
   has_finished = 2,
@@ -17,7 +17,7 @@ enum class StreamMasterErrorCode {
   report_failure = -10,
   streammaster_error = -1000
 };
-enum StreamerErrorCode {
+enum class StreamerErrorCode {
   no_error = 1001,
   writing = 1,
   stopped = 0,
@@ -34,7 +34,7 @@ enum StreamerErrorCode {
   not_initialized = -1000,
 };
 
-  const std::string Err2Str(const FileWriter::Status::StreamMasterErrorCode &);
-const std::string Err2Str(const FileWriter::StreamerError &);
-}
-}
+const std::string Err2Str(const FileWriter::Status::StreamMasterErrorCode &);
+const std::string Err2Str(const FileWriter::Status::StreamerErrorCode &);
+} // namespace Status
+} // namespace FileWriter

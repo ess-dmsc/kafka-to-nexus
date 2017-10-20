@@ -27,6 +27,7 @@ class ProducerTopic;
 namespace FileWriter {
 
 template <typename Streamer, typename Demux> class StreamMaster {
+  using SEC = Status::StreamerErrorCode;
   using SMEC = Status::StreamMasterErrorCode;
   using Options = typename Streamer::Options;
 
@@ -81,7 +82,7 @@ public:
   bool start_time(const ESSTimeStamp &start) {
     for (auto &s : streamer) {
       auto result = s.second.set_start_time(start);
-      if (result.value() != Streamer::ErrorCode::no_error) {
+      if (result != SEC::no_error) {
         return false;
       }
     }
@@ -139,7 +140,7 @@ public:
 
   const SMEC status() {
     for (auto &s : streamer) {
-      if (s.second.runstatus().value() < 0) {
+      if (int(s.second.runstatus()) < 0) {
         runstatus = SMEC::streamer_error;
       }
     }
@@ -147,10 +148,10 @@ public:
   }
 
 private:
-  typename Streamer::Error stop_streamer(const std::string &topic) {
+  SEC stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
   }
-  typename Streamer::Error stop_streamer(Streamer &s) {
+  SEC stop_streamer(Streamer &s) {
     return s.closeStream();
   }
 
@@ -162,7 +163,7 @@ private:
     while (!stop_) {
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
-        if (s.runstatus().value() == Streamer::ErrorCode::writing) {
+        if (s.runstatus() == SEC::writing) {
           tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
             auto _value = s.write(d);
@@ -173,14 +174,14 @@ private:
           }
           continue;
         }
-        if (s.runstatus().value() == Streamer::ErrorCode::not_initialized) {
+        if (s.runstatus() == SEC::not_initialized) {
           std::this_thread::sleep_for(duration);
           continue;
         }
-        if (s.runstatus().value() < 0 &&
-            s.runstatus().value() != Streamer::ErrorCode::not_initialized) {
+        if (int(s.runstatus()) < 0 &&
+            s.runstatus() != SEC::not_initialized) {
           runstatus = SMEC::streamer_error;
-          LOG(0, "Error in topic {} : {}", d.topic(), s.runstatus().value());
+          LOG(0, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
           remove_source(d.topic());
           continue;
         }
@@ -221,7 +222,7 @@ private:
     for (auto &s : streamer) {
       LOG(7, "Shut down {} : {}", s.first);
       auto v = stop_streamer(s.second);
-      if (v != typename Streamer::Error(Streamer::ErrorCode::stopped)) {
+      if (v != SEC::stopped) {
         LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
       } else {
         LOG(7, "\t...done");

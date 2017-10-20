@@ -25,8 +25,7 @@ class Streamer {
 public:
   using option_t = std::pair<std::string, std::string>;
   using Options = std::vector<option_t>;
-  using Error = StreamerError;
-  using ErrorCode = Status::StreamerErrorCode;
+  using SEC = Status::StreamerErrorCode;
 
   Streamer(){};
   Streamer(const std::string &, const std::string &, Options kafka_options = {},
@@ -41,14 +40,14 @@ public:
     return ProcessMessageResult::ERR();
   }
 
-  Error closeStream();
+  SEC closeStream();
 
-  Error set_start_time(const ESSTimeStamp &tp);
+  SEC set_start_time(const ESSTimeStamp &tp);
 
   int32_t &n_sources() { return n_sources_; }
-  Error remove_source();
+  SEC remove_source();
 
-  const Error &runstatus() { return run_status_; }
+  const SEC &runstatus() { return run_status_; }
 
   Status::MessageInfo& info() { return message_info_; }
 
@@ -60,7 +59,7 @@ private:
   std::vector<RdKafkaOffset> _low;
 
   //  Status::StreamerStatus s_;
-  Error run_status_{};
+  SEC run_status_{};
   Status::MessageInfo message_info_;
 
   std::thread connect_;
@@ -88,10 +87,10 @@ private:
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
   std::unique_ptr<RdKafka::Metadata> get_metadata(const int &retry);
-  int get_topic_partitions(const std::string &topic,
+  SEC get_topic_partitions(const std::string &topic,
                            std::unique_ptr<RdKafka::Metadata> metadata);
 
-  Error get_offset_boundaries();
+  SEC get_offset_boundaries();
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);

@@ -14,11 +14,9 @@
 #include "Errors.hpp"
 
 namespace FileWriter {
-class Streamer;
 namespace Status {
 
 class StdIOWriter;
-// class JSONWriterBase;
 
 class MessageInfo {
 public:

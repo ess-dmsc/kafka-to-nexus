@@ -36,7 +36,6 @@ struct PartitionType {};
 struct Timestamp {};
  
 struct FileWriterErrorType {};
-struct StreamerErrorType{};
 
 struct ESSTimeStampType{};
 struct KafkaTimeStampType{};
@@ -44,10 +43,9 @@ struct KafkaTimeStampType{};
 } // namespace utils
 
 using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
-using StreamerError = utils::StrongType<int32_t, utils::StreamerErrorType>;
 
- using ESSTimeStamp = nanoseconds;
- using KafkaTimeStamp = milliseconds;
+using ESSTimeStamp = nanoseconds;
+using KafkaTimeStamp = milliseconds;
  
 const RdKafkaOffset RdKafkaOffsetEnd(-1);
 const RdKafkaOffset RdKafkaOffsetBegin(-2);
