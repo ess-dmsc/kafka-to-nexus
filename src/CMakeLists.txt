@@ -76,7 +76,6 @@ set(kafka_to_nexus_SRC
     StatusWriter.cxx
     Errors.cxx
     Streamer.cxx
-    StreamMaster.cxx
     kafka_util.cxx
     Master.cxx
     CommandListener.cxx

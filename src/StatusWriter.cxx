@@ -15,17 +15,18 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   Document d;
   auto &a = d.GetAllocator();
   d.SetObject();
+
+  auto next_message_relative_eta = info.time_to_next_message();
   { // message type
     d.AddMember("type", "stream_master_status", a);
+    d.AddMember("next_message_eta", next_message_relative_eta, a);
   }
-  auto time = info.time();
   { // stream master info
     Value sm;
     sm.SetObject();
     sm.AddMember("state", StringRef(Err2Str(info.status())), a);
     sm.AddMember("status", primary_quantities(info.total(), a), a);
-    sm.AddMember("statistics", derived_quantities(info.total(), time, a), a);
-    sm.AddMember("refresh_time", time, a);
+    sm.AddMember("statistics", derived_quantities(info.total(), next_message_relative_eta, a), a);
     d.AddMember("stream_master", sm, a);
   }
   { // streamers info
@@ -36,7 +37,7 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
       Value val;
       val.SetObject();
       val.AddMember("status", primary_quantities(topic.second, a), a);
-      val.AddMember("statistics", derived_quantities(topic.second, time, a), a);
+      val.AddMember("statistics", derived_quantities(topic.second, next_message_relative_eta, a), a);
       ss.AddMember(key, val, a);
     }
     d.AddMember("streamer", ss, a);
@@ -85,20 +86,11 @@ rapidjson::Value JSONWriterBase::derived_quantities(MessageInfo &info,
   return value;
 }
 
-StdIOWriter::return_type StdIOWriter::write(StreamMasterInfo &info) const {
-  auto value = base.write_impl(info);
-  rapidjson::StringBuffer buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> w(buffer);
-  w.SetMaxDecimalPlaces(1);
-  value.Accept(w);
-  std::cout << buffer.GetString() << "\n";
-}
-
 JSONStreamWriter::return_type
 JSONStreamWriter::write(StreamMasterInfo &info) const {
   auto value = base.write_impl(info);
   rapidjson::StringBuffer buffer;
-  rapidjson::Writer<rapidjson::StringBuffer> w(buffer);
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> w(buffer);
   w.SetMaxDecimalPlaces(1);
   value.Accept(w);
   std::string s{buffer.GetString()};

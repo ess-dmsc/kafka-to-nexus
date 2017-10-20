@@ -16,7 +16,7 @@ template<class T> class TD;
 
 constexpr int n_messages{100};
 
-TEST(StdIOWriter,create_document) {
+TEST(StatusWriter,create_document) {
   StreamMasterInfo info;
   StreamWriter writer;
   auto value = writer.write(info);
@@ -24,14 +24,14 @@ TEST(StdIOWriter,create_document) {
 }
 
 
-TEST(StdIOWriter,create_report_streamers) {
+TEST(StatusWriter,create_report_streamers) {
 std::default_random_engine generator;
 std::normal_distribution<double> normal(0.0, 1.024e6);
 
   StreamMasterInfo info;
   const std::vector<std::string> topics{"first","second","third"};
 
-  info.time();
+  info.time_to_next_message(milliseconds(2000));
   for(auto& t : topics) {
     MessageInfo mi;
     for(int i=0;i<n_messages;++i) {
@@ -46,8 +46,7 @@ std::normal_distribution<double> normal(0.0, 1.024e6);
   }
   
   StreamWriter writer;
-  auto value = writer.write(info);
-  std::cout << value << "\n";
+  std::cout << writer.write(info) << "\n";
   // here parse json and verify values
 }
 

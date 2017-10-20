@@ -15,7 +15,6 @@ class MessageInfo;
 class JSONWriterBase {
   friend class JSONWriter;
   friend class JSONStreamWriter;
-  friend class StdIOWriter;
 
 private:
   using return_type = rapidjson::Document;
@@ -25,15 +24,6 @@ private:
   rapidjson::Value primary_quantities(MessageInfo &, Allocator &) const;
   template <class Allocator>
   rapidjson::Value derived_quantities(MessageInfo &, double, Allocator &) const;
-};
-
-class StdIOWriter {
-public:
-  using return_type = void;
-  return_type write(StreamMasterInfo &) const;
-
-private:
-  JSONWriterBase base;
 };
 
 class JSONWriter {

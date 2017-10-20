@@ -56,7 +56,7 @@ private:
     }
 
     Status::StreamMasterInfo info;
-    info.time(delay_);
+    info.time_to_next_message(delay_);
     for (auto &s : streamer) {
       info.add(s.first, s.second.info());
     }

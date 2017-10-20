@@ -139,11 +139,11 @@ void FileWriter::Status::StreamMasterInfo::add(
   }
 }
 
-const double FileWriter::Status::StreamMasterInfo::time(
-    const std::chrono::milliseconds &elapsed_time) {
-  time_ = elapsed_time;
-  return std::chrono::duration_cast<std::chrono::seconds>(time_).count();
+const double FileWriter::Status::StreamMasterInfo::time_to_next_message(
+    const std::chrono::milliseconds &to_next_message) {
+  next_message_relative_eta_ = to_next_message;
+  return time_to_next_message();
 }
-const double FileWriter::Status::StreamMasterInfo::time() {
-  return std::chrono::duration_cast<std::chrono::seconds>(time_).count();
+const double FileWriter::Status::StreamMasterInfo::time_to_next_message() {
+  return std::chrono::duration_cast<std::chrono::seconds>(next_message_relative_eta_).count();
 }
