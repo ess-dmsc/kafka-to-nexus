@@ -22,12 +22,10 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   { // stream master info
     Value sm;
     sm.SetObject();
-    sm.AddMember("state", StringRef(Err2Str(info.status())),
-                 a);
+    sm.AddMember("state", StringRef(Err2Str(info.status())), a);
     sm.AddMember("status", primary_quantities(info.total(), a), a);
-    sm.AddMember("statistics",
-                 derived_quantities(info.total(), time, a), a);
-    sm.AddMember("refresh_time",time, a);
+    sm.AddMember("statistics", derived_quantities(info.total(), time, a), a);
+    sm.AddMember("refresh_time", time, a);
     d.AddMember("stream_master", sm, a);
   }
   { // streamers info
@@ -38,8 +36,7 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
       Value val;
       val.SetObject();
       val.AddMember("status", primary_quantities(topic.second, a), a);
-      val.AddMember("statistics",
-                    derived_quantities(topic.second, time, a), a);
+      val.AddMember("statistics", derived_quantities(topic.second, time, a), a);
       ss.AddMember(key, val, a);
     }
     d.AddMember("streamer", ss, a);
@@ -61,7 +58,7 @@ rapidjson::Value JSONWriterBase::primary_quantities(MessageInfo &info,
 
 template <class Allocator>
 rapidjson::Value create_derived_quantity(MessageInfo::value_type &value,
-                                           Allocator &a) {
+                                         Allocator &a) {
   rapidjson::Value result;
   result.SetObject();
   result.AddMember("average", value.first, a);
@@ -71,8 +68,8 @@ rapidjson::Value create_derived_quantity(MessageInfo::value_type &value,
 
 template <class Allocator>
 rapidjson::Value JSONWriterBase::derived_quantities(MessageInfo &info,
-                                                      double duration,
-                                                      Allocator &a) const {
+                                                    double duration,
+                                                    Allocator &a) const {
   using namespace rapidjson;
   auto size = message_size(info);
   auto frequency = FileWriter::Status::message_frequency(info, duration);

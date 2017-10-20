@@ -32,7 +32,7 @@ public:
   value_type Mbytes() const;
   value_type messages() const;
   double errors() const;
-  std::mutex& mutex() { return mutex_; }
+  std::mutex &mutex() { return mutex_; }
 
 private:
   std::atomic<double> messages_{0};
@@ -45,6 +45,7 @@ private:
 
 class StreamMasterInfo {
   using SMEC = StreamMasterErrorCode;
+
 public:
   using value_type = std::map<std::string, MessageInfo>;
 
@@ -52,10 +53,13 @@ public:
 
   value_type &info() { return info_; }
   MessageInfo &total() { return total_; }
-  SMEC &status(const SMEC &other) { status_ = other; return status_; }
+  SMEC &status(const SMEC &other) {
+    status_ = other;
+    return status_;
+  }
   SMEC &status() { return status_; }
 
-  const double time(const std::chrono::milliseconds& elapsed_time);
+  const double time(const std::chrono::milliseconds &elapsed_time);
   const double time();
 
 private:
@@ -70,7 +74,6 @@ const std::pair<double, double> message_frequency(const MessageInfo &,
                                                   const double);
 const std::pair<double, double> message_throughput(const MessageInfo &,
                                                    const double);
-
 
 } // namespace Status
 } // namespace FileWriter

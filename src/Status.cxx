@@ -7,7 +7,7 @@ double average(const double &sum, const double &N) { return sum / N; }
 double standard_deviation(const double &sum, const double &sum_squared,
                           const double &N) {
   auto variance = (N * sum_squared - sum * sum) / (N * (N - 1));
-  if(variance > 0) { // due to numerical instabilities
+  if (variance > 0) { // due to numerical instabilities
     return std::sqrt(variance);
   } else {
     return 0.0;
@@ -29,8 +29,8 @@ FileWriter::Status::message_size(const FileWriter::Status::MessageInfo &value) {
 const std::pair<double, double> FileWriter::Status::message_frequency(
     const FileWriter::Status::MessageInfo &value,
     const double time_difference) {
-  if(time_difference < 1e-10) {
-    return std::pair<double,double>({0,0});
+  if (time_difference < 1e-10) {
+    return std::pair<double, double>({0, 0});
   }
   std::pair<double, double> result{
       average(value.messages().first, time_difference),
@@ -42,8 +42,8 @@ const std::pair<double, double> FileWriter::Status::message_frequency(
 const std::pair<double, double> FileWriter::Status::message_throughput(
     const FileWriter::Status::MessageInfo &value,
     const double time_difference) {
-  if(time_difference < 1e-10) {
-    return std::pair<double,double>({0,0});
+  if (time_difference < 1e-10) {
+    return std::pair<double, double>({0, 0});
   }
   std::pair<double, double> result{
       average(value.Mbytes().first, time_difference),
@@ -118,11 +118,11 @@ double FileWriter::Status::MessageInfo::errors() const {
   return errors_.load();
 }
 
-
 ////////////////////////
 // StreamMasterInfo
 
-void FileWriter::Status::StreamMasterInfo::add(const std::string &topic, FileWriter::Status::MessageInfo &info) {
+void FileWriter::Status::StreamMasterInfo::add(
+    const std::string &topic, FileWriter::Status::MessageInfo &info) {
   // The lock prevents Streamer::write from update info while
   // collecting these stats, or this function from reset while/after
   // Streamer::write updates. Pairs with MessageInfo::message(error) lock
@@ -139,7 +139,8 @@ void FileWriter::Status::StreamMasterInfo::add(const std::string &topic, FileWri
   }
 }
 
-const double FileWriter::Status::StreamMasterInfo::time(const std::chrono::milliseconds& elapsed_time) {
+const double FileWriter::Status::StreamMasterInfo::time(
+    const std::chrono::milliseconds &elapsed_time) {
   time_ = elapsed_time;
   return std::chrono::duration_cast<std::chrono::seconds>(time_).count();
 }

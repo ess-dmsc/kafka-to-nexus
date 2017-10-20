@@ -16,32 +16,26 @@ static const std::map<const SMEC, std::string> stream_master_error_lookup_{
 static const std::map<const SEC, std::string> streamer_error_lookup_{
     {SEC::writing, "writing"},
     {SEC::stopped, "stopped"},
-    {SEC::configuration_error,
-     " configuration_error"},
+    {SEC::configuration_error, " configuration_error"},
     {SEC::consumer_error, " consumer_error"},
     {SEC::metadata_error, "metadata_error"},
-    {SEC::topic_partition_error,
-     "topic_partition_error"},
+    {SEC::topic_partition_error, "topic_partition_error"},
     {SEC::assign_error, "assign_error"},
     {SEC::topic_error, "topic_error"},
     {SEC::offset_error, "offset_error"},
-    {SEC::start_time_error,
-     "start_time_error"},
+    {SEC::start_time_error, "start_time_error"},
     {SEC::message_error, "message_error"},
     {SEC::write_error, "write_error"},
-    {SEC::not_initialized,
-     "not_initialized"}};
+    {SEC::not_initialized, "not_initialized"}};
 
-const std::string
-FileWriter::Status::Err2Str(const SMEC &error) {
+const std::string FileWriter::Status::Err2Str(const SMEC &error) {
   auto it = stream_master_error_lookup_.find(error);
   if (it != stream_master_error_lookup_.end()) {
     return it->second;
   }
   return "Unknown error code";
 };
-const std::string
-FileWriter::Status::Err2Str(const SEC &error) {
+const std::string FileWriter::Status::Err2Str(const SEC &error) {
   auto it = streamer_error_lookup_.find(error);
   if (it != streamer_error_lookup_.end()) {
     return it->second;

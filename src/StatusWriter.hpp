@@ -24,8 +24,7 @@ private:
   template <class Allocator>
   rapidjson::Value primary_quantities(MessageInfo &, Allocator &) const;
   template <class Allocator>
-  rapidjson::Value derived_quantities(MessageInfo &, double,
-                                        Allocator &) const;
+  rapidjson::Value derived_quantities(MessageInfo &, double, Allocator &) const;
 };
 
 class StdIOWriter {

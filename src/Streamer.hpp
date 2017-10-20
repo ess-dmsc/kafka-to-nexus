@@ -31,7 +31,7 @@ public:
   Streamer(const std::string &, const std::string &, Options kafka_options = {},
            Options filewriter_options = {});
   Streamer(const Streamer &) = delete;
-  Streamer(Streamer&& other) = default;
+  Streamer(Streamer &&other) = default;
 
   ~Streamer();
 
@@ -49,7 +49,7 @@ public:
 
   const SEC &runstatus() { return run_status_; }
 
-  Status::MessageInfo& info() { return message_info_; }
+  Status::MessageInfo &info() { return message_info_; }
 
 private:
   std::shared_ptr<RdKafka::KafkaConsumer> _consumer;

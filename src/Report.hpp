@@ -4,8 +4,8 @@
 #include <memory>
 #include <thread>
 
-#include "Status.hpp"
 #include "KafkaW.h"
+#include "Status.hpp"
 #include "StatusWriter.hpp"
 #include "logger.h"
 
@@ -31,20 +31,20 @@ public:
   template <class S>
   void report(S &streamer, std::atomic<bool> &stop,
               std::atomic<SMEC> &stream_master_status) {
-  while (!stop.load()) {
+    while (!stop.load()) {
+      std::this_thread::sleep_for(delay_);
+      auto error = produce_single_report(streamer, stream_master_status.load());
+      if (error == SMEC::report_failure) {
+        stream_master_status = error;
+        return;
+      }
+    }
     std::this_thread::sleep_for(delay_);
     auto error = produce_single_report(streamer, stream_master_status.load());
-    if (error == SMEC::report_failure) {
+    if (error != SMEC::no_error) { // termination message
       stream_master_status = error;
-      return;
     }
-  }
-  std::this_thread::sleep_for(delay_);
-  auto error = produce_single_report(streamer, stream_master_status.load());
-  if (error != SMEC::no_error) { // termination message
-    stream_master_status = error;
-  }
-  return;
+    return;
   }
 
 private:
@@ -54,7 +54,7 @@ private:
       LOG(1, "ProucerTopic error: can't produce StreamMaster status report");
       return SMEC::report_failure;
     }
-    
+
     Status::StreamMasterInfo info;
     info.time(delay_);
     for (auto &s : streamer) {
@@ -62,7 +62,7 @@ private:
     }
     auto value = Status::pprint<Status::JSONStreamWriter>(info);
     report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-			      value.size());  
+                              value.size());
     return SMEC::no_error;
   }
 

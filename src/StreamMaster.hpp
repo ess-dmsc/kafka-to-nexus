@@ -64,8 +64,8 @@ public:
     }
   }
 
-  StreamMaster(const StreamMaster&) = delete;
-  StreamMaster(StreamMaster&&) = default;
+  StreamMaster(const StreamMaster &) = delete;
+  StreamMaster(StreamMaster &&) = default;
 
   ~StreamMaster() {
     stop_ = true;
@@ -77,7 +77,7 @@ public:
     }
   }
 
-  StreamMaster& operator=(const StreamMaster&) = delete;
+  StreamMaster &operator=(const StreamMaster &) = delete;
 
   bool start_time(const ESSTimeStamp &start) {
     for (auto &s : streamer) {
@@ -130,7 +130,7 @@ public:
     if (!report_thread_.joinable()) {
       report_.reset(new Report(p, delay));
       report_thread_ =
-	std::thread([&] { report_->report(streamer, stop_, runstatus); });
+          std::thread([&] { report_->report(streamer, stop_, runstatus); });
     } else {
       LOG(5, "Status report already started, nothing to do");
     }
@@ -151,9 +151,7 @@ private:
   SEC stop_streamer(const std::string &topic) {
     return streamer[topic].closeStream();
   }
-  SEC stop_streamer(Streamer &s) {
-    return s.closeStream();
-  }
+  SEC stop_streamer(Streamer &s) { return s.closeStream(); }
 
   void run() {
     using namespace std::chrono;
@@ -178,8 +176,7 @@ private:
           std::this_thread::sleep_for(duration);
           continue;
         }
-        if (int(s.runstatus()) < 0 &&
-            s.runstatus() != SEC::not_initialized) {
+        if (int(s.runstatus()) < 0 && s.runstatus() != SEC::not_initialized) {
           runstatus = SMEC::streamer_error;
           LOG(0, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
           remove_source(d.topic());
