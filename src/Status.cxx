@@ -1,6 +1,8 @@
-#include "Status.hpp"
+#include <cmath>
 
 #include <rapidjson/document.h>
+
+#include "Status.hpp"
 
 double average(const double &sum, const double &N) { return sum / N; }
 
@@ -139,11 +141,11 @@ void FileWriter::Status::StreamMasterInfo::add(
   }
 }
 
-const double FileWriter::Status::StreamMasterInfo::time_to_next_message(
-    const std::chrono::milliseconds &to_next_message) {
+const milliseconds FileWriter::Status::StreamMasterInfo::time_to_next_message(
+    const milliseconds &to_next_message) {
   next_message_relative_eta_ = to_next_message;
   return time_to_next_message();
 }
-const double FileWriter::Status::StreamMasterInfo::time_to_next_message() {
-  return std::chrono::duration_cast<std::chrono::seconds>(next_message_relative_eta_).count();
+const milliseconds FileWriter::Status::StreamMasterInfo::time_to_next_message() {
+  return next_message_relative_eta_;
 }

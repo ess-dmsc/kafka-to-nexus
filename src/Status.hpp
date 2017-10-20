@@ -1,14 +1,10 @@
 #pragma once
 
 #include <atomic>
-#include <chrono>
-#include <cmath>
-#include <iostream>
 #include <memory>
 #include <mutex>
 #include <vector>
 
-#include <chrono>
 #include <map>
 
 #include "Errors.hpp"
@@ -59,14 +55,14 @@ public:
   }
   SMEC &status() { return status_; }
 
-  const double time_to_next_message(const std::chrono::milliseconds & to_next_message);
-  const double time_to_next_message();
+  const milliseconds time_to_next_message(const milliseconds & to_next_message);
+  const milliseconds time_to_next_message();
 
 private:
   MessageInfo total_;
   value_type info_;
-  std::chrono::milliseconds time_;
-  std::chrono::milliseconds next_message_relative_eta_;
+  milliseconds time_;
+  milliseconds next_message_relative_eta_;
   SMEC status_{SMEC::not_started};
 };
 

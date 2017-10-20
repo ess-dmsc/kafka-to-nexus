@@ -22,7 +22,7 @@ public:
   Report() {}
   Report(std::shared_ptr<KafkaW::ProducerTopic> producer,
          const int delay = 1000)
-      : report_producer_{producer}, delay_{std::chrono::milliseconds(delay)} {}
+      : report_producer_{producer}, delay_{milliseconds(delay)} {}
   Report(const Report &other) = delete;
   Report(Report &&other) = default;
   Report &operator=(Report &&other) = default;
@@ -67,6 +67,6 @@ private:
   }
 
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
-  std::chrono::milliseconds delay_{milliseconds(1000)};
+  milliseconds delay_{milliseconds(1000)};
 };
 } // namespace FileWriter

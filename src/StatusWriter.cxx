@@ -16,17 +16,18 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   auto &a = d.GetAllocator();
   d.SetObject();
 
-  auto next_message_relative_eta = info.time_to_next_message();
+  auto next_message_relative_eta_ms = info.time_to_next_message();
+  auto next_message_relative_eta_s = std::chrono::duration_cast<std::chrono::seconds>(next_message_relative_eta_ms).count();
   { // message type
     d.AddMember("type", "stream_master_status", a);
-    d.AddMember("next_message_eta", next_message_relative_eta, a);
+    d.AddMember("next_message_eta_ms", next_message_relative_eta_ms.count(), a);
   }
   { // stream master info
     Value sm;
     sm.SetObject();
     sm.AddMember("state", StringRef(Err2Str(info.status())), a);
     sm.AddMember("status", primary_quantities(info.total(), a), a);
-    sm.AddMember("statistics", derived_quantities(info.total(), next_message_relative_eta, a), a);
+    sm.AddMember("statistics", derived_quantities(info.total(), next_message_relative_eta_s, a), a);
     d.AddMember("stream_master", sm, a);
   }
   { // streamers info
@@ -37,7 +38,7 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
       Value val;
       val.SetObject();
       val.AddMember("status", primary_quantities(topic.second, a), a);
-      val.AddMember("statistics", derived_quantities(topic.second, next_message_relative_eta, a), a);
+      val.AddMember("statistics", derived_quantities(topic.second, next_message_relative_eta_s, a), a);
       ss.AddMember(key, val, a);
     }
     d.AddMember("streamer", ss, a);
