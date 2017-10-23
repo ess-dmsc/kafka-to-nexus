@@ -15,7 +15,6 @@
 
 #include "DemuxTopic.h"
 #include "FileWriterTask.h"
-//#include "KafkaW.h"
 #include "Report.hpp"
 #include "logger.h"
 
@@ -148,10 +147,6 @@ public:
   }
 
 private:
-  SEC stop_streamer(const std::string &topic) {
-    return streamer[topic].closeStream();
-  }
-  SEC stop_streamer(Streamer &s) { return s.closeStream(); }
 
   void run() {
     using namespace std::chrono;
@@ -189,13 +184,13 @@ private:
   }
 
   SMEC remove_source(const std::string &topic) {
-    auto &s(streamer[topic]);
+    auto &s = streamer[topic];
     if (s.n_sources() > 1) {
       s.n_sources()--;
       return SMEC::running;
     } else {
       LOG(3, "All sources in {} have expired, remove streamer", topic);
-      stop_streamer(s);
+      s.close_stream();
       streamer.erase(topic);
       if (streamer.size() != 0) {
         return SMEC::empty_streamer;
@@ -218,8 +213,8 @@ private:
     }
     for (auto &s : streamer) {
       LOG(7, "Shut down {} : {}", s.first);
-      auto v = stop_streamer(s.second);
-      if (v != SEC::stopped) {
+      auto v = s.second.close_stream();
+      if (v != SEC::has_finished) {
         LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
       } else {
         LOG(7, "\t...done");

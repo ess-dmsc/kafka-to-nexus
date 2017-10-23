@@ -40,7 +40,7 @@ public:
     return ProcessMessageResult::ERR();
   }
 
-  SEC closeStream();
+  SEC close_stream();
 
   SEC set_start_time(const ESSTimeStamp &tp);
 

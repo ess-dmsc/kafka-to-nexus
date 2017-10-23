@@ -18,9 +18,9 @@ enum class StreamMasterErrorCode {
   streammaster_error = -1000
 };
 enum class StreamerErrorCode {
-  no_error = 1001,
+  no_error = 1000,
   writing = 1,
-  stopped = 0,
+  has_finished = 0,
   configuration_error = -1,
   consumer_error = -2,
   metadata_error = -3,

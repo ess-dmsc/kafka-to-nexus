@@ -15,7 +15,7 @@ static const std::map<const SMEC, std::string> stream_master_error_lookup_{
 
 static const std::map<const SEC, std::string> streamer_error_lookup_{
     {SEC::writing, "writing"},
-    {SEC::stopped, "stopped"},
+    {SEC::has_finished, "has_finished"},
     {SEC::configuration_error, " configuration_error"},
     {SEC::consumer_error, " consumer_error"},
     {SEC::metadata_error, "metadata_error"},

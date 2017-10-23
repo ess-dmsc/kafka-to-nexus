@@ -33,14 +33,14 @@ public:
               std::atomic<SMEC> &stream_master_status) {
     while (!stop.load()) {
       std::this_thread::sleep_for(delay_);
-      auto error = produce_single_report(streamer, stream_master_status.load());
+      auto error = produce_single_report(streamer, stream_master_status);
       if (error == SMEC::report_failure) {
         stream_master_status = error;
         return;
       }
     }
     std::this_thread::sleep_for(delay_);
-    auto error = produce_single_report(streamer, stream_master_status.load());
+    auto error = produce_single_report(streamer, stream_master_status);
     if (error != SMEC::no_error) { // termination message
       stream_master_status = error;
     }
@@ -49,13 +49,15 @@ public:
 
 private:
   template <class S>
-  SMEC produce_single_report(S &streamer, SMEC stream_master_status) {
+  SMEC produce_single_report(S &streamer, 
+			     std::atomic<SMEC>& stream_master_status) {
     if (!report_producer_) {
       LOG(1, "ProucerTopic error: can't produce StreamMaster status report");
       return SMEC::report_failure;
     }
 
     Status::StreamMasterInfo info;
+    info.status(stream_master_status);
     info.time_to_next_message(delay_);
     for (auto &s : streamer) {
       info.add(s.first, s.second.info());

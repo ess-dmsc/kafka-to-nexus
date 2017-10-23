@@ -163,7 +163,7 @@ FileWriter::Streamer::Streamer(const std::string &broker,
   connection_ready_.wait(lk, [&] { return this->ready_.load(); });
 }
 
-FileWriter::Streamer::~Streamer() { closeStream(); }
+FileWriter::Streamer::~Streamer() { close_stream(); }
 
 void FileWriter::Streamer::connect(
     const std::string topic_name, FileWriter::Streamer::Options kafka_options,
@@ -234,7 +234,7 @@ void FileWriter::Streamer::connect(
   run_status_ = SEC::writing;
 }
 
-FileWriter::Streamer::SEC FileWriter::Streamer::closeStream() {
+FileWriter::Streamer::SEC FileWriter::Streamer::close_stream() {
   std::lock_guard<std::mutex> lock(guard_);
   if (connect_.joinable()) {
     connect_.join();
@@ -243,6 +243,9 @@ FileWriter::Streamer::SEC FileWriter::Streamer::closeStream() {
     _consumer->close();
   }
   _tp.clear();
+  if(run_status_ == SEC::writing) {
+    run_status_ = SEC::has_finished;
+  }
   return run_status_;
 }
 
@@ -250,7 +253,7 @@ template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
-  if (run_status_ != SEC::writing) {
+  if (run_status_ == SEC::not_initialized) {
     return ProcessMessageResult::OK();
   }
   std::lock_guard<std::mutex> lock(
@@ -259,7 +262,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   if (int(run_status_) < 0) {
     return ProcessMessageResult::ERR();
   }
-  if (run_status_ == SEC::stopped) {
+  if (run_status_ == SEC::has_finished) {
     return ProcessMessageResult::OK();
   }
 
@@ -285,7 +288,8 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
   if (!result.is_OK()) {
-    run_status_ = SEC::write_error;
+    message_info_.error();
+    //    run_status_ = SEC::write_error;
   }
   return result;
 }
