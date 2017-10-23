@@ -46,6 +46,7 @@ class StreamMasterInfo {
 
 public:
   using value_type = std::map<std::string, MessageInfo>;
+  StreamMasterInfo() : start_time_{std::chrono::system_clock::now()} { }
 
   void add(const std::string &topic, MessageInfo &info);
 
@@ -59,11 +60,12 @@ public:
 
   const milliseconds time_to_next_message(const milliseconds & to_next_message);
   const milliseconds time_to_next_message();
+  const milliseconds runtime();
 
 private:
   MessageInfo total_;
   value_type info_;
-  milliseconds time_;
+  std::chrono::system_clock::time_point start_time_;
   milliseconds next_message_relative_eta_;
   SMEC status_{SMEC::not_started};
 };

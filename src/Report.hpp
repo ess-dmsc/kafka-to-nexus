@@ -56,7 +56,6 @@ private:
       return SMEC::report_failure;
     }
 
-    Status::StreamMasterInfo info;
     info.status(stream_master_status);
     info.time_to_next_message(delay_);
     for (auto &s : streamer) {
@@ -68,6 +67,7 @@ private:
     return SMEC::no_error;
   }
 
+  Status::StreamMasterInfo info;
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
   milliseconds delay_{milliseconds(1000)};
 };

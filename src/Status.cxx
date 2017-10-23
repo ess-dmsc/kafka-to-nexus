@@ -122,7 +122,6 @@ double FileWriter::Status::MessageInfo::errors() const {
 
 ////////////////////////
 // StreamMasterInfo
-
 void FileWriter::Status::StreamMasterInfo::add(
     const std::string &topic, FileWriter::Status::MessageInfo &info) {
   // The lock prevents Streamer::write from update info while
@@ -148,4 +147,8 @@ const milliseconds FileWriter::Status::StreamMasterInfo::time_to_next_message(
 }
 const milliseconds FileWriter::Status::StreamMasterInfo::time_to_next_message() {
   return next_message_relative_eta_;
+}
+const milliseconds FileWriter::Status::StreamMasterInfo::runtime() {
+  auto result = std::chrono::duration_cast<milliseconds>(std::chrono::system_clock::now() - start_time_);
+  return result;
 }

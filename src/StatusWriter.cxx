@@ -26,8 +26,10 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
     Value sm;
     sm.SetObject();
     sm.AddMember("state", StringRef(Err2Str(info.status())), a);
-    sm.AddMember("status", primary_quantities(info.total(), a), a);
-    sm.AddMember("statistics", derived_quantities(info.total(), next_message_relative_eta_s, a), a);
+    sm.AddMember("messages", info.total().messages().first, a);
+    sm.AddMember("Mbytes", info.total().Mbytes().first, a);
+    sm.AddMember("errors", info.total().errors(), a);
+    sm.AddMember("runtime", info.runtime().count(), a);
     d.AddMember("stream_master", sm, a);
   }
   { // streamers info
