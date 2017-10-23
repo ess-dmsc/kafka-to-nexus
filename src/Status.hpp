@@ -12,8 +12,6 @@
 namespace FileWriter {
 namespace Status {
 
-class StdIOWriter;
-
 class MessageInfo {
   using SMC = StreamerErrorCode;
 public:
