@@ -29,8 +29,6 @@ enum class StreamerErrorCode {
   topic_error = -6,
   offset_error = -7,
   start_time_error = -8,
-  message_error = -9,
-  write_error = -10,
   not_initialized = -1000,
 };
 

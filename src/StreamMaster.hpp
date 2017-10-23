@@ -151,32 +151,41 @@ private:
   void run() {
     using namespace std::chrono;
     runstatus = SMEC::running;
-    system_clock::time_point tp;
 
-    while (!stop_) {
+    while (!stop_ && demux.size() > 0) {
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
         if (s.runstatus() == SEC::writing) {
-          tp = system_clock::now();
+          auto tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
-            auto _value = s.write(d);
-            if (_value.is_STOP() &&
+            auto value = s.write(d);
+            if (value.is_STOP() &&
                 (remove_source(d.topic()) != SMEC::running)) {
               break;
             }
           }
           continue;
         }
+	if (s.runstatus() == SEC::has_finished) {
+	  if( remove_source(d.topic()) != SMEC::running) {
+	    break;
+	  }
+	  continue;
+	}
         if (s.runstatus() == SEC::not_initialized) {
-          std::this_thread::sleep_for(duration);
+	  if(streamer.size() == 1) {
+	    std::this_thread::sleep_for(milliseconds(500));
+	  }
           continue;
         }
-        if (int(s.runstatus()) < 0 && s.runstatus() != SEC::not_initialized) {
-          runstatus = SMEC::streamer_error;
+        if (int(s.runstatus()) < 0) {
           LOG(0, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
-          remove_source(d.topic());
+          if( remove_source(d.topic()) != SMEC::running) {
+	    break;
+	  }
           continue;
         }
+	
       }
     }
 

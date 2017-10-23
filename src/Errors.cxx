@@ -24,8 +24,6 @@ static const std::map<const SEC, std::string> streamer_error_lookup_{
     {SEC::topic_error, "topic_error"},
     {SEC::offset_error, "offset_error"},
     {SEC::start_time_error, "start_time_error"},
-    {SEC::message_error, "message_error"},
-    {SEC::write_error, "write_error"},
     {SEC::not_initialized, "not_initialized"}};
 
 const std::string FileWriter::Status::Err2Str(const SMEC &error) {
