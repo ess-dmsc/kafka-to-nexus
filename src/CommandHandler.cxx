@@ -200,6 +200,19 @@ void CommandHandler::handle_exit(rapidjson::Document const &d) {
     master->stop();
 }
 
+void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
+  // parse document to get jobid
+  auto s = get_string(&d, "jobid");
+  auto jobid = std::string(s);
+  if (master) {
+    for (auto &x : master->stream_masters) {
+      x->stop(jobid);
+    }
+  }
+  // TODO
+  // remove task from file_writer_tasks
+}
+
 void CommandHandler::handle(rapidjson::Document const &d) {
   using std::string;
   using namespace rapidjson;
@@ -225,6 +238,10 @@ void CommandHandler::handle(rapidjson::Document const &d) {
       return;
     }
     if (cmd == "FileWriter_exit") {
+      handle_exit(d);
+      return;
+    }
+    if (cmd == "FileWriter_stop") {
       handle_exit(d);
       return;
     }
