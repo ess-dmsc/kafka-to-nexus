@@ -120,6 +120,13 @@ public:
     return !(loop.joinable() || report_thread_.joinable());
   }
 
+  bool stop(const std::string& jobid) {
+    if(jobid == _file_writer_task->jobid()) {
+      return stop();
+    }
+    return 0;
+  }
+
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const int &delay = 1000) {
     if (delay < 0) {
@@ -133,7 +140,7 @@ public:
     } else {
       LOG(5, "Status report already started, nothing to do");
     }
-  };
+  }
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
