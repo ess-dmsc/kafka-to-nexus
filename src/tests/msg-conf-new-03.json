@@ -1,6 +1,7 @@
 {
     "cmd": "FileWriter_new",
-    "broker": "129.129.188.59:9092",
+    "broker": "192.168.10.11:9092",
+    "jobid" : "1234567890abcdef",
     "streams": [
 	{
 	    "broker": "129.129.188.59:9092",

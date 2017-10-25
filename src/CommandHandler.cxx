@@ -58,6 +58,22 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
+
+  std::string jobid = "xxxx-xxxx-xxxx-xxxx";
+  {
+    auto m = d.FindMember("jobid");
+    if (m != d.MemberEnd() && m->value.IsString()) {
+      jobid = m->value.GetString();
+    }
+    else {
+      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
+	  "keyword: {}",
+          m->name.GetString());
+    }
+  }
+  // how to handle missing jobid?
+  fwt->jobid_init(jobid);
+
   {
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
     auto x = fwt->hdf_init(nexus_structure, stream_hdf_info);

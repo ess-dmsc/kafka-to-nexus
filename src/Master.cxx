@@ -85,7 +85,8 @@ void Master::statistics() {
   js_files.SetObject();
   for (auto &stream_master : stream_masters) {
     auto fwt_id_str =
-        fmt::format("{:016x}", stream_master->file_writer_task().id());
+      //        fmt::format("{:016x}", stream_master->file_writer_task().id());
+        fmt::format("{}", stream_master->file_writer_task().jobid());
     auto fwt = stream_master->file_writer_task().stats(a);
     // TODO
     // Add status when DM-450 lands.
