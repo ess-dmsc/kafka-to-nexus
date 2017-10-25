@@ -66,6 +66,19 @@ std::string make_command_exit(std::string broker, uint64_t teamid) {
   return buf1.GetString();
 }
 
+std::string make_command_stop(std::string broker, const std::string jobid) {
+  using namespace rapidjson;
+  Document d;
+  auto &a = d.GetAllocator();
+  d.SetObject();
+  d.AddMember("cmd", Value("FileWriter_stop", a), a);
+  d.AddMember("jobid", rapidjson::StringRef(jobid.c_str(), jobid.size()), a);
+  StringBuffer buf1;
+  PrettyWriter<StringBuffer> wr(buf1);
+  d.Accept(wr);
+  return buf1.GetString();
+}
+
 std::string make_command_from_file(const std::string &filename) {
   using namespace rapidjson;
   std::ifstream ifs(filename);
@@ -146,7 +159,8 @@ int main(int argc, char **argv) {
            "    Host, port, topic where the command should be sent to.\n"
            "\n"
            "  --cmd             <command>\n"
-           "    To use a file: file:<filename>\n"
+           "    Use a command file: file:<filename>\n"
+           "    Stop writing file-with-id: stop:<jobid>\n"
            "\n"
            "   -v\n"
            "    Increase verbosity\n"
@@ -170,7 +184,10 @@ int main(int argc, char **argv) {
     auto m1 = make_command_from_file(opt.cmd.substr(5));
     LOG(5, "sending:\n{}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
+  } else if (opt.cmd.substr(0, 5) == "stop:") {
+    auto m1 = make_command_stop(opt.broker_opt.address, opt.cmd.substr(5));
+    LOG(4, "sending {}", m1);
+    pt.produce((uint8_t *)m1.data(), m1.size(), true);
   }
-
   return 0;
 }
