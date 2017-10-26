@@ -120,7 +120,7 @@ Command to start writing a file:
     "file_name": "some.h5"
   },
   "cmd": "FileWriter_new",
-  "jobid" : "16char-unique-identifier",
+  "jobid" : "unique-identifier",
 }
 ```
 

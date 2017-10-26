@@ -59,16 +59,18 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
 
-  std::string jobid = "xxxx-xxxx-xxxx-xxxx";
+  std::string jobid{std::to_string(fwt->id())};
   {
     auto m = d.FindMember("jobid");
-    if (m != d.MemberEnd() && m->value.IsString()) {
-      jobid = m->value.GetString();
-    }
-    else {
-      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
-	  "keyword: {}",
-          m->name.GetString());
+    if (m != d.MemberEnd()) {
+      if (m->value.IsString()) {
+        jobid = m->value.GetString();
+      } else {
+        LOG(6,
+            "ERROR command message schema validation:  Invalid schema: {}  "
+            "keyword: {}",
+            m->name.GetString());
+      }
     }
   }
   // how to handle missing jobid?
