@@ -120,8 +120,8 @@ public:
     return !(loop.joinable() || report_thread_.joinable());
   }
 
-  bool stop(const std::string& jobid) {
-    if(jobid == _file_writer_task->jobid()) {
+  bool stop(const std::string &jobid) {
+    if (jobid == _file_writer_task->jobid()) {
       return stop();
     }
     return 0;
@@ -143,6 +143,7 @@ public:
   }
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
+  
 
   const SMEC status() {
     for (auto &s : streamer) {
@@ -152,6 +153,8 @@ public:
     }
     return runstatus.load();
   }
+
+  std::string jobid() const { return _file_writer_task->jobid(); }
 
 private:
   void run() {
@@ -236,6 +239,10 @@ private:
     }
     streamer.clear();
   }
+
+  // ErrorCode stop_streamer(const std::string &topic) {
+  //   return streamer[topic].closeStream();
+  // }
 
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;

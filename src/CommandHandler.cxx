@@ -201,18 +201,28 @@ void CommandHandler::handle_exit(rapidjson::Document const &d) {
 }
 
 void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
-  // parse document to get jobid
-  auto s = get_string(&d, "jobid");
-  auto jobid = std::string(s);
-  LOG(1,"gracefully stop file with id : {}", jobid);
   if (master) {
+    auto s = get_string(&d, "jobid");
+    auto jobid = std::string(s);
+
+    int counter{0};
     for (auto &x : master->stream_masters) {
-      x->stop(jobid);
+      if (x->jobid() == jobid) {
+        x->stop();
+        LOG(6, "gracefully stop file with id : {}", jobid);
+        ++counter;
+        auto it = std::find(master->stream_masters.begin(),
+                            master->stream_masters.end(), x);
+        master->stream_masters.erase(it);
+      }
+    }
+
+    if (counter == 0) {
+      LOG(3, "no file with id : {}", jobid);
+    } else if (counter > 1) {
+      LOG(3, "error: multiple files with id : {}", jobid);
     }
   }
-  // TODO
-  // - handle missing id (requires collect output of x->stop)
-  // - remove task from file_writer_tasks
 }
 
 void CommandHandler::handle(rapidjson::Document const &d) {
