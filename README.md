@@ -130,6 +130,15 @@ Command to exit the file writer:
 {"cmd": "FileWriter_exit"}
 ```
 
+Command to stop a single file:
+
+```json
+{
+	"cmd": "FileWriter_stop",
+	"jobid": "job-unique-identifier"
+}
+```
+
 Commands can be given in the configuration file as well:
 
 ```json
