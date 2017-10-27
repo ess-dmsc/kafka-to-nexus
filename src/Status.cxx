@@ -59,9 +59,10 @@ const std::pair<double, double> FileWriter::Status::message_throughput(
 
 // data-race safe += with double
 template <class T> void atomic_add(std::atomic<T> &value, const T &other) {
-  auto current = value.load();
-  while (!value.compare_exchange_weak(current, current + other))
-    ;
+  T current = value.load();
+  while (!value.compare_exchange_weak(current, current + other)) {
+    current = value.load();
+  }
 }
 
 const FileWriter::Status::MessageInfo &FileWriter::Status::MessageInfo::
