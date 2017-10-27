@@ -67,7 +67,7 @@ rapidjson::Value create_derived_quantity(MessageInfo::value_type &value,
   result.SetObject();
   result.AddMember("average", value.first, a);
   result.AddMember("stdandard_deviation", value.second, a);
-  return std::move(result);
+  return result;
 }
 
 template <class Allocator>
@@ -97,7 +97,7 @@ JSONStreamWriter::write(StreamMasterInfo &info) const {
   w.SetMaxDecimalPlaces(1);
   value.Accept(w);
   std::string s{buffer.GetString()};
-  return std::move(s);
+  return s;
 }
 
 JSONWriter::return_type JSONWriter::write(StreamMasterInfo &info) const {
