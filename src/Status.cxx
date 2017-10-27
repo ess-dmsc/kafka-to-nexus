@@ -8,7 +8,7 @@ double average(const double &sum, const double &N) { return sum / N; }
 
 double standard_deviation(const double &sum, const double &sum_squared,
                           const double &N) {
-  auto variance = (N * sum_squared - sum * sum) / (N * (N - 1));
+  auto variance = (sum_squared - (sum * sum) / N) / (N - 1);
   if (variance > 0) { // due to numerical instabilities
     return std::sqrt(variance);
   } else {
@@ -53,9 +53,6 @@ const std::pair<double, double> FileWriter::Status::message_throughput(
                          time_difference)};
   return result;
 }
-
-//  \author Michele Brambilla <michele.brambilla@psi.ch>
-//  \date Wed Oct 11 14:47:17 2017
 
 // data-race safe += with double
 template <class T> void atomic_add(std::atomic<T> &value, const T &other) {
