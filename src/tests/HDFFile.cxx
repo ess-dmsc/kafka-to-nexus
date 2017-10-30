@@ -478,6 +478,14 @@ public:
     }
 
     H5Fclose(fid);
+
+    {
+      // now try to recreate the file for testing:
+      auto x =
+          H5Fcreate("tmp-ev42.h5", H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+      ASSERT_GE(x, 0);
+      H5Fclose(x);
+    }
   }
 };
 
