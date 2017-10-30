@@ -345,8 +345,9 @@ uint64_t FBSchemaReader::teamid_impl(Msg &msg) { return 0; }
 FBSchemaWriter::FBSchemaWriter() {}
 
 FBSchemaWriter::~FBSchemaWriter() {
-  if (group_event_data != -1)
-    H5Gclose(group_event_data);
+  if (hdf_group != -1) {
+    H5Gclose(hdf_group);
+  }
 }
 
 void FBSchemaWriter::init(HDFFile *hdf_file, std::string const &hdf_path,
