@@ -141,6 +141,8 @@ int HDFFile::init(std::string filename,
 
   auto f1 = x;
 
+  std::vector<hid_t> gids;
+
   if (nexus_structure.IsObject()) {
     // Traverse nexus_structure
     // The rapidjson visitor interface is not flexible enough unfortunately
@@ -189,6 +191,7 @@ int HDFFile::init(std::string filename,
           if (se.nx_type == "group") {
             se.nxv = H5Gcreate2(se.nxparent, se.name.c_str(), lcpl, H5P_DEFAULT,
                                 H5P_DEFAULT);
+            gids.push_back(se.nxv);
           }
         }
 
@@ -284,6 +287,10 @@ int HDFFile::init(std::string filename,
     auto now =
         make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
     write_hdf_iso8601(f1, "file_time", now);
+  }
+
+  for (auto gid : gids) {
+    H5Gclose(gid);
   }
 
   H5Sclose(dsp_sc);
