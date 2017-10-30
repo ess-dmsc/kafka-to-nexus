@@ -368,6 +368,8 @@ void FBSchemaWriter::init(HDFFile *hdf_file, std::string const &hdf_path,
   if (gid < 0) {
     LOG(2, "can not find group {}, using file root instead", hdf_path);
     gid = f1;
+  } else {
+    hdf_group = gid;
   }
   H5Eset_auto2(H5E_DEFAULT, _f, _d);
 
