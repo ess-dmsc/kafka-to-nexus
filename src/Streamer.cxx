@@ -171,8 +171,8 @@ void FileWriter::Streamer::connect(
   std::lock_guard<std::mutex> lock(guard_);
 
   std::lock_guard<std::mutex> lk(connection_lock_);
-  connection_ready_.notify_all();
   ready_ = true;
+  connection_ready_.notify_all();
 
   LOG(7, "Connecting to {}", topic_name);
   for (auto &i : filewriter_options) {
