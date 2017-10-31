@@ -160,7 +160,7 @@ FileWriter::Streamer::Streamer(const std::string &broker,
   });
 
   std::unique_lock<std::mutex> lk(connection_lock_);
-  connection_ready_.wait(lk, [&] { return this->ready_.load(); });
+  connection_init_.wait(lk, [&] { return this->initilialising_.load(); });
 }
 
 FileWriter::Streamer::~Streamer() { close_stream(); }
@@ -168,11 +168,11 @@ FileWriter::Streamer::~Streamer() { close_stream(); }
 void FileWriter::Streamer::connect(
     const std::string topic_name, FileWriter::Streamer::Options kafka_options,
     FileWriter::Streamer::Options filewriter_options) {
-  std::lock_guard<std::mutex> lock(guard_);
+  std::lock_guard<std::mutex> lock(connection_ready_);
 
   std::lock_guard<std::mutex> lk(connection_lock_);
-  ready_ = true;
-  connection_ready_.notify_all();
+  initilialising_ = true;
+  connection_init_.notify_all();
 
   LOG(7, "Connecting to {}", topic_name);
   for (auto &i : filewriter_options) {
@@ -235,7 +235,7 @@ void FileWriter::Streamer::connect(
 }
 
 FileWriter::Streamer::SEC FileWriter::Streamer::close_stream() {
-  std::lock_guard<std::mutex> lock(guard_);
+  std::lock_guard<std::mutex> lock(connection_ready_);
   if (connect_.joinable()) {
     connect_.join();
   }
@@ -256,8 +256,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   if (run_status_ == SEC::not_initialized) {
     return ProcessMessageResult::OK();
   }
-  std::lock_guard<std::mutex> lock(
-      guard_); // make sure that connect is completed
+  std::lock_guard<std::mutex> lock(connection_ready_); // make sure that connect is completed
 
   if (int(run_status_) < 0) {
     return ProcessMessageResult::ERR();
@@ -296,7 +295,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
 FileWriter::Streamer::SEC
 FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
-  std::lock_guard<std::mutex> lock(guard_); // make sure connnection is done
+  std::lock_guard<std::mutex> lock(connection_ready_); // make sure connnection is done
 
   auto value =
       std::chrono::duration_cast<KafkaTimeStamp>(timepoint - _timestamp_delay);

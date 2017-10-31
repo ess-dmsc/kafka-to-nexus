@@ -63,11 +63,11 @@ private:
   Status::MessageInfo message_info_;
 
   std::thread connect_;
-  std::mutex guard_;
+  std::mutex connection_ready_;
 
   std::mutex connection_lock_;
-  std::condition_variable connection_ready_;
-  std::atomic<bool> ready_{false};
+  std::condition_variable connection_init_;
+  std::atomic<bool> initilialising_{false};
 
   int32_t message_length_{0};
   int32_t n_messages_{0};
