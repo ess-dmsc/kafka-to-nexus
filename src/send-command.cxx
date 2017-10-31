@@ -66,13 +66,13 @@ std::string make_command_exit(std::string broker, uint64_t teamid) {
   return buf1.GetString();
 }
 
-std::string make_command_stop(std::string broker, const std::string jobid) {
+std::string make_command_stop(std::string broker, const std::string job_id) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
   d.SetObject();
   d.AddMember("cmd", Value("FileWriter_stop", a), a);
-  d.AddMember("jobid", rapidjson::StringRef(jobid.c_str(), jobid.size()), a);
+  d.AddMember("job_id", rapidjson::StringRef(job_id.c_str(), job_id.size()), a);
   StringBuffer buf1;
   PrettyWriter<StringBuffer> wr(buf1);
   d.Accept(wr);

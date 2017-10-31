@@ -120,7 +120,7 @@ Command to start writing a file:
     "file_name": "some.h5"
   },
   "cmd": "FileWriter_new",
-  "jobid" : "unique-identifier",
+  "job_id" : "unique-identifier",
 }
 ```
 
@@ -135,7 +135,7 @@ Command to stop a single file:
 ```json
 {
 	"cmd": "FileWriter_stop",
-	"jobid": "job-unique-identifier"
+	"job_id": "job-unique-identifier"
 }
 ```
 

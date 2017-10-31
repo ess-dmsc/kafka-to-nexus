@@ -120,8 +120,8 @@ public:
     return !(loop.joinable() || report_thread_.joinable());
   }
 
-  bool stop(const std::string &jobid) {
-    if (jobid == _file_writer_task->jobid()) {
+  bool stop(const std::string &job_id) {
+    if (job_id == _file_writer_task->job_id()) {
       return stop();
     }
     return 0;
@@ -154,7 +154,7 @@ public:
     return runstatus.load();
   }
 
-  std::string jobid() const { return _file_writer_task->jobid(); }
+  std::string job_id() const { return _file_writer_task->job_id(); }
 
 private:
   void run() {

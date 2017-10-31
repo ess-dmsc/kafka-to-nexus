@@ -56,10 +56,10 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
 }
 
 uint64_t FileWriterTask::id() const { return _id; }
-std::string FileWriterTask::jobid() const { return _jobid; }
+std::string FileWriterTask::job_id() const { return _job_id; }
 
-void FileWriterTask::jobid_init(const std::string& s) {
-  _jobid = s;
+void FileWriterTask::job_id_init(const std::string& s) {
+  _job_id = s;
 }
 
 rapidjson::Value FileWriterTask::stats(

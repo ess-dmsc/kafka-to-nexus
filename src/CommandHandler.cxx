@@ -59,12 +59,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
 
-  std::string jobid{std::to_string(fwt->id())};
+  std::string job_id{std::to_string(fwt->id())};
   {
-    auto m = d.FindMember("jobid");
+    auto m = d.FindMember("job_id");
     if (m != d.MemberEnd()) {
       if (m->value.IsString()) {
-        jobid = m->value.GetString();
+        job_id = m->value.GetString();
       } else {
         LOG(6,
             "ERROR command message schema validation:  Invalid schema: {}  "
@@ -73,8 +73,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
     }
   }
-  // how to handle missing jobid?
-  fwt->jobid_init(jobid);
+  // how to handle missing job id?
+  fwt->job_id_init(job_id);
 
   {
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
@@ -204,14 +204,14 @@ void CommandHandler::handle_exit(rapidjson::Document const &d) {
 
 void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
   if (master) {
-    auto s = get_string(&d, "jobid");
-    auto jobid = std::string(s);
+    auto s = get_string(&d, "job_id");
+    auto job_id = std::string(s);
 
     int counter{0};
     for (auto &x : master->stream_masters) {
-      if (x->jobid() == jobid) {
+      if (x->job_id() == job_id) {
         x->stop();
-        LOG(6, "gracefully stop file with id : {}", jobid);
+        LOG(6, "gracefully stop file with id : {}", job_id);
         ++counter;
         auto it = std::find(master->stream_masters.begin(),
                             master->stream_masters.end(), x);
@@ -220,9 +220,9 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
     }
 
     if (counter == 0) {
-      LOG(3, "no file with id : {}", jobid);
+      LOG(3, "no file with id : {}", job_id);
     } else if (counter > 1) {
-      LOG(3, "error: multiple files with id : {}", jobid);
+      LOG(3, "error: multiple files with id : {}", job_id);
     }
   }
 }
