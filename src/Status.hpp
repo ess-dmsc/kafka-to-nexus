@@ -30,7 +30,6 @@ public:
   std::mutex &mutex() { return mutex_; }
 
 private:
-  SMC status_{SMC::not_initialized};
   std::atomic<double> messages_{0};
   std::atomic<double> messages_square_{0};
   std::atomic<double> Mbytes_{0};

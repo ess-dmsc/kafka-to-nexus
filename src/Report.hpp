@@ -9,10 +9,6 @@
 #include "StatusWriter.hpp"
 #include "logger.h"
 
-namespace KafkaW {
-class ProducerTopic;
-}
-
 namespace FileWriter {
 
 class Report {
