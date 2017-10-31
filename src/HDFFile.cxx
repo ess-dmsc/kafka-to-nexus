@@ -141,143 +141,144 @@ int HDFFile::init(std::string filename,
 
   auto f1 = x;
 
-  std::vector<hid_t> gids;
+  // Traverse nexus_structure
+  // The rapidjson visitor interface is not flexible enough unfortunately
+  struct SE {
+    string name;
+    Value const *jsv;
+    hid_t nxparent;
+    hid_t nxv;
+    hid_t gid;
+    Value::ConstMemberIterator itr;
+    bool basics;
+    string nx_type{"group"};
+    SE(string name, Value const *jsv, hid_t nxparent)
+        : name(name), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
+          itr(jsv->MemberEnd()), basics(false) {
+      if (jsv->IsObject()) {
+        itr = jsv->MemberBegin();
+      }
+    }
+    ~SE() {
+      if (gid != -1) {
+        H5Gclose(gid);
+      }
+    }
+  };
+  std::deque<SE> stack;
 
   if (nexus_structure.IsObject()) {
-    // Traverse nexus_structure
-    // The rapidjson visitor interface is not flexible enough unfortunately
-    struct SE {
-      string name;
-      Value const *jsv;
-      hid_t nxparent;
-      hid_t nxv;
-      Value::ConstMemberIterator itr;
-      bool basics;
-      string nx_type{"group"};
-      SE(string name, Value const *jsv, hid_t nxparent)
-          : name(name), jsv(jsv), nxparent(nxparent), nxv(-1),
-            itr(jsv->MemberEnd()), basics(false) {
-        if (jsv->IsObject()) {
-          itr = jsv->MemberBegin();
-        }
-      }
-    };
-    std::deque<SE> stack;
     stack.push_back(SE{"/", &nexus_structure, -1});
     stack.back().nxv = f1;
-    while (stack.size() > 0) {
-      auto &se = stack.back();
-      for (auto &x : stack) {
-        string itrname = "[empty]";
-        if (x.itr != x.jsv->MemberEnd()) {
-          itrname = x.itr->name.GetString();
+  }
+
+  while (stack.size() > 0) {
+    auto &se = stack.back();
+    for (auto &x : stack) {
+      string itrname = "[empty]";
+      if (x.itr != x.jsv->MemberEnd()) {
+        itrname = x.itr->name.GetString();
+      }
+    }
+    auto &jsv = se.jsv;
+    if (!se.basics) {
+      auto mem = jsv->FindMember("NX_type");
+      if (mem != jsv->MemberEnd()) {
+        auto &nx_type = mem->value;
+        if (nx_type.IsString()) {
+          char const *s = nx_type.GetString();
+          if (string("field") == s) {
+            se.nx_type = "field";
+          } else if (string("some-other") == s) {
+          }
         }
       }
-      auto &jsv = se.jsv;
-      if (!se.basics) {
-        auto mem = jsv->FindMember("NX_type");
-        if (mem != jsv->MemberEnd()) {
-          auto &nx_type = mem->value;
-          if (nx_type.IsString()) {
-            char const *s = nx_type.GetString();
-            if (string("field") == s) {
-              se.nx_type = "field";
-            } else if (string("some-other") == s) {
+
+      if (se.nxv == -1) {
+        if (se.nx_type == "group") {
+          se.nxv = H5Gcreate2(se.nxparent, se.name.c_str(), lcpl, H5P_DEFAULT,
+                              H5P_DEFAULT);
+          se.gid = se.nxv;
+        }
+      }
+
+      mem = jsv->FindMember("NX_class");
+      if (mem != jsv->MemberEnd()) {
+        auto &nx_class = mem->value;
+        if (nx_class.IsString()) {
+          write_attribute_str(se.nxv, "NX_class", nx_class.GetString());
+        }
+      }
+
+      mem = jsv->FindMember("NX_attributes");
+      if (mem != jsv->MemberEnd()) {
+        auto &a = mem->value;
+        if (a.IsObject()) {
+          for (auto &at : a.GetObject()) {
+            if (at.value.IsString()) {
+              write_attribute_str(se.nxv, at.name.GetString(),
+                                  at.value.GetString());
+            }
+            if (at.value.IsInt64()) {
+              write_attribute(se.nxv, at.name.GetString(), at.value.GetInt64());
+            }
+            if (at.value.IsDouble()) {
+              write_attribute(se.nxv, at.name.GetString(),
+                              at.value.GetDouble());
             }
           }
         }
-
-        if (se.nxv == -1) {
-          if (se.nx_type == "group") {
-            se.nxv = H5Gcreate2(se.nxparent, se.name.c_str(), lcpl, H5P_DEFAULT,
-                                H5P_DEFAULT);
-            gids.push_back(se.nxv);
-          }
-        }
-
-        mem = jsv->FindMember("NX_class");
-        if (mem != jsv->MemberEnd()) {
-          auto &nx_class = mem->value;
-          if (nx_class.IsString()) {
-            write_attribute_str(se.nxv, "NX_class", nx_class.GetString());
-          }
-        }
-
-        mem = jsv->FindMember("NX_attributes");
-        if (mem != jsv->MemberEnd()) {
-          auto &a = mem->value;
-          if (a.IsObject()) {
-            for (auto &at : a.GetObject()) {
-              if (at.value.IsString()) {
-                write_attribute_str(se.nxv, at.name.GetString(),
-                                    at.value.GetString());
-              }
-              if (at.value.IsInt64()) {
-                write_attribute(se.nxv, at.name.GetString(),
-                                at.value.GetInt64());
-              }
-              if (at.value.IsDouble()) {
-                write_attribute(se.nxv, at.name.GetString(),
-                                at.value.GetDouble());
-              }
-            }
-          }
-        }
-
-        // TODO
-        // Check if there are NX_attributes and set them
-
-        se.basics = true;
       }
 
-      bool have_child = false;
-      if (se.jsv->IsObject()) {
-        while (!have_child && se.itr != se.jsv->MemberEnd()) {
-          if (strncmp("NX_", se.itr->name.GetString(), 3) != 0) {
-            if (se.itr->value.IsObject()) {
-              stack.emplace_back(se.itr->name.GetString(), &se.itr->value,
-                                 se.nxv);
-              have_child = true;
-            } else if (se.itr->value.IsString()) {
-              // Treated as a basic scalar string "nexus field" aka "hdf
-              // dataset"
-              string s1 = se.itr->value.GetString();
-              auto dsp = H5Screate(H5S_SCALAR);
-              H5Tset_size(strfix, s1.size());
-              auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), strfix,
-                                   dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-              H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-              H5Dclose(ds);
-              H5Sclose(dsp);
-            } else if (se.itr->value.IsInt64()) {
-              int64_t val = se.itr->value.GetInt64();
-              auto dsp = H5Screate(H5S_SCALAR);
-              auto ds =
-                  H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_INT64,
-                             dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-              H5Dwrite(ds, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                       &val);
-              H5Dclose(ds);
-              H5Sclose(dsp);
-            } else if (se.itr->value.IsDouble()) {
-              double val = se.itr->value.GetDouble();
-              auto dsp = H5Screate(H5S_SCALAR);
-              auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(),
-                                   H5T_NATIVE_DOUBLE, dsp, H5P_DEFAULT,
-                                   H5P_DEFAULT, H5P_DEFAULT);
-              H5Dwrite(ds, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                       &val);
-              H5Dclose(ds);
-              H5Sclose(dsp);
-            }
-          }
-          ++se.itr;
-        }
-      }
+      se.basics = true;
+    }
 
-      if (!have_child) {
-        stack.pop_back();
+    bool have_child = false;
+    if (se.jsv->IsObject()) {
+      while (!have_child && se.itr != se.jsv->MemberEnd()) {
+        if (strncmp("NX_", se.itr->name.GetString(), 3) != 0) {
+          if (se.itr->value.IsObject()) {
+            stack.emplace_back(se.itr->name.GetString(), &se.itr->value,
+                               se.nxv);
+            have_child = true;
+          } else if (se.itr->value.IsString()) {
+            // Treated as a basic scalar string "nexus field" aka "hdf
+            // dataset"
+            string s1 = se.itr->value.GetString();
+            auto dsp = H5Screate(H5S_SCALAR);
+            H5Tset_size(strfix, s1.size());
+            auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), strfix, dsp,
+                                 H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
+            H5Dclose(ds);
+            H5Sclose(dsp);
+          } else if (se.itr->value.IsInt64()) {
+            int64_t val = se.itr->value.GetInt64();
+            auto dsp = H5Screate(H5S_SCALAR);
+            auto ds =
+                H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_INT64,
+                           dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(ds, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, &val);
+            H5Dclose(ds);
+            H5Sclose(dsp);
+          } else if (se.itr->value.IsDouble()) {
+            double val = se.itr->value.GetDouble();
+            auto dsp = H5Screate(H5S_SCALAR);
+            auto ds =
+                H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_DOUBLE,
+                           dsp, H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
+            H5Dwrite(ds, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                     &val);
+            H5Dclose(ds);
+            H5Sclose(dsp);
+          }
+        }
+        ++se.itr;
       }
+    }
+
+    if (!have_child) {
+      stack.pop_back();
     }
   }
 
@@ -287,10 +288,6 @@ int HDFFile::init(std::string filename,
     auto now =
         make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
     write_hdf_iso8601(f1, "file_time", now);
-  }
-
-  for (auto gid : gids) {
-    H5Gclose(gid);
   }
 
   H5Sclose(dsp_sc);
