@@ -115,6 +115,50 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   H5Pclose(acpl);
 }
 
+struct SE {
+  string name;
+  rapidjson::Value const *jsv;
+  hid_t nxparent;
+  hid_t nxv;
+  hid_t gid;
+  rapidjson::Value::ConstMemberIterator itr;
+  bool basics;
+  string nx_type{"group"};
+  SE(string name, rapidjson::Value const *jsv, hid_t nxparent)
+      : name(name), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
+        itr(jsv->MemberEnd()), basics(false) {
+    if (jsv->IsObject()) {
+      itr = jsv->MemberBegin();
+    }
+  }
+  ~SE() {
+    if (gid != -1) {
+      H5Gclose(gid);
+    }
+  }
+};
+
+void write_attributes(rapidjson::Value const *jsv, SE &se) {
+  auto mem = jsv->FindMember("NX_attributes");
+  if (mem != jsv->MemberEnd()) {
+    auto &a = mem->value;
+    if (a.IsObject()) {
+      for (auto &at : a.GetObject()) {
+        if (at.value.IsString()) {
+          write_attribute_str(se.nxv, at.name.GetString(),
+                              at.value.GetString());
+        }
+        if (at.value.IsInt64()) {
+          write_attribute(se.nxv, at.name.GetString(), at.value.GetInt64());
+        }
+        if (at.value.IsDouble()) {
+          write_attribute(se.nxv, at.name.GetString(), at.value.GetDouble());
+        }
+      }
+    }
+  }
+}
+
 int HDFFile::init(std::string filename,
                   rapidjson::Value const &nexus_structure) {
   using std::string;
@@ -143,28 +187,6 @@ int HDFFile::init(std::string filename,
 
   // Traverse nexus_structure
   // The rapidjson visitor interface is not flexible enough unfortunately
-  struct SE {
-    string name;
-    Value const *jsv;
-    hid_t nxparent;
-    hid_t nxv;
-    hid_t gid;
-    Value::ConstMemberIterator itr;
-    bool basics;
-    string nx_type{"group"};
-    SE(string name, Value const *jsv, hid_t nxparent)
-        : name(name), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
-          itr(jsv->MemberEnd()), basics(false) {
-      if (jsv->IsObject()) {
-        itr = jsv->MemberBegin();
-      }
-    }
-    ~SE() {
-      if (gid != -1) {
-        H5Gclose(gid);
-      }
-    }
-  };
   std::deque<SE> stack;
 
   if (nexus_structure.IsObject()) {
@@ -210,25 +232,7 @@ int HDFFile::init(std::string filename,
         }
       }
 
-      mem = jsv->FindMember("NX_attributes");
-      if (mem != jsv->MemberEnd()) {
-        auto &a = mem->value;
-        if (a.IsObject()) {
-          for (auto &at : a.GetObject()) {
-            if (at.value.IsString()) {
-              write_attribute_str(se.nxv, at.name.GetString(),
-                                  at.value.GetString());
-            }
-            if (at.value.IsInt64()) {
-              write_attribute(se.nxv, at.name.GetString(), at.value.GetInt64());
-            }
-            if (at.value.IsDouble()) {
-              write_attribute(se.nxv, at.name.GetString(),
-                              at.value.GetDouble());
-            }
-          }
-        }
-      }
+      write_attributes(jsv, se);
 
       se.basics = true;
     }
