@@ -172,6 +172,18 @@ public:
     }
   };
 
+  static int recreate_file(rapidjson::Value *json_command) {
+    // now try to recreate the file for testing:
+    auto m = json_command->FindMember("file_attributes");
+    auto fn = m->value.GetObject().FindMember("file_name")->value.GetString();
+    auto x = H5Fcreate(fn, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+    if (x < 0) {
+      return -1;
+    }
+    H5Fclose(x);
+    return 0;
+  }
+
   static void data_ev42() {
     using namespace FileWriter;
     using std::array;
@@ -478,6 +490,8 @@ public:
     }
 
     H5Fclose(fid);
+
+    ASSERT_EQ(recreate_file(&json_command), 0);
   }
 };
 

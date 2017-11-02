@@ -66,7 +66,7 @@ public:
   void close();
 
 protected:
-  FBSchemaWriter();
+  FBSchemaWriter() = default;
   HDFFile *hdf_file = nullptr;
   rapidjson::Value const *config_file = nullptr;
   /**
@@ -80,7 +80,7 @@ private:
   virtual void init_impl(std::string const &sourcename, hid_t hdf_group,
                          Msg msg) = 0;
   virtual WriteResult write_impl(Msg msg) = 0;
-  hid_t group_event_data = -1;
+  hid_t hdf_group = -1;
 };
 
 } // namespace FileWriter
