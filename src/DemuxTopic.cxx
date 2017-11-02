@@ -56,9 +56,9 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
   if (!reader) {
     return ProcessMessageResult::ERR();
   }
-  if (reader->timestamp(msg) > _stop_time) {
+  if (reader->timestamp(msg) > _stop_time.count()) {
     LOG(8, "reader->timestamp(msg) {} > _stop_time {}", reader->timestamp(msg),
-        _stop_time);
+        _stop_time.count());
     return ProcessMessageResult::STOP();
   }
   auto srcn = reader->sourcename(msg);
@@ -101,6 +101,6 @@ DemuxTopic::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
   return jd;
 }
 
-uint64_t &DemuxTopic::stop_time() { return _stop_time; }
+ESSTimeStamp &DemuxTopic::stop_time() { return _stop_time; }
 
 } // namespace FileWriter

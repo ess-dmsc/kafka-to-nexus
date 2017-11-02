@@ -42,9 +42,11 @@ public:
 
   SEC close_stream();
 
-  SEC set_start_time(const ESSTimeStamp &tp);
+  SEC set_start_time(const ESSTimeStamp &tp)
 
-  int32_t &n_sources() { return n_sources_; }
+      int32_t &n_sources() {
+    return n_sources_;
+  }
   SEC remove_source();
 
   const SEC &runstatus() { return run_status_; }
