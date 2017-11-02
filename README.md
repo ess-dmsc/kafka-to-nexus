@@ -121,6 +121,8 @@ Command to start writing a file:
   },
   "cmd": "FileWriter_new",
   "job_id" : "unique-identifier",
+  [OPTIONAL]"start_time" : <timestamp in milliseconds>,
+  [OPTIONAL]"stop_time" : <timestamp in milliseconds>,
 }
 ```
 
@@ -135,7 +137,8 @@ Command to stop a single file:
 ```json
 {
 	"cmd": "FileWriter_stop",
-	"job_id": "job-unique-identifier"
+	"job_id": "job-unique-identifier",
+	[OPTIONAL]"stop_time" : <timestamp in milliseconds>
 }
 ```
 
