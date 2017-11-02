@@ -8,6 +8,7 @@
 #include <rapidjson/stringbuffer.h>
 #include <string>
 
+#include "utils.h"
 #include "helper.h"
 #include "uri.h"
 
@@ -15,6 +16,7 @@
 #include <iostream>
 
 using uri::URI;
+using ESSTimeStamp = FileWriter::ESSTimeStamp;
 
 // POD
 struct MainOpt {
@@ -66,13 +68,17 @@ std::string make_command_exit(std::string broker, uint64_t teamid) {
   return buf1.GetString();
 }
 
-std::string make_command_stop(std::string broker, const std::string job_id) {
+std::string make_command_stop(std::string broker, const std::string job_id,
+                              const ESSTimeStamp stop_time = ESSTimeStamp{0}) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
   d.SetObject();
   d.AddMember("cmd", Value("FileWriter_stop", a), a);
   d.AddMember("job_id", rapidjson::StringRef(job_id.c_str(), job_id.size()), a);
+  if(stop_time.count()) {
+    d.AddMember("stop_time", stop_time.count(),a);
+  }
   StringBuffer buf1;
   PrettyWriter<StringBuffer> wr(buf1);
   d.Accept(wr);
@@ -160,7 +166,7 @@ int main(int argc, char **argv) {
            "\n"
            "  --cmd             <command>\n"
            "    Use a command file: file:<filename>\n"
-           "    Stop writing file-with-id: stop:<jobid>\n"
+           "    Stop writing file-with-id and timestamp (optional): stop:<jobid>[:<timestamp>]\n"
            "\n"
            "   -v\n"
            "    Increase verbosity\n"
@@ -182,10 +188,22 @@ int main(int argc, char **argv) {
   } else if (opt.cmd.substr(0, 5) == "file:") {
     std::string input = opt.cmd.substr(5);
     auto m1 = make_command_from_file(opt.cmd.substr(5));
-    LOG(5, "sending:\n{}", m1);
+    LOG(4, "sending:\n{}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "stop:") {
-    auto m1 = make_command_stop(opt.broker_opt.address, opt.cmd.substr(5));
+    auto input = opt.cmd.substr(5);
+    ESSTimeStamp stop_time{0};
+    std::string::size_type n{input.find(":")};
+    std::string m1{""};
+    if(n!=std::string::npos) {
+      auto result = to_num<int>(input.substr(n+1));
+      if(result.first) {
+	stop_time = ESSTimeStamp(result.second);
+      }
+      m1 = make_command_stop(opt.broker_opt.address, input.substr(0,n),stop_time);
+    } else {
+      m1 = make_command_stop(opt.broker_opt.address, input);
+    }
     LOG(4, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   }
