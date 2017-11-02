@@ -196,12 +196,6 @@ int HDFFile::init(std::string filename,
 
   while (stack.size() > 0) {
     auto &se = stack.back();
-    for (auto &x : stack) {
-      string itrname = "[empty]";
-      if (x.itr != x.jsv->MemberEnd()) {
-        itrname = x.itr->name.GetString();
-      }
-    }
     auto &jsv = se.jsv;
     if (!se.basics) {
       auto mem = jsv->FindMember("NX_type");
