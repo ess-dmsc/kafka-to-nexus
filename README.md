@@ -210,8 +210,8 @@ The filewriter can be installed using the ansible playbook defined in
 `ansible`. The file `roles/kafka-to-nexus/defaults/main.yml` defines
 the variables used during installation. The variables `<dep>_src` and
 `<dep>_version` are the remote source and the required version of the
-dependancy, `<dep>` the install location. The sources and builds of
-the dependancies are kept in `sources` and `builds`.
+dependency, `<dep>` the install location. The sources and builds of
+the dependencies are kept in `sources` and `builds`.
 
 `filewriter_inc`, `filewriter_lib` and `filewriter_bin` defines
 `CMAKE_INCLUDE_PATH`, `CMAKE_LIBRARY_PATH` and `CMAKE_PROGRAM_PATH`.
@@ -235,7 +235,7 @@ The default installation has the following structure
 ## Flatbuffer Schema Plugins
 
 The actual parsing of the different FlatBuffer schemata is handled by plugins
-which register themself via the `SchemaRegistry`.
+which register themselves via the `SchemaRegistry`.
 See for example `kafka-to-nexus/src/schema_f141.cxx:331`.
 Support for new schemas can be added in the same way.
 
@@ -326,16 +326,9 @@ According to the design the Streamer connects to Kafka (other
 sources to be implemented) and consumes a message in the specified topic. Some features:
 * one Streamer per topic
 * multiple Source per streamer
-* has to be able to search back in the kafka queue for the first message. Some
-  slow sources can be (much) older than the DAQ starts and updated not
-  frequently, we must be able to retrieve the
-  informations. ```search_backward(f)``` implements some algorithm that uses the
-  function ```f``` to find the older message with good timestamp. Different
-  sources can have data in different point of the queue: Source has to discard
-  invalid (according to timestamp) data
-* if the broker is not valid (_e.g._ a change of IP address) it should notify
-  the FileMaster, retrieve the new configuration and reconnect
-
+* initial timestamp is specified using ``set_start_time``
+* connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
+* Kafka::Config and streamer options can be passed using the constructor ``kafka_options`` and ``filewriter_options`` respectively.
 
 ## DemuxTopic
 Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.
@@ -346,24 +339,25 @@ Both receive the message payload and size. Return values are ProcessMessageResul
 
 ## Source
 
-## StreamMaster
-The StreamMaster receives the array of DemuxTopic from FileWriterCommand and
-instantiates the Streamer array according to the topics. Eventually retrieves
-the list of brokers from Kafka.
+## StreamMaster 
 
-* ``the timestamp_list`` is useful for look for initial status of sources in the
-  Kafka queue. It has to be used in combination with Streamer
-  ``search_backward``. It maps the topic with the vector of pairs
-  source-timestamp difference _w.r.t._ the offset of DAQ start provided by ECP
-* after instantiation **searches** in the Kafka queue the _OFFSET_ of the oldest
-  "good" value (due to synchronisation issues, slow sensors, etc)
-* for each topic iterates over the Sources . Listen on each Source until
-  - the message queue is empty
-  - Streammaster::duration milliseconds have been elapsed
-* when receives a **termination** command from Master closes all the streamers
+The StreamMaster receives the array of DemuxTopic from
+FileWriterCommand and instantiates the Streamer array according to the
+topics. Eventually retrieves the list of brokers from Kafka.
+
+* `start_time` and `stop_time` can be used to set the timestamp of
+the first and last event to be written (caution: actually events
+with timestamp earlier than request will be written);
+* upon a `stop` message the ``Master`` can stop the writing;
+* if a `status-uri` is configured sends a (JSON formatted) status
+  report on the corresponding topic;
+* a global `status` flag report the status of
+``StreamMaster``. Definitions are in
+`Status::StreamMasterErrorCode` (the function `Err2Str`
+converts the error code into a human readable string). 
 
 
-More tests involing the network:
+More tests involving the network:
 ```
 tests/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
 tests/streammaster_test --kafka_broker=<broker>:<port>"

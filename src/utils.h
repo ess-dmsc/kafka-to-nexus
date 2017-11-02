@@ -15,7 +15,7 @@ public:
   StrongType() {}
   StrongType(T value) : m_value{value} {}
   StrongType(const StrongType &other) : m_value(other.m_value) {}
-  inline const T &value() { return m_value; }
+  inline const T &value() const { return m_value; }
   StrongType &operator=(const StrongType &other) {
     m_value = other.m_value;
     return *this;
@@ -34,21 +34,20 @@ private:
 struct OffsetType {};
 struct PartitionType {};
 struct Timestamp {};
-struct FileWriterErrorCode {};
+ 
+struct FileWriterErrorType {};
+
+struct ESSTimeStampType{};
+struct KafkaTimeStampType{};
+
 } // namespace utils
 
 using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
-using RdKafkaPartition = utils::StrongType<int32_t, utils::PartitionType>;
-using ErrorCode = utils::StrongType<int32_t, utils::FileWriterErrorCode>;
 
+using ESSTimeStamp = nanoseconds;
+using KafkaTimeStamp = milliseconds;
+ 
 const RdKafkaOffset RdKafkaOffsetEnd(-1);
 const RdKafkaOffset RdKafkaOffsetBegin(-2);
-typedef nanoseconds ESSTimeStamp;
 
-enum StatusCode {
-  NO_ERROR = 1000,
-  RUNNING = 1,
-  STOPPED = 0,
-  ERROR = -1,
-};
 } // namespace FileWriter

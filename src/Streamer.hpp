@@ -1,12 +1,15 @@
 #pragma once
 
+#include <condition_variable>
 #include <functional>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <string>
+#include <thread>
 
 #include "DemuxTopic.h"
-#include "utils.h"
+#include "Status.hpp"
 
 // forward definitions
 namespace RdKafka {
@@ -18,74 +21,78 @@ class TopicPartition;
 
 namespace FileWriter {
 
-struct Streamer {
-  using status_type = std::map<std::string, int32_t>;
+class Streamer {
+public:
+  using option_t = std::pair<std::string, std::string>;
+  using Options = std::vector<option_t>;
+  using SEC = Status::StreamerErrorCode;
 
   Streamer(){};
-  Streamer(const std::string &, const std::string &,
-           std::vector<std::pair<std::string, std::string>> kafka_options = {});
-  Streamer(const Streamer &);
+  Streamer(const std::string &, const std::string &, Options kafka_options = {},
+           Options filewriter_options = {});
+  Streamer(const Streamer &) = delete;
+  Streamer(Streamer &&other) = default;
 
-  ~Streamer() = default;
+  ~Streamer();
 
   template <class T> ProcessMessageResult write(T &f) {
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
 
-  int connect(const std::string &topic,
-              const RdKafkaOffset & = RdKafkaOffsetEnd,
-              const RdKafkaPartition & = RdKafkaPartition(0));
+  SEC close_stream();
 
-  ErrorCode closeStream();
-
-  template <class T>
-  std::map<std::string, int64_t> set_start_time(T &x, const ESSTimeStamp tp) {
-    std::cout << "no initial timepoint\n";
-    return std::map<std::string, int64_t>();
-  }
+  SEC set_start_time(const ESSTimeStamp &tp);
 
   int32_t &n_sources() { return n_sources_; }
-  int run_status() {
-    if (n_sources_ > 0) {
-      return StatusCode::RUNNING;
-    }
-    return StatusCode::STOPPED;
-  }
-  status_type &status();
+  SEC remove_source();
+
+  const SEC &runstatus() { return run_status_; }
+
+  Status::MessageInfo &info() { return message_info_; }
 
 private:
-  RdKafka::KafkaConsumer *_consumer{nullptr};
-  std::shared_ptr<RdKafka::Metadata> _metadata;
+  std::shared_ptr<RdKafka::KafkaConsumer> _consumer;
   std::vector<RdKafka::TopicPartition *> _tp;
   RdKafkaOffset _offset{RdKafkaOffsetEnd};
   RdKafkaOffset _begin;
   std::vector<RdKafkaOffset> _low;
-  status_type status_;
+
+  //  Status::StreamerStatus s_;
+  SEC run_status_{};
+  Status::MessageInfo message_info_;
+
+  std::thread connect_;
+  std::mutex connection_ready_;
+
+  std::mutex connection_lock_;
+  std::condition_variable connection_init_;
+  std::atomic<bool> initilialising_{false};
 
   int32_t message_length_{0};
   int32_t n_messages_{0};
   int32_t n_sources_{0};
   ESSTimeStamp _timestamp_delay{3000};
   milliseconds consumer_timeout{1000};
+  int metadata_retry{5};
 
-  // sets options for the Streamer object
-  bool set_streamer_opt(const std::pair<std::string, std::string> &opt);
-
-  // sets Kafka configuration options
+  void connect(const std::string broker, Options kafka_options,
+               Options filewriter_options);
+  // sets options for Kafka consumer and the Streamer
+  void initialize_streamer(Options &);
+  std::shared_ptr<RdKafka::Conf> initialize_configuration(Options &);
+  bool set_streamer_opt(const option_t &opt);
   bool set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
-                    const std::pair<std::string, std::string> &option);
+                    const option_t &option);
 
   // retrieve Metadata and fills TopicPartition. Retries <retry> times
-  int get_metadata(int retry = 10);
-  int get_topic_partitions(const std::string &topic);
+  std::unique_ptr<RdKafka::Metadata> get_metadata(const int &retry);
+  SEC get_topic_partitions(const std::string &topic,
+                           std::unique_ptr<RdKafka::Metadata> metadata);
 
-  FileWriter::ErrorCode get_offset_boundaries();
+  SEC get_offset_boundaries();
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
 
-template <>
-std::map<std::string, int64_t>
-Streamer::set_start_time<>(FileWriter::DemuxTopic &, const ESSTimeStamp);
 } // namespace FileWriter

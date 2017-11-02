@@ -4,11 +4,25 @@
 #include <random>
 #include <stdexcept>
 
+#include <StatusWriter.hpp>
 #include <StreamMaster.hpp>
 #include <Streamer.hpp>
 #include <librdkafka/rdkafkacpp.h>
 
+#include <rapidjson/prettywriter.h>
+#include <rapidjson/stringbuffer.h>
+
 static std::mt19937_64 rng;
+
+std::ostream &operator<<(std::ostream &os,
+                         rapidjson::Document const &document) {
+  using namespace rapidjson;
+  StringBuffer buffer;
+  PrettyWriter<StringBuffer> wr(buffer);
+  document.Accept(wr);
+  std::cout << buffer.GetString() << "\n";
+  return os;
+}
 
 namespace FileWriter {
 class MockSource {
@@ -70,20 +84,6 @@ template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
-  // RdKafka::Message *msg =
-  //     _consumer->consume(_topic, _partition.value(),
-  // consumer_timeout.count());
-  // if (msg->err() == RdKafka::ERR__PARTITION_EOF) {
-  //   //    std::cout << "eof reached" << std::endl;
-  //   return ProcessMessageResult::OK();
-  // }
-  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
-  //   //    std::cout << "Failed to consume message:
-  //   //    "+RdKafka::err2str(msg->err()) << std::endl;
-  //   return ProcessMessageResult::ERR();
-  // }
-  // message_length = msg->len();
-  // return mp.process_message((char *)msg->payload(), msg->len());
   return ProcessMessageResult::ERR();
 }
 
@@ -91,12 +91,12 @@ FileWriter::Streamer::write(MockDemuxTopic &mp) {
 
 using namespace FileWriter;
 
-std::string broker;
+std::string broker{"localhost"};
 std::vector<std::string> no_topic = {""};
 std::vector<std::string> topic = {"area_detector", "tof_detector", "motor1",
                                   "motor2", "temp"};
 
-#if 1
+// #if 1
 std::vector<MockDemuxTopic> no_demux = {MockDemuxTopic("")};
 std::vector<MockDemuxTopic> one_demux = {
     MockDemuxTopic("topic.with.multiple.sources")};
@@ -104,65 +104,68 @@ std::vector<MockDemuxTopic> demux = {
     MockDemuxTopic("area_detector"), MockDemuxTopic("tof_detector"),
     MockDemuxTopic("motor1"), MockDemuxTopic("motor2"), MockDemuxTopic("temp")};
 
-TEST(Streammaster, NotAllocatedFailure) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  EXPECT_THROW(StreamMaster sm(broker, no_demux), std::runtime_error);
-}
+using MockStreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
 
-TEST(Streammaster, Constructor) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  EXPECT_NO_THROW(StreamMaster sm(broker, demux));
-}
-
-TEST(Streammaster, StartStop) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  EXPECT_TRUE(one_demux[0].sources().size() == 0);
-  one_demux[0].add_source("for_example_motor01");
-  one_demux[0].add_source("for_example_temperature02");
-  EXPECT_FALSE(one_demux[0].sources().size() == 0);
-
-  StreamMaster sm(broker, one_demux);
-  bool is_joinable = sm.start();
-  EXPECT_TRUE(is_joinable);
-  std::this_thread::sleep_for(std::chrono::seconds(1));
-  sm.stop();
-
-  for (int item = 0; item < (int64_t)one_demux[0].sources().size(); ++item)
-    std::cout << one_demux[0].sources()[item].source() << " : "
-              << one_demux[0].sources()[item].processed_messages_count()
-              << "\n";
-}
-
-TEST(Streammaster, StartTime) {
-  using StreamMaster = StreamMaster<FileWriter::Streamer, MockDemuxTopic>;
-  one_demux[0].add_source("for_example_motor01");
-  one_demux[0].add_source("for_example_temperature02");
-  StreamMaster sm(broker, one_demux);
-  sm.start_time(ESSTimeStamp(10));
-}
-
-int main(int argc, char **argv) {
-  rng.seed(1234);
-  ::testing::InitGoogleTest(&argc, argv);
-  for (int i = 1; i < argc; ++i) {
-    std::string opt(argv[i]);
-    size_t found = opt.find("=");
-    if (opt.substr(0, found) == "--kafka_broker")
-      broker = opt.substr(found + 1);
-    // if( opt.substr(0,found) ==  "--kafka_topic")
-    //   topic = opt.substr(found+1);
-    if (opt.substr(0, found) == "--help") {
-      std::cout << "\nOptions: "
-                << "\n"
-                << "\t--kafka_broker=<host>:<port>[default = 9092]\n"
-          // << "\t--kafka_topic=<topic>\n"
-          ;
-    }
+TEST(StreamMaster, streamer_report_failure_if_missing_broker_or_topic) {
+  {
+    MockStreamMaster sm("", one_demux);
+    std::this_thread::sleep_for(milliseconds(10));
+    EXPECT_EQ(sm.status(),
+              FileWriter::Status::StreamMasterErrorCode::streamer_error);
   }
-
-  return RUN_ALL_TESTS();
+  {
+    MockStreamMaster sm(broker, no_demux);
+    std::this_thread::sleep_for(milliseconds(10));
+    EXPECT_EQ(sm.status(),
+              FileWriter::Status::StreamMasterErrorCode::streamer_error);
+  }
 }
 
-#else
-int main(int argc, char **argv) {}
-#endif
+TEST(StreamMaster, streamer_report_failure_if_wrong_broker) {
+  MockStreamMaster sm("no_host", one_demux);
+  std::this_thread::sleep_for(milliseconds(10));
+  EXPECT_EQ(sm.status(),
+            FileWriter::Status::StreamMasterErrorCode::streamer_error);
+}
+
+TEST(StreamMaster, streamer_report_success_if_broker_and_topic_correct) {
+  if (broker == "localhost") {
+    std::cerr << "\nWarning: broker not defined, using localhost\n\n";
+  }
+  MockStreamMaster sm(broker, one_demux);
+  std::this_thread::sleep_for(milliseconds(10));
+  EXPECT_EQ(sm.status(),
+            FileWriter::Status::StreamMasterErrorCode::not_started);
+}
+
+TEST(StreamMaster, success_setting_start_time) {
+  one_demux[0].add_source("for_example_motor01");
+  one_demux[0].add_source("for_example_temperature02");
+  if (broker == "localhost") {
+    std::cerr << "\nWarning: broker not defined, using localhost\n\n";
+  }
+  MockStreamMaster sm(broker, one_demux);
+  EXPECT_TRUE(sm.start_time(ESSTimeStamp(10)));
+}
+
+// int main(int argc, char **argv) {
+//   rng.seed(1234);
+//   ::testing::InitGoogleTest(&argc, argv);
+//   for (int i = 1; i < argc; ++i) {
+//     std::string opt(argv[i]);
+//     size_t found = opt.find("=");
+//     if (opt.substr(0, found) == "--kafka_broker")
+//       broker = opt.substr(found + 1);
+//     if (opt.substr(0, found) == "--help") {
+//       std::cout << "\nOptions: "
+//                 << "\n"
+//                 << "\t--kafka_broker=<host>:<port>[default = 9092]\n";
+//     }
+//   }
+
+//   return RUN_ALL_TESTS();
+// }
+
+// #else
+// int main(int argc, char **argv) {}
+// #endif
