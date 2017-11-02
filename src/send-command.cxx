@@ -167,6 +167,7 @@ int main(int argc, char **argv) {
            "  --cmd             <command>\n"
            "    Use a command file: file:<filename>\n"
            "    Stop writing file-with-id and timestamp (optional): stop:<jobid>[:<timestamp>]\n"
+           "    Terminate the filewriter process: exit\n"
            "\n"
            "   -v\n"
            "    Increase verbosity\n"
