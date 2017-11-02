@@ -66,7 +66,7 @@ public:
   void close();
 
 protected:
-  FBSchemaWriter();
+  FBSchemaWriter() = default;
   HDFFile *hdf_file = nullptr;
   rapidjson::Value const *config_file = nullptr;
   /**

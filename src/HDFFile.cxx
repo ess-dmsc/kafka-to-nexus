@@ -125,7 +125,7 @@ struct SE {
   bool basics;
   string nx_type{"group"};
   SE(string name, rapidjson::Value const *jsv, hid_t nxparent)
-      : name(name), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
+      : name(std::move(name)), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
         itr(jsv->MemberEnd()), basics(false) {
     if (jsv->IsObject()) {
       itr = jsv->MemberBegin();
@@ -284,11 +284,11 @@ int HDFFile::init(std::string filename,
   std::deque<SE> stack;
 
   if (nexus_structure.IsObject()) {
-    stack.push_back(SE{"/", &nexus_structure, -1});
+    stack.emplace_back("/", &nexus_structure, -1);
     stack.back().nxv = f1;
   }
 
-  while (stack.size() > 0) {
+  while (not stack.empty()) {
     auto &se = stack.back();
     if (!se.basics) {
       write_basic_entities(se, lcpl);
@@ -352,8 +352,6 @@ uint64_t FBSchemaReader::ts(Msg msg) { return ts_impl(msg); }
 uint64_t FBSchemaReader::teamid(Msg &msg) { return teamid_impl(msg); }
 
 uint64_t FBSchemaReader::teamid_impl(Msg &msg) { return 0; }
-
-FBSchemaWriter::FBSchemaWriter() {}
 
 FBSchemaWriter::~FBSchemaWriter() {
   if (hdf_group != -1) {
