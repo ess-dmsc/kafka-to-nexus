@@ -88,9 +88,6 @@ public:
     return true;
   }
   bool stop_time(const ESSTimeStamp &stop) {
-    // if (stop.count() < 0) {
-    //   return false;
-    // }
     for (auto &d : demux) {
       d.stop_time() = stop;
     }
