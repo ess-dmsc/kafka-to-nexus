@@ -220,6 +220,153 @@ static void write_scalar_string(SE &se, hid_t hdf_type_strfix) {
   H5Sclose(dsp);
 }
 
+template <typename DT>
+static void write_ds_numeric(hid_t hdf_parent, std::string name,
+                             std::vector<hsize_t> sizes,
+                             rapidjson::Value const *vals) {
+  size_t total_n = 1;
+  for (auto x : sizes) {
+    total_n *= x;
+  }
+  std::vector<DT> blob;
+  hid_t dsp = -1;
+  if (sizes.empty()) {
+    dsp = H5Screate(H5S_SCALAR);
+  } else {
+    dsp = H5Screate(H5S_SIMPLE);
+    H5Sset_extent_simple(dsp, sizes.size(), sizes.data(), sizes.data());
+  }
+  std::vector<rapidjson::Value const *> as;
+  std::vector<size_t> ai;
+  std::vector<size_t> an;
+  as.push_back(vals);
+  ai.push_back(0);
+  an.push_back(vals->GetArray().Size());
+
+  while (not as.empty()) {
+    if (as.size() > 10) {
+      break;
+    }
+    // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
+    if (ai.back() >= an.back()) {
+      as.pop_back();
+      ai.pop_back();
+      an.pop_back();
+      continue;
+    }
+    auto &v = as.back()->GetArray()[ai.back()];
+    if (v.IsArray()) {
+      ai.back()++;
+      as.push_back(&v);
+      ai.push_back(0);
+      size_t n = v.GetArray().Size();
+      an.push_back(n);
+    } else if (v.IsInt()) {
+      blob.push_back(v.GetInt());
+      ai.back()++;
+      // TODO handle also the other numeric cases.
+    }
+  }
+
+  if (blob.size() != total_n) {
+    LOG(3, "error in sizes");
+    // TODO clean up
+    return;
+  }
+
+  auto dt = nat_type<DT>();
+  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT,
+                       H5P_DEFAULT, H5P_DEFAULT);
+  auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
+  if (err < 0) {
+    LOG(3, "error while writing dataset");
+  }
+  H5Dclose(ds);
+  H5Sclose(dsp);
+}
+
+static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
+  // TODO
+  // Inspect size dimensions.
+  // Inspect basic data type.
+  // Create the dataset.
+  // Read the data from json into a memory buffer, always check dimensions.
+  // Return error!!! and make caller handle error as well...
+  LOG(3, "js: {}", json_to_string(*value));
+  std::string name;
+  if (auto x = get_string(value, "name")) {
+    name = x.v;
+  } else {
+    return;
+  }
+
+  auto ds = get_object(*value, "dataset");
+  if (not ds) {
+    return;
+  }
+  auto dso = ds.v->GetObject();
+
+  auto ds_space = get_string(ds.v, "space");
+  if (not ds_space) {
+    return;
+  }
+  if (ds_space.v != "simple") {
+    LOG(3, "sorry, can only handle simple data spaces");
+    return;
+  }
+
+  auto ds_type = get_string(ds.v, "type");
+  if (not ds_type) {
+    return;
+  }
+
+  std::vector<hsize_t> sizes;
+  // optional, default to scalar
+  auto ds_size = get_array(*ds.v, "size");
+  if (ds_size) {
+    auto a = ds_size.v->GetArray();
+    for (size_t i1 = 0; i1 < a.Size(); ++i1) {
+      if (a[i1].IsInt()) {
+        sizes.push_back(a[i1].GetInt());
+      } else if (a[i1].IsString()) {
+        if (string("unlimited") == a[i1].GetString()) {
+          sizes.push_back(H5S_UNLIMITED);
+        }
+      }
+    }
+  }
+
+  auto ds_values = get_array(*value, "values");
+  if (not ds_values) {
+    return;
+  }
+
+  LOG(3, "creating");
+  for (auto x : sizes) {
+    LOG(3, "size: {}", x);
+  }
+
+  auto vals = ds_values.v;
+
+  if (ds_type.v == "uint64") {
+    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, vals);
+  }
+  if (ds_type.v == "uint8") {
+    write_ds_numeric<uint8_t>(hdf_parent, name, sizes, vals);
+  }
+  if (ds_type.v == "int32") {
+    write_ds_numeric<int32_t>(hdf_parent, name, sizes, vals);
+  }
+  if (ds_type.v == "float") {
+    write_ds_numeric<float>(hdf_parent, name, sizes, vals);
+  }
+
+  // TODO
+  // Handle attributes on this dataset as well
+  if (auto x = get_object(*value, "attributes")) {
+  }
+}
+
 static void create_hdf_structures(rapidjson::Value const *value,
                                   hid_t hdf_parent, uint16_t level, hid_t lcpl,
                                   hid_t hdf_type_strfix,
@@ -252,16 +399,7 @@ static void create_hdf_structures(rapidjson::Value const *value,
         stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
       }
       if (type.v == "dataset") {
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        // TODO
-        LOG(3, "DATASET not yet implemented");
+        write_dataset(hdf_parent, value);
       }
     }
   }

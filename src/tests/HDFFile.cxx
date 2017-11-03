@@ -242,11 +242,30 @@ public:
           dataset.AddMember("type", "uint64", a);
           Value dataset_size;
           dataset_size.SetArray();
-          dataset_size.PushBack("unlimited", a);
+          // dataset_size.PushBack("unlimited", a);
+          dataset_size.PushBack(Value(7), a);
           dataset_size.PushBack(Value(4), a);
           dataset_size.PushBack(Value(2), a);
           dataset.AddMember("size", dataset_size, a);
           ds1.AddMember("dataset", dataset, a);
+          {
+            Value values;
+            values.SetArray();
+            for (size_t i1 = 0; i1 < 7; ++i1) {
+              Value v1;
+              v1.SetArray();
+              for (size_t i2 = 0; i2 < 4; ++i2) {
+                Value v2;
+                v2.SetArray();
+                for (size_t i3 = 0; i3 < 2; ++i3) {
+                  v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
+                }
+                v1.PushBack(v2, a);
+              }
+              values.PushBack(v1, a);
+            }
+            ds1.AddMember("values", values, a);
+          }
           children.PushBack(ds1, a);
         }
         g1.AddMember("children", ch, a);
