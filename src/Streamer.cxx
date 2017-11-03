@@ -269,7 +269,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   std::unique_ptr<RdKafka::Message> msg{
       _consumer->consume(consumer_timeout.count())};
 
-  LOG(6, "{} : event timestamp : {}", _tp[0]->topic(),
+  LOG(6, "{} : Kafka timestamp : {}", _tp[0]->topic(),
       msg->timestamp().timestamp);
 
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
@@ -289,7 +289,6 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   auto result = mp.process_message((char *)msg->payload(), msg->len());
   if (!result.is_OK()) {
     message_info_.error();
-    //    run_status_ = SEC::write_error;
   }
   return result;
 }

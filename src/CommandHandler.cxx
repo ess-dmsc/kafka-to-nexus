@@ -3,6 +3,8 @@
 #include "helper.h"
 #include "utils.h"
 
+#include <future>
+
 namespace FileWriter {
 
 // In the future, want to handle many, but not right now.
@@ -213,7 +215,6 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
         stop_time = ESSTimeStamp(m->value.GetUint64());
       }
     }
-
     int counter{0};
     for (auto &x : master->stream_masters) {
       if (x->job_id() == job_id) {
@@ -222,11 +223,8 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
         } else {
           x->stop();
         }
-        LOG(6, "gracefully stop file with id : {}", job_id);
+        LOG(5, "gracefully stop file with id : {}", job_id);
         ++counter;
-        auto it = std::find(master->stream_masters.begin(),
-                            master->stream_masters.end(), x);
-        master->stream_masters.erase(it);
       }
     }
 

@@ -196,12 +196,13 @@ int main(int argc, char **argv) {
     ESSTimeStamp stop_time{0};
     std::string::size_type n{input.find(":")};
     std::string m1{""};
-    if(n!=std::string::npos) {
-      auto result = to_num<int>(input.substr(n+1));
-      if(result.first) {
-	stop_time = ESSTimeStamp(result.second);
+    if (n != std::string::npos) {
+      auto result = strtoul(&input[n + 1], NULL, 0);
+      if (result) {
+        stop_time = ESSTimeStamp(result);
       }
-      m1 = make_command_stop(opt.broker_opt.address, input.substr(0,n),stop_time);
+      m1 = make_command_stop(opt.broker_opt.address, input.substr(0, n),
+                             stop_time);
     } else {
       m1 = make_command_stop(opt.broker_opt.address, input);
     }
