@@ -29,18 +29,16 @@ HDFFile::HDFFile() {
 #else
   static_assert(false, "Unexpected HDF version");
 #endif
-
-  impl.reset(new HDFFile_impl);
 }
 
 HDFFile::~HDFFile() {
-  if (impl->h5file >= 0) {
+  if (h5file >= 0) {
     std::array<char, 512> fname;
-    H5Fget_name(impl->h5file, fname.data(), fname.size());
+    H5Fget_name(h5file, fname.data(), fname.size());
     LOG(6, "flush file {}", fname.data());
-    H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
+    H5Fflush(h5file, H5F_SCOPE_LOCAL);
     LOG(6, "close file {}", fname.data());
-    H5Fclose(impl->h5file);
+    H5Fclose(h5file);
   }
 }
 
@@ -136,7 +134,7 @@ struct SE {
   }
 };
 
-static void write_attributes(hid_t hdf_this, rapidjson::Value const * jsv) {
+static void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
   auto mem = jsv->FindMember("attributes");
   if (mem != jsv->MemberEnd()) {
     auto &a = mem->value;
@@ -222,7 +220,11 @@ static void write_scalar_string(SE &se, hid_t hdf_type_strfix) {
   H5Sclose(dsp);
 }
 
-static void create_hdf_structures(rapidjson::Value const *value, hid_t hdf_parent, uint16_t level, hid_t lcpl, hid_t hdf_type_strfix, std::vector<StreamHDFInfo> &stream_hdf_info) {
+static void create_hdf_structures(rapidjson::Value const *value,
+                                  hid_t hdf_parent, uint16_t level, hid_t lcpl,
+                                  hid_t hdf_type_strfix,
+                                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                                  std::deque<std::string> &path) {
   // The HDF object that we will maybe create at the current level.
   hid_t hdf_this = -1;
   // Keeps the HDF object id if we create a new collection-like object which
@@ -238,22 +240,27 @@ static void create_hdf_structures(rapidjson::Value const *value, hid_t hdf_paren
           hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl, H5P_DEFAULT,
                                 H5P_DEFAULT);
           hdf_next_parent = hdf_this;
+          path.push_back(name.v);
           gid = hdf_this;
         }
       }
       if (type.v == "stream") {
-        stream_hdf_info.push_back(StreamHDFInfo{hdf_parent, value});
+        string pathstr = "/";
+        for (auto &x : path) {
+          pathstr += "/" + x;
+        }
+        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
       }
       if (type.v == "dataset") {
-      	// TODO
-      	// TODO
-      	// TODO
-      	// TODO
-      	// TODO
-      	// TODO
-      	// TODO
-      	// TODO
-      	// TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO
+        // TODO
         LOG(3, "DATASET not yet implemented");
       }
     }
@@ -263,20 +270,22 @@ static void create_hdf_structures(rapidjson::Value const *value, hid_t hdf_paren
     write_attributes(hdf_this, value);
   }
 
-	// If the current level in the HDF can act as a parent, then continue the
-	// recursion with the (optional) "children" array.
+  // If the current level in the HDF can act as a parent, then continue the
+  // recursion with the (optional) "children" array.
   if (hdf_next_parent >= 0) {
     auto mem = value->FindMember("children");
     if (mem != value->MemberEnd()) {
       if (mem->value.IsArray()) {
         for (auto &child : mem->value.GetArray()) {
-          create_hdf_structures(&child, hdf_this, level + 1, lcpl, hdf_type_strfix, stream_hdf_info);
+          create_hdf_structures(&child, hdf_this, level + 1, lcpl,
+                                hdf_type_strfix, stream_hdf_info, path);
         }
       }
     }
+    path.pop_back();
   }
   if (gid != -1) {
-  	H5Gclose(gid);
+    H5Gclose(gid);
   }
 }
 
@@ -284,7 +293,7 @@ static void create_hdf_structures(rapidjson::Value const *value, hid_t hdf_paren
 /// Write leaves immediately.
 /// Either push the next child to, or pop from the stack.
 static void TRASH_handle_children(std::deque<SE> &stack, SE &se,
-                            hid_t hdf_type_strfix) {
+                                  hid_t hdf_type_strfix) {
   bool have_child = false;
   if (se.jsv->IsObject()) {
     while (!have_child && se.itr != se.jsv->MemberEnd()) {
@@ -321,7 +330,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
         cwd.data());
     return -1;
   }
-  impl->h5file = x;
+  h5file = x;
 
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
@@ -334,13 +343,15 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 
   auto f1 = x;
 
+  std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
     auto value = &nexus_structure;
     auto mem = value->FindMember("children");
     if (mem != value->MemberEnd()) {
       if (mem->value.IsArray()) {
         for (auto &child : mem->value.GetArray()) {
-          create_hdf_structures(&child, impl->h5file, 0, lcpl, strfix, stream_hdf_info);
+          create_hdf_structures(&child, h5file, 0, lcpl, strfix,
+                                stream_hdf_info, path);
         }
       }
     }
@@ -361,9 +372,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   return 0;
 }
 
-void HDFFile::flush() { H5Fflush(impl->h5file, H5F_SCOPE_LOCAL); }
-
-HDFFile_h5 HDFFile::h5file_detail() { return HDFFile_h5(impl->h5file); }
+void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
 
 HDFFile_h5::HDFFile_h5(hid_t h5file) : _h5file(h5file) {}
 

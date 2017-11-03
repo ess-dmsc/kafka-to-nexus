@@ -12,13 +12,6 @@ using std::vector;
 
 std::atomic<uint32_t> n_FileWriterTask_created{0};
 
-class FileWriterTask_impl {
-  friend class FileWriterTask;
-  friend class ::Test___FileWriterTask___Create01;
-  std::string hdf_filename;
-  HDFFile hdf_file;
-};
-
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
 
 FileWriterTask::FileWriterTask() {

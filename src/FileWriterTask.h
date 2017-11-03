@@ -10,7 +10,13 @@ class Test___FileWriterTask___Create01;
 
 namespace FileWriter {
 
-class FileWriterTask_impl;
+class FileWriterTask_impl {
+  friend class FileWriterTask;
+  friend class CommandHandler;
+  friend class ::Test___FileWriterTask___Create01;
+  std::string hdf_filename;
+  HDFFile hdf_file;
+};
 
 /**
 Represents the task of writing a HDF file.

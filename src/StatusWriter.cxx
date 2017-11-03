@@ -17,7 +17,10 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   d.SetObject();
 
   auto next_message_relative_eta_ms = info.time_to_next_message();
-  auto next_message_relative_eta_s = std::chrono::duration_cast<std::chrono::seconds>(next_message_relative_eta_ms).count();
+  auto next_message_relative_eta_s =
+      std::chrono::duration_cast<std::chrono::seconds>(
+          next_message_relative_eta_ms)
+          .count();
   { // message type
     d.AddMember("type", "stream_master_status", a);
     d.AddMember("next_message_eta_ms", next_message_relative_eta_ms.count(), a);
@@ -40,7 +43,9 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
       Value val;
       val.SetObject();
       val.AddMember("status", primary_quantities(topic.second, a), a);
-      val.AddMember("statistics", derived_quantities(topic.second, next_message_relative_eta_s, a), a);
+      val.AddMember(
+          "statistics",
+          derived_quantities(topic.second, next_message_relative_eta_s, a), a);
       ss.AddMember(key, val, a);
     }
     d.AddMember("streamer", ss, a);

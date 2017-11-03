@@ -243,7 +243,7 @@ FileWriter::Streamer::SEC FileWriter::Streamer::close_stream() {
     _consumer->close();
   }
   _tp.clear();
-  if(run_status_ == SEC::writing) {
+  if (run_status_ == SEC::writing) {
     run_status_ = SEC::has_finished;
   }
   return run_status_;
@@ -256,7 +256,8 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   if (run_status_ == SEC::not_initialized) {
     return ProcessMessageResult::OK();
   }
-  std::lock_guard<std::mutex> lock(connection_ready_); // make sure that connect is completed
+  std::lock_guard<std::mutex> lock(
+      connection_ready_); // make sure that connect is completed
 
   if (int(run_status_) < 0) {
     return ProcessMessageResult::ERR();
@@ -295,7 +296,8 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
 FileWriter::Streamer::SEC
 FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
-  std::lock_guard<std::mutex> lock(connection_ready_); // make sure connnection is done
+  std::lock_guard<std::mutex> lock(
+      connection_ready_); // make sure connnection is done
 
   auto value =
       std::chrono::duration_cast<KafkaTimeStamp>(timepoint - _timestamp_delay);

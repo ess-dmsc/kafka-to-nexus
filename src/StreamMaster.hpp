@@ -147,7 +147,6 @@ public:
   }
 
 private:
-
   void run() {
     using namespace std::chrono;
     runstatus = SMEC::running;
@@ -166,26 +165,25 @@ private:
           }
           continue;
         }
-	if (s.runstatus() == SEC::has_finished) {
-	  if( remove_source(d.topic()) != SMEC::running) {
-	    break;
-	  }
-	  continue;
-	}
+        if (s.runstatus() == SEC::has_finished) {
+          if (remove_source(d.topic()) != SMEC::running) {
+            break;
+          }
+          continue;
+        }
         if (s.runstatus() == SEC::not_initialized) {
-	  if(streamer.size() == 1) {
-	    std::this_thread::sleep_for(milliseconds(500));
-	  }
+          if (streamer.size() == 1) {
+            std::this_thread::sleep_for(milliseconds(500));
+          }
           continue;
         }
         if (int(s.runstatus()) < 0) {
           LOG(0, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
-          if( remove_source(d.topic()) != SMEC::running) {
-	    break;
-	  }
+          if (remove_source(d.topic()) != SMEC::running) {
+            break;
+          }
           continue;
         }
-	
       }
     }
 

@@ -143,10 +143,12 @@ const milliseconds FileWriter::Status::StreamMasterInfo::time_to_next_message(
   next_message_relative_eta_ = to_next_message;
   return time_to_next_message();
 }
-const milliseconds FileWriter::Status::StreamMasterInfo::time_to_next_message() {
+const milliseconds
+FileWriter::Status::StreamMasterInfo::time_to_next_message() {
   return next_message_relative_eta_;
 }
 const milliseconds FileWriter::Status::StreamMasterInfo::runtime() {
-  auto result = std::chrono::duration_cast<milliseconds>(std::chrono::system_clock::now() - start_time_);
+  auto result = std::chrono::duration_cast<milliseconds>(
+      std::chrono::system_clock::now() - start_time_);
   return result;
 }

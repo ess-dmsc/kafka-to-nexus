@@ -126,7 +126,8 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+  InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                      rapidjson::Value const &config_stream,
                       rapidjson::Value const *config_module) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
@@ -156,8 +157,10 @@ template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                          rapidjson::Value const &config_stream,
                           rapidjson::Value const *config_module) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
   auto &hdf_group = hid;
   auto str = get_string(&config_stream, "source");
   if (!str) {
@@ -261,6 +264,7 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
       return HDFWriterModule::InitResult::ERROR_IO();
     }
   }
+  H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
 }
 

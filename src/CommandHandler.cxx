@@ -35,9 +35,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(6,
-          "ERROR command message schema validation:  Invalid schema: {}  "
-          "keyword: {}",
+      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
+             "keyword: {}",
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
     }
@@ -105,8 +104,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
-    hdf_writer_module->init_hdf(stream.hdf_parent_object, config_stream,
-                                nullptr);
+    hdf_writer_module->init_hdf(fwt->impl->hdf_file.h5file, stream.name,
+                                config_stream, nullptr);
 
     auto s = Source(source.v, move(hdf_writer_module));
     fwt->add_source(move(s));

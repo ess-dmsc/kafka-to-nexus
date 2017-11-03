@@ -59,7 +59,8 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+  InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                      rapidjson::Value const &config_stream,
                       rapidjson::Value const *config_module) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
@@ -83,8 +84,10 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
+HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                          rapidjson::Value const &config_stream,
                           rapidjson::Value const *config_module) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
   auto str = get_string(&config_stream, "source");
   if (!str) {
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
@@ -134,7 +137,7 @@ HDFWriterModule::init_hdf(hid_t hid, rapidjson::Value const &config_stream,
     ds_cue_index.reset();
     ds_cue_timestamp_zero.reset();
   }
-
+  H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
 }
 
