@@ -35,8 +35,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
-             "keyword: {}",
+      LOG(6,
+          "ERROR command message schema validation:  Invalid schema: {}  "
+          "keyword: {}",
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
     }
@@ -146,12 +147,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       config_kafka_vec.emplace_back(x.first, x.second);
     }
 
-    // TODO
-    // Actually pass master->status_producer to StreamMaster here
-
     auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
         new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
                                                config_kafka_vec));
+    if (master->status_producer) {
+      s->report(master->status_producer, config.status_master_interval);
+    }
     if (start_time.count()) {
       LOG(3, "start time :\t{}", start_time.count());
       s->start_time(start_time);

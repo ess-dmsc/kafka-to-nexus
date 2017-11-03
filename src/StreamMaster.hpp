@@ -9,59 +9,83 @@
 
 #include <algorithm>
 #include <atomic>
+#include <exception>
+#include <queue>
 #include <thread>
 
 #include "DemuxTopic.h"
 #include "FileWriterTask.h"
+#include "Report.hpp"
 #include "logger.h"
-#include "utils.h"
 
-struct Streamer;
 struct FileWriterCommand;
+namespace KafkaW {
+class ProducerTopic;
+}
 
 namespace FileWriter {
 
-template <typename Streamer, typename Demux> struct StreamMaster {
+template <typename Streamer, typename Demux> class StreamMaster {
+  using SEC = Status::StreamerErrorCode;
+  using SMEC = Status::StreamMasterErrorCode;
+  using Options = typename Streamer::Options;
 
-  StreamMaster() : do_write(false), _stop(false){};
+public:
+  StreamMaster() {}
 
-  StreamMaster(
-      std::string &broker, std::vector<Demux> &_demux,
-      std::vector<std::pair<std::string, std::string>> kafka_options = {},
-      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
-      : demux(_demux), do_write(false), _stop(false) {
-
-    for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
-      streamer[d.topic()].n_sources() = d.sources().size();
-    }
-  };
-
-  StreamMaster(
-      std::string &broker, std::unique_ptr<FileWriterTask> file_writer_task,
-      std::vector<std::pair<std::string, std::string>> kafka_options = {},
-      const RdKafkaOffset &offset = RdKafkaOffsetEnd)
-      : demux(file_writer_task->demuxers()), do_write(false), _stop(false),
-        _file_writer_task(std::move(file_writer_task)) {
+  StreamMaster(const std::string &broker, std::vector<Demux> &_demux,
+               const Options &kafka_options = {},
+               const Options &filewriter_options = {})
+      : demux(_demux) {
 
     for (auto &d : demux) {
-      streamer.emplace(d.topic(), Streamer{broker, d.topic(), kafka_options});
+      streamer.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(d.topic()),
+                       std::forward_as_tuple(broker, d.topic(), kafka_options,
+                                             filewriter_options));
       streamer[d.topic()].n_sources() = d.sources().size();
-    }
-  };
-
-  ~StreamMaster() {
-    _stop = true;
-    if (loop.joinable()) {
-      loop.join();
     }
   }
 
-  bool start_time(const ESSTimeStamp &start) {
+  StreamMaster(const std::string &broker,
+               std::unique_ptr<FileWriterTask> file_writer_task,
+               const Options &kafka_options = {},
+               const Options &filewriter_options = {})
+      : demux(file_writer_task->demuxers()),
+        _file_writer_task(std::move(file_writer_task)) {
+
     for (auto &d : demux) {
-      auto result = streamer[d.topic()].set_start_time(d, start);
+      streamer.emplace(std::piecewise_construct,
+                       std::forward_as_tuple(d.topic()),
+                       std::forward_as_tuple(broker, d.topic(), kafka_options,
+                                             filewriter_options));
+      streamer[d.topic()].n_sources() = d.sources().size();
     }
-    return false;
+  }
+
+  StreamMaster(const StreamMaster &) = delete;
+  StreamMaster(StreamMaster &&) = default;
+
+  ~StreamMaster() {
+    stop_ = true;
+    if (loop.joinable()) {
+      loop.join();
+    }
+    if (report_thread_.joinable()) {
+      report_thread_.join();
+    }
+  }
+
+  StreamMaster &operator=(const StreamMaster &) = delete;
+
+  bool start_time(const ESSTimeStamp &start) {
+    for (auto &s : streamer) {
+      auto result = s.second.set_start_time(start);
+      if (result != SEC::no_error) {
+        return false;
+      }
+    }
+    return true;
   }
   bool stop_time(const ESSTimeStamp &stop) {
     if (stop.count() < 0) {
@@ -74,8 +98,9 @@ template <typename Streamer, typename Demux> struct StreamMaster {
   }
 
   bool start() {
+    LOG(7, "StreamMaster: start");
     do_write = true;
-    _stop = false;
+    stop_ = false;
 
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
@@ -84,88 +109,139 @@ template <typename Streamer, typename Demux> struct StreamMaster {
     return loop.joinable();
   }
 
-  bool stop() {
-    do_write = false;
-    _stop = true;
-    if (loop.joinable()) {
-      loop.join();
+  int stop() {
+    try {
+      std::call_once(stop_once_guard,
+                     &FileWriter::StreamMaster<Streamer, Demux>::stop_impl,
+                     this);
+    } catch (std::exception &e) {
+      LOG(0, "Error while stopping: {}", e.what());
     }
-    for (auto &d : demux) {
-      this->stop_streamer(streamer[d.topic()]);
-      streamer.erase(d.topic());
-    }
-    return !loop.joinable();
+    return !(loop.joinable() || report_thread_.joinable());
   }
 
-  std::map<std::string, typename Streamer::status_type> status() {
-    std::map<std::string, typename Streamer::status_type> stat;
-    for (auto &s : streamer) {
-      stat.emplace(s.first, s.second.status());
+  void report(std::shared_ptr<KafkaW::ProducerTopic> p,
+              const int &delay = 1000) {
+    if (delay < 0) {
+      LOG(2, "Required negative delay in statistics collection: use default");
+      return report(p);
     }
-    return stat;
-  }
-
-  rapidjson::Value
-  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) {
-    return _file_writer_task->stats(a);
-  }
+    if (!report_thread_.joinable()) {
+      report_.reset(new Report(p, delay));
+      report_thread_ =
+          std::thread([&] { report_->report(streamer, stop_, runstatus); });
+    } else {
+      LOG(5, "Status report already started, nothing to do");
+    }
+  };
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
-private:
-  ErrorCode stop_streamer(const std::string &topic) {
-    return streamer[topic].closeStream();
+  const SMEC status() {
+    for (auto &s : streamer) {
+      if (int(s.second.runstatus()) < 0) {
+        runstatus = SMEC::streamer_error;
+      }
+    }
+    return runstatus.load();
   }
-  ErrorCode stop_streamer(Streamer &s) { return s.closeStream(); }
+
+private:
 
   void run() {
     using namespace std::chrono;
-    system_clock::time_point tp, tp_global(system_clock::now());
+    runstatus = SMEC::running;
 
-    while (!_stop) {
-
+    while (!stop_ && demux.size() > 0) {
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
-        if (s.run_status() == StatusCode::RUNNING) {
-          tp = system_clock::now();
+        if (s.runstatus() == SEC::writing) {
+          auto tp = system_clock::now();
           while (do_write && ((system_clock::now() - tp) < duration)) {
-            auto _value = s.write(d);
-            if (_value.is_STOP() &&
-                (remove_source(d.topic()) != StatusCode::RUNNING)) {
+            auto value = s.write(d);
+            if (value.is_STOP() &&
+                (remove_source(d.topic()) != SMEC::running)) {
               break;
             }
           }
+          continue;
         }
+	if (s.runstatus() == SEC::has_finished) {
+	  if( remove_source(d.topic()) != SMEC::running) {
+	    break;
+	  }
+	  continue;
+	}
+        if (s.runstatus() == SEC::not_initialized) {
+	  if(streamer.size() == 1) {
+	    std::this_thread::sleep_for(milliseconds(500));
+	  }
+          continue;
+        }
+        if (int(s.runstatus()) < 0) {
+          LOG(0, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
+          if( remove_source(d.topic()) != SMEC::running) {
+	    break;
+	  }
+          continue;
+        }
+	
       }
-      double total_size(0);
-      for (auto &s : streamer) {
-        total_size += s.second.status()["status.size"];
+    }
+
+    runstatus = SMEC::has_finished;
+  }
+
+  SMEC remove_source(const std::string &topic) {
+    auto &s = streamer[topic];
+    if (s.n_sources() > 1) {
+      s.n_sources()--;
+      return SMEC::running;
+    } else {
+      LOG(3, "All sources in {} have expired, remove streamer", topic);
+      s.close_stream();
+      streamer.erase(topic);
+      if (streamer.size() != 0) {
+        return SMEC::empty_streamer;
+      } else {
+        stop_ = true;
+        return runstatus = SMEC::has_finished;
       }
-      std::cout << "Written " << total_size * 1e-6 << "MB @ "
-                << total_size * 1e3 / (system_clock::now() - tp_global).count()
-                << "MB/s\n";
     }
   }
 
-  ErrorCode remove_source(const std::string &topic) {
-    auto &s(streamer[topic]);
-    if (s.n_sources() > 1) {
-      s.n_sources()--;
-      return ErrorCode(StatusCode::RUNNING);
-    } else {
-      LOG(3, "All sources in {} have expired, remove streamer", topic);
-      stop_streamer(s);
-      streamer.erase(topic);
-      return ErrorCode(StatusCode::STOPPED);
+  void stop_impl() {
+    LOG(7, "StreamMaster: stop");
+    do_write = false;
+    stop_ = true;
+    if (loop.joinable()) {
+      loop.join();
     }
+    if (report_thread_.joinable()) {
+      report_thread_.join();
+    }
+    for (auto &s : streamer) {
+      LOG(7, "Shut down {} : {}", s.first);
+      auto v = s.second.close_stream();
+      if (v != SEC::has_finished) {
+        LOG(1, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
+      } else {
+        LOG(7, "\t...done");
+      }
+    }
+    streamer.clear();
   }
 
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;
   std::thread loop;
-  std::atomic<bool> do_write;
-  std::atomic<bool> _stop;
-  std::unique_ptr<FileWriterTask> _file_writer_task;
+  std::thread report_thread_;
+  std::atomic<SMEC> runstatus{SMEC::not_started};
+  std::atomic<bool> do_write{false};
+  std::atomic<bool> stop_{false};
+  std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
+  std::once_flag stop_once_guard;
+  std::unique_ptr<Report> report_{nullptr};
 
   milliseconds duration{1000};
 };

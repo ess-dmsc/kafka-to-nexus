@@ -57,6 +57,7 @@ set(libraries_common
     ${CURL_LIBRARIES}
     pthread
     z
+    ${CONAN_LIBS}
 )
 
 set(compile_defs_common "HAS_REMOTE_API=0")
@@ -71,8 +72,10 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
+    Status.cxx
+    StatusWriter.cxx
+    Errors.cxx
     Streamer.cxx
-    StreamMaster.cxx
     kafka_util.cxx
     Master.cxx
     CommandListener.cxx
@@ -106,6 +109,7 @@ set(kafka_to_nexus_INC
     CommandListener.h
     commandproducer.h
     DemuxTopic.h
+    Errors.hpp
     FileWriterTask.h
     FlatbufferReader.h
     h5.h
@@ -124,7 +128,10 @@ set(kafka_to_nexus_INC
     Msg.h
     MsgParser.h
     ProcessMessageResult.h
+    Report.hpp
     Source.h
+    Status.hpp
+    StatusWriter.hpp
     Streamer.hpp
     StreamMaster.hpp
     TimeDifferenceFromMessage.h
@@ -180,22 +187,6 @@ target_link_libraries(${tgt} ${libraries_common})
 if (have_gtest)
     add_gtest_to_target(${tgt})
 endif()
-
-
-
-set(tgt "dummy")
-set(sources
-    dummy.cxx
-    $<TARGET_OBJECTS:kafka_to_nexus__objects>
-)
-add_executable(${tgt} ${sources})
-add_dependencies(${tgt} flatbuffers_generate)
-add_dependencies(${tgt} git_commit_current)
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
-
-
 
 if (have_gtest)
     add_subdirectory(tests)
