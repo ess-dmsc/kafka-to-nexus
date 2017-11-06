@@ -79,6 +79,125 @@ public:
     return true;
   }
 
+  static void create_static_dataset() {
+    using namespace FileWriter;
+    using std::array;
+    using std::vector;
+    using std::string;
+    MainOpt &main_opt = *g_main_opt.load();
+    {
+      rapidjson::Document cfg;
+      cfg.Parse(R""({})"");
+      main_opt.config_file = merge(cfg, main_opt.config_file);
+    }
+    rapidjson::Document json_command;
+    {
+      using namespace rapidjson;
+      auto &j = json_command;
+      auto &a = j.GetAllocator();
+      j.SetObject();
+      Value nexus_structure;
+      nexus_structure.SetObject();
+
+      Value children;
+      children.SetArray();
+
+      {
+        Value g1;
+        g1.SetObject();
+        g1.AddMember("type", "group", a);
+        g1.AddMember("name", "some_group", a);
+        Value attr;
+        attr.SetObject();
+        attr.AddMember("NX_class", "NXinstrument", a);
+        g1.AddMember("attributes", attr, a);
+        Value ch;
+        ch.SetArray();
+        {
+          {
+            Document jd;
+            jd.Parse(
+                R""({"type":"dataset", "name": "value", "values": 42.24, "attributes":{"units":"degree"}})"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({"type":"dataset", "name": "more_complex_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 2]}, "values": [[13.1, 14]]})"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({"type":"dataset", "name": "big_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 4, 2]}})"");
+            {
+              Value values;
+              values.SetArray();
+              for (size_t i1 = 0; i1 < 7; ++i1) {
+                Value v1;
+                v1.SetArray();
+                for (size_t i2 = 0; i2 < 4; ++i2) {
+                  Value v2;
+                  v2.SetArray();
+                  for (size_t i3 = 0; i3 < 2; ++i3) {
+                    v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
+                  }
+                  v1.PushBack(v2, a);
+                }
+                values.PushBack(v1, a);
+              }
+              jd.AddMember("values", values, a);
+            }
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+        }
+        g1.AddMember("children", ch, a);
+        children.PushBack(g1, a);
+      }
+      nexus_structure.AddMember("children", children, a);
+      j.AddMember("nexus_structure", nexus_structure, a);
+      {
+        Value v;
+        v.SetObject();
+        v.AddMember("file_name", StringRef("tmp-static-dataset.h5"), a);
+        j.AddMember("file_attributes", v, a);
+      }
+      j.AddMember("cmd", StringRef("FileWriter_new"), a);
+    }
+
+    auto cmd = json_to_string(json_command);
+    auto fname = get_string(&json_command, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
+
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    Msg msg;
+    msg.data = (char *)cmd.data();
+    msg.size = cmd.size();
+    ch.handle(msg);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    {
+      string cmd("{\"recv_type\":\"FileWriter\", "
+                 "\"cmd\":\"file_writer_tasks_clear_all\"}");
+      ch.handle({(char *)cmd.data(), cmd.size()});
+    }
+
+    // Verification
+    herr_t err;
+    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    ASSERT_GE(fid, 0);
+    auto g1 = H5Gopen2(fid, "some_group", H5P_DEFAULT);
+    ASSERT_GE(g1, 0);
+    auto ds = H5Dopen2(g1, "value", H5P_DEFAULT);
+    ASSERT_GE(ds, 0);
+    ASSERT_GT(H5Tequal(H5Dget_type(ds), H5T_NATIVE_DOUBLE), 0);
+    auto attr = H5Aopen(ds, "units", H5P_DEFAULT);
+    ASSERT_GE(attr, 0);
+    H5Aclose(attr);
+    H5Dclose(ds);
+    H5Gclose(g1);
+    H5Fclose(fid);
+  }
+
   /// Can supply pre-generated test data for a source on a topic to profile the
   /// writing.
   class SourceDataGen {
@@ -224,62 +343,6 @@ public:
         g1.AddMember("attributes", attr, a);
         Value ch;
         ch.SetArray();
-        {
-          auto &children = ch;
-          Value ds1;
-          ds1.SetObject();
-          ds1.AddMember("type", "dataset", a);
-          ds1.AddMember("name", "created_by_filewriter", a);
-          Value attr;
-          attr.SetObject();
-          attr.AddMember("NX_class", "NXdetector", a);
-          attr.AddMember("this_will_be_a_double", Value(0.123), a);
-          attr.AddMember("this_will_be_a_int64", Value(123), a);
-          ds1.AddMember("attributes", attr, a);
-          Value dataset;
-          dataset.SetObject();
-          dataset.AddMember("space", "simple", a);
-          dataset.AddMember("type", "uint64", a);
-          Value dataset_size;
-          dataset_size.SetArray();
-          dataset_size.PushBack("unlimited", a);
-          // dataset_size.PushBack(Value(7), a);
-          dataset_size.PushBack(Value(4), a);
-          dataset_size.PushBack(Value(2), a);
-          dataset.AddMember("size", dataset_size, a);
-          ds1.AddMember("dataset", dataset, a);
-          {
-            Value values;
-            values.SetArray();
-            for (size_t i1 = 0; i1 < 7; ++i1) {
-              Value v1;
-              v1.SetArray();
-              for (size_t i2 = 0; i2 < 4; ++i2) {
-                Value v2;
-                v2.SetArray();
-                for (size_t i3 = 0; i3 < 2; ++i3) {
-                  v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
-                }
-                v1.PushBack(v2, a);
-              }
-              values.PushBack(v1, a);
-            }
-            ds1.AddMember("values", values, a);
-          }
-          children.PushBack(ds1, a);
-          {
-            Document jd;
-            jd.Parse(
-                R""({"type":"dataset", "name": "value", "values": 13.1, "attributes":{"units":"degree"}})"");
-            children.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({"type":"dataset", "name":"value2", "dataset":{"space":"simple", "type":"double"}, "values": 13.1, "attributes":{"units":"degree"}})"");
-            children.PushBack(Value().CopyFrom(jd, a), a);
-          }
-        }
         g1.AddMember("children", ch, a);
         children.PushBack(g1, a);
       }
@@ -838,6 +901,10 @@ public:
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
+
+TEST_F(T_CommandHandler, create_static_dataset) {
+  T_CommandHandler::create_static_dataset();
+}
 
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 

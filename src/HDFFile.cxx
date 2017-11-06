@@ -301,13 +301,6 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
 }
 
 static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
-  // TODO
-  // Inspect size dimensions.
-  // Inspect basic data type.
-  // Create the dataset.
-  // Read the data from json into a memory buffer, always check dimensions.
-  // Return error!!! and make caller handle error as well...
-  LOG(3, "js: {}", json_to_string(*value));
   std::string name;
   if (auto x = get_string(value, "name")) {
     name = x.v;
