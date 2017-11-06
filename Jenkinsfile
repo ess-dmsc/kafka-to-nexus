@@ -1,6 +1,11 @@
 def project = "kafka-to-nexus"
 def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.3')
 
+def failure_function(exception_obj, failureMessage) {
+    def toEmails = [[$class: 'DevelopersRecipientProvider']]
+    emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.', recipientProviders: toEmails, subject: '${DEFAULT_SUBJECT}'
+    throw exception_obj
+}
 
 node('docker') {
     def container_name = "${project}-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
@@ -89,7 +94,8 @@ node('docker') {
             sh "docker cp ${container_name}:/home/jenkins/build/${archive_output} ."
             archiveArtifacts "${archive_output}"
         }
-        
+    } catch (e) {
+        failure_function(e, 'Failed to build.')
     } finally {
         container.stop()
     }
