@@ -230,11 +230,15 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   }
   std::vector<DT> blob;
   hid_t dsp = -1;
+  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
   if (sizes.empty()) {
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
     H5Sset_extent_simple(dsp, sizes.size(), sizes.data(), max.data());
+    if (max[0] == H5S_UNLIMITED) {
+      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+    }
   }
   std::vector<rapidjson::Value const *> as;
   std::vector<size_t> ai;
@@ -275,8 +279,6 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   }
 
   auto dt = nat_type<DT>();
-  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  H5Pset_chunk(dcpl, sizes.size(), sizes.data());
   auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
@@ -350,8 +352,10 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   }
 
   auto max = sizes;
-  if (sizes[0] == H5S_UNLIMITED) {
-    sizes[0] = ds_values.v->GetArray().Size();
+  if (not sizes.empty()) {
+    if (sizes[0] == H5S_UNLIMITED) {
+      sizes[0] = ds_values.v->GetArray().Size();
+    }
   }
 
   auto vals = ds_values.v;
@@ -367,6 +371,9 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   }
   if (ds_type.v == "float") {
     write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
+  }
+  if (ds_type.v == "double") {
+    write_ds_numeric<double>(hdf_parent, name, sizes, max, vals);
   }
 
   // TODO

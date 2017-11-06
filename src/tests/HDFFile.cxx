@@ -267,6 +267,12 @@ public:
             ds1.AddMember("values", values, a);
           }
           children.PushBack(ds1, a);
+          {
+            Document jd;
+            jd.Parse(
+                R""({"type":"dataset", "name":"value", "dataset":{"space":"simple", "type":"double"}, "values": [12]})"");
+            children.PushBack(Value().CopyFrom(jd, a), a);
+          }
         }
         g1.AddMember("children", ch, a);
         children.PushBack(g1, a);
