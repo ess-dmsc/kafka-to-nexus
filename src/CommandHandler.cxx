@@ -7,6 +7,48 @@
 
 namespace FileWriter {
 
+std::string find_filename(rapidjson::Document const &d) {
+  auto m1 = d.FindMember("file_attributes");
+  if (m1 != d.MemberEnd() && m1->value.IsObject()) {
+    auto m2 = m1->value.FindMember("file_name");
+    if (m2 != m1->value.MemberEnd() && m2->value.IsString()) {
+      return m2->value.GetString();
+    }
+  }
+  return std::string{"a-dummy-name.h5"};
+}
+
+std::string find_job_id(rapidjson::Document const &d) {
+  auto m = d.FindMember("job_id");
+  if (m != d.MemberEnd() && m->value.IsString()) {
+    return m->value.GetString();
+  }
+  return std::string{""};
+}
+
+std::string find_broker(rapidjson::Document const &d) {
+  auto m = d.FindMember("broker");
+  if (m != d.MemberEnd() && m->value.IsString()) {
+    auto s = std::string(m->value.GetString());
+    if (s.substr(0, 2) == "//") {
+      uri::URI u(s);
+      return u.host_port;
+    } else {
+      // legacy semantics
+      return s;
+    }
+  }
+  return std::string{"localhost:9092"};
+}
+
+ESSTimeStamp find_time(rapidjson::Document const &d, const std::string &key) {
+  auto m = d.FindMember(key.c_str());
+  if (m != d.MemberEnd() && m->value.IsUint64()) {
+    return ESSTimeStamp(m->value.GetUint64());
+  }
+  return ESSTimeStamp{0};
+}
+
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
@@ -37,47 +79,30 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
-             "keyword: {}",
+      LOG(6,
+          "ERROR command message schema validation:  Invalid schema: {}  "
+          "keyword: {}",
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
     }
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
-  std::string fname = "a-dummy-name.h5";
-  {
-    auto m1 = d.FindMember("file_attributes");
-    if (m1 != d.MemberEnd() && m1->value.IsObject()) {
-      auto m2 = m1->value.FindMember("file_name");
-      if (m2 != m1->value.MemberEnd() && m2->value.IsString()) {
-        fname = m2->value.GetString();
-      }
-    }
+
+  auto job_id = find_job_id(d);
+  if (!job_id.empty()) {
+    fwt->job_id_init(job_id);
+  } else {
+    LOG(2, "Command not accepted: missing job_id");
+    return;
   }
+
+  auto fname = find_filename(d);
   fwt->set_hdf_filename(fname);
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
-
-  std::string job_id{std::to_string(fwt->id())};
-  {
-    auto m = d.FindMember("job_id");
-    if (m != d.MemberEnd()) {
-      if (m->value.IsString()) {
-        job_id = m->value.GetString();
-      } else {
-        LOG(6,
-            "ERROR command message schema validation:  Invalid schema: {}  "
-            "keyword: {}",
-            m->name.GetString());
-      }
-    }
-  }
-  // how to handle missing job id?
-  fwt->job_id_init(job_id);
-
   {
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
     auto x = fwt->hdf_init(nexus_structure, stream_hdf_info);
@@ -132,33 +157,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   }
 
   if (master) {
-    ESSTimeStamp start_time{0};
-    {
-      auto m = d.FindMember("start_time");
-      if (m != d.MemberEnd()) {
-        start_time = ESSTimeStamp(m->value.GetUint64());
-      }
-    }
-    ESSTimeStamp stop_time{0};
-    {
-      auto m = d.FindMember("stop_time");
-      if (m != d.MemberEnd()) {
-        stop_time = ESSTimeStamp(m->value.GetUint64());
-      }
-    }
-
-    std::string br("localhost:9092");
-    auto m = d.FindMember("broker");
-    if (m != d.MemberEnd()) {
-      auto s = std::string(m->value.GetString());
-      if (s.substr(0, 2) == "//") {
-        uri::URI u(s);
-        br = u.host_port;
-      } else {
-        // legacy semantics
-        br = s;
-      }
-    }
+    auto br = find_broker(d);
 
     auto config_kafka = config.kafka;
     std::vector<std::pair<string, string>> config_kafka_vec;
@@ -172,12 +171,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     if (master->status_producer) {
       s->report(master->status_producer, config.status_master_interval);
     }
+    auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
-      LOG(3, "start time :\t{}", start_time.count());
+      LOG(6, "start time :\t{}", start_time.count());
       s->start_time(start_time);
     }
+    auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {
-      LOG(3, "stop time :\t{}", stop_time.count());
+      LOG(6, "stop time :\t{}", stop_time.count());
       s->stop_time(stop_time);
     }
     s->start();
