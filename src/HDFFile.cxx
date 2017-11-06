@@ -268,6 +268,9 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     } else if (v.IsInt()) {
       blob.push_back(v.GetInt());
       ai.back()++;
+    } else if (v.IsDouble()) {
+      blob.push_back(v.GetDouble());
+      ai.back()++;
       // TODO handle also the other numeric cases.
     }
   }
@@ -360,14 +363,29 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
 
   auto vals = ds_values.v;
 
-  if (ds_type.v == "uint64") {
-    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
-  }
   if (ds_type.v == "uint8") {
     write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
   }
+  if (ds_type.v == "uint16") {
+    write_ds_numeric<uint16_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (ds_type.v == "uint32") {
+    write_ds_numeric<uint32_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (ds_type.v == "uint64") {
+    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (ds_type.v == "int8") {
+    write_ds_numeric<int8_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (ds_type.v == "int16") {
+    write_ds_numeric<int16_t>(hdf_parent, name, sizes, max, vals);
+  }
   if (ds_type.v == "int32") {
     write_ds_numeric<int32_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (ds_type.v == "int64") {
+    write_ds_numeric<int64_t>(hdf_parent, name, sizes, max, vals);
   }
   if (ds_type.v == "float") {
     write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
@@ -379,6 +397,9 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   // TODO
   // Handle attributes on this dataset as well
   if (auto x = get_object(*value, "attributes")) {
+    auto ds = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
+    write_attributes(ds, value);
+    H5Dclose(ds);
   }
 }
 

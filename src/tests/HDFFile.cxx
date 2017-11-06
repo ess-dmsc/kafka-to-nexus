@@ -270,7 +270,7 @@ public:
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name":"value", "dataset":{"space":"simple", "type":"double"}, "values": [12]})"");
+                R""({"type":"dataset", "name":"value", "dataset":{"space":"simple", "type":"double"}, "values": [13.1], "attributes":{"units":"degree"}})"");
             children.PushBack(Value().CopyFrom(jd, a), a);
           }
         }
