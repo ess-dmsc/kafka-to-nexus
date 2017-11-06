@@ -240,38 +240,45 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
       H5Pset_chunk(dcpl, sizes.size(), sizes.data());
     }
   }
-  std::vector<rapidjson::Value const *> as;
-  std::vector<size_t> ai;
-  std::vector<size_t> an;
-  as.push_back(vals);
-  ai.push_back(0);
-  an.push_back(vals->GetArray().Size());
 
-  while (not as.empty()) {
-    if (as.size() > 10) {
-      break;
-    }
-    // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
-    if (ai.back() >= an.back()) {
-      as.pop_back();
-      ai.pop_back();
-      an.pop_back();
-      continue;
-    }
-    auto &v = as.back()->GetArray()[ai.back()];
-    if (v.IsArray()) {
-      ai.back()++;
-      as.push_back(&v);
-      ai.push_back(0);
-      size_t n = v.GetArray().Size();
-      an.push_back(n);
-    } else if (v.IsInt()) {
-      blob.push_back(v.GetInt());
-      ai.back()++;
-    } else if (v.IsDouble()) {
-      blob.push_back(v.GetDouble());
-      ai.back()++;
-      // TODO handle also the other numeric cases.
+  if (vals->IsInt()) {
+    blob.push_back(vals->GetInt());
+  } else if (vals->IsDouble()) {
+    blob.push_back(vals->GetDouble());
+  } else if (vals->IsArray()) {
+    std::vector<rapidjson::Value const *> as;
+    std::vector<size_t> ai;
+    std::vector<size_t> an;
+    as.push_back(vals);
+    ai.push_back(0);
+    an.push_back(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
+      if (ai.back() >= an.back()) {
+        as.pop_back();
+        ai.pop_back();
+        an.pop_back();
+        continue;
+      }
+      auto &v = as.back()->GetArray()[ai.back()];
+      if (v.IsArray()) {
+        ai.back()++;
+        as.push_back(&v);
+        ai.push_back(0);
+        size_t n = v.GetArray().Size();
+        an.push_back(n);
+      } else if (v.IsInt()) {
+        blob.push_back(v.GetInt());
+        ai.back()++;
+      } else if (v.IsDouble()) {
+        blob.push_back(v.GetDouble());
+        ai.back()++;
+        // TODO handle also the other numeric cases.
+      }
     }
   }
 
@@ -308,89 +315,92 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
     return;
   }
 
-  auto ds = get_object(*value, "dataset");
-  if (not ds) {
-    return;
-  }
-  auto dso = ds.v->GetObject();
-
-  auto ds_space = get_string(ds.v, "space");
-  if (not ds_space) {
-    return;
-  }
-  if (ds_space.v != "simple") {
-    LOG(3, "sorry, can only handle simple data spaces");
-    return;
-  }
-
-  auto ds_type = get_string(ds.v, "type");
-  if (not ds_type) {
-    return;
-  }
+  std::string dtype = "int64";
 
   std::vector<hsize_t> sizes;
-  // optional, default to scalar
-  auto ds_size = get_array(*ds.v, "size");
-  if (ds_size) {
-    auto a = ds_size.v->GetArray();
-    for (size_t i1 = 0; i1 < a.Size(); ++i1) {
-      if (a[i1].IsInt()) {
-        sizes.push_back(a[i1].GetInt());
-      } else if (a[i1].IsString()) {
-        if (string("unlimited") == a[i1].GetString()) {
-          sizes.push_back(H5S_UNLIMITED);
+  auto ds = get_object(*value, "dataset");
+  if (ds) {
+    auto dso = ds.v->GetObject();
+    auto ds_space = get_string(ds.v, "space");
+    if (ds_space) {
+      if (ds_space.v != "simple") {
+        LOG(3, "sorry, can only handle simple data spaces");
+        return;
+      }
+    }
+
+    auto ds_type = get_string(ds.v, "type");
+    if (ds_type) {
+      dtype = ds_type.v;
+    }
+
+    // optional, default to scalar
+    auto ds_size = get_array(*ds.v, "size");
+    if (ds_size) {
+      auto a = ds_size.v->GetArray();
+      for (size_t i1 = 0; i1 < a.Size(); ++i1) {
+        if (a[i1].IsInt()) {
+          sizes.push_back(a[i1].GetInt());
+        } else if (a[i1].IsString()) {
+          if (string("unlimited") == a[i1].GetString()) {
+            sizes.push_back(H5S_UNLIMITED);
+          }
         }
       }
     }
   }
 
-  auto ds_values = get_array(*value, "values");
-  if (not ds_values) {
+  auto ds_values_it = value->FindMember("values");
+  if (ds_values_it == value->MemberEnd()) {
     return;
   }
+  auto ds_values = &ds_values_it->value;
 
-  LOG(3, "creating");
-  for (auto x : sizes) {
-    LOG(3, "size: {}", x);
+  if (ds_values->IsDouble()) {
+    dtype = "double";
   }
 
   auto max = sizes;
   if (not sizes.empty()) {
     if (sizes[0] == H5S_UNLIMITED) {
-      sizes[0] = ds_values.v->GetArray().Size();
+      if (ds_values->IsArray()) {
+        sizes[0] = ds_values->GetArray().Size();
+      } else {
+        sizes[0] = 1;
+      }
     }
   }
 
-  auto vals = ds_values.v;
+  auto vals = ds_values;
 
-  if (ds_type.v == "uint8") {
+  if (dtype == "uint8") {
     write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "uint16") {
+  if (dtype == "uint16") {
     write_ds_numeric<uint16_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "uint32") {
+  if (dtype == "uint32") {
     write_ds_numeric<uint32_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "uint64") {
+  if (dtype == "uint64") {
     write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "int8") {
+  if (dtype == "int8") {
     write_ds_numeric<int8_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "int16") {
+  if (dtype == "int16") {
     write_ds_numeric<int16_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "int32") {
+  if (dtype == "int32") {
     write_ds_numeric<int32_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "int64") {
+  if (dtype == "int64") {
     write_ds_numeric<int64_t>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "float") {
+  if (dtype == "float") {
     write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
   }
-  if (ds_type.v == "double") {
+  if (dtype == "double") {
     write_ds_numeric<double>(hdf_parent, name, sizes, max, vals);
   }
 
