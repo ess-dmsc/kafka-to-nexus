@@ -93,6 +93,24 @@ Command to start writing a file:
               "type": "float",
               "array_size": 4
             }
+          },
+          {
+            "type": "dataset",
+            "name": "some_static_dataset",
+            "values": 42.24,
+            "attributes": {
+              "units": "Kelvin"
+            }
+          },
+          {
+            "type": "dataset",
+            "name": "some_more_explicit_static_dataset",
+            "dataset": {
+              "space": "simple",
+              "type": "uint64",
+              "size": ["unlimited", 5, 6]
+            },
+            "values": [[[0, 1, 2, 3, 4, 5], [...], ...], [...], ...]
           }
         ]
       }
