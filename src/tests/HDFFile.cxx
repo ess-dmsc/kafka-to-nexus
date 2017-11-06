@@ -405,6 +405,7 @@ public:
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("000000000042"), a);
     }
 
     auto cmd = json_to_string(json_command);

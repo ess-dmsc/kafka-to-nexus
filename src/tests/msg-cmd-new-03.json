@@ -1,6 +1,7 @@
 {
 	"cmd": "FileWriter_new",
 	"broker": "localhost:9092",
+        "job_id" : "0000000003",
 	"streams": [
 		{
 			"broker": "localhost:9092",
