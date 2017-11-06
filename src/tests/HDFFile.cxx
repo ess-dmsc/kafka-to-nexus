@@ -242,8 +242,8 @@ public:
           dataset.AddMember("type", "uint64", a);
           Value dataset_size;
           dataset_size.SetArray();
-          // dataset_size.PushBack("unlimited", a);
-          dataset_size.PushBack(Value(7), a);
+          dataset_size.PushBack("unlimited", a);
+          // dataset_size.PushBack(Value(7), a);
           dataset_size.PushBack(Value(4), a);
           dataset_size.PushBack(Value(2), a);
           dataset.AddMember("size", dataset_size, a);

@@ -221,9 +221,9 @@ static void write_scalar_string(SE &se, hid_t hdf_type_strfix) {
 }
 
 template <typename DT>
-static void write_ds_numeric(hid_t hdf_parent, std::string name,
-                             std::vector<hsize_t> sizes,
-                             rapidjson::Value const *vals) {
+static void
+write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
+                 std::vector<hsize_t> max, rapidjson::Value const *vals) {
   size_t total_n = 1;
   for (auto x : sizes) {
     total_n *= x;
@@ -234,7 +234,7 @@ static void write_ds_numeric(hid_t hdf_parent, std::string name,
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, sizes.size(), sizes.data(), sizes.data());
+    H5Sset_extent_simple(dsp, sizes.size(), sizes.data(), max.data());
   }
   std::vector<rapidjson::Value const *> as;
   std::vector<size_t> ai;
@@ -275,12 +275,15 @@ static void write_ds_numeric(hid_t hdf_parent, std::string name,
   }
 
   auto dt = nat_type<DT>();
-  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT,
-                       H5P_DEFAULT, H5P_DEFAULT);
+  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
+                       H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
     LOG(3, "error while writing dataset");
   }
+  H5Pclose(dcpl);
   H5Dclose(ds);
   H5Sclose(dsp);
 }
@@ -346,19 +349,24 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
     LOG(3, "size: {}", x);
   }
 
+  auto max = sizes;
+  if (sizes[0] == H5S_UNLIMITED) {
+    sizes[0] = ds_values.v->GetArray().Size();
+  }
+
   auto vals = ds_values.v;
 
   if (ds_type.v == "uint64") {
-    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, vals);
+    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
   }
   if (ds_type.v == "uint8") {
-    write_ds_numeric<uint8_t>(hdf_parent, name, sizes, vals);
+    write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
   }
   if (ds_type.v == "int32") {
-    write_ds_numeric<int32_t>(hdf_parent, name, sizes, vals);
+    write_ds_numeric<int32_t>(hdf_parent, name, sizes, max, vals);
   }
   if (ds_type.v == "float") {
-    write_ds_numeric<float>(hdf_parent, name, sizes, vals);
+    write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
   }
 
   // TODO
