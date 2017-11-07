@@ -204,12 +204,17 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
         size_t n = v.GetArray().Size();
         an.push_back(n);
       } else if (v.IsInt()) {
-        blob.push_back(v.GetInt());
+        blob.push_back((DT)v.GetInt());
+        ai.back()++;
+      } else if (v.IsInt64()) {
+        blob.push_back((DT)v.GetInt64());
+        ai.back()++;
+      } else if (v.IsUint64()) {
+        blob.push_back((DT)v.GetUint64());
         ai.back()++;
       } else if (v.IsDouble()) {
-        blob.push_back(v.GetDouble());
+        blob.push_back((DT)v.GetDouble());
         ai.back()++;
-        // TODO handle also the other numeric cases.
       }
     }
   }
