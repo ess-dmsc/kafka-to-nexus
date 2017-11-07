@@ -349,9 +349,9 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
 
   // Handle attributes on this dataset
   if (auto x = get_object(*value, "attributes")) {
-    auto ds = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
-    write_attributes(ds, value);
-    H5Dclose(ds);
+    auto dsid = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
+    write_attributes(dsid, value);
+    H5Dclose(dsid);
   }
 }
 
