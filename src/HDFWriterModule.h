@@ -123,12 +123,12 @@ public:
 
 class HDFWriterModuleRegistry {
 public:
-  using K = std::string;
-  using V = std::function<std::unique_ptr<HDFWriterModule>()>;
-  static std::map<K, V> &items();
-  static V &find(K const &key);
+  using Key = std::string;
+  using Value = std::function<std::unique_ptr<HDFWriterModule>()>;
+  static std::map<Key, Value> &items();
+  static Value &find(Key const &key);
 
-  static void registrate(K key, V value) {
+  static void registrate(Key key, Value value) {
     auto &m = items();
     if (m.find(key) != m.end()) {
       auto s = fmt::format("ERROR entry for key [{}] exists already", key);
@@ -139,7 +139,7 @@ public:
 
   class Registrar {
   public:
-    Registrar(K key, V value) {
+    Registrar(Key key, Value value) {
       HDFWriterModuleRegistry::registrate(key, value);
     }
   };
