@@ -2,15 +2,16 @@
 
 namespace FileWriter {
 
+namespace HDFWriterModuleRegistry {
+
 std::map<HDFWriterModuleRegistry::Key, HDFWriterModuleRegistry::Value> &
-HDFWriterModuleRegistry::items() {
+items() {
   static std::map<HDFWriterModuleRegistry::Key, HDFWriterModuleRegistry::Value>
       _items;
   return _items;
 }
 
-HDFWriterModuleRegistry::Value &
-HDFWriterModuleRegistry::find(HDFWriterModuleRegistry::Key const &key) {
+HDFWriterModuleRegistry::Value &find(HDFWriterModuleRegistry::Key const &key) {
   static HDFWriterModuleRegistry::Value empty;
   auto &_items = items();
   auto f = _items.find(key);
@@ -18,6 +19,7 @@ HDFWriterModuleRegistry::find(HDFWriterModuleRegistry::Key const &key) {
     return empty;
   }
   return f->second;
+}
 }
 
 namespace HDFWriterModule_detail {

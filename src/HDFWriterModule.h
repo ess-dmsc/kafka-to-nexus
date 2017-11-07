@@ -121,27 +121,26 @@ public:
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// HDFWriterModuleRegistry.
 
-class HDFWriterModuleRegistry {
-public:
-  using Key = std::string;
-  using Value = std::function<std::unique_ptr<HDFWriterModule>()>;
-  static std::map<Key, Value> &items();
-  static Value &find(Key const &key);
+namespace HDFWriterModuleRegistry {
+using Key = std::string;
+using Value = std::function<std::unique_ptr<HDFWriterModule>()>;
+std::map<Key, Value> &items();
+Value &find(Key const &key);
 
-  static void registrate(Key key, Value value) {
-    auto &m = items();
-    if (m.find(key) != m.end()) {
-      auto s = fmt::format("ERROR entry for key [{}] exists already", key);
-      throw std::runtime_error(s);
-    }
-    m[key] = std::move(value);
+static void registrate(Key key, Value value) {
+  auto &m = items();
+  if (m.find(key) != m.end()) {
+    auto s = fmt::format("ERROR entry for key [{}] exists already", key);
+    throw std::runtime_error(s);
   }
+  m[key] = std::move(value);
+}
 
-  class Registrar {
-  public:
-    Registrar(Key key, Value value) {
-      HDFWriterModuleRegistry::registrate(key, value);
-    }
-  };
+class Registrar {
+public:
+  Registrar(Key key, Value value) {
+    HDFWriterModuleRegistry::registrate(key, value);
+  }
 };
+}
 }
