@@ -33,7 +33,7 @@ public:
   ~Source() = default;
   std::string const &topic() const;
   std::string const &sourcename() const;
-  uint32_t processed_messages_count() const;
+  uint64_t processed_messages_count() const;
   ProcessMessageResult process_message(Msg const &msg);
   std::string to_str() const;
   rapidjson::Document

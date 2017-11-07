@@ -40,7 +40,7 @@ ProcessMessageResult Source::process_message(Msg const &msg) {
   return ProcessMessageResult::OK();
 }
 
-uint32_t Source::processed_messages_count() const {
+uint64_t Source::processed_messages_count() const {
   return _processed_messages_count;
 }
 
