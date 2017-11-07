@@ -156,6 +156,56 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
 
+writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size, string type,
+                            string s) {
+  using R = writer_typed_base *;
+  auto &hg = hdf_group;
+  if (array_size == 0) {
+    if (type == "int8")
+      return (R) new WS<int8_t, Byte>(hg, s);
+    if (type == "int16")
+      return (R) new WS<int16_t, Short>(hg, s);
+    if (type == "int32")
+      return (R) new WS<int32_t, Int>(hg, s);
+    if (type == "int64")
+      return (R) new WS<int64_t, Long>(hg, s);
+    if (type == "uint8")
+      return (R) new WS<uint8_t, UByte>(hg, s);
+    if (type == "uint16")
+      return (R) new WS<uint16_t, UShort>(hg, s);
+    if (type == "uint32")
+      return (R) new WS<uint32_t, UInt>(hg, s);
+    if (type == "uint64")
+      return (R) new WS<uint64_t, ULong>(hg, s);
+    if (type == "double")
+      return (R) new WS<double, Double>(hg, s);
+    if (type == "float")
+      return (R) new WS<float, Float>(hg, s);
+  } else {
+    if (type == "int8")
+      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size);
+    if (type == "int16")
+      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size);
+    if (type == "int32")
+      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size);
+    if (type == "int64")
+      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size);
+    if (type == "uint8")
+      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size);
+    if (type == "uint16")
+      return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size);
+    if (type == "uint32")
+      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size);
+    if (type == "uint64")
+      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size);
+    if (type == "double")
+      return (R) new WA<double, ArrayDouble>(hg, s, array_size);
+    if (type == "float")
+      return (R) new WA<float, ArrayFloat>(hg, s, array_size);
+  }
+  return (writer_typed_base *)nullptr;
+}
+
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                           rapidjson::Value const &config_stream,
@@ -172,9 +222,9 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
   }
   auto type = str.v;
-  uint32_t array_size = 0;
+  size_t array_size = 0;
   if (auto x = get_uint(&config_stream, "array_size")) {
-    array_size = uint32_t(x.v);
+    array_size = size_t(x.v);
   }
   LOG(7,
       "HDFWriterModule::init_hdf f142 sourcename: {}  type: {}  array_size: {}",
@@ -188,55 +238,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     index_every_bytes = uint64_t(x.v) * 1024 * 1024;
   }
 
-  auto impl_fac = [hdf_group, array_size, &s](string type) {
-    using R = writer_typed_base *;
-    auto &hg = hdf_group;
-    if (array_size == 0) {
-      if (type == "int8")
-        return (R) new WS<int8_t, Byte>(hg, s);
-      if (type == "int16")
-        return (R) new WS<int16_t, Short>(hg, s);
-      if (type == "int32")
-        return (R) new WS<int32_t, Int>(hg, s);
-      if (type == "int64")
-        return (R) new WS<int64_t, Long>(hg, s);
-      if (type == "uint8")
-        return (R) new WS<uint8_t, UByte>(hg, s);
-      if (type == "uint16")
-        return (R) new WS<uint16_t, UShort>(hg, s);
-      if (type == "uint32")
-        return (R) new WS<uint32_t, UInt>(hg, s);
-      if (type == "uint64")
-        return (R) new WS<uint64_t, ULong>(hg, s);
-      if (type == "double")
-        return (R) new WS<double, Double>(hg, s);
-      if (type == "float")
-        return (R) new WS<float, Float>(hg, s);
-    } else {
-      if (type == "int8")
-        return (R) new WA<int8_t, ArrayByte>(hg, s, array_size);
-      if (type == "int16")
-        return (R) new WA<int16_t, ArrayShort>(hg, s, array_size);
-      if (type == "int32")
-        return (R) new WA<int32_t, ArrayInt>(hg, s, array_size);
-      if (type == "int64")
-        return (R) new WA<int64_t, ArrayLong>(hg, s, array_size);
-      if (type == "uint8")
-        return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size);
-      if (type == "uint16")
-        return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size);
-      if (type == "uint32")
-        return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size);
-      if (type == "uint64")
-        return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size);
-      if (type == "double")
-        return (R) new WA<double, ArrayDouble>(hg, s, array_size);
-      if (type == "float")
-        return (R) new WA<float, ArrayFloat>(hg, s, array_size);
-    }
-    return (writer_typed_base *)nullptr;
-  };
-  impl.reset(impl_fac(type));
+  impl.reset(impl_fac(hdf_group, array_size, type, s));
   if (!impl) {
     LOG(4, "Could not create a writer implementation for value_type {}", type);
     return HDFWriterModule::InitResult::ERROR_IO();
