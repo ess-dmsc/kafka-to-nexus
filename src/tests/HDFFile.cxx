@@ -312,12 +312,6 @@ public:
       s.pregenerate(n_msgs_per_source, n_events_per_message);
     }
 
-    if (false) {
-      for (auto &source : sources) {
-        LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
-      }
-    }
-
     rapidjson::Document json_command;
     {
       using namespace rapidjson;
@@ -413,7 +407,7 @@ public:
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8);
+    ASSERT_GT(fname.v.size(), size_t{8});
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
@@ -476,7 +470,7 @@ public:
       return;
     }
 
-    int minimum_expected_entries_in_the_index = 1;
+    size_t minimum_expected_entries_in_the_index = 1;
 
     herr_t err;
 

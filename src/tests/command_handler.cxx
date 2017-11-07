@@ -75,4 +75,3 @@ TEST_F(CommandHandler_Test, start_stop) {
   ASSERT_EQ(FileWriter::find_time(new_03, "stop_time"),
             FileWriter::ESSTimeStamp{0});
 }
-

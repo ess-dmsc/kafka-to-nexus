@@ -32,11 +32,11 @@ const std::string FileWriter::Status::Err2Str(const SMEC &error) {
     return it->second;
   }
   return "Unknown error code";
-};
+}
 const std::string FileWriter::Status::Err2Str(const SEC &error) {
   auto it = streamer_error_lookup_.find(error);
   if (it != streamer_error_lookup_.end()) {
     return it->second;
   }
   return "Unknown error code";
-};
+}
