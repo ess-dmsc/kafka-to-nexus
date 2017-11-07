@@ -243,6 +243,43 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   H5Pclose(dcpl);
 }
 
+static void write_ds_numeric_generic(std::string const &dtype, hid_t hdf_parent,
+                                     std::string const &name,
+                                     std::vector<hsize_t> const &sizes,
+                                     std::vector<hsize_t> const &max,
+                                     rapidjson::Value const *vals) {
+  if (dtype == "uint8") {
+    write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "uint16") {
+    write_ds_numeric<uint16_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "uint32") {
+    write_ds_numeric<uint32_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "uint64") {
+    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int8") {
+    write_ds_numeric<int8_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int16") {
+    write_ds_numeric<int16_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int32") {
+    write_ds_numeric<int32_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int64") {
+    write_ds_numeric<int64_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "float") {
+    write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "double") {
+    write_ds_numeric<double>(hdf_parent, name, sizes, max, vals);
+  }
+}
+
 static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   std::string name;
   if (auto x = get_string(value, "name")) {
@@ -308,40 +345,9 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   }
 
   auto vals = ds_values;
+  write_ds_numeric_generic(dtype, hdf_parent, name, sizes, max, vals);
 
-  if (dtype == "uint8") {
-    write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "uint16") {
-    write_ds_numeric<uint16_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "uint32") {
-    write_ds_numeric<uint32_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "uint64") {
-    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "int8") {
-    write_ds_numeric<int8_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "int16") {
-    write_ds_numeric<int16_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "int32") {
-    write_ds_numeric<int32_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "int64") {
-    write_ds_numeric<int64_t>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "float") {
-    write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
-  }
-  if (dtype == "double") {
-    write_ds_numeric<double>(hdf_parent, name, sizes, max, vals);
-  }
-
-  // TODO
-  // Handle attributes on this dataset as well
+  // Handle attributes on this dataset
   if (auto x = get_object(*value, "attributes")) {
     auto ds = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
     write_attributes(ds, value);
