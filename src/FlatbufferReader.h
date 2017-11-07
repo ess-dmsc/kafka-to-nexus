@@ -16,7 +16,7 @@ namespace FileWriter {
 
 class FlatbufferReader {
 public:
-  typedef std::unique_ptr<FlatbufferReader> ptr;
+  using ptr = std::unique_ptr<FlatbufferReader>;
   /// Run the flatbuffer verification and return the result.
   virtual bool verify(Msg const &msg) const = 0;
   /// Extract the 'sourcename' from the flatbuffer message.
@@ -35,8 +35,8 @@ FBID fbid_from_str(char const *x);
 
 class FlatbufferReaderRegistry {
 public:
-  typedef FBID K;
-  typedef FlatbufferReader::ptr V;
+  using K = FBID;
+  using V = FlatbufferReader::ptr;
   static std::map<K, V> &items();
   static FlatbufferReader::ptr &find(FBID const &fbid);
   static FlatbufferReader::ptr &find(Msg const &msg);
