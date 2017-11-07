@@ -96,9 +96,6 @@ static void write_attribute_str(hid_t loc, std::string name,
 }
 
 template <typename T>
-static void write_attribute(hid_t loc, std::string name, T value);
-
-template <typename T>
 static void write_attribute(hid_t loc, std::string name, T value) {
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
@@ -153,71 +150,6 @@ static void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
       }
     }
   }
-}
-
-static void TRASH_write_basic_entities(SE &se, hid_t lcpl) {
-  auto jsv = se.jsv;
-  auto mem = jsv->FindMember("NX_type");
-  if (mem != jsv->MemberEnd()) {
-    auto &nx_type = mem->value;
-    if (nx_type.IsString()) {
-      char const *s = nx_type.GetString();
-      if (string("field") == s) {
-        se.nx_type = "field";
-      } else if (string("some-other") == s) {
-      }
-    }
-  }
-
-  if (se.nxv == -1) {
-    if (se.nx_type == "group") {
-      se.nxv = H5Gcreate2(se.nxparent, se.name.c_str(), lcpl, H5P_DEFAULT,
-                          H5P_DEFAULT);
-      se.gid = se.nxv;
-    }
-  }
-
-  mem = jsv->FindMember("NX_class");
-  if (mem != jsv->MemberEnd()) {
-    auto &nx_class = mem->value;
-    if (nx_class.IsString()) {
-      write_attribute_str(se.nxv, "NX_class", nx_class.GetString());
-    }
-  }
-  // TODO SIG CHANGED write_attributes(se);
-  se.basics = true;
-}
-
-static void write_scalar_int64(SE &se) {
-  int64_t val = se.itr->value.GetInt64();
-  auto dsp = H5Screate(H5S_SCALAR);
-  auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_INT64, dsp,
-                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(ds, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, &val);
-  H5Dclose(ds);
-  H5Sclose(dsp);
-}
-
-static void write_scalar_double(SE &se) {
-  double val = se.itr->value.GetDouble();
-  auto dsp = H5Screate(H5S_SCALAR);
-  auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_DOUBLE, dsp,
-                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(ds, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &val);
-  H5Dclose(ds);
-  H5Sclose(dsp);
-}
-
-static void write_scalar_string(SE &se, hid_t hdf_type_strfix) {
-  // Treated as a basic scalar string "nexus field" aka "hdf dataset"
-  string s1 = se.itr->value.GetString();
-  auto dsp = H5Screate(H5S_SCALAR);
-  H5Tset_size(hdf_type_strfix, s1.size());
-  auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), hdf_type_strfix, dsp,
-                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(ds, hdf_type_strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-  H5Dclose(ds);
-  H5Sclose(dsp);
 }
 
 template <typename DT>
@@ -463,34 +395,6 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
   if (gid != -1) {
     H5Gclose(gid);
-  }
-}
-
-/// Check whether there are more children to handle.
-/// Write leaves immediately.
-/// Either push the next child to, or pop from the stack.
-static void TRASH_handle_children(std::deque<SE> &stack, SE &se,
-                                  hid_t hdf_type_strfix) {
-  bool have_child = false;
-  if (se.jsv->IsObject()) {
-    while (!have_child && se.itr != se.jsv->MemberEnd()) {
-      if (strncmp("NX_", se.itr->name.GetString(), 3) != 0) {
-        if (se.itr->value.IsObject()) {
-          stack.emplace_back(se.itr->name.GetString(), &se.itr->value, se.nxv);
-          have_child = true;
-        } else if (se.itr->value.IsString()) {
-          write_scalar_string(se, hdf_type_strfix);
-        } else if (se.itr->value.IsInt64()) {
-          write_scalar_int64(se);
-        } else if (se.itr->value.IsDouble()) {
-          write_scalar_double(se);
-        }
-      }
-      ++se.itr;
-    }
-  }
-  if (!have_child) {
-    stack.pop_back();
   }
 }
 
