@@ -35,9 +35,9 @@ FBID fbid_from_str(char const *x);
 
 class FlatbufferReaderRegistry {
 public:
-  using K = FBID;
-  using V = FlatbufferReader::ptr;
-  static std::map<K, V> &items();
+  using Key = FBID;
+  using Value = FlatbufferReader::ptr;
+  static std::map<Key, Value> &items();
   static FlatbufferReader::ptr &find(FBID const &fbid);
   static FlatbufferReader::ptr &find(Msg const &msg);
 

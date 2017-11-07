@@ -11,16 +11,17 @@ FBID fbid_from_str(char const *x) {
   return ret;
 }
 
-std::map<FlatbufferReaderRegistry::K, FlatbufferReaderRegistry::V> &
+std::map<FlatbufferReaderRegistry::Key, FlatbufferReaderRegistry::Value> &
 FlatbufferReaderRegistry::items() {
-  static std::map<FlatbufferReaderRegistry::K, FlatbufferReaderRegistry::V>
+  static std::map<FlatbufferReaderRegistry::Key,
+                  FlatbufferReaderRegistry::Value>
       _items;
   return _items;
 }
 
-FlatbufferReaderRegistry::V &
-FlatbufferReaderRegistry::find(FlatbufferReaderRegistry::K const &key) {
-  static FlatbufferReaderRegistry::V empty;
+FlatbufferReaderRegistry::Value &
+FlatbufferReaderRegistry::find(FlatbufferReaderRegistry::Key const &key) {
+  static FlatbufferReaderRegistry::Value empty;
   auto &_items = items();
   auto f = _items.find(key);
   if (f == _items.end()) {
@@ -36,7 +37,7 @@ FlatbufferReader::ptr &FlatbufferReaderRegistry::find(Msg const &msg) {
     static FlatbufferReader::ptr empty;
     return empty;
   }
-  FlatbufferReaderRegistry::K key;
+  FlatbufferReaderRegistry::Key key;
   memcpy(&key, msg.data + 4, 4);
   return find(key);
 }
