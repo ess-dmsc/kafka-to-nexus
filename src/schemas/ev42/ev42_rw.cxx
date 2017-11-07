@@ -104,10 +104,10 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
   hsize_t chunk_n_elements = 1;
 
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
-    index_every_bytes = x.v * 1024;
+    index_every_bytes = uint64_t(x.v * 1024);
     LOG(7, "index_every_bytes: {}", index_every_bytes);
   } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
-    index_every_bytes = x.v * 1024 * 1024;
+    index_every_bytes = uint64_t(x.v * 1024 * 1024);
     LOG(7, "index_every_bytes: {}", index_every_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
