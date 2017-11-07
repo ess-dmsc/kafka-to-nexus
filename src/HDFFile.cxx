@@ -160,7 +160,6 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   for (auto x : sizes) {
     total_n *= x;
   }
-  std::vector<DT> blob;
   hid_t dsp = -1;
   auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
   if (sizes.empty()) {
@@ -173,6 +172,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     }
   }
 
+  std::vector<DT> blob;
   if (vals->IsInt()) {
     blob.push_back(vals->GetInt());
   } else if (vals->IsDouble()) {
