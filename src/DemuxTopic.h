@@ -27,9 +27,9 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(char *msg_data, int msg_size);
+  ProcessMessageResult process_message(char *msg_data, int msg_size) override;
   /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(char *msg_data, int msg_size);
+  DT time_difference_from_message(char *msg_data, int msg_size) override;
   std::unordered_map<std::string, Source> &sources();
 
   Source &add_source(Source &&source) {

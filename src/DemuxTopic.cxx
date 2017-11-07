@@ -39,7 +39,6 @@ DemuxTopic::DemuxTopic(std::string topic)
 DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
                                                         int msg_size) {
   Msg msg{msg_data, size_t(msg_size)};
-  std::string _tmp_dummy;
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     LOG(4, "ERROR unknown schema id?");
