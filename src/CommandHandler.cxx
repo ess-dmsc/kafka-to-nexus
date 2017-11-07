@@ -104,7 +104,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
-    hdf_writer_module->init_hdf(fwt->impl->hdf_file.h5file, stream.name,
+    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.name,
                                 config_stream, nullptr);
 
     auto s = Source(source.v, move(hdf_writer_module));

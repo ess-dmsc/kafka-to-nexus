@@ -21,13 +21,12 @@ FileWriterTask::FileWriterTask() {
           .count());
   _id = (_id & uint64_t(-1) << 16) | (n_FileWriterTask_created & 0xffff);
   ++n_FileWriterTask_created;
-  impl.reset(new FileWriterTask_impl);
 }
 
 FileWriterTask::~FileWriterTask() { LOG(6, "~FileWriterTask"); }
 
 FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_filename) {
-  impl->hdf_filename = hdf_filename;
+  this->hdf_filename = hdf_filename;
   return *this;
 }
 
@@ -48,10 +47,9 @@ void FileWriterTask::add_source(Source &&source) {
 
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
-  auto x =
-      impl->hdf_file.init(impl->hdf_filename, nexus_structure, stream_hdf_info);
+  auto x = hdf_file.init(hdf_filename, nexus_structure, stream_hdf_info);
   if (x) {
-    LOG(3, "can not initialize hdf file  filename: {}", impl->hdf_filename);
+    LOG(3, "can not initialize hdf file  filename: {}", hdf_filename);
     return x;
   }
   return 0;
@@ -69,7 +67,7 @@ rapidjson::Value FileWriterTask::stats(
   }
   Value js_fwt;
   js_fwt.SetObject();
-  js_fwt.AddMember("filename", Value(impl->hdf_filename.c_str(), a), a);
+  js_fwt.AddMember("filename", Value(hdf_filename.c_str(), a), a);
   js_fwt.AddMember("topics", js_topics, a);
   return js_fwt;
 }
