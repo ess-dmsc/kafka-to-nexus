@@ -182,7 +182,6 @@ public:
     }
 
     // Verification
-    herr_t err;
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
     auto g1 = H5Gopen2(fid, "some_group", H5P_DEFAULT);
