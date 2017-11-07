@@ -138,7 +138,7 @@ Command to stop a single file:
 {
 	"cmd": "FileWriter_stop",
 	"job_id": "job-unique-identifier",
-	[OPTIONAL]"stop_time" : <timestamp in milliseconds>
+	"[OPTIONAL]stop_time" : "timestamp-in-milliseconds"
 }
 ```
 

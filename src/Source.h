@@ -10,6 +10,7 @@
 #include <string>
 
 class Test___FileWriterTask___Create01;
+class CommandHandler_Test_source_Test;
 
 namespace FileWriter {
 
@@ -51,6 +52,9 @@ private:
 
   friend class CommandHandler;
   friend class FileWriterTask;
+  friend class SourceFactory_by_FileWriterTask;
+  friend std::vector<std::unique_ptr<Source>>
+  find_source(rapidjson::Document const &, rapidjson::Document const *);
   friend class ::Test___FileWriterTask___Create01;
 };
 

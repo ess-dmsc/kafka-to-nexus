@@ -14,11 +14,6 @@
 			"write_last_known": true,
 			"nexus_container": "NXlog",
 			"nexus_path": "/entry-01/instrument-01/events-01"
-		},
-		{
-			"broker": "localhost:9092",
-			"topic": "topic.with.multiple.sources",
-			"source": "for_example_temperature02"
 		}
 	],
 
