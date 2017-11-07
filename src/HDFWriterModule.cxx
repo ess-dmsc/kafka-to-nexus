@@ -20,6 +20,15 @@ HDFWriterModuleRegistry::Value &find(HDFWriterModuleRegistry::Key const &key) {
   }
   return f->second;
 }
+
+void registrate(Key key, Value value) {
+  auto &m = items();
+  if (m.find(key) != m.end()) {
+    auto s = fmt::format("ERROR entry for key [{}] exists already", key);
+    throw std::runtime_error(s);
+  }
+  m[key] = std::move(value);
+}
 }
 
 namespace HDFWriterModule_detail {

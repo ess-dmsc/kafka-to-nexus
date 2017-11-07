@@ -11,8 +11,10 @@ FBID fbid_from_str(char const *x) {
   return ret;
 }
 
+namespace FlatbufferReaderRegistry {
+
 std::map<FlatbufferReaderRegistry::Key, FlatbufferReaderRegistry::Value> &
-FlatbufferReaderRegistry::items() {
+items() {
   static std::map<FlatbufferReaderRegistry::Key,
                   FlatbufferReaderRegistry::Value>
       _items;
@@ -20,7 +22,7 @@ FlatbufferReaderRegistry::items() {
 }
 
 FlatbufferReaderRegistry::Value &
-FlatbufferReaderRegistry::find(FlatbufferReaderRegistry::Key const &key) {
+find(FlatbufferReaderRegistry::Key const &key) {
   static FlatbufferReaderRegistry::Value empty;
   auto &_items = items();
   auto f = _items.find(key);
@@ -30,7 +32,7 @@ FlatbufferReaderRegistry::find(FlatbufferReaderRegistry::Key const &key) {
   return f->second;
 }
 
-FlatbufferReader::ptr &FlatbufferReaderRegistry::find(Msg const &msg) {
+FlatbufferReader::ptr &find(Msg const &msg) {
   static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
   if (msg.size < 8) {
     LOG(4, "flatbuffer message is too small: {} expect at least 8", msg.size);
@@ -40,5 +42,17 @@ FlatbufferReader::ptr &FlatbufferReaderRegistry::find(Msg const &msg) {
   FlatbufferReaderRegistry::Key key;
   memcpy(&key, msg.data + 4, 4);
   return find(key);
+}
+
+void add(FBID fbid, FlatbufferReader::ptr &&item) {
+  auto &m = items();
+  if (m.find(fbid) != m.end()) {
+    auto s =
+        fmt::format("ERROR FlatbufferReader for FBID [{:.{}}] exists already",
+                    fbid.data(), fbid.size());
+    throw std::runtime_error(s);
+  }
+  m[fbid] = std::move(item);
+}
 }
 }

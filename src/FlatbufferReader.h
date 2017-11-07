@@ -33,30 +33,20 @@ FBID fbid_from_str(char const *x);
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// FlatbufferReaderRegistry.
 
-class FlatbufferReaderRegistry {
+namespace FlatbufferReaderRegistry {
+using Key = FBID;
+using Value = FlatbufferReader::ptr;
+std::map<Key, Value> &items();
+FlatbufferReader::ptr &find(FBID const &fbid);
+FlatbufferReader::ptr &find(Msg const &msg);
+
+void add(FBID fbid, FlatbufferReader::ptr &&item);
+
+template <typename T> class Registrar {
 public:
-  using Key = FBID;
-  using Value = FlatbufferReader::ptr;
-  static std::map<Key, Value> &items();
-  static FlatbufferReader::ptr &find(FBID const &fbid);
-  static FlatbufferReader::ptr &find(Msg const &msg);
-
-  static void add(FBID fbid, FlatbufferReader::ptr &&item) {
-    auto &m = items();
-    if (m.find(fbid) != m.end()) {
-      auto s =
-          fmt::format("ERROR FlatbufferReader for FBID [{:.{}}] exists already",
-                      fbid.data(), fbid.size());
-      throw std::runtime_error(s);
-    }
-    m[fbid] = std::move(item);
+  explicit Registrar(FBID fbid) {
+    FlatbufferReaderRegistry::add(fbid, std::unique_ptr<T>(new T));
   }
-
-  template <typename T> class Registrar {
-  public:
-    explicit Registrar(FBID fbid) {
-      FlatbufferReaderRegistry::add(fbid, std::unique_ptr<T>(new T));
-    }
-  };
 };
+}
 }
