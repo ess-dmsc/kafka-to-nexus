@@ -84,9 +84,9 @@ private:
 
 class HDFWriterModule {
 public:
-  typedef std::unique_ptr<HDFWriterModule> ptr;
-  typedef HDFWriterModule_detail::InitResult InitResult;
-  typedef HDFWriterModule_detail::WriteResult WriteResult;
+  using ptr = std::unique_ptr<HDFWriterModule>;
+  using InitResult = HDFWriterModule_detail::InitResult;
+  using WriteResult = HDFWriterModule_detail::WriteResult;
 
   virtual ~HDFWriterModule() = default;
 
@@ -123,8 +123,8 @@ public:
 
 class HDFWriterModuleRegistry {
 public:
-  typedef std::string K;
-  typedef std::function<std::unique_ptr<HDFWriterModule>()> V;
+  using K = std::string;
+  using V = std::function<std::unique_ptr<HDFWriterModule>()>;
   static std::map<K, V> &items();
   static V &find(K const &key);
 
