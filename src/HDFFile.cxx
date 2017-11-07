@@ -166,7 +166,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, sizes.size(), sizes.data(), max.data());
+    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
     if (max[0] == H5S_UNLIMITED) {
       H5Pset_chunk(dcpl, sizes.size(), sizes.data());
     }
