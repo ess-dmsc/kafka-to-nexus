@@ -153,26 +153,7 @@ static void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
 }
 
 template <typename DT>
-static void
-write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
-                 std::vector<hsize_t> max, rapidjson::Value const *vals) {
-  size_t total_n = 1;
-  for (auto x : sizes) {
-    total_n *= x;
-  }
-  hid_t dsp = -1;
-  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  if (sizes.empty()) {
-    dsp = H5Screate(H5S_SCALAR);
-  } else {
-    dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
-    if (max[0] == H5S_UNLIMITED) {
-      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
-    }
-  }
-
-  std::vector<DT> blob;
+static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
   if (vals->IsInt()) {
     blob.push_back(vals->GetInt());
   } else if (vals->IsDouble()) {
@@ -218,10 +199,35 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
       }
     }
   }
+}
+
+template <typename DT>
+static void
+write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
+                 std::vector<hsize_t> max, rapidjson::Value const *vals) {
+  size_t total_n = 1;
+  for (auto x : sizes) {
+    total_n *= x;
+  }
+  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  hid_t dsp = -1;
+  if (sizes.empty()) {
+    dsp = H5Screate(H5S_SCALAR);
+  } else {
+    dsp = H5Screate(H5S_SIMPLE);
+    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
+    if (max[0] == H5S_UNLIMITED) {
+      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+    }
+  }
+
+  std::vector<DT> blob;
+  populate_blob(blob, vals);
 
   if (blob.size() != total_n) {
     LOG(3, "error in sizes");
-    // TODO clean up
+    H5Sclose(dsp);
+    H5Pclose(dcpl);
     return;
   }
 
@@ -232,9 +238,9 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   if (err < 0) {
     LOG(3, "error while writing dataset");
   }
-  H5Pclose(dcpl);
   H5Dclose(ds);
   H5Sclose(dsp);
+  H5Pclose(dcpl);
 }
 
 static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
