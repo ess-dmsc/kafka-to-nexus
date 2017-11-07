@@ -72,11 +72,10 @@ public:
       }
       ++i2;
     }
-    if (!found)
+    if (!found) {
       return false;
-    if (event_index[i2] != cue_index)
-      return false;
-    return true;
+    }
+    return event_index[i2] == cue_index;
   }
 
   static void create_static_dataset() {
