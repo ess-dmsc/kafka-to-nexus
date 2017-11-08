@@ -196,8 +196,8 @@ int main(int argc, char **argv) {
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
     ESSTimeStamp stop_time{0};
-    std::string::size_type n{input.find(":")};
-    std::string m1{""};
+    std::string::size_type n{input.find(':')};
+    std::string m1;
     if (n != std::string::npos) {
       auto result = strtoul(&input[n + 1], NULL, 0);
       if (result) {

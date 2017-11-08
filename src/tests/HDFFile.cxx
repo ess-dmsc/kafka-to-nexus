@@ -498,7 +498,6 @@ public:
       auto dsp = H5Dget_space(ds);
       ASSERT_GT(dsp, 0);
       ASSERT_EQ(H5Sis_simple(dsp), 1);
-      // auto nn = H5Sget_simple_extent_npoints(dsp);
 
       using A = array<hsize_t, 1>;
       A sini = {{(hsize_t)n_events_per_message}};
@@ -514,7 +513,6 @@ public:
 
       // LOG(4, "have {} messages", source.msgs.size());
       for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-        // auto &msg = source.msgs.at(msg_i);
         auto &fb = source.fbs.at(msg_i);
         A start = {{(hsize_t)msg_i * n_events_per_message}};
         err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
