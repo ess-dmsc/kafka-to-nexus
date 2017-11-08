@@ -10,8 +10,6 @@ class Test___FileWriterTask___Create01;
 
 namespace FileWriter {
 
-class FileWriterTask_impl;
-
 /**
 Represents the task of writing a HDF file.
 It contains the list of Source and DemuxTopic
@@ -31,13 +29,15 @@ public:
   uint64_t id() const;
   rapidjson::Value
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
+  std::string hdf_filename;
+  HDFFile hdf_file;
 
 private:
   std::vector<DemuxTopic> _demuxers;
-  std::unique_ptr<FileWriterTask_impl> impl;
   void add_source(Source &&source);
   /// Called by CommandHandler on setup.
-  int hdf_init(rapidjson::Value const &nexus_structure);
+  int hdf_init(rapidjson::Value const &nexus_structure,
+               std::vector<StreamHDFInfo> &stream_hdf_info);
   uint64_t _id;
 };
 

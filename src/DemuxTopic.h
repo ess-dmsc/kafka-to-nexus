@@ -27,16 +27,18 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(char *msg_data, int msg_size);
+  ProcessMessageResult process_message(char *msg_data, int msg_size) override;
   /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(char *msg_data, int msg_size);
+  DT time_difference_from_message(char *msg_data, int msg_size) override;
   std::unordered_map<std::string, Source> &sources();
+
   Source &add_source(Source &&source) {
     using std::move;
-    auto k = source.source();
+    auto k = source.sourcename();
     std::pair<std::string, Source> v{k, move(source)};
     return _sources_map.insert(move(v)).first->second;
   }
+
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;

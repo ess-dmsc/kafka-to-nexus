@@ -1,4 +1,5 @@
 #include "DemuxTopic.h"
+#include "FlatbufferReader.h"
 #include "logger.h"
 #include <limits>
 #include <stdexcept>
@@ -38,30 +39,30 @@ DemuxTopic::DemuxTopic(std::string topic)
 DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
                                                         int msg_size) {
   Msg msg{msg_data, size_t(msg_size)};
-  std::string _tmp_dummy;
-  auto reader = FBSchemaReader::create(msg);
+  auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     LOG(4, "ERROR unknown schema id?");
     return DT::ERR();
   }
   auto srcn = reader->sourcename(msg);
-  return DT(srcn, reader->ts(msg));
+  return DT(srcn, reader->timestamp(msg));
 }
 
 std::string const &DemuxTopic::topic() const { return _topic; }
 
 ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
-  Msg msg{msg_data, size_t(msg_size)};
-  auto reader = FBSchemaReader::create(msg);
+  Msg const msg{msg_data, size_t(msg_size)};
+  auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     return ProcessMessageResult::ERR();
   }
-  if (reader->ts(msg) > _stop_time) {
-    LOG(7, "reader->ts(msg) {} > _stop_time {}", reader->ts(msg), _stop_time);
+  if (reader->timestamp(msg) > _stop_time) {
+    LOG(8, "reader->timestamp(msg) {} > _stop_time {}", reader->timestamp(msg),
+        _stop_time);
     return ProcessMessageResult::STOP();
   }
   auto srcn = reader->sourcename(msg);
-  LOG(7, "Msg is for sourcename: {}", srcn);
+  LOG(9, "Msg is for sourcename: {}", srcn);
   try {
     auto &s = _sources_map.at(srcn);
     auto ret = s.process_message(msg);

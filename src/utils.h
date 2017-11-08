@@ -34,11 +34,11 @@ private:
 struct OffsetType {};
 struct PartitionType {};
 struct Timestamp {};
- 
+
 struct FileWriterErrorType {};
 
-struct ESSTimeStampType{};
-struct KafkaTimeStampType{};
+struct ESSTimeStampType {};
+struct KafkaTimeStampType {};
 
 } // namespace utils
 
@@ -46,7 +46,7 @@ using RdKafkaOffset = utils::StrongType<int64_t, utils::OffsetType>;
 
 using ESSTimeStamp = nanoseconds;
 using KafkaTimeStamp = milliseconds;
- 
+
 const RdKafkaOffset RdKafkaOffsetEnd(-1);
 const RdKafkaOffset RdKafkaOffsetBegin(-2);
 

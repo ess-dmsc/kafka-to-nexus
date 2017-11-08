@@ -74,6 +74,12 @@ fb synth::next(uint64_t seq) {
     value_type = Value::ArrayFloat;
     value = b2.Finish().Union();
   } break;
+  case Value::Double: {
+    DoubleBuilder b2(*ret.builder);
+    b2.add_value(seq);
+    value_type = impl->type;
+    value = b2.Finish().Union();
+  } break;
   default:
     break;
   }

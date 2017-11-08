@@ -12,24 +12,6 @@ using std::vector;
 
 std::atomic<uint32_t> n_FileWriterTask_created{0};
 
-class FileWriterTask_impl {
-  friend class FileWriterTask;
-  friend class ::Test___FileWriterTask___Create01;
-  std::string hdf_filename;
-  HDFFile hdf_file;
-};
-
-class SourceFactory_by_FileWriterTask {
-private:
-  Source create(string topic, string sourcename);
-  friend class FileWriterTask;
-};
-
-Source SourceFactory_by_FileWriterTask::create(string topic,
-                                               string sourcename) {
-  return {topic, sourcename};
-}
-
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
 
 FileWriterTask::FileWriterTask() {
@@ -39,13 +21,12 @@ FileWriterTask::FileWriterTask() {
           .count());
   _id = (_id & uint64_t(-1) << 16) | (n_FileWriterTask_created & 0xffff);
   ++n_FileWriterTask_created;
-  impl.reset(new FileWriterTask_impl);
 }
 
 FileWriterTask::~FileWriterTask() { LOG(6, "~FileWriterTask"); }
 
 FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_filename) {
-  impl->hdf_filename = hdf_filename;
+  this->hdf_filename = hdf_filename;
   return *this;
 }
 
@@ -64,15 +45,12 @@ void FileWriterTask::add_source(Source &&source) {
   }
 }
 
-int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure) {
-  auto x = impl->hdf_file.init(impl->hdf_filename, nexus_structure);
+int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
+                             std::vector<StreamHDFInfo> &stream_hdf_info) {
+  auto x = hdf_file.init(hdf_filename, nexus_structure, stream_hdf_info);
   if (x) {
+    LOG(3, "can not initialize hdf file  filename: {}", hdf_filename);
     return x;
-  }
-  for (auto &d : demuxers()) {
-    for (auto &s : d.sources()) {
-      s.second.hdf_init(impl->hdf_file);
-    }
   }
   return 0;
 }
@@ -89,7 +67,7 @@ rapidjson::Value FileWriterTask::stats(
   }
   Value js_fwt;
   js_fwt.SetObject();
-  js_fwt.AddMember("filename", Value(impl->hdf_filename.c_str(), a), a);
+  js_fwt.AddMember("filename", Value(hdf_filename.c_str(), a), a);
   js_fwt.AddMember("topics", js_topics, a);
   return js_fwt;
 }

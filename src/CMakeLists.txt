@@ -84,8 +84,9 @@ set(kafka_to_nexus_SRC
     FileWriterTask.cxx
     Source.cxx
     DemuxTopic.cxx
+    FlatbufferReader.cxx
     HDFFile.cxx
-    SchemaRegistry.cxx
+    HDFWriterModule.cxx
     KafkaW.cxx
     helper.cxx
     logger.cxx
@@ -94,14 +95,10 @@ set(kafka_to_nexus_SRC
     h5.cxx
     date/tz.cpp
     date/tzblobs.cpp
-    schemas/f141/f141_rw.cxx
-    schemas/f141/synth.cxx
     schemas/f142/f142_rw.cxx
     schemas/f142/f142_synth.cxx
-    schemas/f143/f143_rw.cxx
     schemas/ev42/ev42_rw.cxx
     schemas/ev42/ev42_synth.cxx
-    #schemas/events/schema_amo0.cxx
     MainOpt.cxx
     ${FMT_SRC}
     ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
@@ -114,9 +111,11 @@ set(kafka_to_nexus_INC
     DemuxTopic.h
     Errors.hpp
     FileWriterTask.h
+    FlatbufferReader.h
     h5.h
     HDFFile_h5.h
     HDFFile.h
+    HDFWriterModule.h
     helper.h
     json.h
     kafka_util.h
@@ -130,7 +129,6 @@ set(kafka_to_nexus_INC
     MsgParser.h
     ProcessMessageResult.h
     Report.hpp
-    SchemaRegistry.h
     Source.h
     Status.hpp
     StatusWriter.hpp
@@ -146,7 +144,6 @@ set(kafka_to_nexus_INC
     date/tz.h
     date/tzblobs.h
     schemas/ev42/ev42_synth.h
-    schemas/f141/synth.h
     schemas/f142/f142_synth.h
 )
 

@@ -1,9 +1,9 @@
 #include "HDFFile.h"
 #include "HDFFile_h5.h"
 #include "HDFFile_impl.h"
-#include "SchemaRegistry.h"
 #include "date/date.h"
 #include "helper.h"
+#include "json.h"
 #include "logger.h"
 #include <array>
 #include <chrono>
@@ -29,29 +29,37 @@ HDFFile::HDFFile() {
 #else
   static_assert(false, "Unexpected HDF version");
 #endif
-
-  impl.reset(new HDFFile_impl);
 }
 
 HDFFile::~HDFFile() {
-  if (impl->h5file >= 0) {
+  if (h5file >= 0) {
     std::array<char, 512> fname;
-    H5Fget_name(impl->h5file, fname.data(), fname.size());
+    H5Fget_name(h5file, fname.data(), fname.size());
     LOG(6, "flush file {}", fname.data());
-    H5Fflush(impl->h5file, H5F_SCOPE_LOCAL);
+    H5Fflush(h5file, H5F_SCOPE_LOCAL);
     LOG(6, "close file {}", fname.data());
-    H5Fclose(impl->h5file);
+    H5Fclose(h5file);
   }
 }
 
-template <size_t const N> using AA = std::array<hsize_t, N>;
+template <typename T> hid_t nat_type();
+template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
+template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
+template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
+template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
+template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
+template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
+template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
+template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
+template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
+template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
                                        std::string s1) {
   auto strfix = H5Tcopy(H5T_C_S1);
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, s1.size());
-  using A = AA<1>;
+  using A = std::array<hsize_t, 1>;
   A sini{{1}};
   A smax{{1}};
   auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
@@ -86,21 +94,6 @@ static void write_attribute_str(hid_t loc, std::string name,
   H5Sclose(dsp_sc);
   H5Pclose(acpl);
 }
-
-template <typename T> hid_t nat_type();
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
-
-template <typename T>
-static void write_attribute(hid_t loc, std::string name, T value);
 
 template <typename T>
 static void write_attribute(hid_t loc, std::string name, T value) {
@@ -138,123 +131,292 @@ struct SE {
   }
 };
 
-static void write_attributes(SE &se) {
-  auto jsv = se.jsv;
-  auto mem = jsv->FindMember("NX_attributes");
+static void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
+  auto mem = jsv->FindMember("attributes");
   if (mem != jsv->MemberEnd()) {
     auto &a = mem->value;
     if (a.IsObject()) {
       for (auto &at : a.GetObject()) {
         if (at.value.IsString()) {
-          write_attribute_str(se.nxv, at.name.GetString(),
+          write_attribute_str(hdf_this, at.name.GetString(),
                               at.value.GetString());
         }
         if (at.value.IsInt64()) {
-          write_attribute(se.nxv, at.name.GetString(), at.value.GetInt64());
+          write_attribute(hdf_this, at.name.GetString(), at.value.GetInt64());
         }
         if (at.value.IsDouble()) {
-          write_attribute(se.nxv, at.name.GetString(), at.value.GetDouble());
+          write_attribute(hdf_this, at.name.GetString(), at.value.GetDouble());
         }
       }
     }
   }
 }
 
-static void write_basic_entities(SE &se, hid_t lcpl) {
-  auto jsv = se.jsv;
-  auto mem = jsv->FindMember("NX_type");
-  if (mem != jsv->MemberEnd()) {
-    auto &nx_type = mem->value;
-    if (nx_type.IsString()) {
-      char const *s = nx_type.GetString();
-      if (string("field") == s) {
-        se.nx_type = "field";
-      } else if (string("some-other") == s) {
+template <typename DT>
+static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
+  if (vals->IsInt()) {
+    blob.push_back(vals->GetInt());
+  } else if (vals->IsDouble()) {
+    blob.push_back(vals->GetDouble());
+  } else if (vals->IsArray()) {
+    std::vector<rapidjson::Value const *> as;
+    std::vector<size_t> ai;
+    std::vector<size_t> an;
+    as.push_back(vals);
+    ai.push_back(0);
+    an.push_back(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
+      if (ai.back() >= an.back()) {
+        as.pop_back();
+        ai.pop_back();
+        an.pop_back();
+        continue;
+      }
+      auto &v = as.back()->GetArray()[ai.back()];
+      if (v.IsArray()) {
+        ai.back()++;
+        as.push_back(&v);
+        ai.push_back(0);
+        size_t n = v.GetArray().Size();
+        an.push_back(n);
+      } else if (v.IsInt()) {
+        blob.push_back((DT)v.GetInt());
+        ai.back()++;
+      } else if (v.IsInt64()) {
+        blob.push_back((DT)v.GetInt64());
+        ai.back()++;
+      } else if (v.IsUint64()) {
+        blob.push_back((DT)v.GetUint64());
+        ai.back()++;
+      } else if (v.IsDouble()) {
+        blob.push_back((DT)v.GetDouble());
+        ai.back()++;
       }
     }
   }
+}
 
-  if (se.nxv == -1) {
-    if (se.nx_type == "group") {
-      se.nxv = H5Gcreate2(se.nxparent, se.name.c_str(), lcpl, H5P_DEFAULT,
-                          H5P_DEFAULT);
-      se.gid = se.nxv;
+template <typename DT>
+static void
+write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
+                 std::vector<hsize_t> max, rapidjson::Value const *vals) {
+  size_t total_n = 1;
+  for (auto x : sizes) {
+    total_n *= x;
+  }
+  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  hid_t dsp = -1;
+  if (sizes.empty()) {
+    dsp = H5Screate(H5S_SCALAR);
+  } else {
+    dsp = H5Screate(H5S_SIMPLE);
+    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
+    if (max[0] == H5S_UNLIMITED) {
+      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
     }
   }
 
-  mem = jsv->FindMember("NX_class");
-  if (mem != jsv->MemberEnd()) {
-    auto &nx_class = mem->value;
-    if (nx_class.IsString()) {
-      write_attribute_str(se.nxv, "NX_class", nx_class.GetString());
-    }
+  std::vector<DT> blob;
+  populate_blob(blob, vals);
+
+  if (blob.size() != total_n) {
+    LOG(3, "error in sizes");
+    H5Sclose(dsp);
+    H5Pclose(dcpl);
+    return;
   }
-  write_attributes(se);
-  se.basics = true;
-}
 
-static void write_scalar_int64(SE &se) {
-  int64_t val = se.itr->value.GetInt64();
-  auto dsp = H5Screate(H5S_SCALAR);
-  auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_INT64, dsp,
-                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(ds, H5T_NATIVE_INT64, H5S_ALL, H5S_ALL, H5P_DEFAULT, &val);
+  auto dt = nat_type<DT>();
+  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
+                       H5P_DEFAULT);
+  auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
+  if (err < 0) {
+    LOG(3, "error while writing dataset");
+  }
   H5Dclose(ds);
   H5Sclose(dsp);
+  H5Pclose(dcpl);
 }
 
-static void write_scalar_double(SE &se) {
-  double val = se.itr->value.GetDouble();
-  auto dsp = H5Screate(H5S_SCALAR);
-  auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), H5T_NATIVE_DOUBLE, dsp,
-                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(ds, H5T_NATIVE_DOUBLE, H5S_ALL, H5S_ALL, H5P_DEFAULT, &val);
-  H5Dclose(ds);
-  H5Sclose(dsp);
+static void write_ds_numeric_generic(std::string const &dtype, hid_t hdf_parent,
+                                     std::string const &name,
+                                     std::vector<hsize_t> const &sizes,
+                                     std::vector<hsize_t> const &max,
+                                     rapidjson::Value const *vals) {
+  if (dtype == "uint8") {
+    write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "uint16") {
+    write_ds_numeric<uint16_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "uint32") {
+    write_ds_numeric<uint32_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "uint64") {
+    write_ds_numeric<uint64_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int8") {
+    write_ds_numeric<int8_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int16") {
+    write_ds_numeric<int16_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int32") {
+    write_ds_numeric<int32_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "int64") {
+    write_ds_numeric<int64_t>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "float") {
+    write_ds_numeric<float>(hdf_parent, name, sizes, max, vals);
+  }
+  if (dtype == "double") {
+    write_ds_numeric<double>(hdf_parent, name, sizes, max, vals);
+  }
 }
 
-static void write_scalar_string(SE &se, hid_t hdf_type_strfix) {
-  // Treated as a basic scalar string "nexus field" aka "hdf dataset"
-  string s1 = se.itr->value.GetString();
-  auto dsp = H5Screate(H5S_SCALAR);
-  H5Tset_size(hdf_type_strfix, s1.size());
-  auto ds = H5Dcreate2(se.nxv, se.itr->name.GetString(), hdf_type_strfix, dsp,
-                       H5P_DEFAULT, H5P_DEFAULT, H5P_DEFAULT);
-  H5Dwrite(ds, hdf_type_strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-  H5Dclose(ds);
-  H5Sclose(dsp);
-}
+static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
+  std::string name;
+  if (auto x = get_string(value, "name")) {
+    name = x.v;
+  } else {
+    return;
+  }
 
-/// Check whether there are more children to handle.
-/// Write leaves immediately.
-/// Either push the next child to, or pop from the stack.
-static void handle_children(std::deque<SE> &stack, SE &se,
-                            hid_t hdf_type_strfix) {
-  bool have_child = false;
-  if (se.jsv->IsObject()) {
-    while (!have_child && se.itr != se.jsv->MemberEnd()) {
-      if (strncmp("NX_", se.itr->name.GetString(), 3) != 0) {
-        if (se.itr->value.IsObject()) {
-          stack.emplace_back(se.itr->name.GetString(), &se.itr->value, se.nxv);
-          have_child = true;
-        } else if (se.itr->value.IsString()) {
-          write_scalar_string(se, hdf_type_strfix);
-        } else if (se.itr->value.IsInt64()) {
-          write_scalar_int64(se);
-        } else if (se.itr->value.IsDouble()) {
-          write_scalar_double(se);
+  std::string dtype = "int64";
+
+  std::vector<hsize_t> sizes;
+  auto ds = get_object(*value, "dataset");
+  if (ds) {
+    auto dso = ds.v->GetObject();
+    auto ds_space = get_string(ds.v, "space");
+    if (ds_space) {
+      if (ds_space.v != "simple") {
+        LOG(3, "sorry, can only handle simple data spaces");
+        return;
+      }
+    }
+
+    auto ds_type = get_string(ds.v, "type");
+    if (ds_type) {
+      dtype = ds_type.v;
+    }
+
+    // optional, default to scalar
+    auto ds_size = get_array(*ds.v, "size");
+    if (ds_size) {
+      auto a = ds_size.v->GetArray();
+      for (size_t i1 = 0; i1 < a.Size(); ++i1) {
+        if (a[i1].IsInt()) {
+          sizes.push_back(a[i1].GetInt());
+        } else if (a[i1].IsString()) {
+          if (string("unlimited") == a[i1].GetString()) {
+            sizes.push_back(H5S_UNLIMITED);
+          }
         }
       }
-      ++se.itr;
     }
   }
-  if (!have_child) {
-    stack.pop_back();
+
+  auto ds_values_it = value->FindMember("values");
+  if (ds_values_it == value->MemberEnd()) {
+    return;
+  }
+  auto ds_values = &ds_values_it->value;
+
+  if (ds_values->IsDouble()) {
+    dtype = "double";
+  }
+
+  auto max = sizes;
+  if (not sizes.empty()) {
+    if (sizes[0] == H5S_UNLIMITED) {
+      if (ds_values->IsArray()) {
+        sizes[0] = ds_values->GetArray().Size();
+      } else {
+        sizes[0] = 1;
+      }
+    }
+  }
+
+  auto vals = ds_values;
+  write_ds_numeric_generic(dtype, hdf_parent, name, sizes, max, vals);
+
+  // Handle attributes on this dataset
+  if (auto x = get_object(*value, "attributes")) {
+    auto dsid = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
+    write_attributes(dsid, value);
+    H5Dclose(dsid);
   }
 }
 
-int HDFFile::init(std::string filename,
-                  rapidjson::Value const &nexus_structure) {
+static void create_hdf_structures(rapidjson::Value const *value,
+                                  hid_t hdf_parent, uint16_t level, hid_t lcpl,
+                                  hid_t hdf_type_strfix,
+                                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                                  std::deque<std::string> &path) {
+  // The HDF object that we will maybe create at the current level.
+  hid_t hdf_this = -1;
+  // Keeps the HDF object id if we create a new collection-like object which
+  // can be used as the parent for the next level of recursion. The only case
+  // currently is when we create a group.
+  hid_t hdf_next_parent = -1;
+  // Remember whether we created a group at this level.
+  hid_t gid = -1;
+  {
+    if (auto type = get_string(value, "type")) {
+      if (type.v == "group") {
+        if (auto name = get_string(value, "name")) {
+          hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl, H5P_DEFAULT,
+                                H5P_DEFAULT);
+          hdf_next_parent = hdf_this;
+          path.push_back(name.v);
+          gid = hdf_this;
+        }
+      }
+      if (type.v == "stream") {
+        string pathstr = "/";
+        for (auto &x : path) {
+          pathstr += "/" + x;
+        }
+        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
+      }
+      if (type.v == "dataset") {
+        write_dataset(hdf_parent, value);
+      }
+    }
+  }
+
+  if (hdf_this >= 0) {
+    write_attributes(hdf_this, value);
+  }
+
+  // If the current level in the HDF can act as a parent, then continue the
+  // recursion with the (optional) "children" array.
+  if (hdf_next_parent >= 0) {
+    auto mem = value->FindMember("children");
+    if (mem != value->MemberEnd()) {
+      if (mem->value.IsArray()) {
+        for (auto &child : mem->value.GetArray()) {
+          create_hdf_structures(&child, hdf_this, level + 1, lcpl,
+                                hdf_type_strfix, stream_hdf_info, path);
+        }
+      }
+    }
+    path.pop_back();
+  }
+  if (gid != -1) {
+    H5Gclose(gid);
+  }
+}
+
+int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
+                  std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
   using std::vector;
   using rapidjson::Value;
@@ -266,7 +428,7 @@ int HDFFile::init(std::string filename,
         cwd.data());
     return -1;
   }
-  impl->h5file = x;
+  h5file = x;
 
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
@@ -279,21 +441,18 @@ int HDFFile::init(std::string filename,
 
   auto f1 = x;
 
-  // Traverse nexus_structure
-  // The rapidjson visitor interface is not flexible enough unfortunately
-  std::deque<SE> stack;
-
+  std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
-    stack.emplace_back("/", &nexus_structure, -1);
-    stack.back().nxv = f1;
-  }
-
-  while (not stack.empty()) {
-    auto &se = stack.back();
-    if (!se.basics) {
-      write_basic_entities(se, lcpl);
+    auto value = &nexus_structure;
+    auto mem = value->FindMember("children");
+    if (mem != value->MemberEnd()) {
+      if (mem->value.IsArray()) {
+        for (auto &child : mem->value.GetArray()) {
+          create_hdf_structures(&child, h5file, 0, lcpl, strfix,
+                                stream_hdf_info, path);
+        }
+      }
     }
-    handle_children(stack, se, strfix);
   }
 
   {
@@ -311,80 +470,10 @@ int HDFFile::init(std::string filename,
   return 0;
 }
 
-void HDFFile::flush() { H5Fflush(impl->h5file, H5F_SCOPE_LOCAL); }
-
-HDFFile_h5 HDFFile::h5file_detail() { return HDFFile_h5(impl->h5file); }
+void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
 
 HDFFile_h5::HDFFile_h5(hid_t h5file) : _h5file(h5file) {}
 
 hid_t HDFFile_h5::h5file() { return _h5file; }
-
-std::unique_ptr<FBSchemaReader> FBSchemaReader::create(Msg msg) {
-  static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
-  if (msg.size < 8) {
-    LOG(4, "ERROR message is too small");
-    return nullptr;
-  }
-  Schemas::FBID fbid;
-  memcpy(&fbid, msg.data + 4, 4);
-  if (auto &cr = Schemas::SchemaRegistry::find(fbid)) {
-    return cr->create_reader();
-  }
-  LOG(5, "does not seem like a known schema id: {:0x}  {:4.4s}",
-      uint32_t((uint64_t)fbid.data()), (char *)fbid.data());
-  return nullptr;
-}
-
-std::unique_ptr<FBSchemaWriter> FBSchemaReader::create_writer() {
-  return create_writer_impl();
-}
-
-FBSchemaReader::~FBSchemaReader() {}
-
-bool FBSchemaReader::verify(Msg msg) { return verify_impl(msg); }
-
-bool FBSchemaReader::verify_impl(Msg msg) { return false; }
-
-std::string FBSchemaReader::sourcename(Msg msg) { return sourcename_impl(msg); }
-
-uint64_t FBSchemaReader::ts(Msg msg) { return ts_impl(msg); }
-
-uint64_t FBSchemaReader::teamid(Msg &msg) { return teamid_impl(msg); }
-
-uint64_t FBSchemaReader::teamid_impl(Msg &msg) { return 0; }
-
-FBSchemaWriter::~FBSchemaWriter() {
-  if (hdf_group != -1) {
-    H5Gclose(hdf_group);
-  }
-}
-
-void FBSchemaWriter::init(HDFFile *hdf_file, std::string const &hdf_path,
-                          std::string const &sourcename, Msg msg,
-                          rapidjson::Value const *config_file,
-                          rapidjson::Document *config_stream) {
-  this->config_file = config_file;
-  this->config_stream = config_stream;
-  this->hdf_file = hdf_file;
-  auto f1 = hdf_file->h5file_detail().h5file();
-
-  // if it proves useful, factor out
-  H5E_auto2_t _f;
-  void *_d;
-  H5Eget_auto2(H5E_DEFAULT, &_f, &_d);
-  H5Eset_auto2(H5E_DEFAULT, nullptr, nullptr);
-  hid_t gid = H5Gopen2(f1, hdf_path.c_str(), H5P_DEFAULT);
-  if (gid < 0) {
-    LOG(2, "can not find group {}, using file root instead", hdf_path);
-    gid = f1;
-  } else {
-    hdf_group = gid;
-  }
-  H5Eset_auto2(H5E_DEFAULT, _f, _d);
-
-  init_impl(sourcename, gid, msg);
-}
-
-WriteResult FBSchemaWriter::write(Msg msg) { return write_impl(msg); }
 
 } // namespace FileWriter

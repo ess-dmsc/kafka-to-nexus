@@ -9,7 +9,7 @@
 #include <rapidjson/writer.h>
 #include <string>
 
-std::string json_to_string(rapidjson::Document const &jd) {
+std::string json_to_string(rapidjson::Value const &jd) {
   using namespace rapidjson;
   StringBuffer b1;
   PrettyWriter<StringBuffer> w(b1);

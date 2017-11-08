@@ -14,6 +14,7 @@ namespace Status {
 
 class MessageInfo {
   using SMC = StreamerErrorCode;
+
 public:
   using value_type = std::pair<double, double>;
   const MessageInfo &operator=(const MessageInfo &other);
@@ -43,7 +44,7 @@ class StreamMasterInfo {
 
 public:
   using value_type = std::map<std::string, MessageInfo>;
-  StreamMasterInfo() : start_time_{std::chrono::system_clock::now()} { }
+  StreamMasterInfo() : start_time_{std::chrono::system_clock::now()} {}
 
   void add(const std::string &topic, MessageInfo &info);
 
@@ -55,7 +56,7 @@ public:
   }
   SMEC &status() { return status_; }
 
-  const milliseconds time_to_next_message(const milliseconds & to_next_message);
+  const milliseconds time_to_next_message(const milliseconds &to_next_message);
   const milliseconds time_to_next_message();
   const milliseconds runtime();
 

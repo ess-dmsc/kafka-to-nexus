@@ -1,4 +1,5 @@
 #include "CommandHandler.h"
+#include "HDFWriterModule.h"
 #include "helper.h"
 #include "utils.h"
 
@@ -34,9 +35,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(6,
-          "ERROR command message schema validation:  Invalid schema: {}  "
-          "keyword: {}",
+      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
+             "keyword: {}",
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
     }
@@ -55,42 +55,60 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   }
   fwt->set_hdf_filename(fname);
 
+  // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
+  // the list of streams which have been found in the `nexus_structure`.
+  std::vector<StreamHDFInfo> stream_hdf_info;
   {
-    auto m1 = d.FindMember("streams");
-    if (m1 != d.MemberEnd() && m1->value.IsArray()) {
-      for (auto &st : m1->value.GetArray()) {
-        auto s = Source(st["topic"].GetString(), st["source"].GetString());
-        auto m = st.FindMember("nexus_path");
-        if (m != st.MemberEnd()) {
-          if (m->value.IsString()) {
-            s._hdf_path = m->value.GetString();
-          }
-        }
-        s.config_file(&config.config_file);
-        rapidjson::Document j1;
-        j1.CopyFrom(st, j1.GetAllocator());
-        s.config_stream(std::move(j1));
-        fwt->add_source(move(s));
-      }
-    }
-  }
-  uint64_t teamid = 0;
-  if (master) {
-    teamid = master->config.teamid;
-  }
-  for (auto &d : fwt->demuxers()) {
-    for (auto &s : d.sources()) {
-      s.second.teamid = teamid;
-    }
-  }
-
-  {
-    Value const &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x = fwt->hdf_init(nexus_structure);
+    auto &nexus_structure = d.FindMember("nexus_structure")->value;
+    auto x = fwt->hdf_init(nexus_structure, stream_hdf_info);
     if (x) {
       LOG(7, "ERROR hdf init failed, cancel this write command");
       return;
     }
+  }
+
+  LOG(6, "Command contains {} streams", stream_hdf_info.size());
+  for (auto &stream : stream_hdf_info) {
+    auto config_stream_value = get_object(*stream.config_stream, "stream");
+    if (!config_stream_value) {
+      LOG(5, "Missing stream specification");
+      continue;
+    }
+    auto &config_stream = *config_stream_value.v;
+    LOG(7, "Adding stream: {}", json_to_string(config_stream));
+    auto topic = get_string(&config_stream, "topic");
+    if (!topic) {
+      LOG(5, "Missing topic on stream specification");
+      continue;
+    }
+    auto source = get_string(&config_stream, "source");
+    if (!source) {
+      LOG(5, "Missing source on stream specification");
+      continue;
+    }
+    auto module = get_string(&config_stream, "module");
+    if (!module) {
+      LOG(5, "Missing module on stream specification");
+      continue;
+    }
+
+    auto module_factory = HDFWriterModuleRegistry::find(module.v);
+    if (!module_factory) {
+      LOG(5, "Module '{}' is not available", module.v);
+      continue;
+    }
+
+    auto hdf_writer_module = module_factory();
+    if (!hdf_writer_module) {
+      LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
+      continue;
+    }
+
+    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.name,
+                                config_stream, nullptr);
+
+    auto s = Source(source.v, move(hdf_writer_module));
+    fwt->add_source(move(s));
   }
 
   if (master) {

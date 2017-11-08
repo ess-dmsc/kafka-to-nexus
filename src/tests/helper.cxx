@@ -116,7 +116,7 @@ TEST(helper, get_int_01) {
     // We should not be here
     ASSERT_TRUE(false);
   }
-  if (auto g = get_int(&d, "blabla")) {
+  if (get_int(&d, "blabla")) {
     // we should not be here
     ASSERT_TRUE(false);
   }
