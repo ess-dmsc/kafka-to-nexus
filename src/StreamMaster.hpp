@@ -106,7 +106,7 @@ public:
     return loop.joinable();
   }
 
-  int stop() {
+  bool stop() {
     try {
       std::call_once(stop_once_guard,
                      &FileWriter::StreamMaster<Streamer, Demux>::stop_impl,
@@ -121,7 +121,7 @@ public:
     if (job_id == _file_writer_task->job_id()) {
       return stop();
     }
-    return 0;
+    return false;
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
@@ -236,10 +236,6 @@ private:
     }
     streamer.clear();
   }
-
-  // ErrorCode stop_streamer(const std::string &topic) {
-  //   return streamer[topic].closeStream();
-  // }
 
   std::map<std::string, Streamer> streamer;
   std::vector<Demux> &demux;

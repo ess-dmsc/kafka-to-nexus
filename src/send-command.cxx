@@ -8,9 +8,9 @@
 #include <rapidjson/stringbuffer.h>
 #include <string>
 
-#include "utils.h"
 #include "helper.h"
 #include "uri.h"
+#include "utils.h"
 
 #include <fstream>
 #include <iostream>
@@ -28,7 +28,7 @@ struct MainOpt {
   std::string cmd;
 };
 
-std::string make_command(std::string broker, uint64_t teamid) {
+std::string make_command(const std::string &broker, const uint64_t &teamid) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
@@ -55,7 +55,8 @@ std::string make_command(std::string broker, uint64_t teamid) {
   return buf1.GetString();
 }
 
-std::string make_command_exit(std::string broker, uint64_t teamid) {
+std::string make_command_exit(const std::string &broker,
+                              const uint64_t &teamid) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
@@ -68,7 +69,8 @@ std::string make_command_exit(std::string broker, uint64_t teamid) {
   return buf1.GetString();
 }
 
-std::string make_command_stop(std::string broker, const std::string job_id,
+std::string make_command_stop(const std::string &broker,
+                              const std::string &job_id,
                               const ESSTimeStamp stop_time = ESSTimeStamp{0}) {
   using namespace rapidjson;
   Document d;
@@ -76,8 +78,8 @@ std::string make_command_stop(std::string broker, const std::string job_id,
   d.SetObject();
   d.AddMember("cmd", Value("FileWriter_stop", a), a);
   d.AddMember("job_id", rapidjson::StringRef(job_id.c_str(), job_id.size()), a);
-  if(stop_time.count()) {
-    d.AddMember("stop_time", stop_time.count(),a);
+  if (stop_time.count()) {
+    d.AddMember("stop_time", stop_time.count(), a);
   }
   StringBuffer buf1;
   PrettyWriter<StringBuffer> wr(buf1);
@@ -166,7 +168,8 @@ int main(int argc, char **argv) {
            "\n"
            "  --cmd             <command>\n"
            "    Use a command file: file:<filename>\n"
-           "    Stop writing file-with-id and timestamp (optional): stop:<jobid>[:<timestamp>]\n"
+           "    Stop writing file-with-id and timestamp (optional): "
+           "stop:<jobid>[:<timestamp>]\n"
            "    Terminate the filewriter process: exit\n"
            "\n"
            "   -v\n"
@@ -187,7 +190,6 @@ int main(int argc, char **argv) {
     LOG(4, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "file:") {
-    std::string input = opt.cmd.substr(5);
     auto m1 = make_command_from_file(opt.cmd.substr(5));
     LOG(4, "sending:\n{}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
