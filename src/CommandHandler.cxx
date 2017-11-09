@@ -257,10 +257,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
 
     else {
-      //   or re-open in one or more separate mpi workers
-      //     Send command to create HDFWriterModule, all the json config as
-      //     text, let it re-open hdf items
-      //     Create a Source which puts messages on a queue
+      //   or re-open in one or more separate mpi workers Send command to
+      //   create HDFWriterModule, all the json config as text, let it re-open
+      //   hdf items Create a Source which puts messages on a queue
       auto s =
           Source(source.v, {}, config.jm, config.shm, fwt->hdf_file.cq.get());
       s._topic = string(topic);

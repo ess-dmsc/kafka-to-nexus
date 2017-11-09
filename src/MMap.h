@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logger.h"
 #include <fcntl.h>
 #include <memory>
 #include <string>
