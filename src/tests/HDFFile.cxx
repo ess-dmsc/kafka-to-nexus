@@ -162,6 +162,7 @@ public:
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("000000000dataset"), a);
     }
 
     auto cmd = json_to_string(json_command);
@@ -176,7 +177,8 @@ public:
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     {
       string cmd("{\"recv_type\":\"FileWriter\", "
-                 "\"cmd\":\"file_writer_tasks_clear_all\"}");
+                 "\"cmd\":\"file_writer_tasks_clear_all\", "
+                 "\"job_id\":\"000000000dataset\" }");
       ch.handle({(char *)cmd.data(), cmd.size()});
     }
 
@@ -196,8 +198,8 @@ public:
     H5Fclose(fid);
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile the
-  /// writing.
+  /// Can supply pre-generated test data for a source on a topic to profile
+  /// the writing.
   class SourceDataGen {
   public:
     string topic;
@@ -522,7 +524,8 @@ public:
         ASSERT_GE(err, 0);
         auto fbd = fb.root()->detector_id();
         for (int i1 = 0; i1 < n_events_per_message; ++i1) {
-          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1), fbd->Get(i1));
+          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
+          // fbd->Get(i1));
           ASSERT_EQ(data.at(i1), fbd->Get(i1));
         }
       }
@@ -596,8 +599,8 @@ public:
     ASSERT_EQ(recreate_file(&json_command), 0);
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile the
-  /// writing.
+  /// Can supply pre-generated test data for a source on a topic to profile
+  /// the writing.
   class SourceDataGen_f142 {
   public:
     string topic;
@@ -823,6 +826,7 @@ public:
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("0000000data_f142"), a);
     }
 
     auto cmd = json_to_string(json_command);
