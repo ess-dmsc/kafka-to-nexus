@@ -71,7 +71,7 @@ std::string make_command_exit(const std::string &broker,
 
 std::string make_command_stop(const std::string &broker,
                               const std::string &job_id,
-                              const ESSTimeStamp stop_time = ESSTimeStamp{0}) {
+                              const ESSTimeStamp stop_time& = ESSTimeStamp{0}) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();

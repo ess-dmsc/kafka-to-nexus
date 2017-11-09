@@ -121,6 +121,7 @@ Command to start writing a file:
   },
   "cmd": "FileWriter_new",
   "job_id" : "unique-identifier",
+  "broker" : "localhost:9092",
   [OPTIONAL]"start_time" : <timestamp in milliseconds>,
   [OPTIONAL]"stop_time" : <timestamp in milliseconds>,
 }

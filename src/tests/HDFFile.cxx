@@ -53,7 +53,6 @@ public:
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
     char const *fname = d["file_attributes"]["file_name"].GetString();
-    // char const * source_name = d["streams"][0]["source"].GetString();
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
@@ -525,7 +524,6 @@ public:
         auto fbd = fb.root()->detector_id();
         for (int i1 = 0; i1 < n_events_per_message; ++i1) {
           // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
-          // fbd->Get(i1));
           ASSERT_EQ(data.at(i1), fbd->Get(i1));
         }
       }
@@ -839,7 +837,6 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     int const feed_msgs_times = 1;
-    // int const seed = 2;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
