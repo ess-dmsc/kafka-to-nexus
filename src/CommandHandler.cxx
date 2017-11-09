@@ -175,27 +175,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     hdf_writer_module.reset();
   }
 
-  auto old_fid = fwt->hdf_file.h5file;
-  auto print = [](std::string s, hid_t oid) {
-    H5O_info_t i;
-    H5Oget_info(oid, &i);
-    LOG(3, "{} refs: {}", s, i.rc);
-  };
-
-  print("before", old_fid);
-
-  std::vector<hid_t> obj_id_list(1024);
-  auto nopen = H5Fget_obj_ids(old_fid, H5F_OBJ_ALL, obj_id_list.size(),
-                              obj_id_list.data());
-  for (int i1 = 0; i1 < nopen; ++i1) {
-    auto id = obj_id_list[i1];
-    std::vector<char> name(512);
-    H5Iget_name(id, name.data(), name.size());
-    LOG(3, "{}:  {}", i1, name.data());
-    // H5Oclose(id);
-  }
-
-  fwt->hdf_filename = fname;
+  fwt->hdf_file.close();
   // Move the cq unique pointer here. It must stay valid until the very end.
   fwt->hdf_file.cq = move(cq);
 

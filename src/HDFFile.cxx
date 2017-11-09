@@ -510,6 +510,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   using std::string;
   using std::vector;
   using rapidjson::Value;
+  this->filename = filename;
   auto fcpl = H5Pcreate(H5P_FILE_CREATE);
   auto fapl = H5Pcreate(H5P_FILE_ACCESS);
   set_common_props(fcpl, fapl);
@@ -569,6 +570,23 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   H5Pclose(lcpl);
   H5Pclose(acpl);
 
+  return 0;
+}
+
+int HDFFile::close() {
+  if (h5file == -1) {
+    LOG(3, "attempt to close unopened file");
+    return -1;
+  }
+  herr_t err = 0;
+  err = H5Fclose(h5file);
+  if (err < 0) {
+    LOG(3, "can not close the file {}", filename);
+  }
+  if (H5Iis_valid(h5file)) {
+    LOG(3, "closed file handle is still valid for {}", filename);
+  }
+  h5file = -1;
   return 0;
 }
 

@@ -32,10 +32,12 @@ public:
            rapidjson::Value const &config_file,
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
+  int close();
   int reopen(std::string filename, rapidjson::Value const &config_file);
   void flush();
   void create_collective_queue(Jemalloc::sptr jm);
   hid_t h5file = -1;
+  std::string filename;
   CollectiveQueue::ptr cq;
 
 private:
