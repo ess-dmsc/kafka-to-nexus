@@ -40,9 +40,9 @@ enum struct CollectiveCommandType : uint8_t {
   H5Dclose,
 };
 
-#define STR_NAME_MAX_2 255
-
 struct CollectiveCommand {
+
+  static size_t const STR_NAME_MAX_2 = 255;
 
   static CollectiveCommand set_extent(char const *name, hsize_t const ndims,
                                       hsize_t const *size) {
