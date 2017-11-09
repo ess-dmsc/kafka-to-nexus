@@ -33,20 +33,6 @@ template <typename Streamer, typename Demux> class StreamMaster {
 public:
   StreamMaster() {}
 
-  StreamMaster(const std::string &broker, std::vector<Demux> &_demux,
-               const Options &kafka_options = {},
-               const Options &filewriter_options = {})
-      : demux(_demux) {
-
-    for (auto &d : demux) {
-      streamer.emplace(std::piecewise_construct,
-                       std::forward_as_tuple(d.topic()),
-                       std::forward_as_tuple(broker, d.topic(), kafka_options,
-                                             filewriter_options));
-      streamer[d.topic()].n_sources() = d.sources().size();
-    }
-  }
-
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
                const Options &kafka_options = {},
@@ -140,7 +126,6 @@ public:
   }
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
-  
 
   const SMEC status() {
     for (auto &s : streamer) {

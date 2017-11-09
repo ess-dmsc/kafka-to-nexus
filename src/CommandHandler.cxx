@@ -34,7 +34,6 @@ std::string find_broker(rapidjson::Document const &d) {
       uri::URI u(s);
       return u.host_port;
     } else {
-      // legacy semantics
       return s;
     }
   }
@@ -79,9 +78,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(6,
-          "ERROR command message schema validation:  Invalid schema: {}  "
-          "keyword: {}",
+      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
+             "keyword: {}",
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
     }
@@ -153,12 +151,13 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
                                 config_stream, nullptr);
 
     auto s = Source(source.v, move(hdf_writer_module));
+    // Can this be done in a better way?
+    s._topic = string(topic);
     fwt->add_source(move(s));
   }
 
   if (master) {
     auto br = find_broker(d);
-
     auto config_kafka = config.kafka;
     std::vector<std::pair<string, string>> config_kafka_vec;
     for (auto &x : config_kafka) {

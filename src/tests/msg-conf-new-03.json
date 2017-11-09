@@ -1,41 +1,29 @@
 {
-    "cmd": "FileWriter_new",
-    "broker": "192.168.10.11:9092",
-    "job_id" : "1234567890abcdef",
-    "streams": [
-	{
-	    "broker": "129.129.188.59:9092",
-	    "topic": "AMOR.area.detector",
-	    "source": "AMOR.event.stream",
-	    "path": "",
-	    "on_path_missing": "ignore",
-	    "nexus_container": "NXevent_data",
-	    "nexus_path": "/entry1/AMOR/area_detector"
-	}
-
-    ],
-
-    "nexus_structure": {
-	"some_string_field": "the-field-value",
-	"some_int_field": 88004400,
-	"some_double_field": 55.11,
-	"entry1": {
-	    "NX_class": "NXentry",
-	    "AMOR": {
-		"NX_class": "NXinstrument",
-		"area_detector": {
-		    "NX_class": "NXevent_data"
-		}
-	    },
-	    "instrument-02": {
-		"NX_class": "NXinstrument",
-		"NX_attributes": {
-		    "notes": "some notes in form of an attribute",
-		    "attribute_integer": 42,
-		    "attribute_double": 42.0
-		}
-	    }
-	}
-    }
-    
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "AMOR",
+        "attributes": {
+          "NX_class": "NXinstrument"
+        },
+        "children": [
+          {
+            "type": "stream",
+            "stream": {
+              "topic": "AMOR.area.detector",
+              "source": "AMOR.event.stream",
+	      "module": "ev42"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "file_attributes": {
+    "file_name": "some.h5"
+  },
+  "cmd": "FileWriter_new",
+  "job_id" : "1234567890abcdef",
+  "broker": "192.168.10.11:9092"
 }
