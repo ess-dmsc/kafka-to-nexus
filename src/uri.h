@@ -1,7 +1,7 @@
 #pragma once
 
 #include <array>
-#include <regex>
+#include <vector>
 #include <string>
 
 namespace uri {
@@ -9,30 +9,6 @@ namespace uri {
 using std::array;
 using std::vector;
 using std::string;
-
-/// Match data from a regex_match
-struct MD {
-  /// Keep the pointer to the haystack
-  MD(char const *subject);
-  /// Whether the match was successful or not
-  bool ok = false;
-  /// Returns the ith match or string() if out of bounds
-  string substr(uint8_t i);
-  /// Holds the matched substrings
-  vector<string> matches;
-  /// The haystack
-  char const *subject;
-};
-
-/// Wraps a std::regex
-struct Re {
-  Re(std::regex const *re);
-  Re(Re &&);
-  Re &operator=(Re &&);
-  MD match(string const &s) const;
-  std::regex const *re = nullptr;
-  friend void swap(Re &x, Re &y);
-};
 
 /// Thin parser for URIs.
 class URI {
@@ -63,15 +39,7 @@ public:
   /// `path/path`.
   bool require_host_slashes = true;
 
-  /// Test the regular expression library at runtime.
-  /// Some implementors ship a non-functional regex lib.
-  static bool test();
-
 private:
-  static Re const re_full;
-  static Re const re_host_no_slashes;
-  static Re const re_no_host;
-  static Re const re_topic;
   void update_deps();
 };
 }

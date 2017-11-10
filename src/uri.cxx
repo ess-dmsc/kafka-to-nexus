@@ -1,74 +1,31 @@
 #include "uri.h"
 #include "logger.h"
-#include <array>
 #include <iostream>
-#include <mutex>
 
 namespace uri {
 
 using std::array;
 using std::move;
-using std::swap;
 
-struct Patterns {
-  std::regex empty{".*"};
-  std::regex full{"^\\s*(([a-z]+):)?//(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./"
-                  "_A-Za-z0-9]*)?\\s*$"};
-  std::regex re_host_no_slashes{
-      "^\\s*(([-._A-Za-z0-9]+)(:([0-9]+))?)(/[-./_A-Za-z0-9]*)?\\s*$"};
-  std::regex re_no_host{"^/?([-./_A-Za-z0-9]*)$"};
-  std::regex re_topic{"^/?([-._A-Za-z0-9]+)$"};
-};
-
-Patterns const &patterns() {
-  try {
-    static Patterns patterns;
-    return patterns;
-  } catch (std::regex_error &e) {
-    std::cout << "Can not initialize regular expression patterns. Maybe your "
-                 "c++ runtime library is not complete."
-              << std::endl
-              << e.what() << std::endl;
-    throw e;
+static string topic_from_path(string s) {
+  LOG(3, "topic_from_path: {}", s);
+  auto p = s.find("/");
+  if (p == 0) {
+    s = s.substr(1);
   }
-}
-
-MD::MD(char const *subject) : subject(subject) {}
-
-string MD::substr(uint8_t i) {
-  if (!ok) {
-    string();
+  p = s.find("/");
+  if (p == string::npos) {
+    return s;
   }
-  if (i >= matches.size()) {
-    return string();
-  }
-  return matches[i];
-}
-
-Re::Re(std::regex const *re) : re(re) {}
-
-MD Re::match(string const &s) const {
-  MD md(s.data());
-  std::smatch m;
-  auto str = string(s.data(), s.size());
-  auto matched = std::regex_match(str, m, *re);
-  if (matched) {
-    md.ok = true;
-    for (auto &it : m) {
-      md.matches.push_back(it.str());
+  else {
+    if (p == 0) {
+      return s.substr(1);
+    }
+    else {
+      return string();
     }
   }
-  return md;
 }
-
-Re::Re(Re &&x) { swap(*this, x); }
-
-Re &Re::operator=(Re &&x) {
-  swap(*this, x);
-  return *this;
-}
-
-void swap(Re &x, Re &y) { swap(x.re, y.re); }
 
 void URI::update_deps() {
   if (port != 0) {
@@ -76,10 +33,9 @@ void URI::update_deps() {
   } else {
     host_port = host;
   }
-  // check if the path could be a valid topic
-  auto md = re_topic.match(path);
-  if (md.ok) {
-    topic = md.substr(1);
+  auto t = topic_from_path(path);
+  if (not t.empty()) {
+    topic = t;
   }
 }
 
@@ -87,56 +43,82 @@ URI::URI() {}
 
 URI::URI(string uri) { parse(uri); }
 
+static bool is_alpha(string s) {
+  for (auto c : s) {
+    if (c < 'a' or c > 'z') {
+      return false;
+    }
+  }
+  return true;
+}
+
+static vector<string> protocol(string s) {
+  auto slashes = s.find("://");
+  if (slashes == string::npos or slashes == 0) {
+    return {string(), s};
+  }
+  auto proto = s.substr(0, slashes);
+  if (not is_alpha(proto)) {
+    return {string(), s};
+  }
+  return {proto, s.substr(slashes+1, string::npos)};
+}
+
+static vector<string> hostport(string s) {
+  LOG(3, "s: {}", s);
+  if (s.find("//") != 0) {
+    return {string(), string(), s};
+  }
+  auto slash = s.find("/", 2);
+  auto colon = s.find(":", 2);
+  if (colon == string::npos) {
+    if (slash == string::npos) {
+      return {s.substr(2), string(), string()};
+    }
+    else {
+      return {s.substr(2, slash-2), string(), s.substr(slash)};
+    }
+  }
+  else {
+    if (slash == string::npos) {
+      return {s.substr(2, colon-2), s.substr(colon+1), string()};
+    }
+    else {
+      if (colon < slash) {
+        return {s.substr(2, colon-2), s.substr(colon+1, slash-colon-1), s.substr(slash)};
+      }
+      else {
+        return {s.substr(2, slash-2), string(), s.substr(slash)};
+      }
+    }
+  }
+  return {string(), string(), s};
+}
+
 void URI::parse(string uri) {
-  bool match = false;
-  if (!match) {
-    auto md = re_full.match(uri);
-    if (md.ok) {
-      match = true;
-      scheme = md.substr(2);
-      host = md.substr(4);
-      auto port_s = md.substr(6);
-      if (port_s.size() > 0) {
-        port = strtoul(port_s.data(), nullptr, 10);
-      }
-      auto path_str = md.substr(7);
-      if (!path_str.empty()) {
-        path = path_str;
-      }
+  LOG(3, "parse: {}", uri);
+  auto proto = protocol(uri);
+  if (not proto[0].empty()) {
+    scheme = proto[0];
+  }
+  auto s = proto[1];
+  if (not require_host_slashes) {
+    if (s.find("/") != 0) {
+      s = "//" + s;
     }
   }
-  if (!match && !require_host_slashes) {
-    auto md = re_host_no_slashes.match(uri);
-    if (md.ok) {
-      match = true;
-      host = md.substr(2);
-      auto port_s = md.substr(4);
-      if (port_s.size() > 0) {
-        port = strtoul(port_s.data(), nullptr, 10);
-      }
-      auto path_str = md.substr(5);
-      if (!path_str.empty()) {
-        path = path_str;
-      }
-    }
+  auto hp = hostport(s);
+  LOG(3, "hp: {}  {}  {}", hp[0], hp[1], hp[2]);
+  if (not hp[0].empty()) {
+    host = hp[0];
   }
-  if (!match) {
-    auto md = re_no_host.match(uri);
-    if (md.ok) {
-      match = true;
-      auto path_str = md.substr(0);
-      if (!path_str.empty()) {
-        path = path_str;
-      }
-    }
+  if (not hp[1].empty()) {
+    port = strtoul(hp[1].data(), nullptr, 10);
+  }
+  if (not hp[2].empty()) {
+    path = hp[2];
   }
   update_deps();
 }
 
-Re const URI::re_full(&patterns().full);
-Re const URI::re_host_no_slashes(&patterns().re_host_no_slashes);
-Re const URI::re_no_host(&patterns().re_no_host);
-Re const URI::re_topic(&patterns().re_topic);
-
-bool URI::test() { return true; }
 }
