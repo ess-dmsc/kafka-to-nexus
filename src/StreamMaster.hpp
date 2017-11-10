@@ -13,7 +13,6 @@
 #include <queue>
 #include <thread>
 
-#include "DemuxTopic.h"
 #include "FileWriterTask.h"
 #include "Report.hpp"
 #include "logger.h"
@@ -25,7 +24,7 @@ class ProducerTopic;
 
 namespace FileWriter {
 
-template <typename Streamer, typename Demux> class StreamMaster {
+template <typename Streamer> class StreamMaster {
   using SEC = Status::StreamerErrorCode;
   using SMEC = Status::StreamMasterErrorCode;
   using Options = typename Streamer::Options;
@@ -95,7 +94,7 @@ public:
   bool stop() {
     try {
       std::call_once(stop_once_guard,
-                     &FileWriter::StreamMaster<Streamer, Demux>::stop_impl,
+                     &FileWriter::StreamMaster<Streamer>::stop_impl,
                      this);
     } catch (std::exception &e) {
       LOG(0, "Error while stopping: {}", e.what());
@@ -223,7 +222,7 @@ private:
   }
 
   std::map<std::string, Streamer> streamer;
-  std::vector<Demux> &demux;
+  std::vector<DemuxTopic> &demux;
   std::thread loop;
   std::thread report_thread_;
   std::atomic<SMEC> runstatus{SMEC::not_started};

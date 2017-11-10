@@ -164,9 +164,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       config_kafka_vec.emplace_back(x.first, x.second);
     }
 
-    auto s = std::unique_ptr<StreamMaster<Streamer, DemuxTopic>>(
-        new StreamMaster<Streamer, DemuxTopic>(br, std::move(fwt),
-                                               config_kafka_vec));
+    auto s = std::unique_ptr<StreamMaster<Streamer>>(
+        new StreamMaster<Streamer>(br, std::move(fwt), config_kafka_vec));
     if (master->status_producer) {
       s->report(master->status_producer, config.status_master_interval);
     }
