@@ -280,7 +280,7 @@ public:
           "n_msgs_per_source": 100,
           "n_sources": 1,
           "n_msgs_per_batch": 1,
-          "n_mpi_workers": 1,
+          "n_mpi_workers": 4,
           "feed_msgs_seconds": 30,
           "filename": "tmp-ev42.h5",
           "hdf": {
@@ -680,12 +680,14 @@ public:
       }
 
       H5Tclose(dt);
-      H5Dclose(ds);
+      // H5Dclose(ds);
     }
 
-    H5Fclose(fid);
+    err = H5Fclose(fid);
     LOG(7, "data_ev42 verification done");
-    ASSERT_EQ(recreate_file(&json_command), 0);
+    ASSERT_GE(err, 0);
+    ASSERT_EQ(H5Iis_valid(fid), 0);
+    // ASSERT_EQ(recreate_file(&json_command), 0);
   }
 
   /// Can supply pre-generated test data for a source on a topic to profile

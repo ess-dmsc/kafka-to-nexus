@@ -134,8 +134,6 @@ public:
   size_t _size = 0;
 
   inline ~Msg() {
-    using std::unique_ptr;
-    using std::shared_ptr;
     switch (type) {
     case 1:
       // var.rdkafka_msg.~unique_ptr<RdKafka::Message>();
