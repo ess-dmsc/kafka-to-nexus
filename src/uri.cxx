@@ -8,7 +8,6 @@ using std::array;
 using std::move;
 
 static string topic_from_path(string s) {
-  LOG(3, "topic_from_path: {}", s);
   auto p = s.find("/");
   if (p == 0) {
     s = s.substr(1);
@@ -65,7 +64,6 @@ static vector<string> protocol(string s) {
 }
 
 static vector<string> hostport(string s) {
-  LOG(3, "s: {}", s);
   if (s.find("//") != 0) {
     return {string(), string(), s};
   }
@@ -95,8 +93,25 @@ static vector<string> hostport(string s) {
   return {string(), string(), s};
 }
 
+static string trim(string s) {
+  string::size_type a = 0;
+  while (s.find(" ", a) == a) {
+    ++a;
+  }
+  s = s.substr(a);
+  if (s.empty()) {
+    return s;
+  }
+  a = s.size() - 1;
+  while (s[a] == ' ') {
+    --a;
+  }
+  s = s.substr(0, a + 1);
+  return s;
+}
+
 void URI::parse(string uri) {
-  LOG(3, "parse: {}", uri);
+  uri = trim(uri);
   auto proto = protocol(uri);
   if (not proto[0].empty()) {
     scheme = proto[0];
@@ -108,7 +123,6 @@ void URI::parse(string uri) {
     }
   }
   auto hp = hostport(s);
-  LOG(3, "hp: {}  {}  {}", hp[0], hp[1], hp[2]);
   if (not hp[0].empty()) {
     host = hp[0];
   }
