@@ -131,3 +131,8 @@ TEST(URI, host_default_topic) {
   ASSERT_EQ(u1.path, "/some-path");
   ASSERT_EQ(u1.topic, "some-path");
 }
+TEST(URI, trim) {
+  URI u1("  //some:123     ");
+  ASSERT_EQ(u1.host, "some");
+  ASSERT_EQ(u1.port, 123);
+}
