@@ -15,12 +15,10 @@ static string topic_from_path(string s) {
   p = s.find("/");
   if (p == string::npos) {
     return s;
-  }
-  else {
+  } else {
     if (p == 0) {
       return s.substr(1);
-    }
-    else {
+    } else {
       return string();
     }
   }
@@ -60,7 +58,7 @@ static vector<string> protocol(string s) {
   if (not is_alpha(proto)) {
     return {string(), s};
   }
-  return {proto, s.substr(slashes+1, string::npos)};
+  return {proto, s.substr(slashes + 1, string::npos)};
 }
 
 static vector<string> hostport(string s) {
@@ -72,21 +70,18 @@ static vector<string> hostport(string s) {
   if (colon == string::npos) {
     if (slash == string::npos) {
       return {s.substr(2), string(), string()};
+    } else {
+      return {s.substr(2, slash - 2), string(), s.substr(slash)};
     }
-    else {
-      return {s.substr(2, slash-2), string(), s.substr(slash)};
-    }
-  }
-  else {
+  } else {
     if (slash == string::npos) {
-      return {s.substr(2, colon-2), s.substr(colon+1), string()};
-    }
-    else {
+      return {s.substr(2, colon - 2), s.substr(colon + 1), string()};
+    } else {
       if (colon < slash) {
-        return {s.substr(2, colon-2), s.substr(colon+1, slash-colon-1), s.substr(slash)};
-      }
-      else {
-        return {s.substr(2, slash-2), string(), s.substr(slash)};
+        return {s.substr(2, colon - 2), s.substr(colon + 1, slash - colon - 1),
+                s.substr(slash)};
+      } else {
+        return {s.substr(2, slash - 2), string(), s.substr(slash)};
       }
     }
   }
@@ -134,5 +129,4 @@ void URI::parse(string uri) {
   }
   update_deps();
 }
-
 }

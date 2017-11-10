@@ -94,8 +94,7 @@ public:
   bool stop() {
     try {
       std::call_once(stop_once_guard,
-                     &FileWriter::StreamMaster<Streamer>::stop_impl,
-                     this);
+                     &FileWriter::StreamMaster<Streamer>::stop_impl, this);
     } catch (std::exception &e) {
       LOG(0, "Error while stopping: {}", e.what());
     }

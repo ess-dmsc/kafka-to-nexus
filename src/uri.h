@@ -1,8 +1,8 @@
 #pragma once
 
 #include <array>
-#include <vector>
 #include <string>
+#include <vector>
 
 namespace uri {
 

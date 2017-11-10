@@ -284,8 +284,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   _offset = RdKafkaOffset(msg->offset());
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
-  LOG(6, "{} : Message timestamp : {}", _tp[0]->topic(),
-      result.ts());
+  LOG(6, "{} : Message timestamp : {}", _tp[0]->topic(), result.ts());
   if (!result.is_OK()) {
     message_info_.error();
   }

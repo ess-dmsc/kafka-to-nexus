@@ -58,9 +58,7 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
 uint64_t FileWriterTask::id() const { return _id; }
 std::string FileWriterTask::job_id() const { return _job_id; }
 
-void FileWriterTask::job_id_init(const std::string& s) {
-  _job_id = s;
-}
+void FileWriterTask::job_id_init(const std::string &s) { _job_id = s; }
 
 rapidjson::Value FileWriterTask::stats(
     rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const {

@@ -35,11 +35,10 @@ using StreamMaster = FileWriter::StreamMaster<stub::Streamer>;
 class StreamMaster_Test : public ::testing::Test {
 
 protected:
-  virtual void SetUp() {
-  }
+  virtual void SetUp() {}
 
 private:
   std::unique_ptr<StreamMaster> stream_master;
 };
 
-//TEST_F(StreamMaster_Test, empty_test) {}
+// TEST_F(StreamMaster_Test, empty_test) {}
