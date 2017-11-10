@@ -27,6 +27,7 @@ public:
   /// Used by Streamer to get the list of demuxers
   std::vector<DemuxTopic> &demuxers();
   uint64_t id() const;
+  std::string job_id() const;
   rapidjson::Value
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
   std::string hdf_filename;
@@ -38,7 +39,9 @@ private:
   /// Called by CommandHandler on setup.
   int hdf_init(rapidjson::Value const &nexus_structure,
                std::vector<StreamHDFInfo> &stream_hdf_info);
+  void job_id_init(const std::string &);
   uint64_t _id;
+  std::string _job_id;
 };
 
 } // namespace FileWriter

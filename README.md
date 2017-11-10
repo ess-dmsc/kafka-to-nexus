@@ -119,7 +119,11 @@ Command to start writing a file:
   "file_attributes": {
     "file_name": "some.h5"
   },
-  "cmd": "FileWriter_new"
+  "cmd": "FileWriter_new",
+  "job_id" : "unique-identifier",
+  "broker" : "localhost:9092",
+  [OPTIONAL]"start_time" : <timestamp in milliseconds>,
+  [OPTIONAL]"stop_time" : <timestamp in milliseconds>,
 }
 ```
 
@@ -127,6 +131,16 @@ Command to exit the file writer:
 
 ```json
 {"cmd": "FileWriter_exit"}
+```
+
+Command to stop a single file:
+
+```json
+{
+	"cmd": "FileWriter_stop",
+	"job_id": "job-unique-identifier",
+	"[OPTIONAL]stop_time" : "timestamp-in-milliseconds"
+}
 ```
 
 Commands can be given in the configuration file as well:

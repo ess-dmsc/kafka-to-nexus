@@ -53,7 +53,6 @@ public:
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
     char const *fname = d["file_attributes"]["file_name"].GetString();
-    // char const * source_name = d["streams"][0]["source"].GetString();
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
@@ -162,6 +161,7 @@ public:
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("000000000dataset"), a);
     }
 
     auto cmd = json_to_string(json_command);
@@ -176,7 +176,8 @@ public:
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     {
       string cmd("{\"recv_type\":\"FileWriter\", "
-                 "\"cmd\":\"file_writer_tasks_clear_all\"}");
+                 "\"cmd\":\"file_writer_tasks_clear_all\", "
+                 "\"job_id\":\"000000000dataset\" }");
       ch.handle({(char *)cmd.data(), cmd.size()});
     }
 
@@ -196,8 +197,8 @@ public:
     H5Fclose(fid);
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile the
-  /// writing.
+  /// Can supply pre-generated test data for a source on a topic to profile
+  /// the writing.
   class SourceDataGen {
   public:
     string topic;
@@ -312,12 +313,6 @@ public:
       s.pregenerate(n_msgs_per_source, n_events_per_message);
     }
 
-    if (false) {
-      for (auto &source : sources) {
-        LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
-      }
-    }
-
     rapidjson::Document json_command;
     {
       using namespace rapidjson;
@@ -405,6 +400,7 @@ public:
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("000000000042"), a);
     }
 
     auto cmd = json_to_string(json_command);
@@ -412,7 +408,7 @@ public:
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8);
+    ASSERT_GT(fname.v.size(), size_t{8});
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
@@ -475,7 +471,7 @@ public:
       return;
     }
 
-    int minimum_expected_entries_in_the_index = 1;
+    size_t minimum_expected_entries_in_the_index = 1;
 
     herr_t err;
 
@@ -503,7 +499,6 @@ public:
       auto dsp = H5Dget_space(ds);
       ASSERT_GT(dsp, 0);
       ASSERT_EQ(H5Sis_simple(dsp), 1);
-      // auto nn = H5Sget_simple_extent_npoints(dsp);
 
       using A = array<hsize_t, 1>;
       A sini = {{(hsize_t)n_events_per_message}};
@@ -519,7 +514,6 @@ public:
 
       // LOG(4, "have {} messages", source.msgs.size());
       for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-        // auto &msg = source.msgs.at(msg_i);
         auto &fb = source.fbs.at(msg_i);
         A start = {{(hsize_t)msg_i * n_events_per_message}};
         err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
@@ -529,7 +523,7 @@ public:
         ASSERT_GE(err, 0);
         auto fbd = fb.root()->detector_id();
         for (int i1 = 0; i1 < n_events_per_message; ++i1) {
-          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1), fbd->Get(i1));
+          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
           ASSERT_EQ(data.at(i1), fbd->Get(i1));
         }
       }
@@ -603,8 +597,8 @@ public:
     ASSERT_EQ(recreate_file(&json_command), 0);
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile the
-  /// writing.
+  /// Can supply pre-generated test data for a source on a topic to profile
+  /// the writing.
   class SourceDataGen_f142 {
   public:
     string topic;
@@ -830,6 +824,7 @@ public:
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("0000000data_f142"), a);
     }
 
     auto cmd = json_to_string(json_command);
@@ -842,7 +837,6 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     int const feed_msgs_times = 1;
-    // int const seed = 2;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {

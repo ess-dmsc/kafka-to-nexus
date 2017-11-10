@@ -269,9 +269,6 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   std::unique_ptr<RdKafka::Message> msg{
       _consumer->consume(consumer_timeout.count())};
 
-  LOG(6, "{} : event timestamp : {}", _tp[0]->topic(),
-      msg->timestamp().timestamp);
-
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
     LOG(5, "consume :\t{}", RdKafka::err2str(msg->err()));
@@ -287,9 +284,10 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   _offset = RdKafkaOffset(msg->offset());
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
+  LOG(6, "{} : Message timestamp : {}", _tp[0]->topic(),
+      result.ts());
   if (!result.is_OK()) {
     message_info_.error();
-    //    run_status_ = SEC::write_error;
   }
   return result;
 }

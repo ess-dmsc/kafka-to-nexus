@@ -3,6 +3,7 @@
 #include "Source.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
+#include "utils.h"
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -42,12 +43,12 @@ public:
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;
-  uint64_t &stop_time();
+  ESSTimeStamp &stop_time();
 
 private:
   std::string _topic;
   std::unordered_map<std::string, Source> _sources_map;
-  uint64_t _stop_time;
+  ESSTimeStamp _stop_time;
 };
 
 } // namespace FileWriter

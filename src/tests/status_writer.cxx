@@ -45,6 +45,8 @@ TEST(StatusWriter, create_report_streamers) {
   }
 
   StreamWriter writer;
-  std::cout << writer.write(info) << "\n";
-  // here parse json and verify values
+  auto s = std::move(writer.write(info));
+  //  std::cout << writer.write(info) << "\n";
+
+  // ASSERT_EQ(s,expect);
 }

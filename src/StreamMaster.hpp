@@ -13,7 +13,6 @@
 #include <queue>
 #include <thread>
 
-#include "DemuxTopic.h"
 #include "FileWriterTask.h"
 #include "Report.hpp"
 #include "logger.h"
@@ -25,27 +24,13 @@ class ProducerTopic;
 
 namespace FileWriter {
 
-template <typename Streamer, typename Demux> class StreamMaster {
+template <typename Streamer> class StreamMaster {
   using SEC = Status::StreamerErrorCode;
   using SMEC = Status::StreamMasterErrorCode;
   using Options = typename Streamer::Options;
 
 public:
   StreamMaster() {}
-
-  StreamMaster(const std::string &broker, std::vector<Demux> &_demux,
-               const Options &kafka_options = {},
-               const Options &filewriter_options = {})
-      : demux(_demux) {
-
-    for (auto &d : demux) {
-      streamer.emplace(std::piecewise_construct,
-                       std::forward_as_tuple(d.topic()),
-                       std::forward_as_tuple(broker, d.topic(), kafka_options,
-                                             filewriter_options));
-      streamer[d.topic()].n_sources() = d.sources().size();
-    }
-  }
 
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
@@ -88,11 +73,8 @@ public:
     return true;
   }
   bool stop_time(const ESSTimeStamp &stop) {
-    if (stop.count() < 0) {
-      return false;
-    }
     for (auto &d : demux) {
-      d.stop_time() = stop.count();
+      d.stop_time() = stop;
     }
     return true;
   }
@@ -109,15 +91,22 @@ public:
     return loop.joinable();
   }
 
-  int stop() {
+  bool stop() {
     try {
       std::call_once(stop_once_guard,
-                     &FileWriter::StreamMaster<Streamer, Demux>::stop_impl,
+                     &FileWriter::StreamMaster<Streamer>::stop_impl,
                      this);
     } catch (std::exception &e) {
       LOG(0, "Error while stopping: {}", e.what());
     }
     return !(loop.joinable() || report_thread_.joinable());
+  }
+
+  bool stop(const std::string &job_id) {
+    if (job_id == _file_writer_task->job_id()) {
+      return stop();
+    }
+    return false;
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
@@ -133,7 +122,7 @@ public:
     } else {
       LOG(5, "Status report already started, nothing to do");
     }
-  };
+  }
 
   FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
 
@@ -145,6 +134,8 @@ public:
     }
     return runstatus.load();
   }
+
+  std::string job_id() const { return _file_writer_task->job_id(); }
 
 private:
   void run() {
@@ -231,7 +222,7 @@ private:
   }
 
   std::map<std::string, Streamer> streamer;
-  std::vector<Demux> &demux;
+  std::vector<DemuxTopic> &demux;
   std::thread loop;
   std::thread report_thread_;
   std::atomic<SMEC> runstatus{SMEC::not_started};
