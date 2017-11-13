@@ -59,6 +59,11 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
   LOG(7, "f142 init_impl  ncols: {}", ncols);
   this->ds =
       h5::h5d_chunked_2d<DT>::create(hdf_group, sourcename, ncols, 64 * 1024);
+  if (!this->ds) {
+    LOG(3,
+        "could not create hdf dataset  sourcename: {}  number of columns: {}",
+        sourcename, ncols);
+  }
 }
 
 template <typename DT, typename FV>
@@ -82,6 +87,9 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(
     hid_t hdf_group, std::string const &sourcename) {
   LOG(7, "f142 init_impl  scalar");
   this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, sourcename, 64 * 1024);
+  if (!this->ds) {
+    LOG(3, "could not create hdf dataset  sourcename: {}", sourcename);
+  }
 }
 
 template <typename DT, typename FV>
@@ -91,6 +99,9 @@ append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
     return {1, 0, 0};
   }
   auto v2 = v1->value();
+  if (!this->ds) {
+    return {1, 0, 0};
+  }
   return this->ds->append_data_1d(&v2, 1);
 }
 
