@@ -73,7 +73,8 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
 
 template <typename DT, typename FV>
 append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
-  if (fbuf->value_type() != fb_value_type_id) {
+  auto vt = fbuf->value_type();
+  if (vt == Value::NONE || vt != fb_value_type_id) {
     return {-2, 0, 0};
   }
   auto v1 = (FV const *)fbuf->value();
@@ -104,7 +105,8 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
 
 template <typename DT, typename FV>
 append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
-  if (fbuf->value_type() != fb_value_type_id) {
+  auto vt = fbuf->value_type();
+  if (vt == Value::NONE || vt != fb_value_type_id) {
     return {-2, 0, 0};
   }
   auto v1 = (FV const *)fbuf->value();
