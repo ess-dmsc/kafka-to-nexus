@@ -33,7 +33,7 @@ node('docker') {
                 chown -R jenkins.jenkins /home/jenkins/${project}
 	\""""
 
-        stage('Checkout') {
+        stage('Checkout Schemas') {
             def checkout_script = """
                 git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
             """
