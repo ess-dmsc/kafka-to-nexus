@@ -88,11 +88,6 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                           rapidjson::Value const &config_stream,
                           rapidjson::Value const *config_module) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-  auto str = get_string(&config_stream, "source");
-  if (!str) {
-    return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
-  }
-  auto sourcename = str.v;
 
   hsize_t chunk_n_elements = 1;
 
