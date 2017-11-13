@@ -93,13 +93,6 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
   }
   auto sourcename = str.v;
-  str = get_string(&config_stream, "type");
-  if (!str) {
-    return HDFWriterModule::InitResult::ERROR_INCOMPLETE_CONFIGURATION();
-  }
-  auto type = str.v;
-  LOG(7, "ev42::HDFWriterModule::init_hdf  sourcename: {}  type: {}",
-      sourcename, type);
 
   hsize_t chunk_n_elements = 1;
 
