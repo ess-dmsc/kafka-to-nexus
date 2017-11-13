@@ -31,19 +31,22 @@ template <typename DT, typename FV>
 class writer_typed_array : public writer_typed_base {
 public:
   writer_typed_array(hid_t hdf_group, std::string const &sourcename,
-                     hsize_t ncols);
+                     hsize_t ncols, Value fb_value_type_id);
   ~writer_typed_array() override = default;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
+  Value fb_value_type_id = Value::NONE;
 };
 
 template <typename DT, typename FV>
 class writer_typed_scalar : public writer_typed_base {
 public:
-  writer_typed_scalar(hid_t hdf_group, std::string const &sourcename);
+  writer_typed_scalar(hid_t hdf_group, std::string const &sourcename,
+                      Value fb_value_type_id);
   ~writer_typed_scalar() override = default;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
+  Value fb_value_type_id = Value::NONE;
 };
 
 static FBUF const *get_fbuf(char *data) { return GetLogData(data); }
@@ -51,7 +54,9 @@ static FBUF const *get_fbuf(char *data) { return GetLogData(data); }
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                std::string const &sourcename,
-                                               hsize_t ncols) {
+                                               hsize_t ncols,
+                                               Value fb_value_type_id)
+    : fb_value_type_id(fb_value_type_id) {
   if (ncols <= 0) {
     LOG(4, "can not handle number of columns ncols == {}", ncols);
     return;
@@ -68,6 +73,9 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
 
 template <typename DT, typename FV>
 append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
+  if (fbuf->value_type() != fb_value_type_id) {
+    return {-2, 0, 0};
+  }
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
     return {1, 0, 0};
@@ -83,8 +91,10 @@ append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
 }
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::writer_typed_scalar(
-    hid_t hdf_group, std::string const &sourcename) {
+writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
+                                                 std::string const &sourcename,
+                                                 Value fb_value_type_id)
+    : fb_value_type_id(fb_value_type_id) {
   LOG(7, "f142 init_impl  scalar");
   this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, sourcename, 64 * 1024);
   if (!this->ds) {
@@ -94,6 +104,9 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(
 
 template <typename DT, typename FV>
 append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
+  if (fbuf->value_type() != fb_value_type_id) {
+    return {-2, 0, 0};
+  }
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
     return {1, 0, 0};
@@ -172,47 +185,75 @@ writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size, string type,
   using R = writer_typed_base *;
   auto &hg = hdf_group;
   if (array_size == 0) {
-    if (type == "int8")
-      return (R) new WS<int8_t, Byte>(hg, s);
-    if (type == "int16")
-      return (R) new WS<int16_t, Short>(hg, s);
-    if (type == "int32")
-      return (R) new WS<int32_t, Int>(hg, s);
-    if (type == "int64")
-      return (R) new WS<int64_t, Long>(hg, s);
-    if (type == "uint8")
-      return (R) new WS<uint8_t, UByte>(hg, s);
-    if (type == "uint16")
-      return (R) new WS<uint16_t, UShort>(hg, s);
-    if (type == "uint32")
-      return (R) new WS<uint32_t, UInt>(hg, s);
-    if (type == "uint64")
-      return (R) new WS<uint64_t, ULong>(hg, s);
-    if (type == "double")
-      return (R) new WS<double, Double>(hg, s);
-    if (type == "float")
-      return (R) new WS<float, Float>(hg, s);
+    if (type == "int8") {
+      return (R) new WS<int8_t, Byte>(hg, s, Value::Byte);
+    }
+    if (type == "int16") {
+      return (R) new WS<int16_t, Short>(hg, s, Value::Short);
+    }
+    if (type == "int32") {
+      return (R) new WS<int32_t, Int>(hg, s, Value::Int);
+    }
+    if (type == "int64") {
+      return (R) new WS<int64_t, Long>(hg, s, Value::Long);
+    }
+    if (type == "uint8") {
+      return (R) new WS<uint8_t, UByte>(hg, s, Value::UByte);
+    }
+    if (type == "uint16") {
+      return (R) new WS<uint16_t, UShort>(hg, s, Value::UShort);
+    }
+    if (type == "uint32") {
+      return (R) new WS<uint32_t, UInt>(hg, s, Value::UInt);
+    }
+    if (type == "uint64") {
+      return (R) new WS<uint64_t, ULong>(hg, s, Value::ULong);
+    }
+    if (type == "double") {
+      return (R) new WS<double, Double>(hg, s, Value::Double);
+    }
+    if (type == "float") {
+      return (R) new WS<float, Float>(hg, s, Value::Float);
+    }
   } else {
-    if (type == "int8")
-      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size);
-    if (type == "int16")
-      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size);
-    if (type == "int32")
-      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size);
-    if (type == "int64")
-      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size);
-    if (type == "uint8")
-      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size);
-    if (type == "uint16")
-      return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size);
-    if (type == "uint32")
-      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size);
-    if (type == "uint64")
-      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size);
-    if (type == "double")
-      return (R) new WA<double, ArrayDouble>(hg, s, array_size);
-    if (type == "float")
-      return (R) new WA<float, ArrayFloat>(hg, s, array_size);
+    if (type == "int8") {
+      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size, Value::ArrayByte);
+    }
+    if (type == "int16") {
+      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size,
+                                             Value::ArrayShort);
+    }
+    if (type == "int32") {
+      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size, Value::ArrayInt);
+    }
+    if (type == "int64") {
+      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size,
+                                            Value::ArrayLong);
+    }
+    if (type == "uint8") {
+      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size,
+                                             Value::ArrayUByte);
+    }
+    if (type == "uint16") {
+      return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size,
+                                               Value::ArrayUShort);
+    }
+    if (type == "uint32") {
+      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size,
+                                             Value::ArrayUInt);
+    }
+    if (type == "uint64") {
+      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size,
+                                              Value::ArrayULong);
+    }
+    if (type == "double") {
+      return (R) new WA<double, ArrayDouble>(hg, s, array_size,
+                                             Value::ArrayDouble);
+    }
+    if (type == "float") {
+      return (R) new WA<float, ArrayFloat>(hg, s, array_size,
+                                           Value::ArrayFloat);
+    }
   }
   return (writer_typed_base *)nullptr;
 }
