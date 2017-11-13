@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.1.3')
+def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.2.0')
 
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
@@ -90,7 +90,7 @@ node('docker') {
                 cp kafka-to-nexus send-command file-writer/
                 tar czf ${archive_output} file-writer
             """
-            sh "docker exec ${container_name} ${sclsh} -c \"${archive_script}\""       
+            sh "docker exec ${container_name} ${sclsh} -c \"${archive_script}\""
             sh "docker cp ${container_name}:/home/jenkins/build/${archive_output} ."
             archiveArtifacts "${archive_output}"
         }
