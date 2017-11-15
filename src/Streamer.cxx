@@ -14,10 +14,10 @@ bool FileWriter::Streamer::set_streamer_opt(
   // Note: to_int<> returns a pair (validity of conversion,value).
   // First element notifies if the conversion is defined
 
-  if (option.first == "streamer.timestamp.delay") {
+  if (option.first == "ms.before.start") {
     auto value = to_num<int>(option.second);
     if (value.first && (value.second > 0)) {
-      _timestamp_delay = ESSTimeStamp(value.second);
+      ms_before_start_time = ESSTimeStamp(value.second);
       return true;
     }
   }
@@ -298,8 +298,8 @@ FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
   std::lock_guard<std::mutex> lock(
       connection_ready_); // make sure connnection is done
 
-  auto value =
-      std::chrono::duration_cast<KafkaTimeStamp>(timepoint - _timestamp_delay);
+  auto value = std::chrono::duration_cast<KafkaTimeStamp>(timepoint -
+                                                          ms_before_start_time);
   for (auto &i : _tp) {
     i->set_offset(value.count());
   }

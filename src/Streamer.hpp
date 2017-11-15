@@ -72,7 +72,7 @@ private:
   int32_t message_length_{0};
   int32_t n_messages_{0};
   int32_t n_sources_{0};
-  ESSTimeStamp _timestamp_delay{3000};
+  ESSTimeStamp ms_before_start_time{3000};
   milliseconds consumer_timeout{1000};
   int metadata_retry{5};
 
