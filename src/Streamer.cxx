@@ -14,14 +14,14 @@ bool FileWriter::Streamer::set_streamer_opt(
   // Note: to_int<> returns a pair (validity of conversion,value).
   // First element notifies if the conversion is defined
 
-  if (option.first == "ms.before.start") {
+  if (option.first == "ms-before-start") {
     auto value = to_num<int>(option.second);
     if (value.first && (value.second > 0)) {
       ms_before_start_time = ESSTimeStamp(value.second);
       return true;
     }
   }
-  if (option.first == "streamer.metadata.retry") {
+  if (option.first == "metadata-retry") {
     auto value = to_num<int>(option.second);
     if (value.first && (value.second > 0)) {
       metadata_retry = value.second;
@@ -115,11 +115,6 @@ std::shared_ptr<RdKafka::Conf> FileWriter::Streamer::initialize_configuration(
                                        return this->set_conf_opt(conf, item);
                                      }),
                       kafka_options.end());
-  if (!kafka_options.empty()) {
-    for (auto &item : kafka_options) {
-      LOG(Sev::Warning, "Unknown option: {} [{}]", item.first, item.second);
-    }
-  }
   return conf;
 }
 

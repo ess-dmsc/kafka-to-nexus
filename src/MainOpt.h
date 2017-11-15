@@ -5,6 +5,7 @@
 #include "uri.h"
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -12,7 +13,6 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <chrono>
 
 struct rd_kafka_topic_partition_list_s;
 
@@ -29,6 +29,9 @@ struct MainOpt {
   /// Kafka options, they get parsed from the configuration file and passed on
   /// to the StreamMaster.
   std::map<std::string, std::string> kafka;
+  /// Streamer options, they get parsed from the configuration file and passed
+  /// on to the StreamMaster.
+  std::map<std::string, std::string> streamer_config;
   /// Can optionally log in Graylog GELF format to a Kafka topic.
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.

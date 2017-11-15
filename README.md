@@ -42,13 +42,24 @@ Available options include:
     "a list of commands as discussed below."
   ],
   "hdf-output-prefix": "./absolute/or/relative/path/to/hdf/output/directory",
+  [OPTIONAL]"kafka" : {
+	"any-rdkafka-option": "value"
+  },
+  [OPTIONAL]"streamer" : {
+	"ms-before-start" : 1000
+  },
+  [OPTIONAL]"stream-master" : {
+	"topic-write-interval" : 1000
+  }
 }
 ```
 
 - `command-uri` Kafka URI where the file writer listens for commands
 - `status-uri` Kafka URI where to publish status updates
 - `status-master-interval` Interval in milliseconds for status updates
-
+- `kafka` Kafka configuration for consumers in Streamer
+- `streamer` Configuration option for the [Streamer](#Streamer)
+- `stream-master` Configuration option for the [StreamMaster](#StreamMaster)
 
 ### Send command to kafka-to-nexus
 
@@ -407,17 +418,22 @@ A pictorial representation of the implementation is ![File Writer overall design
 
 According to the design the Streamer connects to Kafka (other
 sources to be implemented) and consumes a message in the specified topic. Some features:
+
 * one Streamer per topic
 * multiple Source per streamer
 * initial timestamp is specified using ``set_start_time``
 * connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
-* Kafka::Config and streamer options can be passed using the constructor ``kafka_options`` and ``filewriter_options`` respectively.
+* Kafka::Config and streamer options can be optionally configured using ``kafka`` and ``streamer`` fields in the configuration file. ``kafka`` can contain any option that RdKafka accepts. `streamer` can contain:
+	- `ms-before-start` milliseconds before the `start_time` to start writing from
+
 
 ## DemuxTopic
 Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.
 The two corresponding methods are
+
 * process_message
 * time_difference_from_message
+
 Both receive the message payload and size. Return values are ProcessMessageResult and TimeDifferenceFromMessage_DT.
 
 ## Source
@@ -429,8 +445,7 @@ FileWriterCommand and instantiates the Streamer array according to the
 topics. Eventually retrieves the list of brokers from Kafka.
 
 * `start_time` and `stop_time` can be used to set the timestamp of
-the first and last event to be written (caution: actually events
-with timestamp earlier than request will be written);
+the first and last event to be written (see [Streamer](#Streamer) options);
 * upon a `stop` message the ``Master`` can stop the writing;
 * if a `status-uri` is configured sends a (JSON formatted) status
   report on the corresponding topic;
@@ -438,7 +453,7 @@ with timestamp earlier than request will be written);
 ``StreamMaster``. Definitions are in
 `Status::StreamMasterErrorCode` (the function `Err2Str`
 converts the error code into a human readable string). 
-
+* each topic is written continously for at most `topic-write-interval`. this value can be configured in the config file (default 1000ms)
 
 More tests involving the network:
 ```

@@ -206,14 +206,18 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
   if (master) {
     auto br = find_broker(d);
-    auto config_kafka = config.kafka;
+    //    auto config_kafka = config.kafka;
     std::vector<std::pair<string, string>> config_kafka_vec;
-    for (auto &x : config_kafka) {
+    for (auto &x : config.kafka) {
       config_kafka_vec.emplace_back(x.first, x.second);
     }
+    std::vector<std::pair<string, string>> config_streamer_vec;
+    for (auto &x : config.streamer_config) {
+      config_streamer_vec.emplace_back(x.first, x.second);
+    }
 
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(
-        new StreamMaster<Streamer>(br, std::move(fwt), config_kafka_vec));
+    auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
+        br, std::move(fwt), config_kafka_vec, config_streamer_vec));
     if (master->status_producer) {
       s->report(master->status_producer,
                 milliseconds{config.status_master_interval});
