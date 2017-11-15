@@ -17,8 +17,8 @@ class Report {
 public:
   Report() {}
   Report(std::shared_ptr<KafkaW::ProducerTopic> producer,
-         const int delay = 1000)
-      : report_producer_{producer}, delay_{milliseconds(delay)} {}
+         const milliseconds& report_ms = milliseconds{1000})
+      : report_producer_{producer}, report_ms_{report_ms} {}
   Report(const Report &other) = delete;
   Report(Report &&other) = default;
   Report &operator=(Report &&other) = default;
@@ -28,14 +28,14 @@ public:
   void report(S &streamer, std::atomic<bool> &stop,
               std::atomic<SMEC> &stream_master_status) {
     while (!stop.load()) {
-      std::this_thread::sleep_for(delay_);
+      std::this_thread::sleep_for(report_ms_);
       auto error = produce_single_report(streamer, stream_master_status);
       if (error == SMEC::report_failure) {
         stream_master_status = error;
         return;
       }
     }
-    std::this_thread::sleep_for(delay_);
+    std::this_thread::sleep_for(report_ms_);
     auto error = produce_single_report(streamer, stream_master_status);
     if (error != SMEC::no_error) { // termination message
       stream_master_status = error;
@@ -54,7 +54,7 @@ private:
     }
 
     info.status(stream_master_status);
-    info.time_to_next_message(delay_);
+    info.time_to_next_message(report_ms_);
     for (auto &s : streamer) {
       info.add(s.first, s.second.info());
     }
@@ -66,6 +66,6 @@ private:
 
   Status::StreamMasterInfo info;
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
-  milliseconds delay_{milliseconds(1000)};
+  milliseconds report_ms_;
 };
 } // namespace FileWriter

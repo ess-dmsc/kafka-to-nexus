@@ -109,14 +109,13 @@ public:
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const int &delay = 1000) {
-    if (delay < 0) {
-      LOG(Sev::Warning,
-          "Required negative delay in statistics collection: use default");
+              const milliseconds &report_ms = milliseconds{1000}) {
+    if (delay.count() < 0) {
+      LOG(Sev::Warning, "Required negative delay in statistics collection: use default");
       return report(p);
     }
     if (!report_thread_.joinable()) {
-      report_.reset(new Report(p, delay));
+      report_.reset(new Report(p, report_ms));
       report_thread_ =
           std::thread([&] { report_->report(streamer, stop_, runstatus); });
     } else {

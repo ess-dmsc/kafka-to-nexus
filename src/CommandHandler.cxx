@@ -215,7 +215,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto s = std::unique_ptr<StreamMaster<Streamer>>(
         new StreamMaster<Streamer>(br, std::move(fwt), config_kafka_vec));
     if (master->status_producer) {
-      s->report(master->status_producer, config.status_master_interval);
+      s->report(master->status_producer,
+                milliseconds{config.status_master_interval});
     }
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
