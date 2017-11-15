@@ -3,6 +3,7 @@
 #include "Alloc.h"
 #include "logger.h"
 #include "uri.h"
+
 #include <atomic>
 #include <functional>
 #include <map>
@@ -11,6 +12,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 struct rd_kafka_topic_partition_list_s;
 
@@ -66,6 +68,9 @@ struct MainOpt {
   bool source_do_process_message = true;
   Alloc::sptr jm;
   bool logpid_sleep = false;
+  // Max interval (in milliseconds) to spend writing each topic before
+  // switch to the next
+  std::chrono::milliseconds topic_write_duration;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);

@@ -17,7 +17,6 @@
 #include "Report.hpp"
 #include "logger.h"
 
-struct FileWriterCommand;
 namespace KafkaW {
 class ProducerTopic;
 }
@@ -28,6 +27,7 @@ template <typename Streamer> class StreamMaster {
   using SEC = Status::StreamerErrorCode;
   using SMEC = Status::StreamMasterErrorCode;
   using Options = typename Streamer::Options;
+  friend class CommandHandler;
 
 public:
   StreamMaster() {}
@@ -146,7 +146,8 @@ private:
         auto &s = streamer[d.topic()];
         if (s.runstatus() == SEC::writing) {
           auto tp = system_clock::now();
-          while (do_write && ((system_clock::now() - tp) < duration)) {
+          while (do_write &&
+                 ((system_clock::now() - tp) < topic_write_duration)) {
             auto value = s.write(d);
             if (value.is_STOP() &&
                 (remove_source(d.topic()) != SMEC::running)) {
@@ -233,7 +234,7 @@ private:
   std::once_flag stop_once_guard;
   std::unique_ptr<Report> report_{nullptr};
 
-  milliseconds duration{1000};
+  milliseconds topic_write_duration{1000};
 };
 
 } // namespace FileWriter

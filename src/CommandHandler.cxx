@@ -218,6 +218,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       s->report(master->status_producer,
                 milliseconds{config.status_master_interval});
     }
+    if (config.topic_write_duration.count()) {
+      s->topic_write_duration = config.topic_write_duration;
+    }
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
       LOG(Sev::Info, "start time :\t{}", start_time.count());
