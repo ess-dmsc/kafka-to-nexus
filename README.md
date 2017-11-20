@@ -89,7 +89,7 @@ Command to start writing a file:
             "stream": {
               "topic": "topic.with.multiple.sources",
               "source": "for_example_motor",
-              "module": "f142",
+              "writer_module": "f142",
               "type": "float",
               "array_size": 4
             }

@@ -479,7 +479,7 @@ public:
           stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
@@ -892,7 +892,7 @@ public:
           stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           if (array_size == 0) {
             stream.AddMember("type", Value("double", a), a);
           } else {
