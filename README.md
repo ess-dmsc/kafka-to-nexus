@@ -139,6 +139,16 @@ Command to start writing a file:
                 ["string_1_2_0", "string_1_2_1"]
               ]
             ]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fixed_length_1d",
+            "dataset": {
+              "type":"string",
+              "string_size": 32,
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one"]
           }
         ]
       }
