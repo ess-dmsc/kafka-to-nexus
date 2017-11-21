@@ -115,37 +115,98 @@ public:
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "value", "values": 42.24, "attributes":{"units":"degree"}})"");
+                R""({
+                  "type": "dataset",
+                  "name": "value",
+                  "values": 42.24,
+                  "attributes": {"units":"degree"}
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "more_complex_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 2]}, "values": [[13.1, 14]]})"");
+                R""({
+                  "type": "dataset",
+                  "name": "more_complex_set",
+                  "dataset": {
+                    "space": "simple",
+                    "type": "double",
+                    "size": ["unlimited", 2]
+                  },
+                  "values": [
+                    [13.1, 14]
+                  ]
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "string_scalar", "dataset": {"type":"string"}, "values": "the-scalar-string"})"");
+                R""({
+                  "type": "dataset",
+                  "name": "string_scalar",
+                  "dataset": {
+                    "type": "string"
+                  },
+                  "values": "the-scalar-string"
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "string_1d", "dataset": {"type":"string", "size":["unlimited"]}, "values": ["the-scalar-string", "another-one"]})"");
+                R""({
+                  "type": "dataset",
+                  "name": "string_1d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited"]
+                  },
+                  "values": ["the-scalar-string", "another-one"]
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "string_2d", "dataset": {"type":"string", "size":["unlimited", 2]}, "values": [["the-scalar-string", "another-one"], ["string_1_0", "string_1_1"]]})"");
+                R""({
+                  "type": "dataset",
+                  "name": "string_2d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited", 2]
+                  },
+                  "values": [
+                    ["the-scalar-string", "another-one"],
+                    ["string_1_0", "string_1_1"]
+                  ]
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "string_3d", "dataset": {"type":"string", "size":["unlimited", 3, 2]}, "values": [[["string_0_0_0", "string_0_0_1"], ["string_0_1_0", "string_0_1_1"], ["string_0_2_0", "string_0_2_1"]],   [["string_1_0_0", "string_1_0_1"], ["string_1_1_0", "string_1_1_1"], ["string_1_2_0", "string_1_2_1"]]]})"");
+                R""({
+                  "type": "dataset",
+                  "name": "string_3d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited", 3, 2]
+                  },
+                  "values": [
+                    [
+                      ["string_0_0_0", "string_0_0_1"],
+                      ["string_0_1_0", "string_0_1_1"],
+                      ["string_0_2_0", "string_0_2_1"]
+                    ],
+                    [
+                      ["string_1_0_0", "string_1_0_1"],
+                      ["string_1_1_0", "string_1_1_1"],
+                      ["string_1_2_0", "string_1_2_1"]
+                    ]
+                  ]
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
