@@ -127,6 +127,24 @@ public:
           {
             Document jd;
             jd.Parse(
+                R""({"type":"dataset", "name": "string_scalar", "dataset": {"type":"string"}, "values": "the-scalar-string"})"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({"type":"dataset", "name": "string_1d", "dataset": {"type":"string", "size":["unlimited"]}, "values": ["the-scalar-string", "another-one"]})"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({"type":"dataset", "name": "string_2d", "dataset": {"type":"string", "size":["unlimited", 2]}, "values": [["the-scalar-string", "another-one"], ["string_1_0", "string_1_1"]]})"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
                 R""({"type":"dataset", "name": "big_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 4, 2]}})"");
             {
               Value values;
