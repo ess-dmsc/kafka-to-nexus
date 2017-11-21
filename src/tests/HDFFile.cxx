@@ -145,6 +145,12 @@ public:
           {
             Document jd;
             jd.Parse(
+                R""({"type":"dataset", "name": "string_3d", "dataset": {"type":"string", "size":["unlimited", 3, 2]}, "values": [[["string_0_0_0", "string_0_0_1"], ["string_0_1_0", "string_0_1_1"], ["string_0_2_0", "string_0_2_1"]],   [["string_1_0_0", "string_1_0_1"], ["string_1_1_0", "string_1_1_1"], ["string_1_2_0", "string_1_2_1"]]]})"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
                 R""({"type":"dataset", "name": "big_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 4, 2]}})"");
             {
               Value values;
