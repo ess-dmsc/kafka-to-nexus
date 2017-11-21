@@ -151,6 +151,21 @@ public:
           {
             Document jd;
             jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_fixed_1d",
+                  "dataset": {
+                    "type":"string",
+                    "string_size": 32,
+                    "size": ["unlimited"]
+                  },
+                  "values": ["the-scalar-string", "another-one"]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
                 R""({"type":"dataset", "name": "big_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 4, 2]}})"");
             {
               Value values;
