@@ -349,7 +349,7 @@ write_ds_string(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
 
   auto dt = H5Tcopy(H5T_C_S1);
   H5Tset_size(dt, H5T_VARIABLE);
-  // TODO set utf8
+  H5Tset_cset(dt, H5T_CSET_UTF8);
 
   auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
                        H5P_DEFAULT);
@@ -397,6 +397,7 @@ write_ds_string_fixed_size(hid_t hdf_parent, std::string name, std::vector<hsize
 
   auto dt = H5Tcopy(H5T_C_S1);
   H5Tset_size(dt, element_size);
+  H5Tset_cset(dt, H5T_CSET_UTF8);
 
   auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
                        H5P_DEFAULT);
