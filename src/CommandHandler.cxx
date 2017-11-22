@@ -215,6 +215,13 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     for (auto &x : config.streamer_config) {
       config_streamer_vec.emplace_back(x.first, x.second);
     }
+    // Required before StreamMaster instantiation
+    auto start_time = find_time(d, "start_time");
+    if (start_time.count()) {
+      LOG(Sev::Info, "start time :\t{}", start_time.count());
+      config_streamer_vec.emplace_back("start-time-ms",
+                                       std::to_string(start_time.count()));
+    }
 
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(fwt), config_kafka_vec, config_streamer_vec));
@@ -225,11 +232,15 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     if (config.topic_write_duration.count()) {
       s->topic_write_duration = config.topic_write_duration;
     }
-    auto start_time = find_time(d, "start_time");
-    if (start_time.count()) {
-      LOG(Sev::Info, "start time :\t{}", start_time.count());
-      s->start_time(start_time);
-    }
+// <<<<<<< HEAD
+//     auto start_time = find_time(d, "start_time");
+//     if (start_time.count()) {
+//       LOG(Sev::Info, "start time :\t{}", start_time.count());
+//       s->start_time(start_time);
+//     }
+// =======
+//     // Required after StreamMaster instantiation
+// >>>>>>> Refactor Streamer connection, remove dead code
     auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {
       LOG(Sev::Info, "stop time :\t{}", stop_time.count());

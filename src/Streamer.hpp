@@ -42,7 +42,7 @@ public:
 
   SEC close_stream();
 
-  SEC set_start_time(const ESSTimeStamp &tp);
+  // SEC set_start_time(const ESSTimeStamp &tp);
 
   int32_t &n_sources() { return n_sources_; }
   SEC remove_source();
@@ -52,13 +52,9 @@ public:
   Status::MessageInfo &info() { return message_info_; }
 
 private:
-  std::shared_ptr<RdKafka::KafkaConsumer> _consumer;
+  std::shared_ptr<RdKafka::KafkaConsumer> consumer;
   std::vector<RdKafka::TopicPartition *> _tp;
-  RdKafkaOffset _offset{RdKafkaOffsetEnd};
-  RdKafkaOffset _begin;
-  std::vector<RdKafkaOffset> _low;
 
-  //  Status::StreamerStatus s_;
   SEC run_status_{};
   Status::MessageInfo message_info_;
 
@@ -69,28 +65,25 @@ private:
   std::condition_variable connection_init_;
   std::atomic<bool> initilialising_{false};
 
-  int32_t message_length_{0};
-  int32_t n_messages_{0};
   int32_t n_sources_{0};
   ESSTimeStamp ms_before_start_time{3000};
   milliseconds consumer_timeout{1000};
   int metadata_retry{5};
+  ESSTimeStamp start_ts{0};
 
-  void connect(const std::string broker, Options kafka_options,
-               Options filewriter_options);
-  // sets options for Kafka consumer and the Streamer
-  void initialize_streamer(Options &);
-  std::shared_ptr<RdKafka::Conf> initialize_configuration(Options &);
-  bool set_streamer_opt(const option_t &opt);
-  bool set_conf_opt(std::shared_ptr<RdKafka::Conf> conf,
-                    const option_t &option);
+  void connect(const std::string& broker, const Options& kafka_options,
+               const Options& filewriter_options);
+  void set_streamer_options(const Options &);
+  std::unique_ptr<RdKafka::Conf> create_configuration(const Options &);
+  SEC create_consumer(std::unique_ptr<RdKafka::Conf> &&);
+  std::unique_ptr<RdKafka::Metadata> create_metadata();
+  SEC create_topic_partition(const std::string &topic,
+                             std::unique_ptr<RdKafka::Metadata>&&,
+                             const ESSTimeStamp &timestamp);
+  void push_topic_partition(const std::string &topic, const int32_t &partition,
+                            const ESSTimeStamp &timestamp);
+  SEC assign_topic_partition();
 
-  // retrieve Metadata and fills TopicPartition. Retries <retry> times
-  std::unique_ptr<RdKafka::Metadata> get_metadata(const int &retry);
-  SEC get_topic_partitions(const std::string &topic,
-                           std::unique_ptr<RdKafka::Metadata> metadata);
-
-  SEC get_offset_boundaries();
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);

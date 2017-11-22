@@ -27,6 +27,7 @@ add_gtest_to_target(${tgt})
 set(tgt "streamer_test")
 set(sources
 streamer_test.cxx
+consumer.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})

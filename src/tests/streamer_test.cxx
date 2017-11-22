@@ -5,14 +5,19 @@
 #include <stdexcept>
 #include <thread>
 
-#include <Streamer.hpp>
+#include "../Streamer.hpp"
 #include <librdkafka/rdkafkacpp.h>
+
+#include "../uri.h"
+#include "consumer.hpp"
 
 const int max_recv_messages = 10;
 
 using namespace FileWriter;
 
-class MinimalProducer : public ::testing::Test {
+///////////////////
+///////////////////
+class Producer : public ::testing::Test {
 
 protected:
   virtual void SetUp() {
@@ -20,7 +25,7 @@ protected:
     RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
     std::string errstr;
     conf->set("metadata.broker.list", broker, errstr);
-    //    conf->set("dr_cb", &MinimalProducer::dr_cb, errstr);
+    //    conf->set("dr_cb", &Producer::dr_cb, errstr);
 
     _producer = RdKafka::Producer::create(conf, errstr);
     if (!_producer) {
@@ -100,9 +105,11 @@ public:
   static std::string topic;
 };
 
-std::string MinimalProducer::broker = "localhost";
-std::string MinimalProducer::topic = "streamer-test-topic";
+std::string Producer::broker = "localhost";
+std::string Producer::topic = "test";
 
+///////////////////
+///////////////////
 std::function<ProcessMessageResult(void *, int)> silent = [](void *x, int) {
   return ProcessMessageResult::OK();
 };
@@ -128,11 +135,12 @@ std::pair<std::string, int64_t> dummy_message_parser(std::string &&msg) {
   // what to return??  make it an error.
   return std::pair<std::string, int64_t>("", -1);
 }
-std::function<TimeDifferenceFromMessage_DT(void *, int)> time_difference = [](
-    void *x, int size) {
-  auto parsed_text = dummy_message_parser(std::string((char *)x));
-  return TimeDifferenceFromMessage_DT(parsed_text.first, parsed_text.second);
-};
+std::function<TimeDifferenceFromMessage_DT(void *, int)> time_difference =
+    [](void *x, int size) {
+      auto parsed_text = dummy_message_parser(std::string((char *)x));
+      return TimeDifferenceFromMessage_DT(parsed_text.first,
+                                          parsed_text.second);
+    };
 
 TEST(Streamer, MissingTopicFailure) {
   ASSERT_THROW(Streamer(std::string("data_server:1234"), std::string("")),
@@ -140,11 +148,11 @@ TEST(Streamer, MissingTopicFailure) {
 }
 
 TEST(Streamer, ConstructionSuccess) {
-  ASSERT_NO_THROW(Streamer(MinimalProducer::broker, MinimalProducer::topic));
+  ASSERT_NO_THROW(Streamer(Producer::broker, Producer::topic));
 }
 
 TEST(Streamer, NoReceive) {
-  Streamer s(MinimalProducer::broker, "dummy_topic");
+  Streamer s(Producer::broker, "dummy_topic");
   using namespace std::placeholders;
   int data_size = 0, counter = 0;
   std::function<ProcessMessageResult(void *, int)> f1 =
@@ -160,10 +168,10 @@ TEST(Streamer, NoReceive) {
   EXPECT_EQ(data_size, 0);
 }
 
-TEST_F(MinimalProducer, Receive) {
+TEST_F(Producer, Receive) {
   using namespace std::placeholders;
 
-  Streamer s(MinimalProducer::broker, MinimalProducer::topic);
+  Streamer s(Producer::broker, Producer::topic);
   int data_size = 0, counter = 0;
   std::function<ProcessMessageResult(void *, int)> f1 =
       std::bind(sum, _1, _2, &data_size);
@@ -184,7 +192,7 @@ TEST_F(MinimalProducer, Receive) {
   stop();
 }
 
-// TEST_F(MinimalProducer, Reconnect) {
+// TEST_F(Producer, Reconnect) {
 //   using namespace std::placeholders;
 
 //   int data_size = 0, counter = 0;
@@ -193,7 +201,7 @@ TEST_F(MinimalProducer, Receive) {
 
 //   start();
 
-//   Streamer s(MinimalProducer::broker, "dummy_topic");
+//   Streamer s(Producer::broker, "dummy_topic");
 //   ProcessMessageResult status = ProcessMessageResult::OK();
 //   do {
 //     EXPECT_TRUE(status.is_OK());
@@ -205,7 +213,7 @@ TEST_F(MinimalProducer, Receive) {
 
 //   data_size = 0;
 //   counter = 0;
-//   EXPECT_EQ(s.connect(MinimalProducer::broker, MinimalProducer::topic), 0);
+//   EXPECT_EQ(s.connect(Producer::broker, Producer::topic), 0);
 //   status = ProcessMessageResult::OK();
 //   do {
 //     EXPECT_TRUE(status.is_OK());
@@ -216,7 +224,7 @@ TEST_F(MinimalProducer, Receive) {
 //   stop();
 // }
 
-TEST_F(MinimalProducer, JumpBack) {
+TEST_F(Producer, JumpBack) {
   Streamer s(broker, topic);
   ProcessMessageResult status = ProcessMessageResult::OK();
   int counter = 0;
@@ -228,25 +236,39 @@ TEST_F(MinimalProducer, JumpBack) {
   } while (status.is_OK() && (counter < max_recv_messages));
 
   std::cout << "\n\nhello\n" << std::endl;
-  DemuxTopic demux(MinimalProducer::topic);
+  DemuxTopic demux(Producer::topic);
   stop();
+}
+
+TEST_F(Consumer, setup) {
+  timestamp = 1511278317590;
+  create_config();
+  create_consumer();
+  create_metadata();
+  create_topic_partition();
+  offsets_for_times();
+  assign_topic_partition();
+  while (1) {
+    consume();
+  }
 }
 
 int main(int argc, char **argv) {
 
   ::testing::InitGoogleTest(&argc, argv);
+
   for (int i = 1; i < argc; ++i) {
-    std::string opt(argv[i]);
-    size_t found = opt.find("=");
-    if (opt.substr(0, found) == "--kafka_broker")
-      MinimalProducer::broker = opt.substr(found + 1);
-    if (opt.substr(0, found) == "--kafka_topic")
-      MinimalProducer::topic = opt.substr(found + 1);
-    if (opt.substr(0, found) == "--help") {
+    if (std::string{argv[i]} == "--broker" || std::string{argv[i]} == "-b") {
+      uri::URI u(argv[i + 1]);
+      Producer::broker = u.host_port;
+      Producer::topic = u.topic;
+      Consumer::broker = u.host_port;
+      Consumer::topic = u.topic;
+    }
+    if (std::string{argv[i]} == "--help" || std::string{argv[i]} == "-h") {
       std::cout << "\nOptions: "
                 << "\n"
-                << "\t--kafka_broker=<host>:<port>[default = 9092]\n"
-                << "\t--kafka_topic=<topic>\n";
+                << "\t--broker //<host>:<port>/<topic>\n";
     }
   }
 

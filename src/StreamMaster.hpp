@@ -63,15 +63,6 @@ public:
 
   StreamMaster &operator=(const StreamMaster &) = delete;
 
-  bool start_time(const ESSTimeStamp &start) {
-    for (auto &s : streamer) {
-      auto result = s.second.set_start_time(start);
-      if (result != SEC::no_error) {
-        return false;
-      }
-    }
-    return true;
-  }
   bool stop_time(const ESSTimeStamp &stop) {
     for (auto &d : demux) {
       d.stop_time() = stop;
@@ -110,7 +101,7 @@ public:
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const milliseconds &report_ms = milliseconds{1000}) {
-    if (delay.count() < 0) {
+    if (report_ms.count() < 0) {
       LOG(Sev::Warning, "Required negative delay in statistics collection: use default");
       return report(p);
     }
