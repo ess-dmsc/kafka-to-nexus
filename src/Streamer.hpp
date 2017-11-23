@@ -39,7 +39,7 @@ public:
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
-  template <class T> TimeDifferenceFromMessage_DT set_start_time(T &f) {
+  template <class T> FileWriter::DemuxTopic::DT set_start_time(T &f) {
     std::cout << "fake_set_start_time\n";
     return TimeDifferenceFromMessage_DT::ERR();
   }
@@ -75,21 +75,23 @@ private:
   int metadata_retry{5};
   ESSTimeStamp start_ts{0};
 
-  void connect(const std::string& broker, const Options& kafka_options,
-               const Options& filewriter_options);
+  void connect(const std::string &broker, const Options &kafka_options,
+               const Options &filewriter_options);
   void set_streamer_options(const Options &);
   std::unique_ptr<RdKafka::Conf> create_configuration(const Options &);
   SEC create_consumer(std::unique_ptr<RdKafka::Conf> &&);
   std::unique_ptr<RdKafka::Metadata> create_metadata();
   SEC create_topic_partition(const std::string &topic,
-                             std::unique_ptr<RdKafka::Metadata>&&,
+                             std::unique_ptr<RdKafka::Metadata> &&,
                              const ESSTimeStamp &timestamp);
   void push_topic_partition(const std::string &topic, const int32_t &partition,
                             const ESSTimeStamp &timestamp);
   SEC assign_topic_partition();
-
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
+template <>
+FileWriter::DemuxTopic::DT
+Streamer::set_start_time<>(FileWriter::DemuxTopic &);
 
 } // namespace FileWriter

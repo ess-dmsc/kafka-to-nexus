@@ -45,7 +45,9 @@ public:
                        std::forward_as_tuple(broker, d.topic(), kafka_options,
                                              filewriter_options));
       streamer[d.topic()].n_sources() = d.sources().size();
+      streamer[d.topic()].set_start_time(d);
     }
+
   }
 
   StreamMaster(const StreamMaster &) = delete;

@@ -281,3 +281,15 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   }
   return result;
 }
+
+template <>
+FileWriter::DemuxTopic::DT
+FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp) {
+  auto result = mp.time_difference_from_message((char *)nullptr,0);
+  do {
+    std::unique_ptr<RdKafka::Message> msg{
+        consumer->consume(consumer_timeout.count())};
+    result = mp.time_difference_from_message((char *)msg->payload(), msg->len());
+  } while (result.dt > start_ts.count());
+  return result;
+}
