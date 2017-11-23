@@ -28,6 +28,7 @@ set(tgt "streamer_test")
 set(sources
 streamer_test.cxx
 consumer.cxx
+producer.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})

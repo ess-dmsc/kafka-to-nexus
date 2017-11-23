@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
 
-//#include "../helper.h"
 #include "consumer.hpp"
 
 /////////////
