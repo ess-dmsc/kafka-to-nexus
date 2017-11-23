@@ -308,8 +308,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
       }
     }
   }
-
-  return HDFWriterModule::WriteResult::OK();
+  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
 }
 
 int32_t HDFWriterModule::flush() { return 0; }
