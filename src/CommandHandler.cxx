@@ -223,6 +223,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
                                        std::to_string(start_time.count()));
     }
 
+    LOG(3, "Write file with id :\t{}", job_id);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(fwt), config_kafka_vec, config_streamer_vec));
     if (master->status_producer) {

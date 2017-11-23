@@ -39,6 +39,10 @@ public:
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
+  template <class T> TimeDifferenceFromMessage_DT set_start_time(T &f) {
+    std::cout << "fake_set_start_time\n";
+    return TimeDifferenceFromMessage_DT::ERR();
+  }
 
   SEC close_stream();
 
@@ -66,7 +70,7 @@ private:
   std::atomic<bool> initilialising_{false};
 
   int32_t n_sources_{0};
-  ESSTimeStamp ms_before_start_time{3000};
+  milliseconds ms_before_start_time{3000};
   milliseconds consumer_timeout{1000};
   int metadata_retry{5};
   ESSTimeStamp start_ts{0};

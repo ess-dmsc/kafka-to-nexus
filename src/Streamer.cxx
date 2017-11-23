@@ -128,8 +128,8 @@ void FileWriter::Streamer::push_topic_partition(const std::string &topic,
                                                 const int32_t &partition,
                                                 const ESSTimeStamp &timestamp) {
   if (timestamp.count()) {
-    auto value = std::chrono::duration_cast<KafkaTimeStamp>(
-        timestamp - ms_before_start_time);
+    auto value = std::chrono::duration_cast<KafkaTimeStamp>(timestamp) -
+                 ms_before_start_time;
     _tp.push_back(
         RdKafka::TopicPartition::create(topic, partition, value.count()));
   } else {
