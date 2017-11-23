@@ -11,7 +11,6 @@
 #include "DemuxTopic.h"
 #include "Status.hpp"
 
-// forward definitions
 namespace RdKafka {
 class Conf;
 class KafkaConsumer;
@@ -39,14 +38,8 @@ public:
     std::cout << "fake_recv\n";
     return ProcessMessageResult::ERR();
   }
-  template <class T> FileWriter::DemuxTopic::DT set_start_time(T &f) {
-    std::cout << "fake_set_start_time\n";
-    return TimeDifferenceFromMessage_DT::ERR();
-  }
 
   SEC close_stream();
-
-  // SEC set_start_time(const ESSTimeStamp &tp);
 
   int32_t &n_sources() { return n_sources_; }
   SEC remove_source();
@@ -73,7 +66,7 @@ private:
   milliseconds ms_before_start_time{3000};
   milliseconds consumer_timeout{1000};
   int metadata_retry{5};
-  ESSTimeStamp start_ts{0};
+  milliseconds start_ts{0};
 
   void connect(const std::string &broker, const Options &kafka_options,
                const Options &filewriter_options);
@@ -82,16 +75,11 @@ private:
   SEC create_consumer(std::unique_ptr<RdKafka::Conf> &&);
   std::unique_ptr<RdKafka::Metadata> create_metadata();
   SEC create_topic_partition(const std::string &topic,
-                             std::unique_ptr<RdKafka::Metadata> &&,
-                             const ESSTimeStamp &timestamp);
-  void push_topic_partition(const std::string &topic, const int32_t &partition,
-                            const ESSTimeStamp &timestamp);
+                             std::unique_ptr<RdKafka::Metadata> &&);
+  void push_topic_partition(const std::string &topic, const int32_t &partition);
   SEC assign_topic_partition();
 };
 
 template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
-template <>
-FileWriter::DemuxTopic::DT
-Streamer::set_start_time<>(FileWriter::DemuxTopic &);
 
 } // namespace FileWriter

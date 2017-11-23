@@ -22,7 +22,7 @@ void FileWriter::Streamer::set_streamer_options(
         LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
         ms_before_start_time = ESSTimeStamp(value.second);
       }
-      break;
+      continue;
     }
     if (opt.first == "metadata-retry") {
       auto value = to_num<int>(opt.second);
@@ -30,7 +30,7 @@ void FileWriter::Streamer::set_streamer_options(
         LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
         metadata_retry = value.second;
       }
-      break;
+      continue;
     }
     if (opt.first == "start-time-ms") {
       auto value = to_num<uint64_t>(opt.second);
@@ -38,7 +38,7 @@ void FileWriter::Streamer::set_streamer_options(
         LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
         start_ts = ESSTimeStamp{value.second};
       }
-      break;
+      continue;
     }
     LOG(Sev::Warning, "Unknown option: {} [{}]", opt.first, opt.second);
   }
@@ -93,8 +93,7 @@ std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::create_metadata() {
 
 FileWriter::Status::StreamerErrorCode
 FileWriter::Streamer::create_topic_partition(
-    const std::string &topic, std::unique_ptr<RdKafka::Metadata> &&metadata,
-    const ESSTimeStamp &timestamp) {
+    const std::string &topic, std::unique_ptr<RdKafka::Metadata> &&metadata) {
   if (run_status_ == SEC::metadata_error) {
     return SEC::metadata_error;
   }
@@ -109,7 +108,7 @@ FileWriter::Streamer::create_topic_partition(
   }
   if (pmv->size()) {
     for (auto p : *pmv) {
-      push_topic_partition(topic, p->id(), timestamp);
+      push_topic_partition(topic, p->id());
       if (!_tp.back()) {
         LOG(Sev::Error, "Error: unable to create partition {} for topic {}", p->id(),
             topic);
@@ -125,11 +124,9 @@ FileWriter::Streamer::create_topic_partition(
 }
 
 void FileWriter::Streamer::push_topic_partition(const std::string &topic,
-                                                const int32_t &partition,
-                                                const ESSTimeStamp &timestamp) {
-  if (timestamp.count()) {
-    auto value = std::chrono::duration_cast<KafkaTimeStamp>(timestamp) -
-                 ms_before_start_time;
+                                                const int32_t &partition) {
+  if (start_ts.count()) {
+    auto value = start_ts - ms_before_start_time;
     _tp.push_back(
         RdKafka::TopicPartition::create(topic, partition, value.count()));
   } else {
@@ -142,7 +139,8 @@ FileWriter::Streamer::assign_topic_partition() {
   if (!consumer || _tp.empty()) {
     return SEC::topic_partition_error;
   }
-  auto err = consumer->assign(_tp);
+  auto err = consumer->offsetsForTimes(_tp, 1000);
+  err = consumer->assign(_tp);
   if (err != RdKafka::ERR_NO_ERROR) {
     LOG(Sev::Error, "{}", RdKafka::err2str(err));
     return SEC::topic_partition_error;
@@ -212,8 +210,7 @@ void FileWriter::Streamer::connect(
   if (!metadata) {
     return;
   }
-  run_status_ =
-      create_topic_partition(topic_name, std::move(metadata), start_ts);
+  run_status_ = create_topic_partition(topic_name, std::move(metadata));
   if (run_status_ != SEC::no_error) {
     return;
   }
@@ -271,7 +268,13 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
     message_info_.error();
     return ProcessMessageResult::ERR();
   }
-  // to be removed
+
+  // skip message if timestamp < start_time
+  auto td = mp.time_difference_from_message((char *)msg->payload(), msg->len());
+  if (td.dt < start_ts.count()) {
+    return ProcessMessageResult::OK();
+  }
+
   message_info_.message(msg->len());
 
   auto result = mp.process_message(Msg::rdkafka(std::move(msg)));
@@ -279,17 +282,5 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   if (!result.is_OK()) {
     message_info_.error();
   }
-  return result;
-}
-
-template <>
-FileWriter::DemuxTopic::DT
-FileWriter::Streamer::set_start_time<>(FileWriter::DemuxTopic &mp) {
-  auto result = mp.time_difference_from_message((char *)nullptr,0);
-  do {
-    std::unique_ptr<RdKafka::Message> msg{
-        consumer->consume(consumer_timeout.count())};
-    result = mp.time_difference_from_message((char *)msg->payload(), msg->len());
-  } while (result.dt > start_ts.count());
   return result;
 }

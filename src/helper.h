@@ -83,5 +83,6 @@ std::pair<short int, T> to_num(const std::string &string) {
   return std::pair<short int, T>(false, 0);
 }
 
-template <> std::pair<short int, double> to_num(const std::string &string);
 template <> std::pair<short int, int> to_num(const std::string &string);
+template <> std::pair<short int, uint64_t> to_num(const std::string &string);
+template <> std::pair<short int, double> to_num(const std::string &string);

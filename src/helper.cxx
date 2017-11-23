@@ -291,6 +291,16 @@ template <> std::pair<short int, int> to_num(const std::string &string) {
   return std::pair<short int, int>(true, result);
 }
 
+template <> std::pair<short int, uint64_t> to_num(const std::string &string) {
+  uint64_t result;
+  try {
+    result = std::stoull(string);
+  } catch (std::exception &e) {
+    return std::pair<short int, uint64_t>(false, 0);
+  }
+  return std::pair<short int, uint64_t>(true, result);
+}
+
 template <> std::pair<short int, double> to_num(const std::string &string) {
   double result;
   try {
