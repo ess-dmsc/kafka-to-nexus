@@ -94,17 +94,21 @@ std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::create_metadata() {
 FileWriter::Status::StreamerErrorCode
 FileWriter::Streamer::create_topic_partition(
     const std::string &topic, std::unique_ptr<RdKafka::Metadata> &&metadata) {
-  if (run_status_ == SEC::metadata_error) {
+  if (run_status_ == SEC::metadata_error || !metadata) {
     return SEC::metadata_error;
   }
   using PartitionMetadataVector =
       std::vector<const RdKafka::PartitionMetadata *>;
-  const PartitionMetadataVector *pmv;
+  const PartitionMetadataVector *pmv{nullptr};
   for (auto &t : *metadata->topics()) {
     if (t->topic() == topic) {
       pmv = t->partitions();
       break;
     }
+  }
+  if (!pmv) {
+    LOG(0, "Error: unable to find partition for topic {}", topic);
+    return SEC::topic_partition_error;
   }
   if (pmv->size()) {
     for (auto p : *pmv) {
@@ -120,7 +124,7 @@ FileWriter::Streamer::create_topic_partition(
     return SEC::topic_partition_error;
   }
 
-  return run_status_;
+  return SEC::no_error;
 }
 
 void FileWriter::Streamer::push_topic_partition(const std::string &topic,
@@ -145,7 +149,7 @@ FileWriter::Streamer::assign_topic_partition() {
     LOG(Sev::Error, "{}", RdKafka::err2str(err));
     return SEC::topic_partition_error;
   }
-  return run_status_;
+  return SEC::no_error;
 };
 
 FileWriter::Streamer::Streamer(const std::string &broker,

@@ -9,6 +9,7 @@
 /////////////
 /////////////
 std::string Producer::broker = "localhost";
+std::string Producer::topic = "test";
 
 void Producer::SetUp() {
   create_config();
@@ -55,8 +56,12 @@ void Producer::produce(const std::string &topic, const int32_t &partition) {
   auto ts = duration_cast<FileWriter::KafkaTimeStamp>(
       system_clock::now().time_since_epoch());
   auto msg = "test message < " + std::to_string(ts.count());
-  RdKafka::ErrorCode resp = producer->produce(
+  auto resp = producer->produce(
       topic, partition, RdKafka::Producer::RK_MSG_COPY,
       const_cast<char *>(msg.c_str()), msg.size(), NULL, 0, ts.count(), NULL);
-  producer->flush(-1);
+  ASSERT_EQ(resp, RdKafka::ERR_NO_ERROR);
+  resp = producer->flush(-1);
+  ASSERT_EQ(resp, RdKafka::ERR_NO_ERROR);
 }
+
+int Producer::poll(const int &ms) { return producer->poll(ms); }

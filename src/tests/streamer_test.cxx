@@ -2,6 +2,7 @@
 #include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <stdexcept>
 #include <thread>
 
@@ -12,159 +13,226 @@
 #include "consumer.hpp"
 #include "producer.hpp"
 
-const int max_recv_messages = 10;
-
 using namespace FileWriter;
 
-// ///////////////////
-// ///////////////////
-// std::function<ProcessMessageResult(void *, int)> silent = [](void *x, int) {
-//   return ProcessMessageResult::OK();
-// };
+void create_new_topic_via_producer(const std::string &topic) {
+  Producer p;
+  p.SetUp();
+  p.produce(topic);
+}
 
-// std::function<ProcessMessageResult(void *, int)> verbose = [](void *x,
-//                                                               int size) {
-//   std::cout << "message: " << x << "\t" << size << std::endl;
-//   return ProcessMessageResult::OK();
-// };
-// std::function<ProcessMessageResult(void *, int, int *)> sum =
-//     [](void *x, int size, int *data_size) {
-//       (*data_size) += size;
-//       return ProcessMessageResult::OK();
-//     };
+class StreamerTest : public ::testing::Test {
 
-// std::pair<std::string, int64_t> dummy_message_parser(std::string &&msg) {
-//   auto position = msg.find("-", 0);
-//   int64_t timestamp;
-//   if (position != std::string::npos) {
-//     std::stringstream(msg.substr(position + 1)) >> timestamp;
-//     return std::pair<std::string, int64_t>(msg.substr(0, position), timestamp);
-//   }
-//   // what to return??  make it an error.
-//   return std::pair<std::string, int64_t>("", -1);
-// }
-// std::function<TimeDifferenceFromMessage_DT(void *, int)> time_difference =
-//     [](void *x, int size) {
-//       auto parsed_text = dummy_message_parser(std::string((char *)x));
-//       return TimeDifferenceFromMessage_DT(parsed_text.first,
-//                                           parsed_text.second);
-//     };
+protected:
+  using Option = Streamer::option_t;
+  using Options = Streamer::Options;
 
-// TEST(Streamer, MissingTopicFailure) {
-//   ASSERT_THROW(Streamer(std::string("data_server:1234"), std::string("")),
-//                std::runtime_error);
-// }
+  virtual void SetUp();
+  std::unique_ptr<Streamer> s{nullptr};
 
-// TEST(Streamer, ConstructionSuccess) {
-//   ASSERT_NO_THROW(Streamer(Producer::broker, Producer::topic));
-// }
+  Streamer::SEC reset() { return s->close_stream(); }
 
-// TEST(Streamer, NoReceive) {
-//   Streamer s(Producer::broker, "dummy_topic");
-//   using namespace std::placeholders;
-//   int data_size = 0, counter = 0;
-//   std::function<ProcessMessageResult(void *, int)> f1 =
-//       std::bind(sum, _1, _2, &data_size);
-//   ProcessMessageResult status = ProcessMessageResult::OK();
+  void set_streamer_options(const Options &opt) {
+    s->set_streamer_options(opt);
+  }
+  const milliseconds &ms_before_start_time() { return s->ms_before_start_time; }
+  const milliseconds &start_ts() { return s->start_ts; }
+  const int &metadata_retry() { return s->metadata_retry; }
 
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(f1);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
+  std::unique_ptr<RdKafka::Conf> get_configuration(const Options &opt = {}) {
+    return s->create_configuration(opt);
+  }
 
-//   EXPECT_EQ(data_size, 0);
-// }
+  Streamer::SEC create_consumer(std::unique_ptr<RdKafka::Conf> &&config) {
+    return s->create_consumer(std::move(config));
+  }
+  std::unique_ptr<RdKafka::Metadata> create_metadata() {
+    return s->create_metadata();
+  }
+  Streamer::SEC
+  create_topic_partition(const std::string &topic,
+                         std::unique_ptr<RdKafka::Metadata> &&metadata) {
+    return s->create_topic_partition(topic, std::move(metadata));
+  }
+  const std::vector<RdKafka::TopicPartition *> &get_topic_partition() {
+    return s->_tp;
+  }
+  Streamer::SEC assign_topic_partition() { return s->assign_topic_partition(); }
+};
 
-// TEST_F(Producer, Receive) {
-//   using namespace std::placeholders;
-
-//   Streamer s(Producer::broker, Producer::topic);
-//   int data_size = 0, counter = 0;
-//   std::function<ProcessMessageResult(void *, int)> f1 =
-//       std::bind(sum, _1, _2, &data_size);
-
-//   start();
-
-//   ProcessMessageResult status = ProcessMessageResult::OK();
-//   status = s.write(silent);
-//   ASSERT_TRUE(status.is_OK());
-
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(f1);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
-//   EXPECT_GT(data_size, 0);
-
-//   stop();
-// }
-
-// TEST_F(Producer, Reconnect) {
-//   using namespace std::placeholders;
-
-//   int data_size = 0, counter = 0;
-//   std::function<ProcessMessageResult(void *, int)> f1 =
-//       std::bind(sum, _1, _2, &data_size);
-
-//   start();
-
-//   Streamer s(Producer::broker, "dummy_topic");
-//   ProcessMessageResult status = ProcessMessageResult::OK();
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(f1);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
-//   EXPECT_FALSE(data_size > 0);
-//   EXPECT_EQ(s.disconnect().value(), 0);
-
-//   data_size = 0;
-//   counter = 0;
-//   EXPECT_EQ(s.connect(Producer::broker, Producer::topic), 0);
-//   status = ProcessMessageResult::OK();
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(f1);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
-//   EXPECT_TRUE(data_size > 0);
-//   stop();
-// }
-
-// TEST_F(Producer, JumpBack) {
-//   Streamer s(broker, topic);
-//   ProcessMessageResult status = ProcessMessageResult::OK();
-//   int counter = 0;
-//   start();
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(silent);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
-
-//   std::cout << "\n\nhello\n" << std::endl;
-//   DemuxTopic demux(Producer::topic);
-//   stop();
-// }
-
-TEST_F(Consumer, setup) {
-  timestamp = 1511278317590;
-  create_config();
-  create_consumer();
-  create_metadata();
-  create_topic_partition();
-  offsets_for_times();
-  assign_topic_partition();
-  while (1) {
-    consume();
+void StreamerTest::SetUp() {
+  s.reset(new Streamer{Producer::broker, Producer::topic});
+  if (!s->consumer) {
+    FAIL();
+  } else {
+    SUCCEED();
   }
 }
 
-TEST_F(Producer, setup) {}
+TEST(Streamer, test_producer) {
+  Producer p;
+  p.SetUp();
+  p.produce();
+}
 
-TEST_F(Producer, produce_message) {
-  produce("test",0);
+TEST_F(StreamerTest, streamer_initialisation) {}
+
+TEST_F(StreamerTest, empty_option_list) {
+  // verify initial values
+  auto ms_before_start_time_ = ms_before_start_time();
+  auto metadata_retry_ = metadata_retry();
+  auto start_ts_ = start_ts();
+  ASSERT_EQ(ms_before_start_time_, ms_before_start_time());
+  ASSERT_EQ(metadata_retry_, metadata_retry());
+  ASSERT_EQ(start_ts_, start_ts());
+
+  set_streamer_options({{"", ""}});
+  EXPECT_EQ(ms_before_start_time_, ms_before_start_time());
+  EXPECT_EQ(metadata_retry_, metadata_retry());
+  EXPECT_EQ(start_ts_, start_ts());
+}
+
+TEST_F(StreamerTest, set_one_streamer_option) {
+  auto ms_before_start_time_ = ms_before_start_time();
+  auto metadata_retry_ = metadata_retry();
+  auto start_ts_ = start_ts();
+
+  set_streamer_options({{"start-time-ms", "1234"}});
+
+  EXPECT_EQ(ms_before_start_time_, ms_before_start_time());
+  EXPECT_EQ(metadata_retry_, metadata_retry());
+  EXPECT_EQ(milliseconds{1234}, start_ts());
+}
+
+TEST_F(StreamerTest, set_all_streamer_options) {
+  set_streamer_options({{"start-time-ms", "1234"},
+                        {"metadata-retry", "10"},
+                        {"ms-before-start", "100"}});
+
+  EXPECT_EQ(milliseconds{100}, ms_before_start_time());
+  EXPECT_EQ(10, metadata_retry());
+  EXPECT_EQ(milliseconds{1234}, start_ts());
+}
+
+TEST_F(StreamerTest, create_default_rdkafka_conf) {
+  auto configuration = get_configuration();
+  if (!configuration) {
+    FAIL();
+  } else {
+    SUCCEED();
+  }
+}
+
+TEST_F(StreamerTest, set_and_verify_rdkafka_conf_options) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"}});
+  if (!configuration) {
+    FAIL();
+  } else {
+    SUCCEED();
+  }
+  std::string value;
+  configuration->get("metadata.broker.list", value);
+  EXPECT_EQ(Producer::broker, value);
+  configuration->get("message.max.bytes", value);
+  EXPECT_EQ("10000000", value);
+}
+
+TEST_F(StreamerTest, create_rdkafka_kafkaconsumer) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"},
+                         {"group.id", "streamer-test"}});
+  auto err = create_consumer(std::move(configuration));
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+}
+
+TEST_F(StreamerTest, create_rdkafka_metadata) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"},
+                         {"group.id", "streamer-test"}});
+  create_consumer(std::move(configuration));
+  auto metadata = create_metadata();
+  if (!metadata) {
+    FAIL();
+  } else {
+    SUCCEED();
+  }
+}
+
+TEST_F(StreamerTest, rdkafka_topic_partition_fails_when_metadata_is_null) {
+  auto err = create_topic_partition("missing-test-topic", std::move(nullptr));
+  EXPECT_EQ(Streamer::SEC::metadata_error, err);
+}
+
+TEST_F(StreamerTest,
+       rdkafka_topic_partition_fails_when_partition_doesn_t_exist) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"},
+                         {"group.id", "streamer-test"}});
+  create_consumer(std::move(configuration));
+  auto metadata = create_metadata();
+
+  auto err = create_topic_partition("missing-test-topic", std::move(metadata));
+  EXPECT_EQ(Streamer::SEC::topic_partition_error, err);
+}
+
+TEST_F(StreamerTest, create_rdkafka_topic_partition) {
+  // delete producer and topic_partition array
+  reset();
+
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"group.id", "streamer-test"}});
+  create_consumer(std::move(configuration));
+  auto metadata = create_metadata();
+
+  create_new_topic_via_producer(Producer::topic);
+
+  auto err = create_topic_partition(Producer::topic, std::move(metadata));
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+
+  auto tp = get_topic_partition();
+  EXPECT_GT(tp.size(), 0);
+
+  std::vector<int> partition_list;
+  for (auto &i : tp) {
+    EXPECT_EQ(Producer::topic, i->topic());
+    auto pos =
+        find(partition_list.begin(), partition_list.end(), i->partition());
+    EXPECT_EQ(pos, partition_list.end());
+    partition_list.push_back(i->partition());
+  }
+}
+
+TEST_F(StreamerTest,
+       assign_rdkafka_topic_partition_fails_if_no_consumer_or_empty_tp) {
+  reset();
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"group.id", "streamer-test"}});
+
+  auto err = assign_topic_partition();
+  EXPECT_EQ(Streamer::SEC::topic_partition_error, err);
+
+  create_consumer(std::move(configuration));
+  EXPECT_EQ(Streamer::SEC::topic_partition_error, err);
+}
+
+TEST_F(StreamerTest, assign_rdkafka_topic_partition_succeed) {
+
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"group.id", "streamer-test"}});
+
+  auto err = assign_topic_partition();
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+
+  create_consumer(std::move(configuration));
+  EXPECT_EQ(Streamer::SEC::no_error, err);
 }
 
 int main(int argc, char **argv) {
@@ -175,6 +243,7 @@ int main(int argc, char **argv) {
     if (std::string{argv[i]} == "--broker" || std::string{argv[i]} == "-b") {
       uri::URI u(argv[i + 1]);
       Producer::broker = u.host_port;
+      Producer::topic = u.topic;
       Consumer::broker = u.host_port;
       Consumer::topic = u.topic;
     }

@@ -18,9 +18,12 @@ class Metadata;
 class TopicPartition;
 } // namespace RdKafka
 
+class StreamerTest;
+
 namespace FileWriter {
 
 class Streamer {
+  friend class ::StreamerTest;
 public:
   using option_t = std::pair<std::string, std::string>;
   using Options = std::vector<option_t>;
