@@ -152,7 +152,7 @@ void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
 void write_attributes_if_present(hid_t hdf_this, rapidjson::Value const *jsv) {
   auto mem = jsv->FindMember("attributes");
   if (mem != jsv->MemberEnd()) {
-    write_attributes(hdf_this, jsv);
+    write_attributes(hdf_this, &mem->value);
   }
 }
 
