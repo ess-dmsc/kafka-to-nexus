@@ -114,6 +114,14 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   H5Pclose(acpl);
 }
 
+template <typename T>
+static void write_hdf_iso8601(hid_t loc, std::string name, T &ts) {
+  using namespace date;
+  using namespace std::chrono;
+  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
+  write_attribute_str(loc, name, s2.data());
+}
+
 struct SE {
   string name;
   rapidjson::Value const *jsv;
