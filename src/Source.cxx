@@ -37,6 +37,9 @@ ProcessMessageResult Source::process_message(Msg const &msg) {
   if (ret.is_ERR()) {
     return ProcessMessageResult::ERR();
   }
+  if (ret.is_OK_WITH_TIMESTAMP()) {
+    return ProcessMessageResult::OK(ret.timestamp());
+  }
   return ProcessMessageResult::OK();
 }
 

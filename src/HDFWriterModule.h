@@ -39,6 +39,11 @@ class WriteResult {
 public:
   /// Everything was fine.
   static WriteResult OK() { return WriteResult(0); }
+  static WriteResult OK_WITH_TIMESTAMP(uint64_t timestamp) {
+    WriteResult ret(1);
+    ret.timestamp_ = timestamp;
+    return ret;
+  }
   /// I/O error, for example if libhdf returned with a I/O error.
   static inline WriteResult ERROR_IO() { return WriteResult(-1); }
   /// Indicates that the flatbuffer contained semantically invalid data, even
@@ -59,15 +64,18 @@ public:
     return WriteResult(-4);
   }
   inline bool is_OK() { return v == 0; }
+  inline bool is_OK_WITH_TIMESTAMP() { return v == 1; }
   /// `true` if any error has occurred. More specific query function will come
   /// as need arises.
   inline bool is_ERR() { return v < 0; }
   /// Used for status reports.
   std::string to_str() const;
+  inline uint64_t timestamp() const { return timestamp_; }
 
 private:
   explicit inline WriteResult(int8_t v) : v(v) {}
   int8_t v = -1;
+  uint64_t timestamp_ = 0;
 };
 }
 
