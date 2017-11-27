@@ -657,6 +657,8 @@ static void check_hdf_version() {
   }
 }
 
+extern "C" char const GIT_COMMIT[];
+
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
@@ -671,10 +673,11 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     return -1;
   }
   h5file = x;
-  return init(h5file, nexus_structure, stream_hdf_info);
+  return init(h5file, filename, nexus_structure, stream_hdf_info);
 }
 
-int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
+int HDFFile::init(hid_t h5file, std::string filename,
+                  rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
@@ -685,6 +688,14 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
   H5Tset_size(strfix, 1);
   auto dsp_sc = H5Screate(H5S_SCALAR);
   check_hdf_version();
+  write_attribute_str(h5file, "HDF5_Version",
+                      h5_version_string_linked().data());
+  write_attribute_str(h5file, "file_name", filename.data());
+  write_attribute_str(
+      h5file, "creator",
+      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT).data());
+  write_hdf_iso8601_now(h5file, "file_time");
+
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
     auto value = &nexus_structure;
@@ -698,8 +709,6 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
       }
     }
   }
-
-  write_hdf_iso8601_now(h5file, "file_time");
 
   H5Sclose(dsp_sc);
   H5Pclose(lcpl);

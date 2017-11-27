@@ -1009,7 +1009,7 @@ public:
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
     auto a1 =
@@ -1120,7 +1120,7 @@ public:
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
@@ -1155,7 +1155,7 @@ public:
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
