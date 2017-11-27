@@ -49,7 +49,8 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
   auto x = hdf_file.init(hdf_filename, nexus_structure, stream_hdf_info);
   if (x) {
-    LOG(Sev::Warning, "can not initialize hdf file  filename: {}", hdf_filename);
+    LOG(Sev::Warning, "can not initialize hdf file  filename: {}",
+        hdf_filename);
     return x;
   }
   return 0;

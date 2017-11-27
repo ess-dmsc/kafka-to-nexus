@@ -18,7 +18,7 @@ using std::move;
 
 #define KERR(rk, err)                                                          \
   if (err != 0) {                                                              \
-LOG(Sev::Error, "Kafka {}  error: {}, {}, {}", rd_kafka_name(rk), err,              \
+    LOG(Sev::Error, "Kafka {}  error: {}, {}, {}", rd_kafka_name(rk), err,     \
         rd_kafka_err2name((rd_kafka_resp_err_t)err),                           \
         rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
   }
@@ -83,7 +83,8 @@ void TopicOpt::apply(rd_kafka_topic_conf_t *conf) {
     if (RD_KAFKA_CONF_OK !=
         rd_kafka_topic_conf_set(conf, c.first.c_str(), c.second.c_str(),
                                 errstr.data(), errstr.size())) {
-      LOG(Sev::Warning, "error setting topic config: {} = {}", c.first, c.second);
+      LOG(Sev::Warning, "error setting topic config: {} = {}", c.first,
+          c.second);
     }
   }
 }
@@ -276,7 +277,8 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
     }
     break;
   default:
-    LOG(Sev::Info, "cb_rebalance failure and revoke: {}", rd_kafka_err2str(err));
+    LOG(Sev::Info, "cb_rebalance failure and revoke: {}",
+        rd_kafka_err2str(err));
     err2 = rd_kafka_assign(rk, NULL);
     if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
       LOG(Sev::Warning, "rebalance error: {}  {}", rd_kafka_err2name(err2),
@@ -392,8 +394,8 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
     return;
   }
   if (msg->err) {
-    LOG(Sev::Error, "IID: {}  ERROR on delivery, {}, topic {}, {} [{}] {}", self->id,
-        rd_kafka_name(rk), rd_kafka_topic_name(msg->rkt),
+    LOG(Sev::Error, "IID: {}  ERROR on delivery, {}, topic {}, {} [{}] {}",
+        self->id, rd_kafka_name(rk), rd_kafka_topic_name(msg->rkt),
         rd_kafka_err2name(msg->err), msg->err, rd_kafka_err2str(msg->err));
     if (msg->err == RD_KAFKA_RESP_ERR__MSG_TIMED_OUT) {
       // TODO
@@ -407,8 +409,8 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
       cb(msg);
     }
     if (false) {
-      LOG(Sev::Debug, "IID: {}  Ok delivered ({}, p {}, offset {}, len {})", self->id,
-          rd_kafka_name(rk), msg->partition, msg->offset, msg->len);
+      LOG(Sev::Debug, "IID: {}  Ok delivered ({}, p {}, offset {}, len {})",
+          self->id, rd_kafka_name(rk), msg->partition, msg->offset, msg->len);
     }
     ++self->stats.produce_cb;
   }
@@ -452,7 +454,7 @@ void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
                            void *opaque) {
   auto self = reinterpret_cast<Producer *>(opaque);
   LOG(Sev::Debug, "IID: {}  INFO cb_throttle  broker_id: {}  broker_name: {}  "
-         "throttle_time_ms: {}",
+                  "throttle_time_ms: {}",
       self->id, broker_id, broker_name, throttle_time_ms);
 }
 
@@ -468,7 +470,8 @@ Producer::~Producer() {
       }
       auto events_handled = rd_kafka_poll(rk, timeout_ms);
       if (events_handled > 0) {
-        LOG(Sev::Debug, "rd_kafka_poll handled: {}  outq before: {}  timeout: {}",
+        LOG(Sev::Debug,
+            "rd_kafka_poll handled: {}  outq before: {}  timeout: {}",
             events_handled, outq_len, timeout_ms);
       }
       timeout_ms = timeout_ms << 1;
@@ -477,7 +480,8 @@ Producer::~Producer() {
       }
     }
     if (outq_len > 0) {
-      LOG(Sev::Notice, "Kafka out queue still not empty: {}  destroy producer anyway.",
+      LOG(Sev::Notice,
+          "Kafka out queue still not empty: {}  destroy producer anyway.",
           outq_len);
     }
     LOG(Sev::Debug, "rd_kafka_destroy");
@@ -534,8 +538,9 @@ Producer::Producer(Producer &&x) {
 
 void Producer::poll() {
   int events_handled = rd_kafka_poll(rk, opt.poll_timeout_ms);
-  LOG(Sev::Debug, "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
-      id, opt.address, events_handled, outq());
+  LOG(Sev::Debug,
+      "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
+      opt.address, events_handled, outq());
   if (log_level >= 8) {
     rd_kafka_dump(stdout, rk);
   }

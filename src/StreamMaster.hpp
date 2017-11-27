@@ -111,7 +111,8 @@ public:
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const int &delay = 1000) {
     if (delay < 0) {
-      LOG(Sev::Warning, "Required negative delay in statistics collection: use default");
+      LOG(Sev::Warning,
+          "Required negative delay in statistics collection: use default");
       return report(p);
     }
     if (!report_thread_.joinable()) {
@@ -168,7 +169,8 @@ private:
           continue;
         }
         if (int(s.runstatus()) < 0) {
-          LOG(Sev::Error, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
+          LOG(Sev::Error, "Error in topic {} : {}", d.topic(),
+              int(s.runstatus()));
           if (remove_source(d.topic()) != SMEC::running) {
             break;
           }
@@ -212,7 +214,8 @@ private:
       LOG(Sev::Info, "Shut down {} : {}", s.first);
       auto v = s.second.close_stream();
       if (v != SEC::has_finished) {
-        LOG(Sev::Warning, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
+        LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
+            Status::Err2Str(v));
       } else {
         LOG(Sev::Info, "\t...done");
       }
