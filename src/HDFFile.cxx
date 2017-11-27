@@ -622,6 +622,41 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 }
 
+/// Human readable version of the HDF5 headers that we compile against.
+static std::string h5_version_string_headers_compile_time() {
+  return fmt::format("{}:{}:{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
+}
+
+/// Human readable version of the HDF5 libraries that we run with.
+static std::string h5_version_string_linked() {
+  unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
+  H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
+  return fmt::format("{}:{}:{}", h5_vers_major, h5_vers_minor, h5_vers_release);
+}
+
+/// Compare the version of the HDF5 headers which the kafka-to-nexus was
+/// compiled with against the version of the HDF5 libraries that the
+/// kafka-to-nexus is linked against at runtime. Currently, a mismatch in the
+/// release number is logged but does not cause panic.
+static void check_hdf_version() {
+  unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
+  H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
+  if (h5_vers_major != H5_VERS_MAJOR) {
+    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+        h5_version_string_headers_compile_time(), h5_version_string_linked());
+    exit(1);
+  }
+  if (h5_vers_minor != H5_VERS_MINOR) {
+    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+        h5_version_string_headers_compile_time(), h5_version_string_linked());
+    exit(1);
+  }
+  if (h5_vers_release != H5_VERS_RELEASE) {
+    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+        h5_version_string_headers_compile_time(), h5_version_string_linked());
+  }
+}
+
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
@@ -649,7 +684,7 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, 1);
   auto dsp_sc = H5Screate(H5S_SCALAR);
-
+  check_hdf_version();
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
     auto value = &nexus_structure;
