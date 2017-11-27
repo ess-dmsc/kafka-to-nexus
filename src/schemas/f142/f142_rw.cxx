@@ -4,6 +4,7 @@
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "../../helper.h"
+#include "../../json.h"
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
 #include <limits>
@@ -154,7 +155,8 @@ public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                       rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module) override;
+                      rapidjson::Value const *config_module,
+                      rapidjson::Value const *attributes) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -263,7 +265,8 @@ writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size, string type,
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                           rapidjson::Value const &config_stream,
-                          rapidjson::Value const *config_module) {
+                          rapidjson::Value const *config_module,
+                          rapidjson::Value const *attributes) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
   auto &hdf_group = hid;
   auto str = get_string(&config_stream, "source");
@@ -319,6 +322,9 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
+  }
+  if (attributes) {
+    write_attributes(hid, attributes);
   }
   H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
