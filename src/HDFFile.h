@@ -34,6 +34,8 @@ private:
   friend class CommandHandler;
 };
 
+std::string h5_version_string_linked();
+
 void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv);
 void write_attributes_if_present(hid_t hdf_this, rapidjson::Value const *jsv);
 

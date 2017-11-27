@@ -636,7 +636,7 @@ static std::string h5_version_string_headers_compile_time() {
 }
 
 /// Human readable version of the HDF5 libraries that we run with.
-static std::string h5_version_string_linked() {
+std::string h5_version_string_linked() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   return fmt::format("{}.{}.{}", h5_vers_major, h5_vers_minor, h5_vers_release);
@@ -703,6 +703,8 @@ int HDFFile::init(hid_t h5file, std::string filename,
       h5file, "creator",
       fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT).data());
   write_hdf_iso8601_now(h5file, "file_time");
+
+  write_attributes_if_present(h5file, &nexus_structure);
 
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {

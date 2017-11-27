@@ -286,6 +286,91 @@ public:
     H5Fclose(fid);
   }
 
+  static void write_attributes_at_top_level_of_the_file() {
+    using namespace FileWriter;
+    using std::array;
+    using std::vector;
+    using std::string;
+    MainOpt &main_opt = *g_main_opt.load();
+    {
+      rapidjson::Document cfg;
+      cfg.Parse(R""({})"");
+      main_opt.config_file = merge(cfg, main_opt.config_file);
+    }
+    rapidjson::Document json_command;
+    json_command.Parse(R""({
+      "cmd": "FileWriter_new",
+      "nexus_structure": {
+        "attributes": {
+          "some_top_level_int": 42,
+          "some_top_level_string": "Hello Attribute"
+        }
+      },
+      "file_attributes": {
+        "file_name": "tmp_write_top_level_attributes.h5"
+      },
+      "job_id": "832yhtwgfskdf"
+    })"");
+    auto cmd = json_to_string(json_command);
+    auto fname = get_string(&json_command, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
+
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    Msg msg;
+    msg.data = (char *)cmd.data();
+    msg.size = cmd.size();
+    ch.handle(msg);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    {
+      string cmd(R""({
+        "recv_type": "FileWriter",
+        "cmd": "file_writer_tasks_clear_all",
+        "job_id": "832yhtwgfskdf"
+      })"");
+      ch.handle({(char *)cmd.data(), cmd.size()});
+    }
+
+    // Verification
+    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    ASSERT_GE(fid, 0);
+    {
+      auto attr = H5Aopen(fid, "some_top_level_int", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_INTEGER);
+      uint32_t v = 0;
+      H5Aread(attr, H5T_NATIVE_INT32, &v);
+      ASSERT_EQ(v, 42);
+      H5Aclose(attr);
+    }
+    {
+      auto attr = H5Aopen(fid, "some_top_level_string", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
+      std::vector<char> buf;
+      buf.resize(128);
+      H5Aread(attr, dtype, buf.data());
+      buf[buf.size() - 1] = 0;
+      ASSERT_EQ(string("Hello Attribute"), buf.data());
+      H5Aclose(attr);
+    }
+    {
+      auto attr = H5Aopen(fid, "HDF5_Version", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
+      auto dtype_mem = H5Tget_native_type(dtype, H5T_DIR_ASCEND);
+      std::vector<char> buf;
+      buf.resize(128);
+      H5Aread(attr, dtype_mem, buf.data());
+      buf[buf.size() - 1] = 0;
+      ASSERT_EQ(h5_version_string_linked(), buf.data());
+      H5Aclose(attr);
+    }
+    H5Fclose(fid);
+  }
+
   /// Can supply pre-generated test data for a source on a topic to profile
   /// the writing.
   class SourceDataGen {
@@ -1171,6 +1256,10 @@ TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
 
 TEST_F(T_CommandHandler, create_static_dataset) {
   T_CommandHandler::create_static_dataset();
+}
+
+TEST_F(T_CommandHandler, write_attributes_at_top_level_of_the_file) {
+  T_CommandHandler::write_attributes_at_top_level_of_the_file();
 }
 
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
