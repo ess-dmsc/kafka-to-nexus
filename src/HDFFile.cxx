@@ -624,14 +624,14 @@ static void create_hdf_structures(rapidjson::Value const *value,
 
 /// Human readable version of the HDF5 headers that we compile against.
 static std::string h5_version_string_headers_compile_time() {
-  return fmt::format("{}:{}:{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
+  return fmt::format("{}.{}.{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
 }
 
 /// Human readable version of the HDF5 libraries that we run with.
 static std::string h5_version_string_linked() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
-  return fmt::format("{}:{}:{}", h5_vers_major, h5_vers_minor, h5_vers_release);
+  return fmt::format("{}.{}.{}", h5_vers_major, h5_vers_minor, h5_vers_release);
 }
 
 /// Compare the version of the HDF5 headers which the kafka-to-nexus was
