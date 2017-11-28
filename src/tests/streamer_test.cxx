@@ -15,12 +15,6 @@
 
 using namespace FileWriter;
 
-void create_new_topic_via_producer(const std::string &topic) {
-  Producer p;
-  p.SetUp();
-  p.produce(topic);
-}
-
 class StreamerTest : public ::testing::Test {
 
 protected:
@@ -190,8 +184,6 @@ TEST_F(StreamerTest, create_rdkafka_topic_partition) {
   create_consumer(std::move(configuration));
   auto metadata = create_metadata();
 
-  create_new_topic_via_producer(Producer::topic);
-
   auto err = create_topic_partition(Producer::topic, std::move(metadata));
   EXPECT_EQ(Streamer::SEC::no_error, err);
 
@@ -233,6 +225,15 @@ TEST_F(StreamerTest, assign_rdkafka_topic_partition_succeed) {
 
   create_consumer(std::move(configuration));
   EXPECT_EQ(Streamer::SEC::no_error, err);
+}
+
+TEST_F(StreamerTest, write) {
+
+  DemuxTopic mp(Producer::topic);
+  auto result = s->write(mp);
+
+  EXPECT_TRUE(result.is_OK());
+
 }
 
 int main(int argc, char **argv) {

@@ -51,11 +51,15 @@ void Producer::create_producer() {
   }
 }
 
-void Producer::produce(const std::string &topic, const int32_t &partition) {
+void Producer::produce(const std::string &topic, const int32_t &partition,
+                       char *message) {
   using namespace std::chrono;
   auto ts = duration_cast<FileWriter::KafkaTimeStamp>(
       system_clock::now().time_since_epoch());
   auto msg = "test message < " + std::to_string(ts.count());
+  if (message) {
+    msg = std::string(message);
+  }
   auto resp = producer->produce(
       topic, partition, RdKafka::Producer::RK_MSG_COPY,
       const_cast<char *>(msg.c_str()), msg.size(), NULL, 0, ts.count(), NULL);

@@ -20,6 +20,7 @@ public:
   static std::string topic;
   void SetUp();
   void produce(const std::string &t = topic,
-               const int32_t &partition = RdKafka::Topic::PARTITION_UA);
+               const int32_t &partition = RdKafka::Topic::PARTITION_UA,
+               char *message = nullptr);
   int poll(const int &);
 };
