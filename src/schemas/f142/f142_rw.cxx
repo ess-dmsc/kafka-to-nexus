@@ -35,7 +35,7 @@ public:
   ~writer_typed_array() override = default;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
-  Value fb_value_type_id = Value::NONE;
+  Value _fb_value_type_id = Value::NONE;
 };
 
 template <typename DT, typename FV>
@@ -46,7 +46,7 @@ public:
   ~writer_typed_scalar() override = default;
   append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
-  Value fb_value_type_id = Value::NONE;
+  Value _fb_value_type_id = Value::NONE;
 };
 
 static FBUF const *get_fbuf(char *data) { return GetLogData(data); }
@@ -56,7 +56,7 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                std::string const &sourcename,
                                                hsize_t ncols,
                                                Value fb_value_type_id)
-    : fb_value_type_id(fb_value_type_id) {
+    : _fb_value_type_id(fb_value_type_id) {
   if (ncols <= 0) {
     LOG(4, "can not handle number of columns ncols == {}", ncols);
     return;
@@ -74,7 +74,7 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
 template <typename DT, typename FV>
 append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
   auto vt = fbuf->value_type();
-  if (vt == Value::NONE || vt != fb_value_type_id) {
+  if (vt == Value::NONE || vt != _fb_value_type_id) {
     return {-2, 0, 0};
   }
   auto v1 = (FV const *)fbuf->value();
@@ -95,7 +95,7 @@ template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
                                                  std::string const &sourcename,
                                                  Value fb_value_type_id)
-    : fb_value_type_id(fb_value_type_id) {
+    : _fb_value_type_id(fb_value_type_id) {
   LOG(7, "f142 init_impl  scalar");
   this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, sourcename, 64 * 1024);
   if (!this->ds) {
@@ -106,7 +106,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
 template <typename DT, typename FV>
 append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
   auto vt = fbuf->value_type();
-  if (vt == Value::NONE || vt != fb_value_type_id) {
+  if (vt == Value::NONE || vt != _fb_value_type_id) {
     return {-2, 0, 0};
   }
   auto v1 = (FV const *)fbuf->value();
