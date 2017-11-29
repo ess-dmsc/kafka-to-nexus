@@ -29,7 +29,7 @@ static EventMessage const *get_fbuf(char const *data) {
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
   bool verify(Msg const &msg) const override;
-  std::string sourcename(Msg const &msg) const override;
+  std::string source_name(Msg const &msg) const override;
   uint64_t timestamp(Msg const &msg) const override;
 };
 
@@ -38,11 +38,11 @@ bool FlatbufferReader::verify(Msg const &msg) const {
   return VerifyEventMessageBuffer(veri);
 }
 
-std::string FlatbufferReader::sourcename(Msg const &msg) const {
+std::string FlatbufferReader::source_name(Msg const &msg) const {
   auto fbuf = get_fbuf(msg.data);
   auto s1 = fbuf->source_name();
   if (!s1) {
-    LOG(4, "message has no source name");
+    LOG(4, "message has no source_name");
     return "";
   }
   return s1->str();

@@ -44,7 +44,7 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
     LOG(4, "ERROR unknown schema id?");
     return DT::ERR();
   }
-  auto srcn = reader->sourcename(msg);
+  auto srcn = reader->source_name(msg);
   return DT(srcn, reader->timestamp(msg));
 }
 
@@ -61,8 +61,8 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
         _stop_time.count());
     return ProcessMessageResult::STOP();
   }
-  auto srcn = reader->sourcename(msg);
-  LOG(9, "Msg is for sourcename: {}", srcn);
+  auto srcn = reader->source_name(msg);
+  LOG(9, "Msg is for source_name: {}", srcn);
   try {
     auto &s = _sources_map.at(srcn);
     auto ret = s.process_message(msg);
