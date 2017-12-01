@@ -27,7 +27,7 @@ RUN git config --global http.sslVerify false && \
 
 RUN cd kafka_to_nexus && \
     mv ../conanbuildinfo.cmake conanbuildinfo.cmake && \
-    cmake ../kafka_to_nexus_src && \
+    cmake -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
     make -j8
 
 RUN mkdir /output-files
