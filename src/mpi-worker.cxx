@@ -36,129 +36,13 @@ using std::string;
 using CLK = std::chrono::steady_clock;
 using MS = std::chrono::milliseconds;
 
-void older(MPI_Comm comm_parent, MPI_Comm comm_all) {
-  std::vector<char> buf(128);
-  int rank, size;
-  int err;
-  // MPI_STATUS_IGNORE
-  MPI_Status status;
-  MPI_Recv(buf.data(), buf.size(), MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG,
-           comm_parent, &status);
-  int count;
-  MPI_Get_count(&status, MPI_CHAR, &count);
-  LOG(3, "status: {}, {}, {}, count: {}", status.MPI_SOURCE, status.MPI_TAG,
-      status.MPI_ERROR, count);
-  LOG(3, "received: {}", buf.data());
-
-  LOG(3, "wait for pointer");
-  void *shm_ptr = nullptr;
-  MPI_Recv(&shm_ptr, 8, MPI_CHAR, MPI_ANY_SOURCE, MPI_ANY_TAG, comm_parent,
-           &status);
-  // LOG(3, "read shared data: {}", shm_ptr);
-  LOG(3, "recv shm_ptr: {}", (void *)shm_ptr);
-
-  auto &shm_comm = comm_all;
-  int shm_rank = -1;
-  MPI_Comm_rank(shm_comm, &rank);
-  MPI_Comm_size(shm_comm, &size);
-  LOG(3, "mpi-worker in shm_comm rank: {}  size: {}", rank, size);
-  shm_rank = rank;
-
-  // TODO
-  // Share the setup code with the main process
-  size_t shm_size = 0 * 1024 * 1024;
-  MPI_Win mpi_win;
-  MPI_Info win_info;
-  MPI_Info_create(&win_info);
-  MPI_Info_set(win_info, "alloc_shared_noncontig", "true");
-  LOG(3, "MPI_Win_allocate_shared {}", rank);
-  err = MPI_Win_allocate_shared(shm_size, 1, win_info, shm_comm, &shm_ptr,
-                                &mpi_win);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Win_allocate_shared");
-    exit(1);
-  }
-  LOG(3, "MPI_Win_allocate_shared {} DONE", rank);
-
-  {
-    MPI_Group g;
-    err = MPI_Win_get_group(mpi_win, &g);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Win_get_group");
-      exit(1);
-    }
-    int rank = -1;
-    err = MPI_Group_rank(g, &rank);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Group_rank");
-      exit(1);
-    }
-    LOG(3, "our rank in mpi_win is: {}", rank);
-  }
-
-  MPI_Aint shm_size_q = 0;
-  int disp_unit = 0;
-  err = MPI_Win_shared_query(mpi_win, 1, &shm_size_q, &disp_unit, &shm_ptr);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Win_shared_query");
-    exit(1);
-  }
-  LOG(3, "queried shm_ptr: {:p}", shm_ptr);
-  if (shm_size_q != shm_size) {
-    LOG(3, "shm_size_q != shm_size : {} != {}", shm_size_q, shm_size);
-    // exit(1);
-  }
-  LOG(3, "MPI_Win_shared_query DONE  disp_unit: {}", disp_unit);
-
-  MPI_Win_lock_all(0, mpi_win);
-  MPI_Win_sync(mpi_win);
-  MPI_Barrier(shm_comm);
-  LOG(3, "after barrier");
-
-  FILE *f1 = fopen("tmp-pid2.txt", "wb");
-  auto pidstr = fmt::format("{}", getpid());
-  fwrite(pidstr.data(), pidstr.size(), 1, f1);
-  fclose(f1);
-  // std::this_thread::sleep_for(std::chrono::milliseconds(5000));
-
-  if (false) {
-    auto m1 = (std::atomic<uint32_t> *)shm_ptr;
-    while (m1->load() != 1) {
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      LOG(3, "value: {}", m1->load());
-    }
-    LOG(3, "value: {}", m1->load());
-  }
-
-  MPI_Barrier(shm_comm);
-  LOG(3, "after barrier 2");
-
-  MPI_Info_free(&win_info);
-}
-
 int main(int argc, char **argv) {
-  if (argc < 2) {
-    LOG(3, "not enough arguments");
-    return -1;
-  }
-  auto jconf_raw = gulp(argv[1]);
-  LOG(9, "jconf_raw: {}", jconf_raw.data());
-  using namespace rapidjson;
-  Document jconf;
-  jconf.Parse(jconf_raw.data(), jconf_raw.size());
-  if (auto x = get_int(&jconf, "log_level")) {
-    log_level = x.v;
-  }
-  LOG(7, "jconf: {}", json_to_string(jconf));
-
   int err = MPI_SUCCESS;
-  MPI_Init(&argc, &argv);
-
-  /*
-  MPI_Comm MPI_COMM_NODE;
-  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0,
-                      MPI_INFO_NULL, &MPI_COMM_NODE);
-  */
+  err = MPI_Init(&argc, &argv);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Init");
+    exit(1);
+  }
 
   int rank_world, size_world;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_world);
@@ -178,6 +62,29 @@ int main(int argc, char **argv) {
     LOG(3, "comm_parent rank: {}  size: {}", rank, size);
   }
 
+  using rapidjson::Value;
+  rapidjson::Document jconf;
+  {
+    MPI_Status status;
+    std::vector<char> buf;
+    buf.resize(1024 * 1024);
+    err = MPI_Recv(buf.data(), buf.size(), MPI_CHAR, MPI_ANY_SOURCE, 101,
+                   comm_parent, &status);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Recv");
+      exit(1);
+    }
+    int size = -1;
+    err = MPI_Get_count(&status, MPI_CHAR, &size);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Get_count");
+      exit(1);
+    }
+    jconf.Parse(buf.data(), buf.size());
+    if (jconf.HasParseError()) {
+    }
+  }
+
   int rank_merged, size_merged;
   MPI_Comm comm_all;
   int comm_all_rank = -1;
@@ -192,137 +99,6 @@ int main(int argc, char **argv) {
     LOG(3, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
         size_merged);
     comm_all_rank = rank_merged;
-  }
-
-  if (sizeof(MPI_Win) != 4) {
-    LOG(3, "ERROR");
-    exit(1);
-  }
-
-  MPI_Comm comm_shm;
-  int comm_shm_rank;
-  int comm_shm_size;
-  {
-    LOG(3, "splitting shm {}", comm_all_rank);
-    auto split_comm_shm_from = comm_all;
-    // auto split_comm_shm_from = MPI_COMM_WORLD;
-    err = MPI_Comm_split_type(split_comm_shm_from, MPI_COMM_TYPE_SHARED, 0,
-                              MPI_INFO_NULL, &comm_shm);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "err MPI_Comm_split_type");
-      exit(1);
-    }
-    {
-      int rank, size;
-      MPI_Comm_rank(comm_shm, &rank);
-      MPI_Comm_size(comm_shm, &size);
-      LOG(3, "comm_shm rank: {}  size: {}", rank, size);
-      comm_shm_rank = rank;
-      comm_shm_size = size;
-    }
-
-    MPI_Group group_all;
-    err = MPI_Comm_group(comm_all, &group_all);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Comm_group group_world");
-      exit(1);
-    }
-    MPI_Group group_shm;
-    err = MPI_Comm_group(comm_shm, &group_shm);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Comm_group group_shm");
-      exit(1);
-    }
-
-    std::vector<int> trans1;
-    std::vector<int> trans2;
-
-    for (int i1 = 0; i1 < comm_shm_size; ++i1) {
-      trans1.push_back(i1);
-    }
-    trans2.resize(trans1.size());
-
-    err = MPI_Group_translate_ranks(group_all, trans1.size(), trans1.data(),
-                                    group_shm, trans2.data());
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Group_translate_ranks");
-      exit(1);
-    }
-
-    for (size_t i1 = 0; i1 < trans1.size(); ++i1) {
-      LOG(3, "trans1/2:  {}  {}  {}", i1, trans1.at(i1), trans2.at(i1));
-      if (false and trans1.at(i1) != trans2.at(i1)) {
-        LOG(3, "can currently not handle this situation");
-        exit(1);
-      }
-    }
-
-    // MPI_Info info2;
-    // MPI_Info_create(&info2);
-    void *baseptr = nullptr;
-    MPI_Win win;
-    LOG(3, "MPI_Win_allocate_shared");
-    err = MPI_Win_allocate_shared(1024 * 1024, 1, MPI_INFO_NULL, comm_shm,
-                                  &baseptr, &win);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "can not MPI_Win_allocate_shared");
-    }
-    LOG(3, "baseptr: {}", baseptr);
-
-    {
-      // Write own memory
-      auto s1 = fmt::format("proc-{}", comm_shm_rank);
-      s1.push_back(0);
-      memcpy(baseptr, s1.data(), s1.size());
-    }
-
-    if (false) {
-      MPI_Win rank0win;
-      MPI_Status status;
-      err = MPI_Recv(&rank0win, sizeof(MPI_Win), MPI_INT, 0, 101, comm_all,
-                     &status);
-    }
-
-    // Fence
-    err = MPI_Win_fence(0, win);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Win_fence");
-      exit(1);
-    }
-
-    LOG(3, "Barrier comm_shm 1 BEFORE");
-    MPI_Barrier(comm_shm);
-    LOG(3, "Barrier comm_shm 1 AFTER");
-
-    // Fence
-    err = MPI_Win_fence(0, win);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Win_fence");
-      exit(1);
-    }
-
-    for (int target = 0; target < comm_shm_size; ++target) {
-      MPI_Aint size = 0;
-      int disp_unit = 0;
-      void *baseptr2 = nullptr;
-      err = MPI_Win_shared_query(win, target, &size, &disp_unit, &baseptr2);
-      if (err != MPI_SUCCESS) {
-        LOG(3, "can not MPI_Win_shared_query");
-        exit(1);
-      }
-      // LOG(3, "rank {}  size: {}   rank0baseptr: {}", comm_shm_rank, size,
-      // rank0baseptr);
-      // std::vector<char> buf;
-      // buf.resize(1024 * 1024);
-      // memcpy(buf.data(), (char*)(baseptr2) - 0, 32);
-      LOG(3, "for comm_all_rank {}  comm_shm_rank: {}  target: {}  baseptr2: "
-             "{}  content: {:.16}",
-          comm_all_rank, comm_shm_rank, target, baseptr2, (char *)baseptr2);
-      if (fmt::format("proc-{}", target) != (char *)baseptr2) {
-        LOG(3, "ERROR mismatch");
-        // exit(1);
-      }
-    }
   }
 
   logpid(fmt::format("tmp-pid-worker-{}.txt", rank_merged).c_str());

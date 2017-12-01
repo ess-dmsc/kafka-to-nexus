@@ -104,24 +104,10 @@ void Source::mpi_start(rapidjson::Document config_file,
   }
 
   for (size_t i_child = 0; i_child < n_child; ++i_child) {
-    std::string fname = fmt::format(
-        "tmp-cfg-{}-{}.json", jconf["stream"]["source"].GetString(), i_child);
-    std::ofstream ofs;
-    ofs.open(fname);
-    ofs << std::string(sbuf.GetString(), sbuf.GetString() + sbuf.GetSize() + 1);
-    ofs.close();
     auto child = MPIChild::ptr(new MPIChild);
+    child->config =
+        std::string(sbuf.GetString(), sbuf.GetString() + sbuf.GetSize() + 1);
     child->cmd = {bin.data(), bin.data() + bin.size() + 1};
-    child->args.push_back({fname.data(), fname.data() + fname.size()});
-    char const *s;
-    s = "--mpi";
-    child->args.push_back({s, s + strlen(s) + 1});
-    s = "-vvvv";
-    child->args.push_back({s, s + strlen(s) + 1});
-    for (auto &x : child->args) {
-      child->argv.push_back(x.data());
-    }
-    child->argv.push_back(nullptr);
     spawns.push_back(std::move(child));
   }
 }

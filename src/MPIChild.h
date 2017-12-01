@@ -8,6 +8,5 @@
 struct MPIChild {
   using ptr = std::unique_ptr<MPIChild>;
   std::vector<char> cmd;
-  std::vector<std::vector<char>> args;
-  std::vector<char *> argv;
+  std::string config;
 };
