@@ -95,29 +95,29 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     exit(1);
   }
 
-  vector<char *> cmd_m;
-  vector<char **> argv_m;
-  vector<int> maxprocs_m;
-  vector<MPI_Info> mpi_infos_m;
+  vector<char *> commands;
+  vector<char **> argv_ptrs;
+  vector<int> max_processes;
+  vector<MPI_Info> mpi_infos;
   MPI_Comm comm_spawned;
   vector<int> proc_err_m;
   for (auto &x : to_spawn) {
-    cmd_m.push_back(x->cmd.data());
-    maxprocs_m.push_back(1);
-    mpi_infos_m.push_back(MPI_INFO_NULL);
+    commands.push_back(x->cmd.data());
+    max_processes.push_back(1);
+    mpi_infos.push_back(MPI_INFO_NULL);
     proc_err_m.push_back(0);
   }
-  LOG(3, "spawning  n: {}", cmd_m.size());
+  LOG(3, "spawning  n: {}", commands.size());
   err = MPI_Comm_spawn_multiple(
-      cmd_m.size(), cmd_m.data(), argv_m.data(), maxprocs_m.data(),
-      mpi_infos_m.data(), 0, MPI_COMM_WORLD, &comm_spawned, proc_err_m.data());
+      commands.size(), commands.data(), argv_ptrs.data(), max_processes.data(),
+      mpi_infos.data(), 0, MPI_COMM_WORLD, &comm_spawned, proc_err_m.data());
   if (err != MPI_SUCCESS) {
     LOG(3, "can not spawn");
     exit(1);
   }
 
   {
-    for (int target = 0; target < cmd_m.size(); ++target) {
+    for (int target = 0; target < commands.size(); ++target) {
       auto &child = to_spawn.at(target);
       MPI_Send(child->config.data(), child->config.size(), MPI_CHAR, target,
                101, comm_spawned);
