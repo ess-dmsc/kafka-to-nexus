@@ -1,7 +1,7 @@
 FROM ubuntu:17.04
 
 # Install packages
-ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools"
+ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools kafkacat"
 RUN apt-get -y update && apt-get install $BUILD_PACKAGES -y --no-install-recommends && \
 rm -rf /var/lib/apt/lists/*
 

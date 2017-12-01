@@ -41,4 +41,4 @@ services:
       environment:
         COMMAND_URI: "//localhost:9092/TEST_writerCommand"
         STATUS_URI: "//localhost:9092/TEST_writerStatus"
-        OUTPUT_PATH: "/output-files"
+        KAFKA_BROKER: "localhost"
