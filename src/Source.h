@@ -9,7 +9,6 @@
 #include "Msg.h"
 #include "MsgQueue.h"
 #include "ProcessMessageResult.h"
-#include "SHMP.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
 #if USE_PARALLEL_WRITER
