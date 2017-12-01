@@ -15,13 +15,21 @@
             "attributes": {
               "units": "Kelvin"
             }
+          },
+          {
+            "type": "stream",
+            "stream": {
+              "topic": "TEST_sampleEnv",
+              "source": "Sample",
+              "module": "f142"
+            }
           }
         ]
       }
     ]
   },
   "file_attributes": {
-    "file_name": "some.h5"
+    "file_name": "example.nxs"
   },
   "cmd": "FileWriter_new",
   "job_id": "unique-identifier",
