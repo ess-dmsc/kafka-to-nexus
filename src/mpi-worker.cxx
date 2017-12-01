@@ -154,19 +154,33 @@ int main(int argc, char **argv) {
   int err = MPI_SUCCESS;
   MPI_Init(&argc, &argv);
 
+  /*
   MPI_Comm MPI_COMM_NODE;
-  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0 /* key */,
+  MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0,
                       MPI_INFO_NULL, &MPI_COMM_NODE);
+  */
 
   int rank_world, size_world;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_world);
   MPI_Comm_size(MPI_COMM_WORLD, &size_world);
   LOG(3, "mpi-worker  rank_world: {}  size_world: {}", rank_world, size_world);
   MPI_Comm comm_parent;
-  MPI_Comm_get_parent(&comm_parent);
+  err = MPI_Comm_get_parent(&comm_parent);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Comm_get_parent");
+    exit(1);
+  }
+
+  {
+    int rank, size;
+    MPI_Comm_rank(comm_parent, &rank);
+    MPI_Comm_size(comm_parent, &size);
+    LOG(3, "comm_parent rank: {}  size: {}", rank, size);
+  }
 
   int rank_merged, size_merged;
   MPI_Comm comm_all;
+  int comm_all_rank = -1;
   {
     err = MPI_Intercomm_merge(comm_parent, 1, &comm_all);
     if (err != MPI_SUCCESS) {
@@ -177,6 +191,138 @@ int main(int argc, char **argv) {
     MPI_Comm_size(comm_all, &size_merged);
     LOG(3, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
         size_merged);
+    comm_all_rank = rank_merged;
+  }
+
+  if (sizeof(MPI_Win) != 4) {
+    LOG(3, "ERROR");
+    exit(1);
+  }
+
+  MPI_Comm comm_shm;
+  int comm_shm_rank;
+  int comm_shm_size;
+  {
+    LOG(3, "splitting shm {}", comm_all_rank);
+    auto split_comm_shm_from = comm_all;
+    // auto split_comm_shm_from = MPI_COMM_WORLD;
+    err = MPI_Comm_split_type(split_comm_shm_from, MPI_COMM_TYPE_SHARED, 0,
+                              MPI_INFO_NULL, &comm_shm);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "err MPI_Comm_split_type");
+      exit(1);
+    }
+    {
+      int rank, size;
+      MPI_Comm_rank(comm_shm, &rank);
+      MPI_Comm_size(comm_shm, &size);
+      LOG(3, "comm_shm rank: {}  size: {}", rank, size);
+      comm_shm_rank = rank;
+      comm_shm_size = size;
+    }
+
+    MPI_Group group_all;
+    err = MPI_Comm_group(comm_all, &group_all);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Comm_group group_world");
+      exit(1);
+    }
+    MPI_Group group_shm;
+    err = MPI_Comm_group(comm_shm, &group_shm);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Comm_group group_shm");
+      exit(1);
+    }
+
+    std::vector<int> trans1;
+    std::vector<int> trans2;
+
+    for (int i1 = 0; i1 < comm_shm_size; ++i1) {
+      trans1.push_back(i1);
+    }
+    trans2.resize(trans1.size());
+
+    err = MPI_Group_translate_ranks(group_all, trans1.size(), trans1.data(),
+                                    group_shm, trans2.data());
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Group_translate_ranks");
+      exit(1);
+    }
+
+    for (size_t i1 = 0; i1 < trans1.size(); ++i1) {
+      LOG(3, "trans1/2:  {}  {}  {}", i1, trans1.at(i1), trans2.at(i1));
+      if (false and trans1.at(i1) != trans2.at(i1)) {
+        LOG(3, "can currently not handle this situation");
+        exit(1);
+      }
+    }
+
+    // MPI_Info info2;
+    // MPI_Info_create(&info2);
+    void *baseptr = nullptr;
+    MPI_Win win;
+    LOG(3, "MPI_Win_allocate_shared");
+    err = MPI_Win_allocate_shared(1024 * 1024, 1, MPI_INFO_NULL, comm_shm,
+                                  &baseptr, &win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "can not MPI_Win_allocate_shared");
+    }
+    LOG(3, "baseptr: {}", baseptr);
+
+    {
+      // Write own memory
+      auto s1 = fmt::format("proc-{}", comm_shm_rank);
+      s1.push_back(0);
+      memcpy(baseptr, s1.data(), s1.size());
+    }
+
+    if (false) {
+      MPI_Win rank0win;
+      MPI_Status status;
+      err = MPI_Recv(&rank0win, sizeof(MPI_Win), MPI_INT, 0, 101, comm_all,
+                     &status);
+    }
+
+    // Fence
+    err = MPI_Win_fence(0, win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Win_fence");
+      exit(1);
+    }
+
+    LOG(3, "Barrier comm_shm 1 BEFORE");
+    MPI_Barrier(comm_shm);
+    LOG(3, "Barrier comm_shm 1 AFTER");
+
+    // Fence
+    err = MPI_Win_fence(0, win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Win_fence");
+      exit(1);
+    }
+
+    for (int target = 0; target < comm_shm_size; ++target) {
+      MPI_Aint size = 0;
+      int disp_unit = 0;
+      void *baseptr2 = nullptr;
+      err = MPI_Win_shared_query(win, target, &size, &disp_unit, &baseptr2);
+      if (err != MPI_SUCCESS) {
+        LOG(3, "can not MPI_Win_shared_query");
+        exit(1);
+      }
+      // LOG(3, "rank {}  size: {}   rank0baseptr: {}", comm_shm_rank, size,
+      // rank0baseptr);
+      // std::vector<char> buf;
+      // buf.resize(1024 * 1024);
+      // memcpy(buf.data(), (char*)(baseptr2) - 0, 32);
+      LOG(3, "for comm_all_rank {}  comm_shm_rank: {}  target: {}  baseptr2: "
+             "{}  content: {:.16}",
+          comm_all_rank, comm_shm_rank, target, baseptr2, (char *)baseptr2);
+      if (fmt::format("proc-{}", target) != (char *)baseptr2) {
+        LOG(3, "ERROR mismatch");
+        // exit(1);
+      }
+    }
   }
 
   logpid(fmt::format("tmp-pid-worker-{}.txt", rank_merged).c_str());

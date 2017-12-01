@@ -117,6 +117,11 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     exit(1);
   }
   {
+    int flag = 0;
+    err = MPI_Comm_test_inter(comm_spawned, &flag);
+    LOG(3, "MPI_Comm_test_inter comm_spawned: {}", flag);
+  }
+  {
     int rank, size;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -134,12 +139,127 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     LOG(3, "fail MPI_Intercomm_merge");
     exit(1);
   }
+  int comm_all_size = 0;
   {
     int rank, size;
     MPI_Comm_rank(comm_all, &rank);
     MPI_Comm_size(comm_all, &size);
     LOG(3, "comm_all rank: {}  size: {}", rank, size);
+    comm_all_size = size;
   }
+
+  if (sizeof(MPI_Win) != 4) {
+    LOG(3, "ERROR sizeof(MPI_Win)");
+    exit(1);
+  }
+
+  bool participate_shm = true;
+  auto split_comm_shm_from = comm_all;
+
+  MPI_Comm comm_shm;
+  int comm_shm_rank = -1;
+
+  {
+    int flag = 0;
+    err = MPI_Comm_test_inter(comm_all, &flag);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "error");
+      exit(1);
+    }
+    LOG(3, "MPI_Comm_test_inter comm_all: {}", flag);
+    if (flag != 0) {
+      LOG(3, "ERROR expect comm_all to be intra-comm");
+      exit(1);
+    }
+  }
+
+  if (participate_shm) {
+    LOG(3, "splitting shm");
+    err = MPI_Comm_split_type(split_comm_shm_from, MPI_COMM_TYPE_SHARED, 0,
+                              MPI_INFO_NULL, &comm_shm);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "err MPI_Comm_split_type");
+      exit(1);
+    }
+    {
+      int flag = 0;
+      err = MPI_Comm_test_inter(comm_shm, &flag);
+      if (err != MPI_SUCCESS) {
+        LOG(3, "error");
+        exit(1);
+      }
+      LOG(3, "MPI_Comm_test_inter comm_shm: {}", flag);
+      if (flag != 0) {
+        LOG(3, "ERROR expect comm_shm to be intra-comm");
+        exit(1);
+      }
+    }
+    {
+      int rank, size;
+      MPI_Comm_rank(comm_shm, &rank);
+      MPI_Comm_size(comm_shm, &size);
+      LOG(3, "comm_shm rank: {}  size: {}", rank, size);
+      comm_shm_rank = rank;
+    }
+  }
+
+  void *baseptr = nullptr;
+  MPI_Win win;
+
+  if (participate_shm) {
+    // Allocate
+    // MPI_Info info2;
+    // MPI_Info_create(&info2);
+    err = MPI_Win_allocate_shared(1024 * 1024, 1, MPI_INFO_NULL, comm_shm,
+                                  &baseptr, &win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "can not MPI_Win_allocate_shared");
+    }
+    LOG(3, "baseptr: {}", baseptr);
+  }
+
+  if (false) {
+    // Lock
+    err = MPI_Win_lock_all(MPI_MODE_NOCHECK, win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Win_lock_all");
+      exit(1);
+    }
+  }
+
+  if (participate_shm) {
+    // Write memory
+    auto s1 = fmt::format("proc-{}", comm_shm_rank);
+    s1.push_back(0);
+    memcpy(baseptr, s1.data(), s1.size());
+  }
+
+  if (false) {
+    for (int dest = 1; dest < comm_all_size; ++dest) {
+      MPI_Send(&win, 1, MPI_INT, dest, 101, comm_all);
+    }
+  }
+
+  if (participate_shm) {
+    // Fence
+    err = MPI_Win_fence(0, win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Win_fence");
+      exit(1);
+    }
+
+    LOG(3, "Barrier comm_shm 1 BEFORE");
+    MPI_Barrier(comm_shm);
+    LOG(3, "Barrier comm_shm 1 AFTER");
+
+    // Fence
+    err = MPI_Win_fence(0, win);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Win_fence");
+      exit(1);
+    }
+  }
+
   LOG(3, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 1 AFTER");
