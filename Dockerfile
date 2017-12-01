@@ -29,3 +29,8 @@ RUN cd kafka_to_nexus && \
     mv ../conanbuildinfo.cmake conanbuildinfo.cmake && \
     cmake ../kafka_to_nexus_src && \
     make -j8
+
+RUN mkdir /output-files
+ADD manual-testing/docker_launch.sh /
+
+CMD ["./docker_launch.sh"]

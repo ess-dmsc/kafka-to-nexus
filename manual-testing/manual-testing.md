@@ -6,7 +6,9 @@ This can be launched by using `docker-compose up` from the root directory of the
 Once the containers have been launched kafkacat (https://github.com/edenhill/kafkacat) can be used to send a json command to start writing a file.
 For example:
 ```
-kafkacat -P -b localhost -t example-json-command.json
+kafkacat -P -b localhost -t TEST_writerCommand -p 0 example-json-command.json
+kafkacat -P -b localhost -t TEST_writerCommand -p 0 stop-command.json
+kafkacat -P -b localhost -t TEST_writerCommand -p 0 writer-exit.json
 ```
 The resulting file will be written at ___.
 

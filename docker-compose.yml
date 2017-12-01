@@ -37,3 +37,8 @@ services:
 
     file-writer:
       build: .
+      network_mode: "host"
+      environment:
+        COMMAND_URI: "//localhost:9092/TEST_writerCommand"
+        STATUS_URI: "//localhost:9092/TEST_writerStatus"
+        OUTPUT_PATH: "/output-files"

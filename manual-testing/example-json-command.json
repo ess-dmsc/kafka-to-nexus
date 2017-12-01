@@ -1,0 +1,29 @@
+{
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "for_example_motor_0000",
+        "attributes": {
+          "NX_class": "NXinstrument"
+        },
+        "children": [
+          {
+            "type": "dataset",
+            "name": "some_static_dataset",
+            "values": 42.24,
+            "attributes": {
+              "units": "Kelvin"
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "file_attributes": {
+    "file_name": "some.h5"
+  },
+  "cmd": "FileWriter_new",
+  "job_id": "unique-identifier",
+  "broker": "localhost:9092"
+}
