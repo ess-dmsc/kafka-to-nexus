@@ -1,6 +1,6 @@
 #include "../HDFFile.h"
+#include "../Alloc.h"
 #include "../CommandHandler.h"
-#include "../Jemalloc.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "../helper.h"

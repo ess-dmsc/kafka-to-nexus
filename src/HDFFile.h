@@ -1,6 +1,7 @@
 #pragma once
+
+#include "Alloc.h"
 #include "CollectiveQueue.h"
-#include "Jemalloc.h"
 #include "Msg.h"
 #include <H5Ipublic.h>
 #include <memory>
@@ -35,7 +36,9 @@ public:
   int close();
   int reopen(std::string filename, rapidjson::Value const &config_file);
   void flush();
+#if USE_PARALLEL_WRITER
   void create_collective_queue(Jemalloc::sptr jm);
+#endif
   hid_t h5file = -1;
   std::string filename;
   CollectiveQueue::ptr cq;

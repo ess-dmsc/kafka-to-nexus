@@ -27,7 +27,9 @@ FileWriterTask::FileWriterTask() {
 
 FileWriterTask::~FileWriterTask() {
   LOG(6, "~FileWriterTask");
+#if USE_PARALLEL_WRITER
   mpi_stop();
+#endif
   _demuxers.clear();
 }
 
@@ -84,6 +86,7 @@ rapidjson::Value FileWriterTask::stats(
   return js_fwt;
 }
 
+#if USE_PARALLEL_WRITER
 void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
   // Have to participate also in collective:
   hdf_file.cq->open();
@@ -213,5 +216,6 @@ void FileWriterTask::mpi_stop() {
   }
   // MPI_Finalize();
 }
+#endif
 
 } // namespace FileWriter

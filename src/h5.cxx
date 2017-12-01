@@ -136,7 +136,7 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     return ret;
   }
 
-  {
+  if (cq) {
     char buf[512];
     auto bufn = H5Iget_name(o.id, buf, 512);
     buf[bufn] = '\0';
@@ -184,12 +184,14 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   if (err < 0) {
     LOG(7, "failed H5Pset_edc_check");
   }
+#if USE_PARALLEL_WRITER
   if (false) {
     err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
     if (err < 0) {
       LOG(7, "failed H5Pset_dxpl_mpio");
     }
   }
+#endif
   return ret;
 }
 
@@ -239,12 +241,14 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     if (err < 0) {
       LOG(7, "failed H5Pset_edc_check");
     }
+#if USE_PARALLEL_WRITER
     if (false) {
       err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
       if (err < 0) {
         LOG(7, "failed H5Pset_dxpl_mpio");
       }
     }
+#endif
     return ret;
   } else {
     LOG(3, "h5d::open classic");
@@ -280,12 +284,14 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     if (err < 0) {
       LOG(7, "failed H5Pset_edc_check");
     }
+#if USE_PARALLEL_WRITER
     if (false) {
       err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
       if (err < 0) {
         LOG(7, "failed H5Pset_dxpl_mpio");
       }
     }
+#endif
     return ret;
   }
 }

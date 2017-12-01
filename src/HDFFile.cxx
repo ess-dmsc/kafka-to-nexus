@@ -1,5 +1,7 @@
 #include "HDFFile.h"
+#if USE_PARALLEL_WRITER
 #include "CollectiveQueue.h"
+#endif
 #include "date/date.h"
 #include "helper.h"
 #include "json.h"
@@ -10,7 +12,9 @@
 #include <deque>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
+#if USE_PARALLEL_WRITER
 #include <mpi.h>
+#endif
 #include <unistd.h>
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
@@ -484,6 +488,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
       LOG(7, "failed H5Pset_cache");
     }
   }
+#if USE_PARALLEL_WRITER
 #if 1
   MPI_Info info;
   MPI_Info_create(&info);
@@ -500,6 +505,7 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
   // MPI_Info_set(info, "romio_cb_write", "enable");
   H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, info);
 // MPI_Info_free(&info);
+#endif
 #endif
 }
 

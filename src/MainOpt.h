@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Jemalloc.h"
+#include "Alloc.h"
 #include "MMap.h"
 #include "logger.h"
 #include "uri.h"

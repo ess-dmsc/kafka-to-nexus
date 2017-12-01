@@ -1,9 +1,9 @@
 #pragma once
 
+#include "Alloc.h"
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
-#include "Jemalloc.h"
 #include "MMap.h"
 #include "MPIChild.h"
 #include "Msg.h"
@@ -12,7 +12,9 @@
 #include "SHMP.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
+#if USE_PARALLEL_WRITER
 #include <mpi.h>
+#endif
 #include <string>
 
 class Test___FileWriterTask___Create01;
@@ -66,10 +68,6 @@ private:
   bool do_process_message = true;
   Jemalloc::sptr jm;
   MMap::sptr mmap;
-  MPI_Comm comm_spawned;
-  MPI_Comm comm_all;
-  uint32_t nspawns = 1;
-  std::vector<int> mpi_return_codes;
   CollectiveQueue *cq = nullptr;
 
   friend class CommandHandler;

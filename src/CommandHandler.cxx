@@ -123,11 +123,15 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
+#if USE_PARALLEL_WRITER
   auto &jm = config.jm;
   LOG(3, "CommandHandler create collective queue");
   jm->use_this();
   auto cq = CollectiveQueue::ptr(new CollectiveQueue(jm));
   jm->use_default();
+#else
+  auto cq = std::unique_ptr<CollectiveQueue>();
+#endif
 
   LOG(6, "Command contains {} streams", stream_hdf_info.size());
   for (auto &stream : stream_hdf_info) {
@@ -179,6 +183,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // Move the cq unique pointer here. It must stay valid until the very end.
   fwt->hdf_file.cq = move(cq);
 
+  fwt->hdf_file.reopen(fname, rapidjson::Value());
+
   std::vector<MPIChild::ptr> to_spawn;
 
   for (auto &stream : stream_hdf_info) {
@@ -207,13 +213,20 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
+    bool use_parallel_writer =
+#if USE_PARALLEL_WRITER
+        true;
+#else
+        false;
+#endif
+
     // for each stream:
     //   either re-open in this main process
     //     Re-create HDFWriterModule
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
-    if (false) {
+    if (!use_parallel_writer) {
       auto module_factory = HDFWriterModuleRegistry::find(module.v);
       if (!module_factory) {
         LOG(5, "Module '{}' is not available", module.v);
@@ -227,8 +240,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
 
       hdf_writer_module->parse_config(config_stream, nullptr);
-      hdf_writer_module->reopen(fwt->hdf_file.h5file, stream.hdf_parent_name,
-                                nullptr, nullptr);
+      auto err = hdf_writer_module->reopen(
+          fwt->hdf_file.h5file, stream.hdf_parent_name, nullptr, nullptr);
+      if (err.is_ERR()) {
+        LOG(3, "can not reopen HDF file for stream {}", stream.hdf_parent_name);
+        exit(1);
+      }
       auto s = Source(source.v, move(hdf_writer_module), config.jm, config.shm,
                       fwt->hdf_file.cq.get());
       s._topic = string(topic);
@@ -260,7 +277,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
+#if USE_PARALLEL_WRITER
   fwt->mpi_start(std::move(to_spawn));
+#endif
 
   if (master) {
     auto br = find_broker(d);

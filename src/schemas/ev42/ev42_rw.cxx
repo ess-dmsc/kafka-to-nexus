@@ -153,6 +153,10 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
                                                     CollectiveQueue *cq,
                                                     HDFIDStore *hdf_store) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+  if (hid < 0) {
+    LOG(3, "can not open HDF group");
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
       hid, "event_time_offset", cq, hdf_store);

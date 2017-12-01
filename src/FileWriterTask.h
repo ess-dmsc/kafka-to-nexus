@@ -1,5 +1,8 @@
 #pragma once
 
+#if USE_PARALLEL_WRITER
+#include <mpi.h>
+#endif
 #include "CollectiveQueue.h"
 #include "DemuxTopic.h"
 #include "Source.h"
@@ -34,9 +37,12 @@ public:
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
   std::string hdf_filename;
   HDFFile hdf_file;
+
+#if USE_PARALLEL_WRITER
   void mpi_start(std::vector<MPIChild::ptr> &&to_spawn);
   void mpi_stop();
   MPI_Comm comm_all;
+#endif
 
 private:
   std::vector<DemuxTopic> _demuxers;

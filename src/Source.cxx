@@ -13,13 +13,6 @@
 #define SOURCE_DO_PROCESS_MESSAGE 1
 #endif
 
-/*
-void * operator new(std::size_t n) throw(std::bad_alloc) {
-}
-void operator delete(void * p) throw() {
-}
-*/
-
 namespace FileWriter {
 
 Result Result::Ok() {
@@ -50,10 +43,6 @@ void swap(Source &x, Source &y) {
   swap(x.jm, y.jm);
   swap(x.mmap, y.mmap);
   swap(x.queue, y.queue);
-  swap(x.comm_spawned, y.comm_spawned);
-  swap(x.comm_all, y.comm_all);
-  swap(x.nspawns, y.nspawns);
-  swap(x.mpi_return_codes, y.mpi_return_codes);
   swap(x.cq, y.cq);
 }
 
@@ -123,7 +112,11 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   if (!do_process_message) {
     return ProcessMessageResult::OK();
   }
+#if USE_PARALLEL_WRITER
   bool do_mpi = true;
+#else
+  bool do_mpi = false;
+#endif
   if (do_mpi) {
     // TODO yield on contention
     for (int i1 = 0; true; ++i1) {
@@ -141,20 +134,21 @@ ProcessMessageResult Source::process_message(Msg &msg) {
       sleep_ms(4);
     }
     return ProcessMessageResult::OK();
+  } else {
+    if (!_hdf_writer_module) {
+      throw "ASSERT FAIL: _hdf_writer_module";
+    }
+    auto ret = _hdf_writer_module->write(msg);
+    _cnt_msg_written += 1;
+    _processed_messages_count += 1;
+    if (ret.is_ERR()) {
+      return ProcessMessageResult::ERR();
+    }
+    if (ret.is_OK_WITH_TIMESTAMP()) {
+      return ProcessMessageResult::OK(ret.timestamp());
+    }
+    return ProcessMessageResult::OK();
   }
-  if (!_hdf_writer_module) {
-    throw "ASSERT FAIL: _hdf_writer_module";
-  }
-  auto ret = _hdf_writer_module->write(msg);
-  _cnt_msg_written += 1;
-  _processed_messages_count += 1;
-  if (ret.is_ERR()) {
-    return ProcessMessageResult::ERR();
-  }
-  if (ret.is_OK_WITH_TIMESTAMP()) {
-    return ProcessMessageResult::OK(ret.timestamp());
-  }
-  return ProcessMessageResult::OK();
 }
 
 uint64_t Source::processed_messages_count() const {

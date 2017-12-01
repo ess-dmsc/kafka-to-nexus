@@ -10,6 +10,7 @@
 using uri::URI;
 
 void MainOpt::init() {
+#if USE_PARALLEL_WRITER
   // TODO
   // Do this somewhere else, after parsing all conf including the possibly
   // changed conf in tests
@@ -17,29 +18,10 @@ void MainOpt::init() {
   auto shm_size = config_file["shm"]["size"].GetInt64();
   LOG(3, "mmap {} / {}", shm_fname, shm_size);
   shm = MMap::create(shm_fname, shm_size);
-
   std::memset(shm->addr(), 'a', 1024);
-
   jm = Jemalloc::create(shm->addr(),
                         (void *)((uint8_t *)shm->addr() + shm->size()));
-
-  /*
-  auto m1 = (std::atomic<uint32_t> *) shm->addr();
-  m1->store(97);
-  while (m1->load() < 110) {
-    while(m1->load() % 2 == 1) {
-    }
-    m1->store(m1->load() + 1);
-  }
-
-  MPI_Barrier(comm_all);
-  LOG(3, "alloc init");
-  auto a = jm->alloc(1 * 1024 * 1024);
-  if (a < shm->addr() || a >= (void*)((uint8_t*)shm->addr() + shm->size())) {
-    LOG(3, "error alloc out of range");
-    exit(1);
-  }
-  */
+#endif
 }
 
 int MainOpt::parse_config_file(std::string fname) {
