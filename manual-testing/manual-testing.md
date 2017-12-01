@@ -3,15 +3,15 @@
 The repository contains a `docker-compose` script to use for manual testing of the file writer.
 This can be launched by using `docker-compose up` from the root directory of the repository.
 
-Once the containers have been launched kafkacat (https://github.com/edenhill/kafkacat) can be used to send a json command to start writing a file.
+Once the containers have been launched kafkacat (https://github.com/edenhill/kafkacat) can be used to send json commands from file.
 For example:
 ```
 kafkacat -P -b localhost -t TEST_writerCommand -p 0 example-json-command.json
 kafkacat -P -b localhost -t TEST_writerCommand -p 0 stop-command.json
 kafkacat -P -b localhost -t TEST_writerCommand -p 0 writer-exit.json
 ```
-The resulting file will be written at ___.
 
-TODO document how to view container logs, get into the container etc
-
-TODO add link to this documentation from the README.md
+The resulting file can be copied out of the container. Get the container id from the output of `docker ps`. Then do
+```
+docker cp <CONTAINER_ID>:/kafka_to_nexus/output_file.nxs <DESTINATION_PATH>
+```
