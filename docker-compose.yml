@@ -2,6 +2,13 @@ version: '2'
 
 services:
 
+    producer:
+      image: screamingudder/nexusproducer
+      network_mode: "host"
+      depends_on:
+        - kafka
+        - zookeeper
+
     kafka:
       image: wurstmeister/kafka:0.11.0.1
       depends_on:
@@ -35,10 +42,20 @@ services:
       environment:
         ZK_HOSTS: zookeeper:2181
 
+    # Default logging is user: admin, pass:admin
+    graylog:
+      image: swcc/docker-graylog2
+      ports:
+        - "9001:9000"
+        - "12201:12201"
+
     file-writer:
       build: .
+      depends_on:
+        - graylog
       network_mode: "host"
       environment:
         COMMAND_URI: "//localhost:9092/TEST_writerCommand"
         STATUS_URI: "//localhost:9092/TEST_writerStatus"
         KAFKA_BROKER: "localhost"
+        GRAYLOG_ADDRESS: "localhost:12201"

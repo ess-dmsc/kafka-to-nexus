@@ -17,5 +17,9 @@ docker cp <CONTAINER_ID>:/kafka_to_nexus/output_file.nxs <DESTINATION_PATH>
 ```
 
 ### Other tools
-Kafka-Manager is available at http://localhost:9000
+The Kafka-Manager interface is available at http://localhost:9000
 You'll need to select `Cluster`->`Add Cluster` and enter `zookeeper:2181` in the `Cluster Zookeeper Hosts` field, a name in the `Cluster Name` field, everything else can be left as default.
+
+The Graylog interface is available at http://localhost:9001
+
+You can log in as user: admin, password: admin
