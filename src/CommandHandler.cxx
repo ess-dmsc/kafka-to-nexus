@@ -157,6 +157,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(5, "Missing module on stream specification");
       continue;
     }
+    bool run_parallel = false;
+    auto run_parallel_cfg = get_bool(&config_stream, "run_parallel");
+    if (run_parallel_cfg) {
+      run_parallel = run_parallel_cfg.v;
+      if (run_parallel) {
+        LOG(5, "Run parallel {}", source.v);
+      }
+    }
 
     auto module_factory = HDFWriterModuleRegistry::find(module.v);
     if (!module_factory) {
@@ -173,14 +181,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     hdf_writer_module->parse_config(config_stream, nullptr);
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
                                 cq.get());
-    LOG(3, "close");
+    LOG(8, "close");
     hdf_writer_module->close();
-    LOG(3, "reset");
+    LOG(8, "reset");
     hdf_writer_module.reset();
   }
 
   fwt->hdf_file.close();
-  // Move the cq unique pointer here. It must stay valid until the very end.
+  // Move the cq. It must remain valid until FileWriterTask dtor.
   fwt->hdf_file.cq = move(cq);
 
   fwt->hdf_file.reopen(fname, rapidjson::Value());
@@ -212,6 +220,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(5, "Missing module on stream specification");
       continue;
     }
+    bool run_parallel = false;
+    auto run_parallel_cfg = get_bool(&config_stream, "run_parallel");
+    if (run_parallel_cfg) {
+      run_parallel = run_parallel_cfg.v;
+      if (run_parallel) {
+        LOG(5, "Run parallel {}", source.v);
+      }
+    }
 
     bool use_parallel_writer =
 #if USE_PARALLEL_WRITER
@@ -226,7 +242,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
-    if (!use_parallel_writer) {
+    if (!use_parallel_writer || !run_parallel) {
       auto module_factory = HDFWriterModuleRegistry::find(module.v);
       if (!module_factory) {
         LOG(5, "Module '{}' is not available", module.v);

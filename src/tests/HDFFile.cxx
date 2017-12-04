@@ -276,8 +276,8 @@ public:
           }
         },
         "unit_test": {
-          "n_events_per_message": 1000,
-          "n_msgs_per_source": 100,
+          "n_events_per_message": 16,
+          "n_msgs_per_source": 32,
           "n_sources": 1,
           "n_msgs_per_batch": 1,
           "n_mpi_workers": 4,
@@ -381,6 +381,14 @@ public:
       }
     }
 
+    SourceDataGen stream_for_main_thread;
+    {
+      auto &s = stream_for_main_thread;
+      s.topic = "topic.with.multiple.sources";
+      s.source = fmt::format("stream_for_main_thread_{:04}", 0);
+      s.pregenerate(16, 32, jm);
+    }
+
     rapidjson::Document json_command;
     {
       using namespace rapidjson;
@@ -409,7 +417,8 @@ public:
       }
 
       auto json_stream = [&a, &main_opt](string source, string topic,
-                                         string module) -> Value {
+                                         string module,
+                                         bool run_parallel) -> Value {
         Value g1;
         g1.SetObject();
         g1.AddMember("type", "group", a);
@@ -446,6 +455,7 @@ public:
               std::move(Value().CopyFrom(
                   main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
               a);
+          stream.AddMember("run_parallel", Value(run_parallel), a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
         }
@@ -454,8 +464,13 @@ public:
       };
 
       for (auto &source : sources) {
-        children.PushBack(json_stream(source.source, source.topic, "ev42"), a);
+        children.PushBack(
+            json_stream(source.source, source.topic, "ev42", true), a);
       }
+      children.PushBack(json_stream(stream_for_main_thread.source,
+                                    stream_for_main_thread.topic, "ev42",
+                                    false),
+                        a);
       nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
       {
