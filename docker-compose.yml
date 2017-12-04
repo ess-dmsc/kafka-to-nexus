@@ -53,6 +53,7 @@ services:
       build: .
       depends_on:
         - graylog
+        - kafka
       network_mode: "host"
       environment:
         COMMAND_URI: "//localhost:9092/TEST_writerCommand"

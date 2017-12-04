@@ -6,6 +6,7 @@ OUT=$?
 i="0"
 while [ $OUT -ne 0 -a  $i -ne 5  ]; do
    echo "Waiting for Kafka to be ready"
+   sleep 10
    kafkacat -b ${KAFKA_BROKER:="localhost"} -L
    OUT=$?
    let i=$i+1
