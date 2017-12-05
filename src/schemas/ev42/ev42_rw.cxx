@@ -192,6 +192,7 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
 }
 
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
+  LOG(3, "bla: {}", (void *)this->ds_event_time_zero.get());
   if (!ds_event_time_offset) {
     return HDFWriterModule::WriteResult::ERROR_IO();
   }

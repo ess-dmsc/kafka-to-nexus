@@ -467,10 +467,8 @@ public:
         children.PushBack(
             json_stream(source.source, source.topic, "ev42", true), a);
       }
-      children.PushBack(json_stream(stream_for_main_thread.source,
-                                    stream_for_main_thread.topic, "ev42",
-                                    false),
-                        a);
+      // children.PushBack(json_stream(stream_for_main_thread.source,
+      // stream_for_main_thread.topic, "ev42", false), a);
       nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
       {

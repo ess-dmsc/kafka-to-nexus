@@ -191,7 +191,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // Move the cq. It must remain valid until FileWriterTask dtor.
   fwt->hdf_file.cq = move(cq);
 
-  fwt->hdf_file.reopen(fname, rapidjson::Value());
+  // fwt->hdf_file.reopen(fname, rapidjson::Value());
 
   std::vector<MPIChild::ptr> to_spawn;
 
@@ -229,11 +229,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
     }
 
-    bool use_parallel_writer =
 #if USE_PARALLEL_WRITER
-        true;
+    bool use_parallel_writer = true;
 #else
-        false;
+    bool use_parallel_writer = false;
 #endif
 
     // for each stream:
@@ -242,7 +241,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
+    LOG(3, "topic: {}  use_parallel_writer: {}  run_parallel: {}", topic.v,
+        use_parallel_writer, run_parallel);
     if (!use_parallel_writer || !run_parallel) {
+      LOG(3, "add Source as non-parallel: {}", topic.v);
       auto module_factory = HDFWriterModuleRegistry::find(module.v);
       if (!module_factory) {
         LOG(5, "Module '{}' is not available", module.v);
@@ -273,6 +275,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       //   or re-open in one or more separate mpi workers Send command to
       //   create HDFWriterModule, all the json config as text, let it re-open
       //   hdf items Create a Source which puts messages on a queue
+      LOG(3, "add Source as parallel: {}", topic.v);
       auto s =
           Source(source.v, {}, config.jm, config.shm, fwt->hdf_file.cq.get());
       s._topic = string(topic);

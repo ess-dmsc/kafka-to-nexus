@@ -118,6 +118,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   bool do_mpi = false;
 #endif
   if (do_mpi) {
+    LOG(3, "write PARALLEL");
     // TODO yield on contention
     for (int i1 = 0; true; ++i1) {
       auto n = queue->push(msg);
@@ -135,9 +136,11 @@ ProcessMessageResult Source::process_message(Msg &msg) {
     }
     return ProcessMessageResult::OK();
   } else {
+    LOG(3, "write non-parallel");
     if (!_hdf_writer_module) {
       throw "ASSERT FAIL: _hdf_writer_module";
     }
+    LOG(3, "write non-parallel 2");
     auto ret = _hdf_writer_module->write(msg);
     _cnt_msg_written += 1;
     _processed_messages_count += 1;

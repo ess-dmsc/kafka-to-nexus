@@ -31,6 +31,7 @@ else ()
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fdiagnostics-color=auto")
 endif()
 
+set(compile_defs_common "")
 
 
 set(path_include_common
@@ -53,6 +54,7 @@ set(libraries_common
 )
 
 if (USE_PARALLEL_WRITER)
+  list(APPEND compile_defs_common "USE_PARALLEL_WRITER=1")
   find_package(MPI REQUIRED)
   find_package(Jemalloc REQUIRED)
   list(APPEND path_include_common ${MPI_INCLUDE_DIR})
@@ -61,7 +63,7 @@ if (USE_PARALLEL_WRITER)
   list(APPEND libraries_common ${JEMALLOC_LIBRARIES})
 endif()
 
-set(compile_defs_common "HAS_REMOTE_API=0")
+list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
 if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
 	message(STATUS "Using graylog_logger")
