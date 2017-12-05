@@ -10,7 +10,12 @@ kafkacat -P -b localhost -t TEST_writerCommand -p 0 example-json-command.json
 kafkacat -P -b localhost -t TEST_writerCommand -p 0 stop-command.json
 kafkacat -P -b localhost -t TEST_writerCommand -p 0 writer-exit.json
 ```
-NB, for large commands it may be necessary to increase the `message.max.bytes` and `replica.fetch.max.bytes` on the broker. Alternatively those configuration parameter can be set just for the specific topic by creating the topic with the bash script provided with Kafka, or changed in the Kafka-Manager interface _before any data has been published to the topic_. When using Kafkacat the corresponding  producer configuration _must_ also be set using the `-X` flag, for example
+NB, for large commands it may be necessary to increase the `message.max.bytes` and `replica.fetch.max.bytes` on the broker. When using the Kafka docker container this is achieved by specifying the follwing environment variables in the docker-compose script:
+```
+KAFKA_MESSAGE_MAX_BYTES: 20000000
+KAFKA_REPLICA_FETCH_MAX_BYTES: 20000000
+```
+Alternatively, these configuration parameters can be set just for only specific topic by creating the topic with the bash script provided with Kafka, or changed in the Kafka-Manager interface. When using Kafkacat the corresponding producer configuration _must_ also be set using the `-X` flag, for example
 ```
 kafkacat -P -X message.max.bytes=20000000 -b localhost -t TEST_writerCommand -p 0 example-json-command.json
 ```
