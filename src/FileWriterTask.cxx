@@ -88,15 +88,16 @@ rapidjson::Value FileWriterTask::stats(
 
 #if USE_PARALLEL_WRITER
 void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
-  // Have to participate also in collective:
-  hdf_file.cq->open();
-
   int err = MPI_SUCCESS;
   MPI_Info mpi_info;
   if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
     LOG(3, "ERROR can not init MPI_Info");
     exit(1);
   }
+
+  hdf_store.mpi_rank = 0;
+  hdf_store.cqid = hdf_file.cq->open(hdf_store);
+  hdf_store.h5file = hdf_file.h5file;
 
   vector<char *> commands;
   vector<char **> argv_ptrs;
@@ -145,12 +146,9 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
   }
 
   LOG(3, "Barrier 1 BEFORE");
+  sleep_ms(2000);
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 1 AFTER");
-}
-
-void FileWriterTask::mpi_stop() {
-  LOG(3, "FileWriterTask::mpi_stop()");
 
   int rank, size;
   {
@@ -158,11 +156,17 @@ void FileWriterTask::mpi_stop() {
     MPI_Comm_size(comm_all, &size);
     LOG(3, "comm_all rank: {}  size: {}", rank, size);
   }
+}
+
+void FileWriterTask::mpi_stop() {
+  LOG(3, "FileWriterTask::mpi_stop()");
 
   // send stop command, wait for group size zero?
   for (auto &d : _demuxers) {
     for (auto &s : d.sources()) {
-      s.second.queue->open.store(0);
+      if (s.second.queue) {
+        s.second.queue->open.store(0);
+      }
     }
   }
 
@@ -170,20 +174,25 @@ void FileWriterTask::mpi_stop() {
 
   auto &cq = hdf_file.cq;
 
-  HDFIDStore *hdf_store = nullptr;
-  int cqid = -1;
+  auto &hdf_store = this->hdf_store;
 
-  auto barrier = [&cq, &cqid, &hdf_store](size_t id, size_t queue,
-                                          std::string name) {
-    LOG(6, "...............................  cqid: {}  wait   {}  {}", cqid, id,
-        name);
+  auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
+    LOG(3, "...............................  cqid: {}  wait   {}  {}",
+        hdf_store.cqid, id, name);
     cq->barriers[id]++;
-    cq->wait_for_barrier(hdf_store, id, queue);
-    LOG(6, "===============================  cqid: {}  after  {}  {}", cqid, id,
-        name);
+    cq->wait_for_barrier(&hdf_store, id, queue);
+    LOG(3, "===============================  cqid: {}  after  {}  {}",
+        hdf_store.cqid, id, name);
   };
 
   barrier(0, 0, "MODULE RESET");
+
+  for (auto &d : _demuxers) {
+    for (auto &s : d.sources()) {
+      s.second.close_writer_module();
+    }
+  }
+  cq->close_for(hdf_store);
 
   barrier(1, 0, "CQ EXEC");
   // cq->execute_for(hdf_store, 0);

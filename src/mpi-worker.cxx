@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
   LOG(3, "got cq at: {}", (void *)cq);
   HDFIDStore hdf_store;
   hdf_store.mpi_rank = rank_merged;
-  hdf_store.cqid = cq->open();
+  hdf_store.cqid = cq->open(hdf_store);
   LOG(3, "rank_merged: {}  cqid: {}", rank_merged, hdf_store.cqid);
 
   auto hdf_fname = jconf["hdf"]["fname"].GetString();
@@ -160,6 +160,7 @@ int main(int argc, char **argv) {
   hdf_writer_module->enable_cq(cq, &hdf_store, rank_merged);
 
   LOG(3, "Barrier 1 BEFORE");
+  sleep_ms(2000);
   MPI_Barrier(comm_all);
   LOG(3, "Barrier 1 AFTER");
 
@@ -200,11 +201,11 @@ int main(int argc, char **argv) {
   }
 
   auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
-    LOG(6, "...............................  cqid: {}  wait   {}  {}",
+    LOG(3, "...............................  cqid: {}  wait   {}  {}",
         hdf_store.cqid, id, name);
     cq->barriers[id]++;
     cq->wait_for_barrier(&hdf_store, id, queue);
-    LOG(6, "===============================  cqid: {}  after  {}  {}",
+    LOG(3, "===============================  cqid: {}  after  {}  {}",
         hdf_store.cqid, id, name);
   };
 

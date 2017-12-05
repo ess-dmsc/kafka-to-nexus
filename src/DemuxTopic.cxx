@@ -73,13 +73,13 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
     LOG(7, "no reader");
     return ProcessMessageResult::ERR();
   }
+  auto srcn = reader->sourcename(msg);
+  LOG(9, "Msg is for sourcename: {}", srcn);
   if (reader->timestamp(msg) > _stop_time.count()) {
     LOG(8, "reader->timestamp(msg) {} > _stop_time {}", reader->timestamp(msg),
         _stop_time.count());
     return ProcessMessageResult::STOP();
   }
-  auto srcn = reader->sourcename(msg);
-  LOG(9, "Msg is for sourcename: {}", srcn);
   try {
     auto &s = _sources_map.at(srcn);
     auto ret = s.process_message(msg);

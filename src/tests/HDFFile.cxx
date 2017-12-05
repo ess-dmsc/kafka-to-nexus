@@ -210,6 +210,7 @@ public:
     vector<FileWriter::Msg> msgs;
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;
+    bool run_parallel = false;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(int n, int n_events_per_message,
@@ -280,7 +281,7 @@ public:
           "n_msgs_per_source": 32,
           "n_sources": 1,
           "n_msgs_per_batch": 1,
-          "n_mpi_workers": 4,
+          "n_mpi_workers": 1,
           "feed_msgs_seconds": 30,
           "filename": "tmp-ev42.h5",
           "hdf": {
@@ -363,6 +364,7 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
+      s.run_parallel = true;
       s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
     }
     if (false) {
@@ -381,9 +383,9 @@ public:
       }
     }
 
-    SourceDataGen stream_for_main_thread;
+    sources.emplace_back();
     {
-      auto &s = stream_for_main_thread;
+      auto &s = sources.back();
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("stream_for_main_thread_{:04}", 0);
       s.pregenerate(16, 32, jm);
@@ -464,11 +466,14 @@ public:
       };
 
       for (auto &source : sources) {
-        children.PushBack(
-            json_stream(source.source, source.topic, "ev42", true), a);
+        children.PushBack(json_stream(source.source, source.topic, "ev42",
+                                      source.run_parallel),
+                          a);
       }
       // children.PushBack(json_stream(stream_for_main_thread.source,
       // stream_for_main_thread.topic, "ev42", false), a);
+      // sources.push_back(stream_for_main_thread);
+
       nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
       {
@@ -515,7 +520,7 @@ public:
           if (not do_run) {
             break;
           }
-          LOG(8 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
+          LOG(5 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
               i_feed, i_source);
           for (auto &msg : source.msgs) {
             if (false) {

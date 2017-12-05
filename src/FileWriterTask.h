@@ -42,6 +42,7 @@ public:
   void mpi_start(std::vector<MPIChild::ptr> &&to_spawn);
   void mpi_stop();
   MPI_Comm comm_all;
+  HDFIDStore hdf_store;
 #endif
 
 private:

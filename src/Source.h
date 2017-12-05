@@ -50,6 +50,8 @@ public:
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
+  void close_writer_module();
+  bool is_parallel = false;
 
   MsgQueue::ptr queue;
 

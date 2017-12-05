@@ -44,6 +44,7 @@ void swap(Source &x, Source &y) {
   swap(x.mmap, y.mmap);
   swap(x.queue, y.queue);
   swap(x.cq, y.cq);
+  swap(x.is_parallel, y.is_parallel);
 }
 
 std::string const &Source::topic() const { return _topic; }
@@ -104,6 +105,7 @@ void Source::mpi_start(rapidjson::Document config_file,
 void Source::mpi_stop() { LOG(3, "mpi_stop()  nothing to do"); }
 
 ProcessMessageResult Source::process_message(Msg &msg) {
+  LOG(3, "Source::process_message  sourcename: {}", _sourcename);
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
     LOG(5, "buffer not verified");
@@ -112,12 +114,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   if (!do_process_message) {
     return ProcessMessageResult::OK();
   }
-#if USE_PARALLEL_WRITER
-  bool do_mpi = true;
-#else
-  bool do_mpi = false;
-#endif
-  if (do_mpi) {
+  if (is_parallel) {
     LOG(3, "write PARALLEL");
     // TODO yield on contention
     for (int i1 = 0; true; ++i1) {
@@ -138,7 +135,8 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   } else {
     LOG(3, "write non-parallel");
     if (!_hdf_writer_module) {
-      throw "ASSERT FAIL: _hdf_writer_module";
+      LOG(3, "!_hdf_writer_module for {}", _sourcename);
+      return ProcessMessageResult::OK();
     }
     LOG(3, "write non-parallel 2");
     auto ret = _hdf_writer_module->write(msg);
@@ -156,6 +154,12 @@ ProcessMessageResult Source::process_message(Msg &msg) {
 
 uint64_t Source::processed_messages_count() const {
   return _processed_messages_count;
+}
+
+void Source::close_writer_module() {
+  if (_hdf_writer_module) {
+    _hdf_writer_module.reset();
+  }
 }
 
 std::string Source::to_str() const { return json_to_string(to_json()); }

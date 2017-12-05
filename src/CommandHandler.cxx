@@ -191,7 +191,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // Move the cq. It must remain valid until FileWriterTask dtor.
   fwt->hdf_file.cq = move(cq);
 
-  // fwt->hdf_file.reopen(fname, rapidjson::Value());
+  fwt->hdf_file.reopen(fname, rapidjson::Value());
 
   std::vector<MPIChild::ptr> to_spawn;
 
@@ -278,6 +278,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(3, "add Source as parallel: {}", topic.v);
       auto s =
           Source(source.v, {}, config.jm, config.shm, fwt->hdf_file.cq.get());
+      s.is_parallel = true;
       s._topic = string(topic);
       s.do_process_message = config.source_do_process_message;
       {

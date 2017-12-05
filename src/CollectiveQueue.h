@@ -241,7 +241,7 @@ public:
     }
   }
 
-  size_t open() {
+  size_t open(HDFIDStore &store) {
     if (pthread_mutex_lock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_lock");
       exit(1);
@@ -256,6 +256,7 @@ public:
       x[n] = 0;
     }
     nclients += 1;
+    LOG(3, "\n\nCQ mark open  mpi_rank: {}  n: {}\n", store.mpi_rank, n);
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
