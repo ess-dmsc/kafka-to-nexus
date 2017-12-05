@@ -754,7 +754,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   if (!do_buf) {
     auto res = ds.append_data_1d(data, nlen);
     if (res.status == AppendResult::ERROR) {
-      return {res};
+      return res;
     }
   }
   append_ret ret;
