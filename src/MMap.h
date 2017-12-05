@@ -47,7 +47,7 @@ private:
   size_t shm_size = 0;
   MMap() {}
   static sptr create_inner(string fname, size_t size, bool create = false) {
-    auto ret = ptr(new MMap);
+    auto ret = sptr(new MMap);
     ret->fd = -1;
     ret->shm_ptr = nullptr;
     ret->shm_size = size;
