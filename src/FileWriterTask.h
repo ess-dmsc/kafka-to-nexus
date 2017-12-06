@@ -42,6 +42,7 @@ public:
 #if USE_PARALLEL_WRITER
   void mpi_start(std::vector<MPIChild::ptr> &&to_spawn);
   void mpi_stop();
+  size_t spawned = -1;
   MPI_Comm comm_all;
   MPI_Comm comm_spawned;
   HDFIDStore hdf_store;

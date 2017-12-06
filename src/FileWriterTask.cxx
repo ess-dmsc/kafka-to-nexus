@@ -106,6 +106,9 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     mpi_infos.push_back(MPI_INFO_NULL);
     proc_err_m.push_back(0);
   }
+  if (commands.size() == 0) {
+    return;
+  }
   LOG(8, "spawning MPI children  n: {}", commands.size());
   err = MPI_Comm_spawn_multiple(
       commands.size(), commands.data(), argv_ptrs.data(), max_processes.data(),
@@ -113,6 +116,15 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
   if (err != MPI_SUCCESS) {
     LOG(3, "can not spawn");
     exit(1);
+  }
+  {
+    int size;
+    MPI_Comm_size(comm_spawned, &size);
+    spawned = size;
+  }
+  if (spawned != commands.size()) {
+    LOG(3, "Did not spawn correct number of children  expect: {}  actual:  {}",
+        commands.size(), spawned);
   }
 
   {
@@ -201,25 +213,27 @@ void FileWriterTask::mpi_stop() {
   hdf_file.close();
 
   barrier(3, 2, "MPI Barrier");
-  err = MPI_Barrier(comm_all);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Barrier");
-    exit(1);
-  }
-  LOG(8, "disconnect comm_all  cqid: {}", "main");
-  err = MPI_Comm_disconnect(&comm_all);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Comm_disconnect");
-    exit(1);
-  }
-  LOG(8, "disconnect comm_spawned  cqid: {}", "main");
-  err = MPI_Comm_disconnect(&comm_spawned);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Comm_disconnect");
-    exit(1);
+
+  if (spawned != -1) {
+    err = MPI_Barrier(comm_all);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Barrier");
+      exit(1);
+    }
+    LOG(8, "disconnect comm_all  cqid: {}", "main");
+    err = MPI_Comm_disconnect(&comm_all);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Comm_disconnect");
+      exit(1);
+    }
+    LOG(8, "disconnect comm_spawned  cqid: {}", "main");
+    err = MPI_Comm_disconnect(&comm_spawned);
+    if (err != MPI_SUCCESS) {
+      LOG(3, "fail MPI_Comm_disconnect");
+      exit(1);
+    }
   }
   barrier(4, -1, "Last CQ barrier");
-  MPI_Finalize();
 }
 #endif
 
