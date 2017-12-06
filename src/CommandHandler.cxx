@@ -4,13 +4,8 @@
 #include "MPIChild.h"
 #include "helper.h"
 #include "utils.h"
-#include <h5.h>
-
 #include <future>
-
-// getpid()
-//#include <sys/types.h>
-//#include <unistd.h>
+#include <h5.h>
 
 using std::array;
 using std::vector;

@@ -9,6 +9,8 @@
 
 void sleep_ms(size_t ms);
 
+uint64_t getpid_wrapper();
+
 // note: this implementation does not disable this overload for array types
 template <typename T, typename... TX>
 std::unique_ptr<T> make_unique(TX &&... tx) {

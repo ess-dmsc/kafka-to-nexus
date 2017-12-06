@@ -26,7 +26,7 @@ Master::Master(MainOpt &config) : config(config), command_listener(config) {
   }
   std::string hostname(buffer.data());
   file_writer_process_id_ =
-      fmt::format("kafka-to-nexus--{}--{}", hostname, getpid());
+      fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
   LOG(6, "file_writer_process_id: {}", file_writer_process_id());
 }
 

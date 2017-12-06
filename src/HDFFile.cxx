@@ -586,7 +586,7 @@ int HDFFile::close() {
     h5file = -1;
     return -1;
   }
-  LOG(6, "flush file {}  pid: {}", fname.data(), getpid());
+  LOG(6, "flush file {}  pid: {}", fname.data(), getpid_wrapper());
   err = H5Fflush(h5file, H5F_SCOPE_LOCAL);
   if (err < 0) {
     LOG(3, "fail H5Fflush");

@@ -3,12 +3,18 @@
 #include <fstream>
 #include <unistd.h>
 
+// getpid()
+#include <sys/types.h>
+#include <unistd.h>
+
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 
 void sleep_ms(size_t ms) {
   std::this_thread::sleep_for(std::chrono::milliseconds(ms));
 }
+
+uint64_t getpid_wrapper() { return getpid(); }
 
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;

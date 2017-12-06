@@ -152,7 +152,7 @@ struct CollectiveCommand {
 
   void execute_for(HDFIDStore &store) {
     LOG(7, "execute  cqid: {}  mpi_rank: {}  pid: {}  {}", store.cqid,
-        store.mpi_rank, getpid(), to_string());
+        store.mpi_rank, getpid_wrapper(), to_string());
     if (type == CollectiveCommandType::SetExtent) {
       // the dataset must be open because it must have been created by another
       // collective call.

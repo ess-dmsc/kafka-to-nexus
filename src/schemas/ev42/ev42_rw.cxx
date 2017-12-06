@@ -200,7 +200,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   if (use_the_process_id_for_debug_purposes) {
     auto p = fbuf->time_of_flight()->data();
     for (size_t i1 = 0; i1 < fbuf->time_of_flight()->size(); ++i1) {
-      ((uint32_t *)(p))[i1] = getpid();
+      ((uint32_t *)(p))[i1] = getpid_wrapper();
     }
   }
   auto w1ret = this->ds_event_time_offset->append_data_1d(

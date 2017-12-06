@@ -2,19 +2,13 @@
 #include "logger.h"
 #include <atomic>
 #include <chrono>
-#include <mpi.h>
-#include <thread>
-#include <vector>
-
-// getpid()
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <sys/mman.h>
-
 #include <fcntl.h>
+#include <mpi.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <thread>
+#include <vector>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
