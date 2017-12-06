@@ -82,7 +82,13 @@ int main(int argc, char **argv) {
     }
     jconf.Parse(buf.data(), buf.size());
     if (jconf.HasParseError()) {
+      LOG(3, "can not parse the command");
+      exit(1);
     }
+  }
+
+  if (auto x = get_int(&jconf, "log_level")) {
+    log_level = x.v;
   }
 
   int rank_merged, size_merged;
@@ -101,18 +107,16 @@ int main(int argc, char **argv) {
     comm_all_rank = rank_merged;
   }
 
-  logpid(fmt::format("tmp-pid-worker-{}.txt", rank_merged).c_str());
   if (jconf.FindMember("logpid-sleep") != jconf.MemberEnd()) {
-    LOG(3, "logpid sleep ...");
+    logpid(fmt::format("tmp-pid-worker-{}.txt", rank_merged).c_str());
+    LOG(7, "logpid sleep ...");
     sleep_ms(3000);
   }
 
   auto config_file = jconf["config_file"].GetObject();
   auto shm_fname = config_file["shm"]["fname"].GetString();
   auto shm_size = config_file["shm"]["size"].GetInt64();
-  LOG(3, "mmap {} / {}", shm_fname, shm_size);
   auto shm = MMap::create(shm_fname, shm_size);
-  LOG(3, "memory ready");
 
   using namespace FileWriter;
 
@@ -201,11 +205,11 @@ int main(int argc, char **argv) {
   }
 
   auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
-    LOG(3, "...............................  cqid: {}  wait   {}  {}",
+    LOG(8, "...............................  cqid: {}  wait   {}  {}",
         hdf_store.cqid, id, name);
     cq->barriers[id]++;
     cq->wait_for_barrier(&hdf_store, id, queue);
-    LOG(3, "===============================  cqid: {}  after  {}  {}",
+    LOG(8, "===============================  cqid: {}  after  {}  {}",
         hdf_store.cqid, id, name);
   };
 
@@ -219,10 +223,10 @@ int main(int argc, char **argv) {
 
   barrier(5, 2, "CQ EXEC 3");
 
-  LOG(6, "check_all_empty");
+  LOG(8, "check_all_empty");
   hdf_store.check_all_empty();
 
-  LOG(6, "hdf_file.reset()");
+  LOG(8, "hdf_file.reset()");
   hdf_file.reset();
 
   barrier(3, 2, "MPI Barrier");
@@ -232,46 +236,22 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  LOG(6, "ask for disconnect  cqid: {}", hdf_store.cqid);
-  // MPI_Comm_disconnect(&comm_parent);
+  LOG(8, "ask for disconnect  cqid: {}", hdf_store.cqid);
   err = MPI_Comm_disconnect(&comm_all);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
-    exit(1);
+  }
+  LOG(8, "ask for disconnect  cqid: {}", hdf_store.cqid);
+  err = MPI_Comm_disconnect(&comm_parent);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Comm_disconnect");
   }
 
   barrier(4, -1, "Last CQ barrier");
-  if (false) {
+  if (true) {
     LOG(6, "finalizing {}", rank_merged);
     MPI_Finalize();
     LOG(6, "after finalize {}", rank_merged);
   }
   LOG(6, "return");
-  return 42;
-
-  LOG(3, "wait for parent mmap");
-  MPI_Barrier(comm_all);
-
-  MPI_Barrier(comm_all);
-
-  auto m1 = (std::atomic<uint32_t> *)shm->addr();
-  while (m1->load() < 110) {
-    while (m1->load() % 2 == 0) {
-    }
-    LOG(3, "store");
-    m1->store(m1->load() + 1);
-  }
-  LOG(3, "final: value: {}", m1->load());
-
-  MPI_Barrier(comm_all);
-  LOG(3, "alloc init");
-
-  MPI_Barrier(comm_all);
-  LOG(3, "ask for disconnect");
-  MPI_Comm_disconnect(&comm_parent);
-  MPI_Comm_disconnect(&comm_all);
-  LOG(3, "finalizing {}", rank_merged);
-  MPI_Finalize();
-  LOG(3, "after finalize {}", rank_merged);
-  return 42;
 }

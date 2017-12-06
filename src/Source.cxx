@@ -55,11 +55,10 @@ void Source::mpi_start(rapidjson::Document config_file,
                        rapidjson::Document command,
                        rapidjson::Document config_stream,
                        std::vector<MPIChild::ptr> &spawns) {
-  LOG(3, "Source::mpi_start()");
   jm->use_this();
   queue = MsgQueue::ptr(new MsgQueue);
   if (not jm->check_in_range(queue.get())) {
-    LOG(3, "mem error");
+    LOG(3, "Memory error");
     exit(1);
   }
   jm->use_default();
@@ -72,7 +71,6 @@ void Source::mpi_start(rapidjson::Document config_file,
     n_child = x.v;
   }
 
-  LOG(3, "make jconf");
   rapidjson::StringBuffer sbuf;
   rapidjson::Document jconf;
   {
@@ -102,7 +100,7 @@ void Source::mpi_start(rapidjson::Document config_file,
   }
 }
 
-void Source::mpi_stop() { LOG(3, "mpi_stop()  nothing to do"); }
+void Source::mpi_stop() {}
 
 ProcessMessageResult Source::process_message(Msg &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);

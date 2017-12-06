@@ -99,7 +99,6 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
   vector<char **> argv_ptrs;
   vector<int> max_processes;
   vector<MPI_Info> mpi_infos;
-  MPI_Comm comm_spawned;
   vector<int> proc_err_m;
   for (auto &x : to_spawn) {
     commands.push_back(x->cmd.data());
@@ -173,11 +172,11 @@ void FileWriterTask::mpi_stop() {
   auto &hdf_store = this->hdf_store;
 
   auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
-    LOG(3, "...............................  cqid: {}  wait   {}  {}",
+    LOG(8, "...............................  cqid: {}  wait   {}  {}",
         hdf_store.cqid, id, name);
     cq->barriers[id]++;
     cq->wait_for_barrier(&hdf_store, id, queue);
-    LOG(3, "===============================  cqid: {}  after  {}  {}",
+    LOG(8, "===============================  cqid: {}  after  {}  {}",
         hdf_store.cqid, id, name);
   };
 
@@ -207,7 +206,12 @@ void FileWriterTask::mpi_stop() {
   }
   LOG(6, "ask for disconnect  cqid: {}", "main");
   err = MPI_Comm_disconnect(&comm_all);
-  // err = MPI_Comm_disconnect(&comm_spawned);
+  if (err != MPI_SUCCESS) {
+    LOG(3, "fail MPI_Comm_disconnect");
+    exit(1);
+  }
+  LOG(6, "ask for disconnect  cqid: {}", "main");
+  err = MPI_Comm_disconnect(&comm_spawned);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);

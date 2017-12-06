@@ -23,8 +23,8 @@ int main(int argc, char **argv) {
   auto opt = std::move(po.second);
   setup_logger_from_options(*opt);
 
-  logpid("tmp-pid.txt");
   if (opt->logpid_sleep) {
+    logpid("tmp-pid.txt");
     LOG(3, "sleep 5");
     sleep_ms(3000);
   }
