@@ -538,7 +538,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
   // TODO gather stats
-  // LOG(9, "append_data_1d DONE  {} ms + {} ms", dt1, dt2);
+  dt1 = dt2;
   return {AppendResult::OK, sizeof(T) * nlen, tgt_start[0]};
 }
 
