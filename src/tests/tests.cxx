@@ -32,11 +32,13 @@ int main(int argc, char **argv) {
   Roundtrip::opt = opt.get();
 
 #if USE_PARALLEL_WRITER
-  MPI_Init(&argc, &argv);
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  LOG(3, "Running tests with MPI as {} of {}", rank, size);
+  {
+    MPI_Init(&argc, &argv);
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    LOG(8, "Running tests with MPI as {} of {}", rank, size);
+  }
 #endif
 
   auto gtest_result = RUN_ALL_TESTS();

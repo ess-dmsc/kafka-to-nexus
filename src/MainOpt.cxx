@@ -16,7 +16,7 @@ void MainOpt::init() {
   // changed conf in tests
   auto shm_fname = config_file["shm"]["fname"].GetString();
   auto shm_size = config_file["shm"]["size"].GetInt64();
-  LOG(3, "mmap {} / {}", shm_fname, shm_size);
+  LOG(8, "mmap {} / {}", shm_fname, shm_size);
   shm = MMap::create(shm_fname, shm_size);
   std::memset(shm->addr(), 'a', 1024);
   jm = Jemalloc::create(shm->addr(),

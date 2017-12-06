@@ -47,6 +47,7 @@ private:
   size_t shm_size = 0;
   MMap() {}
   static sptr create_inner(string fname, size_t size, bool create = false) {
+    static_assert(sizeof(char *) == 8, "requires currently 64 bit pointers");
     auto ret = sptr(new MMap);
     ret->fd = -1;
     ret->shm_ptr = nullptr;
@@ -69,15 +70,11 @@ private:
     ret->shm_ptr =
         mmap64((void *)0x662233000000, ret->shm_size, PROT_READ | PROT_WRITE,
                MAP_FIXED | MAP_SHARED, ret->fd, 0);
-    if (sizeof(char *) != 8) {
-      LOG(3, "just making sure");
-      exit(1);
-    }
     if (ret->shm_ptr == MAP_FAILED) {
       LOG(3, "mmap failed");
       exit(1);
     }
-    LOG(3, "shm_ptr: {}", ret->shm_ptr);
+    LOG(8, "shm_ptr: {}", ret->shm_ptr);
     return ret;
   }
 };

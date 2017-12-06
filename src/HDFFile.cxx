@@ -571,7 +571,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 
 int HDFFile::close() {
   if (h5file == -1) {
-    LOG(3, "attempt to close unopened file");
+    LOG(5, "attempt to close unopened file");
     return -1;
   }
   herr_t err = 0;
@@ -618,7 +618,7 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
   if (f1 < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(0, "ERROR could not create the HDF file: {}  cwd: {}", filename,
+    LOG(3, "ERROR could not open the HDF file: {}  cwd: {}", filename,
         cwd.data());
     return -1;
   }

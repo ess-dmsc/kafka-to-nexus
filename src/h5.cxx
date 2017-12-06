@@ -119,7 +119,6 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
                      h5p::dataset_create dcpl, CollectiveQueue *cq) {
   // Creation is done in single process mode.
   // Can do set_extent here.
-  LOG(3, "h5d::create");
   auto ret = ptr(new h5d);
   auto &o = *ret;
   herr_t err = 0;
@@ -143,23 +142,6 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     cq->register_datasetname(buf);
     // Do not keep the cq for later.
     // In the initial setup, we do not want to use the cq.
-  }
-
-  if (false) {
-    // TODO
-    LOG(3, "SET INITAL EXTENT, REMOVE LATER");
-    hid_t dsp_tgt = H5Dget_space(o.id);
-    hid_t id = o.id;
-    herr_t err = 0;
-    std::array<hsize_t, 2> sext;
-    std::array<hsize_t, 2> smax;
-    H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-    sext[0] += 32;
-    err = H5Dset_extent(id, sext.data());
-    if (err < 0) {
-      LOG(3, "fail H5Dset_extent");
-      exit(1);
-    }
   }
 
   o.dsp_tgt = H5Dget_space(o.id);
@@ -198,6 +180,7 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
 h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
                    HDFIDStore *hdf_store) {
   if (cq) {
+    // Open in parallel mode
     herr_t err = 0;
     char buf[512];
     {
@@ -207,18 +190,16 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     std::string full_path(buf);
     full_path += "/";
     full_path += name;
-    LOG(3, "h5d::open collective [{}]", full_path);
     cq->push(*hdf_store, 0, CollectiveCommand::H5Dopen2(full_path.c_str()));
     cq->execute_for(*hdf_store, 0);
-
     auto ret = ptr(new h5d);
     auto &o = *ret;
     o.cq = cq;
     o.hdf_store = hdf_store;
     o.name = name;
     o.id = hdf_store->datasetname_to_ds_id[full_path];
-    LOG(3, "that created  rank: {}  id: {}  for path: {}", hdf_store->mpi_rank,
-        o.id, full_path);
+    LOG(8, "registered dataset name  rank: {}  id: {}  for path: {}",
+        hdf_store->mpi_rank, o.id, full_path);
     o.type = H5Dget_type(o.id);
     o.dsp_tgt = H5Dget_space(o.id);
     o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
@@ -251,7 +232,7 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
 #endif
     return ret;
   } else {
-    LOG(3, "h5d::open classic");
+    // Open in single-process mode
     auto ret = ptr(new h5d);
     auto &o = *ret;
     herr_t err = 0;

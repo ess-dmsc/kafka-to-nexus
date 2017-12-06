@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
   int rank_world, size_world;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank_world);
   MPI_Comm_size(MPI_COMM_WORLD, &size_world);
-  LOG(3, "mpi-worker  rank_world: {}  size_world: {}", rank_world, size_world);
+  LOG(8, "mpi-worker  rank_world: {}  size_world: {}", rank_world, size_world);
   MPI_Comm comm_parent;
   err = MPI_Comm_get_parent(&comm_parent);
   if (err != MPI_SUCCESS) {
@@ -53,7 +53,7 @@ int main(int argc, char **argv) {
     int rank, size;
     MPI_Comm_rank(comm_parent, &rank);
     MPI_Comm_size(comm_parent, &size);
-    LOG(3, "comm_parent rank: {}  size: {}", rank, size);
+    LOG(8, "comm_parent rank: {}  size: {}", rank, size);
   }
 
   using rapidjson::Value;

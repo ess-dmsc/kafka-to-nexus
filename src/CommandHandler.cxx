@@ -120,7 +120,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
 #if USE_PARALLEL_WRITER
   auto &jm = config.jm;
-  LOG(3, "CommandHandler create collective queue");
   jm->use_this();
   fwt->cq = CollectiveQueue::ptr(new CollectiveQueue(jm));
   jm->use_default();
