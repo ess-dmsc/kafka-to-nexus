@@ -1,5 +1,10 @@
 Breaking changes are tagged by `[breaking]`.
 
+## 2017-11-29
+
+- Rename `FlatbufferReader::sourcename` to `FlatbufferReader::source_name`
+  after discussion.
+
 ## 2017-11-06
 
 - `[breaking]` `FBSchemaReader` is superceded by `FlatbufferReader`.
