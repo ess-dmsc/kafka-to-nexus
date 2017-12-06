@@ -150,11 +150,7 @@ uint64_t Source::processed_messages_count() const {
   return _processed_messages_count;
 }
 
-void Source::close_writer_module() {
-  if (_hdf_writer_module) {
-    _hdf_writer_module.reset();
-  }
-}
+void Source::close_writer_module() { _hdf_writer_module.reset(); }
 
 std::string Source::to_str() const { return json_to_string(to_json()); }
 

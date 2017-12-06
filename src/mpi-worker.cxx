@@ -102,7 +102,7 @@ int main(int argc, char **argv) {
     }
     MPI_Comm_rank(comm_all, &rank_merged);
     MPI_Comm_size(comm_all, &size_merged);
-    LOG(3, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
+    LOG(8, "comm_all  rank_merged: {}  size_merged: {}", rank_merged,
         size_merged);
     comm_all_rank = rank_merged;
   }
@@ -122,51 +122,48 @@ int main(int argc, char **argv) {
 
   auto queue = (MsgQueue *)jconf["queue_addr"].GetUint64();
   auto cq = (CollectiveQueue *)jconf["cq_addr"].GetUint64();
-  LOG(3, "got cq at: {}", (void *)cq);
   HDFIDStore hdf_store;
   hdf_store.mpi_rank = rank_merged;
   hdf_store.cqid = cq->open(hdf_store);
-  LOG(3, "rank_merged: {}  cqid: {}", rank_merged, hdf_store.cqid);
+  LOG(8, "rank_merged: {}  cqid: {}", rank_merged, hdf_store.cqid);
 
   auto hdf_fname = jconf["hdf"]["fname"].GetString();
   auto hdf_file = std::unique_ptr<HDFFile>(new HDFFile);
-  // no need to set the cq ptr on hdffile here, it is just the resource owner in
-  // main process.
-  LOG(7, "hdf_file->reopen()  {}", hdf_fname);
+  hdf_file->cq = cq;
+  LOG(8, "hdf_file->reopen()  {}", hdf_fname);
   hdf_file->reopen(hdf_fname, Value());
   hdf_store.h5file = hdf_file->h5file;
 
   auto module = jconf["stream"]["module"].GetString();
 
-  LOG(7, "HDFWriterModuleRegistry::find(module)  {}", module);
+  LOG(8, "HDFWriterModuleRegistry::find(module)  {}", module);
   auto module_factory = HDFWriterModuleRegistry::find(module);
   if (!module_factory) {
     LOG(5, "Module '{}' is not available", module);
     exit(1);
   }
 
-  LOG(7, "module_factory()");
+  LOG(8, "module_factory()");
   auto hdf_writer_module = module_factory();
   if (!hdf_writer_module) {
     LOG(5, "Can not create a HDFWriterModule for '{}'", module);
     exit(1);
   }
 
-  LOG(7, "hdf_writer_module->parse_config()");
+  LOG(8, "hdf_writer_module->parse_config()");
   hdf_writer_module->parse_config(jconf["stream"], nullptr);
-  LOG(7, "hdf_writer_module->reopen()");
+  LOG(8, "hdf_writer_module->reopen()");
   hdf_writer_module->reopen(hdf_file->h5file,
                             jconf["stream"]["hdf_parent_name"].GetString(), cq,
                             &hdf_store);
   // jconf["stream"]["hdf_parent_name"].GetString()
 
-  LOG(7, "hdf_writer_module->enable_cq()");
+  LOG(8, "hdf_writer_module->enable_cq()");
   hdf_writer_module->enable_cq(cq, &hdf_store, rank_merged);
 
-  LOG(3, "Barrier 1 BEFORE");
-  sleep_ms(2000);
+  LOG(8, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);
-  LOG(3, "Barrier 1 AFTER");
+  LOG(8, "Barrier 1 AFTER");
 
   auto t_last = CLK::now();
 
@@ -186,7 +183,7 @@ int main(int argc, char **argv) {
           t_last = t_now;
           cq->execute_for(hdf_store, 0);
         }
-        // LOG(3, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
+        // LOG(9, "writing msg  type: {:2}  size: {:5}  data: {}", m.type,
         // m._size, (void*)m.data());
         hdf_writer_module->write(m);
       }
@@ -248,10 +245,7 @@ int main(int argc, char **argv) {
   }
 
   barrier(4, -1, "Last CQ barrier");
-  if (true) {
-    LOG(6, "finalizing {}", rank_merged);
-    MPI_Finalize();
-    LOG(6, "after finalize {}", rank_merged);
-  }
-  LOG(6, "return");
+  LOG(8, "finalizing {}", rank_merged);
+  MPI_Finalize();
+  LOG(8, "after finalize {}", rank_merged);
 }

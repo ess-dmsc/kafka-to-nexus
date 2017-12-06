@@ -24,6 +24,9 @@ struct HDFIDStore {
   void check_all_empty() {
     if (datasetname_to_ds_id.size() != 0) {
       LOG(3, "datasetname_to_ds_id is not empty");
+      for (auto &x : datasetname_to_ds_id) {
+        LOG(3, "{}: {}", x.first, x.second);
+      }
       exit(1);
     }
     if (datasetname_to_dsp_id.size() != 0) {

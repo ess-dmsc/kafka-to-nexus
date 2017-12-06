@@ -106,7 +106,7 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     mpi_infos.push_back(MPI_INFO_NULL);
     proc_err_m.push_back(0);
   }
-  LOG(3, "spawning  n: {}", commands.size());
+  LOG(8, "spawning MPI children  n: {}", commands.size());
   err = MPI_Comm_spawn_multiple(
       commands.size(), commands.data(), argv_ptrs.data(), max_processes.data(),
       mpi_infos.data(), 0, MPI_COMM_WORLD, &comm_spawned, proc_err_m.data());
@@ -135,26 +135,25 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     int rank, size;
     MPI_Comm_rank(comm_all, &rank);
     MPI_Comm_size(comm_all, &size);
-    LOG(3, "comm_all rank: {}  size: {}", rank, size);
+    LOG(8, "comm_all rank: {}  size: {}", rank, size);
     comm_all_size = size;
     comm_all_rank = rank;
   }
 
-  LOG(3, "Barrier 1 BEFORE");
-  sleep_ms(2000);
+  LOG(8, "Barrier 1 BEFORE");
   MPI_Barrier(comm_all);
-  LOG(3, "Barrier 1 AFTER");
+  LOG(8, "Barrier 1 AFTER");
 
   int rank, size;
   {
     MPI_Comm_rank(comm_all, &rank);
     MPI_Comm_size(comm_all, &size);
-    LOG(3, "comm_all rank: {}  size: {}", rank, size);
+    LOG(8, "comm_all rank: {}  size: {}", rank, size);
   }
 }
 
 void FileWriterTask::mpi_stop() {
-  LOG(3, "FileWriterTask::mpi_stop()");
+  LOG(8, "FileWriterTask::mpi_stop()");
 
   // send stop command, wait for group size zero?
   for (auto &d : _demuxers) {
@@ -190,13 +189,16 @@ void FileWriterTask::mpi_stop() {
   cq->close_for(hdf_store);
 
   barrier(1, 0, "CQ EXEC");
-  // cq->execute_for(hdf_store, 0);
 
-  barrier(2, 0, "CQ EXEC 2");
-  // cq->execute_for(hdf_store, 1);
+  barrier(2, 1, "CQ EXEC 2");
 
-  barrier(5, 1, "CQ EXEC 3");
-  // cq->execute_for(hdf_store, 2);
+  barrier(5, 2, "CQ EXEC 3");
+
+  LOG(8, "check_all_empty");
+  hdf_store.check_all_empty();
+
+  LOG(8, "hdf_file.close()");
+  hdf_file.close();
 
   barrier(3, 2, "MPI Barrier");
   err = MPI_Barrier(comm_all);
@@ -204,26 +206,20 @@ void FileWriterTask::mpi_stop() {
     LOG(3, "fail MPI_Barrier");
     exit(1);
   }
-  LOG(6, "ask for disconnect  cqid: {}", "main");
+  LOG(8, "disconnect comm_all  cqid: {}", "main");
   err = MPI_Comm_disconnect(&comm_all);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);
   }
-  LOG(6, "ask for disconnect  cqid: {}", "main");
+  LOG(8, "disconnect comm_spawned  cqid: {}", "main");
   err = MPI_Comm_disconnect(&comm_spawned);
   if (err != MPI_SUCCESS) {
     LOG(3, "fail MPI_Comm_disconnect");
     exit(1);
   }
   barrier(4, -1, "Last CQ barrier");
-  // LOG(3, "sleep after disconnect");
-  // sleep_ms(2000);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Comm_disconnect");
-    exit(1);
-  }
-  // MPI_Finalize();
+  MPI_Finalize();
 }
 #endif
 

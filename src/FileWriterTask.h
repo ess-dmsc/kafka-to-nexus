@@ -36,6 +36,7 @@ public:
   rapidjson::Value
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
   std::string hdf_filename;
+  CollectiveQueue::ptr cq;
   HDFFile hdf_file;
 
 #if USE_PARALLEL_WRITER

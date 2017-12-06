@@ -41,7 +41,7 @@ public:
 #endif
   hid_t h5file = -1;
   std::string filename;
-  CollectiveQueue::ptr cq;
+  CollectiveQueue *cq;
 
 private:
   friend class ::T_HDFFile;

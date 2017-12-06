@@ -50,17 +50,7 @@ HDFFile::~HDFFile() {
       LOG(3, "visit failed");
     }
   }
-  if (h5file >= 0) {
-    std::array<char, 512> fname;
-    H5Fget_name(h5file, fname.data(), fname.size());
-    LOG(6, "flush file {}", fname.data());
-    H5Fflush(h5file, H5F_SCOPE_LOCAL);
-    LOG(6, "close file {}", fname.data());
-    err = H5Fclose(h5file);
-    if (err < 0) {
-      LOG(3, "can not close file {}", fname.data());
-    }
-  }
+  close();
 }
 
 template <typename T> hid_t nat_type();
@@ -585,12 +575,33 @@ int HDFFile::close() {
     return -1;
   }
   herr_t err = 0;
+  if (!H5Iis_valid(h5file)) {
+    LOG(3, "file handle is not valid");
+    return -1;
+  }
+  std::array<char, 512> fname;
+  err = H5Fget_name(h5file, fname.data(), fname.size());
+  if (err < 0) {
+    LOG(3, "fail H5Fget_name");
+    h5file = -1;
+    return -1;
+  }
+  LOG(6, "flush file {}  pid: {}", fname.data(), getpid());
+  err = H5Fflush(h5file, H5F_SCOPE_LOCAL);
+  if (err < 0) {
+    LOG(3, "fail H5Fflush");
+    h5file = -1;
+    return -1;
+  }
+  LOG(6, "close file {}", fname.data());
   err = H5Fclose(h5file);
   if (err < 0) {
-    LOG(3, "can not close the file {}", filename);
+    LOG(3, "can not close file {}", fname.data());
+    h5file = -1;
+    return -1;
   }
   if (H5Iis_valid(h5file)) {
-    LOG(3, "closed file handle is still valid for {}", filename);
+    LOG(3, "closed file handle is still valid for {}", fname.data());
   }
   h5file = -1;
   return 0;
