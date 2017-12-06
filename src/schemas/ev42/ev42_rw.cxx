@@ -192,12 +192,17 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
 }
 
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
-  LOG(3, "bla: {}", (void *)this->ds_event_time_zero.get());
   if (!ds_event_time_offset) {
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
   auto fbuf = get_fbuf(msg.data());
-  // int64_t ts = fbuf->pulse_time();
+  bool use_the_process_id_for_debug_purposes = true;
+  if (use_the_process_id_for_debug_purposes) {
+    auto p = fbuf->time_of_flight()->data();
+    for (size_t i1 = 0; i1 < fbuf->time_of_flight()->size(); ++i1) {
+      ((uint32_t *)(p))[i1] = getpid();
+    }
+  }
   auto w1ret = this->ds_event_time_offset->append_data_1d(
       fbuf->time_of_flight()->data(), fbuf->time_of_flight()->size());
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),

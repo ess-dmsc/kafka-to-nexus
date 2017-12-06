@@ -256,7 +256,8 @@ public:
       x[n] = 0;
     }
     nclients += 1;
-    LOG(3, "\n\nCQ mark open  mpi_rank: {}  n: {}\n", store.mpi_rank, n);
+    LOG(7, "CQ mark open  mpi_rank: {}  n: {}  nclients: {}", store.mpi_rank, n,
+        nclients);
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(1, "fail pthread_mutex_unlock");
       exit(1);
@@ -377,7 +378,9 @@ public:
     int i1 = 0;
     while (true) {
       auto n1 = n.load();
-      LOG(9, "spinlock: {} vs {}", n1, nclients);
+      if (i1 % 10 == 0) {
+        LOG(9, "spinlock: {} vs {}", n1, nclients);
+      }
       if (n1 == nclients) {
         break;
       }

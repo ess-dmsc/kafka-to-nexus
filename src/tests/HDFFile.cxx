@@ -211,10 +211,12 @@ public:
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;
     bool run_parallel = false;
+    int n_events_per_message = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(int n, int n_events_per_message,
+    void pregenerate(int n, int n_events_per_message_,
                      std::shared_ptr<Jemalloc> &jm) {
+      n_events_per_message = n_events_per_message_;
       LOG(7, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
@@ -272,8 +274,8 @@ public:
             "chunk_kb": 1024
           },
           "buffer": {
-            "size_kb": 0,
-            "packet_max_kb": 0
+            "size_kb": 512,
+            "packet_max_kb": 128
           }
         },
         "unit_test": {
@@ -383,12 +385,12 @@ public:
       }
     }
 
-    sources.emplace_back();
-    {
+    if (true) {
+      sources.emplace_back();
       auto &s = sources.back();
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("stream_for_main_thread_{:04}", 0);
-      s.pregenerate(16, 32, jm);
+      s.pregenerate(17, 71, jm);
     }
 
     rapidjson::Document json_command;
@@ -470,9 +472,6 @@ public:
                                       source.run_parallel),
                           a);
       }
-      // children.PushBack(json_stream(stream_for_main_thread.source,
-      // stream_for_main_thread.topic, "ev42", false), a);
-      // sources.push_back(stream_for_main_thread);
 
       nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
@@ -520,7 +519,7 @@ public:
           if (not do_run) {
             break;
           }
-          LOG(5 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
+          LOG(8 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
               i_feed, i_source);
           for (auto &msg : source.msgs) {
             if (false) {
@@ -582,9 +581,9 @@ public:
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
 
-    vector<DT> data((size_t)(n_events_per_message));
-
+    size_t i_source = 0;
     for (auto &source : sources) {
+      vector<DT> data((size_t)(source.n_events_per_message));
       string base_path = "/";
       string group_path = base_path + source.source;
 
@@ -605,9 +604,9 @@ public:
       ASSERT_EQ(H5Sis_simple(dsp), 1);
 
       using A = array<hsize_t, 1>;
-      A sini = {{(hsize_t)n_events_per_message}};
-      A smax = {{(hsize_t)n_events_per_message}};
-      A count = {{(hsize_t)n_events_per_message}};
+      A sini = {{(hsize_t)source.n_events_per_message}};
+      A smax = {{(hsize_t)source.n_events_per_message}};
+      A count = {{(hsize_t)source.n_events_per_message}};
       A start0 = {{(hsize_t)0}};
       auto mem = H5Screate(H5S_SIMPLE);
       err = H5Sset_extent_simple(mem, sini.size(), sini.data(), smax.data());
@@ -620,16 +619,16 @@ public:
       for (size_t feed_i = 0; feed_i < feed_msgs_times; ++feed_i) {
         for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
           auto &fb = source.fbs.at(msg_i);
-          A start = {
-              {hsize_t(msg_i * n_events_per_message +
-                       feed_i * n_events_per_message * source.msgs.size())}};
+          A start = {{hsize_t(msg_i * source.n_events_per_message +
+                              feed_i * source.n_events_per_message *
+                                  source.msgs.size())}};
           err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
                                     count.data(), nullptr);
           ASSERT_GE(err, 0);
           err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
           ASSERT_GE(err, 0);
           auto fbd = fb.root()->detector_id();
-          for (int i1 = 0; i1 < n_events_per_message; ++i1) {
+          for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
             // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
             // fbd->Get(i1));
             ASSERT_EQ(data.at(i1), fbd->Get(i1));
@@ -698,14 +697,15 @@ public:
       }
 
       H5Tclose(dt);
-      // H5Dclose(ds);
+      H5Dclose(ds);
+      ++i_source;
     }
 
     err = H5Fclose(fid);
     LOG(7, "data_ev42 verification done");
     ASSERT_GE(err, 0);
     ASSERT_EQ(H5Iis_valid(fid), 0);
-    // ASSERT_EQ(recreate_file(&json_command), 0);
+    ASSERT_EQ(recreate_file(&json_command), 0);
   }
 
   /// Can supply pre-generated test data for a source on a topic to profile

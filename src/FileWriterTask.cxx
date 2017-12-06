@@ -95,10 +95,6 @@ void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
     exit(1);
   }
 
-  hdf_store.mpi_rank = 0;
-  hdf_store.cqid = hdf_file.cq->open(hdf_store);
-  hdf_store.h5file = hdf_file.h5file;
-
   vector<char *> commands;
   vector<char **> argv_ptrs;
   vector<int> max_processes;

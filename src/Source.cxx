@@ -105,7 +105,6 @@ void Source::mpi_start(rapidjson::Document config_file,
 void Source::mpi_stop() { LOG(3, "mpi_stop()  nothing to do"); }
 
 ProcessMessageResult Source::process_message(Msg &msg) {
-  LOG(3, "Source::process_message  sourcename: {}", _sourcename);
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
     LOG(5, "buffer not verified");
@@ -115,7 +114,6 @@ ProcessMessageResult Source::process_message(Msg &msg) {
     return ProcessMessageResult::OK();
   }
   if (is_parallel) {
-    LOG(3, "write PARALLEL");
     // TODO yield on contention
     for (int i1 = 0; true; ++i1) {
       auto n = queue->push(msg);
@@ -133,12 +131,10 @@ ProcessMessageResult Source::process_message(Msg &msg) {
     }
     return ProcessMessageResult::OK();
   } else {
-    LOG(3, "write non-parallel");
     if (!_hdf_writer_module) {
       LOG(3, "!_hdf_writer_module for {}", _sourcename);
-      return ProcessMessageResult::OK();
+      return ProcessMessageResult::ERR();
     }
-    LOG(3, "write non-parallel 2");
     auto ret = _hdf_writer_module->write(msg);
     _cnt_msg_written += 1;
     _processed_messages_count += 1;

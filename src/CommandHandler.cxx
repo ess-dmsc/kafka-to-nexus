@@ -193,6 +193,15 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
   fwt->hdf_file.reopen(fname, rapidjson::Value());
 
+#if USE_PARALLEL_WRITER
+  bool use_parallel_writer = true;
+  fwt->hdf_store.mpi_rank = 0;
+  fwt->hdf_store.cqid = fwt->hdf_file.cq->open(fwt->hdf_store);
+  fwt->hdf_store.h5file = fwt->hdf_file.h5file;
+#else
+  bool use_parallel_writer = false;
+#endif
+
   std::vector<MPIChild::ptr> to_spawn;
 
   for (auto &stream : stream_hdf_info) {
@@ -229,12 +238,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
     }
 
-#if USE_PARALLEL_WRITER
-    bool use_parallel_writer = true;
-#else
-    bool use_parallel_writer = false;
-#endif
-
     // for each stream:
     //   either re-open in this main process
     //     Re-create HDFWriterModule
@@ -259,11 +262,20 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
       hdf_writer_module->parse_config(config_stream, nullptr);
       auto err = hdf_writer_module->reopen(
-          fwt->hdf_file.h5file, stream.hdf_parent_name, nullptr, nullptr);
+          fwt->hdf_file.h5file, stream.hdf_parent_name, fwt->hdf_file.cq.get(),
+          &fwt->hdf_store);
       if (err.is_ERR()) {
         LOG(3, "can not reopen HDF file for stream {}", stream.hdf_parent_name);
         exit(1);
       }
+
+      {
+        int rank_merged = 0;
+        LOG(7, "enable_cq()");
+        hdf_writer_module->enable_cq(fwt->hdf_file.cq.get(), &fwt->hdf_store,
+                                     rank_merged);
+      }
+
       auto s = Source(source.v, move(hdf_writer_module), config.jm, config.shm,
                       fwt->hdf_file.cq.get());
       s._topic = string(topic);
