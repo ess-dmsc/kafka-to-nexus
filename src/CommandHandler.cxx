@@ -124,7 +124,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->cq = CollectiveQueue::ptr(new CollectiveQueue(jm));
   jm->use_default();
 #else
-  auto fwt->cq = std::unique_ptr<CollectiveQueue>();
+  fwt->cq = std::unique_ptr<CollectiveQueue>();
 #endif
 
   LOG(6, "Command contains {} streams", stream_hdf_info.size());
