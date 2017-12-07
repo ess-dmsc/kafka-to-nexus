@@ -372,7 +372,7 @@ write_ds_string_fixed_size(hid_t hdf_parent, std::string name, std::vector<hsize
     total_n *= x;
   }
   auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  hid_t dsp = -1;
+  hid_t dsp;
   if (sizes.empty()) {
     dsp = H5Screate(H5S_SCALAR);
   } else {
