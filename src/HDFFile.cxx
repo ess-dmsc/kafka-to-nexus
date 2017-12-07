@@ -291,9 +291,9 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
+    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(), max.data());
     if (max[0] == H5S_UNLIMITED) {
-      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+      H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
     }
   }
 
@@ -377,9 +377,9 @@ write_ds_string_fixed_size(hid_t hdf_parent, std::string name, std::vector<hsize
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
+    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(), max.data());
     if (max[0] == H5S_UNLIMITED) {
-      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+      H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
     }
   }
 
