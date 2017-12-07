@@ -990,6 +990,41 @@ public:
       LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
     }
   }
+
+  static void attribute_int_scalar() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024*1024, false);
+    auto h5file = H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "group",
+          "name": "group1",
+          "attributes": {
+            "hello": "world"
+          }
+
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto a1 = H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
+    ASSERT_GE(a1, 0);
+    auto dt = H5Aget_type(a1);
+    ASSERT_GE(dt, 0);
+    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
+    H5Tclose(dt);
+    ASSERT_GE(H5Aclose(a1), 0);
+  }
+
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
@@ -1001,3 +1036,5 @@ TEST_F(T_CommandHandler, create_static_dataset) {
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
+
+TEST_F(T_CommandHandler, attribute_int_scalar) { T_CommandHandler::attribute_int_scalar(); }
