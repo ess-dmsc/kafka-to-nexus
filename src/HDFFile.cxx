@@ -301,7 +301,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_blob(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3, "error in sizes");
+    LOG(3, "unexpected number of values for dataset {}  expected: {}  actual: {}", name, total_n, blob.size());
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -312,7 +312,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(3, "error while writing dataset");
+    LOG(3, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -342,7 +342,7 @@ write_ds_string(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_string_pointers(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3, "error in sizes");
+    LOG(3, "unexpected number of values for dataset {}  expected: {}  actual: {}", name, total_n, blob.size());
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -356,7 +356,7 @@ write_ds_string(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(3, "error while writing dataset");
+    LOG(3, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
