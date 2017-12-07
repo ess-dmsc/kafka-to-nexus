@@ -23,6 +23,8 @@ public:
   ~HDFFile();
   int init(std::string filename, rapidjson::Value const &nexus_structure,
            std::vector<StreamHDFInfo> &stream_hdf_info);
+  int init(hid_t h5file, rapidjson::Value const &nexus_structure,
+           std::vector<StreamHDFInfo> &stream_hdf_info);
   void flush();
   hid_t h5file = -1;
 

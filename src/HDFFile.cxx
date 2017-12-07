@@ -614,7 +614,11 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     return -1;
   }
   h5file = x;
+  return init(h5file, nexus_structure, stream_hdf_info);
+}
 
+int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
+                  std::vector<StreamHDFInfo> &stream_hdf_info) {
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
@@ -623,8 +627,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, 1);
   auto dsp_sc = H5Screate(H5S_SCALAR);
-
-  auto f1 = x;
 
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
@@ -645,7 +647,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     using namespace std::chrono;
     auto now =
         make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
-    write_hdf_iso8601(f1, "file_time", now);
+    write_hdf_iso8601(h5file, "file_time", now);
   }
 
   H5Sclose(dsp_sc);
