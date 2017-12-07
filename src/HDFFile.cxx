@@ -241,7 +241,7 @@ static void populate_string_pointers(std::vector<char const *> &ptrs, rapidjson:
 static void populate_string_fixed_size(std::vector<char> &blob, hsize_t element_size, rapidjson::Value const *vals) {
   size_t n_added = 0;
   if (vals->IsString()) {
-    memcpy(blob.data() + n_added * element_size, vals->GetString(), vals->GetStringLength());
+    std::copy(vals->GetString(), vals->GetString() + vals->GetStringLength(), blob.data() + n_added * element_size);
     ++n_added;
   } else if (vals->IsArray()) {
     std::vector<rapidjson::Value const *> as;
