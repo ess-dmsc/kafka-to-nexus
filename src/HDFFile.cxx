@@ -9,6 +9,7 @@
 #include <chrono>
 #include <ctime>
 #include <deque>
+#include <stack>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
 #include <unistd.h>
@@ -159,43 +160,43 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
   } else if (vals->IsDouble()) {
     blob.push_back(vals->GetDouble());
   } else if (vals->IsArray()) {
-    std::vector<rapidjson::Value const *> as;
-    std::vector<size_t> ai;
-    std::vector<size_t> an;
-    as.push_back(vals);
-    ai.push_back(0);
-    an.push_back(vals->GetArray().Size());
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
 
     while (not as.empty()) {
       if (as.size() > 10) {
         break;
       }
       // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
-      if (ai.back() >= an.back()) {
-        as.pop_back();
-        ai.pop_back();
-        an.pop_back();
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
         continue;
       }
-      auto &v = as.back()->GetArray()[ai.back()];
+      auto &v = as.top()->GetArray()[ai.top()];
       if (v.IsArray()) {
-        ai.back()++;
-        as.push_back(&v);
-        ai.push_back(0);
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
         size_t n = v.GetArray().Size();
-        an.push_back(n);
+        an.push(n);
       } else if (v.IsInt()) {
         blob.push_back((DT)v.GetInt());
-        ai.back()++;
+        ai.top()++;
       } else if (v.IsInt64()) {
         blob.push_back((DT)v.GetInt64());
-        ai.back()++;
+        ai.top()++;
       } else if (v.IsUint64()) {
         blob.push_back((DT)v.GetUint64());
-        ai.back()++;
+        ai.top()++;
       } else if (v.IsDouble()) {
         blob.push_back((DT)v.GetDouble());
-        ai.back()++;
+        ai.top()++;
       }
     }
   }
