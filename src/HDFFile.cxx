@@ -206,33 +206,33 @@ static void populate_string_pointers(std::vector<char const *> &ptrs, rapidjson:
   if (vals->IsString()) {
     ptrs.push_back(vals->GetString());
   } else if (vals->IsArray()) {
-    std::vector<rapidjson::Value const *> as;
-    std::vector<size_t> ai;
-    std::vector<size_t> an;
-    as.push_back(vals);
-    ai.push_back(0);
-    an.push_back(vals->GetArray().Size());
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
 
     while (not as.empty()) {
       if (as.size() > 10) {
         break;
       }
-      if (ai.back() >= an.back()) {
-        as.pop_back();
-        ai.pop_back();
-        an.pop_back();
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
         continue;
       }
-      auto &v = as.back()->GetArray()[ai.back()];
+      auto &v = as.top()->GetArray()[ai.top()];
       if (v.IsArray()) {
-        ai.back()++;
-        as.push_back(&v);
-        ai.push_back(0);
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
         size_t n = v.GetArray().Size();
-        an.push_back(n);
+        an.push(n);
       } else if (v.IsString()) {
         ptrs.push_back(v.GetString());
-        ai.back()++;
+        ai.top()++;
       }
     }
   }
@@ -244,34 +244,34 @@ static void populate_string_fixed_size(std::vector<char> &blob, hsize_t element_
     std::copy(vals->GetString(), vals->GetString() + vals->GetStringLength(), blob.data() + n_added * element_size);
     ++n_added;
   } else if (vals->IsArray()) {
-    std::vector<rapidjson::Value const *> as;
-    std::vector<size_t> ai;
-    std::vector<size_t> an;
-    as.push_back(vals);
-    ai.push_back(0);
-    an.push_back(vals->GetArray().Size());
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
 
     while (not as.empty()) {
       if (as.size() > 10) {
         break;
       }
-      if (ai.back() >= an.back()) {
-        as.pop_back();
-        ai.pop_back();
-        an.pop_back();
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
         continue;
       }
-      auto &v = as.back()->GetArray()[ai.back()];
+      auto &v = as.top()->GetArray()[ai.top()];
       if (v.IsArray()) {
-        ai.back()++;
-        as.push_back(&v);
-        ai.push_back(0);
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
         size_t n = v.GetArray().Size();
-        an.push_back(n);
+        an.push(n);
       } else if (v.IsString()) {
-        memcpy(blob.data() + n_added * element_size, v.GetString(), v.GetStringLength());
+        std::copy(v.GetString(), v.GetString() + v.GetStringLength(), blob.data() + n_added * element_size);
         ++n_added;
-        ai.back()++;
+        ai.top()++;
       }
     }
   }
