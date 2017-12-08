@@ -129,10 +129,16 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(5, "Missing source on stream specification");
       continue;
     }
-    auto module = get_string(&config_stream, "module");
+    auto module = get_string(&config_stream, "writer_module");
     if (!module) {
-      LOG(5, "Missing module on stream specification");
-      continue;
+      module = get_string(&config_stream, "module");
+      if (module) {
+        LOG(4, "The key \"stream.module\" is deprecated, please use "
+               "\"stream.writer_module\" instead.");
+      } else {
+        LOG(5, "Missing key `writer_module` on stream specification");
+        continue;
+      }
     }
 
     auto module_factory = HDFWriterModuleRegistry::find(module.v);
