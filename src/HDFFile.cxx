@@ -9,9 +9,9 @@
 #include <chrono>
 #include <ctime>
 #include <deque>
-#include <stack>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
+#include <stack>
 #include <unistd.h>
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
@@ -202,7 +202,8 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
   }
 }
 
-static void populate_string_pointers(std::vector<char const *> &ptrs, rapidjson::Value const *vals) {
+static void populate_string_pointers(std::vector<char const *> &ptrs,
+                                     rapidjson::Value const *vals) {
   if (vals->IsString()) {
     ptrs.push_back(vals->GetString());
   } else if (vals->IsArray()) {
@@ -238,10 +239,13 @@ static void populate_string_pointers(std::vector<char const *> &ptrs, rapidjson:
   }
 }
 
-static void populate_string_fixed_size(std::vector<char> &blob, hsize_t element_size, rapidjson::Value const *vals) {
+static void populate_string_fixed_size(std::vector<char> &blob,
+                                       hsize_t element_size,
+                                       rapidjson::Value const *vals) {
   size_t n_added = 0;
   if (vals->IsString()) {
-    std::copy(vals->GetString(), vals->GetString() + vals->GetStringLength(), blob.data() + n_added * element_size);
+    std::copy(vals->GetString(), vals->GetString() + vals->GetStringLength(),
+              blob.data() + n_added * element_size);
     ++n_added;
   } else if (vals->IsArray()) {
     std::stack<rapidjson::Value const *> as;
@@ -269,7 +273,8 @@ static void populate_string_fixed_size(std::vector<char> &blob, hsize_t element_
         size_t n = v.GetArray().Size();
         an.push(n);
       } else if (v.IsString()) {
-        std::copy(v.GetString(), v.GetString() + v.GetStringLength(), blob.data() + n_added * element_size);
+        std::copy(v.GetString(), v.GetString() + v.GetStringLength(),
+                  blob.data() + n_added * element_size);
         ++n_added;
         ai.top()++;
       }
@@ -291,7 +296,8 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(), max.data());
+    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(),
+                         max.data());
     if (max[0] == H5S_UNLIMITED) {
       H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
     }
@@ -301,7 +307,9 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_blob(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3, "unexpected number of values for dataset {}  expected: {}  actual: {}", name, total_n, blob.size());
+    LOG(3,
+        "unexpected number of values for dataset {}  expected: {}  actual: {}",
+        name, total_n, blob.size());
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -319,9 +327,10 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   H5Pclose(dcpl);
 }
 
-static void
-write_ds_string(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
-                 std::vector<hsize_t> max, rapidjson::Value const *vals) {
+static void write_ds_string(hid_t hdf_parent, std::string name,
+                            std::vector<hsize_t> sizes,
+                            std::vector<hsize_t> max,
+                            rapidjson::Value const *vals) {
   size_t total_n = 1;
   for (auto x : sizes) {
     total_n *= x;
@@ -342,7 +351,9 @@ write_ds_string(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_string_pointers(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3, "unexpected number of values for dataset {}  expected: {}  actual: {}", name, total_n, blob.size());
+    LOG(3,
+        "unexpected number of values for dataset {}  expected: {}  actual: {}",
+        name, total_n, blob.size());
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -364,9 +375,11 @@ write_ds_string(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   H5Tclose(dt);
 }
 
-static void
-write_ds_string_fixed_size(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
-                 std::vector<hsize_t> max, hsize_t element_size, rapidjson::Value const *vals) {
+static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
+                                       std::vector<hsize_t> sizes,
+                                       std::vector<hsize_t> max,
+                                       hsize_t element_size,
+                                       rapidjson::Value const *vals) {
   size_t total_n = 1;
   for (auto x : sizes) {
     total_n *= x;
@@ -377,7 +390,8 @@ write_ds_string_fixed_size(hid_t hdf_parent, std::string name, std::vector<hsize
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(), max.data());
+    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(),
+                         max.data());
     if (max[0] == H5S_UNLIMITED) {
       H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
     }
@@ -413,11 +427,11 @@ write_ds_string_fixed_size(hid_t hdf_parent, std::string name, std::vector<hsize
 }
 
 static void write_ds_generic(std::string const &dtype, hid_t hdf_parent,
-                                     std::string const &name,
-                                     std::vector<hsize_t> const &sizes,
-                                     std::vector<hsize_t> const &max,
-                                     hsize_t element_size,
-                                     rapidjson::Value const *vals) {
+                             std::string const &name,
+                             std::vector<hsize_t> const &sizes,
+                             std::vector<hsize_t> const &max,
+                             hsize_t element_size,
+                             rapidjson::Value const *vals) {
   if (dtype == "uint8") {
     write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
   }
@@ -451,9 +465,9 @@ static void write_ds_generic(std::string const &dtype, hid_t hdf_parent,
   if (dtype == "string") {
     if (element_size == H5T_VARIABLE) {
       write_ds_string(hdf_parent, name, sizes, max, vals);
-    }
-    else {
-      write_ds_string_fixed_size(hdf_parent, name, sizes, max, element_size, vals);
+    } else {
+      write_ds_string_fixed_size(hdf_parent, name, sizes, max, element_size,
+                                 vals);
     }
   }
 }
@@ -506,7 +520,6 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
         element_size = x.v;
       }
     }
-
   }
 
   auto ds_values_it = value->FindMember("values");

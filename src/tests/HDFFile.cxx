@@ -993,8 +993,9 @@ public:
 
   static void attribute_int_scalar() {
     auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024*1024, false);
-    auto h5file = H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
     H5Pclose(fapl);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
@@ -1015,7 +1016,8 @@ public:
     hdf_file.init(h5file, nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
-    auto a1 = H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
+    auto a1 =
+        H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
     ASSERT_GE(a1, 0);
     auto dt = H5Aget_type(a1);
     ASSERT_GE(dt, 0);
@@ -1027,7 +1029,8 @@ public:
   /// Read a string from the given dataset at the given position.
   /// Helper for other unit tests.
   /// So far only for 1d datasets.
-  static void read_string(std::string &result, hid_t ds, std::vector<hsize_t> pos) {
+  static void read_string(std::string &result, hid_t ds,
+                          std::vector<hsize_t> pos) {
     herr_t err;
     auto dt = H5Dget_type(ds);
     ASSERT_GE(dt, 0);
@@ -1040,35 +1043,37 @@ public:
     auto dsp = H5Dget_space(ds);
     ASSERT_GE(dsp, 0);
     {
-      std::array<hsize_t, 1> now {{0}};
-      std::array<hsize_t, 1> max {{0}};
+      std::array<hsize_t, 1> now{{0}};
+      std::array<hsize_t, 1> max{{0}};
       err = H5Sget_simple_extent_dims(dsp, now.data(), max.data());
       ASSERT_EQ(err, 1);
       ASSERT_GE(now.at(0), 0);
       ASSERT_GE(max.at(0), 0);
     }
     {
-      std::array<hsize_t, 1> start {{pos.at(0)}};
-      std::array<hsize_t, 1> stride {{1}};
-      std::array<hsize_t, 1> count {{1}};
-      std::array<hsize_t, 1> block {{1}};
-      err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), stride.data(), count.data(), block.data());
+      std::array<hsize_t, 1> start{{pos.at(0)}};
+      std::array<hsize_t, 1> stride{{1}};
+      std::array<hsize_t, 1> count{{1}};
+      std::array<hsize_t, 1> block{{1}};
+      err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(),
+                                stride.data(), count.data(), block.data());
       ASSERT_GE(err, 0);
     }
     auto dspmem = H5Screate(H5S_SIMPLE);
     ASSERT_GE(dspmem, 0);
     {
-      std::array<hsize_t, 1> now {{1}};
-      std::array<hsize_t, 1> max {{1}};
+      std::array<hsize_t, 1> now{{1}};
+      std::array<hsize_t, 1> max{{1}};
       err = H5Sset_extent_simple(dspmem, 1, now.data(), max.data());
       ASSERT_GE(err, 0);
     }
     {
-      std::array<hsize_t, 1> start {{0}};
-      std::array<hsize_t, 1> stride {{1}};
-      std::array<hsize_t, 1> count {{1}};
-      std::array<hsize_t, 1> block {{1}};
-      err = H5Sselect_hyperslab(dspmem, H5S_SELECT_SET, start.data(), stride.data(), count.data(), block.data());
+      std::array<hsize_t, 1> start{{0}};
+      std::array<hsize_t, 1> stride{{1}};
+      std::array<hsize_t, 1> count{{1}};
+      std::array<hsize_t, 1> block{{1}};
+      err = H5Sselect_hyperslab(dspmem, H5S_SELECT_SET, start.data(),
+                                stride.data(), count.data(), block.data());
       ASSERT_GE(err, 0);
     }
     auto dtmem = H5Tcopy(H5T_C_S1);
@@ -1076,12 +1081,11 @@ public:
 
     if (H5Tis_variable_str(dt)) {
       H5Tset_size(dtmem, H5T_VARIABLE);
-      char * string_ptr = nullptr;
+      char *string_ptr = nullptr;
       err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, &string_ptr);
       ASSERT_GE(err, 0);
       result = std::string(string_ptr);
-    }
-    else {
+    } else {
       H5Tset_size(dtmem, H5Tget_size(dt));
       std::vector<char> buf;
       buf.resize(H5Tget_size(dt) + 1);
@@ -1097,8 +1101,9 @@ public:
 
   static void dataset_static_1d_string_fixed() {
     auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024*1024, false);
-    auto h5file = H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
     H5Pclose(fapl);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
@@ -1132,8 +1137,9 @@ public:
 
   static void dataset_static_1d_string_variable() {
     auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024*1024, false);
-    auto h5file = H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
     H5Pclose(fapl);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
@@ -1163,7 +1169,6 @@ public:
     ASSERT_EQ(item, "string-2");
     ASSERT_GE(H5Dclose(ds), 0);
   }
-
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
@@ -1176,8 +1181,14 @@ TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
 
-TEST_F(T_CommandHandler, attribute_int_scalar) { T_CommandHandler::attribute_int_scalar(); }
+TEST_F(T_CommandHandler, attribute_int_scalar) {
+  T_CommandHandler::attribute_int_scalar();
+}
 
-TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) { T_CommandHandler::dataset_static_1d_string_fixed(); }
+TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
+  T_CommandHandler::dataset_static_1d_string_fixed();
+}
 
-TEST_F(T_CommandHandler, dataset_static_1d_string_variable) { T_CommandHandler::dataset_static_1d_string_variable(); }
+TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
+  T_CommandHandler::dataset_static_1d_string_variable();
+}
