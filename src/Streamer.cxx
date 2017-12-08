@@ -40,6 +40,14 @@ void FileWriter::Streamer::set_streamer_options(
       }
       continue;
     }
+    if (opt.first == "consumer-timeout-ms") {
+      auto value = to_num<uint64_t>(opt.second);
+      if (value.first && (value.second > 0)) {
+        LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
+        consumer_timeout_ms = milliseconds{value.second};
+      }
+      continue;
+    }
     LOG(Sev::Warning, "Unknown option: {} [{}]", opt.first, opt.second);
   }
 }
@@ -261,7 +269,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   }
 
   std::unique_ptr<RdKafka::Message> msg{
-      consumer->consume(consumer_timeout.count())};
+      consumer->consume(consumer_timeout_ms.count())};
 
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {

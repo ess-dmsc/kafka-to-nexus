@@ -67,7 +67,7 @@ private:
 
   int32_t n_sources_{0};
   milliseconds ms_before_start_time{3000};
-  milliseconds consumer_timeout{1000};
+  milliseconds consumer_timeout_ms{1000};
   int metadata_retry{5};
   milliseconds start_ts{0};
 
