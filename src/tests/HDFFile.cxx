@@ -238,7 +238,7 @@ public:
                   Value v2;
                   v2.SetArray();
                   for (size_t i3 = 0; i3 < 2; ++i3) {
-                    v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
+                    v2.PushBack(Value().SetInt(1000 * i1 + 10 * i2 + i3), a);
                   }
                   v1.PushBack(v2, a);
                 }
