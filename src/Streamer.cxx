@@ -134,7 +134,8 @@ void FileWriter::Streamer::push_topic_partition(const std::string &topic,
     _tp.push_back(
         RdKafka::TopicPartition::create(topic, partition, value.count()));
   } else {
-    _tp.push_back(RdKafka::TopicPartition::create(topic, partition));
+    _tp.push_back(RdKafka::TopicPartition::create(topic, partition,
+                                                  RdKafka::Topic::OFFSET_END));
   }
 }
 
