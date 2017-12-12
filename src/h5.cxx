@@ -3,7 +3,6 @@
 
 namespace h5 {
 
-template <typename T> hid_t nat_type();
 template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
 template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
 template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
