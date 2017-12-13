@@ -280,8 +280,8 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
   if (auto x = get_uint(&config_stream, "array_size")) {
     array_size = size_t(x.v);
   }
-  LOG(7,
-      "HDFWriterModule::init_hdf f142 source_name: {}  type: {}  array_size: {}",
+  LOG(7, "HDFWriterModule::init_hdf f142 source_name: {}  type: {}  "
+         "array_size: {}",
       source_name, type, array_size);
 
   string s("value");

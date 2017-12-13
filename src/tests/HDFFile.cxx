@@ -115,13 +115,113 @@ public:
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "value", "values": 42.24, "attributes":{"units":"degree"}})"");
+                R""({
+                  "type": "dataset",
+                  "name": "value",
+                  "values": 42.24,
+                  "attributes": {"units":"degree"}
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "more_complex_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 2]}, "values": [[13.1, 14]]})"");
+                R""({
+                  "type": "dataset",
+                  "name": "more_complex_set",
+                  "dataset": {
+                    "space": "simple",
+                    "type": "double",
+                    "size": ["unlimited", 2]
+                  },
+                  "values": [
+                    [13.1, 14]
+                  ]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_scalar",
+                  "dataset": {
+                    "type": "string"
+                  },
+                  "values": "the-scalar-string"
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_1d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited"]
+                  },
+                  "values": ["the-scalar-string", "another-one"]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_2d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited", 2]
+                  },
+                  "values": [
+                    ["the-scalar-string", "another-one"],
+                    ["string_1_0", "string_1_1"]
+                  ]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_3d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited", 3, 2]
+                  },
+                  "values": [
+                    [
+                      ["string_0_0_0", "string_0_0_1"],
+                      ["string_0_1_0", "string_0_1_1"],
+                      ["string_0_2_0", "string_0_2_1"]
+                    ],
+                    [
+                      ["string_1_0_0", "string_1_0_1"],
+                      ["string_1_1_0", "string_1_1_1"],
+                      ["string_1_2_0", "string_1_2_1"]
+                    ]
+                  ]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_fixed_1d",
+                  "dataset": {
+                    "type":"string",
+                    "string_size": 32,
+                    "size": ["unlimited"]
+                  },
+                  "values": ["the-scalar-string", "another-one"]
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
@@ -138,7 +238,7 @@ public:
                   Value v2;
                   v2.SetArray();
                   for (size_t i3 = 0; i3 < 2; ++i3) {
-                    v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
+                    v2.PushBack(Value().SetInt(1000 * i1 + 10 * i2 + i3), a);
                   }
                   v1.PushBack(v2, a);
                 }
@@ -379,7 +479,7 @@ public:
           stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
@@ -792,7 +892,7 @@ public:
           stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           if (array_size == 0) {
             stream.AddMember("type", Value("double", a), a);
           } else {
@@ -890,6 +990,185 @@ public:
       LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
     }
   }
+
+  static void attribute_int_scalar() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "group",
+          "name": "group1",
+          "attributes": {
+            "hello": "world"
+          }
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto a1 =
+        H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
+    ASSERT_GE(a1, 0);
+    auto dt = H5Aget_type(a1);
+    ASSERT_GE(dt, 0);
+    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
+    H5Tclose(dt);
+    ASSERT_GE(H5Aclose(a1), 0);
+  }
+
+  /// Read a string from the given dataset at the given position.
+  /// Helper for other unit tests.
+  /// So far only for 1d datasets.
+  static void read_string(std::string &result, hid_t ds,
+                          std::vector<hsize_t> pos) {
+    herr_t err;
+    auto dt = H5Dget_type(ds);
+    ASSERT_GE(dt, 0);
+    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
+    ASSERT_EQ(H5Tget_cset(dt), H5T_CSET_UTF8);
+    if (!H5Tis_variable_str(dt)) {
+      // Check plausibility, assuming current unit tests:
+      ASSERT_LE(H5Tget_size(dt), 4096);
+    }
+    auto dsp = H5Dget_space(ds);
+    ASSERT_GE(dsp, 0);
+    {
+      std::array<hsize_t, 1> now{{0}};
+      std::array<hsize_t, 1> max{{0}};
+      err = H5Sget_simple_extent_dims(dsp, now.data(), max.data());
+      ASSERT_EQ(err, 1);
+      ASSERT_GE(now.at(0), 0);
+      ASSERT_GE(max.at(0), 0);
+    }
+    {
+      std::array<hsize_t, 1> start{{pos.at(0)}};
+      std::array<hsize_t, 1> stride{{1}};
+      std::array<hsize_t, 1> count{{1}};
+      std::array<hsize_t, 1> block{{1}};
+      err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(),
+                                stride.data(), count.data(), block.data());
+      ASSERT_GE(err, 0);
+    }
+    auto dspmem = H5Screate(H5S_SIMPLE);
+    ASSERT_GE(dspmem, 0);
+    {
+      std::array<hsize_t, 1> now{{1}};
+      std::array<hsize_t, 1> max{{1}};
+      err = H5Sset_extent_simple(dspmem, 1, now.data(), max.data());
+      ASSERT_GE(err, 0);
+    }
+    {
+      std::array<hsize_t, 1> start{{0}};
+      std::array<hsize_t, 1> stride{{1}};
+      std::array<hsize_t, 1> count{{1}};
+      std::array<hsize_t, 1> block{{1}};
+      err = H5Sselect_hyperslab(dspmem, H5S_SELECT_SET, start.data(),
+                                stride.data(), count.data(), block.data());
+      ASSERT_GE(err, 0);
+    }
+    auto dtmem = H5Tcopy(H5T_C_S1);
+    H5Tset_cset(dtmem, H5T_CSET_UTF8);
+
+    if (H5Tis_variable_str(dt)) {
+      H5Tset_size(dtmem, H5T_VARIABLE);
+      char *string_ptr = nullptr;
+      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, &string_ptr);
+      ASSERT_GE(err, 0);
+      result = std::string(string_ptr);
+    } else {
+      H5Tset_size(dtmem, H5Tget_size(dt));
+      std::vector<char> buf;
+      buf.resize(H5Tget_size(dt) + 1);
+      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, buf.data());
+      ASSERT_GE(err, 0);
+      result = std::string(buf.data());
+    }
+
+    H5Tclose(dt);
+    ASSERT_GE(H5Sclose(dsp), 0);
+    ASSERT_GE(H5Sclose(dspmem), 0);
+  }
+
+  static void dataset_static_1d_string_fixed() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "string_fixed_1d_fixed",
+          "dataset": {
+            "type":"string",
+            "string_size": 71,
+            "size": ["unlimited"]
+          },
+          "values": ["the-scalar-string", "another-one"]
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
+    ASSERT_GE(ds, 0);
+    std::string item;
+    read_string(item, ds, {1});
+    ASSERT_EQ(item, "another-one");
+    ASSERT_GE(H5Dclose(ds), 0);
+  }
+
+  static void dataset_static_1d_string_variable() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "string_fixed_1d_variable",
+          "dataset": {
+            "type":"string",
+            "size": [3]
+          },
+          "values": ["string-0", "string-1", "string-2"]
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
+    ASSERT_GE(ds, 0);
+    std::string item;
+    read_string(item, ds, {2});
+    ASSERT_EQ(item, "string-2");
+    ASSERT_GE(H5Dclose(ds), 0);
+  }
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
@@ -901,3 +1180,15 @@ TEST_F(T_CommandHandler, create_static_dataset) {
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
+
+TEST_F(T_CommandHandler, attribute_int_scalar) {
+  T_CommandHandler::attribute_int_scalar();
+}
+
+TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
+  T_CommandHandler::dataset_static_1d_string_fixed();
+}
+
+TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
+  T_CommandHandler::dataset_static_1d_string_variable();
+}

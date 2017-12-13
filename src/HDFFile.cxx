@@ -11,6 +11,7 @@
 #include <deque>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
+#include <stack>
 #include <unistd.h>
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
@@ -174,43 +175,123 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
   } else if (vals->IsDouble()) {
     blob.push_back(vals->GetDouble());
   } else if (vals->IsArray()) {
-    std::vector<rapidjson::Value const *> as;
-    std::vector<size_t> ai;
-    std::vector<size_t> an;
-    as.push_back(vals);
-    ai.push_back(0);
-    an.push_back(vals->GetArray().Size());
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
 
     while (not as.empty()) {
       if (as.size() > 10) {
         break;
       }
       // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
-      if (ai.back() >= an.back()) {
-        as.pop_back();
-        ai.pop_back();
-        an.pop_back();
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
         continue;
       }
-      auto &v = as.back()->GetArray()[ai.back()];
+      auto &v = as.top()->GetArray()[ai.top()];
       if (v.IsArray()) {
-        ai.back()++;
-        as.push_back(&v);
-        ai.push_back(0);
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
         size_t n = v.GetArray().Size();
-        an.push_back(n);
+        an.push(n);
       } else if (v.IsInt()) {
         blob.push_back((DT)v.GetInt());
-        ai.back()++;
+        ai.top()++;
       } else if (v.IsInt64()) {
         blob.push_back((DT)v.GetInt64());
-        ai.back()++;
+        ai.top()++;
       } else if (v.IsUint64()) {
         blob.push_back((DT)v.GetUint64());
-        ai.back()++;
+        ai.top()++;
       } else if (v.IsDouble()) {
         blob.push_back((DT)v.GetDouble());
-        ai.back()++;
+        ai.top()++;
+      }
+    }
+  }
+}
+
+static void populate_string_pointers(std::vector<char const *> &ptrs,
+                                     rapidjson::Value const *vals) {
+  if (vals->IsString()) {
+    ptrs.push_back(vals->GetString());
+  } else if (vals->IsArray()) {
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
+        continue;
+      }
+      auto &v = as.top()->GetArray()[ai.top()];
+      if (v.IsArray()) {
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
+        size_t n = v.GetArray().Size();
+        an.push(n);
+      } else if (v.IsString()) {
+        ptrs.push_back(v.GetString());
+        ai.top()++;
+      }
+    }
+  }
+}
+
+static void populate_string_fixed_size(std::vector<char> &blob,
+                                       hsize_t element_size,
+                                       rapidjson::Value const *vals) {
+  size_t n_added = 0;
+  if (vals->IsString()) {
+    std::copy(vals->GetString(), vals->GetString() + vals->GetStringLength(),
+              blob.data() + n_added * element_size);
+    ++n_added;
+  } else if (vals->IsArray()) {
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
+        continue;
+      }
+      auto &v = as.top()->GetArray()[ai.top()];
+      if (v.IsArray()) {
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
+        size_t n = v.GetArray().Size();
+        an.push(n);
+      } else if (v.IsString()) {
+        std::copy(v.GetString(), v.GetString() + v.GetStringLength(),
+                  blob.data() + n_added * element_size);
+        ++n_added;
+        ai.top()++;
       }
     }
   }
@@ -230,9 +311,10 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     dsp = H5Screate(H5S_SCALAR);
   } else {
     dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
+    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(),
+                         max.data());
     if (max[0] == H5S_UNLIMITED) {
-      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+      H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
     }
   }
 
@@ -240,7 +322,9 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_blob(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3, "error in sizes");
+    LOG(3,
+        "unexpected number of values for dataset {}  expected: {}  actual: {}",
+        name, total_n, blob.size());
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -251,18 +335,118 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(3, "error while writing dataset");
+    LOG(3, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
   H5Pclose(dcpl);
 }
 
-static void write_ds_numeric_generic(std::string const &dtype, hid_t hdf_parent,
-                                     std::string const &name,
-                                     std::vector<hsize_t> const &sizes,
-                                     std::vector<hsize_t> const &max,
-                                     rapidjson::Value const *vals) {
+static void write_ds_string(hid_t hdf_parent, std::string name,
+                            std::vector<hsize_t> sizes,
+                            std::vector<hsize_t> max,
+                            rapidjson::Value const *vals) {
+  size_t total_n = 1;
+  for (auto x : sizes) {
+    total_n *= x;
+  }
+  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  hid_t dsp = -1;
+  if (sizes.empty()) {
+    dsp = H5Screate(H5S_SCALAR);
+  } else {
+    dsp = H5Screate(H5S_SIMPLE);
+    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
+    if (max[0] == H5S_UNLIMITED) {
+      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+    }
+  }
+
+  std::vector<char const *> blob;
+  populate_string_pointers(blob, vals);
+
+  if (blob.size() != total_n) {
+    LOG(3,
+        "unexpected number of values for dataset {}  expected: {}  actual: {}",
+        name, total_n, blob.size());
+    H5Sclose(dsp);
+    H5Pclose(dcpl);
+    return;
+  }
+
+  auto dt = H5Tcopy(H5T_C_S1);
+  H5Tset_size(dt, H5T_VARIABLE);
+  H5Tset_cset(dt, H5T_CSET_UTF8);
+
+  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
+                       H5P_DEFAULT);
+  auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
+  if (err < 0) {
+    LOG(3, "error while writing dataset {}", name);
+  }
+  H5Dclose(ds);
+  H5Sclose(dsp);
+  H5Pclose(dcpl);
+  H5Tclose(dt);
+}
+
+static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
+                                       std::vector<hsize_t> sizes,
+                                       std::vector<hsize_t> max,
+                                       hsize_t element_size,
+                                       rapidjson::Value const *vals) {
+  size_t total_n = 1;
+  for (auto x : sizes) {
+    total_n *= x;
+  }
+  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  hid_t dsp;
+  if (sizes.empty()) {
+    dsp = H5Screate(H5S_SCALAR);
+  } else {
+    dsp = H5Screate(H5S_SIMPLE);
+    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(),
+                         max.data());
+    if (max[0] == H5S_UNLIMITED) {
+      H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
+    }
+  }
+
+  std::vector<char> blob;
+  if (element_size < 1024 * 1024) {
+    blob.resize(total_n * element_size);
+  }
+  populate_string_fixed_size(blob, element_size, vals);
+
+  if (blob.size() != total_n * element_size) {
+    LOG(3, "error in sizes");
+    H5Sclose(dsp);
+    H5Pclose(dcpl);
+    return;
+  }
+
+  auto dt = H5Tcopy(H5T_C_S1);
+  H5Tset_size(dt, element_size);
+  H5Tset_cset(dt, H5T_CSET_UTF8);
+
+  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
+                       H5P_DEFAULT);
+  auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
+  if (err < 0) {
+    LOG(3, "error while writing dataset");
+  }
+  H5Dclose(ds);
+  H5Sclose(dsp);
+  H5Pclose(dcpl);
+  H5Tclose(dt);
+}
+
+static void write_ds_generic(std::string const &dtype, hid_t hdf_parent,
+                             std::string const &name,
+                             std::vector<hsize_t> const &sizes,
+                             std::vector<hsize_t> const &max,
+                             hsize_t element_size,
+                             rapidjson::Value const *vals) {
   if (dtype == "uint8") {
     write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
   }
@@ -293,6 +477,14 @@ static void write_ds_numeric_generic(std::string const &dtype, hid_t hdf_parent,
   if (dtype == "double") {
     write_ds_numeric<double>(hdf_parent, name, sizes, max, vals);
   }
+  if (dtype == "string") {
+    if (element_size == H5T_VARIABLE) {
+      write_ds_string(hdf_parent, name, sizes, max, vals);
+    } else {
+      write_ds_string_fixed_size(hdf_parent, name, sizes, max, element_size,
+                                 vals);
+    }
+  }
 }
 
 static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
@@ -304,6 +496,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   }
 
   std::string dtype = "int64";
+  hsize_t element_size = H5T_VARIABLE;
 
   std::vector<hsize_t> sizes;
   auto ds = get_object(*value, "dataset");
@@ -336,6 +529,12 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
         }
       }
     }
+
+    if (auto x = get_int(ds.v, "string_size")) {
+      if (x.v > 0 && x.v != H5T_VARIABLE) {
+        element_size = x.v;
+      }
+    }
   }
 
   auto ds_values_it = value->FindMember("values");
@@ -360,7 +559,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   }
 
   auto vals = ds_values;
-  write_ds_numeric_generic(dtype, hdf_parent, name, sizes, max, vals);
+  write_ds_generic(dtype, hdf_parent, name, sizes, max, element_size, vals);
 
   // Handle attributes on this dataset
   if (auto x = get_object(*value, "attributes")) {
@@ -444,7 +643,11 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     return -1;
   }
   h5file = x;
+  return init(h5file, nexus_structure, stream_hdf_info);
+}
 
+int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
+                  std::vector<StreamHDFInfo> &stream_hdf_info) {
   auto lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
@@ -453,8 +656,6 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, 1);
   auto dsp_sc = H5Screate(H5S_SCALAR);
-
-  auto f1 = x;
 
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
@@ -470,7 +671,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     }
   }
 
-  write_hdf_iso8601_now(f1, "file_time");
+  write_hdf_iso8601_now(h5file, "file_time");
 
   H5Sclose(dsp_sc);
   H5Pclose(lcpl);
