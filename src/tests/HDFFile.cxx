@@ -4,6 +4,7 @@
 #include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "../helper.h"
+#include "../h5.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
 #include <array>
@@ -21,18 +22,6 @@ using std::array;
 using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
-
-template <typename T> hid_t nat_type();
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 // Verify
 TEST(HDFFile, create) {
@@ -619,7 +608,7 @@ public:
         err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
                                   count.data(), nullptr);
         ASSERT_GE(err, 0);
-        err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+        err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
         ASSERT_GE(err, 0);
         auto fbd = fb.root()->detector_id();
         for (int i1 = 0; i1 < n_events_per_message; ++i1) {
