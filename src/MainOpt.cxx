@@ -57,25 +57,10 @@ int MainOpt::parse_config_json(std::string json) {
     }
   }
   if (auto o = get_object(d, "streamer")) {
-    for (auto &m : o.v->GetObject()) {
-      if (m.value.IsString()) {
-        streamer_config[m.name.GetString()] = m.value.GetString();
-      }
-      if (m.value.IsInt()) {
-        streamer_config[m.name.GetString()] =
-            fmt::format("{}", m.value.GetInt());
-      }
-    }
+    StreamerConfiguration.SetStreamerOptions(o.v);
   }
   if (auto o = get_object(d, "kafka")) {
-    for (auto &m : o.v->GetObject()) {
-      if (m.value.IsString()) {
-        kafka[m.name.GetString()] = m.value.GetString();
-      }
-      if (m.value.IsInt()) {
-        kafka[m.name.GetString()] = fmt::format("{}", m.value.GetInt());
-      }
-    }
+    StreamerConfiguration.SetRdKafkaOptions(o.v);
   }
   if (auto o = get_string(&d, "hdf-output-prefix")) {
     hdf_output_prefix = o.v;

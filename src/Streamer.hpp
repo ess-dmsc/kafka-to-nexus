@@ -1,15 +1,23 @@
-#pragma once
+//===-- src/Streamer.hpp - Stream consumer class definition -------*- C++ -*-===//
+//
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// This file contains the declaration of the Streamer class, which
+/// consumes kafka logs and calls the write procedure
+///
+//===----------------------------------------------------------------------===//
 
-#include <condition_variable>
-#include <functional>
-#include <iostream>
-#include <map>
-#include <mutex>
-#include <string>
-#include <thread>
+#pragma once
 
 #include "DemuxTopic.h"
 #include "Status.hpp"
+#include "StreamerOptions.h"
+
+#include <condition_variable>
+#include <mutex>
+#include <thread>
 
 namespace RdKafka {
 class Conf;
@@ -22,23 +30,22 @@ class StreamerTest;
 
 namespace FileWriter {
 
+/// Class that connects to kafka topics eventually at a given point in time
+/// and consumes messages, usually writing them on the disk
 class Streamer {
   friend class ::StreamerTest;
 public:
-  using option_t = std::pair<std::string, std::string>;
-  using Options = std::vector<option_t>;
   using SEC = Status::StreamerErrorCode;
 
   Streamer(){};
-  Streamer(const std::string &, const std::string &, Options kafka_options = {},
-           Options filewriter_options = {});
+  Streamer(const std::string &, const std::string &, const FileWriter::StreamerOptions&);
   Streamer(const Streamer &) = delete;
   Streamer(Streamer &&other) = default;
 
   ~Streamer();
 
   template <class T> ProcessMessageResult write(T &f) {
-    std::cout << "fake_recv\n";
+    LOG(0,"fake_recv");
     return ProcessMessageResult::ERR();
   }
 
@@ -66,15 +73,10 @@ private:
   std::atomic<bool> initilialising_{false};
 
   int32_t n_sources_{0};
-  milliseconds ms_before_start_time{3000};
-  milliseconds consumer_timeout_ms{1000};
-  int metadata_retry{5};
-  milliseconds start_ts{0};
-
-  void connect(const std::string &broker, const Options &kafka_options,
-               const Options &filewriter_options);
-  void set_streamer_options(const Options &);
-  std::unique_ptr<RdKafka::Conf> create_configuration(const Options &);
+  StreamerOptions Options;
+  
+  void connect(const std::string &broker, const FileWriter::StreamerOptions& options);
+  std::unique_ptr<RdKafka::Conf> create_configuration(const FileWriter::StreamerOptions& options);
   SEC create_consumer(std::unique_ptr<RdKafka::Conf> &&);
   std::unique_ptr<RdKafka::Metadata> create_metadata();
   SEC create_topic_partition(const std::string &topic,

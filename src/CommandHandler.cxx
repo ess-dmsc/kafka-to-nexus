@@ -43,12 +43,12 @@ std::string find_broker(rapidjson::Document const &d) {
   return std::string{"localhost:9092"};
 }
 
-ESSTimeStamp find_time(rapidjson::Document const &d, const std::string &key) {
+KafkaTimeStamp find_time(rapidjson::Document const &d, const std::string &key) {
   auto m = d.FindMember(key.c_str());
   if (m != d.MemberEnd() && m->value.IsUint64()) {
-    return ESSTimeStamp(m->value.GetUint64());
+    return KafkaTimeStamp(m->value.GetUint64());
   }
-  return ESSTimeStamp{0};
+  return KafkaTimeStamp{0};
 }
 
 // In the future, want to handle many, but not right now.
@@ -206,26 +206,16 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
   if (master) {
     auto br = find_broker(d);
-    //    auto config_kafka = config.kafka;
-    std::vector<std::pair<string, string>> config_kafka_vec;
-    for (auto &x : config.kafka) {
-      config_kafka_vec.emplace_back(x.first, x.second);
-    }
-    std::vector<std::pair<string, string>> config_streamer_vec;
-    for (auto &x : config.streamer_config) {
-      config_streamer_vec.emplace_back(x.first, x.second);
-    }
     // Must be called before StreamMaster instantiation
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
       LOG(Sev::Info, "start time :\t{}", start_time.count());
-      config_streamer_vec.emplace_back("start-time-ms",
-                                       std::to_string(start_time.count()));
+      config.StreamerConfiguration.StartTimestamp = milliseconds(start_time);
     }
-
-    LOG(3, "Write file with id :\t{}", job_id);
+    
+    LOG(Sev::Info, "Write file with id :\t{}", job_id);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        br, std::move(fwt), config_kafka_vec, config_streamer_vec));
+        br, std::move(fwt), config.StreamerConfiguration));
     if (master->status_producer) {
       s->report(master->status_producer,
                 milliseconds{config.status_master_interval});

@@ -14,19 +14,14 @@
 #include <thread>
 
 #include "FileWriterTask.h"
-#include "Report.hpp"
 #include "logger.h"
-
-namespace KafkaW {
-class ProducerTopic;
-}
+#include "Report.hpp"
 
 namespace FileWriter {
 
 template <typename Streamer> class StreamMaster {
   using SEC = Status::StreamerErrorCode;
   using SMEC = Status::StreamMasterErrorCode;
-  using Options = typename Streamer::Options;
   friend class CommandHandler;
 
 public:
@@ -34,16 +29,14 @@ public:
 
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
-               const Options &kafka_options = {},
-               const Options &filewriter_options = {})
+               const StreamerOptions &options)
       : demux(file_writer_task->demuxers()),
         _file_writer_task(std::move(file_writer_task)) {
 
     for (auto &d : demux) {
       streamer.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
-                       std::forward_as_tuple(broker, d.topic(), kafka_options,
-                                             filewriter_options));
+                       std::forward_as_tuple(broker, d.topic(), options));
       streamer[d.topic()].n_sources() = d.sources().size();
     }
 

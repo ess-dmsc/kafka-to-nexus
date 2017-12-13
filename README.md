@@ -423,9 +423,12 @@ sources to be implemented) and consumes a message in the specified topic. Some f
 * multiple Source per streamer
 * initial timestamp is specified using ``set_start_time``
 * connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
-* Kafka::Config and streamer options can be optionally configured using ``kafka`` and ``streamer`` fields in the configuration file. ``kafka`` can contain any option that RdKafka accepts. `streamer` can contain:
+* Kafka::Config and streamer options can be optionally configured using ``kafka`` and ``streamer`` fields in the configuration file. ``kafka`` can contain any option that RdKafka accepts. `streamer` accetps:
 	- `ms-before-start` milliseconds before the `start_time` to start writing from
-
+    - `consumer-timeout-ms` the maximum time in milliseconds the consumer waits
+      before return with error status
+    - `metadata-retry` maxim number of retries to connect to specifies broker
+      before return an error
 
 ## DemuxTopic
 Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.

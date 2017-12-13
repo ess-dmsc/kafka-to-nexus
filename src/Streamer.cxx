@@ -1,71 +1,31 @@
-#include <algorithm>
-#include <memory>
+#include "Streamer.hpp"
 
 #include "logger.h"
+#include "helper.h"
+
 #include <librdkafka/rdkafkacpp.h>
 
-#include "Msg.h"
-#include "Streamer.hpp"
-#include "helper.h"
+#include <algorithm>
+#include <memory>
 #include <unistd.h>
 
-void FileWriter::Streamer::set_streamer_options(
-    const FileWriter::Streamer::Options &options) {
-
-  for (auto &opt : options) {
-    // Note: to_int<> returns a pair (validity of conversion,value).
-    // First element notifies if the conversion is defined
-
-    if (opt.first == "ms-before-start") {
-      auto value = to_num<int>(opt.second);
-      if (value.first && (value.second > 0)) {
-        LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
-        ms_before_start_time = ESSTimeStamp(value.second);
-      }
-      continue;
-    }
-    if (opt.first == "metadata-retry") {
-      auto value = to_num<int>(opt.second);
-      if (value.first && (value.second > 0)) {
-        LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
-        metadata_retry = value.second;
-      }
-      continue;
-    }
-    if (opt.first == "start-time-ms") {
-      auto value = to_num<uint64_t>(opt.second);
-      if (value.first && (value.second > 0)) {
-        LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
-        start_ts = ESSTimeStamp{value.second};
-      }
-      continue;
-    }
-    if (opt.first == "consumer-timeout-ms") {
-      auto value = to_num<uint64_t>(opt.second);
-      if (value.first && (value.second > 0)) {
-        LOG(Sev::Debug, "{}: {}", opt.first, opt.second);
-        consumer_timeout_ms = milliseconds{value.second};
-      }
-      continue;
-    }
-    LOG(Sev::Warning, "Unknown option: {} [{}]", opt.first, opt.second);
-  }
-}
-
+/// Method that creates and configures the RdKafka configuration used in the
+/// Streamer
 std::unique_ptr<RdKafka::Conf> FileWriter::Streamer::create_configuration(
-    const FileWriter::Streamer::Options &kafka_options) {
+    const FileWriter::StreamerOptions& Options) {
+  
   std::unique_ptr<RdKafka::Conf> conf(
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
   if (!conf) {
     LOG(Sev::Error, "Error: invalid configuration");
     run_status_ = SEC::configuration_error;
-  } else {
-    std::string errstr;
-    for (auto &opt : kafka_options) {
-      LOG(Sev::Debug, "set kafka config: {} = {}", opt.first, opt.second);
-      if (conf->set(opt.first, opt.second, errstr) != RdKafka::Conf::CONF_OK) {
-        LOG(Sev::Warning, "{}", errstr);
-      }
+    return nullptr;
+  }
+  
+  std::string errstr;
+  for(std::pair<std::string,std::string> Option : Options.RdKafkaOptions) {
+    if (conf->set(Option.first, Option.second, errstr) != RdKafka::Conf::CONF_OK) {
+      LOG(Sev::Warning, "{}", errstr);
     }
   }
   return conf;
@@ -87,8 +47,9 @@ std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::create_metadata() {
   std::unique_ptr<RdKafka::Topic> ptopic;
   int retry{0};
   auto err = consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 1000);
-  while (err != RdKafka::ERR_NO_ERROR && retry < metadata_retry) {
+  while (err != RdKafka::ERR_NO_ERROR && retry < Options.NumMetadataRetry) {
     err = consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 1000);
+    ++retry;
   }
   if (err != RdKafka::ERR_NO_ERROR) {
     LOG(Sev::Error, "{}", RdKafka::err2str(err));
@@ -115,7 +76,7 @@ FileWriter::Streamer::create_topic_partition(
     }
   }
   if (!pmv) {
-    LOG(0, "Error: unable to find partition for topic {}", topic);
+    LOG(Sev::Error, "Error: unable to find partition for topic {}", topic);
     return SEC::topic_partition_error;
   }
   if (pmv->size()) {
@@ -137,8 +98,8 @@ FileWriter::Streamer::create_topic_partition(
 
 void FileWriter::Streamer::push_topic_partition(const std::string &topic,
                                                 const int32_t &partition) {
-  if (start_ts.count()) {
-    auto value = start_ts - ms_before_start_time;
+  if (Options.StartTimestamp.count()) {
+    auto value = Options.StartTimestamp - Options.BeforeStartTime;
     _tp.push_back(
         RdKafka::TopicPartition::create(topic, partition, value.count()));
   } else {
@@ -163,25 +124,17 @@ FileWriter::Streamer::assign_topic_partition() {
 
 FileWriter::Streamer::Streamer(const std::string &broker,
                                const std::string &topic_name,
-                               FileWriter::Streamer::Options kafka_options,
-                               FileWriter::Streamer::Options filewriter_options)
-    : run_status_{SEC::not_initialized} {
+                               const FileWriter::StreamerOptions& Opts)
+  : run_status_{SEC::not_initialized}, Options(Opts) {
 
   if (topic_name.empty() || broker.empty()) {
     LOG(Sev::Warning, "Broker and topic required");
     run_status_ = SEC::not_initialized;
     return;
   }
-  kafka_options.push_back(
-      FileWriter::Streamer::option_t{"metadata.broker.list", broker});
-  kafka_options.push_back(
-      FileWriter::Streamer::option_t{"api.version.request", "true"});
-  kafka_options.push_back(
-      FileWriter::Streamer::option_t{"group.id", topic_name});
 
   connect_ = std::thread([&] {
-    this->connect(std::ref(topic_name), std::ref(kafka_options),
-                  std::ref(filewriter_options));
+    this->connect(std::ref(topic_name), std::ref(Options));
     return;
   });
 
@@ -193,25 +146,16 @@ FileWriter::Streamer::~Streamer() { close_stream(); }
 
 void FileWriter::Streamer::connect(
     const std::string &topic_name,
-    const FileWriter::Streamer::Options &kafka_options,
-    const FileWriter::Streamer::Options &filewriter_options) {
+    const FileWriter::StreamerOptions& options) {
   std::lock_guard<std::mutex> lock(connection_ready_);
 
   std::lock_guard<std::mutex> lk(connection_lock_);
   initilialising_ = true;
   connection_init_.notify_all();
 
-  LOG(Sev::Info, "Connecting to {}", topic_name);
-  for (auto &i : filewriter_options) {
-    LOG(Sev::Debug, "{} :\t{}", i.first, i.second);
-  }
-  for (auto &i : kafka_options) {
-    LOG(Sev::Debug, "{} :\t{}", i.first, i.second);
-  }
+  LOG(Sev::Debug, "Connecting to {}", topic_name);
 
-  set_streamer_options(filewriter_options);
-
-  auto config = create_configuration(kafka_options);
+  auto config = create_configuration(options);
   if (!config) {
     return;
   }
@@ -223,15 +167,16 @@ void FileWriter::Streamer::connect(
   if (!metadata) {
     return;
   }
+  LOG(Sev::Debug,"create_metadata");
   run_status_ = create_topic_partition(topic_name, std::move(metadata));
   if (run_status_ != SEC::no_error) {
     return;
   }
+  LOG(Sev::Debug,"create_topic_partition");
   run_status_ = assign_topic_partition();
   if (run_status_ != SEC::no_error) {
     return;
   }
-
   LOG(Sev::Debug, "Connected to topic {}", topic_name);
   run_status_ = SEC::writing;
 }
@@ -269,7 +214,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   }
 
   std::unique_ptr<RdKafka::Message> msg{
-      consumer->consume(consumer_timeout_ms.count())};
+      consumer->consume(Options.ConsumerTimeout.count())};
 
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
@@ -284,7 +229,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
   // skip message if timestamp < start_time
   auto td = mp.time_difference_from_message((char *)msg->payload(), msg->len());
-  if (td.dt < start_ts.count()) {
+  if (td.dt < Options.StartTimestamp.count()) {
     return ProcessMessageResult::OK();
   }
 
@@ -296,4 +241,55 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
     message_info_.error();
   }
   return result;
+}
+
+/// Method that parse the json configuration and parse the options to be used in
+/// RdKafka::Config
+void FileWriter::StreamerOptions::SetRdKafkaOptions(
+    const rapidjson::Value *Opt) {
+  for (rapidjson::Value::ConstMemberIterator m = Opt->MemberBegin();
+       m != Opt->MemberEnd(); ++m) {
+    if(m->value.IsString()) {
+      RdKafkaOptions.push_back({m->name.GetString(),
+            m->value.GetString()});
+      continue;
+    }
+    if(m->value.IsInt()) {
+      RdKafkaOptions.push_back({m->name.GetString(),
+            std::to_string(m->value.GetInt())});
+      continue;
+    }
+  }
+}
+
+/// Method that parse the json configuration and sets the parameters used in the
+/// Streamer
+void FileWriter::StreamerOptions::SetStreamerOptions(const rapidjson::Value *Opt) {
+  for (rapidjson::Value::ConstMemberIterator m = Opt->MemberBegin();
+       m != Opt->MemberEnd(); ++m) {
+    if(m->name.IsString()) {
+      if(strncmp(m->name.GetString(),"ms-before-start",15)==0) {
+        if (m->value.IsInt()) {
+          BeforeStartTime = milliseconds(m->value.GetInt());
+          continue;
+        }
+        LOG(Sev::Warning,"{} : wrong format",m->name.GetString());
+      }
+      if(strncmp(m->name.GetString(),"consumer-timeout-ms",19)==0) {
+        if (m->value.IsInt()) {
+          ConsumerTimeout = milliseconds(m->value.GetInt());
+          continue;
+        }
+        LOG(Sev::Warning,"{} : wrong format",m->name.GetString());
+      }
+      if(strncmp(m->name.GetString(),"metadata-retry",14)==0) {
+        if (m->value.IsInt()) {
+          NumMetadataRetry = m->value.GetInt();
+          continue;
+        }
+        LOG(Sev::Warning,"{} : wrong format",m->name.GetString());
+      }
+      LOG(Sev::Warning,"Unknown option {}, ignore",m->name.GetString());
+    }
+  }
 }

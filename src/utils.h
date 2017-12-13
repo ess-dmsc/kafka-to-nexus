@@ -1,3 +1,15 @@
+//===-- src/utils.h - Definition of useful aliases and types --*- C++ -*-===//
+//
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+/// This file contains the declaration of useful aliases (e.g. time types) and
+/// the StrongType class that can be used to enforce strong typing
+///
+//===----------------------------------------------------------------------===//
+
+
 #pragma once
 
 #include <chrono>
