@@ -73,11 +73,26 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
 }
 
 template <typename T>
-static void write_hdf_iso8601(hid_t loc, std::string name, T &ts) {
+static void write_hdf_iso8601(hid_t loc, const std::string &name, T &ts) {
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2.c_str());
+  write_hdf_ds_scalar_string(loc, name, s2);
+}
+
+static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
+  using namespace date;
+  using namespace std::chrono;
+  const time_zone *current_time_zone;
+  try {
+    current_time_zone = current_zone();
+  } catch(std::runtime_error &) {
+    LOG(2, "ERROR failed to detect time zone for use in ISO8601 timestamp in HDF file")
+    return;
+  }
+  auto now =
+    make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
+  write_hdf_iso8601(location, name, now);
 }
 
 static void write_attribute_str(hid_t loc, std::string name,
@@ -656,13 +671,7 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
     }
   }
 
-  {
-    using namespace date;
-    using namespace std::chrono;
-    auto now =
-        make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
-    write_hdf_iso8601(h5file, "file_time", now);
-  }
+  write_hdf_iso8601_now(h5file, "file_time");
 
   H5Sclose(dsp_sc);
   H5Pclose(lcpl);

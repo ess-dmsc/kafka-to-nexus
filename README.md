@@ -369,6 +369,10 @@ Start the `gtest` based test suite via:
 ./tests/tests
 ```
 
+## Manual Testing
+
+See [Manual Testing page](manual-testing/manual-testing.md).
+
 
 ## Performance
 
