@@ -132,7 +132,10 @@ FileWriter::Streamer::Streamer(const std::string &broker,
     run_status_ = SEC::not_initialized;
     return;
   }
-
+  Options.RdKafkaOptions.push_back({"metadata.broker.list",broker});
+  Options.RdKafkaOptions.push_back({"api.version.request", "true"});
+  Options.RdKafkaOptions.push_back({"group.id","topic"});
+  
   connect_ = std::thread([&] {
     this->connect(std::ref(topic_name), std::ref(Options));
     return;
@@ -247,16 +250,21 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 /// RdKafka::Config
 void FileWriter::StreamerOptions::SetRdKafkaOptions(
     const rapidjson::Value *Opt) {
-  for (rapidjson::Value::ConstMemberIterator m = Opt->MemberBegin();
-       m != Opt->MemberEnd(); ++m) {
-    if(m->value.IsString()) {
-      RdKafkaOptions.push_back({m->name.GetString(),
-            m->value.GetString()});
+
+  if(!Opt->IsObject()) {
+    LOG(Sev::Warning,"Unable to parse steamer options");
+    return;
+  }
+  
+  for (auto& m : Opt->GetObject() ) {
+    if(m.value.IsString()) {
+      RdKafkaOptions.push_back({m.name.GetString(),
+            m.value.GetString()});
       continue;
     }
-    if(m->value.IsInt()) {
-      RdKafkaOptions.push_back({m->name.GetString(),
-            std::to_string(m->value.GetInt())});
+    if(m.value.IsInt()) {
+      RdKafkaOptions.push_back({m.name.GetString(),
+            std::to_string(m.value.GetInt())});
       continue;
     }
   }
@@ -265,31 +273,36 @@ void FileWriter::StreamerOptions::SetRdKafkaOptions(
 /// Method that parse the json configuration and sets the parameters used in the
 /// Streamer
 void FileWriter::StreamerOptions::SetStreamerOptions(const rapidjson::Value *Opt) {
-  for (rapidjson::Value::ConstMemberIterator m = Opt->MemberBegin();
-       m != Opt->MemberEnd(); ++m) {
-    if(m->name.IsString()) {
-      if(strncmp(m->name.GetString(),"ms-before-start",15)==0) {
-        if (m->value.IsInt()) {
-          BeforeStartTime = milliseconds(m->value.GetInt());
+
+  if(!Opt->IsObject()) {
+    LOG(Sev::Warning,"Unable to parse steamer options");
+    return;
+  }
+
+  for (auto& m : Opt->GetObject() ) {
+    if(m.name.IsString()) {
+      if(strncmp(m.name.GetString(),"ms-before-start",15)==0) {
+        if (m.value.IsInt()) {
+          BeforeStartTime = milliseconds(m.value.GetInt());
           continue;
         }
-        LOG(Sev::Warning,"{} : wrong format",m->name.GetString());
+        LOG(Sev::Warning,"{} : wrong format",m.name.GetString());
       }
-      if(strncmp(m->name.GetString(),"consumer-timeout-ms",19)==0) {
-        if (m->value.IsInt()) {
-          ConsumerTimeout = milliseconds(m->value.GetInt());
+      if(strncmp(m.name.GetString(),"consumer-timeout-ms",19)==0) {
+        if (m.value.IsInt()) {
+          ConsumerTimeout = milliseconds(m.value.GetInt());
           continue;
         }
-        LOG(Sev::Warning,"{} : wrong format",m->name.GetString());
+        LOG(Sev::Warning,"{} : wrong format",m.name.GetString());
       }
-      if(strncmp(m->name.GetString(),"metadata-retry",14)==0) {
-        if (m->value.IsInt()) {
-          NumMetadataRetry = m->value.GetInt();
+      if(strncmp(m.name.GetString(),"metadata-retry",14)==0) {
+        if (m.value.IsInt()) {
+          NumMetadataRetry = m.value.GetInt();
           continue;
         }
-        LOG(Sev::Warning,"{} : wrong format",m->name.GetString());
+        LOG(Sev::Warning,"{} : wrong format",m.name.GetString());
       }
-      LOG(Sev::Warning,"Unknown option {}, ignore",m->name.GetString());
+      LOG(Sev::Warning,"Unknown option {}, ignore",m.name.GetString());
     }
   }
 }

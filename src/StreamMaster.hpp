@@ -18,6 +18,10 @@
 #include "Report.hpp"
 
 namespace FileWriter {
+class StreamerOptions;
+}
+
+namespace FileWriter {
 
 template <typename Streamer> class StreamMaster {
   using SEC = Status::StreamerErrorCode;

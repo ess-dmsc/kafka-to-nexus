@@ -15,17 +15,24 @@
 
 #include <rapidjson/schema.h>
 
+#include <map>
+#include <string>
+#include <vector>
+
+class StreamerOptions_Test;
+
 namespace FileWriter {
 
 /// Class that contains configuration parameters for the Streamer
 class StreamerOptions {
   friend class Streamer;
   friend class CommandHandler;
+  friend class StreamerOptionsTest_Test;
 public:
 
   void SetStreamerOptions(const rapidjson::Value*);
   void SetRdKafkaOptions(const rapidjson::Value*);  
-private:
+  //private:
   
   std::vector<std::pair<std::string,std::string>> RdKafkaOptions;
   milliseconds BeforeStartTime{1000};

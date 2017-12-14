@@ -1,15 +1,17 @@
-#include <algorithm>
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <random>
-#include <stdexcept>
 
 #include <StatusWriter.hpp>
 #include <StreamMaster.hpp>
-#include <librdkafka/rdkafkacpp.h>
+#include <StreamerOptions.h>
 
+#include <librdkafka/rdkafkacpp.h>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <random>
+#include <stdexcept>
 
 namespace stub {
 class Streamer {
