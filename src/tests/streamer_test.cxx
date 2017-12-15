@@ -6,7 +6,7 @@
 #include <stdexcept>
 #include <thread>
 
-#include "../Streamer.hpp"
+#include "../Streamer.h"
 #include <librdkafka/rdkafkacpp.h>
 
 #include "../uri.h"

@@ -56,7 +56,7 @@ private:
     info.status(stream_master_status);
     info.time_to_next_message(report_ms_);
     for (auto &s : streamer) {
-      info.add(s.first, s.second.info());
+      info.add(s.first, s.second.messageInfo());
     }
     auto value = Status::pprint<Status::JSONStreamWriter>(info);
     report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),

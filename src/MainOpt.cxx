@@ -57,10 +57,10 @@ int MainOpt::parse_config_json(std::string json) {
     }
   }
   if (auto o = get_object(d, "streamer")) {
-    StreamerConfiguration.SetStreamerOptions(o.v);
+    StreamerConfiguration.setStreamerOptions(o.v);
   }
   if (auto o = get_object(d, "kafka")) {
-    StreamerConfiguration.SetRdKafkaOptions(o.v);
+    StreamerConfiguration.setRdKafkaOptions(o.v);
   }
   if (auto o = get_string(&d, "hdf-output-prefix")) {
     hdf_output_prefix = o.v;

@@ -4,7 +4,7 @@
 #include "KafkaW.h"
 #include "MainOpt.h"
 #include "StreamMaster.hpp"
-#include "Streamer.hpp"
+#include "Streamer.h"
 #include <atomic>
 #include <functional>
 #include <stdexcept>

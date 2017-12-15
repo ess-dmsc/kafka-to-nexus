@@ -30,8 +30,8 @@ class StreamerOptions {
   friend class StreamerOptionsTest_Test;
 public:
 
-  void SetStreamerOptions(const rapidjson::Value*);
-  void SetRdKafkaOptions(const rapidjson::Value*);  
+  void setStreamerOptions(const rapidjson::Value*);
+  void setRdKafkaOptions(const rapidjson::Value*);  
   //private:
   
   std::vector<std::pair<std::string,std::string>> RdKafkaOptions;

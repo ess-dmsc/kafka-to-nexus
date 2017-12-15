@@ -41,7 +41,7 @@ public:
       streamer.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
                        std::forward_as_tuple(broker, d.topic(), options));
-      streamer[d.topic()].n_sources() = d.sources().size();
+      streamer[d.topic()].numSources() = d.sources().size();
     }
 
   }
@@ -116,7 +116,7 @@ public:
 
   const SMEC status() {
     for (auto &s : streamer) {
-      if (int(s.second.runstatus()) < 0) {
+      if (int(s.second.runStatus()) < 0) {
         runstatus = SMEC::streamer_error;
       }
     }
@@ -133,7 +133,7 @@ private:
     while (!stop_ && demux.size() > 0) {
       for (auto &d : demux) {
         auto &s = streamer[d.topic()];
-        if (s.runstatus() == SEC::writing) {
+        if (s.runStatus() == SEC::writing) {
           auto tp = system_clock::now();
           while (do_write &&
                  ((system_clock::now() - tp) < topic_write_duration)) {
@@ -145,21 +145,20 @@ private:
           }
           continue;
         }
-        if (s.runstatus() == SEC::has_finished) {
+        if (s.runStatus() == SEC::has_finished) {
           if (remove_source(d.topic()) != SMEC::running) {
             break;
           }
           continue;
         }
-        if (s.runstatus() == SEC::not_initialized) {
+        if (s.runStatus() == SEC::not_initialized) {
           if (streamer.size() == 1) {
             std::this_thread::sleep_for(milliseconds(500));
           }
           continue;
         }
-        if (int(s.runstatus()) < 0) {
-          LOG(Sev::Error, "Error in topic {} : {}", d.topic(),
-              int(s.runstatus()));
+        if (int(s.runStatus()) < 0) {
+          LOG(Sev::Error, "Error in topic {} : {}", d.topic(), int(s.runStatus()));
           if (remove_source(d.topic()) != SMEC::running) {
             break;
           }
@@ -173,12 +172,12 @@ private:
 
   SMEC remove_source(const std::string &topic) {
     auto &s = streamer[topic];
-    if (s.n_sources() > 1) {
-      s.n_sources()--;
+    if (s.numSources() > 1) {
+      s.numSources()--;
       return SMEC::running;
     } else {
       LOG(Sev::Debug, "All sources in {} have expired, remove streamer", topic);
-      s.close_stream();
+      s.closeStream();
       streamer.erase(topic);
       if (streamer.size() != 0) {
         return SMEC::empty_streamer;
@@ -200,8 +199,8 @@ private:
       report_thread_.join();
     }
     for (auto &s : streamer) {
-      LOG(Sev::Info, "Shut down {} : {}", s.first);
-      auto v = s.second.close_stream();
+	LOG(Sev::Info, "Shut down {} : {}", s.first);
+      auto v = s.second.closeStream();
       if (v != SEC::has_finished) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));

@@ -27,9 +27,9 @@ class CommandHandler_Test : public ::testing::Test {
 
 protected:
   virtual void SetUp() {
-    auto s = std::move(parse_json_command("tests/msg-cmd-new-00.json"));
+    auto s = parse_json_command("tests/msg-cmd-new-00.json");
     new_00.Parse(s.c_str());
-    s = std::move(parse_json_command("tests/msg-cmd-new-01.json"));
+    s = parse_json_command("tests/msg-cmd-new-01.json");
     new_01.Parse(s.c_str());
   }
   void test_filename_from_json() {

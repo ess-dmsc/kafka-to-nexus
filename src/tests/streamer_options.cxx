@@ -11,11 +11,11 @@ class StreamerOptionsTest : public ::testing::Test {
 public:
   void ConfigureRdKafkaWithJson(const rapidjson::Document& optj) {
     ASSERT_TRUE(optj.HasMember("kafka"));
-    Options.SetRdKafkaOptions(&optj["kafka"]);
+    Options.setRdKafkaOptions(&optj["kafka"]);
   }
   void ConfigureStreamerWithJson(const rapidjson::Document& optj) {
     ASSERT_TRUE(optj.HasMember("streamer"));
-    Options.SetStreamerOptions(&optj["streamer"]);
+    Options.setStreamerOptions(&optj["streamer"]);
   }
 
   void CompareRdKafkaOptionsWith(const FileWriter::StreamerOptions&);
