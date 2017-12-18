@@ -81,11 +81,19 @@ public:
   }
 
   bool stop() {
+    do_write = false;
+    stop_ = true;
     try {
       std::call_once(stop_once_guard,
                      &FileWriter::StreamMaster<Streamer>::stop_impl, this);
     } catch (std::exception &e) {
       LOG(Sev::Warning, "Error while stopping: {}", e.what());
+    }
+    if (loop.joinable()) {
+      loop.join();
+    }
+    if (report_thread_.joinable()) {
+      report_thread_.join();
     }
     return !(loop.joinable() || report_thread_.joinable());
   }
@@ -190,8 +198,6 @@ private:
 
   void stop_impl() {
     LOG(Sev::Info, "StreamMaster: stop");
-    do_write = false;
-    stop_ = true;
     if (loop.joinable()) {
       loop.join();
     }

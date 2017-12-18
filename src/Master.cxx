@@ -70,6 +70,14 @@ void Master::run() {
       t_last_statistics = Clock::now();
       statistics();
     }
+    for(auto it = stream_masters.begin(), 
+	  last_sm = stream_masters.end();
+	it != last_sm; ++it) {
+      if((*it)->status() == Status::StreamMasterErrorCode::has_finished) {
+	LOG(6,"remove stream master with id {}",(*it)->job_id());
+	stream_masters.erase(it);
+      }
+    }
   }
   LOG(Sev::Info, "calling stop on all stream_masters");
   for (auto &x : stream_masters) {
