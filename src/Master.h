@@ -3,7 +3,7 @@
 #include "CommandListener.h"
 #include "KafkaW.h"
 #include "MainOpt.h"
-#include "StreamMaster.hpp"
+#include "StreamMaster.h"
 #include "Streamer.h"
 #include <atomic>
 #include <functional>

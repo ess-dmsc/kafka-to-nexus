@@ -226,7 +226,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {
       LOG(Sev::Info, "stop time :\t{}", stop_time.count());
-      s->stop_time(stop_time);
+      s->setStopTime(stop_time);
     }
     s->start();
     master->stream_masters.push_back(std::move(s));
@@ -306,9 +306,9 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
     }
     int counter{0};
     for (auto &x : master->stream_masters) {
-      if (x->job_id() == job_id) {
+      if (x->getJobId() == job_id) {
         if (stop_time.count()) {
-          x->stop_time(stop_time);
+          x->setStopTime(stop_time);
         } else {
           x->stop();
         }

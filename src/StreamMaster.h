@@ -1,21 +1,18 @@
+//===-- src/StreamMaster.h - Streamers manager class definition -------*- C++ -*-===//
+//
+//
+//===----------------------------------------------------------------------===//
+///
+/// \file
+///
+//===----------------------------------------------------------------------===//
+
 #pragma once
 
-#include <functional>
-#include <iostream>
-#include <map>
-#include <memory>
-#include <string>
-#include <vector>
-
-#include <algorithm>
-#include <atomic>
-#include <exception>
-#include <queue>
-#include <thread>
-
 #include "FileWriterTask.h"
-#include "logger.h"
 #include "Report.hpp"
+
+#include <atomic>
 
 namespace FileWriter {
 class StreamerOptions;
@@ -34,14 +31,14 @@ public:
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
                const StreamerOptions &options)
-      : demux(file_writer_task->demuxers()),
-        _file_writer_task(std::move(file_writer_task)) {
+      : Demuxers(file_writer_task->demuxers()),
+        WriterTask(std::move(file_writer_task)) {
 
-    for (auto &d : demux) {
-      streamer.emplace(std::piecewise_construct,
+    for (auto &d : Demuxers) {
+      Streamers.emplace(std::piecewise_construct,
                        std::forward_as_tuple(d.topic()),
                        std::forward_as_tuple(broker, d.topic(), options));
-      streamer[d.topic()].numSources() = d.sources().size();
+      Streamers[d.topic()].numSources() = d.sources().size();
     }
 
   }
@@ -50,28 +47,28 @@ public:
   StreamMaster(StreamMaster &&) = default;
 
   ~StreamMaster() {
-    stop_ = true;
+    Stop = true;
     if (loop.joinable()) {
       loop.join();
     }
-    if (report_thread_.joinable()) {
-      report_thread_.join();
+    if (ReportThread.joinable()) {
+      ReportThread.join();
     }
   }
 
   StreamMaster &operator=(const StreamMaster &) = delete;
 
-  bool stop_time(const ESSTimeStamp &stop) {
-    for (auto &d : demux) {
-      d.stop_time() = stop;
+  bool setStopTime(const ESSTimeStamp &StopTime) {
+    for (auto &d : Demuxers) {
+      d.stop_time() = StopTime;
     }
     return true;
   }
 
   bool start() {
     LOG(Sev::Info, "StreamMaster: start");
-    do_write = true;
-    stop_ = false;
+    Write = true;
+    Stop = false;
 
     if (!loop.joinable()) {
       loop = std::thread([&] { this->run(); });
@@ -81,25 +78,25 @@ public:
   }
 
   bool stop() {
-    do_write = false;
-    stop_ = true;
+    Write = false;
+    Stop = true;
     try {
-      std::call_once(stop_once_guard,
-                     &FileWriter::StreamMaster<Streamer>::stop_impl, this);
+      std::call_once(StopGuard,
+                     &FileWriter::StreamMaster<Streamer>::stopImplemented, this);
     } catch (std::exception &e) {
       LOG(Sev::Warning, "Error while stopping: {}", e.what());
     }
     if (loop.joinable()) {
       loop.join();
     }
-    if (report_thread_.joinable()) {
-      report_thread_.join();
+    if (ReportThread.joinable()) {
+      ReportThread.join();
     }
-    return !(loop.joinable() || report_thread_.joinable());
+    return !(loop.joinable() || ReportThread.joinable());
   }
 
   bool stop(const std::string &job_id) {
-    if (job_id == _file_writer_task->job_id()) {
+    if (job_id == WriterTask->job_id()) {
       return stop();
     }
     return false;
@@ -107,67 +104,63 @@ public:
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const milliseconds &report_ms = milliseconds{1000}) {
-    if (report_ms.count() < 0) {
-      LOG(Sev::Warning, "Required negative delay in statistics collection: use default");
-      return report(p);
-    }
-    if (!report_thread_.joinable()) {
+    if (!ReportThread.joinable()) {
       report_.reset(new Report(p, report_ms));
-      report_thread_ =
-          std::thread([&] { report_->report(streamer, stop_, runstatus); });
+      ReportThread =
+          std::thread([&] { report_->report(Streamers, Stop, RunStatus); });
     } else {
       LOG(Sev::Debug, "Status report already started, nothing to do");
     }
   }
 
-  FileWriterTask const &file_writer_task() const { return *_file_writer_task; }
+  FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
 
   const SMEC status() {
-    for (auto &s : streamer) {
+    for (auto &s : Streamers) {
       if (int(s.second.runStatus()) < 0) {
-        runstatus = SMEC::streamer_error;
+        RunStatus = SMEC::streamer_error;
       }
     }
-    return runstatus.load();
+    return RunStatus.load();
   }
 
-  std::string job_id() const { return _file_writer_task->job_id(); }
+  std::string getJobId() const { return WriterTask->job_id(); }
 
 private:
   void run() {
     using namespace std::chrono;
-    runstatus = SMEC::running;
+    RunStatus = SMEC::running;
 
-    while (!stop_ && demux.size() > 0) {
-      for (auto &d : demux) {
-        auto &s = streamer[d.topic()];
+    while (!Stop && Demuxers.size() > 0) {
+      for (auto &d : Demuxers) {
+        auto &s = Streamers[d.topic()];
         if (s.runStatus() == SEC::writing) {
           auto tp = system_clock::now();
-          while (do_write &&
+          while (Write &&
                  ((system_clock::now() - tp) < topic_write_duration)) {
             auto value = s.write(d);
             if (value.is_STOP() &&
-                (remove_source(d.topic()) != SMEC::running)) {
+                (removeSource(d.topic()) != SMEC::running)) {
               break;
             }
           }
           continue;
         }
         if (s.runStatus() == SEC::has_finished) {
-          if (remove_source(d.topic()) != SMEC::running) {
+          if (removeSource(d.topic()) != SMEC::running) {
             break;
           }
           continue;
         }
         if (s.runStatus() == SEC::not_initialized) {
-          if (streamer.size() == 1) {
+          if (Streamers.size() == 1) {
             std::this_thread::sleep_for(milliseconds(500));
           }
           continue;
         }
         if (int(s.runStatus()) < 0) {
           LOG(Sev::Error, "Error in topic {} : {}", d.topic(), int(s.runStatus()));
-          if (remove_source(d.topic()) != SMEC::running) {
+          if (removeSource(d.topic()) != SMEC::running) {
             break;
           }
           continue;
@@ -175,37 +168,37 @@ private:
       }
     }
 
-    runstatus = SMEC::has_finished;
+    RunStatus = SMEC::has_finished;
   }
 
-  SMEC remove_source(const std::string &topic) {
-    auto &s = streamer[topic];
+  SMEC removeSource(const std::string &topic) {
+    auto &s = Streamers[topic];
     if (s.numSources() > 1) {
       s.numSources()--;
       return SMEC::running;
     } else {
       LOG(Sev::Debug, "All sources in {} have expired, remove streamer", topic);
       s.closeStream();
-      streamer.erase(topic);
-      if (streamer.size() != 0) {
+      Streamers.erase(topic);
+      if (Streamers.size() != 0) {
         return SMEC::empty_streamer;
       } else {
-        stop_ = true;
-        return runstatus = SMEC::has_finished;
+        Stop = true;
+        return RunStatus = SMEC::has_finished;
       }
     }
   }
 
-  void stop_impl() {
+  void stopImplemented() {
     LOG(Sev::Info, "StreamMaster: stop");
     if (loop.joinable()) {
       loop.join();
     }
-    if (report_thread_.joinable()) {
-      report_thread_.join();
+    if (ReportThread.joinable()) {
+      ReportThread.join();
     }
-    for (auto &s : streamer) {
-	LOG(Sev::Info, "Shut down {} : {}", s.first);
+    for (auto &s : Streamers) {
+      LOG(Sev::Info, "Shut down {} : {}", s.first);
       auto v = s.second.closeStream();
       if (v != SEC::has_finished) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
@@ -214,18 +207,18 @@ private:
         LOG(Sev::Info, "\t...done");
       }
     }
-    streamer.clear();
+    Streamers.clear();
   }
 
-  std::map<std::string, Streamer> streamer;
-  std::vector<DemuxTopic> &demux;
+  std::map<std::string, Streamer> Streamers;
+  std::vector<DemuxTopic> &Demuxers;
   std::thread loop;
-  std::thread report_thread_;
-  std::atomic<SMEC> runstatus{SMEC::not_started};
-  std::atomic<bool> do_write{false};
-  std::atomic<bool> stop_{false};
-  std::unique_ptr<FileWriterTask> _file_writer_task{nullptr};
-  std::once_flag stop_once_guard;
+  std::thread ReportThread;
+  std::atomic<SMEC> RunStatus{SMEC::not_started};
+  std::atomic<bool> Write{false};
+  std::atomic<bool> Stop{false};
+  std::unique_ptr<FileWriterTask> WriterTask{nullptr};
+  std::once_flag StopGuard;
   std::unique_ptr<Report> report_{nullptr};
 
   milliseconds topic_write_duration{1000};

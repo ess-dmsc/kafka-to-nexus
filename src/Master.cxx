@@ -11,8 +11,8 @@
 
 namespace FileWriter {
 
-using std::vector;
 using std::string;
+using std::vector;
 
 std::string &CmdMsg_K::str() { return _str; }
 
@@ -70,12 +70,11 @@ void Master::run() {
       t_last_statistics = Clock::now();
       statistics();
     }
-    for(auto it = stream_masters.begin(), 
-	  last_sm = stream_masters.end();
-	it != last_sm; ++it) {
-      if((*it)->status() == Status::StreamMasterErrorCode::has_finished) {
-	LOG(6,"remove stream master with id {}",(*it)->job_id());
-	stream_masters.erase(it);
+    for (auto it = stream_masters.begin(), last_sm = stream_masters.end();
+         it != last_sm; ++it) {
+      if ((*it)->status() == Status::StreamMasterErrorCode::has_finished) {
+        LOG(6, "remove stream master with id {}", (*it)->getJobId());
+        stream_masters.erase(it);
       }
     }
   }

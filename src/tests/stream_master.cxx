@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <StatusWriter.hpp>
-#include <StreamMaster.hpp>
+#include <StreamMaster.h>
 #include <StreamerOptions.h>
 
 #include <librdkafka/rdkafkacpp.h>
