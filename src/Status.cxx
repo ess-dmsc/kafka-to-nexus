@@ -21,36 +21,36 @@ FileWriter::Status::message_size(const FileWriter::Status::MessageInfo &value) {
   if (value.messages().first == 0) { // nan causes failure in JSON
     return std::pair<double, double>{};
   }
-  std::pair<double, double> result{
+  std::pair<double, double> result(
       average(value.Mbytes().first, value.messages().first),
       standard_deviation(value.Mbytes().first, value.Mbytes().second,
-                         value.messages().first)};
+                         value.messages().first));
   return result;
 }
 
 const std::pair<double, double> FileWriter::Status::message_frequency(
     const FileWriter::Status::MessageInfo &value,
-    const double time_difference) {
-  if (time_difference < 1e-10) {
-    return std::pair<double, double>({0, 0});
+    const milliseconds &TimeDifference) {
+  if (TimeDifference.count() < 1e-10) {
+    return std::pair<double, double>({ 0, 0 });
   }
-  std::pair<double, double> result{
-      average(value.messages().first, time_difference),
-      standard_deviation(value.messages().first, value.messages().second,
-                         time_difference)};
+  std::pair<double, double> result(
+      1e3 * average(value.messages().first, TimeDifference.count()),
+      1e3 * standard_deviation(value.messages().first, value.messages().second,
+                               TimeDifference.count()));
   return result;
 }
 
 const std::pair<double, double> FileWriter::Status::message_throughput(
     const FileWriter::Status::MessageInfo &value,
-    const double time_difference) {
-  if (time_difference < 1e-10) {
-    return std::pair<double, double>({0, 0});
+    const milliseconds &TimeDifference) {
+  if (TimeDifference.count() < 1e-10) {
+    return std::pair<double, double>({ 0, 0 });
   }
-  std::pair<double, double> result{
-      average(value.Mbytes().first, time_difference),
-      standard_deviation(value.Mbytes().first, value.Mbytes().second,
-                         time_difference)};
+  std::pair<double, double> result(
+      1e3*average(value.Mbytes().first, TimeDifference.count()),
+      1e3*standard_deviation(value.Mbytes().first, value.Mbytes().second,
+			     TimeDifference.count()));
   return result;
 }
 

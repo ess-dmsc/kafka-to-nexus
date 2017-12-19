@@ -68,11 +68,12 @@ private:
   SMEC status_{SMEC::not_started};
 };
 
-const std::pair<double, double> message_size(const MessageInfo &);
-const std::pair<double, double> message_frequency(const MessageInfo &,
-                                                  const double);
-const std::pair<double, double> message_throughput(const MessageInfo &,
-                                                   const double);
+const std::pair<double, double> message_size(const MessageInfo &Information);
+const std::pair<double, double>
+message_frequency(const MessageInfo &Information, const milliseconds &Duration);
+const std::pair<double, double>
+message_throughput(const MessageInfo &Information,
+                   const milliseconds &Duration);
 
 } // namespace Status
 } // namespace FileWriter

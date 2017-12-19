@@ -221,7 +221,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
                 milliseconds{config.status_master_interval});
     }
     if (config.topic_write_duration.count()) {
-      s->topic_write_duration = config.topic_write_duration;
+      s->TopicWriteDuration = config.topic_write_duration;
     }
     auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {

@@ -1,10 +1,11 @@
+#include "Status.hpp"
+
+#include <gtest/gtest.h>
+
 #include <random>
 #include <thread>
 #include <type_traits>
 
-#include <gtest/gtest.h>
-
-#include <Status.hpp>
 
 using StreamMasterErrorCode = FileWriter::Status::StreamMasterErrorCode;
 using MessageInfo = FileWriter::Status::MessageInfo;
@@ -225,18 +226,18 @@ TEST(MessageInfo, compute_derived_quantities) {
   for (auto &m : messages_size) {
     mi.message(m * 1e6);
   }
-  double duration{12.23};
+  milliseconds duration(1000);
 
   auto size = FileWriter::Status::message_size(mi);
   auto frequency = FileWriter::Status::message_frequency(mi, duration);
   auto throughput = FileWriter::Status::message_throughput(mi, duration);
   EXPECT_DOUBLE_EQ(size.first, 3.0);
-  EXPECT_NEAR(size.second, 1.5811388300841898, 10e-15); // unbiased
-  EXPECT_NEAR(frequency.first, messages_size.size() / duration, 10e-15);
+  EXPECT_NEAR(size.second, 1.5811388300841898, 10e-3); // unbiased
+  EXPECT_NEAR(frequency.first, 1e3*messages_size.size() / duration.count(), 10e-3);
   EXPECT_NEAR(throughput.first,
-              std::accumulate(messages_size.begin(), messages_size.end(), 0.0) /
-                  duration,
-              10e-15);
+              1e3*std::accumulate(messages_size.begin(), messages_size.end(), 0.0) /
+	      duration.count(),
+              10e-3);
 }
 
 TEST(MessageInfo, derived_quantities_null_divider) {
@@ -246,7 +247,7 @@ TEST(MessageInfo, derived_quantities_null_divider) {
   for (auto &m : messages_size) {
     mi.message(m * 1e6);
   }
-  double duration{0};
+  milliseconds duration(0);
 
   auto frequency = FileWriter::Status::message_frequency(mi, duration);
   auto throughput = FileWriter::Status::message_throughput(mi, duration);
