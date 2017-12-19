@@ -1,7 +1,7 @@
 #include <cstdio>
 
 #include "Status.hpp"
-#include "StatusWriter.hpp"
+#include "StatusWriter.h"
 
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/prettywriter.h"

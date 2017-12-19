@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <StatusWriter.hpp>
+#include <StatusWriter.h>
 #include <StreamMaster.h>
 #include <StreamerOptions.h>
 

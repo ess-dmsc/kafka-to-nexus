@@ -6,7 +6,7 @@
 
 #include "KafkaW.h"
 #include "Status.hpp"
-#include "StatusWriter.hpp"
+#include "StatusWriter.h"
 #include "logger.h"
 
 namespace FileWriter {

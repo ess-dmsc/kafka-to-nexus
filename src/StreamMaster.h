@@ -76,7 +76,7 @@ public:
   /// StreamerErrorCode::has_finished 
   /// \param StopTime timestamp of the
   /// last message to be written in nanoseconds
-  bool setStopTime(const ESSTimeStamp &StopTime) {
+  bool setStopTime(const milliseconds &StopTime) {
     for (auto &d : Demuxers) {
       d.stop_time() = StopTime;
     }

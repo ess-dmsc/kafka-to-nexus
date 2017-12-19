@@ -297,11 +297,11 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
   if (master) {
     auto s = get_string(&d, "job_id");
     auto job_id = std::string(s);
-    ESSTimeStamp stop_time{0};
+    milliseconds stop_time(0);
     {
       auto m = d.FindMember("stop_time");
       if (m != d.MemberEnd()) {
-        stop_time = ESSTimeStamp(m->value.GetUint64());
+        stop_time = milliseconds(m->value.GetUint64());
       }
     }
     int counter{0};

@@ -129,7 +129,7 @@ set(kafka_to_nexus_INC
   Report.hpp
   Source.h
   Status.hpp
-  StatusWriter.hpp
+  StatusWriter.h
   Streamer.h
   StreamMaster.h
   TimeDifferenceFromMessage.h
