@@ -58,8 +58,8 @@ Available options include:
 - `status-uri` Kafka URI where to publish status updates
 - `status-master-interval` Interval in milliseconds for status updates
 - `kafka` Kafka configuration for consumers in Streamer
-- `streamer` Configuration option for the [Streamer](#Streamer)
-- `stream-master` Configuration option for the [StreamMaster](#StreamMaster)
+- `streamer` Configuration option for the Streamer
+- `stream-master` Configuration option for the StreamMaster
 
 ### Send command to kafka-to-nexus
 
@@ -448,7 +448,7 @@ FileWriterCommand and instantiates the Streamer array according to the
 topics. Eventually retrieves the list of brokers from Kafka.
 
 * `start_time` and `stop_time` can be used to set the timestamp of
-the first and last event to be written (see [Streamer](#Streamer) options);
+the first and last event to be written (see Streamer options);
 * upon a `stop` message the ``Master`` can stop the writing;
 * if a `status-uri` is configured sends a (JSON formatted) status
   report on the corresponding topic;

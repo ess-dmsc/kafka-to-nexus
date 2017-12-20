@@ -62,13 +62,20 @@ public:
 
   /// Return the number of different sources in the topic whose last message is
   /// not older than the stop time (if specified)
-  int32_t &numSources() { return NumSources; }
+  const size_t numSources() { return Sources.size(); }
+  void setSources(std::unordered_map<std::string, Source>& SourceList);
+  bool removeSource(const std::string& SourceName);
   
   /// Return a StreamerErrorCode that describes the status of the Streamer
-  const SEC &runStatus() { return RunStatus; }
+  SEC &runStatus() { return RunStatus; }
 
   /// Return all the informations about the messages consumed
   Status::MessageInfo &messageInfo() { return MessageInfo; }
+
+  /// Return a reference to the Options that has been set for the current Streamer. The method can be used to change the current values
+  StreamerOptions& getOptions() {
+	  return Options;
+  }
 
 private:
   std::shared_ptr<RdKafka::KafkaConsumer> Consumer;
@@ -85,6 +92,7 @@ private:
   std::atomic<bool> Initilialising{false};
 
   int32_t NumSources{0};
+  std::vector<std::string> Sources;
   StreamerOptions Options;
   
   void connect(const std::string &);

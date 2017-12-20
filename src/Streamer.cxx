@@ -5,6 +5,7 @@
 
 #include <librdkafka/rdkafkacpp.h>
 
+#include <algorithm>
 #include <memory>
 
 /// Create and configure the RdKafka configuration used in the Streamer. If the
@@ -164,7 +165,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   }
   Options.RdKafkaOptions.push_back({ "metadata.broker.list", Broker });
   Options.RdKafkaOptions.push_back({ "api.version.request", "true" });
-  Options.RdKafkaOptions.push_back({ "group.id", "topic" });
+  Options.RdKafkaOptions.push_back({ "group.id", TopicName });
 
   ConnectThread = std::thread([&] {
     this->connect(std::ref(TopicName));
@@ -249,9 +250,10 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK();
   }
 
-  std::unique_ptr<RdKafka::Message> msg{ Consumer->consume(
-      Options.ConsumerTimeout.count()) };
-
+  // Consume the message and check for message errors. Timeout and partition EOF are considered ok,
+  // other errors are considered failure
+  std::unique_ptr<RdKafka::Message> msg( Consumer->consume(
+      Options.ConsumerTimeout.count()) );
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
     LOG(Sev::Debug, "consume :\t{}", RdKafka::err2str(msg->err()));
@@ -263,15 +265,30 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR();
   }
 
-  // skip message if timestamp < start_time
+  // if the source is not in the source_list return OK (ignore)
+  // if StartTimestamp is set and timestamp < start_time skip message and return OK,
+  // if StopTimestamp is set, timestamp > stop_time and the source is still present remove source and return STOP
+  // else process the message
   auto td = MessageProcessor.time_difference_from_message(
       (char *)msg->payload(), msg->len());
+  LOG(0,"Source is {}",td.sourcename);
+  if(std::find(Sources.begin(),Sources.end(),td.sourcename) == Sources.end()) {
+	  return ProcessMessageResult::OK();
+  }
   if (td.dt < Options.StartTimestamp.count()) {
     return ProcessMessageResult::OK();
   }
+  if (Options.StopTimestamp.count() > 0 && td.dt > Options.StopTimestamp.count()) {
+	  if(removeSource(td.sourcename)) {
+		  return ProcessMessageResult::STOP();
+	  }
+	  return ProcessMessageResult::ERR();
+  }
 
+  // Collect information about the data received
   MessageInfo.message(msg->len());
 
+  // Write the message. Log any error and return the result of processing
   auto result =
       MessageProcessor.process_message((char *)msg->payload(), msg->len());
   LOG(Sev::Debug, "{} : Message timestamp : {}", TopicPartitionVector[0]->topic(),
@@ -281,6 +298,25 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   }
   return result;
 }
+
+void FileWriter::Streamer::setSources(std::unordered_map<std::string, Source>& SourceList) {
+	for(auto& Src : SourceList) {
+		LOG(7,"Add {} to source list",Src.first);
+		Sources.push_back(Src.first);
+	}
+}
+
+bool FileWriter::Streamer::removeSource(const std::string& SourceName) {
+  auto Iter(std::find<std::vector<std::string>::iterator>(Sources.begin(),Sources.end(),SourceName));
+	if(Iter == Sources.end()) {
+		LOG(7,"Can't remove source {}, not in the source list",SourceName);
+		return false;
+	}
+	Sources.erase(Iter);
+	LOG(7,"Remove source {}",SourceName);
+	return true;
+}
+
 
 /// Method that parse the json configuration and parse the options to be used in
 /// RdKafka::Config

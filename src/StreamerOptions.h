@@ -37,6 +37,7 @@ public:
   std::vector<std::pair<std::string,std::string>> RdKafkaOptions;
   milliseconds BeforeStartTime{1000};
   milliseconds StartTimestamp{0};
+  milliseconds StopTimestamp{0};
   milliseconds ConsumerTimeout{1000};
   int NumMetadataRetry{5};
 };

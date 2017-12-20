@@ -212,7 +212,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(Sev::Info, "start time :\t{}", start_time.count());
       config.StreamerConfiguration.StartTimestamp = milliseconds(start_time);
     }
-    
+    auto stop_time = find_time(d, "stop_time");
+    if (stop_time.count()) {
+      LOG(Sev::Info, "stop time :\t{}", stop_time.count());
+      config.StreamerConfiguration.StopTimestamp = milliseconds(stop_time);
+    }
+
     LOG(Sev::Info, "Write file with id :\t{}", job_id);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(fwt), config.StreamerConfiguration));
@@ -222,11 +227,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
     if (config.topic_write_duration.count()) {
       s->TopicWriteDuration = config.topic_write_duration;
-    }
-    auto stop_time = find_time(d, "stop_time");
-    if (stop_time.count()) {
-      LOG(Sev::Info, "stop time :\t{}", stop_time.count());
-      s->setStopTime(stop_time);
     }
     s->start();
     master->stream_masters.push_back(std::move(s));
