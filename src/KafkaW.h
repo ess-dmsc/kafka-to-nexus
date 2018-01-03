@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "logger.h"
 
 namespace KafkaW {
 // Want to expose this typedef also for users of this namespace

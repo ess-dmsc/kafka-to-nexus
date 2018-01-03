@@ -8,7 +8,7 @@
 #include <string>
 
 void signal_handler(int signal) {
-  LOG(0, "SIGNAL {}", signal);
+  LOG(Sev::Note, "SIGNAL {}", signal);
   if (auto opt = g_main_opt.load()) {
     if (auto m = opt->master.load()) {
       m->stop();
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
                "\n");
 
     fmt::print("  -v\n"
-               "      Increase verbosity\n"
+               "      Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info).\n"
                "\n");
     return 1;
   }

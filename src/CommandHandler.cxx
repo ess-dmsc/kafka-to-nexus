@@ -60,7 +60,7 @@ CommandHandler::CommandHandler(MainOpt &config, Master *master)
     auto doc = make_unique<rapidjson::Document>();
     ParseResult err = doc->Parse(buf1.data(), buf1.size());
     if (err.Code() != ParseErrorCode::kParseErrorNone) {
-      LOG(7, "ERROR can not parse schema_command");
+      LOG(Sev::Err, "ERROR can not parse schema_command");
       throw std::runtime_error("ERROR can not parse schema_command");
     }
     schema_command.reset(new SchemaDocument(*doc));
@@ -78,7 +78,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(6, "ERROR command message schema validation:  Invalid schema: {}  "
+      LOG(Sev::Warn, "ERROR command message schema validation:  Invalid schema: {}  "
              "keyword: {}",
           sb1.GetString(), vali.GetInvalidSchemaKeyword());
       return;
@@ -91,7 +91,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   if (!job_id.empty()) {
     fwt->job_id_init(job_id);
   } else {
-    LOG(2, "Command not accepted: missing job_id");
+    LOG(Sev::Warn, "Command not accepted: missing job_id");
     return;
   }
 
@@ -105,51 +105,51 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
     auto x = fwt->hdf_init(nexus_structure, stream_hdf_info);
     if (x) {
-      LOG(7, "ERROR hdf init failed, cancel this write command");
+      LOG(Sev::Err, "ERROR hdf init failed, cancel this write command");
       return;
     }
   }
 
-  LOG(6, "Command contains {} streams", stream_hdf_info.size());
+  LOG(Sev::Info, "Command contains {} streams", stream_hdf_info.size());
   for (auto &stream : stream_hdf_info) {
     auto config_stream_value = get_object(*stream.config_stream, "stream");
     if (!config_stream_value) {
-      LOG(5, "Missing stream specification");
+      LOG(Sev::Note, "Missing stream specification");
       continue;
     }
     auto &config_stream = *config_stream_value.v;
-    LOG(7, "Adding stream: {}", json_to_string(config_stream));
+    LOG(Sev::Info, "Adding stream: {}", json_to_string(config_stream));
     auto topic = get_string(&config_stream, "topic");
     if (!topic) {
-      LOG(5, "Missing topic on stream specification");
+      LOG(Sev::Note, "Missing topic on stream specification");
       continue;
     }
     auto source = get_string(&config_stream, "source");
     if (!source) {
-      LOG(5, "Missing source on stream specification");
+      LOG(Sev::Note, "Missing source on stream specification");
       continue;
     }
     auto module = get_string(&config_stream, "writer_module");
     if (!module) {
       module = get_string(&config_stream, "module");
       if (module) {
-        LOG(4, "The key \"stream.module\" is deprecated, please use "
+        LOG(Sev::Note, "The key \"stream.module\" is deprecated, please use "
                "\"stream.writer_module\" instead.");
       } else {
-        LOG(5, "Missing key `writer_module` on stream specification");
+        LOG(Sev::Note, "Missing key `writer_module` on stream specification");
         continue;
       }
     }
 
     auto module_factory = HDFWriterModuleRegistry::find(module.v);
     if (!module_factory) {
-      LOG(5, "Module '{}' is not available", module.v);
+      LOG(Sev::Warn, "Module '{}' is not available", module.v);
       continue;
     }
 
     auto hdf_writer_module = module_factory();
     if (!hdf_writer_module) {
-      LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
+      LOG(Sev::Warn, "Can not create a HDFWriterModule for '{}'", module.v);
       continue;
     }
 
@@ -177,12 +177,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
-      LOG(6, "start time :\t{}", start_time.count());
+      LOG(Sev::Info, "start time :\t{}", start_time.count());
       s->start_time(start_time);
     }
     auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {
-      LOG(6, "stop time :\t{}", stop_time.count());
+      LOG(Sev::Info, "stop time :\t{}", stop_time.count());
       s->stop_time(stop_time);
     }
     s->start();
@@ -228,15 +228,15 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
         } else {
           x->stop();
         }
-        LOG(5, "gracefully stop file with id : {}", job_id);
+        LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
         ++counter;
       }
     }
 
     if (counter == 0) {
-      LOG(3, "no file with id : {}", job_id);
+      LOG(Sev::Warn, "no file with id : {}", job_id);
     } else if (counter > 1) {
-      LOG(3, "error: multiple files with id : {}", job_id);
+      LOG(Sev::Warn, "error: multiple files with id : {}", job_id);
     }
   }
 }
@@ -253,7 +253,7 @@ void CommandHandler::handle(rapidjson::Document const &d) {
     cmd_teamid = int64_t(i);
   }
   if (cmd_teamid != teamid) {
-    LOG(1, "INFO command is for teamid {:016x}, we are {:016x}", cmd_teamid,
+    LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}", cmd_teamid,
         teamid);
     return;
   }
@@ -291,7 +291,7 @@ void CommandHandler::handle(rapidjson::Document const &d) {
   StringBuffer buffer;
   PrettyWriter<StringBuffer> writer(buffer);
   d.Accept(writer);
-  LOG(3, "ERROR could not figure out this command: {}", buffer.GetString());
+  LOG(Sev::Warn, "ERROR could not figure out this command: {}", buffer.GetString());
 }
 
 void CommandHandler::handle(Msg const &msg) {
@@ -300,7 +300,7 @@ void CommandHandler::handle(Msg const &msg) {
   auto doc = make_unique<Document>();
   ParseResult err = doc->Parse((char *)msg.data, msg.size);
   if (doc->HasParseError()) {
-    LOG(2, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
+    LOG(Sev::Warn, "ERROR json parse: {} {}", err.Code(), GetParseError_En(err.Code()));
     return;
   }
   handle(*doc);

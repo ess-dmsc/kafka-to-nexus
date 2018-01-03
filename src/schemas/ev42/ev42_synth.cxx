@@ -36,7 +36,7 @@ fb synth::next(uint32_t size) {
       ret.builder->CreateUninitializedVector(size, sizeof(DT), (uint8_t **)&a2);
 
   if ((!a1) || (!a2)) {
-    LOG(7, "ERROR can not create test data");
+    LOG(Sev::Dbg, "ERROR can not create test data");
   } else {
     for (size_t i1 = 0; i1 < size; ++i1) {
       auto eid = impl->rnd();
@@ -56,7 +56,7 @@ fb synth::next(uint32_t size) {
   b1.add_time_of_flight(v1);
   b1.add_detector_id(v2);
   FinishEventMessageBuffer(*ret.builder, b1.Finish());
-  // LOG(7, "SIZE: {}", ret.builder->GetSize());
+  // LOG(Sev::Dbg, "SIZE: {}", ret.builder->GetSize());
   ++impl->seq;
   return ret;
 }

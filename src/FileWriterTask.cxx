@@ -23,7 +23,7 @@ FileWriterTask::FileWriterTask() {
   ++n_FileWriterTask_created;
 }
 
-FileWriterTask::~FileWriterTask() { LOG(6, "~FileWriterTask"); }
+FileWriterTask::~FileWriterTask() { LOG(Sev::Dbg, "~FileWriterTask"); }
 
 FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_filename) {
   this->hdf_filename = hdf_filename;
@@ -49,7 +49,7 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
   auto x = hdf_file.init(hdf_filename, nexus_structure, stream_hdf_info);
   if (x) {
-    LOG(3, "can not initialize hdf file  filename: {}", hdf_filename);
+    LOG(Sev::Warn, "can not initialize hdf file  filename: {}", hdf_filename);
     return x;
   }
   return 0;

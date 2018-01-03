@@ -6,12 +6,13 @@
 #include <rapidjson/schema.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
+#include <iostream>
 
 using uri::URI;
 
 int MainOpt::parse_config_file(std::string fname) {
   if (fname.empty()) {
-    LOG(3, "given config filename is empty");
+    LOG(Sev::Note, "given config filename is empty");
     return -1;
   }
   auto jsontxt = gulp(fname);
@@ -26,7 +27,7 @@ int MainOpt::parse_config_json(std::string json) {
   auto &d = config_file;
   d.Parse(json.data(), json.size());
   if (d.HasParseError()) {
-    LOG(3, "configuration is not well formed");
+    LOG(Sev::Note, "configuration is not well formed");
     return -5;
   }
   {
@@ -85,14 +86,15 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"graylog-logger-address", required_argument, nullptr, 0},
       {"use-signal-handler", required_argument, nullptr, 0},
       {"teamid", required_argument, nullptr, 0},
+      {"v", required_argument, nullptr, 0},
       {nullptr, 0, nullptr, 0},
   };
   std::string cmd;
   int option_index = 0;
   bool getopt_error = false;
   while (true) {
-    int c = getopt_long(argc, argv, "vh", long_options, &option_index);
-    // LOG(2, "c getopt {}", c);
+    int c = getopt_long(argc, argv, "v:h", long_options, &option_index);
+    // LOG(Sev::Dbg, "c getopt {}", c);
     if (c == -1)
       break;
     if (c == '?') {
@@ -100,8 +102,11 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
     }
     switch (c) {
     case 'v':
-      opt->verbose = true;
-      log_level = std::min(9, log_level + 1);
+        try {
+          log_level = std::stoi(std::string(optarg));
+        } catch (std::invalid_argument &e) {
+          std::cout << "Severity level of verbosity argument is not an integer." << std::endl;
+        }
       break;
     case 'h':
       opt->help = true;
@@ -145,7 +150,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   }
 
   if (getopt_error) {
-    LOG(2, "ERROR parsing command line options");
+    LOG(Sev::Note, "ERROR parsing command line options");
     opt->help = true;
     ret.first = 1;
   }
@@ -157,7 +162,7 @@ void setup_logger_from_options(MainOpt const &opt) {
   if (opt.kafka_gelf != "") {
     URI uri(opt.kafka_gelf);
     log_kafka_gelf_start(uri.host, uri.topic);
-    LOG(4, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
+    LOG(Sev::Dbg, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
   }
 
   if (opt.graylog_logger_address != "") {

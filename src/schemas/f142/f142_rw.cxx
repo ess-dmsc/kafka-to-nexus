@@ -58,14 +58,14 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                Value fb_value_type_id)
     : _fb_value_type_id(fb_value_type_id) {
   if (ncols <= 0) {
-    LOG(4, "can not handle number of columns ncols == {}", ncols);
+    LOG(Sev::Err, "can not handle number of columns ncols == {}", ncols);
     return;
   }
-  LOG(7, "f142 init_impl  ncols: {}", ncols);
+  LOG(Sev::Dbg, "f142 init_impl  ncols: {}", ncols);
   this->ds =
       h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols, 64 * 1024);
   if (!this->ds) {
-    LOG(3,
+    LOG(Sev::Err,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
         source_name, ncols);
   }
@@ -96,10 +96,10 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
                                                  std::string const &source_name,
                                                  Value fb_value_type_id)
     : _fb_value_type_id(fb_value_type_id) {
-  LOG(7, "f142 init_impl  scalar");
+  LOG(Sev::Dbg, "f142 init_impl  scalar");
   this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024);
   if (!this->ds) {
-    LOG(3, "could not create hdf dataset  source_name: {}", source_name);
+    LOG(Sev::Err, "could not create hdf dataset  source_name: {}", source_name);
   }
 }
 
@@ -135,7 +135,7 @@ std::string FlatbufferReader::source_name(Msg const &msg) const {
   auto fbuf = get_fbuf(msg.data);
   auto s1 = fbuf->source_name();
   if (!s1) {
-    LOG(4, "message has no source name");
+    LOG(Sev::Warn, "message has no source name");
     return "";
   }
   return s1->str();
@@ -280,7 +280,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
   if (auto x = get_uint(&config_stream, "array_size")) {
     array_size = size_t(x.v);
   }
-  LOG(7, "HDFWriterModule::init_hdf f142 source_name: {}  type: {}  "
+  LOG(Sev::Dbg, "HDFWriterModule::init_hdf f142 source_name: {}  type: {}  "
          "array_size: {}",
       source_name, type, array_size);
 
@@ -294,7 +294,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
 
   impl.reset(impl_fac(hdf_group, array_size, type, s));
   if (!impl) {
-    LOG(4, "Could not create a writer implementation for value_type {}", type);
+    LOG(Sev::Err, "Could not create a writer implementation for value_type {}", type);
     return HDFWriterModule::InitResult::ERROR_IO();
   }
 
@@ -327,12 +327,12 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto fbuf = get_fbuf(msg.data);
   if (!impl) {
-    LOG(5, "sorry, but we were unable to initialize for this kind of messages");
+    LOG(Sev::Warn, "sorry, but we were unable to initialize for this kind of messages");
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
   auto wret = impl->write_impl(fbuf);
   if (!wret) {
-    LOG(5, "write failed");
+    LOG(Sev::Err, "write failed");
   }
   total_written_bytes += wret.written_bytes;
   ts_max = std::max(fbuf->timestamp(), ts_max);
