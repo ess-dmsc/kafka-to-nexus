@@ -51,6 +51,7 @@ public:
                         std::forward_as_tuple(broker, d.topic(), options));
       Streamers[d.topic()].setSources(d.sources());
     }
+    NumStreamers = Streamers.size();
   }
 
   StreamMaster(const StreamMaster &) = delete;
@@ -73,14 +74,14 @@ public:
   /// Streamer reaches this time the source is removed. When all the
   /// Sources in a Steramer are removed the Streamer connection is
   /// closed and the Streamer marked as
-  /// StreamerErrorCode::has_finished 
+  /// StreamerErrorCode::has_finished
   /// \param StopTime timestamp of the
   /// last message to be written in nanoseconds
   bool setStopTime(const milliseconds &StopTime) {
     for (auto &s : Streamers) {
-      s.second.getOptions().StopTimestamp= StopTime;
+      s.second.getOptions().StopTimestamp = StopTime;
     }
-    //ForceStopThread = std::thread([&] { this->forceStop(); });
+    // ForceStopThread = std::thread([&] { this->forceStop(); });
     return true;
   }
 
@@ -131,7 +132,6 @@ public:
     }
   }
 
-
   /// Return a reference to the FileWriterTask assiciated with the
   /// current file
   FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
@@ -150,20 +150,21 @@ public:
   std::string getJobId() const { return WriterTask->job_id(); }
 
 private:
-
-  bool processStreamResult(Streamer& Stream, DemuxTopic& Demux){
-	  auto ProcessStartTime = std::chrono::system_clock::now();
-	  while (Write && ((std::chrono::system_clock::now() - ProcessStartTime) < TopicWriteDuration)) {
-		  FileWriter::ProcessMessageResult ProcessResult = Stream.write(Demux);
-		  if(ProcessResult.is_OK()){
-			  return false;
-		  }
-		  if (ProcessResult.is_STOP() && (Stream.numSources() == 0)) {
-			  closeStream(Stream,Demux.topic());
-			  return true;
-		  }
-		  //handle errors
-	  }
+  bool processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
+    auto ProcessStartTime = std::chrono::system_clock::now();
+    while (Write && ((std::chrono::system_clock::now() - ProcessStartTime) <
+                     TopicWriteDuration)) {
+      FileWriter::ProcessMessageResult ProcessResult = Stream.write(Demux);
+      if (ProcessResult.is_OK()) {
+        return false;
+      }
+      if (ProcessResult.is_STOP() && (Stream.numSources() == 0)) {
+        closeStream(Stream, Demux.topic());
+        break;
+      }
+      // handle errors
+    }
+    return true;
   }
 
   void run() {
@@ -176,17 +177,19 @@ private:
 
         // If the stream is active process the messages
         if (s.runStatus() == SEC::writing) {
-        	bool ProcessStreamResult(processStreamResult(s,Demux));
-        	if(ProcessStreamResult) {
-        		break;
-        	}
-        	continue;
+          bool ProcessStreamResult(processStreamResult(s, Demux));
+          if (ProcessStreamResult) {
+            break;
+          }
+          continue;
         }
         // If the stream has finished skip to the next stream
         if (s.runStatus() == SEC::has_finished) {
           break;
         }
-        // If the kafka connection is not ready skip to the next stream. Nevertheless if there's only one stream wait half a second in order to prevent spinning
+        // If the kafka connection is not ready skip to the next stream.
+        // Nevertheless if there's only one stream wait half a second in order
+        // to prevent spinning
         if (s.runStatus() == SEC::not_initialized) {
           if (Streamers.size() == 1) {
             std::this_thread::sleep_for(milliseconds(500));
@@ -194,10 +197,7 @@ private:
           continue;
         }
         if (int(s.runStatus()) < 0) {
-	    LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(), int(s.runStatus()));
-//          if (removeSource(d.topic()) != SMEC::running) {
-//            break;
-//          }
+          LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(), int(s.runStatus()));
           continue;
         }
       }
@@ -206,17 +206,16 @@ private:
     RunStatus = SMEC::has_finished;
   }
 
-  SMEC closeStream(Streamer &Stream, const std::string& TopicName) {
-      LOG(Sev::Debug, "All sources in Stream have expired, close connection");
-      Stream.runStatus() = SEC::has_finished;
-      Stream.closeStream();
-      // sure we wants to remove it?
-      Streamers.erase(TopicName);
-      if (Streamers.size() != 0) {
-        return SMEC::running;
-      }
-      Stop = true;
-      return SMEC::has_finished;
+  SMEC closeStream(Streamer &Stream, const std::string &TopicName) {
+    LOG(Sev::Debug, "All sources in Stream have expired, close connection");
+    Stream.runStatus() = SEC::has_finished;
+    Stream.closeStream();
+    NumStreamers--;
+    if (NumStreamers != 0) {
+      return SMEC::running;
+    }
+    Stop = true;
+    return SMEC::has_finished;
   }
 
   /// Implementation of the stop command. Make sure that the Streamers
@@ -243,16 +242,20 @@ private:
     Streamers.clear();
   }
 
-  /// Make sure that if the stop command has been issued with a specific time point the file writer stops at most within 5 seconds since the timepoint has been reached on the system, independently on the message timestamp
+  /// Make sure that if the stop command has been issued with a specific time
+  /// point the file writer stops at most within 5 seconds since the timepoint
+  /// has been reached on the system, independently on the message timestamp
   void forceStop() {
-	  using namespace std::chrono;
-	  std::this_thread::sleep_for(milliseconds(5000));
-	  while(!Stop) {
-		  milliseconds CurrentSystemTime(duration_cast<milliseconds>(system_clock::now().time_since_epoch()));
-		  if((CurrentSystemTime > Demuxers[0].stop_time()+milliseconds(5000)) && !Stop) {
-			stop();
-		  }
-	  }
+    using namespace std::chrono;
+    std::this_thread::sleep_for(milliseconds(5000));
+    while (!Stop) {
+      milliseconds CurrentSystemTime(
+          duration_cast<milliseconds>(system_clock::now().time_since_epoch()));
+      if ((CurrentSystemTime > Demuxers[0].stop_time() + milliseconds(5000)) &&
+          !Stop) {
+        stop();
+      }
+    }
   }
 
   std::map<std::string, Streamer> Streamers;
@@ -268,6 +271,7 @@ private:
   std::unique_ptr<Report> ReportPtr{nullptr};
 
   milliseconds TopicWriteDuration{1000};
+  size_t NumStreamers{0};
 };
 
 } // namespace FileWriter
