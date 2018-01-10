@@ -48,7 +48,7 @@ private:
   SMEC produce_single_report(S &streamer,
                              std::atomic<SMEC> &stream_master_status) {
     if (!report_producer_) {
-      LOG(Sev::Err, "ProucerTopic error: can't produce StreamMaster status report");
+      LOG(Sev::Error, "ProucerTopic error: can't produce StreamMaster status report");
       return SMEC::report_failure;
     }
 

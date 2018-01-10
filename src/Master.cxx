@@ -56,10 +56,10 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-    LOG(Sev::Dbg, "Master poll");
+    LOG(Sev::Debug, "Master poll");
     auto p = command_listener.poll();
     if (auto msg = p.is_Msg()) {
-      LOG(Sev::Dbg, "Handle a command");
+      LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(std::move(msg));
     }
     if (config.do_kafka_status &&

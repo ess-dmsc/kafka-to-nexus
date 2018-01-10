@@ -43,7 +43,7 @@ int64_t produce_command_from_string(uri::URI const &uri,
   if (x == std::future_status::ready) {
     return fut.get();
   }
-  LOG(Sev::Warn, "Timeout on production of test message");
+  LOG(Sev::Warning, "Timeout on production of test message");
   return -1;
 }
 
@@ -153,7 +153,7 @@ TEST_F(Roundtrip, simple_01) {
 }
 
 void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
-  LOG(Sev::Dbg, "roundtrip_remote_kafka");
+  LOG(Sev::Debug, "roundtrip_remote_kafka");
   using namespace FileWriter;
   using namespace rapidjson;
   using CLK = std::chrono::steady_clock;
@@ -167,7 +167,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   Document d;
   d.Parse(json_data.data(), json_data.size());
   if (d.HasParseError()) {
-    LOG(Sev::Warn, "ERROR can not parse command");
+    LOG(Sev::Warning, "ERROR can not parse command");
     return;
   }
   auto &a = d.GetAllocator();
@@ -215,7 +215,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
                               fb.builder->GetSize()};
         {
           auto v = binary_to_hex(msg.data, msg.size);
-          LOG(Sev::Dbg, "msg:\n{:.{}}", v.data(), v.size());
+          LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
         }
         if (true) {
           topic.produce((uint8_t *)msg.data, msg.size);

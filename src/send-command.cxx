@@ -90,10 +90,10 @@ std::string make_command_from_file(const std::string &filename) {
   using namespace rapidjson;
   std::ifstream ifs(filename);
   if (!ifs.good()) {
-    LOG(Sev::Warn, "can not open file {}", filename);
+    LOG(Sev::Warning, "can not open file {}", filename);
     return "";
   }
-  LOG(Sev::Dbg, "make_command_from_file {}", filename);
+  LOG(Sev::Debug, "make_command_from_file {}", filename);
   auto buf1 = gulp(filename);
   return {buf1.data(), buf1.size()};
 }
@@ -151,7 +151,7 @@ int main(int argc, char **argv) {
   }
 
   if (getopt_error) {
-    LOG(Sev::Note, "ERROR parsing command line options");
+    LOG(Sev::Notice, "ERROR parsing command line options");
     opt.help = true;
     return 1;
   }
@@ -185,15 +185,15 @@ int main(int argc, char **argv) {
   KafkaW::Producer::Topic pt(producer, opt.broker.topic);
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.broker_opt.address, opt.teamid);
-    LOG(Sev::Dbg, "sending {}", m1);
+    LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.broker_opt.address, opt.teamid);
-    LOG(Sev::Dbg, "sending {}", m1);
+    LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "file:") {
     auto m1 = make_command_from_file(opt.cmd.substr(5));
-    LOG(Sev::Dbg, "sending:\n{}", m1);
+    LOG(Sev::Debug, "sending:\n{}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
@@ -210,7 +210,7 @@ int main(int argc, char **argv) {
     } else {
       m1 = make_command_stop(opt.broker_opt.address, input);
     }
-    LOG(Sev::Dbg, "sending {}", m1);
+    LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   }
   return 0;

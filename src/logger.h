@@ -21,12 +21,12 @@ extern int log_level;
 enum class Sev : int {
   Emergency = 0,  //Do not use, reserved for system errors
   Alert = 1,      //Do not use, reserved for system errors
-  Crit = 2,       //Critical, i.e. wake me up in the middle of the night
-  Err = 3,        //Error, I should fix this as soon as possible
-  Warn = 4,       //Could be an indication of a problem that needs fixing
-  Note = 5,       //Notice, potentially important events that might need special treatment
+  Critical = 2,   //Critical, i.e. wake me up in the middle of the night
+  Error = 3,      //Error, I should fix this as soon as possible
+  Warning = 4,    //Could be an indication of a problem that needs fixing
+  Notice = 5,     //Notice, potentially important events that might need special treatment
   Info = 6,       //Informational, general run time info for checking the state of the application
-  Dbg = 7,      //Debug, give me a flood of information
+  Debug = 7,      //Debug, give me a flood of information
 };
 
 void dwlog_inner(int level, char const *file, int line, char const *func,

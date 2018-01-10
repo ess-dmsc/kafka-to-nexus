@@ -12,7 +12,7 @@ using uri::URI;
 
 int MainOpt::parse_config_file(std::string fname) {
   if (fname.empty()) {
-    LOG(Sev::Note, "given config filename is empty");
+    LOG(Sev::Notice, "given config filename is empty");
     return -1;
   }
   auto jsontxt = gulp(fname);
@@ -27,7 +27,7 @@ int MainOpt::parse_config_json(std::string json) {
   auto &d = config_file;
   d.Parse(json.data(), json.size());
   if (d.HasParseError()) {
-    LOG(Sev::Note, "configuration is not well formed");
+    LOG(Sev::Notice, "configuration is not well formed");
     return -5;
   }
   {
@@ -150,7 +150,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   }
 
   if (getopt_error) {
-    LOG(Sev::Note, "ERROR parsing command line options");
+    LOG(Sev::Notice, "ERROR parsing command line options");
     opt->help = true;
     ret.first = 1;
   }
@@ -162,7 +162,7 @@ void setup_logger_from_options(MainOpt const &opt) {
   if (opt.kafka_gelf != "") {
     URI uri(opt.kafka_gelf);
     log_kafka_gelf_start(uri.host, uri.topic);
-    LOG(Sev::Dbg, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
+    LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
   }
 
   if (opt.graylog_logger_address != "") {

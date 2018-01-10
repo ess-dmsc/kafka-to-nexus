@@ -96,7 +96,7 @@ public:
       std::call_once(stop_once_guard,
                      &FileWriter::StreamMaster<Streamer>::stop_impl, this);
     } catch (std::exception &e) {
-      LOG(Sev::Warn, "Error while stopping: {}", e.what());
+      LOG(Sev::Warning, "Error while stopping: {}", e.what());
     }
     return !(loop.joinable() || report_thread_.joinable());
   }
@@ -111,7 +111,7 @@ public:
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const int &delay = 1000) {
     if (delay < 0) {
-      LOG(Sev::Warn, "Required negative delay in statistics collection: use default");
+      LOG(Sev::Warning, "Required negative delay in statistics collection: use default");
       return report(p);
     }
     if (!report_thread_.joinable()) {
@@ -119,7 +119,7 @@ public:
       report_thread_ =
           std::thread([&] { report_->report(streamer, stop_, runstatus); });
     } else {
-      LOG(Sev::Dbg, "Status report already started, nothing to do");
+      LOG(Sev::Debug, "Status report already started, nothing to do");
     }
   }
 
@@ -168,7 +168,7 @@ private:
           continue;
         }
         if (int(s.runstatus()) < 0) {
-          LOG(Sev::Err, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
+          LOG(Sev::Error, "Error in topic {} : {}", d.topic(), int(s.runstatus()));
           if (remove_source(d.topic()) != SMEC::running) {
             break;
           }
@@ -186,7 +186,7 @@ private:
       s.n_sources()--;
       return SMEC::running;
     } else {
-      LOG(Sev::Dbg, "All sources in {} have expired, remove streamer", topic);
+      LOG(Sev::Debug, "All sources in {} have expired, remove streamer", topic);
       s.close_stream();
       streamer.erase(topic);
       if (streamer.size() != 0) {
@@ -212,7 +212,7 @@ private:
       LOG(Sev::Info, "Shut down {} : {}", s.first);
       auto v = s.second.close_stream();
       if (v != SEC::has_finished) {
-        LOG(Sev::Warn, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
+        LOG(Sev::Warning, "Error while stopping {} : {}", s.first, Status::Err2Str(v));
       } else {
         LOG(Sev::Info, "\t...done");
       }

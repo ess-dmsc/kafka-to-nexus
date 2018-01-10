@@ -98,7 +98,7 @@ void Logger::fwd_graylog_logger_enable(std::string address) {
   Log::AddLogHandler(new GraylogInterface(addr, port));
   do_use_graylog_logger = true;
 #else
-  LOG(Sev::Note, "ERROR not compiled with support for graylog_logger. Would have used "
+  LOG(Sev::Notice, "ERROR not compiled with support for graylog_logger. Would have used "
          "{}:{}",
       addr, port);
 #endif

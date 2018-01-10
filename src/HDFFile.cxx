@@ -37,9 +37,9 @@ HDFFile::~HDFFile() {
   if (h5file >= 0) {
     std::array<char, 512> fname;
     H5Fget_name(h5file, fname.data(), fname.size());
-    LOG(Sev::Dbg, "flush file {}", fname.data());
+    LOG(Sev::Debug, "flush file {}", fname.data());
     H5Fflush(h5file, H5F_SCOPE_LOCAL);
-    LOG(Sev::Dbg, "close file {}", fname.data());
+    LOG(Sev::Debug, "close file {}", fname.data());
     H5Fclose(h5file);
   }
 }
@@ -76,7 +76,7 @@ static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
   try {
     current_time_zone = current_zone();
   } catch(std::runtime_error &) {
-    LOG(Sev::Warn, "ERROR failed to detect time zone for use in ISO8601 timestamp in HDF file")
+    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 timestamp in HDF file")
     return;
   }
   auto now =
@@ -311,7 +311,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_blob(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(Sev::Err,
+    LOG(Sev::Error,
         "unexpected number of values for dataset {}  expected: {}  actual: {}",
         name, total_n, blob.size());
     H5Sclose(dsp);
@@ -324,7 +324,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(Sev::Err, "error while writing dataset {}", name);
+    LOG(Sev::Error, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -355,7 +355,7 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
   populate_string_pointers(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(Sev::Err,
+    LOG(Sev::Error,
         "unexpected number of values for dataset {}  expected: {}  actual: {}",
         name, total_n, blob.size());
     H5Sclose(dsp);
@@ -371,7 +371,7 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(Sev::Err, "error while writing dataset {}", name);
+    LOG(Sev::Error, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -408,7 +408,7 @@ static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
   populate_string_fixed_size(blob, element_size, vals);
 
   if (blob.size() != total_n * element_size) {
-    LOG(Sev::Err, "error in sizes");
+    LOG(Sev::Error, "error in sizes");
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -422,7 +422,7 @@ static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(Sev::Err, "error while writing dataset");
+    LOG(Sev::Error, "error while writing dataset");
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -494,7 +494,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
     auto ds_space = get_string(ds.v, "space");
     if (ds_space) {
       if (ds_space.v != "simple") {
-        LOG(Sev::Warn, "sorry, can only handle simple data spaces");
+        LOG(Sev::Warning, "sorry, can only handle simple data spaces");
         return;
       }
     }
@@ -627,7 +627,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   if (x < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(Sev::Err, "ERROR could not create the HDF file: {}  cwd: {}", filename,
+    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}", filename,
         cwd.data());
     return -1;
   }

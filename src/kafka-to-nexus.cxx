@@ -8,7 +8,7 @@
 #include <string>
 
 void signal_handler(int signal) {
-  LOG(Sev::Note, "SIGNAL {}", signal);
+  LOG(Sev::Notice, "SIGNAL {}", signal);
   if (auto opt = g_main_opt.load()) {
     if (auto m = opt->master.load()) {
       m->stop();
