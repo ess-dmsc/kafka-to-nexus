@@ -10,6 +10,7 @@ static const std::map<const SMEC, std::string> stream_master_error_lookup_{
     {SMEC::not_started, "not_started"},
     {SMEC::running, "running"},
     {SMEC::has_finished, "has_finished"},
+    {SMEC::is_removable, "is_removable"},
     {SMEC::report_failure, "report_failure"},
     {SMEC::streammaster_error, "streammaster_error"}};
 

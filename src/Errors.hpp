@@ -13,6 +13,7 @@ enum class StreamMasterErrorCode {
   running = 1,
   has_finished = 2,
   empty_streamer = 3,
+  is_removable = 4,
   streamer_error = -1,
   report_failure = -10,
   streammaster_error = -1000

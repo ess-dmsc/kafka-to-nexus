@@ -298,21 +298,21 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
     auto s = get_string(&d, "job_id");
     auto job_id = std::string(s);
     milliseconds stop_time(0);
-    {
-      auto m = d.FindMember("stop_time");
-      if (m != d.MemberEnd()) {
-        stop_time = milliseconds(m->value.GetUint64());
-      }
+    auto m = d.FindMember("stop_time");
+    if (m != d.MemberEnd()) {
+      stop_time = milliseconds(m->value.GetUint64());
     }
     int counter{0};
     for (auto &x : master->stream_masters) {
       if (x->getJobId() == job_id) {
         if (stop_time.count()) {
+          LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", job_id,
+              stop_time.count());
           x->setStopTime(stop_time);
         } else {
+          LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
           x->stop();
         }
-        LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
         ++counter;
       }
     }
