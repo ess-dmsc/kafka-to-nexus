@@ -20,7 +20,6 @@ class Master;
 // POD
 struct MainOpt {
   bool help = false;
-  bool verbose = false;
   bool gtest = false;
   bool use_signal_handler = true;
   /// Kafka options, they get parsed from the configuration file and passed on

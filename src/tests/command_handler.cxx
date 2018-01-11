@@ -19,7 +19,7 @@ std::string parse_json_command(const std::string &filename) {
   std::stringstream buffer;
   buffer << t.rdbuf();
   std::string cmd{buffer.str()};
-  LOG(7, "cmd: {}", cmd.c_str());
+  LOG(Sev::Debug, "cmd: {}", cmd.c_str());
   return cmd;
 }
 

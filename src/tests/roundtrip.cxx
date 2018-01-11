@@ -43,7 +43,7 @@ int64_t produce_command_from_string(uri::URI const &uri,
   if (x == std::future_status::ready) {
     return fut.get();
   }
-  LOG(0, "Timeout on production of test message");
+  LOG(Sev::Warning, "Timeout on production of test message");
   return -1;
 }
 
@@ -62,7 +62,7 @@ struct _has_teamid<T, decltype((void)T::teamid, 0)> : std::true_type {
 };
 
 void roundtrip_simple_01(MainOpt &opt) {
-  LOG(5, "Run test:  Test::roundtrip_simple_01");
+  LOG(Sev::Info, "Run test:  Test::roundtrip_simple_01");
   using namespace FileWriter;
   using namespace rapidjson;
   using namespace BrightnESS::FlatBufs::f141_epics_nt;
@@ -141,7 +141,7 @@ void roundtrip_simple_01(MainOpt &opt) {
   while (CLK::now() - start < MS(5000)) {
     std::this_thread::sleep_for(MS(200));
   }
-  LOG(5, "Stop Master");
+  LOG(Sev::Info, "Stop Master");
   m.stop();
   t1.join();
 }
@@ -153,7 +153,7 @@ TEST_F(Roundtrip, simple_01) {
 }
 
 void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
-  LOG(7, "roundtrip_remote_kafka");
+  LOG(Sev::Debug, "roundtrip_remote_kafka");
   using namespace FileWriter;
   using namespace rapidjson;
   using CLK = std::chrono::steady_clock;
@@ -167,7 +167,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   Document d;
   d.Parse(json_data.data(), json_data.size());
   if (d.HasParseError()) {
-    LOG(3, "ERROR can not parse command");
+    LOG(Sev::Warning, "ERROR can not parse command");
     return;
   }
   auto &a = d.GetAllocator();
@@ -215,7 +215,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
                               fb.builder->GetSize()};
         {
           auto v = binary_to_hex(msg.data, msg.size);
-          LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+          LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
         }
         if (true) {
           topic.produce((uint8_t *)msg.data, msg.size);
@@ -231,7 +231,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   while (CLK::now() - start < MS(4000)) {
     std::this_thread::sleep_for(MS(200));
   }
-  LOG(5, "Stop Master");
+  LOG(Sev::Info, "Stop Master");
   m.stop();
   t1.join();
 }

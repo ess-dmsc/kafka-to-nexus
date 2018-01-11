@@ -28,7 +28,7 @@ ProcessMessageResult Source::process_message(Msg const &msg) {
   }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
-    LOG(5, "buffer not verified");
+    LOG(Sev::Error, "buffer not verified");
     return ProcessMessageResult::ERR();
   }
   auto ret = _hdf_writer_module->write(msg);
