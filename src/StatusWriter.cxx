@@ -1,6 +1,6 @@
 #include <cstdio>
 
-#include "Status.hpp"
+#include "Status.h"
 #include "StatusWriter.h"
 
 #include "rapidjson/filewritestream.h"
@@ -19,7 +19,7 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
   auto &Allocator = Document.GetAllocator();
   Document.SetObject();
 
-  milliseconds next_message_relative_eta_ms = Information.time_to_next_message();
+  milliseconds next_message_relative_eta_ms = Information.timeToNextMessage();
   { // message type
     Document.AddMember("type", "stream_master_status", Allocator);
     Document.AddMember("next_message_eta_ms",
@@ -29,14 +29,15 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
     rapidjson::Value StreamMasterInformation;
     StreamMasterInformation.SetObject();
     StreamMasterInformation.AddMember(
-        "state", rapidjson::StringRef(Err2Str(Information.status())), Allocator);
-    StreamMasterInformation.AddMember("messages", Information.total().messages().first,
-                                      Allocator);
-    StreamMasterInformation.AddMember("Mbytes", Information.total().Mbytes().first,
-                                      Allocator);
-    StreamMasterInformation.AddMember("errors", Information.total().errors(),
-                                      Allocator);
-    StreamMasterInformation.AddMember("runtime", Information.runtime().count(),
+        "state", rapidjson::StringRef(Err2Str(Information.status()).c_str()),
+        Allocator);
+    StreamMasterInformation.AddMember(
+        "messages", Information.getTotal().getMessages().first, Allocator);
+    StreamMasterInformation.AddMember(
+        "Mbytes", Information.getTotal().getMbytes().first, Allocator);
+    StreamMasterInformation.AddMember(
+        "errors", Information.getTotal().getErrors(), Allocator);
+    StreamMasterInformation.AddMember("runtime", Information.runTime().count(),
                                       Allocator);
     Document.AddMember("stream_master", StreamMasterInformation, Allocator);
   }
@@ -51,7 +52,8 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
                       Allocator);
       Value.AddMember("statistics",
                       derivedQuantities(TopicName.second,
-                                        next_message_relative_eta_ms, Allocator),
+                                        next_message_relative_eta_ms,
+                                        Allocator),
                       Allocator);
       StreamerInformation.AddMember(Key, Value, Allocator);
     }
@@ -64,16 +66,17 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
 /// number of errors in a rapidjson::Value object
 /// \param Information a MessageInfo object containing information about the
 /// messages consumed by the Streamer
-/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be written
+/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
+/// written
 template <class AllocatorType>
 rapidjson::Value
 JSONWriterBase::primaryQuantities(MessageInfo &Information,
                                   AllocatorType &Allocator) const {
   rapidjson::Value Value;
   Value.SetObject();
-  Value.AddMember("messages", Information.messages().first, Allocator);
-  Value.AddMember("Mbytes", Information.Mbytes().first, Allocator);
-  Value.AddMember("errors", Information.errors(), Allocator);
+  Value.AddMember("messages", Information.getMessages().first, Allocator);
+  Value.AddMember("Mbytes", Information.getMbytes().first, Allocator);
+  Value.AddMember("errors", Information.getErrors(), Allocator);
   return Value;
 }
 
@@ -102,11 +105,12 @@ rapidjson::Value createDerivedQuantity(MessageInfo::value_type &Quantity,
 /// written
 template <class AllocatorType>
 rapidjson::Value
-JSONWriterBase::derivedQuantities(MessageInfo &Info, const milliseconds &Duration,
+JSONWriterBase::derivedQuantities(MessageInfo &Info,
+                                  const milliseconds &Duration,
                                   AllocatorType &Allocator) const {
-  auto Size = message_size(Info);
-  auto Frequency = FileWriter::Status::message_frequency(Info, Duration);
-  auto Throughput = FileWriter::Status::message_throughput(Info, Duration);
+  auto Size = messageSize(Info);
+  auto Frequency = FileWriter::Status::messageFrequency(Info, Duration);
+  auto Throughput = FileWriter::Status::messageThroughput(Info, Duration);
 
   rapidjson::Value Value;
   Value.SetObject();

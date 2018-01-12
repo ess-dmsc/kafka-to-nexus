@@ -5,7 +5,7 @@
 #include <thread>
 
 #include "KafkaW.h"
-#include "Status.hpp"
+#include "Status.h"
 #include "StatusWriter.h"
 #include "logger.h"
 
@@ -17,7 +17,7 @@ class Report {
 public:
   Report() {}
   Report(std::shared_ptr<KafkaW::ProducerTopic> producer,
-         const milliseconds& report_ms = milliseconds{1000})
+         const milliseconds &report_ms = milliseconds{1000})
       : report_producer_{producer}, report_ms_{report_ms} {}
   Report(const Report &other) = delete;
   Report(Report &&other) = default;
@@ -54,7 +54,7 @@ private:
     }
 
     info.status(stream_master_status);
-    info.time_to_next_message(report_ms_);
+    info.timeToNextMessage(report_ms_);
     for (auto &s : streamer) {
       info.add(s.first, s.second.messageInfo());
     }

@@ -12,7 +12,7 @@
 #pragma once
 
 #include "DemuxTopic.h"
-#include "Status.hpp"
+#include "Status.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 
