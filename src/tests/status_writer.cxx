@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 #include <random>
 
-#include <Status.hpp>
-#include <StatusWriter.h>
+#include "Status.h"
+#include "StatusWriter.h"
 
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/prettywriter.h"
@@ -30,7 +30,7 @@ TEST(StatusWriter, create_report_streamers) {
   StreamMasterInfo info;
   const std::vector<std::string> topics{"first", "second", "third"};
 
-  info.time_to_next_message(milliseconds(2000));
+  info.timeToNextMessage(milliseconds(2000));
   for (auto &t : topics) {
     MessageInfo mi;
     for (int i = 0; i < n_messages; ++i) {
@@ -45,8 +45,7 @@ TEST(StatusWriter, create_report_streamers) {
   }
 
   StreamWriter writer;
-  auto s = std::move(writer.write(info));
-  //  std::cout << writer.write(info) << "\n";
+  auto s = writer.write(info);
 
   // ASSERT_EQ(s,expect);
 }
