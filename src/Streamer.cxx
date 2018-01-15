@@ -271,7 +271,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   // else process the message
   auto td = MessageProcessor.time_difference_from_message(
       (char *)msg->payload(), msg->len());
-  LOG(0,"Source is {}",td.sourcename);
+  LOG(Sev::Debug,"Source is {}",td.sourcename);
   if(std::find(Sources.begin(),Sources.end(),td.sourcename) == Sources.end()) {
 	  return ProcessMessageResult::OK();
   }
@@ -301,7 +301,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
 
 void FileWriter::Streamer::setSources(std::unordered_map<std::string, Source>& SourceList) {
 	for(auto& Src : SourceList) {
-		LOG(7,"Add {} to source list",Src.first);
+	  LOG(Sev::Info,"Add {} to source list",Src.first);
 		Sources.push_back(Src.first);
 	}
 }
@@ -309,11 +309,11 @@ void FileWriter::Streamer::setSources(std::unordered_map<std::string, Source>& S
 bool FileWriter::Streamer::removeSource(const std::string& SourceName) {
   auto Iter(std::find<std::vector<std::string>::iterator>(Sources.begin(),Sources.end(),SourceName));
 	if(Iter == Sources.end()) {
-		LOG(7,"Can't remove source {}, not in the source list",SourceName);
+	  LOG(Sev::Warning,"Can't remove source {}, not in the source list",SourceName);
 		return false;
 	}
 	Sources.erase(Iter);
-	LOG(7,"Remove source {}",SourceName);
+	LOG(Sev::Info,"Remove source {}",SourceName);
 	return true;
 }
 

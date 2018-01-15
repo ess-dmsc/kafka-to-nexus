@@ -252,7 +252,7 @@ private:
       ReportThread.join();
     }
     for (auto &s : Streamers) {
-      LOG(Sev::Info, "Shut down {} : {}", s.first);
+      LOG(Sev::Info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
       if (v != SEC::has_finished) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
@@ -274,7 +274,7 @@ private:
         milliseconds(5000));
     std::unique_lock<std::mutex> lk(cv_m);
     if (cv.wait_until(lk, StopTimePoint) == std::cv_status::timeout) {
-      LOG(6, "Stop time elapsed since 5 seconds, force stop");
+      LOG(Sev::Warning, "Stop time elapsed since 5 seconds, force stop");
       stop(true);
     }
   }

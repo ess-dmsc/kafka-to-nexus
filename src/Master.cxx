@@ -73,7 +73,7 @@ void Master::run() {
     for (auto it = stream_masters.begin(), last_sm = stream_masters.end();
          it != last_sm; ++it) {
       if ((*it)->status() == Status::StreamMasterErrorCode::is_removable) {
-        LOG(6, "remove stream master with id {}", (*it)->getJobId());
+        LOG(Sev::Info, "remove stream master with id {}", (*it)->getJobId());
         stream_masters.erase(it);
       }
     }
