@@ -57,6 +57,9 @@ int MainOpt::parse_config_json(std::string json) {
       }
     }
   }
+  if (auto o = get_string(&d, "hdf-output-prefix")) {
+    hdf_output_prefix = o.v;
+  }
   if (auto a = get_array(d, "commands")) {
     for (auto &e : a.v->GetArray()) {
       Document js_command;
