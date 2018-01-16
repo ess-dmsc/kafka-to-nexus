@@ -51,7 +51,7 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
   std::string filename = hdf_filename;
   if (!hdf_output_prefix.empty()) {
-    filename = hdf_output_prefix + "/" + hdf_filename;
+    filename = hdf_output_prefix + "/" + filename;
   }
   auto x = hdf_file.init(filename, nexus_structure, stream_hdf_info);
   if (x) {

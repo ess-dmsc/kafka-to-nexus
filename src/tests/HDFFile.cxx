@@ -66,6 +66,112 @@ public:
     return event_index[i2] == cue_index;
   }
 
+  static void create_static_file_with_hdf_output_prefix() {
+    using namespace FileWriter;
+    using std::array;
+    using std::vector;
+    using std::string;
+    MainOpt &main_opt = *g_main_opt.load();
+    std::string hdf_output_prefix = "./tmp-relative-output";
+    {
+      std::string jsontxt =
+          fmt::format(R""({{"hdf-output-prefix": "{}"}})"", hdf_output_prefix);
+      rapidjson::Document cfg;
+      cfg.Parse(jsontxt.c_str());
+      main_opt.config_file = merge(cfg, main_opt.config_file);
+      main_opt.hdf_output_prefix = hdf_output_prefix;
+    }
+    {
+      // not portable so far..
+      std::string cmd = fmt::format("mkdir -p {}", hdf_output_prefix);
+      system(cmd.c_str());
+    }
+    rapidjson::Document json_command;
+    {
+      using namespace rapidjson;
+      auto &j = json_command;
+      auto &a = j.GetAllocator();
+      j.SetObject();
+      Value nexus_structure;
+      nexus_structure.SetObject();
+
+      Value children;
+      children.SetArray();
+
+      {
+        Value g1;
+        g1.SetObject();
+        g1.AddMember("type", "group", a);
+        g1.AddMember("name", "some_group", a);
+        Value attr;
+        attr.SetObject();
+        attr.AddMember("NX_class", "NXinstrument", a);
+        g1.AddMember("attributes", attr, a);
+        Value ch;
+        ch.SetArray();
+        {
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "value",
+                  "values": 42.24,
+                  "attributes": {"units":"degree"}
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+        }
+        g1.AddMember("children", ch, a);
+        children.PushBack(g1, a);
+      }
+      nexus_structure.AddMember("children", children, a);
+      j.AddMember("nexus_structure", nexus_structure, a);
+      {
+        Value v;
+        v.SetObject();
+        v.AddMember("file_name", StringRef("tmp-file-with-hdf-prefix.h5"), a);
+        j.AddMember("file_attributes", v, a);
+      }
+      j.AddMember("cmd", StringRef("FileWriter_new"), a);
+      j.AddMember("job_id", StringRef("000000000dataset"), a);
+    }
+
+    auto cmd = json_to_string(json_command);
+    auto fname = get_string(&json_command, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
+
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    Msg msg;
+    msg.data = (char *)cmd.data();
+    msg.size = cmd.size();
+    ch.handle(msg);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    {
+      string cmd("{\"recv_type\":\"FileWriter\", "
+                 "\"cmd\":\"file_writer_tasks_clear_all\", "
+                 "\"job_id\":\"000000000dataset\" }");
+      ch.handle({(char *)cmd.data(), cmd.size()});
+    }
+    main_opt.hdf_output_prefix = "";
+
+    // Verification
+    auto fid = H5Fopen((hdf_output_prefix + "/" + fname.v).c_str(),
+                       H5F_ACC_RDONLY, H5P_DEFAULT);
+    ASSERT_GE(fid, 0);
+    auto g1 = H5Gopen2(fid, "some_group", H5P_DEFAULT);
+    ASSERT_GE(g1, 0);
+    auto ds = H5Dopen2(g1, "value", H5P_DEFAULT);
+    ASSERT_GE(ds, 0);
+    ASSERT_GT(H5Tequal(H5Dget_type(ds), H5T_NATIVE_DOUBLE), 0);
+    auto attr = H5Aopen(ds, "units", H5P_DEFAULT);
+    ASSERT_GE(attr, 0);
+    H5Aclose(attr);
+    H5Dclose(ds);
+    H5Gclose(g1);
+    H5Fclose(fid);
+  }
+
   static void create_static_dataset() {
     using namespace FileWriter;
     using std::array;
@@ -1168,6 +1274,10 @@ public:
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
+
+TEST_F(T_CommandHandler, create_static_file_with_hdf_output_prefix) {
+  T_CommandHandler::create_static_file_with_hdf_output_prefix();
+}
 
 TEST_F(T_CommandHandler, create_static_dataset) {
   T_CommandHandler::create_static_dataset();
