@@ -77,8 +77,6 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   std::pair<int, std::unique_ptr<MainOpt>> ret{
       0, std::unique_ptr<MainOpt>(new MainOpt)};
   auto &opt = ret.second;
-  // For the signal handler
-  g_main_opt.store(opt.get());
   static struct option long_options[] = {
       {"help", no_argument, nullptr, 'h'},
       {"config-file", required_argument, nullptr, 0},
