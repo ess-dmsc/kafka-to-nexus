@@ -60,6 +60,12 @@ int main(int argc, char **argv) {
         "  -v\n"
         "      Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info).\n"
         "\n");
+
+    fmt::print(
+        "  --hdf-output-prefix <absolute/or/relative/directory>\n"
+        "      Directory which gets prepended to the HDF output filenames in\n"
+        "      the file write commands.\n"
+        "\n");
     return 1;
   }
 
