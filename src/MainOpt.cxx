@@ -96,7 +96,6 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   optind = 0;
   while (true) {
     int c = getopt_long(argc, argv, "v:h", long_options, &option_index);
-    // LOG(Sev::Dbg, "c getopt {}", c);
     if (c == -1)
       break;
     if (c == '?') {
