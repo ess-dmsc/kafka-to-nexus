@@ -72,7 +72,16 @@ public:
     using std::vector;
     using std::string;
     MainOpt &main_opt = *g_main_opt.load();
-    std::string hdf_output_prefix = "./tmp-relative-output";
+    std::string hdf_output_prefix = "tmp-relative-output";
+    {
+#ifdef _MSC_VER
+      // NOTE just a suggestion, not tested on windows so far, we have no
+      // windows here.
+      _mkdir(hdf_output_prefix.c_str());
+#else
+      mkdir(hdf_output_prefix.c_str(), 0777);
+#endif
+    }
     {
       std::string jsontxt =
           fmt::format(R""({{"hdf-output-prefix": "{}"}})"", hdf_output_prefix);
@@ -80,11 +89,6 @@ public:
       cfg.Parse(jsontxt.c_str());
       main_opt.config_file = merge(cfg, main_opt.config_file);
       main_opt.hdf_output_prefix = hdf_output_prefix;
-    }
-    {
-      // not portable so far..
-      std::string cmd = fmt::format("mkdir -p {}", hdf_output_prefix);
-      system(cmd.c_str());
     }
     rapidjson::Document json_command;
     {
