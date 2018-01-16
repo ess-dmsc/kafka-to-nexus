@@ -3,8 +3,8 @@
 #include "../HDFFile_impl.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
-#include "../helper.h"
 #include "../h5.h"
+#include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
 #include <array>
@@ -544,7 +544,8 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(Sev::Debug, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
+      LOG(Sev::Debug, "processing done in {} ms",
+          duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
@@ -552,8 +553,10 @@ public:
         ch.handle({(char *)cmd.data(), cmd.size()});
       }
       auto t3 = CLK::now();
-      LOG(Sev::Debug, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
-      LOG(Sev::Debug, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+      LOG(Sev::Debug, "finishing done in {} ms",
+          duration_cast<MS>(t3 - t2).count());
+      LOG(Sev::Debug, "done in total {} ms",
+          duration_cast<MS>(t3 - t1).count());
     }
 
     if (!do_verification) {
@@ -608,7 +611,8 @@ public:
         err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
                                   count.data(), nullptr);
         ASSERT_GE(err, 0);
-        err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+        err =
+            H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
         ASSERT_GE(err, 0);
         auto fbd = fb.root()->detector_id();
         for (int i1 = 0; i1 < n_events_per_message; ++i1) {
@@ -967,7 +971,8 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(Sev::Debug, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
+      LOG(Sev::Debug, "processing done in {} ms",
+          duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
@@ -975,8 +980,10 @@ public:
         ch.handle({(char *)cmd.data(), cmd.size()});
       }
       auto t3 = CLK::now();
-      LOG(Sev::Debug, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
-      LOG(Sev::Debug, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+      LOG(Sev::Debug, "finishing done in {} ms",
+          duration_cast<MS>(t3 - t2).count());
+      LOG(Sev::Debug, "done in total {} ms",
+          duration_cast<MS>(t3 - t1).count());
     }
   }
 

@@ -146,7 +146,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
     if (n1 > 0) {
-      LOG(Sev::Debug, "append_data_1d {} for dataset {:.{}}", nlen, buf1.data(), n1);
+      LOG(Sev::Debug, "append_data_1d {} for dataset {:.{}}", nlen, buf1.data(),
+          n1);
     }
   }
   auto tgt = H5Dget_space(id);
@@ -210,7 +211,8 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
     if (n1 > 0) {
-      LOG(Sev::Debug, "append_data_2d {} for dataset {:.{}}", nlen, buf1.data(), n1);
+      LOG(Sev::Debug, "append_data_2d {} for dataset {:.{}}", nlen, buf1.data(),
+          n1);
     }
   }
   auto tgt = H5Dget_space(id);

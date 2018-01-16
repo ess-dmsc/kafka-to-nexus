@@ -1,4 +1,5 @@
 #pragma once
+#include "logger.h"
 #include <atomic>
 #include <functional>
 #include <librdkafka/rdkafka.h>
@@ -6,7 +7,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include "logger.h"
 
 namespace KafkaW {
 // Want to expose this typedef also for users of this namespace
