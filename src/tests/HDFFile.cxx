@@ -30,7 +30,7 @@ TEST(HDFFile, create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
-  f1.init("tmp-test.h5", rapidjson::Value(), stream_hdf_info);
+  f1.init("tmp-test.h5", rapidjson::Value().SetObject(), stream_hdf_info);
 }
 
 class T_CommandHandler : public testing::Test {
