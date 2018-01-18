@@ -34,13 +34,25 @@ HDFFile::HDFFile() {
 }
 
 HDFFile::~HDFFile() {
+  herr_t err;
   if (h5file >= 0) {
     std::array<char, 512> fname;
-    H5Fget_name(h5file, fname.data(), fname.size());
-    LOG(Sev::Debug, "flush file {}", fname.data());
-    H5Fflush(h5file, H5F_SCOPE_LOCAL);
-    LOG(Sev::Debug, "close file {}", fname.data());
-    H5Fclose(h5file);
+    err = H5Fget_name(h5file, fname.data(), fname.size());
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Fget_name");
+      fname = std::array<char, 512>{{"<unknown name>"}};
+    }
+    LOG(Sev::Debug, "flushing file {}", fname.data());
+    err = H5Fflush(h5file, H5F_SCOPE_LOCAL);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Fflush on {}", fname.data());
+    }
+    LOG(Sev::Debug, "closing file {}", fname.data());
+    err = H5Fclose(h5file);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Fclose on {}", fname.data());
+    }
+    LOG(Sev::Debug, "closed file {}", fname.data());
   }
 }
 
