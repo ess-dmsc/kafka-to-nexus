@@ -829,9 +829,13 @@ static void create_hdf_structures(rapidjson::Value const *value,
         if (auto name = get_string(value, "name")) {
           hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl, H5P_DEFAULT,
                                 H5P_DEFAULT);
-          hdf_next_parent = hdf_this;
-          path.push_back(name.v);
-          gid = hdf_this;
+          if (hdf_this < 0) {
+            LOG(Sev::Critical, "failed H5Gcreate2  name: {}", name.v.c_str());
+          } else {
+            hdf_next_parent = hdf_this;
+            path.push_back(name.v);
+            gid = hdf_this;
+          }
         }
       }
       if (type.v == "stream") {
@@ -866,7 +870,10 @@ static void create_hdf_structures(rapidjson::Value const *value,
     path.pop_back();
   }
   if (gid != -1) {
-    H5Gclose(gid);
+    herr_t err = H5Gclose(gid);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Gclose");
+    }
   }
 }
 
