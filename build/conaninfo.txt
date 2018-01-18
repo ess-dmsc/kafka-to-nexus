@@ -1,0 +1,55 @@
+[settings]
+    arch=x86_64
+    build_type=Release
+    compiler=gcc
+    compiler.libcxx=libstdc++
+    compiler.version=7
+    os=Linux
+
+[requires]
+    RapidJSON/1.Y.Z
+    fmt/3.Y.Z
+    graylog-logger/1.Y.Z
+    gtest/3121b20-dm2
+    hdf5/1.Y.Z
+    librdkafka/0.11.3-dm1
+    streaming-data-types/3e85b23
+
+[options]
+
+
+[full_settings]
+    arch=x86_64
+    arch_build=x86_64
+    build_type=Release
+    compiler=gcc
+    compiler.libcxx=libstdc++
+    compiler.version=7
+    os=Linux
+    os_build=Linux
+
+[full_requires]
+    FlatBuffers/1.8.0@ess-dmsc/stable:0ab9fcf606068d4347207cc29edd400ceccbc944
+    RapidJSON/1.1.0-dm2@ess-dmsc/stable:5ab84d6acfe1f23c4fae0ab88f26e3a396351ac9
+    fmt/3.0.2-dm1@ess-dmsc/stable:0ab9fcf606068d4347207cc29edd400ceccbc944
+    graylog-logger/1.0.3-dm1@ess-dmsc/stable:0ab9fcf606068d4347207cc29edd400ceccbc944
+    gtest/3121b20-dm2@ess-dmsc/stable:27cb7fbffba1a5268eda91c4da54b0254d48c3b1
+    hdf5/1.10.1-dm3@ess-dmsc/stable:88c19d36ef8709d802ff03316b1fbf0bb1ea0116
+    librdkafka/0.11.3-dm1@ess-dmsc/stable:27cb7fbffba1a5268eda91c4da54b0254d48c3b1
+    streaming-data-types/3e85b23@ess-dmsc/stable:5330521a8f67d7ad891b07c1aef59486b256d8e5
+    zlib/1.2.11@conan/stable:6ae331b72e7e265ca2a3d1d8246faf73aa030238
+
+[full_options]
+    FlatBuffers:shared=False
+    gtest:shared=True
+    hdf5:cxx=True
+    hdf5:parallel=False
+    hdf5:shared=True
+    librdkafka:shared=True
+    zlib:shared=False
+
+[recipe_hash]
+
+
+[env]
+

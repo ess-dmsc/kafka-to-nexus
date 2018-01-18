@@ -1,10 +1,10 @@
 [requires]
-gtest/3121b20-dm1@ess-dmsc/testing
+gtest/3121b20-dm2@ess-dmsc/stable
 fmt/3.0.2-dm1@ess-dmsc/stable
-hdf5/1.10.1-dm1@ess-dmsc/stable
-librdkafka/0.11.1-dm1@ess-dmsc/stable
-RapidJSON/1.1.0-dm1@ess-dmsc/stable
-graylog-logger/1.0.3@ess-dmsc/stable
+hdf5/1.10.1-dm3@ess-dmsc/stable
+librdkafka/0.11.3-dm1@ess-dmsc/stable
+RapidJSON/1.1.0-dm2@ess-dmsc/stable
+graylog-logger/1.0.3-dm1@ess-dmsc/stable
 streaming-data-types/3e85b23@ess-dmsc/stable
 
 [generators]
