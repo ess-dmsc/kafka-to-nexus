@@ -133,13 +133,13 @@ static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
 
 static void write_attribute_str(hid_t loc, std::string name,
                                 char const *value) {
-  auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+  hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-  auto dsp_sc = H5Screate(H5S_SCALAR);
-  auto strfix = H5Tcopy(H5T_C_S1);
+  hid_t dsp_sc = H5Screate(H5S_SCALAR);
+  hid_t strfix = H5Tcopy(H5T_C_S1);
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, strlen(value));
-  auto at = H5Acreate2(loc, name.c_str(), strfix, dsp_sc, acpl, H5P_DEFAULT);
+  hid_t at = H5Acreate2(loc, name.c_str(), strfix, dsp_sc, acpl, H5P_DEFAULT);
   H5Awrite(at, strfix, value);
   H5Aclose(at);
   H5Tclose(strfix);
