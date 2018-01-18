@@ -58,19 +58,53 @@ HDFFile::~HDFFile() {
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
                                        std::string s1) {
-  auto strfix = H5Tcopy(H5T_C_S1);
-  H5Tset_cset(strfix, H5T_CSET_UTF8);
-  H5Tset_size(strfix, s1.size());
-  using A = std::array<hsize_t, 1>;
-  A sini{{1}};
-  A smax{{1}};
-  auto dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-  auto ds = H5Dcreate2(loc, name.c_str(), strfix, dsp, H5P_DEFAULT, H5P_DEFAULT,
-                       H5P_DEFAULT);
-  H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-  H5Dclose(ds);
-  H5Sclose(dsp);
-  H5Tclose(strfix);
+  herr_t err;
+  hid_t strfix = H5Tcopy(H5T_C_S1);
+  if (strfix < 0) {
+    LOG(Sev::Critical, "failed H5Tcopy");
+  } else {
+    err = H5Tset_cset(strfix, H5T_CSET_UTF8);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Tset_cset");
+    } else {
+      err = H5Tset_size(strfix, s1.size());
+      if (err < 0) {
+        LOG(Sev::Critical, "failed H5Tset_size");
+      } else {
+        using A = std::array<hsize_t, 1>;
+        A sini{{1}};
+        A smax{{1}};
+        hid_t dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
+        if (dsp < 0) {
+          LOG(Sev::Critical, "failed H5Screate_simple");
+        } else {
+          hid_t ds = H5Dcreate2(loc, name.c_str(), strfix, dsp, H5P_DEFAULT,
+                                H5P_DEFAULT, H5P_DEFAULT);
+          if (ds < 0) {
+            LOG(Sev::Critical, "failed H5Dcreate2");
+          } else {
+            err =
+                H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Dwrite");
+            }
+            err = H5Dclose(ds);
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Dclose");
+            }
+          }
+          H5Sclose(dsp);
+          if (err < 0) {
+            LOG(Sev::Critical, "failed H5Sclose");
+          }
+        }
+      }
+    }
+    H5Tclose(strfix);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Tclose");
+    }
+  }
 }
 
 template <typename T>
