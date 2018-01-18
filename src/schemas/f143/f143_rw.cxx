@@ -3,7 +3,7 @@
 #include "../../SchemaRegistry.h"
 #include "../../h5.h"
 #include "../../helper.h"
-#include "schemas/f143_structure_generated.h"
+#include "f143_structure_generated.h"
 #include <limits>
 
 namespace FileWriter {

@@ -12,7 +12,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-#include "schemas/f142_logdata_generated.h"
+#include "f142_logdata_generated.h"
 
 using std::array;
 using std::vector;

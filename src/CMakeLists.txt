@@ -13,7 +13,6 @@ find_package(Rapidjson REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
-find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
 
@@ -146,10 +145,8 @@ add_library(${tgt} OBJECT
     ${kafka_to_nexus_INC}
 )
 
-add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-
 
 
 set(tgt "send-command")
@@ -171,7 +168,6 @@ set(sources
     $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
-add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
