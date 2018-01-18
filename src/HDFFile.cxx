@@ -93,14 +93,14 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
               LOG(Sev::Critical, "failed H5Dclose");
             }
           }
-          H5Sclose(dsp);
+          err = H5Sclose(dsp);
           if (err < 0) {
             LOG(Sev::Critical, "failed H5Sclose");
           }
         }
       }
     }
-    H5Tclose(strfix);
+    err = H5Tclose(strfix);
     if (err < 0) {
       LOG(Sev::Critical, "failed H5Tclose");
     }
