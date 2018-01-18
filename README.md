@@ -211,8 +211,6 @@ Commands can be given in the configuration file as well:
 - rapidjson
 - hdf5
 - libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
-- `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
-  and `streaming-data-types` are in the same directory)
 - Optional `graylog_logger`
 
 Tooling
