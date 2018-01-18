@@ -898,14 +898,14 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 
 int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
-  auto lcpl = H5Pcreate(H5P_LINK_CREATE);
+  hid_t lcpl = H5Pcreate(H5P_LINK_CREATE);
   H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
-  auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+  hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-  auto strfix = H5Tcopy(H5T_C_S1);
+  hid_t strfix = H5Tcopy(H5T_C_S1);
   H5Tset_cset(strfix, H5T_CSET_UTF8);
   H5Tset_size(strfix, 1);
-  auto dsp_sc = H5Screate(H5S_SCALAR);
+  hid_t dsp_sc = H5Screate(H5S_SCALAR);
 
   std::deque<std::string> path;
   if (nexus_structure.IsObject()) {
