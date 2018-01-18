@@ -194,11 +194,11 @@ static void write_attribute_str(hid_t loc, std::string name,
 
 template <typename T>
 static void write_attribute(hid_t loc, std::string name, T value) {
-  auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+  hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-  auto dsp_sc = H5Screate(H5S_SCALAR);
-  auto at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc, acpl,
-                       H5P_DEFAULT);
+  hid_t dsp_sc = H5Screate(H5S_SCALAR);
+  hid_t at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc, acpl,
+                        H5P_DEFAULT);
   H5Awrite(at, h5::nat_type<T>(), &value);
   H5Aclose(at);
   H5Sclose(dsp_sc);
