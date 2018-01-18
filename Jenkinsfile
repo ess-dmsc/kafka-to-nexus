@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.2.0')
+def centos = docker.image('essdmscdm/centos7-gcc6-build-node:1.0.0')
 
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
@@ -32,13 +32,6 @@ node('docker') {
 	sh """docker exec --user root ${container_name} ${sclsh} -c \"
                 chown -R jenkins.jenkins /home/jenkins/${project}
 	\""""
-
-        stage('Checkout Schemas') {
-            def checkout_script = """
-                git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
-            """
-            sh "docker exec ${container_name} ${sclsh} -c \"${checkout_script}\""
-        }
 
         stage('Get Dependencies') {
             def conan_remote = "ess-dmsc-local"

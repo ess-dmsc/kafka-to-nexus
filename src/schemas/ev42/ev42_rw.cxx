@@ -4,7 +4,7 @@
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "../../helper.h"
-#include "schemas/ev42_events_generated.h"
+#include "ev42_events_generated.h"
 #include <limits>
 
 namespace FileWriter {
