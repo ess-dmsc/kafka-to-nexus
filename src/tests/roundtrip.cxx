@@ -4,7 +4,7 @@
 #include "../helper.h"
 #include "../logger.h"
 #include "../schemas/ev42/ev42_synth.h"
-#include "schemas/f141_epics_nt_generated.h"
+#include "f141_epics_nt_generated.h"
 #include <array>
 #include <future>
 #include <gtest/gtest.h>
