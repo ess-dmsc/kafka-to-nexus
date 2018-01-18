@@ -54,9 +54,10 @@ int main(int argc, char **argv) {
                "      Log to Graylog via graylog_logger library.\n"
                "\n");
 
-    fmt::print("  -v\n"
-               "      Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info).\n"
-               "\n");
+    fmt::print(
+        "  -v\n"
+        "      Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info).\n"
+        "\n");
     return 1;
   }
 

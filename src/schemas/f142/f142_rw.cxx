@@ -99,7 +99,8 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
   LOG(Sev::Debug, "f142 init_impl  scalar");
   this->ds = h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024);
   if (!this->ds) {
-    LOG(Sev::Error, "could not create hdf dataset  source_name: {}", source_name);
+    LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
+        source_name);
   }
 }
 
@@ -281,7 +282,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     array_size = size_t(x.v);
   }
   LOG(Sev::Debug, "HDFWriterModule::init_hdf f142 source_name: {}  type: {}  "
-         "array_size: {}",
+                  "array_size: {}",
       source_name, type, array_size);
 
   string s("value");
@@ -294,7 +295,8 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
 
   impl.reset(impl_fac(hdf_group, array_size, type, s));
   if (!impl) {
-    LOG(Sev::Error, "Could not create a writer implementation for value_type {}", type);
+    LOG(Sev::Error,
+        "Could not create a writer implementation for value_type {}", type);
     return HDFWriterModule::InitResult::ERROR_IO();
   }
 
@@ -327,7 +329,8 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto fbuf = get_fbuf(msg.data);
   if (!impl) {
-    LOG(Sev::Warning, "sorry, but we were unable to initialize for this kind of messages");
+    LOG(Sev::Warning,
+        "sorry, but we were unable to initialize for this kind of messages");
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
   auto wret = impl->write_impl(fbuf);

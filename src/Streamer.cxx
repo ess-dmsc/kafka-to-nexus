@@ -94,7 +94,8 @@ FileWriter::Streamer::SEC FileWriter::Streamer::get_offset_boundaries() {
     auto err = _consumer->query_watermark_offsets(i->topic(), i->partition(),
                                                   &low, &high, 5000);
     if (err) {
-      LOG(Sev::Error, "Unable to get boundaries for topic {}, partition {} : {}",
+      LOG(Sev::Error,
+          "Unable to get boundaries for topic {}, partition {} : {}",
           i->topic(), i->partition(), RdKafka::err2str(err));
       return SEC::topic_partition_error;
     }

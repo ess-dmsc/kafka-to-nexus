@@ -1,8 +1,8 @@
-#include "h5.h"
 #include "HDFFile.h"
 #include "HDFFile_h5.h"
 #include "HDFFile_impl.h"
 #include "date/date.h"
+#include "h5.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
@@ -75,12 +75,13 @@ static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
   const time_zone *current_time_zone;
   try {
     current_time_zone = current_zone();
-  } catch(std::runtime_error &) {
-    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 timestamp in HDF file")
+  } catch (std::runtime_error &) {
+    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
+                      "timestamp in HDF file")
     return;
   }
   auto now =
-    make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
+      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
   write_hdf_iso8601(location, name, now);
 }
 
@@ -105,8 +106,8 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
   auto dsp_sc = H5Screate(H5S_SCALAR);
-  auto at =
-      H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc, acpl, H5P_DEFAULT);
+  auto at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc, acpl,
+                       H5P_DEFAULT);
   H5Awrite(at, h5::nat_type<T>(), &value);
   H5Aclose(at);
   H5Sclose(dsp_sc);
@@ -627,8 +628,8 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   if (x < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}", filename,
-        cwd.data());
+    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}",
+        filename, cwd.data());
     return -1;
   }
   h5file = x;

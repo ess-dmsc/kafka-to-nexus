@@ -57,8 +57,8 @@ ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
     return ProcessMessageResult::ERR();
   }
   if (reader->timestamp(msg) > _stop_time.count()) {
-    LOG(Sev::Debug, "reader->timestamp(msg) {} > _stop_time {}", reader->timestamp(msg),
-        _stop_time.count());
+    LOG(Sev::Debug, "reader->timestamp(msg) {} > _stop_time {}",
+        reader->timestamp(msg), _stop_time.count());
     return ProcessMessageResult::STOP();
   }
   auto srcn = reader->source_name(msg);

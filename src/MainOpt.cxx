@@ -2,11 +2,11 @@
 #include "helper.h"
 #include "uri.h"
 #include <getopt.h>
+#include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/schema.h>
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
-#include <iostream>
 
 using uri::URI;
 
@@ -102,11 +102,12 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
     }
     switch (c) {
     case 'v':
-        try {
-          log_level = std::stoi(std::string(optarg));
-        } catch (std::invalid_argument &e) {
-          std::cout << "Severity level of verbosity argument is not an integer." << std::endl;
-        }
+      try {
+        log_level = std::stoi(std::string(optarg));
+      } catch (std::invalid_argument &e) {
+        std::cout << "Severity level of verbosity argument is not an integer."
+                  << std::endl;
+      }
       break;
     case 'h':
       opt->help = true;
