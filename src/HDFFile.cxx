@@ -898,36 +898,84 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 
 int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
+  int ret = -1;
+  herr_t err;
   hid_t lcpl = H5Pcreate(H5P_LINK_CREATE);
-  H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
-  hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
-  H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-  hid_t strfix = H5Tcopy(H5T_C_S1);
-  H5Tset_cset(strfix, H5T_CSET_UTF8);
-  H5Tset_size(strfix, 1);
-  hid_t dsp_sc = H5Screate(H5S_SCALAR);
-
-  std::deque<std::string> path;
-  if (nexus_structure.IsObject()) {
-    auto value = &nexus_structure;
-    auto mem = value->FindMember("children");
-    if (mem != value->MemberEnd()) {
-      if (mem->value.IsArray()) {
-        for (auto &child : mem->value.GetArray()) {
-          create_hdf_structures(&child, h5file, 0, lcpl, strfix,
-                                stream_hdf_info, path);
+  if (lcpl < 0) {
+    LOG(Sev::Critical, "failed H5Pcreate");
+  } else {
+    err = H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Pset_char_encoding");
+    } else {
+      hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
+      if (acpl < 0) {
+        LOG(Sev::Critical, "failed H5Pcreate");
+      } else {
+        err = H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
+        if (err < 0) {
+          LOG(Sev::Critical, "failed H5Pset_char_encoding");
+        } else {
+          hid_t strfix = H5Tcopy(H5T_C_S1);
+          if (strfix < 0) {
+            LOG(Sev::Critical, "failed H5Tcopy");
+          } else {
+            err = H5Tset_cset(strfix, H5T_CSET_UTF8);
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Tset_cset");
+            } else {
+              err = H5Tset_size(strfix, 1);
+              if (err < 0) {
+                LOG(Sev::Critical, "failed H5Tset_size");
+              } else {
+                hid_t dsp_sc = H5Screate(H5S_SCALAR);
+                if (dsp_sc < 0) {
+                  LOG(Sev::Critical, "failed H5Screate");
+                } else {
+                  std::deque<std::string> path;
+                  if (nexus_structure.IsObject()) {
+                    auto value = &nexus_structure;
+                    auto mem = value->FindMember("children");
+                    if (mem != value->MemberEnd()) {
+                      if (mem->value.IsArray()) {
+                        for (auto &child : mem->value.GetArray()) {
+                          create_hdf_structures(&child, h5file, 0, lcpl, strfix,
+                                                stream_hdf_info, path);
+                        }
+                      }
+                    }
+                  }
+                  write_hdf_iso8601_now(h5file, "file_time");
+                  ret = 0;
+                  err = H5Sclose(dsp_sc);
+                  if (err < 0) {
+                    LOG(Sev::Critical, "failed H5Sclose");
+                    ret = -1;
+                  }
+                }
+              }
+            }
+            err = H5Tclose(strfix);
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Tclose");
+              ret = -1;
+            }
+          }
+        }
+        err = H5Pclose(acpl);
+        if (err < 0) {
+          LOG(Sev::Critical, "failed H5Pclose");
+          ret = -1;
         }
       }
     }
+    err = H5Pclose(lcpl);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Pclose");
+      ret = -1;
+    }
   }
-
-  write_hdf_iso8601_now(h5file, "file_time");
-
-  H5Sclose(dsp_sc);
-  H5Pclose(lcpl);
-  H5Pclose(acpl);
-
-  return 0;
+  return ret;
 }
 
 void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
