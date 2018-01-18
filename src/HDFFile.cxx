@@ -487,11 +487,12 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
                             std::vector<hsize_t> sizes,
                             std::vector<hsize_t> max,
                             rapidjson::Value const *vals) {
+  herr_t err = 0;
   size_t total_n = 1;
   for (auto x : sizes) {
     total_n *= x;
   }
-  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
   hid_t dsp = -1;
   if (sizes.empty()) {
     dsp = H5Screate(H5S_SCALAR);
@@ -515,13 +516,13 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
     return;
   }
 
-  auto dt = H5Tcopy(H5T_C_S1);
+  hid_t dt = H5Tcopy(H5T_C_S1);
   H5Tset_size(dt, H5T_VARIABLE);
   H5Tset_cset(dt, H5T_CSET_UTF8);
 
-  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
-                       H5P_DEFAULT);
-  auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
+  hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
+                        H5P_DEFAULT);
+  err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
     LOG(Sev::Error, "error while writing dataset {}", name);
   }
