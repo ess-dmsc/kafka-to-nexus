@@ -61,30 +61,6 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
   H5Tclose(strfix);
 }
 
-template <typename T>
-static void write_hdf_iso8601(hid_t loc, const std::string &name, T &ts) {
-  using namespace date;
-  using namespace std::chrono;
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2);
-}
-
-static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
-  using namespace date;
-  using namespace std::chrono;
-  const time_zone *current_time_zone;
-  try {
-    current_time_zone = current_zone();
-  } catch (std::runtime_error &) {
-    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
-                      "timestamp in HDF file")
-    return;
-  }
-  auto now =
-      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
-  write_hdf_iso8601(location, name, now);
-}
-
 static void write_attribute_str(hid_t loc, std::string name,
                                 char const *value) {
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
@@ -115,11 +91,35 @@ static void write_attribute(hid_t loc, std::string name, T value) {
 }
 
 template <typename T>
-static void write_hdf_iso8601(hid_t loc, std::string name, T &ts) {
+static void write_hdf_ds_iso8601(hid_t loc, const std::string &name, T &ts) {
+  using namespace date;
+  using namespace std::chrono;
+  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
+  write_hdf_ds_scalar_string(loc, name, s2);
+}
+
+template <typename T>
+static void write_hdf_attribute_iso8601(hid_t loc, std::string name, T &ts) {
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
   write_attribute_str(loc, name, s2.data());
+}
+
+static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
+  using namespace date;
+  using namespace std::chrono;
+  const time_zone *current_time_zone;
+  try {
+    current_time_zone = current_zone();
+  } catch (std::runtime_error &) {
+    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
+                      "timestamp in HDF file")
+    return;
+  }
+  auto now =
+      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
+  write_hdf_attribute_iso8601(location, name, now);
 }
 
 struct SE {
