@@ -882,16 +882,18 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   using std::string;
   using std::vector;
   using rapidjson::Value;
-  auto x = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-  if (x < 0) {
+  hid_t h5file =
+      H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  if (h5file < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
     LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}",
         filename, cwd.data());
     return -1;
+  } else {
+    this->h5file = h5file;
+    return init(h5file, nexus_structure, stream_hdf_info);
   }
-  h5file = x;
-  return init(h5file, nexus_structure, stream_hdf_info);
 }
 
 int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
