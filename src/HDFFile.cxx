@@ -122,29 +122,6 @@ static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
   write_hdf_attribute_iso8601(location, name, now);
 }
 
-struct SE {
-  string name;
-  rapidjson::Value const *jsv;
-  hid_t nxparent;
-  hid_t nxv;
-  hid_t gid;
-  rapidjson::Value::ConstMemberIterator itr;
-  bool basics;
-  string nx_type{"group"};
-  SE(string name, rapidjson::Value const *jsv, hid_t nxparent)
-      : name(std::move(name)), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
-        itr(jsv->MemberEnd()), basics(false) {
-    if (jsv->IsObject()) {
-      itr = jsv->MemberBegin();
-    }
-  }
-  ~SE() {
-    if (gid != -1) {
-      H5Gclose(gid);
-    }
-  }
-};
-
 void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
   if (jsv->IsObject()) {
     for (auto &at : jsv->GetObject()) {
