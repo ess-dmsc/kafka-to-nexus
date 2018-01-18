@@ -411,45 +411,76 @@ template <typename DT>
 static void
 write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
                  std::vector<hsize_t> max, rapidjson::Value const *vals) {
+  herr_t err = 0;
   size_t total_n = 1;
   for (auto x : sizes) {
     total_n *= x;
   }
-  auto dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  hid_t dsp = -1;
-  if (sizes.empty()) {
-    dsp = H5Screate(H5S_SCALAR);
+  hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
+  if (dcpl < 0) {
   } else {
-    dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()), sizes.data(),
-                         max.data());
-    if (max[0] == H5S_UNLIMITED) {
-      H5Pset_chunk(dcpl, static_cast<int>(sizes.size()), sizes.data());
+    hid_t dsp = -1;
+    if (sizes.empty()) {
+      dsp = H5Screate(H5S_SCALAR);
+    } else {
+      dsp = H5Screate(H5S_SIMPLE);
+    }
+    if (dsp < 0) {
+    } else {
+      err = 0;
+      if (!sizes.empty()) {
+        err = H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()),
+                                   sizes.data(), max.data());
+        if (err < 0) {
+          LOG(Sev::Critical, "failed H5Sset_extent_simple");
+        } else {
+          if (max[0] == H5S_UNLIMITED) {
+            err = H5Pset_chunk(dcpl, static_cast<int>(sizes.size()),
+                               sizes.data());
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Pset_chunk");
+            }
+          }
+        }
+      }
+
+      if (err < 0) {
+        // currently, nothing needed here
+      } else {
+        std::vector<DT> blob;
+        populate_blob(blob, vals);
+        if (blob.size() != total_n) {
+          LOG(Sev::Critical, "unexpected number of values for dataset {}  "
+                             "expected: {}  actual: {}",
+              name, total_n, blob.size());
+        } else {
+          hid_t dt = h5::nat_type<DT>();
+          hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT,
+                                dcpl, H5P_DEFAULT);
+          if (ds < 0) {
+            LOG(Sev::Critical, "failed H5Dcreate2");
+          } else {
+            err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
+            if (err < 0) {
+              LOG(Sev::Critical, "error while writing dataset {}", name);
+            }
+            err = H5Dclose(ds);
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Dclose");
+            }
+          }
+        }
+      }
+      err = H5Sclose(dsp);
+      if (err < 0) {
+        LOG(Sev::Critical, "failed H5Sclose");
+      }
+    }
+    err = H5Pclose(dcpl);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Pclose");
     }
   }
-
-  std::vector<DT> blob;
-  populate_blob(blob, vals);
-
-  if (blob.size() != total_n) {
-    LOG(Sev::Error,
-        "unexpected number of values for dataset {}  expected: {}  actual: {}",
-        name, total_n, blob.size());
-    H5Sclose(dsp);
-    H5Pclose(dcpl);
-    return;
-  }
-
-  auto dt = h5::nat_type<DT>();
-  auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
-                       H5P_DEFAULT);
-  auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
-  if (err < 0) {
-    LOG(Sev::Error, "error while writing dataset {}", name);
-  }
-  H5Dclose(ds);
-  H5Sclose(dsp);
-  H5Pclose(dcpl);
 }
 
 static void write_ds_string(hid_t hdf_parent, std::string name,
