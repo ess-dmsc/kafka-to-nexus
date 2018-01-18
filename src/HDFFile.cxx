@@ -796,9 +796,17 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
 
   // Handle attributes on this dataset
   if (auto x = get_object(*value, "attributes")) {
-    auto dsid = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
-    write_attributes(dsid, value);
-    H5Dclose(dsid);
+    hid_t dsid = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
+    if (dsid < 0) {
+      LOG(Sev::Critical, "failed H5Dopen2");
+    } else {
+      write_attributes(dsid, value);
+      herr_t err = 0;
+      err = H5Dclose(dsid);
+      if (dsid < 0) {
+        LOG(Sev::Critical, "failed H5Dopen2");
+      }
+    }
   }
 }
 
