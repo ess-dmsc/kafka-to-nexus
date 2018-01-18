@@ -493,43 +493,89 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
     total_n *= x;
   }
   hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  hid_t dsp = -1;
-  if (sizes.empty()) {
-    dsp = H5Screate(H5S_SCALAR);
+  if (dcpl < 0) {
+    LOG(Sev::Critical, "failed H5Pcreate");
   } else {
-    dsp = H5Screate(H5S_SIMPLE);
-    H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(), max.data());
-    if (max[0] == H5S_UNLIMITED) {
-      H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+    hid_t dsp = -1;
+    if (sizes.empty()) {
+      dsp = H5Screate(H5S_SCALAR);
+    } else {
+      dsp = H5Screate(H5S_SIMPLE);
+    }
+    if (dsp < 0) {
+      LOG(Sev::Critical, "failed H5Screate");
+    } else {
+      err = 0;
+      if (!sizes.empty()) {
+        err = H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(),
+                                   max.data());
+        if (err < 0) {
+          LOG(Sev::Critical, "failed H5Sset_extent_simple");
+        } else {
+          if (max[0] == H5S_UNLIMITED) {
+            err = H5Pset_chunk(dcpl, sizes.size(), sizes.data());
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Pset_chunk");
+            }
+          }
+        }
+      }
+      if (err < 0) {
+        // nothing to do here so far
+      } else {
+        std::vector<char const *> blob;
+        populate_string_pointers(blob, vals);
+        if (blob.size() != total_n) {
+          LOG(Sev::Critical, "unexpected number of values for dataset {}  "
+                             "expected: {}  actual: {}",
+              name, total_n, blob.size());
+        } else {
+          hid_t dt = H5Tcopy(H5T_C_S1);
+          if (dt < 0) {
+            LOG(Sev::Critical, "failed H5Tcopy");
+          } else {
+            err = H5Tset_size(dt, H5T_VARIABLE);
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Tset_size");
+            } else {
+              err = H5Tset_cset(dt, H5T_CSET_UTF8);
+              if (err < 0) {
+                LOG(Sev::Critical, "failed H5Tset_cset");
+              } else {
+                hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp,
+                                      H5P_DEFAULT, dcpl, H5P_DEFAULT);
+                if (ds < 0) {
+                  LOG(Sev::Critical, "failed H5Dcreate2");
+                } else {
+                  err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                                 blob.data());
+                  if (err < 0) {
+                    LOG(Sev::Error, "error while writing dataset {}", name);
+                  }
+                  err = H5Dclose(ds);
+                  if (err < 0) {
+                    LOG(Sev::Critical, "failed H5Dclose");
+                  }
+                }
+              }
+            }
+            err = H5Tclose(dt);
+            if (err < 0) {
+              LOG(Sev::Critical, "failed H5Tclose");
+            }
+          }
+        }
+      }
+      err = H5Sclose(dsp);
+      if (err < 0) {
+        LOG(Sev::Critical, "failed H5Sclose");
+      }
+    }
+    err = H5Pclose(dcpl);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Pclose");
     }
   }
-
-  std::vector<char const *> blob;
-  populate_string_pointers(blob, vals);
-
-  if (blob.size() != total_n) {
-    LOG(Sev::Error,
-        "unexpected number of values for dataset {}  expected: {}  actual: {}",
-        name, total_n, blob.size());
-    H5Sclose(dsp);
-    H5Pclose(dcpl);
-    return;
-  }
-
-  hid_t dt = H5Tcopy(H5T_C_S1);
-  H5Tset_size(dt, H5T_VARIABLE);
-  H5Tset_cset(dt, H5T_CSET_UTF8);
-
-  hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
-                        H5P_DEFAULT);
-  err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
-  if (err < 0) {
-    LOG(Sev::Error, "error while writing dataset {}", name);
-  }
-  H5Dclose(ds);
-  H5Sclose(dsp);
-  H5Pclose(dcpl);
-  H5Tclose(dt);
 }
 
 static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
