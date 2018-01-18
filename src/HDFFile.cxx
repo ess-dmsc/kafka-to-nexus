@@ -194,15 +194,44 @@ static void write_attribute_str(hid_t loc, std::string name,
 
 template <typename T>
 static void write_attribute(hid_t loc, std::string name, T value) {
+  herr_t err;
   hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
-  H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-  hid_t dsp_sc = H5Screate(H5S_SCALAR);
-  hid_t at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc, acpl,
-                        H5P_DEFAULT);
-  H5Awrite(at, h5::nat_type<T>(), &value);
-  H5Aclose(at);
-  H5Sclose(dsp_sc);
-  H5Pclose(acpl);
+  if (acpl < 0) {
+    LOG(Sev::Critical, "failed H5Pcreate");
+  } else {
+    err = H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Pset_char_encoding");
+    } else {
+      hid_t dsp_sc = H5Screate(H5S_SCALAR);
+      if (dsp_sc < 0) {
+        LOG(Sev::Critical, "failed H5Screate");
+      } else {
+        hid_t at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc,
+                              acpl, H5P_DEFAULT);
+        if (at < 0) {
+          LOG(Sev::Critical, "failed H5Acreate2");
+        } else {
+          err = H5Awrite(at, h5::nat_type<T>(), &value);
+          if (err < 0) {
+            LOG(Sev::Critical, "failed H5Awrite");
+          }
+          err = H5Aclose(at);
+          if (err < 0) {
+            LOG(Sev::Critical, "failed H5Aclose");
+          }
+        }
+        err = H5Sclose(dsp_sc);
+        if (err < 0) {
+          LOG(Sev::Critical, "failed H5Sclose");
+        }
+      }
+    }
+    err = H5Pclose(acpl);
+    if (err < 0) {
+      LOG(Sev::Critical, "failed H5Pclose");
+    }
+  }
 }
 
 struct SE {
