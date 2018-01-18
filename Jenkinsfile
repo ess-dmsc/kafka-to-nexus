@@ -33,13 +33,6 @@ node('docker') {
                 chown -R jenkins.jenkins /home/jenkins/${project}
 	\""""
 
-        stage('Checkout Schemas') {
-            def checkout_script = """
-                git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
-            """
-            sh "docker exec ${container_name} ${sclsh} -c \"${checkout_script}\""
-        }
-
         stage('Get Dependencies') {
             def conan_remote = "ess-dmsc-local"
             def dependencies_script = """
