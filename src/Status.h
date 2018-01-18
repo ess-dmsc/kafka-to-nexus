@@ -106,7 +106,11 @@ public:
 
   /// Set the ETA of the next message
   /// \param ToNextMessage milliseconds from the last message to the next
-  const milliseconds timeToNextMessage(const milliseconds &ToNextMessage);
+  void setTimeToNextMessage(const milliseconds &ToNextMessage);
+  /// get the time difference between two consecutive status messages
+  /// \result milliseconds from the last message to the next
+  const milliseconds getTimeToNextMessage();
+
   /// Get the ETA of the next message
   /// \return ToNextMessage milliseconds from the last message to the next
   const milliseconds timeToNextMessage();

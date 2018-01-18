@@ -1,7 +1,7 @@
 #include "Streamer.h"
 
-#include "logger.h"
 #include "helper.h"
+#include "logger.h"
 
 #include <librdkafka/rdkafkacpp.h>
 
@@ -60,19 +60,18 @@ FileWriter::Streamer::createConsumer(std::unique_ptr<RdKafka::Conf> &&Conf) {
 std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::createMetadata() {
   RdKafka::Metadata *Metadata;
   std::unique_ptr<RdKafka::Topic> Topic;
-  int retry{ 0 };
-  auto err =
-      Consumer->metadata(Topic.get() != NULL, Topic.get(), &Metadata, 1000);
+  int retry{0};
+  auto err = Consumer->metadata(Topic != nullptr, Topic.get(), &Metadata, 1000);
   while (err != RdKafka::ERR_NO_ERROR && retry < Options.NumMetadataRetry) {
-    err = Consumer->metadata(Topic.get() != NULL, Topic.get(), &Metadata, 1000);
+    err = Consumer->metadata(Topic != nullptr, Topic.get(), &Metadata, 1000);
     ++retry;
   }
   if (err != RdKafka::ERR_NO_ERROR) {
-      LOG(Sev::Error, "{}", RdKafka::err2str(err));
+    LOG(Sev::Error, "{}", RdKafka::err2str(err));
     RunStatus = SEC::metadata_error;
-    return std::unique_ptr<RdKafka::Metadata>{ nullptr };
+    return std::unique_ptr<RdKafka::Metadata>{nullptr};
   } else {
-    return std::unique_ptr<RdKafka::Metadata>{ Metadata };
+    return std::unique_ptr<RdKafka::Metadata>{Metadata};
   }
 }
 
@@ -88,7 +87,7 @@ FileWriter::Streamer::createTopicPartition(
   }
   using PartitionMetadataVector =
       std::vector<const RdKafka::PartitionMetadata *>;
-  const PartitionMetadataVector *pmv{ nullptr };
+  const PartitionMetadataVector *pmv{nullptr};
   for (auto &t : *Metadata->topics()) {
     if (t->topic() == TopicName) {
       pmv = t->partitions();
@@ -99,12 +98,12 @@ FileWriter::Streamer::createTopicPartition(
     LOG(Sev::Error, "Error: unable to find partition for topic {}", TopicName);
     return SEC::topic_partition_error;
   }
-  if (pmv->size()) {
+  if (!pmv->empty()) {
     for (auto p : *pmv) {
       pushTopicPartition(TopicName, p->id());
       if (!TopicPartitionVector.back()) {
-        LOG(Sev::Error, "Error: unable to create partition {} for topic {}", p->id(),
-            TopicName);
+        LOG(Sev::Error, "Error: unable to create partition {} for topic {}",
+            p->id(), TopicName);
         return SEC::topic_partition_error;
       }
     }
@@ -145,9 +144,16 @@ FileWriter::Streamer::SEC FileWriter::Streamer::assignTopicPartition() {
     return SEC::topic_partition_error;
   }
   auto err = Consumer->offsetsForTimes(TopicPartitionVector, 1000);
+  if (err != RdKafka::ERR_NO_ERROR) {
+    LOG(Sev::Error,
+        "Error while look up the offsets for the given timestamp: {}",
+        RdKafka::err2str(err));
+    return SEC::topic_partition_error;
+  }
   err = Consumer->assign(TopicPartitionVector);
   if (err != RdKafka::ERR_NO_ERROR) {
-    LOG(Sev::Error, "{}", RdKafka::err2str(err));
+    LOG(Sev::Error, "Error while assign to topic-partition: {}",
+        RdKafka::err2str(err));
     return SEC::topic_partition_error;
   }
   return SEC::no_error;
@@ -156,16 +162,16 @@ FileWriter::Streamer::SEC FileWriter::Streamer::assignTopicPartition() {
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
                                const FileWriter::StreamerOptions &Opts)
-    : RunStatus{ SEC::not_initialized }, Options(Opts) {
+    : RunStatus{SEC::not_initialized}, Options(Opts) {
 
   if (TopicName.empty() || Broker.empty()) {
     LOG(Sev::Error, "Broker and topic required");
     RunStatus = SEC::not_initialized;
     return;
   }
-  Options.RdKafkaOptions.push_back({ "metadata.broker.list", Broker });
-  Options.RdKafkaOptions.push_back({ "api.version.request", "true" });
-  Options.RdKafkaOptions.push_back({ "group.id", TopicName });
+  Options.RdKafkaOptions.emplace_back("metadata.broker.list", Broker);
+  Options.RdKafkaOptions.emplace_back("api.version.request", "true");
+  Options.RdKafkaOptions.emplace_back("group.id", TopicName);
 
   ConnectThread = std::thread([&] {
     this->connect(std::ref(TopicName));
@@ -173,7 +179,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   });
 
   std::unique_lock<std::mutex> lk(ConnectionLock);
-  ConnectionInit.wait(lk, [&] { return this->Initilialising.load(); });
+  ConnectionInit.wait(lk, [&] { return this->Initialising.load(); });
 }
 
 FileWriter::Streamer::~Streamer() { closeStream(); }
@@ -188,7 +194,7 @@ void FileWriter::Streamer::connect(const std::string &TopicName) {
   std::lock_guard<std::mutex> lock(ConnectionReady);
 
   std::lock_guard<std::mutex> lk(ConnectionLock);
-  Initilialising = true;
+  Initialising = true;
   ConnectionInit.notify_all();
 
   LOG(Sev::Debug, "Connecting to {}", TopicName);
@@ -250,39 +256,41 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK();
   }
 
-  // Consume the message and check for message errors. Timeout and partition EOF are considered ok,
-  // other errors are considered failure
-  std::unique_ptr<RdKafka::Message> msg( Consumer->consume(
-      Options.ConsumerTimeout.count()) );
+  // Consume the message and check for message errors. Timeout and partition EOF
+  // are considered ok, other errors are considered failure
+  std::unique_ptr<RdKafka::Message> msg(
+      Consumer->consume(Options.ConsumerTimeout.count()));
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
     LOG(Sev::Debug, "consume :\t{}", RdKafka::err2str(msg->err()));
     return ProcessMessageResult::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
-      LOG(Sev::Warning, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
+    LOG(Sev::Warning, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
     MessageInfo.error();
     return ProcessMessageResult::ERR();
   }
 
   // if the source is not in the source_list return OK (ignore)
-  // if StartTimestamp is set and timestamp < start_time skip message and return OK,
-  // if StopTimestamp is set, timestamp > stop_time and the source is still present remove source and return STOP
-  // else process the message
+  // if StartTimestamp is set and timestamp < start_time skip message and return
+  // OK, if StopTimestamp is set, timestamp > stop_time and the source is still
+  // present remove source and return STOP else process the message
   auto td = MessageProcessor.time_difference_from_message(
       (char *)msg->payload(), msg->len());
-  LOG(Sev::Debug,"Source is {}",td.sourcename);
-  if(std::find(Sources.begin(),Sources.end(),td.sourcename) == Sources.end()) {
-	  return ProcessMessageResult::OK();
+  LOG(Sev::Debug, "Source is {}", td.sourcename);
+  if (std::find(Sources.begin(), Sources.end(), td.sourcename) ==
+      Sources.end()) {
+    return ProcessMessageResult::OK();
   }
   if (td.dt < Options.StartTimestamp.count()) {
     return ProcessMessageResult::OK();
   }
-  if (Options.StopTimestamp.count() > 0 && td.dt > Options.StopTimestamp.count()) {
-	  if(removeSource(td.sourcename)) {
-		  return ProcessMessageResult::STOP();
-	  }
-	  return ProcessMessageResult::ERR();
+  if (Options.StopTimestamp.count() > 0 &&
+      td.dt > Options.StopTimestamp.count()) {
+    if (removeSource(td.sourcename)) {
+      return ProcessMessageResult::STOP();
+    }
+    return ProcessMessageResult::ERR();
   }
 
   // Collect information about the data received
@@ -291,37 +299,39 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   // Write the message. Log any error and return the result of processing
   auto result =
       MessageProcessor.process_message((char *)msg->payload(), msg->len());
-  LOG(Sev::Debug, "{} : Message timestamp : {}", TopicPartitionVector[0]->topic(),
-      result.ts());
+  LOG(Sev::Debug, "{} : Message timestamp : {}",
+      TopicPartitionVector[0]->topic(), result.ts());
   if (!result.is_OK()) {
     MessageInfo.error();
   }
   return result;
 }
 
-void FileWriter::Streamer::setSources(std::unordered_map<std::string, Source>& SourceList) {
-	for(auto& Src : SourceList) {
-	  LOG(Sev::Info,"Add {} to source list",Src.first);
-		Sources.push_back(Src.first);
-	}
+void FileWriter::Streamer::setSources(
+    std::unordered_map<std::string, Source> &SourceList) {
+  for (auto &Src : SourceList) {
+    LOG(Sev::Info, "Add {} to source list", Src.first);
+    Sources.push_back(Src.first);
+  }
 }
 
-bool FileWriter::Streamer::removeSource(const std::string& SourceName) {
-  auto Iter(std::find<std::vector<std::string>::iterator>(Sources.begin(),Sources.end(),SourceName));
-	if(Iter == Sources.end()) {
-	  LOG(Sev::Warning,"Can't remove source {}, not in the source list",SourceName);
-		return false;
-	}
-	Sources.erase(Iter);
-	LOG(Sev::Info,"Remove source {}",SourceName);
-	return true;
+bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
+  auto Iter(std::find<std::vector<std::string>::iterator>(
+      Sources.begin(), Sources.end(), SourceName));
+  if (Iter == Sources.end()) {
+    LOG(Sev::Warning, "Can't remove source {}, not in the source list",
+        SourceName);
+    return false;
+  }
+  Sources.erase(Iter);
+  LOG(Sev::Info, "Remove source {}", SourceName);
+  return true;
 }
-
 
 /// Method that parse the json configuration and parse the options to be used in
 /// RdKafka::Config
-void
-FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
+void FileWriter::StreamerOptions::setRdKafkaOptions(
+    const rapidjson::Value *Opt) {
 
   if (!Opt->IsObject()) {
     LOG(Sev::Warning, "Unable to parse steamer options");
@@ -330,12 +340,12 @@ FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
 
   for (auto &m : Opt->GetObject()) {
     if (m.value.IsString()) {
-      RdKafkaOptions.push_back({ m.name.GetString(), m.value.GetString() });
+      RdKafkaOptions.emplace_back(m.name.GetString(), m.value.GetString());
       continue;
     }
     if (m.value.IsInt()) {
-      RdKafkaOptions.push_back(
-          { m.name.GetString(), std::to_string(m.value.GetInt()) });
+      RdKafkaOptions.emplace_back(m.name.GetString(),
+                                  std::to_string(m.value.GetInt()));
       continue;
     }
   }
@@ -343,8 +353,8 @@ FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
 
 /// Method that parse the json configuration and sets the parameters used in the
 /// Streamer
-void
-FileWriter::StreamerOptions::setStreamerOptions(const rapidjson::Value *Opt) {
+void FileWriter::StreamerOptions::setStreamerOptions(
+    const rapidjson::Value *Opt) {
 
   if (!Opt->IsObject()) {
     LOG(Sev::Warning, "Unable to parse steamer options");

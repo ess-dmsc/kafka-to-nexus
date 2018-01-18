@@ -145,12 +145,12 @@ void FileWriter::Status::StreamMasterInfo::add(
   }
 }
 
-const milliseconds FileWriter::Status::StreamMasterInfo::timeToNextMessage(
+void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
     const milliseconds &ToNextMessage) {
   NextMessageRelativeEta = ToNextMessage;
-  return timeToNextMessage();
 }
-const milliseconds FileWriter::Status::StreamMasterInfo::timeToNextMessage() {
+const milliseconds
+FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() {
   return NextMessageRelativeEta;
 }
 const milliseconds FileWriter::Status::StreamMasterInfo::runTime() {

@@ -38,8 +38,6 @@ template <typename Streamer> class StreamMaster {
   friend class CommandHandler;
 
 public:
-  StreamMaster(){};
-
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
                const StreamerOptions &options)
@@ -107,7 +105,7 @@ public:
 
   /// Stop the streams writing. Return true if successful, false in case
   /// of failure. If the stop command is called from forceStop the joining the
-  /// latter can cause a deadlock. The IsFoced flag prevents the join and
+  /// latter can cause a deadlock. The IsForced flag prevents the join and
   /// hence the deadlock.
   /// \param IsForced if false join the forceStop task, if true don't
   bool stop(bool IsForced = false) {
@@ -211,7 +209,8 @@ private:
           continue;
         }
         if (int(s.runStatus()) < 0) {
-          LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(), int(s.runStatus()));
+          LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
+              int(s.runStatus()));
           continue;
         }
       }

@@ -19,7 +19,8 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
   auto &Allocator = Document.GetAllocator();
   Document.SetObject();
 
-  milliseconds next_message_relative_eta_ms = Information.timeToNextMessage();
+  milliseconds next_message_relative_eta_ms =
+      Information.getTimeToNextMessage();
   { // message type
     Document.AddMember("type", "stream_master_status", Allocator);
     Document.AddMember("next_message_eta_ms",

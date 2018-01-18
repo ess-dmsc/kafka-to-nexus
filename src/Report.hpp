@@ -54,7 +54,7 @@ private:
     }
 
     info.status(stream_master_status);
-    info.timeToNextMessage(report_ms_);
+    info.setTimeToNextMessage(report_ms_);
     for (auto &s : streamer) {
       info.add(s.first, s.second.messageInfo());
     }

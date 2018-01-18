@@ -39,7 +39,7 @@ class Streamer {
 public:
   using SEC = Status::StreamerErrorCode;
 
-  Streamer(){};
+  Streamer() = default;
   /// Constructor
   /// \param broker name or address of one of the brokers in the partition
   /// \param topic_name name of the topic to listen for messages
@@ -54,7 +54,7 @@ public:
   /// Generic template method that process a message according to a policy T
   /// \param mp instance of the policy that describe how to process the message
   template <class T> ProcessMessageResult write(T &mp) {
-    LOG(0, "fake_recv");
+    LOG(Sev::Warning, "fake_recv");
     return ProcessMessageResult::ERR();
   }
 
@@ -90,9 +90,8 @@ private:
 
   std::mutex ConnectionLock;
   std::condition_variable ConnectionInit;
-  std::atomic<bool> Initilialising{false};
+  std::atomic<bool> Initialising{false};
 
-  int32_t NumSources{0};
   std::vector<std::string> Sources;
   StreamerOptions Options;
 

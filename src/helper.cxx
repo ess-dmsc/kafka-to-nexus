@@ -56,8 +56,8 @@ std::vector<char> binary_to_hex(char const *data, uint32_t len) {
 }
 
 std::vector<std::string> split(std::string const &input, std::string token) {
-  using std::vector;
   using std::string;
+  using std::vector;
   vector<string> ret;
   if (token.size() == 0)
     return {input};
@@ -286,9 +286,9 @@ template <> std::pair<short int, int> to_num(const std::string &string) {
   try {
     result = std::stoi(string);
   } catch (std::exception &e) {
-    return std::pair<short int, int>(false, 0);
+    return {false, 0};
   }
-  return std::pair<short int, int>(true, result);
+  return {true, result};
 }
 
 template <> std::pair<short int, uint64_t> to_num(const std::string &string) {
@@ -296,9 +296,9 @@ template <> std::pair<short int, uint64_t> to_num(const std::string &string) {
   try {
     result = std::stoull(string);
   } catch (std::exception &e) {
-    return std::pair<short int, uint64_t>(false, 0);
+    return {false, 0};
   }
-  return std::pair<short int, uint64_t>(true, result);
+  return {true, result};
 }
 
 template <> std::pair<short int, double> to_num(const std::string &string) {
@@ -306,7 +306,7 @@ template <> std::pair<short int, double> to_num(const std::string &string) {
   try {
     result = std::stod(string);
   } catch (std::exception &e) {
-    return std::pair<short int, double>(false, 0);
+    return {false, 0};
   }
-  return std::pair<short int, double>(true, result);
+  return {true, result};
 }

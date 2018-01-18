@@ -1,8 +1,10 @@
 #pragma once
 
+
 #include "Alloc.h"
 #include "logger.h"
 #include "StreamerOptions.h"
+#include "logger.h"
 #include "uri.h"
 
 #include <atomic>
@@ -20,7 +22,7 @@ struct rd_kafka_topic_partition_list_s;
 namespace FileWriter {
 class Master;
 class StreamerOptions;
-}
+} // namespace FileWriter
 
 // POD
 struct MainOpt {
@@ -34,7 +36,6 @@ struct MainOpt {
   /// Streamer options, they get parsed from the configuration file and passed
   /// on to the StreamMaster.
   FileWriter::StreamerOptions StreamerConfiguration;
-  std::map<std::string, std::string> streamer_config;
   /// Can optionally log in Graylog GELF format to a Kafka topic.
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.

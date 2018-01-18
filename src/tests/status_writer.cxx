@@ -30,7 +30,7 @@ TEST(StatusWriter, create_report_streamers) {
   StreamMasterInfo info;
   const std::vector<std::string> topics{"first", "second", "third"};
 
-  info.timeToNextMessage(milliseconds(2000));
+  info.setTimeToNextMessage(milliseconds(2000));
   for (auto &t : topics) {
     MessageInfo mi;
     for (int i = 0; i < n_messages; ++i) {
