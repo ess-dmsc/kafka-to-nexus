@@ -13,7 +13,7 @@ double average(const double &Sum, const double &N) { return Sum / N; }
 /// \sqrt{\frac{\langle x^2 \rangle - \langle x \rangle^2}{N(N-1)}}\f$
 double standardDeviation(const double &Sum, const double &SumSquared,
                          const double &N) {
-  auto Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
+  double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
   if (Variance > 0) { // can be caused by numerical instabilities
     return std::sqrt(Variance);
   } else {
@@ -81,6 +81,7 @@ operator=(const FileWriter::Status::MessageInfo &Other) {
 
 const FileWriter::Status::MessageInfo &FileWriter::Status::MessageInfo::
 operator+=(const FileWriter::Status::MessageInfo &Other) {
+  std::lock_guard<std::mutex> Lock(Mutex);
   atomic_add(Mbytes, Other.Mbytes.load());
   atomic_add(MbytesSquare, Other.MbytesSquare.load());
   atomic_add(Messages, Other.Messages.load());
@@ -92,7 +93,7 @@ operator+=(const FileWriter::Status::MessageInfo &Other) {
 const FileWriter::Status::MessageInfo &
 FileWriter::Status::MessageInfo::message(const double &MessageSize) {
   std::lock_guard<std::mutex> Lock(Mutex);
-  auto Size = MessageSize * 1e-6;
+  double Size = MessageSize * 1e-6;
   atomic_add(Mbytes, Size);
   atomic_add(MbytesSquare, Size * Size);
   atomic_add(Messages, 1.0);
@@ -133,12 +134,12 @@ void FileWriter::Status::StreamMasterInfo::add(
   // collecting these stats, or this function from reset while/after
   // Streamer::write updates. Pairs with MessageInfo::message(error) lock
   if (StreamsInfo.find(topic) != StreamsInfo.end()) {
-    std::lock_guard<std::mutex> lock(info.getMutex());
+    //    std::lock_guard<std::mutex> lock(info.getMutex());
     StreamsInfo[topic] = info;
     Total += info;
     info.reset();
   } else {
-    std::lock_guard<std::mutex> lock(info.getMutex());
+    //    std::lock_guard<std::mutex> lock(info.getMutex());
     StreamsInfo[topic] += info;
     Total += info;
     info.reset();

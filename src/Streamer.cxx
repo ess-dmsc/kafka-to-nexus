@@ -66,7 +66,7 @@ FileWriter::Streamer::createConsumer(std::unique_ptr<RdKafka::Conf> &&Conf) {
 /// as a unique_ptr. If fail log the error, set the RunStatus to
 /// SEC::metadata_error and return a null pointer.
 std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::createMetadata() {
-  RdKafka::Metadata *Metadata;
+  RdKafka::Metadata *Metadata{nullptr};
   std::unique_ptr<RdKafka::Topic> Topic;
   int retry{0};
   auto err = Consumer->metadata(Topic != nullptr, Topic.get(), &Metadata, 1000);

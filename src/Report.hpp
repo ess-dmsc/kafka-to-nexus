@@ -29,14 +29,14 @@ public:
               std::atomic<SMEC> &stream_master_status) {
     while (!stop.load()) {
       std::this_thread::sleep_for(report_ms_);
-      auto error = produce_single_report(streamer, stream_master_status);
+      SMEC error = produce_single_report(streamer, stream_master_status);
       if (error == SMEC::report_failure) {
         stream_master_status = error;
         return;
       }
     }
     std::this_thread::sleep_for(report_ms_);
-    auto error = produce_single_report(streamer, stream_master_status);
+    SMEC error = produce_single_report(streamer, stream_master_status);
     if (error != SMEC::no_error) { // termination message
       stream_master_status = error;
     }
@@ -55,10 +55,13 @@ private:
 
     info.status(stream_master_status);
     info.setTimeToNextMessage(report_ms_);
+
     for (auto &s : streamer) {
+      std::lock_guard<std::mutex> Lock(s.second.messageInfo().getMutex());
       info.add(s.first, s.second.messageInfo());
     }
-    auto value = Status::pprint<Status::JSONStreamWriter>(info);
+    Status::JSONStreamWriter::ReturnType value =
+        Status::pprint<Status::JSONStreamWriter>(info);
     report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
                               value.size());
     return SMEC::no_error;
