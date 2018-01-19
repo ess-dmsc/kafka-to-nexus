@@ -33,4 +33,7 @@ private:
   friend class CommandHandler;
 };
 
+void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv);
+void write_attributes_if_present(hid_t hdf_this, rapidjson::Value const *jsv);
+
 } // namespace FileWriter

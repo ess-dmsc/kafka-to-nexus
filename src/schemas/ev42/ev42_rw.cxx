@@ -4,6 +4,7 @@
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "../../helper.h"
+#include "../../json.h"
 #include "schemas/ev42_events_generated.h"
 #include <limits>
 
@@ -61,7 +62,8 @@ public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                       rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module) override;
+                      rapidjson::Value const *config_module,
+                      rapidjson::Value const *attributes) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -86,7 +88,8 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                           rapidjson::Value const &config_stream,
-                          rapidjson::Value const *config_module) {
+                          rapidjson::Value const *config_module,
+                          rapidjson::Value const *attributes) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 
   hsize_t chunk_n_elements = 1;
@@ -124,6 +127,9 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     ds_event_index.reset();
     ds_cue_index.reset();
     ds_cue_timestamp_zero.reset();
+  }
+  if (attributes) {
+    write_attributes(hid, attributes);
   }
   H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
