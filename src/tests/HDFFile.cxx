@@ -3,6 +3,7 @@
 #include "../HDFFile_impl.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
+#include "../h5.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
@@ -22,18 +23,6 @@ using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
 
-template <typename T> hid_t nat_type();
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
-
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -49,7 +38,7 @@ public:
   static void new_03() {
     using namespace FileWriter;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
-    LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
+    LOG(Sev::Debug, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
     char const *fname = d["file_attributes"]["file_name"].GetString();
@@ -238,7 +227,7 @@ public:
                   Value v2;
                   v2.SetArray();
                   for (size_t i3 = 0; i3 < 2; ++i3) {
-                    v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
+                    v2.PushBack(Value().SetInt(1000 * i1 + 10 * i2 + i3), a);
                   }
                   v1.PushBack(v2, a);
                 }
@@ -312,7 +301,7 @@ public:
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(int n, int n_events_per_message) {
-      LOG(7, "generating {} {}...", topic, source);
+      LOG(Sev::Debug, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
@@ -395,32 +384,32 @@ public:
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
-      LOG(4, "do_verification: {}", do_verification);
+      LOG(Sev::Debug, "do_verification: {}", do_verification);
     }
 
     int n_msgs_per_source = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
-      LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = x.v;
     }
 
     int n_sources = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
-      LOG(4, "unit_test.n_sources: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
       n_sources = x.v;
     }
 
     int n_events_per_message = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_events_per_message")) {
-      LOG(4, "unit_test.n_events_per_message: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_events_per_message: {}", x.v);
       n_events_per_message = x.v;
     }
 
     int n_msgs_per_batch = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
-      LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_batch: {}", x.v);
       n_msgs_per_batch = x.v;
     }
 
@@ -499,7 +488,7 @@ public:
           )"");
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
@@ -524,7 +513,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(4, "command: {}", cmd);
+    // LOG(Sev::Dbg, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -548,7 +537,7 @@ public:
       auto &fwt = ch.file_writer_tasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      LOG(6, "processing...");
+      LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
@@ -562,7 +551,7 @@ public:
               auto &msg = source.msgs[source.n_fed];
               if (false) {
                 auto v = binary_to_hex(msg.data, msg.size);
-                LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+                LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
               }
               fwt->demuxers().at(0).process_message(msg.data, msg.size);
               source.n_fed++;
@@ -575,16 +564,19 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(6, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
-      LOG(6, "finishing...");
+      LOG(Sev::Debug, "processing done in {} ms",
+          duration_cast<MS>(t2 - t1).count());
+      LOG(Sev::Debug, "finishing...");
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
         ch.handle({(char *)cmd.data(), cmd.size()});
       }
       auto t3 = CLK::now();
-      LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
-      LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+      LOG(Sev::Debug, "finishing done in {} ms",
+          duration_cast<MS>(t3 - t2).count());
+      LOG(Sev::Debug, "done in total {} ms",
+          duration_cast<MS>(t3 - t1).count());
     }
 
     if (!do_verification) {
@@ -632,18 +624,19 @@ public:
                                 count.data(), nullptr);
       ASSERT_GE(err, 0);
 
-      // LOG(4, "have {} messages", source.msgs.size());
+      // LOG(Sev::Dbg, "have {} messages", source.msgs.size());
       for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
         auto &fb = source.fbs.at(msg_i);
         A start = {{(hsize_t)msg_i * n_events_per_message}};
         err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
                                   count.data(), nullptr);
         ASSERT_GE(err, 0);
-        err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+        err =
+            H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
         ASSERT_GE(err, 0);
         auto fbd = fb.root()->detector_id();
         for (int i1 = 0; i1 < n_events_per_message; ++i1) {
-          // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
+          // LOG(Sev::Dbg, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
           ASSERT_EQ(data.at(i1), fbd->Get(i1));
         }
       }
@@ -734,7 +727,7 @@ public:
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
-      LOG(7, "generating {} {}...", topic, source);
+      LOG(Sev::Debug, "generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
@@ -784,25 +777,25 @@ public:
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
-      LOG(4, "do_verification: {}", do_verification);
+      LOG(Sev::Debug, "do_verification: {}", do_verification);
     }
 
     int n_msgs_per_source = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
-      LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = int(x.v);
     }
 
     int n_sources = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
-      LOG(4, "unit_test.n_sources: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
       n_sources = int(x.v);
     }
 
     int n_msgs_per_batch = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
-      LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_batch: {}", x.v);
       n_msgs_per_batch = int(x.v);
     }
 
@@ -819,7 +812,7 @@ public:
 
     if (false) {
       for (auto &source : sources) {
-        LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
+        LOG(Sev::Debug, "msgs: {}  {}", source.source, source.msgs.size());
       }
     }
 
@@ -914,7 +907,7 @@ public:
           stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           if (array_size == 0) {
             stream.AddMember("type", Value("double", a), a);
           } else {
@@ -950,7 +943,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(4, "command: {}", cmd);
+    // LOG(Sev::Dbg, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -973,7 +966,7 @@ public:
       auto &fwt = ch.file_writer_tasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      LOG(6, "processing...");
+      LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
@@ -987,7 +980,7 @@ public:
               auto &msg = source.msgs[source.n_fed];
               if (false) {
                 auto v = binary_to_hex(msg.data, msg.size);
-                LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+                LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
               }
               fwt->demuxers().at(0).process_message(msg.data, msg.size);
               source.n_fed++;
@@ -1000,16 +993,19 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(6, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
-      LOG(6, "finishing...");
+      LOG(Sev::Debug, "processing done in {} ms",
+          duration_cast<MS>(t2 - t1).count());
+      LOG(Sev::Debug, "finishing...");
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
         ch.handle({(char *)cmd.data(), cmd.size()});
       }
       auto t3 = CLK::now();
-      LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
-      LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+      LOG(Sev::Debug, "finishing done in {} ms",
+          duration_cast<MS>(t3 - t2).count());
+      LOG(Sev::Debug, "done in total {} ms",
+          duration_cast<MS>(t3 - t1).count());
     }
   }
 

@@ -2,6 +2,7 @@
 #include "HDFFile_h5.h"
 #include "HDFFile_impl.h"
 #include "date/date.h"
+#include "h5.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
@@ -36,24 +37,12 @@ HDFFile::~HDFFile() {
   if (h5file >= 0) {
     std::array<char, 512> fname;
     H5Fget_name(h5file, fname.data(), fname.size());
-    LOG(6, "flush file {}", fname.data());
+    LOG(Sev::Debug, "flush file {}", fname.data());
     H5Fflush(h5file, H5F_SCOPE_LOCAL);
-    LOG(6, "close file {}", fname.data());
+    LOG(Sev::Debug, "close file {}", fname.data());
     H5Fclose(h5file);
   }
 }
-
-template <typename T> hid_t nat_type();
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
                                        std::string s1) {
@@ -73,11 +62,27 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
 }
 
 template <typename T>
-static void write_hdf_iso8601(hid_t loc, std::string name, T &ts) {
+static void write_hdf_iso8601(hid_t loc, const std::string &name, T &ts) {
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2.c_str());
+  write_hdf_ds_scalar_string(loc, name, s2);
+}
+
+static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
+  using namespace date;
+  using namespace std::chrono;
+  const time_zone *current_time_zone;
+  try {
+    current_time_zone = current_zone();
+  } catch (std::runtime_error &) {
+    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
+                      "timestamp in HDF file")
+    return;
+  }
+  auto now =
+      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
+  write_hdf_iso8601(location, name, now);
 }
 
 static void write_attribute_str(hid_t loc, std::string name,
@@ -101,9 +106,9 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   auto acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
   auto dsp_sc = H5Screate(H5S_SCALAR);
-  auto at =
-      H5Acreate2(loc, name.c_str(), nat_type<T>(), dsp_sc, acpl, H5P_DEFAULT);
-  H5Awrite(at, nat_type<T>(), &value);
+  auto at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc, acpl,
+                       H5P_DEFAULT);
+  H5Awrite(at, h5::nat_type<T>(), &value);
   H5Aclose(at);
   H5Sclose(dsp_sc);
   H5Pclose(acpl);
@@ -310,7 +315,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   populate_blob(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3,
+    LOG(Sev::Error,
         "unexpected number of values for dataset {}  expected: {}  actual: {}",
         name, total_n, blob.size());
     H5Sclose(dsp);
@@ -318,12 +323,12 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
     return;
   }
 
-  auto dt = nat_type<DT>();
+  auto dt = h5::nat_type<DT>();
   auto ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT, dcpl,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(3, "error while writing dataset {}", name);
+    LOG(Sev::Error, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -354,7 +359,7 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
   populate_string_pointers(blob, vals);
 
   if (blob.size() != total_n) {
-    LOG(3,
+    LOG(Sev::Error,
         "unexpected number of values for dataset {}  expected: {}  actual: {}",
         name, total_n, blob.size());
     H5Sclose(dsp);
@@ -370,7 +375,7 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(3, "error while writing dataset {}", name);
+    LOG(Sev::Error, "error while writing dataset {}", name);
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -407,7 +412,7 @@ static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
   populate_string_fixed_size(blob, element_size, vals);
 
   if (blob.size() != total_n * element_size) {
-    LOG(3, "error in sizes");
+    LOG(Sev::Error, "error in sizes");
     H5Sclose(dsp);
     H5Pclose(dcpl);
     return;
@@ -421,7 +426,7 @@ static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
                        H5P_DEFAULT);
   auto err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
   if (err < 0) {
-    LOG(3, "error while writing dataset");
+    LOG(Sev::Error, "error while writing dataset");
   }
   H5Dclose(ds);
   H5Sclose(dsp);
@@ -493,7 +498,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
     auto ds_space = get_string(ds.v, "space");
     if (ds_space) {
       if (ds_space.v != "simple") {
-        LOG(3, "sorry, can only handle simple data spaces");
+        LOG(Sev::Warning, "sorry, can only handle simple data spaces");
         return;
       }
     }
@@ -626,8 +631,8 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   if (x < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(0, "ERROR could not create the HDF file: {}  cwd: {}", filename,
-        cwd.data());
+    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}",
+        filename, cwd.data());
     return -1;
   }
   h5file = x;
@@ -659,13 +664,7 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
     }
   }
 
-  {
-    using namespace date;
-    using namespace std::chrono;
-    auto now =
-        make_zoned(current_zone(), floor<milliseconds>(system_clock::now()));
-    write_hdf_iso8601(h5file, "file_time", now);
-  }
+  write_hdf_iso8601_now(h5file, "file_time");
 
   H5Sclose(dsp_sc);
   H5Pclose(lcpl);

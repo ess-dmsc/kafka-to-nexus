@@ -21,7 +21,6 @@ using ESSTimeStamp = FileWriter::ESSTimeStamp;
 // POD
 struct MainOpt {
   bool help = false;
-  bool verbose = false;
   uint64_t teamid = 0;
   URI broker{"localhost:9092/commands"};
   KafkaW::BrokerOpt broker_opt;
@@ -91,10 +90,10 @@ std::string make_command_from_file(const std::string &filename) {
   using namespace rapidjson;
   std::ifstream ifs(filename);
   if (!ifs.good()) {
-    LOG(3, "can not open file {}", filename);
+    LOG(Sev::Warning, "can not open file {}", filename);
     return "";
   }
-  LOG(4, "make_command_from_file {}", filename);
+  LOG(Sev::Debug, "make_command_from_file {}", filename);
   auto buf1 = gulp(filename);
   return {buf1.data(), buf1.size()};
 }
@@ -115,8 +114,8 @@ int main(int argc, char **argv) {
   int option_index = 0;
   bool getopt_error = false;
   while (true) {
-    int c = getopt_long(argc, argv, "vh", long_options, &option_index);
-    // LOG(2, "c getopt {}", c);
+    int c = getopt_long(argc, argv, "v:h", long_options, &option_index);
+    // LOG(Sev::Dbg, "c getopt {}", c);
     if (c == -1)
       break;
     if (c == '?') {
@@ -124,8 +123,12 @@ int main(int argc, char **argv) {
     }
     switch (c) {
     case 'v':
-      opt.verbose = true;
-      log_level = std::min(9, log_level + 1);
+      try {
+        log_level = std::stoi(std::string(optarg));
+      } catch (std::invalid_argument &e) {
+        std::cout << "Severity level of verbosity argument is not an integer."
+                  << std::endl;
+      }
       break;
     case 'h':
       opt.help = true;
@@ -149,7 +152,7 @@ int main(int argc, char **argv) {
   }
 
   if (getopt_error) {
-    LOG(2, "ERROR parsing command line options");
+    LOG(Sev::Notice, "ERROR parsing command line options");
     opt.help = true;
     return 1;
   }
@@ -183,15 +186,15 @@ int main(int argc, char **argv) {
   KafkaW::Producer::Topic pt(producer, opt.broker.topic);
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.broker_opt.address, opt.teamid);
-    LOG(4, "sending {}", m1);
+    LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.broker_opt.address, opt.teamid);
-    LOG(4, "sending {}", m1);
+    LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "file:") {
     auto m1 = make_command_from_file(opt.cmd.substr(5));
-    LOG(4, "sending:\n{}", m1);
+    LOG(Sev::Debug, "sending:\n{}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
@@ -208,7 +211,7 @@ int main(int argc, char **argv) {
     } else {
       m1 = make_command_stop(opt.broker_opt.address, input);
     }
-    LOG(4, "sending {}", m1);
+    LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   }
   return 0;

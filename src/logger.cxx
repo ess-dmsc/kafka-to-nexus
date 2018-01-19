@@ -49,7 +49,7 @@ Logger::Logger() {}
 Logger::~Logger() {
   do_run_kafka = false;
   if (log_file != nullptr and log_file != stdout) {
-    LOG(0, "Closing log");
+    LOG(Sev::Info, "Closing log");
     fclose(log_file);
   }
   if (thread_poll.joinable()) {
@@ -94,12 +94,13 @@ void Logger::fwd_graylog_logger_enable(std::string address) {
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   Log::RemoveAllHandlers();
-  LOG(4, "Enable graylog_logger on {}:{}", addr, port);
+  LOG(Sev::Info, "Enable graylog_logger on {}:{}", addr, port);
   Log::AddLogHandler(new GraylogInterface(addr, port));
   do_use_graylog_logger = true;
 #else
-  LOG(0, "ERROR not compiled with support for graylog_logger. Would have used "
-         "{}:{}",
+  LOG(Sev::Notice,
+      "ERROR not compiled with support for graylog_logger. Would have used "
+      "{}:{}",
       addr, port);
 #endif
 }

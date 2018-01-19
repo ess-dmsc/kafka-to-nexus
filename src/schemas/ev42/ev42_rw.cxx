@@ -43,7 +43,7 @@ std::string FlatbufferReader::source_name(Msg const &msg) const {
   auto fbuf = get_fbuf(msg.data);
   auto s1 = fbuf->source_name();
   if (!s1) {
-    LOG(4, "message has no source_name");
+    LOG(Sev::Notice, "message has no source_name");
     return "";
   }
   return s1->str();
@@ -96,14 +96,14 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
 
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v * 1024);
-    LOG(7, "index_every_bytes: {}", index_every_bytes);
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
   } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
     index_every_bytes = uint64_t(x.v * 1024 * 1024);
-    LOG(7, "index_every_bytes: {}", index_every_bytes);
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
     chunk_n_elements = hsize_t(x.v);
-    LOG(7, "chunk_n_elements: {}", chunk_n_elements);
+    LOG(Sev::Debug, "chunk_n_elements: {}", chunk_n_elements);
   }
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
@@ -146,7 +146,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),
                                                  fbuf->detector_id()->size());
   if (w1ret.ix0 != w2ret.ix0) {
-    LOG(3, "written data lengths differ");
+    LOG(Sev::Warning, "written data lengths differ");
   }
   auto pulse_time = fbuf->pulse_time();
   this->ds_event_time_zero->append_data_1d(&pulse_time, 1);

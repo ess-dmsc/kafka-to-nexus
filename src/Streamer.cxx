@@ -36,9 +36,9 @@ bool FileWriter::Streamer::set_conf_opt(
   std::string errstr;
   if (!(option.first.empty() || option.second.empty())) {
     auto result = conf->set(option.first, option.second, errstr);
-    LOG(5, "set kafka config: {} = {}", option.first, option.second);
+    LOG(Sev::Debug, "set kafka config: {} = {}", option.first, option.second);
     if (result != RdKafka::Conf::CONF_OK) {
-      LOG(3, "Failed to initialise configuration: {}", errstr);
+      LOG(Sev::Error, "Failed to initialise configuration: {}", errstr);
       return false;
     }
   }
@@ -52,7 +52,7 @@ FileWriter::Streamer::get_metadata(const int &retry) {
   std::unique_ptr<RdKafka::Topic> ptopic;
   auto err = _consumer->metadata(ptopic.get() != NULL, ptopic.get(), &md, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
-    LOG(3, "Can't request metadata");
+    LOG(Sev::Error, "Can't request metadata");
     if (retry) {
       get_metadata(retry - 1);
     } else {
@@ -68,7 +68,7 @@ FileWriter::Streamer::SEC FileWriter::Streamer::get_topic_partitions(
     const std::string &topic, std::unique_ptr<RdKafka::Metadata> _metadata) {
   bool topic_found = false;
   if (!_metadata) {
-    LOG(3, "Missing metadata informations");
+    LOG(Sev::Error, "Missing metadata informations");
     return SEC::metadata_error;
   }
   auto partition_metadata = _metadata->topics()->at(0)->partitions();
@@ -79,7 +79,7 @@ FileWriter::Streamer::SEC FileWriter::Streamer::get_topic_partitions(
     }
   }
   if (!topic_found) {
-    LOG(3, "Can't find topic : {}", topic);
+    LOG(Sev::Error, "Can't find topic : {}", topic);
     return SEC::topic_error;
   }
   for (auto &i : (*partition_metadata)) {
@@ -94,7 +94,8 @@ FileWriter::Streamer::SEC FileWriter::Streamer::get_offset_boundaries() {
     auto err = _consumer->query_watermark_offsets(i->topic(), i->partition(),
                                                   &low, &high, 5000);
     if (err) {
-      LOG(1, "Unable to get boundaries for topic {}, partition {} : {}",
+      LOG(Sev::Error,
+          "Unable to get boundaries for topic {}, partition {} : {}",
           i->topic(), i->partition(), RdKafka::err2str(err));
       return SEC::topic_partition_error;
     }
@@ -115,7 +116,7 @@ std::shared_ptr<RdKafka::Conf> FileWriter::Streamer::initialize_configuration(
                       kafka_options.end());
   if (!kafka_options.empty()) {
     for (auto &item : kafka_options) {
-      LOG(3, "Unknown option: {} [{}]", item.first, item.second);
+      LOG(Sev::Warning, "Unknown option: {} [{}]", item.first, item.second);
     }
   }
   return conf;
@@ -131,7 +132,7 @@ void FileWriter::Streamer::initialize_streamer(
                            filewriter_options.end());
   if (!filewriter_options.empty()) {
     for (auto &item : filewriter_options) {
-      LOG(3, "Unknown option: {} [{}]", item.first, item.second);
+      LOG(Sev::Warning, "Unknown option: {} [{}]", item.first, item.second);
     }
   }
 }
@@ -143,7 +144,7 @@ FileWriter::Streamer::Streamer(const std::string &broker,
     : run_status_{SEC::not_initialized} {
 
   if (topic_name.empty() || broker.empty()) {
-    LOG(0, "Broker and topic required");
+    LOG(Sev::Warning, "Broker and topic required");
     run_status_ = SEC::not_initialized;
     return;
   }
@@ -174,12 +175,12 @@ void FileWriter::Streamer::connect(
   initilialising_ = true;
   connection_init_.notify_all();
 
-  LOG(7, "Connecting to {}", topic_name);
+  LOG(Sev::Info, "Connecting to {}", topic_name);
   for (auto &i : filewriter_options) {
-    LOG(7, "{} :\t{}", i.first, i.second);
+    LOG(Sev::Debug, "{} :\t{}", i.first, i.second);
   }
   for (auto &i : kafka_options) {
-    LOG(7, "{} :\t{}", i.first, i.second);
+    LOG(Sev::Debug, "{} :\t{}", i.first, i.second);
   }
 
   // set streamer options
@@ -189,7 +190,7 @@ void FileWriter::Streamer::connect(
   // Initialize configuration and consumer
   auto conf = initialize_configuration(kafka_options);
   if (!conf) {
-    LOG(0, "Unable to initialize configuration ({})", topic_name);
+    LOG(Sev::Error, "Unable to initialize configuration ({})", topic_name);
     run_status_ = SEC::configuration_error;
     return;
   }
@@ -197,7 +198,7 @@ void FileWriter::Streamer::connect(
       RdKafka::KafkaConsumer::create(conf.get(), errstr);
   _consumer.reset(c);
   if (!_consumer) {
-    LOG(0, "Failed to create consumer: {}", errstr);
+    LOG(Sev::Error, "Failed to create consumer: {}", errstr);
     run_status_ = SEC::consumer_error;
     return;
   }
@@ -205,12 +206,12 @@ void FileWriter::Streamer::connect(
   // Retrieve informations
   std::unique_ptr<RdKafka::Metadata> metadata = get_metadata(metadata_retry);
   if (!metadata) {
-    LOG(1, "Unable to retrieve metadata");
+    LOG(Sev::Error, "Unable to retrieve metadata");
     run_status_ = SEC::metadata_error;
     return;
   }
   if (get_topic_partitions(topic_name, std::move(metadata)) != SEC::no_error) {
-    LOG(1, "Unable to build TopicPartitions structure");
+    LOG(Sev::Error, "Unable to build TopicPartitions structure");
     run_status_ = SEC::topic_partition_error;
     return;
   }
@@ -220,7 +221,7 @@ void FileWriter::Streamer::connect(
   }
   auto err = _consumer->assign(_tp);
   if (err) {
-    LOG(0, "Failed to subscribe to {} ", topic_name);
+    LOG(Sev::Warning, "Failed to subscribe to {} ", topic_name);
     run_status_ = SEC::assign_error;
     return;
   }
@@ -230,7 +231,7 @@ void FileWriter::Streamer::connect(
     return;
   }
 
-  LOG(7, "Connected to topic {}", topic_name);
+  LOG(Sev::Debug, "Connected to topic {}", topic_name);
   run_status_ = SEC::writing;
 }
 
@@ -271,11 +272,11 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
 
   if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
       msg->err() == RdKafka::ERR__TIMED_OUT) {
-    LOG(5, "consume :\t{}", RdKafka::err2str(msg->err()));
+    LOG(Sev::Debug, "consume :\t{}", RdKafka::err2str(msg->err()));
     return ProcessMessageResult::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
-    LOG(5, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
+    LOG(Sev::Warning, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
     message_info_.error();
     return ProcessMessageResult::ERR();
   }
@@ -284,7 +285,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &mp) {
   _offset = RdKafkaOffset(msg->offset());
 
   auto result = mp.process_message((char *)msg->payload(), msg->len());
-  LOG(6, "{} : Message timestamp : {}", _tp[0]->topic(), result.ts());
+  LOG(Sev::Debug, "{} : Message timestamp : {}", _tp[0]->topic(), result.ts());
   if (!result.is_OK()) {
     message_info_.error();
   }
@@ -304,9 +305,9 @@ FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
   auto err = _consumer->offsetsForTimes(_tp, 1000);
   if (err != RdKafka::ERR_NO_ERROR) {
     run_status_ = SEC::start_time_error;
-    LOG(3, "Error searching initial time: {}", err2str(err));
+    LOG(Sev::Error, "Error searching initial time: {}", err2str(err));
     for (auto &i : _tp) {
-      LOG(3, "TopicPartition {}-{} : {}", i->topic(), i->partition(),
+      LOG(Sev::Error, "TopicPartition {}-{} : {}", i->topic(), i->partition(),
           RdKafka::err2str(i->err()));
     }
     run_status_ = SEC::start_time_error;
@@ -320,7 +321,7 @@ FileWriter::Streamer::set_start_time(const ESSTimeStamp &timepoint) {
   }
   err = _consumer->assign(_tp);
   if (err != RdKafka::ERR_NO_ERROR) {
-    LOG(3, "Error assigning initial time: {}", err2str(err));
+    LOG(Sev::Error, "Error assigning initial time: {}", err2str(err));
     run_status_ = SEC::start_time_error;
     return SEC::start_time_error;
   }

@@ -9,7 +9,7 @@ TEST(json, merge_with_exactly_one_conflicting_key) {
   jd1.Parse(R""({"k1": "string1"})"");
   jd2.Parse(R""({"k1": "string2"})"");
   auto jd3 = merge(jd1, jd2);
-  LOG(9, "{}", json_to_string(jd3));
+  LOG(Sev::Debug, "{}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jd2);
 }
 
@@ -22,7 +22,7 @@ TEST(json, merge_two_different_keys) {
   "k2": "string2"
 })"");
   auto jd3 = merge(jd1, jd2);
-  LOG(9, "{}", json_to_string(jd3));
+  LOG(Sev::Debug, "{}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jde);
 }
 
@@ -55,7 +55,7 @@ TEST(json, merge_3_keys_with_more_complicated_structures) {
   }
 })"");
   auto jd3 = merge(jd1, jd2);
-  LOG(9, "{}", json_to_string(jd3));
+  LOG(Sev::Debug, "{}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jde);
 }
 
@@ -106,7 +106,7 @@ TEST(json, merge_deeper_nested_keys) {
 })"");
 
   auto jd3 = merge(jd1, jd2);
-  LOG(9, "expected: {}", json_to_string(jde));
-  LOG(9, "returned: {}", json_to_string(jd3));
+  LOG(Sev::Debug, "expected: {}", json_to_string(jde));
+  LOG(Sev::Debug, "returned: {}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jde);
 }

@@ -1,4 +1,5 @@
 #pragma once
+#include "logger.h"
 #include <atomic>
 #include <functional>
 #include <librdkafka/rdkafka.h>
