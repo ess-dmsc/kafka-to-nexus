@@ -341,7 +341,7 @@ public:
   }
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
-  static void verify_attribute_data_ev42(bool &attribute_verified, hid_t oid,
+  static void verify_attribute_data_ev42(hid_t oid,
                                          string const &group_path) {
     herr_t err;
     auto a1 = H5Aopen_by_name(oid, group_path.data(), "this_will_be_a_double",
@@ -356,9 +356,7 @@ public:
     }
     double v;
     err = H5Aread(a1, H5T_NATIVE_DOUBLE, &v);
-    if (v == 0.125) {
-      attribute_verified = true;
-    }
+    ASSERT_EQ(v, 0.125);
     err = H5Aclose(a1);
     ASSERT_GE(err, 0);
   }
@@ -713,11 +711,7 @@ public:
       H5Tclose(dt);
       H5Dclose(ds);
 
-      {
-        bool attribute_verified = false;
-        verify_attribute_data_ev42(attribute_verified, fid, group_path);
-        ASSERT_EQ(attribute_verified, true);
-      }
+      verify_attribute_data_ev42(fid, group_path);
     }
 
     H5Fclose(fid);
