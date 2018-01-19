@@ -118,6 +118,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(Sev::Notice, "Missing stream specification");
       continue;
     }
+    auto attributes = get_object(*stream.config_stream, "attributes");
     auto &config_stream = *config_stream_value.v;
     LOG(Sev::Info, "Adding stream: {}", json_to_string(config_stream));
     auto topic = get_string(&config_stream, "topic");
@@ -155,7 +156,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
 
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.name,
-                                config_stream, nullptr);
+                                config_stream, nullptr, attributes.v);
 
     auto s = Source(source.v, move(hdf_writer_module));
     // Can this be done in a better way?

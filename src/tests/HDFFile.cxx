@@ -439,6 +439,26 @@ public:
     return 0;
   }
 
+  /// Used by `data_ev42` test to verify attributes attached to the group.
+  static void verify_attribute_data_ev42(hid_t oid, string const &group_path) {
+    herr_t err;
+    auto a1 = H5Aopen_by_name(oid, group_path.data(), "this_will_be_a_double",
+                              H5P_DEFAULT, H5P_DEFAULT);
+    ASSERT_GE(a1, 0);
+    {
+      auto dt = H5Aget_type(a1);
+      ASSERT_EQ(H5Tget_class(dt), H5T_FLOAT);
+      ASSERT_EQ(H5Tget_size(dt), H5Tget_size(H5T_NATIVE_DOUBLE));
+      err = H5Tclose(dt);
+      ASSERT_GE(err, 0);
+    }
+    double v;
+    err = H5Aread(a1, H5T_NATIVE_DOUBLE, &v);
+    ASSERT_EQ(v, 0.125);
+    err = H5Aclose(a1);
+    ASSERT_GE(err, 0);
+  }
+
   static void data_ev42() {
     using namespace FileWriter;
     using std::array;
@@ -553,16 +573,17 @@ public:
         ch.SetArray();
         {
           auto &children = ch;
-          Value ds1;
+          Document ds1(&a);
           ds1.SetObject();
-          ds1.AddMember("type", "stream", a);
-          Value attr;
-          attr.SetObject();
-          attr.AddMember("this_will_be_a_double", Value(0.123), a);
-          attr.AddMember("this_will_be_a_int64", Value(123), a);
-          ds1.AddMember("attributes", attr, a);
-          Document cfg_nexus;
-          cfg_nexus.Parse(R""(
+          ds1.Parse(R""({
+            "type": "stream",
+            "attributes": {
+              "this_will_be_a_double": 0.125,
+              "this_will_be_a_int64": 123
+            }
+          })"");
+          Document stream(&a);
+          stream.Parse(R""(
             {
               "nexus": {
                 "indices": {
@@ -574,8 +595,6 @@ public:
               }
             }
           )"");
-          Value stream;
-          stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("writer_module", Value(module.c_str(), a), a);
@@ -793,6 +812,8 @@ public:
 
       H5Tclose(dt);
       H5Dclose(ds);
+
+      verify_attribute_data_ev42(fid, group_path);
     }
 
     H5Fclose(fid);
