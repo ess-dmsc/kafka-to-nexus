@@ -330,8 +330,7 @@ public:
   }
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
-  static void verify_attribute_data_ev42(hid_t oid,
-                                         string const &group_path) {
+  static void verify_attribute_data_ev42(hid_t oid, string const &group_path) {
     herr_t err;
     auto a1 = H5Aopen_by_name(oid, group_path.data(), "this_will_be_a_double",
                               H5P_DEFAULT, H5P_DEFAULT);
