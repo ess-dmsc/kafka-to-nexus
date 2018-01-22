@@ -73,7 +73,7 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
     LOG(Sev::Debug, "no reader");
     return ProcessMessageResult::ERR();
   }
-  auto srcn = reader->sourcename(msg);
+  auto srcn = reader->source_name(msg);
   LOG(Sev::Debug, "Msg is for source_name: {}", srcn);
   if (reader->timestamp(msg) > _stop_time.count()) {
     LOG(Sev::Debug, "reader->timestamp(msg) {} > _stop_time {}",

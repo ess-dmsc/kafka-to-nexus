@@ -25,7 +25,7 @@ int main(int argc, char **argv) {
 
   if (opt->logpid_sleep) {
     logpid("tmp-pid.txt");
-    LOG(3, "sleep 5");
+    LOG(Sev::Debug, "sleep");
     sleep_ms(3000);
   }
 

@@ -62,8 +62,6 @@ public:
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
   InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                      rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
   InitResult reopen(hid_t hdf_file, string hdf_parent_name, CollectiveQueue *cq,
@@ -97,8 +95,6 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 
 void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
                                    rapidjson::Value const *config_module) {
-  hsize_t chunk_n_elements = 1;
-
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v * 1024);
     LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
@@ -125,12 +121,9 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
 
 HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
                           string hdf_parent_name,
-                          rapidjson::Value const &config_stream,
-                          rapidjson::Value const *config_module,
                           rapidjson::Value const *attributes,
                           CollectiveQueue *cq) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
       hid, "event_time_offset", chunk_bytes, cq);
   this->ds_event_id =
@@ -153,6 +146,9 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
     ds_cue_index.reset();
     ds_cue_timestamp_zero.reset();
   }
+  if (attributes) {
+    write_attributes(hid, attributes);
+  }
   H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
 }
@@ -163,7 +159,7 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
                                                     HDFIDStore *hdf_store) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
   if (hid < 0) {
-    LOG(3, "can not open HDF group");
+    LOG(Sev::Error, "can not open HDF group");
     return HDFWriterModule::InitResult::ERROR_IO();
   }
 
@@ -195,9 +191,6 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
     ds_event_index.reset();
     ds_cue_index.reset();
     ds_cue_timestamp_zero.reset();
-  }
-  if (attributes) {
-    write_attributes(hid, attributes);
   }
   H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();

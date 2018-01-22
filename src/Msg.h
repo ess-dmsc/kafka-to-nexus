@@ -32,7 +32,7 @@ public:
     while (true) {
       p1 = (char *)jm->alloc(len * sizeof(char));
       if (not jm->check_in_range(p1)) {
-        LOG(3, "try again...");
+        LOG(Sev::Error, "try again...");
         // exit(1);
       } else
         break;
@@ -45,7 +45,7 @@ public:
     msg.var.shared = p1;
     std::memcpy((void *)msg.var.shared, data, len);
     msg._size = len;
-    // LOG(3, "shared, set size to: {}", msg._size);
+    // LOG(Sev::Error, "shared, set size to: {}", msg._size);
     return msg;
   }
 
@@ -69,21 +69,21 @@ public:
   }
 
   inline Msg(Msg &&x) {
-    // LOG(3, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
+    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
     using std::swap;
     swap(type, x.type);
     swap(var, x.var);
     swap(_size, x._size);
-    // LOG(3, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
+    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
   }
 
   inline void swap(Msg &y) {
     auto &x = *this;
     if (x.type != -1 && x.type != y.type) {
-      LOG(1, "sorry, can not swap that");
+      LOG(Sev::Critical, "sorry, can not swap that");
       exit(1);
     }
-    // LOG(3, "swap {} / {}   {} / {}", x.type, x._size, y.type, y._size);
+    // LOG(Sev::Error, "swap {} / {}   {} / {}", x.type, x._size, y.type, y._size);
     using std::swap;
     swap(x.type, y.type);
     swap(x.var, y.var);
@@ -101,7 +101,7 @@ public:
     case 22:
       return var.cheap;
     default:
-      LOG(3, "error at type: {}", type);
+      LOG(Sev::Error, "error at type: {}", type);
       exit(1);
     }
     return "";
@@ -118,7 +118,7 @@ public:
     case 22:
       return _size;
     default:
-      LOG(3, "error at type: {}", type);
+      LOG(Sev::Error, "error at type: {}", type);
       exit(1);
     }
     return 0;
@@ -155,7 +155,7 @@ public:
     case -1:
       break;
     default:
-      LOG(3, "error at type: {}", type);
+      LOG(Sev::Error, "error at type: {}", type);
       exit(1);
     }
   }

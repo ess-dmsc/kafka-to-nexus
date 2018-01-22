@@ -16,32 +16,32 @@ public:
   MsgQueue() {
     pthread_mutexattr_t mx_attr;
     if (pthread_mutexattr_init(&mx_attr) != 0) {
-      LOG(3, "fail pthread_mutexattr_init");
+      LOG(Sev::Error, "fail pthread_mutexattr_init");
       exit(1);
     }
     if (pthread_mutexattr_setpshared(&mx_attr, PTHREAD_PROCESS_SHARED) != 0) {
-      LOG(3, "fail pthread_mutexattr_setpshared");
+      LOG(Sev::Error, "fail pthread_mutexattr_setpshared");
       exit(1);
     }
     if (pthread_mutex_init(&mx, &mx_attr) != 0) {
-      LOG(3, "fail pthread_mutex_init");
+      LOG(Sev::Error, "fail pthread_mutex_init");
       exit(1);
     }
     if (pthread_mutexattr_destroy(&mx_attr) != 0) {
-      LOG(3, "fail pthread_mutexattr_destroy");
+      LOG(Sev::Error, "fail pthread_mutexattr_destroy");
       exit(1);
     }
   }
   ~MsgQueue() {
     if (pthread_mutex_destroy(&mx) != 0) {
-      LOG(3, "fail pthread_mutex_destroy");
+      LOG(Sev::Error, "fail pthread_mutex_destroy");
       exit(1);
     }
   }
   MsgQueue(MsgQueue &x) { swap(*this, x); }
   int push(Msg &msg) {
     if (pthread_mutex_lock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_lock");
+      LOG(Sev::Critical, "fail pthread_mutex_lock");
       exit(1);
     }
     auto nW = nw.load();
@@ -49,32 +49,32 @@ public:
     auto nn = size(nW, nR);
     if (nn >= items.size() - 2) {
       if (pthread_mutex_unlock(&mx) != 0) {
-        LOG(1, "fail pthread_mutex_unlock");
+        LOG(Sev::Critical, "fail pthread_mutex_unlock");
         exit(1);
       }
       return nn;
     }
-    // LOG(3, "queuen msg {} / {}", msg.type, msg._size);
+    // LOG(Sev::Error, "queuen msg {} / {}", msg.type, msg._size);
     items.at(nW).swap(msg);
     nW = (nW + 1) % items.size();
     nw.store(nW);
-    // LOG(3, "now have {} in queue", n.load());
+    // LOG(Sev::Error, "now have {} in queue", n.load());
     if (pthread_mutex_unlock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_unlock");
+      LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);
     }
     return 0;
   }
   void all(std::vector<Msg> &ret, size_t fac) {
     if (pthread_mutex_lock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_lock");
+      LOG(Sev::Critical, "fail pthread_mutex_lock");
       exit(1);
     }
     /*
-    LOG(3, "checking all messages before move");
+    LOG(Sev::Error, "checking all messages before move");
     for (size_t i1 = 0; i1 < n.load(); ++i1) {
       auto & m = items[i1];
-      LOG(3, "msg  type: {:2}  size: {:5}  data: {}", m.type, m._size,
+      LOG(Sev::Error, "msg  type: {:2}  size: {:5}  data: {}", m.type, m._size,
     (void*)m.data());
     }
     */
@@ -93,16 +93,16 @@ public:
     }
     nr.store(nR);
     /*
-    LOG(3, "checking all messages in ret {}", ret.size());
+    LOG(Sev::Error, "checking all messages in ret {}", ret.size());
     for (size_t i1 = 0; i1 < ret.size(); ++i1) {
       auto & m = ret[i1];
-      LOG(3, "...");
-      LOG(3, "msg  type: {:2}  size: {:5}  data: {}", m.type, m._size,
+      LOG(Sev::Error, "...");
+      LOG(Sev::Error, "msg  type: {:2}  size: {:5}  data: {}", m.type, m._size,
     (void*)m.data());
     }
     */
     if (pthread_mutex_unlock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_unlock");
+      LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);
     }
   }

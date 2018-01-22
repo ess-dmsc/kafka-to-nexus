@@ -9,5 +9,5 @@ void logpid(char const *fname) {
   auto pidstr = fmt::format("{}", getpid_wrapper());
   fwrite(pidstr.data(), pidstr.size(), 1, f1);
   fclose(f1);
-  LOG(3, "logged pid {} to {}", pidstr, fname);
+  LOG(Sev::Error, "logged pid {} to {}", pidstr, fname);
 }

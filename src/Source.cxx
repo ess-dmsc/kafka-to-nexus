@@ -58,7 +58,7 @@ void Source::mpi_start(rapidjson::Document config_file,
   jm->use_this();
   queue = MsgQueue::ptr(new MsgQueue);
   if (not jm->check_in_range(queue.get())) {
-    LOG(3, "Memory error");
+    LOG(Sev::Error, "Memory error");
     exit(1);
   }
   jm->use_default();
@@ -74,9 +74,9 @@ void Source::mpi_start(rapidjson::Document config_file,
   rapidjson::StringBuffer sbuf;
   rapidjson::Document jconf;
   {
-    LOG(7, "config_file: {}", json_to_string(config_file));
-    LOG(7, "command: {}", json_to_string(command));
-    LOG(7, "config_stream: {}", json_to_string(config_stream));
+    LOG(Sev::Debug, "config_file: {}", json_to_string(config_file));
+    LOG(Sev::Debug, "command: {}", json_to_string(command));
+    LOG(Sev::Debug, "config_stream: {}", json_to_string(config_stream));
     using namespace rapidjson;
     auto &a = jconf.GetAllocator();
     jconf.Parse(R""({"hdf":{},"shm":{"fname":"tmp-mmap"}})"");
@@ -88,7 +88,7 @@ void Source::mpi_start(rapidjson::Document config_file,
     jconf.AddMember("log_level", Value(log_level), a);
     PrettyWriter<StringBuffer> wr(sbuf);
     jconf.Accept(wr);
-    LOG(7, "config for mpi: {}", sbuf.GetString());
+    LOG(Sev::Debug, "config for mpi: {}", sbuf.GetString());
   }
 
   for (size_t i_child = 0; i_child < n_child; ++i_child) {
@@ -119,10 +119,10 @@ ProcessMessageResult Source::process_message(Msg &msg) {
         break;
       }
       if (i1 % (1 << 9) == (1 << 9) - 1) {
-        LOG(3, "queue full  i1: {}  n: {}", i1, n);
+        LOG(Sev::Debug, "queue full  i1: {}  n: {}", i1, n);
       }
       if (i1 >= (1 << 12)) {
-        LOG(3, "QUEUE IS FULL FOR TOO LONG TIME");
+        LOG(Sev::Debug, "QUEUE IS FULL FOR TOO LONG TIME");
         break;
       }
       sleep_ms(4);
@@ -130,7 +130,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
     return ProcessMessageResult::OK();
   } else {
     if (!_hdf_writer_module) {
-      LOG(3, "!_hdf_writer_module for {}", _sourcename);
+      LOG(Sev::Debug, "!_hdf_writer_module for {}", _sourcename);
       return ProcessMessageResult::ERR();
     }
     auto ret = _hdf_writer_module->write(msg);

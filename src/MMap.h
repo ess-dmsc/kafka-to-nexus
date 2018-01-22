@@ -26,12 +26,12 @@ public:
   ~MMap() {
     return;
     if (munmap(shm_ptr, shm_size) != 0) {
-      LOG(3, "munmap failed");
+      LOG(Sev::Error, "munmap failed");
       exit(1);
     }
     shm_ptr = nullptr;
     if (::close(fd) != 0) {
-      LOG(3, "could not close mmap file");
+      LOG(Sev::Error, "could not close mmap file");
       exit(1);
     }
     fd = -1;
@@ -58,12 +58,12 @@ private:
     }
     ret->fd = ::open(fname.data(), flags, S_IRUSR | S_IWUSR);
     if (ret->fd == -1) {
-      LOG(3, "open failed");
+      LOG(Sev::Error, "open failed");
       exit(1);
     }
     if (create) {
       if (ftruncate(ret->fd, ret->shm_size) != 0) {
-        LOG(3, "fail truncate");
+        LOG(Sev::Error, "fail truncate");
         exit(1);
       }
     }
@@ -71,10 +71,10 @@ private:
         mmap64((void *)0x662233000000, ret->shm_size, PROT_READ | PROT_WRITE,
                MAP_FIXED | MAP_SHARED, ret->fd, 0);
     if (ret->shm_ptr == MAP_FAILED) {
-      LOG(3, "mmap failed");
+      LOG(Sev::Error, "mmap failed");
       exit(1);
     }
-    LOG(8, "shm_ptr: {}", ret->shm_ptr);
+    LOG(Sev::Chatty, "shm_ptr: {}", ret->shm_ptr);
     return ret;
   }
 };

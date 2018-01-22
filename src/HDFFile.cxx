@@ -190,7 +190,7 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
       if (as.size() > 10) {
         break;
       }
-      // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
+      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
       if (ai.top() >= an.top()) {
         as.pop();
         ai.pop();
@@ -647,19 +647,19 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
     err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
                                      1 << 20);
     if (err < 0) {
-      LOG(7, "failed H5Pset_file_space_strategy");
+      LOG(Sev::Debug, "failed H5Pset_file_space_strategy");
     }
   }
   if (0) {
     err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
     if (err < 0) {
-      LOG(7, "failed H5Pset_file_space_page_size");
+      LOG(Sev::Debug, "failed H5Pset_file_space_page_size");
     }
   }
   if (0) {
     err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
     if (err < 0) {
-      LOG(7, "failed H5Pset_page_buffer_size");
+      LOG(Sev::Debug, "failed H5Pset_page_buffer_size");
     }
   }
   if (0) {
@@ -667,22 +667,22 @@ static void set_common_props(hid_t fcpl, hid_t fapl) {
     hsize_t alignment;
     err = H5Pget_alignment(fapl, &threshold, &alignment);
     if (err < 0) {
-      LOG(7, "could not get alignment");
+      LOG(Sev::Debug, "could not get alignment");
     } else {
-      LOG(7, "threshold: {}  alignment: {}", threshold, alignment);
+      LOG(Sev::Debug, "threshold: {}  alignment: {}", threshold, alignment);
     }
   }
   if (0) {
     err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
     if (err < 0) {
-      LOG(7, "failed H5Pset_alignment");
+      LOG(Sev::Debug, "failed H5Pset_alignment");
     }
   }
   if (0) {
     // 521  1483  9973
     err = H5Pset_cache(fapl, 0, 9973, size_t(1) << 31, 0.0);
     if (err < 0) {
-      LOG(7, "failed H5Pset_cache");
+      LOG(Sev::Debug, "failed H5Pset_cache");
     }
   }
 #if USE_PARALLEL_WRITER
@@ -729,7 +729,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
 
   H5Pclose(fcpl);
   H5Pclose(fapl);
-  return init(h5file, nexus_structure, stream_hdf_info);
+  return init(h5file, nexus_structure, stream_hdf_info, groups);
 }
 
 int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
@@ -760,7 +760,7 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
   for (auto x : groups) {
     array<char, 256> b;
     H5Iget_name(x, b.data(), b.size());
-    LOG(3, "closing refs: {}  name: {}", H5Iget_ref(x), b.data());
+    LOG(Sev::Error, "closing refs: {}  name: {}", H5Iget_ref(x), b.data());
     H5Gclose(x);
   }
   groups.clear();
@@ -823,7 +823,7 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
   if (f1 < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(3, "ERROR could not open the HDF file: {}  cwd: {}", filename,
+    LOG(Sev::Error, "ERROR could not open the HDF file: {}  cwd: {}", filename,
         cwd.data());
     return -1;
   }

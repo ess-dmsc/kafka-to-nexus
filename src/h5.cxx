@@ -125,11 +125,11 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   o.name = name;
   err = H5Pset_fill_value(dcpl.id, type, nullptr);
   if (err < 0) {
-    LOG(7, "failed H5Pset_fill_value");
+    LOG(Sev::Debug, "failed H5Pset_fill_value");
   }
   o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
   if (o.id < 0) {
-    LOG(3, "H5Dcreate1 failed");
+    LOG(Sev::Error, "H5Dcreate1 failed");
     ret.reset();
     return ret;
   }
@@ -150,7 +150,7 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
           o.type, i1, o.sext.at(i1), o.smax.at(i1));
     }
   }
@@ -158,18 +158,18 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   o.mem_now = {{0, 0}};
   o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
   if (o.dsp_mem < 0) {
-    LOG(3, "H5Screate_simple dsp_mem failed");
+    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
   }
   o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
   err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
   if (err < 0) {
-    LOG(7, "failed H5Pset_edc_check");
+    LOG(Sev::Debug, "failed H5Pset_edc_check");
   }
 #if USE_PARALLEL_WRITER
   if (false) {
     err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
     if (err < 0) {
-      LOG(7, "failed H5Pset_dxpl_mpio");
+      LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
     }
   }
 #endif
@@ -197,7 +197,7 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     o.hdf_store = hdf_store;
     o.name = name;
     o.id = hdf_store->datasetname_to_ds_id[full_path];
-    LOG(8, "registered dataset name  rank: {}  id: {}  for path: {}",
+    LOG(Sev::Chatty, "registered dataset name  rank: {}  id: {}  for path: {}",
         hdf_store->mpi_rank, o.id, full_path);
     o.type = H5Dget_type(o.id);
     o.dsp_tgt = H5Dget_space(o.id);
@@ -206,7 +206,7 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
     if (log_level >= 9) {
       for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-        LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+        LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
             o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
       }
     }
@@ -214,18 +214,18 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     o.mem_now = {{0, 0}};
     o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
     if (o.dsp_mem < 0) {
-      LOG(3, "H5Screate_simple dsp_mem failed");
+      LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
     }
     o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
     err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
     if (err < 0) {
-      LOG(7, "failed H5Pset_edc_check");
+      LOG(Sev::Debug, "failed H5Pset_edc_check");
     }
 #if USE_PARALLEL_WRITER
     if (false) {
       err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
       if (err < 0) {
-        LOG(7, "failed H5Pset_dxpl_mpio");
+        LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
       }
     }
 #endif
@@ -238,7 +238,7 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     o.name = name;
     o.id = H5Dopen2(loc, name.c_str(), H5P_DEFAULT);
     if (o.id < 0) {
-      LOG(3, "H5Dopen2 failed");
+      LOG(Sev::Error, "H5Dopen2 failed");
       ret.reset();
       return ret;
     }
@@ -249,7 +249,7 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
     if (log_level >= 9) {
       for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-        LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+        LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
             o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
       }
     }
@@ -257,18 +257,18 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     o.mem_now = {{0, 0}};
     o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
     if (o.dsp_mem < 0) {
-      LOG(3, "H5Screate_simple dsp_mem failed");
+      LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
     }
     o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
     err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
     if (err < 0) {
-      LOG(7, "failed H5Pset_edc_check");
+      LOG(Sev::Debug, "failed H5Pset_edc_check");
     }
 #if USE_PARALLEL_WRITER
     if (false) {
       err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
       if (err < 0) {
-        LOG(7, "failed H5Pset_dxpl_mpio");
+        LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
       }
     }
 #endif
@@ -280,7 +280,7 @@ h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
   if (id != -1) {
-    LOG(9, "~h5d ds");
+    LOG(Sev::Trace, "~h5d ds");
     herr_t err = 0;
     char ds_name[512];
     auto &buf = ds_name;
@@ -290,18 +290,17 @@ h5d::~h5d() {
     if (not cq) {
       err = H5Dset_extent(id, snow.data());
       if (err < 0) {
-        LOG(3, "H5Dset_extent failed");
+        LOG(Sev::Error, "H5Dset_extent failed");
       }
       err = H5Dclose(id);
       if (err < 0) {
-        LOG(3, "Could not close dataset: {}");
-        LOG(7, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
+        LOG(Sev::Error, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
                "H5O_info_t.rc: {}",
             id, buf, bufn, H5Iget_ref(id), oi.rc);
       }
       id = -1;
     } else {
-      LOG(9, "~h5d ds  cqid: {}", hdf_store->cqid);
+      LOG(Sev::Trace, "~h5d ds  cqid: {}", hdf_store->cqid);
       size_t CQSNOWIX = -1;
       lookup_cqsnowix(ds_name, CQSNOWIX);
       snow[0] = cq->snow[CQSNOWIX].load();
@@ -350,7 +349,7 @@ void swap(h5d &x, h5d &y) {
 }
 
 void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
-  LOG(9, "using cq: {}", (void *)cq);
+  LOG(Sev::Trace, "using cq: {}", (void *)cq);
   cqsnowix = cq->find_snowix_for_datasetname(ds_name);
 }
 
@@ -360,7 +359,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using CLK = steady_clock;
   using MS = milliseconds;
   auto t1 = CLK::now();
-  LOG(9, "append_data_1d");
+  LOG(Sev::Trace, "append_data_1d");
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -402,8 +401,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   if (false) {
     // Just for debugging
-    std::array<hsize_t, 1> snow, smax;
-    H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
+    A1 snow;
+    A1 smax;
+    H5Sget_simple_extent_dims(dsp_tgt, snow.data(), smax.data());
     if (log_level >= 9) {
       for (size_t i1 = 0; i1 < snow.size(); ++i1) {
         LOG(Sev::Debug, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
@@ -439,14 +439,14 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     if (sext2[0] - sext[0] > (1 << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
-    LOG(7, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext, sext[0],
+    LOG(Sev::Debug, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext, sext[0],
         sext2[0]);
 
     auto t2 = CLK::now();
     if (not cq) {
       err = H5Dset_extent(id, sext2.data());
       if (err < 0) {
-        LOG(3, "H5Dset_extent failed");
+        LOG(Sev::Error, "H5Dset_extent failed");
         return {AppendResult::ERROR};
       }
       dsp_tgt = H5Dget_space(id);
@@ -454,7 +454,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         // LOG(9, "try to get the dsp dims:");
         err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
         if (err < 0) {
-          LOG(3, "fail H5Sget_simple_extent_dims");
+          LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
           exit(1);
         }
       }
@@ -466,29 +466,29 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       cq->execute_for(*hdf_store, 0);
       dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
       if (true) {
-        // LOG(9, "try to get the dsp dims:");
+        // LOG(Sev::Trace, "try to get the dsp dims:");
         err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
         if (err < 0) {
-          LOG(3, "fail H5Sget_simple_extent_dims");
+          LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
           exit(1);
         }
       }
     }
     auto t3 = CLK::now();
-    LOG(7, "h5d::append_data_1d set_extent: {} + {}",
+    LOG(Sev::Debug, "h5d::append_data_1d set_extent: {} + {}",
         duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
   }
 
   if (log_level >= 9) {
     A1 sext, smax;
-    LOG(9, "try to get the dsp dims:");
+    LOG(Sev::Trace, "try to get the dsp dims:");
     err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     if (err < 0) {
-      LOG(3, "fail H5Sget_simple_extent_dims");
+      LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       exit(1);
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
           type, i1, sext.at(i1), smax.at(i1));
     }
   }
@@ -508,7 +508,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   A1 tgt_count{{nlen}};
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(9, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
+      LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
           tgt_count[0]);
     }
   }
@@ -565,13 +565,14 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
           n1);
     }
   }
+  size_t const NDIM = 2;
   using A1 = array<hsize_t, 2>;
   herr_t err;
-  if (NDIM != H5Sget_simple_extent_ndims(tgt)) {
+  if (NDIM != H5Sget_simple_extent_ndims(dsp_tgt)) {
     LOG(Sev::Error, "dataset dimensions do not match");
-    return {-1};
+    return {AppendResult::ERROR};
   }
-  H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
+  H5Sget_simple_extent_dims(dsp_tgt, snow.data(), smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < snow.size(); ++i1) {
       LOG(Sev::Debug, "snow {} {:3}", i1, snow.at(i1));
@@ -607,7 +608,7 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
 
     err = H5Dset_extent(id, snow.data());
     if (err < 0) {
-      LOG(3, "can not extend dataset");
+      LOG(Sev::Error, "can not extend dataset");
       return {AppendResult::ERROR};
     }
 

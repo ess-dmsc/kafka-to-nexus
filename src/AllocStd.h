@@ -24,7 +24,7 @@ public:
   void *alloc(size_t size) {
     auto addr = malloc(size);
     if (addr == nullptr) {
-      LOG(3, "fail alloc size: {}", size);
+      LOG(Sev::Error, "fail alloc size: {}", size);
       exit(1);
     }
     return addr;

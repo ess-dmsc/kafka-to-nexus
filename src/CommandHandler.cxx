@@ -164,7 +164,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     if (run_parallel_cfg) {
       run_parallel = run_parallel_cfg.v;
       if (run_parallel) {
-        LOG(5, "Run parallel {}", source.v);
+        LOG(Sev::Info, "Run parallel {}", source.v);
       }
     }
 
@@ -182,10 +182,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
     hdf_writer_module->parse_config(config_stream, nullptr);
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
-                                fwt->cq.get(), attributes.v);
-    LOG(8, "close");
+                                attributes.v, fwt->cq.get());
+    LOG(Sev::Chatty, "close");
     hdf_writer_module->close();
-    LOG(8, "reset");
+    LOG(Sev::Chatty, "reset");
     hdf_writer_module.reset();
   }
 
@@ -209,24 +209,24 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     // Refactor with the above loop..
     auto config_stream_value = get_object(*stream.config_stream, "stream");
     if (!config_stream_value) {
-      LOG(5, "Missing stream specification");
+      LOG(Sev::Info, "Missing stream specification");
       continue;
     }
     auto &config_stream = *config_stream_value.v;
     // LOG(7, "Adding stream: {}", json_to_string(config_stream));
     auto topic = get_string(&config_stream, "topic");
     if (!topic) {
-      LOG(5, "Missing topic on stream specification");
+      LOG(Sev::Info, "Missing topic on stream specification");
       continue;
     }
     auto source = get_string(&config_stream, "source");
     if (!source) {
-      LOG(5, "Missing source on stream specification");
+      LOG(Sev::Info, "Missing source on stream specification");
       continue;
     }
     auto module = get_string(&config_stream, "module");
     if (!module) {
-      LOG(5, "Missing module on stream specification");
+      LOG(Sev::Info, "Missing module on stream specification");
       continue;
     }
     bool run_parallel = false;
@@ -234,7 +234,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     if (run_parallel_cfg) {
       run_parallel = run_parallel_cfg.v;
       if (run_parallel) {
-        LOG(5, "Run parallel {}", source.v);
+        LOG(Sev::Info, "Run parallel {}", source.v);
       }
     }
 
@@ -244,19 +244,19 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
-    LOG(8, "topic: {}  use_parallel_writer: {}  run_parallel: {}", topic.v,
+    LOG(Sev::Chatty, "topic: {}  use_parallel_writer: {}  run_parallel: {}", topic.v,
         use_parallel_writer, run_parallel);
     if (!use_parallel_writer || !run_parallel) {
-      LOG(8, "add Source as non-parallel: {}", topic.v);
+      LOG(Sev::Chatty, "add Source as non-parallel: {}", topic.v);
       auto module_factory = HDFWriterModuleRegistry::find(module.v);
       if (!module_factory) {
-        LOG(5, "Module '{}' is not available", module.v);
+        LOG(Sev::Info, "Module '{}' is not available", module.v);
         continue;
       }
 
       auto hdf_writer_module = module_factory();
       if (!hdf_writer_module) {
-        LOG(5, "Can not create a HDFWriterModule for '{}'", module.v);
+        LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'", module.v);
         continue;
       }
 
@@ -270,7 +270,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
           fwt->hdf_file.h5file, stream.hdf_parent_name, nullptr, nullptr);
 #endif
       if (err.is_ERR()) {
-        LOG(3, "can not reopen HDF file for stream {}", stream.hdf_parent_name);
+        LOG(Sev::Error, "can not reopen HDF file for stream {}", stream.hdf_parent_name);
         exit(1);
       }
 
@@ -293,7 +293,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       //   or re-open in one or more separate mpi workers Send command to
       //   create HDFWriterModule, all the json config as text, let it re-open
       //   hdf items Create a Source which puts messages on a queue
-      LOG(8, "add Source as parallel: {}", topic.v);
+      LOG(Sev::Chatty, "add Source as parallel: {}", topic.v);
       auto s = Source(source.v, {}, config.jm, config.shm, fwt->cq.get());
       s.is_parallel = true;
       s._topic = string(topic);

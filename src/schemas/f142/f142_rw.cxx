@@ -39,7 +39,7 @@ public:
 template <typename DT, typename FV>
 class writer_typed_array : public writer_typed_base {
 public:
-  writer_typed_array(hid_t hdf_group, std::string const &sourcename,
+  writer_typed_array(hid_t hdf_group, std::string const &source_name,
                      hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq);
   ~writer_typed_array() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
@@ -50,7 +50,7 @@ public:
 template <typename DT, typename FV>
 class writer_typed_scalar : public writer_typed_base {
 public:
-  writer_typed_scalar(hid_t hdf_group, std::string const &sourcename, Value fb_value_type_id,
+  writer_typed_scalar(hid_t hdf_group, std::string const &source_name, Value fb_value_type_id,
                       CollectiveQueue *cq);
   ~writer_typed_scalar() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
@@ -62,16 +62,16 @@ static FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
-                                               std::string const &sourcename,
+                                               std::string const &source_name,
                                                hsize_t ncols, Value fb_value_type_id,
-                                               CollectiveQueue *cq) {
+                                               CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
   if (ncols <= 0) {
     LOG(Sev::Error, "can not handle number of columns ncols == {}", ncols);
     return;
   }
   LOG(Sev::Debug, "f142 init_impl  ncols: {}", ncols);
-  this->ds = h5::h5d_chunked_2d<DT>::create(hdf_group, sourcename, ncols,
+  this->ds = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols,
                                             64 * 1024, cq);
   if (!this->ds) {
     LOG(Sev::Error,
@@ -84,7 +84,7 @@ template <typename DT, typename FV>
 h5::append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != _fb_value_type_id) {
-    return {-2, 0, 0};
+    return {h5::AppendResult::ERROR, 0, 0};
   }
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
@@ -102,12 +102,12 @@ h5::append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
 
 template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
-                                                 std::string const &sourcename, Value fb_value_type_id,
-                                                 CollectiveQueue *cq) {
+                                                 std::string const &source_name, Value fb_value_type_id,
+                                                 CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 init_impl  scalar");
   this->ds =
-      h5::h5d_chunked_1d<DT>::create(hdf_group, sourcename, 64 * 1024, cq);
+      h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
   if (!this->ds) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
@@ -118,7 +118,7 @@ template <typename DT, typename FV>
 h5::append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != _fb_value_type_id) {
-    return {-2, 0, 0};
+    return {h5::AppendResult::ERROR, 0, 0};
   }
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
@@ -126,7 +126,7 @@ h5::append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
   }
   auto v2 = v1->value();
   if (!this->ds) {
-    return {1, 0, 0};
+    return {h5::AppendResult::ERROR, 0, 0};
   }
   return this->ds->append_data_1d(&v2, 1);
 }
@@ -164,8 +164,6 @@ class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                      rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
   void parse_config(rapidjson::Value const &config_stream,
@@ -193,7 +191,7 @@ public:
   uint64_t index_every_bytes = !0;
   uint64_t ts_max = 0;
   size_t array_size = 0;
-  std::string sourcename;
+  std::string source_name;
   std::string type;
   CollectiveQueue *cq = nullptr;
 };
@@ -289,7 +287,7 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   if (!str) {
     return;
   }
-  sourcename = str.v;
+  source_name = str.v;
   str = get_string(&config_stream, "type");
   if (!str) {
     return;
@@ -298,9 +296,9 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   if (auto x = get_uint(&config_stream, "array_size")) {
     array_size = size_t(x.v);
   }
-  LOG(Sev::Debug, "HDFWriterModule::parse_config f142 sourcename: {}  type: {}  "
+  LOG(Sev::Debug, "HDFWriterModule::parse_config f142 source_name: {}  type: {}  "
          "array_size: {}",
-      sourcename, type, array_size);
+      source_name, type, array_size);
 
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v) * 1024;
@@ -344,7 +342,7 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name, rapidjson
     }
   }
   if (attributes) {
-    write_attributes(hid, attributes);
+    write_attributes(hdf_group, attributes);
   }
   H5Gclose(hdf_group);
   return HDFWriterModule::InitResult::OK();

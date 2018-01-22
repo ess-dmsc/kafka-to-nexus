@@ -23,14 +23,14 @@ struct HDFIDStore {
 
   void check_all_empty() {
     if (datasetname_to_ds_id.size() != 0) {
-      LOG(3, "datasetname_to_ds_id is not empty");
+      LOG(Sev::Error, "datasetname_to_ds_id is not empty");
       for (auto &x : datasetname_to_ds_id) {
-        LOG(3, "{}: {}", x.first, x.second);
+        LOG(Sev::Error, "{}: {}", x.first, x.second);
       }
       exit(1);
     }
     if (datasetname_to_dsp_id.size() != 0) {
-      LOG(3, "datasetname_to_dsp_id is not empty");
+      LOG(Sev::Error, "datasetname_to_dsp_id is not empty");
       exit(1);
     }
   }
@@ -108,7 +108,7 @@ struct CollectiveCommand {
       ret = fmt::format("H5Dclose({})", v.H5Dclose.name);
       break;
     default:
-      LOG(3, "unhandled");
+      LOG(Sev::Error, "unhandled");
       exit(1);
     }
     return ret;
@@ -129,7 +129,7 @@ struct CollectiveCommand {
       if (v.set_extent.size[0] > x.v.set_extent.size[0]) {
         return false;
       } else {
-        LOG(7, "rejected because {} <= {}", v.set_extent.size[0],
+        LOG(Sev::Debug, "rejected because {} <= {}", v.set_extent.size[0],
             x.v.set_extent.size[0]);
       }
       break;
@@ -144,14 +144,14 @@ struct CollectiveCommand {
       }
       break;
     default:
-      LOG(3, "unhandled");
+      LOG(Sev::Error, "unhandled");
       exit(1);
     }
     return true;
   }
 
   void execute_for(HDFIDStore &store) {
-    LOG(7, "execute  cqid: {}  mpi_rank: {}  pid: {}  {}", store.cqid,
+    LOG(Sev::Debug, "execute  cqid: {}  mpi_rank: {}  pid: {}  {}", store.cqid,
         store.mpi_rank, getpid_wrapper(), to_string());
     if (type == CollectiveCommandType::SetExtent) {
       // the dataset must be open because it must have been created by another
@@ -164,33 +164,33 @@ struct CollectiveCommand {
       // This seems to trigger a MPI send, recv and barrier!
       err = H5Dset_extent(id, v.set_extent.size);
       if (err < 0) {
-        LOG(3, "fail H5Dset_extent  cqid: {}  {}", store.cqid, to_string());
+        LOG(Sev::Error, "fail H5Dset_extent  cqid: {}  {}", store.cqid, to_string());
         exit(1);
       }
       store.datasetname_to_dsp_id[v.set_extent.name] = H5Dget_space(id);
     } else if (type == CollectiveCommandType::H5Dopen2) {
       auto id = ::H5Dopen2(store.h5file, v.H5Dopen2.name, H5P_DEFAULT);
       if (id < 0) {
-        LOG(3, "H5Dopen2 failed");
+        LOG(Sev::Error, "H5Dopen2 failed");
       }
       char buf[512];
       {
         auto bufn = H5Iget_name(id, buf, 512);
         buf[bufn] = '\0';
       }
-      LOG(8, "opened for {:2} as name: {}  id: {}", store.mpi_rank, buf, id);
+      LOG(Sev::Chatty, "opened for {:2} as name: {}  id: {}", store.mpi_rank, buf, id);
       store.datasetname_to_ds_id[buf] = id;
       store.datasetname_to_dsp_id[buf] = H5Dget_space(id);
     } else if (type == CollectiveCommandType::H5Dclose) {
       auto &name = v.H5Dclose.name;
       auto id = ::H5Dclose(store.datasetname_to_ds_id[name]);
       if (id < 0) {
-        LOG(3, "H5Dclose failed");
+        LOG(Sev::Error, "H5Dclose failed");
       }
       store.datasetname_to_ds_id.erase(name);
       store.datasetname_to_dsp_id.erase(name);
     } else {
-      LOG(3, "unhandled");
+      LOG(Sev::Error, "unhandled");
       exit(1);
     }
   }
@@ -220,38 +220,38 @@ public:
     }
     pthread_mutexattr_t mx_attr;
     if (pthread_mutexattr_init(&mx_attr) != 0) {
-      LOG(3, "fail pthread_mutexattr_init");
+      LOG(Sev::Error, "fail pthread_mutexattr_init");
       exit(1);
     }
     if (pthread_mutexattr_setpshared(&mx_attr, PTHREAD_PROCESS_SHARED) != 0) {
-      LOG(3, "fail pthread_mutexattr_setpshared");
+      LOG(Sev::Error, "fail pthread_mutexattr_setpshared");
       exit(1);
     }
     if (pthread_mutex_init(&mx, &mx_attr) != 0) {
-      LOG(3, "fail pthread_mutex_init");
+      LOG(Sev::Error, "fail pthread_mutex_init");
       exit(1);
     }
     if (pthread_mutexattr_destroy(&mx_attr) != 0) {
-      LOG(3, "fail pthread_mutexattr_destroy");
+      LOG(Sev::Error, "fail pthread_mutexattr_destroy");
       exit(1);
     }
   }
 
   ~CollectiveQueue() {
     if (pthread_mutex_destroy(&mx) != 0) {
-      LOG(3, "fail pthread_mutex_destroy");
+      LOG(Sev::Error, "fail pthread_mutex_destroy");
       exit(1);
     }
   }
 
   size_t open(HDFIDStore &store) {
     if (pthread_mutex_lock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_lock");
+      LOG(Sev::Critical, "fail pthread_mutex_lock");
       exit(1);
     }
     auto n = nclients;
     if (n >= mark_open.size()) {
-      LOG(3, "can not register more clients  n: {}", n);
+      LOG(Sev::Error, "can not register more clients  n: {}", n);
       exit(1);
     }
     mark_open[n] = true;
@@ -259,10 +259,10 @@ public:
       x[n] = 0;
     }
     nclients += 1;
-    LOG(7, "CQ mark open  mpi_rank: {}  n: {}  nclients: {}", store.mpi_rank, n,
+    LOG(Sev::Debug, "CQ mark open  mpi_rank: {}  n: {}  nclients: {}", store.mpi_rank, n,
         nclients);
     if (pthread_mutex_unlock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_unlock");
+      LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);
     }
     return n;
@@ -271,11 +271,11 @@ public:
   int push(HDFIDStore &store, size_t queue, CollectiveCommand item) {
     auto &items = queues[queue];
     if (n_queued[queue].load() >= items.size()) {
-      LOG(3, "Command queue full  n_queued[queue]: {}", n_queued[queue].load());
+      LOG(Sev::Error, "Command queue full  n_queued[queue]: {}", n_queued[queue].load());
       exit(1);
     }
     if (pthread_mutex_lock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_lock");
+      LOG(Sev::Critical, "fail pthread_mutex_lock");
       exit(1);
     }
     auto n1 = n_queued[queue].load();
@@ -286,7 +286,7 @@ public:
       for (size_t i1 = 0; i1 < n1; ++i1) {
         if (item.equivalent(items[i1])) {
           if (log_level >= 9) {
-            LOG(9, "found equivalent command, skip {}", item.to_string());
+            LOG(Sev::Trace, "found equivalent command, skip {}", item.to_string());
           }
           do_insert = false;
           break;
@@ -295,7 +295,7 @@ public:
     }
 
     if (do_insert) {
-      LOG(7, "push CQ  cqid: {:2}  queue: {}  n1: {:4}  cmd: {}", store.cqid,
+      LOG(Sev::Debug, "push CQ  cqid: {:2}  queue: {}  n1: {:4}  cmd: {}", store.cqid,
           queue, n1, item.to_string());
       items[n1] = item;
       n1 += 1;
@@ -309,7 +309,7 @@ public:
     //   Set the new 'n'
 
     if (pthread_mutex_unlock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_unlock");
+      LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);
     }
     return 0;
@@ -318,31 +318,31 @@ public:
   void all_for(HDFIDStore &store, size_t queue,
                std::vector<CollectiveCommand> &ret) {
     if (pthread_mutex_lock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_lock");
+      LOG(Sev::Critical, "fail pthread_mutex_lock");
       exit(1);
     }
     auto n1 = n_queued[queue].load();
     auto n2 = markers.at(queue).at(store.cqid);
-    LOG(9, "all_for  cqid: {}  queue: {}  n1: {}  n2: {}", store.cqid, queue,
+    LOG(Sev::Trace, "all_for  cqid: {}  queue: {}  n1: {}  n2: {}", store.cqid, queue,
         n1, n2);
     auto &items = queues[queue];
     for (size_t i1 = n2; i1 < n1; ++i1) {
       ret.push_back(items[i1]);
     }
     markers.at(queue).at(store.cqid) = n1;
-    LOG(9, "all_for  cqid: {}  queue: {}  marker updated: {}", store.cqid,
+    LOG(Sev::Debug, "all_for  cqid: {}  queue: {}  marker updated: {}", store.cqid,
         queue, markers.at(queue).at(store.cqid));
     if (pthread_mutex_unlock(&mx) != 0) {
-      LOG(1, "fail pthread_mutex_unlock");
+      LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);
     }
   }
 
   void execute_for(HDFIDStore &store, size_t queue) {
-    LOG(9, "execute_for  cqid: {}", store.cqid);
+    LOG(Sev::Trace, "execute_for  cqid: {}", store.cqid);
     std::vector<CollectiveCommand> cmds;
     all_for(store, queue, cmds);
-    LOG(9, "execute_for  cqid: {}  cmds: {}", store.cqid, cmds.size());
+    LOG(Sev::Trace, "execute_for  cqid: {}  cmds: {}", store.cqid, cmds.size());
     for (auto &cmd : cmds) {
       cmd.execute_for(store);
     }
@@ -352,25 +352,25 @@ public:
     auto &n = datasetname_to_snow_a_ix__n;
     auto &a = datasetname_to_snow_a_ix_name;
     if (n >= a.size()) {
-      LOG(3, "can not register more datasets");
+      LOG(Sev::Error, "can not register more datasets");
       exit(1);
     }
-    LOG(7, "register dataset {} as snow_a_ix {}", name, n);
+    LOG(Sev::Debug, "register dataset {} as snow_a_ix {}", name, n);
     std::strncpy(a[n].data(), name.data(), a[n].size());
     a[n][a[n].size() - 1] = 0;
     ++n;
   }
 
   size_t find_snowix_for_datasetname(std::string name) {
-    LOG(9, "find_snowix_for_datasetname {}", name);
+    LOG(Sev::Trace, "find_snowix_for_datasetname {}", name);
     for (size_t i1 = 0; i1 < datasetname_to_snow_a_ix__n; ++i1) {
       if (std::strncmp(name.data(), datasetname_to_snow_a_ix_name[i1].data(),
                        256) == 0) {
-        LOG(9, "found ix: {}", i1);
+        LOG(Sev::Trace, "found ix: {}", i1);
         return i1;
       }
     }
-    LOG(3, "error not found");
+    LOG(Sev::Error, "error not found");
     exit(1);
   }
 
@@ -382,7 +382,7 @@ public:
     while (true) {
       auto n1 = n.load();
       if (i1 % 10 == 0) {
-        LOG(9, "spinlock: {} vs {}", n1, nclients);
+        LOG(Sev::Trace, "spinlock: {} vs {}", n1, nclients);
       }
       if (n1 == nclients) {
         break;
@@ -392,7 +392,7 @@ public:
       }
       sleep_ms(100);
       if (i1 > 1000) {
-        LOG(3, "timeout");
+        LOG(Sev::Error, "timeout");
         exit(1);
       }
       i1 += 1;

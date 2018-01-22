@@ -322,7 +322,7 @@ public:
             (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
             jm));
         if (msgs.back().size() < 8) {
-          LOG(3, "error");
+          LOG(Sev::Error, "error");
           exit(1);
         }
       }
@@ -450,20 +450,20 @@ public:
 
     int feed_msgs_times = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.feed_msgs_times")) {
-      LOG(4, "unit_test.feed_msgs_times: {}", x.v);
+      LOG(Sev::Info, "unit_test.feed_msgs_times: {}", x.v);
       feed_msgs_times = x.v;
     }
 
     int feed_msgs_seconds = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.feed_msgs_seconds")) {
-      LOG(4, "unit_test.feed_msgs_seconds: {}", x.v);
+      LOG(Sev::Info, "unit_test.feed_msgs_seconds: {}", x.v);
       feed_msgs_seconds = x.v;
     }
 
     string filename = "tmp-ev42.h5";
     if (auto x = get_string(&main_opt.config_file, "unit_test.filename")) {
-      LOG(4, "unit_test.filename: {}", x.v);
+      LOG(Sev::Info, "unit_test.filename: {}", x.v);
       filename = x.v;
     }
 
@@ -482,14 +482,14 @@ public:
       vector<std::thread> threads_pregen;
       for (int i1 = 0; i1 < n_sources; ++i1) {
         auto &s = sources.back();
-        LOG(7, "push pregen {}", i1);
+        LOG(Sev::Debug, "push pregen {}", i1);
         threads_pregen.push_back(
             std::thread([&jm, &s, n_msgs_per_source, n_events_per_message] {
               s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
             }));
       }
       for (auto &x : threads_pregen) {
-        LOG(7, "join pregen");
+        LOG(Sev::Debug, "join pregen");
         x.join();
       }
     }
@@ -638,23 +638,23 @@ public:
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
             if (msg.size() < 8) {
-              LOG(3, "error");
+              LOG(Sev::Error, "error");
               do_run = false;
             }
             auto res =
                 fwt->demuxers().at(0).process_message(Msg::cheap(msg, jm));
             if (res.is_ERR()) {
-              LOG(3, "is_ERR");
+              LOG(Sev::Error, "is_ERR");
               do_run = false;
               break;
             }
             if (res.is_ALL_SOURCES_FULL()) {
-              LOG(3, "is_ALL_SOURCES_FULL");
+              LOG(Sev::Error, "is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
             if (res.is_STOP()) {
-              LOG(3, "is_STOP");
+              LOG(Sev::Error, "is_STOP");
               do_run = false;
               break;
             }
@@ -739,7 +739,7 @@ public:
           err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
                                     count.data(), nullptr);
           ASSERT_GE(err, 0);
-          err = H5Dread(ds, nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+          err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
           ASSERT_GE(err, 0);
           auto fbd = fb.root()->detector_id();
           for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
@@ -818,7 +818,7 @@ public:
     }
 
     err = H5Fclose(fid);
-    LOG(7, "data_ev42 verification done");
+    LOG(Sev::Debug, "data_ev42 verification done");
     ASSERT_GE(err, 0);
     ASSERT_EQ(H5Iis_valid(fid), 0);
     ASSERT_EQ(recreate_file(&json_command), 0);
@@ -852,7 +852,7 @@ public:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
         fbs.push_back(synth.next(i1, array_size));
-        LOG(3, "error NOT IMPLEMENTED, jm missing!");
+        LOG(Sev::Error, "error NOT IMPLEMENTED, jm missing!");
         exit(1);
         //auto &fb = fbs.back();
         //msgs.push_back(FileWriter::Msg::shared((char const *)fb.builder->GetBufferPointer(),
@@ -1059,7 +1059,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(Sev::Dbg, "command: {}", cmd);
+    // LOG(Sev::Debug, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -1071,7 +1071,7 @@ public:
     std::mt19937 rnd_nn;
 
     if (feed_msgs_times > 1) {
-      LOG(4, "Sorry, can feed messages currently only once");
+      LOG(Sev::Error, "Sorry, can feed messages currently only once");
       exit(1);
     }
 
@@ -1091,7 +1091,7 @@ public:
       auto t1 = CLK::now();
       for (auto &source : sources) {
         for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
-          LOG(6, "feed {}", i_feed);
+          LOG(Sev::Info, "feed {}", i_feed);
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());
@@ -1139,9 +1139,10 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info, groups);
     herr_t err;
     err = 0;
     auto a1 =
@@ -1250,9 +1251,10 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<hid_t> groups;    
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info, groups);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
@@ -1285,9 +1287,10 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<hid_t> groups;    
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info, groups);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
