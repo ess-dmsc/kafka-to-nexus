@@ -224,10 +224,16 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       LOG(Sev::Info, "Missing source on stream specification");
       continue;
     }
-    auto module = get_string(&config_stream, "module");
+    auto module = get_string(&config_stream, "writer_module");
     if (!module) {
-      LOG(Sev::Info, "Missing module on stream specification");
-      continue;
+      module = get_string(&config_stream, "module");
+      if (module) {
+        LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
+                         "\"stream.writer_module\" instead.");
+      } else {
+        LOG(Sev::Notice, "Missing key `writer_module` on stream specification");
+        continue;
+      }
     }
     bool run_parallel = false;
     auto run_parallel_cfg = get_bool(&config_stream, "run_parallel");
