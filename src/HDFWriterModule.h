@@ -110,7 +110,8 @@ public:
   /// HDFWriterModule.
   virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
                               rapidjson::Value const &config_stream,
-                              rapidjson::Value const *config_module) = 0;
+                              rapidjson::Value const *config_module,
+                              rapidjson::Value const *attributes) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
