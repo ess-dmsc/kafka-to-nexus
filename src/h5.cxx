@@ -4,7 +4,6 @@
 
 namespace h5 {
 
-template <typename T> hid_t nat_type();
 template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
 template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
 template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
@@ -366,7 +365,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
     if (n1 > 0) {
-      LOG(9, "append_data_1d {} for dataset {:.{}}", nlen, buf1.data(), n1);
+      LOG(Sev::Debug, "append_data_1d {} for dataset {:.{}}", nlen, buf1.data(),
+          n1);
     }
   }
   using A1 = array<hsize_t, 1>;
@@ -390,29 +390,39 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
     // Not necessary, just for testing:
     if (false) {
-      LOG(9, "try to get the dsp dims:");
+      LOG(Sev::Debug, "try to get the dsp dims:");
       err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
       if (err < 0) {
-        LOG(3, "fail H5Sget_simple_extent_dims");
-        exit(1);
+        LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
       }
     }
   } else {
-    LOG(9, "DO NOT LOOKUP CQSNOWIX");
+    LOG(Sev::Debug, "Do not look up cqsnowix");
+  }
+
+  if (false) {
+    // Just for debugging
+    std::array<hsize_t, 1> snow, smax;
+    H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
+    if (log_level >= 9) {
+      for (size_t i1 = 0; i1 < snow.size(); ++i1) {
+        LOG(Sev::Debug, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
+      }
+    }
   }
 
   size_t snext = -1;
   if (not cq) {
     snext = snow[0];
   } else {
-    LOG(9, "CAS allocate...");
+    LOG(Sev::Debug, "CAS allocate...");
     while (true) {
       snext = cq->snow[CQSNOWIX].load();
       if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
         break;
       }
     }
-    LOG(9, "CAS allocated: {}", snext);
+    LOG(Sev::Debug, "CAS allocated: {}", snext);
   }
 
   if (snext + nlen > sext[0]) {
@@ -489,7 +499,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
-      LOG(3, "can not select mem hyperslab");
+      LOG(Sev::Error, "can not select mem hyperslab");
       return {AppendResult::ERROR};
     }
   }
@@ -505,16 +515,16 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
-    LOG(3, "can not select tgt hyperslab");
+    LOG(Sev::Error, "can not select tgt hyperslab");
     return {AppendResult::ERROR};
   }
   auto t2 = CLK::now();
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     if (cq) {
-      LOG(3, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid, ds_name);
+      LOG(Sev::Error, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid, ds_name);
     } else {
-      LOG(3, "write failed:");
+      LOG(Sev::Error, "write failed:");
     }
     if (log_level >= 7) {
       std::array<hsize_t, 4> sext;
@@ -522,15 +532,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       hid_t dsp = H5Dget_space(id);
       err = H5Sget_simple_extent_dims(dsp, sext.data(), smax.data());
       if (err < 0) {
-        LOG(3, "fail H5Sget_simple_extent_dims");
-        exit(1);
+        LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       }
       for (size_t i1 = 0; i1 < 1; ++i1) {
-        LOG(7, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
+        LOG(Sev::Debug, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
             smax.at(i1));
       }
     }
-    exit(1);
     return {AppendResult::ERROR};
   }
   snow[0] = snext + nlen;
@@ -544,8 +552,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
 template <typename T>
 append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
-  LOG(3, "append_data_2d");
-  LOG(3, "NO LONGER SUPPORTED");
+  LOG(Sev::Error, "append_data_2d");
+  LOG(Sev::Error, "CURRENTLY NOT SUPPORTED");
   // TODO
   // adapt to 1d case
   exit(1);
@@ -553,14 +561,26 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
     if (n1 > 0) {
-      LOG(9, "append_data_2d {} for dataset {:.{}}", nlen, buf1.data(), n1);
+      LOG(Sev::Debug, "append_data_2d {} for dataset {:.{}}", nlen, buf1.data(),
+          n1);
     }
   }
   using A1 = array<hsize_t, 2>;
   herr_t err;
+  if (NDIM != H5Sget_simple_extent_ndims(tgt)) {
+    LOG(Sev::Error, "dataset dimensions do not match");
+    return {-1};
+  }
+  H5Sget_simple_extent_dims(tgt, snow.data(), smax.data());
+  if (log_level >= 9) {
+    for (size_t i1 = 0; i1 < snow.size(); ++i1) {
+      LOG(Sev::Debug, "snow {} {:3}", i1, snow.at(i1));
+    }
+  }
+
   hsize_t ncols = snow[1];
   if (nlen % ncols != 0) {
-    LOG(3, "dataset dimensions do not match");
+    LOG(Sev::Error, "dataset dimensions do not match");
     return {AppendResult::ERROR};
   }
   hsize_t nrows = nlen / ncols;
@@ -577,11 +597,11 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
     if (not cq) {
       err = H5Dset_extent(id, sext.data());
       if (err < 0) {
-        LOG(3, "H5Dset_extent failed");
+        LOG(Sev::Error, "H5Dset_extent failed");
         return {AppendResult::ERROR};
       }
     } else if (mpi_rank == 1) {
-      LOG(3, "NOT IMPLEMENTED");
+      LOG(Sev::Critical, "NOT IMPLEMENTED");
       exit(1);
     }
 
@@ -599,7 +619,7 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
-      LOG(3, "can not select mem hyperslab");
+      LOG(Sev::Error, "can not select mem hyperslab");
       return {AppendResult::ERROR};
     }
   }
@@ -608,12 +628,12 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
                             tgt_count.data(), nullptr);
   if (err < 0) {
-    LOG(3, "can not select tgt hyperslab");
+    LOG(Sev::Error, "can not select tgt hyperslab");
     return {AppendResult::ERROR};
   }
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
-    LOG(3, "writing failed");
+    LOG(Sev::Error, "writing failed");
     return {AppendResult::ERROR};
   }
   return {AppendResult::OK, sizeof(T) * nlen, tgt_start[0]};
@@ -676,7 +696,7 @@ h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
     : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() {
-  LOG(7, "~h5d_chunked_1d  count_append_calls: {}, count_append_bytes: {}, "
+  LOG(Sev::Debug, "~h5d_chunked_1d  count_append_calls: {}, count_append_bytes: {}, "
          "count_buffer_copy_calls: {}, count_buffer_copy_bytes: {}",
       count_append_calls, count_append_bytes, count_buffer_copy_calls,
       count_buffer_copy_bytes);
@@ -706,7 +726,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   bool do_buf = nbytes <= buf_packet_max;
   auto buffer_append = [this, &nbytes](T const *data) {
     if (buf_n + nbytes > buf_size) {
-      LOG(3, "fail buffer");
+      LOG(Sev::Error, "fail buffer");
       exit(1);
     }
     auto p1 = (char *)data;
@@ -728,7 +748,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
     if (res == AppendResult::ERROR) {
       return {res};
     } else if (res != AppendResult::OK) {
-      LOG(3, "unhandled error");
+      LOG(Sev::Error, "unhandled error");
       exit(1);
     }
   }
@@ -798,7 +818,7 @@ template <typename T>
 append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
   // TODO
   // Adapt to the 1d case.
-  LOG(3, "not supported currently");
+  LOG(Sev::Error, "not supported currently");
   exit(1);
   append_ret ret{AppendResult::ERROR};
   if (nlen != dsp_wr.sini.at(1)) {

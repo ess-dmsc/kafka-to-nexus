@@ -113,6 +113,9 @@ public:
   /// @param hdf_parent_name Path to the group into which this HDFWriterModule
   /// should put its data.
   virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                              rapidjson::Value const &config_stream,
+                              rapidjson::Value const *config_module,
+                              rapidjson::Value const *attributes,
                               CollectiveQueue *cq) = 0;
 
   virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,

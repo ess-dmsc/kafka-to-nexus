@@ -3,6 +3,7 @@
 #include "../CommandHandler.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
+#include "../h5.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
@@ -23,18 +24,6 @@ using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
 
-template <typename T> hid_t nat_type();
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
-
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -52,7 +41,7 @@ public:
   static void new_03() {
     using namespace FileWriter;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
-    LOG(7, "cmd: {:.{}}", cmd.data(), cmd.size());
+    LOG(Sev::Debug, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
     char const *fname = d["file_attributes"]["file_name"].GetString();
@@ -118,13 +107,113 @@ public:
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "value", "values": 42.24, "attributes":{"units":"degree"}})"");
+                R""({
+                  "type": "dataset",
+                  "name": "value",
+                  "values": 42.24,
+                  "attributes": {"units":"degree"}
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
             Document jd;
             jd.Parse(
-                R""({"type":"dataset", "name": "more_complex_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 2]}, "values": [[13.1, 14]]})"");
+                R""({
+                  "type": "dataset",
+                  "name": "more_complex_set",
+                  "dataset": {
+                    "space": "simple",
+                    "type": "double",
+                    "size": ["unlimited", 2]
+                  },
+                  "values": [
+                    [13.1, 14]
+                  ]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_scalar",
+                  "dataset": {
+                    "type": "string"
+                  },
+                  "values": "the-scalar-string"
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_1d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited"]
+                  },
+                  "values": ["the-scalar-string", "another-one"]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_2d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited", 2]
+                  },
+                  "values": [
+                    ["the-scalar-string", "another-one"],
+                    ["string_1_0", "string_1_1"]
+                  ]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_3d",
+                  "dataset": {
+                    "type": "string",
+                    "size": ["unlimited", 3, 2]
+                  },
+                  "values": [
+                    [
+                      ["string_0_0_0", "string_0_0_1"],
+                      ["string_0_1_0", "string_0_1_1"],
+                      ["string_0_2_0", "string_0_2_1"]
+                    ],
+                    [
+                      ["string_1_0_0", "string_1_0_1"],
+                      ["string_1_1_0", "string_1_1_1"],
+                      ["string_1_2_0", "string_1_2_1"]
+                    ]
+                  ]
+                })"");
+            ch.PushBack(Value().CopyFrom(jd, a), a);
+          }
+          {
+            Document jd;
+            jd.Parse(
+                R""({
+                  "type": "dataset",
+                  "name": "string_fixed_1d",
+                  "dataset": {
+                    "type":"string",
+                    "string_size": 32,
+                    "size": ["unlimited"]
+                  },
+                  "values": ["the-scalar-string", "another-one"]
+                })"");
             ch.PushBack(Value().CopyFrom(jd, a), a);
           }
           {
@@ -141,7 +230,7 @@ public:
                   Value v2;
                   v2.SetArray();
                   for (size_t i3 = 0; i3 < 2; ++i3) {
-                    v2.PushBack(Value(1000 * i1 + 10 * i2 + i3), a);
+                    v2.PushBack(Value().SetInt(1000 * i1 + 10 * i2 + i3), a);
                   }
                   v1.PushBack(v2, a);
                 }
@@ -217,7 +306,7 @@ public:
     void pregenerate(int n, int n_events_per_message_,
                      std::shared_ptr<Jemalloc> &jm) {
       n_events_per_message = n_events_per_message_;
-      LOG(7, "generating {} {}...", topic, source);
+      LOG(Sev::Debug, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
@@ -250,6 +339,26 @@ public:
     }
     H5Fclose(x);
     return 0;
+  }
+
+  /// Used by `data_ev42` test to verify attributes attached to the group.
+  static void verify_attribute_data_ev42(hid_t oid, string const &group_path) {
+    herr_t err;
+    auto a1 = H5Aopen_by_name(oid, group_path.data(), "this_will_be_a_double",
+                              H5P_DEFAULT, H5P_DEFAULT);
+    ASSERT_GE(a1, 0);
+    {
+      auto dt = H5Aget_type(a1);
+      ASSERT_EQ(H5Tget_class(dt), H5T_FLOAT);
+      ASSERT_EQ(H5Tget_size(dt), H5Tget_size(H5T_NATIVE_DOUBLE));
+      err = H5Tclose(dt);
+      ASSERT_GE(err, 0);
+    }
+    double v;
+    err = H5Aread(a1, H5T_NATIVE_DOUBLE, &v);
+    ASSERT_EQ(v, 0.125);
+    err = H5Aclose(a1);
+    ASSERT_GE(err, 0);
   }
 
   static void data_ev42() {
@@ -310,32 +419,32 @@ public:
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
-      LOG(4, "do_verification: {}", do_verification);
+      LOG(Sev::Debug, "do_verification: {}", do_verification);
     }
 
     int n_msgs_per_source = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
-      LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = x.v;
     }
 
     int n_sources = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
-      LOG(4, "unit_test.n_sources: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
       n_sources = x.v;
     }
 
     int n_events_per_message = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_events_per_message")) {
-      LOG(4, "unit_test.n_events_per_message: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_events_per_message: {}", x.v);
       n_events_per_message = x.v;
     }
 
     int n_msgs_per_batch = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
-      LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_batch: {}", x.v);
       n_msgs_per_batch = x.v;
     }
 
@@ -435,14 +544,14 @@ public:
         ch.SetArray();
         {
           auto &children = ch;
-          Value ds1;
-          ds1.SetObject();
-          ds1.AddMember("type", "stream", a);
-          Value attr;
-          attr.SetObject();
-          attr.AddMember("this_will_be_a_double", Value(0.123), a);
-          attr.AddMember("this_will_be_a_int64", Value(123), a);
-          ds1.AddMember("attributes", attr, a);
+          Document ds1(&a);
+          ds1.Parse(R""({
+            "type": "stream",
+            "attributes": {
+              "this_will_be_a_double": 0.125,
+              "this_will_be_a_int64": 123
+            }
+          })"");
           Value stream;
           stream.SetObject();
           if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
@@ -452,7 +561,7 @@ public:
           }
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
           stream.AddMember(
               "n_mpi_workers",
@@ -486,7 +595,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    LOG(8, "command: {}", cmd);
+    LOG(Sev::Debug, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -507,7 +616,7 @@ public:
       auto &fwt = ch.file_writer_tasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      LOG(6, "processing...");
+      LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       bool do_run = true;
@@ -519,12 +628,14 @@ public:
           if (not do_run) {
             break;
           }
-          LOG(8 - int(i_feed % 100 == 0), "i_feed: {:3}  i_source: {:2}",
+          if (i_feed % 100 == 0) {
+            LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}",
               i_feed, i_source);
+          }
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());
-              LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
             if (msg.size() < 8) {
               LOG(3, "error");
@@ -558,16 +669,19 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(6, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
-      LOG(6, "finishing...");
+      LOG(Sev::Debug, "processing done in {} ms",
+          duration_cast<MS>(t2 - t1).count());
+      LOG(Sev::Debug, "finishing...");
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
         ch.handle(Msg::owned((char const *)cmd.data(), cmd.size()));
       }
       auto t3 = CLK::now();
-      LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
-      LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+      LOG(Sev::Debug, "finishing done in {} ms",
+          duration_cast<MS>(t3 - t2).count());
+      LOG(Sev::Debug, "done in total {} ms",
+          duration_cast<MS>(t3 - t1).count());
     }
 
     if (!do_verification) {
@@ -615,7 +729,7 @@ public:
                                 count.data(), nullptr);
       ASSERT_GE(err, 0);
 
-      // LOG(4, "have {} messages", source.msgs.size());
+      // LOG(Sev::Debug, "have {} messages", source.msgs.size());
       for (size_t feed_i = 0; feed_i < feed_msgs_times; ++feed_i) {
         for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
           auto &fb = source.fbs.at(msg_i);
@@ -629,7 +743,7 @@ public:
           ASSERT_GE(err, 0);
           auto fbd = fb.root()->detector_id();
           for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
-            // LOG(4, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
+            // LOG(Sev::Debug, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
             // fbd->Get(i1));
             ASSERT_EQ(data.at(i1), fbd->Get(i1));
           }
@@ -699,6 +813,8 @@ public:
       H5Tclose(dt);
       H5Dclose(ds);
       ++i_source;
+
+      verify_attribute_data_ev42(fid, group_path);
     }
 
     err = H5Fclose(fid);
@@ -723,7 +839,7 @@ public:
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
-      LOG(7, "generating {} {}...", topic, source);
+      LOG(Sev::Debug, "generating {} {}...", topic, source);
 #if 0
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
@@ -777,25 +893,25 @@ public:
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
-      LOG(4, "do_verification: {}", do_verification);
+      LOG(Sev::Debug, "do_verification: {}", do_verification);
     }
 
     int n_msgs_per_source = 1;
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
-      LOG(4, "unit_test.n_msgs_per_source: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = int(x.v);
     }
 
     int n_sources = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
-      LOG(4, "unit_test.n_sources: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
       n_sources = int(x.v);
     }
 
     int n_msgs_per_batch = 1;
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
-      LOG(4, "unit_test.n_msgs_per_batch: {}", x.v);
+      LOG(Sev::Debug, "unit_test.n_msgs_per_batch: {}", x.v);
       n_msgs_per_batch = int(x.v);
     }
 
@@ -812,7 +928,7 @@ public:
 
     if (false) {
       for (auto &source : sources) {
-        LOG(4, "msgs: {}  {}", source.source, source.msgs.size());
+        LOG(Sev::Debug, "msgs: {}  {}", source.source, source.msgs.size());
       }
     }
 
@@ -907,7 +1023,7 @@ public:
           stream.CopyFrom(cfg_nexus, a);
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("module", Value(module.c_str(), a), a);
+          stream.AddMember("writer_module", Value(module.c_str(), a), a);
           if (array_size == 0) {
             stream.AddMember("type", Value("double", a), a);
           } else {
@@ -943,7 +1059,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(4, "command: {}", cmd);
+    // LOG(Sev::Dbg, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -969,7 +1085,7 @@ public:
       auto &fwt = ch.file_writer_tasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      LOG(6, "processing...");
+      LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
@@ -979,7 +1095,7 @@ public:
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());
-              LOG(7, "msg:\n{:.{}}", v.data(), v.size());
+              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
             fwt->demuxers().at(0).process_message(Msg::cheap(msg, main_opt.jm));
             source.n_fed++;
@@ -987,17 +1103,199 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(6, "processing done in {} ms", duration_cast<MS>(t2 - t1).count());
-      LOG(6, "finishing...");
+      LOG(Sev::Debug, "processing done in {} ms",
+          duration_cast<MS>(t2 - t1).count());
+      LOG(Sev::Debug, "finishing...");
       {
         string cmd("{\"recv_type\":\"FileWriter\", "
                    "\"cmd\":\"file_writer_tasks_clear_all\"}");
         ch.handle(Msg::owned((char const *)cmd.data(), cmd.size()));
       }
       auto t3 = CLK::now();
-      LOG(6, "finishing done in {} ms", duration_cast<MS>(t3 - t2).count());
-      LOG(6, "done in total {} ms", duration_cast<MS>(t3 - t1).count());
+      LOG(Sev::Debug, "finishing done in {} ms",
+          duration_cast<MS>(t3 - t2).count());
+      LOG(Sev::Debug, "done in total {} ms",
+          duration_cast<MS>(t3 - t1).count());
     }
+  }
+
+  static void attribute_int_scalar() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "group",
+          "name": "group1",
+          "attributes": {
+            "hello": "world"
+          }
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto a1 =
+        H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
+    ASSERT_GE(a1, 0);
+    auto dt = H5Aget_type(a1);
+    ASSERT_GE(dt, 0);
+    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
+    H5Tclose(dt);
+    ASSERT_GE(H5Aclose(a1), 0);
+  }
+
+  /// Read a string from the given dataset at the given position.
+  /// Helper for other unit tests.
+  /// So far only for 1d datasets.
+  static void read_string(std::string &result, hid_t ds,
+                          std::vector<hsize_t> pos) {
+    herr_t err;
+    auto dt = H5Dget_type(ds);
+    ASSERT_GE(dt, 0);
+    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
+    ASSERT_EQ(H5Tget_cset(dt), H5T_CSET_UTF8);
+    if (!H5Tis_variable_str(dt)) {
+      // Check plausibility, assuming current unit tests:
+      ASSERT_LE(H5Tget_size(dt), 4096);
+    }
+    auto dsp = H5Dget_space(ds);
+    ASSERT_GE(dsp, 0);
+    {
+      std::array<hsize_t, 1> now{{0}};
+      std::array<hsize_t, 1> max{{0}};
+      err = H5Sget_simple_extent_dims(dsp, now.data(), max.data());
+      ASSERT_EQ(err, 1);
+      ASSERT_GE(now.at(0), 0);
+      ASSERT_GE(max.at(0), 0);
+    }
+    {
+      std::array<hsize_t, 1> start{{pos.at(0)}};
+      std::array<hsize_t, 1> stride{{1}};
+      std::array<hsize_t, 1> count{{1}};
+      std::array<hsize_t, 1> block{{1}};
+      err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(),
+                                stride.data(), count.data(), block.data());
+      ASSERT_GE(err, 0);
+    }
+    auto dspmem = H5Screate(H5S_SIMPLE);
+    ASSERT_GE(dspmem, 0);
+    {
+      std::array<hsize_t, 1> now{{1}};
+      std::array<hsize_t, 1> max{{1}};
+      err = H5Sset_extent_simple(dspmem, 1, now.data(), max.data());
+      ASSERT_GE(err, 0);
+    }
+    {
+      std::array<hsize_t, 1> start{{0}};
+      std::array<hsize_t, 1> stride{{1}};
+      std::array<hsize_t, 1> count{{1}};
+      std::array<hsize_t, 1> block{{1}};
+      err = H5Sselect_hyperslab(dspmem, H5S_SELECT_SET, start.data(),
+                                stride.data(), count.data(), block.data());
+      ASSERT_GE(err, 0);
+    }
+    auto dtmem = H5Tcopy(H5T_C_S1);
+    H5Tset_cset(dtmem, H5T_CSET_UTF8);
+
+    if (H5Tis_variable_str(dt)) {
+      H5Tset_size(dtmem, H5T_VARIABLE);
+      char *string_ptr = nullptr;
+      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, &string_ptr);
+      ASSERT_GE(err, 0);
+      result = std::string(string_ptr);
+    } else {
+      H5Tset_size(dtmem, H5Tget_size(dt));
+      std::vector<char> buf;
+      buf.resize(H5Tget_size(dt) + 1);
+      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, buf.data());
+      ASSERT_GE(err, 0);
+      result = std::string(buf.data());
+    }
+
+    H5Tclose(dt);
+    ASSERT_GE(H5Sclose(dsp), 0);
+    ASSERT_GE(H5Sclose(dspmem), 0);
+  }
+
+  static void dataset_static_1d_string_fixed() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "string_fixed_1d_fixed",
+          "dataset": {
+            "type":"string",
+            "string_size": 71,
+            "size": ["unlimited"]
+          },
+          "values": ["the-scalar-string", "another-one"]
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
+    ASSERT_GE(ds, 0);
+    std::string item;
+    read_string(item, ds, {1});
+    ASSERT_EQ(item, "another-one");
+    ASSERT_GE(H5Dclose(ds), 0);
+  }
+
+  static void dataset_static_1d_string_variable() {
+    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+    H5Pset_fapl_core(fapl, 1024 * 1024, false);
+    auto h5file =
+        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
+    H5Pclose(fapl);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    rapidjson::Document nexus_structure;
+    nexus_structure.Parse(R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "string_fixed_1d_variable",
+          "dataset": {
+            "type":"string",
+            "size": [3]
+          },
+          "values": ["string-0", "string-1", "string-2"]
+        }
+      ]
+    })"");
+    ASSERT_EQ(nexus_structure.HasParseError(), false);
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = h5file;
+    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    herr_t err;
+    err = 0;
+    auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
+    ASSERT_GE(ds, 0);
+    std::string item;
+    read_string(item, ds, {2});
+    ASSERT_EQ(item, "string-2");
+    ASSERT_GE(H5Dclose(ds), 0);
   }
 };
 
@@ -1010,3 +1308,15 @@ TEST_F(T_CommandHandler, create_static_dataset) {
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
+
+TEST_F(T_CommandHandler, attribute_int_scalar) {
+  T_CommandHandler::attribute_int_scalar();
+}
+
+TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
+  T_CommandHandler::dataset_static_1d_string_fixed();
+}
+
+TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
+  T_CommandHandler::dataset_static_1d_string_variable();
+}

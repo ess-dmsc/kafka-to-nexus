@@ -15,6 +15,8 @@ using std::array;
 using std::vector;
 using std::string;
 
+template <typename T> hid_t nat_type();
+
 void swap(hsize_t &, hsize_t &);
 
 namespace h5p {

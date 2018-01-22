@@ -22,12 +22,12 @@ Master::Master(MainOpt &config) : config(config), command_listener(config) {
   if (buffer.back() != 0) {
     // likely an error
     buffer.back() = 0;
-    LOG(4, "Hostname got truncated: {}", buffer.data());
+    LOG(Sev::Info, "Hostname got truncated: {}", buffer.data());
   }
   std::string hostname(buffer.data());
   file_writer_process_id_ =
       fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
-  LOG(6, "file_writer_process_id: {}", file_writer_process_id());
+  LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
@@ -42,7 +42,7 @@ void Master::handle_command(rapidjson::Document const &cmd) {
 
 void Master::run() {
   if (config.do_kafka_status) {
-    LOG(3, "Publishing status to kafka://{}/{}",
+    LOG(Sev::Info, "Publishing status to kafka://{}/{}",
         config.kafka_status_uri.host_port, config.kafka_status_uri.topic);
     KafkaW::BrokerOpt bopt;
     bopt.address = config.kafka_status_uri.host_port;
@@ -57,10 +57,10 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-    LOG(7, "Master poll");
+    LOG(Sev::Debug, "Master poll");
     auto p = command_listener.poll();
     if (auto msg = p.is_Msg()) {
-      LOG(7, "Handle a command");
+      LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(std::move(msg));
     }
     if (config.do_kafka_status &&
@@ -70,11 +70,11 @@ void Master::run() {
       statistics();
     }
   }
-  LOG(6, "calling stop on all stream_masters");
+  LOG(Sev::Info, "calling stop on all stream_masters");
   for (auto &x : stream_masters) {
     x->stop();
   }
-  LOG(6, "called stop on all stream_masters");
+  LOG(Sev::Info, "called stop on all stream_masters");
 }
 
 void Master::statistics() {

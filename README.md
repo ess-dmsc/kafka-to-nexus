@@ -89,7 +89,7 @@ Command to start writing a file:
             "stream": {
               "topic": "topic.with.multiple.sources",
               "source": "for_example_motor",
-              "module": "f142",
+              "writer_module": "f142",
               "type": "float",
               "array_size": 4
             }
@@ -111,6 +111,44 @@ Command to start writing a file:
               "size": ["unlimited", 5, 6]
             },
             "values": [[[0, 1, 2, 3, 4, 5], [...], ...], [...], ...]
+          },
+          {
+            "type": "dataset",
+            "name": "string_scalar",
+            "dataset": {
+              "type": "string"
+            },
+            "values": "the-scalar-string"
+          },
+          {
+            "type": "dataset",
+            "name": "string_3d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited", 3, 2]
+            },
+            "values": [
+              [
+                ["string_0_0_0", "string_0_0_1"],
+                ["string_0_1_0", "string_0_1_1"],
+                ["string_0_2_0", "string_0_2_1"]
+              ],
+              [
+                ["string_1_0_0", "string_1_0_1"],
+                ["string_1_1_0", "string_1_1_1"],
+                ["string_1_2_0", "string_1_2_1"]
+              ]
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fixed_length_1d",
+            "dataset": {
+              "type":"string",
+              "string_size": 32,
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one"]
           }
         ]
       }
@@ -330,6 +368,10 @@ Start the `gtest` based test suite via:
 ```
 ./tests/tests
 ```
+
+## Manual Testing
+
+See [Manual Testing page](manual-testing/manual-testing.md).
 
 
 ## Performance

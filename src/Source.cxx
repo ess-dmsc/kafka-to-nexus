@@ -105,7 +105,7 @@ void Source::mpi_stop() {}
 ProcessMessageResult Source::process_message(Msg &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
-    LOG(5, "buffer not verified");
+    LOG(Sev::Error, "buffer not verified");
     return ProcessMessageResult::ERR();
   }
   if (!do_process_message) {

@@ -26,7 +26,7 @@ FileWriterTask::FileWriterTask() {
 }
 
 FileWriterTask::~FileWriterTask() {
-  LOG(6, "~FileWriterTask");
+  LOG(Sev::Debug, "~FileWriterTask");
 #if USE_PARALLEL_WRITER
   mpi_stop();
 #endif
@@ -60,7 +60,8 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
   auto x = hdf_file.init(hdf_filename, nexus_structure, config_file,
                          stream_hdf_info, groups);
   if (x) {
-    LOG(3, "can not initialize hdf file  filename: {}", hdf_filename);
+    LOG(Sev::Warning, "can not initialize hdf file  filename: {}",
+        hdf_filename);
     return x;
   }
   return 0;

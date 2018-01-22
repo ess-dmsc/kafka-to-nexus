@@ -54,10 +54,10 @@ void swap(DemuxTopic &x, DemuxTopic &y) {
 DemuxTopic::DT DemuxTopic::time_difference_from_message(Msg const &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
-    LOG(4, "ERROR unknown schema id?");
+    LOG(Sev::Error, "ERROR unknown schema id?");
     return DT::ERR();
   }
-  auto srcn = reader->sourcename(msg);
+  auto srcn = reader->source_name(msg);
   return DT(srcn, reader->timestamp(msg));
 }
 
@@ -65,19 +65,19 @@ std::string const &DemuxTopic::topic() const { return _topic; }
 
 ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
   if (msg.size() < 8) {
-    LOG(3, "error");
+    LOG(Sev::Error, "too small message");
     exit(1);
   }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
-    LOG(7, "no reader");
+    LOG(Sev::Debug, "no reader");
     return ProcessMessageResult::ERR();
   }
   auto srcn = reader->sourcename(msg);
-  LOG(9, "Msg is for sourcename: {}", srcn);
+  LOG(Sev::Debug, "Msg is for source_name: {}", srcn);
   if (reader->timestamp(msg) > _stop_time.count()) {
-    LOG(8, "reader->timestamp(msg) {} > _stop_time {}", reader->timestamp(msg),
-        _stop_time.count());
+    LOG(Sev::Debug, "reader->timestamp(msg) {} > _stop_time {}",
+        reader->timestamp(msg), _stop_time.count());
     return ProcessMessageResult::STOP();
   }
   try {

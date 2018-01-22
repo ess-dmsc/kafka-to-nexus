@@ -13,7 +13,7 @@
             "stream": {
               "topic": "AMOR.area.detector",
               "source": "AMOR.event.stream",
-	      "module": "ev42"
+              "writer_module": "ev42"
             }
           }
         ]

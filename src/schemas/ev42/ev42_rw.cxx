@@ -3,6 +3,7 @@
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "../../helper.h"
+#include "../../json.h"
 #include "schemas/ev42_events_generated.h"
 #include <limits>
 
@@ -28,7 +29,7 @@ static EventMessage const *get_fbuf(char const *data) {
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
   bool verify(Msg const &msg) const override;
-  std::string sourcename(Msg const &msg) const override;
+  std::string source_name(Msg const &msg) const override;
   uint64_t timestamp(Msg const &msg) const override;
 };
 
@@ -37,11 +38,11 @@ bool FlatbufferReader::verify(Msg const &msg) const {
   return VerifyEventMessageBuffer(veri);
 }
 
-std::string FlatbufferReader::sourcename(Msg const &msg) const {
+std::string FlatbufferReader::source_name(Msg const &msg) const {
   auto fbuf = get_fbuf(msg.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
-    LOG(4, "message has no source name");
+    LOG(Sev::Notice, "message has no source_name");
     return "";
   }
   return s1->str();
@@ -60,7 +61,10 @@ public:
   static FileWriter::HDFWriterModule::ptr create();
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
-  InitResult init_hdf(hid_t hdf_file, string hdf_parent_name,
+  InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                      rapidjson::Value const &config_stream,
+                      rapidjson::Value const *config_module,
+                      rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
   InitResult reopen(hid_t hdf_file, string hdf_parent_name, CollectiveQueue *cq,
                     HDFIDStore *hdf_store) override;
@@ -93,33 +97,38 @@ FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
 
 void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
                                    rapidjson::Value const *config_module) {
+  hsize_t chunk_n_elements = 1;
+
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v * 1024);
-    LOG(7, "index_every_bytes: {}", index_every_bytes);
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
   } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
     index_every_bytes = uint64_t(x.v * 1024 * 1024);
-    LOG(7, "index_every_bytes: {}", index_every_bytes);
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
-    LOG(3, "chunk_n_elements is no longer supported");
+    LOG(Sev::Error, "chunk_n_elements is no longer supported");
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_kb")) {
     chunk_bytes = (1 << 10) * x.v;
-    LOG(7, "chunk_bytes: {}", chunk_bytes);
+    LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.buffer.size_kb")) {
     buffer_size = (1 << 10) * x.v;
-    LOG(7, "buffer_size: {}", buffer_size);
+    LOG(Sev::Debug, "buffer_size: {}", buffer_size);
   }
   if (auto x = get_int(&config_stream, "nexus.buffer.packet_max_kb")) {
     buffer_packet_max = (1 << 10) * x.v;
-    LOG(7, "buffer_packet_max: {}", buffer_packet_max);
+    LOG(Sev::Debug, "buffer_packet_max: {}", buffer_packet_max);
   }
 }
 
 HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
-                                                      string hdf_parent_name,
-                                                      CollectiveQueue *cq) {
+                          string hdf_parent_name,
+                          rapidjson::Value const &config_stream,
+                          rapidjson::Value const *config_module,
+                          rapidjson::Value const *attributes,
+                          CollectiveQueue *cq) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
@@ -187,6 +196,9 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
     ds_cue_index.reset();
     ds_cue_timestamp_zero.reset();
   }
+  if (attributes) {
+    write_attributes(hid, attributes);
+  }
   H5Gclose(hid);
   return HDFWriterModule::InitResult::OK();
 }
@@ -208,7 +220,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),
                                                  fbuf->detector_id()->size());
   if (w1ret.ix0 != w2ret.ix0) {
-    LOG(3, "written data lengths differ");
+    LOG(Sev::Warning, "written data lengths differ");
   }
   auto pulse_time = fbuf->pulse_time();
   this->ds_event_time_zero->append_data_1d(&pulse_time, 1);

@@ -35,6 +35,8 @@ public:
            std::vector<hid_t> &groups);
   int close();
   int reopen(std::string filename, rapidjson::Value const &config_file);
+  int init(hid_t h5file, rapidjson::Value const &nexus_structure,
+           std::vector<StreamHDFInfo> &stream_hdf_info, std::vector<hid_t> &groups);
   void flush();
 #if USE_PARALLEL_WRITER
   void create_collective_queue(Jemalloc::sptr jm);
@@ -47,5 +49,8 @@ private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
 };
+
+void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv);
+void write_attributes_if_present(hid_t hdf_this, rapidjson::Value const *jsv);
 
 } // namespace FileWriter
