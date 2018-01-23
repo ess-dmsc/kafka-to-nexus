@@ -29,6 +29,49 @@ void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
   main_opt.config_file = merge(cfg, main_opt.config_file);
 }
 
+rapidjson::Document basic_command(string filename) {
+  rapidjson::Document cmd;
+  auto &a = cmd.GetAllocator();
+  cmd.Parse(R""({
+    "cmd": "FileWriter_new",
+    "nexus_structure": {
+      "children": []
+    },
+    "file_attributes": {
+    },
+    "job_id": "some_unique_id"
+  })"");
+  cmd.FindMember("file_attributes")
+      ->value.GetObject()
+      .AddMember("file_name", rapidjson::Value(filename.c_str(), a), a);
+  return cmd;
+}
+
+void command_add_static_dataset_1d(rapidjson::Document &cmd) {
+  auto &a = cmd.GetAllocator();
+  rapidjson::Document j(&a);
+  j.Parse(R""({
+    "type": "group",
+    "name": "some_group",
+    "attributes": {
+      "NX_class": "NXinstrument"
+    },
+    "children": [
+      {
+        "type": "dataset",
+        "name": "value",
+        "values": 42.24,
+        "attributes": {"units":"degree"}
+      }
+    ]
+  })"");
+  cmd.FindMember("nexus_structure")
+      ->value.GetObject()
+      .FindMember("children")
+      ->value.GetArray()
+      .PushBack(j, a);
+}
+
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -84,56 +127,9 @@ public:
       merge_config_into_main_opt(main_opt, jsontxt);
       main_opt.hdf_output_prefix = hdf_output_prefix;
     }
-    rapidjson::Document json_command;
-    {
-      using namespace rapidjson;
-      auto &j = json_command;
-      auto &a = j.GetAllocator();
-      j.SetObject();
-      Value nexus_structure;
-      nexus_structure.SetObject();
-
-      Value children;
-      children.SetArray();
-
-      {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", "some_group", a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        {
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "value",
-                  "values": 42.24,
-                  "attributes": {"units":"degree"}
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-        }
-        g1.AddMember("children", ch, a);
-        children.PushBack(g1, a);
-      }
-      nexus_structure.AddMember("children", children, a);
-      j.AddMember("nexus_structure", nexus_structure, a);
-      {
-        Value v;
-        v.SetObject();
-        v.AddMember("file_name", StringRef("tmp-file-with-hdf-prefix.h5"), a);
-        j.AddMember("file_attributes", v, a);
-      }
-      j.AddMember("cmd", StringRef("FileWriter_new"), a);
-      j.AddMember("job_id", StringRef("000000000dataset"), a);
-    }
+    rapidjson::Document json_command =
+        basic_command("tmp-file-with-hdf-prefix.h5");
+    command_add_static_dataset_1d(json_command);
 
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");
