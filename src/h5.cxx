@@ -176,106 +176,115 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   return ret;
 }
 
+h5d::ptr h5d::open_single(hid_t loc, string name, CollectiveQueue *cq,
+                          HDFIDStore *hdf_store) {
+  // Open in single-process mode
+  auto ret = ptr(new h5d);
+  auto &o = *ret;
+  herr_t err = 0;
+  o.name = name;
+  o.id = H5Dopen2(loc, name.c_str(), H5P_DEFAULT);
+  if (o.id < 0) {
+    LOG(Sev::Error, "H5Dopen2 failed");
+    ret.reset();
+    return ret;
+  }
+  o.type = H5Dget_type(o.id);
+  o.dsp_tgt = H5Dget_space(o.id);
+  o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
+  o.snow = {{0, 0}};
+  H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
+  if (log_level >= 9) {
+    for (size_t i1 = 0; i1 < o.ndims; ++i1) {
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+          o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
+    }
+  }
+  o.mem_max = {{100000000, 100000000}};
+  o.mem_now = {{0, 0}};
+  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
+  if (o.dsp_mem < 0) {
+    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
+  }
+  o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
+  err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
+  if (err < 0) {
+    LOG(Sev::Debug, "failed H5Pset_edc_check");
+  }
+  return ret;
+}
+
+#if USE_PARALLEL_WRITER
+h5d::ptr h5d::open_mpi(hid_t loc, string name, CollectiveQueue *cq,
+                       HDFIDStore *hdf_store) {
+  // Open in parallel mode
+  herr_t err = 0;
+  char buf[512];
+  {
+    auto bufn = H5Iget_name(loc, buf, 512);
+    buf[bufn] = '\0';
+  }
+  std::string full_path(buf);
+  full_path += "/";
+  full_path += name;
+  cq->push(*hdf_store, 0, CollectiveCommand::H5Dopen2(full_path.c_str()));
+  cq->execute_for(*hdf_store, 0);
+  auto ret = ptr(new h5d);
+  auto &o = *ret;
+  o.cq = cq;
+  o.hdf_store = hdf_store;
+  o.name = name;
+  o.id = hdf_store->datasetname_to_ds_id[full_path];
+  LOG(Sev::Chatty, "registered dataset name  rank: {}  id: {}  for path: {}",
+      hdf_store->mpi_rank, o.id, full_path);
+  o.type = H5Dget_type(o.id);
+  o.dsp_tgt = H5Dget_space(o.id);
+  o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
+  o.snow = {{0, 0}};
+  H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
+  if (log_level >= 9) {
+    for (size_t i1 = 0; i1 < o.ndims; ++i1) {
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+          o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
+    }
+  }
+  o.mem_max = {{100000000, 100000000}};
+  o.mem_now = {{0, 0}};
+  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
+  if (o.dsp_mem < 0) {
+    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
+  }
+  o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
+  err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
+  if (err < 0) {
+    LOG(Sev::Debug, "failed H5Pset_edc_check");
+  }
+  if (false) {
+    err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
+    if (err < 0) {
+      LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
+    }
+  }
+  return ret;
+}
+#endif
+
 h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
                    HDFIDStore *hdf_store) {
   if (cq) {
-    // Open in parallel mode
-    herr_t err = 0;
-    char buf[512];
-    {
-      auto bufn = H5Iget_name(loc, buf, 512);
-      buf[bufn] = '\0';
-    }
-    std::string full_path(buf);
-    full_path += "/";
-    full_path += name;
-    cq->push(*hdf_store, 0, CollectiveCommand::H5Dopen2(full_path.c_str()));
-    cq->execute_for(*hdf_store, 0);
-    auto ret = ptr(new h5d);
-    auto &o = *ret;
-    o.cq = cq;
-    o.hdf_store = hdf_store;
-    o.name = name;
-    o.id = hdf_store->datasetname_to_ds_id[full_path];
-    LOG(Sev::Chatty, "registered dataset name  rank: {}  id: {}  for path: {}",
-        hdf_store->mpi_rank, o.id, full_path);
-    o.type = H5Dget_type(o.id);
-    o.dsp_tgt = H5Dget_space(o.id);
-    o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
-    o.snow = {{0, 0}};
-    H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
-    if (log_level >= 9) {
-      for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-        LOG(Sev::Trace,
-            "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
-            o.type, i1, o.sext.at(i1), o.smax.at(i1));
-      }
-    }
-    o.mem_max = {{100000000, 100000000}};
-    o.mem_now = {{0, 0}};
-    o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
-    if (o.dsp_mem < 0) {
-      LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
-    }
-    o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
-    err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_edc_check");
-    }
 #if USE_PARALLEL_WRITER
-    if (false) {
-      err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
-      if (err < 0) {
-        LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
-      }
+    return open_mpi(loc, name, cq, hdf_store);
+#else
+    if (cq) {
+      LOG(Sev::Critical,
+          "Found cq != nullptr even though not compiled for parallel");
+      exit(1);
     }
 #endif
-    return ret;
   } else {
-    // Open in single-process mode
-    auto ret = ptr(new h5d);
-    auto &o = *ret;
-    herr_t err = 0;
-    o.name = name;
-    o.id = H5Dopen2(loc, name.c_str(), H5P_DEFAULT);
-    if (o.id < 0) {
-      LOG(Sev::Error, "H5Dopen2 failed");
-      ret.reset();
-      return ret;
-    }
-    o.type = H5Dget_type(o.id);
-    o.dsp_tgt = H5Dget_space(o.id);
-    o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
-    o.snow = {{0, 0}};
-    H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
-    if (log_level >= 9) {
-      for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-        LOG(Sev::Trace,
-            "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
-            o.type, i1, o.sext.at(i1), o.smax.at(i1));
-      }
-    }
-    o.mem_max = {{100000000, 100000000}};
-    o.mem_now = {{0, 0}};
-    o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
-    if (o.dsp_mem < 0) {
-      LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
-    }
-    o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
-    err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_edc_check");
-    }
-#if USE_PARALLEL_WRITER
-    if (false) {
-      err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
-      if (err < 0) {
-        LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
-      }
-    }
-#endif
-    return ret;
+    return open_single(loc, name, cq, hdf_store);
   }
+  return {};
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
