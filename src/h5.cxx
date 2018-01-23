@@ -455,10 +455,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       BLOCK -= snow_1_ln2;
     }
     uint32_t const MAX = BLOCK + 8;
-    std::array<hsize_t, 2> sext2;
+    AT sext2;
+    sext2 = sext;
     sext2[0] = sext[0];
     sext2[1] = sext[1];
-    sext2[0] = (1 + (((snext + nlen) * 4 / 3) >> BLOCK)) << BLOCK;
+    sext2[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
     if (sext2[0] - sext[0] > (1 << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
