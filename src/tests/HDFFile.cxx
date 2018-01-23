@@ -36,7 +36,6 @@ TEST(HDFFile, create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    using namespace FileWriter;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(Sev::Debug, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
@@ -177,10 +176,6 @@ public:
   }
 
   static void create_static_dataset() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     {
       rapidjson::Document cfg;
@@ -368,7 +363,7 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    Msg msg;
+    FileWriter::Msg msg;
     msg.data = (char *)cmd.data();
     msg.size = cmd.size();
     ch.handle(msg);
@@ -460,10 +455,6 @@ public:
   }
 
   static void data_ev42() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     bool do_verification = true;
 
@@ -637,7 +628,7 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      Msg msg;
+      FileWriter::Msg msg;
       msg.data = (char *)cmd.data();
       msg.size = cmd.size();
       ch.handle(msg);
@@ -856,10 +847,6 @@ public:
   };
 
   static void data_f142() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     bool do_verification = true;
 
@@ -1066,7 +1053,7 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      Msg msg;
+      FileWriter::Msg msg;
       msg.data = (char *)cmd.data();
       msg.size = cmd.size();
       ch.handle(msg);
