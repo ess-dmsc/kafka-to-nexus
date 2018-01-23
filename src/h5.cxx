@@ -366,12 +366,6 @@ void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
 
 template <typename T>
 append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
-  size_t const NDIM = 1;
-  if (NDIM != ndims) {
-    LOG(Sev::Critical, "NDIM != ndims;  {} != {}", NDIM, ndims);
-    return {AppendResult::ERROR};
-  }
-
   using namespace std::chrono;
   using CLK = steady_clock;
   using MS = milliseconds;
