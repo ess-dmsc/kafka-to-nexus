@@ -430,7 +430,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     LOG(Sev::Debug, "CAS allocate...");
     while (true) {
       snext = cq->snow[CQSNOWIX].load();
-      if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen)) {
+      if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen_0)) {
         break;
       }
     }
