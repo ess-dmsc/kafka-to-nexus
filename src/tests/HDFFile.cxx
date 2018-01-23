@@ -543,7 +543,8 @@ public:
         "feed_msgs_seconds": 30,
         "filename": "tmp-ev42.h5",
         "hdf": {
-          "do_verification": 1
+          "do_verification": 1,
+          "do_recreate": 0
         }
       },
       "shm": {
@@ -960,7 +961,11 @@ public:
     LOG(Sev::Debug, "data_ev42 verification done");
     ASSERT_GE(err, 0);
     ASSERT_EQ(H5Iis_valid(fid), 0);
-    ASSERT_EQ(recreate_file(&json_command), 0);
+    if (auto x = get_int(&main_opt.config_file, "unit_test.hdf.do_recreate")) {
+      if (x.v == 1) {
+        ASSERT_EQ(recreate_file(&json_command), 0);
+      }
+    }
   }
 
   /// Can supply pre-generated test data for a source on a topic to profile
