@@ -369,11 +369,7 @@ public:
 
   static void write_attributes_at_top_level_of_the_file() {
     MainOpt &main_opt = *g_main_opt.load();
-    {
-      rapidjson::Document cfg;
-      cfg.Parse(R""({})"");
-      main_opt.config_file = merge(cfg, main_opt.config_file);
-    }
+    merge_config_into_main_opt(main_opt, R""({})"");
     rapidjson::Document json_command;
     json_command.Parse(R""({
       "cmd": "FileWriter_new",
