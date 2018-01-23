@@ -156,16 +156,6 @@ public:
     auto fid = H5Fopen((hdf_output_prefix + "/" + fname.v).c_str(),
                        H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
-    auto g1 = H5Gopen2(fid, "some_group", H5P_DEFAULT);
-    ASSERT_GE(g1, 0);
-    auto ds = H5Dopen2(g1, "value", H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
-    ASSERT_GT(H5Tequal(H5Dget_type(ds), H5T_NATIVE_DOUBLE), 0);
-    auto attr = H5Aopen(ds, "units", H5P_DEFAULT);
-    ASSERT_GE(attr, 0);
-    H5Aclose(attr);
-    H5Dclose(ds);
-    H5Gclose(g1);
     H5Fclose(fid);
   }
 
