@@ -366,11 +366,17 @@ void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
 
 template <typename T>
 append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
+  size_t const NDIM = 1;
+  if (NDIM != ndims) {
+    LOG(Sev::Critical, "NDIM != ndims;  {} != {}", NDIM, ndims);
+    return {AppendResult::ERROR};
+  }
+
   using namespace std::chrono;
   using CLK = steady_clock;
   using MS = milliseconds;
   auto t1 = CLK::now();
-  LOG(Sev::Trace, "append_data_1d");
+  LOG(Sev::Trace, "append_data_{}d", NDIM);
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -379,7 +385,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           n1);
     }
   }
-  using A1 = array<hsize_t, 1>;
+  using AT = array<hsize_t, NDIM>;
   herr_t err;
 
   char ds_name[512];
@@ -398,27 +404,19 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (cq) {
     lookup_cqsnowix(ds_name, CQSNOWIX);
     dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
-    // Not necessary, just for testing:
-    if (false) {
-      LOG(Sev::Debug, "try to get the dsp dims:");
-      err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-      if (err < 0) {
-        LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
-      }
-    }
   } else {
-    LOG(Sev::Debug, "Do not look up cqsnowix");
+    LOG(Sev::Trace, "Do not look up cqsnowix");
   }
 
-  if (false) {
+  if (false && log_level >= 9) {
     // Just for debugging
-    A1 snow;
-    A1 smax;
-    H5Sget_simple_extent_dims(dsp_tgt, snow.data(), smax.data());
-    if (log_level >= 9) {
-      for (size_t i1 = 0; i1 < snow.size(); ++i1) {
-        LOG(Sev::Debug, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
-      }
+    AT snow, smax;
+    err = H5Sget_simple_extent_dims(dsp_tgt, snow.data(), smax.data());
+    if (err < 0) {
+      LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
+    }
+    for (size_t i1 = 0; i1 < NDIM; ++i1) {
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
     }
   }
 
@@ -491,22 +489,23 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
 
   if (log_level >= 9) {
-    A1 sext, smax;
+    AT sext, smax;
     LOG(Sev::Trace, "try to get the dsp dims:");
     err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     if (err < 0) {
       LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       exit(1);
     }
-    for (size_t i1 = 0; i1 < ndims; ++i1) {
+    for (size_t i1 = 0; i1 < NDIM; ++i1) {
       LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
           name, type, i1, sext.at(i1), smax.at(i1));
     }
   }
 
   {
-    A1 start{{0}};
-    A1 count{{nlen}};
+    AT start, count;
+    start[0] = 0;
+    count[0] = nlen;
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
@@ -515,10 +514,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
   }
 
-  A1 tgt_start{{snext}};
-  A1 tgt_count{{nlen}};
+  AT tgt_start, tgt_count;
+  tgt_start[0] = snext;
+  tgt_count[0] = nlen;
   if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < ndims; ++i1) {
+    for (size_t i1 = 0; i1 < NDIM; ++i1) {
       LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1,
           tgt_start[0], tgt_count[0]);
     }
@@ -536,17 +536,16 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid,
           ds_name);
     } else {
-      LOG(Sev::Error, "write failed:");
+      LOG(Sev::Error, "write failed  ds_name: {}", ds_name);
     }
     if (log_level >= 7) {
-      std::array<hsize_t, 4> sext;
-      std::array<hsize_t, 4> smax;
+      AT sext, smax;
       hid_t dsp = H5Dget_space(id);
       err = H5Sget_simple_extent_dims(dsp, sext.data(), smax.data());
       if (err < 0) {
         LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       }
-      for (size_t i1 = 0; i1 < 1; ++i1) {
+      for (size_t i1 = 0; i1 < sext.size(); ++i1) {
         LOG(Sev::Debug, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1,
             sext.at(i1), smax.at(i1));
       }
