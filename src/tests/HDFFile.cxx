@@ -389,10 +389,7 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    FileWriter::Msg msg;
-    msg.data = (char *)cmd.data();
-    msg.size = cmd.size();
-    ch.handle(msg);
+    ch.handle({(char*)cmd.data(), cmd.size()});
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     {
       string cmd(R""({
