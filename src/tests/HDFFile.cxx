@@ -66,10 +66,6 @@ public:
   }
 
   static void create_static_file_with_hdf_output_prefix() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     std::string hdf_output_prefix = "tmp-relative-output";
 #ifdef _MSC_VER
@@ -140,7 +136,7 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    Msg msg;
+    FileWriter::Msg msg;
     msg.data = (char *)cmd.data();
     msg.size = cmd.size();
     ch.handle(msg);
