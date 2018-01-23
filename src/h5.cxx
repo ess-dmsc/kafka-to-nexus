@@ -437,7 +437,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     LOG(Sev::Debug, "CAS allocated: {}", snext);
   }
 
-  if (snext + nlen > sext[0]) {
+  if (snext + nlen_0 > sext[0]) {
     auto t1 = CLK::now();
     // TODO
     // Make these configurable, and the default much smaller than it is right
