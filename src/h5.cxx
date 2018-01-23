@@ -442,7 +442,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     // TODO
     // Make these configurable, and the default much smaller than it is right
     // now.
-    uint32_t const BLOCK = 22;
+    uint32_t BLOCK = 22;
+    if (ndims == 2) {
+      size_t snow_1_ln2 = -1;
+      for (size_t x = snow[1]; x != 0; x = x >> 1) {
+        snow_1_ln2 += 1;
+      }
+      if (snow_1_ln2 >= BLOCK) {
+        LOG(Sev::Error, "snow_1_ln2 >= BLOCK; {} >= {}", snow_1_ln2, BLOCK);
+        snow_1_ln2 = BLOCK - 1;
+      }
+      BLOCK -= snow_1_ln2;
+    }
     uint32_t const MAX = BLOCK + 8;
     std::array<hsize_t, 2> sext2;
     sext2[0] = sext[0];
