@@ -432,6 +432,13 @@ public:
       ASSERT_EQ(FileWriter::h5_version_string_linked(), buf.data());
       H5Aclose(attr);
     }
+    {
+      auto attr = H5Aopen(fid, "file_time", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
+      H5Aclose(attr);
+    }
     H5Fclose(fid);
   }
 
