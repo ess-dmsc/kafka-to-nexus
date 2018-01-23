@@ -33,7 +33,9 @@ FileWriterTask::~FileWriterTask() {
   _demuxers.clear();
 }
 
-FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_filename) {
+FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_output_prefix,
+                                                 std::string hdf_filename) {
+  this->hdf_output_prefix = hdf_output_prefix;
   this->hdf_filename = hdf_filename;
   return *this;
 }
@@ -57,11 +59,16 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              rapidjson::Value const &config_file,
                              std::vector<StreamHDFInfo> &stream_hdf_info,
                              std::vector<hid_t> &groups) {
-  auto x = hdf_file.init(hdf_filename, nexus_structure, config_file,
+  std::string filename = hdf_filename;
+  if (!hdf_output_prefix.empty()) {
+    filename = hdf_output_prefix + "/" + filename;
+  }
+  auto x = hdf_file.init(filename, nexus_structure, config_file,
                          stream_hdf_info, groups);
   if (x) {
-    LOG(Sev::Warning, "can not initialize hdf file  filename: {}",
-        hdf_filename);
+    LOG(Sev::Warning,
+        "can not initialize hdf file  hdf_output_prefix: {}  filename: {}",
+        hdf_output_prefix, hdf_filename);
     return x;
   }
   return 0;

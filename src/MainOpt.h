@@ -46,6 +46,9 @@ struct MainOpt {
   int parse_config_json(std::string json);
   /// Kafka broker and topic where file writer commands are published.
   uri::URI command_broker_uri{"kafka://localhost:9092/kafka-to-nexus.command"};
+  /// Path for HDF output. This gets prepended to the HDF output filename given
+  /// in the write commands.
+  std::string hdf_output_prefix;
 
   /// Whether we want to publish status to Kafka
   bool do_kafka_status = false;

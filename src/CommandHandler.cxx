@@ -102,7 +102,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   }
 
   auto fname = find_filename(d);
-  fwt->set_hdf_filename(fname);
+  fwt->set_hdf_filename(config.hdf_output_prefix, fname);
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.

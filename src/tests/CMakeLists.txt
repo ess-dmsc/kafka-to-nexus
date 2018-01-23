@@ -13,6 +13,7 @@ status_test.cxx
 status_writer.cxx
 command_handler.cxx
 stream_master.cxx
+MainOpt_tests.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})

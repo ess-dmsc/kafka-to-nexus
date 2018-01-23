@@ -24,6 +24,64 @@ using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
 
+void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
+  rapidjson::Document cfg;
+  cfg.Parse(jsontxt.c_str());
+  main_opt.config_file = merge(cfg, main_opt.config_file);
+}
+
+rapidjson::Document basic_command(string filename) {
+  rapidjson::Document cmd;
+  auto &a = cmd.GetAllocator();
+  cmd.Parse(R""({
+    "cmd": "FileWriter_new",
+    "nexus_structure": {
+      "children": []
+    },
+    "file_attributes": {
+    },
+    "job_id": "some_unique_id"
+  })"");
+  cmd.FindMember("file_attributes")
+      ->value.GetObject()
+      .AddMember("file_name", rapidjson::Value(filename.c_str(), a), a);
+  return cmd;
+}
+
+void command_add_static_dataset_1d(rapidjson::Document &cmd) {
+  auto &a = cmd.GetAllocator();
+  rapidjson::Document j(&a);
+  j.Parse(R""({
+    "type": "group",
+    "name": "some_group",
+    "attributes": {
+      "NX_class": "NXinstrument"
+    },
+    "children": [
+      {
+        "type": "dataset",
+        "name": "value",
+        "values": 42.24,
+        "attributes": {"units":"degree"}
+      }
+    ]
+  })"");
+  cmd.FindMember("nexus_structure")
+      ->value.GetObject()
+      .FindMember("children")
+      ->value.GetArray()
+      .PushBack(j, a);
+}
+
+void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
+  string cmd = fmt::format(R""({{
+    "recv_type": "FileWriter",
+    "cmd": "file_writer_tasks_clear_all",
+    "job_id": "{}"
+  }})"", job_cmd.FindMember("job_id")->value.GetString());
+  ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+}
+
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -39,7 +97,6 @@ TEST(HDFFile, create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    using namespace FileWriter;
     auto cmd = gulp("tests/msg-cmd-new-03.json");
     LOG(Sev::Debug, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
@@ -48,7 +105,7 @@ public:
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(Msg::owned(cmd.data(), cmd.size()));
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -69,17 +126,44 @@ public:
     return event_index[i2] == cue_index;
   }
 
-  static void create_static_dataset() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
+  static void create_static_file_with_hdf_output_prefix() {
     MainOpt &main_opt = *g_main_opt.load();
+    std::string hdf_output_prefix = "tmp-relative-output";
+#ifdef _MSC_VER
+#else
+    mkdir(hdf_output_prefix.c_str(), 0777);
+#endif
     {
-      rapidjson::Document cfg;
-      cfg.Parse(R""({})"");
-      main_opt.config_file = merge(cfg, main_opt.config_file);
+      std::string jsontxt =
+          fmt::format(R""({{"hdf-output-prefix": "{}"}})"", hdf_output_prefix);
+      merge_config_into_main_opt(main_opt, jsontxt);
+      main_opt.hdf_output_prefix = hdf_output_prefix;
     }
+    rapidjson::Document json_command =
+        basic_command("tmp-file-with-hdf-prefix.h5");
+    command_add_static_dataset_1d(json_command);
+
+    auto cmd = json_to_string(json_command);
+    auto fname = get_string(&json_command, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
+
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    send_stop(ch, json_command);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    main_opt.hdf_output_prefix = "";
+
+    // Verification
+    auto fid = H5Fopen((hdf_output_prefix + "/" + fname.v).c_str(),
+                       H5F_ACC_RDONLY, H5P_DEFAULT);
+    ASSERT_GE(fid, 0);
+    H5Fclose(fid);
+  }
+
+  static void create_static_dataset() {
+    MainOpt &main_opt = *g_main_opt.load();
+    merge_config_into_main_opt(main_opt, R""({})"");
     rapidjson::Document json_command;
     {
       using namespace rapidjson;
@@ -261,15 +345,10 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    auto msg = Msg::owned(cmd.data(), cmd.size());
-    ch.handle(msg);
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
-    {
-      string cmd("{\"recv_type\":\"FileWriter\", "
-                 "\"cmd\":\"file_writer_tasks_clear_all\", "
-                 "\"job_id\":\"000000000dataset\" }");
-      ch.handle(Msg::owned(cmd.data(), cmd.size()));
-    }
+    send_stop(ch, json_command);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
 
     // Verification
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
@@ -362,55 +441,43 @@ public:
   }
 
   static void data_ev42() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
-    {
-      rapidjson::Document cfg;
-      auto &a = cfg.GetAllocator();
-      cfg.Parse(R""(
-      {
-        "nexus": {
-          "indices": {
-            "index_every_kb": 1
-          },
-          "chunk": {
-            "chunk_kb": 1024
-          },
-          "buffer": {
-            "size_kb": 512,
-            "packet_max_kb": 128
-          }
+    merge_config_into_main_opt(main_opt, R""({
+      "nexus": {
+        "indices": {
+          "index_every_kb": 1
         },
-        "unit_test": {
-          "n_events_per_message": 16,
-          "n_msgs_per_source": 32,
-          "n_sources": 1,
-          "n_msgs_per_batch": 1,
-          "n_mpi_workers": 1,
-          "feed_msgs_seconds": 30,
-          "filename": "tmp-ev42.h5",
-          "hdf": {
-            "do_verification": 1
-          }
+        "chunk": {
+          "chunk_kb": 1024
         },
-        "shm": {
-          "fname": "tmp-mmap"
-        },
-        "mpi": {
-          "path_bin": "."
+        "buffer": {
+          "size_kb": 512,
+          "packet_max_kb": 128
         }
-      })"");
-      rapidjson::Value v2;
-      v2.SetUint64(uint64_t(2) * 1024 * 1024 * 1024);
-      cfg["shm"].AddMember("size", std::move(v2), a);
-      main_opt.config_file = merge(cfg, main_opt.config_file);
-    }
+      },
+      "unit_test": {
+        "n_events_per_message": 16,
+        "n_msgs_per_source": 32,
+        "n_sources": 1,
+        "n_msgs_per_batch": 1,
+        "n_mpi_workers": 1,
+        "feed_msgs_seconds": 30,
+        "filename": "tmp-ev42.h5",
+        "hdf": {
+          "do_verification": 1
+        }
+      },
+      "shm": {
+        "fname": "tmp-mmap"
+      },
+      "mpi": {
+        "path_bin": "."
+      },
+      "shm": 2100100100
+    })"");
 
     // TODO
     // This must go somewhere else...
@@ -609,8 +676,7 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      auto msg = Msg::owned((char const *)cmd.data(), cmd.size());
-      ch.handle(msg);
+      ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
       auto &fwt = ch.file_writer_tasks.at(0);
@@ -642,7 +708,7 @@ public:
               do_run = false;
             }
             auto res =
-                fwt->demuxers().at(0).process_message(Msg::cheap(msg, jm));
+                fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg, jm));
             if (res.is_ERR()) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
@@ -672,11 +738,8 @@ public:
       LOG(Sev::Debug, "processing done in {} ms",
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
-      {
-        string cmd("{\"recv_type\":\"FileWriter\", "
-                   "\"cmd\":\"file_writer_tasks_clear_all\"}");
-        ch.handle(Msg::owned((char const *)cmd.data(), cmd.size()));
-      }
+      send_stop(ch, json_command);
+      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -863,32 +926,23 @@ public:
   };
 
   static void data_f142() {
-    using namespace FileWriter;
-    using std::array;
-    using std::vector;
-    using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
-    {
-      rapidjson::Document cfg;
-      cfg.Parse(R""(
-      {
-        "nexus": {
-          "chunk": {
-            "chunk_kb": 1024
-          }
-        },
-        "unit_test": {
-          "n_events_per_message": 32,
-          "n_msgs_per_source": 128,
-          "n_sources": 1,
-          "n_msgs_per_batch": 1
+    merge_config_into_main_opt(main_opt, R""({
+      "nexus": {
+        "chunk": {
+          "chunk_kb": 1024
         }
-      })"");
-      main_opt.config_file = merge(cfg, main_opt.config_file);
-    }
+      },
+      "unit_test": {
+        "n_events_per_message": 32,
+        "n_msgs_per_source": 128,
+        "n_sources": 1,
+        "n_msgs_per_batch": 1
+      }
+    })"");
 
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
@@ -1078,8 +1132,7 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      auto msg = Msg::owned((char const *)cmd.data(), cmd.size());
-      ch.handle(msg);
+      ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
       auto &fwt = ch.file_writer_tasks.at(0);
@@ -1097,7 +1150,7 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(Msg::cheap(msg, main_opt.jm));
+            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg, main_opt.jm));
             source.n_fed++;
           }
         }
@@ -1106,11 +1159,8 @@ public:
       LOG(Sev::Debug, "processing done in {} ms",
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
-      {
-        string cmd("{\"recv_type\":\"FileWriter\", "
-                   "\"cmd\":\"file_writer_tasks_clear_all\"}");
-        ch.handle(Msg::owned((char const *)cmd.data(), cmd.size()));
-      }
+      send_stop(ch, json_command);
+      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -1303,6 +1353,10 @@ public:
 };
 
 TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
+
+TEST_F(T_CommandHandler, create_static_file_with_hdf_output_prefix) {
+  T_CommandHandler::create_static_file_with_hdf_output_prefix();
+}
 
 TEST_F(T_CommandHandler, create_static_dataset) {
   T_CommandHandler::create_static_dataset();

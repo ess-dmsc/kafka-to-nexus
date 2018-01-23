@@ -40,7 +40,8 @@ Available options include:
   "status-master-interval": 2000,
   "commands": [
     "a list of commands as discussed below."
-  ]
+  ],
+  "hdf-output-prefix": "./absolute/or/relative/path/to/hdf/output/directory",
 }
 ```
 
