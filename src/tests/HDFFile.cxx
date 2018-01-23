@@ -23,6 +23,12 @@ using std::chrono::steady_clock;
 using std::chrono::milliseconds;
 using std::chrono::duration_cast;
 
+void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
+  rapidjson::Document cfg;
+  cfg.Parse(jsontxt.c_str());
+  main_opt.config_file = merge(cfg, main_opt.config_file);
+}
+
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -75,9 +81,7 @@ public:
     {
       std::string jsontxt =
           fmt::format(R""({{"hdf-output-prefix": "{}"}})"", hdf_output_prefix);
-      rapidjson::Document cfg;
-      cfg.Parse(jsontxt.c_str());
-      main_opt.config_file = merge(cfg, main_opt.config_file);
+      merge_config_into_main_opt(main_opt, jsontxt);
       main_opt.hdf_output_prefix = hdf_output_prefix;
     }
     rapidjson::Document json_command;
@@ -168,11 +172,7 @@ public:
 
   static void create_static_dataset() {
     MainOpt &main_opt = *g_main_opt.load();
-    {
-      rapidjson::Document cfg;
-      cfg.Parse(R""({})"");
-      main_opt.config_file = merge(cfg, main_opt.config_file);
-    }
+    merge_config_into_main_opt(main_opt, R""({})"");
     rapidjson::Document json_command;
     {
       using namespace rapidjson;
@@ -450,27 +450,22 @@ public:
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
-    {
-      rapidjson::Document cfg;
-      cfg.Parse(R""(
-      {
-        "nexus": {
-          "indices": {
-            "index_every_kb": 1
-          },
-          "chunk": {
-            "chunk_n_elements": 64
-          }
+    merge_config_into_main_opt(main_opt, R""({
+      "nexus": {
+        "indices": {
+          "index_every_kb": 1
         },
-        "unit_test": {
-          "n_events_per_message": 32,
-          "n_msgs_per_source": 128,
-          "n_sources": 8,
-          "n_msgs_per_batch": 1
+        "chunk": {
+          "chunk_n_elements": 64
         }
-      })"");
-      main_opt.config_file = merge(cfg, main_opt.config_file);
-    }
+      },
+      "unit_test": {
+        "n_events_per_message": 32,
+        "n_msgs_per_source": 128,
+        "n_sources": 8,
+        "n_msgs_per_batch": 1
+      }
+    })"");
 
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
@@ -842,24 +837,19 @@ public:
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
-    {
-      rapidjson::Document cfg;
-      cfg.Parse(R""(
-      {
-        "nexus": {
-          "chunk": {
-            "chunk_n_elements": 64
-          }
-        },
-        "unit_test": {
-          "n_events_per_message": 32,
-          "n_msgs_per_source": 128,
-          "n_sources": 1,
-          "n_msgs_per_batch": 1
+    merge_config_into_main_opt(main_opt, R""({
+      "nexus": {
+        "chunk": {
+          "chunk_n_elements": 64
         }
-      })"");
-      main_opt.config_file = merge(cfg, main_opt.config_file);
-    }
+      },
+      "unit_test": {
+        "n_events_per_message": 32,
+        "n_msgs_per_source": 128,
+        "n_sources": 1,
+        "n_msgs_per_batch": 1
+      }
+    })"");
 
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
