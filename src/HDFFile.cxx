@@ -107,30 +107,6 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
   }
 }
 
-template <typename T>
-static void write_hdf_iso8601(hid_t loc, const std::string &name, T &ts) {
-  using namespace date;
-  using namespace std::chrono;
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2);
-}
-
-static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
-  using namespace date;
-  using namespace std::chrono;
-  const time_zone *current_time_zone;
-  try {
-    current_time_zone = current_zone();
-  } catch (std::runtime_error &) {
-    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
-                      "timestamp in HDF file")
-    return;
-  }
-  auto now =
-      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
-  write_hdf_iso8601(location, name, now);
-}
-
 static void write_attribute_str(hid_t loc, std::string name,
                                 char const *value) {
   herr_t err;
@@ -234,28 +210,37 @@ static void write_attribute(hid_t loc, std::string name, T value) {
   }
 }
 
-struct SE {
-  string name;
-  rapidjson::Value const *jsv;
-  hid_t nxparent;
-  hid_t nxv;
-  hid_t gid;
-  rapidjson::Value::ConstMemberIterator itr;
-  bool basics;
-  string nx_type{"group"};
-  SE(string name, rapidjson::Value const *jsv, hid_t nxparent)
-      : name(std::move(name)), jsv(jsv), nxparent(nxparent), nxv(-1), gid(-1),
-        itr(jsv->MemberEnd()), basics(false) {
-    if (jsv->IsObject()) {
-      itr = jsv->MemberBegin();
-    }
+template <typename T>
+static void write_hdf_ds_iso8601(hid_t loc, const std::string &name, T &ts) {
+  using namespace date;
+  using namespace std::chrono;
+  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
+  write_hdf_ds_scalar_string(loc, name, s2);
+}
+
+template <typename T>
+static void write_hdf_attribute_iso8601(hid_t loc, std::string name, T &ts) {
+  using namespace date;
+  using namespace std::chrono;
+  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
+  write_attribute_str(loc, name, s2.data());
+}
+
+static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
+  using namespace date;
+  using namespace std::chrono;
+  const time_zone *current_time_zone;
+  try {
+    current_time_zone = current_zone();
+  } catch (std::runtime_error &) {
+    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
+                      "timestamp in HDF file")
+    return;
   }
-  ~SE() {
-    if (gid != -1) {
-      H5Gclose(gid);
-    }
-  }
-};
+  auto now =
+      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
+  write_hdf_attribute_iso8601(location, name, now);
+}
 
 void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
   if (jsv->IsObject()) {
@@ -880,6 +865,43 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 }
 
+/// Human readable version of the HDF5 headers that we compile against.
+static std::string h5_version_string_headers_compile_time() {
+  return fmt::format("{}.{}.{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
+}
+
+/// Human readable version of the HDF5 libraries that we run with.
+std::string h5_version_string_linked() {
+  unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
+  H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
+  return fmt::format("{}.{}.{}", h5_vers_major, h5_vers_minor, h5_vers_release);
+}
+
+/// Compare the version of the HDF5 headers which the kafka-to-nexus was
+/// compiled with against the version of the HDF5 libraries that the
+/// kafka-to-nexus is linked against at runtime. Currently, a mismatch in the
+/// release number is logged but does not cause panic.
+static void check_hdf_version() {
+  unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
+  H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
+  if (h5_vers_major != H5_VERS_MAJOR) {
+    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+        h5_version_string_headers_compile_time(), h5_version_string_linked());
+    exit(1);
+  }
+  if (h5_vers_minor != H5_VERS_MINOR) {
+    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+        h5_version_string_headers_compile_time(), h5_version_string_linked());
+    exit(1);
+  }
+  if (h5_vers_release != H5_VERS_RELEASE) {
+    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+        h5_version_string_headers_compile_time(), h5_version_string_linked());
+  }
+}
+
+extern "C" char const GIT_COMMIT[];
+
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
   using std::string;
@@ -895,12 +917,14 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
     return -1;
   } else {
     this->h5file = h5file;
-    return init(h5file, nexus_structure, stream_hdf_info);
+    return init(h5file, filename, nexus_structure, stream_hdf_info);
   }
 }
 
-int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
+int HDFFile::init(hid_t h5file, std::string filename,
+                  rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info) {
+  check_hdf_version();
   int ret = -1;
   herr_t err;
   hid_t lcpl = H5Pcreate(H5P_LINK_CREATE);
@@ -948,7 +972,15 @@ int HDFFile::init(hid_t h5file, rapidjson::Value const &nexus_structure,
                       }
                     }
                   }
+                  write_attribute_str(h5file, "HDF5_Version",
+                                      h5_version_string_linked().data());
+                  write_attribute_str(h5file, "file_name", filename.data());
+                  write_attribute_str(
+                      h5file, "creator",
+                      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT).data());
                   write_hdf_iso8601_now(h5file, "file_time");
+                  write_attributes_if_present(h5file, &nexus_structure);
+
                   ret = 0;
                   err = H5Sclose(dsp_sc);
                   if (err < 0) {

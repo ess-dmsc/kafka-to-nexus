@@ -89,7 +89,7 @@ TEST(HDFFile, create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
-  f1.init("tmp-test.h5", rapidjson::Value(), stream_hdf_info);
+  f1.init("tmp-test.h5", rapidjson::Value().SetObject(), stream_hdf_info);
 }
 
 class T_CommandHandler : public testing::Test {
@@ -364,6 +364,81 @@ public:
     H5Aclose(attr);
     H5Dclose(ds);
     H5Gclose(g1);
+    H5Fclose(fid);
+  }
+
+  static void write_attributes_at_top_level_of_the_file() {
+    MainOpt &main_opt = *g_main_opt.load();
+    merge_config_into_main_opt(main_opt, R""({})"");
+    rapidjson::Document json_command;
+    json_command.Parse(R""({
+      "cmd": "FileWriter_new",
+      "nexus_structure": {
+        "attributes": {
+          "some_top_level_int": 42,
+          "some_top_level_string": "Hello Attribute"
+        }
+      },
+      "file_attributes": {
+        "file_name": "tmp_write_top_level_attributes.h5"
+      },
+      "job_id": "832yhtwgfskdf"
+    })"");
+    auto cmd = json_to_string(json_command);
+    auto fname = get_string(&json_command, "file_attributes.file_name");
+    ASSERT_GT(fname.v.size(), 8);
+
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    ch.handle({(char*)cmd.data(), cmd.size()});
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    send_stop(ch, json_command);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+
+    // Verification
+    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
+    ASSERT_GE(fid, 0);
+    {
+      auto attr = H5Aopen(fid, "some_top_level_int", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_INTEGER);
+      uint32_t v = 0;
+      H5Aread(attr, H5T_NATIVE_INT32, &v);
+      ASSERT_EQ(v, 42);
+      H5Aclose(attr);
+    }
+    {
+      auto attr = H5Aopen(fid, "some_top_level_string", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
+      std::vector<char> buf;
+      buf.resize(128);
+      H5Aread(attr, dtype, buf.data());
+      buf[buf.size() - 1] = 0;
+      ASSERT_EQ(string("Hello Attribute"), buf.data());
+      H5Aclose(attr);
+    }
+    {
+      auto attr = H5Aopen(fid, "HDF5_Version", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
+      auto dtype_mem = H5Tget_native_type(dtype, H5T_DIR_ASCEND);
+      std::vector<char> buf;
+      buf.resize(128);
+      H5Aread(attr, dtype_mem, buf.data());
+      buf[buf.size() - 1] = 0;
+      ASSERT_EQ(FileWriter::h5_version_string_linked(), buf.data());
+      H5Aclose(attr);
+    }
+    {
+      auto attr = H5Aopen(fid, "file_time", H5P_DEFAULT);
+      ASSERT_GE(attr, 0);
+      auto dtype = H5Aget_type(attr);
+      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
+      H5Aclose(attr);
+    }
     H5Fclose(fid);
   }
 
@@ -1087,7 +1162,7 @@ public:
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
     auto a1 =
@@ -1198,7 +1273,7 @@ public:
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
@@ -1233,7 +1308,7 @@ public:
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
@@ -1253,6 +1328,10 @@ TEST_F(T_CommandHandler, create_static_file_with_hdf_output_prefix) {
 
 TEST_F(T_CommandHandler, create_static_dataset) {
   T_CommandHandler::create_static_dataset();
+}
+
+TEST_F(T_CommandHandler, write_attributes_at_top_level_of_the_file) {
+  T_CommandHandler::write_attributes_at_top_level_of_the_file();
 }
 
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
