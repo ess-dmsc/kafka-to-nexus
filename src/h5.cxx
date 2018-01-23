@@ -414,6 +414,15 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
   }
 
+  hsize_t nlen_0 = nlen;
+  if (ndims == 2) {
+    if (nlen % sext[1] != 0) {
+      LOG(Sev::Error, "dataset dimensions do not match");
+      return {AppendResult::ERROR};
+    }
+    nlen_0 /= sext[1];
+  }
+
   size_t snext = -1;
   if (not cq) {
     snext = snow[0];
