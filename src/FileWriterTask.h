@@ -23,13 +23,15 @@ class FileWriterTask final {
 public:
   FileWriterTask();
   ~FileWriterTask();
-  FileWriterTask &set_hdf_filename(std::string hdf_filename);
+  FileWriterTask &set_hdf_filename(std::string hdf_output_prefix,
+                                   std::string hdf_filename);
   /// Used by Streamer to get the list of demuxers
   std::vector<DemuxTopic> &demuxers();
   uint64_t id() const;
   std::string job_id() const;
   rapidjson::Value
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
+  std::string hdf_output_prefix;
   std::string hdf_filename;
   HDFFile hdf_file;
 

@@ -19,6 +19,8 @@ void signal_handler(int signal) {
 int main(int argc, char **argv) {
   auto po = parse_opt(argc, argv);
   auto opt = std::move(po.second);
+  // For the signal handler
+  g_main_opt.store(opt.get());
 
   fmt::print("kafka-to-nexus {:.7} (ESS, BrightnESS)\n", GIT_COMMIT);
   fmt::print("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
@@ -57,6 +59,12 @@ int main(int argc, char **argv) {
     fmt::print(
         "  -v\n"
         "      Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info).\n"
+        "\n");
+
+    fmt::print(
+        "  --hdf-output-prefix <absolute/or/relative/directory>\n"
+        "      Directory which gets prepended to the HDF output filenames in\n"
+        "      the file write commands.\n"
         "\n");
     return 1;
   }

@@ -57,6 +57,9 @@ int MainOpt::parse_config_json(std::string json) {
       }
     }
   }
+  if (auto o = get_string(&d, "hdf-output-prefix")) {
+    hdf_output_prefix = o.v;
+  }
   if (auto a = get_array(d, "commands")) {
     for (auto &e : a.v->GetArray()) {
       Document js_command;
@@ -74,9 +77,6 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   std::pair<int, std::unique_ptr<MainOpt>> ret{
       0, std::unique_ptr<MainOpt>(new MainOpt)};
   auto &opt = ret.second;
-  opt->master = nullptr;
-  // For the signal handler
-  g_main_opt.store(opt.get());
   static struct option long_options[] = {
       {"help", no_argument, nullptr, 'h'},
       {"config-file", required_argument, nullptr, 0},
@@ -85,6 +85,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"kafka-gelf", required_argument, nullptr, 0},
       {"graylog-logger-address", required_argument, nullptr, 0},
       {"use-signal-handler", required_argument, nullptr, 0},
+      {"hdf-output-prefix", required_argument, nullptr, 0},
       {"teamid", required_argument, nullptr, 0},
       {"v", required_argument, nullptr, 0},
       {nullptr, 0, nullptr, 0},
@@ -92,9 +93,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
   std::string cmd;
   int option_index = 0;
   bool getopt_error = false;
+  optind = 0;
   while (true) {
     int c = getopt_long(argc, argv, "v:h", long_options, &option_index);
-    // LOG(Sev::Dbg, "c getopt {}", c);
     if (c == -1)
       break;
     if (c == '?') {
@@ -142,6 +143,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       }
       if (std::string("use-signal-handler") == lname) {
         opt->use_signal_handler = (bool)strtoul(optarg, nullptr, 0);
+      }
+      if (std::string("hdf-output-prefix") == lname) {
+        opt->hdf_output_prefix = optarg;
       }
       if (std::string("teamid") == lname) {
         opt->teamid = strtoul(optarg, nullptr, 0);
