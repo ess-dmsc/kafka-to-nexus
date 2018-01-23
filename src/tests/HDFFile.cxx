@@ -72,15 +72,10 @@ public:
     using std::string;
     MainOpt &main_opt = *g_main_opt.load();
     std::string hdf_output_prefix = "tmp-relative-output";
-    {
 #ifdef _MSC_VER
-      // NOTE just a suggestion, not tested on windows so far, we have no
-      // windows here.
-      _mkdir(hdf_output_prefix.c_str());
 #else
-      mkdir(hdf_output_prefix.c_str(), 0777);
+    mkdir(hdf_output_prefix.c_str(), 0777);
 #endif
-    }
     {
       std::string jsontxt =
           fmt::format(R""({{"hdf-output-prefix": "{}"}})"", hdf_output_prefix);
