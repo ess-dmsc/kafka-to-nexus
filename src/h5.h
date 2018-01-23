@@ -147,6 +147,8 @@ public:
   typedef unique_ptr<h5d_chunked_2d<T>> ptr;
   static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
                     CollectiveQueue *cq);
+  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+                  HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();

@@ -812,6 +812,33 @@ h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
 }
 
 template <typename T>
+typename h5d_chunked_2d<T>::ptr h5d_chunked_2d<T>::open(hid_t loc, string name,
+                                                        CollectiveQueue *cq,
+                                                        HDFIDStore *hdf_store) {
+  /*
+  TODO
+  - Fetch the dsp after open
+  - Something to do with dcpl??
+
+  auto dsp = h5s::simple_unlim<1>({{0}});
+  if (!dsp) {
+    return nullptr;
+  }
+  auto dcpl = h5p::dataset_open::chunked1(nat_type<T>(), chunk_bytes);
+  if (!dcpl) {
+    return nullptr;
+  }
+  */
+  auto ds = h5d::open(loc, name, cq, hdf_store);
+  if (!ds) {
+    return nullptr;
+  }
+  // todo: With these changes, return ::ptr directly.  Also in 2d case.
+  auto ret = new h5d_chunked_2d<T>(loc, name, move(*ds));
+  return ptr(ret);
+}
+
+template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, hsize_t ncols,
                                   hsize_t chunk_bytes, h5d ds)
     : ds(move(ds)), dsp_wr(this->ds), ncols(ncols) {}
