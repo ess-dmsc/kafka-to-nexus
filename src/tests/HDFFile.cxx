@@ -72,6 +72,16 @@ void command_add_static_dataset_1d(rapidjson::Document &cmd) {
       .PushBack(j, a);
 }
 
+void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
+  string cmd = fmt::format(R""({{
+    "recv_type": "FileWriter",
+    "cmd": "file_writer_tasks_clear_all",
+    "job_id": "{}"
+  }})"",
+                           job_cmd.FindMember("job_id")->value.GetString());
+  ch.handle({(char *)cmd.data(), cmd.size()});
+}
+
 // Verify
 TEST(HDFFile, create) {
   auto fname = "tmp-test.h5";
@@ -138,12 +148,8 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle({(char *)cmd.data(), cmd.size()});
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
-    {
-      string cmd("{\"recv_type\":\"FileWriter\", "
-                 "\"cmd\":\"file_writer_tasks_clear_all\", "
-                 "\"job_id\":\"000000000dataset\" }");
-      ch.handle({(char *)cmd.data(), cmd.size()});
-    }
+    send_stop(ch, json_command);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
     main_opt.hdf_output_prefix = "";
 
     // Verification
