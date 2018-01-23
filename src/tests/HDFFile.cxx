@@ -391,14 +391,8 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle({(char*)cmd.data(), cmd.size()});
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
-    {
-      string cmd(R""({
-        "recv_type": "FileWriter",
-        "cmd": "file_writer_tasks_clear_all",
-        "job_id": "832yhtwgfskdf"
-      })"");
-      ch.handle({(char *)cmd.data(), cmd.size()});
-    }
+    send_stop(ch, json_command);
+    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
 
     // Verification
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
