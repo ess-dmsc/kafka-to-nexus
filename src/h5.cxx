@@ -520,7 +520,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   {
     AT start, count;
     start[0] = 0;
-    count[0] = nlen;
+    start[1] = 0;
+    count[0] = nlen_0;
+    count[1] = sext[1];
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {
@@ -531,7 +533,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   AT tgt_start, tgt_count;
   tgt_start[0] = snext;
-  tgt_count[0] = nlen;
+  tgt_start[1] = 0;
+  tgt_count[0] = nlen_0;
+  tgt_count[1] = sext[1];
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1,
@@ -567,7 +571,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
     return {AppendResult::ERROR};
   }
-  snow[0] = snext + nlen;
+  snow[0] = snext + nlen_0;
   auto t3 = CLK::now();
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
