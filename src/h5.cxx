@@ -370,7 +370,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using CLK = steady_clock;
   using MS = milliseconds;
   auto t1 = CLK::now();
-  LOG(Sev::Trace, "append_data_{}d", NDIM);
+  LOG(Sev::Trace, "append_data_{}d", ndims);
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -379,7 +379,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           n1);
     }
   }
-  using AT = array<hsize_t, NDIM>;
+  using AT = array<hsize_t, 2>;
   herr_t err;
 
   char ds_name[512];
@@ -409,7 +409,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     if (err < 0) {
       LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
     }
-    for (size_t i1 = 0; i1 < NDIM; ++i1) {
+    for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Trace, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
     }
   }
@@ -490,7 +490,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       exit(1);
     }
-    for (size_t i1 = 0; i1 < NDIM; ++i1) {
+    for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
           name, type, i1, sext.at(i1), smax.at(i1));
     }
@@ -512,7 +512,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   tgt_start[0] = snext;
   tgt_count[0] = nlen;
   if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < NDIM; ++i1) {
+    for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1,
           tgt_start[0], tgt_count[0]);
     }
@@ -539,7 +539,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       if (err < 0) {
         LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       }
-      for (size_t i1 = 0; i1 < sext.size(); ++i1) {
+      for (size_t i1 = 0; i1 < ndims; ++i1) {
         LOG(Sev::Debug, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1,
             sext.at(i1), smax.at(i1));
       }
