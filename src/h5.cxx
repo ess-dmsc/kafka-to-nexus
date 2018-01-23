@@ -740,14 +740,14 @@ h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
   if (!ds) {
     return nullptr;
   }
-  auto ret = new h5d_chunked_2d<T>(loc, name, ncols, chunk_bytes, move(*ds));
+  auto ret = new h5d_chunked_2d<T>(loc, name, move(*ds), ncols);
   return ptr(ret);
 }
 
 template <typename T>
-typename h5d_chunked_2d<T>::ptr h5d_chunked_2d<T>::open(hid_t loc, string name,
-                                                        CollectiveQueue *cq,
-                                                        HDFIDStore *hdf_store) {
+typename h5d_chunked_2d<T>::ptr
+h5d_chunked_2d<T>::open(hid_t loc, string name, hsize_t ncols,
+                        CollectiveQueue *cq, HDFIDStore *hdf_store) {
   /*
   TODO
   - Fetch the dsp after open
@@ -767,13 +767,12 @@ typename h5d_chunked_2d<T>::ptr h5d_chunked_2d<T>::open(hid_t loc, string name,
     return nullptr;
   }
   // todo: With these changes, return ::ptr directly.  Also in 2d case.
-  auto ret = new h5d_chunked_2d<T>(loc, name, move(*ds));
+  auto ret = new h5d_chunked_2d<T>(loc, name, move(*ds), ncols);
   return ptr(ret);
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, hsize_t ncols,
-                                  hsize_t chunk_bytes, h5d ds)
+h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols)
     : ds(move(ds)), dsp_wr(this->ds), ncols(ncols) {}
 
 template <typename T>
@@ -977,36 +976,34 @@ template h5d_chunked_2d<double>::ptr
 h5d_chunked_2d<double>::create(hid_t loc, string name, hsize_t ncols,
                                hsize_t chunk_bytes, CollectiveQueue *cq);
 
-template h5d_chunked_2d<uint8_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                 hsize_t ncols,
-                                                 hsize_t chunk_bytes, h5d ds);
+// clang-format: off
+
+template h5d_chunked_2d<float>::ptr
+h5d_chunked_2d<float>::open(hid_t loc, string name, hsize_t ncols,
+                            CollectiveQueue *cq, HDFIDStore *hdf_store);
+
+template h5d_chunked_2d<uint8_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                                 hsize_t ncols);
 template h5d_chunked_2d<uint16_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                  hsize_t ncols,
-                                                  hsize_t chunk_bytes, h5d ds);
+                                                  h5d ds, hsize_t ncols);
 template h5d_chunked_2d<uint32_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                  hsize_t ncols,
-                                                  hsize_t chunk_bytes, h5d ds);
+                                                  h5d ds, hsize_t ncols);
 template h5d_chunked_2d<uint64_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                  hsize_t ncols,
-                                                  hsize_t chunk_bytes, h5d ds);
-template h5d_chunked_2d<int8_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                hsize_t ncols,
-                                                hsize_t chunk_bytes, h5d ds);
-template h5d_chunked_2d<int16_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                 hsize_t ncols,
-                                                 hsize_t chunk_bytes, h5d ds);
-template h5d_chunked_2d<int32_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                 hsize_t ncols,
-                                                 hsize_t chunk_bytes, h5d ds);
-template h5d_chunked_2d<int64_t>::h5d_chunked_2d(hid_t loc, string name,
-                                                 hsize_t ncols,
-                                                 hsize_t chunk_bytes, h5d ds);
-template h5d_chunked_2d<float>::h5d_chunked_2d(hid_t loc, string name,
-                                               hsize_t ncols,
-                                               hsize_t chunk_bytes, h5d ds);
-template h5d_chunked_2d<double>::h5d_chunked_2d(hid_t loc, string name,
-                                                hsize_t ncols,
-                                                hsize_t chunk_bytes, h5d ds);
+                                                  h5d ds, hsize_t ncols);
+template h5d_chunked_2d<int8_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                                hsize_t ncols);
+template h5d_chunked_2d<int16_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                                 hsize_t ncols);
+template h5d_chunked_2d<int32_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                                 hsize_t ncols);
+template h5d_chunked_2d<int64_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                                 hsize_t ncols);
+template h5d_chunked_2d<float>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                               hsize_t ncols);
+template h5d_chunked_2d<double>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
+                                                hsize_t ncols);
+
+// clang-format: on
 
 template h5d_chunked_2d<uint8_t>::~h5d_chunked_2d();
 template h5d_chunked_2d<uint16_t>::~h5d_chunked_2d();

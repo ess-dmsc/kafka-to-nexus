@@ -91,7 +91,7 @@ public:
   hid_t id = -1;
   hid_t type = -1;
   hid_t pl_transfer = -1;
-  int ndims = -1;
+  hsize_t ndims = -1;
   hid_t dsp_mem = -1;
   hid_t dsp_tgt = -1;
   std::array<hsize_t, 2> snow;
@@ -147,7 +147,7 @@ public:
   typedef unique_ptr<h5d_chunked_2d<T>> ptr;
   static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
                     CollectiveQueue *cq);
-  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+  static ptr open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
@@ -157,8 +157,7 @@ public:
   int flush_buf();
 
 private:
-  h5d_chunked_2d(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
-                 h5d ds);
+  h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
   h5s dsp_wr;
   hsize_t ncols;
   std::vector<T> buf;
