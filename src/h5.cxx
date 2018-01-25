@@ -414,6 +414,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           snow.at(i1), smax.at(i1));
     }
   }
+  sext[1] = smax[1];
 
   hsize_t nlen_0 = nlen;
   if (ndims == 2) {
