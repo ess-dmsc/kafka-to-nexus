@@ -89,13 +89,15 @@ writer_typed_array<DT, FV>::writer_typed_array(
     return;
   }
   LOG(Sev::Debug, "f142 writer_typed_array reopen  ncols: {}", ncols);
-  this->ds = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols, cq,
-                                          hdf_store);
-  if (!this->ds) {
+  ds = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols, cq,
+                                    hdf_store);
+  if (!ds) {
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
         source_name, ncols);
   }
+  // TODO take from config
+  ds->buffer_init(64 * 1024, 0);
 }
 
 template <typename DT, typename FV>
@@ -141,12 +143,13 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
                                                  HDFIDStore *hdf_store)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 init_impl  scalar");
-  this->ds =
-      h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
+  ds = h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
   if (!this->ds) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
   }
+  // TODO take from config
+  ds->buffer_init(64 * 1024, 0);
 }
 
 template <typename DT, typename FV>
