@@ -138,9 +138,9 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     char buf[512];
     auto bufn = H5Iget_name(o.id, buf, 512);
     buf[bufn] = '\0';
+#if USE_PARALLEL_WRITER
     cq->register_datasetname(buf);
-    // Do not keep the cq for later.
-    // In the initial setup, we do not want to use the cq.
+#endif
   }
 
   o.dsp_tgt = H5Dget_space(o.id);
@@ -311,6 +311,7 @@ h5d::~h5d() {
       }
       id = -1;
     } else {
+#if USE_PARALLEL_WRITER
       LOG(Sev::Trace, "~h5d ds  cqid: {}", hdf_store->cqid);
       size_t CQSNOWIX = -1;
       lookup_cqsnowix(ds_name, CQSNOWIX);
@@ -321,6 +322,7 @@ h5d::~h5d() {
                                   ds_name, snow.size(), snow.data()));
       cq->push(*hdf_store, 2, CollectiveCommand::H5Dclose(ds_name));
       id = -1;
+#endif
     }
   }
   if (dsp_mem != -1) {
@@ -361,7 +363,9 @@ void swap(h5d &x, h5d &y) {
 
 void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
   LOG(Sev::Trace, "using cq: {}", (void *)cq);
+#if USE_PARALLEL_WRITER
   cqsnowix = cq->find_snowix_for_datasetname(ds_name);
+#endif
 }
 
 template <typename T>
@@ -389,18 +393,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     buf[bufn] = '\0';
   }
 
-  // TODO
-  // Is there still a need to look up the DSP because some extent might have
-  // happened in some other process? Yes, sure!!
-  // Therefore, always lookup the dataspace from the hdf_store!
+// TODO
+// Is there still a need to look up the DSP because some extent might have
+// happened in some other process? Yes, sure!!
+// Therefore, always lookup the dataspace from the hdf_store!
 
+#if USE_PARALLEL_WRITER
   size_t CQSNOWIX = -1;
   if (cq) {
     lookup_cqsnowix(ds_name, CQSNOWIX);
     dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
-  } else {
-    LOG(Sev::Trace, "Do not look up cqsnowix");
   }
+#endif
 
   if (false && log_level >= 9) {
     // Just for debugging
@@ -429,6 +433,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (not cq) {
     snext = snow[0];
   } else {
+#if USE_PARALLEL_WRITER
     LOG(Sev::Debug, "CAS allocate...");
     while (true) {
       snext = cq->snow[CQSNOWIX].load();
@@ -437,6 +442,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       }
     }
     LOG(Sev::Debug, "CAS allocated: {}", snext);
+#endif
   }
 
   if (snext + nlen_0 > sext[0]) {
@@ -486,6 +492,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         }
       }
     } else {
+#if USE_PARALLEL_WRITER
       // H5O_info_t oi;
       // H5Oget_info(id, &oi);
       cq->push(*hdf_store, 0, CollectiveCommand::set_extent(
@@ -499,6 +506,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           exit(1);
         }
       }
+#endif
     }
     sext.at(1) = sext2.at(1);
     auto t3 = CLK::now();
@@ -555,8 +563,10 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     if (cq) {
+#if USE_PARALLEL_WRITER
       LOG(Sev::Error, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid,
           ds_name);
+#endif
     } else {
       LOG(Sev::Error, "write failed  ds_name: {}", ds_name);
     }
