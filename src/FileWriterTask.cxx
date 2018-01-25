@@ -27,9 +27,6 @@ FileWriterTask::FileWriterTask() {
 
 FileWriterTask::~FileWriterTask() {
   LOG(Sev::Debug, "~FileWriterTask");
-#if USE_PARALLEL_WRITER
-  mpi_stop();
-#endif
   _demuxers.clear();
 }
 
@@ -77,9 +74,6 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
 int FileWriterTask::hdf_close() { return hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
-#if USE_PARALLEL_WRITER
-  hdf_file.cq = cq.get();
-#endif
   return hdf_file.reopen(filename_full, rapidjson::Value());
 }
 
@@ -102,156 +96,5 @@ rapidjson::Value FileWriterTask::stats(
   js_fwt.AddMember("topics", js_topics, a);
   return js_fwt;
 }
-
-#if USE_PARALLEL_WRITER
-void FileWriterTask::mpi_start(std::vector<MPIChild::ptr> &&to_spawn) {
-  int err = MPI_SUCCESS;
-  MPI_Info mpi_info;
-  if (MPI_Info_create(&mpi_info) != MPI_SUCCESS) {
-    LOG(3, "ERROR can not init MPI_Info");
-    exit(1);
-  }
-
-  vector<char *> commands;
-  vector<char **> argv_ptrs;
-  vector<int> max_processes;
-  vector<MPI_Info> mpi_infos;
-  vector<int> proc_err_m;
-  for (auto &x : to_spawn) {
-    commands.push_back(x->cmd.data());
-    max_processes.push_back(1);
-    mpi_infos.push_back(MPI_INFO_NULL);
-    proc_err_m.push_back(0);
-  }
-  if (commands.size() == 0) {
-    return;
-  }
-  LOG(8, "spawning MPI children  n: {}", commands.size());
-  err = MPI_Comm_spawn_multiple(
-      commands.size(), commands.data(), argv_ptrs.data(), max_processes.data(),
-      mpi_infos.data(), 0, MPI_COMM_WORLD, &comm_spawned, proc_err_m.data());
-  if (err != MPI_SUCCESS) {
-    LOG(3, "can not spawn");
-    exit(1);
-  }
-  {
-    int size;
-    MPI_Comm_size(comm_spawned, &size);
-    spawned = size;
-  }
-  if (spawned != commands.size()) {
-    LOG(3, "Did not spawn correct number of children  expect: {}  actual:  {}",
-        commands.size(), spawned);
-  }
-
-  {
-    for (int target = 0; target < commands.size(); ++target) {
-      auto &child = to_spawn.at(target);
-      MPI_Send(child->config.data(), child->config.size(), MPI_CHAR, target,
-               101, comm_spawned);
-    }
-  }
-
-  err = MPI_Intercomm_merge(comm_spawned, 0, &comm_all);
-  if (err != MPI_SUCCESS) {
-    LOG(3, "fail MPI_Intercomm_merge");
-    exit(1);
-  }
-
-  int comm_all_size = -1;
-  int comm_all_rank = -1;
-  {
-    int rank, size;
-    MPI_Comm_rank(comm_all, &rank);
-    MPI_Comm_size(comm_all, &size);
-    LOG(8, "comm_all rank: {}  size: {}", rank, size);
-    comm_all_size = size;
-    comm_all_rank = rank;
-  }
-
-  LOG(8, "Barrier 1 BEFORE");
-  MPI_Barrier(comm_all);
-  LOG(8, "Barrier 1 AFTER");
-
-  int rank, size;
-  {
-    MPI_Comm_rank(comm_all, &rank);
-    MPI_Comm_size(comm_all, &size);
-    LOG(8, "comm_all rank: {}  size: {}", rank, size);
-  }
-}
-
-void FileWriterTask::mpi_stop() {
-  LOG(8, "FileWriterTask::mpi_stop()");
-
-  // send stop command, wait for group size zero?
-  for (auto &d : _demuxers) {
-    for (auto &s : d.sources()) {
-      if (s.second.queue) {
-        s.second.queue->open.store(0);
-      }
-    }
-  }
-
-  int err = MPI_SUCCESS;
-
-  auto &cq = hdf_file.cq;
-
-  auto &hdf_store = this->hdf_store;
-
-  auto barrier = [&cq, &hdf_store](size_t id, size_t queue, std::string name) {
-    LOG(8, "...............................  cqid: {}  wait   {}  {}",
-        hdf_store.cqid, id, name);
-    cq->barriers[id]++;
-    cq->wait_for_barrier(&hdf_store, id, queue);
-    LOG(8, "===============================  cqid: {}  after  {}  {}",
-        hdf_store.cqid, id, name);
-  };
-
-  barrier(0, 0, "MODULE RESET");
-
-  for (auto &d : _demuxers) {
-    for (auto &s : d.sources()) {
-      s.second.close_writer_module();
-    }
-  }
-  cq->close_for(hdf_store);
-
-  barrier(1, 0, "CQ EXEC");
-
-  barrier(2, 1, "CQ EXEC 2");
-
-  barrier(5, 2, "CQ EXEC 3");
-
-  LOG(8, "check_all_empty");
-  hdf_store.check_all_empty();
-
-  LOG(8, "hdf_file.close()");
-  hdf_file.close();
-
-  barrier(3, 2, "MPI Barrier");
-
-  if (spawned != -1) {
-    err = MPI_Barrier(comm_all);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Barrier");
-      exit(1);
-    }
-    LOG(8, "disconnect comm_all  cqid: {}", "main");
-    err = MPI_Comm_disconnect(&comm_all);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Comm_disconnect");
-      exit(1);
-    }
-    LOG(8, "disconnect comm_spawned  cqid: {}", "main");
-    err = MPI_Comm_disconnect(&comm_spawned);
-    if (err != MPI_SUCCESS) {
-      LOG(3, "fail MPI_Comm_disconnect");
-      exit(1);
-    }
-  }
-  barrier(4, -1, "Last CQ barrier");
-}
-#endif
 
 } // namespace FileWriter

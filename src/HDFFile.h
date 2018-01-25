@@ -7,11 +7,6 @@
 #include <string>
 #include <vector>
 
-#if USE_PARALLEL_WRITER
-#include "Alloc.h"
-#include "CollectiveQueue.h"
-#endif
-
 class T_HDFFile;
 
 namespace FileWriter {
@@ -43,10 +38,6 @@ public:
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
   void flush();
-#if USE_PARALLEL_WRITER
-  void create_collective_queue(Jemalloc::sptr jm);
-  CollectiveQueue *cq;
-#endif
   hid_t h5file = -1;
   std::string filename;
 

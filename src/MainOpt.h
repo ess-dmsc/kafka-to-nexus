@@ -12,10 +12,6 @@
 #include <utility>
 #include <vector>
 
-#if USE_PARALLEL_WRITER
-#include "MMap.h"
-#endif
-
 struct rd_kafka_topic_partition_list_s;
 
 namespace FileWriter {
@@ -69,9 +65,6 @@ struct MainOpt {
   uint64_t teamid = 0;
   bool source_do_process_message = true;
   Jemalloc::sptr jm;
-#if USE_PARALLEL_WRITER
-  MMap::sptr shm;
-#endif
   bool logpid_sleep = false;
 };
 

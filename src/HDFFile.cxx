@@ -1,7 +1,4 @@
 #include "HDFFile.h"
-#if USE_PARALLEL_WRITER
-#include "CollectiveQueue.h"
-#endif
 #include "date/date.h"
 #include "h5.h"
 #include "helper.h"
@@ -13,9 +10,6 @@
 #include <deque>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
-#if USE_PARALLEL_WRITER
-#include <mpi.h>
-#endif
 #include <stack>
 #include <unistd.h>
 #define HAS_REMOTE_API 0
@@ -855,78 +849,7 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 }
 
-static void set_common_props(hid_t fcpl, hid_t fapl) {
-  herr_t err = 0;
-  size_t const PAGE_SIZE = 1 << 22;
-  // H5F_FSPACE_STRATEGY_FSM_AGGR
-  // H5F_FSPACE_STRATEGY_PAGE
-  // H6F_FSPACE_STRATEGY_AGGR
-  // H5F_FSPACE_STRATEGY_NONE
-  // H5F_FSPACE_STRATEGY_NTYPES
-  if (0) {
-    // H5F_FSPACE_STRATEGY_NONE
-    // H5F_FSPACE_STRATEGY_PAGE
-    err = H5Pset_file_space_strategy(fcpl, H5F_FSPACE_STRATEGY_PAGE, false,
-                                     1 << 20);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_file_space_strategy");
-    }
-  }
-  if (0) {
-    err = H5Pset_file_space_page_size(fcpl, PAGE_SIZE);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_file_space_page_size");
-    }
-  }
-  if (0) {
-    err = H5Pset_page_buffer_size(fapl, 512 * PAGE_SIZE, 0, 0);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_page_buffer_size");
-    }
-  }
-  if (0) {
-    hsize_t threshold;
-    hsize_t alignment;
-    err = H5Pget_alignment(fapl, &threshold, &alignment);
-    if (err < 0) {
-      LOG(Sev::Debug, "could not get alignment");
-    } else {
-      LOG(Sev::Debug, "threshold: {}  alignment: {}", threshold, alignment);
-    }
-  }
-  if (0) {
-    err = H5Pset_alignment(fapl, 0, PAGE_SIZE);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_alignment");
-    }
-  }
-  if (0) {
-    // 521  1483  9973
-    err = H5Pset_cache(fapl, 0, 9973, size_t(1) << 31, 0.0);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_cache");
-    }
-  }
-#if USE_PARALLEL_WRITER
-#if 1
-  MPI_Info info;
-  MPI_Info_create(&info);
-  // MPI_Info_set(info, "direct_write", "true");
-  // MPI_Info_set(info, "cb_nodes", "8");
-  // MPI_Info_set(info, "striping_unit", "1048576");
-  // MPI_Info_set(info, "striping_factor", "8");
-  // MPI_Info_set(info, "cb_buffer_size", "268435456");
-  // not tested: MPI_Info_set(info, "striping_factor", "4");
-  //     MPI_Info_set(info, "start_iodevice", "2");
-  //     MPI_Info_set(info, "ind_rd_buffer_size", "2097152");
-  //     MPI_Info_set(info, "ind_wr_buffer_size", "1048576");
-  // MPI_Info_set(info, "ind_wr_buffer_size", "268435456");
-  // MPI_Info_set(info, "romio_cb_write", "enable");
-  H5Pset_fapl_mpio(fapl, MPI_COMM_WORLD, info);
-// MPI_Info_free(&info);
-#endif
-#endif
-}
+static void set_common_props(hid_t fcpl, hid_t fapl) {}
 
 /// Human readable version of the HDF5 headers that we compile against.
 static std::string h5_version_string_headers_compile_time() {

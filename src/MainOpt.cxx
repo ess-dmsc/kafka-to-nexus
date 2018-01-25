@@ -10,20 +10,7 @@
 
 using uri::URI;
 
-void MainOpt::init() {
-#if USE_PARALLEL_WRITER
-  // TODO
-  // Do this somewhere else, after parsing all conf including the possibly
-  // changed conf in tests
-  auto shm_fname = config_file["shm"]["fname"].GetString();
-  auto shm_size = config_file["shm"]["size"].GetInt64();
-  LOG(8, "mmap {} / {}", shm_fname, shm_size);
-  shm = MMap::create(shm_fname, shm_size);
-  std::memset(shm->addr(), 'a', 1024);
-  jm = Jemalloc::create(shm->addr(),
-                        (void *)((uint8_t *)shm->addr() + shm->size()));
-#endif
-}
+void MainOpt::init() {}
 
 int MainOpt::parse_config_file(std::string fname) {
   if (fname.empty()) {

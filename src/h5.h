@@ -75,10 +75,6 @@ public:
                     h5p::dataset_create dcpl, CollectiveQueue *cq);
   static ptr open_single(hid_t loc, string name, CollectiveQueue *cq,
                          HDFIDStore *hdf_store);
-#if USE_PARALLEL_WRITER
-  static ptr open_mpi(hid_t loc, string name, CollectiveQueue *cq,
-                      HDFIDStore *hdf_store);
-#endif
   static ptr open(hid_t loc, string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d(h5d &&x);
