@@ -77,7 +77,9 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
 int FileWriterTask::hdf_close() { return hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
+#if USE_PARALLEL_WRITER
   hdf_file.cq = cq.get();
+#endif
   return hdf_file.reopen(filename_full, rapidjson::Value());
 }
 

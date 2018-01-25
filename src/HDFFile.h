@@ -1,13 +1,16 @@
 #pragma once
 
-#include "Alloc.h"
-#include "CollectiveQueue.h"
 #include "Msg.h"
 #include <H5Ipublic.h>
 #include <memory>
 #include <rapidjson/document.h>
 #include <string>
 #include <vector>
+
+#if USE_PARALLEL_WRITER
+#include "Alloc.h"
+#include "CollectiveQueue.h"
+#endif
 
 class T_HDFFile;
 
@@ -42,10 +45,10 @@ public:
   void flush();
 #if USE_PARALLEL_WRITER
   void create_collective_queue(Jemalloc::sptr jm);
+  CollectiveQueue *cq;
 #endif
   hid_t h5file = -1;
   std::string filename;
-  CollectiveQueue *cq;
 
 private:
   friend class ::T_HDFFile;
