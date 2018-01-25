@@ -575,6 +575,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     return {AppendResult::ERROR};
   }
   snow[0] = snext + nlen_0;
+  snow[1] = sext[1];
   auto t3 = CLK::now();
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
