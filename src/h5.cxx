@@ -542,7 +542,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1,
-          tgt_start[0], tgt_count[0]);
+          tgt_start.at(i1), tgt_count.at(i1));
     }
   }
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
