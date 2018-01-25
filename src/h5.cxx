@@ -466,8 +466,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     if (sext2[0] - sext[0] > (1 << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
-    LOG(Sev::Debug, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext,
-        sext[0], sext2[0]);
+    LOG(Sev::Debug, "snext: {:12}  set_extent\n  from: {:12}  to: {:12}\n  "
+                    "from: {:12}  to: {:12}",
+        snext, sext.at(0), sext2.at(0), sext.at(1), sext2.at(1));
 
     auto t2 = CLK::now();
     if (not cq) {
