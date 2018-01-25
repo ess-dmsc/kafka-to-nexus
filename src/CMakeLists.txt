@@ -53,16 +53,6 @@ set(libraries_common
   z
 )
 
-if (USE_PARALLEL_WRITER)
-  list(APPEND compile_defs_common "USE_PARALLEL_WRITER=1")
-  find_package(MPI REQUIRED)
-  find_package(Jemalloc REQUIRED)
-  list(APPEND path_include_common ${MPI_INCLUDE_DIR})
-  list(APPEND path_include_common ${JEMALLOC_INCLUDE_DIR})
-  list(APPEND libraries_common ${MPI_LIBRARIES})
-  list(APPEND libraries_common ${JEMALLOC_LIBRARIES})
-endif()
-
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
 if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
@@ -176,7 +166,6 @@ set(tgt "kafka-to-nexus")
 set(sources
   kafka-to-nexus.cxx
   $<TARGET_OBJECTS:kafka_to_nexus__objects>
-  ${JEMALLOC_LIBRARIES}
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
