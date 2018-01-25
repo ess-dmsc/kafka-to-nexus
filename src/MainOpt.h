@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Alloc.h"
-#include "MMap.h"
 #include "logger.h"
 #include "uri.h"
 #include <atomic>
@@ -12,6 +11,10 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+#if USE_PARALLEL_WRITER
+#include "MMap.h"
+#endif
 
 struct rd_kafka_topic_partition_list_s;
 
@@ -65,8 +68,10 @@ struct MainOpt {
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
   bool source_do_process_message = true;
-  MMap::sptr shm;
   Jemalloc::sptr jm;
+#if USE_PARALLEL_WRITER
+  MMap::sptr shm;
+#endif
   bool logpid_sleep = false;
 };
 
