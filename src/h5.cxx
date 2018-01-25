@@ -718,6 +718,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
 template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
   auto wr = ds.append_data_1d((T *)buf.data(), buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
+    LOG(Sev::Trace, "FLUSH NOT OK");
     return wr.status;
   }
   buf_n = 0;
@@ -789,44 +790,59 @@ template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y) {
 
 template <typename T>
 append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
-  // TODO
-  // Adapt to the 1d case.
-  LOG(Sev::Error, "not supported currently");
-  exit(1);
-  append_ret ret{AppendResult::ERROR};
-  if (nlen != dsp_wr.sini.at(1)) {
-    return {AppendResult::ERROR};
-  }
-  bool do_buf = nlen * sizeof(T) < 4 * 1024;
+  auto nbytes = nlen * sizeof(T);
+  bool do_buf = nbytes <= buf_packet_max;
+  auto buffer_append = [this, &nbytes](T const *data) {
+    if (buf_n + nbytes > buf_size) {
+      LOG(Sev::Error, "fail buffer");
+      exit(1);
+    }
+    auto p1 = (char *)data;
+    auto p2 = buf.data() + buf_n;
+    for (size_t i1 = 0; i1 < nbytes; ++i1) {
+      p2[i1] = p1[i1];
+    }
+    buf_n += nbytes;
+    count_buffer_copy_calls += 1;
+    count_buffer_copy_bytes += nbytes;
+  };
   if (do_buf) {
-    std::copy(data, data + nlen, std::back_inserter(buf));
-    buf_bytes += nlen * sizeof(T);
+    buffer_append(data);
   }
-  if (buf_bytes > 128 * 1024 || (!do_buf && buf_bytes > 0)) {
-    if (flush_buf() != 0) {
-      return {AppendResult::ERROR};
+  // Flush the buffer if there is a chance that it will be full on the next
+  // iteration.
+  if (buf_n + buf_packet_max > buf_size || (!do_buf && buf_n > 0)) {
+    auto res = flush_buf();
+    if (res == AppendResult::ERROR) {
+      return {res};
+    } else if (res != AppendResult::OK) {
+      LOG(Sev::Error, "unhandled error");
+      exit(1);
     }
   }
   if (!do_buf) {
-    ret = ds.append_data_2d(data, nlen);
-    if (!ret) {
-      return ret;
+    auto res = ds.append_data_1d(data, nlen);
+    if (res.status == AppendResult::ERROR) {
+      return res;
     }
   }
+  append_ret ret;
   ret.status = AppendResult::OK;
   ret.ix0 = i0;
-  ret.written_bytes = sizeof(T) * nlen;
-  i0 += nlen / dsp_wr.sini.at(1);
+  ret.written_bytes = nbytes;
+  i0 += nlen;
+  count_append_calls += 1;
+  count_append_bytes += nbytes;
   return ret;
 }
 
-template <typename T> int h5d_chunked_2d<T>::flush_buf() {
-  auto wr = ds.append_data_2d(buf.data(), buf.size());
-  if (!wr) {
-    return -1;
+template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
+  auto wr = ds.append_data_2d((T *)buf.data(), buf_n / sizeof(T));
+  if (wr.status != AppendResult::OK) {
+    return wr.status;
   }
-  buf.clear();
-  return 0;
+  buf_n = 0;
+  return AppendResult::OK;
 }
 
 template h5s::ptr h5s::simple_unlim(array<hsize_t, 1> const &sini);
