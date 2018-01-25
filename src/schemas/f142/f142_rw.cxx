@@ -33,6 +33,9 @@ public:
   writer_typed_array(hid_t hdf_group, std::string const &source_name,
                      hsize_t ncols, Value fb_value_type_id,
                      CollectiveQueue *cq);
+  writer_typed_array(hid_t hdf_group, std::string const &source_name,
+                     hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq,
+                     HDFIDStore *hdf_store);
   ~writer_typed_array() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
@@ -44,6 +47,9 @@ class writer_typed_scalar : public writer_typed_base {
 public:
   writer_typed_scalar(hid_t hdf_group, std::string const &source_name,
                       Value fb_value_type_id, CollectiveQueue *cq);
+  writer_typed_scalar(hid_t hdf_group, std::string const &source_name,
+                      Value fb_value_type_id, CollectiveQueue *cq,
+                      HDFIDStore *hdf_store);
   ~writer_typed_scalar() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
@@ -66,6 +72,25 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
   LOG(Sev::Debug, "f142 init_impl  ncols: {}", ncols);
   this->ds = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols,
                                             64 * 1024, cq);
+  if (!this->ds) {
+    LOG(Sev::Error,
+        "could not create hdf dataset  source_name: {}  number of columns: {}",
+        source_name, ncols);
+  }
+}
+
+template <typename DT, typename FV>
+writer_typed_array<DT, FV>::writer_typed_array(
+    hid_t hdf_group, std::string const &source_name, hsize_t ncols,
+    Value fb_value_type_id, CollectiveQueue *cq, HDFIDStore *hdf_store)
+    : _fb_value_type_id(fb_value_type_id) {
+  if (ncols <= 0) {
+    LOG(Sev::Error, "can not handle number of columns ncols == {}", ncols);
+    return;
+  }
+  LOG(Sev::Debug, "f142 writer_typed_array reopen  ncols: {}", ncols);
+  this->ds = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols, cq,
+                                          hdf_store);
   if (!this->ds) {
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
@@ -102,6 +127,22 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
   LOG(Sev::Debug, "f142 init_impl  scalar");
   this->ds =
       h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
+  if (!this->ds) {
+    LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
+        source_name);
+  }
+}
+
+template <typename DT, typename FV>
+writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
+                                                 std::string const &source_name,
+                                                 Value fb_value_type_id,
+                                                 CollectiveQueue *cq,
+                                                 HDFIDStore *hdf_store)
+    : _fb_value_type_id(fb_value_type_id) {
+  LOG(Sev::Debug, "f142 init_impl  scalar");
+  this->ds =
+      h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
   if (!this->ds) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
