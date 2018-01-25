@@ -447,11 +447,12 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     uint32_t BLOCK = 22;
     if (ndims == 2) {
       size_t snow_1_ln2 = -1;
-      for (size_t x = snow[1]; x != 0; x = x >> 1) {
+      for (size_t x = sext[1]; x != 0; x = x >> 1) {
         snow_1_ln2 += 1;
       }
       if (snow_1_ln2 >= BLOCK) {
-        LOG(Sev::Error, "snow_1_ln2 >= BLOCK; {} >= {}", snow_1_ln2, BLOCK);
+        LOG(Sev::Error, "snow_1_ln2 >= BLOCK; {} >= {};  sext[1]: {}",
+            snow_1_ln2, BLOCK, sext[1]);
         snow_1_ln2 = BLOCK - 1;
       }
       BLOCK -= snow_1_ln2;
