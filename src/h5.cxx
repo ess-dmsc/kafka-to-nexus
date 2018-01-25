@@ -873,12 +873,38 @@ template h5d_chunked_1d<double>::ptr
 h5d_chunked_1d<double>::create(hid_t loc, string name, hsize_t chunk_bytes,
                                CollectiveQueue *cq);
 
+// clang-format: off
+template h5d_chunked_1d<uint8_t>::ptr
+h5d_chunked_1d<uint8_t>::open(hid_t loc, string name, CollectiveQueue *cq,
+                              HDFIDStore *hdf_store);
+template h5d_chunked_1d<uint16_t>::ptr
+h5d_chunked_1d<uint16_t>::open(hid_t loc, string name, CollectiveQueue *cq,
+                               HDFIDStore *hdf_store);
 template h5d_chunked_1d<uint32_t>::ptr
 h5d_chunked_1d<uint32_t>::open(hid_t loc, string name, CollectiveQueue *cq,
                                HDFIDStore *hdf_store);
 template h5d_chunked_1d<uint64_t>::ptr
 h5d_chunked_1d<uint64_t>::open(hid_t loc, string name, CollectiveQueue *cq,
                                HDFIDStore *hdf_store);
+template h5d_chunked_1d<int8_t>::ptr
+h5d_chunked_1d<int8_t>::open(hid_t loc, string name, CollectiveQueue *cq,
+                             HDFIDStore *hdf_store);
+template h5d_chunked_1d<int16_t>::ptr
+h5d_chunked_1d<int16_t>::open(hid_t loc, string name, CollectiveQueue *cq,
+                              HDFIDStore *hdf_store);
+template h5d_chunked_1d<int32_t>::ptr
+h5d_chunked_1d<int32_t>::open(hid_t loc, string name, CollectiveQueue *cq,
+                              HDFIDStore *hdf_store);
+template h5d_chunked_1d<int64_t>::ptr
+h5d_chunked_1d<int64_t>::open(hid_t loc, string name, CollectiveQueue *cq,
+                              HDFIDStore *hdf_store);
+template h5d_chunked_1d<float>::ptr
+h5d_chunked_1d<float>::open(hid_t loc, string name, CollectiveQueue *cq,
+                            HDFIDStore *hdf_store);
+template h5d_chunked_1d<double>::ptr
+h5d_chunked_1d<double>::open(hid_t loc, string name, CollectiveQueue *cq,
+                             HDFIDStore *hdf_store);
+// clang-format: on
 
 template h5d_chunked_1d<uint8_t>::h5d_chunked_1d(hid_t loc, string name,
                                                  h5d ds);
@@ -978,9 +1004,36 @@ h5d_chunked_2d<double>::create(hid_t loc, string name, hsize_t ncols,
 
 // clang-format: off
 
+template h5d_chunked_2d<uint8_t>::ptr
+h5d_chunked_2d<uint8_t>::open(hid_t loc, string name, hsize_t ncols,
+                              CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<uint16_t>::ptr
+h5d_chunked_2d<uint16_t>::open(hid_t loc, string name, hsize_t ncols,
+                               CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<uint32_t>::ptr
+h5d_chunked_2d<uint32_t>::open(hid_t loc, string name, hsize_t ncols,
+                               CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<uint64_t>::ptr
+h5d_chunked_2d<uint64_t>::open(hid_t loc, string name, hsize_t ncols,
+                               CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<int8_t>::ptr
+h5d_chunked_2d<int8_t>::open(hid_t loc, string name, hsize_t ncols,
+                             CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<int16_t>::ptr
+h5d_chunked_2d<int16_t>::open(hid_t loc, string name, hsize_t ncols,
+                              CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<int32_t>::ptr
+h5d_chunked_2d<int32_t>::open(hid_t loc, string name, hsize_t ncols,
+                              CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<int64_t>::ptr
+h5d_chunked_2d<int64_t>::open(hid_t loc, string name, hsize_t ncols,
+                              CollectiveQueue *cq, HDFIDStore *hdf_store);
 template h5d_chunked_2d<float>::ptr
 h5d_chunked_2d<float>::open(hid_t loc, string name, hsize_t ncols,
                             CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<double>::ptr
+h5d_chunked_2d<double>::open(hid_t loc, string name, hsize_t ncols,
+                             CollectiveQueue *cq, HDFIDStore *hdf_store);
 
 template h5d_chunked_2d<uint8_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds,
                                                  hsize_t ncols);

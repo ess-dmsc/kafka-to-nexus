@@ -154,15 +154,22 @@ public:
   ~h5d_chunked_2d();
   friend void swap<>(h5d_chunked_2d &x, h5d_chunked_2d &y);
   append_ret append_data_2d(T const *data, hsize_t nlen);
-  int flush_buf();
+  AppendResult flush_buf();
 
 private:
   h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
   h5s dsp_wr;
   hsize_t ncols;
+  size_t buf_size = 0;
+  size_t buf_packet_max = 0;
+  size_t buf_n = 0;
   std::vector<T> buf;
   uint32_t buf_bytes = 0;
   hsize_t i0 = 0;
+  uint64_t count_buffer_copy_calls = 0;
+  uint64_t count_buffer_copy_bytes = 0;
+  uint64_t count_append_calls = 0;
+  uint64_t count_append_bytes = 0;
 };
 
 } // namespace h5
