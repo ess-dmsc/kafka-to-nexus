@@ -189,9 +189,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     hdf_writer_module.reset();
   }
 
-  fwt->hdf_file.close();
-  fwt->hdf_file.cq = fwt->cq.get();
-  fwt->hdf_file.reopen(fname, rapidjson::Value());
+  fwt->hdf_close();
+  fwt->hdf_reopen();
 
 #if USE_PARALLEL_WRITER
   bool use_parallel_writer = true;

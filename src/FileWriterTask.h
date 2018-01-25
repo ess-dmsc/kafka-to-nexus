@@ -38,6 +38,7 @@ public:
   stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
   std::string hdf_output_prefix;
   std::string hdf_filename;
+  std::string filename_full;
   CollectiveQueue::ptr cq;
   HDFFile hdf_file;
 
@@ -58,6 +59,8 @@ private:
                rapidjson::Value const &config_file,
                std::vector<StreamHDFInfo> &stream_hdf_info,
                std::vector<hid_t> &groups);
+  int hdf_close();
+  int hdf_reopen();
   void job_id_init(const std::string &);
   uint64_t _id;
   std::string _job_id;
