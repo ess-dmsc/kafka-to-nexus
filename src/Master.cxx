@@ -1,6 +1,7 @@
 #include "Master.h"
 #include "CommandHandler.h"
 #include "Msg.h"
+#include "helper.h"
 #include "logger.h"
 #include <chrono>
 #include <rapidjson/document.h>

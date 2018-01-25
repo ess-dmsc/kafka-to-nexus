@@ -124,7 +124,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   jm->use_this();
   fwt->cq = CollectiveQueue::ptr(new CollectiveQueue(jm));
   jm->use_default();
-#else
   fwt->cq = std::unique_ptr<CollectiveQueue>();
 #endif
 

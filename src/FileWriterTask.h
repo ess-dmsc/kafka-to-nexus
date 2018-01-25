@@ -1,15 +1,16 @@
 #pragma once
 
-#if USE_PARALLEL_WRITER
-#include <mpi.h>
-#endif
-#include "CollectiveQueue.h"
 #include "DemuxTopic.h"
 #include "Source.h"
 #include <memory>
 #include <rapidjson/document.h>
 #include <string>
 #include <vector>
+
+#if USE_PARALLEL_WRITER
+#include "CollectiveQueue.h"
+#include <mpi.h>
+#endif
 
 class Test___FileWriterTask___Create01;
 
@@ -39,7 +40,6 @@ public:
   std::string hdf_output_prefix;
   std::string hdf_filename;
   std::string filename_full;
-  CollectiveQueue::ptr cq;
   HDFFile hdf_file;
 
 #if USE_PARALLEL_WRITER
@@ -49,6 +49,7 @@ public:
   MPI_Comm comm_all;
   MPI_Comm comm_spawned;
   HDFIDStore hdf_store;
+  CollectiveQueue::ptr cq;
 #endif
 
 private:
