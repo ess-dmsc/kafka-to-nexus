@@ -499,10 +499,56 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
                                                     std::string hdf_parent_name,
                                                     CollectiveQueue *cq,
                                                     HDFIDStore *hdf_store) {
-  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-  // TODO
-  // Actually open the datasets here
-  H5Gclose(hid);
+  auto hdf_group = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+  if (hdf_group < 0) {
+    LOG(Sev::Error, "can not open HDF group");
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
+
+  string s("value");
+  impl.reset(impl_fac_open(hdf_group, array_size, type, s, cq, hdf_store));
+  if (!impl) {
+    LOG(Sev::Error,
+        "Could not create a writer implementation for value_type {}", type);
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
+
+  this->ds_timestamp =
+      h5::h5d_chunked_1d<uint64_t>::open(hdf_group, "time", cq, hdf_store);
+  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
+      hdf_group, "cue_timestamp_zero", cq, hdf_store);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint64_t>::open(hdf_group, "cue_index", cq, hdf_store);
+  if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
+    impl.reset();
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
+
+  // TODO take from config
+  size_t buffer_size = 1024 * 1024;
+  size_t buffer_packet_max = 0;
+
+  ds_timestamp->buffer_init(buffer_size, buffer_packet_max);
+  ds_cue_timestamp_zero->buffer_init(buffer_size, buffer_packet_max);
+  ds_cue_index->buffer_init(buffer_size, buffer_packet_max);
+
+  if (do_writer_forwarder_internal) {
+    this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
+        hdf_group, source_name + "__fwdinfo_seq_data", cq, hdf_store);
+    this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
+        hdf_group, source_name + "__fwdinfo_seq_fwd", cq, hdf_store);
+    this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
+        hdf_group, source_name + "__fwdinfo_ts_data", cq, hdf_store);
+    if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+      impl.reset();
+      return HDFWriterModule::InitResult::ERROR_IO();
+    }
+    ds_seq_data->buffer_init(buffer_size, buffer_packet_max);
+    ds_seq_fwd->buffer_init(buffer_size, buffer_packet_max);
+    ds_ts_data->buffer_init(buffer_size, buffer_packet_max);
+  }
+
+  H5Gclose(hdf_group);
   return HDFWriterModule::InitResult::OK();
 }
 
