@@ -982,9 +982,9 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(size_t array_size, uint64_t n) {
+    void pregenerate(size_t array_size, uint64_t n,
+                     std::shared_ptr<Jemalloc> &jm) {
       LOG(Sev::Debug, "generating {} {}...", topic, source);
-#if 0
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
@@ -996,13 +996,11 @@ public:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
         fbs.push_back(synth.next(i1, array_size));
-        LOG(Sev::Error, "error NOT IMPLEMENTED, jm missing!");
-        exit(1);
-        //auto &fb = fbs.back();
-        //msgs.push_back(FileWriter::Msg::shared((char const *)fb.builder->GetBufferPointer(),
-        //                               fb.builder->GetSize()));
+        auto &fb = fbs.back();
+        msgs.push_back(FileWriter::Msg::shared(
+            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
+            jm));
       }
-#endif
     }
   };
 
@@ -1058,7 +1056,7 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(array_size, n_msgs_per_source);
+      s.pregenerate(array_size, n_msgs_per_source, main_opt.jm);
     }
 
     if (false) {
