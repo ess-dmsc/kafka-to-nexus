@@ -5,6 +5,9 @@
 #include <memory>
 #include <mutex>
 
+// This class should better be called AllocStd, but that renaming is coming
+// with a different PR.
+
 class Jemalloc {
 public:
   using ptr = std::unique_ptr<Jemalloc>;
