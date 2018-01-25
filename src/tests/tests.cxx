@@ -1,10 +1,11 @@
 #include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "helper.h"
-#include "logpid.h"
 #include "roundtrip.h"
 #include <gtest/gtest.h>
+
 #if USE_PARALLEL_WRITER
+#include "logpid.h"
 #include <mpi.h>
 #endif
 
@@ -24,11 +25,13 @@ int main(int argc, char **argv) {
   g_main_opt.store(opt.get());
   setup_logger_from_options(*opt);
 
+#if USE_PARALLEL_WRITER
   if (opt->logpid_sleep) {
     logpid("tmp-pid.txt");
     LOG(Sev::Debug, "sleep");
     sleep_ms(3000);
   }
+#endif
 
   Roundtrip::opt = opt.get();
 
