@@ -410,7 +410,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:3}", snow.at(i1));
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {} {:3} / {:3}", i1,
+          snow.at(i1), smax.at(i1));
     }
   }
 
