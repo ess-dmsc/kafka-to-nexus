@@ -500,6 +500,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         }
       }
     }
+    sext.at(1) = sext2.at(1);
     auto t3 = CLK::now();
     LOG(Sev::Debug, "h5d::append_data_1d set_extent: {} + {}",
         duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
