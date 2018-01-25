@@ -1,5 +1,4 @@
 #include "Source.h"
-#include "MPIChild.h"
 #include "helper.h"
 #include "logger.h"
 #include <chrono>
@@ -8,6 +7,10 @@
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
 #include <thread>
+
+#if USE_PARALLEL_WRITER
+#include "MPIChild.h"
+#endif
 
 #ifndef SOURCE_DO_PROCESS_MESSAGE
 #define SOURCE_DO_PROCESS_MESSAGE 1
@@ -21,6 +24,15 @@ Result Result::Ok() {
   return ret;
 }
 
+Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
+    : _sourcename(sourcename),
+      _hdf_writer_module(std::move(hdf_writer_module)) {
+  if (SOURCE_DO_PROCESS_MESSAGE == 0) {
+    do_process_message = false;
+  }
+}
+
+#if USE_PARALLEL_WRITER
 Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
                Jemalloc::sptr jm, MMap::sptr mmap, CollectiveQueue *cq)
     : _sourcename(sourcename), _hdf_writer_module(std::move(hdf_writer_module)),
@@ -29,6 +41,7 @@ Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module,
     do_process_message = false;
   }
 }
+#endif
 
 Source::Source(Source &&x) noexcept { swap(*this, x); }
 
@@ -40,17 +53,20 @@ void swap(Source &x, Source &y) {
   swap(x._processed_messages_count, y._processed_messages_count);
   swap(x._cnt_msg_written, y._cnt_msg_written);
   swap(x.do_process_message, y.do_process_message);
+  swap(x.is_parallel, y.is_parallel);
+#if USE_PARALLEL_WRITER
   swap(x.jm, y.jm);
   swap(x.mmap, y.mmap);
   swap(x.queue, y.queue);
   swap(x.cq, y.cq);
-  swap(x.is_parallel, y.is_parallel);
+#endif
 }
 
 std::string const &Source::topic() const { return _topic; }
 
 std::string const &Source::sourcename() const { return _sourcename; }
 
+#if USE_PARALLEL_WRITER
 void Source::mpi_start(rapidjson::Document config_file,
                        rapidjson::Document command,
                        rapidjson::Document config_stream,
@@ -101,6 +117,7 @@ void Source::mpi_start(rapidjson::Document config_file,
 }
 
 void Source::mpi_stop() {}
+#endif
 
 ProcessMessageResult Source::process_message(Msg &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
@@ -111,6 +128,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   if (!do_process_message) {
     return ProcessMessageResult::OK();
   }
+#if USE_PARALLEL_WRITER
   if (is_parallel) {
     // TODO yield on contention
     for (int i1 = 0; true; ++i1) {
@@ -128,7 +146,9 @@ ProcessMessageResult Source::process_message(Msg &msg) {
       sleep_ms(4);
     }
     return ProcessMessageResult::OK();
-  } else {
+  }
+#endif
+  if (!is_parallel) {
     if (!_hdf_writer_module) {
       LOG(Sev::Debug, "!_hdf_writer_module for {}", _sourcename);
       return ProcessMessageResult::ERR();
@@ -144,6 +164,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
     }
     return ProcessMessageResult::OK();
   }
+  return ProcessMessageResult::ERR();
 }
 
 uint64_t Source::processed_messages_count() const {

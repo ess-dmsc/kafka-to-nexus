@@ -288,13 +288,18 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
 #endif
 
+#if USE_PARALLEL_WRITER
       auto s = Source(source.v, move(hdf_writer_module), config.jm, config.shm,
                       fwt->cq.get());
+#else
+      auto s = Source(source.v, move(hdf_writer_module));
+#endif
       s._topic = string(topic);
       s.do_process_message = config.source_do_process_message;
       fwt->add_source(move(s));
     }
 
+#if USE_PARALLEL_WRITER
     else {
       //   or re-open in one or more separate mpi workers Send command to
       //   create HDFWriterModule, all the json config as text, let it re-open
@@ -318,6 +323,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
       fwt->add_source(move(s));
     }
+#endif
   }
 
 #if USE_PARALLEL_WRITER
