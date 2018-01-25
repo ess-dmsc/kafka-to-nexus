@@ -21,15 +21,6 @@ using std::string;
 template <typename T> using uptr = std::unique_ptr<T>;
 using FBUF = LogData;
 
-/*
-struct append_ret {
-  int status;
-  uint64_t written_bytes;
-  uint64_t ix0;
-  operator bool() const { return status == 0; }
-};
-*/
-
 class writer_typed_base {
 public:
   virtual ~writer_typed_base() = default;
