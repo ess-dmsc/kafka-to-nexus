@@ -164,7 +164,8 @@ struct CollectiveCommand {
       // This seems to trigger a MPI send, recv and barrier!
       err = H5Dset_extent(id, v.set_extent.size);
       if (err < 0) {
-        LOG(Sev::Error, "fail H5Dset_extent  cqid: {}  {}", store.cqid, to_string());
+        LOG(Sev::Error, "fail H5Dset_extent  cqid: {}  {}", store.cqid,
+            to_string());
         exit(1);
       }
       store.datasetname_to_dsp_id[v.set_extent.name] = H5Dget_space(id);
@@ -178,7 +179,8 @@ struct CollectiveCommand {
         auto bufn = H5Iget_name(id, buf, 512);
         buf[bufn] = '\0';
       }
-      LOG(Sev::Chatty, "opened for {:2} as name: {}  id: {}", store.mpi_rank, buf, id);
+      LOG(Sev::Chatty, "opened for {:2} as name: {}  id: {}", store.mpi_rank,
+          buf, id);
       store.datasetname_to_ds_id[buf] = id;
       store.datasetname_to_dsp_id[buf] = H5Dget_space(id);
     } else if (type == CollectiveCommandType::H5Dclose) {
@@ -259,8 +261,8 @@ public:
       x[n] = 0;
     }
     nclients += 1;
-    LOG(Sev::Debug, "CQ mark open  mpi_rank: {}  n: {}  nclients: {}", store.mpi_rank, n,
-        nclients);
+    LOG(Sev::Debug, "CQ mark open  mpi_rank: {}  n: {}  nclients: {}",
+        store.mpi_rank, n, nclients);
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);
@@ -271,7 +273,8 @@ public:
   int push(HDFIDStore &store, size_t queue, CollectiveCommand item) {
     auto &items = queues[queue];
     if (n_queued[queue].load() >= items.size()) {
-      LOG(Sev::Error, "Command queue full  n_queued[queue]: {}", n_queued[queue].load());
+      LOG(Sev::Error, "Command queue full  n_queued[queue]: {}",
+          n_queued[queue].load());
       exit(1);
     }
     if (pthread_mutex_lock(&mx) != 0) {
@@ -286,7 +289,8 @@ public:
       for (size_t i1 = 0; i1 < n1; ++i1) {
         if (item.equivalent(items[i1])) {
           if (log_level >= 9) {
-            LOG(Sev::Trace, "found equivalent command, skip {}", item.to_string());
+            LOG(Sev::Trace, "found equivalent command, skip {}",
+                item.to_string());
           }
           do_insert = false;
           break;
@@ -295,8 +299,8 @@ public:
     }
 
     if (do_insert) {
-      LOG(Sev::Debug, "push CQ  cqid: {:2}  queue: {}  n1: {:4}  cmd: {}", store.cqid,
-          queue, n1, item.to_string());
+      LOG(Sev::Debug, "push CQ  cqid: {:2}  queue: {}  n1: {:4}  cmd: {}",
+          store.cqid, queue, n1, item.to_string());
       items[n1] = item;
       n1 += 1;
       n_queued[queue].store(n1);
@@ -323,15 +327,15 @@ public:
     }
     auto n1 = n_queued[queue].load();
     auto n2 = markers.at(queue).at(store.cqid);
-    LOG(Sev::Trace, "all_for  cqid: {}  queue: {}  n1: {}  n2: {}", store.cqid, queue,
-        n1, n2);
+    LOG(Sev::Trace, "all_for  cqid: {}  queue: {}  n1: {}  n2: {}", store.cqid,
+        queue, n1, n2);
     auto &items = queues[queue];
     for (size_t i1 = n2; i1 < n1; ++i1) {
       ret.push_back(items[i1]);
     }
     markers.at(queue).at(store.cqid) = n1;
-    LOG(Sev::Debug, "all_for  cqid: {}  queue: {}  marker updated: {}", store.cqid,
-        queue, markers.at(queue).at(store.cqid));
+    LOG(Sev::Debug, "all_for  cqid: {}  queue: {}  marker updated: {}",
+        store.cqid, queue, markers.at(queue).at(store.cqid));
     if (pthread_mutex_unlock(&mx) != 0) {
       LOG(Sev::Critical, "fail pthread_mutex_unlock");
       exit(1);

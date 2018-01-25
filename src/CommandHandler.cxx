@@ -250,8 +250,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     //     Re-parse the stream config
     //     Re-open HDF items
     //     Create a Source which feeds directly to that module
-    LOG(Sev::Chatty, "topic: {}  use_parallel_writer: {}  run_parallel: {}", topic.v,
-        use_parallel_writer, run_parallel);
+    LOG(Sev::Chatty, "topic: {}  use_parallel_writer: {}  run_parallel: {}",
+        topic.v, use_parallel_writer, run_parallel);
     if (!use_parallel_writer || !run_parallel) {
       LOG(Sev::Chatty, "add Source as non-parallel: {}", topic.v);
       auto module_factory = HDFWriterModuleRegistry::find(module.v);
@@ -276,7 +276,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
           fwt->hdf_file.h5file, stream.hdf_parent_name, nullptr, nullptr);
 #endif
       if (err.is_ERR()) {
-        LOG(Sev::Error, "can not reopen HDF file for stream {}", stream.hdf_parent_name);
+        LOG(Sev::Error, "can not reopen HDF file for stream {}",
+            stream.hdf_parent_name);
         exit(1);
       }
 

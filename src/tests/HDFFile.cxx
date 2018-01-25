@@ -78,7 +78,8 @@ void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
     "recv_type": "FileWriter",
     "cmd": "file_writer_tasks_clear_all",
     "job_id": "{}"
-  }})"", job_cmd.FindMember("job_id")->value.GetString());
+  }})"",
+                           job_cmd.FindMember("job_id")->value.GetString());
   ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
 }
 
@@ -90,8 +91,8 @@ TEST(HDFFile, create) {
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
   std::vector<hid_t> groups;
-  f1.init("tmp-test.h5", rapidjson::Value().SetObject(), rapidjson::Value().SetObject(),
-          stream_hdf_info, groups);
+  f1.init("tmp-test.h5", rapidjson::Value().SetObject(),
+          rapidjson::Value().SetObject(), stream_hdf_info, groups);
 }
 
 class T_CommandHandler : public testing::Test {
@@ -770,8 +771,7 @@ public:
             break;
           }
           if (i_feed % 100 == 0) {
-            LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}",
-              i_feed, i_source);
+            LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
           }
           for (auto &msg : source.msgs) {
             if (false) {
@@ -782,8 +782,8 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            auto res =
-                fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg, jm));
+            auto res = fwt->demuxers().at(0).process_message(
+                FileWriter::Msg::cheap(msg, jm));
             if (res.is_ERR()) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
@@ -877,7 +877,8 @@ public:
           err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
                                     count.data(), nullptr);
           ASSERT_GE(err, 0);
-          err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
+          err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT,
+                        data.data());
           ASSERT_GE(err, 0);
           auto fbd = fb.root()->detector_id();
           for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
@@ -1225,7 +1226,8 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg, main_opt.jm));
+            fwt->demuxers().at(0).process_message(
+                FileWriter::Msg::cheap(msg, main_opt.jm));
             source.n_fed++;
           }
         }
@@ -1267,7 +1269,8 @@ public:
     std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info, groups);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+                  groups);
     herr_t err;
     err = 0;
     auto a1 =
@@ -1376,10 +1379,11 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;    
+    std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info, groups);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+                  groups);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
@@ -1412,10 +1416,11 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;    
+    std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info, groups);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+                  groups);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);

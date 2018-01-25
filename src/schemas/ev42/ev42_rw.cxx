@@ -119,8 +119,8 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   }
 }
 
-HDFWriterModule::InitResult HDFWriterModule::init_hdf(hid_t hdf_file,
-                          string hdf_parent_name,
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hid_t hdf_file, string hdf_parent_name,
                           rapidjson::Value const *attributes,
                           CollectiveQueue *cq) {
   auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);

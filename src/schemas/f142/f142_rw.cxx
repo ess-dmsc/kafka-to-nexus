@@ -40,7 +40,8 @@ template <typename DT, typename FV>
 class writer_typed_array : public writer_typed_base {
 public:
   writer_typed_array(hid_t hdf_group, std::string const &source_name,
-                     hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq);
+                     hsize_t ncols, Value fb_value_type_id,
+                     CollectiveQueue *cq);
   ~writer_typed_array() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
@@ -50,8 +51,8 @@ public:
 template <typename DT, typename FV>
 class writer_typed_scalar : public writer_typed_base {
 public:
-  writer_typed_scalar(hid_t hdf_group, std::string const &source_name, Value fb_value_type_id,
-                      CollectiveQueue *cq);
+  writer_typed_scalar(hid_t hdf_group, std::string const &source_name,
+                      Value fb_value_type_id, CollectiveQueue *cq);
   ~writer_typed_scalar() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
@@ -63,7 +64,8 @@ static FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
                                                std::string const &source_name,
-                                               hsize_t ncols, Value fb_value_type_id,
+                                               hsize_t ncols,
+                                               Value fb_value_type_id,
                                                CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
   if (ncols <= 0) {
@@ -102,7 +104,8 @@ h5::append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
 
 template <typename DT, typename FV>
 writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
-                                                 std::string const &source_name, Value fb_value_type_id,
+                                                 std::string const &source_name,
+                                                 Value fb_value_type_id,
                                                  CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 init_impl  scalar");
@@ -240,18 +243,20 @@ writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size, string type,
     }
   } else {
     if (type == "int8") {
-      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size, Value::ArrayByte, cq);
+      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size, Value::ArrayByte,
+                                           cq);
     }
     if (type == "int16") {
       return (R) new WA<int16_t, ArrayShort>(hg, s, array_size,
                                              Value::ArrayShort, cq);
     }
     if (type == "int32") {
-      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size, Value::ArrayInt, cq);
+      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size, Value::ArrayInt,
+                                           cq);
     }
     if (type == "int64") {
-      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size,
-                                            Value::ArrayLong, cq);
+      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size, Value::ArrayLong,
+                                            cq);
     }
     if (type == "uint8") {
       return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size,
@@ -274,8 +279,8 @@ writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size, string type,
                                              Value::ArrayDouble, cq);
     }
     if (type == "float") {
-      return (R) new WA<float, ArrayFloat>(hg, s, array_size,
-                                           Value::ArrayFloat, cq);
+      return (R) new WA<float, ArrayFloat>(hg, s, array_size, Value::ArrayFloat,
+                                           cq);
     }
   }
   return (writer_typed_base *)nullptr;
@@ -296,8 +301,9 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   if (auto x = get_uint(&config_stream, "array_size")) {
     array_size = size_t(x.v);
   }
-  LOG(Sev::Debug, "HDFWriterModule::parse_config f142 source_name: {}  type: {}  "
-         "array_size: {}",
+  LOG(Sev::Debug,
+      "HDFWriterModule::parse_config f142 source_name: {}  type: {}  "
+      "array_size: {}",
       source_name, type, array_size);
 
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
@@ -308,7 +314,8 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name, rapidjson::Value const *attributes,
+HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+                          rapidjson::Value const *attributes,
                           CollectiveQueue *cq) {
   auto hdf_group = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
 

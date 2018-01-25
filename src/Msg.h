@@ -69,12 +69,14 @@ public:
   }
 
   inline Msg(Msg &&x) {
-    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
+    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type,
+    // x._size);
     using std::swap;
     swap(type, x.type);
     swap(var, x.var);
     swap(_size, x._size);
-    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type, x._size);
+    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type,
+    // x._size);
   }
 
   inline void swap(Msg &y) {
@@ -83,7 +85,8 @@ public:
       LOG(Sev::Critical, "sorry, can not swap that");
       exit(1);
     }
-    // LOG(Sev::Error, "swap {} / {}   {} / {}", x.type, x._size, y.type, y._size);
+    // LOG(Sev::Error, "swap {} / {}   {} / {}", x.type, x._size, y.type,
+    // y._size);
     using std::swap;
     swap(x.type, y.type);
     swap(x.var, y.var);

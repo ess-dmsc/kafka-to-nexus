@@ -150,8 +150,8 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
-          o.type, i1, o.sext.at(i1), o.smax.at(i1));
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+          o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
     }
   }
   o.mem_max = {{100000000, 100000000}};
@@ -206,8 +206,9 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
     if (log_level >= 9) {
       for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-        LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-            o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
+        LOG(Sev::Trace,
+            "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
+            o.type, i1, o.sext.at(i1), o.smax.at(i1));
       }
     }
     o.mem_max = {{100000000, 100000000}};
@@ -249,8 +250,9 @@ h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
     H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
     if (log_level >= 9) {
       for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-        LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-            o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
+        LOG(Sev::Trace,
+            "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", o.name,
+            o.type, i1, o.sext.at(i1), o.smax.at(i1));
       }
     }
     o.mem_max = {{100000000, 100000000}};
@@ -295,7 +297,7 @@ h5d::~h5d() {
       err = H5Dclose(id);
       if (err < 0) {
         LOG(Sev::Error, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
-               "H5O_info_t.rc: {}",
+                        "H5O_info_t.rc: {}",
             id, buf, bufn, H5Iget_ref(id), oi.rc);
       }
       id = -1;
@@ -439,8 +441,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     if (sext2[0] - sext[0] > (1 << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
-    LOG(Sev::Debug, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext, sext[0],
-        sext2[0]);
+    LOG(Sev::Debug, "snext: {:12}  set_extent from: {:12}  to: {:12}", snext,
+        sext[0], sext2[0]);
 
     auto t2 = CLK::now();
     if (not cq) {
@@ -488,8 +490,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       exit(1);
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}", name,
-          type, i1, sext.at(i1), smax.at(i1));
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+          name, type, i1, sext.at(i1), smax.at(i1));
     }
   }
 
@@ -508,8 +510,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   A1 tgt_count{{nlen}};
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1, tgt_start[0],
-          tgt_count[0]);
+      LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1,
+          tgt_start[0], tgt_count[0]);
     }
   }
   err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
@@ -522,7 +524,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     if (cq) {
-      LOG(Sev::Error, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid, ds_name);
+      LOG(Sev::Error, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid,
+          ds_name);
     } else {
       LOG(Sev::Error, "write failed:");
     }
@@ -535,8 +538,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       }
       for (size_t i1 = 0; i1 < 1; ++i1) {
-        LOG(Sev::Debug, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1, sext.at(i1),
-            smax.at(i1));
+        LOG(Sev::Debug, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1,
+            sext.at(i1), smax.at(i1));
       }
     }
     return {AppendResult::ERROR};
@@ -697,8 +700,9 @@ h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
     : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() {
-  LOG(Sev::Debug, "~h5d_chunked_1d  count_append_calls: {}, count_append_bytes: {}, "
-         "count_buffer_copy_calls: {}, count_buffer_copy_bytes: {}",
+  LOG(Sev::Debug,
+      "~h5d_chunked_1d  count_append_calls: {}, count_append_bytes: {}, "
+      "count_buffer_copy_calls: {}, count_buffer_copy_bytes: {}",
       count_append_calls, count_append_bytes, count_buffer_copy_calls,
       count_buffer_copy_bytes);
   flush_buf();

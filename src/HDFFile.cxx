@@ -43,9 +43,7 @@ herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
   return 0;
 }
 
-HDFFile::~HDFFile() {
-  close();
-}
+HDFFile::~HDFFile() { close(); }
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
                                        std::string s1) {
@@ -275,7 +273,8 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
       if (as.size() > 10) {
         break;
       }
-      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
+      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
+      // an.back());
       if (ai.top() >= an.top()) {
         as.pop();
         ai.pop();
@@ -994,8 +993,10 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   return ret;
 }
 
-int HDFFile::init(hid_t h5file, std::string filename, rapidjson::Value const &nexus_structure,
-                  std::vector<StreamHDFInfo> &stream_hdf_info, std::vector<hid_t> &groups) {
+int HDFFile::init(hid_t h5file, std::string filename,
+                  rapidjson::Value const &nexus_structure,
+                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                  std::vector<hid_t> &groups) {
   check_hdf_version();
   int ret = -1;
   herr_t err;
@@ -1049,7 +1050,8 @@ int HDFFile::init(hid_t h5file, std::string filename, rapidjson::Value const &ne
                   write_attribute_str(h5file, "file_name", filename.data());
                   write_attribute_str(
                       h5file, "creator",
-                      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT).data());
+                      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT)
+                          .data());
                   write_hdf_iso8601_now(h5file, "file_time");
                   write_attributes_if_present(h5file, &nexus_structure);
 
