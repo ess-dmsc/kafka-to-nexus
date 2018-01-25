@@ -75,6 +75,17 @@ CommandHandler::CommandHandler(MainOpt &config, Master *master)
   }
 }
 
+// POD
+
+struct StreamSettings {
+  StreamHDFInfo stream_hdf_info;
+  std::string topic;
+  std::string module;
+  std::string source;
+  bool run_parallel = false;
+  rapidjson::Value const *config_stream = nullptr;
+};
+
 void CommandHandler::handle_new(rapidjson::Document const &d) {
   // if (g_N_HANDLED > 0) return;
   using namespace rapidjson;
@@ -130,8 +141,13 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->cq = std::unique_ptr<CollectiveQueue>();
 #endif
 
+  // Extract some information from the JSON first
+  std::vector<StreamSettings> stream_settings_list;
   LOG(Sev::Info, "Command contains {} streams", stream_hdf_info.size());
   for (auto &stream : stream_hdf_info) {
+    StreamSettings stream_settings;
+    stream_settings.stream_hdf_info = stream;
+
     auto config_stream_value = get_object(*stream.config_stream, "stream");
     if (!config_stream_value) {
       LOG(Sev::Notice, "Missing stream specification");
@@ -139,17 +155,20 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
     auto attributes = get_object(*stream.config_stream, "attributes");
     auto &config_stream = *config_stream_value.v;
+    stream_settings.config_stream = config_stream_value.v;
     LOG(Sev::Info, "Adding stream: {}", json_to_string(config_stream));
     auto topic = get_string(&config_stream, "topic");
     if (!topic) {
       LOG(Sev::Notice, "Missing topic on stream specification");
       continue;
     }
+    stream_settings.topic = topic.v;
     auto source = get_string(&config_stream, "source");
     if (!source) {
       LOG(Sev::Notice, "Missing source on stream specification");
       continue;
     }
+    stream_settings.source = source.v;
     auto module = get_string(&config_stream, "writer_module");
     if (!module) {
       module = get_string(&config_stream, "module");
@@ -161,6 +180,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         continue;
       }
     }
+    stream_settings.module = module.v;
     bool run_parallel = false;
     auto run_parallel_cfg = get_bool(&config_stream, "run_parallel");
     if (run_parallel_cfg) {
@@ -169,6 +189,9 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         LOG(Sev::Info, "Run parallel {}", source.v);
       }
     }
+    stream_settings.run_parallel = run_parallel;
+
+    stream_settings_list.push_back(stream_settings);
 
     auto module_factory = HDFWriterModuleRegistry::find(module.v);
     if (!module_factory) {
@@ -189,9 +212,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 #endif
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
                                 attributes.v, cq);
-    LOG(Sev::Chatty, "close");
     hdf_writer_module->close();
-    LOG(Sev::Chatty, "reset");
     hdf_writer_module.reset();
   }
 
@@ -208,111 +229,16 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   bool use_parallel_writer = false;
 #endif
 
-  for (auto &stream : stream_hdf_info) {
-    // TODO
-    // Refactor with the above loop..
-    auto config_stream_value = get_object(*stream.config_stream, "stream");
-    if (!config_stream_value) {
-      LOG(Sev::Info, "Missing stream specification");
-      continue;
-    }
-    auto &config_stream = *config_stream_value.v;
-    // LOG(7, "Adding stream: {}", json_to_string(config_stream));
-    auto topic = get_string(&config_stream, "topic");
-    if (!topic) {
-      LOG(Sev::Info, "Missing topic on stream specification");
-      continue;
-    }
-    auto source = get_string(&config_stream, "source");
-    if (!source) {
-      LOG(Sev::Info, "Missing source on stream specification");
-      continue;
-    }
-    auto module = get_string(&config_stream, "writer_module");
-    if (!module) {
-      module = get_string(&config_stream, "module");
-      if (module) {
-        LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
-                         "\"stream.writer_module\" instead.");
-      } else {
-        LOG(Sev::Notice, "Missing key `writer_module` on stream specification");
-        continue;
-      }
-    }
-    bool run_parallel = false;
-    auto run_parallel_cfg = get_bool(&config_stream, "run_parallel");
-    if (run_parallel_cfg) {
-      run_parallel = run_parallel_cfg.v;
-      if (run_parallel) {
-        LOG(Sev::Info, "Run parallel {}", source.v);
-      }
-    }
-
-    // for each stream:
-    //   either re-open in this main process
-    //     Re-create HDFWriterModule
-    //     Re-parse the stream config
-    //     Re-open HDF items
-    //     Create a Source which feeds directly to that module
-    LOG(Sev::Chatty, "topic: {}  use_parallel_writer: {}  run_parallel: {}",
-        topic.v, use_parallel_writer, run_parallel);
-    if (!use_parallel_writer || !run_parallel) {
-      LOG(Sev::Chatty, "add Source as non-parallel: {}", topic.v);
-      auto module_factory = HDFWriterModuleRegistry::find(module.v);
-      if (!module_factory) {
-        LOG(Sev::Info, "Module '{}' is not available", module.v);
-        continue;
-      }
-
-      auto hdf_writer_module = module_factory();
-      if (!hdf_writer_module) {
-        LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'", module.v);
-        continue;
-      }
-
-      hdf_writer_module->parse_config(config_stream, nullptr);
+  for (auto &stream_settings : stream_settings_list) {
+    if (use_parallel_writer && stream_settings.run_parallel) {
 #if USE_PARALLEL_WRITER
-      auto err = hdf_writer_module->reopen(fwt->hdf_file.h5file,
-                                           stream.hdf_parent_name,
-                                           fwt->cq.get(), &fwt->hdf_store);
-#else
-      auto err = hdf_writer_module->reopen(
-          fwt->hdf_file.h5file, stream.hdf_parent_name, nullptr, nullptr);
-#endif
-      if (err.is_ERR()) {
-        LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            stream.hdf_parent_name);
-        exit(1);
-      }
-
-#if USE_PARALLEL_WRITER
-      {
-        int rank_merged = 0;
-        hdf_writer_module->enable_cq(fwt->cq.get(), &fwt->hdf_store,
-                                     rank_merged);
-      }
-#endif
-
-#if USE_PARALLEL_WRITER
-      auto s = Source(source.v, move(hdf_writer_module), config.jm, config.shm,
-                      fwt->cq.get());
-#else
-      auto s = Source(source.v, move(hdf_writer_module));
-#endif
-      s._topic = string(topic);
-      s.do_process_message = config.source_do_process_message;
-      fwt->add_source(move(s));
-    }
-
-#if USE_PARALLEL_WRITER
-    else {
       //   or re-open in one or more separate mpi workers Send command to
       //   create HDFWriterModule, all the json config as text, let it re-open
       //   hdf items Create a Source which puts messages on a queue
-      LOG(Sev::Chatty, "add Source as parallel: {}", topic.v);
+      LOG(Sev::Chatty, "add Source as parallel: {}", stream_settings.topic);
       auto s = Source(source.v, {}, config.jm, config.shm, fwt->cq.get());
       s.is_parallel = true;
-      s._topic = string(topic);
+      s._topic = string(stream_settings.topic);
       s.do_process_message = config.source_do_process_message;
       {
         Document c1;
@@ -327,8 +253,57 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         s.mpi_start(move(c1), move(c2), move(c3), to_spawn);
       }
       fwt->add_source(move(s));
-    }
 #endif
+    } else {
+      LOG(Sev::Chatty, "add Source as non-parallel: {}", stream_settings.topic);
+      auto module_factory =
+          HDFWriterModuleRegistry::find(stream_settings.module);
+      if (!module_factory) {
+        LOG(Sev::Info, "Module '{}' is not available", stream_settings.module);
+        continue;
+      }
+
+      auto hdf_writer_module = module_factory();
+      if (!hdf_writer_module) {
+        LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'",
+            stream_settings.module);
+        continue;
+      }
+
+      hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
+#if USE_PARALLEL_WRITER
+      auto err = hdf_writer_module->reopen(fwt->hdf_file.h5file,
+                                           stream.hdf_parent_name,
+                                           fwt->cq.get(), &fwt->hdf_store);
+#else
+      auto err = hdf_writer_module->reopen(
+          fwt->hdf_file.h5file, stream_settings.stream_hdf_info.hdf_parent_name,
+          nullptr, nullptr);
+#endif
+      if (err.is_ERR()) {
+        LOG(Sev::Error, "can not reopen HDF file for stream {}",
+            stream_settings.stream_hdf_info.hdf_parent_name);
+        exit(1);
+      }
+
+#if USE_PARALLEL_WRITER
+      {
+        int rank_merged = 0;
+        hdf_writer_module->enable_cq(fwt->cq.get(), &fwt->hdf_store,
+                                     rank_merged);
+      }
+#endif
+
+#if USE_PARALLEL_WRITER
+      auto s = Source(stream_settings.source, move(hdf_writer_module),
+                      config.jm, config.shm, fwt->cq.get());
+#else
+      auto s = Source(stream_settings.source, move(hdf_writer_module));
+#endif
+      s._topic = string(stream_settings.topic);
+      s.do_process_message = config.source_do_process_message;
+      fwt->add_source(move(s));
+    }
   }
 
 #if USE_PARALLEL_WRITER
