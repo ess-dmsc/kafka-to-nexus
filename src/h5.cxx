@@ -479,7 +479,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       }
       dsp_tgt = H5Dget_space(id);
       if (true) {
-        // LOG(9, "try to get the dsp dims:");
         err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
         if (err < 0) {
           LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
@@ -494,7 +493,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       cq->execute_for(*hdf_store, 0);
       dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
       if (true) {
-        // LOG(Sev::Trace, "try to get the dsp dims:");
         err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
         if (err < 0) {
           LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
