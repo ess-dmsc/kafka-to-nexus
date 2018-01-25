@@ -180,8 +180,12 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
 
     hdf_writer_module->parse_config(config_stream, nullptr);
+    CollectiveQueue *cq = nullptr;
+#if USE_PARALLEL_WRITER
+    cq = fwt->cq.get();
+#endif
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
-                                attributes.v, fwt->cq.get());
+                                attributes.v, cq);
     LOG(Sev::Chatty, "close");
     hdf_writer_module->close();
     LOG(Sev::Chatty, "reset");
