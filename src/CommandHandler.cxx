@@ -1,11 +1,14 @@
 #include "CommandHandler.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
-#include "MPIChild.h"
 #include "helper.h"
 #include "utils.h"
 #include <future>
 #include <h5.h>
+
+#if USE_PARALLEL_WRITER
+#include "MPIChild.h"
+#endif
 
 using std::array;
 using std::vector;
@@ -200,11 +203,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->hdf_store.mpi_rank = 0;
   fwt->hdf_store.cqid = fwt->hdf_file.cq->open(fwt->hdf_store);
   fwt->hdf_store.h5file = fwt->hdf_file.h5file;
+  std::vector<MPIChild::ptr> to_spawn;
 #else
   bool use_parallel_writer = false;
 #endif
-
-  std::vector<MPIChild::ptr> to_spawn;
 
   for (auto &stream : stream_hdf_info) {
     // TODO
