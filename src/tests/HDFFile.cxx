@@ -1016,8 +1016,8 @@ public:
         }
       },
       "unit_test": {
-        "n_events_per_message": 32,
-        "n_msgs_per_source": 128,
+        "f142_array_size": 7,
+        "n_msgs_per_source": 43,
         "n_sources": 1,
         "n_msgs_per_batch": 1
       }
@@ -1048,7 +1048,12 @@ public:
       n_msgs_per_batch = int(x.v);
     }
 
-    size_t array_size = 4;
+    size_t array_size = 0;
+    if (auto x = get_int(&main_opt.config_file, "unit_test.f142_array_size")) {
+      LOG(Sev::Debug, "unit_test.f142_array_size: {}", x.v);
+      array_size = size_t(x.v);
+    }
+
     vector<SourceDataGen_f142> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
