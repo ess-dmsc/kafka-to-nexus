@@ -138,9 +138,6 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     char buf[512];
     auto bufn = H5Iget_name(o.id, buf, 512);
     buf[bufn] = '\0';
-#if USE_PARALLEL_WRITER
-    cq->register_datasetname(buf);
-#endif
   }
 
   o.dsp_tgt = H5Dget_space(o.id);
@@ -165,14 +162,6 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   if (err < 0) {
     LOG(Sev::Debug, "failed H5Pset_edc_check");
   }
-#if USE_PARALLEL_WRITER
-  if (false) {
-    err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
-    }
-  }
-#endif
   return ret;
 }
 
@@ -214,77 +203,9 @@ h5d::ptr h5d::open_single(hid_t loc, string name, CollectiveQueue *cq,
   return ret;
 }
 
-#if USE_PARALLEL_WRITER
-h5d::ptr h5d::open_mpi(hid_t loc, string name, CollectiveQueue *cq,
-                       HDFIDStore *hdf_store) {
-  // Open in parallel mode
-  herr_t err = 0;
-  char buf[512];
-  {
-    auto bufn = H5Iget_name(loc, buf, 512);
-    buf[bufn] = '\0';
-  }
-  std::string full_path(buf);
-  full_path += "/";
-  full_path += name;
-  cq->push(*hdf_store, 0, CollectiveCommand::H5Dopen2(full_path.c_str()));
-  cq->execute_for(*hdf_store, 0);
-  auto ret = ptr(new h5d);
-  auto &o = *ret;
-  o.cq = cq;
-  o.hdf_store = hdf_store;
-  o.name = name;
-  o.id = hdf_store->datasetname_to_ds_id[full_path];
-  LOG(Sev::Chatty, "registered dataset name  rank: {}  id: {}  for path: {}",
-      hdf_store->mpi_rank, o.id, full_path);
-  o.type = H5Dget_type(o.id);
-  o.dsp_tgt = H5Dget_space(o.id);
-  o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
-  o.snow = {{0, 0}};
-  H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
-  if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-          o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
-    }
-  }
-  o.mem_max = {{100000000, 100000000}};
-  o.mem_now = {{0, 0}};
-  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
-  if (o.dsp_mem < 0) {
-    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
-  }
-  o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
-  err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
-  if (err < 0) {
-    LOG(Sev::Debug, "failed H5Pset_edc_check");
-  }
-  if (false) {
-    err = H5Pset_dxpl_mpio(o.pl_transfer, H5FD_MPIO_COLLECTIVE);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_dxpl_mpio");
-    }
-  }
-  return ret;
-}
-#endif
-
 h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
                    HDFIDStore *hdf_store) {
-  if (cq) {
-#if USE_PARALLEL_WRITER
-    return open_mpi(loc, name, cq, hdf_store);
-#else
-    if (cq) {
-      LOG(Sev::Critical,
-          "Found cq != nullptr even though not compiled for parallel");
-      exit(1);
-    }
-#endif
-  } else {
-    return open_single(loc, name, cq, hdf_store);
-  }
-  return {};
+  return open_single(loc, name, cq, hdf_store);
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
@@ -310,19 +231,6 @@ h5d::~h5d() {
             id, buf, bufn, H5Iget_ref(id), oi.rc);
       }
       id = -1;
-    } else {
-#if USE_PARALLEL_WRITER
-      LOG(Sev::Trace, "~h5d ds  cqid: {}", hdf_store->cqid);
-      size_t CQSNOWIX = -1;
-      lookup_cqsnowix(ds_name, CQSNOWIX);
-      snow[0] = cq->snow[CQSNOWIX].load();
-      // TODO
-      // Trim the final size, needs some more work.
-      cq->push(*hdf_store, 1, CollectiveCommand::set_extent(
-                                  ds_name, snow.size(), snow.data()));
-      cq->push(*hdf_store, 2, CollectiveCommand::H5Dclose(ds_name));
-      id = -1;
-#endif
     }
   }
   if (dsp_mem != -1) {
@@ -363,9 +271,6 @@ void swap(h5d &x, h5d &y) {
 
 void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
   LOG(Sev::Trace, "using cq: {}", (void *)cq);
-#if USE_PARALLEL_WRITER
-  cqsnowix = cq->find_snowix_for_datasetname(ds_name);
-#endif
 }
 
 template <typename T>
@@ -393,18 +298,10 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     buf[bufn] = '\0';
   }
 
-// TODO
-// Is there still a need to look up the DSP because some extent might have
-// happened in some other process? Yes, sure!!
-// Therefore, always lookup the dataspace from the hdf_store!
-
-#if USE_PARALLEL_WRITER
-  size_t CQSNOWIX = -1;
-  if (cq) {
-    lookup_cqsnowix(ds_name, CQSNOWIX);
-    dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
-  }
-#endif
+  // TODO
+  // Is there still a need to look up the DSP because some extent might have
+  // happened in some other process? Yes, sure!!
+  // Therefore, always lookup the dataspace from the hdf_store!
 
   if (false && log_level >= 9) {
     // Just for debugging
@@ -433,16 +330,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (not cq) {
     snext = snow[0];
   } else {
-#if USE_PARALLEL_WRITER
-    LOG(Sev::Debug, "CAS allocate...");
-    while (true) {
-      snext = cq->snow[CQSNOWIX].load();
-      if (cq->snow[CQSNOWIX].compare_exchange_weak(snext, snext + nlen_0)) {
-        break;
-      }
-    }
-    LOG(Sev::Debug, "CAS allocated: {}", snext);
-#endif
   }
 
   if (snext + nlen_0 > sext[0]) {
@@ -491,22 +378,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           exit(1);
         }
       }
-    } else {
-#if USE_PARALLEL_WRITER
-      // H5O_info_t oi;
-      // H5Oget_info(id, &oi);
-      cq->push(*hdf_store, 0, CollectiveCommand::set_extent(
-                                  ds_name, sext2.size(), sext2.data()));
-      cq->execute_for(*hdf_store, 0);
-      dsp_tgt = hdf_store->datasetname_to_dsp_id[ds_name];
-      if (true) {
-        err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
-        if (err < 0) {
-          LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
-          exit(1);
-        }
-      }
-#endif
     }
     sext.at(1) = sext2.at(1);
     auto t3 = CLK::now();
@@ -563,10 +434,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
   if (err < 0) {
     if (cq) {
-#if USE_PARALLEL_WRITER
-      LOG(Sev::Error, "write failed  cqid: {}  ds_name: {}", hdf_store->cqid,
-          ds_name);
-#endif
     } else {
       LOG(Sev::Error, "write failed  ds_name: {}", ds_name);
     }

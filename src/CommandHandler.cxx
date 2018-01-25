@@ -6,10 +6,6 @@
 #include <future>
 #include <h5.h>
 
-#if USE_PARALLEL_WRITER
-#include "MPIChild.h"
-#endif
-
 using std::array;
 using std::vector;
 
@@ -133,14 +129,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     }
   }
 
-#if USE_PARALLEL_WRITER
-  auto &jm = config.jm;
-  jm->use_this();
-  fwt->cq = CollectiveQueue::ptr(new CollectiveQueue(jm));
-  jm->use_default();
-  fwt->cq = std::unique_ptr<CollectiveQueue>();
-#endif
-
   // Extract some information from the JSON first
   std::vector<StreamSettings> stream_settings_list;
   LOG(Sev::Info, "Command contains {} streams", stream_hdf_info.size());
@@ -207,9 +195,6 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
     hdf_writer_module->parse_config(config_stream, nullptr);
     CollectiveQueue *cq = nullptr;
-#if USE_PARALLEL_WRITER
-    cq = fwt->cq.get();
-#endif
     hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
                                 attributes.v, cq);
     hdf_writer_module->close();
@@ -219,41 +204,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->hdf_close();
   fwt->hdf_reopen();
 
-#if USE_PARALLEL_WRITER
-  bool use_parallel_writer = true;
-  fwt->hdf_store.mpi_rank = 0;
-  fwt->hdf_store.cqid = fwt->hdf_file.cq->open(fwt->hdf_store);
-  fwt->hdf_store.h5file = fwt->hdf_file.h5file;
-  std::vector<MPIChild::ptr> to_spawn;
-#else
   bool use_parallel_writer = false;
-#endif
 
   for (auto &stream_settings : stream_settings_list) {
     if (use_parallel_writer && stream_settings.run_parallel) {
-#if USE_PARALLEL_WRITER
-      //   or re-open in one or more separate mpi workers Send command to
-      //   create HDFWriterModule, all the json config as text, let it re-open
-      //   hdf items Create a Source which puts messages on a queue
-      LOG(Sev::Chatty, "add Source as parallel: {}", stream_settings.topic);
-      auto s = Source(source.v, {}, config.jm, config.shm, fwt->cq.get());
-      s.is_parallel = true;
-      s._topic = string(stream_settings.topic);
-      s.do_process_message = config.source_do_process_message;
-      {
-        Document c1;
-        c1.CopyFrom(config.config_file, c1.GetAllocator());
-        Document c2;
-        c2.CopyFrom(d, c2.GetAllocator());
-        Document c3;
-        auto &c3a = c3.GetAllocator();
-        c3.CopyFrom(config_stream, c3a);
-        c3.AddMember("hdf_parent_name",
-                     Value(stream.hdf_parent_name.c_str(), c3a), c3a);
-        s.mpi_start(move(c1), move(c2), move(c3), to_spawn);
-      }
-      fwt->add_source(move(s));
-#endif
     } else {
       LOG(Sev::Chatty, "add Source as non-parallel: {}", stream_settings.topic);
       auto module_factory =
@@ -271,44 +225,21 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       }
 
       hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
-#if USE_PARALLEL_WRITER
-      auto err = hdf_writer_module->reopen(fwt->hdf_file.h5file,
-                                           stream.hdf_parent_name,
-                                           fwt->cq.get(), &fwt->hdf_store);
-#else
       auto err = hdf_writer_module->reopen(
           fwt->hdf_file.h5file, stream_settings.stream_hdf_info.hdf_parent_name,
           nullptr, nullptr);
-#endif
       if (err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
             stream_settings.stream_hdf_info.hdf_parent_name);
         exit(1);
       }
 
-#if USE_PARALLEL_WRITER
-      {
-        int rank_merged = 0;
-        hdf_writer_module->enable_cq(fwt->cq.get(), &fwt->hdf_store,
-                                     rank_merged);
-      }
-#endif
-
-#if USE_PARALLEL_WRITER
-      auto s = Source(stream_settings.source, move(hdf_writer_module),
-                      config.jm, config.shm, fwt->cq.get());
-#else
       auto s = Source(stream_settings.source, move(hdf_writer_module));
-#endif
       s._topic = string(stream_settings.topic);
       s.do_process_message = config.source_do_process_message;
       fwt->add_source(move(s));
     }
   }
-
-#if USE_PARALLEL_WRITER
-  fwt->mpi_start(std::move(to_spawn));
-#endif
 
   if (master) {
     auto br = find_broker(d);
