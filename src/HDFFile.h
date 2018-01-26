@@ -37,13 +37,15 @@ public:
            rapidjson::Value const &nexus_structure,
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
-  void flush();
+  int flush(const std::string &filename = "");
   hid_t h5file = -1;
   std::string filename;
 
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
+
+  std::string getFilename();
 };
 
 std::string h5_version_string_linked();

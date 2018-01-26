@@ -971,10 +971,9 @@ int HDFFile::init(hid_t h5file, std::string filename,
                   write_attribute_str(h5file, "HDF5_Version",
                                       h5_version_string_linked().data());
                   write_attribute_str(h5file, "file_name", filename.data());
-                  write_attribute_str(
-                      h5file, "creator",
-                      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT)
-                          .data());
+                  write_attribute_str(h5file, "creator",
+                                      fmt::format("kafka-to-nexus commit {:.7}",
+                                                  GIT_COMMIT).data());
                   write_hdf_iso8601_now(h5file, "file_time");
                   write_attributes_if_present(h5file, &nexus_structure);
 
@@ -1024,29 +1023,23 @@ int HDFFile::close() {
     LOG(Sev::Error, "file handle is not valid");
     return -1;
   }
-  std::array<char, 512> fname;
-  err = H5Fget_name(h5file, fname.data(), fname.size());
-  if (err < 0) {
-    LOG(Sev::Error, "fail H5Fget_name");
-    h5file = -1;
+
+  auto filename = getFilename();
+  if (filename.empty())
     return -1;
-  }
-  LOG(Sev::Info, "flush file {}  pid: {}", fname.data(), getpid_wrapper());
-  err = H5Fflush(h5file, H5F_SCOPE_LOCAL);
-  if (err < 0) {
-    LOG(Sev::Error, "fail H5Fflush");
-    h5file = -1;
+
+  if (flush(filename) < 0)
     return -1;
-  }
-  LOG(Sev::Info, "close file {}", fname.data());
+
+  LOG(Sev::Info, "close file {}", filename);
   err = H5Fclose(h5file);
   if (err < 0) {
-    LOG(Sev::Error, "can not close file {}", fname.data());
+    LOG(Sev::Error, "can not close file {}", filename);
     h5file = -1;
     return -1;
   }
   if (H5Iis_valid(h5file)) {
-    LOG(Sev::Error, "closed file handle is still valid for {}", fname.data());
+    LOG(Sev::Error, "closed file handle is still valid for {}", filename);
   }
   h5file = -1;
   return 0;
@@ -1074,6 +1067,27 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
   return 0;
 }
 
-void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
+std::string HDFFile::getFilename() {
+  array<char, 512> fname;
+  auto size_or_err = H5Fget_name(h5file, fname.data(), fname.size());
+  if (size_or_err < 0) {
+    LOG(Sev::Error, "failed to get name of file with H5Fget_name");
+    h5file = -1;
+    return "";
+  }
+  std::string filename(fname.begin(), fname.end());
+  return filename;
+}
+
+int HDFFile::flush(const std::string &filename) {
+  if (!filename.empty())
+    LOG(Sev::Info, "flush file {}  pid: {}", filename, getpid_wrapper());
+  if (H5Fflush(h5file, H5F_SCOPE_LOCAL) < 0) {
+    LOG(Sev::Error, "failed to flush file with H5Fflush");
+    h5file = -1;
+    return -1;
+  }
+  return 0;
+}
 
 } // namespace FileWriter
