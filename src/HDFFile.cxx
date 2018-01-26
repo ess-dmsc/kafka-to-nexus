@@ -37,7 +37,16 @@ herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
   return 0;
 }
 
-HDFFile::~HDFFile() { close(); }
+HDFFile::~HDFFile() {
+  // we do this to prevent destructor from throwing
+  try {
+    close();
+  }
+  catch (std::exception& e)
+  {
+    LOG(Sev::Error, "HDFFile failed to close, stack: {}", hdf5::error::print_nested(e));
+  }
+}
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
                                        std::string s1) {
@@ -886,7 +895,7 @@ static void check_hdf_version() {
 
 extern "C" char const GIT_COMMIT[];
 
-int HDFFile::init(std::string filename,
+void HDFFile::init(std::string filename,
                   rapidjson::Value const &nexus_structure,
                   rapidjson::Value const &config_file,
                   std::vector<StreamHDFInfo> &stream_hdf_info,
@@ -898,111 +907,20 @@ int HDFFile::init(std::string filename,
     set_common_props(fcpl, fapl);
     h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE,
                              fcpl, fapl);
+    init(nexus_structure, stream_hdf_info, groups);
   }
   catch (std::exception& e)
   {
     auto message = hdf5::error::print_nested(e);
-    std::array<char, 256> cwd;
-    getcwd(cwd.data(), cwd.size());
     LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}  trace: {}",
-        filename, cwd.data(), message);
-    return -1;
+        filename, boost::filesystem::current_path().string(), message);
+    std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
-
-  return init(static_cast<hid_t>(this->h5file),
-              filename, nexus_structure, stream_hdf_info, groups);
 }
 
-int HDFFile::init(hid_t h5file, std::string filename,
-                  rapidjson::Value const &nexus_structure,
+void HDFFile::init(rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info,
                   std::vector<hid_t> &groups) {
-  check_hdf_version();
-  int ret = -1;
-  herr_t err;
-  hid_t lcpl = H5Pcreate(H5P_LINK_CREATE);
-  if (lcpl < 0) {
-    LOG(Sev::Critical, "failed H5Pcreate");
-  } else {
-    err = H5Pset_char_encoding(lcpl, H5T_CSET_UTF8);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pset_char_encoding");
-    } else {
-      hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
-      if (acpl < 0) {
-        LOG(Sev::Critical, "failed H5Pcreate");
-      } else {
-        err = H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-        if (err < 0) {
-          LOG(Sev::Critical, "failed H5Pset_char_encoding");
-        } else {
-          hid_t strfix = H5Tcopy(H5T_C_S1);
-          if (strfix < 0) {
-            LOG(Sev::Critical, "failed H5Tcopy");
-          } else {
-            err = H5Tset_cset(strfix, H5T_CSET_UTF8);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tset_cset");
-            } else {
-              err = H5Tset_size(strfix, 1);
-              if (err < 0) {
-                LOG(Sev::Critical, "failed H5Tset_size");
-              } else {
-                hid_t dsp_sc = H5Screate(H5S_SCALAR);
-                if (dsp_sc < 0) {
-                  LOG(Sev::Critical, "failed H5Screate");
-                } else {
-                  std::deque<std::string> path;
-                  if (nexus_structure.IsObject()) {
-                    auto value = &nexus_structure;
-                    auto mem = value->FindMember("children");
-                    if (mem != value->MemberEnd()) {
-                      if (mem->value.IsArray()) {
-                        for (auto &child : mem->value.GetArray()) {
-                          create_hdf_structures(&child, h5file, 0, lcpl, strfix,
-                                                stream_hdf_info, path);
-                        }
-                      }
-                    }
-                  }
-                  write_attribute_str(h5file, "HDF5_Version",
-                                      h5_version_string_linked().data());
-                  write_attribute_str(h5file, "file_name", filename.data());
-                  write_attribute_str(h5file, "creator",
-                                      fmt::format("kafka-to-nexus commit {:.7}",
-                                                  GIT_COMMIT).data());
-                  write_hdf_iso8601_now(h5file, "file_time");
-                  write_attributes_if_present(h5file, &nexus_structure);
-
-                  ret = 0;
-                  err = H5Sclose(dsp_sc);
-                  if (err < 0) {
-                    LOG(Sev::Critical, "failed H5Sclose");
-                    ret = -1;
-                  }
-                }
-              }
-            }
-            err = H5Tclose(strfix);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tclose");
-              ret = -1;
-            }
-          }
-        }
-        err = H5Pclose(acpl);
-        if (err < 0) {
-          LOG(Sev::Critical, "failed H5Pclose");
-          ret = -1;
-        }
-      }
-    }
-    err = H5Pclose(lcpl);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pclose");
-      ret = -1;
-    }
-  }
 
   for (auto x : groups) {
     array<char, 256> b;
@@ -1011,52 +929,91 @@ int HDFFile::init(hid_t h5file, std::string filename,
     H5Gclose(x);
   }
   groups.clear();
-  return ret;
+
+
+  try {
+    check_hdf_version();
+
+    //These never gets used?!?!
+    hdf5::dataspace::Scalar dsp_sc;
+    hdf5::property::AttributeCreationList acpl;
+    acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    hdf5::property::LinkCreationList lcpl;
+    lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    auto strfix = hdf5::datatype::String::fixed(0);
+    strfix.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    std::deque<std::string> path;
+    if (nexus_structure.IsObject()) {
+      auto value = &nexus_structure;
+      auto mem = value->FindMember("children");
+      if (mem != value->MemberEnd()) {
+        if (mem->value.IsArray()) {
+          for (auto &child : mem->value.GetArray()) {
+            create_hdf_structures(&child, static_cast<hid_t>(h5file),
+                                  0, static_cast<hid_t>(lcpl),
+                                  static_cast<hid_t>(strfix),
+                                  stream_hdf_info, path);
+          }
+        }
+      }
+    }
+    write_attribute_str(static_cast<hid_t>(h5file), "HDF5_Version",
+                        h5_version_string_linked().data());
+    write_attribute_str(static_cast<hid_t>(h5file), "file_name",
+                        h5file.id().file_name().stem().string().c_str());
+    write_attribute_str(static_cast<hid_t>(h5file), "creator",
+                        fmt::format("kafka-to-nexus commit {:.7}",
+                                    GIT_COMMIT).data());
+    write_hdf_iso8601_now(static_cast<hid_t>(h5file), "file_time");
+    write_attributes_if_present(static_cast<hid_t>(h5file), &nexus_structure);
+  }
+  catch (std::exception& e)
+  {
+    LOG(Sev::Critical, "ERROR could not initialize file: {}  trace: {}",
+        h5file.id().file_name().string(), hdf5::error::print_nested(e));
+    std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
+  }
 }
 
-int HDFFile::close() {
+void HDFFile::close() {
   try {
     flush();
     h5file.close();
-    if (h5file.is_valid()) {
-      LOG(Sev::Error, "closed file handle is still valid for {}",
-          h5file.id().file_name().string());
-    }
-    h5file = hdf5::file::File();
-    return 0;
   }
   catch (std::exception& e)
   {
     LOG(Sev::Error, "ERROR could not close file: {}  trace: {}",
         h5file.id().file_name().string(), hdf5::error::print_nested(e));
+    std::throw_with_nested(std::runtime_error("HDFFile failed to close!"));
   }
-
-  return -1;
 }
 
-int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
+void HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     set_common_props(fcpl, fapl);
 
     h5file = hdf5::file::open(filename, hdf5::file::AccessFlags::READWRITE, fapl);
-    return 0;
   }
   catch (std::exception& e)
   {
     auto message = hdf5::error::print_nested(e);
-    std::array<char, 256> cwd;
-    getcwd(cwd.data(), cwd.size());
-    LOG(Sev::Error, "ERROR could not reopen HDF file: {}  cwd: {}  trace: {}",
-        filename, cwd.data(), message);
+    LOG(Sev::Error, "ERROR could not reopen HDF file path: {}  file: {}  trace: {}",
+        filename, boost::filesystem::current_path().string(), message);
+    std::throw_with_nested(std::runtime_error("HDFFile failed to reopen!"));
   }
-
-  return -1;
 }
 
 void HDFFile::flush() {
-  h5file.flush(hdf5::file::Scope::LOCAL);
+  try {
+    h5file.flush(hdf5::file::Scope::LOCAL);
+  } catch (...) {
+    std::throw_with_nested(std::runtime_error("HDFFile failed to flush!"));
+  }
 }
 
 } // namespace FileWriter

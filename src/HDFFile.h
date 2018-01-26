@@ -27,23 +27,25 @@ public:
 class HDFFile final {
 public:
   HDFFile();
+
   ~HDFFile();
-  int init(std::string filename, rapidjson::Value const &nexus_structure,
+
+  void init(std::string filename, rapidjson::Value const &nexus_structure,
            rapidjson::Value const &config_file,
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
-  int close();
-  int reopen(std::string filename, rapidjson::Value const &config_file);
-  int init(hid_t h5file, std::string filename,
-           rapidjson::Value const &nexus_structure,
+
+  void init(rapidjson::Value const &nexus_structure,
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
 
+  void reopen(std::string filename, rapidjson::Value const &config_file);
+
+
   void flush();
+  void close();
 
   hdf5::file::File h5file;
-//  hid_t h5file = -1;
-//  std::string filename;
 
 private:
   friend class ::T_HDFFile;
