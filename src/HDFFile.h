@@ -38,17 +38,16 @@ public:
            rapidjson::Value const &nexus_structure,
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
-  int flush(const std::string &filename = "");
+
+  void flush();
 
   hdf5::file::File h5file;
 //  hid_t h5file = -1;
-  std::string filename;
+//  std::string filename;
 
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
-
-  std::string getFilename();
 
   static void set_common_props(hdf5::property::FileCreationList& fcpl,
                                hdf5::property::FileAccessList& fapl) {}

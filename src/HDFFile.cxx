@@ -891,17 +891,13 @@ int HDFFile::init(std::string filename,
                   rapidjson::Value const &config_file,
                   std::vector<StreamHDFInfo> &stream_hdf_info,
                   std::vector<hid_t> &groups) {
-  this->filename = filename;
-  hdf5::property::FileCreationList fcpl;
-  hdf5::property::FileAccessList fapl;
-  set_common_props(fcpl, fapl);
 
   try {
-    this->h5file
-        = hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE,
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+    set_common_props(fcpl, fapl);
+    h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE,
                              fcpl, fapl);
-    return init(static_cast<hid_t>(this->h5file),
-                filename, nexus_structure, stream_hdf_info, groups);
   }
   catch (std::exception& e)
   {
@@ -910,9 +906,11 @@ int HDFFile::init(std::string filename,
     getcwd(cwd.data(), cwd.size());
     LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}  trace: {}",
         filename, cwd.data(), message);
+    return -1;
   }
 
-  return -1;
+  return init(static_cast<hid_t>(this->h5file),
+              filename, nexus_structure, stream_hdf_info, groups);
 }
 
 int HDFFile::init(hid_t h5file, std::string filename,
@@ -1017,42 +1015,32 @@ int HDFFile::init(hid_t h5file, std::string filename,
 }
 
 int HDFFile::close() {
-  herr_t err = 0;
-  if (!H5Iis_valid(h5file)) {
-    LOG(Sev::Error, "file handle is not valid");
-    return -1;
+  try {
+    flush();
+    h5file.close();
+    if (h5file.is_valid()) {
+      LOG(Sev::Error, "closed file handle is still valid for {}",
+          h5file.id().file_name().string());
+    }
+    h5file = hdf5::file::File();
+    return 0;
+  }
+  catch (std::exception& e)
+  {
+    LOG(Sev::Error, "ERROR could not close file: {}  trace: {}",
+        h5file.id().file_name().string(), hdf5::error::print_nested(e));
   }
 
-  auto filename = getFilename();
-  if (filename.empty())
-    return -1;
-
-  if (flush(filename) < 0)
-    return -1;
-
-  LOG(Sev::Info, "close file {}", filename);
-  err = H5Fclose(h5file);
-  if (err < 0) {
-    LOG(Sev::Error, "can not close file {}", filename);
-    h5file = -1;
-    return -1;
-  }
-  if (H5Iis_valid(h5file)) {
-    LOG(Sev::Error, "closed file handle is still valid for {}", filename);
-  }
-  h5file = -1;
-  return 0;
+  return -1;
 }
 
 int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
-  hdf5::property::FileCreationList fcpl;
-  hdf5::property::FileAccessList fapl;
-  set_common_props(fcpl, fapl);
-
   try {
-    this->h5file
-        = hdf5::file::create(filename, hdf5::file::AccessFlags::READWRITE,
-                             fcpl, fapl);
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+    set_common_props(fcpl, fapl);
+
+    h5file = hdf5::file::open(filename, hdf5::file::AccessFlags::READWRITE, fapl);
     return 0;
   }
   catch (std::exception& e)
@@ -1060,34 +1048,15 @@ int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
     auto message = hdf5::error::print_nested(e);
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}  trace: {}",
+    LOG(Sev::Error, "ERROR could not reopen HDF file: {}  cwd: {}  trace: {}",
         filename, cwd.data(), message);
   }
 
   return -1;
 }
 
-std::string HDFFile::getFilename() {
-  array<char, 512> fname;
-  auto size_or_err = H5Fget_name(h5file, fname.data(), fname.size());
-  if (size_or_err < 0) {
-    LOG(Sev::Error, "failed to get name of file with H5Fget_name");
-    h5file = -1;
-    return "";
-  }
-  std::string filename(fname.begin(), fname.begin() + size_or_err);
-  return filename;
-}
-
-int HDFFile::flush(const std::string &filename) {
-  if (!filename.empty())
-    LOG(Sev::Info, "flush file {}  pid: {}", filename, getpid_wrapper());
-  if (H5Fflush(h5file, H5F_SCOPE_LOCAL) < 0) {
-    LOG(Sev::Error, "failed to flush file with H5Fflush");
-    h5file = -1;
-    return -1;
-  }
-  return 0;
+void HDFFile::flush() {
+  h5file.flush(hdf5::file::Scope::LOCAL);
 }
 
 } // namespace FileWriter

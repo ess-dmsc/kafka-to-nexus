@@ -1255,11 +1255,14 @@ public:
   }
 
   static void attribute_int_scalar() {
-    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024 * 1024, false);
-    auto h5file =
-        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
-    H5Pclose(fapl);
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+
+    H5Pset_fapl_core(static_cast<hid_t>(fapl), 1024 * 1024, false);
+    auto h5file = hdf5::file::create("tmp-in-memory.h5",
+                                     hdf5::file::AccessFlags::TRUNCATE,
+                                     fcpl, fapl);
+
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1277,12 +1280,14 @@ public:
     std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+    hdf_file.init(static_cast<hid_t>(h5file), "tmp-in-memory.h5",
+                  nexus_structure, stream_hdf_info,
                   groups);
     herr_t err;
     err = 0;
     auto a1 =
-        H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
+        H5Aopen_by_name(static_cast<hid_t>(h5file), "/group1", "hello",
+                        H5P_DEFAULT, H5P_DEFAULT);
     ASSERT_GE(a1, 0);
     auto dt = H5Aget_type(a1);
     ASSERT_GE(dt, 0);
@@ -1365,11 +1370,14 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
-    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024 * 1024, false);
-    auto h5file =
-        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
-    H5Pclose(fapl);
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+
+    H5Pset_fapl_core(static_cast<hid_t>(fapl), 1024 * 1024, false);
+    auto h5file = hdf5::file::create("tmp-in-memory.h5",
+                                     hdf5::file::AccessFlags::TRUNCATE,
+                                     fcpl, fapl);
+
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1390,11 +1398,12 @@ public:
     std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+    hdf_file.init(static_cast<hid_t>(h5file), "tmp-in-memory.h5",
+                  nexus_structure, stream_hdf_info,
                   groups);
     herr_t err;
     err = 0;
-    auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
+    auto ds = H5Dopen(static_cast<hid_t>(h5file), "/string_fixed_1d_fixed", H5P_DEFAULT);
     ASSERT_GE(ds, 0);
     std::string item;
     read_string(item, ds, {1});
@@ -1403,11 +1412,14 @@ public:
   }
 
   static void dataset_static_1d_string_variable() {
-    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024 * 1024, false);
-    auto h5file =
-        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
-    H5Pclose(fapl);
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+
+    H5Pset_fapl_core(static_cast<hid_t>(fapl), 1024 * 1024, false);
+    auto h5file = hdf5::file::create("tmp-in-memory.h5",
+                                     hdf5::file::AccessFlags::TRUNCATE,
+                                     fcpl, fapl);
+
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1427,11 +1439,12 @@ public:
     std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+    hdf_file.init(static_cast<hid_t>(h5file), "tmp-in-memory.h5",
+                  nexus_structure, stream_hdf_info,
                   groups);
     herr_t err;
     err = 0;
-    auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
+    auto ds = H5Dopen(static_cast<hid_t>(h5file), "/string_fixed_1d_variable", H5P_DEFAULT);
     ASSERT_GE(ds, 0);
     std::string item;
     read_string(item, ds, {2});
