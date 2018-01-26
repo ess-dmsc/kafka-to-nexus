@@ -29,8 +29,6 @@ enum class Sev : int {
   Info = 6,   // Informational, general run time info for checking the state of
               // the application
   Debug = 7,  // Debug, give me a flood of information
-  Chatty = 8, // Be even more talk-active
-  Trace = 9,  // Give me everything
 };
 
 void dwlog_inner(int level, char const *file, int line, char const *func,

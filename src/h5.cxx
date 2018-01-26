@@ -123,7 +123,7 @@ void h5d::init_basics() {
   H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+      LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
           name, type, i1, sext.at(i1), smax.at(i1));
     }
   }
@@ -188,7 +188,7 @@ h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
   if (id != -1) {
-    LOG(Sev::Trace, "~h5d ds");
+    LOG(Sev::Debug, "~h5d ds");
     herr_t err = 0;
     char ds_name[512];
     auto &buf = ds_name;
@@ -246,7 +246,7 @@ void swap(h5d &x, h5d &y) {
 }
 
 void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
-  LOG(Sev::Trace, "using cq: {}", (void *)cq);
+  LOG(Sev::Debug, "using cq: {}", (void *)cq);
 }
 
 template <typename T>
@@ -255,7 +255,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using CLK = steady_clock;
   using MS = milliseconds;
   auto t1 = CLK::now();
-  LOG(Sev::Trace, "append_data_{}d", ndims);
+  LOG(Sev::Debug, "append_data_{}d", ndims);
   if (log_level >= 9) {
     array<char, 64> buf1;
     auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
@@ -287,7 +287,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {} {:3} / {:3}", i1,
+      LOG(Sev::Debug, "H5Sget_simple_extent_dims {} {:3} / {:3}", i1,
           snow.at(i1), smax.at(i1));
     }
   }
@@ -363,14 +363,14 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
   if (log_level >= 9) {
     AT sext, smax;
-    LOG(Sev::Trace, "try to get the dsp dims:");
+    LOG(Sev::Debug, "try to get the dsp dims:");
     err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
     if (err < 0) {
       LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       exit(1);
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+      LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
           name, type, i1, sext.at(i1), smax.at(i1));
     }
   }
@@ -397,7 +397,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   tgt_count[1] = sext[1];
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Trace, "select tgt  i1: {}  start: {}  count: {}", i1,
+      LOG(Sev::Debug, "select tgt  i1: {}  start: {}  count: {}", i1,
           tgt_start.at(i1), tgt_count.at(i1));
     }
   }
@@ -560,7 +560,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
 template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
   auto wr = ds.append_data_1d((T *)buf.data(), buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
-    LOG(Sev::Trace, "FLUSH NOT OK");
+    LOG(Sev::Debug, "FLUSH NOT OK");
     return wr.status;
   }
   buf_n = 0;

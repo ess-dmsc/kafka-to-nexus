@@ -245,7 +245,7 @@ void CommandHandler::add_stream_source_to_writer_module(
   for (const auto &stream_settings : stream_settings_list) {
     if (use_parallel_writer && stream_settings.run_parallel) {
     } else {
-      LOG(Sev::Chatty, "add Source as non-parallel: {}", stream_settings.topic);
+      LOG(Sev::Debug, "add Source as non-parallel: {}", stream_settings.topic);
       auto module_factory =
           HDFWriterModuleRegistry::find(stream_settings.module);
       if (!module_factory) {
