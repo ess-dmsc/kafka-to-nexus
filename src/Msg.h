@@ -11,13 +11,21 @@
 
 namespace FileWriter {
 
+enum class MsgType : int {
+  Invalid = -1,
+  Owned = 0,
+  RdKafka = 1,
+  Shared = 2,
+  Cheap = 22,
+};
+
 class Msg {
 public:
-  Msg() { type = -1; }
+  Msg() { type = MsgType::Invalid; }
 
   static Msg owned(char const *data, size_t len) {
     Msg msg;
-    msg.type = 0;
+    msg.type = MsgType::Owned;
     msg.var.owned = new char[len];
     std::memcpy((void *)msg.var.owned, data, len);
     msg._size = len;
@@ -40,20 +48,19 @@ public:
     Alloc::tcache_flush();
 
     Msg msg;
-    msg.type = 2;
+    msg.type = MsgType::Shared;
     msg.var.shared = p1;
     std::memcpy((void *)msg.var.shared, data, len);
     msg._size = len;
-    // LOG(Sev::Error, "shared, set size to: {}", msg._size);
     return msg;
   }
 
   static Msg cheap(Msg const &msg, std::shared_ptr<Alloc> &jm) {
-    if (msg.type != 2) {
-      throw 1;
+    if (msg.type != MsgType::Shared) {
+      throw "msg.type != MsgType::Shared";
     }
     Msg ret;
-    ret.type = 22;
+    ret.type = MsgType::Cheap;
     ret.var.cheap = msg.var.shared;
     ret._size = msg._size;
     return ret;
@@ -61,31 +68,24 @@ public:
 
   static Msg rdkafka(std::unique_ptr<RdKafka::Message> &&rdkafka_msg) {
     Msg msg;
-    msg.type = 1;
+    msg.type = MsgType::RdKafka;
     msg.var.rdkafka_msg = rdkafka_msg.release();
     msg._size = msg.var.rdkafka_msg->len();
     return msg;
   }
 
   inline Msg(Msg &&x) {
-    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type,
-    // x._size);
     using std::swap;
     swap(type, x.type);
     swap(var, x.var);
     swap(_size, x._size);
-    // LOG(Sev::Error, "move ctor {} / {}   {} / {}", type, _size, x.type,
-    // x._size);
   }
 
   inline void swap(Msg &y) {
     auto &x = *this;
-    if (x.type != -1 && x.type != y.type) {
+    if (x.type != MsgType::Invalid && x.type != y.type) {
       LOG(Sev::Critical, "sorry, can not swap that");
-      exit(1);
     }
-    // LOG(Sev::Error, "swap {} / {}   {} / {}", x.type, x._size, y.type,
-    // y._size);
     using std::swap;
     swap(x.type, y.type);
     swap(x.var, y.var);
@@ -94,16 +94,16 @@ public:
 
   inline char const *data() const {
     switch (type) {
-    case 1:
+    case MsgType::RdKafka:
       return (char const *)var.rdkafka_msg->payload();
-    case 0:
+    case MsgType::Owned:
       return var.owned;
-    case 2:
+    case MsgType::Shared:
       return var.shared;
-    case 22:
+    case MsgType::Cheap:
       return var.cheap;
     default:
-      LOG(Sev::Error, "error at type: {}", type);
+      LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
       exit(1);
     }
     return "";
@@ -111,22 +111,22 @@ public:
 
   inline size_t size() const {
     switch (type) {
-    case 1:
+    case MsgType::RdKafka:
       return var.rdkafka_msg->len();
-    case 0:
+    case MsgType::Owned:
       return _size;
-    case 2:
+    case MsgType::Shared:
       return _size;
-    case 22:
+    case MsgType::Cheap:
       return _size;
     default:
-      LOG(Sev::Error, "error at type: {}", type);
+      LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
       exit(1);
     }
     return 0;
   }
 
-  int type = -1;
+  MsgType type = MsgType::Invalid;
   union Var {
     RdKafka::Message *rdkafka_msg;
     char const *owned;
@@ -137,27 +137,24 @@ public:
 
   inline ~Msg() {
     switch (type) {
-    case 1:
+    case MsgType::RdKafka:
       // var.rdkafka_msg.~unique_ptr<RdKafka::Message>();
       delete var.rdkafka_msg;
       break;
-    case 0:
+    case MsgType::Owned:
       // var.owned.~V0();
       delete var.owned;
       break;
-    case 2:
-      // TODO
-      // control block is on separate allocation, but I try to dealloc on
-      // worker..
+    case MsgType::Shared:
       // var.shared.~shared_ptr<std::vector<char>>();
       delete var.shared;
       break;
-    case 22:
+    case MsgType::Cheap:
       break;
-    case -1:
+    case MsgType::Invalid:
       break;
     default:
-      LOG(Sev::Error, "error at type: {}", type);
+      LOG(Sev::Error, "unhandled type: {}", static_cast<int>(type));
       exit(1);
     }
   }
