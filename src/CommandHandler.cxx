@@ -204,42 +204,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   fwt->hdf_close();
   fwt->hdf_reopen();
 
-  bool use_parallel_writer = false;
-
-  for (auto &stream_settings : stream_settings_list) {
-    if (use_parallel_writer && stream_settings.run_parallel) {
-    } else {
-      LOG(Sev::Chatty, "add Source as non-parallel: {}", stream_settings.topic);
-      auto module_factory =
-          HDFWriterModuleRegistry::find(stream_settings.module);
-      if (!module_factory) {
-        LOG(Sev::Info, "Module '{}' is not available", stream_settings.module);
-        continue;
-      }
-
-      auto hdf_writer_module = module_factory();
-      if (!hdf_writer_module) {
-        LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'",
-            stream_settings.module);
-        continue;
-      }
-
-      hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
-      auto err = hdf_writer_module->reopen(
-          fwt->hdf_file.h5file, stream_settings.stream_hdf_info.hdf_parent_name,
-          nullptr, nullptr);
-      if (err.is_ERR()) {
-        LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            stream_settings.stream_hdf_info.hdf_parent_name);
-        exit(1);
-      }
-
-      auto s = Source(stream_settings.source, move(hdf_writer_module));
-      s._topic = string(stream_settings.topic);
-      s.do_process_message = config.source_do_process_message;
-      fwt->add_source(move(s));
-    }
-  }
+  add_stream_source_to_writer_module(stream_settings_list, fwt);
 
   if (master) {
     auto br = find_broker(d);
@@ -270,6 +235,47 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     file_writer_tasks.emplace_back(std::move(fwt));
   }
   g_N_HANDLED += 1;
+}
+
+void CommandHandler::add_stream_source_to_writer_module(
+    const std::vector<StreamSettings> &stream_settings_list,
+    std::unique_ptr<FileWriterTask> &fwt) {
+  bool use_parallel_writer = false;
+
+  for (const auto &stream_settings : stream_settings_list) {
+    if (use_parallel_writer && stream_settings.run_parallel) {
+    } else {
+      LOG(Sev::Chatty, "add Source as non-parallel: {}", stream_settings.topic);
+      auto module_factory =
+          HDFWriterModuleRegistry::find(stream_settings.module);
+      if (!module_factory) {
+        LOG(Sev::Info, "Module '{}' is not available", stream_settings.module);
+        continue;
+      }
+
+      auto hdf_writer_module = module_factory();
+      if (!hdf_writer_module) {
+        LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'",
+            stream_settings.module);
+        continue;
+      }
+
+      hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
+      auto err = hdf_writer_module->reopen(
+          fwt->hdf_file.h5file, stream_settings.stream_hdf_info.hdf_parent_name,
+          nullptr, nullptr);
+      if (err.is_ERR()) {
+        LOG(Sev::Error, "can not reopen HDF file for stream {}",
+            stream_settings.stream_hdf_info.hdf_parent_name);
+        exit(1);
+      }
+
+      auto s = Source(stream_settings.source, move(hdf_writer_module));
+      s._topic = std::string(stream_settings.topic);
+      s.do_process_message = config.source_do_process_message;
+      fwt->add_source(std::move(s));
+    }
+  }
 }
 
 void CommandHandler::handle_file_writer_task_clear_all(

@@ -13,6 +13,8 @@ class T_CommandHandler;
 
 namespace FileWriter {
 
+struct StreamSettings;
+
 /// Stub, will perform the JSON parsing and then take appropriate action.
 class CommandHandler : public FileWriterCommandHandler {
 public:
@@ -25,6 +27,9 @@ public:
   void handle(rapidjson::Document const &cmd);
 
 private:
+  void add_stream_source_to_writer_module(
+      const std::vector<StreamSettings> &stream_settings_list,
+      std::unique_ptr<FileWriterTask> &fwt);
   MainOpt &config;
   std::unique_ptr<rapidjson::SchemaDocument> schema_command;
   Master *master = nullptr;
