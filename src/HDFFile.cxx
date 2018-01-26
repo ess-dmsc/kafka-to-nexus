@@ -1075,7 +1075,7 @@ std::string HDFFile::getFilename() {
     h5file = -1;
     return "";
   }
-  std::string filename(fname.begin(), fname.end());
+  std::string filename(fname.begin(), fname.begin() + size_or_err);
   return filename;
 }
 
