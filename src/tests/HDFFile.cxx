@@ -459,7 +459,7 @@ public:
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(int n, int n_events_per_message_,
-                     std::shared_ptr<Jemalloc> &jm) {
+                     std::shared_ptr<Alloc> &jm) {
       n_events_per_message = n_events_per_message_;
       LOG(Sev::Debug, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
@@ -983,7 +983,7 @@ public:
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n,
-                     std::shared_ptr<Jemalloc> &jm) {
+                     std::shared_ptr<Alloc> &jm) {
       LOG(Sev::Debug, "generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {

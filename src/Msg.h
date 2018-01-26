@@ -24,10 +24,9 @@ public:
     return msg;
   }
 
-  static Msg shared(char const *data, size_t len,
-                    std::shared_ptr<Jemalloc> &jm) {
+  static Msg shared(char const *data, size_t len, std::shared_ptr<Alloc> &jm) {
     jm->use_this();
-    Jemalloc::tcache_flush();
+    Alloc::tcache_flush();
     char *p1;
     while (true) {
       p1 = (char *)jm->alloc(len * sizeof(char));
@@ -38,7 +37,7 @@ public:
         break;
     }
     jm->use_default();
-    Jemalloc::tcache_flush();
+    Alloc::tcache_flush();
 
     Msg msg;
     msg.type = 2;
@@ -49,7 +48,7 @@ public:
     return msg;
   }
 
-  static Msg cheap(Msg const &msg, std::shared_ptr<Jemalloc> &jm) {
+  static Msg cheap(Msg const &msg, std::shared_ptr<Alloc> &jm) {
     if (msg.type != 2) {
       throw 1;
     }

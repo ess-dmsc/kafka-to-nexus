@@ -5,16 +5,13 @@
 #include <memory>
 #include <mutex>
 
-// This class should better be called AllocStd, but that renaming is coming
-// with a different PR.
-
-class Jemalloc {
+class Alloc {
 public:
-  using ptr = std::unique_ptr<Jemalloc>;
-  using sptr = std::shared_ptr<Jemalloc>;
+  using ptr = std::unique_ptr<Alloc>;
+  using sptr = std::shared_ptr<Alloc>;
 
   static sptr create(void *base, void *ceil) {
-    auto ret = sptr(new Jemalloc);
+    auto ret = sptr(new Alloc);
     return ret;
   }
 
@@ -40,5 +37,5 @@ public:
   bool check_in_range(void *p) { return true; }
 
 private:
-  Jemalloc() {}
+  Alloc() {}
 };

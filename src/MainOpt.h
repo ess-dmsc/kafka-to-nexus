@@ -64,7 +64,7 @@ struct MainOpt {
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
   bool source_do_process_message = true;
-  Jemalloc::sptr jm;
+  Alloc::sptr jm;
   bool logpid_sleep = false;
 };
 
