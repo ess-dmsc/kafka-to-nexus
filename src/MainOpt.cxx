@@ -10,6 +10,8 @@
 
 using uri::URI;
 
+void MainOpt::init() {}
+
 int MainOpt::parse_config_file(std::string fname) {
   if (fname.empty()) {
     LOG(Sev::Notice, "given config filename is empty");
@@ -67,6 +69,10 @@ int MainOpt::parse_config_json(std::string json) {
       commands_from_config_file.push_back(std::move(js_command));
     }
   }
+  if (auto o = get_bool(&d, "source_do_process_message")) {
+    source_do_process_message = o.v;
+  }
+
   return 0;
 }
 
@@ -86,6 +92,7 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       {"graylog-logger-address", required_argument, nullptr, 0},
       {"use-signal-handler", required_argument, nullptr, 0},
       {"hdf-output-prefix", required_argument, nullptr, 0},
+      {"logpid-sleep", required_argument, nullptr, 0},
       {"teamid", required_argument, nullptr, 0},
       {"v", required_argument, nullptr, 0},
       {nullptr, 0, nullptr, 0},
@@ -146,6 +153,9 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
       }
       if (std::string("hdf-output-prefix") == lname) {
         opt->hdf_output_prefix = optarg;
+      }
+      if (std::string("logpid-sleep") == lname) {
+        opt->logpid_sleep = true;
       }
       if (std::string("teamid") == lname) {
         opt->teamid = strtoul(optarg, nullptr, 0);

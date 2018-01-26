@@ -19,6 +19,7 @@ void signal_handler(int signal) {
 int main(int argc, char **argv) {
   auto po = parse_opt(argc, argv);
   auto opt = std::move(po.second);
+  opt->init();
   // For the signal handler
   g_main_opt.store(opt.get());
 

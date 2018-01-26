@@ -1,9 +1,11 @@
 #include "FileWriterTask.h"
 #include "HDFFile.h"
 #include "Source.h"
+#include "helper.h"
 #include "logger.h"
 #include <atomic>
 #include <chrono>
+#include <thread>
 
 namespace FileWriter {
 
@@ -23,7 +25,10 @@ FileWriterTask::FileWriterTask() {
   ++n_FileWriterTask_created;
 }
 
-FileWriterTask::~FileWriterTask() { LOG(Sev::Debug, "~FileWriterTask"); }
+FileWriterTask::~FileWriterTask() {
+  LOG(Sev::Debug, "~FileWriterTask");
+  _demuxers.clear();
+}
 
 FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_output_prefix,
                                                  std::string hdf_filename) {
@@ -48,19 +53,28 @@ void FileWriterTask::add_source(Source &&source) {
 }
 
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
-                             std::vector<StreamHDFInfo> &stream_hdf_info) {
-  std::string filename = hdf_filename;
+                             rapidjson::Value const &config_file,
+                             std::vector<StreamHDFInfo> &stream_hdf_info,
+                             std::vector<hid_t> &groups) {
+  filename_full = hdf_filename;
   if (!hdf_output_prefix.empty()) {
-    filename = hdf_output_prefix + "/" + filename;
+    filename_full = hdf_output_prefix + "/" + filename_full;
   }
-  auto x = hdf_file.init(filename, nexus_structure, stream_hdf_info);
+  auto x = hdf_file.init(filename_full, nexus_structure, config_file,
+                         stream_hdf_info, groups);
   if (x) {
     LOG(Sev::Warning,
-        "can not initialize hdf file  hdf_output_prefix: {}  filename: {}",
+        "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
         hdf_output_prefix, hdf_filename);
     return x;
   }
   return 0;
+}
+
+int FileWriterTask::hdf_close() { return hdf_file.close(); }
+
+int FileWriterTask::hdf_reopen() {
+  return hdf_file.reopen(filename_full, rapidjson::Value());
 }
 
 uint64_t FileWriterTask::id() const { return _id; }

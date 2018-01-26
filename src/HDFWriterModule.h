@@ -1,5 +1,6 @@
 #pragma once
 
+#include "CollectiveQueue.h"
 #include "Msg.h"
 #include <H5Ipublic.h>
 #include <fmt/format.h>
@@ -98,20 +99,25 @@ public:
 
   virtual ~HDFWriterModule() = default;
 
+  /// @param config_stream Configuration from the write file command for this
+  /// stream.
+  /// @param config_module Configuration for all instances of this
+  /// HDFWriterModule.
+  virtual void parse_config(rapidjson::Value const &config_stream,
+                            rapidjson::Value const *config_module) = 0;
+
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   /// @param hdf_file The HDF file handle.
   /// @param hdf_parent_name Path to the group into which this HDFWriterModule
   /// should put its data.
-  /// @param config_stream Configuration from the write file command for this
-  /// stream.
-  /// @param config_module Configuration for all instances of this
-  /// HDFWriterModule.
   virtual InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                              rapidjson::Value const &config_stream,
-                              rapidjson::Value const *config_module,
-                              rapidjson::Value const *attributes) = 0;
+                              rapidjson::Value const *attributes,
+                              CollectiveQueue *cq) = 0;
+
+  virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,
+                            CollectiveQueue *cq, HDFIDStore *hdf_store) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
@@ -123,6 +129,9 @@ public:
   // Please close all open HDF handles, datasets, dataspaces, groups,
   // everything.
   virtual int32_t close() = 0;
+
+  virtual void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                         int mpi_rank) = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.

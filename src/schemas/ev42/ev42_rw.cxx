@@ -1,6 +1,5 @@
 #include "../../FlatbufferReader.h"
 #include "../../HDFFile.h"
-#include "../../HDFFile_h5.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "../../helper.h"
@@ -35,12 +34,12 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 };
 
 bool FlatbufferReader::verify(Msg const &msg) const {
-  flatbuffers::Verifier veri((uint8_t *)msg.data, msg.size);
+  flatbuffers::Verifier veri((uint8_t *)msg.data(), msg.size());
   return VerifyEventMessageBuffer(veri);
 }
 
 std::string FlatbufferReader::source_name(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
     LOG(Sev::Notice, "message has no source_name");
@@ -50,7 +49,7 @@ std::string FlatbufferReader::source_name(Msg const &msg) const {
 }
 
 uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data);
+  auto fbuf = get_fbuf(msg.data());
   return fbuf->pulse_time();
 }
 
@@ -60,13 +59,18 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
+  void parse_config(rapidjson::Value const &config_stream,
+                    rapidjson::Value const *config_module) override;
   InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                      rapidjson::Value const &config_stream,
-                      rapidjson::Value const *config_module,
-                      rapidjson::Value const *attributes) override;
+                      rapidjson::Value const *attributes,
+                      CollectiveQueue *cq) override;
+  InitResult reopen(hid_t hdf_file, string hdf_parent_name, CollectiveQueue *cq,
+                    HDFIDStore *hdf_store) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
+  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                 int mpi_rank) override;
 
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_id;
@@ -74,26 +78,23 @@ public:
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_index;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
+  hsize_t chunk_bytes = 1 << 16;
   bool do_flush_always = false;
   uint64_t total_written_bytes = 0;
   uint64_t index_at_bytes = 0;
   uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
   uint64_t ts_max = 0;
+  size_t buffer_size = 0;
+  size_t buffer_packet_max = 0;
+  CollectiveQueue *cq = nullptr;
 };
 
 FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
   return FileWriter::HDFWriterModule::ptr(new HDFWriterModule);
 }
 
-HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                          rapidjson::Value const &config_stream,
-                          rapidjson::Value const *config_module,
-                          rapidjson::Value const *attributes) {
-  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-
-  hsize_t chunk_n_elements = 1;
-
+void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
+                                   rapidjson::Value const *config_module) {
   if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
     index_every_bytes = uint64_t(x.v * 1024);
     LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
@@ -102,22 +103,39 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
     LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
   }
   if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
-    chunk_n_elements = hsize_t(x.v);
-    LOG(Sev::Debug, "chunk_n_elements: {}", chunk_n_elements);
+    LOG(Sev::Error, "chunk_n_elements is no longer supported");
   }
+  if (auto x = get_int(&config_stream, "nexus.chunk.chunk_kb")) {
+    chunk_bytes = (1 << 10) * x.v;
+    LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
+  }
+  if (auto x = get_int(&config_stream, "nexus.buffer.size_kb")) {
+    buffer_size = (1 << 10) * x.v;
+    LOG(Sev::Debug, "buffer_size: {}", buffer_size);
+  }
+  if (auto x = get_int(&config_stream, "nexus.buffer.packet_max_kb")) {
+    buffer_packet_max = (1 << 10) * x.v;
+    LOG(Sev::Debug, "buffer_packet_max: {}", buffer_packet_max);
+  }
+}
 
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hid_t hdf_file, string hdf_parent_name,
+                          rapidjson::Value const *attributes,
+                          CollectiveQueue *cq) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_time_offset", chunk_n_elements * sizeof(uint32_t));
-  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_id", chunk_n_elements * sizeof(uint32_t));
+      hid, "event_time_offset", chunk_bytes, cq);
+  this->ds_event_id =
+      h5::h5d_chunked_1d<uint32_t>::create(hid, "event_id", chunk_bytes, cq);
   this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hid, "event_time_zero", chunk_n_elements * sizeof(uint64_t));
-  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "event_index", chunk_n_elements * sizeof(uint32_t));
-  this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
-      hid, "cue_index", chunk_n_elements * sizeof(uint32_t));
+      hid, "event_time_zero", chunk_bytes, cq);
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::create(hid, "event_index", chunk_bytes, cq);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint32_t>::create(hid, "cue_index", chunk_bytes, cq);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hid, "cue_timestamp_zero", chunk_n_elements * sizeof(uint64_t));
+      hid, "cue_timestamp_zero", chunk_bytes, cq);
 
   if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
       !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
@@ -135,12 +153,61 @@ HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
   return HDFWriterModule::InitResult::OK();
 }
 
+HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
+                                                    string hdf_parent_name,
+                                                    CollectiveQueue *cq,
+                                                    HDFIDStore *hdf_store) {
+  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+  if (hid < 0) {
+    LOG(Sev::Error, "can not open HDF group");
+    return HDFWriterModule::InitResult::ERROR_IO();
+  }
+
+  this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
+      hid, "event_time_offset", cq, hdf_store);
+  this->ds_event_id =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "event_id", cq, hdf_store);
+  this->ds_event_time_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(hid, "event_time_zero", cq, hdf_store);
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "event_index", cq, hdf_store);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint32_t>::open(hid, "cue_index", cq, hdf_store);
+  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
+      hid, "cue_timestamp_zero", cq, hdf_store);
+
+  ds_event_time_offset->buffer_init(buffer_size, buffer_packet_max);
+  ds_event_id->buffer_init(buffer_size, buffer_packet_max);
+  ds_event_time_zero->buffer_init(buffer_size, buffer_packet_max);
+  ds_event_index->buffer_init(buffer_size, buffer_packet_max);
+  ds_cue_index->buffer_init(buffer_size, buffer_packet_max);
+  ds_cue_timestamp_zero->buffer_init(buffer_size, buffer_packet_max);
+
+  if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
+      !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
+    ds_event_time_offset.reset();
+    ds_event_id.reset();
+    ds_event_time_zero.reset();
+    ds_event_index.reset();
+    ds_cue_index.reset();
+    ds_cue_timestamp_zero.reset();
+  }
+  H5Gclose(hid);
+  return HDFWriterModule::InitResult::OK();
+}
+
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   if (!ds_event_time_offset) {
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto fbuf = get_fbuf(msg.data);
-  // int64_t ts = fbuf->pulse_time();
+  auto fbuf = get_fbuf(msg.data());
+  bool use_the_process_id_for_debug_purposes = true;
+  if (use_the_process_id_for_debug_purposes) {
+    auto p = fbuf->time_of_flight()->data();
+    for (size_t i1 = 0; i1 < fbuf->time_of_flight()->size(); ++i1) {
+      ((uint32_t *)(p))[i1] = getpid_wrapper();
+    }
+  }
   auto w1ret = this->ds_event_time_offset->append_data_1d(
       fbuf->time_of_flight()->data(), fbuf->time_of_flight()->size());
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),
@@ -164,7 +231,43 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
 
 int32_t HDFWriterModule::flush() { return 0; }
 
-int32_t HDFWriterModule::close() { return 0; }
+int32_t HDFWriterModule::close() {
+  ds_event_time_offset.reset();
+  ds_event_id.reset();
+  ds_event_time_zero.reset();
+  ds_event_index.reset();
+  ds_cue_index.reset();
+  ds_cue_timestamp_zero.reset();
+  return 0;
+}
+
+void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                                int mpi_rank) {
+  this->cq = cq;
+  ds_event_time_offset->ds.cq = cq;
+  ds_event_time_offset->ds.hdf_store = hdf_store;
+  ds_event_time_offset->ds.mpi_rank = mpi_rank;
+
+  ds_event_id->ds.cq = cq;
+  ds_event_id->ds.hdf_store = hdf_store;
+  ds_event_id->ds.mpi_rank = mpi_rank;
+
+  ds_event_time_zero->ds.cq = cq;
+  ds_event_time_zero->ds.hdf_store = hdf_store;
+  ds_event_time_zero->ds.mpi_rank = mpi_rank;
+
+  ds_event_index->ds.cq = cq;
+  ds_event_index->ds.hdf_store = hdf_store;
+  ds_event_index->ds.mpi_rank = mpi_rank;
+
+  ds_cue_index->ds.cq = cq;
+  ds_cue_index->ds.hdf_store = hdf_store;
+  ds_cue_index->ds.mpi_rank = mpi_rank;
+
+  ds_cue_timestamp_zero->ds.cq = cq;
+  ds_cue_timestamp_zero->ds.hdf_store = hdf_store;
+  ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
+}
 
 HDFWriterModuleRegistry::Registrar
     g_registrar_HDFWriterModule("ev42", HDFWriterModule::create);

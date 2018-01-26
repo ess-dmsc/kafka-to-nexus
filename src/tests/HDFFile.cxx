@@ -1,6 +1,6 @@
 #include "../HDFFile.h"
+#include "../Alloc.h"
 #include "../CommandHandler.h"
-#include "../HDFFile_impl.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
 #include "../h5.h"
@@ -10,6 +10,7 @@
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <hdf5.h>
 #include <random>
 #include <rapidjson/document.h>
 #include <string>
@@ -79,7 +80,7 @@ void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
     "job_id": "{}"
   }})"",
                            job_cmd.FindMember("job_id")->value.GetString());
-  ch.handle({(char *)cmd.data(), cmd.size()});
+  ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
 }
 
 // Verify
@@ -89,7 +90,9 @@ TEST(HDFFile, create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
-  f1.init("tmp-test.h5", rapidjson::Value().SetObject(), stream_hdf_info);
+  std::vector<hid_t> groups;
+  f1.init("tmp-test.h5", rapidjson::Value().SetObject(),
+          rapidjson::Value().SetObject(), stream_hdf_info, groups);
 }
 
 class T_CommandHandler : public testing::Test {
@@ -103,7 +106,7 @@ public:
     unlink(fname);
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({cmd.data(), cmd.size()});
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -146,7 +149,7 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({(char *)cmd.data(), cmd.size()});
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     send_stop(ch, json_command);
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
@@ -343,10 +346,7 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    FileWriter::Msg msg;
-    msg.data = (char *)cmd.data();
-    msg.size = cmd.size();
-    ch.handle(msg);
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     send_stop(ch, json_command);
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
@@ -389,7 +389,7 @@ public:
     ASSERT_GT(fname.v.size(), 8);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle({(char*)cmd.data(), cmd.size()});
+    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
     send_stop(ch, json_command);
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
@@ -454,9 +454,13 @@ public:
     vector<FileWriter::Msg> msgs;
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;
+    bool run_parallel = false;
+    int n_events_per_message = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(int n, int n_events_per_message) {
+    void pregenerate(int n, int n_events_per_message_,
+                     std::shared_ptr<Alloc> &jm) {
+      n_events_per_message = n_events_per_message_;
       LOG(Sev::Debug, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
@@ -467,8 +471,15 @@ public:
         auto n_ele = n_events_per_message;
         fbs.push_back(synth.next(n_ele));
         auto &fb = fbs.back();
-        msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                       fb.builder->GetSize()});
+
+        // Allocate memory on JM AND CHECK IT!
+        msgs.push_back(FileWriter::Msg::shared(
+            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
+            jm));
+        if (msgs.back().size() < 8) {
+          LOG(Sev::Error, "error");
+          exit(1);
+        }
       }
     }
   };
@@ -516,16 +527,38 @@ public:
           "index_every_kb": 1
         },
         "chunk": {
-          "chunk_n_elements": 64
+          "chunk_kb": 1024
+        },
+        "buffer": {
+          "size_kb": 512,
+          "packet_max_kb": 128
         }
       },
       "unit_test": {
-        "n_events_per_message": 32,
-        "n_msgs_per_source": 128,
-        "n_sources": 8,
-        "n_msgs_per_batch": 1
-      }
+        "n_events_per_message": 16,
+        "n_msgs_per_source": 32,
+        "n_sources": 1,
+        "n_msgs_per_batch": 1,
+        "n_mpi_workers": 1,
+        "feed_msgs_seconds": 30,
+        "filename": "tmp-ev42.h5",
+        "hdf": {
+          "do_verification": 1,
+          "do_recreate": 0
+        }
+      },
+      "shm": {
+        "fname": "tmp-mmap"
+      },
+      "mpi": {
+        "path_bin": "."
+      },
+      "shm": 2100100100
     })"");
+
+    // TODO
+    // This must go somewhere else...
+    main_opt.init();
 
     if (auto x =
             get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
@@ -559,6 +592,26 @@ public:
       n_msgs_per_batch = x.v;
     }
 
+    int feed_msgs_times = 1;
+    if (auto x = get_int(&main_opt.config_file, "unit_test.feed_msgs_times")) {
+      LOG(Sev::Info, "unit_test.feed_msgs_times: {}", x.v);
+      feed_msgs_times = x.v;
+    }
+
+    int feed_msgs_seconds = 1;
+    if (auto x =
+            get_int(&main_opt.config_file, "unit_test.feed_msgs_seconds")) {
+      LOG(Sev::Info, "unit_test.feed_msgs_seconds: {}", x.v);
+      feed_msgs_seconds = x.v;
+    }
+
+    string filename = "tmp-ev42.h5";
+    if (auto x = get_string(&main_opt.config_file, "unit_test.filename")) {
+      LOG(Sev::Info, "unit_test.filename: {}", x.v);
+      filename = x.v;
+    }
+
+    auto &jm = main_opt.jm;
     vector<SourceDataGen> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -566,7 +619,31 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(n_msgs_per_source, n_events_per_message);
+      s.run_parallel = true;
+      s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
+    }
+    if (false) {
+      vector<std::thread> threads_pregen;
+      for (int i1 = 0; i1 < n_sources; ++i1) {
+        auto &s = sources.back();
+        LOG(Sev::Debug, "push pregen {}", i1);
+        threads_pregen.push_back(
+            std::thread([&jm, &s, n_msgs_per_source, n_events_per_message] {
+              s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
+            }));
+      }
+      for (auto &x : threads_pregen) {
+        LOG(Sev::Debug, "join pregen");
+        x.join();
+      }
+    }
+
+    if (true) {
+      sources.emplace_back();
+      auto &s = sources.back();
+      s.topic = "topic.with.multiple.sources";
+      s.source = fmt::format("stream_for_main_thread_{:04}", 0);
+      s.pregenerate(17, 71, jm);
     }
 
     rapidjson::Document json_command;
@@ -596,8 +673,9 @@ public:
         children.PushBack(g1, a);
       }
 
-      auto json_stream = [&a](string source, string topic,
-                              string module) -> Value {
+      auto json_stream = [&a, &main_opt](string source, string topic,
+                                         string module,
+                                         bool run_parallel) -> Value {
         Value g1;
         g1.SetObject();
         g1.AddMember("type", "group", a);
@@ -611,7 +689,6 @@ public:
         {
           auto &children = ch;
           Document ds1(&a);
-          ds1.SetObject();
           ds1.Parse(R""({
             "type": "stream",
             "attributes": {
@@ -619,23 +696,23 @@ public:
               "this_will_be_a_int64": 123
             }
           })"");
-          Document stream(&a);
-          stream.Parse(R""(
-            {
-              "nexus": {
-                "indices": {
-                  "index_every_kb": 1
-                },
-                "chunk": {
-                  "chunk_n_elements": 64
-                }
-              }
-            }
-          )"");
+          Value stream;
+          stream.SetObject();
+          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
+            Value nx;
+            nx.CopyFrom(*main_nexus.v, a);
+            stream.AddMember("nexus", std::move(nx), a);
+          }
           stream.AddMember("topic", Value(topic.c_str(), a), a);
           stream.AddMember("source", Value(source.c_str(), a), a);
           stream.AddMember("writer_module", Value(module.c_str(), a), a);
           stream.AddMember("type", Value("uint32", a), a);
+          stream.AddMember(
+              "n_mpi_workers",
+              std::move(Value().CopyFrom(
+                  main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
+              a);
+          stream.AddMember("run_parallel", Value(run_parallel), a);
           ds1.AddMember("stream", stream, a);
           children.PushBack(ds1, a);
         }
@@ -644,14 +721,17 @@ public:
       };
 
       for (auto &source : sources) {
-        children.PushBack(json_stream(source.source, source.topic, "ev42"), a);
+        children.PushBack(json_stream(source.source, source.topic, "ev42",
+                                      source.run_parallel),
+                          a);
       }
+
       nexus_structure.AddMember("children", children, a);
       j.AddMember("nexus_structure", nexus_structure, a);
       {
         Value v;
         v.SetObject();
-        v.AddMember("file_name", StringRef("tmp-ev42.h5"), a);
+        v.AddMember("file_name", Value(filename.c_str(), a), a);
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
@@ -659,7 +739,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(Sev::Dbg, "command: {}", cmd);
+    LOG(Sev::Debug, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -668,16 +748,12 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     using DT = uint32_t;
-    int const feed_msgs_times = 1;
     std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      FileWriter::Msg msg;
-      msg.data = (char *)cmd.data();
-      msg.size = cmd.size();
-      ch.handle(msg);
+      ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
       auto &fwt = ch.file_writer_tasks.at(0);
@@ -686,26 +762,51 @@ public:
       LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
+      bool do_run = true;
+      auto feed_start = CLK::now();
       auto t1 = CLK::now();
-      for (;;) {
-        bool change = false;
-        for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
-          for (auto &source : sources) {
-            for (int i2 = 0;
-                 i2 < n_msgs_per_batch && source.n_fed < source.msgs.size();
-                 ++i2) {
-              auto &msg = source.msgs[source.n_fed];
-              if (false) {
-                auto v = binary_to_hex(msg.data, msg.size);
-                LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
-              }
-              fwt->demuxers().at(0).process_message(msg.data, msg.size);
-              source.n_fed++;
-              change = true;
-            }
+      for (int i_feed = 0; do_run and i_feed < feed_msgs_times; ++i_feed) {
+        size_t i_source = 0;
+        for (auto &source : sources) {
+          if (not do_run) {
+            break;
           }
+          if (i_feed % 100 == 0) {
+            LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
+          }
+          for (auto &msg : source.msgs) {
+            if (false) {
+              auto v = binary_to_hex(msg.data(), msg.size());
+              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
+            }
+            if (msg.size() < 8) {
+              LOG(Sev::Error, "error");
+              do_run = false;
+            }
+            auto res = fwt->demuxers().at(0).process_message(
+                FileWriter::Msg::cheap(msg, jm));
+            if (res.is_ERR()) {
+              LOG(Sev::Error, "is_ERR");
+              do_run = false;
+              break;
+            }
+            if (res.is_ALL_SOURCES_FULL()) {
+              LOG(Sev::Error, "is_ALL_SOURCES_FULL");
+              do_run = false;
+              break;
+            }
+            if (res.is_STOP()) {
+              LOG(Sev::Error, "is_STOP");
+              do_run = false;
+              break;
+            }
+            source.n_fed++;
+          }
+          i_source += 1;
         }
-        if (!change) {
+        auto now = CLK::now();
+        if (duration_cast<MS>(now - feed_start).count() / 1000 >=
+            feed_msgs_seconds) {
           break;
         }
       }
@@ -733,9 +834,9 @@ public:
     auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
     ASSERT_GE(fid, 0);
 
-    vector<DT> data((size_t)32000);
-
+    size_t i_source = 0;
     for (auto &source : sources) {
+      vector<DT> data((size_t)(source.n_events_per_message));
       string base_path = "/";
       string group_path = base_path + source.source;
 
@@ -756,9 +857,9 @@ public:
       ASSERT_EQ(H5Sis_simple(dsp), 1);
 
       using A = array<hsize_t, 1>;
-      A sini = {{(hsize_t)n_events_per_message}};
-      A smax = {{(hsize_t)n_events_per_message}};
-      A count = {{(hsize_t)n_events_per_message}};
+      A sini = {{(hsize_t)source.n_events_per_message}};
+      A smax = {{(hsize_t)source.n_events_per_message}};
+      A count = {{(hsize_t)source.n_events_per_message}};
       A start0 = {{(hsize_t)0}};
       auto mem = H5Screate(H5S_SIMPLE);
       err = H5Sset_extent_simple(mem, sini.size(), sini.data(), smax.data());
@@ -767,20 +868,25 @@ public:
                                 count.data(), nullptr);
       ASSERT_GE(err, 0);
 
-      // LOG(Sev::Dbg, "have {} messages", source.msgs.size());
-      for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-        auto &fb = source.fbs.at(msg_i);
-        A start = {{(hsize_t)msg_i * n_events_per_message}};
-        err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
-                                  count.data(), nullptr);
-        ASSERT_GE(err, 0);
-        err =
-            H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT, data.data());
-        ASSERT_GE(err, 0);
-        auto fbd = fb.root()->detector_id();
-        for (int i1 = 0; i1 < n_events_per_message; ++i1) {
-          // LOG(Sev::Dbg, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
-          ASSERT_EQ(data.at(i1), fbd->Get(i1));
+      // LOG(Sev::Debug, "have {} messages", source.msgs.size());
+      for (size_t feed_i = 0; feed_i < feed_msgs_times; ++feed_i) {
+        for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
+          auto &fb = source.fbs.at(msg_i);
+          A start = {{hsize_t(msg_i * source.n_events_per_message +
+                              feed_i * source.n_events_per_message *
+                                  source.msgs.size())}};
+          err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
+                                    count.data(), nullptr);
+          ASSERT_GE(err, 0);
+          err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT,
+                        data.data());
+          ASSERT_GE(err, 0);
+          auto fbd = fb.root()->detector_id();
+          for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
+            // LOG(Sev::Debug, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
+            // fbd->Get(i1));
+            ASSERT_EQ(data.at(i1), fbd->Get(i1));
+          }
         }
       }
 
@@ -838,7 +944,7 @@ public:
       ASSERT_GT(event_time_zero.size(), 0u);
       ASSERT_EQ(event_time_zero.size(), event_index.size());
 
-      for (hsize_t i1 = 0; i1 < cue_timestamp_zero.size(); ++i1) {
+      for (hsize_t i1 = 0; false && i1 < cue_timestamp_zero.size(); ++i1) {
         auto ok = check_cue(event_time_zero, event_index,
                             cue_timestamp_zero[i1], cue_index[i1]);
         ASSERT_TRUE(ok);
@@ -846,13 +952,20 @@ public:
 
       H5Tclose(dt);
       H5Dclose(ds);
+      ++i_source;
 
       verify_attribute_data_ev42(fid, group_path);
     }
 
-    H5Fclose(fid);
-
-    ASSERT_EQ(recreate_file(&json_command), 0);
+    err = H5Fclose(fid);
+    LOG(Sev::Debug, "data_ev42 verification done");
+    ASSERT_GE(err, 0);
+    ASSERT_EQ(H5Iis_valid(fid), 0);
+    if (auto x = get_int(&main_opt.config_file, "unit_test.hdf.do_recreate")) {
+      if (x.v == 1) {
+        ASSERT_EQ(recreate_file(&json_command), 0);
+      }
+    }
   }
 
   /// Can supply pre-generated test data for a source on a topic to profile
@@ -869,22 +982,24 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(size_t array_size, uint64_t n) {
+    void pregenerate(size_t array_size, uint64_t n,
+                     std::shared_ptr<Alloc> &jm) {
       LOG(Sev::Debug, "generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
       }
-      FlatBufs::f142::synth synth(source, ty, int(array_size));
+      FlatBufs::f142::synth synth(source, ty);
       rnd.seed(seed);
       for (uint64_t i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
         // size_t n_ele = rnd() >> 24;
         // Currently fixed, have to adapt verification code first.
-        fbs.push_back(synth.next(i1));
+        fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
-        msgs.push_back(FileWriter::Msg{(char *)fb.builder->GetBufferPointer(),
-                                       fb.builder->GetSize()});
+        msgs.push_back(FileWriter::Msg::shared(
+            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
+            jm));
       }
     }
   };
@@ -897,12 +1012,12 @@ public:
     merge_config_into_main_opt(main_opt, R""({
       "nexus": {
         "chunk": {
-          "chunk_n_elements": 64
+          "chunk_kb": 1024
         }
       },
       "unit_test": {
-        "n_events_per_message": 32,
-        "n_msgs_per_source": 128,
+        "f142_array_size": 7,
+        "n_msgs_per_source": 43,
         "n_sources": 1,
         "n_msgs_per_batch": 1
       }
@@ -933,7 +1048,12 @@ public:
       n_msgs_per_batch = int(x.v);
     }
 
-    size_t array_size = 4;
+    size_t array_size = 0;
+    if (auto x = get_int(&main_opt.config_file, "unit_test.f142_array_size")) {
+      LOG(Sev::Debug, "unit_test.f142_array_size: {}", x.v);
+      array_size = size_t(x.v);
+    }
+
     vector<SourceDataGen_f142> sources;
     for (int i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -941,7 +1061,7 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(array_size, n_msgs_per_source);
+      s.pregenerate(array_size, n_msgs_per_source, main_opt.jm);
     }
 
     if (false) {
@@ -1032,7 +1152,7 @@ public:
                   "index_every_mb": 1
                 },
                 "chunk": {
-                  "chunk_n_elements": 64
+                  "chunk_kb": 1024
                 }
               }
             }
@@ -1077,7 +1197,7 @@ public:
     }
 
     auto cmd = json_to_string(json_command);
-    // LOG(Sev::Dbg, "command: {}", cmd);
+    // LOG(Sev::Debug, "command: {}", cmd);
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
@@ -1088,13 +1208,15 @@ public:
     int const feed_msgs_times = 1;
     std::mt19937 rnd_nn;
 
+    if (feed_msgs_times > 1) {
+      LOG(Sev::Error, "Sorry, can feed messages currently only once");
+      exit(1);
+    }
+
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      FileWriter::Msg msg;
-      msg.data = (char *)cmd.data();
-      msg.size = cmd.size();
-      ch.handle(msg);
+      ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
       ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
 
       auto &fwt = ch.file_writer_tasks.at(0);
@@ -1104,26 +1226,18 @@ public:
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
-      for (;;) {
-        bool change = false;
-        for (int i1 = 0; i1 < feed_msgs_times; ++i1) {
-          for (auto &source : sources) {
-            for (int i2 = 0;
-                 i2 < n_msgs_per_batch && source.n_fed < source.msgs.size();
-                 ++i2) {
-              auto &msg = source.msgs[source.n_fed];
-              if (false) {
-                auto v = binary_to_hex(msg.data, msg.size);
-                LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
-              }
-              fwt->demuxers().at(0).process_message(msg.data, msg.size);
-              source.n_fed++;
-              change = true;
+      for (auto &source : sources) {
+        for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
+          LOG(Sev::Info, "feed {}", i_feed);
+          for (auto &msg : source.msgs) {
+            if (false) {
+              auto v = binary_to_hex(msg.data(), msg.size());
+              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
+            fwt->demuxers().at(0).process_message(
+                FileWriter::Msg::cheap(msg, main_opt.jm));
+            source.n_fed++;
           }
-        }
-        if (!change) {
-          break;
         }
       }
       auto t2 = CLK::now();
@@ -1160,9 +1274,11 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+                  groups);
     herr_t err;
     err = 0;
     auto a1 =
@@ -1271,9 +1387,11 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+                  groups);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
@@ -1306,9 +1424,11 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<hid_t> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info);
+    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
+                  groups);
     herr_t err;
     err = 0;
     auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);

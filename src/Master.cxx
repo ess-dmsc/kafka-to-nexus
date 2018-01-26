@@ -1,5 +1,7 @@
 #include "Master.h"
 #include "CommandHandler.h"
+#include "Msg.h"
+#include "helper.h"
 #include "logger.h"
 #include <chrono>
 #include <rapidjson/document.h>
@@ -25,13 +27,13 @@ Master::Master(MainOpt &config) : config(config), command_listener(config) {
   }
   std::string hostname(buffer.data());
   file_writer_process_id_ =
-      fmt::format("kafka-to-nexus--{}--{}", hostname, getpid());
+      fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
   LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
   CommandHandler command_handler(config, this);
-  command_handler.handle({(char *)msg->data(), msg->size()});
+  command_handler.handle(Msg::owned((char const *)msg->data(), msg->size()));
 }
 
 void Master::handle_command(rapidjson::Document const &cmd) {

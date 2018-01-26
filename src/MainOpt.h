@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Alloc.h"
 #include "logger.h"
 #include "uri.h"
 #include <atomic>
@@ -19,6 +20,7 @@ class Master;
 
 // POD
 struct MainOpt {
+  void init();
   bool help = false;
   bool gtest = false;
   bool use_signal_handler = true;
@@ -61,6 +63,9 @@ struct MainOpt {
   int64_t start_at_command_offset = -1;
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
+  bool source_do_process_message = true;
+  Alloc::sptr jm;
+  bool logpid_sleep = false;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);

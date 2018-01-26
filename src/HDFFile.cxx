@@ -1,6 +1,4 @@
 #include "HDFFile.h"
-#include "HDFFile_h5.h"
-#include "HDFFile_impl.h"
 #include "date/date.h"
 #include "h5.h"
 #include "helper.h"
@@ -33,28 +31,13 @@ HDFFile::HDFFile() {
 #endif
 }
 
-HDFFile::~HDFFile() {
-  herr_t err;
-  if (h5file >= 0) {
-    std::array<char, 512> fname;
-    err = H5Fget_name(h5file, fname.data(), fname.size());
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Fget_name");
-      fname = std::array<char, 512>{{"<unknown name>"}};
-    }
-    LOG(Sev::Debug, "flushing file {}", fname.data());
-    err = H5Fflush(h5file, H5F_SCOPE_LOCAL);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Fflush on {}", fname.data());
-    }
-    LOG(Sev::Debug, "closing file {}", fname.data());
-    err = H5Fclose(h5file);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Fclose on {}", fname.data());
-    }
-    LOG(Sev::Debug, "closed file {}", fname.data());
-  }
+herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
+                         void *op_data) {
+  LOG(Sev::Error, "obj refs: {:2}  name: {}", oi->rc, name);
+  return 0;
 }
+
+HDFFile::~HDFFile() { close(); }
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
                                        std::string s1) {
@@ -284,7 +267,8 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
       if (as.size() > 10) {
         break;
       }
-      // LOG(3, "level: {}  ai: {}  an: {}", as.size(), ai.back(), an.back());
+      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
+      // an.back());
       if (ai.top() >= an.top()) {
         as.pop();
         ai.pop();
@@ -865,6 +849,8 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 }
 
+static void set_common_props(hid_t fcpl, hid_t fapl) {}
+
 /// Human readable version of the HDF5 headers that we compile against.
 static std::string h5_version_string_headers_compile_time() {
   return fmt::format("{}.{}.{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
@@ -903,27 +889,37 @@ static void check_hdf_version() {
 extern "C" char const GIT_COMMIT[];
 
 int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
-                  std::vector<StreamHDFInfo> &stream_hdf_info) {
+                  rapidjson::Value const &config_file,
+                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                  std::vector<hid_t> &groups) {
   using std::string;
   using std::vector;
   using rapidjson::Value;
-  hid_t h5file =
-      H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
+  int ret = -1;
+  this->filename = filename;
+  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
+  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  set_common_props(fcpl, fapl);
+  hid_t h5file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
   if (h5file < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
     LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}",
         filename, cwd.data());
-    return -1;
+    ret = -1;
   } else {
     this->h5file = h5file;
-    return init(h5file, filename, nexus_structure, stream_hdf_info);
+    ret = init(h5file, filename, nexus_structure, stream_hdf_info, groups);
   }
+  H5Pclose(fcpl);
+  H5Pclose(fapl);
+  return ret;
 }
 
 int HDFFile::init(hid_t h5file, std::string filename,
                   rapidjson::Value const &nexus_structure,
-                  std::vector<StreamHDFInfo> &stream_hdf_info) {
+                  std::vector<StreamHDFInfo> &stream_hdf_info,
+                  std::vector<hid_t> &groups) {
   check_hdf_version();
   int ret = -1;
   herr_t err;
@@ -975,9 +971,9 @@ int HDFFile::init(hid_t h5file, std::string filename,
                   write_attribute_str(h5file, "HDF5_Version",
                                       h5_version_string_linked().data());
                   write_attribute_str(h5file, "file_name", filename.data());
-                  write_attribute_str(
-                      h5file, "creator",
-                      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT).data());
+                  write_attribute_str(h5file, "creator",
+                                      fmt::format("kafka-to-nexus commit {:.7}",
+                                                  GIT_COMMIT).data());
                   write_hdf_iso8601_now(h5file, "file_time");
                   write_attributes_if_present(h5file, &nexus_structure);
 
@@ -1010,13 +1006,88 @@ int HDFFile::init(hid_t h5file, std::string filename,
       ret = -1;
     }
   }
+
+  for (auto x : groups) {
+    array<char, 256> b;
+    H5Iget_name(x, b.data(), b.size());
+    LOG(Sev::Error, "closing refs: {}  name: {}", H5Iget_ref(x), b.data());
+    H5Gclose(x);
+  }
+  groups.clear();
   return ret;
 }
 
-void HDFFile::flush() { H5Fflush(h5file, H5F_SCOPE_LOCAL); }
+int HDFFile::close() {
+  herr_t err = 0;
+  if (!H5Iis_valid(h5file)) {
+    LOG(Sev::Error, "file handle is not valid");
+    return -1;
+  }
 
-HDFFile_h5::HDFFile_h5(hid_t h5file) : _h5file(h5file) {}
+  auto filename = getFilename();
+  if (filename.empty())
+    return -1;
 
-hid_t HDFFile_h5::h5file() { return _h5file; }
+  if (flush(filename) < 0)
+    return -1;
+
+  LOG(Sev::Info, "close file {}", filename);
+  err = H5Fclose(h5file);
+  if (err < 0) {
+    LOG(Sev::Error, "can not close file {}", filename);
+    h5file = -1;
+    return -1;
+  }
+  if (H5Iis_valid(h5file)) {
+    LOG(Sev::Error, "closed file handle is still valid for {}", filename);
+  }
+  h5file = -1;
+  return 0;
+}
+
+int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
+  using std::string;
+  using std::vector;
+  using rapidjson::Value;
+  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
+  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  set_common_props(fcpl, fapl);
+  auto f1 = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);
+  if (f1 < 0) {
+    std::array<char, 256> cwd;
+    getcwd(cwd.data(), cwd.size());
+    LOG(Sev::Error, "ERROR could not open the HDF file: {}  cwd: {}", filename,
+        cwd.data());
+    return -1;
+  }
+  h5file = f1;
+
+  H5Pclose(fcpl);
+  H5Pclose(fapl);
+  return 0;
+}
+
+std::string HDFFile::getFilename() {
+  array<char, 512> fname;
+  auto size_or_err = H5Fget_name(h5file, fname.data(), fname.size());
+  if (size_or_err < 0) {
+    LOG(Sev::Error, "failed to get name of file with H5Fget_name");
+    h5file = -1;
+    return "";
+  }
+  std::string filename(fname.begin(), fname.begin() + size_or_err);
+  return filename;
+}
+
+int HDFFile::flush(const std::string &filename) {
+  if (!filename.empty())
+    LOG(Sev::Info, "flush file {}  pid: {}", filename, getpid_wrapper());
+  if (H5Fflush(h5file, H5F_SCOPE_LOCAL) < 0) {
+    LOG(Sev::Error, "failed to flush file with H5Fflush");
+    h5file = -1;
+    return -1;
+  }
+  return 0;
+}
 
 } // namespace FileWriter

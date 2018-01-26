@@ -12,8 +12,6 @@
 #include <rapidjson/stringbuffer.h>
 #include <rapidjson/writer.h>
 #include <string>
-#include <sys/types.h>
-#include <unistd.h>
 #include <vector>
 
 namespace FileWriter {
@@ -39,7 +37,7 @@ void CommandListener::start() {
   opt.poll_timeout_ms = 500;
   opt.address = config.command_broker_uri.host_port;
   opt.conf_strings["group.id"] =
-      fmt::format("kafka-to-nexus.CommandListener--pid-{}", getpid());
+      fmt::format("kafka-to-nexus.CommandListener--pid-{}", getpid_wrapper());
   consumer.reset(new KafkaW::Consumer(opt));
   consumer->on_rebalance_assign = config.on_rebalance_assign;
   consumer->add_topic(config.command_broker_uri.topic);

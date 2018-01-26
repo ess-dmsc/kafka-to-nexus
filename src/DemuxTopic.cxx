@@ -36,9 +36,20 @@ ProcessMessageResult ProcessMessageResult::STOP() {
 DemuxTopic::DemuxTopic(std::string topic)
     : _topic(topic), _stop_time(std::numeric_limits<uint64_t>::max()) {}
 
-DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
-                                                        int msg_size) {
-  Msg msg{msg_data, size_t(msg_size)};
+DemuxTopic::~DemuxTopic() {
+  // Empty dtor kept to simplify merge in a later PR which will add code here.
+}
+
+DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
+
+void swap(DemuxTopic &x, DemuxTopic &y) {
+  using std::swap;
+  swap(x._topic, y._topic);
+  swap(x._sources_map, y._sources_map);
+  swap(x._stop_time, y._stop_time);
+}
+
+DemuxTopic::DT DemuxTopic::time_difference_from_message(Msg const &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     LOG(Sev::Error, "ERROR unknown schema id?");
@@ -50,26 +61,27 @@ DemuxTopic::DT DemuxTopic::time_difference_from_message(char *msg_data,
 
 std::string const &DemuxTopic::topic() const { return _topic; }
 
-ProcessMessageResult DemuxTopic::process_message(char *msg_data, int msg_size) {
-  Msg const msg{msg_data, size_t(msg_size)};
+ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
+  if (msg.size() < 8) {
+    LOG(Sev::Error, "too small message");
+    exit(1);
+  }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
+    LOG(Sev::Debug, "no reader");
     return ProcessMessageResult::ERR();
   }
+  auto srcn = reader->source_name(msg);
+  LOG(Sev::Debug, "Msg is for source_name: {}", srcn);
   if (reader->timestamp(msg) > _stop_time.count()) {
     LOG(Sev::Debug, "reader->timestamp(msg) {} > _stop_time {}",
         reader->timestamp(msg), _stop_time.count());
     return ProcessMessageResult::STOP();
   }
-  auto srcn = reader->source_name(msg);
-  LOG(Sev::Debug, "Msg is for source_name: {}", srcn);
   try {
     auto &s = _sources_map.at(srcn);
     auto ret = s.process_message(msg);
-    if (ret.ts() < 0) {
-      return ProcessMessageResult::ERR();
-    }
-    return ProcessMessageResult::OK(ret.ts());
+    return ret;
   } catch (std::out_of_range &e) {
   }
   return ProcessMessageResult::ERR();

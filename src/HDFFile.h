@@ -1,4 +1,5 @@
 #pragma once
+
 #include "Msg.h"
 #include <H5Ipublic.h>
 #include <memory>
@@ -12,9 +13,14 @@ namespace FileWriter {
 
 // POD
 struct StreamHDFInfo {
-  // hid_t hdf_parent_object;
-  std::string name;
+  std::string hdf_parent_name;
   rapidjson::Value const *config_stream;
+};
+
+// Basically POD
+class WriteResult {
+public:
+  int64_t ts;
 };
 
 class HDFFile final {
@@ -22,16 +28,24 @@ public:
   HDFFile();
   ~HDFFile();
   int init(std::string filename, rapidjson::Value const &nexus_structure,
-           std::vector<StreamHDFInfo> &stream_hdf_info);
+           rapidjson::Value const &config_file,
+           std::vector<StreamHDFInfo> &stream_hdf_info,
+           std::vector<hid_t> &groups);
+  int close();
+  int reopen(std::string filename, rapidjson::Value const &config_file);
   int init(hid_t h5file, std::string filename,
            rapidjson::Value const &nexus_structure,
-           std::vector<StreamHDFInfo> &stream_hdf_info);
-  void flush();
+           std::vector<StreamHDFInfo> &stream_hdf_info,
+           std::vector<hid_t> &groups);
+  int flush(const std::string &filename = "");
   hid_t h5file = -1;
+  std::string filename;
 
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
+
+  std::string getFilename();
 };
 
 std::string h5_version_string_linked();
