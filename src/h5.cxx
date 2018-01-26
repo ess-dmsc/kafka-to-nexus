@@ -114,6 +114,32 @@ h5s::~h5s() {
   }
 }
 
+void h5d::init_basics() {
+  herr_t err = 0;
+  type = H5Dget_type(id);
+  dsp_tgt = H5Dget_space(id);
+  ndims = H5Sget_simple_extent_ndims(dsp_tgt);
+  snow = {{0, 0}};
+  H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+  if (log_level >= 9) {
+    for (size_t i1 = 0; i1 < ndims; ++i1) {
+      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
+          name, type, i1, sext.at(i1), smax.at(i1));
+    }
+  }
+  mem_max = {{H5S_UNLIMITED, H5S_UNLIMITED}};
+  mem_now = {{0, 0}};
+  dsp_mem = H5Screate_simple(ndims, mem_now.data(), nullptr);
+  if (dsp_mem < 0) {
+    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
+  }
+  pl_transfer = H5Pcreate(H5P_DATASET_XFER);
+  err = H5Pset_edc_check(pl_transfer, H5Z_DISABLE_EDC);
+  if (err < 0) {
+    LOG(Sev::Debug, "failed H5Pset_edc_check");
+  }
+}
+
 h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
                      h5p::dataset_create dcpl, CollectiveQueue *cq) {
   // Creation is done in single process mode.
@@ -133,29 +159,7 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     ret.reset();
     return ret;
   }
-
-  o.dsp_tgt = H5Dget_space(o.id);
-
-  o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
-  o.snow = {{0, 0}};
-  H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
-  if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-          o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
-    }
-  }
-  o.mem_max = {{H5S_UNLIMITED, H5S_UNLIMITED}};
-  o.mem_now = {{0, 0}};
-  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_now.data(), nullptr);
-  if (o.dsp_mem < 0) {
-    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
-  }
-  o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
-  err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
-  if (err < 0) {
-    LOG(Sev::Debug, "failed H5Pset_edc_check");
-  }
+  o.init_basics();
   return ret;
 }
 
@@ -164,7 +168,6 @@ h5d::ptr h5d::open_single(hid_t loc, string name, CollectiveQueue *cq,
   // Open in single-process mode
   auto ret = ptr(new h5d);
   auto &o = *ret;
-  herr_t err = 0;
   o.name = name;
   o.id = H5Dopen2(loc, name.c_str(), H5P_DEFAULT);
   if (o.id < 0) {
@@ -172,28 +175,7 @@ h5d::ptr h5d::open_single(hid_t loc, string name, CollectiveQueue *cq,
     ret.reset();
     return ret;
   }
-  o.type = H5Dget_type(o.id);
-  o.dsp_tgt = H5Dget_space(o.id);
-  o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
-  o.snow = {{0, 0}};
-  H5Sget_simple_extent_dims(o.dsp_tgt, o.sext.data(), o.smax.data());
-  if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < o.ndims; ++i1) {
-      LOG(Sev::Trace, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-          o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
-    }
-  }
-  o.mem_max = {{100000000, 100000000}};
-  o.mem_now = {{0, 0}};
-  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
-  if (o.dsp_mem < 0) {
-    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
-  }
-  o.pl_transfer = H5Pcreate(H5P_DATASET_XFER);
-  err = H5Pset_edc_check(o.pl_transfer, H5Z_DISABLE_EDC);
-  if (err < 0) {
-    LOG(Sev::Debug, "failed H5Pset_edc_check");
-  }
+  o.init_basics();
   return ret;
 }
 
@@ -399,6 +381,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     start[1] = 0;
     count[0] = nlen_0;
     count[1] = sext[1];
+    err = H5Sset_extent_simple(dsp_mem, ndims, count.data(), count.data());
     err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
                               count.data(), nullptr);
     if (err < 0) {

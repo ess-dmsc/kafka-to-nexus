@@ -101,6 +101,7 @@ public:
 
 private:
   h5d();
+  void init_basics();
 };
 
 template <typename T> class h5d_chunked_1d;
