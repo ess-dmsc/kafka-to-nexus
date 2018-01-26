@@ -14,13 +14,14 @@ status_writer.cxx
 command_handler.cxx
 stream_master.cxx
 MainOpt_tests.cxx
+h5cpp_file_creation_test.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
+target_link_libraries(${tgt} ${libraries_common} h5cpp)
 add_gtest_to_target(${tgt})
 
 

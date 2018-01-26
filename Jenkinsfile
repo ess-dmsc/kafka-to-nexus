@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.2.0')
+def centos = docker.image('essdmscdm/centos7-gcc6-build-node:1.0.0')
 
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
@@ -56,7 +56,8 @@ node('docker') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                cmake3 ../${project} -DREQUIRE_GTEST=ON
+                . ./activate_run.sh
+                cmake ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${configure_script}\""
         }
