@@ -145,9 +145,9 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
           o.name, o.type, i1, o.sext.at(i1), o.smax.at(i1));
     }
   }
-  o.mem_max = {{100000000, 100000000}};
+  o.mem_max = {{H5S_UNLIMITED, H5S_UNLIMITED}};
   o.mem_now = {{0, 0}};
-  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_max.data(), nullptr);
+  o.dsp_mem = H5Screate_simple(o.ndims, o.mem_now.data(), nullptr);
   if (o.dsp_mem < 0) {
     LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
   }
