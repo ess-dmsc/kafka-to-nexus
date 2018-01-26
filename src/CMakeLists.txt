@@ -11,7 +11,6 @@ message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 find_package(Fmt REQUIRED)
 find_package(Rapidjson REQUIRED)
 find_package(RdKafka REQUIRED)
-find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
 find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
 find_package(GraylogLogger)
@@ -33,23 +32,21 @@ endif()
 
 set(compile_defs_common "")
 
-
 set(path_include_common
+	${PROJECT_SOURCE_DIR}/src
+	${PROJECT_BINARY_DIR}/src
   ${FMT_INCLUDE_DIR}
   ${RDKAFKA_INCLUDE_DIR}
-  ${HDF5_INCLUDE_DIRS}
   ${FLATBUFFERS_INCLUDE_DIR}
   ${RAPIDJSON_INCLUDE_DIR}
   ${CURL_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/src
-  ${PROJECT_BINARY_DIR}/src
 )
 
 set(libraries_common
   ${RDKAFKA_LIBRARIES}
-  ${HDF5_C_LIBRARIES}
   ${CURL_LIBRARIES}
   pthread
+	h5cpp
   z
 )
 
