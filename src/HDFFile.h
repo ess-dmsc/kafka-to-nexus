@@ -6,6 +6,7 @@
 #include <rapidjson/document.h>
 #include <string>
 #include <vector>
+#include <h5cpp/hdf5.hpp>
 
 class T_HDFFile;
 
@@ -38,7 +39,9 @@ public:
            std::vector<StreamHDFInfo> &stream_hdf_info,
            std::vector<hid_t> &groups);
   int flush(const std::string &filename = "");
-  hid_t h5file = -1;
+
+  hdf5::file::File h5file;
+//  hid_t h5file = -1;
   std::string filename;
 
 private:
@@ -46,6 +49,9 @@ private:
   friend class CommandHandler;
 
   std::string getFilename();
+
+  static void set_common_props(hdf5::property::FileCreationList& fcpl,
+                               hdf5::property::FileAccessList& fapl) {}
 };
 
 std::string h5_version_string_linked();

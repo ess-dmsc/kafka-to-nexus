@@ -849,8 +849,6 @@ static void create_hdf_structures(rapidjson::Value const *value,
   }
 }
 
-static void set_common_props(hid_t fcpl, hid_t fapl) {}
-
 /// Human readable version of the HDF5 headers that we compile against.
 static std::string h5_version_string_headers_compile_time() {
   return fmt::format("{}.{}.{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
@@ -888,32 +886,33 @@ static void check_hdf_version() {
 
 extern "C" char const GIT_COMMIT[];
 
-int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
+int HDFFile::init(std::string filename,
+                  rapidjson::Value const &nexus_structure,
                   rapidjson::Value const &config_file,
                   std::vector<StreamHDFInfo> &stream_hdf_info,
                   std::vector<hid_t> &groups) {
-  using std::string;
-  using std::vector;
-  using rapidjson::Value;
-  int ret = -1;
   this->filename = filename;
-  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
-  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  hdf5::property::FileCreationList fcpl;
+  hdf5::property::FileAccessList fapl;
   set_common_props(fcpl, fapl);
-  hid_t h5file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
-  if (h5file < 0) {
+
+  try {
+    this->h5file
+        = hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE,
+                             fcpl, fapl);
+    return init(static_cast<hid_t>(this->h5file),
+                filename, nexus_structure, stream_hdf_info, groups);
+  }
+  catch (std::exception& e)
+  {
+    auto message = hdf5::error::print_nested(e);
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}",
-        filename, cwd.data());
-    ret = -1;
-  } else {
-    this->h5file = h5file;
-    ret = init(h5file, filename, nexus_structure, stream_hdf_info, groups);
+    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}  trace: {}",
+        filename, cwd.data(), message);
   }
-  H5Pclose(fcpl);
-  H5Pclose(fapl);
-  return ret;
+
+  return -1;
 }
 
 int HDFFile::init(hid_t h5file, std::string filename,
@@ -1046,25 +1045,26 @@ int HDFFile::close() {
 }
 
 int HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) {
-  using std::string;
-  using std::vector;
-  using rapidjson::Value;
-  auto fcpl = H5Pcreate(H5P_FILE_CREATE);
-  auto fapl = H5Pcreate(H5P_FILE_ACCESS);
+  hdf5::property::FileCreationList fcpl;
+  hdf5::property::FileAccessList fapl;
   set_common_props(fcpl, fapl);
-  auto f1 = H5Fopen(filename.c_str(), H5F_ACC_RDWR, fapl);
-  if (f1 < 0) {
+
+  try {
+    this->h5file
+        = hdf5::file::create(filename, hdf5::file::AccessFlags::READWRITE,
+                             fcpl, fapl);
+    return 0;
+  }
+  catch (std::exception& e)
+  {
+    auto message = hdf5::error::print_nested(e);
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
-    LOG(Sev::Error, "ERROR could not open the HDF file: {}  cwd: {}", filename,
-        cwd.data());
-    return -1;
+    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}  trace: {}",
+        filename, cwd.data(), message);
   }
-  h5file = f1;
 
-  H5Pclose(fcpl);
-  H5Pclose(fapl);
-  return 0;
+  return -1;
 }
 
 std::string HDFFile::getFilename() {

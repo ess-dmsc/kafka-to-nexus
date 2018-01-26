@@ -195,7 +195,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
     hdf_writer_module->parse_config(config_stream, nullptr);
     CollectiveQueue *cq = nullptr;
-    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
+    hdf_writer_module->init_hdf(static_cast<hid_t>(fwt->hdf_file.h5file),
+                                stream.hdf_parent_name,
                                 attributes.v, cq);
     hdf_writer_module->close();
     hdf_writer_module.reset();
@@ -262,7 +263,8 @@ void CommandHandler::add_stream_source_to_writer_module(
 
       hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
       auto err = hdf_writer_module->reopen(
-          fwt->hdf_file.h5file, stream_settings.stream_hdf_info.hdf_parent_name,
+          static_cast<hid_t>(fwt->hdf_file.h5file),
+          stream_settings.stream_hdf_info.hdf_parent_name,
           nullptr, nullptr);
       if (err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
