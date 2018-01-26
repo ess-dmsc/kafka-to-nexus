@@ -134,12 +134,6 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
     return ret;
   }
 
-  if (cq) {
-    char buf[512];
-    auto bufn = H5Iget_name(o.id, buf, 512);
-    buf[bufn] = '\0';
-  }
-
   o.dsp_tgt = H5Dget_space(o.id);
 
   o.ndims = H5Sget_simple_extent_ndims(o.dsp_tgt);
