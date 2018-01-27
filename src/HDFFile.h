@@ -52,6 +52,7 @@ public:
                                   std::string value);
 
   hdf5::file::File h5file;
+  hdf5::node::Group root_group;
 
  private:
   friend class ::T_HDFFile;
@@ -76,8 +77,11 @@ public:
   static void write_attributes_if_present(hdf5::node::Node& node,
                                           rapidjson::Value const *jsv);
 
+  static void populate_strings(std::vector<std::string> &ptrs,
+                               rapidjson::Value const *vals);
+
   static void populate_string_pointers(std::vector<char const *> &ptrs,
-                                       rapidjson::Value const *vals);
+                                         rapidjson::Value const *vals);
 
   static void populate_string_fixed_size(std::vector<char> &blob,
                                          hsize_t element_size,
@@ -87,6 +91,11 @@ public:
                               std::vector<hsize_t> sizes,
                               std::vector<hsize_t> max,
                               rapidjson::Value const *vals);
+
+  static void write_ds_string_variable(hdf5::node::Group& parent, std::string name,
+                                       std::vector<hsize_t> sizes,
+                                       std::vector<hsize_t> max,
+                                       rapidjson::Value const *vals);
 
   static void write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
                                          std::vector<hsize_t> sizes,

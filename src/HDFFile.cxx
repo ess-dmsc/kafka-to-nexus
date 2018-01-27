@@ -219,8 +219,49 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
   }
 }
 
-void HDFFile::populate_string_pointers(std::vector<char const *> &ptrs,
+void HDFFile::populate_strings(std::vector<std::string> &ptrs,
                                      rapidjson::Value const *vals) {
+  if (vals->IsString()) {
+    std::string sss(vals->GetString());
+    sss += "\0";
+    ptrs.push_back(sss);
+  } else if (vals->IsArray()) {
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
+        continue;
+      }
+      auto &v = as.top()->GetArray()[ai.top()];
+      if (v.IsArray()) {
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
+        size_t n = v.GetArray().Size();
+        an.push(n);
+      } else if (v.IsString()) {
+        std::string sss(v.GetString());
+        sss += "\0";
+        ptrs.push_back(sss);
+        ai.top()++;
+      }
+    }
+  }
+}
+
+void HDFFile::populate_string_pointers(std::vector<char const *> &ptrs,
+                                       rapidjson::Value const *vals) {
   if (vals->IsString()) {
     ptrs.push_back(vals->GetString());
   } else if (vals->IsArray()) {
@@ -304,83 +345,45 @@ static void
 write_ds_numeric(hdf5::node::Group& parent, std::string name,
                  std::vector<hsize_t> sizes,
                  std::vector<hsize_t> max, rapidjson::Value const *vals) {
-  herr_t err = 0;
-  size_t total_n = 1;
-  for (auto x : sizes) {
-    total_n *= x;
+
+  try {
+    hdf5::property::DatasetCreationList dcpl;
+    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
+    if (!sizes.empty()) {
+      dsp = hdf5::dataspace::Simple(sizes, max);
+      if (max[0] == H5S_UNLIMITED) {
+        dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
+        dcpl.chunk(sizes);
+      }
+    }
+
+    std::vector<DT> blob;
+    populate_blob(blob, vals);
+    if (static_cast<hssize_t>(blob.size()) != dsp.size()) {
+      LOG(Sev::Critical, "unexpected number of values for dataset {}  "
+          "expected: {}  actual: {}",
+          name, dsp.size(), blob.size());
+    } else {
+      auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(), dsp,
+                                      hdf5::property::LinkCreationList(), dcpl);
+
+      ds.write(blob);
+    }
   }
-
-  hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  if (dcpl < 0) {
-  } else {
-    hid_t dsp = -1;
-    if (sizes.empty()) {
-      dsp = H5Screate(H5S_SCALAR);
-    } else {
-      dsp = H5Screate(H5S_SIMPLE);
-    }
-    if (dsp < 0) {
-    } else {
-      err = 0;
-      if (!sizes.empty()) {
-        err = H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()),
-                                   sizes.data(), max.data());
-        if (err < 0) {
-          LOG(Sev::Critical, "failed H5Sset_extent_simple");
-        } else {
-          if (max[0] == H5S_UNLIMITED) {
-            err = H5Pset_chunk(dcpl, static_cast<int>(sizes.size()),
-                               sizes.data());
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Pset_chunk");
-            }
-          }
-        }
-      }
-
-      if (err < 0) {
-        // currently, nothing needed here
-      } else {
-        std::vector<DT> blob;
-        populate_blob(blob, vals);
-        if (blob.size() != total_n) {
-          LOG(Sev::Critical, "unexpected number of values for dataset {}  "
-                             "expected: {}  actual: {}",
-              name, total_n, blob.size());
-        } else {
-          hid_t dt = h5::nat_type<DT>();
-          hid_t ds = H5Dcreate2(static_cast<hid_t>(parent), name.data(),
-                                dt, dsp, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-          if (ds < 0) {
-            LOG(Sev::Critical, "failed H5Dcreate2");
-          } else {
-            err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data());
-            if (err < 0) {
-              LOG(Sev::Critical, "error while writing dataset {}", name);
-            }
-            err = H5Dclose(ds);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Dclose");
-            }
-          }
-        }
-      }
-      err = H5Sclose(dsp);
-      if (err < 0) {
-        LOG(Sev::Critical, "failed H5Sclose");
-      }
-    }
-    err = H5Pclose(dcpl);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pclose");
-    }
+  catch (std::exception& e)
+  {
+    std::stringstream ss;
+    ss << "Failed numeric dataset write in ";
+    ss << parent.link().path() <<  "/" << name;
+    std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
+
 void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
-                            std::vector<hsize_t> sizes,
-                            std::vector<hsize_t> max,
-                            rapidjson::Value const *vals) {
+                              std::vector<hsize_t> sizes,
+                              std::vector<hsize_t> max,
+                              rapidjson::Value const *vals) {
   herr_t err = 0;
   size_t total_n = 1;
   for (auto x : sizes) {
@@ -421,7 +424,7 @@ void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
         populate_string_pointers(blob, vals);
         if (blob.size() != total_n) {
           LOG(Sev::Critical, "unexpected number of values for dataset {}  "
-                             "expected: {}  actual: {}",
+              "expected: {}  actual: {}",
               name, total_n, blob.size());
         } else {
           hid_t dt = H5Tcopy(H5T_C_S1);
@@ -470,6 +473,99 @@ void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
       LOG(Sev::Critical, "failed H5Pclose");
     }
   }
+}
+
+
+void HDFFile::write_ds_string_variable(hdf5::node::Group& parent, std::string name,
+                                       std::vector<hsize_t> sizes,
+                                       std::vector<hsize_t> max,
+                                       rapidjson::Value const *vals) {
+
+  hdf5::property::DatasetCreationList dcpl;
+  hdf5::datatype::String dt = hdf5::datatype::create<std::string>();
+  dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+//  dt.set_padding(hdf5::datatype::StringPad::NULLTERM);
+
+//  auto dt = hdf5::datatype::create<std::string>();
+
+  hdf5::node::Dataset ds;
+  hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
+  std::vector<std::string> blob;
+  populate_strings(blob, vals);
+
+  try {
+//    hdf5::property::DatasetCreationList dcpl;
+//    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
+    if (!sizes.empty()) {
+      dsp = hdf5::dataspace::Simple(sizes, max);
+      if (max[0] == H5S_UNLIMITED) {
+        dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
+        dcpl.chunk(sizes);
+      }
+    }
+
+    if (static_cast<hssize_t>(blob.size()) != dsp.size()) {
+      LOG(Sev::Critical, "unexpected number of values for dataset {}  "
+          "expected: {}  actual: {}",
+          name, dsp.size(), blob.size());
+      return;
+    } else {
+      ds = hdf5::node::Dataset(parent, name,
+                               dt, dsp,
+           hdf5::property::LinkCreationList(), dcpl);
+    }
+  }
+  catch (std::exception& e)
+  {
+    std::stringstream ss;
+    ss << "Failed to create variable-length string dataset ";
+    ss << parent.link().path() <<  "/" << name;
+    ss <<" blob(" << blob.size() << ")=[";
+    for (auto b : blob)
+      ss << b.size() << "'"<< b << "' ";
+    ss << "]";
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+//  if (ds.is_valid()) {
+    try {
+      auto dsp2 = ds.dataspace();
+      if (blob.size() > 1) {
+        hsize_t n=0;
+        for (auto b : blob)
+          ds.write(b, hdf5::dataspace::Hyperslab({n++}, {1}));
+      } else {
+        ds.write(blob.front(), dt, dsp);
+      }
+    }
+    catch (std::exception &e) {
+      std::stringstream ss;
+      ss << "Failed to write variable-length string dataset ";
+      ss << ds.link().path();
+      if (dsp.type() == hdf5::dataspace::Type::SIMPLE) {
+        ss << " size(";
+        for (auto s : hdf5::dataspace::Simple(dsp).current_dimensions())
+          ss << s << " ";
+        ss << ")  max(";
+        for (auto s : hdf5::dataspace::Simple(dsp).maximum_dimensions())
+          ss << s << " ";
+        ss << ")";
+      }
+      ss <<" blob(" << blob.size() << ")=[";
+      for (auto b : blob)
+        ss << b.size() << "'"<< b << "' ";
+      ss << "]";
+
+      ss << " dspace_size=" << dsp.size();
+      ss << " sspace_type=" << dsp.type();
+      ss << " dset_valid=" << ds.is_valid();
+      ss << " dset_size=" << ds.dataspace().size();
+      ss << " dset_type=" << ds.datatype().get_class();
+      ss << " refcount_ds=" <<  H5Iget_ref(static_cast<hid_t >(ds));
+      ss << " refcount_dsp=" <<  H5Iget_ref(static_cast<hid_t >(dsp));
+      std::throw_with_nested(std::runtime_error(ss.str()));
+    }
+//  }
 }
 
 void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
@@ -574,43 +670,62 @@ void HDFFile::write_ds_generic(std::string const &dtype,
                                std::vector<hsize_t> const &max,
                                hsize_t element_size,
                                rapidjson::Value const *vals) {
-  if (dtype == "uint8") {
-    write_ds_numeric<uint8_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "uint16") {
-    write_ds_numeric<uint16_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "uint32") {
-    write_ds_numeric<uint32_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "uint64") {
-    write_ds_numeric<uint64_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "int8") {
-    write_ds_numeric<int8_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "int16") {
-    write_ds_numeric<int16_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "int32") {
-    write_ds_numeric<int32_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "int64") {
-    write_ds_numeric<int64_t>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "float") {
-    write_ds_numeric<float>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "double") {
-    write_ds_numeric<double>(parent, name, sizes, max, vals);
-  }
-  if (dtype == "string") {
-    if (element_size == H5T_VARIABLE) {
-      write_ds_string(parent, name, sizes, max, vals);
-    } else {
-      write_ds_string_fixed_size(parent, name, sizes, max, element_size,
-                                 vals);
+  try {
+
+    if (dtype == "uint8") {
+      write_ds_numeric<uint8_t>(parent, name, sizes, max, vals);
     }
+    if (dtype == "uint16") {
+      write_ds_numeric<uint16_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "uint32") {
+      write_ds_numeric<uint32_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "uint64") {
+      write_ds_numeric<uint64_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "int8") {
+      write_ds_numeric<int8_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "int16") {
+      write_ds_numeric<int16_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "int32") {
+      write_ds_numeric<int32_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "int64") {
+      write_ds_numeric<int64_t>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "float") {
+      write_ds_numeric<float>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "double") {
+      write_ds_numeric<double>(parent, name, sizes, max, vals);
+    }
+    if (dtype == "string") {
+      if (element_size == H5T_VARIABLE) {
+        write_ds_string(parent, name, sizes, max, vals);
+      } else {
+        write_ds_string_fixed_size(parent, name, sizes, max, element_size,
+                                   vals);
+      }
+    }
+  }
+  catch (std::exception& e)
+  {
+    std::stringstream ss;
+    ss << "Failed dataset write in ";
+    ss << parent.link().path() <<  "/" << name;
+    ss << " type='" << dtype << "'";
+    ss << " size(";
+    for (auto s : sizes)
+      ss << s << " ";
+    ss << ")  max(";
+    for (auto s : max)
+      ss << s << " ";
+    ss << ")  ";
+
+    std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
@@ -703,59 +818,69 @@ void HDFFile::create_hdf_structures(rapidjson::Value const *value,
                                     std::vector<StreamHDFInfo> &stream_hdf_info,
                                     std::deque<std::string> &path) {
 
-  // The HDF object that we will maybe create at the current level.
-  hdf5::node::Group hdf_this;
-  // Keeps the HDF object id if we create a new collection-like object which
-  // can be used as the parent for the next level of recursion. The only case
-  // currently is when we create a group.
-  hdf5::node::Group hdf_next_parent;
-  // Remember whether we created a group at this level.
-  hdf5::node::Group gid;
-  if (auto type = get_string(value, "type")) {
-    if (type.v == "group") {
-      if (auto name = get_string(value, "name")) {
+  try {
 
-        try {
-          hdf_this = parent.create_group(name.v, lcpl);
-          hdf_next_parent = hdf_this;
-          path.push_back(name.v);
-          gid = hdf_this;
-        }
-        catch (...) {
-          LOG(Sev::Critical, "failed to create group  name: {}", name.v.c_str());
+    // The HDF object that we will maybe create at the current level.
+    hdf5::node::Group hdf_this;
+    // Keeps the HDF object id if we create a new collection-like object which
+    // can be used as the parent for the next level of recursion. The only case
+    // currently is when we create a group.
+    hdf5::node::Group hdf_next_parent;
+    // Remember whether we created a group at this level.
+    hdf5::node::Group gid;
+    if (auto type = get_string(value, "type")) {
+      if (type.v == "group") {
+        if (auto name = get_string(value, "name")) {
+
+          try {
+            hdf_this = parent.create_group(name.v, lcpl);
+            hdf_next_parent = hdf_this;
+            path.push_back(name.v);
+            gid = hdf_this;
+          }
+          catch (...) {
+            LOG(Sev::Critical, "failed to create group  name: {}", name.v.c_str());
+          }
         }
       }
-    }
-    if (type.v == "stream") {
-      string pathstr;
-      for (auto &x : path) {
-        pathstr += "/" + x;
-      }
+      if (type.v == "stream") {
+        string pathstr;
+        for (auto &x : path) {
+          pathstr += "/" + x;
+        }
 
-      stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
+        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
+      }
+      if (type.v == "dataset") {
+        write_dataset(parent, value);
+      }
     }
-    if (type.v == "dataset") {
-      write_dataset(parent, value);
+
+    if (hdf_this.is_valid()) {
+      write_attributes_if_present(hdf_this, value);
+    }
+
+    // If the current level in the HDF can act as a parent, then continue the
+    // recursion with the (optional) "children" array.
+    if (hdf_next_parent.is_valid()) {
+      auto mem = value->FindMember("children");
+      if (mem != value->MemberEnd()) {
+        if (mem->value.IsArray()) {
+          for (auto &child : mem->value.GetArray()) {
+            create_hdf_structures(&child, hdf_this, level + 1, lcpl,
+                                  hdf_type_strfix, stream_hdf_info, path);
+          }
+        }
+      }
+      path.pop_back();
     }
   }
-
-  if (hdf_this.is_valid()) {
-    write_attributes_if_present(hdf_this, value);
-  }
-
-  // If the current level in the HDF can act as a parent, then continue the
-  // recursion with the (optional) "children" array.
-  if (hdf_next_parent.is_valid()) {
-    auto mem = value->FindMember("children");
-    if (mem != value->MemberEnd()) {
-      if (mem->value.IsArray()) {
-        for (auto &child : mem->value.GetArray()) {
-          create_hdf_structures(&child, hdf_this, level + 1, lcpl,
-                                hdf_type_strfix, stream_hdf_info, path);
-        }
-      }
-    }
-    path.pop_back();
+  catch (std::exception& e)
+  {
+    std::stringstream ss;
+    ss << "Failed to create structure  parent=";
+    ss << parent.link().path() <<  "  level=" << level;
+    std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
@@ -812,9 +937,9 @@ void HDFFile::init(std::string filename,
   }
   catch (std::exception& e)
   {
-    auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "ERROR could not create the HDF file: {}  cwd: {}  trace: {}",
-        filename, boost::filesystem::current_path().string(), message);
+    LOG(Sev::Error, "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
+        boost::filesystem::current_path().string(), filename,
+        hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
 }
@@ -846,7 +971,7 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
     auto fixed_string = hdf5::datatype::String::fixed(0);
     fixed_string.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    auto root_group = h5file.root();
+    root_group = h5file.root();
 
     std::deque<std::string> path;
     if (nexus_structure.IsObject()) {
@@ -874,7 +999,7 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
   }
   catch (std::exception& e)
   {
-    LOG(Sev::Critical, "ERROR could not initialize file: {}  trace: {}",
+    LOG(Sev::Critical, "ERROR could not initialize  file={}  trace:\n{}",
         h5file.id().file_name().string(), hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
@@ -887,7 +1012,7 @@ void HDFFile::close() {
   }
   catch (std::exception& e)
   {
-    LOG(Sev::Error, "ERROR could not close file: {}  trace: {}",
+    LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
         h5file.id().file_name().string(), hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to close!"));
   }
@@ -904,8 +1029,8 @@ void HDFFile::reopen(std::string filename, rapidjson::Value const &config_file) 
   catch (std::exception& e)
   {
     auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "ERROR could not reopen HDF file path: {}  file: {}  trace: {}",
-        filename, boost::filesystem::current_path().string(), message);
+    LOG(Sev::Error, "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
+        boost::filesystem::current_path().string(), filename, message);
     std::throw_with_nested(std::runtime_error("HDFFile failed to reopen!"));
   }
 }

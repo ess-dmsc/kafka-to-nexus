@@ -8,7 +8,7 @@
 
 
 int main(int argc, char **argv) {
-    hdf5::error::Singleton::instance().auto_print(false);
+  hdf5::error::Singleton::instance().auto_print(false);
 
   ::testing::InitGoogleTest(&argc, argv);
   std::string f = ::testing::GTEST_FLAG(filter);

@@ -1366,11 +1366,13 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
+    FileWriter::HDFFile hdf_file;
+
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
+//    fapl.driver(hdf5::file::MemoryDriver());
 
-    auto h5file = hdf5::file::create("tmp-in-memory.h5",
+    hdf_file.h5file = hdf5::file::create("tmp-fixedlen.h5",
                                      hdf5::file::AccessFlags::TRUNCATE,
                                      fcpl, fapl);
 
@@ -1392,23 +1394,23 @@ public:
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<hid_t> groups;
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = h5file;
+
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
-    auto ds = H5Dopen(static_cast<hid_t>(h5file), "/string_fixed_1d_fixed", H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
+    auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
+    ASSERT_TRUE(ds.is_valid());
     std::string item;
-    read_string(item, ds, {1});
+    read_string(item, static_cast<hid_t>(ds), {1});
     ASSERT_EQ(item, "another-one");
-    ASSERT_GE(H5Dclose(ds), 0);
   }
 
   static void dataset_static_1d_string_variable() {
+    FileWriter::HDFFile hdf_file;
+
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
+//    fapl.driver(hdf5::file::MemoryDriver());
 
-    H5Pset_fapl_core(static_cast<hid_t>(fapl), 1024 * 1024, false);
-    auto h5file = hdf5::file::create("tmp-in-memory.h5",
+    hdf_file.h5file = hdf5::file::create("tmp-varlen.h5",
                                      hdf5::file::AccessFlags::TRUNCATE,
                                      fcpl, fapl);
 
@@ -1429,15 +1431,14 @@ public:
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<hid_t> groups;
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = h5file;
+
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
-    auto ds = H5Dopen(static_cast<hid_t>(h5file), "/string_fixed_1d_variable", H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
+    auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_variable");
+
+    ASSERT_TRUE(ds.is_valid());
     std::string item;
-    read_string(item, ds, {2});
+    read_string(item, static_cast<hid_t>(ds), {2});
     ASSERT_EQ(item, "string-2");
-    ASSERT_GE(H5Dclose(ds), 0);
   }
 };
 
