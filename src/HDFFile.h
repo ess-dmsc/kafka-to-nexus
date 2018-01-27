@@ -77,15 +77,12 @@ public:
   static void write_attributes_if_present(hdf5::node::Node& node,
                                           rapidjson::Value const *jsv);
 
-  static void populate_strings(std::vector<std::string> &ptrs,
-                               rapidjson::Value const *vals);
+  static std::vector<std::string> populate_strings(rapidjson::Value const *vals,
+                                                   hssize_t goal_size);
 
-  static void populate_string_pointers(std::vector<char const *> &ptrs,
-                                         rapidjson::Value const *vals);
-
-  static void populate_string_fixed_size(std::vector<char> &blob,
-                                         hsize_t element_size,
-                                         rapidjson::Value const *vals);
+  static std::vector<std::string> populate_fixed_strings(rapidjson::Value const *vals,
+                                                         size_t fix_at,
+                                                         hssize_t goal_size);
 
   static void write_ds_string(hdf5::node::Group& parent, std::string name,
                               std::vector<hsize_t> sizes,

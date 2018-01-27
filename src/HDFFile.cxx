@@ -129,11 +129,12 @@ void HDFFile::write_attributes_if_present(hdf5::node::Node& node, rapidjson::Val
 }
 
 template <typename DT>
-static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
+static std::vector<DT> populate_blob(rapidjson::Value const *vals, hssize_t goal_size) {
+  std::vector<DT> ret;
   if (vals->IsInt()) {
-    blob.push_back(vals->GetInt());
+    ret.push_back(vals->GetInt());
   } else if (vals->IsDouble()) {
-    blob.push_back(vals->GetDouble());
+    ret.push_back(vals->GetDouble());
   } else if (vals->IsArray()) {
     std::stack<rapidjson::Value const *> as;
     std::stack<size_t> ai;
@@ -162,28 +163,36 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
         size_t n = v.GetArray().Size();
         an.push(n);
       } else if (v.IsInt()) {
-        blob.push_back((DT)v.GetInt());
+        ret.push_back((DT)v.GetInt());
         ai.top()++;
       } else if (v.IsInt64()) {
-        blob.push_back((DT)v.GetInt64());
+        ret.push_back((DT)v.GetInt64());
         ai.top()++;
       } else if (v.IsUint64()) {
-        blob.push_back((DT)v.GetUint64());
+        ret.push_back((DT)v.GetUint64());
         ai.top()++;
       } else if (v.IsDouble()) {
-        blob.push_back((DT)v.GetDouble());
+        ret.push_back((DT)v.GetDouble());
         ai.top()++;
       }
     }
   }
+  if (ret.size() != goal_size) {
+    std::stringstream ss;
+    ss << "Failed to populate numeric blob ";
+    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+  return ret;
 }
 
-void HDFFile::populate_strings(std::vector<std::string> &ptrs,
-                                     rapidjson::Value const *vals) {
+std::vector<std::string> HDFFile::populate_strings(rapidjson::Value const *vals,
+                                                   hssize_t goal_size) {
+  std::vector<std::string> ret;
   if (vals->IsString()) {
     std::string sss(vals->GetString());
-    sss += "\0";
-    ptrs.push_back(sss);
+    ret.push_back(sss);
   } else if (vals->IsArray()) {
     std::stack<rapidjson::Value const *> as;
     std::stack<size_t> ai;
@@ -211,18 +220,38 @@ void HDFFile::populate_strings(std::vector<std::string> &ptrs,
         an.push(n);
       } else if (v.IsString()) {
         std::string sss(v.GetString());
-        sss += "\0";
-        ptrs.push_back(sss);
+        ret.push_back(sss);
         ai.top()++;
       }
     }
   }
+
+  if (ret.size() != goal_size) {
+    std::stringstream ss;
+    ss << "Failed to populate string(variable) blob ";
+    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+  return ret;
 }
 
-void HDFFile::populate_string_pointers(std::vector<char const *> &ptrs,
-                                       rapidjson::Value const *vals) {
+std::vector<std::string> HDFFile::populate_fixed_strings(rapidjson::Value const *vals,
+                                                   size_t fixed_at,
+                                                   hssize_t goal_size) {
+
+  if (fixed_at >= 1024 * 1024) {
+    std::stringstream ss;
+    ss << "Failed to allocate fixed-size string dataset ";
+    ss << " bad element size: " << fixed_at;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+  std::vector<std::string> ret;
   if (vals->IsString()) {
-    ptrs.push_back(vals->GetString());
+    std::string sss(vals->GetString());
+    sss.resize(fixed_at, '\0');
+    ret.push_back(sss);
   } else if (vals->IsArray()) {
     std::stack<rapidjson::Value const *> as;
     std::stack<size_t> ai;
@@ -249,54 +278,22 @@ void HDFFile::populate_string_pointers(std::vector<char const *> &ptrs,
         size_t n = v.GetArray().Size();
         an.push(n);
       } else if (v.IsString()) {
-        ptrs.push_back(v.GetString());
+        std::string sss(v.GetString());
+        sss.resize(fixed_at, '\0');
+        ret.push_back(sss);
         ai.top()++;
       }
     }
   }
-}
 
-void HDFFile::populate_string_fixed_size(std::vector<char> &blob,
-                                       hsize_t element_size,
-                                       rapidjson::Value const *vals) {
-  size_t n_added = 0;
-  if (vals->IsString()) {
-    std::copy(vals->GetString(), vals->GetString() + vals->GetStringLength(),
-              blob.data() + n_added * element_size);
-    ++n_added;
-  } else if (vals->IsArray()) {
-    std::stack<rapidjson::Value const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(vals);
-    ai.push(0);
-    an.push(vals->GetArray().Size());
-
-    while (not as.empty()) {
-      if (as.size() > 10) {
-        break;
-      }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->GetArray()[ai.top()];
-      if (v.IsArray()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        size_t n = v.GetArray().Size();
-        an.push(n);
-      } else if (v.IsString()) {
-        std::copy(v.GetString(), v.GetString() + v.GetStringLength(),
-                  blob.data() + n_added * element_size);
-        ++n_added;
-        ai.top()++;
-      }
-    }
+  if (ret.size() != goal_size) {
+    std::stringstream ss;
+    ss << "Failed to populate string(fixed) blob ";
+    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    std::throw_with_nested(std::runtime_error(ss.str()));
   }
+
+  return ret;
 }
 
 template <typename DT>
@@ -311,23 +308,15 @@ write_ds_numeric(hdf5::node::Group& parent, std::string name,
     if (!sizes.empty()) {
       dsp = hdf5::dataspace::Simple(sizes, max);
       if (max[0] == H5S_UNLIMITED) {
-        dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
         dcpl.chunk(sizes);
       }
     }
 
-    std::vector<DT> blob;
-    populate_blob(blob, vals);
-    if (static_cast<hssize_t>(blob.size()) != dsp.size()) {
-      LOG(Sev::Critical, "unexpected number of values for dataset {}  "
-          "expected: {}  actual: {}",
-          name, dsp.size(), blob.size());
-    } else {
-      auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(), dsp,
-                                      hdf5::property::LinkCreationList(), dcpl);
+    std::vector<DT> blob = populate_blob<DT>(vals, dsp.size());
+    auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(), dsp,
+                                    hdf5::property::LinkCreationList(), dcpl);
 
-      ds.write(blob);
-    }
+    ds.write(blob);
   }
   catch (std::exception& e)
   {
@@ -344,36 +333,24 @@ void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
                               std::vector<hsize_t> max,
                               rapidjson::Value const *vals) {
 
-  hdf5::property::DatasetCreationList dcpl;
-  hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
-  if (!sizes.empty()) {
-    dsp = hdf5::dataspace::Simple(sizes, max);
-    if (max[0] == H5S_UNLIMITED) {
-      dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
-      dcpl.chunk(sizes);
-    }
-  }
-
-  std::vector<char const *> blob;
-  populate_string_pointers(blob, vals);
-  if (blob.size() != dsp.size()) {
-    std::stringstream ss;
-    ss << "Failed to populate blob for variable-size string dataset ";
-    ss << parent.link().path() << "/" << name;
-    ss << " size mismatch " << blob.size() << "!=" << dsp.size();
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
-
   try {
+    hdf5::property::DatasetCreationList dcpl;
+    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
+    if (!sizes.empty()) {
+      dsp = hdf5::dataspace::Simple(sizes, max);
+      if (max[0] == H5S_UNLIMITED) {
+        dcpl.chunk(sizes);
+      }
+    }
+
+    auto blob2 = populate_strings(vals, dsp.size());
+
     auto dt = hdf5::datatype::String::variable();
     dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    auto ds = parent.create_dataset(name, dt, dsp, hdf5::property::LinkCreationList(), dcpl);
-
-    if (0 < H5Dwrite(static_cast<hid_t>(ds), static_cast<hid_t>(dt),
-                     H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data())) {
-      LOG(Sev::Error, "error while writing dataset {}", name);
-    }
+    auto ds = parent.create_dataset(name, dt, dsp,
+                                    hdf5::property::LinkCreationList(), dcpl);
+    ds.write(blob2, dt, dsp, dsp);
   }
   catch (std::exception &e) {
     std::stringstream ss;
@@ -388,29 +365,7 @@ void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string 
                                        std::vector<hsize_t> max,
                                        hsize_t element_size,
                                        rapidjson::Value const *vals) {
-  if (element_size >= 1024 * 1024) {
-    std::stringstream ss;
-    ss << "Failed to allocate fixed-size string dataset ";
-    ss << parent.link().path() <<  "/" << name;
-    ss << " bad element size: " << element_size;
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
 
-  size_t total_n = 1;
-  for (auto x : sizes) {
-    total_n *= x;
-  }
-
-  std::vector<char> blob;
-  blob.resize(total_n * element_size);
-  populate_string_fixed_size(blob, element_size, vals);
-  if (static_cast<hssize_t>(blob.size()) != (total_n * element_size)) {
-    std::stringstream ss;
-    ss << "Failed to populate blob for fixed-size string dataset ";
-    ss << parent.link().path() << "/" << name;
-    ss << " size mismatch " << blob.size() << "!=" << (total_n * element_size);
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
 
   try {
     hdf5::property::DatasetCreationList dcpl;
@@ -418,22 +373,20 @@ void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string 
     if (!sizes.empty()) {
       dsp = hdf5::dataspace::Simple(sizes, max);
       if (max[0] == H5S_UNLIMITED) {
-        dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
         dcpl.chunk(sizes);
       }
     }
 
-    auto dt = hdf5::datatype::String::fixed(element_size - 1);
+    auto dt = hdf5::datatype::String::fixed(element_size -1 + 1);
     dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    dt.set_padding(hdf5::datatype::StringPad::NULLTERM);
 
     auto ds = parent.create_dataset(name, dt, dsp,
                                     hdf5::property::LinkCreationList(), dcpl);
 
-    if (0 < H5Dwrite(static_cast<hid_t>(ds), static_cast<hid_t>(dt),
-                     H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                     blob.data())) {
-      LOG(Sev::Critical, "error while writing dataset");
-    }
+    auto blob2 = populate_fixed_strings(vals, element_size, dsp.size());
+    ds.write(blob2, dt, dsp, dsp, hdf5::property::DatasetTransferList());
+
   }
   catch (std::exception &e) {
     std::stringstream ss;
