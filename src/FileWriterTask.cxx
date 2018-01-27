@@ -55,7 +55,7 @@ void FileWriterTask::add_source(Source &&source) {
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              rapidjson::Value const &config_file,
                              std::vector<StreamHDFInfo> &stream_hdf_info,
-                             std::vector<hid_t> &groups) {
+                             std::vector<hdf5::node::Group> &groups) {
   filename_full = hdf_filename;
   if (!hdf_output_prefix.empty()) {
     filename_full = hdf_output_prefix + "/" + filename_full;

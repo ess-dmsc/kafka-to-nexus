@@ -38,13 +38,13 @@ herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
 }
 
 HDFFile::~HDFFile() {
-  // we do this to prevent destructor from throwing
   try {
     close();
   }
+  // we do this to prevent destructor from throwing
   catch (std::exception& e)
   {
-    LOG(Sev::Error, "HDFFile failed to close, stack: {}", hdf5::error::print_nested(e));
+    LOG(Sev::Error, "HDFFile failed to close, stack:\n{}", hdf5::error::print_nested(e));
   }
 }
 
@@ -177,7 +177,7 @@ static std::vector<DT> populate_blob(rapidjson::Value const *vals, hssize_t goal
       }
     }
   }
-  if (ret.size() != goal_size) {
+  if (static_cast<hssize_t>(ret.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate numeric blob ";
     ss << " size mismatch " << ret.size() << "!=" << goal_size;
@@ -226,7 +226,7 @@ std::vector<std::string> HDFFile::populate_strings(rapidjson::Value const *vals,
     }
   }
 
-  if (ret.size() != goal_size) {
+  if (static_cast<hssize_t>(ret.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate string(variable) blob ";
     ss << " size mismatch " << ret.size() << "!=" << goal_size;
@@ -286,7 +286,7 @@ std::vector<std::string> HDFFile::populate_fixed_strings(rapidjson::Value const 
     }
   }
 
-  if (ret.size() != goal_size) {
+  if (static_cast<hssize_t>(ret.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate string(fixed) blob ";
     ss << " size mismatch " << ret.size() << "!=" << goal_size;
@@ -483,7 +483,7 @@ void HDFFile::write_dataset(hdf5::node::Group& parent, rapidjson::Value const *v
     }
 
     if (auto x = get_int(ds.v, "string_size")) {
-      if (x.v > 0 && x.v != H5T_VARIABLE) {
+      if ((x.v > 0) && (x.v != H5T_VARIABLE)) {
         element_size = x.v;
       }
     }
@@ -635,7 +635,7 @@ void HDFFile::init(std::string filename,
                   rapidjson::Value const &nexus_structure,
                   rapidjson::Value const &config_file,
                   std::vector<StreamHDFInfo> &stream_hdf_info,
-                  std::vector<hid_t> &groups) {
+                  std::vector<hdf5::node::Group> &groups) {
 
   try {
     hdf5::property::FileCreationList fcpl;
@@ -656,16 +656,9 @@ void HDFFile::init(std::string filename,
 
 void HDFFile::init(rapidjson::Value const &nexus_structure,
                   std::vector<StreamHDFInfo> &stream_hdf_info,
-                  std::vector<hid_t> &groups) {
+                  std::vector<hdf5::node::Group> &groups) {
 
-  for (auto x : groups) {
-    array<char, 256> b;
-    H5Iget_name(x, b.data(), b.size());
-    LOG(Sev::Error, "closing refs: {}  name: {}", H5Iget_ref(x), b.data());
-    H5Gclose(x);
-  }
   groups.clear();
-
 
   try {
     check_hdf_version();

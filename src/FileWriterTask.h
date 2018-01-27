@@ -44,7 +44,7 @@ private:
   int hdf_init(rapidjson::Value const &nexus_structure,
                rapidjson::Value const &config_file,
                std::vector<StreamHDFInfo> &stream_hdf_info,
-               std::vector<hid_t> &groups);
+               std::vector<hdf5::node::Group> &groups);
   void hdf_close();
   int hdf_reopen();
   void job_id_init(const std::string &);

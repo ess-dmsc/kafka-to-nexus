@@ -90,7 +90,7 @@ TEST(HDFFile, create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
-  std::vector<hid_t> groups;
+  std::vector<hdf5::node::Group> groups;
   f1.init("tmp-test.h5", rapidjson::Value().SetObject(),
           rapidjson::Value().SetObject(), stream_hdf_info, groups);
 }
@@ -1277,7 +1277,7 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;
+    std::vector<hdf5::node::Group> groups;
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = h5file;
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
@@ -1393,7 +1393,7 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;
+    std::vector<hdf5::node::Group> groups;
 
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
@@ -1431,7 +1431,7 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;
+    std::vector<hdf5::node::Group> groups;
 
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_variable");
