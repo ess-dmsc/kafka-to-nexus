@@ -738,9 +738,10 @@ static void create_hdf_structures(rapidjson::Value const *value,
                                   hdf5::node::Group& hdf_parent,
                                   uint16_t level,
                                   hdf5::property::LinkCreationList lcpl,
-                                  hid_t hdf_type_strfix,
+                                  hdf5::datatype::String hdf_type_strfix,
                                   std::vector<StreamHDFInfo> &stream_hdf_info,
                                   std::deque<std::string> &path) {
+
   // The HDF object that we will maybe create at the current level.
   hdf5::node::Group hdf_this;
   // Keeps the HDF object id if we create a new collection-like object which
@@ -749,32 +750,31 @@ static void create_hdf_structures(rapidjson::Value const *value,
   hdf5::node::Group hdf_next_parent;
   // Remember whether we created a group at this level.
   hdf5::node::Group gid;
-  {
-    if (auto type = get_string(value, "type")) {
-      if (type.v == "group") {
-        if (auto name = get_string(value, "name")) {
+  if (auto type = get_string(value, "type")) {
+    if (type.v == "group") {
+      if (auto name = get_string(value, "name")) {
 
-          try {
-            hdf_this = hdf_parent.create_group(name.v, lcpl);
-            hdf_next_parent = hdf_this;
-            path.push_back(name.v);
-            gid = hdf_this;
-          }
-          catch (...) {
-            LOG(Sev::Critical, "failed to create group  name: {}", name.v.c_str());
-          }
+        try {
+          hdf_this = hdf_parent.create_group(name.v, lcpl);
+          hdf_next_parent = hdf_this;
+          path.push_back(name.v);
+          gid = hdf_this;
+        }
+        catch (...) {
+          LOG(Sev::Critical, "failed to create group  name: {}", name.v.c_str());
         }
       }
-      if (type.v == "stream") {
-        string pathstr = "/";
-        for (auto &x : path) {
-          pathstr += "/" + x;
-        }
-        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
+    }
+    if (type.v == "stream") {
+      string pathstr;
+      for (auto &x : path) {
+        pathstr += "/" + x;
       }
-      if (type.v == "dataset") {
-        write_dataset(hdf_parent, value);
-      }
+
+      stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
+    }
+    if (type.v == "dataset") {
+      write_dataset(hdf_parent, value);
     }
   }
 
@@ -895,8 +895,7 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
         if (mem->value.IsArray()) {
           for (auto &child : mem->value.GetArray()) {
             create_hdf_structures(&child, root_group,
-                                  0, lcpl,
-                                  static_cast<hid_t>(strfix),
+                                  0, lcpl, strfix,
                                   stream_hdf_info, path);
           }
         }

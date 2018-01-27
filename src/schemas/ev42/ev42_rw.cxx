@@ -123,31 +123,39 @@ HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group& hdf_parent, string hdf_parent_name,
                           rapidjson::Value const *attributes,
                           CollectiveQueue *cq) {
-  auto hdf_group = hdf5::node::Group(hdf_parent.nodes[hdf_parent_name]);
-  this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-      static_cast<hid_t>(hdf_group), "event_time_offset", chunk_bytes, cq);
-  this->ds_event_id =
-      h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "event_id", chunk_bytes, cq);
-  this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      static_cast<hid_t>(hdf_group), "event_time_zero", chunk_bytes, cq);
-  this->ds_event_index =
-      h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "event_index", chunk_bytes, cq);
-  this->ds_cue_index =
-      h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "cue_index", chunk_bytes, cq);
-  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      static_cast<hid_t>(hdf_group), "cue_timestamp_zero", chunk_bytes, cq);
+  try {
+    auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
+    this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
+        static_cast<hid_t>(hdf_group), "event_time_offset", chunk_bytes, cq);
+    this->ds_event_id =
+        h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "event_id", chunk_bytes, cq);
+    this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
+        static_cast<hid_t>(hdf_group), "event_time_zero", chunk_bytes, cq);
+    this->ds_event_index =
+        h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "event_index", chunk_bytes, cq);
+    this->ds_cue_index =
+        h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "cue_index", chunk_bytes, cq);
+    this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+        static_cast<hid_t>(hdf_group), "cue_timestamp_zero", chunk_bytes, cq);
 
-  if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
-      !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
-    ds_event_time_offset.reset();
-    ds_event_id.reset();
-    ds_event_time_zero.reset();
-    ds_event_index.reset();
-    ds_cue_index.reset();
-    ds_cue_timestamp_zero.reset();
+    if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
+        !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
+      ds_event_time_offset.reset();
+      ds_event_id.reset();
+      ds_event_time_zero.reset();
+      ds_event_index.reset();
+      ds_cue_index.reset();
+      ds_cue_timestamp_zero.reset();
+    }
+    if (attributes) {
+      write_attributes(hdf_group, attributes);
+    }
   }
-  if (attributes) {
-    write_attributes(hdf_group, attributes);
+  catch (std::exception& e)
+  {
+    auto message = hdf5::error::print_nested(e);
+    LOG(Sev::Error, "ERROR ev42 could not init hdf_parent: {}  name: {}  trace: {}",
+        static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name, message);
   }
   return HDFWriterModule::InitResult::OK();
 }
