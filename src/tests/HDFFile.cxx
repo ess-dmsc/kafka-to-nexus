@@ -1255,14 +1255,6 @@ public:
   }
 
   static void attribute_int_scalar() {
-    hdf5::property::FileCreationList fcpl;
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    auto h5file = hdf5::file::create("tmp-in-memory.h5",
-                                     hdf5::file::AccessFlags::TRUNCATE,
-                                     fcpl, fapl);
-
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1277,92 +1269,39 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hdf5::node::Group> groups;
+
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+    fapl.driver(hdf5::file::MemoryDriver());
+
     FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = h5file;
+    hdf_file.h5file = hdf5::file::create("tmp-in-memory.h5",
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         fcpl, fapl);
+
+    std::vector<hdf5::node::Group> groups;
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
-    auto a1 =
-        H5Aopen_by_name(static_cast<hid_t>(h5file), "/group1", "hello",
-                        H5P_DEFAULT, H5P_DEFAULT);
-    ASSERT_GE(a1, 0);
-    auto dt = H5Aget_type(a1);
-    ASSERT_GE(dt, 0);
-    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
-    H5Tclose(dt);
-    ASSERT_GE(H5Aclose(a1), 0);
+    auto a1 = hdf5::node::get_group(hdf_file.root_group, "/group1").attributes["hello"];
+    ASSERT_TRUE(a1.is_valid());
+    ASSERT_EQ(a1.datatype().get_class(), hdf5::datatype::Class::STRING);
   }
 
   /// Read a string from the given dataset at the given position.
   /// Helper for other unit tests.
   /// So far only for 1d datasets.
-  static void read_string(std::string &result, hid_t ds,
-                          std::vector<hsize_t> pos) {
-    herr_t err;
-    auto dt = H5Dget_type(ds);
-    ASSERT_GE(dt, 0);
-    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
-    ASSERT_EQ(H5Tget_cset(dt), H5T_CSET_UTF8);
-    if (!H5Tis_variable_str(dt)) {
-      // Check plausibility, assuming current unit tests:
-      ASSERT_LE(H5Tget_size(dt), 4096);
-    }
-    auto dsp = H5Dget_space(ds);
-    ASSERT_GE(dsp, 0);
-    {
-      std::array<hsize_t, 1> now{{0}};
-      std::array<hsize_t, 1> max{{0}};
-      err = H5Sget_simple_extent_dims(dsp, now.data(), max.data());
-      ASSERT_EQ(err, 1);
-      ASSERT_GE(now.at(0), 0);
-      ASSERT_GE(max.at(0), 0);
-    }
-    {
-      std::array<hsize_t, 1> start{{pos.at(0)}};
-      std::array<hsize_t, 1> stride{{1}};
-      std::array<hsize_t, 1> count{{1}};
-      std::array<hsize_t, 1> block{{1}};
-      err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(),
-                                stride.data(), count.data(), block.data());
-      ASSERT_GE(err, 0);
-    }
-    auto dspmem = H5Screate(H5S_SIMPLE);
-    ASSERT_GE(dspmem, 0);
-    {
-      std::array<hsize_t, 1> now{{1}};
-      std::array<hsize_t, 1> max{{1}};
-      err = H5Sset_extent_simple(dspmem, 1, now.data(), max.data());
-      ASSERT_GE(err, 0);
-    }
-    {
-      std::array<hsize_t, 1> start{{0}};
-      std::array<hsize_t, 1> stride{{1}};
-      std::array<hsize_t, 1> count{{1}};
-      std::array<hsize_t, 1> block{{1}};
-      err = H5Sselect_hyperslab(dspmem, H5S_SELECT_SET, start.data(),
-                                stride.data(), count.data(), block.data());
-      ASSERT_GE(err, 0);
-    }
-    auto dtmem = H5Tcopy(H5T_C_S1);
-    H5Tset_cset(dtmem, H5T_CSET_UTF8);
+  static std::string read_string(const hdf5::node::Dataset &dataset,
+                                 std::vector<hsize_t> pos) {
 
-    if (H5Tis_variable_str(dt)) {
-      H5Tset_size(dtmem, H5T_VARIABLE);
-      char *string_ptr = nullptr;
-      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, &string_ptr);
-      ASSERT_GE(err, 0);
-      result = std::string(string_ptr);
-    } else {
-      H5Tset_size(dtmem, H5Tget_size(dt));
-      std::vector<char> buf;
-      buf.resize(H5Tget_size(dt) + 1);
-      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, buf.data());
-      ASSERT_GE(err, 0);
-      result = std::string(buf.data());
-    }
+    hdf5::datatype::String datatype(dataset.datatype());
+    hdf5::dataspace::Simple dataspace(dataset.dataspace());
 
-    H5Tclose(dt);
-    ASSERT_GE(H5Sclose(dsp), 0);
-    ASSERT_GE(H5Sclose(dspmem), 0);
+    std::vector<std::string> result;
+    result.resize(dataspace.size());
+    dataset.read(result, datatype, dataspace, dataspace,
+                 hdf5::property::DatasetTransferList());
+
+    //trim padding
+    return result[pos[0]].c_str();
   }
 
   static void dataset_static_1d_string_fixed() {
@@ -1397,11 +1336,11 @@ public:
 
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
-    ASSERT_TRUE(ds.is_valid());
-    std::string item;
-    item.reserve(20);
-    read_string(item, static_cast<hid_t>(ds), {1});
-    ASSERT_EQ(item, std::string("another-one"));
+    auto datatype = hdf5::datatype::String(ds.datatype());
+    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
+    ASSERT_FALSE(datatype.is_variable_length());
+    ASSERT_EQ(read_string(ds, {1}), std::string("another-one"));
   }
 
   static void dataset_static_1d_string_variable() {
@@ -1435,12 +1374,11 @@ public:
 
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_variable");
-
-    ASSERT_TRUE(ds.is_valid());
-    std::string item;
-    item.reserve(20);
-    read_string(item, static_cast<hid_t>(ds), {2});
-    ASSERT_EQ(item, std::string("string-2"));
+    auto datatype = hdf5::datatype::String(ds.datatype());
+    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
+    ASSERT_TRUE(datatype.is_variable_length());
+    ASSERT_EQ(read_string(ds, {2}), std::string("string-2"));
   }
 };
 

@@ -326,6 +326,7 @@ void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
   try {
     auto dt = hdf5::datatype::String::variable();
     dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    dt.set_padding(hdf5::datatype::StringPad::NULLTERM);
 
     auto ds = parent.create_dataset(name, dt, dataspace,
                                     hdf5::property::LinkCreationList(), dcpl);
@@ -350,10 +351,12 @@ void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string 
   try {
     auto dt = hdf5::datatype::String::fixed(element_size);
     dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    dt.set_padding(hdf5::datatype::StringPad::NULLTERM);
 
     auto ds = parent.create_dataset(name, dt, dataspace,
                                     hdf5::property::LinkCreationList(), dcpl);
 
+    dt.set_padding(hdf5::datatype::StringPad::NULLPAD);
     ds.write(populate_fixed_strings(vals, element_size, dataspace.size()),
              dt, dataspace, dataspace, hdf5::property::DatasetTransferList());
 
