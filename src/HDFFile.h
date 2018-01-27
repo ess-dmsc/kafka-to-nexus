@@ -61,14 +61,14 @@ public:
   static std::string h5_version_string_headers_compile_time();
 
   static void create_hdf_structures(rapidjson::Value const *value,
-                                    hdf5::node::Group& hdf_parent,
+                                    hdf5::node::Group& parent,
                                     uint16_t level,
                                     hdf5::property::LinkCreationList lcpl,
                                     hdf5::datatype::String hdf_type_strfix,
                                     std::vector<StreamHDFInfo> &stream_hdf_info,
                                     std::deque<std::string> &path);
 
-  static void write_hdf_ds_scalar_string(hdf5::node::Group& hdf_parent, std::string name,
+  static void write_hdf_ds_scalar_string(hdf5::node::Group& parent, std::string name,
                                          std::string s1);
 
   static void write_hdf_iso8601_now(hdf5::node::Node& node, const std::string &name);
@@ -83,28 +83,36 @@ public:
                                          hsize_t element_size,
                                          rapidjson::Value const *vals);
 
-  static void write_ds_string(hdf5::node::Group& hdf_parent, std::string name,
+  static void write_ds_string(hdf5::node::Group& parent, std::string name,
                               std::vector<hsize_t> sizes,
                               std::vector<hsize_t> max,
                               rapidjson::Value const *vals);
 
-  static void write_ds_string_fixed_size(hdf5::node::Group& hdf_parent, std::string name,
+  static void write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
                                          std::vector<hsize_t> sizes,
                                          std::vector<hsize_t> max,
                                          hsize_t element_size,
                                          rapidjson::Value const *vals);
 
   static void write_ds_generic(std::string const &dtype,
-                               hdf5::node::Group& hdf_parent, std::string const &name,
+                               hdf5::node::Group& parent, std::string const &name,
                                std::vector<hsize_t> const &sizes,
                                std::vector<hsize_t> const &max,
                                hsize_t element_size,
                                rapidjson::Value const *vals);
 
-  static void write_dataset(hdf5::node::Group& hdf_parent, rapidjson::Value const *value);
+  static void write_dataset(hdf5::node::Group& parent, rapidjson::Value const *value);
 
   static void set_common_props(hdf5::property::FileCreationList& fcpl,
                                hdf5::property::FileAccessList& fapl) {}
+
+  template <typename T>
+  static void write_attribute(hdf5::node::Node& node, std::string name, T value) {
+    hdf5::property::AttributeCreationList acpl;
+    acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    node.attributes.create<T>(name, acpl).write(value);
+  }
+
 };
 
 } // namespace FileWriter
