@@ -1388,7 +1388,7 @@ public:
             "string_size": 71,
             "size": ["unlimited"]
           },
-          "values": ["the-scalar-string", "another-one"]
+          "values": ["the-scalar-string", "another-one", "yet-another"]
         }
       ]
     })"");
@@ -1399,8 +1399,9 @@ public:
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
     ASSERT_TRUE(ds.is_valid());
     std::string item;
+    item.reserve(20);
     read_string(item, static_cast<hid_t>(ds), {1});
-    ASSERT_EQ(item, "another-one");
+    ASSERT_EQ(item, std::string("another-one"));
   }
 
   static void dataset_static_1d_string_variable() {

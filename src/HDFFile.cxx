@@ -573,94 +573,58 @@ void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string 
                                        std::vector<hsize_t> max,
                                        hsize_t element_size,
                                        rapidjson::Value const *vals) {
-  herr_t err = 0;
+  if (element_size >= 1024 * 1024) {
+    std::stringstream ss;
+    ss << "Failed to allocate fixed-size string dataset ";
+    ss << parent.link().path() <<  "/" << name;
+    ss << " bad element size: " << element_size;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
   size_t total_n = 1;
   for (auto x : sizes) {
     total_n *= x;
   }
-  hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  if (dcpl < 0) {
-    LOG(Sev::Critical, "failed H5Pcreate");
-  } else {
-    hid_t dsp = -1;
-    if (sizes.empty()) {
-      dsp = H5Screate(H5S_SCALAR);
-    } else {
-      dsp = H5Screate(H5S_SIMPLE);
-    }
-    if (dsp < 0) {
-      LOG(Sev::Critical, "failed H5Screate");
-    } else {
-      err = 0;
-      if (!sizes.empty()) {
-        err = H5Sset_extent_simple(dsp, static_cast<int>(sizes.size()),
-                                   sizes.data(), max.data());
-        if (err < 0) {
-        } else {
-          if (max[0] == H5S_UNLIMITED) {
-            err = H5Pset_chunk(dcpl, static_cast<int>(sizes.size()),
-                               sizes.data());
-            if (err < 0) {
-            }
-          }
-        }
-      }
-      if (err < 0) {
-        // nothing more to do so far
-      } else {
-        std::vector<char> blob;
-        if (element_size < 1024 * 1024) {
-          blob.resize(total_n * element_size);
-        }
-        populate_string_fixed_size(blob, element_size, vals);
-        if (blob.size() != total_n * element_size) {
-          LOG(Sev::Critical, "error in sizes");
-        } else {
-          hid_t dt = H5Tcopy(H5T_C_S1);
-          if (dt < 0) {
-            LOG(Sev::Critical, "failed H5Tcopy");
-          } else {
-            err = H5Tset_size(dt, element_size);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tset_size");
-            } else {
-              err = H5Tset_cset(dt, H5T_CSET_UTF8);
-              if (err < 0) {
-                LOG(Sev::Critical, "failed H5Tset_cset");
-              } else {
-                hid_t ds = H5Dcreate2(static_cast<hid_t>(parent), name.data(),
-                                      dt, dsp, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-                if (ds < 0) {
-                  LOG(Sev::Critical, "failed H5Dcreate2");
-                } else {
-                  err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                                 blob.data());
-                  if (err < 0) {
-                    LOG(Sev::Critical, "error while writing dataset");
-                  }
-                  err = H5Dclose(ds);
-                  if (err < 0) {
-                    LOG(Sev::Critical, "failed H5Dclose");
-                  }
-                }
-              }
-            }
-            err = H5Tclose(dt);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tclose");
-            }
-          }
-        }
-      }
-      err = H5Sclose(dsp);
-      if (err < 0) {
-        LOG(Sev::Critical, "failed H5Sclose");
+
+  std::vector<char> blob;
+  blob.resize(total_n * element_size);
+  populate_string_fixed_size(blob, element_size, vals);
+  if (static_cast<hssize_t>(blob.size()) != (total_n * element_size)) {
+    std::stringstream ss;
+    ss << "Failed to populate blob for fixed-size string dataset ";
+    ss << parent.link().path() << "/" << name;
+    ss << " size mismatch " << blob.size() << "!=" << (total_n * element_size);
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+  try {
+    hdf5::property::DatasetCreationList dcpl;
+    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
+    if (!sizes.empty()) {
+      dsp = hdf5::dataspace::Simple(sizes, max);
+      if (max[0] == H5S_UNLIMITED) {
+        dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
+        dcpl.chunk(sizes);
       }
     }
-    err = H5Pclose(dcpl);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pclose");
+
+    auto dt = hdf5::datatype::String::fixed(element_size - 1);
+    dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    auto ds = parent.create_dataset(name, dt, dsp,
+                                    hdf5::property::LinkCreationList(), dcpl);
+
+    if (0 < H5Dwrite(static_cast<hid_t>(ds), static_cast<hid_t>(dt),
+                     H5S_ALL, H5S_ALL, H5P_DEFAULT,
+                     blob.data())) {
+      LOG(Sev::Critical, "error while writing dataset");
     }
+  }
+  catch (std::exception &e) {
+    std::stringstream ss;
+    ss << "Failed to write fixed-size string dataset ";
+    ss << parent.link().path() << "/" << name;
+    std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
