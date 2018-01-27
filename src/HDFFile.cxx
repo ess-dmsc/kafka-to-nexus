@@ -50,54 +50,13 @@ HDFFile::~HDFFile() {
 
 void HDFFile::write_hdf_ds_scalar_string(hdf5::node::Group& parent, std::string name,
                                        std::string s1) {
-  herr_t err;
-  hid_t strfix = H5Tcopy(H5T_C_S1);
-  if (strfix < 0) {
-    LOG(Sev::Critical, "failed H5Tcopy");
-  } else {
-    err = H5Tset_cset(strfix, H5T_CSET_UTF8);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Tset_cset");
-    } else {
-      err = H5Tset_size(strfix, s1.size());
-      if (err < 0) {
-        LOG(Sev::Critical, "failed H5Tset_size");
-      } else {
-        using A = std::array<hsize_t, 1>;
-        A sini{{1}};
-        A smax{{1}};
-        hid_t dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-        if (dsp < 0) {
-          LOG(Sev::Critical, "failed H5Screate_simple");
-        } else {
-          hid_t ds = H5Dcreate2(static_cast<hid_t>(parent), name.c_str(),
-                                strfix, dsp, H5P_DEFAULT,
-                                H5P_DEFAULT, H5P_DEFAULT);
-          if (ds < 0) {
-            LOG(Sev::Critical, "failed H5Dcreate2");
-          } else {
-            err =
-                H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Dwrite");
-            }
-            err = H5Dclose(ds);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Dclose");
-            }
-          }
-          err = H5Sclose(dsp);
-          if (err < 0) {
-            LOG(Sev::Critical, "failed H5Sclose");
-          }
-        }
-      }
-    }
-    err = H5Tclose(strfix);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Tclose");
-    }
-  }
+
+  auto strfix = hdf5::datatype::String::fixed(s1.size());
+  strfix.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+  auto dsp = hdf5::dataspace::Scalar();
+  auto ds = parent.create_dataset(name, strfix, dsp);
+  ds.write(s1, strfix, dsp, dsp);
 }
 
 void HDFFile::write_attribute_str(hdf5::node::Node& node, std::string name,
@@ -384,188 +343,44 @@ void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
                               std::vector<hsize_t> sizes,
                               std::vector<hsize_t> max,
                               rapidjson::Value const *vals) {
-  herr_t err = 0;
-  size_t total_n = 1;
-  for (auto x : sizes) {
-    total_n *= x;
-  }
-  hid_t dcpl = H5Pcreate(H5P_DATASET_CREATE);
-  if (dcpl < 0) {
-    LOG(Sev::Critical, "failed H5Pcreate");
-  } else {
-    hid_t dsp = -1;
-    if (sizes.empty()) {
-      dsp = H5Screate(H5S_SCALAR);
-    } else {
-      dsp = H5Screate(H5S_SIMPLE);
-    }
-    if (dsp < 0) {
-      LOG(Sev::Critical, "failed H5Screate");
-    } else {
-      err = 0;
-      if (!sizes.empty()) {
-        err = H5Sset_extent_simple(dsp, (int)sizes.size(), sizes.data(),
-                                   max.data());
-        if (err < 0) {
-          LOG(Sev::Critical, "failed H5Sset_extent_simple");
-        } else {
-          if (max[0] == H5S_UNLIMITED) {
-            err = H5Pset_chunk(dcpl, sizes.size(), sizes.data());
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Pset_chunk");
-            }
-          }
-        }
-      }
-      if (err < 0) {
-        // nothing to do here so far
-      } else {
-        std::vector<char const *> blob;
-        populate_string_pointers(blob, vals);
-        if (blob.size() != total_n) {
-          LOG(Sev::Critical, "unexpected number of values for dataset {}  "
-              "expected: {}  actual: {}",
-              name, total_n, blob.size());
-        } else {
-          hid_t dt = H5Tcopy(H5T_C_S1);
-          if (dt < 0) {
-            LOG(Sev::Critical, "failed H5Tcopy");
-          } else {
-            err = H5Tset_size(dt, H5T_VARIABLE);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tset_size");
-            } else {
-              err = H5Tset_cset(dt, H5T_CSET_UTF8);
-              if (err < 0) {
-                LOG(Sev::Critical, "failed H5Tset_cset");
-              } else {
-                hid_t ds = H5Dcreate2(static_cast<hid_t>(parent), name.data(),
-                                      dt, dsp, H5P_DEFAULT, dcpl, H5P_DEFAULT);
-                if (ds < 0) {
-                  LOG(Sev::Critical, "failed H5Dcreate2");
-                } else {
-                  err = H5Dwrite(ds, dt, H5S_ALL, H5S_ALL, H5P_DEFAULT,
-                                 blob.data());
-                  if (err < 0) {
-                    LOG(Sev::Error, "error while writing dataset {}", name);
-                  }
-                  err = H5Dclose(ds);
-                  if (err < 0) {
-                    LOG(Sev::Critical, "failed H5Dclose");
-                  }
-                }
-              }
-            }
-            err = H5Tclose(dt);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tclose");
-            }
-          }
-        }
-      }
-      err = H5Sclose(dsp);
-      if (err < 0) {
-        LOG(Sev::Critical, "failed H5Sclose");
-      }
-    }
-    err = H5Pclose(dcpl);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pclose");
-    }
-  }
-}
-
-
-void HDFFile::write_ds_string_variable(hdf5::node::Group& parent, std::string name,
-                                       std::vector<hsize_t> sizes,
-                                       std::vector<hsize_t> max,
-                                       rapidjson::Value const *vals) {
 
   hdf5::property::DatasetCreationList dcpl;
-  hdf5::datatype::String dt = hdf5::datatype::create<std::string>();
-  dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-//  dt.set_padding(hdf5::datatype::StringPad::NULLTERM);
-
-//  auto dt = hdf5::datatype::create<std::string>();
-
-  hdf5::node::Dataset ds;
   hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
-  std::vector<std::string> blob;
-  populate_strings(blob, vals);
-
-  try {
-//    hdf5::property::DatasetCreationList dcpl;
-//    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
-    if (!sizes.empty()) {
-      dsp = hdf5::dataspace::Simple(sizes, max);
-      if (max[0] == H5S_UNLIMITED) {
-        dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
-        dcpl.chunk(sizes);
-      }
-    }
-
-    if (static_cast<hssize_t>(blob.size()) != dsp.size()) {
-      LOG(Sev::Critical, "unexpected number of values for dataset {}  "
-          "expected: {}  actual: {}",
-          name, dsp.size(), blob.size());
-      return;
-    } else {
-      ds = hdf5::node::Dataset(parent, name,
-                               dt, dsp,
-           hdf5::property::LinkCreationList(), dcpl);
+  if (!sizes.empty()) {
+    dsp = hdf5::dataspace::Simple(sizes, max);
+    if (max[0] == H5S_UNLIMITED) {
+      dcpl.layout(hdf5::property::DatasetLayout::CHUNKED);
+      dcpl.chunk(sizes);
     }
   }
-  catch (std::exception& e)
-  {
+
+  std::vector<char const *> blob;
+  populate_string_pointers(blob, vals);
+  if (blob.size() != dsp.size()) {
     std::stringstream ss;
-    ss << "Failed to create variable-length string dataset ";
-    ss << parent.link().path() <<  "/" << name;
-    ss <<" blob(" << blob.size() << ")=[";
-    for (auto b : blob)
-      ss << b.size() << "'"<< b << "' ";
-    ss << "]";
+    ss << "Failed to populate blob for variable-size string dataset ";
+    ss << parent.link().path() << "/" << name;
+    ss << " size mismatch " << blob.size() << "!=" << dsp.size();
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
-//  if (ds.is_valid()) {
-    try {
-      auto dsp2 = ds.dataspace();
-      if (blob.size() > 1) {
-        hsize_t n=0;
-        for (auto b : blob)
-          ds.write(b, hdf5::dataspace::Hyperslab({n++}, {1}));
-      } else {
-        ds.write(blob.front(), dt, dsp);
-      }
-    }
-    catch (std::exception &e) {
-      std::stringstream ss;
-      ss << "Failed to write variable-length string dataset ";
-      ss << ds.link().path();
-      if (dsp.type() == hdf5::dataspace::Type::SIMPLE) {
-        ss << " size(";
-        for (auto s : hdf5::dataspace::Simple(dsp).current_dimensions())
-          ss << s << " ";
-        ss << ")  max(";
-        for (auto s : hdf5::dataspace::Simple(dsp).maximum_dimensions())
-          ss << s << " ";
-        ss << ")";
-      }
-      ss <<" blob(" << blob.size() << ")=[";
-      for (auto b : blob)
-        ss << b.size() << "'"<< b << "' ";
-      ss << "]";
+  try {
+    auto dt = hdf5::datatype::String::variable();
+    dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-      ss << " dspace_size=" << dsp.size();
-      ss << " sspace_type=" << dsp.type();
-      ss << " dset_valid=" << ds.is_valid();
-      ss << " dset_size=" << ds.dataspace().size();
-      ss << " dset_type=" << ds.datatype().get_class();
-      ss << " refcount_ds=" <<  H5Iget_ref(static_cast<hid_t >(ds));
-      ss << " refcount_dsp=" <<  H5Iget_ref(static_cast<hid_t >(dsp));
-      std::throw_with_nested(std::runtime_error(ss.str()));
+    auto ds = parent.create_dataset(name, dt, dsp, hdf5::property::LinkCreationList(), dcpl);
+
+    if (0 < H5Dwrite(static_cast<hid_t>(ds), static_cast<hid_t>(dt),
+                     H5S_ALL, H5S_ALL, H5P_DEFAULT, blob.data())) {
+      LOG(Sev::Error, "error while writing dataset {}", name);
     }
-//  }
+  }
+  catch (std::exception &e) {
+    std::stringstream ss;
+    ss << "Failed to write variable-size string dataset ";
+    ss << parent.link().path() << "/" << name;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
 }
 
 void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
@@ -688,7 +503,6 @@ void HDFFile::write_ds_generic(std::string const &dtype,
     for (auto s : max)
       ss << s << " ";
     ss << ")  ";
-
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }

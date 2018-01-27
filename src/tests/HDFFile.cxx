@@ -1438,8 +1438,9 @@ public:
 
     ASSERT_TRUE(ds.is_valid());
     std::string item;
+    item.reserve(20);
     read_string(item, static_cast<hid_t>(ds), {2});
-    ASSERT_EQ(item, "string-2");
+    ASSERT_EQ(item, std::string("string-2"));
   }
 };
 

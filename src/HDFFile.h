@@ -92,11 +92,6 @@ public:
                               std::vector<hsize_t> max,
                               rapidjson::Value const *vals);
 
-  static void write_ds_string_variable(hdf5::node::Group& parent, std::string name,
-                                       std::vector<hsize_t> sizes,
-                                       std::vector<hsize_t> max,
-                                       rapidjson::Value const *vals);
-
   static void write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
                                          std::vector<hsize_t> sizes,
                                          std::vector<hsize_t> max,
