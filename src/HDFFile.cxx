@@ -299,24 +299,14 @@ std::vector<std::string> HDFFile::populate_fixed_strings(rapidjson::Value const 
 template <typename DT>
 static void
 write_ds_numeric(hdf5::node::Group& parent, std::string name,
-                 std::vector<hsize_t> sizes,
-                 std::vector<hsize_t> max, rapidjson::Value const *vals) {
+                 hdf5::property::DatasetCreationList& dcpl,
+                 hdf5::dataspace::Dataspace& dataspace,
+                 rapidjson::Value const *vals) {
 
   try {
-    hdf5::property::DatasetCreationList dcpl;
-    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
-    if (!sizes.empty()) {
-      dsp = hdf5::dataspace::Simple(sizes, max);
-      if (max[0] == H5S_UNLIMITED) {
-        dcpl.chunk(sizes);
-      }
-    }
-
-    std::vector<DT> blob = populate_blob<DT>(vals, dsp.size());
-    auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(), dsp,
+    auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(), dataspace,
                                     hdf5::property::LinkCreationList(), dcpl);
-
-    ds.write(blob);
+    ds.write(populate_blob<DT>(vals, dataspace.size()));
   }
   catch (std::exception& e)
   {
@@ -329,28 +319,18 @@ write_ds_numeric(hdf5::node::Group& parent, std::string name,
 
 
 void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
-                              std::vector<hsize_t> sizes,
-                              std::vector<hsize_t> max,
+                              hdf5::property::DatasetCreationList& dcpl,
+                              hdf5::dataspace::Dataspace& dataspace,
                               rapidjson::Value const *vals) {
 
   try {
-    hdf5::property::DatasetCreationList dcpl;
-    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
-    if (!sizes.empty()) {
-      dsp = hdf5::dataspace::Simple(sizes, max);
-      if (max[0] == H5S_UNLIMITED) {
-        dcpl.chunk(sizes);
-      }
-    }
-
-    auto blob2 = populate_strings(vals, dsp.size());
-
     auto dt = hdf5::datatype::String::variable();
     dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    auto ds = parent.create_dataset(name, dt, dsp,
+    auto ds = parent.create_dataset(name, dt, dataspace,
                                     hdf5::property::LinkCreationList(), dcpl);
-    ds.write(blob2, dt, dsp, dsp);
+    ds.write(populate_strings(vals, dataspace.size()),
+             dt, dataspace, dataspace, hdf5::property::DatasetTransferList());
   }
   catch (std::exception &e) {
     std::stringstream ss;
@@ -361,31 +341,21 @@ void HDFFile::write_ds_string(hdf5::node::Group& parent, std::string name,
 }
 
 void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
-                                       std::vector<hsize_t> sizes,
-                                       std::vector<hsize_t> max,
-                                       hsize_t element_size,
-                                       rapidjson::Value const *vals) {
+                                         hdf5::property::DatasetCreationList& dcpl,
+                                         hdf5::dataspace::Dataspace& dataspace,
+                                         hsize_t element_size,
+                                         rapidjson::Value const *vals) {
 
 
   try {
-    hdf5::property::DatasetCreationList dcpl;
-    hdf5::dataspace::Dataspace dsp = hdf5::dataspace::Scalar();
-    if (!sizes.empty()) {
-      dsp = hdf5::dataspace::Simple(sizes, max);
-      if (max[0] == H5S_UNLIMITED) {
-        dcpl.chunk(sizes);
-      }
-    }
-
-    auto dt = hdf5::datatype::String::fixed(element_size -1 + 1);
+    auto dt = hdf5::datatype::String::fixed(element_size);
     dt.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    dt.set_padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto ds = parent.create_dataset(name, dt, dsp,
+    auto ds = parent.create_dataset(name, dt, dataspace,
                                     hdf5::property::LinkCreationList(), dcpl);
 
-    auto blob2 = populate_fixed_strings(vals, element_size, dsp.size());
-    ds.write(blob2, dt, dsp, dsp, hdf5::property::DatasetTransferList());
+    ds.write(populate_fixed_strings(vals, element_size, dataspace.size()),
+             dt, dataspace, dataspace, hdf5::property::DatasetTransferList());
 
   }
   catch (std::exception &e) {
@@ -404,41 +374,50 @@ void HDFFile::write_ds_generic(std::string const &dtype,
                                rapidjson::Value const *vals) {
   try {
 
+    hdf5::property::DatasetCreationList dcpl;
+    hdf5::dataspace::Dataspace dataspace = hdf5::dataspace::Scalar();
+    if (!sizes.empty()) {
+      dataspace = hdf5::dataspace::Simple(sizes, max);
+      if (max[0] == H5S_UNLIMITED) {
+        dcpl.chunk(sizes);
+      }
+    }
+
     if (dtype == "uint8") {
-      write_ds_numeric<uint8_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<uint8_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "uint16") {
-      write_ds_numeric<uint16_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<uint16_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "uint32") {
-      write_ds_numeric<uint32_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<uint32_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "uint64") {
-      write_ds_numeric<uint64_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<uint64_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "int8") {
-      write_ds_numeric<int8_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<int8_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "int16") {
-      write_ds_numeric<int16_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<int16_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "int32") {
-      write_ds_numeric<int32_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<int32_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "int64") {
-      write_ds_numeric<int64_t>(parent, name, sizes, max, vals);
+      write_ds_numeric<int64_t>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "float") {
-      write_ds_numeric<float>(parent, name, sizes, max, vals);
+      write_ds_numeric<float>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "double") {
-      write_ds_numeric<double>(parent, name, sizes, max, vals);
+      write_ds_numeric<double>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "string") {
       if (element_size == H5T_VARIABLE) {
-        write_ds_string(parent, name, sizes, max, vals);
+        write_ds_string(parent, name, dcpl, dataspace, vals);
       } else {
-        write_ds_string_fixed_size(parent, name, sizes, max, element_size,
+        write_ds_string_fixed_size(parent, name, dcpl, dataspace, element_size,
                                    vals);
       }
     }

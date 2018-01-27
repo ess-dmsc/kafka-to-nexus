@@ -85,13 +85,13 @@ public:
                                                          hssize_t goal_size);
 
   static void write_ds_string(hdf5::node::Group& parent, std::string name,
-                              std::vector<hsize_t> sizes,
-                              std::vector<hsize_t> max,
+                              hdf5::property::DatasetCreationList& dcpl,
+                              hdf5::dataspace::Dataspace& dataspace,
                               rapidjson::Value const *vals);
 
   static void write_ds_string_fixed_size(hdf5::node::Group& parent, std::string name,
-                                         std::vector<hsize_t> sizes,
-                                         std::vector<hsize_t> max,
+                                         hdf5::property::DatasetCreationList& dcpl,
+                                         hdf5::dataspace::Dataspace& dataspace,
                                          hsize_t element_size,
                                          rapidjson::Value const *vals);
 
