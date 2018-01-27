@@ -60,7 +60,7 @@ void HDFFile::write_hdf_ds_scalar_string(hdf5::node::Group& parent, std::string 
 }
 
 void HDFFile::write_attribute_str(hdf5::node::Node& node, std::string name,
-                                std::string value) {
+                                  std::string value) {
   //does this need to be fixed length? Would variable be ok?
   auto string_type = hdf5::datatype::String::fixed(value.size());
   string_type.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);

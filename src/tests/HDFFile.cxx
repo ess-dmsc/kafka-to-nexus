@@ -1254,8 +1254,15 @@ public:
     }
   }
 
-  static void attribute_int_scalar() {
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+  static void attribute_string_scalar() {
+    hdf5::property::FileAccessList fapl;
+//    fapl.driver(hdf5::file::MemoryDriver());
+
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = hdf5::file::create("tmp-attr-scalar.h5",
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         hdf5::property::FileCreationList(), fapl);
+
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
       "children": [
@@ -1269,21 +1276,15 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-
-    hdf5::property::FileCreationList fcpl;
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = hdf5::file::create("tmp-in-memory.h5",
-                                         hdf5::file::AccessFlags::TRUNCATE,
-                                         fcpl, fapl);
-
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     std::vector<hdf5::node::Group> groups;
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
+
     auto a1 = hdf5::node::get_group(hdf_file.root_group, "/group1").attributes["hello"];
-    ASSERT_TRUE(a1.is_valid());
     ASSERT_EQ(a1.datatype().get_class(), hdf5::datatype::Class::STRING);
+    std::string val;
+    a1.read(val, a1.datatype());
+    ASSERT_EQ(val, "world");
   }
 
   /// Read a string from the given dataset at the given position.
@@ -1305,17 +1306,14 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
-    FileWriter::HDFFile hdf_file;
-
-    hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
 //    fapl.driver(hdf5::file::MemoryDriver());
 
+    FileWriter::HDFFile hdf_file;
     hdf_file.h5file = hdf5::file::create("tmp-fixedlen.h5",
-                                     hdf5::file::AccessFlags::TRUNCATE,
-                                     fcpl, fapl);
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         hdf5::property::FileCreationList(), fapl);
 
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
       "children": [
@@ -1332,9 +1330,10 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     std::vector<hdf5::node::Group> groups;
-
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
+
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
@@ -1344,17 +1343,14 @@ public:
   }
 
   static void dataset_static_1d_string_variable() {
-    FileWriter::HDFFile hdf_file;
-
-    hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
 //    fapl.driver(hdf5::file::MemoryDriver());
 
+    FileWriter::HDFFile hdf_file;
     hdf_file.h5file = hdf5::file::create("tmp-varlen.h5",
-                                     hdf5::file::AccessFlags::TRUNCATE,
-                                     fcpl, fapl);
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         hdf5::property::FileCreationList(), fapl);
 
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
       "children": [
@@ -1371,8 +1367,9 @@ public:
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<hdf5::node::Group> groups;
-
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     hdf_file.init(nexus_structure, stream_hdf_info, groups);
+
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_variable");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
@@ -1400,8 +1397,8 @@ TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
 
-TEST_F(T_CommandHandler, attribute_int_scalar) {
-  T_CommandHandler::attribute_int_scalar();
+TEST_F(T_CommandHandler, attribute_string_scalar) {
+  T_CommandHandler::attribute_string_scalar();
 }
 
 TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
