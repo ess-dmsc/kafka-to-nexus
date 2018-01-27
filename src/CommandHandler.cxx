@@ -193,9 +193,10 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
+    auto root_group = fwt->hdf_file.h5file.root();
     hdf_writer_module->parse_config(config_stream, nullptr);
     CollectiveQueue *cq = nullptr;
-    hdf_writer_module->init_hdf(static_cast<hid_t>(fwt->hdf_file.h5file),
+    hdf_writer_module->init_hdf(root_group,
                                 stream.hdf_parent_name,
                                 attributes.v, cq);
     hdf_writer_module->close();

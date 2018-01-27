@@ -99,65 +99,17 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
   }
 }
 
-static void write_attribute_str(hid_t loc, std::string name,
-                                char const *value) {
-  herr_t err;
-  hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
-  if (acpl < 0) {
-    LOG(Sev::Critical, "failed H5Pcreate");
-  } else {
-    err = H5Pset_char_encoding(acpl, H5T_CSET_UTF8);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pset_char_encoding");
-    } else {
-      hid_t dsp_sc = H5Screate(H5S_SCALAR);
-      if (dsp_sc < 0) {
-        LOG(Sev::Critical, "failed H5Screate");
-      } else {
-        hid_t strfix = H5Tcopy(H5T_C_S1);
-        if (strfix < 0) {
-          LOG(Sev::Critical, "failed H5Tcopy");
-        } else {
-          err = H5Tset_cset(strfix, H5T_CSET_UTF8);
-          if (err < 0) {
-            LOG(Sev::Critical, "failed H5Tset_cset");
-          } else {
-            err = H5Tset_size(strfix, strlen(value));
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Tset_size");
-            } else {
-              hid_t at = H5Acreate2(loc, name.c_str(), strfix, dsp_sc, acpl,
-                                    H5P_DEFAULT);
-              if (at < 0) {
-                LOG(Sev::Critical, "failed H5Acreate2");
-              } else {
-                err = H5Awrite(at, strfix, value);
-                if (err < 0) {
-                  LOG(Sev::Critical, "failed H5Awrite");
-                }
-                err = H5Aclose(at);
-                if (err < 0) {
-                  LOG(Sev::Critical, "failed H5Aclose");
-                }
-              }
-            }
-          }
-          err = H5Tclose(strfix);
-          if (err < 0) {
-            LOG(Sev::Critical, "failed H5Tclose");
-          }
-        }
-        err = H5Sclose(dsp_sc);
-        if (err < 0) {
-          LOG(Sev::Critical, "failed H5Sclose");
-        }
-      }
-    }
-    err = H5Pclose(acpl);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Pclose");
-    }
-  }
+static void write_attribute_str(hdf5::node::Node& node, std::string name,
+                                std::string value) {
+  //does this need to be fixed length? Would variable be ok?
+  auto string_type = hdf5::datatype::String::fixed(value.size());
+  string_type.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  string_type.set_padding(hdf5::datatype::StringPad::NULLTERM);
+  hdf5::property::AttributeCreationList acpl;
+  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+  auto at = node.attributes.create(name, string_type, hdf5::dataspace::Scalar(), acpl);
+  at.write(value, string_type);
 }
 
 template <typename T>
@@ -211,14 +163,14 @@ static void write_hdf_ds_iso8601(hid_t loc, const std::string &name, T &ts) {
 }
 
 template <typename T>
-static void write_hdf_attribute_iso8601(hid_t loc, std::string name, T &ts) {
+static void write_hdf_attribute_iso8601(hdf5::node::Node& node, std::string name, T &ts) {
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_attribute_str(loc, name, s2.data());
+  write_attribute_str(node, name, s2);
 }
 
-static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
+static void write_hdf_iso8601_now(hdf5::node::Node& node, const std::string &name) {
   using namespace date;
   using namespace std::chrono;
   const time_zone *current_time_zone;
@@ -231,30 +183,30 @@ static void write_hdf_iso8601_now(hid_t location, const std::string &name) {
   }
   auto now =
       make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
-  write_hdf_attribute_iso8601(location, name, now);
+  write_hdf_attribute_iso8601(node, name, now);
 }
 
-void write_attributes(hid_t hdf_this, rapidjson::Value const *jsv) {
+void write_attributes(hdf5::node::Node& node, rapidjson::Value const *jsv) {
   if (jsv->IsObject()) {
     for (auto &at : jsv->GetObject()) {
       if (at.value.IsString()) {
-        write_attribute_str(hdf_this, at.name.GetString(),
+        write_attribute_str(node, at.name.GetString(),
                             at.value.GetString());
       }
       if (at.value.IsInt64()) {
-        write_attribute(hdf_this, at.name.GetString(), at.value.GetInt64());
+        write_attribute(static_cast<hid_t>(node), at.name.GetString(), at.value.GetInt64());
       }
       if (at.value.IsDouble()) {
-        write_attribute(hdf_this, at.name.GetString(), at.value.GetDouble());
+        write_attribute(static_cast<hid_t>(node), at.name.GetString(), at.value.GetDouble());
       }
     }
   }
 }
 
-void write_attributes_if_present(hid_t hdf_this, rapidjson::Value const *jsv) {
+void write_attributes_if_present(hdf5::node::Node& node, rapidjson::Value const *jsv) {
   auto mem = jsv->FindMember("attributes");
   if (mem != jsv->MemberEnd()) {
-    write_attributes(hdf_this, &mem->value);
+    write_attributes(node, &mem->value);
   }
 }
 
@@ -701,7 +653,7 @@ static void write_ds_generic(std::string const &dtype, hid_t hdf_parent,
   }
 }
 
-static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
+static void write_dataset(hdf5::node::Group& hdf_parent, rapidjson::Value const *value) {
   std::string name;
   if (auto x = get_string(value, "name")) {
     name = x.v;
@@ -773,49 +725,43 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
   }
 
   auto vals = ds_values;
-  write_ds_generic(dtype, hdf_parent, name, sizes, max, element_size, vals);
+  write_ds_generic(dtype, static_cast<hid_t>(hdf_parent),
+                   name, sizes, max, element_size, vals);
+  auto dset = hdf5::node::Dataset(hdf_parent.nodes[name]);
 
   // Handle attributes on this dataset
-  if (auto x = get_object(*value, "attributes")) {
-    hid_t dsid = H5Dopen2(hdf_parent, name.data(), H5P_DEFAULT);
-    if (dsid < 0) {
-      LOG(Sev::Critical, "failed H5Dopen2");
-    } else {
-      write_attributes(dsid, x.v);
-      herr_t err = 0;
-      err = H5Dclose(dsid);
-      if (dsid < 0) {
-        LOG(Sev::Critical, "failed H5Dopen2");
-      }
-    }
-  }
+  if (auto x = get_object(*value, "attributes"))
+    write_attributes(dset, x.v);
 }
 
 static void create_hdf_structures(rapidjson::Value const *value,
-                                  hid_t hdf_parent, uint16_t level, hid_t lcpl,
+                                  hdf5::node::Group& hdf_parent,
+                                  uint16_t level,
+                                  hdf5::property::LinkCreationList lcpl,
                                   hid_t hdf_type_strfix,
                                   std::vector<StreamHDFInfo> &stream_hdf_info,
                                   std::deque<std::string> &path) {
   // The HDF object that we will maybe create at the current level.
-  hid_t hdf_this = -1;
+  hdf5::node::Group hdf_this;
   // Keeps the HDF object id if we create a new collection-like object which
   // can be used as the parent for the next level of recursion. The only case
   // currently is when we create a group.
-  hid_t hdf_next_parent = -1;
+  hdf5::node::Group hdf_next_parent;
   // Remember whether we created a group at this level.
-  hid_t gid = -1;
+  hdf5::node::Group gid;
   {
     if (auto type = get_string(value, "type")) {
       if (type.v == "group") {
         if (auto name = get_string(value, "name")) {
-          hdf_this = H5Gcreate2(hdf_parent, name.v.c_str(), lcpl, H5P_DEFAULT,
-                                H5P_DEFAULT);
-          if (hdf_this < 0) {
-            LOG(Sev::Critical, "failed H5Gcreate2  name: {}", name.v.c_str());
-          } else {
+
+          try {
+            hdf_this = hdf_parent.create_group(name.v, lcpl);
             hdf_next_parent = hdf_this;
             path.push_back(name.v);
             gid = hdf_this;
+          }
+          catch (...) {
+            LOG(Sev::Critical, "failed to create group  name: {}", name.v.c_str());
           }
         }
       }
@@ -832,13 +778,13 @@ static void create_hdf_structures(rapidjson::Value const *value,
     }
   }
 
-  if (hdf_this >= 0) {
+  if (hdf_this.is_valid()) {
     write_attributes_if_present(hdf_this, value);
   }
 
   // If the current level in the HDF can act as a parent, then continue the
   // recursion with the (optional) "children" array.
-  if (hdf_next_parent >= 0) {
+  if (hdf_next_parent.is_valid()) {
     auto mem = value->FindMember("children");
     if (mem != value->MemberEnd()) {
       if (mem->value.IsArray()) {
@@ -849,12 +795,6 @@ static void create_hdf_structures(rapidjson::Value const *value,
       }
     }
     path.pop_back();
-  }
-  if (gid != -1) {
-    herr_t err = H5Gclose(gid);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Gclose");
-    }
   }
 }
 
@@ -945,6 +885,8 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
     auto strfix = hdf5::datatype::String::fixed(0);
     strfix.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
+    auto root_group = h5file.root();
+
     std::deque<std::string> path;
     if (nexus_structure.IsObject()) {
       auto value = &nexus_structure;
@@ -952,23 +894,23 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
       if (mem != value->MemberEnd()) {
         if (mem->value.IsArray()) {
           for (auto &child : mem->value.GetArray()) {
-            create_hdf_structures(&child, static_cast<hid_t>(h5file),
-                                  0, static_cast<hid_t>(lcpl),
+            create_hdf_structures(&child, root_group,
+                                  0, lcpl,
                                   static_cast<hid_t>(strfix),
                                   stream_hdf_info, path);
           }
         }
       }
     }
-    write_attribute_str(static_cast<hid_t>(h5file), "HDF5_Version",
-                        h5_version_string_linked().data());
-    write_attribute_str(static_cast<hid_t>(h5file), "file_name",
-                        h5file.id().file_name().stem().string().c_str());
-    write_attribute_str(static_cast<hid_t>(h5file), "creator",
-                        fmt::format("kafka-to-nexus commit {:.7}",
-                                    GIT_COMMIT).data());
-    write_hdf_iso8601_now(static_cast<hid_t>(h5file), "file_time");
-    write_attributes_if_present(static_cast<hid_t>(h5file), &nexus_structure);
+
+    write_attribute_str(root_group, "HDF5_Version",
+                        h5_version_string_linked());
+    write_attribute_str(root_group, "file_name",
+                        h5file.id().file_name().stem().string());
+    write_attribute_str(root_group, "creator",
+                        fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
+    write_hdf_iso8601_now(root_group, "file_time");
+    write_attributes_if_present(root_group, &nexus_structure);
   }
   catch (std::exception& e)
   {
