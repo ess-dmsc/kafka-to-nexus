@@ -429,7 +429,7 @@ public:
       buf.resize(128);
       H5Aread(attr, dtype_mem, buf.data());
       buf[buf.size() - 1] = 0;
-      ASSERT_EQ(FileWriter::h5_version_string_linked(), buf.data());
+      ASSERT_EQ(FileWriter::HDFFile::h5_version_string_linked(), buf.data());
       H5Aclose(attr);
     }
     {

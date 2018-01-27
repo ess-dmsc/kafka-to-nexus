@@ -537,7 +537,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &hdf_parent,
       }
     }
     if (attributes) {
-      write_attributes(hdf_group, attributes);
+      HDFFile::write_attributes(hdf_group, attributes);
     }
   }
   catch (std::exception &e) {

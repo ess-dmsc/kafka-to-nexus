@@ -148,7 +148,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group& hdf_parent, string hdf_parent_name,
       ds_cue_timestamp_zero.reset();
     }
     if (attributes) {
-      write_attributes(hdf_group, attributes);
+      HDFFile::write_attributes(hdf_group, attributes);
     }
   }
   catch (std::exception& e)

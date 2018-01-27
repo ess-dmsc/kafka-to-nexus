@@ -48,7 +48,7 @@ HDFFile::~HDFFile() {
   }
 }
 
-static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
+void HDFFile::write_hdf_ds_scalar_string(hdf5::node::Group& hdf_parent, std::string name,
                                        std::string s1) {
   herr_t err;
   hid_t strfix = H5Tcopy(H5T_C_S1);
@@ -70,7 +70,8 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
         if (dsp < 0) {
           LOG(Sev::Critical, "failed H5Screate_simple");
         } else {
-          hid_t ds = H5Dcreate2(loc, name.c_str(), strfix, dsp, H5P_DEFAULT,
+          hid_t ds = H5Dcreate2(static_cast<hid_t>(hdf_parent), name.c_str(),
+                                strfix, dsp, H5P_DEFAULT,
                                 H5P_DEFAULT, H5P_DEFAULT);
           if (ds < 0) {
             LOG(Sev::Critical, "failed H5Dcreate2");
@@ -99,7 +100,7 @@ static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
   }
 }
 
-static void write_attribute_str(hdf5::node::Node& node, std::string name,
+void HDFFile::write_attribute_str(hdf5::node::Node& node, std::string name,
                                 std::string value) {
   //does this need to be fixed length? Would variable be ok?
   auto string_type = hdf5::datatype::String::fixed(value.size());
@@ -113,7 +114,7 @@ static void write_attribute_str(hdf5::node::Node& node, std::string name,
 }
 
 template <typename T>
-static void write_attribute(hid_t loc, std::string name, T value) {
+static void write_attribute(hdf5::node::Node& node, std::string name, T value) {
   herr_t err;
   hid_t acpl = H5Pcreate(H5P_ATTRIBUTE_CREATE);
   if (acpl < 0) {
@@ -127,7 +128,8 @@ static void write_attribute(hid_t loc, std::string name, T value) {
       if (dsp_sc < 0) {
         LOG(Sev::Critical, "failed H5Screate");
       } else {
-        hid_t at = H5Acreate2(loc, name.c_str(), h5::nat_type<T>(), dsp_sc,
+        hid_t at = H5Acreate2(static_cast<hid_t>(node), name.c_str(),
+                              h5::nat_type<T>(), dsp_sc,
                               acpl, H5P_DEFAULT);
         if (at < 0) {
           LOG(Sev::Critical, "failed H5Acreate2");
@@ -155,11 +157,11 @@ static void write_attribute(hid_t loc, std::string name, T value) {
 }
 
 template <typename T>
-static void write_hdf_ds_iso8601(hid_t loc, const std::string &name, T &ts) {
+static void write_hdf_ds_iso8601(hdf5::node::Group& hdf_parent, const std::string &name, T &ts) {
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2);
+  HDFFile::write_hdf_ds_scalar_string(hdf_parent, name, s2);
 }
 
 template <typename T>
@@ -167,10 +169,10 @@ static void write_hdf_attribute_iso8601(hdf5::node::Node& node, std::string name
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_attribute_str(node, name, s2);
+  HDFFile::write_attribute_str(node, name, s2);
 }
 
-static void write_hdf_iso8601_now(hdf5::node::Node& node, const std::string &name) {
+void HDFFile::write_hdf_iso8601_now(hdf5::node::Node& node, const std::string &name) {
   using namespace date;
   using namespace std::chrono;
   const time_zone *current_time_zone;
@@ -186,7 +188,7 @@ static void write_hdf_iso8601_now(hdf5::node::Node& node, const std::string &nam
   write_hdf_attribute_iso8601(node, name, now);
 }
 
-void write_attributes(hdf5::node::Node& node, rapidjson::Value const *jsv) {
+void HDFFile::write_attributes(hdf5::node::Node& node, rapidjson::Value const *jsv) {
   if (jsv->IsObject()) {
     for (auto &at : jsv->GetObject()) {
       if (at.value.IsString()) {
@@ -194,16 +196,16 @@ void write_attributes(hdf5::node::Node& node, rapidjson::Value const *jsv) {
                             at.value.GetString());
       }
       if (at.value.IsInt64()) {
-        write_attribute(static_cast<hid_t>(node), at.name.GetString(), at.value.GetInt64());
+        write_attribute(node, at.name.GetString(), at.value.GetInt64());
       }
       if (at.value.IsDouble()) {
-        write_attribute(static_cast<hid_t>(node), at.name.GetString(), at.value.GetDouble());
+        write_attribute(node, at.name.GetString(), at.value.GetDouble());
       }
     }
   }
 }
 
-void write_attributes_if_present(hdf5::node::Node& node, rapidjson::Value const *jsv) {
+void HDFFile::write_attributes_if_present(hdf5::node::Node& node, rapidjson::Value const *jsv) {
   auto mem = jsv->FindMember("attributes");
   if (mem != jsv->MemberEnd()) {
     write_attributes(node, &mem->value);
@@ -260,7 +262,7 @@ static void populate_blob(std::vector<DT> &blob, rapidjson::Value const *vals) {
   }
 }
 
-static void populate_string_pointers(std::vector<char const *> &ptrs,
+void HDFFile::populate_string_pointers(std::vector<char const *> &ptrs,
                                      rapidjson::Value const *vals) {
   if (vals->IsString()) {
     ptrs.push_back(vals->GetString());
@@ -297,7 +299,7 @@ static void populate_string_pointers(std::vector<char const *> &ptrs,
   }
 }
 
-static void populate_string_fixed_size(std::vector<char> &blob,
+void HDFFile::populate_string_fixed_size(std::vector<char> &blob,
                                        hsize_t element_size,
                                        rapidjson::Value const *vals) {
   size_t n_added = 0;
@@ -342,7 +344,8 @@ static void populate_string_fixed_size(std::vector<char> &blob,
 
 template <typename DT>
 static void
-write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
+write_ds_numeric(hdf5::node::Group& hdf_parent, std::string name,
+                 std::vector<hsize_t> sizes,
                  std::vector<hsize_t> max, rapidjson::Value const *vals) {
   herr_t err = 0;
   size_t total_n = 1;
@@ -388,8 +391,8 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
               name, total_n, blob.size());
         } else {
           hid_t dt = h5::nat_type<DT>();
-          hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp, H5P_DEFAULT,
-                                dcpl, H5P_DEFAULT);
+          hid_t ds = H5Dcreate2(static_cast<hid_t>(hdf_parent), name.data(),
+                                dt, dsp, H5P_DEFAULT, dcpl, H5P_DEFAULT);
           if (ds < 0) {
             LOG(Sev::Critical, "failed H5Dcreate2");
           } else {
@@ -416,7 +419,7 @@ write_ds_numeric(hid_t hdf_parent, std::string name, std::vector<hsize_t> sizes,
   }
 }
 
-static void write_ds_string(hid_t hdf_parent, std::string name,
+void HDFFile::write_ds_string(hdf5::node::Group& hdf_parent, std::string name,
                             std::vector<hsize_t> sizes,
                             std::vector<hsize_t> max,
                             rapidjson::Value const *vals) {
@@ -475,8 +478,8 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
               if (err < 0) {
                 LOG(Sev::Critical, "failed H5Tset_cset");
               } else {
-                hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp,
-                                      H5P_DEFAULT, dcpl, H5P_DEFAULT);
+                hid_t ds = H5Dcreate2(static_cast<hid_t>(hdf_parent), name.data(),
+                                      dt, dsp, H5P_DEFAULT, dcpl, H5P_DEFAULT);
                 if (ds < 0) {
                   LOG(Sev::Critical, "failed H5Dcreate2");
                 } else {
@@ -511,7 +514,7 @@ static void write_ds_string(hid_t hdf_parent, std::string name,
   }
 }
 
-static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
+void HDFFile::write_ds_string_fixed_size(hdf5::node::Group& hdf_parent, std::string name,
                                        std::vector<hsize_t> sizes,
                                        std::vector<hsize_t> max,
                                        hsize_t element_size,
@@ -571,8 +574,8 @@ static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
               if (err < 0) {
                 LOG(Sev::Critical, "failed H5Tset_cset");
               } else {
-                hid_t ds = H5Dcreate2(hdf_parent, name.data(), dt, dsp,
-                                      H5P_DEFAULT, dcpl, H5P_DEFAULT);
+                hid_t ds = H5Dcreate2(static_cast<hid_t>(hdf_parent), name.data(),
+                                      dt, dsp, H5P_DEFAULT, dcpl, H5P_DEFAULT);
                 if (ds < 0) {
                   LOG(Sev::Critical, "failed H5Dcreate2");
                 } else {
@@ -607,12 +610,12 @@ static void write_ds_string_fixed_size(hid_t hdf_parent, std::string name,
   }
 }
 
-static void write_ds_generic(std::string const &dtype, hid_t hdf_parent,
-                             std::string const &name,
-                             std::vector<hsize_t> const &sizes,
-                             std::vector<hsize_t> const &max,
-                             hsize_t element_size,
-                             rapidjson::Value const *vals) {
+void HDFFile::write_ds_generic(std::string const &dtype,
+                               hdf5::node::Group& hdf_parent, std::string const &name,
+                               std::vector<hsize_t> const &sizes,
+                               std::vector<hsize_t> const &max,
+                               hsize_t element_size,
+                               rapidjson::Value const *vals) {
   if (dtype == "uint8") {
     write_ds_numeric<uint8_t>(hdf_parent, name, sizes, max, vals);
   }
@@ -653,7 +656,7 @@ static void write_ds_generic(std::string const &dtype, hid_t hdf_parent,
   }
 }
 
-static void write_dataset(hdf5::node::Group& hdf_parent, rapidjson::Value const *value) {
+void HDFFile::write_dataset(hdf5::node::Group& hdf_parent, rapidjson::Value const *value) {
   std::string name;
   if (auto x = get_string(value, "name")) {
     name = x.v;
@@ -725,8 +728,8 @@ static void write_dataset(hdf5::node::Group& hdf_parent, rapidjson::Value const 
   }
 
   auto vals = ds_values;
-  write_ds_generic(dtype, static_cast<hid_t>(hdf_parent),
-                   name, sizes, max, element_size, vals);
+  write_ds_generic(dtype, hdf_parent, name,
+                   sizes, max, element_size, vals);
   auto dset = hdf5::node::Dataset(hdf_parent.nodes[name]);
 
   // Handle attributes on this dataset
@@ -734,13 +737,13 @@ static void write_dataset(hdf5::node::Group& hdf_parent, rapidjson::Value const 
     write_attributes(dset, x.v);
 }
 
-static void create_hdf_structures(rapidjson::Value const *value,
-                                  hdf5::node::Group& hdf_parent,
-                                  uint16_t level,
-                                  hdf5::property::LinkCreationList lcpl,
-                                  hdf5::datatype::String hdf_type_strfix,
-                                  std::vector<StreamHDFInfo> &stream_hdf_info,
-                                  std::deque<std::string> &path) {
+void HDFFile::create_hdf_structures(rapidjson::Value const *value,
+                                    hdf5::node::Group &hdf_parent,
+                                    uint16_t level,
+                                    hdf5::property::LinkCreationList lcpl,
+                                    hdf5::datatype::String hdf_type_strfix,
+                                    std::vector<StreamHDFInfo> &stream_hdf_info,
+                                    std::deque<std::string> &path) {
 
   // The HDF object that we will maybe create at the current level.
   hdf5::node::Group hdf_this;
@@ -799,12 +802,12 @@ static void create_hdf_structures(rapidjson::Value const *value,
 }
 
 /// Human readable version of the HDF5 headers that we compile against.
-static std::string h5_version_string_headers_compile_time() {
+std::string HDFFile::h5_version_string_headers_compile_time() {
   return fmt::format("{}.{}.{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
 }
 
 /// Human readable version of the HDF5 libraries that we run with.
-std::string h5_version_string_linked() {
+std::string HDFFile::h5_version_string_linked() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   return fmt::format("{}.{}.{}", h5_vers_major, h5_vers_minor, h5_vers_release);
@@ -814,7 +817,7 @@ std::string h5_version_string_linked() {
 /// compiled with against the version of the HDF5 libraries that the
 /// kafka-to-nexus is linked against at runtime. Currently, a mismatch in the
 /// release number is logged but does not cause panic.
-static void check_hdf_version() {
+void HDFFile::check_hdf_version() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
@@ -882,8 +885,8 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
     hdf5::property::LinkCreationList lcpl;
     lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    auto strfix = hdf5::datatype::String::fixed(0);
-    strfix.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    auto fixed_string = hdf5::datatype::String::fixed(0);
+    fixed_string.set_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
     auto root_group = h5file.root();
 
@@ -895,7 +898,7 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
         if (mem->value.IsArray()) {
           for (auto &child : mem->value.GetArray()) {
             create_hdf_structures(&child, root_group,
-                                  0, lcpl, strfix,
+                                  0, lcpl, fixed_string,
                                   stream_hdf_info, path);
           }
         }
