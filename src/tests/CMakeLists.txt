@@ -14,7 +14,6 @@ status_writer.cxx
 command_handler.cxx
 stream_master.cxx
 MainOpt_tests.cxx
-h5cpp_file_creation_test.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
