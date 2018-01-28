@@ -4,7 +4,6 @@
 #include "helper.h"
 #include "utils.h"
 #include <future>
-#include <h5.h>
 
 using std::array;
 using std::vector;
