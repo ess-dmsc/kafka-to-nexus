@@ -31,12 +31,6 @@ HDFFile::HDFFile() {
 #endif
 }
 
-herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
-                         void *op_data) {
-  LOG(Sev::Error, "obj refs: {:2}  name: {}", oi->rc, name);
-  return 0;
-}
-
 HDFFile::~HDFFile() { close(); }
 
 static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
