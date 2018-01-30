@@ -137,14 +137,6 @@ static void write_attribute(hid_t loc, std::string name, T value) {
 }
 
 template <typename T>
-static void write_hdf_ds_iso8601(hid_t loc, const std::string &name, T &ts) {
-  using namespace date;
-  using namespace std::chrono;
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2);
-}
-
-template <typename T>
 static void write_hdf_attribute_iso8601(hid_t loc, std::string name, T &ts) {
   using namespace date;
   using namespace std::chrono;
