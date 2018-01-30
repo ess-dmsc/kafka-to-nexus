@@ -17,12 +17,6 @@ struct StreamHDFInfo {
   rapidjson::Value const *config_stream;
 };
 
-// Basically POD
-class WriteResult {
-public:
-  int64_t ts;
-};
-
 class HDFFile final {
 public:
   HDFFile();
