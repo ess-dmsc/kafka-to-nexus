@@ -380,13 +380,23 @@ void FileWriter::StreamerOptions::setStreamerOptions(
     if (m.name.IsString()) {
       if (strncmp(m.name.GetString(), "ms-before-start", 15) == 0) {
         if (m.value.IsInt()) {
+          LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
           BeforeStartTime = milliseconds(m.value.GetInt());
+          continue;
+        }
+        LOG(Sev::Warning, "{} : wrong format", m.name.GetString());
+      }
+      if (strncmp(m.name.GetString(), "ms-after-stop", 13) == 0) {
+        if (m.value.IsInt()) {
+          LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
+          AfterStopTime = milliseconds(m.value.GetInt());
           continue;
         }
         LOG(Sev::Warning, "{} : wrong format", m.name.GetString());
       }
       if (strncmp(m.name.GetString(), "consumer-timeout-ms", 19) == 0) {
         if (m.value.IsInt()) {
+          LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
           ConsumerTimeout = milliseconds(m.value.GetInt());
           continue;
         }
@@ -394,6 +404,7 @@ void FileWriter::StreamerOptions::setStreamerOptions(
       }
       if (strncmp(m.name.GetString(), "metadata-retry", 14) == 0) {
         if (m.value.IsInt()) {
+          LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
           NumMetadataRetry = m.value.GetInt();
           continue;
         }
