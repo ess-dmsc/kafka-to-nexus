@@ -708,7 +708,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
       LOG(Sev::Critical, "failed H5Dopen2");
     } else {
       write_attributes(dsid, x.v);
-      herr_t err = 0;
+      herr_t err;
       err = H5Dclose(dsid);
       if (dsid < 0) {
         LOG(Sev::Critical, "failed H5Dopen2");
