@@ -1,4 +1,5 @@
-//===-- src/StreamerOptions.h - Streamer consumer options class definition --*- C++ -*-===//
+//===-- src/StreamerOptions.h - Streamer consumer options class definition --*-
+// C++ -*-===//
 //
 //
 //===----------------------------------------------------------------------===//
@@ -28,19 +29,19 @@ class StreamerOptions {
   friend class Streamer;
   friend class CommandHandler;
   friend class StreamerOptionsTest_Test;
-public:
 
-  void setStreamerOptions(const rapidjson::Value*);
-  void setRdKafkaOptions(const rapidjson::Value*);  
-  //private:
-  
-  std::vector<std::pair<std::string,std::string>> RdKafkaOptions;
-  milliseconds BeforeStartTime{1000};
+public:
+  void setStreamerOptions(const rapidjson::Value *);
+  void setRdKafkaOptions(const rapidjson::Value *);
+  // private:
+
+  std::vector<std::pair<std::string, std::string>> RdKafkaOptions;
   milliseconds StartTimestamp{0};
   milliseconds StopTimestamp{0};
+  milliseconds BeforeStartTime{1000};
+  milliseconds AfterStopTime{1000};
   milliseconds ConsumerTimeout{1000};
   int NumMetadataRetry{5};
 };
-
 
 } // namespace FileWriter

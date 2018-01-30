@@ -58,10 +58,6 @@ public:
 
   ~StreamMaster() {
     Stop = true;
-    if (ForceStopThread.joinable()) {
-      cv.notify_all();
-      ForceStopThread.join();
-    }
     if (WriteThread.joinable()) {
       WriteThread.join();
     }
@@ -84,9 +80,6 @@ public:
     for (auto &s : Streamers) {
       s.second.getOptions().StopTimestamp = StopTime;
     }
-    if (!ForceStopThread.joinable()) { // make sure not to call twice
-      ForceStopThread = std::thread([&] { this->forceStop(); });
-    }
     return true;
   }
 
@@ -104,20 +97,10 @@ public:
   }
 
   /// Stop the streams writing. Return true if successful, false in case
-  /// of failure. If the stop command is called from forceStop the joining the
-  /// latter can cause a deadlock. The IsForced flag prevents the join and
-  /// hence the deadlock.
-  /// \param IsForced if false join the forceStop task, if true don't
-  bool stop(bool IsForced = false) {
+  /// of failure.
+  bool stop() {
+    LOG(Sev::Info, "StreamMaster: stop");
     Stop = true;
-    try {
-      std::call_once(StopGuard,
-                     &FileWriter::StreamMaster<Streamer>::stopImplemented, this,
-                     IsForced);
-    } catch (std::exception &e) {
-      LOG(Sev::Warning, "Error while stopping: {}", e.what());
-    }
-    RunStatus = SMEC::is_removable;
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
 
@@ -158,8 +141,11 @@ private:
   /// all the streams have finished returns SMEC::has_finished.
   SMEC processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
-    while (!Stop && ((std::chrono::system_clock::now() - ProcessStartTime) <
-                     TopicWriteDuration)) {
+    while ((std::chrono::system_clock::now() - ProcessStartTime) <
+           TopicWriteDuration) {
+      if (Stop) {
+        return SMEC::has_finished;
+      }
       FileWriter::ProcessMessageResult ProcessResult = Stream.write(Demux);
       if (ProcessResult.is_STOP()) {
         if (Stream.numSources() == 0) {
@@ -183,9 +169,9 @@ private:
     using namespace std::chrono;
     RunStatus = SMEC::running;
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
+
       for (auto &Demux : Demuxers) {
         auto &s = Streamers[Demux.topic()];
-
         // If the stream is active process the messages
         if (s.runStatus() == SEC::writing) {
           SMEC ProcessResult = processStreamResult(s, Demux);
@@ -216,6 +202,7 @@ private:
       }
     }
     RunStatus = SMEC::has_finished;
+    stopImplemented();
   }
 
   /// Close the Kafka connection in the selected stream, set its value to
@@ -237,16 +224,7 @@ private:
   /// Implementation of the stop command. Make sure that the Streamers
   /// are not polled for messages, the status report is stopped and
   /// closes all the connections to the Kafka streams.
-  void stopImplemented(bool IsForced) {
-    LOG(Sev::Info, "StreamMaster: stop");
-
-    if (!IsForced && ForceStopThread.joinable()) {
-      cv.notify_all();
-      ForceStopThread.join();
-    }
-    if (WriteThread.joinable()) {
-      WriteThread.join();
-    }
+  void stopImplemented() {
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
@@ -261,35 +239,18 @@ private:
       }
     }
     Streamers.clear();
-  }
-
-  /// Make sure that if the stop command has been issued with a specific time
-  /// point the file writer stops at most within 5 seconds since the timepoint
-  /// has been reached on the system, independently on the message timestamp
-  void forceStop() {
-    using namespace std::chrono;
-    time_point<high_resolution_clock, milliseconds> StopTimePoint(
-        Streamers.begin()->second.getOptions().StopTimestamp +
-        milliseconds(5000));
-    std::unique_lock<std::mutex> lk(cv_m);
-    if (cv.wait_until(lk, StopTimePoint) == std::cv_status::timeout) {
-      LOG(Sev::Warning, "Stop time elapsed since 5 seconds, force stop");
-      stop(true);
-    }
+    RunStatus = SMEC::is_removable;
+    LOG(Sev::Info, "RunStatus:  {}", Err2Str(RunStatus));
   }
 
   std::map<std::string, Streamer> Streamers;
   std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;
-  std::thread ForceStopThread;
   std::atomic<SMEC> RunStatus{SMEC::not_started};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
-  std::once_flag StopGuard;
   std::unique_ptr<Report> ReportPtr{nullptr};
-  std::condition_variable cv;
-  std::mutex cv_m;
   milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
 };

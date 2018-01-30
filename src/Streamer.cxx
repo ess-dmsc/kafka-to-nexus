@@ -8,6 +8,14 @@
 #include <algorithm>
 #include <memory>
 
+namespace FileWriter {
+milliseconds systemTime() {
+  using namespace std::chrono;
+  system_clock::time_point now = system_clock::now();
+  return duration_cast<milliseconds>(now.time_since_epoch());
+}
+} // namespace FileWriter
+
 /// Create and configure the RdKafka configuration used in the Streamer. If the
 /// RdKafka fails in the creations of the configuration log the error, set
 /// RunStatus to SEC::configuration_error and return an empty pointer. Else
@@ -233,9 +241,9 @@ FileWriter::Streamer::SEC FileWriter::Streamer::closeStream() {
     Consumer->close();
   }
   TopicPartitionVector.clear();
-  if (RunStatus == SEC::writing) {
-    RunStatus = SEC::has_finished;
-  }
+  //  if (RunStatus == SEC::writing) {
+  RunStatus = SEC::has_finished;
+  //  }
   return RunStatus;
 }
 
@@ -253,16 +261,23 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR();
   }
   if (RunStatus == SEC::has_finished) {
-    return ProcessMessageResult::OK();
+    return ProcessMessageResult::STOP();
   }
 
-  // Consume the message and check for message errors. Timeout and partition EOF
-  // are considered ok, other errors are considered failure
+  // Consume the message and check for message errors. Timeout
+  // is considered ok;
+  // partition EOF return stop if the system time is larger than the stop time;
+  // other errors are considered failure
   std::unique_ptr<RdKafka::Message> msg(
       Consumer->consume(Options.ConsumerTimeout.count()));
-  if (msg->err() == RdKafka::ERR__PARTITION_EOF ||
-      msg->err() == RdKafka::ERR__TIMED_OUT) {
+  if ((msg->err() == RdKafka::ERR__TIMED_OUT) ||
+      (msg->err() == RdKafka::ERR__PARTITION_EOF)) {
     LOG(Sev::Debug, "consume :\t{}", RdKafka::err2str(msg->err()));
+    if ((Options.StopTimestamp.count() > 0) &&
+        (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
+      Sources.clear();
+      return ProcessMessageResult::STOP();
+    }
     return ProcessMessageResult::OK();
   }
   if (msg->err() != RdKafka::ERR_NO_ERROR) {
