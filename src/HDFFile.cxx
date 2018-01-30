@@ -31,64 +31,7 @@ HDFFile::HDFFile() {
 #endif
 }
 
-herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
-                         void *op_data) {
-  LOG(Sev::Error, "obj refs: {:2}  name: {}", oi->rc, name);
-  return 0;
-}
-
 HDFFile::~HDFFile() { close(); }
-
-static void write_hdf_ds_scalar_string(hid_t loc, std::string name,
-                                       std::string s1) {
-  herr_t err;
-  hid_t strfix = H5Tcopy(H5T_C_S1);
-  if (strfix < 0) {
-    LOG(Sev::Critical, "failed H5Tcopy");
-  } else {
-    err = H5Tset_cset(strfix, H5T_CSET_UTF8);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Tset_cset");
-    } else {
-      err = H5Tset_size(strfix, s1.size());
-      if (err < 0) {
-        LOG(Sev::Critical, "failed H5Tset_size");
-      } else {
-        using A = std::array<hsize_t, 1>;
-        A sini{{1}};
-        A smax{{1}};
-        hid_t dsp = H5Screate_simple(sini.size(), sini.data(), smax.data());
-        if (dsp < 0) {
-          LOG(Sev::Critical, "failed H5Screate_simple");
-        } else {
-          hid_t ds = H5Dcreate2(loc, name.c_str(), strfix, dsp, H5P_DEFAULT,
-                                H5P_DEFAULT, H5P_DEFAULT);
-          if (ds < 0) {
-            LOG(Sev::Critical, "failed H5Dcreate2");
-          } else {
-            err =
-                H5Dwrite(ds, strfix, H5S_ALL, H5S_ALL, H5P_DEFAULT, s1.data());
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Dwrite");
-            }
-            err = H5Dclose(ds);
-            if (err < 0) {
-              LOG(Sev::Critical, "failed H5Dclose");
-            }
-          }
-          err = H5Sclose(dsp);
-          if (err < 0) {
-            LOG(Sev::Critical, "failed H5Sclose");
-          }
-        }
-      }
-    }
-    err = H5Tclose(strfix);
-    if (err < 0) {
-      LOG(Sev::Critical, "failed H5Tclose");
-    }
-  }
-}
 
 static void write_attribute_str(hid_t loc, std::string name,
                                 char const *value) {
@@ -191,14 +134,6 @@ static void write_attribute(hid_t loc, std::string name, T value) {
       LOG(Sev::Critical, "failed H5Pclose");
     }
   }
-}
-
-template <typename T>
-static void write_hdf_ds_iso8601(hid_t loc, const std::string &name, T &ts) {
-  using namespace date;
-  using namespace std::chrono;
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  write_hdf_ds_scalar_string(loc, name, s2);
 }
 
 template <typename T>
@@ -736,7 +671,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
     }
 
     if (auto x = get_int(ds.v, "string_size")) {
-      if (x.v > 0 && x.v != H5T_VARIABLE) {
+      if (x.v > 0) {
         element_size = x.v;
       }
     }
@@ -773,10 +708,10 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
       LOG(Sev::Critical, "failed H5Dopen2");
     } else {
       write_attributes(dsid, x.v);
-      herr_t err = 0;
+      herr_t err;
       err = H5Dclose(dsid);
-      if (dsid < 0) {
-        LOG(Sev::Critical, "failed H5Dopen2");
+      if (err < 0) {
+        LOG(Sev::Critical, "failed H5Dclose");
       }
     }
   }
