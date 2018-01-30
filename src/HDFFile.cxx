@@ -671,7 +671,7 @@ static void write_dataset(hid_t hdf_parent, rapidjson::Value const *value) {
     }
 
     if (auto x = get_int(ds.v, "string_size")) {
-      if (x.v > 0 && x.v != H5T_VARIABLE) {
+      if (x.v > 0) {
         element_size = x.v;
       }
     }
