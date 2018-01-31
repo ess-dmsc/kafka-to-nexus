@@ -3,7 +3,10 @@
 #include "Msg.h"
 #include "helper.h"
 #include "logger.h"
+
+#include <algorithm>
 #include <chrono>
+
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <sys/types.h>
@@ -70,13 +73,15 @@ void Master::run() {
       t_last_statistics = Clock::now();
       statistics();
     }
-    for (auto it = stream_masters.begin(), last_sm = stream_masters.end();
-         it != last_sm; ++it) {
-      if ((*it)->status() == Status::StreamMasterErrorCode::is_removable) {
-        LOG(Sev::Info, "remove stream master with id {}", (*it)->getJobId());
-        stream_masters.erase(it);
-      }
-    }
+
+    // Remove any job which is in 'is_removable' state
+    stream_masters.erase(
+        std::remove_if(stream_masters.begin(), stream_masters.end(),
+                       [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
+                         return Iter->status() ==
+                                Status::StreamMasterErrorCode::is_removable;
+                       }),
+        stream_masters.end());
   }
   LOG(Sev::Info, "calling stop on all stream_masters");
   for (auto &x : stream_masters) {

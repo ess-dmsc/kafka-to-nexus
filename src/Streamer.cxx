@@ -286,34 +286,35 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR();
   }
 
+  size_t MessageLength = msg->len();
+  auto Message = Msg::rdkafka(std::move(msg));
   // if the source is not in the source_list return OK (ignore)
   // if StartTimestamp is set and timestamp < start_time skip message and return
   // OK, if StopTimestamp is set, timestamp > stop_time and the source is still
   // present remove source and return STOP else process the message
-  auto td = MessageProcessor.time_difference_from_message(
-      (char *)msg->payload(), msg->len());
-  LOG(Sev::Debug, "Source is {}", td.sourcename);
-  if (std::find(Sources.begin(), Sources.end(), td.sourcename) ==
+  auto MessageTime = MessageProcessor.time_difference_from_message(Message);
+  LOG(Sev::Debug, "Source is {}", MessageTime.sourcename);
+  if (std::find(Sources.begin(), Sources.end(), MessageTime.sourcename) ==
       Sources.end()) {
     return ProcessMessageResult::OK();
   }
-  if (td.dt < Options.StartTimestamp.count()) {
+  if (MessageTime.dt < Options.StartTimestamp.count()) {
     return ProcessMessageResult::OK();
   }
   if (Options.StopTimestamp.count() > 0 &&
-      td.dt > Options.StopTimestamp.count()) {
-    if (removeSource(td.sourcename)) {
+      MessageTime.dt > Options.StopTimestamp.count()) {
+    if (removeSource(MessageTime.sourcename)) {
       return ProcessMessageResult::STOP();
     }
     return ProcessMessageResult::ERR();
   }
 
   // Collect information about the data received
-  MessageInfo.message(msg->len());
+  MessageInfo.message(MessageLength);
 
   // Write the message. Log any error and return the result of processing
   auto result =
-      MessageProcessor.process_message((char *)msg->payload(), msg->len());
+    MessageProcessor.process_message(std::move(Message));
   LOG(Sev::Debug, "{} : Message timestamp : {}",
       TopicPartitionVector[0]->topic(), result.ts());
   if (!result.is_OK()) {
