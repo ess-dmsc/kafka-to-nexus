@@ -21,48 +21,6 @@ void swap(hsize_t &x, hsize_t &y) {
   x ^= y;
 }
 
-template <size_t N> h5s::ptr h5s::simple_unlim(array<hsize_t, N> const &sini) {
-  auto ret = ptr(new h5s);
-  auto &o = *ret;
-  o.sini = {sini.data(), sini.data() + sini.size()};
-  o.smax.clear();
-  o.smax.resize(o.sini.size(), H5S_UNLIMITED);
-  for (size_t i1 = 1; i1 < o.sini.size(); ++i1) {
-    o.smax[i1] = o.sini[i1];
-  }
-  o.id = H5Screate_simple(o.sini.size(), o.sini.data(), o.smax.data());
-  if (o.id == -1) {
-    ret.reset();
-  }
-  return ret;
-}
-
-h5s::h5s(h5d const &x) {
-  id = H5Dget_space(x.id);
-  if (H5Sget_simple_extent_type(id) != H5S_SIMPLE) {
-    throw std::runtime_error("expect a simple dataspace");
-  }
-  auto n = H5Sget_simple_extent_ndims(id);
-  sini.resize(n);
-  smax.resize(n);
-  H5Sget_simple_extent_dims(id, sini.data(), smax.data());
-}
-
-void swap(h5s &x, h5s &y) {
-  using std::swap;
-  swap(x.id, y.id);
-}
-
-h5s::h5s() {}
-
-h5s::h5s(h5s &&x) { swap(*this, x); }
-
-h5s::~h5s() {
-  if (id != -1) {
-    H5Sclose(id);
-  }
-}
-
 void h5d::init_basics() {
   herr_t err = 0;
   type = H5Dget_type(id);
@@ -89,7 +47,8 @@ void h5d::init_basics() {
   }
 }
 
-h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
+h5d::ptr h5d::create(hid_t loc, string name, hid_t type,
+                     hdf5::dataspace::Simple dsp,
                      hdf5::property::DatasetCreationList dcpl,
                      CollectiveQueue *cq) {
   // Creation is done in single process mode.
@@ -103,7 +62,8 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   if (err < 0) {
     LOG(Sev::Debug, "failed H5Pset_fill_value");
   }
-  o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, static_cast<hid_t>(dcpl));
+  o.id = H5Dcreate1(loc, name.c_str(), type, static_cast<hid_t>(dsp),
+                    static_cast<hid_t>(dcpl));
   if (o.id < 0) {
     LOG(Sev::Error, "H5Dcreate1 failed");
     ret.reset();
@@ -397,13 +357,10 @@ template <typename T>
 typename h5d_chunked_1d<T>::ptr
 h5d_chunked_1d<T>::create(hid_t loc, string name, hsize_t chunk_bytes,
                           CollectiveQueue *cq) {
-  auto dsp = h5s::simple_unlim<1>({{0}});
-  if (!dsp) {
-    return nullptr;
-  }
+  hdf5::dataspace::Simple dsp({0}, {H5S_UNLIMITED});
   hdf5::property::DatasetCreationList dcpl;
   dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / sizeof(T))});
-  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), dcpl, cq);
+  auto ds = h5d::create(loc, name, nat_type<T>(), dsp, dcpl, cq);
   if (!ds) {
     return nullptr;
   }
@@ -425,7 +382,20 @@ typename h5d_chunked_1d<T>::ptr h5d_chunked_1d<T>::open(hid_t loc, string name,
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, h5d ds)
-    : ds(move(ds)), dsp_wr(this->ds) {}
+    : ds(move(ds)) {
+  if (ds.id < 0) {
+    LOG(Sev::Critical, "not a dataset");
+  } else {
+    if (H5Sget_simple_extent_ndims(ds.id) != 1) {
+      LOG(Sev::Critical, "wrong dimension");
+    } else {
+      auto dsp = H5Dget_space(ds.id);
+      std::vector<hsize_t> snow(1), smax(1);
+      H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
+      dsp_wr = hdf5::dataspace::Simple(snow, smax);
+    }
+  }
+}
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
@@ -519,15 +489,12 @@ template <typename T>
 typename h5d_chunked_2d<T>::ptr
 h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
                           hsize_t chunk_bytes, CollectiveQueue *cq) {
-  auto dsp = h5s::simple_unlim<2>({{0, ncols}});
-  if (!dsp) {
-    return nullptr;
-  }
+  hdf5::dataspace::Simple dsp({0, ncols}, {H5S_UNLIMITED, ncols});
   hdf5::property::DatasetCreationList dcpl;
   dcpl.chunk(
       {std::max<hsize_t>(1, chunk_bytes / ncols / H5Tget_size(nat_type<T>())),
        ncols});
-  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), dcpl, cq);
+  auto ds = h5d::create(loc, name, nat_type<T>(), dsp, dcpl, cq);
   if (!ds) {
     return nullptr;
   }
@@ -548,7 +515,20 @@ h5d_chunked_2d<T>::open(hid_t loc, string name, hsize_t ncols,
 
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols)
-    : ds(move(ds)), dsp_wr(this->ds), ncols(ncols) {}
+    : ds(move(ds)), ncols(ncols) {
+  if (ds.id < 0) {
+    LOG(Sev::Critical, "not a dataset");
+  } else {
+    if (H5Sget_simple_extent_ndims(ds.id) != 2) {
+      LOG(Sev::Critical, "wrong dimension");
+    } else {
+      auto dsp = H5Dget_space(ds.id);
+      std::vector<hsize_t> snow(2), smax(2);
+      H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
+      dsp_wr = hdf5::dataspace::Simple(snow, smax);
+    }
+  }
+}
 
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(h5d_chunked_2d &&x)
@@ -627,10 +607,6 @@ template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
 }
 
 // clang-format off
-
-template h5s::ptr h5s::simple_unlim(array<hsize_t, 1> const &sini);
-template h5s::ptr h5s::simple_unlim(array<hsize_t, 2> const &sini);
-template h5s::ptr h5s::simple_unlim(array<hsize_t, 3> const &sini);
 
 template append_ret h5d::append_data_1d(uint8_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(uint16_t const *data, hsize_t nlen);

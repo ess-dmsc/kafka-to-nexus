@@ -22,22 +22,6 @@ void swap(hsize_t &, hsize_t &);
 
 class h5d;
 
-class h5s {
-public:
-  typedef unique_ptr<h5s> ptr;
-  template <size_t N> static ptr simple_unlim(array<hsize_t, N> const &sini);
-  h5s(h5d const &x);
-  h5s(h5s &&x);
-  ~h5s();
-  friend void swap(h5s &x, h5s &y);
-  hid_t id = -1;
-  vector<hsize_t> sini;
-  vector<hsize_t> smax;
-
-private:
-  h5s();
-};
-
 enum class AppendResult : uint32_t {
   OK,
   ERROR,
@@ -53,7 +37,8 @@ struct append_ret {
 class h5d {
 public:
   typedef unique_ptr<h5d> ptr;
-  static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
+  static ptr create(hid_t loc, string name, hid_t type,
+                    hdf5::dataspace::Simple dsp,
                     hdf5::property::DatasetCreationList dcpl,
                     CollectiveQueue *cq);
   static ptr open_single(hid_t loc, string name, CollectiveQueue *cq,
@@ -107,7 +92,7 @@ public:
 
 private:
   h5d_chunked_1d(hid_t loc, string name, h5d ds);
-  h5s dsp_wr;
+  hdf5::dataspace::Simple dsp_wr;
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
   size_t buf_n = 0;
@@ -139,7 +124,7 @@ public:
 
 private:
   h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-  h5s dsp_wr;
+  hdf5::dataspace::Simple dsp_wr;
   hsize_t ncols;
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
