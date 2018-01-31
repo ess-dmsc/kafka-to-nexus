@@ -21,57 +21,6 @@ void swap(hsize_t &x, hsize_t &y) {
   x ^= y;
 }
 
-namespace h5p {
-
-dataset_create::ptr dataset_create::chunked1(hid_t type, hsize_t bytes) {
-  auto id = H5Pcreate(H5P_DATASET_CREATE);
-  if (id == -1) {
-    return {nullptr};
-  }
-  array<hsize_t, 1> schk{{std::max<hsize_t>(bytes / H5Tget_size(type), 1)}};
-  H5Pset_chunk(id, schk.size(), schk.data());
-  auto ret = ptr(new dataset_create);
-  ret->id = id;
-  return ret;
-}
-
-dataset_create::ptr dataset_create::chunked2(hid_t type, hsize_t ncols,
-                                             hsize_t bytes) {
-  auto id = H5Pcreate(H5P_DATASET_CREATE);
-  if (id == -1) {
-    return {nullptr};
-  }
-  array<hsize_t, 2> schk{
-      {std::max<hsize_t>(bytes / ncols / H5Tget_size(type), 1), ncols}};
-  H5Pset_chunk(id, schk.size(), schk.data());
-  auto ret = ptr(new dataset_create);
-  ret->id = id;
-  return ret;
-}
-
-dataset_create::dataset_create(dataset_create const &x)
-    : id(H5Iinc_ref(x.id)) {}
-
-dataset_create::dataset_create(dataset_create &&x) {
-  using std::swap;
-  swap(*this, x);
-}
-
-dataset_create::~dataset_create() {
-  if (id != -1) {
-    H5Pclose(id);
-  }
-}
-
-dataset_create::dataset_create() {}
-
-void swap(dataset_create &x, dataset_create &y) {
-  using std::swap;
-  swap(x.id, y.id);
-}
-
-} // namespace h5p
-
 template <size_t N> h5s::ptr h5s::simple_unlim(array<hsize_t, N> const &sini) {
   auto ret = ptr(new h5s);
   auto &o = *ret;
@@ -141,7 +90,8 @@ void h5d::init_basics() {
 }
 
 h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
-                     h5p::dataset_create dcpl, CollectiveQueue *cq) {
+                     hdf5::property::DatasetCreationList dcpl,
+                     CollectiveQueue *cq) {
   // Creation is done in single process mode.
   // Can do set_extent here.
   auto ret = ptr(new h5d);
@@ -149,11 +99,11 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type, h5s dsp,
   herr_t err = 0;
   o.type = type;
   o.name = name;
-  err = H5Pset_fill_value(dcpl.id, type, nullptr);
+  err = H5Pset_fill_value(static_cast<hid_t>(dcpl), type, nullptr);
   if (err < 0) {
     LOG(Sev::Debug, "failed H5Pset_fill_value");
   }
-  o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, dcpl.id);
+  o.id = H5Dcreate1(loc, name.c_str(), type, dsp.id, static_cast<hid_t>(dcpl));
   if (o.id < 0) {
     LOG(Sev::Error, "H5Dcreate1 failed");
     ret.reset();
@@ -451,11 +401,9 @@ h5d_chunked_1d<T>::create(hid_t loc, string name, hsize_t chunk_bytes,
   if (!dsp) {
     return nullptr;
   }
-  auto dcpl = h5p::dataset_create::chunked1(nat_type<T>(), chunk_bytes);
-  if (!dcpl) {
-    return nullptr;
-  }
-  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), move(*dcpl), cq);
+  hdf5::property::DatasetCreationList dcpl;
+  dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / sizeof(T))});
+  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), dcpl, cq);
   if (!ds) {
     return nullptr;
   }
@@ -575,11 +523,11 @@ h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
   if (!dsp) {
     return nullptr;
   }
-  auto dcpl = h5p::dataset_create::chunked2(nat_type<T>(), ncols, chunk_bytes);
-  if (!dcpl) {
-    return nullptr;
-  }
-  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), move(*dcpl), cq);
+  hdf5::property::DatasetCreationList dcpl;
+  dcpl.chunk(
+      {std::max<hsize_t>(1, chunk_bytes / ncols / H5Tget_size(nat_type<T>())),
+       ncols});
+  auto ds = h5d::create(loc, name, nat_type<T>(), move(*dsp), dcpl, cq);
   if (!ds) {
     return nullptr;
   }

@@ -2,6 +2,7 @@
 
 #include "CollectiveQueue.h"
 #include <array>
+#include <h5cpp/hdf5.hpp>
 #include <hdf5.h>
 #include <memory>
 #include <string>
@@ -18,25 +19,6 @@ using std::string;
 template <typename T> hid_t nat_type();
 
 void swap(hsize_t &, hsize_t &);
-
-namespace h5p {
-
-class dataset_create {
-public:
-  typedef unique_ptr<dataset_create> ptr;
-  static ptr chunked1(hid_t type, hsize_t bytes);
-  static ptr chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
-  dataset_create(dataset_create &&x);
-  ~dataset_create();
-  friend void swap(dataset_create &x, dataset_create &y);
-  hid_t id = -1;
-
-private:
-  dataset_create();
-  dataset_create(dataset_create const &x);
-};
-
-} // namespace h5p
 
 class h5d;
 
@@ -72,7 +54,8 @@ class h5d {
 public:
   typedef unique_ptr<h5d> ptr;
   static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
-                    h5p::dataset_create dcpl, CollectiveQueue *cq);
+                    hdf5::property::DatasetCreationList dcpl,
+                    CollectiveQueue *cq);
   static ptr open_single(hid_t loc, string name, CollectiveQueue *cq,
                          HDFIDStore *hdf_store);
   static ptr open(hid_t loc, string name, CollectiveQueue *cq,
