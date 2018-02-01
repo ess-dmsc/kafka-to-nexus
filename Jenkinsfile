@@ -63,7 +63,11 @@ node('docker') {
         }
 
         stage('Build') {
-            def build_script = "make --directory=./build VERBOSE=1"
+            def test_script = """
+                cd build
+                . ./activate_run.sh
+                make VERBOSE=1
+            """
             sh "docker exec ${container_name} ${sclsh} -c \"${build_script}\""
         }
 
@@ -71,6 +75,7 @@ node('docker') {
             def test_output = "TestResults.xml"
             def test_script = """
                 cd build
+                . ./activate_run.sh
                 ./tests/tests -- --gtest_output=xml:${test_output}
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${test_script}\""
