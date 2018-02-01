@@ -48,7 +48,7 @@ node('docker') {
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
-                conan install ../${project}/conan --build=missing
+                conan install ../${project}/conan --build=outdated
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${dependencies_script}\""
         }
