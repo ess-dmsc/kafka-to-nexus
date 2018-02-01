@@ -534,21 +534,13 @@ void HDFFile::create_hdf_structures(rapidjson::Value const *value,
 
     // The HDF object that we will maybe create at the current level.
     hdf5::node::Group hdf_this;
-    // Keeps the HDF object id if we create a new collection-like object which
-    // can be used as the parent for the next level of recursion. The only case
-    // currently is when we create a group.
-    hdf5::node::Group hdf_next_parent;
-    // Remember whether we created a group at this level.
-    hdf5::node::Group gid;
     if (auto type = get_string(value, "type")) {
       if (type.v == "group") {
         if (auto name = get_string(value, "name")) {
 
           try {
             hdf_this = parent.create_group(name.v, lcpl);
-            hdf_next_parent = hdf_this;
             path.push_back(name.v);
-            gid = hdf_this;
           }
           catch (...) {
             LOG(Sev::Critical, "failed to create group  name: {}", name.v.c_str());
@@ -568,13 +560,10 @@ void HDFFile::create_hdf_structures(rapidjson::Value const *value,
       }
     }
 
-    if (hdf_this.is_valid()) {
-      write_attributes_if_present(hdf_this, value);
-    }
-
     // If the current level in the HDF can act as a parent, then continue the
     // recursion with the (optional) "children" array.
-    if (hdf_next_parent.is_valid()) {
+    if (hdf_this.is_valid()) {
+      write_attributes_if_present(hdf_this, value);
       auto mem = value->FindMember("children");
       if (mem != value->MemberEnd()) {
         if (mem->value.IsArray()) {
@@ -636,8 +625,7 @@ extern "C" char const GIT_COMMIT[];
 void HDFFile::init(std::string filename,
                   rapidjson::Value const &nexus_structure,
                   rapidjson::Value const &config_file,
-                  std::vector<StreamHDFInfo> &stream_hdf_info,
-                  std::vector<hdf5::node::Group> &groups) {
+                  std::vector<StreamHDFInfo> &stream_hdf_info) {
 
   try {
     hdf5::property::FileCreationList fcpl;
@@ -645,7 +633,7 @@ void HDFFile::init(std::string filename,
     set_common_props(fcpl, fapl);
     h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE,
                              fcpl, fapl);
-    init(nexus_structure, stream_hdf_info, groups);
+    init(nexus_structure, stream_hdf_info);
   }
   catch (std::exception& e)
   {
@@ -657,10 +645,7 @@ void HDFFile::init(std::string filename,
 }
 
 void HDFFile::init(rapidjson::Value const &nexus_structure,
-                  std::vector<StreamHDFInfo> &stream_hdf_info,
-                  std::vector<hdf5::node::Group> &groups) {
-
-  groups.clear();
+                  std::vector<StreamHDFInfo> &stream_hdf_info) {
 
   try {
     check_hdf_version();

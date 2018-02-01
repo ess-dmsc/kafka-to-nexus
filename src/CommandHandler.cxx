@@ -116,12 +116,11 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
-  std::vector<hdf5::node::Group> groups;
   {
     rapidjson::Value config_file;
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
     auto x =
-        fwt->hdf_init(nexus_structure, config_file, stream_hdf_info, groups);
+        fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
       return;

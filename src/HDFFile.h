@@ -32,12 +32,10 @@ public:
 
   void init(std::string filename, rapidjson::Value const &nexus_structure,
            rapidjson::Value const &config_file,
-           std::vector<StreamHDFInfo> &stream_hdf_info,
-           std::vector<hdf5::node::Group> &groups);
+           std::vector<StreamHDFInfo> &stream_hdf_info);
 
   void init(rapidjson::Value const &nexus_structure,
-           std::vector<StreamHDFInfo> &stream_hdf_info,
-           std::vector<hdf5::node::Group> &groups);
+           std::vector<StreamHDFInfo> &stream_hdf_info);
 
   void reopen(std::string filename, rapidjson::Value const &config_file);
 

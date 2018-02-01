@@ -54,16 +54,14 @@ void FileWriterTask::add_source(Source &&source) {
 
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              rapidjson::Value const &config_file,
-                             std::vector<StreamHDFInfo> &stream_hdf_info,
-                             std::vector<hdf5::node::Group> &groups) {
+                             std::vector<StreamHDFInfo> &stream_hdf_info) {
   filename_full = hdf_filename;
   if (!hdf_output_prefix.empty()) {
     filename_full = hdf_output_prefix + "/" + filename_full;
   }
 
   try {
-    hdf_file.init(filename_full, nexus_structure, config_file,
-                  stream_hdf_info, groups);
+    hdf_file.init(filename_full, nexus_structure, config_file, stream_hdf_info);
   }
   catch (...)
   {
@@ -78,7 +76,6 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
 
 void FileWriterTask::hdf_close()
 {
-  // nest another exception?
   hdf_file.close();
 }
 
