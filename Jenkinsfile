@@ -63,7 +63,7 @@ node('docker') {
         }
 
         stage('Build') {
-            def test_script = """
+            def build_script = """
                 cd build
                 . ./activate_run.sh
                 make VERBOSE=1
