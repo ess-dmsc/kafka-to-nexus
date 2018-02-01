@@ -16,6 +16,8 @@ find_package(FlatBuffers REQUIRED)
 find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
+find_package(h5cpp REQUIRED)
+find_package(Boost COMPONENTS filesystem system REQUIRED)
 
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
@@ -40,6 +42,8 @@ set(path_include_common
   ${HDF5_INCLUDE_DIRS}
   ${FLATBUFFERS_INCLUDE_DIR}
   ${RAPIDJSON_INCLUDE_DIR}
+  ${H5CPP_INCLUDE_DIR}
+  ${Boost_INCLUDE_DIRS}
   ${CURL_INCLUDE_DIRS}
   ${PROJECT_SOURCE_DIR}/src
   ${PROJECT_BINARY_DIR}/src
@@ -48,7 +52,9 @@ set(path_include_common
 set(libraries_common
   ${RDKAFKA_LIBRARIES}
   ${HDF5_C_LIBRARIES}
+  ${H5CPP_LIBRARIES}
   ${CURL_LIBRARIES}
+  ${Boost_LIBRARIES}
   pthread
   z
 )
