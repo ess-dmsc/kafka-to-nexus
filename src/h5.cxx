@@ -381,18 +381,32 @@ typename h5d_chunked_1d<T>::ptr h5d_chunked_1d<T>::open(hid_t loc, string name,
 }
 
 template <typename T>
-h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, h5d ds)
-    : ds(move(ds)) {
+h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, h5d ds_)
+    : ds(move(ds_)) {
   if (ds.id < 0) {
     LOG(Sev::Critical, "not a dataset");
   } else {
-    if (H5Sget_simple_extent_ndims(ds.id) != 1) {
-      LOG(Sev::Critical, "wrong dimension");
+    if (H5Iis_valid(ds.id) != 1) {
+      LOG(Sev::Critical, "invalid ds.id: {}", ds.id);
     } else {
-      auto dsp = H5Dget_space(ds.id);
-      std::vector<hsize_t> snow(1), smax(1);
-      H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
-      dsp_wr = hdf5::dataspace::Simple(snow, smax);
+      if (H5Iget_type(ds.id) != H5I_DATASET) {
+        LOG(Sev::Critical, "not H5I_DATASET ds.id: {}", ds.id);
+      } else {
+        auto dsp = H5Dget_space(ds.id);
+        if (dsp < 0) {
+          LOG(Sev::Critical, "failed H5Dget_space");
+        } else {
+          auto ndims = H5Sget_simple_extent_ndims(dsp);
+          if (ndims != 1) {
+            LOG(Sev::Critical, "wrong dimension ds.id: {}  dsp: {}  ndims: {}",
+                ds.id, dsp, ndims);
+          } else {
+            std::vector<hsize_t> snow(1), smax(1);
+            H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
+            dsp_wr = hdf5::dataspace::Simple(snow, smax);
+          }
+        }
+      }
     }
   }
 }
@@ -514,18 +528,33 @@ h5d_chunked_2d<T>::open(hid_t loc, string name, hsize_t ncols,
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols)
-    : ds(move(ds)), ncols(ncols) {
+h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, h5d ds_,
+                                  hsize_t ncols)
+    : ds(move(ds_)), ncols(ncols) {
   if (ds.id < 0) {
     LOG(Sev::Critical, "not a dataset");
   } else {
-    if (H5Sget_simple_extent_ndims(ds.id) != 2) {
-      LOG(Sev::Critical, "wrong dimension");
+    if (H5Iis_valid(ds.id) != 1) {
+      LOG(Sev::Critical, "invalid ds.id: {}", ds.id);
     } else {
-      auto dsp = H5Dget_space(ds.id);
-      std::vector<hsize_t> snow(2), smax(2);
-      H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
-      dsp_wr = hdf5::dataspace::Simple(snow, smax);
+      if (H5Iget_type(ds.id) != H5I_DATASET) {
+        LOG(Sev::Critical, "not H5I_DATASET ds.id: {}", ds.id);
+      } else {
+        auto dsp = H5Dget_space(ds.id);
+        if (dsp < 0) {
+          LOG(Sev::Critical, "failed H5Dget_space");
+        } else {
+          auto ndims = H5Sget_simple_extent_ndims(dsp);
+          if (ndims != 2) {
+            LOG(Sev::Critical, "wrong dimension ds.id: {}  dsp: {}  ndims: {}",
+                ds.id, dsp, ndims);
+          } else {
+            std::vector<hsize_t> snow(2), smax(2);
+            H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
+            dsp_wr = hdf5::dataspace::Simple(snow, smax);
+          }
+        }
+      }
     }
   }
 }
