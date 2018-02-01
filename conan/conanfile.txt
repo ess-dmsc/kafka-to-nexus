@@ -11,6 +11,7 @@ h5cpp/0.0.4-dm1@ess-dmsc/stable
 cmake
 virtualbuildenv
 virtualrunenv
+virtualbuildenv
 
 [options]
 FlatBuffers:shared=True
