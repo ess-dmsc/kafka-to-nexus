@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-def centos = docker.image('essdmscdm/centos-gcc6-build-node:0.2.0')
+def centos = docker.image('essdmscdm/centos7-gcc6-build-node:1.0.0')
 
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
