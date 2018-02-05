@@ -201,7 +201,8 @@ FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hid_t hdf_file, std::string hdf_parent_name,
+  InitResult init_hdf(hdf5::node::Group &hdf_parent,
+                      std::string hdf_parent_name,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
   void parse_config(rapidjson::Value const &config_stream,
@@ -497,45 +498,55 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   }
 }
 
-HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hid_t hdf_file, std::string hdf_parent_name,
-                          rapidjson::Value const *attributes,
-                          CollectiveQueue *cq) {
-  auto hdf_group = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+HDFWriterModule::InitResult HDFWriterModule::init_hdf(
+    hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
+    rapidjson::Value const *attributes, CollectiveQueue *cq) {
+  try {
+    auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
 
-  string s("value");
-  impl.reset(impl_fac(hdf_group, array_size, type, s, cq));
-  if (!impl) {
-    LOG(Sev::Error,
-        "Could not create a writer implementation for value_type {}", type);
-    return HDFWriterModule::InitResult::ERROR_IO();
-  }
-  this->ds_timestamp =
-      h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024, cq);
-  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "cue_timestamp_zero", 64 * 1024, cq);
-  this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
-      hdf_group, "cue_index", 64 * 1024, cq);
-  if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
-    impl.reset();
-    return HDFWriterModule::InitResult::ERROR_IO();
-  }
-  if (do_writer_forwarder_internal) {
-    this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, source_name + "__fwdinfo_seq_data", 64 * 1024, cq);
-    this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, source_name + "__fwdinfo_seq_fwd", 64 * 1024, cq);
-    this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, source_name + "__fwdinfo_ts_data", 64 * 1024, cq);
-    if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+    string s("value");
+    impl.reset(
+        impl_fac(static_cast<hid_t>(hdf_group), array_size, type, s, cq));
+    if (!impl) {
+      LOG(Sev::Error,
+          "Could not create a writer implementation for value_type {}", type);
+      return HDFWriterModule::InitResult::ERROR_IO();
+    }
+    this->ds_timestamp = h5::h5d_chunked_1d<uint64_t>::create(
+        static_cast<hid_t>(hdf_group), "time", 64 * 1024, cq);
+    this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+        static_cast<hid_t>(hdf_group), "cue_timestamp_zero", 64 * 1024, cq);
+    this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
+        static_cast<hid_t>(hdf_group), "cue_index", 64 * 1024, cq);
+    if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
+    if (do_writer_forwarder_internal) {
+      this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
+          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_seq_data",
+          64 * 1024, cq);
+      this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
+          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_seq_fwd",
+          64 * 1024, cq);
+      this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
+          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_ts_data",
+          64 * 1024, cq);
+      if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+        impl.reset();
+        return HDFWriterModule::InitResult::ERROR_IO();
+      }
+    }
+    if (attributes) {
+      HDFFile::write_attributes(hdf_group, attributes);
+    }
+  } catch (std::exception &e) {
+    auto message = hdf5::error::print_nested(e);
+    LOG(Sev::Error,
+        "ERROR f142 could not init hdf_parent: {}  name: {}  trace: {}",
+        static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name,
+        message);
   }
-  if (attributes) {
-    write_attributes(hdf_group, attributes);
-  }
-  H5Gclose(hdf_group);
   return HDFWriterModule::InitResult::OK();
 }
 
