@@ -46,6 +46,18 @@ public:
   to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;
   ESSTimeStamp &stop_time();
 
+  /// Counts the number of processed message.
+  std::atomic<size_t> messages_processed{0};
+  /// Counts the number of times when a received message is so small that it
+  /// can not be a valid flatbuffer.
+  std::atomic<size_t> error_message_too_small{0};
+  /// Counts the number of times when we can not find a reader for this type of
+  /// flatbuffer.
+  std::atomic<size_t> error_no_flatbuffer_reader{0};
+  /// Counts the number of times when we can not find a source instance for the
+  /// source_name mentioned in the the flatbuffer message.
+  std::atomic<size_t> error_no_source_instance{0};
+
 private:
   std::string _topic;
   std::unordered_map<std::string, Source> _sources_map;

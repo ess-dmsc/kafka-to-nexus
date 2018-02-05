@@ -906,9 +906,10 @@ int HDFFile::init(hid_t h5file, std::string filename,
                   write_attribute_str(h5file, "HDF5_Version",
                                       h5_version_string_linked().data());
                   write_attribute_str(h5file, "file_name", filename.data());
-                  write_attribute_str(h5file, "creator",
-                                      fmt::format("kafka-to-nexus commit {:.7}",
-                                                  GIT_COMMIT).data());
+                  write_attribute_str(
+                      h5file, "creator",
+                      fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT)
+                          .data());
                   write_hdf_iso8601_now(h5file, "file_time");
                   write_attributes_if_present(h5file, &nexus_structure);
 

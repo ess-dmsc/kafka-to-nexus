@@ -26,9 +26,9 @@ enum class Sev : int {
   Warning = 4,   // Could be an indication of a problem that needs fixing
   Notice = 5,    // Notice, potentially important events that might need special
                  // treatment
-  Info = 6,   // Informational, general run time info for checking the state of
-              // the application
-  Debug = 7,  // Debug, give me a flood of information
+  Info = 6,  // Informational, general run time info for checking the state of
+             // the application
+  Debug = 7, // Debug, give me a flood of information
 };
 
 void dwlog_inner(int level, char const *file, int line, char const *func,
