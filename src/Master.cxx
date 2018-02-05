@@ -81,22 +81,14 @@ void Master::run() {
 void Master::statistics() {
   using namespace rapidjson;
   rapidjson::Document js_status;
-  js_status.SetObject();
   auto &a = js_status.GetAllocator();
+  js_status.SetObject();
+  js_status.AddMember("type", StringRef("filewriter_status_master"), a);
   Value js_files;
   js_files.SetObject();
   for (auto &stream_master : stream_masters) {
-    auto fwt_id_str =
-        //        fmt::format("{:016x}",
-        //        stream_master->file_writer_task().id());
-        fmt::format("{}", stream_master->file_writer_task().job_id());
+    auto fwt_id_str = fmt::format("{}", stream_master->file_writer_task().job_id());
     auto fwt = stream_master->file_writer_task().stats(a);
-    // TODO
-    // Add status when DM-450 lands.
-    fwt.AddMember(
-        "status",
-        StringRef("[to-be-filled-when-StreamMaster-makes-status-available]"),
-        a);
     js_files.AddMember(Value(fwt_id_str.c_str(), a), fwt, a);
   }
   js_status.AddMember("files", js_files, a);
@@ -104,6 +96,7 @@ void Master::statistics() {
   rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
   writer.SetIndent(' ', 2);
   js_status.Accept(writer);
+  LOG(Sev::Critical, "Status: {}", buffer.GetString());
   if (status_producer) {
     status_producer->produce((KafkaW::uchar *)buffer.GetString(),
                              buffer.GetSize());
