@@ -64,11 +64,13 @@ std::string const &DemuxTopic::topic() const { return _topic; }
 ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
   if (msg.size() < 8) {
     LOG(Sev::Error, "too small message");
-    exit(1);
+    ++error_message_too_small;
+    return ProcessMessageResult::ERR();
   }
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader) {
     LOG(Sev::Debug, "no reader");
+    ++error_no_flatbuffer_reader;
     return ProcessMessageResult::ERR();
   }
   auto srcn = reader->source_name(msg);
@@ -81,8 +83,10 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
   try {
     auto &s = _sources_map.at(srcn);
     auto ret = s.process_message(msg);
+    ++messages_processed;
     return ret;
   } catch (std::out_of_range &e) {
+    ++error_no_source_instance;
   }
   return ProcessMessageResult::ERR();
 }
