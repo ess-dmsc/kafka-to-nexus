@@ -2,6 +2,7 @@
 gtest/3121b20-dm2@ess-dmsc/stable
 fmt/3.0.2-dm1@ess-dmsc/stable
 FlatBuffers/1.8.0@ess-dmsc/stable
+hdf5/1.10.1-dm3@ess-dmsc/stable
 librdkafka/0.11.3-dm1@ess-dmsc/stable
 RapidJSON/1.1.0-dm2@ess-dmsc/stable
 graylog-logger/1.0.3-dm1@ess-dmsc/stable
@@ -15,4 +16,5 @@ virtualrunenv
 [options]
 FlatBuffers:shared=True
 gtest:shared=True
+hdf5:shared=True
 librdkafka:shared=True
