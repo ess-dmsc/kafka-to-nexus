@@ -835,7 +835,7 @@ int HDFFile::init(std::string filename, rapidjson::Value const &nexus_structure,
   auto fcpl = H5Pcreate(H5P_FILE_CREATE);
   auto fapl = H5Pcreate(H5P_FILE_ACCESS);
   set_common_props(fcpl, fapl);
-  hid_t h5file = H5Fcreate(filename.c_str(), H5F_ACC_TRUNC, fcpl, fapl);
+  hid_t h5file = H5Fcreate(filename.c_str(), H5F_ACC_EXCL, fcpl, fapl);
   if (h5file < 0) {
     std::array<char, 256> cwd;
     getcwd(cwd.data(), cwd.size());
