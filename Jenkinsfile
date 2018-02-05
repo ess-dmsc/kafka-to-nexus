@@ -48,7 +48,7 @@ node('docker') {
                 conan remote add \
                     --insert 0 \
                     ${conan_remote} ${local_conan_server}
-                conan install ../${project}/conan --build=missing
+                conan install ../${project}/conan --build=outdated
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${dependencies_script}\""
         }
@@ -56,13 +56,18 @@ node('docker') {
         stage('Configure') {
             def configure_script = """
                 cd build
-                cmake3 ../${project} -DREQUIRE_GTEST=ON
+                . ./activate_run.sh
+                cmake ../${project} -DREQUIRE_GTEST=ON
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${configure_script}\""
         }
 
         stage('Build') {
-            def build_script = "make --directory=./build VERBOSE=1"
+            def build_script = """
+                cd build
+                . ./activate_run.sh
+                make VERBOSE=1
+            """
             sh "docker exec ${container_name} ${sclsh} -c \"${build_script}\""
         }
 
@@ -70,6 +75,7 @@ node('docker') {
             def test_output = "TestResults.xml"
             def test_script = """
                 cd build
+                . ./activate_run.sh
                 ./tests/tests -- --gtest_output=xml:${test_output}
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${test_script}\""

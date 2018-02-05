@@ -3,7 +3,6 @@
 #include "../CommandHandler.h"
 #include "../KafkaW.h"
 #include "../MainOpt.h"
-#include "../h5.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
@@ -90,9 +89,8 @@ TEST(HDFFile, create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
-  std::vector<hid_t> groups;
   f1.init("tmp-test.h5", rapidjson::Value().SetObject(),
-          rapidjson::Value().SetObject(), stream_hdf_info, groups);
+          rapidjson::Value().SetObject(), stream_hdf_info);
 }
 
 class T_CommandHandler : public testing::Test {
@@ -156,10 +154,9 @@ public:
     main_opt.hdf_output_prefix = "";
 
     // Verification
-    auto fid = H5Fopen((hdf_output_prefix + "/" + fname.v).c_str(),
-                       H5F_ACC_RDONLY, H5P_DEFAULT);
-    ASSERT_GE(fid, 0);
-    H5Fclose(fid);
+    auto file = hdf5::file::open(hdf_output_prefix + "/" + fname.v,
+                                 hdf5::file::AccessFlags::READONLY);
+    ASSERT_TRUE(file.is_valid());
   }
 
   static void create_static_dataset() {
@@ -352,19 +349,10 @@ public:
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
 
     // Verification
-    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    ASSERT_GE(fid, 0);
-    auto g1 = H5Gopen2(fid, "some_group", H5P_DEFAULT);
-    ASSERT_GE(g1, 0);
-    auto ds = H5Dopen2(g1, "value", H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
-    ASSERT_GT(H5Tequal(H5Dget_type(ds), H5T_NATIVE_DOUBLE), 0);
-    auto attr = H5Aopen(ds, "units", H5P_DEFAULT);
-    ASSERT_GE(attr, 0);
-    H5Aclose(attr);
-    H5Dclose(ds);
-    H5Gclose(g1);
-    H5Fclose(fid);
+    auto file = hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto ds = hdf5::node::get_dataset(file.root(), "/some_group/value");
+    ASSERT_EQ(ds.datatype(), hdf5::datatype::create<double>());
+    ASSERT_TRUE(ds.attributes["units"].is_valid());
   }
 
   static void write_attributes_at_top_level_of_the_file() {
@@ -395,51 +383,33 @@ public:
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
 
     // Verification
-    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    ASSERT_GE(fid, 0);
+    auto file = hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto root_group = file.root();
     {
-      auto attr = H5Aopen(fid, "some_top_level_int", H5P_DEFAULT);
-      ASSERT_GE(attr, 0);
-      auto dtype = H5Aget_type(attr);
-      ASSERT_EQ(H5Tget_class(dtype), H5T_INTEGER);
+      auto attr = root_group.attributes["some_top_level_int"];
+      ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::INTEGER);
       uint32_t v = 0;
-      H5Aread(attr, H5T_NATIVE_INT32, &v);
+      attr.read(v);
       ASSERT_EQ(v, 42);
-      H5Aclose(attr);
     }
     {
-      auto attr = H5Aopen(fid, "some_top_level_string", H5P_DEFAULT);
-      ASSERT_GE(attr, 0);
-      auto dtype = H5Aget_type(attr);
-      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
-      std::vector<char> buf;
-      buf.resize(128);
-      H5Aread(attr, dtype, buf.data());
-      buf[buf.size() - 1] = 0;
-      ASSERT_EQ(string("Hello Attribute"), buf.data());
-      H5Aclose(attr);
+      auto attr = root_group.attributes["some_top_level_string"];
+      ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::STRING);
+      std::string val;
+      attr.read(val, attr.datatype());
+      ASSERT_EQ(string("Hello Attribute"), val);
     }
     {
-      auto attr = H5Aopen(fid, "HDF5_Version", H5P_DEFAULT);
-      ASSERT_GE(attr, 0);
-      auto dtype = H5Aget_type(attr);
-      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
-      auto dtype_mem = H5Tget_native_type(dtype, H5T_DIR_ASCEND);
-      std::vector<char> buf;
-      buf.resize(128);
-      H5Aread(attr, dtype_mem, buf.data());
-      buf[buf.size() - 1] = 0;
-      ASSERT_EQ(FileWriter::h5_version_string_linked(), buf.data());
-      H5Aclose(attr);
+      auto attr = root_group.attributes["HDF5_Version"];
+      ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::STRING);
+      std::string val;
+      attr.read(val, attr.datatype());
+      ASSERT_EQ(FileWriter::HDFFile::h5_version_string_linked(), val);
     }
     {
-      auto attr = H5Aopen(fid, "file_time", H5P_DEFAULT);
-      ASSERT_GE(attr, 0);
-      auto dtype = H5Aget_type(attr);
-      ASSERT_EQ(H5Tget_class(dtype), H5T_STRING);
-      H5Aclose(attr);
+      auto attr = root_group.attributes["file_time"];
+      ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::STRING);
     }
-    H5Fclose(fid);
   }
 
   /// Can supply pre-generated test data for a source on a topic to profile
@@ -484,36 +454,23 @@ public:
     }
   };
 
-  static int recreate_file(rapidjson::Value *json_command) {
+  static void recreate_file(rapidjson::Value *json_command) {
     // now try to recreate the file for testing:
     auto m = json_command->FindMember("file_attributes");
     auto fn = m->value.GetObject().FindMember("file_name")->value.GetString();
-    auto x = H5Fcreate(fn, H5F_ACC_TRUNC, H5P_DEFAULT, H5P_DEFAULT);
-    if (x < 0) {
-      return -1;
-    }
-    H5Fclose(x);
-    return 0;
+    auto file = hdf5::file::create(fn, hdf5::file::AccessFlags::TRUNCATE);
   }
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
-  static void verify_attribute_data_ev42(hid_t oid, string const &group_path) {
-    herr_t err;
-    auto a1 = H5Aopen_by_name(oid, group_path.data(), "this_will_be_a_double",
-                              H5P_DEFAULT, H5P_DEFAULT);
-    ASSERT_GE(a1, 0);
-    {
-      auto dt = H5Aget_type(a1);
-      ASSERT_EQ(H5Tget_class(dt), H5T_FLOAT);
-      ASSERT_EQ(H5Tget_size(dt), H5Tget_size(H5T_NATIVE_DOUBLE));
-      err = H5Tclose(dt);
-      ASSERT_GE(err, 0);
-    }
+  static void verify_attribute_data_ev42(hdf5::node::Group& node) {
+
+    auto a1 = node.attributes["this_will_be_a_double"];
+    auto dt = a1.datatype();
+    ASSERT_EQ(dt.get_class(), hdf5::datatype::Class::FLOAT);
+    ASSERT_EQ(dt.size(), sizeof(double));
     double v;
-    err = H5Aread(a1, H5T_NATIVE_DOUBLE, &v);
+    a1.read(v);
     ASSERT_EQ(v, 0.125);
-    err = H5Aclose(a1);
-    ASSERT_GE(err, 0);
   }
 
   static void data_ev42() {
@@ -831,57 +788,26 @@ public:
 
     herr_t err;
 
-    auto fid = H5Fopen(string(fname).c_str(), H5F_ACC_RDONLY, H5P_DEFAULT);
-    ASSERT_GE(fid, 0);
+
+    auto file = hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto root_group = file.root();
 
     size_t i_source = 0;
     for (auto &source : sources) {
       vector<DT> data((size_t)(source.n_events_per_message));
-      string base_path = "/";
-      string group_path = base_path + source.source;
+      string group_path = "/" + source.source;
 
-      auto g0 = H5Gopen(fid, group_path.c_str(), H5P_DEFAULT);
-      ASSERT_GE(g0, 0);
-      H5Gclose(g0);
-
-      auto ds = H5Dopen2(fid, (group_path + "/event_id").c_str(), H5P_DEFAULT);
-      ASSERT_GE(ds, 0);
-      ASSERT_GT(H5Iis_valid(ds), 0);
-
-      auto dt = H5Dget_type(ds);
-      ASSERT_GT(dt, 0);
-      ASSERT_EQ(H5Tget_size(dt), sizeof(DT));
-
-      auto dsp = H5Dget_space(ds);
-      ASSERT_GT(dsp, 0);
-      ASSERT_EQ(H5Sis_simple(dsp), 1);
-
-      using A = array<hsize_t, 1>;
-      A sini = {{(hsize_t)source.n_events_per_message}};
-      A smax = {{(hsize_t)source.n_events_per_message}};
-      A count = {{(hsize_t)source.n_events_per_message}};
-      A start0 = {{(hsize_t)0}};
-      auto mem = H5Screate(H5S_SIMPLE);
-      err = H5Sset_extent_simple(mem, sini.size(), sini.data(), smax.data());
-      ASSERT_GE(err, 0);
-      err = H5Sselect_hyperslab(mem, H5S_SELECT_SET, start0.data(), nullptr,
-                                count.data(), nullptr);
-      ASSERT_GE(err, 0);
+      auto ds = hdf5::node::get_dataset(root_group, group_path + "/event_id");
 
       // LOG(Sev::Debug, "have {} messages", source.msgs.size());
       for (size_t feed_i = 0; feed_i < feed_msgs_times; ++feed_i) {
         for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-          auto &fb = source.fbs.at(msg_i);
-          A start = {{hsize_t(msg_i * source.n_events_per_message +
-                              feed_i * source.n_events_per_message *
-                                  source.msgs.size())}};
-          err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(), nullptr,
-                                    count.data(), nullptr);
-          ASSERT_GE(err, 0);
-          err = H5Dread(ds, h5::nat_type<DT>(), mem, dsp, H5P_DEFAULT,
-                        data.data());
-          ASSERT_GE(err, 0);
-          auto fbd = fb.root()->detector_id();
+          hsize_t i_pos = msg_i * source.n_events_per_message +
+                          feed_i * source.n_events_per_message * source.msgs.size();
+
+          ds.read(data, hdf5::dataspace::Hyperslab({i_pos}, {source.n_events_per_message}));
+
+          auto fbd = source.fbs.at(msg_i).root()->detector_id();
           for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
             // LOG(Sev::Debug, "found: {:4}  {:6} vs {:6}", i1, data.at(i1),
             // fbd->Get(i1));
@@ -890,56 +816,28 @@ public:
         }
       }
 
-      H5Sclose(mem);
-      H5Sclose(dsp);
+      auto ds_cue_timestamp_zero
+          = hdf5::node::get_dataset(root_group, group_path + "/cue_timestamp_zero");
+      vector<uint64_t> cue_timestamp_zero(ds_cue_timestamp_zero.dataspace().size());
+      ds_cue_timestamp_zero.read(cue_timestamp_zero);
 
-      auto ds_cue_timestamp_zero = H5Dopen2(
-          fid, (group_path + "/cue_timestamp_zero").c_str(), H5P_DEFAULT);
-      ASSERT_GE(ds_cue_timestamp_zero, 0);
-      ASSERT_GT(H5Iis_valid(ds_cue_timestamp_zero), 0);
-      vector<uint64_t> cue_timestamp_zero(
-          H5Sget_simple_extent_npoints(H5Dget_space(ds_cue_timestamp_zero)));
-      err = H5Dread(ds_cue_timestamp_zero, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL,
-                    H5P_DEFAULT, cue_timestamp_zero.data());
-      ASSERT_EQ(err, 0);
-      H5Dclose(ds_cue_timestamp_zero);
+      auto ds_cue_index
+          = hdf5::node::get_dataset(root_group, group_path + "/cue_index");
+      vector<uint32_t> cue_index(ds_cue_index.dataspace().size());
+      ds_cue_index.read(cue_index);
 
-      auto ds_cue_index =
-          H5Dopen2(fid, (group_path + "/cue_index").c_str(), H5P_DEFAULT);
-      ASSERT_GE(ds_cue_index, 0);
-      ASSERT_GT(H5Iis_valid(ds_cue_index), 0);
-      vector<uint32_t> cue_index(
-          H5Sget_simple_extent_npoints(H5Dget_space(ds_cue_index)));
-      err = H5Dread(ds_cue_index, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL,
-                    H5P_DEFAULT, cue_index.data());
-      ASSERT_EQ(err, 0);
-      H5Dclose(ds_cue_index);
-
-      ASSERT_GE(cue_timestamp_zero.size(),
-                minimum_expected_entries_in_the_index);
+      ASSERT_GE(cue_timestamp_zero.size(), minimum_expected_entries_in_the_index);
       ASSERT_EQ(cue_timestamp_zero.size(), cue_index.size());
 
-      auto ds_event_time_zero =
-          H5Dopen2(fid, (group_path + "/event_time_zero").c_str(), H5P_DEFAULT);
-      ASSERT_GE(ds_event_time_zero, 0);
-      ASSERT_GT(H5Iis_valid(ds_event_time_zero), 0);
-      vector<uint64_t> event_time_zero(
-          H5Sget_simple_extent_npoints(H5Dget_space(ds_event_time_zero)));
-      err = H5Dread(ds_event_time_zero, H5T_NATIVE_UINT64, H5S_ALL, H5S_ALL,
-                    H5P_DEFAULT, event_time_zero.data());
-      ASSERT_EQ(err, 0);
-      H5Dclose(ds_event_time_zero);
+      auto ds_event_time_zero
+          = hdf5::node::get_dataset(root_group, group_path + "/event_time_zero");
+      vector<uint64_t> event_time_zero(ds_event_time_zero.dataspace().size());
+      ds_event_time_zero.read(event_time_zero);
 
-      auto ds_event_index =
-          H5Dopen2(fid, (group_path + "/event_index").c_str(), H5P_DEFAULT);
-      ASSERT_GE(ds_event_index, 0);
-      ASSERT_GT(H5Iis_valid(ds_event_index), 0);
-      vector<uint32_t> event_index(
-          H5Sget_simple_extent_npoints(H5Dget_space(ds_event_index)));
-      err = H5Dread(ds_event_index, H5T_NATIVE_UINT32, H5S_ALL, H5S_ALL,
-                    H5P_DEFAULT, event_index.data());
-      ASSERT_EQ(err, 0);
-      H5Dclose(ds_event_index);
+      auto ds_event_index
+          = hdf5::node::get_dataset(root_group, group_path + "/event_index");
+      vector<uint32_t> event_index(ds_event_index.dataspace().size());
+      ds_event_index.read(event_index);
 
       ASSERT_GT(event_time_zero.size(), 0u);
       ASSERT_EQ(event_time_zero.size(), event_index.size());
@@ -950,22 +848,13 @@ public:
         ASSERT_TRUE(ok);
       }
 
-      H5Tclose(dt);
-      H5Dclose(ds);
       ++i_source;
 
-      verify_attribute_data_ev42(fid, group_path);
+      auto attr_node = hdf5::node::get_group(root_group, group_path);
+      verify_attribute_data_ev42(attr_node);
     }
 
-    err = H5Fclose(fid);
     LOG(Sev::Debug, "data_ev42 verification done");
-    ASSERT_GE(err, 0);
-    ASSERT_EQ(H5Iis_valid(fid), 0);
-    if (auto x = get_int(&main_opt.config_file, "unit_test.hdf.do_recreate")) {
-      if (x.v == 1) {
-        ASSERT_EQ(recreate_file(&json_command), 0);
-      }
-    }
   }
 
   /// Can supply pre-generated test data for a source on a topic to profile
@@ -1254,13 +1143,15 @@ public:
     }
   }
 
-  static void attribute_int_scalar() {
-    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024 * 1024, false);
-    auto h5file =
-        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
-    H5Pclose(fapl);
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+  static void attribute_string_scalar() {
+    hdf5::property::FileAccessList fapl;
+//    fapl.driver(hdf5::file::MemoryDriver());
+
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = hdf5::file::create("tmp-attr-scalar.h5",
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         hdf5::property::FileCreationList(), fapl);
+
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
       "children": [
@@ -1274,103 +1165,43 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
-                  groups);
-    herr_t err;
-    err = 0;
-    auto a1 =
-        H5Aopen_by_name(h5file, "/group1", "hello", H5P_DEFAULT, H5P_DEFAULT);
-    ASSERT_GE(a1, 0);
-    auto dt = H5Aget_type(a1);
-    ASSERT_GE(dt, 0);
-    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
-    H5Tclose(dt);
-    ASSERT_GE(H5Aclose(a1), 0);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    hdf_file.init(nexus_structure, stream_hdf_info);
+
+    auto a1 = hdf5::node::get_group(hdf_file.root_group, "/group1").attributes["hello"];
+    ASSERT_EQ(a1.datatype().get_class(), hdf5::datatype::Class::STRING);
+    std::string val;
+    a1.read(val, a1.datatype());
+    ASSERT_EQ(val, "world");
   }
 
   /// Read a string from the given dataset at the given position.
   /// Helper for other unit tests.
   /// So far only for 1d datasets.
-  static void read_string(std::string &result, hid_t ds,
-                          std::vector<hsize_t> pos) {
-    herr_t err;
-    auto dt = H5Dget_type(ds);
-    ASSERT_GE(dt, 0);
-    ASSERT_EQ(H5Tget_class(dt), H5T_STRING);
-    ASSERT_EQ(H5Tget_cset(dt), H5T_CSET_UTF8);
-    if (!H5Tis_variable_str(dt)) {
-      // Check plausibility, assuming current unit tests:
-      ASSERT_LE(H5Tget_size(dt), 4096);
-    }
-    auto dsp = H5Dget_space(ds);
-    ASSERT_GE(dsp, 0);
-    {
-      std::array<hsize_t, 1> now{{0}};
-      std::array<hsize_t, 1> max{{0}};
-      err = H5Sget_simple_extent_dims(dsp, now.data(), max.data());
-      ASSERT_EQ(err, 1);
-      ASSERT_GE(now.at(0), 0);
-      ASSERT_GE(max.at(0), 0);
-    }
-    {
-      std::array<hsize_t, 1> start{{pos.at(0)}};
-      std::array<hsize_t, 1> stride{{1}};
-      std::array<hsize_t, 1> count{{1}};
-      std::array<hsize_t, 1> block{{1}};
-      err = H5Sselect_hyperslab(dsp, H5S_SELECT_SET, start.data(),
-                                stride.data(), count.data(), block.data());
-      ASSERT_GE(err, 0);
-    }
-    auto dspmem = H5Screate(H5S_SIMPLE);
-    ASSERT_GE(dspmem, 0);
-    {
-      std::array<hsize_t, 1> now{{1}};
-      std::array<hsize_t, 1> max{{1}};
-      err = H5Sset_extent_simple(dspmem, 1, now.data(), max.data());
-      ASSERT_GE(err, 0);
-    }
-    {
-      std::array<hsize_t, 1> start{{0}};
-      std::array<hsize_t, 1> stride{{1}};
-      std::array<hsize_t, 1> count{{1}};
-      std::array<hsize_t, 1> block{{1}};
-      err = H5Sselect_hyperslab(dspmem, H5S_SELECT_SET, start.data(),
-                                stride.data(), count.data(), block.data());
-      ASSERT_GE(err, 0);
-    }
-    auto dtmem = H5Tcopy(H5T_C_S1);
-    H5Tset_cset(dtmem, H5T_CSET_UTF8);
+  static std::string read_string(const hdf5::node::Dataset &dataset,
+                                 std::vector<hsize_t> pos) {
 
-    if (H5Tis_variable_str(dt)) {
-      H5Tset_size(dtmem, H5T_VARIABLE);
-      char *string_ptr = nullptr;
-      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, &string_ptr);
-      ASSERT_GE(err, 0);
-      result = std::string(string_ptr);
-    } else {
-      H5Tset_size(dtmem, H5Tget_size(dt));
-      std::vector<char> buf;
-      buf.resize(H5Tget_size(dt) + 1);
-      err = H5Dread(ds, dtmem, dspmem, dsp, H5P_DEFAULT, buf.data());
-      ASSERT_GE(err, 0);
-      result = std::string(buf.data());
-    }
+    hdf5::datatype::String datatype(dataset.datatype());
+    hdf5::dataspace::Simple dataspace(dataset.dataspace());
 
-    H5Tclose(dt);
-    ASSERT_GE(H5Sclose(dsp), 0);
-    ASSERT_GE(H5Sclose(dspmem), 0);
+    std::vector<std::string> result;
+    result.resize(dataspace.size());
+    dataset.read(result, datatype, dataspace, dataspace,
+                 hdf5::property::DatasetTransferList());
+
+    //trim padding
+    return result[pos[0]].c_str();
   }
 
   static void dataset_static_1d_string_fixed() {
-    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024 * 1024, false);
-    auto h5file =
-        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
-    H5Pclose(fapl);
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    hdf5::property::FileAccessList fapl;
+//    fapl.driver(hdf5::file::MemoryDriver());
+
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = hdf5::file::create("tmp-fixedlen.h5",
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         hdf5::property::FileCreationList(), fapl);
+
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
       "children": [
@@ -1382,33 +1213,31 @@ public:
             "string_size": 71,
             "size": ["unlimited"]
           },
-          "values": ["the-scalar-string", "another-one"]
+          "values": ["the-scalar-string", "another-one", "yet-another"]
         }
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
-                  groups);
-    herr_t err;
-    err = 0;
-    auto ds = H5Dopen(h5file, "/string_fixed_1d_fixed", H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
-    std::string item;
-    read_string(item, ds, {1});
-    ASSERT_EQ(item, "another-one");
-    ASSERT_GE(H5Dclose(ds), 0);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    hdf_file.init(nexus_structure, stream_hdf_info);
+
+    auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
+    auto datatype = hdf5::datatype::String(ds.datatype());
+    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
+    ASSERT_FALSE(datatype.is_variable_length());
+    ASSERT_EQ(read_string(ds, {1}), std::string("another-one"));
   }
 
   static void dataset_static_1d_string_variable() {
-    auto fapl = H5Pcreate(H5P_FILE_ACCESS);
-    H5Pset_fapl_core(fapl, 1024 * 1024, false);
-    auto h5file =
-        H5Fcreate("tmp-in-memory.h5", H5F_ACC_TRUNC, H5P_DEFAULT, fapl);
-    H5Pclose(fapl);
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    hdf5::property::FileAccessList fapl;
+//    fapl.driver(hdf5::file::MemoryDriver());
+
+    FileWriter::HDFFile hdf_file;
+    hdf_file.h5file = hdf5::file::create("tmp-varlen.h5",
+                                         hdf5::file::AccessFlags::TRUNCATE,
+                                         hdf5::property::FileCreationList(), fapl);
+
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
       "children": [
@@ -1424,19 +1253,15 @@ public:
       ]
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<hid_t> groups;
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = h5file;
-    hdf_file.init(h5file, "tmp-in-memory.h5", nexus_structure, stream_hdf_info,
-                  groups);
-    herr_t err;
-    err = 0;
-    auto ds = H5Dopen(h5file, "/string_fixed_1d_variable", H5P_DEFAULT);
-    ASSERT_GE(ds, 0);
-    std::string item;
-    read_string(item, ds, {2});
-    ASSERT_EQ(item, "string-2");
-    ASSERT_GE(H5Dclose(ds), 0);
+    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+    hdf_file.init(nexus_structure, stream_hdf_info);
+
+    auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_variable");
+    auto datatype = hdf5::datatype::String(ds.datatype());
+    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
+    ASSERT_TRUE(datatype.is_variable_length());
+    ASSERT_EQ(read_string(ds, {2}), std::string("string-2"));
   }
 };
 
@@ -1458,8 +1283,8 @@ TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
 
-TEST_F(T_CommandHandler, attribute_int_scalar) {
-  T_CommandHandler::attribute_int_scalar();
+TEST_F(T_CommandHandler, attribute_string_scalar) {
+  T_CommandHandler::attribute_string_scalar();
 }
 
 TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {

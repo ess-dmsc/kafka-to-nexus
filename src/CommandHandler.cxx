@@ -4,7 +4,6 @@
 #include "helper.h"
 #include "utils.h"
 #include <future>
-#include <h5.h>
 
 using std::array;
 using std::vector;
@@ -117,12 +116,11 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
-  std::vector<hid_t> groups;
   {
     rapidjson::Value config_file;
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
     auto x =
-        fwt->hdf_init(nexus_structure, config_file, stream_hdf_info, groups);
+        fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
       return;
@@ -193,9 +191,11 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
       continue;
     }
 
+    auto root_group = fwt->hdf_file.h5file.root();
     hdf_writer_module->parse_config(config_stream, nullptr);
     CollectiveQueue *cq = nullptr;
-    hdf_writer_module->init_hdf(fwt->hdf_file.h5file, stream.hdf_parent_name,
+    hdf_writer_module->init_hdf(root_group,
+                                stream.hdf_parent_name,
                                 attributes.v, cq);
     hdf_writer_module->close();
     hdf_writer_module.reset();
@@ -262,7 +262,8 @@ void CommandHandler::add_stream_source_to_writer_module(
 
       hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
       auto err = hdf_writer_module->reopen(
-          fwt->hdf_file.h5file, stream_settings.stream_hdf_info.hdf_parent_name,
+          static_cast<hid_t>(fwt->hdf_file.h5file),
+          stream_settings.stream_hdf_info.hdf_parent_name,
           nullptr, nullptr);
       if (err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",

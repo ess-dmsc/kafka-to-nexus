@@ -54,27 +54,40 @@ void FileWriterTask::add_source(Source &&source) {
 
 int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
                              rapidjson::Value const &config_file,
-                             std::vector<StreamHDFInfo> &stream_hdf_info,
-                             std::vector<hid_t> &groups) {
+                             std::vector<StreamHDFInfo> &stream_hdf_info) {
   filename_full = hdf_filename;
   if (!hdf_output_prefix.empty()) {
     filename_full = hdf_output_prefix + "/" + filename_full;
   }
-  auto x = hdf_file.init(filename_full, nexus_structure, config_file,
-                         stream_hdf_info, groups);
-  if (x) {
+
+  try {
+    hdf_file.init(filename_full, nexus_structure, config_file, stream_hdf_info);
+  }
+  catch (...)
+  {
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
         hdf_output_prefix, hdf_filename);
-    return x;
+    return -1;
   }
+
   return 0;
 }
 
-int FileWriterTask::hdf_close() { return hdf_file.close(); }
+void FileWriterTask::hdf_close()
+{
+  hdf_file.close();
+}
 
 int FileWriterTask::hdf_reopen() {
-  return hdf_file.reopen(filename_full, rapidjson::Value());
+  try {
+    hdf_file.reopen(filename_full, rapidjson::Value());
+  }
+  catch (...)
+  {
+    return -1;
+  }
+  return 0;
 }
 
 uint64_t FileWriterTask::id() const { return _id; }
