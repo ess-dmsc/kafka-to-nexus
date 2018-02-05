@@ -349,7 +349,8 @@ public:
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
 
     // Verification
-    auto file = hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto file =
+        hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
     auto ds = hdf5::node::get_dataset(file.root(), "/some_group/value");
     ASSERT_EQ(ds.datatype(), hdf5::datatype::create<double>());
     ASSERT_TRUE(ds.attributes["units"].is_valid());
@@ -383,7 +384,8 @@ public:
     ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
 
     // Verification
-    auto file = hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto file =
+        hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
     auto root_group = file.root();
     {
       auto attr = root_group.attributes["some_top_level_int"];
@@ -462,7 +464,7 @@ public:
   }
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
-  static void verify_attribute_data_ev42(hdf5::node::Group& node) {
+  static void verify_attribute_data_ev42(hdf5::node::Group &node) {
 
     auto a1 = node.attributes["this_will_be_a_double"];
     auto dt = a1.datatype();
@@ -788,8 +790,8 @@ public:
 
     herr_t err;
 
-
-    auto file = hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto file =
+        hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
     auto root_group = file.root();
 
     size_t i_source = 0;
@@ -802,10 +804,12 @@ public:
       // LOG(Sev::Debug, "have {} messages", source.msgs.size());
       for (size_t feed_i = 0; feed_i < feed_msgs_times; ++feed_i) {
         for (size_t msg_i = 0; msg_i < source.msgs.size(); ++msg_i) {
-          hsize_t i_pos = msg_i * source.n_events_per_message +
-                          feed_i * source.n_events_per_message * source.msgs.size();
+          hsize_t i_pos =
+              msg_i * source.n_events_per_message +
+              feed_i * source.n_events_per_message * source.msgs.size();
 
-          ds.read(data, hdf5::dataspace::Hyperslab({i_pos}, {source.n_events_per_message}));
+          ds.read(data, hdf5::dataspace::Hyperslab(
+                            {i_pos}, {source.n_events_per_message}));
 
           auto fbd = source.fbs.at(msg_i).root()->detector_id();
           for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {
@@ -816,26 +820,28 @@ public:
         }
       }
 
-      auto ds_cue_timestamp_zero
-          = hdf5::node::get_dataset(root_group, group_path + "/cue_timestamp_zero");
-      vector<uint64_t> cue_timestamp_zero(ds_cue_timestamp_zero.dataspace().size());
+      auto ds_cue_timestamp_zero = hdf5::node::get_dataset(
+          root_group, group_path + "/cue_timestamp_zero");
+      vector<uint64_t> cue_timestamp_zero(
+          ds_cue_timestamp_zero.dataspace().size());
       ds_cue_timestamp_zero.read(cue_timestamp_zero);
 
-      auto ds_cue_index
-          = hdf5::node::get_dataset(root_group, group_path + "/cue_index");
+      auto ds_cue_index =
+          hdf5::node::get_dataset(root_group, group_path + "/cue_index");
       vector<uint32_t> cue_index(ds_cue_index.dataspace().size());
       ds_cue_index.read(cue_index);
 
-      ASSERT_GE(cue_timestamp_zero.size(), minimum_expected_entries_in_the_index);
+      ASSERT_GE(cue_timestamp_zero.size(),
+                minimum_expected_entries_in_the_index);
       ASSERT_EQ(cue_timestamp_zero.size(), cue_index.size());
 
-      auto ds_event_time_zero
-          = hdf5::node::get_dataset(root_group, group_path + "/event_time_zero");
+      auto ds_event_time_zero =
+          hdf5::node::get_dataset(root_group, group_path + "/event_time_zero");
       vector<uint64_t> event_time_zero(ds_event_time_zero.dataspace().size());
       ds_event_time_zero.read(event_time_zero);
 
-      auto ds_event_index
-          = hdf5::node::get_dataset(root_group, group_path + "/event_index");
+      auto ds_event_index =
+          hdf5::node::get_dataset(root_group, group_path + "/event_index");
       vector<uint32_t> event_index(ds_event_index.dataspace().size());
       ds_event_index.read(event_index);
 
@@ -1145,12 +1151,12 @@ public:
 
   static void attribute_string_scalar() {
     hdf5::property::FileAccessList fapl;
-//    fapl.driver(hdf5::file::MemoryDriver());
+    //    fapl.driver(hdf5::file::MemoryDriver());
 
     FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = hdf5::file::create("tmp-attr-scalar.h5",
-                                         hdf5::file::AccessFlags::TRUNCATE,
-                                         hdf5::property::FileCreationList(), fapl);
+    hdf_file.h5file = hdf5::file::create(
+        "tmp-attr-scalar.h5", hdf5::file::AccessFlags::TRUNCATE,
+        hdf5::property::FileCreationList(), fapl);
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1168,7 +1174,8 @@ public:
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     hdf_file.init(nexus_structure, stream_hdf_info);
 
-    auto a1 = hdf5::node::get_group(hdf_file.root_group, "/group1").attributes["hello"];
+    auto a1 = hdf5::node::get_group(hdf_file.root_group, "/group1")
+                  .attributes["hello"];
     ASSERT_EQ(a1.datatype().get_class(), hdf5::datatype::Class::STRING);
     std::string val;
     a1.read(val, a1.datatype());
@@ -1189,18 +1196,18 @@ public:
     dataset.read(result, datatype, dataspace, dataspace,
                  hdf5::property::DatasetTransferList());
 
-    //trim padding
+    // trim padding
     return result[pos[0]].c_str();
   }
 
   static void dataset_static_1d_string_fixed() {
     hdf5::property::FileAccessList fapl;
-//    fapl.driver(hdf5::file::MemoryDriver());
+    //    fapl.driver(hdf5::file::MemoryDriver());
 
     FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = hdf5::file::create("tmp-fixedlen.h5",
-                                         hdf5::file::AccessFlags::TRUNCATE,
-                                         hdf5::property::FileCreationList(), fapl);
+    hdf_file.h5file =
+        hdf5::file::create("tmp-fixedlen.h5", hdf5::file::AccessFlags::TRUNCATE,
+                           hdf5::property::FileCreationList(), fapl);
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1221,7 +1228,8 @@ public:
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     hdf_file.init(nexus_structure, stream_hdf_info);
 
-    auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_fixed");
+    auto ds =
+        hdf5::node::get_dataset(hdf_file.root_group, "string_fixed_1d_fixed");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
@@ -1231,12 +1239,12 @@ public:
 
   static void dataset_static_1d_string_variable() {
     hdf5::property::FileAccessList fapl;
-//    fapl.driver(hdf5::file::MemoryDriver());
+    //    fapl.driver(hdf5::file::MemoryDriver());
 
     FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = hdf5::file::create("tmp-varlen.h5",
-                                         hdf5::file::AccessFlags::TRUNCATE,
-                                         hdf5::property::FileCreationList(), fapl);
+    hdf_file.h5file =
+        hdf5::file::create("tmp-varlen.h5", hdf5::file::AccessFlags::TRUNCATE,
+                           hdf5::property::FileCreationList(), fapl);
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1256,7 +1264,8 @@ public:
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     hdf_file.init(nexus_structure, stream_hdf_info);
 
-    auto ds = hdf5::node::get_dataset(hdf_file.root_group,  "string_fixed_1d_variable");
+    auto ds = hdf5::node::get_dataset(hdf_file.root_group,
+                                      "string_fixed_1d_variable");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);

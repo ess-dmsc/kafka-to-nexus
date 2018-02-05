@@ -4,11 +4,11 @@
 #include "Msg.h"
 #include <fmt/format.h>
 #include <functional>
+#include <h5cpp/hdf5.hpp>
 #include <map>
 #include <memory>
 #include <rapidjson/document.h>
 #include <string>
-#include <h5cpp/hdf5.hpp>
 
 namespace FileWriter {
 
@@ -112,7 +112,7 @@ public:
   /// @param hdf_file The HDF file handle.
   /// @param hdf_parent_name Path to the group into which this HDFWriterModule
   /// should put its data.
-  virtual InitResult init_hdf(hdf5::node::Group& hdf_parent,
+  virtual InitResult init_hdf(hdf5::node::Group &hdf_parent,
                               std::string hdf_parent_name,
                               rapidjson::Value const *attributes,
                               CollectiveQueue *cq) = 0;

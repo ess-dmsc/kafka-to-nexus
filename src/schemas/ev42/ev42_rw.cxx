@@ -61,7 +61,8 @@ public:
   static FileWriter::HDFWriterModule::ptr create();
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
-  InitResult init_hdf(hdf5::node::Group& hdf_parent, std::string hdf_parent_name,
+  InitResult init_hdf(hdf5::node::Group &hdf_parent,
+                      std::string hdf_parent_name,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
   InitResult reopen(hid_t hdf_file, string hdf_parent_name, CollectiveQueue *cq,
@@ -120,21 +121,21 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hdf5::node::Group& hdf_parent, string hdf_parent_name,
+HDFWriterModule::init_hdf(hdf5::node::Group &hdf_parent, string hdf_parent_name,
                           rapidjson::Value const *attributes,
                           CollectiveQueue *cq) {
   try {
     auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
         static_cast<hid_t>(hdf_group), "event_time_offset", chunk_bytes, cq);
-    this->ds_event_id =
-        h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "event_id", chunk_bytes, cq);
+    this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
+        static_cast<hid_t>(hdf_group), "event_id", chunk_bytes, cq);
     this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
         static_cast<hid_t>(hdf_group), "event_time_zero", chunk_bytes, cq);
-    this->ds_event_index =
-        h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "event_index", chunk_bytes, cq);
-    this->ds_cue_index =
-        h5::h5d_chunked_1d<uint32_t>::create(static_cast<hid_t>(hdf_group), "cue_index", chunk_bytes, cq);
+    this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
+        static_cast<hid_t>(hdf_group), "event_index", chunk_bytes, cq);
+    this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
+        static_cast<hid_t>(hdf_group), "cue_index", chunk_bytes, cq);
     this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
         static_cast<hid_t>(hdf_group), "cue_timestamp_zero", chunk_bytes, cq);
 
@@ -150,12 +151,12 @@ HDFWriterModule::init_hdf(hdf5::node::Group& hdf_parent, string hdf_parent_name,
     if (attributes) {
       HDFFile::write_attributes(hdf_group, attributes);
     }
-  }
-  catch (std::exception& e)
-  {
+  } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "ERROR ev42 could not init hdf_parent: {}  name: {}  trace: {}",
-        static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name, message);
+    LOG(Sev::Error,
+        "ERROR ev42 could not init hdf_parent: {}  name: {}  trace: {}",
+        static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name,
+        message);
   }
   return HDFWriterModule::InitResult::OK();
 }

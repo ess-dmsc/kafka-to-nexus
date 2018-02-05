@@ -119,8 +119,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
   {
     rapidjson::Value config_file;
     auto &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x =
-        fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
+    auto x = fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
       return;
@@ -194,8 +193,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto root_group = fwt->hdf_file.h5file.root();
     hdf_writer_module->parse_config(config_stream, nullptr);
     CollectiveQueue *cq = nullptr;
-    hdf_writer_module->init_hdf(root_group,
-                                stream.hdf_parent_name,
+    hdf_writer_module->init_hdf(root_group, stream.hdf_parent_name,
                                 attributes.v, cq);
     hdf_writer_module->close();
     hdf_writer_module.reset();
@@ -263,8 +261,7 @@ void CommandHandler::add_stream_source_to_writer_module(
       hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
       auto err = hdf_writer_module->reopen(
           static_cast<hid_t>(fwt->hdf_file.h5file),
-          stream_settings.stream_hdf_info.hdf_parent_name,
-          nullptr, nullptr);
+          stream_settings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
       if (err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
             stream_settings.stream_hdf_info.hdf_parent_name);

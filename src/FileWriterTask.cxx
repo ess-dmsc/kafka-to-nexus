@@ -62,9 +62,7 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
 
   try {
     hdf_file.init(filename_full, nexus_structure, config_file, stream_hdf_info);
-  }
-  catch (...)
-  {
+  } catch (...) {
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
         hdf_output_prefix, hdf_filename);
@@ -74,17 +72,12 @@ int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
   return 0;
 }
 
-void FileWriterTask::hdf_close()
-{
-  hdf_file.close();
-}
+void FileWriterTask::hdf_close() { hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
   try {
     hdf_file.reopen(filename_full, rapidjson::Value());
-  }
-  catch (...)
-  {
+  } catch (...) {
     return -1;
   }
   return 0;
