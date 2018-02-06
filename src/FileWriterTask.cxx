@@ -96,13 +96,14 @@ rapidjson::Value FileWriterTask::stats(
   for (auto &d : _demuxers) {
     Value demux;
     demux.SetObject();
-    demux.AddMember("messages_processed", d.messages_processed.load(), a);
-    demux.AddMember("error_message_too_small", d.error_message_too_small.load(),
-                    a);
+    demux.AddMember("messages_processed",
+                    Value().SetUint64(d.messages_processed.load()), a);
+    demux.AddMember("error_message_too_small",
+                    Value().SetUint64(d.error_message_too_small.load()), a);
     demux.AddMember("error_no_flatbuffer_reader",
-                    d.error_no_flatbuffer_reader.load(), a);
+                    Value().SetUint64(d.error_no_flatbuffer_reader.load()), a);
     demux.AddMember("error_no_source_instance",
-                    d.error_no_source_instance.load(), a);
+                    Value().SetUint64(d.error_no_source_instance.load()), a);
     js_topics.AddMember(Value(d.topic().c_str(), a), demux, a);
   }
   Value js_fwt;

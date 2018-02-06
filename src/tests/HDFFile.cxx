@@ -817,8 +817,10 @@ public:
               msg_i * source.n_events_per_message +
               feed_i * source.n_events_per_message * source.msgs.size();
 
-          ds.read(data, hdf5::dataspace::Hyperslab(
-                            {i_pos}, {source.n_events_per_message}));
+          ds.read(data,
+                  hdf5::dataspace::Hyperslab(
+                      {i_pos},
+                      {static_cast<hsize_t>(source.n_events_per_message)}));
 
           auto fbd = source.fbs.at(msg_i).root()->detector_id();
           for (int i1 = 0; i1 < source.n_events_per_message; ++i1) {

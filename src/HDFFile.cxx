@@ -73,8 +73,8 @@ void HDFFile::write_attribute_str(hdf5::node::Node &node, std::string name,
 }
 
 template <typename T>
-static void write_hdf_ds_iso8601(hdf5::node::Group &parent,
-                                 const std::string &name, T &ts) {
+void HDFFile::write_hdf_ds_iso8601(hdf5::node::Group &parent,
+                                   const std::string &name, T &ts) {
   using namespace date;
   using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
