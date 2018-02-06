@@ -127,8 +127,8 @@ public:
 
   static void create_static_file_with_hdf_output_prefix() {
     MainOpt &main_opt = *g_main_opt.load();
-    std::string hdf_output_prefix = "tmp-relative-output";
-    std::string hdf_output_filename = "tmp-file-with-hdf-prefix.h5";
+    std::string const hdf_output_prefix = "tmp-relative-output";
+    std::string const hdf_output_filename = "tmp-file-with-hdf-prefix.h5";
 #ifdef _MSC_VER
 #else
     mkdir(hdf_output_prefix.c_str(), 0777);
@@ -163,7 +163,7 @@ public:
   static void create_static_dataset() {
     MainOpt &main_opt = *g_main_opt.load();
     merge_config_into_main_opt(main_opt, R""({})"");
-    std::string hdf_output_filename = "tmp-static-dataset.h5";
+    std::string const hdf_output_filename = "tmp-static-dataset.h5";
     unlink(hdf_output_filename.c_str());
     rapidjson::Document json_command;
     {
@@ -362,7 +362,7 @@ public:
   static void write_attributes_at_top_level_of_the_file() {
     MainOpt &main_opt = *g_main_opt.load();
     merge_config_into_main_opt(main_opt, R""({})"");
-    std::string hdf_output_filename = "tmp_write_top_level_attributes.h5";
+    std::string const hdf_output_filename = "tmp_write_top_level_attributes.h5";
     unlink(hdf_output_filename.c_str());
     rapidjson::Document json_command;
     json_command.Parse(R""({
