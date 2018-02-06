@@ -107,6 +107,9 @@ private:
     acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
     node.attributes.create<T>(name, acpl).write(value);
   }
+  template <typename T>
+  void write_hdf_ds_iso8601(hdf5::node::Group &parent, const std::string &name,
+                            T &ts);
 };
 
 } // namespace FileWriter
