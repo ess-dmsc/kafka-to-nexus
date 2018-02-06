@@ -127,10 +127,12 @@ public:
 
   static void create_static_file_with_hdf_output_prefix() {
     MainOpt &main_opt = *g_main_opt.load();
-    std::string hdf_output_prefix = "tmp-relative-output";
+    std::string const hdf_output_prefix = "tmp-relative-output";
+    std::string const hdf_output_filename = "tmp-file-with-hdf-prefix.h5";
 #ifdef _MSC_VER
 #else
     mkdir(hdf_output_prefix.c_str(), 0777);
+    unlink((hdf_output_prefix + "/" + hdf_output_filename).c_str());
 #endif
     {
       std::string jsontxt =
@@ -138,8 +140,7 @@ public:
       merge_config_into_main_opt(main_opt, jsontxt);
       main_opt.hdf_output_prefix = hdf_output_prefix;
     }
-    rapidjson::Document json_command =
-        basic_command("tmp-file-with-hdf-prefix.h5");
+    rapidjson::Document json_command = basic_command(hdf_output_filename);
     command_add_static_dataset_1d(json_command);
 
     auto cmd = json_to_string(json_command);
@@ -162,6 +163,8 @@ public:
   static void create_static_dataset() {
     MainOpt &main_opt = *g_main_opt.load();
     merge_config_into_main_opt(main_opt, R""({})"");
+    std::string const hdf_output_filename = "tmp-static-dataset.h5";
+    unlink(hdf_output_filename.c_str());
     rapidjson::Document json_command;
     {
       using namespace rapidjson;
@@ -331,7 +334,7 @@ public:
       {
         Value v;
         v.SetObject();
-        v.AddMember("file_name", StringRef("tmp-static-dataset.h5"), a);
+        v.AddMember("file_name", StringRef(hdf_output_filename.c_str()), a);
         j.AddMember("file_attributes", v, a);
       }
       j.AddMember("cmd", StringRef("FileWriter_new"), a);
@@ -359,6 +362,8 @@ public:
   static void write_attributes_at_top_level_of_the_file() {
     MainOpt &main_opt = *g_main_opt.load();
     merge_config_into_main_opt(main_opt, R""({})"");
+    std::string const hdf_output_filename = "tmp_write_top_level_attributes.h5";
+    unlink(hdf_output_filename.c_str());
     rapidjson::Document json_command;
     json_command.Parse(R""({
       "cmd": "FileWriter_new",
@@ -369,10 +374,14 @@ public:
         }
       },
       "file_attributes": {
-        "file_name": "tmp_write_top_level_attributes.h5"
       },
       "job_id": "832yhtwgfskdf"
     })"");
+    json_command.FindMember("file_attributes")
+        ->value.GetObject()
+        .AddMember("file_name", rapidjson::Value(hdf_output_filename.c_str(),
+                                                 json_command.GetAllocator()),
+                   json_command.GetAllocator());
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");
     ASSERT_GT(fname.v.size(), 8);

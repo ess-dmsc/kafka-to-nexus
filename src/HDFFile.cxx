@@ -627,7 +627,7 @@ void HDFFile::init(std::string filename,
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     set_common_props(fcpl, fapl);
-    h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE,
+    h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
                                 fcpl, fapl);
     init(nexus_structure, stream_hdf_info);
   } catch (std::exception &e) {
