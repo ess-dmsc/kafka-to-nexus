@@ -10,6 +10,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <rapidjson/document.h>
 #include <string>
 #include <utility>
