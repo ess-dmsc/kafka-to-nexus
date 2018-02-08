@@ -3,22 +3,12 @@
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include <future>
+#include <nlohmann/json.hpp>
 
 using std::array;
 using std::vector;
 
 namespace FileWriter {
-
-std::string find_filename(rapidjson::Document const &d) {
-  auto m1 = d.FindMember("file_attributes");
-  if (m1 != d.MemberEnd() && m1->value.IsObject()) {
-    auto m2 = m1->value.FindMember("file_name");
-    if (m2 != m1->value.MemberEnd() && m2->value.IsString()) {
-      return m2->value.GetString();
-    }
-  }
-  return std::string{"a-dummy-name.h5"};
-}
 
 std::string find_job_id(rapidjson::Document const &d) {
   auto m = d.FindMember("job_id");
@@ -81,15 +71,16 @@ struct StreamSettings {
   rapidjson::Value const *config_stream = nullptr;
 };
 
-void CommandHandler::handle_new(rapidjson::Document const &d) {
-  // if (g_N_HANDLED > 0) return;
-  using namespace rapidjson;
+void CommandHandler::handle_new(std::string const &command) {
   using std::move;
   using std::string;
+  rapidjson::Document d;
+  d.Parse(command.c_str());
+
   if (schema_command) {
-    SchemaValidator vali(*schema_command);
+    rapidjson::SchemaValidator vali(*schema_command);
     if (!d.Accept(vali)) {
-      StringBuffer sb1, sb2;
+      rapidjson::StringBuffer sb1, sb2;
       vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
       vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
       LOG(Sev::Warning,
@@ -110,7 +101,14 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     return;
   }
 
-  auto fname = find_filename(d);
+  auto dd = nlohmann::json::parse(command);
+  std::string fname;
+  try {
+    fname = dd.at("file_attributes").at("file_name");
+  } catch (...) {
+    fname = "a-dummy-name.h5";
+  }
+
   fwt->set_hdf_filename(config.hdf_output_prefix, fname);
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
@@ -328,16 +326,28 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
   }
 }
 
-void CommandHandler::handle(rapidjson::Document const &d) {
+void CommandHandler::handle(std::string const &command) {
   using std::string;
-  using namespace rapidjson;
+  using nlohmann::json;
+  json d2;
+  try {
+    d2 = json::parse(command);
+  } catch (...) {
+    LOG(Sev::Error, "Can not parse json command");
+    return;
+  }
+  rapidjson::Document d;
+  d.Parse(command.c_str());
+
   uint64_t teamid = 0;
   uint64_t cmd_teamid = 0;
   if (master) {
     teamid = master->config.teamid;
   }
-  if (auto i = get_int(&d, "teamid")) {
-    cmd_teamid = int64_t(i);
+  try {
+    cmd_teamid = d2.at("teamid").get<int64_t>();
+  } catch (...) {
+    // do nothing
   }
   if (cmd_teamid != teamid) {
     LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
@@ -345,11 +355,10 @@ void CommandHandler::handle(rapidjson::Document const &d) {
     return;
   }
 
-  // The ways to give commands will be unified in upcoming PR.
-  if (auto s = get_string(&d, "cmd")) {
-    auto cmd = string(s);
+  try {
+    std::string cmd = d2.at("cmd");
     if (cmd == "FileWriter_new") {
-      handle_new(d);
+      handle_new(command);
       return;
     }
     if (cmd == "FileWriter_exit") {
@@ -360,6 +369,8 @@ void CommandHandler::handle(rapidjson::Document const &d) {
       handle_stream_master_stop(d);
       return;
     }
+  } catch (...) {
+    // ignore
   }
 
   if (auto s = get_string(&d, "recv_type")) {
@@ -374,25 +385,11 @@ void CommandHandler::handle(rapidjson::Document const &d) {
       }
     }
   }
-
-  StringBuffer buffer;
-  PrettyWriter<StringBuffer> writer(buffer);
-  d.Accept(writer);
-  LOG(Sev::Warning, "ERROR could not figure out this command: {}",
-      buffer.GetString());
+  LOG(Sev::Warning, "Could not understand this command: {}", command);
 }
 
 void CommandHandler::handle(Msg const &msg) {
-  using std::string;
-  using namespace rapidjson;
-  auto doc = make_unique<Document>();
-  ParseResult err = doc->Parse((char *)msg.data(), msg.size());
-  if (doc->HasParseError()) {
-    LOG(Sev::Warning, "ERROR json parse: {} {}", err.Code(),
-        GetParseError_En(err.Code()));
-    return;
-  }
-  handle(*doc);
+  handle({(char *)msg.data(), msg.size()});
 }
 
 } // namespace FileWriter

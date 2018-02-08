@@ -1,13 +1,14 @@
 #include "../CommandHandler.h"
 #include <fstream>
 #include <gtest/gtest.h>
+#include <nlohmann/json.hpp>
 #include <rapidjson/filereadstream.h>
 #include <sstream>
 
 using namespace FileWriter;
 
 namespace FileWriter {
-std::string find_filename(rapidjson::Document const &);
+
 std::string find_job_id(rapidjson::Document const &);
 std::string find_broker(rapidjson::Document const &);
 
@@ -32,9 +33,6 @@ protected:
     new_00.Parse(s.c_str());
     s = parse_json_command("tests/msg-cmd-new-01.json");
     new_01.Parse(s.c_str());
-  }
-  void test_filename_from_json() {
-    ASSERT_EQ(FileWriter::find_filename(new_00), "a-dummy-name-00.h5");
   }
   void test_job_id_from_json() {
     ASSERT_EQ(FileWriter::find_job_id(new_00), "0000000000000000");
@@ -67,10 +65,6 @@ private:
 rapidjson::Document CommandHandler_Test::new_00;
 rapidjson::Document CommandHandler_Test::new_01;
 
-TEST_F(CommandHandler_Test, test_found_filename_matches_expected) {
-  CommandHandler_Test::test_filename_from_json();
-}
-
 TEST_F(CommandHandler_Test, test_found_job_id_matches_expected) {
   CommandHandler_Test::test_job_id_from_json();
 }
@@ -93,4 +87,13 @@ TEST_F(CommandHandler_Test, test_missing_broker_set_to_default) {
 
 TEST_F(CommandHandler_Test, test_missing_start_stop_time_set_to_zero) {
   CommandHandler_Test::test_missing_start_stop_time();
+}
+
+TEST(CommandHandler, jsonmodern) {
+  using std::string;
+  using nlohmann::json;
+  json d;
+  d = json::parse(R"""({"x": 42})""");
+  ASSERT_EQ(42, d.at("x"));
+  // d.at("x").get<string>();
 }

@@ -10,7 +10,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <rapidjson/document.h>
 #include <string>
 #include <utility>
@@ -46,7 +45,7 @@ struct MainOpt {
   /// Keeps commands contained in the configuration file.  The configuration
   /// file may contain commands which are executed before any other command
   /// from the Kafka command topic.
-  std::vector<rapidjson::Document> commands_from_config_file;
+  std::vector<std::string> commands_from_config_file;
   /// Called on startup when a `--config-file` is found.
   int parse_config_file(std::string fname);
   /// Used in turn by `parse_config_file` to parse the json data.
