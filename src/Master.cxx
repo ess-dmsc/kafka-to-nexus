@@ -100,8 +100,8 @@ void Master::statistics() {
   js_files.SetObject();
   for (auto &stream_master : stream_masters) {
     auto fwt_id_str =
-        fmt::format("{}", stream_master->file_writer_task().job_id());
-    auto fwt = stream_master->file_writer_task().stats(a);
+        fmt::format("{}", stream_master->getFileWriterTask().job_id());
+    auto fwt = stream_master->getFileWriterTask().stats(a);
     js_files.AddMember(Value(fwt_id_str.c_str(), a), fwt, a);
   }
   js_status.AddMember("files", js_files, a);

@@ -20,10 +20,10 @@
 #include <mutex>
 #include <vector>
 
+#include <chrono>
 #include <map>
 
 #include "Errors.h"
-#include "utils.h"
 
 namespace FileWriter {
 namespace Status {
@@ -105,24 +105,26 @@ public:
   SMEC &status() { return Status; }
 
   /// Set the ETA of the next message
-  /// \param ToNextMessage milliseconds from the last message to the next
-  void setTimeToNextMessage(const milliseconds &ToNextMessage);
+  /// \param ToNextMessage std::chrono::milliseconds from the last message to
+  /// the next
+  void setTimeToNextMessage(const std::chrono::milliseconds &ToNextMessage);
   /// get the time difference between two consecutive status messages
-  /// \result milliseconds from the last message to the next
-  const milliseconds getTimeToNextMessage();
+  /// \result std::chrono::milliseconds from the last message to the next
+  const std::chrono::milliseconds getTimeToNextMessage();
 
   /// Get the ETA of the next message
-  /// \return ToNextMessage milliseconds from the last message to the next
-  const milliseconds timeToNextMessage();
+  /// \return ToNextMessage std::chrono::milliseconds from the last message to
+  /// the next
+  const std::chrono::milliseconds timeToNextMessage();
   /// Return the total execution time
-  /// \return milliseconds since the class has been created
-  const milliseconds runTime();
+  /// \return std::chrono::milliseconds since the class has been created
+  const std::chrono::milliseconds runTime();
 
 private:
   MessageInfo Total;
   std::map<std::string, MessageInfo> StreamsInfo;
   std::chrono::system_clock::time_point StartTime;
-  milliseconds NextMessageRelativeEta;
+  std::chrono::milliseconds NextMessageRelativeEta;
   SMEC Status{SMEC::not_started};
 };
 
@@ -134,14 +136,16 @@ const std::pair<double, double> messageSize(const MessageInfo &Information);
 /// Return the frequency and the relative standard deviation of the number of
 /// messages \param value the MessageInfo object that stores the data \return
 /// the {frequency, standard deviation} pair
-const std::pair<double, double> messageFrequency(const MessageInfo &Information,
-                                                 const milliseconds &Duration);
+const std::pair<double, double>
+messageFrequency(const MessageInfo &Information,
+                 const std::chrono::milliseconds &Duration);
 
 /// Return the throughput and the relative standard deviation of the number of
 /// messages \param value the MessageInfo object that stores the data \return
 /// the {throughput, standard deviation} pair
 const std::pair<double, double>
-messageThroughput(const MessageInfo &Information, const milliseconds &Duration);
+messageThroughput(const MessageInfo &Information,
+                  const std::chrono::milliseconds &Duration);
 
 } // namespace Status
 } // namespace FileWriter

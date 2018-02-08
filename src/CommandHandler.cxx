@@ -2,7 +2,6 @@
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "helper.h"
-#include "utils.h"
 #include <future>
 
 using std::array;
@@ -43,12 +42,13 @@ std::string find_broker(rapidjson::Document const &d) {
   return std::string{"localhost:9092"};
 }
 
-KafkaTimeStamp find_time(rapidjson::Document const &d, const std::string &key) {
+std::chrono::milliseconds find_time(rapidjson::Document const &d,
+                                    const std::string &key) {
   auto m = d.FindMember(key.c_str());
   if (m != d.MemberEnd() && m->value.IsUint64()) {
-    return KafkaTimeStamp(m->value.GetUint64());
+    return std::chrono::milliseconds(m->value.GetUint64());
   }
-  return KafkaTimeStamp{0};
+  return std::chrono::milliseconds{0};
 }
 
 // In the future, want to handle many, but not right now.
@@ -210,7 +210,8 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
       LOG(Sev::Info, "start time :\t{}", start_time.count());
-      config.StreamerConfiguration.StartTimestamp = milliseconds(start_time);
+      config.StreamerConfiguration.StartTimestamp =
+          std::chrono::milliseconds(start_time);
     }
 
     LOG(Sev::Info, "Write file with id :\t{}", job_id);
@@ -218,7 +219,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
         br, std::move(fwt), config.StreamerConfiguration));
     if (master->status_producer) {
       s->report(master->status_producer,
-                milliseconds{config.status_master_interval});
+                std::chrono::milliseconds{config.status_master_interval});
     }
     if (config.topic_write_duration.count()) {
       s->TopicWriteDuration = config.topic_write_duration;
@@ -228,7 +229,7 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
     auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {
       LOG(Sev::Info, "stop time :\t{}", stop_time.count());
-      s->setStopTime(milliseconds(stop_time));
+      s->setStopTime(std::chrono::milliseconds(stop_time));
     }
 
     master->stream_masters.push_back(std::move(s));
@@ -299,10 +300,10 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
   if (master) {
     auto s = get_string(&d, "job_id");
     auto job_id = std::string(s);
-    milliseconds stop_time(0);
+    std::chrono::milliseconds stop_time(0);
     auto m = d.FindMember("stop_time");
     if (m != d.MemberEnd()) {
-      stop_time = milliseconds(m->value.GetUint64());
+      stop_time = std::chrono::milliseconds(m->value.GetUint64());
     }
     int counter{0};
     for (auto &x : master->stream_masters) {

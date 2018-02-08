@@ -12,10 +12,9 @@
 
 #pragma once
 
-#include "utils.h"
-
 #include <rapidjson/schema.h>
 
+#include <chrono>
 #include <map>
 #include <string>
 #include <vector>
@@ -36,11 +35,11 @@ public:
   // private:
 
   std::vector<std::pair<std::string, std::string>> RdKafkaOptions;
-  milliseconds StartTimestamp{0};
-  milliseconds StopTimestamp{0};
-  milliseconds BeforeStartTime{1000};
-  milliseconds AfterStopTime{1000};
-  milliseconds ConsumerTimeout{1000};
+  std::chrono::milliseconds StartTimestamp{0};
+  std::chrono::milliseconds StopTimestamp{0};
+  std::chrono::milliseconds BeforeStartTime{1000};
+  std::chrono::milliseconds AfterStopTime{1000};
+  std::chrono::milliseconds ConsumerTimeout{1000};
   int NumMetadataRetry{5};
 };
 

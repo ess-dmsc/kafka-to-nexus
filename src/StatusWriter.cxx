@@ -19,7 +19,7 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
   auto &Allocator = Document.GetAllocator();
   Document.SetObject();
 
-  milliseconds next_message_relative_eta_ms =
+  std::chrono::milliseconds next_message_relative_eta_ms =
       Information.getTimeToNextMessage();
   { // message type
     Document.AddMember("type", "stream_master_status", Allocator);
@@ -107,7 +107,7 @@ rapidjson::Value createDerivedQuantity(MessageInfo::value_type &Quantity,
 template <class AllocatorType>
 rapidjson::Value
 JSONWriterBase::derivedQuantities(MessageInfo &Info,
-                                  const milliseconds &Duration,
+                                  const std::chrono::milliseconds &Duration,
                                   AllocatorType &Allocator) const {
   auto Size = messageSize(Info);
   auto Frequency = FileWriter::Status::messageFrequency(Info, Duration);

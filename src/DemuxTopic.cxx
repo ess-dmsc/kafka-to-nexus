@@ -112,6 +112,6 @@ DemuxTopic::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
   return jd;
 }
 
-milliseconds &DemuxTopic::stop_time() { return _stop_time; }
+std::chrono::milliseconds &DemuxTopic::stop_time() { return _stop_time; }
 
 } // namespace FileWriter

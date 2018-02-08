@@ -68,7 +68,7 @@ public:
 
   StreamMaster &operator=(const StreamMaster &) = delete;
 
-  /// Set the timepoint (in milliseconds) that triggers the
+  /// Set the timepoint (in std::chrono::milliseconds) that triggers the
   /// termination of the run. When the timestamp of a Source in the
   /// Streamer reaches this time the source is removed. When all the
   /// Sources in a Streamer are removed the Streamer connection is
@@ -76,7 +76,7 @@ public:
   /// StreamerErrorCode::has_finished
   /// \param StopTime timestamp of the
   /// last message to be written in nanoseconds
-  bool setStopTime(const milliseconds &StopTime) {
+  bool setStopTime(const std::chrono::milliseconds &StopTime) {
     for (auto &s : Streamers) {
       s.second.getOptions().StopTimestamp = StopTime;
     }
@@ -91,7 +91,7 @@ public:
 
     if (!WriteThread.joinable()) {
       WriteThread = std::thread([&] { this->run(); });
-      std::this_thread::sleep_for(milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     return WriteThread.joinable();
   }
@@ -105,7 +105,8 @@ public:
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const milliseconds &report_ms = milliseconds{1000}) {
+              const std::chrono::milliseconds &report_ms =
+                  std::chrono::milliseconds{1000}) {
     if (!ReportThread.joinable()) {
       ReportPtr.reset(new Report(p, report_ms));
       ReportThread =
@@ -136,9 +137,10 @@ public:
 
 private:
   /// Process the messages in Stream for at most TopicWriteDuration
-  /// milliseconds. If the TopicWriteDuration time is elapsed or the stream is
-  /// stopped and other stream are active the method returns SMEC::running. If
-  /// all the streams have finished returns SMEC::has_finished.
+  /// std::chrono::milliseconds. If the TopicWriteDuration time is elapsed or
+  /// the stream is stopped and other stream are active the method returns
+  /// SMEC::running. If all the streams have finished returns
+  /// SMEC::has_finished.
   SMEC processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
@@ -190,7 +192,7 @@ private:
         // to prevent spinning
         if (s.runStatus() == SEC::not_initialized) {
           if (Streamers.size() == 1) {
-            std::this_thread::sleep_for(milliseconds(500));
+            std::this_thread::sleep_for(std::chrono::milliseconds(500));
           }
           continue;
         }
@@ -251,7 +253,7 @@ private:
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};
-  milliseconds TopicWriteDuration{1000};
+  std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
 };
 

@@ -135,7 +135,6 @@ set(kafka_to_nexus_INC
   TimeDifferenceFromMessage.h
   TopicReader.h
   uri.h
-  utils.h
   date/date.h
   date/ios.h
   date/tz_private.h

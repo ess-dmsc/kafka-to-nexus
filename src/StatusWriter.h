@@ -1,4 +1,5 @@
-//===-- src/StatusWriter.h - StatusWriter class definition -------*- C++ -*-===//
+//===-- src/StatusWriter.h - StatusWriter class definition -------*- C++
+//-*-===//
 //
 //
 //===----------------------------------------------------------------------===//
@@ -19,8 +20,6 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 #endif
 
-#include "utils.h"
-
 #include "rapidjson/document.h"
 
 namespace FileWriter {
@@ -28,8 +27,8 @@ namespace Status {
 
 class StreamMasterInfo;
 class MessageInfo;
-}
-}
+} // namespace Status
+} // namespace FileWriter
 
 namespace FileWriter {
 namespace Status {
@@ -89,7 +88,8 @@ private:
   template <class Allocator>
   rapidjson::Value primaryQuantities(MessageInfo &, Allocator &) const;
   template <class Allocator>
-  rapidjson::Value derivedQuantities(MessageInfo &, const milliseconds &,
+  rapidjson::Value derivedQuantities(MessageInfo &,
+                                     const std::chrono::milliseconds &,
                                      Allocator &) const;
 };
 

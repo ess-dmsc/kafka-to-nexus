@@ -9,10 +9,10 @@
 #include <memory>
 
 namespace FileWriter {
-milliseconds systemTime() {
+std::chrono::milliseconds systemTime() {
   using namespace std::chrono;
   system_clock::time_point now = system_clock::now();
-  return duration_cast<milliseconds>(now.time_since_epoch());
+  return duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
 }
 } // namespace FileWriter
 
@@ -133,7 +133,7 @@ FileWriter::Streamer::createTopicPartition(
 void FileWriter::Streamer::pushTopicPartition(const std::string &TopicName,
                                               const int32_t &Partition) {
   if (Options.StartTimestamp.count()) {
-    milliseconds ActualStartTime =
+    std::chrono::milliseconds ActualStartTime =
         Options.StartTimestamp - Options.BeforeStartTime;
     TopicPartitionVector.push_back(RdKafka::TopicPartition::create(
         TopicName, Partition, ActualStartTime.count()));
@@ -313,8 +313,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   MessageInfo.message(MessageLength);
 
   // Write the message. Log any error and return the result of processing
-  auto result =
-    MessageProcessor.process_message(std::move(Message));
+  auto result = MessageProcessor.process_message(std::move(Message));
   LOG(Sev::Debug, "{} : Message timestamp : {}",
       TopicPartitionVector[0]->topic(), result.ts());
   if (!result.is_OK()) {
@@ -382,7 +381,7 @@ void FileWriter::StreamerOptions::setStreamerOptions(
       if (strncmp(m.name.GetString(), "ms-before-start", 15) == 0) {
         if (m.value.IsInt()) {
           LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
-          BeforeStartTime = milliseconds(m.value.GetInt());
+          BeforeStartTime = std::chrono::milliseconds(m.value.GetInt());
           continue;
         }
         LOG(Sev::Warning, "{} : wrong format", m.name.GetString());
@@ -390,7 +389,7 @@ void FileWriter::StreamerOptions::setStreamerOptions(
       if (strncmp(m.name.GetString(), "ms-after-stop", 13) == 0) {
         if (m.value.IsInt()) {
           LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
-          AfterStopTime = milliseconds(m.value.GetInt());
+          AfterStopTime = std::chrono::milliseconds(m.value.GetInt());
           continue;
         }
         LOG(Sev::Warning, "{} : wrong format", m.name.GetString());
@@ -398,7 +397,7 @@ void FileWriter::StreamerOptions::setStreamerOptions(
       if (strncmp(m.name.GetString(), "consumer-timeout-ms", 19) == 0) {
         if (m.value.IsInt()) {
           LOG(Sev::Info, "Set {}: {}", m.name.GetString(), m.value.GetInt());
-          ConsumerTimeout = milliseconds(m.value.GetInt());
+          ConsumerTimeout = std::chrono::milliseconds(m.value.GetInt());
           continue;
         }
         LOG(Sev::Warning, "{} : wrong format", m.name.GetString());

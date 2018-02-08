@@ -16,9 +16,9 @@
 
 namespace FileWriter {
 
+using std::array;
 using std::string;
 using std::vector;
-using std::array;
 
 HDFFile::HDFFile() {
 // Keep this.  Will be used later to test against different lib versions
@@ -102,8 +102,8 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
                       "timestamp in HDF file")
     return;
   }
-  auto now =
-      make_zoned(current_time_zone, floor<milliseconds>(system_clock::now()));
+  auto now = make_zoned(current_time_zone,
+                        floor<std::chrono::milliseconds>(system_clock::now()));
   write_hdf_attribute_iso8601(node, name, now);
 }
 

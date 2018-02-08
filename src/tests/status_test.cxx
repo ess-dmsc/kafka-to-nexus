@@ -215,7 +215,7 @@ TEST(MessageInfo, compute_derived_quantities) {
   for (auto &m : MessagesSize) {
     MsgInfo.message(m * 1e6);
   }
-  milliseconds Duration(1000);
+  std::chrono::milliseconds Duration(1000);
 
   auto Size = FileWriter::Status::messageSize(MsgInfo);
   auto Frequency = FileWriter::Status::messageFrequency(MsgInfo, Duration);
@@ -238,7 +238,7 @@ TEST(MessageInfo, derived_quantities_null_divider) {
   for (auto &m : MessagesSize) {
     MsgInfo.message(m * 1e6);
   }
-  milliseconds Duration(0);
+  std::chrono::milliseconds Duration(0);
 
   auto Frequency = FileWriter::Status::messageFrequency(MsgInfo, Duration);
   auto throughput = FileWriter::Status::messageThroughput(MsgInfo, Duration);

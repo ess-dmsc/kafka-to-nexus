@@ -17,7 +17,8 @@ class Report {
 public:
   Report() {}
   Report(std::shared_ptr<KafkaW::ProducerTopic> producer,
-         const milliseconds &report_ms = milliseconds{1000})
+         const std::chrono::milliseconds &report_ms =
+             std::chrono::milliseconds{1000})
       : report_producer_{producer}, report_ms_{report_ms} {}
   Report(const Report &other) = delete;
   Report(Report &&other) = default;
@@ -69,6 +70,6 @@ private:
 
   Status::StreamMasterInfo info;
   std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
-  milliseconds report_ms_;
+  std::chrono::milliseconds report_ms_;
 };
 } // namespace FileWriter

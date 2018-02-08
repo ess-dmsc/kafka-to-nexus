@@ -1,8 +1,6 @@
 #pragma once
 
-
 #include "Alloc.h"
-#include "logger.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include "uri.h"
@@ -62,8 +60,8 @@ struct MainOpt {
   bool do_kafka_status = false;
   /// Kafka topic where status updates are to be published
   uri::URI kafka_status_uri{"kafka://localhost:9092/kafka-to-nexus.status"};
-  /// Milliseconds interval to publish status of `Master` (e.g. list of current
-  /// file writings)
+  /// std::chrono::milliseconds interval to publish status of `Master` (e.g.
+  /// list of current file writings)
   uint32_t status_master_interval = 2000;
 
   // For testing.
@@ -75,8 +73,8 @@ struct MainOpt {
   bool source_do_process_message = true;
   Alloc::sptr jm;
   bool logpid_sleep = false;
-  // Max interval (in milliseconds) to spend writing each topic before
-  // switch to the next
+  // Max interval (in std::chrono::milliseconds) to spend writing each topic
+  // before switch to the next
   std::chrono::milliseconds topic_write_duration;
 };
 

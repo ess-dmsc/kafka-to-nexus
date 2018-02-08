@@ -22,7 +22,7 @@ public:
   Streamer() {}
   Streamer(const std::string &, const std::string &, const Options &,
            const Options &) {}
-  const Error set_start_time(const milliseconds &) const {
+  const Error set_start_time(const std::chrono::milliseconds &) const {
     return Error::no_error;
   }
   int &n_sources() { return n_src; };

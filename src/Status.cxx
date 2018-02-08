@@ -35,7 +35,7 @@ FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Value) {
 
 const std::pair<double, double> FileWriter::Status::messageFrequency(
     const FileWriter::Status::MessageInfo &Value,
-    const milliseconds &TimeDifference) {
+    const std::chrono::milliseconds &TimeDifference) {
   if (TimeDifference.count() < 1e-10) {
     return std::pair<double, double>({0, 0});
   }
@@ -49,7 +49,7 @@ const std::pair<double, double> FileWriter::Status::messageFrequency(
 
 const std::pair<double, double> FileWriter::Status::messageThroughput(
     const FileWriter::Status::MessageInfo &Value,
-    const milliseconds &TimeDifference) {
+    const std::chrono::milliseconds &TimeDifference) {
   if (TimeDifference.count() < 1e-10) {
     return std::pair<double, double>({0, 0});
   }
@@ -147,15 +147,16 @@ void FileWriter::Status::StreamMasterInfo::add(
 }
 
 void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
-    const milliseconds &ToNextMessage) {
+    const std::chrono::milliseconds &ToNextMessage) {
   NextMessageRelativeEta = ToNextMessage;
 }
-const milliseconds
+const std::chrono::milliseconds
 FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() {
   return NextMessageRelativeEta;
 }
-const milliseconds FileWriter::Status::StreamMasterInfo::runTime() {
-  auto result = std::chrono::duration_cast<milliseconds>(
+const std::chrono::milliseconds
+FileWriter::Status::StreamMasterInfo::runTime() {
+  auto result = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now() - StartTime);
   return result;
 }

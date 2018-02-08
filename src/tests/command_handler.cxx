@@ -11,7 +11,8 @@ std::string find_filename(rapidjson::Document const &);
 std::string find_job_id(rapidjson::Document const &);
 std::string find_broker(rapidjson::Document const &);
 
-ESSTimeStamp find_time(rapidjson::Document const &, const std::string &);
+std::chrono::milliseconds find_time(rapidjson::Document const &,
+                                    const std::string &);
 } // namespace FileWriter
 
 std::string parse_json_command(const std::string &filename) {
@@ -43,17 +44,19 @@ protected:
   }
   void test_start_stop_time_from_json() {
     ASSERT_EQ(FileWriter::find_time(new_00, "start_time"),
-              ESSTimeStamp{123456789});
+              std::chrono::milliseconds{123456789});
     ASSERT_EQ(FileWriter::find_time(new_00, "stop_time"),
-              ESSTimeStamp{123456790});
+              std::chrono::milliseconds{123456790});
   }
   void test_missing_broker() {
     ASSERT_EQ(FileWriter::find_broker(new_01), "localhost:9092");
   }
   void test_missing_job_id() { ASSERT_EQ(FileWriter::find_job_id(new_01), ""); }
   void test_missing_start_stop_time() {
-    ASSERT_EQ(FileWriter::find_time(new_01, "start"), ESSTimeStamp{0});
-    ASSERT_EQ(FileWriter::find_time(new_01, "stop"), ESSTimeStamp{0});
+    ASSERT_EQ(FileWriter::find_time(new_01, "start"),
+              std::chrono::milliseconds{0});
+    ASSERT_EQ(FileWriter::find_time(new_01, "stop"),
+              std::chrono::milliseconds{0});
   }
 
 private:

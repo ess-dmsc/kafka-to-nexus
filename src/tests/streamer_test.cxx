@@ -29,8 +29,10 @@ protected:
   void set_streamer_options(const Options &opt) {
     s->set_streamer_options(opt);
   }
-  const milliseconds &ms_before_start_time() { return s->ms_before_start_time; }
-  const milliseconds &start_ts() { return s->start_ts; }
+  const std::chrono::milliseconds &ms_before_start_time() {
+    return s->ms_before_start_time;
+  }
+  const std::chrono::milliseconds &start_ts() { return s->start_ts; }
   const int &metadata_retry() { return s->metadata_retry; }
 
   std::unique_ptr<RdKafka::Conf> get_configuration(const Options &opt = {}) {
@@ -95,7 +97,7 @@ TEST_F(StreamerTest, set_one_streamer_option) {
 
   EXPECT_EQ(ms_before_start_time_, ms_before_start_time());
   EXPECT_EQ(metadata_retry_, metadata_retry());
-  EXPECT_EQ(milliseconds{1234}, start_ts());
+  EXPECT_EQ(std::chrono::milliseconds{1234}, start_ts());
 }
 
 TEST_F(StreamerTest, set_all_streamer_options) {
@@ -103,9 +105,9 @@ TEST_F(StreamerTest, set_all_streamer_options) {
                         {"metadata-retry", "10"},
                         {"ms-before-start", "100"}});
 
-  EXPECT_EQ(milliseconds{100}, ms_before_start_time());
+  EXPECT_EQ(std::chrono::milliseconds{100}, ms_before_start_time());
   EXPECT_EQ(10, metadata_retry());
-  EXPECT_EQ(milliseconds{1234}, start_ts());
+  EXPECT_EQ(std::chrono::milliseconds{1234}, start_ts());
 }
 
 TEST_F(StreamerTest, create_default_rdkafka_conf) {
@@ -233,7 +235,6 @@ TEST_F(StreamerTest, write) {
   auto result = s->write(mp);
 
   EXPECT_TRUE(result.is_OK());
-
 }
 
 int main(int argc, char **argv) {
