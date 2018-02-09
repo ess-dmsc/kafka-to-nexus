@@ -19,19 +19,28 @@ node('docker') {
     cleanWs()
 
     dir("${project}") {
-	stage('Checkout') {
-            scm_vars = checkout scm
-	}
+      stage('Checkout') {
+                scm_vars = checkout scm
+      }
     }
 
     try {
         container = centos.run(run_args)
 
-	// Copy sources to container and change owner and group.
-	sh "docker cp ${project} ${container_name}:/home/jenkins/${project}"
-	sh """docker exec --user root ${container_name} ${sclsh} -c \"
-                chown -R jenkins.jenkins /home/jenkins/${project}
-	\""""
+        // Copy sources to container and change owner and group.
+        sh "docker cp ${project} ${container_name}:/home/jenkins/${project}"
+        sh """docker exec --user root ${container_name} ${sclsh} -c \"
+                      chown -R jenkins.jenkins /home/jenkins/${project}
+        \""""
+
+        stage('Check Formatting') {
+            sh """docker exec ${container_name} sh -c \"
+                clang-format -version
+                cd ${project}
+                find . \\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\) \
+                    -exec clangformatdiff.sh {} +
+            \""""
+        }
 
         stage('Checkout Schemas') {
             def checkout_script = """
@@ -87,6 +96,8 @@ node('docker') {
 
             junit "${test_output}"
         }
+
+
 
         stage('Archive') {
             def archive_output = "file-writer.tar.gz"
