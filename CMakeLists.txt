@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.11)
 project("kafka-to-nexus")
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+include(${CMAKE_MODULE_PATH}/CoverageReports.cmake)
 
 if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
   include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
