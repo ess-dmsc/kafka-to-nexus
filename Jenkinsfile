@@ -57,7 +57,7 @@ node('docker') {
             def configure_script = """
                 cd build
                 . ./activate_run.sh
-                cmake ../${project} -DREQUIRE_GTEST=ON
+                cmake ../${project} -DREQUIRE_GTEST=ON -DCOV=1
             """
             sh "docker exec ${container_name} ${sclsh} -c \"${configure_script}\""
         }
