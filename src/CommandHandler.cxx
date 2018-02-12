@@ -10,14 +10,6 @@ using std::vector;
 
 namespace FileWriter {
 
-std::string find_job_id(rapidjson::Document const &d) {
-  auto m = d.FindMember("job_id");
-  if (m != d.MemberEnd() && m->value.IsString()) {
-    return m->value.GetString();
-  }
-  return std::string{""};
-}
-
 std::string find_broker(rapidjson::Document const &d) {
   auto m = d.FindMember("broker");
   if (m != d.MemberEnd() && m->value.IsString()) {
@@ -45,20 +37,7 @@ std::chrono::milliseconds find_time(rapidjson::Document const &d,
 static int g_N_HANDLED = 0;
 
 CommandHandler::CommandHandler(MainOpt &config, Master *master)
-    : config(config), master(master) {
-  // Will take care of this in upcoming PR.
-  if (false) {
-    using namespace rapidjson;
-    auto buf1 = gulp("/test/schema-command.json");
-    auto doc = make_unique<rapidjson::Document>();
-    ParseResult err = doc->Parse(buf1.data(), buf1.size());
-    if (err.Code() != ParseErrorCode::kParseErrorNone) {
-      LOG(Sev::Error, "ERROR can not parse schema_command");
-      throw std::runtime_error("ERROR can not parse schema_command");
-    }
-    schema_command.reset(new SchemaDocument(*doc));
-  }
-}
+    : config(config), master(master) {}
 
 // POD
 
@@ -74,34 +53,25 @@ struct StreamSettings {
 void CommandHandler::handle_new(std::string const &command) {
   using std::move;
   using std::string;
-  rapidjson::Document d;
-  d.Parse(command.c_str());
 
-  if (schema_command) {
-    rapidjson::SchemaValidator vali(*schema_command);
-    if (!d.Accept(vali)) {
-      rapidjson::StringBuffer sb1, sb2;
-      vali.GetInvalidSchemaPointer().StringifyUriFragment(sb1);
-      vali.GetInvalidDocumentPointer().StringifyUriFragment(sb2);
-      LOG(Sev::Warning,
-          "ERROR command message schema validation:  Invalid schema: {}  "
-          "keyword: {}",
-          sb1.GetString(), vali.GetInvalidSchemaKeyword());
-      return;
-    }
+  nlohmann::json dd;
+  try {
+    dd = nlohmann::json::parse(command);
+  } catch (...) {
+    LOG(Sev::Warning, "Can not parse command: {}", command);
+    return;
   }
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 
-  auto job_id = find_job_id(d);
-  if (!job_id.empty()) {
-    fwt->job_id_init(job_id);
-  } else {
+  string job_id = dd.at("job_id");
+  if (job_id.empty()) {
     LOG(Sev::Warning, "Command not accepted: missing job_id");
     return;
+  } else {
+    fwt->job_id_init(job_id);
   }
 
-  auto dd = nlohmann::json::parse(command);
   std::string fname;
   try {
     fname = dd.at("file_attributes").at("file_name");
@@ -110,6 +80,9 @@ void CommandHandler::handle_new(std::string const &command) {
   }
 
   fwt->set_hdf_filename(config.hdf_output_prefix, fname);
+
+  rapidjson::Document d;
+  d.Parse(command.c_str());
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
@@ -279,7 +252,7 @@ void CommandHandler::add_stream_source_to_writer_module(
 }
 
 void CommandHandler::handle_file_writer_task_clear_all(
-    rapidjson::Document const &d) {
+    nlohmann::json const &d) {
   using namespace rapidjson;
   if (master) {
     for (auto &x : master->stream_masters) {
@@ -289,63 +262,67 @@ void CommandHandler::handle_file_writer_task_clear_all(
   file_writer_tasks.clear();
 }
 
-void CommandHandler::handle_exit(rapidjson::Document const &d) {
-  if (master)
+void CommandHandler::handle_exit(nlohmann::json const &d) {
+  if (master) {
     master->stop();
+  }
 }
 
-void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
-  if (master) {
-    auto s = get_string(&d, "job_id");
-    auto job_id = std::string(s);
-    std::chrono::milliseconds stop_time(0);
-    auto m = d.FindMember("stop_time");
-    if (m != d.MemberEnd()) {
-      stop_time = std::chrono::milliseconds(m->value.GetUint64());
-    }
-    int counter{0};
-    for (auto &x : master->stream_masters) {
-      if (x->getJobId() == job_id) {
-        if (stop_time.count()) {
-          LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", job_id,
-              stop_time.count());
-          x->setStopTime(stop_time);
-        } else {
-          LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
-          x->stop();
-        }
-        ++counter;
+void CommandHandler::handle_stream_master_stop(nlohmann::json const &d) {
+  using std::string;
+  if (!master) {
+    return;
+  }
+  string job_id;
+  try {
+    job_id = d.at("job_id");
+  } catch (...) {
+    LOG(Sev::Warning, "File write stop message lacks job_id");
+    return;
+  }
+  std::chrono::milliseconds stop_time(0);
+  try {
+    stop_time = std::chrono::milliseconds(d.at("stop_time"));
+  } catch (...) {
+  }
+  int counter{0};
+  for (auto &x : master->stream_masters) {
+    if (x->getJobId() == job_id) {
+      if (stop_time.count()) {
+        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", job_id,
+            stop_time.count());
+        x->setStopTime(stop_time);
+      } else {
+        LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
+        x->stop();
       }
+      ++counter;
     }
-
-    if (counter == 0) {
-      LOG(Sev::Warning, "no file with id : {}", job_id);
-    } else if (counter > 1) {
-      LOG(Sev::Warning, "error: multiple files with id : {}", job_id);
-    }
+  }
+  if (counter == 0) {
+    LOG(Sev::Warning, "no file with id : {}", job_id);
+  } else if (counter > 1) {
+    LOG(Sev::Warning, "error: multiple files with id : {}", job_id);
   }
 }
 
 void CommandHandler::handle(std::string const &command) {
   using std::string;
   using nlohmann::json;
-  json d2;
+  json d;
   try {
-    d2 = json::parse(command);
+    d = json::parse(command);
   } catch (...) {
     LOG(Sev::Error, "Can not parse json command");
     return;
   }
-  rapidjson::Document d;
-  d.Parse(command.c_str());
-
   uint64_t teamid = 0;
   uint64_t cmd_teamid = 0;
   if (master) {
     teamid = master->config.teamid;
   }
   try {
-    cmd_teamid = d2.at("teamid").get<int64_t>();
+    cmd_teamid = d.at("teamid").get<int64_t>();
   } catch (...) {
     // do nothing
   }
@@ -356,7 +333,7 @@ void CommandHandler::handle(std::string const &command) {
   }
 
   try {
-    std::string cmd = d2.at("cmd");
+    std::string cmd = d.at("cmd");
     if (cmd == "FileWriter_new") {
       handle_new(command);
       return;
@@ -369,21 +346,18 @@ void CommandHandler::handle(std::string const &command) {
       handle_stream_master_stop(d);
       return;
     }
-  } catch (...) {
-    // ignore
-  }
-
-  if (auto s = get_string(&d, "recv_type")) {
-    auto recv_type = string(s);
-    if (recv_type == "FileWriter") {
-      if (auto s = get_string(&d, "cmd")) {
-        auto cmd = string(s);
-        if (cmd == "file_writer_tasks_clear_all") {
+    if (cmd == "file_writer_tasks_clear_all") {
+      try {
+        string recv_type = d.at("recv_type");
+        if (recv_type == "FileWriter") {
           handle_file_writer_task_clear_all(d);
           return;
         }
+      } catch (...) {
       }
     }
+  } catch (...) {
+    // ignore
   }
   LOG(Sev::Warning, "Could not understand this command: {}", command);
 }

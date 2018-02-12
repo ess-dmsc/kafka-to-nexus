@@ -3,6 +3,7 @@
 #include "MainOpt.h"
 #include "Master.h"
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <rapidjson/document.h>
 #include <rapidjson/error/en.h>
 #include <rapidjson/prettywriter.h>
@@ -20,9 +21,9 @@ class CommandHandler : public FileWriterCommandHandler {
 public:
   CommandHandler(MainOpt &config, Master *master);
   void handle_new(std::string const &command);
-  void handle_exit(rapidjson::Document const &d);
-  void handle_file_writer_task_clear_all(rapidjson::Document const &d);
-  void handle_stream_master_stop(rapidjson::Document const &d);
+  void handle_exit(nlohmann::json const &d);
+  void handle_file_writer_task_clear_all(nlohmann::json const &d);
+  void handle_stream_master_stop(nlohmann::json const &d);
   void handle(Msg const &msg);
   void handle(std::string const &command);
 
