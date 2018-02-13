@@ -1,8 +1,6 @@
 #pragma once
 #include <string>
 
-#include "utils.h"
-
 namespace FileWriter {
 namespace Status {
 
@@ -13,6 +11,7 @@ enum class StreamMasterErrorCode {
   running = 1,
   has_finished = 2,
   empty_streamer = 3,
+  is_removable = 4,
   streamer_error = -1,
   report_failure = -10,
   streammaster_error = -1000
@@ -32,7 +31,15 @@ enum class StreamerErrorCode {
   not_initialized = -1000,
 };
 
-const std::string Err2Str(const FileWriter::Status::StreamMasterErrorCode &);
-const std::string Err2Str(const FileWriter::Status::StreamerErrorCode &);
+/// Convert the StreamMasterErrorCode in a string. If the code is not known
+/// return "Unknown error code" \param Error the StreamMasterErrorCode to be
+/// converted
+const std::string
+Err2Str(const FileWriter::Status::StreamMasterErrorCode &Error);
+
+/// Convert the StreamerErrorCode in a string. If the code is not known return
+/// "Unknown error code" \param Error the StreamerErrorCode to be converted
+const std::string Err2Str(const FileWriter::Status::StreamerErrorCode &Error);
+
 } // namespace Status
 } // namespace FileWriter

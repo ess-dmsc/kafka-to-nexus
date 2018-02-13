@@ -2,7 +2,6 @@
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "helper.h"
-#include "utils.h"
 #include <future>
 
 using std::array;
@@ -43,12 +42,13 @@ std::string find_broker(rapidjson::Document const &d) {
   return std::string{"localhost:9092"};
 }
 
-ESSTimeStamp find_time(rapidjson::Document const &d, const std::string &key) {
+std::chrono::milliseconds find_time(rapidjson::Document const &d,
+                                    const std::string &key) {
   auto m = d.FindMember(key.c_str());
   if (m != d.MemberEnd() && m->value.IsUint64()) {
-    return ESSTimeStamp(m->value.GetUint64());
+    return std::chrono::milliseconds(m->value.GetUint64());
   }
-  return ESSTimeStamp{0};
+  return std::chrono::milliseconds{0};
 }
 
 // In the future, want to handle many, but not right now.
@@ -206,28 +206,32 @@ void CommandHandler::handle_new(rapidjson::Document const &d) {
 
   if (master) {
     auto br = find_broker(d);
-    auto config_kafka = config.kafka;
-    std::vector<std::pair<string, string>> config_kafka_vec;
-    for (auto &x : config_kafka) {
-      config_kafka_vec.emplace_back(x.first, x.second);
-    }
-
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(
-        new StreamMaster<Streamer>(br, std::move(fwt), config_kafka_vec));
-    if (master->status_producer) {
-      s->report(master->status_producer, config.status_master_interval);
-    }
+    // Must be called before StreamMaster instantiation
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
       LOG(Sev::Info, "start time :\t{}", start_time.count());
-      s->start_time(start_time);
+      config.StreamerConfiguration.StartTimestamp =
+          std::chrono::milliseconds(start_time);
     }
+
+    LOG(Sev::Info, "Write file with id :\t{}", job_id);
+    auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
+        br, std::move(fwt), config.StreamerConfiguration));
+    if (master->status_producer) {
+      s->report(master->status_producer,
+                std::chrono::milliseconds{config.status_master_interval});
+    }
+    if (config.topic_write_duration.count()) {
+      s->TopicWriteDuration = config.topic_write_duration;
+    }
+    s->start();
+
     auto stop_time = find_time(d, "stop_time");
     if (stop_time.count()) {
       LOG(Sev::Info, "stop time :\t{}", stop_time.count());
-      s->stop_time(stop_time);
+      s->setStopTime(std::chrono::milliseconds(stop_time));
     }
-    s->start();
+
     master->stream_masters.push_back(std::move(s));
   } else {
     file_writer_tasks.emplace_back(std::move(fwt));
@@ -296,22 +300,22 @@ void CommandHandler::handle_stream_master_stop(rapidjson::Document const &d) {
   if (master) {
     auto s = get_string(&d, "job_id");
     auto job_id = std::string(s);
-    ESSTimeStamp stop_time{0};
-    {
-      auto m = d.FindMember("stop_time");
-      if (m != d.MemberEnd()) {
-        stop_time = ESSTimeStamp(m->value.GetUint64());
-      }
+    std::chrono::milliseconds stop_time(0);
+    auto m = d.FindMember("stop_time");
+    if (m != d.MemberEnd()) {
+      stop_time = std::chrono::milliseconds(m->value.GetUint64());
     }
     int counter{0};
     for (auto &x : master->stream_masters) {
-      if (x->job_id() == job_id) {
+      if (x->getJobId() == job_id) {
         if (stop_time.count()) {
-          x->stop_time(stop_time);
+          LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", job_id,
+              stop_time.count());
+          x->setStopTime(stop_time);
         } else {
+          LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
           x->stop();
         }
-        LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
         ++counter;
       }
     }

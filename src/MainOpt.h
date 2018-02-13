@@ -1,9 +1,12 @@
 #pragma once
 
 #include "Alloc.h"
+#include "StreamerOptions.h"
 #include "logger.h"
 #include "uri.h"
+
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <map>
 #include <memory>
@@ -16,7 +19,8 @@ struct rd_kafka_topic_partition_list_s;
 
 namespace FileWriter {
 class Master;
-}
+class StreamerOptions;
+} // namespace FileWriter
 
 // POD
 struct MainOpt {
@@ -27,6 +31,9 @@ struct MainOpt {
   /// Kafka options, they get parsed from the configuration file and passed on
   /// to the StreamMaster.
   std::map<std::string, std::string> kafka;
+  /// Streamer options, they get parsed from the configuration file and passed
+  /// on to the StreamMaster.
+  FileWriter::StreamerOptions StreamerConfiguration;
   /// Can optionally log in Graylog GELF format to a Kafka topic.
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.
@@ -53,8 +60,8 @@ struct MainOpt {
   bool do_kafka_status = false;
   /// Kafka topic where status updates are to be published
   uri::URI kafka_status_uri{"kafka://localhost:9092/kafka-to-nexus.status"};
-  /// Milliseconds interval to publish status of `Master` (e.g. list of current
-  /// file writings)
+  /// std::chrono::milliseconds interval to publish status of `Master` (e.g.
+  /// list of current file writings)
   uint32_t status_master_interval = 2000;
 
   // For testing.
@@ -66,6 +73,9 @@ struct MainOpt {
   bool source_do_process_message = true;
   Alloc::sptr jm;
   bool logpid_sleep = false;
+  // Max interval (in std::chrono::milliseconds) to spend writing each topic
+  // before switch to the next
+  std::chrono::milliseconds topic_write_duration;
 };
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);

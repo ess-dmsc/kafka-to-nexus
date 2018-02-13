@@ -3,7 +3,10 @@
 #include "Msg.h"
 #include "helper.h"
 #include "logger.h"
+
+#include <algorithm>
 #include <chrono>
+
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
 #include <sys/types.h>
@@ -11,8 +14,8 @@
 
 namespace FileWriter {
 
-using std::vector;
 using std::string;
+using std::vector;
 
 std::string &CmdMsg_K::str() { return _str; }
 
@@ -70,6 +73,15 @@ void Master::run() {
       t_last_statistics = Clock::now();
       statistics();
     }
+
+    // Remove any job which is in 'is_removable' state
+    stream_masters.erase(
+        std::remove_if(stream_masters.begin(), stream_masters.end(),
+                       [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
+                         return Iter->status() ==
+                                Status::StreamMasterErrorCode::is_removable;
+                       }),
+        stream_masters.end());
   }
   LOG(Sev::Info, "calling stop on all stream_masters");
   for (auto &x : stream_masters) {
@@ -88,8 +100,8 @@ void Master::statistics() {
   js_files.SetObject();
   for (auto &stream_master : stream_masters) {
     auto fwt_id_str =
-        fmt::format("{}", stream_master->file_writer_task().job_id());
-    auto fwt = stream_master->file_writer_task().stats(a);
+        fmt::format("{}", stream_master->getFileWriterTask().job_id());
+    auto fwt = stream_master->getFileWriterTask().stats(a);
     js_files.AddMember(Value(fwt_id_str.c_str(), a), fwt, a);
   }
   js_status.AddMember("files", js_files, a);

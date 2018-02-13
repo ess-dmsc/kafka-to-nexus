@@ -1,15 +1,17 @@
-#include <algorithm>
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <random>
-#include <stdexcept>
 
-#include <StatusWriter.hpp>
-#include <StreamMaster.hpp>
+#include <StatusWriter.h>
+#include <StreamMaster.h>
+#include <StreamerOptions.h>
+
 #include <librdkafka/rdkafkacpp.h>
-
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/stringbuffer.h>
+
+#include <algorithm>
+#include <cstdint>
+#include <random>
+#include <stdexcept>
 
 namespace stub {
 class Streamer {
@@ -20,7 +22,7 @@ public:
   Streamer() {}
   Streamer(const std::string &, const std::string &, const Options &,
            const Options &) {}
-  const Error set_start_time(const milliseconds &) const {
+  const Error set_start_time(const std::chrono::milliseconds &) const {
     return Error::no_error;
   }
   int &n_sources() { return n_src; };

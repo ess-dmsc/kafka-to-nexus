@@ -2,251 +2,257 @@
 #include <atomic>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <stdexcept>
 #include <thread>
 
-#include <Streamer.hpp>
+#include "../Streamer.h"
 #include <librdkafka/rdkafkacpp.h>
 
-const int max_recv_messages = 10;
+#include "../uri.h"
+#include "consumer.hpp"
+#include "producer.hpp"
 
 using namespace FileWriter;
 
-class MinimalProducer : public ::testing::Test {
+class StreamerTest : public ::testing::Test {
 
 protected:
-  virtual void SetUp() {
-    RdKafka::Conf *conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-    RdKafka::Conf *tconf = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
-    std::string errstr;
-    conf->set("metadata.broker.list", broker, errstr);
-    //    conf->set("dr_cb", &MinimalProducer::dr_cb, errstr);
+  using Option = Streamer::option_t;
+  using Options = Streamer::Options;
 
-    _producer = RdKafka::Producer::create(conf, errstr);
-    if (!_producer) {
-      std::cerr << "Failed to create producer: " << errstr << std::endl;
-      exit(1);
-    }
-    _topic = RdKafka::Topic::create(_producer, topic, tconf, errstr);
-    if (!_topic) {
-      std::cerr << "Failed to create topic: " << errstr << std::endl;
-      exit(1);
-    }
-    _pause = true;
-    _stop = true;
+  virtual void SetUp();
+  std::unique_ptr<Streamer> s{nullptr};
+
+  Streamer::SEC reset() { return s->close_stream(); }
+
+  void set_streamer_options(const Options &opt) {
+    s->set_streamer_options(opt);
+  }
+  const std::chrono::milliseconds &ms_before_start_time() {
+    return s->ms_before_start_time;
+  }
+  const std::chrono::milliseconds &start_ts() { return s->start_ts; }
+  const int &metadata_retry() { return s->metadata_retry; }
+
+  std::unique_ptr<RdKafka::Conf> get_configuration(const Options &opt = {}) {
+    return s->create_configuration(opt);
   }
 
-  virtual void TearDown() {
-    if (t.joinable())
-      stop();
-    _producer->poll(1000);
-    delete _topic;
-    delete _producer;
+  Streamer::SEC create_consumer(std::unique_ptr<RdKafka::Conf> &&config) {
+    return s->create_consumer(std::move(config));
   }
-
-  void dr_cb(RdKafka::Message &message) { _message_count++; }
-
-  void produce(std::string prefix = "message-") {
-    std::string line;
-    int counter = 0;
-    while (!_stop) {
-
-      if (!_pause) {
-        line = prefix + std::to_string(counter);
-        RdKafka::ErrorCode resp = _producer->produce(
-            _topic, _partition,
-            RdKafka::Producer::RK_MSG_COPY /* Copy payload */,
-            const_cast<char *>(line.c_str()), line.size(), NULL, NULL);
-        if (resp != RdKafka::ERR_NO_ERROR)
-          std::cerr << "% Produce failed: " << RdKafka::err2str(resp)
-                    << std::endl;
-        // else
-        //   std::cerr << "% Produced message (" << line.size() << " bytes)" <<
-        //   std::endl;
-        _producer->poll(0);
-        ++counter;
-      }
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-    return;
+  std::unique_ptr<RdKafka::Metadata> create_metadata() {
+    return s->create_metadata();
   }
-
-  void start() {
-    _stop = false;
-    _pause = false;
-    t = std::thread([this] { this->produce(); });
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+  Streamer::SEC
+  create_topic_partition(const std::string &topic,
+                         std::unique_ptr<RdKafka::Metadata> &&metadata) {
+    return s->create_topic_partition(topic, std::move(metadata));
   }
-
-  void pause() { _pause = true; }
-
-  void stop() {
-    _stop = true;
-    t.join();
+  const std::vector<RdKafka::TopicPartition *> &get_topic_partition() {
+    return s->_tp;
   }
-
-  const int count() { return _message_count; }
-
-  int32_t _partition = RdKafka::Topic::PARTITION_UA;
-  int32_t _message_count = 0;
-  RdKafka::Producer *_producer;
-  RdKafka::Topic *_topic;
-  std::thread t;
-  std::atomic<bool> _pause;
-  std::atomic<bool> _stop;
-
-public:
-  static std::string broker;
-  static std::string topic;
+  Streamer::SEC assign_topic_partition() { return s->assign_topic_partition(); }
 };
 
-std::string MinimalProducer::broker = "localhost";
-std::string MinimalProducer::topic = "streamer-test-topic";
-
-std::function<ProcessMessageResult(void *, int)> silent = [](void *x, int) {
-  return ProcessMessageResult::OK();
-};
-
-std::function<ProcessMessageResult(void *, int)> verbose = [](void *x,
-                                                              int size) {
-  std::cout << "message: " << x << "\t" << size << std::endl;
-  return ProcessMessageResult::OK();
-};
-std::function<ProcessMessageResult(void *, int, int *)> sum =
-    [](void *x, int size, int *data_size) {
-      (*data_size) += size;
-      return ProcessMessageResult::OK();
-    };
-
-std::pair<std::string, int64_t> dummy_message_parser(std::string &&msg) {
-  auto position = msg.find("-", 0);
-  int64_t timestamp;
-  if (position != std::string::npos) {
-    std::stringstream(msg.substr(position + 1)) >> timestamp;
-    return std::pair<std::string, int64_t>(msg.substr(0, position), timestamp);
+void StreamerTest::SetUp() {
+  s.reset(new Streamer{Producer::broker, Producer::topic});
+  if (!s->consumer) {
+    FAIL();
+  } else {
+    SUCCEED();
   }
-  // what to return??  make it an error.
-  return std::pair<std::string, int64_t>("", -1);
-}
-std::function<TimeDifferenceFromMessage_DT(void *, int)> time_difference = [](
-    void *x, int size) {
-  auto parsed_text = dummy_message_parser(std::string((char *)x));
-  return TimeDifferenceFromMessage_DT(parsed_text.first, parsed_text.second);
-};
-
-TEST(Streamer, MissingTopicFailure) {
-  ASSERT_THROW(Streamer(std::string("data_server:1234"), std::string("")),
-               std::runtime_error);
 }
 
-TEST(Streamer, ConstructionSuccess) {
-  ASSERT_NO_THROW(Streamer(MinimalProducer::broker, MinimalProducer::topic));
+TEST(Streamer, test_producer) {
+  Producer p;
+  p.SetUp();
+  p.produce();
 }
 
-TEST(Streamer, NoReceive) {
-  Streamer s(MinimalProducer::broker, "dummy_topic");
-  using namespace std::placeholders;
-  int data_size = 0, counter = 0;
-  std::function<ProcessMessageResult(void *, int)> f1 =
-      std::bind(sum, _1, _2, &data_size);
-  ProcessMessageResult status = ProcessMessageResult::OK();
+TEST_F(StreamerTest, streamer_initialisation) {}
 
-  do {
-    EXPECT_TRUE(status.is_OK());
-    status = s.write(f1);
-    ++counter;
-  } while (status.is_OK() && (counter < max_recv_messages));
+TEST_F(StreamerTest, empty_option_list) {
+  // verify initial values
+  auto ms_before_start_time_ = ms_before_start_time();
+  auto metadata_retry_ = metadata_retry();
+  auto start_ts_ = start_ts();
+  ASSERT_EQ(ms_before_start_time_, ms_before_start_time());
+  ASSERT_EQ(metadata_retry_, metadata_retry());
+  ASSERT_EQ(start_ts_, start_ts());
 
-  EXPECT_EQ(data_size, 0);
+  set_streamer_options({{"", ""}});
+  EXPECT_EQ(ms_before_start_time_, ms_before_start_time());
+  EXPECT_EQ(metadata_retry_, metadata_retry());
+  EXPECT_EQ(start_ts_, start_ts());
 }
 
-TEST_F(MinimalProducer, Receive) {
-  using namespace std::placeholders;
+TEST_F(StreamerTest, set_one_streamer_option) {
+  auto ms_before_start_time_ = ms_before_start_time();
+  auto metadata_retry_ = metadata_retry();
+  auto start_ts_ = start_ts();
 
-  Streamer s(MinimalProducer::broker, MinimalProducer::topic);
-  int data_size = 0, counter = 0;
-  std::function<ProcessMessageResult(void *, int)> f1 =
-      std::bind(sum, _1, _2, &data_size);
+  set_streamer_options({{"start-time-ms", "1234"}});
 
-  start();
-
-  ProcessMessageResult status = ProcessMessageResult::OK();
-  status = s.write(silent);
-  ASSERT_TRUE(status.is_OK());
-
-  do {
-    EXPECT_TRUE(status.is_OK());
-    status = s.write(f1);
-    ++counter;
-  } while (status.is_OK() && (counter < max_recv_messages));
-  EXPECT_GT(data_size, 0);
-
-  stop();
+  EXPECT_EQ(ms_before_start_time_, ms_before_start_time());
+  EXPECT_EQ(metadata_retry_, metadata_retry());
+  EXPECT_EQ(std::chrono::milliseconds{1234}, start_ts());
 }
 
-// TEST_F(MinimalProducer, Reconnect) {
-//   using namespace std::placeholders;
+TEST_F(StreamerTest, set_all_streamer_options) {
+  set_streamer_options({{"start-time-ms", "1234"},
+                        {"metadata-retry", "10"},
+                        {"ms-before-start", "100"}});
 
-//   int data_size = 0, counter = 0;
-//   std::function<ProcessMessageResult(void *, int)> f1 =
-//       std::bind(sum, _1, _2, &data_size);
+  EXPECT_EQ(std::chrono::milliseconds{100}, ms_before_start_time());
+  EXPECT_EQ(10, metadata_retry());
+  EXPECT_EQ(std::chrono::milliseconds{1234}, start_ts());
+}
 
-//   start();
+TEST_F(StreamerTest, create_default_rdkafka_conf) {
+  auto configuration = get_configuration();
+  if (!configuration) {
+    FAIL();
+  } else {
+    SUCCEED();
+  }
+}
 
-//   Streamer s(MinimalProducer::broker, "dummy_topic");
-//   ProcessMessageResult status = ProcessMessageResult::OK();
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(f1);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
-//   EXPECT_FALSE(data_size > 0);
-//   EXPECT_EQ(s.disconnect().value(), 0);
+TEST_F(StreamerTest, set_and_verify_rdkafka_conf_options) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"}});
+  if (!configuration) {
+    FAIL();
+  } else {
+    SUCCEED();
+  }
+  std::string value;
+  configuration->get("metadata.broker.list", value);
+  EXPECT_EQ(Producer::broker, value);
+  configuration->get("message.max.bytes", value);
+  EXPECT_EQ("10000000", value);
+}
 
-//   data_size = 0;
-//   counter = 0;
-//   EXPECT_EQ(s.connect(MinimalProducer::broker, MinimalProducer::topic), 0);
-//   status = ProcessMessageResult::OK();
-//   do {
-//     EXPECT_TRUE(status.is_OK());
-//     status = s.write(f1);
-//     ++counter;
-//   } while (status.is_OK() && (counter < max_recv_messages));
-//   EXPECT_TRUE(data_size > 0);
-//   stop();
-// }
+TEST_F(StreamerTest, create_rdkafka_kafkaconsumer) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"},
+                         {"group.id", "streamer-test"}});
+  auto err = create_consumer(std::move(configuration));
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+}
 
-TEST_F(MinimalProducer, JumpBack) {
-  Streamer s(broker, topic);
-  ProcessMessageResult status = ProcessMessageResult::OK();
-  int counter = 0;
-  start();
-  do {
-    EXPECT_TRUE(status.is_OK());
-    status = s.write(silent);
-    ++counter;
-  } while (status.is_OK() && (counter < max_recv_messages));
+TEST_F(StreamerTest, create_rdkafka_metadata) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"},
+                         {"group.id", "streamer-test"}});
+  create_consumer(std::move(configuration));
+  auto metadata = create_metadata();
+  if (!metadata) {
+    FAIL();
+  } else {
+    SUCCEED();
+  }
+}
 
-  std::cout << "\n\nhello\n" << std::endl;
-  DemuxTopic demux(MinimalProducer::topic);
-  stop();
+TEST_F(StreamerTest, rdkafka_topic_partition_fails_when_metadata_is_null) {
+  auto err = create_topic_partition("missing-test-topic", std::move(nullptr));
+  EXPECT_EQ(Streamer::SEC::metadata_error, err);
+}
+
+TEST_F(StreamerTest,
+       rdkafka_topic_partition_fails_when_partition_doesn_t_exist) {
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"message.max.bytes", "10000000"},
+                         {"group.id", "streamer-test"}});
+  create_consumer(std::move(configuration));
+  auto metadata = create_metadata();
+
+  auto err = create_topic_partition("missing-test-topic", std::move(metadata));
+  EXPECT_EQ(Streamer::SEC::topic_partition_error, err);
+}
+
+TEST_F(StreamerTest, create_rdkafka_topic_partition) {
+  // delete producer and topic_partition array
+  reset();
+
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"group.id", "streamer-test"}});
+  create_consumer(std::move(configuration));
+  auto metadata = create_metadata();
+
+  auto err = create_topic_partition(Producer::topic, std::move(metadata));
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+
+  auto tp = get_topic_partition();
+  EXPECT_GT(tp.size(), 0);
+
+  std::vector<int> partition_list;
+  for (auto &i : tp) {
+    EXPECT_EQ(Producer::topic, i->topic());
+    auto pos =
+        find(partition_list.begin(), partition_list.end(), i->partition());
+    EXPECT_EQ(pos, partition_list.end());
+    partition_list.push_back(i->partition());
+  }
+}
+
+TEST_F(StreamerTest,
+       assign_rdkafka_topic_partition_fails_if_no_consumer_or_empty_tp) {
+  reset();
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"group.id", "streamer-test"}});
+
+  auto err = assign_topic_partition();
+  EXPECT_EQ(Streamer::SEC::topic_partition_error, err);
+
+  create_consumer(std::move(configuration));
+  EXPECT_EQ(Streamer::SEC::topic_partition_error, err);
+}
+
+TEST_F(StreamerTest, assign_rdkafka_topic_partition_succeed) {
+
+  auto configuration =
+      get_configuration({{"metadata.broker.list", Producer::broker},
+                         {"group.id", "streamer-test"}});
+
+  auto err = assign_topic_partition();
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+
+  create_consumer(std::move(configuration));
+  EXPECT_EQ(Streamer::SEC::no_error, err);
+}
+
+TEST_F(StreamerTest, write) {
+
+  DemuxTopic mp(Producer::topic);
+  auto result = s->write(mp);
+
+  EXPECT_TRUE(result.is_OK());
 }
 
 int main(int argc, char **argv) {
 
   ::testing::InitGoogleTest(&argc, argv);
+
   for (int i = 1; i < argc; ++i) {
-    std::string opt(argv[i]);
-    size_t found = opt.find("=");
-    if (opt.substr(0, found) == "--kafka_broker")
-      MinimalProducer::broker = opt.substr(found + 1);
-    if (opt.substr(0, found) == "--kafka_topic")
-      MinimalProducer::topic = opt.substr(found + 1);
-    if (opt.substr(0, found) == "--help") {
+    if (std::string{argv[i]} == "--broker" || std::string{argv[i]} == "-b") {
+      uri::URI u(argv[i + 1]);
+      Producer::broker = u.host_port;
+      Producer::topic = u.topic;
+      Consumer::broker = u.host_port;
+      Consumer::topic = u.topic;
+    }
+    if (std::string{argv[i]} == "--help" || std::string{argv[i]} == "-h") {
       std::cout << "\nOptions: "
                 << "\n"
-                << "\t--kafka_broker=<host>:<port>[default = 9092]\n"
-                << "\t--kafka_topic=<topic>\n";
+                << "\t--broker //<host>:<port>/<topic>\n";
     }
   }
 

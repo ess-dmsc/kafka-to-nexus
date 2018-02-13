@@ -10,13 +10,11 @@
 
 #include "helper.h"
 #include "uri.h"
-#include "utils.h"
 
 #include <fstream>
 #include <iostream>
 
 using uri::URI;
-using ESSTimeStamp = FileWriter::ESSTimeStamp;
 
 // POD
 struct MainOpt {
@@ -68,9 +66,9 @@ std::string make_command_exit(const std::string &broker,
   return buf1.GetString();
 }
 
-std::string make_command_stop(const std::string &broker,
-                              const std::string &job_id,
-                              const ESSTimeStamp &stop_time = ESSTimeStamp{0}) {
+std::string make_command_stop(
+    const std::string &broker, const std::string &job_id,
+    const std::chrono::milliseconds &stop_time = std::chrono::milliseconds{0}) {
   using namespace rapidjson;
   Document d;
   auto &a = d.GetAllocator();
@@ -198,13 +196,13 @@ int main(int argc, char **argv) {
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
-    ESSTimeStamp stop_time{0};
+    std::chrono::milliseconds stop_time{0};
     std::string::size_type n{input.find(':')};
     std::string m1;
     if (n != std::string::npos) {
       auto result = strtoul(&input[n + 1], NULL, 0);
       if (result) {
-        stop_time = ESSTimeStamp(result);
+        stop_time = std::chrono::milliseconds{result};
       }
       m1 = make_command_stop(opt.broker_opt.address, input.substr(0, n),
                              stop_time);

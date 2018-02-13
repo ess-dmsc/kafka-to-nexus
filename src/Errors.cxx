@@ -1,19 +1,20 @@
 #include <map>
 
-#include "Errors.hpp"
+#include "Errors.h"
 
 using SMEC = FileWriter::Status::StreamMasterErrorCode;
 using SEC = FileWriter::Status::StreamerErrorCode;
 
-static const std::map<const SMEC, std::string> stream_master_error_lookup_{
+static const std::map<const SMEC, std::string> StreamMasterErrorLookup{
     {SMEC::no_error, "no_error"},
     {SMEC::not_started, "not_started"},
     {SMEC::running, "running"},
     {SMEC::has_finished, "has_finished"},
+    {SMEC::is_removable, "is_removable"},
     {SMEC::report_failure, "report_failure"},
     {SMEC::streammaster_error, "streammaster_error"}};
 
-static const std::map<const SEC, std::string> streamer_error_lookup_{
+static const std::map<const SEC, std::string> StreamerErrorLookup{
     {SEC::writing, "writing"},
     {SEC::has_finished, "has_finished"},
     {SEC::configuration_error, " configuration_error"},
@@ -27,15 +28,15 @@ static const std::map<const SEC, std::string> streamer_error_lookup_{
     {SEC::not_initialized, "not_initialized"}};
 
 const std::string FileWriter::Status::Err2Str(const SMEC &error) {
-  auto it = stream_master_error_lookup_.find(error);
-  if (it != stream_master_error_lookup_.end()) {
+  auto it = StreamMasterErrorLookup.find(error);
+  if (it != StreamMasterErrorLookup.end()) {
     return it->second;
   }
   return "Unknown error code";
 }
 const std::string FileWriter::Status::Err2Str(const SEC &error) {
-  auto it = streamer_error_lookup_.find(error);
-  if (it != streamer_error_lookup_.end()) {
+  auto it = StreamerErrorLookup.find(error);
+  if (it != StreamerErrorLookup.end()) {
     return it->second;
   }
   return "Unknown error code";

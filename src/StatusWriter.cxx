@@ -1,7 +1,7 @@
 #include <cstdio>
 
-#include "Status.hpp"
-#include "StatusWriter.hpp"
+#include "Status.h"
+#include "StatusWriter.h"
 
 #include "rapidjson/filewritestream.h"
 #include "rapidjson/prettywriter.h"
@@ -10,103 +10,133 @@
 namespace FileWriter {
 namespace Status {
 
-rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
-  using namespace rapidjson;
-  Document d;
-  auto &a = d.GetAllocator();
-  d.SetObject();
+/// Serialize the information contained in a StreamMasterInfo object
+/// into a JSON message stored as a rapidjson::Document.
+/// \param Information the StreamMasterInfo object to be serialized
+rapidjson::Document
+JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
+  rapidjson::Document Document;
+  auto &Allocator = Document.GetAllocator();
+  Document.SetObject();
 
-  auto next_message_relative_eta_ms = info.time_to_next_message();
-  auto next_message_relative_eta_s =
-      std::chrono::duration_cast<std::chrono::seconds>(
-          next_message_relative_eta_ms)
-          .count();
+  std::chrono::milliseconds next_message_relative_eta_ms =
+      Information.getTimeToNextMessage();
   { // message type
-    d.AddMember("type", "stream_master_status", a);
-    d.AddMember("next_message_eta_ms", next_message_relative_eta_ms.count(), a);
+    Document.AddMember("type", "stream_master_status", Allocator);
+    Document.AddMember("next_message_eta_ms",
+                       next_message_relative_eta_ms.count(), Allocator);
   }
   { // stream master info
-    Value sm;
-    sm.SetObject();
-    sm.AddMember("state", StringRef(Err2Str(info.status())), a);
-    sm.AddMember("messages", info.total().messages().first, a);
-    sm.AddMember("Mbytes", info.total().Mbytes().first, a);
-    sm.AddMember("errors", info.total().errors(), a);
-    sm.AddMember("runtime", info.runtime().count(), a);
-    d.AddMember("stream_master", sm, a);
+    rapidjson::Value StreamMasterInformation;
+    StreamMasterInformation.SetObject();
+    StreamMasterInformation.AddMember(
+        "state", rapidjson::StringRef(Err2Str(Information.status()).c_str()),
+        Allocator);
+    StreamMasterInformation.AddMember(
+        "messages", Information.getTotal().getMessages().first, Allocator);
+    StreamMasterInformation.AddMember(
+        "Mbytes", Information.getTotal().getMbytes().first, Allocator);
+    StreamMasterInformation.AddMember(
+        "errors", Information.getTotal().getErrors(), Allocator);
+    StreamMasterInformation.AddMember("runtime", Information.runTime().count(),
+                                      Allocator);
+    Document.AddMember("stream_master", StreamMasterInformation, Allocator);
   }
   { // streamers info
-    Value ss;
-    ss.SetObject();
-    for (auto &topic : info.info()) {
-      Value key{topic.first.c_str(), a};
-      Value val;
-      val.SetObject();
-      val.AddMember("status", primary_quantities(topic.second, a), a);
-      val.AddMember(
-          "statistics",
-          derived_quantities(topic.second, next_message_relative_eta_s, a), a);
-      ss.AddMember(key, val, a);
+    rapidjson::Value StreamerInformation;
+    StreamerInformation.SetObject();
+    for (auto &TopicName : Information.info()) {
+      rapidjson::Value Key(TopicName.first.c_str(), Allocator);
+      rapidjson::Value Value;
+      Value.SetObject();
+      Value.AddMember("status", primaryQuantities(TopicName.second, Allocator),
+                      Allocator);
+      Value.AddMember("statistics",
+                      derivedQuantities(TopicName.second,
+                                        next_message_relative_eta_ms,
+                                        Allocator),
+                      Allocator);
+      StreamerInformation.AddMember(Key, Value, Allocator);
     }
-    d.AddMember("streamer", ss, a);
+    Document.AddMember("streamer", StreamerInformation, Allocator);
   }
-  return d;
+  return Document;
 }
 
-template <class Allocator>
-rapidjson::Value JSONWriterBase::primary_quantities(MessageInfo &info,
-                                                    Allocator &a) const {
-  using namespace rapidjson;
-  Value value;
-  value.SetObject();
-  value.AddMember("messages", info.messages().first, a);
-  value.AddMember("Mbytes", info.Mbytes().first, a);
-  value.AddMember("errors", info.errors(), a);
-  return value;
+/// Format the number received of messages, the received megabytes and the
+/// number of errors in a rapidjson::Value object
+/// \param Information a MessageInfo object containing information about the
+/// messages consumed by the Streamer
+/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
+/// written
+template <class AllocatorType>
+rapidjson::Value
+JSONWriterBase::primaryQuantities(MessageInfo &Information,
+                                  AllocatorType &Allocator) const {
+  rapidjson::Value Value;
+  Value.SetObject();
+  Value.AddMember("messages", Information.getMessages().first, Allocator);
+  Value.AddMember("Mbytes", Information.getMbytes().first, Allocator);
+  Value.AddMember("errors", Information.getErrors(), Allocator);
+  return Value;
 }
 
-template <class Allocator>
-rapidjson::Value create_derived_quantity(MessageInfo::value_type &value,
-                                         Allocator &a) {
-  rapidjson::Value result;
-  result.SetObject();
-  result.AddMember("average", value.first, a);
-  result.AddMember("stdandard_deviation", value.second, a);
-  return result;
+/// Return the average and the standard value of the quantity as a
+/// rapidjson::Value object
+/// \param Quantity a MessageInfo::value_type object containing statistical
+/// information about the quantity of interest
+/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
+/// written
+template <class AllocatorType>
+rapidjson::Value createDerivedQuantity(MessageInfo::value_type &Quantity,
+                                       AllocatorType &Allocator) {
+  rapidjson::Value Result;
+  Result.SetObject();
+  Result.AddMember("average", Quantity.first, Allocator);
+  Result.AddMember("stdandard_deviation", Quantity.second, Allocator);
+  return Result;
 }
 
-template <class Allocator>
-rapidjson::Value JSONWriterBase::derived_quantities(MessageInfo &info,
-                                                    double duration,
-                                                    Allocator &a) const {
-  using namespace rapidjson;
-  auto size = message_size(info);
-  auto frequency = FileWriter::Status::message_frequency(info, duration);
-  auto throughput = FileWriter::Status::message_throughput(info, duration);
+/// Compute average message size, the message frequency and the Streamer
+/// throughput and return them as a rapidjson::Value object
+/// \param Information a MessageInfo object containing information about the
+/// messages consumed by the Streamer
+/// \param Duration
+/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
+/// written
+template <class AllocatorType>
+rapidjson::Value
+JSONWriterBase::derivedQuantities(MessageInfo &Info,
+                                  const std::chrono::milliseconds &Duration,
+                                  AllocatorType &Allocator) const {
+  auto Size = messageSize(Info);
+  auto Frequency = FileWriter::Status::messageFrequency(Info, Duration);
+  auto Throughput = FileWriter::Status::messageThroughput(Info, Duration);
 
-  Value value;
-  value.SetObject();
+  rapidjson::Value Value;
+  Value.SetObject();
+  Value.AddMember("size", createDerivedQuantity(Size, Allocator), Allocator);
+  Value.AddMember("frequency", createDerivedQuantity(Frequency, Allocator),
+                  Allocator);
+  Value.AddMember("throughput", createDerivedQuantity(Throughput, Allocator),
+                  Allocator);
 
-  value.AddMember("size", create_derived_quantity(size, a), a);
-  value.AddMember("frequency", create_derived_quantity(frequency, a), a);
-  value.AddMember("throughput", create_derived_quantity(throughput, a), a);
-
-  return value;
+  return Value;
 }
 
-JSONStreamWriter::return_type
-JSONStreamWriter::write(StreamMasterInfo &info) const {
-  auto value = base.write_impl(info);
-  rapidjson::StringBuffer buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> w(buffer);
-  w.SetMaxDecimalPlaces(1);
-  value.Accept(w);
-  std::string s{buffer.GetString()};
-  return s;
+JSONStreamWriter::ReturnType
+JSONStreamWriter::write(StreamMasterInfo &Information) const {
+  auto Value = Base.writeImplemented(Information);
+  rapidjson::StringBuffer Buffer;
+  rapidjson::PrettyWriter<rapidjson::StringBuffer> Writer(Buffer);
+  Writer.SetMaxDecimalPlaces(1);
+  Value.Accept(Writer);
+  std::string String(Buffer.GetString());
+  return String;
 }
 
-JSONWriter::return_type JSONWriter::write(StreamMasterInfo &info) const {
-  return base.write_impl(info);
+JSONWriter::ReturnType JSONWriter::write(StreamMasterInfo &Information) const {
+  return Base.writeImplemented(Information);
 }
 
 } // namespace Status

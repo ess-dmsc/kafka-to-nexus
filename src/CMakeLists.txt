@@ -108,7 +108,7 @@ set(kafka_to_nexus_INC
   CommandListener.h
   commandproducer.h
   DemuxTopic.h
-  Errors.hpp
+  Errors.h
   FileWriterTask.h
   FlatbufferReader.h
   h5.h
@@ -128,14 +128,13 @@ set(kafka_to_nexus_INC
   ProcessMessageResult.h
   Report.hpp
   Source.h
-  Status.hpp
-  StatusWriter.hpp
-  Streamer.hpp
-  StreamMaster.hpp
+  Status.h
+  StatusWriter.h
+  Streamer.h
+  StreamMaster.h
   TimeDifferenceFromMessage.h
   TopicReader.h
   uri.h
-  utils.h
   date/date.h
   date/ios.h
   date/tz_private.h

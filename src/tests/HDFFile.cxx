@@ -16,12 +16,12 @@
 #include <unistd.h>
 #include <vector>
 
+using std::array;
+using std::chrono::duration_cast;
+using std::chrono::milliseconds;
+using std::chrono::steady_clock;
 using std::string;
 using std::vector;
-using std::array;
-using std::chrono::steady_clock;
-using std::chrono::milliseconds;
-using std::chrono::duration_cast;
 
 void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
   rapidjson::Document cfg;
