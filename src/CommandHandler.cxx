@@ -312,60 +312,61 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 }
 
-void CommandHandler::handle(std::string const &command) {
-  using std::string;
+void CommandHandler::handle(std::string const &Command) {
   using nlohmann::json;
-  json d;
+  json Doc;
   try {
-    d = json::parse(command);
+    Doc = json::parse(Command);
   } catch (...) {
-    LOG(Sev::Error, "Can not parse json command");
+    LOG(Sev::Error, "Can not parse json command: {}", Command);
     return;
   }
-  uint64_t teamid = 0;
-  uint64_t cmd_teamid = 0;
+  uint64_t TeamId = 0;
+  uint64_t CommandTeamId = 0;
   if (MasterPtr) {
-    teamid = MasterPtr->config.teamid;
+    TeamId = MasterPtr->config.teamid;
   }
   try {
-    cmd_teamid = d.at("teamid").get<int64_t>();
+    CommandTeamId = Doc.at("teamid").get<int64_t>();
   } catch (...) {
     // do nothing
   }
-  if (cmd_teamid != teamid) {
+  if (CommandTeamId != TeamId) {
     LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
-        cmd_teamid, teamid);
+        CommandTeamId, TeamId);
     return;
   }
 
   try {
-    std::string cmd = d.at("cmd");
-    if (cmd == "FileWriter_new") {
-      handleNew(command);
+    std::string CommandMain = Doc.at("cmd");
+    if (CommandMain == "FileWriter_new") {
+      handleNew(Command);
       return;
     }
-    if (cmd == "FileWriter_exit") {
+    if (CommandMain == "FileWriter_exit") {
       handleExit();
       return;
     }
-    if (cmd == "FileWriter_stop") {
-      handleStreamMasterStop(d);
+    if (CommandMain == "FileWriter_stop") {
+      handleStreamMasterStop(Doc);
       return;
     }
-    if (cmd == "file_writer_tasks_clear_all") {
+    if (CommandMain == "file_writer_tasks_clear_all") {
       try {
-        string recv_type = d.at("recv_type");
-        if (recv_type == "FileWriter") {
-          handleFileWriterTaskClearAll(d);
+        std::string ReceiverType = Doc.at("recv_type");
+        if (ReceiverType == "FileWriter") {
+          handleFileWriterTaskClearAll(Doc);
           return;
         }
       } catch (...) {
+        LOG(Sev::Warning, "Can not extract 'recv_type' from command {}",
+            Command);
       }
     }
   } catch (...) {
-    // ignore
+    LOG(Sev::Warning, "Can not extract 'cmd' from command {}", Command);
   }
-  LOG(Sev::Warning, "Could not understand this command: {}", command);
+  LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
 void CommandHandler::handle(Msg const &msg) {
