@@ -10,18 +10,29 @@ using std::vector;
 
 namespace FileWriter {
 
-std::string find_broker(rapidjson::Document const &d) {
-  auto m = d.FindMember("broker");
-  if (m != d.MemberEnd() && m->value.IsString()) {
-    auto s = std::string(m->value.GetString());
-    if (s.substr(0, 2) == "//") {
-      uri::URI u(s);
+static nlohmann::json parseOrThrow(std::string const &Command) {
+  try {
+    return nlohmann::json::parse(Command);
+  } catch (...) {
+    LOG(Sev::Warning, "Can not parse command: {}", Command);
+    throw;
+  }
+}
+
+std::string findBroker(std::string const &Command) {
+  nlohmann::json Doc = parseOrThrow(Command);
+  try {
+    std::string broker = Doc.at("broker");
+    if (broker.substr(0, 2) == "//") {
+      uri::URI u(broker);
       return u.host_port;
     } else {
-      return s;
+      return broker;
     }
+  } catch (...) {
+    LOG(Sev::Warning, "Can not find field 'broker' in command: {}", Command);
   }
-  return std::string{"localhost:9092"};
+  return std::string("localhost:9092");
 }
 
 std::chrono::milliseconds find_time(rapidjson::Document const &d,
@@ -176,7 +187,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   addStreamSourceToWriterModule(stream_settings_list, fwt);
 
   if (MasterPtr) {
-    auto br = find_broker(d);
+    std::string br = findBroker(Command);
     // Must be called before StreamMaster instantiation
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {

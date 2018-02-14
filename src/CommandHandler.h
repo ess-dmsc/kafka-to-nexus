@@ -33,4 +33,6 @@ private:
   friend class ::T_CommandHandler;
 };
 
+std::string findBroker(std::string const &);
+
 } // namespace FileWriter

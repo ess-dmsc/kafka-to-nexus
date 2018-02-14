@@ -9,8 +9,6 @@ using namespace FileWriter;
 
 namespace FileWriter {
 
-std::string find_broker(rapidjson::Document const &);
-
 std::chrono::milliseconds find_time(rapidjson::Document const &,
                                     const std::string &);
 } // namespace FileWriter
@@ -28,13 +26,13 @@ class CommandHandler_Test : public ::testing::Test {
 
 protected:
   virtual void SetUp() {
-    auto s = parse_json_command("tests/msg-cmd-new-00.json");
-    new_00.Parse(s.c_str());
-    s = parse_json_command("tests/msg-cmd-new-01.json");
-    new_01.Parse(s.c_str());
+    Cmd00 = parse_json_command("tests/msg-cmd-new-00.json");
+    new_00.Parse(Cmd00.c_str());
+    Cmd01 = parse_json_command("tests/msg-cmd-new-01.json");
+    new_01.Parse(Cmd01.c_str());
   }
   void test_broker_from_json() {
-    ASSERT_EQ(FileWriter::find_broker(new_00), "192.168.10.11:9092");
+    ASSERT_EQ(FileWriter::findBroker(Cmd00), "192.168.10.11:9092");
   }
   void test_start_stop_time_from_json() {
     ASSERT_EQ(FileWriter::find_time(new_00, "start_time"),
@@ -43,7 +41,7 @@ protected:
               std::chrono::milliseconds{123456790});
   }
   void test_missing_broker() {
-    ASSERT_EQ(FileWriter::find_broker(new_01), "localhost:9092");
+    ASSERT_EQ(FileWriter::findBroker(Cmd01), "localhost:9092");
   }
   void test_missing_start_stop_time() {
     ASSERT_EQ(FileWriter::find_time(new_01, "start"),
@@ -53,6 +51,8 @@ protected:
   }
 
 private:
+  std::string Cmd00;
+  std::string Cmd01;
   static rapidjson::Document new_00;
   static rapidjson::Document new_01;
 };
