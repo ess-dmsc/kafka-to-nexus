@@ -125,12 +125,11 @@ std::shared_ptr<RdKafka::Conf> FileWriter::Streamer::initialize_configuration(
 
 void FileWriter::Streamer::initialize_streamer(
     FileWriter::Streamer::Options &filewriter_options) {
-  filewriter_options.erase(std::remove_if(filewriter_options.begin(),
-                                          filewriter_options.end(),
-                                          [&](option_t &item) -> bool {
-                                            return this->set_streamer_opt(item);
-                                          }),
-                           filewriter_options.end());
+  filewriter_options.erase(
+      std::remove_if(filewriter_options.begin(), filewriter_options.end(),
+                     [&](option_t &item)
+                         -> bool { return this->set_streamer_opt(item); }),
+      filewriter_options.end());
   if (!filewriter_options.empty()) {
     for (auto &item : filewriter_options) {
       LOG(Sev::Warning, "Unknown option: {} [{}]", item.first, item.second);

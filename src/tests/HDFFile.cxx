@@ -641,52 +641,52 @@ public:
         children.PushBack(g1, a);
       }
 
-      auto json_stream = [&a, &main_opt](string source, string topic,
-                                         string module,
-                                         bool run_parallel) -> Value {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", Value(source.c_str(), a), a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        {
-          auto &children = ch;
-          Document ds1(&a);
-          ds1.Parse(R""({
+      auto json_stream =
+          [&a, &main_opt](string source, string topic, string module,
+                          bool run_parallel) -> Value {
+            Value g1;
+            g1.SetObject();
+            g1.AddMember("type", "group", a);
+            g1.AddMember("name", Value(source.c_str(), a), a);
+            Value attr;
+            attr.SetObject();
+            attr.AddMember("NX_class", "NXinstrument", a);
+            g1.AddMember("attributes", attr, a);
+            Value ch;
+            ch.SetArray();
+            {
+              auto &children = ch;
+              Document ds1(&a);
+              ds1.Parse(R""({
             "type": "stream",
             "attributes": {
               "this_will_be_a_double": 0.125,
               "this_will_be_a_int64": 123
             }
           })"");
-          Value stream;
-          stream.SetObject();
-          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
-            Value nx;
-            nx.CopyFrom(*main_nexus.v, a);
-            stream.AddMember("nexus", std::move(nx), a);
-          }
-          stream.AddMember("topic", Value(topic.c_str(), a), a);
-          stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("writer_module", Value(module.c_str(), a), a);
-          stream.AddMember("type", Value("uint32", a), a);
-          stream.AddMember(
-              "n_mpi_workers",
-              std::move(Value().CopyFrom(
-                  main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
-              a);
-          stream.AddMember("run_parallel", Value(run_parallel), a);
-          ds1.AddMember("stream", stream, a);
-          children.PushBack(ds1, a);
-        }
-        g1.AddMember("children", ch, a);
-        return g1;
-      };
+              Value stream;
+              stream.SetObject();
+              if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
+                Value nx;
+                nx.CopyFrom(*main_nexus.v, a);
+                stream.AddMember("nexus", std::move(nx), a);
+              }
+              stream.AddMember("topic", Value(topic.c_str(), a), a);
+              stream.AddMember("source", Value(source.c_str(), a), a);
+              stream.AddMember("writer_module", Value(module.c_str(), a), a);
+              stream.AddMember("type", Value("uint32", a), a);
+              stream.AddMember(
+                  "n_mpi_workers",
+                  std::move(Value().CopyFrom(
+                      main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
+                  a);
+              stream.AddMember("run_parallel", Value(run_parallel), a);
+              ds1.AddMember("stream", stream, a);
+              children.PushBack(ds1, a);
+            }
+            g1.AddMember("children", ch, a);
+            return g1;
+          };
 
       for (auto &source : sources) {
         children.PushBack(json_stream(source.source, source.topic, "ev42",

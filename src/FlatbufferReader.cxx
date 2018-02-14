@@ -16,8 +16,7 @@ namespace FlatbufferReaderRegistry {
 std::map<FlatbufferReaderRegistry::Key, FlatbufferReaderRegistry::Value> &
 items() {
   static std::map<FlatbufferReaderRegistry::Key,
-                  FlatbufferReaderRegistry::Value>
-      _items;
+                  FlatbufferReaderRegistry::Value> _items;
   return _items;
 }
 

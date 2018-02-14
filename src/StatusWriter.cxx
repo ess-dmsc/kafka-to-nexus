@@ -19,8 +19,7 @@ rapidjson::Document JSONWriterBase::write_impl(StreamMasterInfo &info) const {
   auto next_message_relative_eta_ms = info.time_to_next_message();
   auto next_message_relative_eta_s =
       std::chrono::duration_cast<std::chrono::seconds>(
-          next_message_relative_eta_ms)
-          .count();
+          next_message_relative_eta_ms).count();
   { // message type
     d.AddMember("type", "stream_master_status", a);
     d.AddMember("next_message_eta_ms", next_message_relative_eta_ms.count(), a);

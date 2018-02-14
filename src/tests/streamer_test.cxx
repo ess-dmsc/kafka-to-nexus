@@ -103,15 +103,14 @@ public:
 std::string MinimalProducer::broker = "localhost";
 std::string MinimalProducer::topic = "streamer-test-topic";
 
-std::function<ProcessMessageResult(void *, int)> silent = [](void *x, int) {
-  return ProcessMessageResult::OK();
-};
+std::function<ProcessMessageResult(void *, int)> silent =
+    [](void *x, int) { return ProcessMessageResult::OK(); };
 
-std::function<ProcessMessageResult(void *, int)> verbose = [](void *x,
-                                                              int size) {
-  std::cout << "message: " << x << "\t" << size << std::endl;
-  return ProcessMessageResult::OK();
-};
+std::function<ProcessMessageResult(void *, int)> verbose =
+    [](void *x, int size) {
+      std::cout << "message: " << x << "\t" << size << std::endl;
+      return ProcessMessageResult::OK();
+    };
 std::function<ProcessMessageResult(void *, int, int *)> sum =
     [](void *x, int size, int *data_size) {
       (*data_size) += size;
