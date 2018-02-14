@@ -1,3 +1,4 @@
+// clang-format off
 //
 //  ios.h
 //  DateTimeLib
@@ -45,3 +46,4 @@ std::string get_tzdata_path();
 #define TARGET_OS_IPHONE 0
 #endif // !__APPLE__
 #endif // ios_hpp
+// clang-format on

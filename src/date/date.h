@@ -1,3 +1,4 @@
+// clang-format off
 #ifndef DATE_H
 #define DATE_H
 
@@ -5745,3 +5746,4 @@ parse(std::basic_istream<CharT, Traits>& is, const CharT* format,
 } // namespace date
 
 #endif // DATE_H
+// clang-format on
