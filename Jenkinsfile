@@ -79,16 +79,6 @@ def get_pipeline(image_key)
               cat ../${project}/CMakeLists.txt
               conan install --build=outdated ../${project}/conan/conanfile.txt
           """
-
-          def diag_script = """
-            cd ${project}
-            ls -l
-            cd conan
-            ls -l
-          """
-          def ret = sh(script: diag_script, returnStdout: true)
-          println ret
-
           sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
         }
 
