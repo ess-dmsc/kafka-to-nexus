@@ -3,7 +3,6 @@
 #include "MainOpt.h"
 #include "Master.h"
 #include <memory>
-#include <nlohmann/json.hpp>
 
 class T_CommandHandler;
 
