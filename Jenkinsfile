@@ -1,5 +1,5 @@
 def project = "kafka-to-nexus"
-clangformat_os = "fedora"
+def clangformat_os = "fedora"
 
 images = [
     'centos-gcc6': [
@@ -45,14 +45,14 @@ def get_pipeline(image_key)
       def custom_sh = images[image_key]['sh']
 
       // Copy sources to container and change owner and group.
-      sh "docker cp ${project} ${container_name}:/home/jenkins/${project}"
-      sh """docker exec --user root ${container_name} ${sclsh} -c \"
+      sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
+      sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
                     chown -R jenkins.jenkins /home/jenkins/${project}
       \""""
 
       if (image_key == clangformat_os) {
         stage('${image_key} Check Formatting') {
-            sh """docker exec ${container_name} sh -c \"
+            sh """docker exec ${container_name(image_key)} sh -c \"
                 clang-format -version
                 cd ${project}
                 find . \\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\) \
@@ -111,9 +111,10 @@ def get_pipeline(image_key)
           // Remove file outside container.
           sh "rm -f ${test_output}"
           // Copy and publish test results.
-          sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${test_output} ."
-
-          junit "${test_output}"
+          if (image_key == 'centos-gcc6') {
+            sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${test_output} ."
+            junit "${test_output}"
+          }
         }
       }
 
