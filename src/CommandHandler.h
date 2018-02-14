@@ -10,7 +10,9 @@ namespace FileWriter {
 
 struct StreamSettings;
 
-/// Stub, will perform the JSON parsing and then take appropriate action.
+/// Given a `Msg` or a JSON command in form of a `std::string` it will
+/// interpret and execute the command.
+
 class CommandHandler : public FileWriterCommandHandler {
 public:
   CommandHandler(MainOpt &config, Master *master);
