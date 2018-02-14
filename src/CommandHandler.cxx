@@ -36,8 +36,8 @@ std::chrono::milliseconds find_time(rapidjson::Document const &d,
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
-CommandHandler::CommandHandler(MainOpt &config, Master *master)
-    : config(config), master(master) {}
+CommandHandler::CommandHandler(MainOpt &Config_, Master *MasterPtr_)
+    : Config(Config_), MasterPtr(MasterPtr_) {}
 
 // POD
 
@@ -79,7 +79,7 @@ void CommandHandler::handleNew(std::string const &command) {
     fname = "a-dummy-name.h5";
   }
 
-  fwt->set_hdf_filename(config.hdf_output_prefix, fname);
+  fwt->set_hdf_filename(Config.hdf_output_prefix, fname);
 
   rapidjson::Document d;
   d.Parse(command.c_str());
@@ -175,25 +175,25 @@ void CommandHandler::handleNew(std::string const &command) {
 
   addStreamSourceToWriterModule(stream_settings_list, fwt);
 
-  if (master) {
+  if (MasterPtr) {
     auto br = find_broker(d);
     // Must be called before StreamMaster instantiation
     auto start_time = find_time(d, "start_time");
     if (start_time.count()) {
       LOG(Sev::Info, "start time :\t{}", start_time.count());
-      config.StreamerConfiguration.StartTimestamp =
+      Config.StreamerConfiguration.StartTimestamp =
           std::chrono::milliseconds(start_time);
     }
 
     LOG(Sev::Info, "Write file with id :\t{}", job_id);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        br, std::move(fwt), config.StreamerConfiguration));
-    if (master->status_producer) {
-      s->report(master->status_producer,
-                std::chrono::milliseconds{config.status_master_interval});
+        br, std::move(fwt), Config.StreamerConfiguration));
+    if (MasterPtr->status_producer) {
+      s->report(MasterPtr->status_producer,
+                std::chrono::milliseconds{Config.status_master_interval});
     }
-    if (config.topic_write_duration.count()) {
-      s->TopicWriteDuration = config.topic_write_duration;
+    if (Config.topic_write_duration.count()) {
+      s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
 
@@ -203,7 +203,7 @@ void CommandHandler::handleNew(std::string const &command) {
       s->setStopTime(std::chrono::milliseconds(stop_time));
     }
 
-    master->stream_masters.push_back(std::move(s));
+    MasterPtr->stream_masters.push_back(std::move(s));
   } else {
     file_writer_tasks.emplace_back(std::move(fwt));
   }
@@ -245,7 +245,7 @@ void CommandHandler::addStreamSourceToWriterModule(
 
       auto s = Source(stream_settings.source, move(hdf_writer_module));
       s._topic = std::string(stream_settings.topic);
-      s.do_process_message = config.source_do_process_message;
+      s.do_process_message = Config.source_do_process_message;
       fwt->add_source(std::move(s));
     }
   }
@@ -253,8 +253,8 @@ void CommandHandler::addStreamSourceToWriterModule(
 
 void CommandHandler::handleFileWriterTaskClearAll(nlohmann::json const &d) {
   using namespace rapidjson;
-  if (master) {
-    for (auto &x : master->stream_masters) {
+  if (MasterPtr) {
+    for (auto &x : MasterPtr->stream_masters) {
       x->stop();
     }
   }
@@ -262,14 +262,14 @@ void CommandHandler::handleFileWriterTaskClearAll(nlohmann::json const &d) {
 }
 
 void CommandHandler::handleExit(nlohmann::json const &d) {
-  if (master) {
-    master->stop();
+  if (MasterPtr) {
+    MasterPtr->stop();
   }
 }
 
 void CommandHandler::handleStreamMasterStop(nlohmann::json const &d) {
   using std::string;
-  if (!master) {
+  if (!MasterPtr) {
     return;
   }
   string job_id;
@@ -285,7 +285,7 @@ void CommandHandler::handleStreamMasterStop(nlohmann::json const &d) {
   } catch (...) {
   }
   int counter{0};
-  for (auto &x : master->stream_masters) {
+  for (auto &x : MasterPtr->stream_masters) {
     if (x->getJobId() == job_id) {
       if (stop_time.count()) {
         LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", job_id,
@@ -317,8 +317,8 @@ void CommandHandler::handle(std::string const &command) {
   }
   uint64_t teamid = 0;
   uint64_t cmd_teamid = 0;
-  if (master) {
-    teamid = master->config.teamid;
+  if (MasterPtr) {
+    teamid = MasterPtr->config.teamid;
   }
   try {
     cmd_teamid = d.at("teamid").get<int64_t>();
