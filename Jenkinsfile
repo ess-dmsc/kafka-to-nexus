@@ -83,6 +83,14 @@ def get_pipeline(image_key)
           sh "docker cp ${container_name(image_key)}:/home/jenkins/commandResult ."
           result = readFile('commandResult').trim()
           println result
+          def diag_script = """
+            cd ${project}
+            ls -l
+            cd conan
+            ls -l
+          """
+          def ret = sh(script: diag_script, returnStdout: true)
+          println ret
           sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
         }
 
