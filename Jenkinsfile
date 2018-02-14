@@ -9,6 +9,10 @@ images = [
     'fedora': [
         'name': 'essdmscdm/fedora25-build-node:1.0.0',
         'sh': 'sh'
+    ],
+    'ubuntu1604': [
+        'name': 'essdmscdm/ubuntu16.04-build-node:2.0.0',
+        'sh': 'sh'
     ]
 ]
 
@@ -111,7 +115,7 @@ def get_pipeline(image_key)
 
           // Remove file outside container.
           sh "rm -f ${test_output}"
-          // Copy and publish test results.
+          // Copy and publish test results (only from one container).
           if (image_key == 'centos-gcc6') {
             sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${test_output} ."
             junit "${test_output}"
