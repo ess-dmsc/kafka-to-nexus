@@ -82,6 +82,7 @@ def get_pipeline(image_key)
           sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"ls -l > commandResult\""
           sh "docker cp ${container_name(image_key)}:/home/jenkins/commandResult ."
           result = readFile('commandResult').trim()
+          println result
           sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
         }
 
