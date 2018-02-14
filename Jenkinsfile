@@ -76,7 +76,7 @@ def get_pipeline(image_key)
               conan remote add \
                   --insert 0 \
                   ${conan_remote} ${local_conan_server}
-              conan install ../${project}/conan --build=outdated
+              conan install ../${project}/conan/conanfile.txt --build=outdated
           """
           sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
         }
