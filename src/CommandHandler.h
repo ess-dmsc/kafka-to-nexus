@@ -32,7 +32,6 @@ private:
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
   MainOpt &Config;
-  std::unique_ptr<rapidjson::SchemaDocument> schema_command;
   Master *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> file_writer_tasks;
   friend class ::T_CommandHandler;
