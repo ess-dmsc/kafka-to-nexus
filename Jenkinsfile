@@ -1,5 +1,5 @@
-def project = "kafka-to-nexus"
-def clangformat_os = "fedora"
+project = "kafka-to-nexus"
+clangformat_os = "fedora"
 
 images = [
     'centos-gcc6': [
