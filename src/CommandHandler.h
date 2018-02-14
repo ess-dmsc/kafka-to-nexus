@@ -15,10 +15,10 @@ struct StreamSettings;
 class CommandHandler : public FileWriterCommandHandler {
 public:
   CommandHandler(MainOpt &config, Master *master);
-  void handleNew(std::string const &command);
-  void handleExit(nlohmann::json const &d);
+  void handleNew(std::string const &Command);
+  void handleExit();
   void handleFileWriterTaskClearAll(nlohmann::json const &d);
-  void handleStreamMasterStop(nlohmann::json const &d);
+  void handleStreamMasterStop(std::string const &Command);
   void handle(Msg const &msg);
   void handle(std::string const &command);
 

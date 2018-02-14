@@ -50,15 +50,15 @@ struct StreamSettings {
   rapidjson::Value const *config_stream = nullptr;
 };
 
-void CommandHandler::handleNew(std::string const &command) {
+void CommandHandler::handleNew(std::string const &Command) {
   using std::move;
   using std::string;
 
   nlohmann::json dd;
   try {
-    dd = nlohmann::json::parse(command);
+    dd = nlohmann::json::parse(Command);
   } catch (...) {
-    LOG(Sev::Warning, "Can not parse command: {}", command);
+    LOG(Sev::Warning, "Can not parse command: {}", Command);
     return;
   }
 
@@ -82,7 +82,7 @@ void CommandHandler::handleNew(std::string const &command) {
   fwt->set_hdf_filename(Config.hdf_output_prefix, fname);
 
   rapidjson::Document d;
-  d.Parse(command.c_str());
+  d.Parse(Command.c_str());
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
@@ -261,27 +261,34 @@ void CommandHandler::handleFileWriterTaskClearAll(nlohmann::json const &d) {
   FileWriterTasks.clear();
 }
 
-void CommandHandler::handleExit(nlohmann::json const &d) {
+void CommandHandler::handleExit() {
   if (MasterPtr) {
     MasterPtr->stop();
   }
 }
 
-void CommandHandler::handleStreamMasterStop(nlohmann::json const &d) {
+void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
   if (!MasterPtr) {
     return;
   }
+  nlohmann::json Doc;
+  try {
+    Doc = nlohmann::json::parse(Command);
+  } catch (...) {
+    LOG(Sev::Warning, "Can not parse command: {}", Command);
+    return;
+  }
   string job_id;
   try {
-    job_id = d.at("job_id");
+    job_id = Doc.at("job_id");
   } catch (...) {
     LOG(Sev::Warning, "File write stop message lacks job_id");
     return;
   }
   std::chrono::milliseconds stop_time(0);
   try {
-    stop_time = std::chrono::milliseconds(d.at("stop_time"));
+    stop_time = std::chrono::milliseconds(Doc.at("stop_time"));
   } catch (...) {
   }
   int counter{0};
@@ -338,7 +345,7 @@ void CommandHandler::handle(std::string const &command) {
       return;
     }
     if (cmd == "FileWriter_exit") {
-      handleExit(d);
+      handleExit();
       return;
     }
     if (cmd == "FileWriter_stop") {
