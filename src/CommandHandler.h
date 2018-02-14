@@ -20,15 +20,15 @@ struct StreamSettings;
 class CommandHandler : public FileWriterCommandHandler {
 public:
   CommandHandler(MainOpt &config, Master *master);
-  void handle_new(std::string const &command);
-  void handle_exit(nlohmann::json const &d);
-  void handle_file_writer_task_clear_all(nlohmann::json const &d);
-  void handle_stream_master_stop(nlohmann::json const &d);
+  void handleNew(std::string const &command);
+  void handleExit(nlohmann::json const &d);
+  void handleFileWriterTaskClearAll(nlohmann::json const &d);
+  void handleStreamMasterStop(nlohmann::json const &d);
   void handle(Msg const &msg);
   void handle(std::string const &command);
 
 private:
-  void add_stream_source_to_writer_module(
+  void addStreamSourceToWriterModule(
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
   MainOpt &config;

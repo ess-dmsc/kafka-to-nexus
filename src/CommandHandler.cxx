@@ -50,7 +50,7 @@ struct StreamSettings {
   rapidjson::Value const *config_stream = nullptr;
 };
 
-void CommandHandler::handle_new(std::string const &command) {
+void CommandHandler::handleNew(std::string const &command) {
   using std::move;
   using std::string;
 
@@ -173,7 +173,7 @@ void CommandHandler::handle_new(std::string const &command) {
   fwt->hdf_close();
   fwt->hdf_reopen();
 
-  add_stream_source_to_writer_module(stream_settings_list, fwt);
+  addStreamSourceToWriterModule(stream_settings_list, fwt);
 
   if (master) {
     auto br = find_broker(d);
@@ -210,7 +210,7 @@ void CommandHandler::handle_new(std::string const &command) {
   g_N_HANDLED += 1;
 }
 
-void CommandHandler::add_stream_source_to_writer_module(
+void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &stream_settings_list,
     std::unique_ptr<FileWriterTask> &fwt) {
   bool use_parallel_writer = false;
@@ -251,8 +251,7 @@ void CommandHandler::add_stream_source_to_writer_module(
   }
 }
 
-void CommandHandler::handle_file_writer_task_clear_all(
-    nlohmann::json const &d) {
+void CommandHandler::handleFileWriterTaskClearAll(nlohmann::json const &d) {
   using namespace rapidjson;
   if (master) {
     for (auto &x : master->stream_masters) {
@@ -262,13 +261,13 @@ void CommandHandler::handle_file_writer_task_clear_all(
   file_writer_tasks.clear();
 }
 
-void CommandHandler::handle_exit(nlohmann::json const &d) {
+void CommandHandler::handleExit(nlohmann::json const &d) {
   if (master) {
     master->stop();
   }
 }
 
-void CommandHandler::handle_stream_master_stop(nlohmann::json const &d) {
+void CommandHandler::handleStreamMasterStop(nlohmann::json const &d) {
   using std::string;
   if (!master) {
     return;
@@ -335,22 +334,22 @@ void CommandHandler::handle(std::string const &command) {
   try {
     std::string cmd = d.at("cmd");
     if (cmd == "FileWriter_new") {
-      handle_new(command);
+      handleNew(command);
       return;
     }
     if (cmd == "FileWriter_exit") {
-      handle_exit(d);
+      handleExit(d);
       return;
     }
     if (cmd == "FileWriter_stop") {
-      handle_stream_master_stop(d);
+      handleStreamMasterStop(d);
       return;
     }
     if (cmd == "file_writer_tasks_clear_all") {
       try {
         string recv_type = d.at("recv_type");
         if (recv_type == "FileWriter") {
-          handle_file_writer_task_clear_all(d);
+          handleFileWriterTaskClearAll(d);
           return;
         }
       } catch (...) {
