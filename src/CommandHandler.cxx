@@ -251,7 +251,7 @@ void CommandHandler::addStreamSourceToWriterModule(
   }
 }
 
-void CommandHandler::handleFileWriterTaskClearAll(nlohmann::json const &d) {
+void CommandHandler::handleFileWriterTaskClearAll() {
   using namespace rapidjson;
   if (MasterPtr) {
     for (auto &x : MasterPtr->stream_masters) {
@@ -355,7 +355,7 @@ void CommandHandler::handle(std::string const &Command) {
       try {
         std::string ReceiverType = Doc.at("recv_type");
         if (ReceiverType == "FileWriter") {
-          handleFileWriterTaskClearAll(Doc);
+          handleFileWriterTaskClearAll();
           return;
         }
       } catch (...) {

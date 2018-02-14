@@ -17,7 +17,7 @@ public:
   CommandHandler(MainOpt &config, Master *master);
   void handleNew(std::string const &Command);
   void handleExit();
-  void handleFileWriterTaskClearAll(nlohmann::json const &d);
+  void handleFileWriterTaskClearAll();
   void handleStreamMasterStop(std::string const &Command);
   void handle(Msg const &msg);
   void handle(std::string const &command);
