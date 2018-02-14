@@ -4,11 +4,6 @@
 #include "Master.h"
 #include <memory>
 #include <nlohmann/json.hpp>
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/schema.h>
-#include <rapidjson/stringbuffer.h>
 
 class T_CommandHandler;
 
