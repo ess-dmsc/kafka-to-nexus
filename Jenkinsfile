@@ -79,10 +79,7 @@ def get_pipeline(image_key)
               cat ../${project}/CMakeLists.txt
               conan install --build=outdated ../${project}/conan/conanfile.txt
           """
-          sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"ls -l > commandResult\""
-          sh "docker cp ${container_name(image_key)}:/home/jenkins/commandResult ."
-          result = readFile('commandResult').trim()
-          println result
+
           def diag_script = """
             cd ${project}
             ls -l
@@ -91,6 +88,7 @@ def get_pipeline(image_key)
           """
           def ret = sh(script: diag_script, returnStdout: true)
           println ret
+
           sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
         }
 
@@ -158,7 +156,7 @@ node('docker') {
   cleanWs()
 
   stage('Checkout') {
-      dir("${project}/code") {
+      dir("${project}") {
           try {
               scm_vars = checkout scm
           } catch (e) {
