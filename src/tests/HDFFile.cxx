@@ -149,9 +149,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
     main_opt.hdf_output_prefix = "";
 
     // Verification
@@ -347,9 +347,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
 
     // Verification
     auto file =
@@ -388,9 +388,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
 
     // Verification
     auto file =
@@ -722,9 +722,9 @@ public:
       unlink(string(fname).c_str());
 
       ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
 
-      auto &fwt = ch.file_writer_tasks.at(0);
+      auto &fwt = ch.FileWriterTasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
       LOG(Sev::Debug, "processing...");
@@ -783,7 +783,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, json_command);
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -1123,9 +1123,9 @@ public:
       unlink(string(fname).c_str());
 
       ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
 
-      auto &fwt = ch.file_writer_tasks.at(0);
+      auto &fwt = ch.FileWriterTasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
       LOG(Sev::Debug, "processing...");
@@ -1151,7 +1151,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, json_command);
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());

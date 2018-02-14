@@ -28,7 +28,7 @@ private:
       std::unique_ptr<FileWriterTask> &fwt);
   MainOpt &Config;
   Master *MasterPtr = nullptr;
-  std::vector<std::unique_ptr<FileWriterTask>> file_writer_tasks;
+  std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
   friend class ::T_CommandHandler;
 };
 

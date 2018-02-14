@@ -205,7 +205,7 @@ void CommandHandler::handleNew(std::string const &command) {
 
     MasterPtr->stream_masters.push_back(std::move(s));
   } else {
-    file_writer_tasks.emplace_back(std::move(fwt));
+    FileWriterTasks.emplace_back(std::move(fwt));
   }
   g_N_HANDLED += 1;
 }
@@ -258,7 +258,7 @@ void CommandHandler::handleFileWriterTaskClearAll(nlohmann::json const &d) {
       x->stop();
     }
   }
-  file_writer_tasks.clear();
+  FileWriterTasks.clear();
 }
 
 void CommandHandler::handleExit(nlohmann::json const &d) {
