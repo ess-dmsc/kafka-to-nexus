@@ -19,6 +19,8 @@ static nlohmann::json parseOrThrow(std::string const &Command) {
   }
 }
 
+/// Helper function to extract the broker from the file writer command.
+
 std::string findBroker(std::string const &Command) {
   nlohmann::json Doc = parseOrThrow(Command);
   try {
@@ -262,8 +264,9 @@ void CommandHandler::addStreamSourceToWriterModule(
   }
 }
 
+/// Stop and remove all ongoing file writer jobs.
+
 void CommandHandler::handleFileWriterTaskClearAll() {
-  using namespace rapidjson;
   if (MasterPtr) {
     for (auto &x : MasterPtr->stream_masters) {
       x->stop();
@@ -271,6 +274,8 @@ void CommandHandler::handleFileWriterTaskClearAll() {
   }
   FileWriterTasks.clear();
 }
+
+/// Stop the whole file writer application.
 
 void CommandHandler::handleExit() {
   if (MasterPtr) {
