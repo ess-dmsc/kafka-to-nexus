@@ -241,10 +241,10 @@ void CommandHandler::handleNew(std::string const &Command) {
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &stream_settings_list,
     std::unique_ptr<FileWriterTask> &fwt) {
-  bool use_parallel_writer = false;
+  bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : stream_settings_list) {
-    if (use_parallel_writer && StreamSettings.run_parallel) {
+    if (UseParallelWriter && StreamSettings.run_parallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
       auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
