@@ -87,12 +87,12 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
-  std::vector<StreamHDFInfo> stream_hdf_info;
+  std::vector<StreamHDFInfo> StreamHDFInfoList;
   {
     json ConfigFile = json::parse("{}");
     json NexusStructure = Doc.at("nexus_structure");
     int x = fwt->hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                          stream_hdf_info);
+                          StreamHDFInfoList);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
       return;
@@ -101,8 +101,8 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   // Extract some information from the JSON first
   std::vector<StreamSettings> StreamSettingsList;
-  LOG(Sev::Info, "Command contains {} streams", stream_hdf_info.size());
-  for (auto &stream : stream_hdf_info) {
+  LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
+  for (auto &stream : StreamHDFInfoList) {
     StreamSettings StreamSettings;
     StreamSettings.stream_hdf_info = stream;
 
