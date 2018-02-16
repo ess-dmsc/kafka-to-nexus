@@ -17,8 +17,6 @@ namespace FileWriter {
 using std::string;
 using std::vector;
 
-std::string &CmdMsg_K::str() { return _str; }
-
 Master::Master(MainOpt &config) : config(config), command_listener(config) {
   std::vector<char> buffer;
   buffer.resize(128);

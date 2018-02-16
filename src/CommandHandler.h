@@ -13,7 +13,7 @@ struct StreamSettings;
 /// Given a `Msg` or a JSON command in form of a `std::string` it will
 /// interpret and execute the command.
 
-class CommandHandler : public FileWriterCommandHandler {
+class CommandHandler {
 public:
   CommandHandler(MainOpt &config, Master *master);
   void handleNew(std::string const &Command);

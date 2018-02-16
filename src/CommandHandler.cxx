@@ -92,7 +92,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     json ConfigFile = json::parse("{}");
     json NexusStructure = Doc.at("nexus_structure");
     int x = Task->hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                          StreamHDFInfoList);
+                           StreamHDFInfoList);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
       return;
