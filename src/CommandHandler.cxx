@@ -13,7 +13,7 @@ namespace FileWriter {
 static nlohmann::json parseOrThrow(std::string const &Command) {
   try {
     return nlohmann::json::parse(Command);
-  } catch (...) {
+  } catch (nlohmann::detail::parse_error &e) {
     LOG(Sev::Warning, "Can not parse command: {}", Command);
     throw;
   }
