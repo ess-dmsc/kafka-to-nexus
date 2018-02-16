@@ -27,6 +27,7 @@ private:
   void addStreamSourceToWriterModule(
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
+  std::vector<StreamHDFInfo> initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) const;
   MainOpt &Config;
   Master *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;

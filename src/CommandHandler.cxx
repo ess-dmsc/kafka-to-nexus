@@ -20,6 +20,10 @@ static nlohmann::json parseOrThrow(std::string const &Command) {
   }
 }
 
+static void logMissingKey(std::string const &Key, std::string const &Context) {
+  LOG(Sev::Warning, "Missing key {} from {}", Key, Context);
+}
+
 /// Helper function to extract the broker from the file writer command.
 
 std::string findBroker(std::string const &Command) {
@@ -33,7 +37,7 @@ std::string findBroker(std::string const &Command) {
       return BrokerHostPort;
     }
   } catch (...) {
-    LOG(Sev::Warning, "Can not find field 'broker' in command: {}", Command);
+    logMissingKey("broker", Command);
   }
   return std::string("localhost:9092");
 }
@@ -55,50 +59,34 @@ struct StreamSettings {
   std::string ConfigStreamJson;
 };
 
-void CommandHandler::handleNew(std::string const &Command) {
-  using std::move;
-  using std::string;
+
+/// \brief Given a task and the `nexus_structure` as json string, set up the
+/// basic HDF file structure.
+
+std::vector<StreamHDFInfo> CommandHandler::initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) const {
+  using nlohmann::json;
+  json NexusStructure = json::parse(NexusStructureString);
+  std::vector<StreamHDFInfo> StreamHDFInfoList;
+  json ConfigFile = json::parse("{}");
+  int x = Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(),
+                         StreamHDFInfoList);
+  if (x) {
+    LOG(Sev::Error, "hdf_init failed, cancel this command");
+    throw std::runtime_error("");
+  }
+  return StreamHDFInfoList;
+}
+
+
+/// Extracts the information about the stream from the json command and calls
+/// the corresponding HDF writer modules to set u pthe initial HDF structures
+/// in the output file.
+
+static std::vector<StreamSettings> extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task, std::vector<StreamHDFInfo> const & StreamHDFInfoList) {
   using nlohmann::detail::out_of_range;
   using nlohmann::json;
-  json Doc = parseOrThrow(Command);
-
-  auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
-  try {
-    std::string JobID = Doc.at("job_id");
-    if (JobID.empty()) {
-      LOG(Sev::Warning, "Command not accepted: empty job_id");
-      return;
-    }
-    Task->job_id_init(JobID);
-  } catch (out_of_range const &e) {
-    LOG(Sev::Warning, "Command not accepted: missing job_id");
-    return;
-  }
-
-  try {
-    Task->set_hdf_filename(Config.hdf_output_prefix, Doc.at("file_attributes").at("file_name"));
-  } catch (out_of_range const &e) {
-    LOG(Sev::Warning, "Command not accepted: missing file_attributes.file_name");
-    return;
-  }
-
-  // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
-  // the list of streams which have been found in the `nexus_structure`.
-  std::vector<StreamHDFInfo> StreamHDFInfoList;
-  {
-    json ConfigFile = json::parse("{}");
-    json NexusStructure = Doc.at("nexus_structure");
-    int x = Task->hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                           StreamHDFInfoList);
-    if (x) {
-      LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
-      return;
-    }
-  }
-
-  // Extract some information from the JSON first
-  std::vector<StreamSettings> StreamSettingsList;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
+  std::vector<StreamSettings> StreamSettingsList;
   for (auto const &stream : StreamHDFInfoList) {
     StreamSettings StreamSettings;
     StreamSettings.StreamHDFInfoObj = stream;
@@ -115,7 +103,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     try {
       ConfigStreamInner = ConfigStream.at("stream");
     } catch (out_of_range const &e) {
-      LOG(Sev::Notice, "Missing stream specification");
+      logMissingKey("stream", ConfigStream.dump());
       continue;
     }
 
@@ -125,14 +113,14 @@ void CommandHandler::handleNew(std::string const &Command) {
     try {
       StreamSettings.Topic = ConfigStreamInner.at("topic");
     } catch (out_of_range const &e) {
-      LOG(Sev::Notice, "Missing topic on stream specification");
+      logMissingKey("topic", ConfigStreamInner.dump());
       continue;
     }
 
     try {
       StreamSettings.Source = ConfigStreamInner.at("source");
     } catch (out_of_range const &e) {
-      LOG(Sev::Notice, "Missing source on stream specification");
+      logMissingKey("source", ConfigStreamInner.dump());
       continue;
     }
 
@@ -140,13 +128,14 @@ void CommandHandler::handleNew(std::string const &Command) {
       try {
         StreamSettings.Module = ConfigStreamInner.at("writer_module");
       } catch (out_of_range const &e) {
+        logMissingKey("writer_module", ConfigStreamInner.dump());
         // Allow the old key name as well:
         StreamSettings.Module = ConfigStreamInner.at("module");
         LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
                          "\"stream.writer_module\" instead.");
       }
     } catch (out_of_range const &e) {
-      LOG(Sev::Notice, "Missing key `writer_module` on stream specification");
+      logMissingKey("module", ConfigStreamInner.dump());
       continue;
     }
 
@@ -195,6 +184,59 @@ void CommandHandler::handleNew(std::string const &Command) {
     HDFWriterModule->close();
     HDFWriterModule.reset();
   }
+  return StreamSettingsList;
+}
+
+
+/// \brief Given a JSON string, create a new file writer job.
+///
+/// Creates a new `FileWriterTask`, sets information such as file name, job id.
+/// Goes on and calls `initializeHDF` to initialize the basic HDF group
+/// structure in the output file. It then extracts the information about the
+/// data streams by calling `extractStreamInformationFromJson`. The HDF file is
+/// closed and re-opened to optionally support SWMR and parallel writing. In a
+/// second pass, it calls `addStreamSourceToWriterModule` to instantiate
+/// `Source` objects which in turn re-open the HDF datasets for writing.
+/// Finally, we register the `FileWriterTask` with `Master`.
+
+void CommandHandler::handleNew(std::string const &Command) {
+  using std::move;
+  using std::string;
+  using nlohmann::detail::out_of_range;
+  using nlohmann::json;
+  json Doc = parseOrThrow(Command);
+
+  auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
+  try {
+    std::string JobID = Doc.at("job_id");
+    if (JobID.empty()) {
+      logMissingKey("job_id", Doc.dump());
+      return;
+    }
+    Task->job_id_init(JobID);
+  } catch (out_of_range const &e) {
+    logMissingKey("job_id", Doc.dump());
+    return;
+  }
+
+  try {
+    Task->set_hdf_filename(Config.hdf_output_prefix, Doc.at("file_attributes").at("file_name"));
+  } catch (out_of_range const &e) {
+    logMissingKey("file_attributes.file_name", Doc.dump());
+    return;
+  }
+
+  // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
+  // the list of streams which have been found in the `nexus_structure`.
+  std::vector<StreamHDFInfo> StreamHDFInfoList;
+  try {
+    StreamHDFInfoList = initializeHDF(*Task, Doc.at("nexus_structure").dump());
+  } catch (out_of_range const &e) {
+    logMissingKey("nexus_structure", Doc.dump());
+    return;
+  }
+
+  std::vector<StreamSettings> StreamSettingsList = extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
   Task->hdf_close();
   Task->hdf_reopen();
@@ -234,6 +276,14 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
   g_N_HANDLED += 1;
 }
+
+
+/// \brief Given a `FileWriterTask` and a list of `StreamSettings`, it sets up
+/// the HDF writer modules for writing.
+///
+/// It creates the `HDFWriterModule` instances which in turn re-open the
+/// previously created HDF datasets. It creates then a `Source` instance for
+/// each stream and adds those to the `FileWriterTask`.
 
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &StreamSettingsList,
@@ -296,6 +346,8 @@ void CommandHandler::handleExit() {
   }
 }
 
+/// Stops a given job
+
 void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
   if (!MasterPtr) {
@@ -312,7 +364,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   try {
     JobID = Doc.at("job_id");
   } catch (...) {
-    LOG(Sev::Warning, "File write stop message lacks job_id");
+    logMissingKey("job_id", Doc.dump());
     return;
   }
   std::chrono::milliseconds StopTime(0);
@@ -340,6 +392,9 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     LOG(Sev::Warning, "error: multiple files with id : {}", JobID);
   }
 }
+
+
+/// Parses the given command and passes it on to a more specific handler.
 
 void CommandHandler::handle(std::string const &Command) {
   using nlohmann::json;
@@ -388,8 +443,7 @@ void CommandHandler::handle(std::string const &Command) {
           return;
         }
       } catch (...) {
-        LOG(Sev::Warning, "Can not extract 'recv_type' from command {}",
-            Command);
+        logMissingKey("recv_type", Doc.dump());
       }
     }
   } catch (...) {
@@ -397,6 +451,9 @@ void CommandHandler::handle(std::string const &Command) {
   }
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
+
+
+/// Given a `Msg`, call `CommandHandler::handle(std::string const &Command)`.
 
 void CommandHandler::handle(Msg const &Msg) {
   handle({(char *)Msg.data(), Msg.size()});
