@@ -37,15 +37,6 @@ std::string findBroker(std::string const &Command) {
   return std::string("localhost:9092");
 }
 
-std::chrono::milliseconds find_time(rapidjson::Document const &d,
-                                    const std::string &key) {
-  auto m = d.FindMember(key.c_str());
-  if (m != d.MemberEnd() && m->value.IsUint64()) {
-    return std::chrono::milliseconds(m->value.GetUint64());
-  }
-  return std::chrono::milliseconds{0};
-}
-
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
@@ -60,24 +51,23 @@ struct StreamSettings {
   std::string module;
   std::string source;
   bool run_parallel = false;
-  rapidjson::Value const *config_stream = nullptr;
+  std::string config_stream;
 };
 
 void CommandHandler::handleNew(std::string const &Command) {
   using std::move;
   using std::string;
-
-  nlohmann::json dd;
-  try {
-    dd = nlohmann::json::parse(Command);
-  } catch (...) {
-    LOG(Sev::Warning, "Can not parse command: {}", Command);
-    return;
-  }
+  using nlohmann::detail::out_of_range;
+  using nlohmann::json;
+  json Doc = parseOrThrow(Command);
 
   auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 
-  string job_id = dd.at("job_id");
+  string job_id;
+  try {
+    job_id = Doc.at("job_id");
+  } catch (out_of_range const &e) {
+  }
   if (job_id.empty()) {
     LOG(Sev::Warning, "Command not accepted: missing job_id");
     return;
@@ -85,10 +75,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     fwt->job_id_init(job_id);
   }
 
-  std::string fname;
+  string fname;
   try {
-    fname = dd.at("file_attributes").at("file_name");
-  } catch (...) {
+    fname = Doc.at("file_attributes").at("file_name");
+  } catch (out_of_range const &e) {
     fname = "a-dummy-name.h5";
   }
 
@@ -101,9 +91,10 @@ void CommandHandler::handleNew(std::string const &Command) {
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
   {
-    rapidjson::Value config_file;
-    auto &nexus_structure = d.FindMember("nexus_structure")->value;
-    auto x = fwt->hdf_init(nexus_structure, config_file, stream_hdf_info);
+    json ConfigFile = json::parse("{}");
+    json NexusStructure = Doc.at("nexus_structure");
+    int x = fwt->hdf_init(NexusStructure.dump(), ConfigFile.dump(),
+                          stream_hdf_info);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
       return;
@@ -118,14 +109,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     stream_settings.stream_hdf_info = stream;
 
     auto config_stream_value = get_object(*stream.config_stream, "stream");
-    if (!config_stream_value) {
-      LOG(Sev::Notice, "Missing stream specification");
-      continue;
-    }
     auto attributes = get_object(*stream.config_stream, "attributes");
+    stream_settings.config_stream = json_to_string(*config_stream_value.v);
+    LOG(Sev::Info, "Adding stream: {}", stream_settings.config_stream);
     auto &config_stream = *config_stream_value.v;
-    stream_settings.config_stream = config_stream_value.v;
-    LOG(Sev::Info, "Adding stream: {}", json_to_string(config_stream));
     auto topic = get_string(&config_stream, "topic");
     if (!topic) {
       LOG(Sev::Notice, "Missing topic on stream specification");
@@ -191,14 +178,13 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     std::string br = findBroker(Command);
     // Must be called before StreamMaster instantiation
-    auto start_time = find_time(d, "start_time");
-    if (start_time.count()) {
-      LOG(Sev::Info, "start time :\t{}", start_time.count());
-      Config.StreamerConfiguration.StartTimestamp =
-          std::chrono::milliseconds(start_time);
+    std::chrono::milliseconds StartTime(Doc.at("start_time").get<uint64_t>());
+    if (StartTime.count() != 0) {
+      LOG(Sev::Info, "StartTime: {}", StartTime.count());
+      Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
 
-    LOG(Sev::Info, "Write file with id :\t{}", job_id);
+    LOG(Sev::Info, "Write file with job_id: {}", job_id);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(fwt), Config.StreamerConfiguration));
     if (MasterPtr->status_producer) {
@@ -210,10 +196,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
     s->start();
 
-    auto stop_time = find_time(d, "stop_time");
-    if (stop_time.count()) {
-      LOG(Sev::Info, "stop time :\t{}", stop_time.count());
-      s->setStopTime(std::chrono::milliseconds(stop_time));
+    std::chrono::milliseconds StopTime(Doc.at("stop_time").get<uint64_t>());
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info, "StopTime: {}", StopTime.count());
+      s->setStopTime(StopTime);
     }
 
     MasterPtr->stream_masters.push_back(std::move(s));
@@ -246,7 +232,9 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
 
-      hdf_writer_module->parse_config(*stream_settings.config_stream, nullptr);
+      rapidjson::Document config_stream;
+      config_stream.Parse(stream_settings.config_stream.c_str());
+      hdf_writer_module->parse_config(config_stream, nullptr);
       auto err = hdf_writer_module->reopen(
           static_cast<hid_t>(fwt->hdf_file.h5file),
           stream_settings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);

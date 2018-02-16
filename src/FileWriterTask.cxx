@@ -52,16 +52,31 @@ void FileWriterTask::add_source(Source &&source) {
   }
 }
 
-int FileWriterTask::hdf_init(rapidjson::Value const &nexus_structure,
-                             rapidjson::Value const &config_file,
+int FileWriterTask::hdf_init(std::string const &NexusStructure,
+                             std::string const &ConfigFile,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
   filename_full = hdf_filename;
   if (!hdf_output_prefix.empty()) {
     filename_full = hdf_output_prefix + "/" + filename_full;
   }
 
+  rapidjson::Document NexusStructureDocument;
+  NexusStructureDocument.Parse(NexusStructure.c_str());
+  if (NexusStructureDocument.HasParseError()) {
+    LOG(Sev::Critical, "Parse ERROR:", NexusStructure);
+    return -1;
+  }
+
+  rapidjson::Document ConfigFileDocument;
+  ConfigFileDocument.Parse(ConfigFile.c_str());
+  if (ConfigFileDocument.HasParseError()) {
+    LOG(Sev::Critical, "Parse ERROR:", ConfigFile);
+    return -1;
+  }
+
   try {
-    hdf_file.init(filename_full, nexus_structure, config_file, stream_hdf_info);
+    hdf_file.init(filename_full, NexusStructureDocument, ConfigFileDocument,
+                  stream_hdf_info);
   } catch (...) {
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",

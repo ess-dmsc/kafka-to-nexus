@@ -17,6 +17,18 @@ std::string json_to_string(rapidjson::Value const &jd) {
   return b1.GetString();
 }
 
+/// Meant to be used in situations where json was verified before.
+
+rapidjson::Document stringToRapidjsonOrThrow(std::string const &JsonString) {
+  rapidjson::Document doc;
+  doc.Parse(JsonString.c_str());
+  if (doc.HasParseError()) {
+    throw RapidjsonParseError(std::string("RapidjsonParseError[") + JsonString +
+                              "]");
+  }
+  return doc;
+}
+
 /// Merge the json structure v2 into a copy of v1.
 /// If the new key in v2 is not a object, it replaces the key in v1.
 /// Elements of arrays are also not merged, but the new array fully replaces
