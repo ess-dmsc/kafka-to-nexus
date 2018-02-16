@@ -1,4 +1,4 @@
-
+// clang-format off
 #pragma once
 
 #include <map>
@@ -11,3 +11,4 @@ using uchar = unsigned char;
 extern std::map<std::string, std::vector<uchar>> tzblobs;
 
 } // namespace tzblobs
+// clang-format on

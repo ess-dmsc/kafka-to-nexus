@@ -1,3 +1,4 @@
+// clang-format off
 // The MIT License (MIT)
 //
 // Copyright (c) 2015, 2016 Howard Hinnant
@@ -2803,3 +2804,4 @@ const time_zone *locate_native_zone(const std::string &native_tz_name) {
 #endif // TZ_TEST && TIMEZONE_MAPPING
 
 } // namespace date
+// clang-format on

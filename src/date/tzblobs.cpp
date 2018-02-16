@@ -1,4 +1,4 @@
-
+// clang-format off
 #include "tzblobs.h"
 namespace tzblobs {
 using uchar = unsigned char;
@@ -10608,3 +10608,4 @@ std::map<std::string, std::vector<uchar>> tzblobs{
 
 }; // end map
 }
+// clang-format on
