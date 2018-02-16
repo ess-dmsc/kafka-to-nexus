@@ -25,12 +25,12 @@ static nlohmann::json parseOrThrow(std::string const &Command) {
 std::string findBroker(std::string const &Command) {
   nlohmann::json Doc = parseOrThrow(Command);
   try {
-    std::string broker = Doc.at("broker");
-    if (broker.substr(0, 2) == "//") {
-      uri::URI u(broker);
+    std::string BrokerHostPort = Doc.at("broker");
+    if (BrokerHostPort.substr(0, 2) == "//") {
+      uri::URI u(BrokerHostPort);
       return u.host_port;
     } else {
-      return broker;
+      return BrokerHostPort;
     }
   } catch (...) {
     LOG(Sev::Warning, "Can not find field 'broker' in command: {}", Command);
@@ -263,19 +263,19 @@ void CommandHandler::addStreamSourceToWriterModule(
       rapidjson::Document ConfigStream;
       ConfigStream.Parse(StreamSettings.config_stream.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
-      auto err = HDFWriterModule->reopen(
+      auto Err = HDFWriterModule->reopen(
           static_cast<hid_t>(Task->hdf_file.h5file),
           StreamSettings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
-      if (err.is_ERR()) {
+      if (Err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
             StreamSettings.stream_hdf_info.hdf_parent_name);
         continue;
       }
 
-      auto s = Source(StreamSettings.Source, move(HDFWriterModule));
-      s._topic = std::string(StreamSettings.Topic);
-      s.do_process_message = Config.source_do_process_message;
-      Task->add_source(std::move(s));
+      Source ThisSource(StreamSettings.Source, move(HDFWriterModule));
+      ThisSource._topic = std::string(StreamSettings.Topic);
+      ThisSource.do_process_message = Config.source_do_process_message;
+      Task->add_source(std::move(ThisSource));
     }
   }
 }
