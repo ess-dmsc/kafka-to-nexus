@@ -47,12 +47,12 @@ CommandHandler::CommandHandler(MainOpt &Config_, Master *MasterPtr_)
 // POD
 
 struct StreamSettings {
-  StreamHDFInfo stream_hdf_info;
+  StreamHDFInfo StreamHDFInfoObj;
   std::string Topic;
   std::string Module;
   std::string Source;
-  bool run_parallel = false;
-  std::string config_stream;
+  bool RunParallel = false;
+  std::string ConfigStreamJson;
 };
 
 void CommandHandler::handleNew(std::string const &Command) {
@@ -104,7 +104,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   for (auto &stream : StreamHDFInfoList) {
     StreamSettings StreamSettings;
-    StreamSettings.stream_hdf_info = stream;
+    StreamSettings.StreamHDFInfoObj = stream;
 
     json ConfigStream;
     try {
@@ -122,8 +122,8 @@ void CommandHandler::handleNew(std::string const &Command) {
       continue;
     }
 
-    StreamSettings.config_stream = ConfigStreamInner.dump();
-    LOG(Sev::Info, "Adding stream: {}", StreamSettings.config_stream);
+    StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
+    LOG(Sev::Info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
 
     try {
       StreamSettings.Topic = ConfigStreamInner.at("topic");
@@ -154,11 +154,11 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
 
     try {
-      StreamSettings.run_parallel = ConfigStream.at("run_parallel");
+      StreamSettings.RunParallel = ConfigStream.at("run_parallel");
     } catch (out_of_range const &e) {
       // do nothing
     }
-    if (StreamSettings.run_parallel) {
+    if (StreamSettings.RunParallel) {
       LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
     }
 
@@ -244,7 +244,7 @@ void CommandHandler::addStreamSourceToWriterModule(
   bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : stream_settings_list) {
-    if (UseParallelWriter && StreamSettings.run_parallel) {
+    if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
       auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
@@ -261,14 +261,14 @@ void CommandHandler::addStreamSourceToWriterModule(
       }
 
       rapidjson::Document ConfigStream;
-      ConfigStream.Parse(StreamSettings.config_stream.c_str());
+      ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
       auto Err = HDFWriterModule->reopen(
           static_cast<hid_t>(Task->hdf_file.h5file),
-          StreamSettings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
+          StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr, nullptr);
       if (Err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            StreamSettings.stream_hdf_info.hdf_parent_name);
+            StreamSettings.StreamHDFInfoObj.hdf_parent_name);
         continue;
       }
 
