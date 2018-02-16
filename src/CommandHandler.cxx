@@ -63,27 +63,24 @@ void CommandHandler::handleNew(std::string const &Command) {
   json Doc = parseOrThrow(Command);
 
   auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
-
-  string JobID;
   try {
-    JobID = Doc.at("job_id");
+    std::string JobID = Doc.at("job_id");
+    if (JobID.empty()) {
+      LOG(Sev::Warning, "Command not accepted: empty job_id");
+      return;
+    }
+    Task->job_id_init(JobID);
   } catch (out_of_range const &e) {
-  }
-  if (JobID.empty()) {
     LOG(Sev::Warning, "Command not accepted: missing job_id");
     return;
-  } else {
-    Task->job_id_init(JobID);
   }
 
-  string FileName;
   try {
-    FileName = Doc.at("file_attributes").at("file_name");
+    Task->set_hdf_filename(Config.hdf_output_prefix, Doc.at("file_attributes").at("file_name"));
   } catch (out_of_range const &e) {
-    FileName = "a-dummy-name.h5";
+    LOG(Sev::Warning, "Command not accepted: missing file_attributes.file_name");
+    return;
   }
-
-  Task->set_hdf_filename(Config.hdf_output_prefix, FileName);
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
@@ -213,7 +210,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
 
-    LOG(Sev::Info, "Write file with job_id: {}", JobID);
+    LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(Task), Config.StreamerConfiguration));
     if (MasterPtr->status_producer) {
