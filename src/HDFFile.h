@@ -15,7 +15,7 @@ namespace FileWriter {
 // POD
 struct StreamHDFInfo {
   std::string hdf_parent_name;
-  rapidjson::Value const *config_stream;
+  std::string config_stream;
 };
 
 class HDFFile final {

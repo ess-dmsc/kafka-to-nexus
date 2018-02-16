@@ -2,6 +2,7 @@
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "helper.h"
+#include "json.h"
 #include <future>
 #include <nlohmann/json.hpp>
 
@@ -84,9 +85,6 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   fwt->set_hdf_filename(Config.hdf_output_prefix, fname);
 
-  rapidjson::Document d;
-  d.Parse(Command.c_str());
-
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> stream_hdf_info;
@@ -102,70 +100,101 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 
   // Extract some information from the JSON first
-  std::vector<StreamSettings> stream_settings_list;
+  std::vector<StreamSettings> StreamSettingsList;
   LOG(Sev::Info, "Command contains {} streams", stream_hdf_info.size());
   for (auto &stream : stream_hdf_info) {
-    StreamSettings stream_settings;
-    stream_settings.stream_hdf_info = stream;
+    StreamSettings StreamSettings;
+    StreamSettings.stream_hdf_info = stream;
 
-    auto config_stream_value = get_object(*stream.config_stream, "stream");
-    auto attributes = get_object(*stream.config_stream, "attributes");
-    stream_settings.config_stream = json_to_string(*config_stream_value.v);
-    LOG(Sev::Info, "Adding stream: {}", stream_settings.config_stream);
-    auto &config_stream = *config_stream_value.v;
-    auto topic = get_string(&config_stream, "topic");
-    if (!topic) {
+    json ConfigStream;
+    try {
+      ConfigStream = json::parse(stream.config_stream);
+    } catch (nlohmann::detail::parse_error const &e) {
+      LOG(Sev::Warning, "Invalid json: {}", stream.config_stream);
+      continue;
+    }
+
+    json ConfigStreamInner;
+    try {
+      ConfigStreamInner = ConfigStream.at("stream");
+    } catch (out_of_range const &e) {
+      LOG(Sev::Notice, "Missing stream specification");
+      continue;
+    }
+
+    StreamSettings.config_stream = ConfigStreamInner.dump();
+    LOG(Sev::Info, "Adding stream: {}", StreamSettings.config_stream);
+
+    try {
+      StreamSettings.topic = ConfigStreamInner.at("topic");
+    } catch (out_of_range const &e) {
       LOG(Sev::Notice, "Missing topic on stream specification");
       continue;
     }
-    stream_settings.topic = topic.v;
-    auto source = get_string(&config_stream, "source");
-    if (!source) {
+
+    try {
+      StreamSettings.source = ConfigStreamInner.at("source");
+    } catch (out_of_range const &e) {
       LOG(Sev::Notice, "Missing source on stream specification");
       continue;
     }
-    stream_settings.source = source.v;
-    auto module = get_string(&config_stream, "writer_module");
-    if (!module) {
-      module = get_string(&config_stream, "module");
-      if (module) {
+
+    try {
+      try {
+        StreamSettings.module = ConfigStreamInner.at("writer_module");
+      } catch (out_of_range const &e) {
+        // Allow the old key name as well:
+        StreamSettings.module = ConfigStreamInner.at("module");
         LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
                          "\"stream.writer_module\" instead.");
-      } else {
-        LOG(Sev::Notice, "Missing key `writer_module` on stream specification");
-        continue;
       }
+    } catch (out_of_range const &e) {
+      LOG(Sev::Notice, "Missing key `writer_module` on stream specification");
+      continue;
     }
-    stream_settings.module = module.v;
-    bool run_parallel = false;
-    auto run_parallel_cfg = get_bool(&config_stream, "run_parallel");
-    if (run_parallel_cfg) {
-      run_parallel = run_parallel_cfg.v;
-      if (run_parallel) {
-        LOG(Sev::Info, "Run parallel {}", source.v);
-      }
+
+    try {
+      StreamSettings.run_parallel = ConfigStream.at("run_parallel");
+    } catch (out_of_range const &e) {
+      // do nothing
     }
-    stream_settings.run_parallel = run_parallel;
+    if (StreamSettings.run_parallel) {
+      LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.source);
+    }
 
-    stream_settings_list.push_back(stream_settings);
+    StreamSettingsList.push_back(StreamSettings);
 
-    auto module_factory = HDFWriterModuleRegistry::find(module.v);
+    auto module_factory = HDFWriterModuleRegistry::find(StreamSettings.module);
     if (!module_factory) {
-      LOG(Sev::Warning, "Module '{}' is not available", module.v);
+      LOG(Sev::Warning, "Module '{}' is not available", StreamSettings.module);
       continue;
     }
 
     auto hdf_writer_module = module_factory();
     if (!hdf_writer_module) {
-      LOG(Sev::Warning, "Can not create a HDFWriterModule for '{}'", module.v);
+      LOG(Sev::Warning, "Can not create a HDFWriterModule for '{}'",
+          StreamSettings.module);
       continue;
     }
 
     auto root_group = fwt->hdf_file.h5file.root();
-    hdf_writer_module->parse_config(config_stream, nullptr);
+    auto ConfigStreamRapidjson =
+        stringToRapidjsonOrThrow(ConfigStreamInner.dump());
+    hdf_writer_module->parse_config(ConfigStreamRapidjson, nullptr);
     CollectiveQueue *cq = nullptr;
+    rapidjson::Document AttributesDocument;
+    try {
+      AttributesDocument =
+          stringToRapidjsonOrThrow(ConfigStream.at("attributes").dump());
+    } catch (out_of_range const &e) {
+      // it's ok
+    }
+    rapidjson::Value const *AttributesPtr = nullptr;
+    if (AttributesDocument.IsObject()) {
+      AttributesPtr = &AttributesDocument;
+    }
     hdf_writer_module->init_hdf(root_group, stream.hdf_parent_name,
-                                attributes.v, cq);
+                                AttributesPtr, cq);
     hdf_writer_module->close();
     hdf_writer_module.reset();
   }
@@ -173,7 +202,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   fwt->hdf_close();
   fwt->hdf_reopen();
 
-  addStreamSourceToWriterModule(stream_settings_list, fwt);
+  addStreamSourceToWriterModule(StreamSettingsList, fwt);
 
   if (MasterPtr) {
     std::string br = findBroker(Command);
