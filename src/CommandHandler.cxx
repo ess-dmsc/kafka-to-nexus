@@ -62,7 +62,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   using nlohmann::json;
   json Doc = parseOrThrow(Command);
 
-  auto fwt = std::unique_ptr<FileWriterTask>(new FileWriterTask);
+  auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 
   string job_id;
   try {
@@ -73,7 +73,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     LOG(Sev::Warning, "Command not accepted: missing job_id");
     return;
   } else {
-    fwt->job_id_init(job_id);
+    Task->job_id_init(job_id);
   }
 
   string fname;
@@ -83,7 +83,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     fname = "a-dummy-name.h5";
   }
 
-  fwt->set_hdf_filename(Config.hdf_output_prefix, fname);
+  Task->set_hdf_filename(Config.hdf_output_prefix, fname);
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
@@ -91,7 +91,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   {
     json ConfigFile = json::parse("{}");
     json NexusStructure = Doc.at("nexus_structure");
-    int x = fwt->hdf_init(NexusStructure.dump(), ConfigFile.dump(),
+    int x = Task->hdf_init(NexusStructure.dump(), ConfigFile.dump(),
                           StreamHDFInfoList);
     if (x) {
       LOG(Sev::Error, "ERROR hdf init failed, cancel this write command");
@@ -177,7 +177,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       continue;
     }
 
-    auto root_group = fwt->hdf_file.h5file.root();
+    auto RootGroup = Task->hdf_file.h5file.root();
     auto ConfigStreamRapidjson =
         stringToRapidjsonOrThrow(ConfigStreamInner.dump());
     HDFWriterModule->parse_config(ConfigStreamRapidjson, nullptr);
@@ -193,16 +193,16 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (AttributesDocument.IsObject()) {
       AttributesPtr = &AttributesDocument;
     }
-    HDFWriterModule->init_hdf(root_group, stream.hdf_parent_name, AttributesPtr,
+    HDFWriterModule->init_hdf(RootGroup, stream.hdf_parent_name, AttributesPtr,
                               cq);
     HDFWriterModule->close();
     HDFWriterModule.reset();
   }
 
-  fwt->hdf_close();
-  fwt->hdf_reopen();
+  Task->hdf_close();
+  Task->hdf_reopen();
 
-  addStreamSourceToWriterModule(StreamSettingsList, fwt);
+  addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   if (MasterPtr) {
     std::string br = findBroker(Command);
@@ -215,7 +215,7 @@ void CommandHandler::handleNew(std::string const &Command) {
 
     LOG(Sev::Info, "Write file with job_id: {}", job_id);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        br, std::move(fwt), Config.StreamerConfiguration));
+        br, std::move(Task), Config.StreamerConfiguration));
     if (MasterPtr->status_producer) {
       s->report(MasterPtr->status_producer,
                 std::chrono::milliseconds{Config.status_master_interval});
@@ -233,14 +233,14 @@ void CommandHandler::handleNew(std::string const &Command) {
 
     MasterPtr->stream_masters.push_back(std::move(s));
   } else {
-    FileWriterTasks.emplace_back(std::move(fwt));
+    FileWriterTasks.emplace_back(std::move(Task));
   }
   g_N_HANDLED += 1;
 }
 
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &stream_settings_list,
-    std::unique_ptr<FileWriterTask> &fwt) {
+    std::unique_ptr<FileWriterTask> &Task) {
   bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : stream_settings_list) {
@@ -264,7 +264,7 @@ void CommandHandler::addStreamSourceToWriterModule(
       ConfigStream.Parse(StreamSettings.config_stream.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
       auto err = HDFWriterModule->reopen(
-          static_cast<hid_t>(fwt->hdf_file.h5file),
+          static_cast<hid_t>(Task->hdf_file.h5file),
           StreamSettings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
       if (err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
@@ -275,7 +275,7 @@ void CommandHandler::addStreamSourceToWriterModule(
       auto s = Source(StreamSettings.Source, move(HDFWriterModule));
       s._topic = std::string(StreamSettings.Topic);
       s.do_process_message = Config.source_do_process_message;
-      fwt->add_source(std::move(s));
+      Task->add_source(std::move(s));
     }
   }
 }
