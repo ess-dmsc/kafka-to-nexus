@@ -64,26 +64,26 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
 
-  string job_id;
+  string JobID;
   try {
-    job_id = Doc.at("job_id");
+    JobID = Doc.at("job_id");
   } catch (out_of_range const &e) {
   }
-  if (job_id.empty()) {
+  if (JobID.empty()) {
     LOG(Sev::Warning, "Command not accepted: missing job_id");
     return;
   } else {
-    Task->job_id_init(job_id);
+    Task->job_id_init(JobID);
   }
 
-  string fname;
+  string FileName;
   try {
-    fname = Doc.at("file_attributes").at("file_name");
+    FileName = Doc.at("file_attributes").at("file_name");
   } catch (out_of_range const &e) {
-    fname = "a-dummy-name.h5";
+    FileName = "a-dummy-name.h5";
   }
 
-  Task->set_hdf_filename(Config.hdf_output_prefix, fname);
+  Task->set_hdf_filename(Config.hdf_output_prefix, FileName);
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
@@ -213,7 +213,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
 
-    LOG(Sev::Info, "Write file with job_id: {}", job_id);
+    LOG(Sev::Info, "Write file with job_id: {}", JobID);
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(Task), Config.StreamerConfiguration));
     if (MasterPtr->status_producer) {
@@ -239,11 +239,11 @@ void CommandHandler::handleNew(std::string const &Command) {
 }
 
 void CommandHandler::addStreamSourceToWriterModule(
-    const std::vector<StreamSettings> &stream_settings_list,
+    const std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   bool UseParallelWriter = false;
 
-  for (auto const &StreamSettings : stream_settings_list) {
+  for (auto const &StreamSettings : StreamSettingsList) {
     if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
@@ -311,36 +311,36 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     LOG(Sev::Warning, "Can not parse command: {}", Command);
     return;
   }
-  string job_id;
+  string JobID;
   try {
-    job_id = Doc.at("job_id");
+    JobID = Doc.at("job_id");
   } catch (...) {
     LOG(Sev::Warning, "File write stop message lacks job_id");
     return;
   }
-  std::chrono::milliseconds stop_time(0);
+  std::chrono::milliseconds StopTime(0);
   try {
-    stop_time = std::chrono::milliseconds(Doc.at("stop_time"));
+    StopTime = std::chrono::milliseconds(Doc.at("stop_time"));
   } catch (...) {
   }
   int counter{0};
   for (auto &x : MasterPtr->stream_masters) {
-    if (x->getJobId() == job_id) {
-      if (stop_time.count()) {
-        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", job_id,
-            stop_time.count());
-        x->setStopTime(stop_time);
+    if (x->getJobId() == JobID) {
+      if (StopTime.count() != 0) {
+        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
+            StopTime.count());
+        x->setStopTime(StopTime);
       } else {
-        LOG(Sev::Info, "gracefully stop file with id : {}", job_id);
+        LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
         x->stop();
       }
       ++counter;
     }
   }
   if (counter == 0) {
-    LOG(Sev::Warning, "no file with id : {}", job_id);
+    LOG(Sev::Warning, "no file with id : {}", JobID);
   } else if (counter > 1) {
-    LOG(Sev::Warning, "error: multiple files with id : {}", job_id);
+    LOG(Sev::Warning, "error: multiple files with id : {}", JobID);
   }
 }
 
@@ -401,8 +401,8 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
-void CommandHandler::handle(Msg const &msg) {
-  handle({(char *)msg.data(), msg.size()});
+void CommandHandler::handle(Msg const &Msg) {
+  handle({(char *)Msg.data(), Msg.size()});
 }
 
 } // namespace FileWriter
