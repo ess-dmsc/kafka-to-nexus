@@ -261,9 +261,9 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
 
-      rapidjson::Document config_stream;
-      config_stream.Parse(stream_settings.config_stream.c_str());
-      hdf_writer_module->parse_config(config_stream, nullptr);
+      rapidjson::Document ConfigStream;
+      ConfigStream.Parse(stream_settings.config_stream.c_str());
+      hdf_writer_module->parse_config(ConfigStream, nullptr);
       auto err = hdf_writer_module->reopen(
           static_cast<hid_t>(fwt->hdf_file.h5file),
           stream_settings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
