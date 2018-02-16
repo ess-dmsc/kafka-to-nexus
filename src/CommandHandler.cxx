@@ -48,9 +48,9 @@ CommandHandler::CommandHandler(MainOpt &Config_, Master *MasterPtr_)
 
 struct StreamSettings {
   StreamHDFInfo stream_hdf_info;
-  std::string topic;
-  std::string module;
-  std::string source;
+  std::string Topic;
+  std::string Module;
+  std::string Source;
   bool run_parallel = false;
   std::string config_stream;
 };
@@ -126,14 +126,14 @@ void CommandHandler::handleNew(std::string const &Command) {
     LOG(Sev::Info, "Adding stream: {}", StreamSettings.config_stream);
 
     try {
-      StreamSettings.topic = ConfigStreamInner.at("topic");
+      StreamSettings.Topic = ConfigStreamInner.at("topic");
     } catch (out_of_range const &e) {
       LOG(Sev::Notice, "Missing topic on stream specification");
       continue;
     }
 
     try {
-      StreamSettings.source = ConfigStreamInner.at("source");
+      StreamSettings.Source = ConfigStreamInner.at("source");
     } catch (out_of_range const &e) {
       LOG(Sev::Notice, "Missing source on stream specification");
       continue;
@@ -141,10 +141,10 @@ void CommandHandler::handleNew(std::string const &Command) {
 
     try {
       try {
-        StreamSettings.module = ConfigStreamInner.at("writer_module");
+        StreamSettings.Module = ConfigStreamInner.at("writer_module");
       } catch (out_of_range const &e) {
         // Allow the old key name as well:
-        StreamSettings.module = ConfigStreamInner.at("module");
+        StreamSettings.Module = ConfigStreamInner.at("module");
         LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
                          "\"stream.writer_module\" instead.");
       }
@@ -159,21 +159,21 @@ void CommandHandler::handleNew(std::string const &Command) {
       // do nothing
     }
     if (StreamSettings.run_parallel) {
-      LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.source);
+      LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
     }
 
     StreamSettingsList.push_back(StreamSettings);
 
-    auto module_factory = HDFWriterModuleRegistry::find(StreamSettings.module);
+    auto module_factory = HDFWriterModuleRegistry::find(StreamSettings.Module);
     if (!module_factory) {
-      LOG(Sev::Warning, "Module '{}' is not available", StreamSettings.module);
+      LOG(Sev::Warning, "Module '{}' is not available", StreamSettings.Module);
       continue;
     }
 
     auto hdf_writer_module = module_factory();
     if (!hdf_writer_module) {
       LOG(Sev::Warning, "Can not create a HDFWriterModule for '{}'",
-          StreamSettings.module);
+          StreamSettings.Module);
       continue;
     }
 
@@ -246,18 +246,18 @@ void CommandHandler::addStreamSourceToWriterModule(
   for (const auto &stream_settings : stream_settings_list) {
     if (use_parallel_writer && stream_settings.run_parallel) {
     } else {
-      LOG(Sev::Debug, "add Source as non-parallel: {}", stream_settings.topic);
+      LOG(Sev::Debug, "add Source as non-parallel: {}", stream_settings.Topic);
       auto module_factory =
-          HDFWriterModuleRegistry::find(stream_settings.module);
+          HDFWriterModuleRegistry::find(stream_settings.Module);
       if (!module_factory) {
-        LOG(Sev::Info, "Module '{}' is not available", stream_settings.module);
+        LOG(Sev::Info, "Module '{}' is not available", stream_settings.Module);
         continue;
       }
 
       auto hdf_writer_module = module_factory();
       if (!hdf_writer_module) {
         LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'",
-            stream_settings.module);
+            stream_settings.Module);
         continue;
       }
 
@@ -273,8 +273,8 @@ void CommandHandler::addStreamSourceToWriterModule(
         exit(1);
       }
 
-      auto s = Source(stream_settings.source, move(hdf_writer_module));
-      s._topic = std::string(stream_settings.topic);
+      auto s = Source(stream_settings.Source, move(hdf_writer_module));
+      s._topic = std::string(stream_settings.Topic);
       s.do_process_message = Config.source_do_process_message;
       fwt->add_source(std::move(s));
     }
