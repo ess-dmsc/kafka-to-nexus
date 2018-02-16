@@ -164,14 +164,14 @@ void CommandHandler::handleNew(std::string const &Command) {
 
     StreamSettingsList.push_back(StreamSettings);
 
-    auto module_factory = HDFWriterModuleRegistry::find(StreamSettings.Module);
-    if (!module_factory) {
+    auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+    if (!ModuleFactory) {
       LOG(Sev::Warning, "Module '{}' is not available", StreamSettings.Module);
       continue;
     }
 
-    auto hdf_writer_module = module_factory();
-    if (!hdf_writer_module) {
+    auto HDFWriterModule = ModuleFactory();
+    if (!HDFWriterModule) {
       LOG(Sev::Warning, "Can not create a HDFWriterModule for '{}'",
           StreamSettings.Module);
       continue;
@@ -180,7 +180,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     auto root_group = fwt->hdf_file.h5file.root();
     auto ConfigStreamRapidjson =
         stringToRapidjsonOrThrow(ConfigStreamInner.dump());
-    hdf_writer_module->parse_config(ConfigStreamRapidjson, nullptr);
+    HDFWriterModule->parse_config(ConfigStreamRapidjson, nullptr);
     CollectiveQueue *cq = nullptr;
     rapidjson::Document AttributesDocument;
     try {
@@ -193,10 +193,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (AttributesDocument.IsObject()) {
       AttributesPtr = &AttributesDocument;
     }
-    hdf_writer_module->init_hdf(root_group, stream.hdf_parent_name,
-                                AttributesPtr, cq);
-    hdf_writer_module->close();
-    hdf_writer_module.reset();
+    HDFWriterModule->init_hdf(root_group, stream.hdf_parent_name, AttributesPtr,
+                              cq);
+    HDFWriterModule->close();
+    HDFWriterModule.reset();
   }
 
   fwt->hdf_close();
@@ -243,38 +243,37 @@ void CommandHandler::addStreamSourceToWriterModule(
     std::unique_ptr<FileWriterTask> &fwt) {
   bool use_parallel_writer = false;
 
-  for (const auto &stream_settings : stream_settings_list) {
-    if (use_parallel_writer && stream_settings.run_parallel) {
+  for (auto const &StreamSettings : stream_settings_list) {
+    if (use_parallel_writer && StreamSettings.run_parallel) {
     } else {
-      LOG(Sev::Debug, "add Source as non-parallel: {}", stream_settings.Topic);
-      auto module_factory =
-          HDFWriterModuleRegistry::find(stream_settings.Module);
-      if (!module_factory) {
-        LOG(Sev::Info, "Module '{}' is not available", stream_settings.Module);
+      LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
+      auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      if (!ModuleFactory) {
+        LOG(Sev::Info, "Module '{}' is not available", StreamSettings.Module);
         continue;
       }
 
-      auto hdf_writer_module = module_factory();
-      if (!hdf_writer_module) {
+      auto HDFWriterModule = ModuleFactory();
+      if (!HDFWriterModule) {
         LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'",
-            stream_settings.Module);
+            StreamSettings.Module);
         continue;
       }
 
       rapidjson::Document ConfigStream;
-      ConfigStream.Parse(stream_settings.config_stream.c_str());
-      hdf_writer_module->parse_config(ConfigStream, nullptr);
-      auto err = hdf_writer_module->reopen(
+      ConfigStream.Parse(StreamSettings.config_stream.c_str());
+      HDFWriterModule->parse_config(ConfigStream, nullptr);
+      auto err = HDFWriterModule->reopen(
           static_cast<hid_t>(fwt->hdf_file.h5file),
-          stream_settings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
+          StreamSettings.stream_hdf_info.hdf_parent_name, nullptr, nullptr);
       if (err.is_ERR()) {
         LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            stream_settings.stream_hdf_info.hdf_parent_name);
-        exit(1);
+            StreamSettings.stream_hdf_info.hdf_parent_name);
+        continue;
       }
 
-      auto s = Source(stream_settings.Source, move(hdf_writer_module));
-      s._topic = std::string(stream_settings.Topic);
+      auto s = Source(StreamSettings.Source, move(HDFWriterModule));
+      s._topic = std::string(StreamSettings.Topic);
       s.do_process_message = Config.source_do_process_message;
       fwt->add_source(std::move(s));
     }
