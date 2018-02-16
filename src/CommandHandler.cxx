@@ -99,7 +99,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   // Extract some information from the JSON first
   std::vector<StreamSettings> StreamSettingsList;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
-  for (auto &stream : StreamHDFInfoList) {
+  for (auto const &stream : StreamHDFInfoList) {
     StreamSettings StreamSettings;
     StreamSettings.StreamHDFInfoObj = stream;
 
