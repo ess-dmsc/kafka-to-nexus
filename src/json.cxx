@@ -127,3 +127,35 @@ rapidjson::Document merge(rapidjson::Value const &v1,
   }
   return ret;
 }
+
+template <> JsonMaybe<nlohmann::json> get(std::string Key, nlohmann::json const &Json) {
+  auto It = Json.find(Key);
+  if (It != Json.end()) {
+    return JsonMaybe<nlohmann::json>(It.value());
+  }
+  return JsonMaybe<nlohmann::json>();
+}
+
+template <> JsonMaybe<std::string> get(std::string Key, nlohmann::json const &Json) {
+  auto It = Json.find(Key);
+  if (It != Json.end()) {
+    return JsonMaybe<std::string>(It.value().get<std::string>());
+  }
+  return JsonMaybe<std::string>();
+}
+
+template <> JsonMaybe<bool> get(std::string Key, nlohmann::json const &Json) {
+  auto It = Json.find(Key);
+  if (It != Json.end()) {
+    return JsonMaybe<bool>(It.value().get<bool>());
+  }
+  return JsonMaybe<bool>();
+}
+
+template <> nlohmann::json get_or(std::string Key, std::function<nlohmann::json (void)> Else, nlohmann::json const &Json) {
+  auto It = Json.find(Key);
+  if (It != Json.end()) {
+    return It.value();
+  }
+  return Else();
+}

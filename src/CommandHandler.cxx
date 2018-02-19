@@ -100,9 +100,9 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(std::unique_
     }
 
     json ConfigStreamInner;
-    try {
-      ConfigStreamInner = ConfigStream.at("stream");
-    } catch (out_of_range const &e) {
+    if (auto x = get<json>("stream", ConfigStream)) {
+      ConfigStreamInner = x.inner();
+    } else {
       logMissingKey("stream", ConfigStream.dump());
       continue;
     }
@@ -110,16 +110,16 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(std::unique_
     StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
     LOG(Sev::Info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
 
-    try {
-      StreamSettings.Topic = ConfigStreamInner.at("topic");
-    } catch (out_of_range const &e) {
+    if (auto x = get<json>("topic", ConfigStreamInner)) {
+      StreamSettings.Topic = x.inner();
+    } else {
       logMissingKey("topic", ConfigStreamInner.dump());
       continue;
     }
 
-    try {
-      StreamSettings.Source = ConfigStreamInner.at("source");
-    } catch (out_of_range const &e) {
+    if (auto x = get<std::string>("source", ConfigStreamInner)) {
+      StreamSettings.Source = x.inner();
+    } else {
       logMissingKey("source", ConfigStreamInner.dump());
       continue;
     }
@@ -139,10 +139,8 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(std::unique_
       continue;
     }
 
-    try {
-      StreamSettings.RunParallel = ConfigStream.at("run_parallel");
-    } catch (out_of_range const &e) {
-      // do nothing
+    if (auto x = get<bool>("run_parallel", ConfigStream)) {
+      StreamSettings.RunParallel = x.inner();
     }
     if (StreamSettings.RunParallel) {
       LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
