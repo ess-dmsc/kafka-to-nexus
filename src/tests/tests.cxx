@@ -1,4 +1,4 @@
-#include "../KafkaW.h"
+#include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
 #include "helper.h"
 #include "roundtrip.h"
