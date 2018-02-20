@@ -121,7 +121,6 @@ set(kafka_to_nexus_INC
   KafkaW.h
   logger.h
   MainOpt.h
-  Master_handler.h
   Master.h
   Msg.h
   MsgParser.h

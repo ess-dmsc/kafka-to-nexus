@@ -17,8 +17,6 @@ namespace FileWriter {
 using std::string;
 using std::vector;
 
-std::string &CmdMsg_K::str() { return _str; }
-
 Master::Master(MainOpt &config) : config(config), command_listener(config) {
   std::vector<char> buffer;
   buffer.resize(128);
@@ -39,9 +37,9 @@ void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
   command_handler.handle(Msg::owned((char const *)msg->data(), msg->size()));
 }
 
-void Master::handle_command(rapidjson::Document const &cmd) {
+void Master::handle_command(std::string const &command) {
   CommandHandler command_handler(config, this);
-  command_handler.handle(cmd);
+  command_handler.handle(command);
 }
 
 void Master::run() {

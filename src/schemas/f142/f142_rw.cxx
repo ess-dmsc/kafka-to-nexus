@@ -95,6 +95,7 @@ writer_typed_array<DT, FV>::writer_typed_array(
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
         source_name, ncols);
+    return;
   }
   // TODO take from config
   ds->buffer_init(64 * 1024, 0);

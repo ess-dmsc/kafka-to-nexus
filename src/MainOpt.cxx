@@ -69,7 +69,10 @@ int MainOpt::parse_config_json(std::string json) {
     for (auto &e : a.v->GetArray()) {
       Document js_command;
       js_command.CopyFrom(e, js_command.GetAllocator());
-      commands_from_config_file.push_back(std::move(js_command));
+      rapidjson::StringBuffer buf;
+      rapidjson::Writer<StringBuffer> wr(buf);
+      js_command.Accept(wr);
+      commands_from_config_file.push_back({buf.GetString(), buf.GetSize()});
     }
   }
   if (auto o = get_bool(&d, "source_do_process_message")) {
