@@ -37,5 +37,3 @@ template <typename T> JsonMaybe<T> get(std::string Key, nlohmann::json const &Js
   }
   return JsonMaybe<T>();
 }
-
-template <typename T> T get_or(std::string Key, std::function<nlohmann::json()> Else, nlohmann::json const &Json);

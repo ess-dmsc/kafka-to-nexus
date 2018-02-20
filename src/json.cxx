@@ -127,11 +127,3 @@ rapidjson::Document merge(rapidjson::Value const &v1,
   }
   return ret;
 }
-
-template <> nlohmann::json get_or(std::string Key, std::function<nlohmann::json (void)> Else, nlohmann::json const &Json) {
-  auto It = Json.find(Key);
-  if (It != Json.end()) {
-    return It.value();
-  }
-  return Else();
-}
