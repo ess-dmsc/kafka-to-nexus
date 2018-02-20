@@ -22,8 +22,8 @@ class TimeDifferenceFromMessage {
 public:
   using DT = TimeDifferenceFromMessage_DT;
   /// Given a message, returns the sourcename and the time difference
-  /// `dt = tm - t0` (milliseconds) between the message `tm` and the
-  /// time at which `sourcename` would like to start to consume data.
+  /// `dt = tm - t0` (std::chrono::milliseconds) between the message `tm` and
+  /// the time at which `sourcename` would like to start to consume data.
   virtual DT time_difference_from_message(Msg const &msg) = 0;
 };
 

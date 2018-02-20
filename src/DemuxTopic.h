@@ -3,7 +3,6 @@
 #include "Source.h"
 #include "TimeDifferenceFromMessage.h"
 #include "json.h"
-#include "utils.h"
 #include <functional>
 #include <string>
 #include <unordered_map>
@@ -44,7 +43,7 @@ public:
   std::string to_str() const;
   rapidjson::Document
   to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;
-  ESSTimeStamp &stop_time();
+  std::chrono::milliseconds &stop_time();
 
   /// Counts the number of processed message.
   std::atomic<size_t> messages_processed{0};
@@ -61,8 +60,8 @@ public:
 private:
   std::string _topic;
   std::unordered_map<std::string, Source> _sources_map;
-  ESSTimeStamp _stop_time;
   friend void swap(DemuxTopic &x, DemuxTopic &y);
+  std::chrono::milliseconds _stop_time;
 };
 
 } // namespace FileWriter

@@ -1,3 +1,4 @@
+// clang-format off
 #ifndef TZ_PRIVATE_H
 #define TZ_PRIVATE_H
 
@@ -262,3 +263,4 @@ struct zonelet {
 #endif
 
 #endif // TZ_PRIVATE_H
+// clang-format on

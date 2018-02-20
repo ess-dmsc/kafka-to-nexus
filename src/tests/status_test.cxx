@@ -1,257 +1,249 @@
-#include <random>
-#include <thread>
-#include <type_traits>
+#include "Status.h"
 
 #include <gtest/gtest.h>
 
-#include <Status.hpp>
+#include <random>
+#include <thread>
+#include <type_traits>
 
 using StreamMasterErrorCode = FileWriter::Status::StreamMasterErrorCode;
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
 
-constexpr int n_messages{10000};
+constexpr int NumMessages{10000};
+
+double RandomGaussian() {
+  static std::default_random_engine Generator;
+  static std::normal_distribution<double> Normal(0.0, 1.0);
+  return Normal(Generator);
+}
 
 TEST(MessageInfo, zero_initialisation) {
-  MessageInfo mi;
-  ASSERT_DOUBLE_EQ(mi.messages().first, 0.0);
-  ASSERT_DOUBLE_EQ(mi.messages().second, 0.0);
-  ASSERT_DOUBLE_EQ(mi.Mbytes().first, 0.0);
-  ASSERT_DOUBLE_EQ(mi.Mbytes().second, 0.0);
-  ASSERT_DOUBLE_EQ(mi.errors(), 0.0);
+  MessageInfo MsgInfo;
+  ASSERT_DOUBLE_EQ(MsgInfo.getMessages().first, 0.0);
+  ASSERT_DOUBLE_EQ(MsgInfo.getMessages().second, 0.0);
+  ASSERT_DOUBLE_EQ(MsgInfo.getMbytes().first, 0.0);
+  ASSERT_DOUBLE_EQ(MsgInfo.getMbytes().second, 0.0);
+  ASSERT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
 TEST(MessageInfo, add_one_message) {
-  MessageInfo mi;
-  const double new_message_bytes{1024};
-  mi.message(new_message_bytes);
+  MessageInfo MsgInfo;
+  const double NewMessageBytes{1024};
+  MsgInfo.message(NewMessageBytes);
 
-  EXPECT_DOUBLE_EQ(mi.messages().first, 1.0);
-  EXPECT_DOUBLE_EQ(mi.messages().second, 1.0);
-  EXPECT_DOUBLE_EQ(mi.Mbytes().first, new_message_bytes * 1e-6);
-  EXPECT_DOUBLE_EQ(mi.Mbytes().second,
-                   new_message_bytes * new_message_bytes * 1e-12);
-  EXPECT_DOUBLE_EQ(mi.errors(), 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, 1.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, 1.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMbytes().first, NewMessageBytes * 1e-6);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMbytes().second,
+                   NewMessageBytes * NewMessageBytes * 1e-12);
+  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
 TEST(MessageInfo, add_one_error) {
-  MessageInfo mi;
-  mi.error();
+  MessageInfo MsgInfo;
+  MsgInfo.error();
 
-  EXPECT_DOUBLE_EQ(mi.messages().first, 0.0);
-  EXPECT_DOUBLE_EQ(mi.messages().second, 0.0);
-  EXPECT_DOUBLE_EQ(mi.Mbytes().first, 0.0);
-  EXPECT_DOUBLE_EQ(mi.Mbytes().second, 0.0);
-  EXPECT_DOUBLE_EQ(mi.errors(), 1.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMbytes().first, 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMbytes().second, 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 1.0);
 }
 
 TEST(MessageInfo, add_messages) {
-  MessageInfo mi;
-  std::default_random_engine generator;
-  std::normal_distribution<double> normal(0.0, 1.0);
+  MessageInfo MsgInfo;
 
   double accum{0.0}, accum2{0.0};
-  for (int i = 0; i < n_messages; ++i) {
-    auto new_message_bytes = std::fabs(normal(generator));
+  for (int i = 0; i < NumMessages; ++i) {
+    auto new_message_bytes = std::fabs(RandomGaussian());
     accum += new_message_bytes;
     accum2 += new_message_bytes * new_message_bytes;
-    mi.message(new_message_bytes);
+    MsgInfo.message(new_message_bytes);
   }
 
-  EXPECT_DOUBLE_EQ(mi.messages().first, n_messages);
-  EXPECT_DOUBLE_EQ(mi.messages().second, n_messages);
-  EXPECT_NEAR(mi.Mbytes().first, accum * 1e-6, 1e-6);
-  EXPECT_NEAR(mi.Mbytes().second, accum2 * 1e-12, 1e-12);
-  EXPECT_DOUBLE_EQ(mi.errors(), 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, NumMessages);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, NumMessages);
+  EXPECT_NEAR(MsgInfo.getMbytes().first, accum * 1e-6, 1e-6);
+  EXPECT_NEAR(MsgInfo.getMbytes().second, accum2 * 1e-12, 1e-12);
+  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
 TEST(MessageInfo, reduce_message_info_empty) {
 
-  std::vector<MessageInfo> vmi(10);
-  MessageInfo mi;
-  for (auto &mit : vmi) {
-    mi += mit;
+  std::vector<MessageInfo> MsgInfoVec(10);
+  MessageInfo MsgInfo;
+  for (auto &Elem : MsgInfoVec) {
+    MsgInfo += Elem;
   }
 
-  EXPECT_DOUBLE_EQ(mi.messages().first, 0.0);
-  EXPECT_DOUBLE_EQ(mi.messages().second, 0.0);
-  EXPECT_NEAR(mi.Mbytes().first, 0.0, 1e-6);
-  EXPECT_NEAR(mi.Mbytes().second, 0.0, 1e-12);
-  EXPECT_DOUBLE_EQ(mi.errors(), 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, 0.0);
+  EXPECT_NEAR(MsgInfo.getMbytes().first, 0.0, 1e-6);
+  EXPECT_NEAR(MsgInfo.getMbytes().second, 0.0, 1e-12);
+  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
 TEST(MessageInfo, reduce_message_info) {
-  std::default_random_engine generator;
-  std::normal_distribution<double> normal(0.0, 1.0);
+  std::vector<MessageInfo> MsgInfoVec(10);
 
-  std::vector<MessageInfo> vmi(10);
-
-  double tot_msg{0.0}, tot_msg2{0.0};
-  double tot_size{0.0}, tot_size2{0.0};
-  for (auto &mit : vmi) {
+  double TotalMessages{0.0}, TotalMessages2{0.0};
+  double TotalSize{0.0}, TotalSize2{0.0};
+  for (auto &Elem : MsgInfoVec) {
     for (int i = 0; i < 10; ++i) {
-      mit.message(std::fabs(normal(generator)));
+      Elem.message(std::fabs(RandomGaussian()));
     }
-    tot_msg += mit.messages().first;
-    tot_msg2 += mit.messages().second;
-    tot_size += mit.Mbytes().first;
-    tot_size2 += mit.Mbytes().second;
+    TotalMessages += Elem.getMessages().first;
+    TotalMessages2 += Elem.getMessages().second;
+    TotalSize += Elem.getMbytes().first;
+    TotalSize2 += Elem.getMbytes().second;
   }
 
-  MessageInfo mi;
-  for (auto &mit : vmi) {
-    mi += mit;
+  MessageInfo MsgInfo;
+  for (auto &Elem : MsgInfoVec) {
+    MsgInfo += Elem;
   }
 
-  EXPECT_DOUBLE_EQ(mi.messages().first, tot_msg);
-  EXPECT_DOUBLE_EQ(mi.messages().second, tot_msg2);
-  EXPECT_NEAR(mi.Mbytes().first, tot_size, 1e-6);
-  EXPECT_NEAR(mi.Mbytes().second, tot_size2, 1e-12);
-  EXPECT_DOUBLE_EQ(mi.errors(), 0.0);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, TotalMessages);
+  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, TotalMessages2);
+  EXPECT_NEAR(MsgInfo.getMbytes().first, TotalSize, 1e-6);
+  EXPECT_NEAR(MsgInfo.getMbytes().second, TotalSize2, 1e-12);
+  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
 TEST(MessageInfo, copy_message_info) {
-  std::default_random_engine generator;
-  std::normal_distribution<double> normal(0.0, 1.0);
-
-  MessageInfo mi;
-  for (int i = 0; i < n_messages; ++i) {
-    mi.message(std::fabs(normal(generator)));
+  MessageInfo MsgInfo;
+  for (int i = 0; i < NumMessages; ++i) {
+    MsgInfo.message(std::fabs(RandomGaussian()));
   }
   for (int i = 0; i < 10; ++i) {
-    mi.error();
+    MsgInfo.error();
   }
-  MessageInfo new_mi;
-  new_mi = mi;
+  MessageInfo NewMsgInfo;
+  NewMsgInfo = MsgInfo;
 
-  EXPECT_EQ(new_mi.messages().first, mi.messages().first);
-  EXPECT_EQ(new_mi.messages().second, mi.messages().second);
-  EXPECT_EQ(new_mi.Mbytes().first, mi.Mbytes().first);
-  EXPECT_EQ(new_mi.Mbytes().second, mi.Mbytes().second);
-  EXPECT_EQ(new_mi.errors(), mi.errors());
+  EXPECT_EQ(NewMsgInfo.getMessages().first, MsgInfo.getMessages().first);
+  EXPECT_EQ(NewMsgInfo.getMessages().second, MsgInfo.getMessages().second);
+  EXPECT_EQ(NewMsgInfo.getMbytes().first, MsgInfo.getMbytes().first);
+  EXPECT_EQ(NewMsgInfo.getMbytes().second, MsgInfo.getMbytes().second);
+  EXPECT_EQ(NewMsgInfo.getErrors(), MsgInfo.getErrors());
 }
 
 TEST(StreamMasterInfo, initialize_empty) {
-  StreamMasterInfo info;
-  auto &value = info.info();
-  EXPECT_TRUE(value.size() == 0);
+  StreamMasterInfo Info;
+  auto &Value = Info.info();
+  EXPECT_TRUE(Value.size() == 0);
 }
 
-template <class T> using remove_const_t = typename std::remove_const<T>::type;
-
 TEST(StreamMasterInfo, add_one_info) {
-  std::default_random_engine generator;
-  std::normal_distribution<double> normal(0.0, 1.0);
+  StreamMasterInfo Info;
 
-  StreamMasterInfo info;
-
-  // other is required because MessageInfo::add() resets values
-  MessageInfo mi, other;
-  for (int i = 0; i < n_messages; ++i) {
-    auto msg = std::fabs(normal(generator));
-    mi.message(msg);
-    other.message(msg);
+  // other is required because MessageInfo::add() resets s
+  MessageInfo MsgInfo, Other;
+  for (int i = 0; i < NumMessages; ++i) {
+    auto msg = std::fabs(RandomGaussian());
+    MsgInfo.message(msg);
+    Other.message(msg);
   }
   for (int i = 0; i < 10; ++i) {
-    mi.error();
-    other.error();
+    MsgInfo.error();
+    Other.error();
   }
-  info.add("topic", mi);
+  Info.add("topic", MsgInfo);
 
-  auto &value = info.info();
-  EXPECT_TRUE(value.size() == 1);
+  auto &Value = Info.info();
+  EXPECT_TRUE(Value.size() == 1);
 
-  EXPECT_EQ(value["topic"].messages().first, other.messages().first);
-  EXPECT_EQ(value["topic"].messages().second, other.messages().second);
-  EXPECT_EQ(value["topic"].Mbytes().first, other.Mbytes().first);
-  EXPECT_EQ(value["topic"].Mbytes().second, other.Mbytes().second);
-  EXPECT_EQ(value["topic"].errors(), other.errors());
+  EXPECT_EQ(Value["topic"].getMessages().first, Other.getMessages().first);
+  EXPECT_EQ(Value["topic"].getMessages().second, Other.getMessages().second);
+  EXPECT_EQ(Value["topic"].getMbytes().first, Other.getMbytes().first);
+  EXPECT_EQ(Value["topic"].getMbytes().second, Other.getMbytes().second);
+  EXPECT_EQ(Value["topic"].getErrors(), Other.getErrors());
 }
 
 TEST(StreamMasterInfo, add_multiple_infos) {
-  StreamMasterInfo info;
-  const std::vector<std::string> topics{"first", "second", "third"};
+  StreamMasterInfo Info;
+  const std::vector<std::string> Topics{"first", "second", "third"};
 
-  for (auto &t : topics) {
-    MessageInfo mi;
-    info.add(t, mi);
+  for (auto &t : Topics) {
+    MessageInfo MsgInfo;
+    Info.add(t, MsgInfo);
   }
 
-  auto &value = info.info();
-  EXPECT_TRUE(value.size() == topics.size());
+  auto &Value = Info.info();
+  EXPECT_TRUE(Value.size() == Topics.size());
 }
 
 TEST(StreamMasterInfo, add_accumulate_all_infos) {
-  std::default_random_engine generator;
-  std::normal_distribution<double> normal(0.0, 1.0);
+  StreamMasterInfo Info;
+  const std::vector<std::string> Topics{"first", "second", "third"};
 
-  StreamMasterInfo info;
-  const std::vector<std::string> topics{"first", "second", "third"};
+  double TotalMessages{0.0}, TotalMessages2{0.0};
+  double TotalSize{0.0}, TotalSize2{0.0};
+  double TotalErrors{0.0};
 
-  double tot_msg{0.0}, tot_msg2{0.0};
-  double tot_size{0.0}, tot_size2{0.0};
-  double tot_errors{0.0};
-
-  for (auto &t : topics) {
-    MessageInfo mi;
+  for (auto &t : Topics) {
+    MessageInfo MsgInfo;
     for (int i = 0; i < 10; ++i) {
-      auto message_size = std::fabs(normal(generator));
-      mi.message(message_size);
+      auto MessageSize = std::fabs(RandomGaussian());
+      MsgInfo.message(MessageSize);
 
-      tot_msg += 1.0;
-      tot_msg2 += 1.0;
-      tot_size += message_size * 1e-6;
-      tot_size2 += message_size * message_size * 1e-12;
+      TotalMessages += 1.0;
+      TotalMessages2 += 1.0;
+      TotalSize += MessageSize * 1e-6;
+      TotalSize2 += MessageSize * MessageSize * 1e-12;
     }
     for (int i = 0; i < 10; ++i) {
-      mi.error();
-      tot_errors += 1.0;
+      MsgInfo.error();
+      TotalErrors += 1.0;
     }
-    info.add(t, mi);
+    Info.add(t, MsgInfo);
   }
 
-  auto &value = info.total();
-  EXPECT_DOUBLE_EQ(value.messages().first, tot_msg);
-  EXPECT_DOUBLE_EQ(value.messages().second, tot_msg2);
-  EXPECT_NEAR(value.Mbytes().first, tot_size, 1e-6);
-  EXPECT_NEAR(value.Mbytes().second, tot_size2, 1e-12);
-  EXPECT_DOUBLE_EQ(value.errors(), tot_errors);
+  auto &Value = Info.getTotal();
+  EXPECT_DOUBLE_EQ(Value.getMessages().first, TotalMessages);
+  EXPECT_DOUBLE_EQ(Value.getMessages().second, TotalMessages2);
+  EXPECT_NEAR(Value.getMbytes().first, TotalSize, 1e-6);
+  EXPECT_NEAR(Value.getMbytes().second, TotalSize2, 1e-12);
+  EXPECT_DOUBLE_EQ(Value.getErrors(), TotalErrors);
 }
 
 TEST(MessageInfo, compute_derived_quantities) {
-  const std::vector<double> messages_size{1.0, 2.0, 3.0, 4.0, 5.0};
-  MessageInfo mi;
+  const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
+  MessageInfo MsgInfo;
 
-  for (auto &m : messages_size) {
-    mi.message(m * 1e6);
+  for (auto &m : MessagesSize) {
+    MsgInfo.message(m * 1e6);
   }
-  double duration{12.23};
+  std::chrono::milliseconds Duration(1000);
 
-  auto size = FileWriter::Status::message_size(mi);
-  auto frequency = FileWriter::Status::message_frequency(mi, duration);
-  auto throughput = FileWriter::Status::message_throughput(mi, duration);
-  EXPECT_DOUBLE_EQ(size.first, 3.0);
-  EXPECT_NEAR(size.second, 1.5811388300841898, 10e-15); // unbiased
-  EXPECT_NEAR(frequency.first, messages_size.size() / duration, 10e-15);
-  EXPECT_NEAR(throughput.first,
-              std::accumulate(messages_size.begin(), messages_size.end(), 0.0) /
-                  duration,
-              10e-15);
+  auto Size = FileWriter::Status::messageSize(MsgInfo);
+  auto Frequency = FileWriter::Status::messageFrequency(MsgInfo, Duration);
+  auto Throughput = FileWriter::Status::messageThroughput(MsgInfo, Duration);
+  EXPECT_DOUBLE_EQ(Size.first, 3.0);
+  EXPECT_NEAR(Size.second, 1.5811388300841898, 10e-3); // unbiased
+  EXPECT_NEAR(Frequency.first, 1e3 * MessagesSize.size() / Duration.count(),
+              10e-3);
+  EXPECT_NEAR(
+      Throughput.first,
+      1e3 * std::accumulate(MessagesSize.begin(), MessagesSize.end(), 0.0) /
+          Duration.count(),
+      10e-3);
 }
 
 TEST(MessageInfo, derived_quantities_null_divider) {
-  const std::vector<double> messages_size{1.0, 2.0, 3.0, 4.0, 5.0};
-  MessageInfo mi;
+  const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
+  MessageInfo MsgInfo;
 
-  for (auto &m : messages_size) {
-    mi.message(m * 1e6);
+  for (auto &m : MessagesSize) {
+    MsgInfo.message(m * 1e6);
   }
-  double duration{0};
+  std::chrono::milliseconds Duration(0);
 
-  auto frequency = FileWriter::Status::message_frequency(mi, duration);
-  auto throughput = FileWriter::Status::message_throughput(mi, duration);
-  EXPECT_DOUBLE_EQ(0.0, frequency.first);
-  EXPECT_DOUBLE_EQ(0.0, frequency.second);
+  auto Frequency = FileWriter::Status::messageFrequency(MsgInfo, Duration);
+  auto throughput = FileWriter::Status::messageThroughput(MsgInfo, Duration);
+  EXPECT_DOUBLE_EQ(0.0, Frequency.first);
+  EXPECT_DOUBLE_EQ(0.0, Frequency.second);
   EXPECT_DOUBLE_EQ(0.0, throughput.first);
   EXPECT_DOUBLE_EQ(0.0, throughput.second);
 }

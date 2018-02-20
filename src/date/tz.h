@@ -1,3 +1,4 @@
+// clang-format off
 #ifndef TZ_H
 #define TZ_H
 
@@ -1452,3 +1453,4 @@ format(const std::basic_string<CharT, Traits> &fmt,
 } // namespace date
 
 #endif // TZ_H
+// clang-format on

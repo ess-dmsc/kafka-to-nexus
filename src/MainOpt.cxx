@@ -49,15 +49,18 @@ int MainOpt::parse_config_json(std::string json) {
   if (auto o = get_int(&d, "status-master-interval")) {
     status_master_interval = o.v;
   }
-  if (auto o = get_object(d, "kafka")) {
+  if (auto o = get_object(d, "stream-master")) {
     for (auto &m : o.v->GetObject()) {
-      if (m.value.IsString()) {
-        kafka[m.name.GetString()] = m.value.GetString();
-      }
-      if (m.value.IsInt()) {
-        kafka[m.name.GetString()] = fmt::format("{}", m.value.GetInt());
+      if (m.name.GetString() == std::string{"topic-write-interval"}) {
+        topic_write_duration = std::chrono::milliseconds{m.value.GetUint64()};
       }
     }
+  }
+  if (auto o = get_object(d, "streamer")) {
+    StreamerConfiguration.setStreamerOptions(o.v);
+  }
+  if (auto o = get_object(d, "kafka")) {
+    StreamerConfiguration.setRdKafkaOptions(o.v);
   }
   if (auto o = get_string(&d, "hdf-output-prefix")) {
     hdf_output_prefix = o.v;
