@@ -59,17 +59,18 @@ struct StreamSettings {
   std::string ConfigStreamJson;
 };
 
-
 /// \brief Given a task and the `nexus_structure` as json string, set up the
 /// basic HDF file structure.
 
-std::vector<StreamHDFInfo> CommandHandler::initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) const {
+std::vector<StreamHDFInfo>
+CommandHandler::initializeHDF(FileWriterTask &Task,
+                              std::string const &NexusStructureString) const {
   using nlohmann::json;
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
   int x = Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                         StreamHDFInfoList);
+                        StreamHDFInfoList);
   if (x) {
     LOG(Sev::Error, "hdf_init failed, cancel this command");
     throw std::runtime_error("");
@@ -77,12 +78,13 @@ std::vector<StreamHDFInfo> CommandHandler::initializeHDF(FileWriterTask &Task, s
   return StreamHDFInfoList;
 }
 
-
 /// Extracts the information about the stream from the json command and calls
 /// the corresponding HDF writer modules to set u pthe initial HDF structures
 /// in the output file.
 
-static std::vector<StreamSettings> extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task, std::vector<StreamHDFInfo> const & StreamHDFInfoList) {
+static std::vector<StreamSettings> extractStreamInformationFromJson(
+    std::unique_ptr<FileWriterTask> const &Task,
+    std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
   using nlohmann::detail::out_of_range;
   using nlohmann::json;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
@@ -182,7 +184,6 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(std::unique_
   return StreamSettingsList;
 }
 
-
 /// \brief Given a JSON string, create a new file writer job.
 ///
 /// Creates a new `FileWriterTask`, sets information such as file name, job id.
@@ -236,7 +237,8 @@ void CommandHandler::handleNew(std::string const &Command) {
     return;
   }
 
-  std::vector<StreamSettings> StreamSettingsList = extractStreamInformationFromJson(Task, StreamHDFInfoList);
+  std::vector<StreamSettings> StreamSettingsList =
+      extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
   Task->hdf_close();
   Task->hdf_reopen();
@@ -276,7 +278,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
   g_N_HANDLED += 1;
 }
-
 
 /// \brief Given a `FileWriterTask` and a list of `StreamSettings`, it sets up
 /// the HDF writer modules for writing.
@@ -392,7 +393,6 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 }
 
-
 /// Parses the given command and passes it on to a more specific handler.
 
 void CommandHandler::handle(std::string const &Command) {
@@ -448,7 +448,6 @@ void CommandHandler::handle(std::string const &Command) {
   }
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
-
 
 /// Given a `Msg`, call `CommandHandler::handle(std::string const &Command)`.
 
