@@ -22,7 +22,7 @@ public:
   void run();
   void stop();
   void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg);
-  void handle_command(rapidjson::Document const &cmd);
+  void handle_command(std::string const &command);
   std::function<void(void)> cb_on_filewriter_new;
   std::shared_ptr<KafkaW::ProducerTopic> status_producer;
   void statistics();

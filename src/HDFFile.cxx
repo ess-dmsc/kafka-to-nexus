@@ -13,12 +13,16 @@
 #include <unistd.h>
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
+#include <nlohmann/json.hpp>
 
 namespace FileWriter {
 
 using std::array;
 using std::string;
 using std::vector;
+
+using nlohmann::json;
+using json_out_of_range = nlohmann::detail::out_of_range;
 
 HDFFile::HDFFile() {
 // Keep this.  Will be used later to test against different lib versions
@@ -551,7 +555,8 @@ void HDFFile::create_hdf_structures(rapidjson::Value const *value,
           pathstr += "/" + x;
         }
 
-        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value});
+        stream_hdf_info.push_back(
+            StreamHDFInfo{pathstr, json_to_string(*value)});
       }
       if (type.v == "dataset") {
         write_dataset(parent, value);

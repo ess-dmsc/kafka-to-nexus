@@ -3,11 +3,6 @@
 #include "MainOpt.h"
 #include "Master.h"
 #include <memory>
-#include <rapidjson/document.h>
-#include <rapidjson/error/en.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/schema.h>
-#include <rapidjson/stringbuffer.h>
 
 class T_CommandHandler;
 
@@ -15,26 +10,30 @@ namespace FileWriter {
 
 struct StreamSettings;
 
-/// Stub, will perform the JSON parsing and then take appropriate action.
-class CommandHandler : public FileWriterCommandHandler {
+/// Given a `Msg` or a JSON command in form of a `std::string` it will
+/// interpret and execute the command.
+
+class CommandHandler {
 public:
   CommandHandler(MainOpt &config, Master *master);
-  void handle_new(rapidjson::Document const &d);
-  void handle_exit(rapidjson::Document const &d);
-  void handle_file_writer_task_clear_all(rapidjson::Document const &d);
-  void handle_stream_master_stop(rapidjson::Document const &d);
+  void handleNew(std::string const &Command);
+  void handleExit();
+  void handleFileWriterTaskClearAll();
+  void handleStreamMasterStop(std::string const &Command);
   void handle(Msg const &msg);
-  void handle(rapidjson::Document const &cmd);
+  void handle(std::string const &command);
 
 private:
-  void add_stream_source_to_writer_module(
+  void addStreamSourceToWriterModule(
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
-  MainOpt &config;
-  std::unique_ptr<rapidjson::SchemaDocument> schema_command;
-  Master *master = nullptr;
-  std::vector<std::unique_ptr<FileWriterTask>> file_writer_tasks;
+  std::vector<StreamHDFInfo> initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString) const;
+  MainOpt &Config;
+  Master *MasterPtr = nullptr;
+  std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
   friend class ::T_CommandHandler;
 };
+
+std::string findBroker(std::string const &);
 
 } // namespace FileWriter

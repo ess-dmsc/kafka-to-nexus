@@ -1,32 +1,12 @@
 #include "CommandListener.h"
 #include "KafkaW.h"
-#include "Master_handler.h"
-#include "commandproducer.h"
 #include "helper.h"
-#include "kafka_util.h"
 #include "logger.h"
-#include <cassert>
-#include <map>
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
-#include <string>
-#include <vector>
 
 namespace FileWriter {
 
 using std::vector;
 using std::string;
-
-std::unique_ptr<CmdMsg> PollStatus::is_CmdMsg() {
-  if (state == 1) {
-    std::unique_ptr<CmdMsg> ret((CmdMsg *)data);
-    data = nullptr;
-    return ret;
-  }
-  return nullptr;
-}
 
 CommandListener::CommandListener(MainOpt &config) : config(config) {}
 

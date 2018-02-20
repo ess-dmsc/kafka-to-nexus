@@ -32,10 +32,8 @@ int64_t produce_command_from_string(uri::URI const &uri,
   opt.address = uri.host_port;
   auto p = std::make_shared<KafkaW::Producer>(opt);
   std::promise<int64_t> offset;
-  std::function<void(rd_kafka_message_t const *msg)> cb =
-      [&offset](rd_kafka_message_t const *msg) {
-        offset.set_value(msg->offset);
-      };
+  std::function<void(rd_kafka_message_t const *msg)> cb = [&offset](
+      rd_kafka_message_t const *msg) { offset.set_value(msg->offset); };
   p->on_delivery_ok = cb;
   KafkaW::Producer::Topic pt(p, uri.topic);
   pt.do_copy();

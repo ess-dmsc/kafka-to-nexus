@@ -145,13 +145,13 @@ public:
 
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8);
+    ASSERT_GT(fname.v.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
     main_opt.hdf_output_prefix = "";
 
     // Verification
@@ -343,13 +343,13 @@ public:
 
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8);
+    ASSERT_GT(fname.v.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
 
     // Verification
     auto file =
@@ -384,13 +384,13 @@ public:
                    json_command.GetAllocator());
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8);
+    ASSERT_GT(fname.v.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
 
     // Verification
     auto file =
@@ -401,7 +401,7 @@ public:
       ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::INTEGER);
       uint32_t v = 0;
       attr.read(v);
-      ASSERT_EQ(v, 42);
+      ASSERT_EQ(v, 42u);
     }
     {
       auto attr = root_group.attributes["some_top_level_string"];
@@ -506,7 +506,6 @@ public:
         "n_events_per_message": 16,
         "n_msgs_per_source": 32,
         "n_sources": 1,
-        "n_msgs_per_batch": 1,
         "n_mpi_workers": 1,
         "feed_msgs_seconds": 30,
         "filename": "tmp-ev42.h5",
@@ -529,39 +528,33 @@ public:
     main_opt.init();
 
     if (auto x =
-            get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
+            get_uint(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
       LOG(Sev::Debug, "do_verification: {}", do_verification);
     }
 
-    int n_msgs_per_source = 1;
+    size_t n_msgs_per_source = 1;
     if (auto x =
-            get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
+            get_uint(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
       LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
       n_msgs_per_source = x.v;
     }
 
-    int n_sources = 1;
-    if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
+    size_t n_sources = 1;
+    if (auto x = get_uint(&main_opt.config_file, "unit_test.n_sources")) {
       LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
       n_sources = x.v;
     }
 
-    int n_events_per_message = 1;
+    size_t n_events_per_message = 1;
     if (auto x =
-            get_int(&main_opt.config_file, "unit_test.n_events_per_message")) {
+            get_uint(&main_opt.config_file, "unit_test.n_events_per_message")) {
       LOG(Sev::Debug, "unit_test.n_events_per_message: {}", x.v);
       n_events_per_message = x.v;
     }
 
-    int n_msgs_per_batch = 1;
-    if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
-      LOG(Sev::Debug, "unit_test.n_msgs_per_batch: {}", x.v);
-      n_msgs_per_batch = x.v;
-    }
-
-    int feed_msgs_times = 1;
-    if (auto x = get_int(&main_opt.config_file, "unit_test.feed_msgs_times")) {
+    size_t feed_msgs_times = 1;
+    if (auto x = get_uint(&main_opt.config_file, "unit_test.feed_msgs_times")) {
       LOG(Sev::Info, "unit_test.feed_msgs_times: {}", x.v);
       feed_msgs_times = x.v;
     }
@@ -581,7 +574,7 @@ public:
 
     auto &jm = main_opt.jm;
     vector<SourceDataGen> sources;
-    for (int i1 = 0; i1 < n_sources; ++i1) {
+    for (size_t i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
       auto &s = sources.back();
       // Currently, we assume only one topic!
@@ -592,7 +585,7 @@ public:
     }
     if (false) {
       vector<std::thread> threads_pregen;
-      for (int i1 = 0; i1 < n_sources; ++i1) {
+      for (size_t i1 = 0; i1 < n_sources; ++i1) {
         auto &s = sources.back();
         LOG(Sev::Debug, "push pregen {}", i1);
         threads_pregen.push_back(
@@ -722,9 +715,9 @@ public:
       unlink(string(fname).c_str());
 
       ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
 
-      auto &fwt = ch.file_writer_tasks.at(0);
+      auto &fwt = ch.FileWriterTasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
       LOG(Sev::Debug, "processing...");
@@ -733,7 +726,7 @@ public:
       bool do_run = true;
       auto feed_start = CLK::now();
       auto t1 = CLK::now();
-      for (int i_feed = 0; do_run and i_feed < feed_msgs_times; ++i_feed) {
+      for (size_t i_feed = 0; do_run and i_feed < feed_msgs_times; ++i_feed) {
         size_t i_source = 0;
         for (auto &source : sources) {
           if (not do_run) {
@@ -783,7 +776,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, json_command);
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -796,8 +789,6 @@ public:
     }
 
     size_t minimum_expected_entries_in_the_index = 1;
-
-    herr_t err;
 
     auto file =
         hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
@@ -924,8 +915,7 @@ public:
       "unit_test": {
         "f142_array_size": 7,
         "n_msgs_per_source": 43,
-        "n_sources": 1,
-        "n_msgs_per_batch": 1
+        "n_sources": 1
       }
     })"");
 
@@ -946,12 +936,6 @@ public:
     if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
       LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
       n_sources = int(x.v);
-    }
-
-    int n_msgs_per_batch = 1;
-    if (auto x = get_int(&main_opt.config_file, "unit_test.n_msgs_per_batch")) {
-      LOG(Sev::Debug, "unit_test.n_msgs_per_batch: {}", x.v);
-      n_msgs_per_batch = int(x.v);
     }
 
     size_t array_size = 0;
@@ -1107,7 +1091,7 @@ public:
 
     auto &d = json_command;
     auto fname = get_string(&d, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8);
+    ASSERT_GT(fname.v.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
@@ -1123,9 +1107,9 @@ public:
       unlink(string(fname).c_str());
 
       ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)1);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
 
-      auto &fwt = ch.file_writer_tasks.at(0);
+      auto &fwt = ch.FileWriterTasks.at(0);
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
       LOG(Sev::Debug, "processing...");
@@ -1151,7 +1135,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, json_command);
-      ASSERT_EQ(ch.file_writer_tasks.size(), (size_t)0);
+      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());

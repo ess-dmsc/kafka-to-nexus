@@ -20,8 +20,8 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 #endif
 
-#include<chrono>
 #include "rapidjson/document.h"
+#include <chrono>
 
 namespace FileWriter {
 namespace Status {
