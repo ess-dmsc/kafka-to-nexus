@@ -13,12 +13,12 @@ CommandListener::CommandListener(MainOpt &config) : config(config) {}
 CommandListener::~CommandListener() {}
 
 void CommandListener::start() {
-  KafkaW::BrokerOpt opt;
-  opt.poll_timeout_ms = 500;
-  opt.address = config.command_broker_uri.host_port;
-  opt.conf_strings["group.id"] =
+  KafkaW::BrokerSettings BrokerSettings;
+  BrokerSettings.poll_timeout_ms = 500;
+  BrokerSettings.address = config.command_broker_uri.host_port;
+  BrokerSettings.conf_strings["group.id"] =
       fmt::format("kafka-to-nexus.CommandListener--pid-{}", getpid_wrapper());
-  consumer.reset(new KafkaW::Consumer(opt));
+  consumer.reset(new KafkaW::Consumer(BrokerSettings));
   consumer->on_rebalance_assign = config.on_rebalance_assign;
   consumer->add_topic(config.command_broker_uri.topic);
   if (config.start_at_command_offset >= 0) {

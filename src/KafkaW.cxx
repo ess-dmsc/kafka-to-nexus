@@ -25,46 +25,6 @@ using std::move;
 
 static_assert(RD_KAFKA_RESP_ERR_NO_ERROR == 0, "We rely on NO_ERROR == 0");
 
-BrokerOpt::BrokerOpt() {
-  conf_ints = {
-      {"metadata.request.timeout.ms", 2 * 1000},
-      {"socket.timeout.ms", 2 * 1000},
-      {"message.max.bytes", 23 * 1024 * 1024},
-      {"fetch.message.max.bytes", 23 * 1024 * 1024},
-      {"receive.message.max.bytes", 23 * 1024 * 1024},
-      {"queue.buffering.max.messages", 100 * 1000},
-      {"queue.buffering.max.ms", 50},
-      {"queue.buffering.max.kbytes", 800 * 1024},
-      {"batch.num.messages", 100 * 1000},
-      {"coordinator.query.interval.ms", 2 * 1000},
-      {"heartbeat.interval.ms", 500},
-      {"statistics.interval.ms", 600 * 1000},
-  };
-  conf_strings = {
-      {"api.version.request", "true"},
-  };
-}
-
-void BrokerOpt::apply(rd_kafka_conf_t *conf) {
-  std::vector<char> errstr(256);
-  for (auto &c : conf_ints) {
-    auto s1 = fmt::format("{:d}", c.second);
-    LOG(Sev::Debug, "set config: {} = {}", c.first, s1);
-    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(), s1.c_str(),
-                                              errstr.data(), errstr.size())) {
-      LOG(Sev::Warning, "error setting config: {} = {}", c.first, s1);
-    }
-  }
-  for (auto &c : conf_strings) {
-    LOG(Sev::Debug, "set config: {} = {}", c.first, c.second);
-    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(),
-                                              c.second.c_str(), errstr.data(),
-                                              errstr.size())) {
-      LOG(Sev::Warning, "error setting config: {} = {}", c.first, c.second);
-    }
-  }
-}
-
 TopicOpt::TopicOpt() {}
 
 void TopicOpt::apply(rd_kafka_topic_conf_t *conf) {
@@ -175,7 +135,8 @@ std::unique_ptr<Msg> PollStatus::is_Msg() {
   return nullptr;
 }
 
-Consumer::Consumer(BrokerOpt opt) : opt(opt) {
+Consumer::Consumer(BrokerSettings BrokerSettings)
+    : ConsumerBrokerSettings(BrokerSettings) {
   init();
   id = g_kafka_instance_count++;
 }
@@ -228,8 +189,8 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
   }
   LOG(ll, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
           "errorstring: {}  message: {}",
-      self->id, self->opt.address, err_i, rd_kafka_err2name(err),
-      rd_kafka_err2str(err), msg);
+      self->id, self->ConsumerBrokerSettings.address, err_i,
+      rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
 int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
@@ -294,7 +255,7 @@ void Consumer::init() {
   char errstr[errstr_N];
 
   auto conf = rd_kafka_conf_new();
-  opt.apply(conf);
+  ConsumerBrokerSettings.apply(conf);
 
   rd_kafka_conf_set_log_cb(conf, Consumer::cb_log);
   rd_kafka_conf_set_error_cb(conf, Consumer::cb_error);
@@ -312,8 +273,8 @@ void Consumer::init() {
   rd_kafka_set_log_level(rk, 4);
 
   LOG(Sev::Info, "New Kafka consumer {} with brokers: {}", rd_kafka_name(rk),
-      opt.address.c_str());
-  if (rd_kafka_brokers_add(rk, opt.address.c_str()) == 0) {
+      ConsumerBrokerSettings.address.c_str());
+  if (rd_kafka_brokers_add(rk, ConsumerBrokerSettings.address.c_str()) == 0) {
     LOG(Sev::Error, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }
@@ -357,7 +318,7 @@ PollStatus Consumer::poll() {
 
   auto ret = PollStatus::Empty();
 
-  auto msg = rd_kafka_consumer_poll(rk, opt.poll_timeout_ms);
+  auto msg = rd_kafka_consumer_poll(rk, ConsumerBrokerSettings.poll_timeout_ms);
 
   if (msg == nullptr) {
     return PollStatus::Empty();
@@ -430,8 +391,8 @@ void Producer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
   }
   LOG(ll, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
           "errorstring: {}  message: {}",
-      self->id, self->opt.address, err_i, rd_kafka_err2name(err),
-      rd_kafka_err2str(err), msg);
+      self->id, self->ProducerBrokerSettings.address, err_i,
+      rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
 int Producer::cb_stats(rd_kafka_t *rk, char *json, size_t json_len,
@@ -490,7 +451,8 @@ Producer::~Producer() {
   }
 }
 
-Producer::Producer(BrokerOpt opt) : opt(opt) {
+Producer::Producer(BrokerSettings ProducerBrokerSettings)
+    : ProducerBrokerSettings(ProducerBrokerSettings) {
   id = g_kafka_instance_count++;
 
   // librdkafka API sometimes wants to write errors into a buffer:
@@ -508,7 +470,7 @@ Producer::Producer(BrokerOpt opt) : opt(opt) {
   rd_kafka_conf_set_opaque(conf, this);
   LOG(Sev::Debug, "Producer opaque: {}", (void *)this);
 
-  opt.apply(conf);
+  ProducerBrokerSettings.apply(conf);
 
   rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr.data(), errstr.size());
   if (!rk) {
@@ -519,8 +481,8 @@ Producer::Producer(BrokerOpt opt) : opt(opt) {
   rd_kafka_set_log_level(rk, 4);
 
   LOG(Sev::Info, "New Kafka {} with brokers: {}", rd_kafka_name(rk),
-      opt.address.c_str());
-  if (rd_kafka_brokers_add(rk, opt.address.c_str()) == 0) {
+      ProducerBrokerSettings.address.c_str());
+  if (rd_kafka_brokers_add(rk, ProducerBrokerSettings.address.c_str()) == 0) {
     LOG(Sev::Error, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }
@@ -532,15 +494,16 @@ Producer::Producer(Producer &&x) {
   swap(on_delivery_ok, x.on_delivery_ok);
   swap(on_delivery_failed, x.on_delivery_failed);
   swap(on_error, x.on_error);
-  swap(opt, x.opt);
+  swap(ProducerBrokerSettings, x.ProducerBrokerSettings);
   swap(id, x.id);
 }
 
 void Producer::poll() {
-  int events_handled = rd_kafka_poll(rk, opt.poll_timeout_ms);
+  int events_handled =
+      rd_kafka_poll(rk, ProducerBrokerSettings.poll_timeout_ms);
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
-      opt.address, events_handled, outq());
+      ProducerBrokerSettings.address, events_handled, outq());
   if (log_level >= 8) {
     rd_kafka_dump(stdout, rk);
   }
@@ -550,7 +513,8 @@ void Producer::poll() {
 
 void Producer::poll_while_outq() {
   while (outq() > 0) {
-    stats.poll_served += rd_kafka_poll(rk, opt.poll_timeout_ms);
+    stats.poll_served +=
+        rd_kafka_poll(rk, ProducerBrokerSettings.poll_timeout_ms);
   }
 }
 

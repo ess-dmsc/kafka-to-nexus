@@ -21,7 +21,7 @@ struct MainOpt {
   bool help = false;
   uint64_t teamid = 0;
   URI broker{"localhost:9092/commands"};
-  KafkaW::BrokerOpt broker_opt;
+  KafkaW::BrokerSettings BrokerSettings;
   std::string cmd;
 };
 
@@ -179,15 +179,15 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  opt.broker_opt.address = opt.broker.host_port;
-  auto producer = std::make_shared<KafkaW::Producer>(opt.broker_opt);
+  opt.BrokerSettings.address = opt.broker.host_port;
+  auto producer = std::make_shared<KafkaW::Producer>(opt.BrokerSettings);
   KafkaW::Producer::Topic pt(producer, opt.broker.topic);
   if (opt.cmd == "new") {
-    auto m1 = make_command(opt.broker_opt.address, opt.teamid);
+    auto m1 = make_command(opt.BrokerSettings.address, opt.teamid);
     LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd == "exit") {
-    auto m1 = make_command_exit(opt.broker_opt.address, opt.teamid);
+    auto m1 = make_command_exit(opt.BrokerSettings.address, opt.teamid);
     LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "file:") {
@@ -204,10 +204,10 @@ int main(int argc, char **argv) {
       if (result) {
         stop_time = std::chrono::milliseconds{result};
       }
-      m1 = make_command_stop(opt.broker_opt.address, input.substr(0, n),
+      m1 = make_command_stop(opt.BrokerSettings.address, input.substr(0, n),
                              stop_time);
     } else {
-      m1 = make_command_stop(opt.broker_opt.address, input);
+      m1 = make_command_stop(opt.BrokerSettings.address, input);
     }
     LOG(Sev::Debug, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);

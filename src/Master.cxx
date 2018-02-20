@@ -46,9 +46,9 @@ void Master::run() {
   if (config.do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
         config.kafka_status_uri.host_port, config.kafka_status_uri.topic);
-    KafkaW::BrokerOpt bopt;
-    bopt.address = config.kafka_status_uri.host_port;
-    auto producer = std::make_shared<KafkaW::Producer>(bopt);
+    KafkaW::BrokerSettings BrokerSettings;
+    BrokerSettings.address = config.kafka_status_uri.host_port;
+    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     status_producer = std::make_shared<KafkaW::ProducerTopic>(
         producer, config.kafka_status_uri.topic);
   }

@@ -1,4 +1,6 @@
 #pragma once
+
+#include "BrokerSettings.h"
 #include "logger.h"
 #include <atomic>
 #include <functional>
@@ -18,17 +20,6 @@ using uchar = unsigned char;
 #endif
 
 namespace KafkaW {
-
-/// POD to collect the options
-class BrokerOpt {
-public:
-  BrokerOpt();
-  void apply(rd_kafka_conf_t *conf);
-  std::string address;
-  int poll_timeout_ms = 100;
-  std::map<std::string, int> conf_ints;
-  std::map<std::string, std::string> conf_strings;
-};
 
 class TopicOpt {
 public:
@@ -76,7 +67,7 @@ class Inspect;
 
 class Consumer {
 public:
-  Consumer(BrokerOpt opt);
+  Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
   ~Consumer();
@@ -91,7 +82,7 @@ public:
   rd_kafka_t *rk = nullptr;
 
 private:
-  BrokerOpt opt;
+  BrokerSettings ConsumerBrokerSettings;
   static void cb_log(rd_kafka_t const *rk, int level, char const *fac,
                      char const *buf);
   static int cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
@@ -136,7 +127,7 @@ public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
   typedef ProducerStats Stats;
-  Producer(BrokerOpt opt);
+  Producer(BrokerSettings ProducerBrokerSettings_);
   Producer(Producer const &) = delete;
   Producer(Producer &&x);
   ~Producer();
@@ -160,7 +151,7 @@ public:
   std::function<void(rd_kafka_message_t const *msg)> on_delivery_failed;
   std::function<void(Producer *, rd_kafka_resp_err_t)> on_error;
   // Currently it's nice to have acces to these two for statistics:
-  BrokerOpt opt;
+  BrokerSettings ProducerBrokerSettings;
   rd_kafka_t *rk = nullptr;
   std::atomic<uint64_t> total_produced_{0};
   Stats stats;
