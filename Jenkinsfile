@@ -125,6 +125,7 @@ def get_pipeline(image_key)
                         """
                         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
                         sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${test_output} ."
+                        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/coverage ."
                         junit "${test_output}"
 
                         step([
