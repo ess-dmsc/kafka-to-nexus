@@ -26,7 +26,7 @@ add_gtest_to_target(${tgt})
 
 enable_coverage(${tgt})
 
-set(gcovr_excl_opts "-e .*Test.cpp -e .*gtest.*.h -e .*_generated.h -e .*CLI11.hpp")
+set(gcovr_excl_opts "-e .*gtest.*.h -e .*/tests.*")
 create_coverage_targets(
   coverage
   ${tgt}
