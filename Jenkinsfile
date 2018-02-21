@@ -4,7 +4,7 @@ test_and_coverage_os = "centos-gcc6"
 
 images = [
     'centos-gcc6': [
-        'name': 'essdmscdm/centos7-gcc6-build-node:2.0.0',
+        'name': 'essdmscdm/centos7-gcc6-build-node:2.1.0',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
     ],
     'fedora': [
