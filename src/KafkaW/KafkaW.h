@@ -1,6 +1,7 @@
 #pragma once
 
 #include "BrokerSettings.h"
+#include "Msg.h"
 #include "logger.h"
 #include <atomic>
 #include <functional>
@@ -9,11 +10,6 @@
 #include <memory>
 #include <string>
 #include <vector>
-
-namespace KafkaW {
-// Want to expose this typedef also for users of this namespace
-using uchar = unsigned char;
-}
 
 #if HAVE_KAFKAW_INSPECT
 #include "KafkaW-inspect.h"
@@ -27,17 +23,6 @@ public:
   void apply(rd_kafka_topic_conf_t *conf);
   std::map<std::string, int> conf_ints;
   std::map<std::string, std::string> conf_strings;
-};
-
-class Msg {
-public:
-  ~Msg();
-  uchar *data();
-  uint32_t size();
-  void *kmsg;
-  char const *topic_name();
-  int32_t offset();
-  int32_t partition();
 };
 
 class PollStatus {
