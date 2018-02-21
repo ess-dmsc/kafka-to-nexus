@@ -89,6 +89,8 @@ set(kafka_to_nexus_SRC
   KafkaW/BrokerSettings.cxx
   KafkaW/KafkaW.cxx
   KafkaW/Msg.cxx
+  KafkaW/Consumer.cxx
+  KafkaW/Producer.cxx
   helper.cxx
   logger.cxx
   json.cxx
@@ -123,6 +125,8 @@ set(kafka_to_nexus_INC
   KafkaW/BrokerSettings.h
   KafkaW/KafkaW.h
   KafkaW/Msg.h
+  KafkaW/Consumer.h
+  KafkaW/Producer.h
   logger.h
   MainOpt.h
   Master.h
