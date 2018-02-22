@@ -56,7 +56,7 @@ def get_pipeline(image_key)
             \""""
 
             if (image_key == clangformat_os) {
-            stage('${image_key} Check Formatting') {
+            stage('Check Formatting') {
                 sh """docker exec ${container_name(image_key)} sh -c \"
                     clang-format -version
                     cd ${project}
@@ -66,14 +66,14 @@ def get_pipeline(image_key)
             }
             } else {
 
-                stage('${image_key} Checkout Schemas') {
+                stage('Checkout Schemas') {
                     def checkout_script = """
                         git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
                     """
                     sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
                 }
 
-                stage('${image_key} Get Dependencies') {
+                stage('Get Dependencies') {
                     def conan_remote = "ess-dmsc-local"
                     def dependencies_script = """
                         mkdir build
@@ -87,7 +87,7 @@ def get_pipeline(image_key)
                     sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
                 }
 
-                stage('${image_key} Configure') {
+                stage('Configure') {
                     def coverage_on = ""
                     if (image_key == test_and_coverage_os) {
                         coverage_on = "-DCOV=1"
@@ -101,7 +101,7 @@ def get_pipeline(image_key)
                     sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
                 }
 
-                stage('${image_key} Build') {
+                stage('Build') {
                   def build_script = """
                       cd build
                       . ./activate_run.sh
@@ -110,7 +110,7 @@ def get_pipeline(image_key)
                   sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
                 }
 
-                stage('${image_key} Test') {
+                stage('Test') {
                     def test_output = "TestResults.xml"
                     def test_script = """
                         cd build
@@ -160,7 +160,7 @@ def get_pipeline(image_key)
             }
 
             if (image_key == 'centos-gcc6') {
-                stage('${image_key} Archive') {
+                stage('Archive') {
                     def archive_output = "file-writer.tar.gz"
                     def archive_script = """
                         cd build
