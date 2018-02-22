@@ -136,7 +136,7 @@ def get_pipeline(image_key)
 
                         print(scm_vars.GIT_COMMIT)
                         withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
-                            sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
+                            sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT} -p ${project}"
                         }
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
                         sh "python lcov_cobertura.py build/coverage.info -o build/coverage.xml"
