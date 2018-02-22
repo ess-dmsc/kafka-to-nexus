@@ -40,6 +40,15 @@ def Object get_container(image_key) {
         --env https_proxy=${env.https_proxy} \
         --env local_conan_server=${env.local_conan_server} \
           ")
+
+    def custom_sh = images[image_key]['sh']
+    def chown_script = """
+                    chown -R jenkins.jenkins /home/jenkins/${project}
+                    """
+    sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
+    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${chown_script}\""
+
+
     return container
 }
 
@@ -181,13 +190,6 @@ def get_pipeline(image_key) {
 
             try {
                 def container = get_container(image_key)
-                def custom_sh = images[image_key]['sh']
-
-                // Copy sources to container and change owner and group.
-                sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
-                sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
-                        chown -R jenkins.jenkins /home/jenkins/${project}
-            \""""
 
                 if (image_key == clangformat_os) {
                     docker_formatting(image_key)
