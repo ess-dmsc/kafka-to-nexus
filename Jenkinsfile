@@ -137,7 +137,9 @@ def get_pipeline(image_key)
                         sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
                         junit "build/${test_output}"
 
-                        sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info"
+                        def env = System.getenv()
+                        String token = env['kafka-to-nexus-codecov-token']
+                        sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${token}"
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
                         sh "python lcov_cobertura.py build/coverage.info -o build/coverage.xml"
 
