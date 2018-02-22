@@ -45,7 +45,7 @@ def Object get_container(image_key) {
     def chown_script = """
                     chown -R jenkins.jenkins /home/jenkins/${project}
                     """
-    sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
+    sh "cd .. && docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
     sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${chown_script}\""
 
     return container
@@ -185,37 +185,35 @@ def docker_archive(image_key) {
 
 def get_pipeline(image_key) {
     return {
-        dir("${project}") {
-            stage("${image_key}") {
+        stage("${image_key}") {
 
-                try {
-                    def container = get_container(image_key)
+            try {
+                def container = get_container(image_key)
 
-                    if (image_key == clangformat_os) {
-                        docker_formatting(image_key)
-                    } else {
-                        docker_dependencies(image_key)
-                        docker_cmake(image_key)
-                        docker_build(image_key)
-                        docker_test(image_key)
+                if (image_key == clangformat_os) {
+                    docker_formatting(image_key)
+                } else {
+                    docker_dependencies(image_key)
+                    docker_cmake(image_key)
+                    docker_build(image_key)
+                    docker_test(image_key)
 
-                        // Copy and publish test results (only from one container).
-                        if (image_key == test_and_coverage_os) {
-                            docker_coverage(image_key)
-                        }
-
+                    // Copy and publish test results (only from one container).
+                    if (image_key == test_and_coverage_os) {
+                        docker_coverage(image_key)
                     }
 
-                    if (image_key == 'centos7-gcc6') {
-                        docker_archive(image_key)
-                    }
-
-                } catch (e) {
-                    failure_function(e, "Unknown build failure for ${image_key}")
-                } finally {
-                    sh "docker stop ${container_name(image_key)}"
-                    sh "docker rm -f ${container_name(image_key)}"
                 }
+
+                if (image_key == 'centos7-gcc6') {
+                    docker_archive(image_key)
+                }
+
+            } catch (e) {
+                failure_function(e, "Unknown build failure for ${image_key}")
+            } finally {
+                sh "docker stop ${container_name(image_key)}"
+                sh "docker rm -f ${container_name(image_key)}"
             }
         }
     }
@@ -224,23 +222,25 @@ def get_pipeline(image_key) {
 node('docker') {
     cleanWs()
 
-    stage('Checkout') {
-        dir("${project}") {
+    dir("${project}") {
+
+        stage('Checkout') {
             try {
                 scm_vars = checkout scm
             } catch (e) {
                 failure_function(e, 'Checkout failed')
             }
         }
+
+        def builders = [:]
+        for (x in images.keySet()) {
+            def image_key = x
+            builders[image_key] = get_pipeline(image_key)
+        }
+
+        parallel builders
     }
 
-    def builders = [:]
-    for (x in images.keySet()) {
-        def image_key = x
-        builders[image_key] = get_pipeline(image_key)
-    }
-    parallel builders
-
-    // Delete workspace when build is done
+// Delete workspace when build is done
     cleanWs()
 }
