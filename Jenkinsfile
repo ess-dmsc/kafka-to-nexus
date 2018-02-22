@@ -138,8 +138,7 @@ def get_pipeline(image_key)
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
                         sh "python lcov_cobertura.py coverage.info"
 
-                        String fileContents = new File('coverage.xml').text
-                        print(fileContents)
+                        sh "head coverage.xml"
 
                         step([
                             $class: 'CoberturaPublisher',
