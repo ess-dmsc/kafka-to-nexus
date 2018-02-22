@@ -44,6 +44,7 @@ def Object get_container(image_key) {
 }
 
 def docker_dependencies(image_key) {
+    def custom_sh = images[image_key]['sh']
     def conan_remote = "ess-dmsc-local"
     def dependencies_script = """
                         mkdir build
