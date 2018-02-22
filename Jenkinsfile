@@ -66,13 +66,6 @@ def get_pipeline(image_key)
             }
             } else {
 
-                stage('Checkout Schemas') {
-                    def checkout_script = """
-                        git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
-                    """
-                    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
-                }
-
                 stage('Get Dependencies') {
                     def conan_remote = "ess-dmsc-local"
                     def dependencies_script = """
