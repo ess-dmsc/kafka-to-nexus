@@ -128,12 +128,11 @@ def get_pipeline(image_key)
                             . ./activate_run.sh
                             make coverage
                             lcov --directory . --capture --output-file coverage.info
-                            lcov --remove coverage.info '*_generated.h' 'src/date/*' '*/.conan/data/*' --output-file coverage.info
+                            lcov --remove coverage.info '*_generated.h' 'src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
                         """
                         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
-                        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${test_output} ."
-                        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/coverage.info ./coverage.info"
-                        junit "${test_output}"
+                        sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
+                        junit "build/${test_output}"
 
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
                         sh "python lcov_cobertura.py coverage.info"
