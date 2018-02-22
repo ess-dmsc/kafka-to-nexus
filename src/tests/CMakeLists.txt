@@ -24,17 +24,6 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common})
 add_gtest_to_target(${tgt})
 
-enable_coverage(${tgt})
-
-set(gcovr_excl_opts "-e .*gtest.*.h -e .*/tests.*")
-create_coverage_targets(
-  coverage
-  ${tgt}
-  ${PROJECT_BINARY_DIR}
-  ${CMAKE_SOURCE_DIR}/
-  ${PROJECT_BINARY_DIR}/coverage
-  ${gcovr_excl_opts})
-
 configure_file(msg-conf-new-01.json ../../tests/msg-conf-new-01.json)
 configure_file(msg-conf-new-02.json ../../tests/msg-conf-new-02.json)
 configure_file(msg-conf-new-03.json ../../tests/msg-conf-new-03.json)

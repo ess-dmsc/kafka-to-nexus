@@ -91,8 +91,12 @@ def get_pipeline(image_key)
                     def configure_script = """
                         cd build
                         . ./activate_run.sh
-                        cmake ../${project} -DREQUIRE_GTEST=ON -DCOV=1
+                        cmake ../${project} -DREQUIRE_GTEST=ON
                     """
+                    if (image_key == test_and_coverage_os) {
+                        configure_script = configure_script + " -DCOV=1"
+                    }
+                    print(configure_script)
                     sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
                 }
 
@@ -122,17 +126,20 @@ def get_pipeline(image_key)
                             cd build
                             . ./activate_run.sh
                             make coverage
+                            lcov --directory . --capture --output-file coverage.info
                         """
                         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
                         sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${test_output} ."
-                        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/coverage ./coverage"
+                        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/coverage.info ./coverage.info"
                         junit "${test_output}"
 
+                        sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
+                        sh "python lcov_cobertura.py coverage.info"
                         step([
                             $class: 'CoberturaPublisher',
                             autoUpdateHealth: true,
                             autoUpdateStability: true,
-                            coberturaReportFile: 'coverage/coverage.xml',
+                            coberturaReportFile: 'coverage.xml',
                             failUnhealthy: false,
                             failUnstable: false,
                             maxNumberOfBuilds: 0,
