@@ -34,11 +34,11 @@ def Object get_container(image_key) {
     def image = docker.image(images[image_key]['name'])
     def container = image.run("\
         --name ${container_name(image_key)} \
-        --tty   \
-        --network = host   \
-        --env http_proxy = ${env.http_proxy} \
-        --env https_proxy = ${env.https_proxy} \
-        --env local_conan_server = ${env.local_conan_server} \
+        --tty \
+        --network=host \
+        --env http_proxy=${env.http_proxy} \
+        --env https_proxy=${env.https_proxy} \
+        --env local_conan_server=${env.local_conan_server} \
           ")
     return container
 }
