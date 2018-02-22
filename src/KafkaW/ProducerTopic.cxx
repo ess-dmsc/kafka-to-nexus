@@ -13,10 +13,10 @@ using std::move;
 
 ProducerTopic::~ProducerTopic() {
   LOG(Sev::Debug, "~ProducerTopic {}", Name);
-  if (rkt) {
+  if (RdKafkaTopic) {
     LOG(Sev::Debug, "rd_kafka_topic_destroy");
-    rd_kafka_topic_destroy(rkt);
-    rkt = nullptr;
+    rd_kafka_topic_destroy(RdKafkaTopic);
+    RdKafkaTopic = nullptr;
   }
 }
 
@@ -27,25 +27,22 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Producer,
   rd_kafka_topic_conf_t *topic_conf = rd_kafka_topic_conf_new();
   TopicSettings.applySettingsToRdKafkaConf(topic_conf);
 
-  // rd_kafka_msg_partitioner_random, rd_kafka_msg_partitioner_consistent,
-  // rd_kafka_msg_partitioner_consistent_random
-  // rd_kafka_topic_conf_set_partitioner_cb(topic_conf,
-  // rd_kafka_msg_partitioner_random);
-
-  rkt = rd_kafka_topic_new(Producer_->rd_kafka_ptr(), Name.c_str(), topic_conf);
-  if (rkt == nullptr) {
+  RdKafkaTopic =
+      rd_kafka_topic_new(Producer_->rd_kafka_ptr(), Name.c_str(), topic_conf);
+  if (RdKafkaTopic == nullptr) {
     // Seems like Kafka uses the system error code?
     auto errstr = rd_kafka_err2str(rd_kafka_errno2err(errno));
     LOG(Sev::Error, "could not create Kafka topic: {}", errstr);
     throw std::exception();
   }
-  LOG(Sev::Debug, "ctor topic: {}  producer: {}", rd_kafka_topic_name(rkt),
+  LOG(Sev::Debug, "ctor topic: {}  producer: {}",
+      rd_kafka_topic_name(RdKafkaTopic),
       rd_kafka_name(Producer_->rd_kafka_ptr()));
 }
 
 ProducerTopic::ProducerTopic(ProducerTopic &&x) {
   std::swap(Producer_, x.Producer_);
-  std::swap(rkt, x.rkt);
+  std::swap(RdKafkaTopic, x.RdKafkaTopic);
   std::swap(Name, x.Name);
   std::swap(DoCopyMsg, x.DoCopyMsg);
 }
@@ -58,25 +55,26 @@ struct Msg_ : public Producer::Msg {
   }
 };
 
-int ProducerTopic::produce(uchar *msg_data, size_t msg_size, bool print_err) {
-  auto p = new Msg_;
-  std::copy(msg_data, msg_data + msg_size, std::back_inserter(p->v));
-  p->finalize();
-  unique_ptr<Producer::Msg> m(p);
-  return produce(m);
+int ProducerTopic::produce(uchar *MsgData, size_t MsgSize, bool PrintError) {
+  auto MsgPtr = new Msg_;
+  std::copy(MsgData, MsgData + MsgSize, std::back_inserter(MsgPtr->v));
+  MsgPtr->finalize();
+  unique_ptr<Producer::Msg> Msg(MsgPtr);
+  return produce(Msg);
 }
 
-int ProducerTopic::produce(unique_ptr<Producer::Msg> &msg) {
-  if (not rkt) {
-    throw std::runtime_error("ERROR tried to produce on uninitialized rkt");
+int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
+  if (not RdKafkaTopic) {
+    // Should never happen
+    return RDKAFKATOPIC_NOT_INITIALIZED;
   }
   int x;
   int32_t partition = RD_KAFKA_PARTITION_UA;
   void const *key = NULL;
   size_t key_len = 0;
   int msgflags = 0; // 0, RD_KAFKA_MSG_F_COPY, RD_KAFKA_MSG_F_FREE
-  x = rd_kafka_produce(rkt, partition, msgflags, msg->data, msg->size, key,
-                       key_len, msg.get());
+  x = rd_kafka_produce(RdKafkaTopic, partition, msgflags, Msg->data, Msg->size,
+                       key, key_len, Msg.get());
 
   auto &s = Producer_->stats;
   if (x != 0) {
@@ -91,24 +89,25 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &msg) {
     } else if (err == RD_KAFKA_RESP_ERR_MSG_SIZE_TOO_LARGE) {
       ++s.msg_too_large;
       if (print_err) {
-        LOG(Sev::Error, "TOO_LARGE  size: {}", msg->size);
+        LOG(Sev::Error, "TOO_LARGE  size: {}", Msg->size);
       }
     } else {
       ++s.produce_fail;
       if (print_err) {
         LOG(Sev::Debug, "produce topic {}  partition {}   error: {}  {}",
-            rd_kafka_topic_name(rkt), partition, x, rd_kafka_err2str(err));
+            rd_kafka_topic_name(RdKafkaTopic), partition, x,
+            rd_kafka_err2str(err));
       }
     }
   } else {
     ++s.produced;
-    s.produced_bytes += (uint64_t)msg->size;
+    s.produced_bytes += (uint64_t)Msg->size;
     ++Producer_->total_produced_;
     if (log_level >= 8) {
-      LOG(Sev::Debug, "sent to topic {} partition {}", rd_kafka_topic_name(rkt),
-          partition);
+      LOG(Sev::Debug, "sent to topic {} partition {}",
+          rd_kafka_topic_name(RdKafkaTopic), partition);
     }
-    msg.release();
+    Msg.release();
   }
 
   return x;

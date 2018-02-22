@@ -9,16 +9,20 @@
 
 namespace KafkaW {
 
+enum ProducerTopicError {
+  RDKAFKATOPIC_NOT_INITIALIZED,
+};
+
 class ProducerTopic {
 public:
   ProducerTopic(ProducerTopic &&);
   ProducerTopic(std::shared_ptr<Producer> Producer_, std::string Name_);
   ~ProducerTopic();
-  int produce(uchar *msg_data, size_t msg_size, bool print_err = false);
-  int produce(std::unique_ptr<Producer::Msg> &msg);
+  int produce(uchar *MsgData, size_t MsgSize, bool PrintError = false);
+  int produce(std::unique_ptr<Producer::Msg> &Msg);
   // Currently it's nice to have access to these for statistics:
   std::shared_ptr<Producer> Producer_;
-  rd_kafka_topic_t *rkt = nullptr;
+  rd_kafka_topic_t *RdKafkaTopic = nullptr;
   void enableCopy();
 
 private:
