@@ -26,6 +26,7 @@ def Object container_name(image_key) {
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
     emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.', recipientProviders: toEmails, subject: '${DEFAULT_SUBJECT}'
+    slackSend color: 'danger', message: "${project}: " + failureMessage
     throw exception_obj
 }
 
@@ -41,6 +42,26 @@ def Object get_container(image_key) {
         ")
     return container
 }
+
+def docker_dependencies(image_key) {
+    def conan_remote = "ess-dmsc-local"
+    def dependencies_script = """
+                        mkdir build
+                        cd build
+                        conan remote add \
+                            --insert 0 \
+                            ${conan_remote} ${local_conan_server}
+                        cat ../${project}/CMakeLists.txt
+                        conan install --build=outdated ../${project}/conan/conanfile.txt
+                    """
+    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
+
+    def checkout_script = """
+                        git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
+                    """
+    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
+}
+
 
 def get_pipeline(image_key)
 {
@@ -66,18 +87,10 @@ def get_pipeline(image_key)
             }
             } else {
 
-                stage('Get Dependencies') {
-                    def conan_remote = "ess-dmsc-local"
-                    def dependencies_script = """
-                        mkdir build
-                        cd build
-                        conan remote add \
-                            --insert 0 \
-                            ${conan_remote} ${local_conan_server}
-                        cat ../${project}/CMakeLists.txt
-                        conan install --build=outdated ../${project}/conan/conanfile.txt
-                    """
-                    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
+                try {
+                    docker_dependencies(image_key)
+                } catch (e) {
+                    failure_function(e, "Get dependencies for ${image_key} failed")
                 }
 
                 stage('Configure') {
