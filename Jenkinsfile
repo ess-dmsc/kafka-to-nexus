@@ -1,6 +1,7 @@
 project = "kafka-to-nexus"
 clangformat_os = "fedora"
 test_and_coverage_os = "centos7-gcc6"
+archive_os = "centos7-gcc6"
 
 images = [
         'centos7-gcc6': [
@@ -41,11 +42,6 @@ def Object get_container(image_key) {
         --env local_conan_server=${env.local_conan_server} \
           ")
 
-    def custom_sh = images[image_key]['sh']
-    sh "cd .. && docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
-    sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
-                        chown -R jenkins.jenkins /home/jenkins/${project}
-                        \""""
     return container
 }
 
@@ -188,22 +184,26 @@ def get_pipeline(image_key) {
             try {
                 def container = get_container(image_key)
 
-                if (image_key == clangformat_os) {
-                    docker_formatting(image_key)
-                } else {
-                    docker_dependencies(image_key)
-                    docker_cmake(image_key)
-                    docker_build(image_key)
-                    docker_test(image_key)
+                def custom_sh = images[image_key]['sh']
+                sh "cd .. && docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
+                sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
+                        chown -R jenkins.jenkins /home/jenkins/${project}
+                        \""""
 
-                    // Copy and publish test results (only from one container).
-                    if (image_key == test_and_coverage_os) {
-                        docker_coverage(image_key)
-                    }
+                docker_dependencies(image_key)
+                docker_cmake(image_key)
+                docker_build(image_key)
+                docker_test(image_key)
 
+                if (image_key == test_and_coverage_os) {
+                    docker_coverage(image_key)
                 }
 
-                if (image_key == 'centos7-gcc6') {
+                if (image_key == clangformat_os) {
+                    docker_formatting(image_key)
+                }
+
+                if (image_key == archive_os) {
                     docker_archive(image_key)
                 }
 
