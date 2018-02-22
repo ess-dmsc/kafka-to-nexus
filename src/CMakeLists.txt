@@ -87,10 +87,12 @@ set(kafka_to_nexus_SRC
   HDFFile.cxx
   HDFWriterModule.cxx
   KafkaW/BrokerSettings.cxx
+  KafkaW/TopicSettings.cxx
   KafkaW/KafkaW.cxx
   KafkaW/Msg.cxx
   KafkaW/Consumer.cxx
   KafkaW/Producer.cxx
+  KafkaW/ProducerTopic.cxx
   helper.cxx
   logger.cxx
   json.cxx
@@ -123,10 +125,12 @@ set(kafka_to_nexus_INC
   kafka_util.h
   kafka-to-nexus.h
   KafkaW/BrokerSettings.h
+  KafkaW/TopicSettings.h
   KafkaW/KafkaW.h
   KafkaW/Msg.h
   KafkaW/Consumer.h
   KafkaW/Producer.h
+  KafkaW/ProducerTopic.h
   logger.h
   MainOpt.h
   Master.h
