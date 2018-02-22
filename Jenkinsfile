@@ -90,7 +90,7 @@ def get_pipeline(image_key)
                 stage('${image_key} Configure') {
                     def coverage_on = ""
                     if (image_key == test_and_coverage_os) {
-                        configure_on = "-DCOV=1"
+                        coverage_on = "-DCOV=1"
                     }
                     def configure_script = """
                         cd build
