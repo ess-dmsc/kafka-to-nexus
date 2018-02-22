@@ -1,5 +1,5 @@
 project = "kafka-to-nexus"
-clangformat_os = "fedora"
+clangformat_os = "fedora25"
 test_and_coverage_os = "centos7-gcc6"
 
 images = [
@@ -33,12 +33,12 @@ def failure_function(exception_obj, failureMessage) {
 def Object get_container(image_key) {
     def image = docker.image(images[image_key]['name'])
     def container = image.run("\
-            --name $ { container_name(image_key) }   \
-        -- tty   \
-        -- network = host   \
-        -- env http_proxy = $ { env.http_proxy }   \
-        -- env https_proxy = $ { env.https_proxy }   \
-        -- env local_conan_server = $ { env.local_conan_server }   \
+        --name ${container_name(image_key)} \
+        --tty   \
+        --network = host   \
+        --env http_proxy = ${env.http_proxy} \
+        --env https_proxy = ${env.https_proxy} \
+        --env local_conan_server = ${env.local_conan_server} \
           ")
     return container
 }
