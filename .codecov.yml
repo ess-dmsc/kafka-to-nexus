@@ -1,2 +1,5 @@
 fixes:
   - "kafka-to-nexus/::"  # Corrects coverage paths to be relative to repo root
+
+ignore:
+  - "src/tests"
