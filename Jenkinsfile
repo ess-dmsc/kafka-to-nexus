@@ -1,5 +1,5 @@
 project = "kafka-to-nexus"
-clangformat_os = "fedora25"
+clangformat_os = "fedora"
 test_and_coverage_os = "centos7-gcc6"
 
 images = [
@@ -7,7 +7,7 @@ images = [
                 'name': 'essdmscdm/centos7-gcc6-build-node:2.1.0',
                 'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
         ],
-        'fedora25'    : [
+        'fedora'    : [
                 'name': 'essdmscdm/fedora25-build-node:1.0.0',
                 'sh'  : 'sh'
         ],
@@ -46,7 +46,7 @@ def Object get_container(image_key) {
                     chown -R jenkins.jenkins /home/jenkins/${project}
                     """
     sh "cd .. && docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
-    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${chown_script}\""
+    sh "docker --user root exec ${container_name(image_key)} ${custom_sh} -c \"${chown_script}\""
 
     return container
 }
