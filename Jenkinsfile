@@ -141,7 +141,7 @@ def get_pipeline(image_key)
                             $class: 'CoberturaPublisher',
                             autoUpdateHealth: true,
                             autoUpdateStability: true,
-                            coberturaReportFile: 'coverage_filtered.xml',
+                            coberturaReportFile: 'coverage.xml',
                             failUnhealthy: false,
                             failUnstable: false,
                             maxNumberOfBuilds: 0,
