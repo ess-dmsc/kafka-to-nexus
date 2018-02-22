@@ -42,12 +42,10 @@ def Object get_container(image_key) {
           ")
 
     def custom_sh = images[image_key]['sh']
-    def chown_script = """
-                    chown -R jenkins.jenkins /home/jenkins/${project}
-                    """
     sh "cd .. && docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
-    sh "docker --user root exec ${container_name(image_key)} ${custom_sh} -c \"${chown_script}\""
-
+    sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
+                        chown -R jenkins.jenkins /home/jenkins/${project}
+                        \""""
     return container
 }
 
