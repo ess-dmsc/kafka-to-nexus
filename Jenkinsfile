@@ -138,7 +138,6 @@ def get_pipeline(image_key)
                         junit "build/${test_output}"
 
                         sh "bash <\(curl -s https://codecov.io/bash\) -f build/coverage.info"
-
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
                         sh "python lcov_cobertura.py build/coverage.info -o build/coverage.xml"
 
