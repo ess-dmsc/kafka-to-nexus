@@ -111,6 +111,9 @@ def get_pipeline(image_key)
                 }
 
                 stage('${image_key} Test') {
+                    environment {
+                        CODECOV_TOKEN = credentials('kafka-to-nexus-codecov-token')
+                    }
                     def test_output = "TestResults.xml"
                     def test_script = """
                         cd build
@@ -133,6 +136,8 @@ def get_pipeline(image_key)
                         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
                         sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
                         junit "build/${test_output}"
+
+                        sh "bash <(curl -s https://codecov.io/bash) -f build/coverage.info"
 
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
                         sh "python lcov_cobertura.py build/coverage.info -o build/coverage.xml"
