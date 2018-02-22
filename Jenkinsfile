@@ -135,15 +135,15 @@ def get_pipeline(image_key)
                         junit "build/${test_output}"
 
                         sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
-                        sh "python lcov_cobertura.py coverage.info"
+                        sh "python lcov_cobertura.py build/coverage.info -o build/coverage.xml"
 
-                        sh "head coverage.xml"
+                        sh "head build/coverage.xml"
 
                         step([
                             $class: 'CoberturaPublisher',
                             autoUpdateHealth: true,
                             autoUpdateStability: true,
-                            coberturaReportFile: 'coverage.xml',
+                            coberturaReportFile: 'build/coverage.xml',
                             failUnhealthy: false,
                             failUnstable: false,
                             maxNumberOfBuilds: 0,
