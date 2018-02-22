@@ -138,23 +138,6 @@ def get_pipeline(image_key)
                         withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
                             sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
                         }
-                        sh "curl -O https://raw.githubusercontent.com/eriwen/lcov-to-cobertura-xml/master/lcov_cobertura/lcov_cobertura.py"
-                        sh "python lcov_cobertura.py build/coverage.info -o build/coverage.xml"
-
-                        sh "head build/coverage.xml"
-
-                        step([
-                            $class: 'CoberturaPublisher',
-                            autoUpdateHealth: true,
-                            autoUpdateStability: true,
-                            coberturaReportFile: 'build/coverage.xml',
-                            failUnhealthy: false,
-                            failUnstable: false,
-                            maxNumberOfBuilds: 0,
-                            onlyStable: false,
-                            sourceEncoding: 'ASCII',
-                            zoomCoverageChart: false
-                        ])
                     }
                 }
             }
