@@ -67,7 +67,7 @@ void Logger::log_kafka_gelf_start(std::string address, std::string topicname) {
   BrokerSettings.address = address;
   producer.reset(new KafkaW::Producer(BrokerSettings));
   topic.reset(new KafkaW::Producer::Topic(producer, topicname));
-  topic->do_copy();
+  topic->enableCopy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {
       producer->poll();

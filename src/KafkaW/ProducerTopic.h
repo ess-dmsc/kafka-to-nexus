@@ -19,7 +19,7 @@ public:
   // Currently it's nice to have access to these for statistics:
   std::shared_ptr<Producer> Producer_;
   rd_kafka_topic_t *rkt = nullptr;
-  void do_copy();
+  void enableCopy();
 
 private:
   std::string Name;

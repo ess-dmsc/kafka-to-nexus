@@ -36,7 +36,7 @@ int64_t produce_command_from_string(uri::URI const &uri,
       rd_kafka_message_t const *msg) { offset.set_value(msg->offset); };
   p->on_delivery_ok = cb;
   KafkaW::Producer::Topic pt(p, uri.topic);
-  pt.do_copy();
+  pt.enableCopy();
   pt.produce((uint8_t *)cmd.data(), cmd.size());
   p->poll_while_outq();
   auto fut = offset.get_future();
@@ -99,7 +99,7 @@ void roundtrip_simple_01(MainOpt &opt) {
     for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
       auto prod = std::make_shared<KafkaW::Producer>(BrokerSettings);
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);
-      topic.do_copy();
+      topic.enableCopy();
       auto &sourcename = test_sourcenames[i3];
       for (int i1 = 0; i1 < 2; ++i1) {
         flatbuffers::FlatBufferBuilder builder(1024);
@@ -205,7 +205,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
     auto prod = std::make_shared<KafkaW::Producer>(BrokerSettings);
     for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);
-      topic.do_copy();
+      topic.enableCopy();
       auto &sourcename = test_sourcenames[i3];
       FlatBufs::ev42::synth synth(sourcename, 1);
 
