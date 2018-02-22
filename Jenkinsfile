@@ -1,13 +1,13 @@
 project = "kafka-to-nexus"
 clangformat_os = "fedora"
-test_and_coverage_os = "centos-gcc6"
+test_and_coverage_os = "centos7-gcc6"
 
 images = [
-    'centos-gcc6': [
+    'centos7-gcc6': [
         'name': 'essdmscdm/centos7-gcc6-build-node:2.1.0',
         'sh': '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
     ],
-    'fedora': [
+    'fedora25': [
         'name': 'essdmscdm/fedora25-build-node:1.0.0',
         'sh': 'sh'
     ],
@@ -44,9 +44,10 @@ def Object get_container(image_key) {
 }
 
 def docker_dependencies(image_key) {
-    def custom_sh = images[image_key]['sh']
-    def conan_remote = "ess-dmsc-local"
-    def dependencies_script = """
+    try {
+        def custom_sh = images[image_key]['sh']
+        def conan_remote = "ess-dmsc-local"
+        def dependencies_script = """
                         mkdir build
                         cd build
                         conan remote add \
@@ -55,14 +56,49 @@ def docker_dependencies(image_key) {
                         cat ../${project}/CMakeLists.txt
                         conan install --build=outdated ../${project}/conan/conanfile.txt
                     """
-    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
 
-    def checkout_script = """
+        def checkout_script = """
                         git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
                     """
-    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
+    } catch (e) {
+        failure_function(e, "Get dependencies for (${container_name(image_key)}) failed")
+    }
 }
 
+def docker_cmake(image_key) {
+    try {
+        def custom_sh = images[image_key]['sh']
+        def coverage_on = ""
+        if (image_key == test_and_coverage_os) {
+            coverage_on = "-DCOV=1"
+        }
+        def configure_script = """
+                        cd build
+                        . ./activate_run.sh
+                        cmake ../${project} -DREQUIRE_GTEST=ON ${coverage_on}
+                    """
+        print(configure_script)
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
+    } catch (e) {
+        failure_function(e, "CMake step for (${container_name(image_key)}) failed")
+    }
+}
+
+def docker_build(image_key) {
+    try {
+        def custom_sh = images[image_key]['sh']
+        def build_script = """
+                      cd build
+                      . ./activate_run.sh
+                      make VERBOSE=1
+                  """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
+    } catch (e) {
+        failure_function(e, "Build step for (${container_name(image_key)}) failed")
+    }
+}
 
 def get_pipeline(image_key)
 {
@@ -88,34 +124,9 @@ def get_pipeline(image_key)
             }
             } else {
 
-                try {
-                    docker_dependencies(image_key)
-                } catch (e) {
-                    failure_function(e, "Get dependencies for ${image_key} failed")
-                }
-
-                stage('Configure') {
-                    def coverage_on = ""
-                    if (image_key == test_and_coverage_os) {
-                        coverage_on = "-DCOV=1"
-                    }
-                    def configure_script = """
-                        cd build
-                        . ./activate_run.sh
-                        cmake ../${project} -DREQUIRE_GTEST=ON ${coverage_on}
-                    """
-                    print(configure_script)
-                    sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
-                }
-
-                stage('Build') {
-                  def build_script = """
-                      cd build
-                      . ./activate_run.sh
-                      make VERBOSE=1
-                  """
-                  sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
-                }
+                docker_dependencies(image_key)
+                docker_cmake(image_key)
+                docker_build(image_key)
 
                 stage('Test') {
                     def test_output = "TestResults.xml"
@@ -149,7 +160,7 @@ def get_pipeline(image_key)
                 }
             }
 
-            if (image_key == 'centos-gcc6') {
+            if (image_key == 'centos7-gcc6') {
                 stage('Archive') {
                     def archive_output = "file-writer.tar.gz"
                     def archive_script = """
