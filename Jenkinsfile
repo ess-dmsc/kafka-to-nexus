@@ -48,7 +48,6 @@ def Object get_container(image_key) {
     sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
     sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${chown_script}\""
 
-
     return container
 }
 
@@ -186,35 +185,37 @@ def docker_archive(image_key) {
 
 def get_pipeline(image_key) {
     return {
-        stage("${image_key}") {
+        dir("${project}") {
+            stage("${image_key}") {
 
-            try {
-                def container = get_container(image_key)
+                try {
+                    def container = get_container(image_key)
 
-                if (image_key == clangformat_os) {
-                    docker_formatting(image_key)
-                } else {
-                    docker_dependencies(image_key)
-                    docker_cmake(image_key)
-                    docker_build(image_key)
-                    docker_test(image_key)
+                    if (image_key == clangformat_os) {
+                        docker_formatting(image_key)
+                    } else {
+                        docker_dependencies(image_key)
+                        docker_cmake(image_key)
+                        docker_build(image_key)
+                        docker_test(image_key)
 
-                    // Copy and publish test results (only from one container).
-                    if (image_key == test_and_coverage_os) {
-                        docker_coverage(image_key)
+                        // Copy and publish test results (only from one container).
+                        if (image_key == test_and_coverage_os) {
+                            docker_coverage(image_key)
+                        }
+
                     }
 
-                }
+                    if (image_key == 'centos7-gcc6') {
+                        docker_archive(image_key)
+                    }
 
-                if (image_key == 'centos7-gcc6') {
-                    docker_archive(image_key)
+                } catch (e) {
+                    failure_function(e, "Unknown build failure for ${image_key}")
+                } finally {
+                    sh "docker stop ${container_name(image_key)}"
+                    sh "docker rm -f ${container_name(image_key)}"
                 }
-
-            } catch (e) {
-                failure_function(e, "Unknown build failure for ${image_key}")
-            } finally {
-                sh "docker stop ${container_name(image_key)}"
-                sh "docker rm -f ${container_name(image_key)}"
             }
         }
     }
