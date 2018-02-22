@@ -31,7 +31,7 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Producer,
       rd_kafka_topic_new(Producer_->rd_kafka_ptr(), Name.c_str(), topic_conf);
   if (RdKafkaTopic == nullptr) {
     // Seems like Kafka uses the system error code?
-    auto errstr = rd_kafka_err2str(rd_kafka_errno2err(errno));
+    auto errstr = rd_kafka_err2str(rd_kafka_last_error());
     LOG(Sev::Error, "could not create Kafka topic: {}", errstr);
     throw std::exception();
   }
@@ -78,7 +78,7 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
 
   auto &s = Producer_->stats;
   if (x != 0) {
-    auto err = rd_kafka_errno2err(rd_kafka_errno());
+    auto err = rd_kafka_last_error();
     bool print_err = true;
     if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
       ++s.local_queue_full;
