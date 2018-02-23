@@ -91,7 +91,6 @@ def docker_cmake(image_key) {
                         . ./activate_run.sh
                         cmake ../${project} -DREQUIRE_GTEST=ON ${coverage_on}
                     """
-        print(configure_script)
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
     } catch (e) {
         failure_function(e, "CMake step for (${container_name(image_key)}) failed")
