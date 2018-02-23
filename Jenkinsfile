@@ -102,21 +102,6 @@ def docker_build(image_key) {
     }
 }
 
-def docker_formatting(image_key) {
-    try {
-        def custom_sh = images[image_key]['sh']
-        def script = """
-                    clang-format -version
-                    cd ${project}
-                    find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
-                        -exec clangformatdiff.sh {} +
-                  """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
-    } catch (e) {
-        failure_function(e, "Check formatting step for (${container_name(image_key)}) failed")
-    }
-}
-
 def docker_test(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
@@ -155,6 +140,21 @@ def docker_coverage(image_key) {
         }
     } catch (e) {
         failure_function(e, "Coverage step for (${container_name(image_key)}) failed")
+    }
+}
+
+def docker_formatting(image_key) {
+    try {
+        def custom_sh = images[image_key]['sh']
+        def script = """
+                    clang-format -version
+                    cd ${project}
+                    find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
+                        -exec clangformatdiff.sh {} +
+                  """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
+    } catch (e) {
+        failure_function(e, "Check formatting step for (${container_name(image_key)}) failed")
     }
 }
 
@@ -205,9 +205,9 @@ def get_pipeline(image_key) {
                     docker_test(image_key)
                 }
 
-//                if (image_key == clangformat_os) {
-//                    docker_formatting(image_key)
-//                }
+                if (image_key == clangformat_os) {
+                    docker_formatting(image_key)
+                }
 
                 if (image_key == archive_os) {
                     docker_archive(image_key)
