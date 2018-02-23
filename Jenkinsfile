@@ -260,7 +260,6 @@ def get_macos_pipeline()
 
                     try {
                         sh "make VERBOSE=1"
-                        sh "find ."
                         sh "./tests/tests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
