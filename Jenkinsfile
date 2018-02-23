@@ -15,6 +15,10 @@ images = [
         'ubuntu1604'  : [
                 'name': 'essdmscdm/ubuntu16.04-build-node:2.1.0',
                 'sh'  : 'sh'
+        ],
+        'ubuntu1710': [
+                'name': 'essdmscdm/ubuntu17.10-build-node:2.0.0',
+                'sh': 'sh'
         ]
 ]
 
