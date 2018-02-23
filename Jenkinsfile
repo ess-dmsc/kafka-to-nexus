@@ -227,6 +227,51 @@ def get_pipeline(image_key) {
     }
 }
 
+def get_macos_pipeline()
+{
+    return {
+        stage("MacOSX") {
+            node ("macos") {
+                // Delete workspace when build is done
+                cleanWs()
+
+                dir("${project}/code") {
+                    try {
+                        checkout scm
+                    } catch (e) {
+                        failure_function(e, 'MacOSX / Checkout failed')
+                    }
+                }
+
+                dir("${project}") {
+                    sh "git clone -b master https://github.com/ess-dmsc/streaming-data-types.git"
+                }
+
+                dir("${project}/build") {
+                    try {
+                        sh "conan install --build=outdated ../code/conan"
+                    } catch (e) {
+                        failure_function(e, 'MacOSX / getting dependencies failed')
+                    }
+
+                    try {
+                        sh "cmake ../code"
+                    } catch (e) {
+                        failure_function(e, 'MacOSX / CMake failed')
+                    }
+
+                    try {
+                        sh "make run_tests"
+                    } catch (e) {
+                        failure_function(e, 'MacOSX / build+test failed')
+                    }
+                }
+
+            }
+        }
+    }
+}
+
 node('docker') {
     cleanWs()
 
@@ -245,9 +290,10 @@ node('docker') {
         def image_key = x
         builders[image_key] = get_pipeline(image_key)
     }
+    builders['macOS'] = get_macos_pipeline()
 
     parallel builders
 
-// Delete workspace when build is done
+    // Delete workspace when build is done
     cleanWs()
 }
