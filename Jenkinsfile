@@ -152,7 +152,7 @@ def docker_formatting(image_key) {
                     find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
                         -exec clangformatdiff.sh {} +
                   """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${script}\""
     } catch (e) {
         failure_function(e, "Check formatting step for (${container_name(image_key)}) failed")
     }
