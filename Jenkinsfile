@@ -137,21 +137,23 @@ def docker_test(image_key) {
 
 def docker_coverage(image_key) {
     try {
-        def custom_sh = images[image_key]['sh']
-        def coverage_script = """
+        dir("${image_key}") {
+            def custom_sh = images[image_key]['sh']
+            def coverage_script = """
                             cd build
                             . ./activate_run.sh
                             make coverage
                             lcov --directory . --capture --output-file coverage.info
                             lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
                         """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
-        sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/${project}/build ./"
-        junit "${image_key}/build/${test_output}"
+            sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
+            sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
+            junit "build/${test_output}"
 
-        print(scm_vars.GIT_COMMIT)
-        withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
-            sh "curl -s https://codecov.io/bash | bash -s - -f ${image_key}/build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
+            print(scm_vars.GIT_COMMIT)
+            withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
+                sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
+            }
         }
     } catch (e) {
         failure_function(e, "Coverage step for (${container_name(image_key)}) failed")
