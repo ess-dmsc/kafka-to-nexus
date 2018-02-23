@@ -254,13 +254,14 @@ def get_macos_pipeline()
                     }
 
                     try {
-                        sh "cmake ../code"
+                        sh "cmake -DREQUIRE_GTEST=ON ../code"
                     } catch (e) {
                         failure_function(e, 'MacOSX / CMake failed')
                     }
 
                     try {
                         sh "make VERBOSE=1"
+                        sh "find ."
                         sh "./tests/tests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
