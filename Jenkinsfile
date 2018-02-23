@@ -1,5 +1,5 @@
 project = "kafka-to-nexus"
-clangformat_os = "fedora"
+clangformat_os = "fedora25"
 test_and_coverage_os = "centos7-gcc6"
 archive_os = "centos7-gcc6"
 
@@ -8,7 +8,7 @@ images = [
                 'name': 'essdmscdm/centos7-gcc6-build-node:2.1.0',
                 'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
         ],
-        'fedora'    : [
+        'fedora25'    : [
                 'name': 'essdmscdm/fedora25-build-node:1.0.0',
                 'sh'  : 'sh'
         ],
@@ -146,7 +146,7 @@ def docker_coverage(image_key) {
                             lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
                         """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
-        sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./${image_key}"
+        sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/build ."
         junit "${image_key}/build/${test_output}"
 
         print(scm_vars.GIT_COMMIT)
@@ -197,9 +197,9 @@ def get_pipeline(image_key) {
                 docker_build(image_key)
                 docker_test(image_key)
 
-//                if (image_key == test_and_coverage_os) {
-//                    docker_coverage(image_key)
-//                }
+                if (image_key == test_and_coverage_os) {
+                    docker_coverage(image_key)
+                }
 
 //                if (image_key == clangformat_os) {
 //                    docker_formatting(image_key)
