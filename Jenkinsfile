@@ -123,12 +123,9 @@ def docker_test(image_key) {
         def test_script = """
                         cd build
                         . ./activate_run.sh
-                        ./tests/tests --
+                        ./tests/tests
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${test_script}\""
-
-        // Remove file outside container.
-        // sh "rm -f ${test_output}"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
@@ -163,17 +160,19 @@ def docker_coverage(image_key) {
 
 def docker_archive(image_key) {
     try {
-        def custom_sh = images[image_key]['sh']
-        def archive_output = "file-writer.tar.gz"
-        def archive_script = """
+        dir("${image_key}") {
+            def custom_sh = images[image_key]['sh']
+            def archive_output = "file-writer.tar.gz"
+            def archive_script = """
                         cd build
                         rm -rf file-writer; mkdir file-writer
                         cp kafka-to-nexus send-command file-writer/
                         tar czf ${archive_output} file-writer
                     """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
-        sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/${project}/build/${archive_output} ./"
-        archiveArtifacts "${image_key}/${archive_output}"
+            sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
+            sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
+            archiveArtifacts "${archive_output}"
+        }
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
@@ -198,19 +197,21 @@ def get_pipeline(image_key) {
                 docker_dependencies(image_key)
                 docker_cmake(image_key)
                 docker_build(image_key)
-                docker_test(image_key)
 
                 if (image_key == test_and_coverage_os) {
                     docker_coverage(image_key)
+                }
+                else {
+                    docker_test(image_key)
                 }
 
 //                if (image_key == clangformat_os) {
 //                    docker_formatting(image_key)
 //                }
 
-//                if (image_key == archive_os) {
-//                    docker_archive(image_key)
-//                }
+                if (image_key == archive_os) {
+                    docker_archive(image_key)
+                }
 
             } catch (e) {
                 failure_function(e, "Unknown build failure for ${image_key}")
