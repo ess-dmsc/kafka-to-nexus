@@ -146,7 +146,7 @@ def docker_coverage(image_key) {
                             lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
                         """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
-        sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/build ."
+        sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/build ./"
         junit "${image_key}/build/${test_output}"
 
         print(scm_vars.GIT_COMMIT)
@@ -169,7 +169,7 @@ def docker_archive(image_key) {
                         tar czf ${archive_output} file-writer
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
-        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./${image_key}"
+        sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
         archiveArtifacts "${image_key}/${archive_output}"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
