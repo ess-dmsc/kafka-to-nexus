@@ -190,22 +190,24 @@ def get_pipeline(image_key) {
                         chown -R jenkins.jenkins /home/jenkins/${project}
                         \""""
 
+                sh "mkdir ${image_key}"
+
                 docker_dependencies(image_key)
                 docker_cmake(image_key)
                 docker_build(image_key)
                 docker_test(image_key)
 
-                if (image_key == test_and_coverage_os) {
-                    docker_coverage(image_key)
-                }
+//                if (image_key == test_and_coverage_os) {
+//                    docker_coverage(image_key)
+//                }
 
-                if (image_key == clangformat_os) {
-                    docker_formatting(image_key)
-                }
+//                if (image_key == clangformat_os) {
+//                    docker_formatting(image_key)
+//                }
 
-                if (image_key == archive_os) {
-                    docker_archive(image_key)
-                }
+//                if (image_key == archive_os) {
+//                    docker_archive(image_key)
+//                }
 
             } catch (e) {
                 failure_function(e, "Unknown build failure for ${image_key}")
