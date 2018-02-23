@@ -230,7 +230,7 @@ def get_pipeline(image_key) {
 def get_macos_pipeline()
 {
     return {
-        stage("MacOSX") {
+        stage("macOS") {
             node ("macos") {
                 // Delete workspace when build is done
                 cleanWs()
@@ -261,7 +261,7 @@ def get_macos_pipeline()
                     }
 
                     try {
-                        sh "make run_tests"
+                        sh "make VERBOSE=1"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
                     }
