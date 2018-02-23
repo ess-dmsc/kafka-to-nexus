@@ -129,7 +129,7 @@ def docker_test(image_key) {
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${test_script}\""
 
         // Remove file outside container.
-        sh "rm -f ${test_output}"
+        // sh "rm -f ${test_output}"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
@@ -146,12 +146,12 @@ def docker_coverage(image_key) {
                             lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
                         """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
-        sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
-        junit "build/${test_output}"
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./${image_key}"
+        junit "${image_key}/build/${test_output}"
 
         print(scm_vars.GIT_COMMIT)
         withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
-            sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
+            sh "curl -s https://codecov.io/bash | bash -s - -f ${image_key}/build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
         }
     } catch (e) {
         failure_function(e, "Coverage step for (${container_name(image_key)}) failed")
@@ -169,8 +169,8 @@ def docker_archive(image_key) {
                         tar czf ${archive_output} file-writer
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
-        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ."
-        archiveArtifacts "${archive_output}"
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./${image_key}"
+        archiveArtifacts "${image_key}/${archive_output}"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
@@ -185,7 +185,7 @@ def get_pipeline(image_key) {
                 def container = get_container(image_key)
 
                 def custom_sh = images[image_key]['sh']
-                sh "cd .. && docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
+                sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
                 sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
                         chown -R jenkins.jenkins /home/jenkins/${project}
                         \""""
@@ -220,24 +220,23 @@ def get_pipeline(image_key) {
 node('docker') {
     cleanWs()
 
-    dir("${project}") {
-
-        stage('Checkout') {
+    stage('Checkout') {
+        dir("${project}") {
             try {
                 scm_vars = checkout scm
             } catch (e) {
                 failure_function(e, 'Checkout failed')
             }
         }
-
-        def builders = [:]
-        for (x in images.keySet()) {
-            def image_key = x
-            builders[image_key] = get_pipeline(image_key)
-        }
-
-        parallel builders
     }
+
+    def builders = [:]
+    for (x in images.keySet()) {
+        def image_key = x
+        builders[image_key] = get_pipeline(image_key)
+    }
+
+    parallel builders
 
 // Delete workspace when build is done
     cleanWs()
