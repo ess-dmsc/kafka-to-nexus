@@ -46,6 +46,11 @@ def Object get_container(image_key) {
         --env local_conan_server=${env.local_conan_server} \
           ")
 
+    def custom_sh = images[image_key]['sh']
+    sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
+    sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
+                        chown -R jenkins.jenkins /home/jenkins/${project}
+                        \""""
     return container
 }
 
@@ -189,14 +194,6 @@ def get_pipeline(image_key) {
 
             try {
                 def container = get_container(image_key)
-
-                def custom_sh = images[image_key]['sh']
-                sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
-                sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
-                        chown -R jenkins.jenkins /home/jenkins/${project}
-                        \""""
-
-                sh "mkdir ${image_key}"
 
                 docker_dependencies(image_key)
                 docker_cmake(image_key)
