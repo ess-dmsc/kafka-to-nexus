@@ -36,7 +36,7 @@ Available options include:
 ```
 {
   "command-uri": "//broker[:port]/command-topic",
-  "status-uri": "//broker[:port]/status-topic",
+  "status-uri": "//broker[:port]/status-topic", 
   "status-master-interval": 2000,
   "commands": [
     "a list of commands as discussed below."
