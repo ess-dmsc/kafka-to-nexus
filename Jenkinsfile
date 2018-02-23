@@ -120,11 +120,10 @@ def docker_formatting(image_key) {
 def docker_test(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
-        def test_output = "TestResults.xml"
         def test_script = """
                         cd build
                         . ./activate_run.sh
-                        ./tests/tests -- --gtest_output=xml:${test_output}
+                        ./tests/tests --
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${test_script}\""
 
@@ -139,9 +138,11 @@ def docker_coverage(image_key) {
     try {
         dir("${image_key}") {
             def custom_sh = images[image_key]['sh']
+            def test_output = "TestResults.xml"
             def coverage_script = """
                             cd build
                             . ./activate_run.sh
+                            ./tests/tests -- --gtest_output=xml:${test_output}
                             make coverage
                             lcov --directory . --capture --output-file coverage.info
                             lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
