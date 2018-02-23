@@ -35,7 +35,7 @@ def failure_function(exception_obj, failureMessage) {
     throw exception_obj
 }
 
-def Object get_container(image_key) {
+def create_container(image_key) {
     def image = docker.image(images[image_key]['name'])
     def container = image.run("\
         --name ${container_name(image_key)} \
@@ -45,13 +45,14 @@ def Object get_container(image_key) {
         --env https_proxy=${env.https_proxy} \
         --env local_conan_server=${env.local_conan_server} \
           ")
+}
 
+def docker_copy_code(image_key) {
     def custom_sh = images[image_key]['sh']
     sh "docker cp ${project} ${container_name(image_key)}:/home/jenkins/${project}"
     sh """docker exec --user root ${container_name(image_key)} ${custom_sh} -c \"
                         chown -R jenkins.jenkins /home/jenkins/${project}
                         \""""
-    return container
 }
 
 def docker_dependencies(image_key) {
@@ -193,8 +194,9 @@ def get_pipeline(image_key) {
         stage("${image_key}") {
 
             try {
-                def container = get_container(image_key)
+                create_container(image_key)
 
+                docker_copy_code(image_key)
                 docker_dependencies(image_key)
                 docker_cmake(image_key)
                 docker_build(image_key)
@@ -259,6 +261,7 @@ def get_macos_pipeline()
 
                     try {
                         sh "make VERBOSE=1"
+                        sh "./tests/tests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
                     }
