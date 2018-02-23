@@ -170,7 +170,7 @@ def docker_archive(image_key) {
                         tar czf ${archive_output} file-writer
                     """
             sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
-            sh "cd ${image_key} && docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
+            sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
             archiveArtifacts "${archive_output}"
         }
     } catch (e) {
