@@ -62,9 +62,9 @@ void Logger::use_log_file(std::string fname) {
   log_file = f1;
 }
 
-void Logger::log_kafka_gelf_start(std::string address, std::string topicname) {
+void Logger::log_kafka_gelf_start(std::string Address, std::string topicname) {
   KafkaW::BrokerSettings BrokerSettings;
-  BrokerSettings.address = address;
+  BrokerSettings.Address = Address;
   producer.reset(new KafkaW::Producer(BrokerSettings));
   topic.reset(new KafkaW::Producer::Topic(producer, topicname));
   topic->enableCopy();

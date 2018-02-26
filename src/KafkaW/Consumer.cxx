@@ -138,7 +138,7 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
   }
   LOG(ll, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
           "errorstring: {}  message: {}",
-      self->id, self->ConsumerBrokerSettings.address, err_i,
+      self->id, self->ConsumerBrokerSettings.Address, err_i,
       rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
@@ -222,8 +222,8 @@ void Consumer::init() {
   rd_kafka_set_log_level(rk, 4);
 
   LOG(Sev::Info, "New Kafka consumer {} with brokers: {}", rd_kafka_name(rk),
-      ConsumerBrokerSettings.address.c_str());
-  if (rd_kafka_brokers_add(rk, ConsumerBrokerSettings.address.c_str()) == 0) {
+      ConsumerBrokerSettings.Address.c_str());
+  if (rd_kafka_brokers_add(rk, ConsumerBrokerSettings.Address.c_str()) == 0) {
     LOG(Sev::Error, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }

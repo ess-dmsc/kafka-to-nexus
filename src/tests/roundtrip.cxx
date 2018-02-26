@@ -29,7 +29,7 @@ using std::vector;
 int64_t produce_command_from_string(uri::URI const &uri,
                                     std::string const &cmd) {
   KafkaW::BrokerSettings BrokerSettings;
-  BrokerSettings.address = uri.host_port;
+  BrokerSettings.Address = uri.host_port;
   auto p = std::make_shared<KafkaW::Producer>(BrokerSettings);
   std::promise<int64_t> offset;
   std::function<void(rd_kafka_message_t const *msg)> cb = [&offset](
@@ -93,7 +93,7 @@ void roundtrip_simple_01(MainOpt &opt) {
   {
     // Produce sample data using the nt types scheme only
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.address = "localhost:9092";
+    BrokerSettings.Address = "localhost:9092";
     // auto nowns = []{return
     // std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::system_clock::now().time_since_epoch()).count();};
     for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
@@ -201,7 +201,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   {
     // Produce sample data using the nt types scheme only
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.address = broker_common.host_port;
+    BrokerSettings.Address = broker_common.host_port;
     auto prod = std::make_shared<KafkaW::Producer>(BrokerSettings);
     for (size_t i3 = 0; i3 < test_sourcenames.size(); ++i3) {
       KafkaW::Producer::Topic topic(prod, test_topics[i3]);

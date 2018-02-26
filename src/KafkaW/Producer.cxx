@@ -50,7 +50,7 @@ void Producer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
   }
   LOG(ll, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
           "errorstring: {}  message: {}",
-      self->id, self->ProducerBrokerSettings.address, err_i,
+      self->id, self->ProducerBrokerSettings.Address, err_i,
       rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
@@ -140,8 +140,8 @@ Producer::Producer(BrokerSettings ProducerBrokerSettings)
   rd_kafka_set_log_level(rk, 4);
 
   LOG(Sev::Info, "New Kafka {} with brokers: {}", rd_kafka_name(rk),
-      ProducerBrokerSettings.address.c_str());
-  if (rd_kafka_brokers_add(rk, ProducerBrokerSettings.address.c_str()) == 0) {
+      ProducerBrokerSettings.Address.c_str());
+  if (rd_kafka_brokers_add(rk, ProducerBrokerSettings.Address.c_str()) == 0) {
     LOG(Sev::Error, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }
@@ -162,7 +162,7 @@ void Producer::poll() {
       rd_kafka_poll(rk, ProducerBrokerSettings.poll_timeout_ms);
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
-      ProducerBrokerSettings.address, events_handled, outq());
+      ProducerBrokerSettings.Address, events_handled, outq());
   if (log_level >= 8) {
     rd_kafka_dump(stdout, rk);
   }
