@@ -127,23 +127,20 @@ def docker_test(image_key) {
 
 def docker_coverage(image_key) {
     try {
-        dir("${image_key}") {
-            def custom_sh = images[image_key]['sh']
-            def test_output = "TestResults.xml"
-            def coverage_script = """
-                            cd build
-                            . ./activate_run.sh
-                            ./tests/tests -- --gtest_output=xml:${test_output}
-                            make coverage
-                        """
-            sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
-            sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
-            sh "cp -r ../${project} ./"
-            junit "build/${test_output}"
+        def custom_sh = images[image_key]['sh']
+        def test_output = "TestResults.xml"
+        def coverage_script = """
+                        cd build
+                        . ./activate_run.sh
+                        ./tests/tests -- --gtest_output=xml:${test_output}
+                        make coverage
+                    """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
+        junit "build/${test_output}"
 
-            withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
-                sh "cd build && curl -s https://codecov.io/bash | bash -s - -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
-            }
+        withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
+            sh "cd build && curl -s https://codecov.io/bash | bash -s - -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
         }
     } catch (e) {
         failure_function(e, "Coverage step for (${container_name(image_key)}) failed")
@@ -167,19 +164,17 @@ def docker_formatting(image_key) {
 
 def docker_archive(image_key) {
     try {
-        dir("${image_key}") {
-            def custom_sh = images[image_key]['sh']
-            def archive_output = "file-writer.tar.gz"
-            def archive_script = """
-                        cd build
-                        rm -rf file-writer; mkdir file-writer
-                        cp kafka-to-nexus send-command file-writer/
-                        tar czf ${archive_output} file-writer
-                    """
-            sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
-            sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
-            archiveArtifacts "${archive_output}"
-        }
+        def custom_sh = images[image_key]['sh']
+        def archive_output = "file-writer.tar.gz"
+        def archive_script = """
+                    cd build
+                    rm -rf file-writer; mkdir file-writer
+                    cp kafka-to-nexus send-command file-writer/
+                    tar czf ${archive_output} file-writer
+                """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
+        archiveArtifacts "${archive_output}"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
