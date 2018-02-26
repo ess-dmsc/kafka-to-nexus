@@ -138,6 +138,7 @@ def docker_coverage(image_key) {
                         """
             sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
             sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
+            sh "cp -r ../${project} ./"
             junit "build/${test_output}"
 
             withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
@@ -291,5 +292,5 @@ node('docker') {
     parallel builders
 
     // Delete workspace when build is done
-    //cleanWs()
+    cleanWs()
 }
