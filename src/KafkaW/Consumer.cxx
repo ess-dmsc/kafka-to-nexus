@@ -205,7 +205,7 @@ PollStatus Consumer::poll() {
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   std::unique_ptr<Msg> m2(new Msg);
-  m2->kmsg = msg;
+  m2->MsgPtr = msg;
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
     return PollStatus::newWithMsg(std::move(m2));
   } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {

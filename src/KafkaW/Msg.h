@@ -11,7 +11,7 @@ public:
   ~Msg();
   uchar *data();
   uint32_t size();
-  void *kmsg;
+  void *MsgPtr;
   char const *topic_name();
   int32_t offset();
   int32_t partition();
