@@ -175,22 +175,21 @@ void Consumer::addTopic(std::string Topic) {
   }
 }
 
-void Consumer::dump_current_subscription() {
-  // Dump current subscription:
-  rd_kafka_topic_partition_list_t *l1 = nullptr;
-  rd_kafka_subscription(rk, &l1);
-  if (l1) {
-    for (int i1 = 0; i1 < l1->cnt; ++i1) {
-      LOG(Sev::Info, "subscribed topics: {}  {}  off {}", l1->elems[i1].topic,
-          rd_kafka_err2str(l1->elems[i1].err), l1->elems[i1].offset);
+void Consumer::dumpCurrentSubscription() {
+  rd_kafka_topic_partition_list_t *List = nullptr;
+  rd_kafka_subscription(rk, &List);
+  if (List) {
+    for (int i = 0; i < List->cnt; ++i) {
+      LOG(Sev::Info, "subscribed topics: {}  {}  off {}", List->elems[i].topic,
+          rd_kafka_err2str(List->elems[i].err), List->elems[i].offset);
     }
-    rd_kafka_topic_partition_list_destroy(l1);
+    rd_kafka_topic_partition_list_destroy(List);
   }
 }
 
 PollStatus Consumer::poll() {
   if (0)
-    dump_current_subscription();
+    dumpCurrentSubscription();
   if (0)
     rd_kafka_dump(stdout, rk);
 
