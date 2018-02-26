@@ -6,7 +6,7 @@
 namespace KafkaW {
 
 BrokerSettings::BrokerSettings() {
-  conf_ints = {
+  ConfigurationIntegers = {
       {"metadata.request.timeout.ms", 2 * 1000},
       {"socket.timeout.ms", 2 * 1000},
       {"message.max.bytes", 23 * 1024 * 1024},
@@ -27,7 +27,7 @@ BrokerSettings::BrokerSettings() {
 
 void BrokerSettings::apply(rd_kafka_conf_t *conf) {
   std::vector<char> errstr(256);
-  for (auto &c : conf_ints) {
+  for (auto &c : ConfigurationIntegers) {
     auto s1 = fmt::format("{:d}", c.second);
     LOG(Sev::Debug, "set config: {} = {}", c.first, s1);
     if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(), s1.c_str(),
