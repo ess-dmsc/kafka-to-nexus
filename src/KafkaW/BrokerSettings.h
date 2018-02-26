@@ -13,7 +13,7 @@ namespace KafkaW {
 class BrokerSettings {
 public:
   BrokerSettings();
-  void apply(rd_kafka_conf_t *conf);
+  void apply(rd_kafka_conf_t *RdKafkaConfiguration);
   std::string Address;
   size_t PollTimeoutMS = 100;
   std::map<std::string, int> ConfigurationIntegers;

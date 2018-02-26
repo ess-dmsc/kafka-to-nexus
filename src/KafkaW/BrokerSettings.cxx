@@ -25,21 +25,22 @@ BrokerSettings::BrokerSettings() {
   };
 }
 
-void BrokerSettings::apply(rd_kafka_conf_t *conf) {
+void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) {
   std::vector<char> errstr(256);
   for (auto &c : ConfigurationIntegers) {
     auto s1 = fmt::format("{:d}", c.second);
     LOG(Sev::Debug, "set config: {} = {}", c.first, s1);
-    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(), s1.c_str(),
+    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(RdKafkaConfiguration,
+                                              c.first.c_str(), s1.c_str(),
                                               errstr.data(), errstr.size())) {
       LOG(Sev::Warning, "error setting config: {} = {}", c.first, s1);
     }
   }
   for (auto &c : ConfigurationStrings) {
     LOG(Sev::Debug, "set config: {} = {}", c.first, c.second);
-    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(),
-                                              c.second.c_str(), errstr.data(),
-                                              errstr.size())) {
+    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(RdKafkaConfiguration,
+                                              c.first.c_str(), c.second.c_str(),
+                                              errstr.data(), errstr.size())) {
       LOG(Sev::Warning, "error setting config: {} = {}", c.first, c.second);
     }
   }
