@@ -21,27 +21,27 @@ Consumer::Consumer(BrokerSettings BrokerSettings)
 
 Consumer::~Consumer() {
   LOG(Sev::Debug, "~Consumer()");
-  if (rk) {
+  if (RdKafka) {
     // commit offsets?
     if (0) {
       LOG(Sev::Debug, "rd_kafka_unsubscribe");
-      rd_kafka_unsubscribe(rk);
+      rd_kafka_unsubscribe(RdKafka);
     }
     if (0) {
       LOG(Sev::Debug, "rd_kafka_poll");
-      int n1 = rd_kafka_poll(rk, 100);
+      int n1 = rd_kafka_poll(RdKafka, 100);
       LOG(Sev::Debug, "  served {} reuests", n1);
     }
     if (1) {
       LOG(Sev::Debug, "rd_kafka_consumer_close");
-      rd_kafka_consumer_close(rk);
+      rd_kafka_consumer_close(RdKafka);
     }
     // rd_kafka_consume_stop(rd_kafka_topic_t *, partition)  therefore low-level
     // API?
     if (1) {
       LOG(Sev::Debug, "rd_kafka_destroy");
-      rd_kafka_destroy(rk);
-      rk = nullptr;
+      rd_kafka_destroy(RdKafka);
+      RdKafka = nullptr;
     }
   }
   if (plist) {
@@ -142,22 +142,23 @@ void Consumer::init() {
   rd_kafka_conf_set_consume_cb(conf, nullptr);
   rd_kafka_conf_set_opaque(conf, this);
 
-  rk = rd_kafka_new(RD_KAFKA_CONSUMER, conf, errstr, errstr_N);
-  if (!rk) {
+  RdKafka = rd_kafka_new(RD_KAFKA_CONSUMER, conf, errstr, errstr_N);
+  if (!RdKafka) {
     LOG(Sev::Error, "can not create kafka handle: {}", errstr);
     throw std::runtime_error("can not create Kafka handle");
   }
 
-  rd_kafka_set_log_level(rk, 4);
+  rd_kafka_set_log_level(RdKafka, 4);
 
-  LOG(Sev::Info, "New Kafka consumer {} with brokers: {}", rd_kafka_name(rk),
-      ConsumerBrokerSettings.Address.c_str());
-  if (rd_kafka_brokers_add(rk, ConsumerBrokerSettings.Address.c_str()) == 0) {
+  LOG(Sev::Info, "New Kafka consumer {} with brokers: {}",
+      rd_kafka_name(RdKafka), ConsumerBrokerSettings.Address.c_str());
+  if (rd_kafka_brokers_add(RdKafka, ConsumerBrokerSettings.Address.c_str()) ==
+      0) {
     LOG(Sev::Error, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }
 
-  rd_kafka_poll_set_consumer(rk);
+  rd_kafka_poll_set_consumer(RdKafka);
 
   // Allocate some default size.  This is not a limit.
   plist = rd_kafka_topic_partition_list_new(16);
@@ -167,8 +168,8 @@ void Consumer::addTopic(std::string Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   int Partition = RD_KAFKA_PARTITION_UA;
   rd_kafka_topic_partition_list_add(plist, Topic.c_str(), Partition);
-  int err = rd_kafka_subscribe(rk, plist);
-  KERR(rk, err);
+  int err = rd_kafka_subscribe(RdKafka, plist);
+  KERR(RdKafka, err);
   if (err) {
     LOG(Sev::Error, "could not subscribe");
     throw std::runtime_error("can not subscribe");
@@ -177,7 +178,7 @@ void Consumer::addTopic(std::string Topic) {
 
 void Consumer::dumpCurrentSubscription() {
   rd_kafka_topic_partition_list_t *List = nullptr;
-  rd_kafka_subscription(rk, &List);
+  rd_kafka_subscription(RdKafka, &List);
   if (List) {
     for (int i = 0; i < List->cnt; ++i) {
       LOG(Sev::Info, "subscribed topics: {}  {}  off {}", List->elems[i].topic,
@@ -191,11 +192,12 @@ PollStatus Consumer::poll() {
   if (0)
     dumpCurrentSubscription();
   if (0)
-    rd_kafka_dump(stdout, rk);
+    rd_kafka_dump(stdout, RdKafka);
 
   auto ret = PollStatus::Empty();
 
-  auto msg = rd_kafka_consumer_poll(rk, ConsumerBrokerSettings.PollTimeoutMS);
+  auto msg =
+      rd_kafka_consumer_poll(RdKafka, ConsumerBrokerSettings.PollTimeoutMS);
 
   if (msg == nullptr) {
     return PollStatus::Empty();
