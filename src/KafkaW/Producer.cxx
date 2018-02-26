@@ -167,16 +167,16 @@ void Producer::poll() {
   int events_handled = rd_kafka_poll(rk, ProducerBrokerSettings.PollTimeoutMS);
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
-      ProducerBrokerSettings.Address, events_handled, outq());
+      ProducerBrokerSettings.Address, events_handled, outputQueueLength());
   if (log_level >= 8) {
     rd_kafka_dump(stdout, rk);
   }
   stats.poll_served += events_handled;
-  stats.out_queue = outq();
+  stats.out_queue = outputQueueLength();
 }
 
-void Producer::poll_while_outq() {
-  while (outq() > 0) {
+void Producer::pollWhileOutputQueueFilled() {
+  while (outputQueueLength() > 0) {
     stats.poll_served +=
         rd_kafka_poll(rk, ProducerBrokerSettings.PollTimeoutMS);
   }
@@ -184,7 +184,7 @@ void Producer::poll_while_outq() {
 
 rd_kafka_t *Producer::rd_kafka_ptr() const { return rk; }
 
-uint64_t Producer::outq() { return rd_kafka_outq_len(rk); }
+uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(rk); }
 
 uint64_t Producer::total_produced() { return total_produced_; }
 

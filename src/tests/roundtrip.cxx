@@ -38,7 +38,7 @@ int64_t produce_command_from_string(uri::URI const &uri,
   KafkaW::Producer::Topic pt(p, uri.topic);
   pt.enableCopy();
   pt.produce((uint8_t *)cmd.data(), cmd.size());
-  p->poll_while_outq();
+  p->outputQueueLength();
   auto fut = offset.get_future();
   auto x = fut.wait_for(std::chrono::milliseconds(2000));
   if (x == std::future_status::ready) {
@@ -133,7 +133,7 @@ void roundtrip_simple_01(MainOpt &opt) {
           prod->poll();
         }
       }
-      prod->poll_while_outq();
+      prod->outputQueueLength();
     }
     // fwt->file_flush();
   }
@@ -223,7 +223,7 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
           prod->poll();
         }
       }
-      prod->poll_while_outq();
+      prod->outputQueueLength();
     }
     // fwt->file_flush();
   }

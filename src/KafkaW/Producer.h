@@ -42,10 +42,10 @@ public:
   Producer(Producer const &) = delete;
   Producer(Producer &&x);
   ~Producer();
-  void poll_while_outq();
+  void pollWhileOutputQueueFilled();
   void poll();
   uint64_t total_produced();
-  uint64_t outq();
+  uint64_t outputQueueLength();
   static void cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
                            void *opaque);
   static void cb_error(rd_kafka_t *rk, int err_i, char const *reason,
