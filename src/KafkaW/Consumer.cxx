@@ -44,9 +44,9 @@ Consumer::~Consumer() {
       RdKafka = nullptr;
     }
   }
-  if (plist) {
-    rd_kafka_topic_partition_list_destroy(plist);
-    plist = nullptr;
+  if (PartitionList) {
+    rd_kafka_topic_partition_list_destroy(PartitionList);
+    PartitionList = nullptr;
   }
 }
 
@@ -161,14 +161,14 @@ void Consumer::init() {
   rd_kafka_poll_set_consumer(RdKafka);
 
   // Allocate some default size.  This is not a limit.
-  plist = rd_kafka_topic_partition_list_new(16);
+  PartitionList = rd_kafka_topic_partition_list_new(16);
 }
 
 void Consumer::addTopic(std::string Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   int Partition = RD_KAFKA_PARTITION_UA;
-  rd_kafka_topic_partition_list_add(plist, Topic.c_str(), Partition);
-  int err = rd_kafka_subscribe(RdKafka, plist);
+  rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
+  int err = rd_kafka_subscribe(RdKafka, PartitionList);
   KERR(RdKafka, err);
   if (err) {
     LOG(Sev::Error, "could not subscribe");
