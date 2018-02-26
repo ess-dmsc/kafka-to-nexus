@@ -2,35 +2,11 @@
 
 #include "BrokerSettings.h"
 #include "Msg.h"
-#include <atomic>
-#include <functional>
+#include "PollStatus.h"
 #include <librdkafka/rdkafka.h>
-#include <memory>
+//#include <functional>
 
 namespace KafkaW {
-
-class PollStatus {
-public:
-  static PollStatus Ok();
-  static PollStatus Err();
-  static PollStatus EOP();
-  static PollStatus Empty();
-  static PollStatus make_Msg(std::unique_ptr<Msg> x);
-  PollStatus(PollStatus &&);
-  PollStatus &operator=(PollStatus &&);
-  ~PollStatus();
-  void reset();
-  PollStatus();
-  bool is_Ok();
-  bool is_Err();
-  bool is_EOP();
-  bool is_Empty();
-  std::unique_ptr<Msg> is_Msg();
-
-private:
-  int state = -1;
-  void *data = nullptr;
-};
 
 class Inspect;
 

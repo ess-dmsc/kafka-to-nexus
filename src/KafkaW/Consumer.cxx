@@ -1,79 +1,8 @@
 #include "Consumer.h"
 #include "logger.h"
+#include <atomic>
 
 namespace KafkaW {
-
-PollStatus::~PollStatus() { reset(); }
-
-PollStatus PollStatus::Ok() {
-  PollStatus ret;
-  ret.state = 0;
-  return ret;
-}
-
-PollStatus PollStatus::Err() {
-  PollStatus ret;
-  ret.state = -1;
-  return ret;
-}
-
-PollStatus PollStatus::EOP() {
-  PollStatus ret;
-  ret.state = -2;
-  return ret;
-}
-
-PollStatus PollStatus::Empty() {
-  PollStatus ret;
-  ret.state = -3;
-  return ret;
-}
-
-PollStatus PollStatus::make_Msg(std::unique_ptr<Msg> x) {
-  PollStatus ret;
-  ret.state = 1;
-  ret.data = x.release();
-  return ret;
-}
-
-PollStatus::PollStatus(PollStatus &&x)
-    : state(std::move(x.state)), data(std::move(x.data)) {}
-
-PollStatus &PollStatus::operator=(PollStatus &&x) {
-  reset();
-  std::swap(state, x.state);
-  std::swap(data, x.data);
-  return *this;
-}
-
-void PollStatus::reset() {
-  if (state == 1) {
-    if (auto x = (Msg *)data) {
-      delete x;
-    }
-  }
-  state = -1;
-  data = nullptr;
-}
-
-PollStatus::PollStatus() {}
-
-bool PollStatus::is_Ok() { return state == 0; }
-
-bool PollStatus::is_Err() { return state == -1; }
-
-bool PollStatus::is_EOP() { return state == -2; }
-
-bool PollStatus::is_Empty() { return state == -3; }
-
-std::unique_ptr<Msg> PollStatus::is_Msg() {
-  if (state == 1) {
-    std::unique_ptr<Msg> ret((Msg *)data);
-    data = nullptr;
-    return ret;
-  }
-  return nullptr;
-}
 
 static std::atomic<int> g_kafka_consumer_instance_count;
 
@@ -277,7 +206,7 @@ PollStatus Consumer::poll() {
   std::unique_ptr<Msg> m2(new Msg);
   m2->kmsg = msg;
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    return PollStatus::make_Msg(std::move(m2));
+    return PollStatus::newWithMsg(std::move(m2));
   } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
     // Just an advisory.  msg contains which partition it is.
     return PollStatus::EOP();

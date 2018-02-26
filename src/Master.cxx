@@ -61,7 +61,7 @@ void Master::run() {
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
     auto p = command_listener.poll();
-    if (auto msg = p.is_Msg()) {
+    if (auto msg = p.isMsg()) {
       LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(std::move(msg));
     }

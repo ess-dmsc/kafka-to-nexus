@@ -90,6 +90,7 @@ set(kafka_to_nexus_SRC
   KafkaW/TopicSettings.cxx
   KafkaW/KafkaW.cxx
   KafkaW/Msg.cxx
+  KafkaW/PollStatus.cxx
   KafkaW/Consumer.cxx
   KafkaW/Producer.cxx
   KafkaW/ProducerTopic.cxx
@@ -128,6 +129,7 @@ set(kafka_to_nexus_INC
   KafkaW/TopicSettings.h
   KafkaW/KafkaW.h
   KafkaW/Msg.h
+  KafkaW/PollStatus.h
   KafkaW/Consumer.h
   KafkaW/Producer.h
   KafkaW/ProducerTopic.h
