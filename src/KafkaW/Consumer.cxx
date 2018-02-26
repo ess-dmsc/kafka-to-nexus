@@ -163,10 +163,10 @@ void Consumer::init() {
   plist = rd_kafka_topic_partition_list_new(16);
 }
 
-void Consumer::add_topic(std::string topic) {
-  LOG(Sev::Info, "Consumer::add_topic  {}", topic);
-  int partition = RD_KAFKA_PARTITION_UA;
-  rd_kafka_topic_partition_list_add(plist, topic.c_str(), partition);
+void Consumer::addTopic(std::string Topic) {
+  LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
+  int Partition = RD_KAFKA_PARTITION_UA;
+  rd_kafka_topic_partition_list_add(plist, Topic.c_str(), Partition);
   int err = rd_kafka_subscribe(rk, plist);
   KERR(rk, err);
   if (err) {

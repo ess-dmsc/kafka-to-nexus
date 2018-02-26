@@ -19,7 +19,7 @@ void CommandListener::start() {
       fmt::format("kafka-to-nexus.CommandListener--pid-{}", getpid_wrapper());
   consumer.reset(new KafkaW::Consumer(BrokerSettings));
   consumer->on_rebalance_assign = config.on_rebalance_assign;
-  consumer->add_topic(config.command_broker_uri.topic);
+  consumer->addTopic(config.command_broker_uri.topic);
   if (config.start_at_command_offset >= 0) {
     int n1 = config.start_at_command_offset;
     consumer->on_rebalance_start =

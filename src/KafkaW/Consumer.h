@@ -17,7 +17,7 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer();
   void init();
-  void add_topic(std::string topic);
+  void addTopic(std::string Topic);
   void dump_current_subscription();
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
