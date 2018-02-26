@@ -17,6 +17,6 @@ public:
   std::string Address;
   size_t PollTimeoutMS = 100;
   std::map<std::string, int> ConfigurationIntegers;
-  std::map<std::string, std::string> conf_strings;
+  std::map<std::string, std::string> ConfigurationStrings;
 };
 }

@@ -20,7 +20,7 @@ BrokerSettings::BrokerSettings() {
       {"heartbeat.interval.ms", 500},
       {"statistics.interval.ms", 600 * 1000},
   };
-  conf_strings = {
+  ConfigurationStrings = {
       {"api.version.request", "true"},
   };
 }
@@ -35,7 +35,7 @@ void BrokerSettings::apply(rd_kafka_conf_t *conf) {
       LOG(Sev::Warning, "error setting config: {} = {}", c.first, s1);
     }
   }
-  for (auto &c : conf_strings) {
+  for (auto &c : ConfigurationStrings) {
     LOG(Sev::Debug, "set config: {} = {}", c.first, c.second);
     if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(conf, c.first.c_str(),
                                               c.second.c_str(), errstr.data(),

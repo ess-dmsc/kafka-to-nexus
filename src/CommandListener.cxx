@@ -15,7 +15,7 @@ void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.command_broker_uri.host_port;
-  BrokerSettings.conf_strings["group.id"] =
+  BrokerSettings.ConfigurationStrings["group.id"] =
       fmt::format("kafka-to-nexus.CommandListener--pid-{}", getpid_wrapper());
   consumer.reset(new KafkaW::Consumer(BrokerSettings));
   consumer->on_rebalance_assign = config.on_rebalance_assign;
