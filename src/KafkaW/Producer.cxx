@@ -16,7 +16,7 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
   auto self = reinterpret_cast<Producer *>(opaque);
   if (!msg) {
     LOG(Sev::Error, "IID: {}  ERROR msg should never be null", self->id);
-    ++self->stats.produce_cb_fail;
+    ++self->Stats.produce_cb_fail;
     return;
   }
   if (msg->err) {
@@ -29,7 +29,7 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
     if (auto &cb = self->on_delivery_failed) {
       cb(msg);
     }
-    ++self->stats.produce_cb_fail;
+    ++self->Stats.produce_cb_fail;
   } else {
     if (auto &cb = self->on_delivery_ok) {
       cb(msg);
@@ -38,7 +38,7 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
       LOG(Sev::Debug, "IID: {}  Ok delivered ({}, p {}, offset {}, len {})",
           self->id, rd_kafka_name(rk), msg->partition, msg->offset, msg->len);
     }
-    ++self->stats.produce_cb;
+    ++self->Stats.produce_cb;
   }
 }
 
@@ -174,13 +174,13 @@ void Producer::poll() {
   if (log_level >= 8) {
     rd_kafka_dump(stdout, RdKafkaPtr);
   }
-  stats.poll_served += events_handled;
-  stats.out_queue = outputQueueLength();
+  Stats.poll_served += events_handled;
+  Stats.out_queue = outputQueueLength();
 }
 
 void Producer::pollWhileOutputQueueFilled() {
   while (outputQueueLength() > 0) {
-    stats.poll_served +=
+    Stats.poll_served +=
         rd_kafka_poll(RdKafkaPtr, ProducerBrokerSettings.PollTimeoutMS);
   }
 }

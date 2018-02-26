@@ -37,7 +37,6 @@ class Producer {
 public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
-  typedef ProducerStats Stats;
   Producer(BrokerSettings ProducerBrokerSettings_);
   Producer(Producer const &) = delete;
   Producer(Producer &&x);
@@ -65,7 +64,7 @@ public:
   BrokerSettings ProducerBrokerSettings;
   rd_kafka_t *RdKafkaPtr = nullptr;
   std::atomic<uint64_t> TotalMessagesProduced{0};
-  Stats stats;
+  ProducerStats Stats;
 
 private:
   int id = 0;

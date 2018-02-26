@@ -76,7 +76,7 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
   x = rd_kafka_produce(RdKafkaTopic, partition, msgflags, Msg->data, Msg->size,
                        key, key_len, Msg.get());
 
-  auto &s = Producer_->stats;
+  auto &s = Producer_->Stats;
   if (x != 0) {
     auto err = rd_kafka_last_error();
     bool print_err = true;
