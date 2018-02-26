@@ -5,6 +5,12 @@ namespace KafkaW {
 
 static std::atomic<int> g_kafka_producer_instance_count;
 
+ProducerMsg::~ProducerMsg() {}
+
+void ProducerMsg::deliveryOk() {}
+
+void ProducerMsg::deliveryError() {}
+
 void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
                             void *opaque) {
   auto self = reinterpret_cast<Producer *>(opaque);

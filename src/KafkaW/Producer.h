@@ -13,8 +13,8 @@ class ProducerTopic;
 class ProducerMsg {
 public:
   virtual ~ProducerMsg();
-  virtual void delivery_ok();
-  virtual void delivery_fail();
+  virtual void deliveryOk();
+  virtual void deliveryError();
   uchar *data;
   uint32_t size;
 };

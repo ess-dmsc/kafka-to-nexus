@@ -114,10 +114,4 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
 }
 
 void ProducerTopic::enableCopy() { DoCopyMsg = true; }
-
-ProducerMsg::~ProducerMsg() {}
-
-void ProducerMsg::delivery_ok() {}
-
-void ProducerMsg::delivery_fail() {}
 }
