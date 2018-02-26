@@ -135,8 +135,6 @@ def docker_coverage(image_key) {
                             . ./activate_run.sh
                             ./tests/tests -- --gtest_output=xml:${test_output}
                             make coverage
-                            lcov --directory . --capture --output-file coverage.info
-                            lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
                         """
             sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${coverage_script}\""
             sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
@@ -145,7 +143,7 @@ def docker_coverage(image_key) {
             sh "cat build/coverage.info"
 
             withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
-                sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
+                sh "cd build && curl -s https://codecov.io/bash | bash -s - -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
             }
         }
     } catch (e) {

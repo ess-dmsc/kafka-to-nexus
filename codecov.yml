@@ -3,6 +3,10 @@ fixes:
 
 ignore:
   - "src/tests"
+  - "*_generated.h"
+  - "*/src/date/*"
+  - "*/.conan/data/*"
+  - "*/usr/*"
 
 comment:
   - layout: "header, diff, tree, changes, sunburst"
