@@ -28,7 +28,7 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Producer,
   TopicSettings.applySettingsToRdKafkaConf(topic_conf);
 
   RdKafkaTopic =
-      rd_kafka_topic_new(Producer_->rd_kafka_ptr(), Name.c_str(), topic_conf);
+      rd_kafka_topic_new(Producer_->getRdKafkaPtr(), Name.c_str(), topic_conf);
   if (RdKafkaTopic == nullptr) {
     // Seems like Kafka uses the system error code?
     auto errstr = rd_kafka_err2str(rd_kafka_last_error());
@@ -37,7 +37,7 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Producer,
   }
   LOG(Sev::Debug, "ctor topic: {}  producer: {}",
       rd_kafka_topic_name(RdKafkaTopic),
-      rd_kafka_name(Producer_->rd_kafka_ptr()));
+      rd_kafka_name(Producer_->getRdKafkaPtr()));
 }
 
 ProducerTopic::ProducerTopic(ProducerTopic &&x) {
@@ -84,7 +84,7 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
       ++s.local_queue_full;
       if (print_err) {
         LOG(Sev::Warning, "QUEUE_FULL  outq: {}",
-            rd_kafka_outq_len(Producer_->rd_kafka_ptr()));
+            rd_kafka_outq_len(Producer_->getRdKafkaPtr()));
       }
     } else if (err == RD_KAFKA_RESP_ERR_MSG_SIZE_TOO_LARGE) {
       ++s.msg_too_large;

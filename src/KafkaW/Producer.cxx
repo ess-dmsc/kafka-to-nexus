@@ -86,15 +86,15 @@ void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
 
 Producer::~Producer() {
   LOG(Sev::Debug, "~Producer");
-  if (rk) {
+  if (RdKafkaPtr) {
     int timeout_ms = 1;
     uint32_t outq_len = 0;
     while (true) {
-      outq_len = rd_kafka_outq_len(rk);
+      outq_len = rd_kafka_outq_len(RdKafkaPtr);
       if (outq_len == 0) {
         break;
       }
-      auto events_handled = rd_kafka_poll(rk, timeout_ms);
+      auto events_handled = rd_kafka_poll(RdKafkaPtr, timeout_ms);
       if (events_handled > 0) {
         LOG(Sev::Debug,
             "rd_kafka_poll handled: {}  outq before: {}  timeout: {}",
@@ -111,8 +111,8 @@ Producer::~Producer() {
           outq_len);
     }
     LOG(Sev::Debug, "rd_kafka_destroy");
-    rd_kafka_destroy(rk);
-    rk = nullptr;
+    rd_kafka_destroy(RdKafkaPtr);
+    RdKafkaPtr = nullptr;
   }
 }
 
@@ -137,17 +137,19 @@ Producer::Producer(BrokerSettings ProducerBrokerSettings)
 
   ProducerBrokerSettings.apply(conf);
 
-  rk = rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr.data(), errstr.size());
-  if (!rk) {
+  RdKafkaPtr =
+      rd_kafka_new(RD_KAFKA_PRODUCER, conf, errstr.data(), errstr.size());
+  if (!RdKafkaPtr) {
     LOG(Sev::Error, "can not create kafka handle: {}", errstr.data());
     throw std::runtime_error("can not create Kafka handle");
   }
 
-  rd_kafka_set_log_level(rk, 4);
+  rd_kafka_set_log_level(RdKafkaPtr, 4);
 
-  LOG(Sev::Info, "New Kafka {} with brokers: {}", rd_kafka_name(rk),
+  LOG(Sev::Info, "New Kafka {} with brokers: {}", rd_kafka_name(RdKafkaPtr),
       ProducerBrokerSettings.Address.c_str());
-  if (rd_kafka_brokers_add(rk, ProducerBrokerSettings.Address.c_str()) == 0) {
+  if (rd_kafka_brokers_add(RdKafkaPtr,
+                           ProducerBrokerSettings.Address.c_str()) == 0) {
     LOG(Sev::Error, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }
@@ -155,7 +157,7 @@ Producer::Producer(BrokerSettings ProducerBrokerSettings)
 
 Producer::Producer(Producer &&x) {
   using std::swap;
-  swap(rk, x.rk);
+  swap(RdKafkaPtr, x.RdKafkaPtr);
   swap(on_delivery_ok, x.on_delivery_ok);
   swap(on_delivery_failed, x.on_delivery_failed);
   swap(on_error, x.on_error);
@@ -164,12 +166,13 @@ Producer::Producer(Producer &&x) {
 }
 
 void Producer::poll() {
-  int events_handled = rd_kafka_poll(rk, ProducerBrokerSettings.PollTimeoutMS);
+  int events_handled =
+      rd_kafka_poll(RdKafkaPtr, ProducerBrokerSettings.PollTimeoutMS);
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
       ProducerBrokerSettings.Address, events_handled, outputQueueLength());
   if (log_level >= 8) {
-    rd_kafka_dump(stdout, rk);
+    rd_kafka_dump(stdout, RdKafkaPtr);
   }
   stats.poll_served += events_handled;
   stats.out_queue = outputQueueLength();
@@ -178,13 +181,13 @@ void Producer::poll() {
 void Producer::pollWhileOutputQueueFilled() {
   while (outputQueueLength() > 0) {
     stats.poll_served +=
-        rd_kafka_poll(rk, ProducerBrokerSettings.PollTimeoutMS);
+        rd_kafka_poll(RdKafkaPtr, ProducerBrokerSettings.PollTimeoutMS);
   }
 }
 
-rd_kafka_t *Producer::rd_kafka_ptr() const { return rk; }
+rd_kafka_t *Producer::getRdKafkaPtr() const { return RdKafkaPtr; }
 
-uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(rk); }
+uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(RdKafkaPtr); }
 
 uint64_t Producer::totalMessagesProduced() { return TotalMessagesProduced; }
 

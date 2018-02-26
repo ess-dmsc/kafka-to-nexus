@@ -57,13 +57,13 @@ public:
   static void cb_throttle(rd_kafka_t *rk, char const *broker_name,
                           int32_t broker_id, int throttle_time_ms,
                           void *opaque);
-  rd_kafka_t *rd_kafka_ptr() const;
+  rd_kafka_t *getRdKafkaPtr() const;
   std::function<void(rd_kafka_message_t const *msg)> on_delivery_ok;
   std::function<void(rd_kafka_message_t const *msg)> on_delivery_failed;
   std::function<void(Producer *, rd_kafka_resp_err_t)> on_error;
   // Currently it's nice to have acces to these two for statistics:
   BrokerSettings ProducerBrokerSettings;
-  rd_kafka_t *rk = nullptr;
+  rd_kafka_t *RdKafkaPtr = nullptr;
   std::atomic<uint64_t> TotalMessagesProduced{0};
   Stats stats;
 
