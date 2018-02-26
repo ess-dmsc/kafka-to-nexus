@@ -186,7 +186,7 @@ rd_kafka_t *Producer::rd_kafka_ptr() const { return rk; }
 
 uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(rk); }
 
-uint64_t Producer::total_produced() { return total_produced_; }
+uint64_t Producer::totalMessagesProduced() { return TotalMessagesProduced; }
 
 ProducerStats::ProducerStats() {}
 

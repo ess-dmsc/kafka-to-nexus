@@ -44,7 +44,7 @@ public:
   ~Producer();
   void pollWhileOutputQueueFilled();
   void poll();
-  uint64_t total_produced();
+  uint64_t totalMessagesProduced();
   uint64_t outputQueueLength();
   static void cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
                            void *opaque);
@@ -64,7 +64,7 @@ public:
   // Currently it's nice to have acces to these two for statistics:
   BrokerSettings ProducerBrokerSettings;
   rd_kafka_t *rk = nullptr;
-  std::atomic<uint64_t> total_produced_{0};
+  std::atomic<uint64_t> TotalMessagesProduced{0};
   Stats stats;
 
 private:
