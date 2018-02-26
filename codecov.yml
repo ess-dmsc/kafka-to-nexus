@@ -3,3 +3,7 @@ fixes:
 
 ignore:
   - "src/tests"
+
+comment:
+  layout: "header, diff, tree, changes, sunburst"
+  require_changes: false
