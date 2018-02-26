@@ -291,5 +291,5 @@ node('docker') {
     parallel builders
 
     // Delete workspace when build is done
-    cleanWs()
+    //cleanWs()
 }
