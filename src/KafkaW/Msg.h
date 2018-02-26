@@ -12,7 +12,7 @@ public:
   uchar *data();
   uint32_t size();
   void *MsgPtr;
-  char const *topic_name();
+  char const *topicName();
   int32_t offset();
   int32_t partition();
 };

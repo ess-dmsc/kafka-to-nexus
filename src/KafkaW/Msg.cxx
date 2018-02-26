@@ -10,7 +10,7 @@ uchar *Msg::data() { return (uchar *)((rd_kafka_message_t *)MsgPtr)->payload; }
 
 uint32_t Msg::size() { return ((rd_kafka_message_t *)MsgPtr)->len; }
 
-char const *Msg::topic_name() {
+char const *Msg::topicName() {
   return rd_kafka_topic_name(((rd_kafka_message_t *)MsgPtr)->rkt);
 }
 
