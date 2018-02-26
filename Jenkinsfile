@@ -140,8 +140,6 @@ def docker_coverage(image_key) {
             sh "docker cp ${container_name(image_key)}:/home/jenkins/build ./"
             junit "build/${test_output}"
 
-            sh "cat build/coverage.info"
-
             withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
                 sh "cd build && curl -s https://codecov.io/bash | bash -s - -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
             }
