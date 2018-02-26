@@ -9,6 +9,11 @@
 
 namespace KafkaW {
 
+class TopicCreationError : public std::runtime_error {
+public:
+  TopicCreationError() : std::runtime_error("Can not create Kafka topic") {}
+};
+
 enum ProducerTopicError {
   RDKAFKATOPIC_NOT_INITIALIZED,
 };

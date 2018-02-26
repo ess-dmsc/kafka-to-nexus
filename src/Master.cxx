@@ -49,8 +49,12 @@ void Master::run() {
     KafkaW::BrokerSettings BrokerSettings;
     BrokerSettings.Address = config.kafka_status_uri.host_port;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
-    status_producer = std::make_shared<KafkaW::ProducerTopic>(
-        producer, config.kafka_status_uri.topic);
+    try {
+      status_producer = std::make_shared<KafkaW::ProducerTopic>(
+          producer, config.kafka_status_uri.topic);
+    } catch (KafkaW::TopicCreationError const &e) {
+      LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
+    }
   }
   for (auto const &cmd : config.commands_from_config_file) {
     this->handle_command(cmd);

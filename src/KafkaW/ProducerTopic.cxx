@@ -33,7 +33,7 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Producer,
     // Seems like Kafka uses the system error code?
     auto errstr = rd_kafka_err2str(rd_kafka_last_error());
     LOG(Sev::Error, "could not create Kafka topic: {}", errstr);
-    throw std::exception();
+    throw TopicCreationError();
   }
   LOG(Sev::Debug, "ctor topic: {}  producer: {}",
       rd_kafka_topic_name(RdKafkaTopic),
