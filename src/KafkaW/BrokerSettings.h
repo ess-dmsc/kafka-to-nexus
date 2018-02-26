@@ -15,7 +15,7 @@ public:
   BrokerSettings();
   void apply(rd_kafka_conf_t *conf);
   std::string Address;
-  int poll_timeout_ms = 100;
+  size_t PollTimeoutMS = 100;
   std::map<std::string, int> conf_ints;
   std::map<std::string, std::string> conf_strings;
 };

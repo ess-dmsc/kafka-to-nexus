@@ -158,8 +158,7 @@ Producer::Producer(Producer &&x) {
 }
 
 void Producer::poll() {
-  int events_handled =
-      rd_kafka_poll(rk, ProducerBrokerSettings.poll_timeout_ms);
+  int events_handled = rd_kafka_poll(rk, ProducerBrokerSettings.PollTimeoutMS);
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
       ProducerBrokerSettings.Address, events_handled, outq());
@@ -173,7 +172,7 @@ void Producer::poll() {
 void Producer::poll_while_outq() {
   while (outq() > 0) {
     stats.poll_served +=
-        rd_kafka_poll(rk, ProducerBrokerSettings.poll_timeout_ms);
+        rd_kafka_poll(rk, ProducerBrokerSettings.PollTimeoutMS);
   }
 }
 

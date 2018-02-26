@@ -267,7 +267,7 @@ PollStatus Consumer::poll() {
 
   auto ret = PollStatus::Empty();
 
-  auto msg = rd_kafka_consumer_poll(rk, ConsumerBrokerSettings.poll_timeout_ms);
+  auto msg = rd_kafka_consumer_poll(rk, ConsumerBrokerSettings.PollTimeoutMS);
 
   if (msg == nullptr) {
     return PollStatus::Empty();
