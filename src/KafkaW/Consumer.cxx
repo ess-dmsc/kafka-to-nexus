@@ -22,27 +22,11 @@ Consumer::Consumer(BrokerSettings BrokerSettings)
 Consumer::~Consumer() {
   LOG(Sev::Debug, "~Consumer()");
   if (RdKafka) {
-    // commit offsets?
-    if (0) {
-      LOG(Sev::Debug, "rd_kafka_unsubscribe");
-      rd_kafka_unsubscribe(RdKafka);
-    }
-    if (0) {
-      LOG(Sev::Debug, "rd_kafka_poll");
-      int n1 = rd_kafka_poll(RdKafka, 100);
-      LOG(Sev::Debug, "  served {} reuests", n1);
-    }
-    if (1) {
-      LOG(Sev::Debug, "rd_kafka_consumer_close");
-      rd_kafka_consumer_close(RdKafka);
-    }
-    // rd_kafka_consume_stop(rd_kafka_topic_t *, partition)  therefore low-level
-    // API?
-    if (1) {
-      LOG(Sev::Debug, "rd_kafka_destroy");
-      rd_kafka_destroy(RdKafka);
-      RdKafka = nullptr;
-    }
+    LOG(Sev::Debug, "rd_kafka_consumer_close");
+    rd_kafka_consumer_close(RdKafka);
+    LOG(Sev::Debug, "rd_kafka_destroy");
+    rd_kafka_destroy(RdKafka);
+    RdKafka = nullptr;
   }
   if (PartitionList) {
     rd_kafka_topic_partition_list_destroy(PartitionList);
