@@ -70,7 +70,7 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
   }
   int x;
   int32_t partition = RD_KAFKA_PARTITION_UA;
-  void const *key = NULL;
+  void const *key = nullptr;
   size_t key_len = 0;
   int msgflags = 0; // 0, RD_KAFKA_MSG_F_COPY, RD_KAFKA_MSG_F_FREE
   x = rd_kafka_produce(RdKafkaTopic, partition, msgflags, Msg->data, Msg->size,
