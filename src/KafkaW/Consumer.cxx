@@ -93,7 +93,7 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
   case RD_KAFKA_RESP_ERR__REVOKE_PARTITIONS:
     LOG(Sev::Warning, "cb_rebalance revoke:");
     print_partition_list(plist);
-    err2 = rd_kafka_assign(rk, NULL);
+    err2 = rd_kafka_assign(rk, nullptr);
     if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
       LOG(Sev::Warning, "rebalance error: {}  {}", rd_kafka_err2name(err2),
           rd_kafka_err2str(err2));
@@ -102,7 +102,7 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
   default:
     LOG(Sev::Info, "cb_rebalance failure and revoke: {}",
         rd_kafka_err2str(err));
-    err2 = rd_kafka_assign(rk, NULL);
+    err2 = rd_kafka_assign(rk, nullptr);
     if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
       LOG(Sev::Warning, "rebalance error: {}  {}", rd_kafka_err2name(err2),
           rd_kafka_err2str(err2));
