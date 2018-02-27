@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cstdlib>
 
 namespace KafkaW {
 // Want to expose this typedef also for users of this namespace
@@ -10,10 +11,10 @@ class Msg {
 public:
   ~Msg();
   uchar *data();
-  uint32_t size();
+  size_t size();
   void *MsgPtr;
   char const *topicName();
-  int32_t offset();
+  int64_t offset();
   int32_t partition();
 };
 }
