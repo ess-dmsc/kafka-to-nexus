@@ -43,7 +43,7 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
 void Producer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
                         void *opaque) {
   auto self = reinterpret_cast<Producer *>(opaque);
-  rd_kafka_resp_err_t err = (rd_kafka_resp_err_t)err_i;
+  auto err = static_cast<rd_kafka_resp_err_t>(err_i);
   Sev ll = Sev::Warning;
   if (err == RD_KAFKA_RESP_ERR__TRANSPORT) {
     ll = Sev::Error;
