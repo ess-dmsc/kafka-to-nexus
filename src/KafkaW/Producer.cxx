@@ -5,8 +5,6 @@ namespace KafkaW {
 
 static std::atomic<int> g_kafka_producer_instance_count;
 
-ProducerMsg::~ProducerMsg() {}
-
 void ProducerMsg::deliveryOk() {}
 
 void ProducerMsg::deliveryError() {}

@@ -12,7 +12,7 @@ class ProducerTopic;
 
 class ProducerMsg {
 public:
-  virtual ~ProducerMsg();
+  virtual ~ProducerMsg() = default;
   virtual void deliveryOk();
   virtual void deliveryError();
   uchar *data;
