@@ -189,8 +189,6 @@ uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(RdKafkaPtr); }
 
 uint64_t Producer::totalMessagesProduced() { return TotalMessagesProduced; }
 
-ProducerStats::ProducerStats() {}
-
 ProducerStats::ProducerStats(ProducerStats const &x) {
   produced = x.produced.load();
   produce_fail = x.produce_fail.load();

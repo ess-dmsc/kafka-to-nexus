@@ -29,7 +29,7 @@ struct ProducerStats {
   std::atomic<uint64_t> msg_too_large{0};
   std::atomic<uint64_t> produced_bytes{0};
   std::atomic<uint32_t> out_queue{0};
-  ProducerStats();
+  ProducerStats() = default;
   ProducerStats(ProducerStats const &);
 };
 
