@@ -37,7 +37,6 @@ private:
   static void cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
                            rd_kafka_topic_partition_list_t *plist,
                            void *opaque);
-  static void cb_consume(rd_kafka_message_t *msg, void *opaque);
   rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
 };
