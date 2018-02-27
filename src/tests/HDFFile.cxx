@@ -1,7 +1,7 @@
 #include "../HDFFile.h"
 #include "../Alloc.h"
 #include "../CommandHandler.h"
-#include "../KafkaW.h"
+#include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"

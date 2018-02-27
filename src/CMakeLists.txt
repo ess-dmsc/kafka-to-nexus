@@ -86,7 +86,14 @@ set(kafka_to_nexus_SRC
   FlatbufferReader.cxx
   HDFFile.cxx
   HDFWriterModule.cxx
-  KafkaW.cxx
+  KafkaW/BrokerSettings.cxx
+  KafkaW/TopicSettings.cxx
+  KafkaW/KafkaW.cxx
+  KafkaW/Msg.cxx
+  KafkaW/PollStatus.cxx
+  KafkaW/Consumer.cxx
+  KafkaW/Producer.cxx
+  KafkaW/ProducerTopic.cxx
   helper.cxx
   logger.cxx
   json.cxx
@@ -118,7 +125,14 @@ set(kafka_to_nexus_INC
   json.h
   kafka_util.h
   kafka-to-nexus.h
-  KafkaW.h
+  KafkaW/BrokerSettings.h
+  KafkaW/TopicSettings.h
+  KafkaW/KafkaW.h
+  KafkaW/Msg.h
+  KafkaW/PollStatus.h
+  KafkaW/Consumer.h
+  KafkaW/Producer.h
+  KafkaW/ProducerTopic.h
   logger.h
   MainOpt.h
   Master.h

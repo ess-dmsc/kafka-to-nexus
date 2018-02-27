@@ -1,5 +1,5 @@
 #include "logger.h"
-#include "KafkaW.h"
+#include "KafkaW/KafkaW.h"
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
@@ -62,12 +62,12 @@ void Logger::use_log_file(std::string fname) {
   log_file = f1;
 }
 
-void Logger::log_kafka_gelf_start(std::string address, std::string topicname) {
-  KafkaW::BrokerOpt opt;
-  opt.address = address;
-  producer.reset(new KafkaW::Producer(opt));
+void Logger::log_kafka_gelf_start(std::string Address, std::string topicname) {
+  KafkaW::BrokerSettings BrokerSettings;
+  BrokerSettings.Address = Address;
+  producer.reset(new KafkaW::Producer(BrokerSettings));
   topic.reset(new KafkaW::Producer::Topic(producer, topicname));
-  topic->do_copy();
+  topic->enableCopy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {
       producer->poll();
