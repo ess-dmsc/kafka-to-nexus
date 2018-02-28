@@ -16,5 +16,6 @@ public:
   char const *topicName();
   int64_t offset();
   int32_t partition();
+  void *releaseMsgPtr();
 };
 }

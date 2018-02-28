@@ -81,7 +81,7 @@ public:
     Msg msg;
     msg.type = MsgType::RdKafkaCPtr;
     msg.var.rdkafka_msg_c_ptr =
-        static_cast<rd_kafka_message_t *>(KafkaWMsg->MsgPtr);
+        static_cast<rd_kafka_message_t *>(KafkaWMsg->releaseMsgPtr());
     msg._size = msg.var.rdkafka_msg_c_ptr->len;
     return msg;
   }
