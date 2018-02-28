@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Alloc.h"
+#include "KafkaW/Msg.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <vector>
@@ -16,6 +18,7 @@ enum class MsgType : int {
   Owned = 0,
   RdKafka = 1,
   Shared = 2,
+  RdKafkaCPtr = 3,
   Cheap = 22,
 };
 
@@ -74,6 +77,15 @@ public:
     return msg;
   }
 
+  static Msg fromKafkaW(std::unique_ptr<KafkaW::Msg> KafkaWMsg) {
+    Msg msg;
+    msg.type = MsgType::RdKafkaCPtr;
+    msg.var.rdkafka_msg_c_ptr =
+        static_cast<rd_kafka_message_t *>(KafkaWMsg->MsgPtr);
+    msg._size = msg.var.rdkafka_msg_c_ptr->len;
+    return msg;
+  }
+
   inline Msg(Msg &&x) {
     using std::swap;
     swap(type, x.type);
@@ -96,6 +108,8 @@ public:
     switch (type) {
     case MsgType::RdKafka:
       return (char const *)var.rdkafka_msg->payload();
+    case MsgType::RdKafkaCPtr:
+      return (char const *)var.rdkafka_msg_c_ptr->payload;
     case MsgType::Owned:
       return var.owned;
     case MsgType::Shared:
@@ -113,6 +127,8 @@ public:
     switch (type) {
     case MsgType::RdKafka:
       return var.rdkafka_msg->len();
+    case MsgType::RdKafkaCPtr:
+      return var.rdkafka_msg_c_ptr->len;
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:
@@ -129,6 +145,7 @@ public:
   MsgType type = MsgType::Invalid;
   union Var {
     RdKafka::Message *rdkafka_msg;
+    rd_kafka_message_t *rdkafka_msg_c_ptr;
     char const *owned;
     char const *shared;
     char const *cheap;
@@ -140,6 +157,9 @@ public:
     case MsgType::RdKafka:
       // var.rdkafka_msg.~unique_ptr<RdKafka::Message>();
       delete var.rdkafka_msg;
+      break;
+    case MsgType::RdKafkaCPtr:
+      rd_kafka_message_destroy(var.rdkafka_msg_c_ptr);
       break;
     case MsgType::Owned:
       // var.owned.~V0();
@@ -158,8 +178,6 @@ public:
       exit(1);
     }
   }
-
-private:
 };
 
 } // namespace FileWriter

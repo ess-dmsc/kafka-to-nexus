@@ -69,6 +69,7 @@ std::unique_ptr<Msg> PollStatus::isMsg() {
   if (state == 1) {
     std::unique_ptr<Msg> ret((Msg *)data);
     data = nullptr;
+    state = -3;
     return ret;
   }
   return nullptr;

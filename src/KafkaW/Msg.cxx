@@ -4,7 +4,11 @@
 
 namespace KafkaW {
 
-Msg::~Msg() { rd_kafka_message_destroy((rd_kafka_message_t *)MsgPtr); }
+Msg::~Msg() {
+  if (MsgPtr) {
+    rd_kafka_message_destroy((rd_kafka_message_t *)MsgPtr);
+  }
+}
 
 uchar *Msg::data() { return (uchar *)((rd_kafka_message_t *)MsgPtr)->payload; }
 
