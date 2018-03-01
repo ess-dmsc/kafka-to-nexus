@@ -117,11 +117,9 @@ void HDFFile::write_attributes(hdf5::node::Node &node,
     for (auto &at : jsv->GetObject()) {
       if (at.value.IsString()) {
         write_attribute_str(node, at.name.GetString(), at.value.GetString());
-      }
-      if (at.value.IsInt64()) {
+      } else if (at.value.IsInt64()) {
         write_attribute(node, at.name.GetString(), at.value.GetInt64());
-      }
-      if (at.value.IsDouble()) {
+      } else if (at.value.IsDouble()) {
         write_attribute(node, at.name.GetString(), at.value.GetDouble());
       }
     }
