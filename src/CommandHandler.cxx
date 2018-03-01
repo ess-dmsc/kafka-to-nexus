@@ -248,10 +248,12 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     std::string br = findBroker(Command);
     // Must be called before StreamMaster instantiation
-    std::chrono::milliseconds StartTime(Doc.at("start_time").get<uint64_t>());
-    if (StartTime.count() != 0) {
-      LOG(Sev::Info, "StartTime: {}", StartTime.count());
-      Config.StreamerConfiguration.StartTimestamp = StartTime;
+    if (auto x = get<uint64_t>("start_time", Doc)) {
+      std::chrono::milliseconds StartTime(x.inner());
+      if (StartTime.count() != 0) {
+        LOG(Sev::Info, "StartTime: {}", StartTime.count());
+        Config.StreamerConfiguration.StartTimestamp = StartTime;
+      }
     }
 
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
@@ -266,10 +268,12 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
     s->start();
 
-    std::chrono::milliseconds StopTime(Doc.at("stop_time").get<uint64_t>());
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      s->setStopTime(StopTime);
+    if (auto x = get<uint64_t>("stop_time", Doc)) {
+      std::chrono::milliseconds StopTime(x.inner());
+      if (StopTime.count() != 0) {
+        LOG(Sev::Info, "StopTime: {}", StopTime.count());
+        s->setStopTime(StopTime);
+      }
     }
 
     MasterPtr->stream_masters.push_back(std::move(s));
