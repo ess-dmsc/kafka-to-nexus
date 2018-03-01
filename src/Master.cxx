@@ -39,7 +39,7 @@ void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
 
 void Master::handle_command(std::string const &command) {
   CommandHandler command_handler(config, this);
-  command_handler.handle(command);
+  command_handler.tryToHandle(command);
 }
 
 void Master::run() {

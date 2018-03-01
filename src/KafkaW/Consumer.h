@@ -3,8 +3,8 @@
 #include "BrokerSettings.h"
 #include "Msg.h"
 #include "PollStatus.h"
+#include <functional>
 #include <librdkafka/rdkafka.h>
-//#include <functional>
 
 namespace KafkaW {
 
