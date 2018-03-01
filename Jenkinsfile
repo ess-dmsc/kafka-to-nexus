@@ -238,7 +238,7 @@ def get_macos_pipeline()
 
                     try {
                         sh "make VERBOSE=1"
-                        sh "./tests/tests"
+                        sh ". ./activate_run.sh && ./tests/tests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
                     }
