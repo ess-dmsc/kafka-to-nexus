@@ -28,6 +28,9 @@ public:
             rapidjson::Value const &config_file,
             std::vector<StreamHDFInfo> &stream_hdf_info);
 
+  void init(const std::string &nexus_structure,
+            std::vector<StreamHDFInfo> &stream_hdf_info);
+
   void init(rapidjson::Value const &nexus_structure,
             std::vector<StreamHDFInfo> &stream_hdf_info);
 
