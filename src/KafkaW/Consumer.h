@@ -17,13 +17,13 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer();
   void init();
-  void addTopic(std::string Topic);
+  void addTopic(std::string Topic, size_t StartTime = 0);
   void dumpCurrentSubscription();
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-      on_rebalance_assign;
+  on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-      on_rebalance_start;
+  on_rebalance_start;
   rd_kafka_t *RdKafka = nullptr;
 
 private:

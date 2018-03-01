@@ -16,6 +16,8 @@
 #include "StreamerOptions.h"
 #include "logger.h"
 
+#include "KafkaW/KafkaW.h"
+
 #include <condition_variable>
 #include <mutex>
 #include <thread>
@@ -79,6 +81,9 @@ public:
   StreamerOptions &getOptions() { return Options; }
 
 private:
+  std::unique_ptr<KafkaW::Consumer> ConsumerW;
+  KafkaW::BrokerSettings Settings;
+
   std::shared_ptr<RdKafka::KafkaConsumer> Consumer;
   std::vector<RdKafka::TopicPartition *> TopicPartitionVector;
 
@@ -90,7 +95,7 @@ private:
 
   std::mutex ConnectionLock;
   std::condition_variable ConnectionInit;
-  std::atomic<bool> Initialising{false};
+  std::atomic<bool> Initialising{ false };
 
   std::vector<std::string> Sources;
   StreamerOptions Options;

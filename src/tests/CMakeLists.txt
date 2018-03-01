@@ -1,5 +1,14 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
 
+set(libraries_testing ${libraries_common})
+list(REMOVE_ITEM libraries_testing ${RDKAFKA_LIBRARIES_CXX} ${RDKAFKA_LIBRARIES_C})
+list(APPEND libraries_testing 
+	 ${FAKE_RDKAFKA}/lib/librdkafka++-fake.a 
+	 ${FAKE_RDKAFKA}/lib/librdkafka-fake.a 
+	 ${FAKE_RDKAFKA}/lib/librdkafka-fake-utils.a
+	)
+
+message(STATUS "libraries_testing ${libraries_testing}")
 
 set(tgt "tests")
 set(sources
@@ -15,8 +24,9 @@ status_test.cxx
 status_writer.cxx
 command_handler.cxx
 stream_master.cxx
-MainOpt_tests.cxx
 streamer_options.cxx
+streamer.cxx
+broker_settings.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(includes
@@ -25,8 +35,8 @@ HDFFileTestHelper.h
 add_executable(${tgt} ${sources} ${includes})
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common} ${FAKE_RDKAFKA}/include)
+target_link_libraries(${tgt} ${libraries_testing})
 add_gtest_to_target(${tgt})
 
 configure_file(msg-conf-new-01.json ../../tests/msg-conf-new-01.json)

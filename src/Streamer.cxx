@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <memory>
 
+template <class T> class XType;
+
 namespace FileWriter {
 std::chrono::milliseconds systemTime() {
   using namespace std::chrono;
@@ -66,9 +68,9 @@ FileWriter::Streamer::createConsumer(std::unique_ptr<RdKafka::Conf> &&Conf) {
 /// as a unique_ptr. If fail log the error, set the RunStatus to
 /// SEC::metadata_error and return a null pointer.
 std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::createMetadata() {
-  RdKafka::Metadata *Metadata{nullptr};
+  RdKafka::Metadata *Metadata{ nullptr };
   std::unique_ptr<RdKafka::Topic> Topic;
-  int retry{0};
+  int retry{ 0 };
   auto err = Consumer->metadata(Topic != nullptr, Topic.get(), &Metadata, 1000);
   while (err != RdKafka::ERR_NO_ERROR && retry < Options.NumMetadataRetry) {
     err = Consumer->metadata(Topic != nullptr, Topic.get(), &Metadata, 1000);
@@ -77,9 +79,9 @@ std::unique_ptr<RdKafka::Metadata> FileWriter::Streamer::createMetadata() {
   if (err != RdKafka::ERR_NO_ERROR) {
     LOG(Sev::Error, "{}", RdKafka::err2str(err));
     RunStatus = SEC::metadata_error;
-    return std::unique_ptr<RdKafka::Metadata>{nullptr};
+    return std::unique_ptr<RdKafka::Metadata>{ nullptr };
   } else {
-    return std::unique_ptr<RdKafka::Metadata>{Metadata};
+    return std::unique_ptr<RdKafka::Metadata>{ Metadata };
   }
 }
 
@@ -95,7 +97,7 @@ FileWriter::Streamer::createTopicPartition(
   }
   using PartitionMetadataVector =
       std::vector<const RdKafka::PartitionMetadata *>;
-  const PartitionMetadataVector *pmv{nullptr};
+  const PartitionMetadataVector *pmv{ nullptr };
   for (auto &t : *Metadata->topics()) {
     if (t->topic() == TopicName) {
       pmv = t->partitions();
@@ -170,7 +172,7 @@ FileWriter::Streamer::SEC FileWriter::Streamer::assignTopicPartition() {
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
                                const FileWriter::StreamerOptions &Opts)
-    : RunStatus{SEC::not_initialized}, Options(Opts) {
+    : RunStatus{ SEC::not_initialized }, Options(Opts) {
 
   if (TopicName.empty() || Broker.empty()) {
     LOG(Sev::Error, "Broker and topic required");
@@ -180,6 +182,16 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   Options.RdKafkaOptions.emplace_back("metadata.broker.list", Broker);
   Options.RdKafkaOptions.emplace_back("api.version.request", "true");
   Options.RdKafkaOptions.emplace_back("group.id", TopicName);
+
+  Settings.ConfigurationStrings["group.id"] = TopicName;
+  Settings.ConfigurationStrings["debug"] = "all";
+
+  const int MiB = 1024 * 1024;
+  Settings.ConfigurationIntegers["receive.message.max.bytes"] = 100 * MiB;
+  Settings.ConfigurationIntegers["message.max.bytes"] = 100 * MiB;
+
+  Settings.Address = Broker;
+  Settings.PollTimeoutMS = 2000;
 
   ConnectThread = std::thread([&] {
     this->connect(std::ref(TopicName));
@@ -206,28 +218,31 @@ void FileWriter::Streamer::connect(const std::string &TopicName) {
   ConnectionInit.notify_all();
 
   LOG(Sev::Debug, "Connecting to {}", TopicName);
-  auto Config = createConfiguration(Options);
-  if (!Config) {
-    return;
-  }
-  RunStatus = createConsumer(std::move(Config));
-  if (RunStatus != SEC::no_error) {
-    return;
-  }
-  auto Metadata = createMetadata();
-  if (!Metadata) {
-    return;
-  }
-  LOG(Sev::Debug, "createMetadata");
-  RunStatus = createTopicPartition(TopicName, std::move(Metadata));
-  if (RunStatus != SEC::no_error) {
-    return;
-  }
-  LOG(Sev::Debug, "createTopicPartition");
-  RunStatus = assignTopicPartition();
-  if (RunStatus != SEC::no_error) {
-    return;
-  }
+  ConsumerW.reset(new KafkaW::Consumer(Settings));
+  ConsumerW->addTopic(TopicName);
+  ////
+  // auto Config = createConfiguration(Options);
+  // if (!Config) {
+  //   return;
+  // }
+  // RunStatus = createConsumer(std::move(Config));
+  // if (RunStatus != SEC::no_error) {
+  //   return;
+  // }
+  // auto Metadata = createMetadata();
+  // if (!Metadata) {
+  //   return;
+  // }
+  // LOG(Sev::Debug, "createMetadata");
+  // RunStatus = createTopicPartition(TopicName, std::move(Metadata));
+  // if (RunStatus != SEC::no_error) {
+  //   return;
+  // }
+  // LOG(Sev::Debug, "createTopicPartition");
+  // RunStatus = assignTopicPartition();
+  // if (RunStatus != SEC::no_error) {
+  //   return;
+  // }
   LOG(Sev::Debug, "Connected to topic {}", TopicName);
   RunStatus = SEC::writing;
 }
@@ -264,62 +279,90 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::STOP();
   }
 
-  // Consume the message and check for message errors. Timeout
-  // is considered ok;
-  // partition EOF return stop if the system time is larger than the stop time;
-  // other errors are considered failure
-  std::unique_ptr<RdKafka::Message> msg(
-      Consumer->consume(Options.ConsumerTimeout.count()));
-  if ((msg->err() == RdKafka::ERR__TIMED_OUT) ||
-      (msg->err() == RdKafka::ERR__PARTITION_EOF)) {
-    LOG(Sev::Debug, "consume :\t{}", RdKafka::err2str(msg->err()));
-    if ((Options.StopTimestamp.count() > 0) &&
-        (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
-      Sources.clear();
-      return ProcessMessageResult::STOP();
+  KafkaW::PollStatus Poll = ConsumerW->poll();
+  LOG(Sev::Critical, "Poll isOk() : {}", Poll.isOk());
+  LOG(Sev::Critical, "Poll isEOP() : {}", Poll.isEOP());
+  LOG(Sev::Critical, "Poll isErr() : {}", Poll.isErr());
+  LOG(Sev::Critical, "Poll isEmpty() : {}", Poll.isEmpty());
+
+  if (Poll.isOk()) {
+    Msg Message(Msg::fromKafkaW(std::move(Poll.isMsg())));
+
+    if (Message.type != MsgType::Invalid) {
+      auto MessageTime = MessageProcessor.time_difference_from_message(Message);
+      LOG(Sev::Critical, "{} : {}", MessageTime.sourcename, MessageTime.dt);
     }
-    return ProcessMessageResult::OK();
   }
-  if (msg->err() != RdKafka::ERR_NO_ERROR) {
-    LOG(Sev::Warning, "Failed to consume :\t{}", RdKafka::err2str(msg->err()));
-    MessageInfo.error();
-    return ProcessMessageResult::ERR();
-  }
+  //////////////// Consumer.cxx
+  // if (StartTime.count() > 0) {
+  //   rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
+  //   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(),
+  // Partition)
+  //       ->offset = StartTime.count();
+  // } else {
+  //
+  //
+  // // Consume the message and check for message errors. Timeout
+  // // is considered ok;
+  // // partition EOF return stop if the system time is larger than the stop
+  // time;
+  // // other errors are considered failure
+  // std::unique_ptr<RdKafka::Message> msg(
+  //     Consumer->consume(Options.ConsumerTimeout.count()));
+  // if ((msg->err() == RdKafka::ERR__TIMED_OUT) ||
+  //     (msg->err() == RdKafka::ERR__PARTITION_EOF)) {
+  //   LOG(Sev::Debug, "consume :\t{}", RdKafka::err2str(msg->err()));
+  //   if ((Options.StopTimestamp.count() > 0) &&
+  //       (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
+  //     Sources.clear();
+  //     return ProcessMessageResult::STOP();
+  //   }
+  //   return ProcessMessageResult::OK();
+  // }
+  // if (msg->err() != RdKafka::ERR_NO_ERROR) {
+  //   LOG(Sev::Warning, "Failed to consume :\t{}",
+  // RdKafka::err2str(msg->err()));
+  //   MessageInfo.error();
+  //   return ProcessMessageResult::ERR();
+  // }
 
-  size_t MessageLength = msg->len();
-  auto Message = Msg::rdkafka(std::move(msg));
-  // if the source is not in the source_list return OK (ignore)
-  // if StartTimestamp is set and timestamp < start_time skip message and return
-  // OK, if StopTimestamp is set, timestamp > stop_time and the source is still
-  // present remove source and return STOP else process the message
-  auto MessageTime = MessageProcessor.time_difference_from_message(Message);
-  LOG(Sev::Debug, "Source is {}", MessageTime.sourcename);
-  if (std::find(Sources.begin(), Sources.end(), MessageTime.sourcename) ==
-      Sources.end()) {
-    return ProcessMessageResult::OK();
-  }
-  if (MessageTime.dt < Options.StartTimestamp.count()) {
-    return ProcessMessageResult::OK();
-  }
-  if (Options.StopTimestamp.count() > 0 &&
-      MessageTime.dt > Options.StopTimestamp.count()) {
-    if (removeSource(MessageTime.sourcename)) {
-      return ProcessMessageResult::STOP();
-    }
-    return ProcessMessageResult::ERR();
-  }
+  // size_t MessageLength = msg->len();
+  // auto Message = Msg::rdkafka(std::move(msg));
+  // // if the source is not in the source_list return OK (ignore)
+  // // if StartTimestamp is set and timestamp < start_time skip message and
+  // return
+  // // OK, if StopTimestamp is set, timestamp > stop_time and the source is
+  // still
+  // // present remove source and return STOP else process the message
+  // auto MessageTime = MessageProcessor.time_difference_from_message(Message);
+  // LOG(Sev::Debug, "Source is {}", MessageTime.sourcename);
+  // if (std::find(Sources.begin(), Sources.end(), MessageTime.sourcename) ==
+  //     Sources.end()) {
+  //   return ProcessMessageResult::OK();
+  // }
+  // if (MessageTime.dt < Options.StartTimestamp.count()) {
+  //   return ProcessMessageResult::OK();
+  // }
+  // if (Options.StopTimestamp.count() > 0 &&
+  //     MessageTime.dt > Options.StopTimestamp.count()) {
+  //   if (removeSource(MessageTime.sourcename)) {
+  //     return ProcessMessageResult::STOP();
+  //   }
+  //   return ProcessMessageResult::ERR();
+  // }
 
-  // Collect information about the data received
-  MessageInfo.message(MessageLength);
+  // // Collect information about the data received
+  // MessageInfo.message(MessageLength);
 
-  // Write the message. Log any error and return the result of processing
-  auto result = MessageProcessor.process_message(std::move(Message));
-  LOG(Sev::Debug, "{} : Message timestamp : {}",
-      TopicPartitionVector[0]->topic(), result.ts());
-  if (!result.is_OK()) {
-    MessageInfo.error();
-  }
-  return result;
+  // // Write the message. Log any error and return the result of processing
+  // auto result = MessageProcessor.process_message(std::move(Message));
+  // LOG(Sev::Debug, "{} : Message timestamp : {}",
+  //     TopicPartitionVector[0]->topic(), result.ts());
+  // if (!result.is_OK()) {
+  //   MessageInfo.error();
+  // }
+  // return result;
+  return ProcessMessageResult::ERR();
 }
 
 void FileWriter::Streamer::setSources(
@@ -345,8 +388,8 @@ bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
 
 /// Method that parse the json configuration and parse the options to be used in
 /// RdKafka::Config
-void FileWriter::StreamerOptions::setRdKafkaOptions(
-    const rapidjson::Value *Opt) {
+void
+FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
 
   if (!Opt->IsObject()) {
     LOG(Sev::Warning, "Unable to parse steamer options");
@@ -368,8 +411,8 @@ void FileWriter::StreamerOptions::setRdKafkaOptions(
 
 /// Method that parse the json configuration and sets the parameters used in the
 /// Streamer
-void FileWriter::StreamerOptions::setStreamerOptions(
-    const rapidjson::Value *Opt) {
+void
+FileWriter::StreamerOptions::setStreamerOptions(const rapidjson::Value *Opt) {
 
   if (!Opt->IsObject()) {
     LOG(Sev::Warning, "Unable to parse steamer options");
