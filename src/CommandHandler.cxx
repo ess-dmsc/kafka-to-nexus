@@ -245,14 +245,22 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
-  if (MasterPtr) {
-    std::string br = findBroker(Command);
-    // Must be called before StreamMaster instantiation
-    std::chrono::milliseconds StartTime(Doc.at("start_time").get<uint64_t>());
+  // Must be done before StreamMaster instantiation
+  if (auto x = get<uint64_t>("start_time", Doc)) {
+    std::chrono::milliseconds StartTime(x.inner());
     if (StartTime.count() != 0) {
       LOG(Sev::Info, "StartTime: {}", StartTime.count());
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
+  }
+
+  std::chrono::milliseconds StopTime(0);
+  if (auto x = get<uint64_t>("stop_time", Doc)) {
+    StopTime = std::chrono::milliseconds(x.inner());
+  }
+
+  if (MasterPtr) {
+    std::string br = findBroker(Command);
 
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
@@ -266,7 +274,6 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
     s->start();
 
-    std::chrono::milliseconds StopTime(Doc.at("stop_time").get<uint64_t>());
     if (StopTime.count() != 0) {
       LOG(Sev::Info, "StopTime: {}", StopTime.count());
       s->setStopTime(StopTime);
@@ -449,10 +456,25 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
+void CommandHandler::tryToHandle(std::string const &Command) {
+  try {
+    handle(Command);
+  } catch (nlohmann::detail::parse_error &e) {
+    LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
+  } catch (nlohmann::detail::out_of_range &e) {
+    LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
+  } catch (nlohmann::detail::type_error &e) {
+    LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
+  } catch (...) {
+    LOG(Sev::Error, "Unexpected error while handling command: {}", Command);
+    throw;
+  }
+}
+
 /// Given a `Msg`, call `CommandHandler::handle(std::string const &Command)`.
 
 void CommandHandler::handle(Msg const &Msg) {
-  handle({(char *)Msg.data(), Msg.size()});
+  tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 
 } // namespace FileWriter
