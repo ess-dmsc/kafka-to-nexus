@@ -65,12 +65,10 @@ def docker_dependencies(image_key) {
                         conan remote add \
                             --insert 0 \
                             ${conan_remote} ${local_conan_server}
-                        cat ../${project}/CMakeLists.txt
-                        conan install --build=outdated ../${project}/conan/conanfile.txt
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
     } catch (e) {
-        failure_function(e, "Get dependencies for (${container_name(image_key)}) failed")
+        failure_function(e, "Add conan remote for (${container_name(image_key)}) failed")
     }
 }
 
@@ -233,12 +231,6 @@ def get_macos_pipeline()
                 }
 
                 dir("${project}/build") {
-                    try {
-                        sh "conan install --build=outdated ../code/conan"
-                    } catch (e) {
-                        failure_function(e, 'MacOSX / getting dependencies failed')
-                    }
-
                     try {
                         sh "cmake -DREQUIRE_GTEST=ON ../code"
                     } catch (e) {
