@@ -463,7 +463,8 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   } catch (nlohmann::detail::type_error &e) {
     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
   } catch (...) {
-    LOG(Sev::Error, "Can not handle json command: {}", Command);
+    LOG(Sev::Error, "Unexpected error while handling command: {}", Command);
+    throw;
   }
 }
 
