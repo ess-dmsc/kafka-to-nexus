@@ -22,6 +22,7 @@ public:
   void handleStreamMasterStop(std::string const &Command);
   void handle(Msg const &msg);
   void handle(std::string const &command);
+  void tryToHandle(std::string const &Command);
 
 private:
   void addStreamSourceToWriterModule(

@@ -449,10 +449,24 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
+void CommandHandler::tryToHandle(std::string const &Command) {
+  try {
+    handle(Command);
+  } catch (nlohmann::detail::parse_error &e) {
+    LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
+  } catch (nlohmann::detail::out_of_range &e) {
+    LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
+  } catch (nlohmann::detail::type_error &e) {
+    LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
+  } catch (...) {
+    LOG(Sev::Error, "Can not handle json command: {}", Command);
+  }
+}
+
 /// Given a `Msg`, call `CommandHandler::handle(std::string const &Command)`.
 
 void CommandHandler::handle(Msg const &Msg) {
-  handle({(char *)Msg.data(), Msg.size()});
+  tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 
 } // namespace FileWriter
