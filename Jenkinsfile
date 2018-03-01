@@ -69,11 +69,6 @@ def docker_dependencies(image_key) {
                         conan install --build=outdated ../${project}/conan/conanfile.txt
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
-
-        def checkout_script = """
-                        git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
-                    """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
     } catch (e) {
         failure_function(e, "Get dependencies for (${container_name(image_key)}) failed")
     }
@@ -235,10 +230,6 @@ def get_macos_pipeline()
                     } catch (e) {
                         failure_function(e, 'MacOSX / Checkout failed')
                     }
-                }
-
-                dir("${project}") {
-                    sh "git clone -b master https://github.com/ess-dmsc/streaming-data-types.git"
                 }
 
                 dir("${project}/build") {
