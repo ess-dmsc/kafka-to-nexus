@@ -142,6 +142,7 @@ def docker_coverage(image_key) {
         junit "build/${test_output}"
 
         withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
+            sh "cp ${project}/codecov.yml codecov.yml"
             sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
         }
     } catch (e) {
