@@ -81,7 +81,6 @@ def docker_cmake(image_key) {
         }
         def configure_script = """
                         cd build
-                        . ./activate_run.sh
                         cmake ../${project} -DREQUIRE_GTEST=ON ${coverage_on}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
