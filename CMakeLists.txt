@@ -14,7 +14,7 @@ if(NOT CONAN_DISABLE)
   include(${CMAKE_MODULE_PATH}/conan.cmake)
   conan_cmake_run(CONANFILE conan/conanfile.txt
           PROFILE default
-          BASIC_SETUP NO_OUTPUT_DIRS
+          BASIC_SETUP NO_OUTPUT_DIRS SKIP_RPATH
           BUILD_TYPE "None"
           BUILD outdated)
 endif()
