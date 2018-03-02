@@ -14,7 +14,39 @@ FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename) {
   return TestFile;
 }
 
-TEST(HDFFileAttributesTest, whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
+TEST(HDFFileAttributesTest,
+     whenCommandContainsNumericalAttributeItIsWrittenToFile) {
+  using namespace hdf5;
+
+  auto TestFile = createInMemoryTestFile("test-numerical-attribute.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "nexus_structure": {
+        "children": [
+          {
+            "type": "dataset",
+            "name": "dataset_with_numerical_attr",
+            "values" : 3,
+            "attributes": {
+              "the_answer_is": 42
+            }
+          }
+        ]
+      }
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.root_group,
+                                      "/dataset_with_numerical_attr")
+                  .attributes["the_answer_is"];
+  int AttrValue;
+  Attr.read(AttrValue);
+  ASSERT_EQ(AttrValue, 42);
+}
+
+TEST(HDFFileAttributesTest,
+     whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-scalar-string-attribute.nxs");
@@ -44,7 +76,8 @@ TEST(HDFFileAttributesTest, whenCommandContainsScalarStringAttributeItIsWrittenT
   ASSERT_EQ(StringValue, "world");
 }
 
-TEST(HDFFileAttributesTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
+TEST(HDFFileAttributesTest,
+     whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-array-of-attributes.nxs");
@@ -88,7 +121,8 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayOfAttributesTheyAreWrittenTo
   ASSERT_EQ(StringValue, "string_value");
 }
 
-TEST(HDFFileAttributesTest, whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
+TEST(HDFFileAttributesTest,
+     whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-typed-attribute.nxs");
@@ -114,9 +148,8 @@ TEST(HDFFileAttributesTest, whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToF
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
 
-  auto IntAttr =
-      node::get_group(TestFile.root_group, "group_with_typed_attrs")
-          .attributes["uint32_attribute"];
+  auto IntAttr = node::get_group(TestFile.root_group, "group_with_typed_attrs")
+                     .attributes["uint32_attribute"];
   uint32_t IntValue;
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42);
