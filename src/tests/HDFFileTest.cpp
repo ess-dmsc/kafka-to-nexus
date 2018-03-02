@@ -88,6 +88,42 @@ TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   ASSERT_EQ(StringValue, "string_value");
 }
 
+TEST(HDFFileTest, whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
+  using namespace hdf5;
+
+  auto TestFile = createInMemoryTestFile("test-typed-attribute.nxs");
+
+  std::string CommandWithTypedAttrs = R""({
+    "nexus_structure": {
+      "children": [
+        {
+          "type": "group",
+          "name": "group_with_typed_attrs",
+          "attributes": [
+            {
+              "name": "uint32_attribute",
+              "values": 42,
+              "dataset": {
+                "type": "uint32"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  })"";
+
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
+
+  auto IntAttr =
+      node::get_group(TestFile.root_group, "group_with_typed_attrs")
+          .attributes["uint32_attribute"];
+  uint32_t IntValue;
+  IntAttr.read(IntValue);
+  ASSERT_EQ(IntValue, 42);
+}
+
 TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   using namespace hdf5;
 
@@ -116,14 +152,12 @@ TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
-  auto Group =
-      node::get_group(TestFile.root_group, "group_with_vector_attr");
-
-  ASSERT_TRUE(Group.attributes.exists("array"));
-  auto vector_attr = Group.attributes["array"];
-  std::vector<int> vector_attr_values;
-  vector_attr.read(vector_attr_values);
-  ASSERT_EQ(vector_attr_values[0], 1);
-  ASSERT_EQ(vector_attr_values[1], 2);
-  ASSERT_EQ(vector_attr_values[2], 3);
+  auto ArrayAttr =
+      node::get_group(TestFile.root_group, "group_with_vector_attr")
+          .attributes["array"];
+  std::vector<int> ArrayAttrValues;
+  ArrayAttr.read(ArrayAttrValues);
+  ASSERT_EQ(ArrayAttrValues[0], 1);
+  ASSERT_EQ(ArrayAttrValues[1], 2);
+  ASSERT_EQ(ArrayAttrValues[2], 3);
 }

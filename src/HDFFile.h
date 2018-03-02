@@ -126,12 +126,17 @@ private:
   static void writeObjectOfAttributes(hdf5::node::Node &node,
                                       const rapidjson::Value *jsv);
 
-  static void writeArrayOfAttributes(hdf5::node::Node &node,
-                                     const rapidjson::Value *jsv);
+  static void writeArrayOfAttributes(hdf5::node::Node &Node,
+                                     const rapidjson::Value *JsonValue);
 
-  static void writeScalarAttribute(hdf5::node::Node &node,
+  static void writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   const rapidjson::Value *attrValue);
+                                   const rapidjson::Value *AttrValue);
+
+  static void writeAttrOfSpecifiedType(std::string const &DType,
+                                       hdf5::node::Node &Node,
+                                       std::string const &Name,
+                                       rapidjson::Value const *Values);
 };
 
 } // namespace FileWriter

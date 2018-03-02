@@ -182,11 +182,11 @@ void HDFFile::write_attributes(hdf5::node::Node &node,
 
 /// Write attributes defined in an array of attribute objects
 /// Unlike a single attribute object this allows specifying type and dataset
-/// \param node : node to write attributes on
-/// \param jsv : json value array of attribute objects
-void HDFFile::writeArrayOfAttributes(hdf5::node::Node &node,
-                                     const rapidjson::Value *jsv) {
-  for (const auto &attribute : jsv->GetArray()) {
+/// \param Node : node to write attributes on
+/// \param JsonValue : json value array of attribute objects
+void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
+                                     const rapidjson::Value *JsonValue) {
+  for (const auto &attribute : JsonValue->GetArray()) {
     if (attribute.IsObject()) {
       string Name;
       if (auto NameString = get_string(&attribute, "name")) {
@@ -199,14 +199,82 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &node,
       auto ValuesField = attr.FindMember("values");
 
       if (ValuesField != attr.MemberEnd()) {
-        if (!ValuesField->value.IsArray()) {
-          auto Value = &ValuesField->value;
-          writeScalarAttribute(node, Name, Value);
+        std::string DType;
+        auto AttrType = get_string(&attribute, "type");
+        auto Values = &ValuesField->value;
+        if (AttrType) {
+          DType = AttrType.v;
+          writeAttrOfSpecifiedType(DType, Node, Name, Values);
         } else {
-          throw "Not implemented yet";
+          if (ValuesField->value.IsArray()) {
+            LOG(Sev::Warning, "Attributes with array values must specify type")
+            continue;
+          }
+          writeScalarAttribute(Node, Name, Values);
         }
       }
     }
+  }
+}
+
+/// Write scalar or array attribute of specfied type
+/// \param DType : type of the attribute values
+/// \param Node : group or dataset to add attribute to
+/// \param Name : name of the attribute
+/// \param Values : the attribute values
+void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
+                                       hdf5::node::Node &Node,
+                                       std::string const &Name,
+                                       rapidjson::Value const *Values) {
+  try {
+    if (Values->IsArray()) {
+      //TODO something
+
+      //populate_blob(Values, Values->GetArray().Size());
+    }
+
+    if (DType == "uint8") {
+      write_attribute(Node, Name, static_cast<uint8_t>(Values->GetUint()));
+    }
+    if (DType == "uint16") {
+      write_attribute(Node, Name, static_cast<uint16_t>(Values->GetUint()));
+    }
+    if (DType == "uint32") {
+      write_attribute(Node, Name, static_cast<uint32_t>(Values->GetUint()));
+    }
+    if (DType == "uint64") {
+      write_attribute(Node, Name, static_cast<uint64_t>(Values->GetUint64()));
+    }
+    if (DType == "int8") {
+      write_attribute(Node, Name, static_cast<int8_t>(Values->GetInt()));
+    }
+    if (DType == "int16") {
+      write_attribute(Node, Name, static_cast<int16_t>(Values->GetInt()));
+    }
+    if (DType == "int32") {
+      write_attribute(Node, Name, static_cast<int32_t>(Values->GetInt()));
+    }
+    if (DType == "int64") {
+      write_attribute(Node, Name, static_cast<int64_t>(Values->GetInt64()));
+    }
+    if (DType == "float") {
+      write_attribute(Node, Name, Values->GetFloat());
+    }
+    if (DType == "double") {
+      write_attribute(Node, Name, Values->GetDouble());
+    }
+    if (DType == "string") {
+      const std::string StringValue = Values->GetString();
+      auto string_type = hdf5::datatype::String::fixed(StringValue.size());
+      auto StringAttr = Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar());
+      StringAttr.write(Values->GetString(), string_type);
+    }
+  } catch (std::exception &e) {
+    std::stringstream ss;
+    ss << "Failed attribute write in ";
+    ss << Node.link().path() << "/" << Name;
+    ss << " type='" << DType << "'";
+    std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
@@ -221,19 +289,19 @@ void HDFFile::writeObjectOfAttributes(hdf5::node::Node &node,
   }
 }
 
-void HDFFile::writeScalarAttribute(hdf5::node::Node &node,
+/// Write a scalar attribute when the type is to be inferred
+/// \param Node : Group or dataset to write attribute to
+/// \param Name : Name of the attribute
+/// \param AttrValue : Json value containing the attribute value
+void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   const rapidjson::Value *attrValue) {
-  if (attrValue->IsString()) {
-    write_attribute_str(node, Name, attrValue->GetString());
-  } else if (attrValue->IsInt64()) {
-    write_attribute(node, Name, attrValue->GetInt64());
-  } else if (attrValue->IsDouble()) {
-    write_attribute(node, Name, attrValue->GetDouble());
-  } else if (attrValue->IsArray()) {
-    LOG(Sev::Warning, "Array attributes can only be given in an array of "
-                      "attribute definitions,"
-                      "not an object of attributes with names as keys");
+                                   const rapidjson::Value *AttrValue) {
+  if (AttrValue->IsString()) {
+    write_attribute_str(Node, Name, AttrValue->GetString());
+  } else if (AttrValue->IsInt64()) {
+    write_attribute(Node, Name, AttrValue->GetInt64());
+  } else if (AttrValue->IsDouble()) {
+    write_attribute(Node, Name, AttrValue->GetDouble());
   }
 }
 
