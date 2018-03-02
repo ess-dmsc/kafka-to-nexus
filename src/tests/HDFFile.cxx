@@ -1146,7 +1146,7 @@ public:
 
   static void attribute_string_scalar() {
     hdf5::property::FileAccessList fapl;
-    //    fapl.driver(hdf5::file::MemoryDriver());
+    fapl.driver(hdf5::file::MemoryDriver());
 
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file = hdf5::file::create(
@@ -1197,7 +1197,7 @@ public:
 
   static void dataset_static_1d_string_fixed() {
     hdf5::property::FileAccessList fapl;
-    //    fapl.driver(hdf5::file::MemoryDriver());
+    fapl.driver(hdf5::file::MemoryDriver());
 
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file =
@@ -1234,7 +1234,7 @@ public:
 
   static void dataset_static_1d_string_variable() {
     hdf5::property::FileAccessList fapl;
-    //    fapl.driver(hdf5::file::MemoryDriver());
+    fapl.driver(hdf5::file::MemoryDriver());
 
     FileWriter::HDFFile hdf_file;
     hdf_file.h5file =
