@@ -186,21 +186,21 @@ void HDFFile::write_attributes(hdf5::node::Node &node,
 /// \param JsonValue : json value array of attribute objects
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
                                      const rapidjson::Value *JsonValue) {
-  for (const auto &attribute : JsonValue->GetArray()) {
-    if (attribute.IsObject()) {
+  for (const auto &Attribute : JsonValue->GetArray()) {
+    if (Attribute.IsObject()) {
       string Name;
-      if (auto NameString = get_string(&attribute, "name")) {
+      if (auto NameString = get_string(&Attribute, "name")) {
         Name = NameString.v;
       } else {
         continue;
       }
 
-      auto attr = attribute.GetObject();
+      auto attr = Attribute.GetObject();
       auto ValuesField = attr.FindMember("values");
 
       if (ValuesField != attr.MemberEnd()) {
         std::string DType;
-        auto AttrType = get_string(&attribute, "type");
+        auto AttrType = get_string(&Attribute, "type");
         auto Values = &ValuesField->value;
         if (AttrType) {
           DType = AttrType.v;
@@ -227,46 +227,101 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
                                        std::string const &Name,
                                        rapidjson::Value const *Values) {
   try {
-    if (Values->IsArray()) {
-      //TODO something
-
-      //populate_blob(Values, Values->GetArray().Size());
-    }
-
     if (DType == "uint8") {
-      write_attribute(Node, Name, static_cast<uint8_t>(Values->GetUint()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<uint8_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<uint8_t>(Values->GetUint()));
+      }
     }
     if (DType == "uint16") {
-      write_attribute(Node, Name, static_cast<uint16_t>(Values->GetUint()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<uint16_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<uint16_t>(Values->GetUint()));
+      }
     }
     if (DType == "uint32") {
-      write_attribute(Node, Name, static_cast<uint32_t>(Values->GetUint()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<uint32_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<uint32_t>(Values->GetUint()));
+      }
     }
     if (DType == "uint64") {
-      write_attribute(Node, Name, static_cast<uint64_t>(Values->GetUint64()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<uint64_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<uint64_t>(Values->GetUint64()));
+      }
     }
     if (DType == "int8") {
-      write_attribute(Node, Name, static_cast<int8_t>(Values->GetInt()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<int8_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<int8_t>(Values->GetInt()));
+      }
     }
     if (DType == "int16") {
-      write_attribute(Node, Name, static_cast<int16_t>(Values->GetInt()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<int16_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<int16_t>(Values->GetInt()));
+      }
     }
     if (DType == "int32") {
-      write_attribute(Node, Name, static_cast<int32_t>(Values->GetInt()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<int32_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<int32_t>(Values->GetInt()));
+      }
     }
     if (DType == "int64") {
-      write_attribute(Node, Name, static_cast<int64_t>(Values->GetInt64()));
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<int64_t>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, static_cast<int64_t>(Values->GetInt64()));
+      }
     }
     if (DType == "float") {
-      write_attribute(Node, Name, Values->GetFloat());
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<float>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, Values->GetFloat());
+      }
     }
     if (DType == "double") {
-      write_attribute(Node, Name, Values->GetDouble());
+      if (Values->IsArray()) {
+        auto ValueArray =
+            populate_blob<double>(Values, Values->GetArray().Size());
+        write_attribute(Node, Name, ValueArray);
+      } else {
+        write_attribute(Node, Name, Values->GetDouble());
+      }
     }
     if (DType == "string") {
       const std::string StringValue = Values->GetString();
       auto string_type = hdf5::datatype::String::fixed(StringValue.size());
-      auto StringAttr = Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar());
+      auto StringAttr =
+          Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar());
       StringAttr.write(Values->GetString(), string_type);
     }
   } catch (std::exception &e) {
