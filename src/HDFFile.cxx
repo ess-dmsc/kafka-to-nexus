@@ -318,11 +318,19 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
       }
     }
     if (DType == "string") {
-      const std::string StringValue = Values->GetString();
-      auto string_type = hdf5::datatype::String::fixed(StringValue.size());
-      auto StringAttr =
-          Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar());
-      StringAttr.write(Values->GetString(), string_type);
+      if (Values->IsArray()) {
+        auto ValueArray = populate_strings(Values, Values->GetArray().Size());
+        auto StringAttr = Node.attributes.create(
+            Name, hdf5::datatype::create<std::string>(),
+            hdf5::dataspace::Simple{{Values->GetArray().Size()}});
+        StringAttr.write(ValueArray);
+      } else {
+        const std::string StringValue = Values->GetString();
+        auto string_type = hdf5::datatype::String::fixed(StringValue.size());
+        auto StringAttr = Node.attributes.create(Name, string_type,
+                                                 hdf5::dataspace::Scalar());
+        StringAttr.write(Values->GetString(), string_type);
+      }
     }
   } catch (std::exception &e) {
     std::stringstream ss;

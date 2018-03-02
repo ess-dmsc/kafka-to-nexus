@@ -132,12 +132,17 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
       "children": [
         {
           "type": "group",
-          "name": "group_with_array_attr",
+          "name": "group_with_array_attrs",
           "attributes": [
             {
               "name": "array_attribute",
               "values": [1, 2, 3],
               "type": "uint64"
+            },
+            {
+              "name": "array_string_attribute",
+              "values": ["A", "B"],
+              "type": "string"
             }
           ]
         }
@@ -149,11 +154,19 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
   auto ArrayAttr =
-      node::get_group(TestFile.root_group, "group_with_array_attr")
+      node::get_group(TestFile.root_group, "group_with_array_attrs")
           .attributes["array_attribute"];
   std::vector<int> ArrayAttrValues(3);
   ArrayAttr.read(ArrayAttrValues);
   ASSERT_EQ(ArrayAttrValues[0], 1);
   ASSERT_EQ(ArrayAttrValues[1], 2);
   ASSERT_EQ(ArrayAttrValues[2], 3);
+
+  auto ArrayStringAttr =
+      node::get_group(TestFile.root_group, "group_with_array_attrs")
+          .attributes["array_string_attribute"];
+  std::vector<std::string> ArrayStringAttrValues(2);
+  ArrayStringAttr.read(ArrayStringAttrValues);
+  ASSERT_EQ(ArrayStringAttrValues[0], "A");
+  ASSERT_EQ(ArrayStringAttrValues[1], "B");
 }
