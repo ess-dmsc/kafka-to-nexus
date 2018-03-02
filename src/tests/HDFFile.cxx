@@ -1144,39 +1144,6 @@ public:
     }
   }
 
-  static void attribute_string_scalar() {
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file = hdf5::file::create(
-        "tmp-attr-scalar.h5", hdf5::file::AccessFlags::TRUNCATE,
-        hdf5::property::FileCreationList(), fapl);
-
-    rapidjson::Document nexus_structure;
-    nexus_structure.Parse(R""({
-      "children": [
-        {
-          "type": "group",
-          "name": "group1",
-          "attributes": {
-            "hello": "world"
-          }
-        }
-      ]
-    })"");
-    ASSERT_EQ(nexus_structure.HasParseError(), false);
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-    hdf_file.init(nexus_structure, stream_hdf_info);
-
-    auto a1 = hdf5::node::get_group(hdf_file.root_group, "/group1")
-                  .attributes["hello"];
-    ASSERT_EQ(a1.datatype().get_class(), hdf5::datatype::Class::STRING);
-    std::string val;
-    a1.read(val, a1.datatype());
-    ASSERT_EQ(val, "world");
-  }
-
   /// Read a string from the given dataset at the given position.
   /// Helper for other unit tests.
   /// So far only for 1d datasets.
@@ -1286,10 +1253,6 @@ TEST_F(T_CommandHandler, write_attributes_at_top_level_of_the_file) {
 TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
-
-TEST_F(T_CommandHandler, attribute_string_scalar) {
-  T_CommandHandler::attribute_string_scalar();
-}
 
 TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
   T_CommandHandler::dataset_static_1d_string_fixed();

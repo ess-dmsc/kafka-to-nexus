@@ -111,29 +111,6 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
   write_hdf_attribute_iso8601(node, name, now);
 }
 
-void HDFFile::write_attributes(hdf5::node::Node &node,
-                               rapidjson::Value const *jsv) {
-  if (jsv->IsObject()) {
-    for (auto &at : jsv->GetObject()) {
-      if (at.value.IsString()) {
-        write_attribute_str(node, at.name.GetString(), at.value.GetString());
-      } else if (at.value.IsInt64()) {
-        write_attribute(node, at.name.GetString(), at.value.GetInt64());
-      } else if (at.value.IsDouble()) {
-        write_attribute(node, at.name.GetString(), at.value.GetDouble());
-      }
-    }
-  }
-}
-
-void HDFFile::write_attributes_if_present(hdf5::node::Node &node,
-                                          rapidjson::Value const *jsv) {
-  auto mem = jsv->FindMember("attributes");
-  if (mem != jsv->MemberEnd()) {
-    write_attributes(node, &mem->value);
-  }
-}
-
 template <typename DT>
 static std::vector<DT> populate_blob(rapidjson::Value const *vals,
                                      hssize_t goal_size) {
@@ -192,6 +169,80 @@ static std::vector<DT> populate_blob(rapidjson::Value const *vals,
   }
 
   return ret;
+}
+
+void HDFFile::write_attributes(hdf5::node::Node &node,
+                               rapidjson::Value const *jsv) {
+  if (jsv->IsArray()) {
+    writeArrayOfAttributes(node, jsv);
+  } else if (jsv->IsObject()) {
+    writeObjectOfAttributes(node, jsv);
+  }
+}
+
+/// Write attributes defined in an array of attribute objects
+/// Unlike a single attribute object this allows specifying type and dataset
+/// \param node : node to write attributes on
+/// \param jsv : json value array of attribute objects
+void HDFFile::writeArrayOfAttributes(hdf5::node::Node &node,
+                                     const rapidjson::Value *jsv) {
+  for (const auto &attribute : jsv->GetArray()) {
+    if (attribute.IsObject()) {
+      string Name;
+      if (auto NameString = get_string(&attribute, "name")) {
+        Name = NameString.v;
+      } else {
+        continue;
+      }
+
+      auto attr = attribute.GetObject();
+      auto ValuesField = attr.FindMember("values");
+
+      if (ValuesField != attr.MemberEnd()) {
+        if (!ValuesField->value.IsArray()) {
+          auto Value = &ValuesField->value;
+          writeScalarAttribute(node, Name, Value);
+        } else {
+          throw "Not implemented yet";
+        }
+      }
+    }
+  }
+}
+
+/// Write attributes defined in an object of name-value pairs
+/// \param node : node to write attributes on
+/// \param jsv : json value object of attributes
+void HDFFile::writeObjectOfAttributes(hdf5::node::Node &node,
+                                      const rapidjson::Value *jsv) {
+  for (auto &at : jsv->GetObject()) {
+    const std::string Name = at.name.GetString();
+    writeScalarAttribute(node, Name, &at.value);
+  }
+}
+
+void HDFFile::writeScalarAttribute(hdf5::node::Node &node,
+                                   const std::string &Name,
+                                   const rapidjson::Value *attrValue) {
+  if (attrValue->IsString()) {
+    write_attribute_str(node, Name, attrValue->GetString());
+  } else if (attrValue->IsInt64()) {
+    write_attribute(node, Name, attrValue->GetInt64());
+  } else if (attrValue->IsDouble()) {
+    write_attribute(node, Name, attrValue->GetDouble());
+  } else if (attrValue->IsArray()) {
+    LOG(Sev::Warning, "Array attributes can only be given in an array of "
+                      "attribute definitions,"
+                      "not an object of attributes with names as keys");
+  }
+}
+
+void HDFFile::write_attributes_if_present(hdf5::node::Node &node,
+                                          rapidjson::Value const *jsv) {
+  auto mem = jsv->FindMember("attributes");
+  if (mem != jsv->MemberEnd()) {
+    write_attributes(node, &mem->value);
+  }
 }
 
 std::vector<std::string> HDFFile::populate_strings(rapidjson::Value const *vals,
@@ -646,7 +697,7 @@ void HDFFile::init(const std::string &nexus_structure,
                    std::vector<StreamHDFInfo> &stream_hdf_info) {
   rapidjson::Document document;
   document.Parse(nexus_structure.c_str());
-  const rapidjson::Value& nexus_structure_json = document["nexus_structure"];
+  const rapidjson::Value &nexus_structure_json = document["nexus_structure"];
   init(nexus_structure_json, stream_hdf_info);
 }
 

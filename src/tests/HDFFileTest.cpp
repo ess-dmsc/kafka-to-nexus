@@ -7,11 +7,41 @@ FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename) {
   fapl.driver(hdf5::file::MemoryDriver());
 
   FileWriter::HDFFile TestFile;
-  TestFile.h5file = hdf5::file::create(
-          Filename, hdf5::file::AccessFlags::TRUNCATE,
-          hdf5::property::FileCreationList(), fapl);
+  TestFile.h5file =
+      hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE,
+                         hdf5::property::FileCreationList(), fapl);
 
   return TestFile;
+}
+
+TEST(HDFFileTest, whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
+  using namespace hdf5;
+
+  auto TestFile = createInMemoryTestFile("test-scalar-string-attribute.nxs");
+
+  std::string CommandWithScalarStringAttr = R""({
+      "nexus_structure": {
+        "children": [
+          {
+            "type": "group",
+            "name": "group_with_scalar_string_attr",
+            "attributes": {
+              "hello": "world"
+            }
+          }
+        ]
+      }
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithScalarStringAttr, EmptyStreamHDFInfo);
+
+  auto StringAttr = hdf5::node::get_group(TestFile.root_group,
+                                          "/group_with_scalar_string_attr")
+                        .attributes["hello"];
+  ASSERT_EQ(StringAttr.datatype().get_class(), hdf5::datatype::Class::STRING);
+  std::string StringValue;
+  StringAttr.read(StringValue, StringAttr.datatype());
+  ASSERT_EQ(StringValue, "world");
 }
 
 TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
@@ -23,9 +53,8 @@ TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
     "nexus_structure": {
       "children": [
         {
-          "type": "dataset",
-          "name": "dataset_with_array_of_attrs",
-          "values": 42.24,
+          "type": "group",
+          "name": "group_with_array_of_attrs",
           "attributes": [
             {
               "name": "integer_attribute",
@@ -44,20 +73,19 @@ TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
 
-  auto dataset =
-      node::get_dataset(TestFile.root_group, "dataset_with_array_of_attrs");
+  auto IntAttr =
+      node::get_group(TestFile.root_group, "group_with_array_of_attrs")
+          .attributes["integer_attribute"];
+  int64_t IntValue;
+  IntAttr.read(IntValue);
+  ASSERT_EQ(IntValue, 42);
 
-  ASSERT_TRUE(dataset.attributes.exists("integer_attribute"));
-  auto int_attr = dataset.attributes["integer_attribute"];
-  uint64_t int_attr_value;
-  int_attr.read(int_attr_value);
-  ASSERT_EQ(int_attr_value, 42);
-
-  ASSERT_TRUE(dataset.attributes.exists("string_attribute"));
-  auto string_attr = dataset.attributes["string_attribute"];
-  std::string str_attr_value;
-  int_attr.read(str_attr_value);
-  ASSERT_EQ(str_attr_value, "string_value");
+  auto StringAttr =
+      node::get_group(TestFile.root_group, "group_with_array_of_attrs")
+          .attributes["string_attribute"];
+  std::string StringValue;
+  StringAttr.read(StringValue, StringAttr.datatype());
+  ASSERT_EQ(StringValue, "string_value");
 }
 
 TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
@@ -69,9 +97,8 @@ TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
     "nexus_structure": {
       "children": [
         {
-          "type": "dataset",
-          "name": "dataset_with_array_attr",
-          "values": 42.24,
+          "type": "group",
+          "name": "group_with_array_attr",
           "attributes": [
             {
               "name": "array",
@@ -89,11 +116,11 @@ TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
-  auto dataset =
-      node::get_dataset(TestFile.root_group, "dataset_with_vector_attr");
+  auto Group =
+      node::get_group(TestFile.root_group, "group_with_vector_attr");
 
-  ASSERT_TRUE(dataset.attributes.exists("vector"));
-  auto vector_attr = dataset.attributes["vector"];
+  ASSERT_TRUE(Group.attributes.exists("array"));
+  auto vector_attr = Group.attributes["array"];
   std::vector<int> vector_attr_values;
   vector_attr.read(vector_attr_values);
   ASSERT_EQ(vector_attr_values[0], 1);

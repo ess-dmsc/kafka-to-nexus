@@ -104,15 +104,34 @@ private:
                                hdf5::property::FileAccessList &fapl) {}
 
   template <typename T>
-  static void write_attribute(hdf5::node::Node &node, std::string name,
+  static void write_attribute(hdf5::node::Node &node, const std::string &name,
                               T value) {
     hdf5::property::AttributeCreationList acpl;
     acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
     node.attributes.create<T>(name, acpl).write(value);
   }
+
+  template <typename T>
+  static void write_attribute(hdf5::node::Node &node, const std::string &name,
+                              std::vector<T> values) {
+    hdf5::property::AttributeCreationList acpl;
+    acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    node.attributes.create<T>(name, {values.size()}, acpl).write(values);
+  }
+
   template <typename T>
   void write_hdf_ds_iso8601(hdf5::node::Group &parent, const std::string &name,
                             T &ts);
+
+  static void writeObjectOfAttributes(hdf5::node::Node &node,
+                                      const rapidjson::Value *jsv);
+
+  static void writeArrayOfAttributes(hdf5::node::Node &node,
+                                     const rapidjson::Value *jsv);
+
+  static void writeScalarAttribute(hdf5::node::Node &node,
+                                   const std::string &Name,
+                                   const rapidjson::Value *attrValue);
 };
 
 } // namespace FileWriter
