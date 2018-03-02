@@ -6,7 +6,7 @@ set(sources
 tests.cxx
 roundtrip.cxx
 HDFFile.cxx
-HDFFileTest.cpp
+HDFFileAttributesTest.cpp
 helper.cxx
 json.cxx
 uri.cxx

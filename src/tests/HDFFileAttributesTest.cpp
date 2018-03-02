@@ -14,7 +14,7 @@ FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename) {
   return TestFile;
 }
 
-TEST(HDFFileTest, whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
+TEST(HDFFileAttributesTest, whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-scalar-string-attribute.nxs");
@@ -44,7 +44,7 @@ TEST(HDFFileTest, whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
   ASSERT_EQ(StringValue, "world");
 }
 
-TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
+TEST(HDFFileAttributesTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-array-of-attributes.nxs");
@@ -88,7 +88,7 @@ TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   ASSERT_EQ(StringValue, "string_value");
 }
 
-TEST(HDFFileTest, whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
+TEST(HDFFileAttributesTest, whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-typed-attribute.nxs");
@@ -124,7 +124,7 @@ TEST(HDFFileTest, whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
   ASSERT_EQ(IntValue, 42);
 }
 
-TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
+TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   using namespace hdf5;
 
   auto TestFile = createInMemoryTestFile("test-array-attribute.nxs");
