@@ -14,26 +14,80 @@ FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename) {
   return TestFile;
 }
 
-TEST(HDFFileTest, givenCommandContainsVectorAttrItIsWrittenToFile) {
+TEST(HDFFileTest, whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   using namespace hdf5;
 
-  auto TestFile = createInMemoryTestFile("test-vector-attribute.nxs");
+  auto TestFile = createInMemoryTestFile("test-array-of-attributes.nxs");
 
-  std::string CommandWithVectorAttr = R""({
+  std::string CommandWithArrayOfAttrs = R""({
     "nexus_structure": {
       "children": [
         {
           "type": "dataset",
-          "name": "dataset_with_vector_attr",
+          "name": "dataset_with_array_of_attrs",
           "values": 42.24,
-          "attributes": {"vector":[1, 2, 3]}
+          "attributes": [
+            {
+              "name": "integer_attribute",
+              "values": 42
+            },
+            {
+              "name": "string_attribute",
+              "values": "string_value"
+            }
+          ]
         }
       ]
     }
   })"";
 
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithVectorAttr, EmptyStreamHDFInfo);
+  TestFile.init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
+
+  auto dataset =
+      node::get_dataset(TestFile.root_group, "dataset_with_array_of_attrs");
+
+  ASSERT_TRUE(dataset.attributes.exists("integer_attribute"));
+  auto int_attr = dataset.attributes["integer_attribute"];
+  uint64_t int_attr_value;
+  int_attr.read(int_attr_value);
+  ASSERT_EQ(int_attr_value, 42);
+
+  ASSERT_TRUE(dataset.attributes.exists("string_attribute"));
+  auto string_attr = dataset.attributes["string_attribute"];
+  std::string str_attr_value;
+  int_attr.read(str_attr_value);
+  ASSERT_EQ(str_attr_value, "string_value");
+}
+
+TEST(HDFFileTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
+  using namespace hdf5;
+
+  auto TestFile = createInMemoryTestFile("test-array-attribute.nxs");
+
+  std::string CommandWithArrayAttr = R""({
+    "nexus_structure": {
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_array_attr",
+          "values": 42.24,
+          "attributes": [
+            {
+              "name": "array",
+              "values":[1, 2, 3],
+              "dataset": {
+                "type": "uint64"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  })"";
+
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
   auto dataset =
       node::get_dataset(TestFile.root_group, "dataset_with_vector_attr");
