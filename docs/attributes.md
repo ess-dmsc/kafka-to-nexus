@@ -2,12 +2,14 @@
 
 [Attributes](https://support.hdfgroup.org/HDF5/doc1.6/UG/13_Attributes.html) are
 metadata which can be attached to groups or datasets. They are added using the
-`attributes` keyword with the value as either an object or an array. If an
-object is provided it contains attribute names and values as key-value pairs.
+`attributes` key with the value as either an object or an array. NeXus classes
+are defined using a [group](groups.md) with an attribute named `NX_class`.
 
 ## Attributes object
 
-Here is a dataset with an `attributes` object as an example:
+If an object is provided as the `attributes`, it contains attribute names
+and values as key-value pairs. Here is a dataset with an `attributes`
+object as an example:
 
 ```json
 

@@ -82,11 +82,11 @@ Depending on the `HDFWriterModule`, there will be more options specific to the
 #### Command to start writing a file:
 
 Further documentation:
-- [Groups]()
-- [Datasets]()
+- [Groups](docs/groups.md)
+- [~~Datasets~~]()
 - [Attributes](docs/attributes.md)
-- [File Attributes]()
-- [Streams]()
+- [~~File Attributes~~]()
+- [~~Streams~~]()
 
 ```json
 {
