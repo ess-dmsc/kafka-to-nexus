@@ -10,8 +10,6 @@
 
 using uri::URI;
 
-void MainOpt::init() {}
-
 int MainOpt::parse_config_file(std::string fname) {
   if (fname.empty()) {
     LOG(Sev::Notice, "given config filename is empty");
@@ -72,7 +70,7 @@ int MainOpt::parse_config_json(std::string json) {
       rapidjson::StringBuffer buf;
       rapidjson::Writer<StringBuffer> wr(buf);
       js_command.Accept(wr);
-      commands_from_config_file.push_back({buf.GetString(), buf.GetSize()});
+      commands_from_config_file.emplace_back(buf.GetString(), buf.GetSize());
     }
   }
   if (auto o = get_bool(&d, "source_do_process_message")) {
@@ -180,13 +178,13 @@ std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv) {
 }
 
 void setup_logger_from_options(MainOpt const &opt) {
-  if (opt.kafka_gelf != "") {
+  if (!opt.kafka_gelf.empty()) {
     URI uri(opt.kafka_gelf);
     log_kafka_gelf_start(uri.host, uri.topic);
     LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
   }
 
-  if (opt.graylog_logger_address != "") {
+  if (!opt.graylog_logger_address.empty()) {
     fwd_graylog_logger_enable(opt.graylog_logger_address);
   }
 }
