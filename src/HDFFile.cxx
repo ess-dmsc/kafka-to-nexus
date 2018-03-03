@@ -24,6 +24,104 @@ using std::vector;
 using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
+template <typename T>
+static void write_attribute(hdf5::node::Node &node, const std::string &name,
+                            T value) {
+  hdf5::property::AttributeCreationList acpl;
+  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  node.attributes.create<T>(name, acpl).write(value);
+}
+
+template <typename T>
+static void write_attribute(hdf5::node::Node &node, const std::string &name,
+                            std::vector<T> values) {
+  hdf5::property::AttributeCreationList acpl;
+  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  node.attributes.create<T>(name, {values.size()}, acpl).write(values);
+}
+
+template <typename DT>
+static std::vector<DT> populate_blob(rapidjson::Value const *vals,
+                                     hssize_t goal_size) {
+  std::vector<DT> ret;
+  if (vals->IsInt()) {
+    ret.push_back(vals->GetInt());
+  } else if (vals->IsDouble()) {
+    ret.push_back(vals->GetDouble());
+  } else if (vals->IsArray()) {
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
+      // an.back());
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
+        continue;
+      }
+      auto &v = as.top()->GetArray()[ai.top()];
+      if (v.IsArray()) {
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
+        size_t n = v.GetArray().Size();
+        an.push(n);
+      } else if (v.IsInt()) {
+        ret.push_back((DT)v.GetInt());
+        ai.top()++;
+      } else if (v.IsInt64()) {
+        ret.push_back((DT)v.GetInt64());
+        ai.top()++;
+      } else if (v.IsUint64()) {
+        ret.push_back((DT)v.GetUint64());
+        ai.top()++;
+      } else if (v.IsDouble()) {
+        ret.push_back((DT)v.GetDouble());
+        ai.top()++;
+      }
+    }
+  }
+  if (static_cast<hssize_t>(ret.size()) != goal_size) {
+    std::stringstream ss;
+    ss << "Failed to populate numeric blob ";
+    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+  return ret;
+}
+
+template <typename T>
+static void writeAttrNumeric(hdf5::node::Node &Node, const std::string &Name,
+                             rapidjson::Value const *Values) {
+  hssize_t length = 1;
+  if (Values->IsArray()) {
+    length = Values->GetArray().Size();
+  }
+  auto ValueData = populate_blob<uint8_t>(Values, length);
+  try {
+    if (Values->IsArray()) {
+      write_attribute(Node, Name, ValueData);
+    } else {
+      write_attribute(Node, Name, ValueData[0]);
+    }
+  } catch (std::exception &e) {
+    std::stringstream ss;
+    ss << "Failed numeric attribute write in ";
+    ss << Node.link().path() << "/" << Name;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+}
+
 HDFFile::HDFFile() {
 // Keep this.  Will be used later to test against different lib versions
 #if H5_VERSION_GE(1, 8, 0) && H5_VERSION_LE(1, 10, 99)
@@ -111,66 +209,6 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
   write_hdf_attribute_iso8601(node, name, now);
 }
 
-template <typename DT>
-static std::vector<DT> populate_blob(rapidjson::Value const *vals,
-                                     hssize_t goal_size) {
-  std::vector<DT> ret;
-  if (vals->IsInt()) {
-    ret.push_back(vals->GetInt());
-  } else if (vals->IsDouble()) {
-    ret.push_back(vals->GetDouble());
-  } else if (vals->IsArray()) {
-    std::stack<rapidjson::Value const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(vals);
-    ai.push(0);
-    an.push(vals->GetArray().Size());
-
-    while (not as.empty()) {
-      if (as.size() > 10) {
-        break;
-      }
-      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
-      // an.back());
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->GetArray()[ai.top()];
-      if (v.IsArray()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        size_t n = v.GetArray().Size();
-        an.push(n);
-      } else if (v.IsInt()) {
-        ret.push_back((DT)v.GetInt());
-        ai.top()++;
-      } else if (v.IsInt64()) {
-        ret.push_back((DT)v.GetInt64());
-        ai.top()++;
-      } else if (v.IsUint64()) {
-        ret.push_back((DT)v.GetUint64());
-        ai.top()++;
-      } else if (v.IsDouble()) {
-        ret.push_back((DT)v.GetDouble());
-        ai.top()++;
-      }
-    }
-  }
-  if (static_cast<hssize_t>(ret.size()) != goal_size) {
-    std::stringstream ss;
-    ss << "Failed to populate numeric blob ";
-    ss << " size mismatch " << ret.size() << "!=" << goal_size;
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
-
-  return ret;
-}
-
 void HDFFile::write_attributes(hdf5::node::Node &node,
                                rapidjson::Value const *jsv) {
   if (jsv->IsArray()) {
@@ -228,94 +266,34 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
                                        rapidjson::Value const *Values) {
   try {
     if (DType == "uint8") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<uint8_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<uint8_t>(Values->GetUint()));
-      }
+      writeAttrNumeric<uint8_t>(Node, Name, Values);
     }
     if (DType == "uint16") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<uint16_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<uint16_t>(Values->GetUint()));
-      }
+      writeAttrNumeric<uint16_t>(Node, Name, Values);
     }
     if (DType == "uint32") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<uint32_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<uint32_t>(Values->GetUint()));
-      }
+      writeAttrNumeric<uint32_t>(Node, Name, Values);
     }
     if (DType == "uint64") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<uint64_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<uint64_t>(Values->GetUint64()));
-      }
+      writeAttrNumeric<uint64_t>(Node, Name, Values);
     }
     if (DType == "int8") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<int8_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<int8_t>(Values->GetInt()));
-      }
+      writeAttrNumeric<int8_t>(Node, Name, Values);
     }
     if (DType == "int16") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<int16_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<int16_t>(Values->GetInt()));
-      }
+      writeAttrNumeric<int16_t>(Node, Name, Values);
     }
     if (DType == "int32") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<int32_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<int32_t>(Values->GetInt()));
-      }
+      writeAttrNumeric<int32_t>(Node, Name, Values);
     }
     if (DType == "int64") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<int64_t>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, static_cast<int64_t>(Values->GetInt64()));
-      }
+      writeAttrNumeric<int64_t>(Node, Name, Values);
     }
     if (DType == "float") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<float>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, Values->GetFloat());
-      }
+      writeAttrNumeric<float>(Node, Name, Values);
     }
     if (DType == "double") {
-      if (Values->IsArray()) {
-        auto ValueArray =
-            populate_blob<double>(Values, Values->GetArray().Size());
-        write_attribute(Node, Name, ValueArray);
-      } else {
-        write_attribute(Node, Name, Values->GetDouble());
-      }
+      writeAttrNumeric<double>(Node, Name, Values);
     }
     if (DType == "string") {
       if (Values->IsArray()) {
