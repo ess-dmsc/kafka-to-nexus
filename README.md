@@ -83,10 +83,10 @@ Depending on the `HDFWriterModule`, there will be more options specific to the
 
 Further documentation:
 - [Groups](docs/groups.md)
-- [~~Datasets~~]()
+- [~~Datasets~~ documentation not yet written]()
 - [Attributes](docs/attributes.md)
-- [~~File Attributes~~]()
-- [~~Streams~~]()
+- [~~File Attributes~~ documentation not yet written]()
+- [~~Streams~~ documentation not yet written]()
 
 ```json
 {
