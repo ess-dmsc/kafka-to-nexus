@@ -24,7 +24,6 @@ class StreamerOptions;
 
 // POD
 struct MainOpt {
-  void init();
   bool help = false;
   bool gtest = false;
   bool use_signal_handler = true;

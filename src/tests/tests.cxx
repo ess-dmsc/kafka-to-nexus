@@ -1,7 +1,9 @@
 #include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
+#include "CLIOptions.h"
 #include "helper.h"
 #include "roundtrip.h"
+#include <CLI/CLI.hpp>
 #include <gtest/gtest.h>
 
 #include <h5cpp/error/error.hpp>
@@ -16,15 +18,15 @@ int main(int argc, char **argv) {
   }
   ::testing::GTEST_FLAG(filter) = f;
 
-  auto po = parse_opt(argc, argv);
-  if (po.first) {
-    return 1;
-  }
-  auto opt = std::move(po.second);
-  g_main_opt.store(opt.get());
-  setup_logger_from_options(*opt);
+  CLI::App App{""};
+  auto Options = std::unique_ptr<MainOpt>(new MainOpt());
+  setCLIOptions(App, *Options);
 
-  Roundtrip::opt = opt.get();
+  CLI11_PARSE(App, argc, argv);
+
+  g_main_opt.store(Options.get());
+  setup_logger_from_options(*Options);
+  Roundtrip::opt = Options.get();
 
   auto gtest_result = RUN_ALL_TESTS();
 
