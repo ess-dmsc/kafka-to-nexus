@@ -523,10 +523,6 @@ public:
       "shm": 2100100100
     })"");
 
-    // TODO
-    // This must go somewhere else...
-    main_opt.init();
-
     if (auto x =
             get_uint(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
