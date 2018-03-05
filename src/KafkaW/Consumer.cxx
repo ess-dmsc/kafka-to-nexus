@@ -1,6 +1,7 @@
 #include "Consumer.h"
 #include "logger.h"
 #include <atomic>
+#include <iostream>
 
 namespace KafkaW {
 
@@ -151,6 +152,22 @@ void Consumer::init() {
 void Consumer::addTopic(std::string Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   int Partition = RD_KAFKA_PARTITION_UA;
+  //////////////// Consumer.cxx
+  // if (StartTime.count() > 0) {
+  //   rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
+  //   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(),
+  // Partition)
+  //       ->offset = StartTime.count();
+  // } else {
+  //
+
+  if (ConsumerBrokerSettings.ConfigurationIntegers.find("start.time") !=
+      ConsumerBrokerSettings.ConfigurationIntegers.end()) {
+    LOG(Sev::Critical, "{}",
+        ConsumerBrokerSettings.ConfigurationIntegers["start.time"]);
+    exit(0);
+  }
+
   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
   int err = rd_kafka_subscribe(RdKafka, PartitionList);
   KERR(RdKafka, err);

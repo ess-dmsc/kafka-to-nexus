@@ -3,3 +3,7 @@
 .idea/
 *.user
 pipeline.gdsl
+*.yml~
+*.j2~
+*.h~
+*.cxx~

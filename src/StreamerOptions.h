@@ -14,8 +14,8 @@
 
 #include <rapidjson/schema.h>
 
+#include "KafkaW/BrokerSettings.h"
 #include <chrono>
-#include <map>
 #include <string>
 #include <vector>
 
@@ -34,13 +34,13 @@ public:
   void setRdKafkaOptions(const rapidjson::Value *);
   // private:
 
-  std::vector<std::pair<std::string, std::string>> RdKafkaOptions;
-  std::chrono::milliseconds StartTimestamp{0};
-  std::chrono::milliseconds StopTimestamp{0};
-  std::chrono::milliseconds BeforeStartTime{1000};
-  std::chrono::milliseconds AfterStopTime{1000};
-  std::chrono::milliseconds ConsumerTimeout{1000};
-  int NumMetadataRetry{5};
+  KafkaW::BrokerSettings Settings;
+  std::chrono::milliseconds StartTimestamp{ 0 };
+  std::chrono::milliseconds StopTimestamp{ 0 };
+  std::chrono::milliseconds BeforeStartTime{ 1000 };
+  std::chrono::milliseconds AfterStopTime{ 1000 };
+  std::chrono::milliseconds ConsumerTimeout{ 1000 };
+  int NumMetadataRetry{ 5 };
 };
 
 } // namespace FileWriter

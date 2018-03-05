@@ -5,6 +5,7 @@
 #include "PollStatus.h"
 #include <functional>
 #include <librdkafka/rdkafka.h>
+#include <chrono>
 
 namespace KafkaW {
 
@@ -17,8 +18,9 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer();
   void init();
-  void addTopic(std::string Topic, size_t StartTime = 0);
+  void addTopic(std::string Topic);
   void dumpCurrentSubscription();
+  void dumpMetadata();
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
   on_rebalance_assign;
