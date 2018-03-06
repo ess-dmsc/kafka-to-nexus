@@ -20,8 +20,6 @@ template <typename T> hid_t nat_type();
 
 void swap(hsize_t &, hsize_t &);
 
-class h5d;
-
 enum class AppendResult : uint32_t {
   OK,
   ERROR,
