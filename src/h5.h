@@ -5,6 +5,7 @@
 #include <h5cpp/hdf5.hpp>
 #include <hdf5.h>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -15,6 +16,11 @@ using std::move;
 using std::array;
 using std::vector;
 using std::string;
+
+class RuntimeError : public std::runtime_error {
+public:
+  RuntimeError(std::string const &x) : std::runtime_error(x) {}
+};
 
 template <typename T> hid_t nat_type();
 
@@ -54,13 +60,11 @@ public:
   hid_t type = -1;
   hid_t pl_transfer = -1;
   hsize_t ndims = -1;
-  hid_t dsp_mem = -1;
+  hdf5::dataspace::Simple DSPMem;
   hid_t dsp_tgt = -1;
   std::array<hsize_t, 2> snow;
   std::array<hsize_t, 2> smax;
   std::array<hsize_t, 2> sext;
-  std::array<hsize_t, 2> mem_max;
-  std::array<hsize_t, 2> mem_now;
   CollectiveQueue *cq = nullptr;
   HDFIDStore *hdf_store = nullptr;
   int mpi_rank = -1;

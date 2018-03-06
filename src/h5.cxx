@@ -34,11 +34,11 @@ void h5d::init_basics() {
           name, type, i1, sext.at(i1), smax.at(i1));
     }
   }
-  mem_max = {{H5S_UNLIMITED, H5S_UNLIMITED}};
-  mem_now = {{0, 0}};
-  dsp_mem = H5Screate_simple(ndims, mem_now.data(), nullptr);
-  if (dsp_mem < 0) {
-    LOG(Sev::Error, "H5Screate_simple dsp_mem failed");
+  try {
+    DSPMem = hdf5::dataspace::Simple({0, 0}, {H5S_UNLIMITED, H5S_UNLIMITED});
+  } catch (std::runtime_error const &e) {
+    std::throw_with_nested(
+        RuntimeError("hdf5::dataspace::Simple ctor failure"));
   }
   pl_transfer = H5Pcreate(H5P_DATASET_XFER);
   err = H5Pset_edc_check(pl_transfer, H5Z_DISABLE_EDC);
@@ -119,10 +119,6 @@ h5d::~h5d() {
       id = -1;
     }
   }
-  if (dsp_mem != -1) {
-    H5Sclose(dsp_mem);
-    dsp_mem = -1;
-  }
   if (pl_transfer != -1) {
     H5Pclose(pl_transfer);
     pl_transfer = -1;
@@ -143,13 +139,11 @@ void swap(h5d &x, h5d &y) {
   swap(x.type, y.type);
   swap(x.pl_transfer, y.pl_transfer);
   swap(x.ndims, y.ndims);
-  swap(x.dsp_mem, y.dsp_mem);
+  swap(x.DSPMem, y.DSPMem);
   swap(x.dsp_tgt, y.dsp_tgt);
   swap(x.snow, y.snow);
   swap(x.smax, y.smax);
   swap(x.sext, y.sext);
-  swap(x.mem_max, y.mem_max);
-  swap(x.mem_now, y.mem_now);
   swap(x.cq, y.cq);
   swap(x.hdf_store, y.hdf_store);
   swap(x.mpi_rank, y.mpi_rank);
@@ -291,9 +285,10 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     start[1] = 0;
     count[0] = nlen_0;
     count[1] = sext[1];
-    err = H5Sset_extent_simple(dsp_mem, ndims, count.data(), count.data());
-    err = H5Sselect_hyperslab(dsp_mem, H5S_SELECT_SET, start.data(), nullptr,
-                              count.data(), nullptr);
+    err = H5Sset_extent_simple(static_cast<hid_t>(DSPMem), ndims, count.data(),
+                               count.data());
+    err = H5Sselect_hyperslab(static_cast<hid_t>(DSPMem), H5S_SELECT_SET,
+                              start.data(), nullptr, count.data(), nullptr);
     if (err < 0) {
       LOG(Sev::Error, "can not select mem hyperslab");
       return {AppendResult::ERROR};
@@ -318,7 +313,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     return {AppendResult::ERROR};
   }
   auto t2 = CLK::now();
-  err = H5Dwrite(id, type, dsp_mem, dsp_tgt, pl_transfer, data);
+  err = H5Dwrite(id, type, static_cast<hid_t>(DSPMem), dsp_tgt, pl_transfer,
+                 data);
   if (err < 0) {
     if (cq) {
     } else {
