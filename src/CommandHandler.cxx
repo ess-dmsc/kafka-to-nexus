@@ -231,7 +231,11 @@ void CommandHandler::handleNew(std::string const &Command) {
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   if (auto x = get<nlohmann::json>("nexus_structure", Doc)) {
-    StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
+    try {
+      StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
+    } catch (std::runtime_error const &e) {
+      LOG(Sev::Error, "Failed to initializeHDF: {}", e.what());
+    }
   } else {
     logMissingKey("nexus_structure", Doc.dump());
     return;
@@ -318,12 +322,17 @@ void CommandHandler::addStreamSourceToWriterModule(
       rapidjson::Document ConfigStream;
       ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
-      auto Err = HDFWriterModule->reopen(
-          static_cast<hid_t>(Task->hdf_file.h5file),
-          StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr, nullptr);
-      if (Err.is_ERR()) {
-        LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+      try {
+        auto Err = HDFWriterModule->reopen(
+            static_cast<hid_t>(Task->hdf_file.h5file),
+            StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr, nullptr);
+        if (Err.is_ERR()) {
+          LOG(Sev::Error, "can not reopen HDF file for stream {}",
+              StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+          continue;
+        }
+      } catch (std::runtime_error const &e) {
+        LOG(Sev::Error, "Exception on HDFWriterModule->reopen(): {}", e.what());
         continue;
       }
 
