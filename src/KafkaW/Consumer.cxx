@@ -149,23 +149,16 @@ void Consumer::init() {
   PartitionList = rd_kafka_topic_partition_list_new(16);
 }
 
-void Consumer::addTopic(std::string Topic) {
+void Consumer::addTopic(std::string Topic,
+                        const std::chrono::milliseconds &StartTime) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   int Partition = RD_KAFKA_PARTITION_UA;
-  //////////////// Consumer.cxx
-  // if (StartTime.count() > 0) {
-  //   rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
-  //   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(),
-  // Partition)
-  //       ->offset = StartTime.count();
-  // } else {
-  //
 
-  if (ConsumerBrokerSettings.ConfigurationIntegers.find("start.time") !=
-      ConsumerBrokerSettings.ConfigurationIntegers.end()) {
-    LOG(Sev::Critical, "{}",
-        ConsumerBrokerSettings.ConfigurationIntegers["start.time"]);
-    exit(0);
+  if (StartTime.count() > 0) {
+    LOG(Sev::Info, "Consumer::StartTime  {}", StartTime.count());
+    rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
+    rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition)
+        ->offset = StartTime.count();
   }
 
   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
@@ -206,6 +199,7 @@ PollStatus Consumer::poll() {
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   std::unique_ptr<Msg> m2(new Msg);
+
   m2->MsgPtr = msg;
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
     return PollStatus::newWithMsg(std::move(m2));

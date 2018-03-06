@@ -18,7 +18,8 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer();
   void init();
-  void addTopic(std::string Topic);
+  void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
+                                       std::chrono::milliseconds{ 0 });
   void dumpCurrentSubscription();
   void dumpMetadata();
   PollStatus poll();

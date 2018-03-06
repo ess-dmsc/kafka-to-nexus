@@ -84,9 +84,6 @@ private:
   std::unique_ptr<KafkaW::Consumer> ConsumerW;
   KafkaW::BrokerSettings Settings;
 
-  std::shared_ptr<RdKafka::KafkaConsumer> Consumer;
-  std::vector<RdKafka::TopicPartition *> TopicPartitionVector;
-
   SEC RunStatus{};
   Status::MessageInfo MessageInfo;
 
@@ -101,14 +98,14 @@ private:
   StreamerOptions Options;
 
   void connect(const std::string &);
-  std::unique_ptr<RdKafka::Conf>
-  createConfiguration(const FileWriter::StreamerOptions &);
-  SEC createConsumer(std::unique_ptr<RdKafka::Conf> &&);
-  std::unique_ptr<RdKafka::Metadata> createMetadata();
-  SEC createTopicPartition(const std::string &,
-                           std::unique_ptr<RdKafka::Metadata> &&);
-  void pushTopicPartition(const std::string &, const int32_t &);
-  SEC assignTopicPartition();
+  // std::unique_ptr<RdKafka::Conf>
+  // createConfiguration(const FileWriter::StreamerOptions &);
+  // SEC createConsumer(std::unique_ptr<RdKafka::Conf> &&);
+  // std::unique_ptr<RdKafka::Metadata> createMetadata();
+  // SEC createTopicPartition(const std::string &,
+  //                          std::unique_ptr<RdKafka::Metadata> &&);
+  // void pushTopicPartition(const std::string &, const int32_t &);
+  // SEC assignTopicPartition();
 };
 
 /// Consume a Kafka message and process it according to
