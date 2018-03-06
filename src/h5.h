@@ -68,6 +68,7 @@ public:
 private:
   h5d();
   void init_basics();
+  uint64_t TotalNanosecondsSpent = 0;
 };
 
 template <typename T> class h5d_chunked_1d;

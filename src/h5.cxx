@@ -242,7 +242,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     sext2[0] = sext[0];
     sext2[1] = sext[1];
     sext2[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
-    if (sext2[0] - sext[0] > (1 << MAX)) {
+    if (sext2[0] - sext[0] > (1u << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
     LOG(Sev::Debug, "snext: {:12}  set_extent\n  from: {:12}  to: {:12}\n  "
@@ -343,8 +343,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t3 = CLK::now();
   auto dt1 = duration_cast<MS>(t2 - t1).count();
   auto dt2 = duration_cast<MS>(t3 - t2).count();
-  // TODO gather stats
-  dt1 = dt2;
+  TotalNanosecondsSpent += dt1 + dt2;
   return {AppendResult::OK, sizeof(T) * nlen, tgt_start[0]};
 }
 
