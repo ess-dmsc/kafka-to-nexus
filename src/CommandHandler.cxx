@@ -252,10 +252,12 @@ void CommandHandler::handleNew(std::string const &Command) {
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
   }
-
-  std::chrono::milliseconds StopTime(0);
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
+  if (auto x = get<uint64_t>("stop_time", Doc)) {
+    std::chrono::milliseconds StopTime(x.inner());
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info, "StopTime: {}", StopTime.count());
+      Config.StreamerConfiguration.StopTimestamp = StopTime;
+    }
   }
 
   if (MasterPtr) {
@@ -274,11 +276,6 @@ void CommandHandler::handleNew(std::string const &Command) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
-
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      s->setStopTime(StopTime);
-    }
 
     MasterPtr->stream_masters.push_back(std::move(s));
   } else {
@@ -357,6 +354,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (!MasterPtr) {
     return;
   }
+  LOG(Sev::Critical, "{}", Command);
+
   nlohmann::json Doc;
   try {
     Doc = nlohmann::json::parse(Command);
@@ -432,7 +431,7 @@ void CommandHandler::handle(std::string const &Command) {
       return;
     }
     if (CommandMain == "FileWriter_stop") {
-      handleStreamMasterStop(Doc);
+      handleStreamMasterStop(Command);
       return;
     }
     if (CommandMain == "file_writer_tasks_clear_all") {
