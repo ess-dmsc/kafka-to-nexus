@@ -678,7 +678,7 @@ void HDFFile::write_dataset(hdf5::node::Group &parent,
   write_ds_generic(dtype, parent, name, sizes, max, element_size, vals);
   auto dset = hdf5::node::Dataset(parent.nodes[name]);
 
-  write_attributes_if_present(dset , value);
+  write_attributes_if_present(dset, value);
 }
 
 void HDFFile::create_hdf_structures(rapidjson::Value const *value,
