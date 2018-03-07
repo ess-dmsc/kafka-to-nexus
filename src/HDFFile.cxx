@@ -804,8 +804,7 @@ void HDFFile::init(const std::string &nexus_structure,
                    std::vector<StreamHDFInfo> &stream_hdf_info) {
   rapidjson::Document document;
   document.Parse(nexus_structure.c_str());
-  const rapidjson::Value &nexus_structure_json = document["nexus_structure"];
-  init(nexus_structure_json, stream_hdf_info);
+  init(document, stream_hdf_info);
 }
 
 void HDFFile::init(rapidjson::Value const &nexus_structure,

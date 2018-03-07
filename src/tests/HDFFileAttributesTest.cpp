@@ -21,18 +21,16 @@ TEST(HDFFileAttributesTest,
   auto TestFile = createInMemoryTestFile("test-numerical-attribute.nxs");
 
   std::string CommandWithNumericalAttr = R""({
-      "nexus_structure": {
-        "children": [
-          {
-            "type": "dataset",
-            "name": "dataset_with_numerical_attr",
-            "values" : 3,
-            "attributes": {
-              "the_answer_is": 42
-            }
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": {
+            "the_answer_is": 42
           }
-        ]
-      }
+        }
+      ]
     })"";
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
@@ -52,17 +50,15 @@ TEST(HDFFileAttributesTest,
   auto TestFile = createInMemoryTestFile("test-scalar-string-attribute.nxs");
 
   std::string CommandWithScalarStringAttr = R""({
-      "nexus_structure": {
-        "children": [
-          {
-            "type": "group",
-            "name": "group_with_scalar_string_attr",
-            "attributes": {
-              "hello": "world"
-            }
+      "children": [
+        {
+          "type": "group",
+          "name": "group_with_scalar_string_attr",
+          "attributes": {
+            "hello": "world"
           }
-        ]
-      }
+        }
+      ]
     })"";
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithScalarStringAttr, EmptyStreamHDFInfo);
@@ -83,24 +79,22 @@ TEST(HDFFileAttributesTest,
   auto TestFile = createInMemoryTestFile("test-array-of-attributes.nxs");
 
   std::string CommandWithArrayOfAttrs = R""({
-    "nexus_structure": {
-      "children": [
-        {
-          "type": "group",
-          "name": "group_with_array_of_attrs",
-          "attributes": [
-            {
-              "name": "integer_attribute",
-              "values": 42
-            },
-            {
-              "name": "string_attribute",
-              "values": "string_value"
-            }
-          ]
-        }
-      ]
-    }
+    "children": [
+      {
+        "type": "group",
+        "name": "group_with_array_of_attrs",
+        "attributes": [
+          {
+            "name": "integer_attribute",
+            "values": 42
+          },
+          {
+            "name": "string_attribute",
+            "values": "string_value"
+          }
+        ]
+      }
+    ]
   })"";
 
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
@@ -128,21 +122,19 @@ TEST(HDFFileAttributesTest,
   auto TestFile = createInMemoryTestFile("test-typed-attribute.nxs");
 
   std::string CommandWithTypedAttrs = R""({
-    "nexus_structure": {
-      "children": [
-        {
-          "type": "group",
-          "name": "group_with_typed_attrs",
-          "attributes": [
-            {
-              "name": "uint32_attribute",
-              "values": 42,
-              "type": "uint32"
-            }
-          ]
-        }
-      ]
-    }
+    "children": [
+      {
+        "type": "group",
+        "name": "group_with_typed_attrs",
+        "attributes": [
+          {
+            "name": "uint32_attribute",
+            "values": 42,
+            "type": "uint32"
+          }
+        ]
+      }
+    ]
   })"";
 
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
@@ -161,26 +153,24 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   auto TestFile = createInMemoryTestFile("test-array-attribute.nxs");
 
   std::string CommandWithArrayAttr = R""({
-    "nexus_structure": {
-      "children": [
-        {
-          "type": "group",
-          "name": "group_with_array_attrs",
-          "attributes": [
-            {
-              "name": "array_attribute",
-              "values": [1, 2, 3],
-              "type": "uint64"
-            },
-            {
-              "name": "array_string_attribute",
-              "values": ["A", "B"],
-              "type": "string"
-            }
-          ]
-        }
-      ]
-    }
+    "children": [
+      {
+        "type": "group",
+        "name": "group_with_array_attrs",
+        "attributes": [
+          {
+            "name": "array_attribute",
+            "values": [1, 2, 3],
+            "type": "uint64"
+          },
+          {
+            "name": "array_string_attribute",
+            "values": ["A", "B"],
+            "type": "string"
+          }
+        ]
+      }
+    ]
   })"";
 
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
