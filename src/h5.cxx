@@ -40,8 +40,8 @@ void h5d::init_basics() {
     std::throw_with_nested(
         RuntimeError("hdf5::dataspace::Simple ctor failure"));
   }
-  pl_transfer = H5Pcreate(H5P_DATASET_XFER);
-  err = H5Pset_edc_check(pl_transfer, H5Z_DISABLE_EDC);
+  PLTransfer = hdf5::property::DatasetTransferList();
+  err = H5Pset_edc_check(static_cast<hid_t>(PLTransfer), H5Z_DISABLE_EDC);
   if (err < 0) {
     LOG(Sev::Debug, "failed H5Pset_edc_check");
   }
@@ -121,10 +121,6 @@ h5d::~h5d() {
       id = -1;
     }
   }
-  if (pl_transfer != -1) {
-    H5Pclose(pl_transfer);
-    pl_transfer = -1;
-  }
 }
 
 h5d::h5d() {}
@@ -134,7 +130,7 @@ void swap(h5d &x, h5d &y) {
   swap(x.id, y.id);
   swap(x.name, y.name);
   swap(x.Type, y.Type);
-  swap(x.pl_transfer, y.pl_transfer);
+  swap(x.PLTransfer, y.PLTransfer);
   swap(x.ndims, y.ndims);
   swap(x.DSPMem, y.DSPMem);
   swap(x.dsp_tgt, y.dsp_tgt);
@@ -311,7 +307,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
   auto t2 = CLK::now();
   err = H5Dwrite(id, static_cast<hid_t>(Type), static_cast<hid_t>(DSPMem),
-                 dsp_tgt, pl_transfer, data);
+                 dsp_tgt, static_cast<hid_t>(PLTransfer), data);
   if (err < 0) {
     if (cq) {
     } else {
