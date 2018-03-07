@@ -23,9 +23,7 @@ void swap(hsize_t &x, hsize_t &y) {
 
 void h5d::init_basics() {
   herr_t err = 0;
-  type = H5Dget_type(id);
-  Type = hdf5::datatype::Datatype(
-      hdf5::ObjectHandle(type, hdf5::ObjectHandle::Policy::WITHOUT_WARD));
+  Type = hdf5::datatype::Datatype(hdf5::ObjectHandle(H5Dget_type(id)));
   dsp_tgt = H5Dget_space(id);
   ndims = H5Sget_simple_extent_ndims(dsp_tgt);
   snow = {{0, 0}};
@@ -58,16 +56,16 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type,
   auto ret = ptr(new h5d);
   auto &o = *ret;
   herr_t err = 0;
-  o.type = type;
   o.Type = hdf5::datatype::Datatype(
       hdf5::ObjectHandle(type, hdf5::ObjectHandle::Policy::WITHOUT_WARD));
   o.name = name;
-  err = H5Pset_fill_value(static_cast<hid_t>(dcpl), type, nullptr);
+  err = H5Pset_fill_value(static_cast<hid_t>(dcpl), static_cast<hid_t>(o.Type),
+                          nullptr);
   if (err < 0) {
     LOG(Sev::Debug, "failed H5Pset_fill_value");
   }
-  o.id = H5Dcreate1(loc, name.c_str(), type, static_cast<hid_t>(dsp),
-                    static_cast<hid_t>(dcpl));
+  o.id = H5Dcreate1(loc, name.c_str(), static_cast<hid_t>(o.Type),
+                    static_cast<hid_t>(dsp), static_cast<hid_t>(dcpl));
   if (o.id < 0) {
     LOG(Sev::Error, "H5Dcreate1 failed");
     ret.reset();
@@ -127,11 +125,6 @@ h5d::~h5d() {
     H5Pclose(pl_transfer);
     pl_transfer = -1;
   }
-  if (type != -1) {
-    // TODO
-    H5Tclose(type);
-    type = -1;
-  }
 }
 
 h5d::h5d() {}
@@ -140,7 +133,6 @@ void swap(h5d &x, h5d &y) {
   using std::swap;
   swap(x.id, y.id);
   swap(x.name, y.name);
-  swap(x.type, y.type);
   swap(x.Type, y.Type);
   swap(x.pl_transfer, y.pl_transfer);
   swap(x.ndims, y.ndims);
@@ -280,7 +272,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
     for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-          name, type, i1, sext.at(i1), smax.at(i1));
+          name, static_cast<hid_t>(Type), i1, sext.at(i1), smax.at(i1));
     }
   }
 
@@ -318,8 +310,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     return {AppendResult::ERROR};
   }
   auto t2 = CLK::now();
-  err = H5Dwrite(id, type, static_cast<hid_t>(DSPMem), dsp_tgt, pl_transfer,
-                 data);
+  err = H5Dwrite(id, static_cast<hid_t>(Type), static_cast<hid_t>(DSPMem),
+                 dsp_tgt, pl_transfer, data);
   if (err < 0) {
     if (cq) {
     } else {
