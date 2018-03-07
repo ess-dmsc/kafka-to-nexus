@@ -58,6 +58,7 @@ public:
   string name;
   hid_t id = -1;
   hid_t type = -1;
+  hdf5::datatype::Datatype Type;
   hid_t pl_transfer = -1;
   hsize_t ndims = -1;
   hdf5::dataspace::Simple DSPMem;

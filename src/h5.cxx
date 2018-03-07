@@ -24,14 +24,16 @@ void swap(hsize_t &x, hsize_t &y) {
 void h5d::init_basics() {
   herr_t err = 0;
   type = H5Dget_type(id);
+  Type = hdf5::datatype::Datatype(
+      hdf5::ObjectHandle(type, hdf5::ObjectHandle::Policy::WITHOUT_WARD));
   dsp_tgt = H5Dget_space(id);
   ndims = H5Sget_simple_extent_ndims(dsp_tgt);
   snow = {{0, 0}};
   H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} ty: {}  {}: {:21} {:21}",
-          name, type, i1, sext.at(i1), smax.at(i1));
+      LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} {}: {:21} {:21}", name,
+          i1, sext.at(i1), smax.at(i1));
     }
   }
   try {
@@ -57,6 +59,8 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type,
   auto &o = *ret;
   herr_t err = 0;
   o.type = type;
+  o.Type = hdf5::datatype::Datatype(
+      hdf5::ObjectHandle(type, hdf5::ObjectHandle::Policy::WITHOUT_WARD));
   o.name = name;
   err = H5Pset_fill_value(static_cast<hid_t>(dcpl), type, nullptr);
   if (err < 0) {
@@ -125,7 +129,7 @@ h5d::~h5d() {
   }
   if (type != -1) {
     // TODO
-    // H5Tclose(type);
+    H5Tclose(type);
     type = -1;
   }
 }
@@ -137,6 +141,7 @@ void swap(h5d &x, h5d &y) {
   swap(x.id, y.id);
   swap(x.name, y.name);
   swap(x.type, y.type);
+  swap(x.Type, y.Type);
   swap(x.pl_transfer, y.pl_transfer);
   swap(x.ndims, y.ndims);
   swap(x.DSPMem, y.DSPMem);
