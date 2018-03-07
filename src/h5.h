@@ -61,7 +61,7 @@ public:
   hdf5::property::DatasetTransferList PLTransfer;
   hsize_t ndims = -1;
   hdf5::dataspace::Simple DSPMem;
-  hid_t dsp_tgt = -1;
+  hdf5::dataspace::Simple DSPTgt;
   std::array<hsize_t, 2> snow;
   std::array<hsize_t, 2> smax;
   std::array<hsize_t, 2> sext;

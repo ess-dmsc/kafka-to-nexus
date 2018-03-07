@@ -24,10 +24,11 @@ void swap(hsize_t &x, hsize_t &y) {
 void h5d::init_basics() {
   herr_t err = 0;
   Type = hdf5::datatype::Datatype(hdf5::ObjectHandle(H5Dget_type(id)));
-  dsp_tgt = H5Dget_space(id);
-  ndims = H5Sget_simple_extent_ndims(dsp_tgt);
+  DSPTgt = hdf5::dataspace::Simple(hdf5::ObjectHandle(H5Dget_space(id)));
+  ndims = DSPTgt.rank();
   snow = {{0, 0}};
-  H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+  H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), sext.data(),
+                            smax.data());
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} {}: {:21} {:21}", name,
@@ -133,7 +134,7 @@ void swap(h5d &x, h5d &y) {
   swap(x.PLTransfer, y.PLTransfer);
   swap(x.ndims, y.ndims);
   swap(x.DSPMem, y.DSPMem);
-  swap(x.dsp_tgt, y.dsp_tgt);
+  swap(x.DSPTgt, y.DSPTgt);
   swap(x.snow, y.snow);
   swap(x.smax, y.smax);
   swap(x.sext, y.sext);
@@ -179,7 +180,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (false && log_level >= 9) {
     // Just for debugging
     AT snow, smax;
-    err = H5Sget_simple_extent_dims(dsp_tgt, snow.data(), smax.data());
+    err = H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), snow.data(),
+                                    smax.data());
     if (err < 0) {
       LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
     }
@@ -243,9 +245,10 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         LOG(Sev::Error, "H5Dset_extent failed");
         return {AppendResult::ERROR};
       }
-      dsp_tgt = H5Dget_space(id);
+      DSPTgt = hdf5::dataspace::Simple(hdf5::ObjectHandle(H5Dget_space(id)));
       if (true) {
-        err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+        err = H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), sext.data(),
+                                        smax.data());
         if (err < 0) {
           LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
           exit(1);
@@ -261,7 +264,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   if (log_level >= 9) {
     AT sext, smax;
     LOG(Sev::Debug, "try to get the dsp dims:");
-    err = H5Sget_simple_extent_dims(dsp_tgt, sext.data(), smax.data());
+    err = H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), sext.data(),
+                                    smax.data());
     if (err < 0) {
       LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       exit(1);
@@ -299,15 +303,17 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           tgt_start.at(i1), tgt_count.at(i1));
     }
   }
-  err = H5Sselect_hyperslab(dsp_tgt, H5S_SELECT_SET, tgt_start.data(), nullptr,
-                            tgt_count.data(), nullptr);
+  err =
+      H5Sselect_hyperslab(static_cast<hid_t>(DSPTgt), H5S_SELECT_SET,
+                          tgt_start.data(), nullptr, tgt_count.data(), nullptr);
   if (err < 0) {
     LOG(Sev::Error, "can not select tgt hyperslab");
     return {AppendResult::ERROR};
   }
   auto t2 = CLK::now();
   err = H5Dwrite(id, static_cast<hid_t>(Type), static_cast<hid_t>(DSPMem),
-                 dsp_tgt, static_cast<hid_t>(PLTransfer), data);
+                 static_cast<hid_t>(DSPTgt), static_cast<hid_t>(PLTransfer),
+                 data);
   if (err < 0) {
     if (cq) {
     } else {
