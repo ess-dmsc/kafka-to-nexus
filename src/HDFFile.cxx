@@ -107,7 +107,7 @@ static void writeAttrNumeric(hdf5::node::Node &Node, const std::string &Name,
   if (Values->IsArray()) {
     length = Values->GetArray().Size();
   }
-  auto ValueData = populate_blob<uint8_t>(Values, length);
+  auto ValueData = populate_blob<T>(Values, length);
   try {
     if (Values->IsArray()) {
       write_attribute(Node, Name, ValueData);
@@ -678,9 +678,7 @@ void HDFFile::write_dataset(hdf5::node::Group &parent,
   write_ds_generic(dtype, parent, name, sizes, max, element_size, vals);
   auto dset = hdf5::node::Dataset(parent.nodes[name]);
 
-  // Handle attributes on this dataset
-  if (auto x = get_object(*value, "attributes"))
-    write_attributes(dset, x.v);
+  write_attributes_if_present(dset , value);
 }
 
 void HDFFile::create_hdf_structures(rapidjson::Value const *value,
