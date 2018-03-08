@@ -106,7 +106,7 @@ public:
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const std::chrono::milliseconds &report_ms =
-                  std::chrono::milliseconds{1000}) {
+                  std::chrono::milliseconds{ 1000 }) {
     if (!ReportThread.joinable()) {
       ReportPtr.reset(new Report(p, report_ms));
       ReportThread =
@@ -198,7 +198,7 @@ private:
         }
         if (int(s.runStatus()) < 0) {
           LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
-              int(s.runStatus()));
+              Err2Str(s.runStatus()));
           continue;
         }
       }
@@ -249,12 +249,12 @@ private:
   std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;
-  std::atomic<SMEC> RunStatus{SMEC::not_started};
-  std::atomic<bool> Stop{false};
-  std::unique_ptr<FileWriterTask> WriterTask{nullptr};
-  std::unique_ptr<Report> ReportPtr{nullptr};
-  std::chrono::milliseconds TopicWriteDuration{1000};
-  size_t NumStreamers{0};
+  std::atomic<SMEC> RunStatus{ SMEC::not_started };
+  std::atomic<bool> Stop{ false };
+  std::unique_ptr<FileWriterTask> WriterTask{ nullptr };
+  std::unique_ptr<Report> ReportPtr{ nullptr };
+  std::chrono::milliseconds TopicWriteDuration{ 1000 };
+  size_t NumStreamers{ 0 };
 };
 
 } // namespace FileWriter

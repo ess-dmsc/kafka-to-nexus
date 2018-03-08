@@ -22,6 +22,7 @@ public:
                                        std::chrono::milliseconds{ 0 });
   void dumpCurrentSubscription();
   void dumpMetadata();
+  bool topicPresent(const std::string &Topic);
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
   on_rebalance_assign;

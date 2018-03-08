@@ -3,12 +3,8 @@
 #include "helper.h"
 #include "logger.h"
 
-#include <librdkafka/rdkafkacpp.h>
-
 #include <algorithm>
 #include <memory>
-
-template <class T> class XType;
 
 namespace FileWriter {
 std::chrono::milliseconds systemTime() {
@@ -30,15 +26,8 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   }
 
   Options.Settings.ConfigurationStrings["group.id"] = TopicName;
-  Options.Settings.ConfigurationStrings["debug"] = "all";
-
-  const int MiB = 1024 * 1024;
-  Options.Settings.ConfigurationIntegers["receive.message.max.bytes"] =
-      32 * MiB;
-  Options.Settings.ConfigurationIntegers["message.max.bytes"] = 32 * MiB;
-
+  Options.Settings.ConfigurationStrings["auto.create.topics.enable"] = "false";
   Options.Settings.Address = Broker;
-  Options.Settings.PollTimeoutMS = 1000;
 
   ConnectThread = std::thread([&] {
     this->connect(std::ref(TopicName));
@@ -65,18 +54,27 @@ void FileWriter::Streamer::connect(const std::string &TopicName) {
   ConnectionInit.notify_all();
 
   LOG(Sev::Debug, "Connecting to {}", TopicName);
-  ConsumerW.reset(new KafkaW::Consumer(Options.Settings));
+  try {
+    ConsumerW.reset(new KafkaW::Consumer(Options.Settings));
 
-  if (Options.StartTimestamp.count()) {
-    ConsumerW->addTopic(TopicName,
-                        Options.StartTimestamp - Options.BeforeStartTime);
-
-  } else {
-    ConsumerW->addTopic(TopicName);
+    if (Options.StartTimestamp.count()) {
+      ConsumerW->addTopic(TopicName,
+                          Options.StartTimestamp - Options.BeforeStartTime);
+    } else {
+      ConsumerW->addTopic(TopicName);
+    }
+    // if the topic cannot be found in the metadata sets an error flag
+    if (!ConsumerW->topicPresent(TopicName)) {
+      RunStatus = SEC::topic_partition_error;
+      return;
+    }
+    LOG(Sev::Debug, "Connected to topic {}", TopicName);
+    RunStatus = SEC::writing;
   }
-
-  LOG(Sev::Debug, "Connected to topic {}", TopicName);
-  RunStatus = SEC::writing;
+  catch (std::exception &e) {
+    LOG(Sev::Error, "{}", e.what());
+    RunStatus = SEC::configuration_error;
+  }
 }
 
 FileWriter::Streamer::SEC FileWriter::Streamer::closeStream() {

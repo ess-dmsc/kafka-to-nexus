@@ -170,6 +170,27 @@ void Consumer::addTopic(std::string Topic,
   }
 }
 
+bool Consumer::topicPresent(const std::string &TopicName) {
+  const rd_kafka_metadata_t *Metadata;
+  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
+
+  if (!Metadata) {
+    LOG(Sev::Error, "could not crete metadata");
+    return false;
+  }
+
+  bool IsPresent = false;
+  for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
+    if (Metadata->topics[topic].topic == TopicName) {
+      IsPresent = true;
+      break;
+    }
+  }
+  rd_kafka_metadata_destroy(Metadata);
+  //      const_cast<const struct rd_kafka_metadata *>(Metadata));
+  return IsPresent;
+}
+
 void Consumer::dumpCurrentSubscription() {
   rd_kafka_topic_partition_list_t *List = nullptr;
   rd_kafka_subscription(RdKafka, &List);
