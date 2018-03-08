@@ -54,7 +54,7 @@ HDFFile::~HDFFile() {
 void HDFFile::write_hdf_ds_scalar_string(hdf5::node::Group &parent,
                                          std::string name, std::string s1) {
 
-  auto strfix = hdf5::datatype::String::fixed(s1.size());
+  auto strfix = hdf5::datatype::String::variable();
   strfix.encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
   auto dsp = hdf5::dataspace::Scalar();
@@ -64,10 +64,8 @@ void HDFFile::write_hdf_ds_scalar_string(hdf5::node::Group &parent,
 
 void HDFFile::write_attribute_str(hdf5::node::Node &node, std::string name,
                                   std::string value) {
-  // does this need to be fixed length? Would variable be ok?
-  auto string_type = hdf5::datatype::String::fixed(value.size());
+  auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  string_type.padding(hdf5::datatype::StringPad::NULLTERM);
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
@@ -658,7 +656,7 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
     hdf5::property::LinkCreationList lcpl;
     lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    auto fixed_string = hdf5::datatype::String::fixed(0);
+    auto fixed_string = hdf5::datatype::String::variable();
     fixed_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
     root_group = h5file.root();
