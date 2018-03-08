@@ -638,52 +638,52 @@ public:
         children.PushBack(g1, a);
       }
 
-      auto json_stream = [&a, &main_opt](string source, string topic,
-                                         string module,
-                                         bool run_parallel) -> Value {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", Value(source.c_str(), a), a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        {
-          auto &children = ch;
-          Document ds1(&a);
-          ds1.Parse(R""({
+      auto json_stream =
+          [&a, &main_opt](string source, string topic, string module,
+                          bool run_parallel) -> Value {
+            Value g1;
+            g1.SetObject();
+            g1.AddMember("type", "group", a);
+            g1.AddMember("name", Value(source.c_str(), a), a);
+            Value attr;
+            attr.SetObject();
+            attr.AddMember("NX_class", "NXinstrument", a);
+            g1.AddMember("attributes", attr, a);
+            Value ch;
+            ch.SetArray();
+            {
+              auto &children = ch;
+              Document ds1(&a);
+              ds1.Parse(R""({
             "type": "stream",
             "attributes": {
               "this_will_be_a_double": 0.125,
               "this_will_be_a_int64": 123
             }
           })"");
-          Value stream;
-          stream.SetObject();
-          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
-            Value nx;
-            nx.CopyFrom(*main_nexus.v, a);
-            stream.AddMember("nexus", std::move(nx), a);
-          }
-          stream.AddMember("topic", Value(topic.c_str(), a), a);
-          stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("writer_module", Value(module.c_str(), a), a);
-          stream.AddMember("type", Value("uint32", a), a);
-          stream.AddMember(
-              "n_mpi_workers",
-              std::move(Value().CopyFrom(
-                  main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
-              a);
-          stream.AddMember("run_parallel", Value(run_parallel), a);
-          ds1.AddMember("stream", stream, a);
-          children.PushBack(ds1, a);
-        }
-        g1.AddMember("children", ch, a);
-        return g1;
-      };
+              Value stream;
+              stream.SetObject();
+              if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
+                Value nx;
+                nx.CopyFrom(*main_nexus.v, a);
+                stream.AddMember("nexus", std::move(nx), a);
+              }
+              stream.AddMember("topic", Value(topic.c_str(), a), a);
+              stream.AddMember("source", Value(source.c_str(), a), a);
+              stream.AddMember("writer_module", Value(module.c_str(), a), a);
+              stream.AddMember("type", Value("uint32", a), a);
+              stream.AddMember(
+                  "n_mpi_workers",
+                  std::move(Value().CopyFrom(
+                      main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
+                  a);
+              stream.AddMember("run_parallel", Value(run_parallel), a);
+              ds1.AddMember("stream", stream, a);
+              children.PushBack(ds1, a);
+            }
+            g1.AddMember("children", ch, a);
+            return g1;
+          };
 
       for (auto &source : sources) {
         children.PushBack(json_stream(source.source, source.topic, "ev42",
@@ -1167,7 +1167,8 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
-    auto hdf_file = HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
+    auto hdf_file =
+        HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1255,28 +1256,39 @@ TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
   T_CommandHandler::dataset_static_1d_string_variable();
 }
 
-TEST_F(T_CommandHandler, createStaticDatasetWithLongIntegerValue) {
+template <typename T>
+void testType(FileWriter::HDFFile &TestFile, const std::pair<std::string, T> NameAndValue) {
+  auto Dataset = hdf5::node::get_dataset(TestFile.root_group, "/" + NameAndValue.first);
+  auto OutputValue = NameAndValue.second;
+  Dataset.read(OutputValue);
+  ASSERT_EQ(OutputValue, NameAndValue.second);
+}
+
+TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
   using namespace hdf5;
 
-  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("test-long-int-error.nxs");
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("test-dataset-int-types.nxs");
 
-  std::string CommandWithLongInt = R""({
-      "children": [
-        {
-          "name": "features",
-          "values": 10138143369737381149,
-          "type": "dataset",
-          "dataset": {
-            "type": "uint64"
-          }
-        }
-      ]
-    })"";
+  const std::pair<std::string, uint32_t> TestUint32 = {"uint32", 37381149};
+  const std::pair<std::string, uint64_t> TestUint64 = {"uint64", 10138143369737381149U};
+  const std::pair<std::string, int32_t> TestInt32 = {"int32", -7381149};
+  const std::pair<std::string, int64_t> TestInt64 = {"int64", -138143369737381149};
+
+  std::stringstream CommandStream;
+  CommandStream
+      << R""({"children": [)""
+      << HDFFileTestHelper::createCommandForDataset(TestUint32) << ",\n"
+      << HDFFileTestHelper::createCommandForDataset(TestUint64) << ",\n"
+      << HDFFileTestHelper::createCommandForDataset(TestInt32) << ",\n"
+      << HDFFileTestHelper::createCommandForDataset(TestInt64)
+      << "]}";
+
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
-  TestFile.init(CommandWithLongInt, EmptyStreamHDFInfo);
+  TestFile.init(CommandStream.str(), EmptyStreamHDFInfo);
 
-  auto Dataset = hdf5::node::get_dataset(TestFile.root_group, "/features");
-  uint64_t Value;
-  Dataset.read(Value);
-  ASSERT_EQ(Value, 10138143369737381149U);
+  testType(TestFile, TestUint32);
+  testType(TestFile, TestUint64);
+  testType(TestFile, TestInt32);
+  testType(TestFile, TestInt64);
 }
