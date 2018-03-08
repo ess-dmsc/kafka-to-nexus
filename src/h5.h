@@ -41,8 +41,8 @@ struct append_ret {
 class h5d {
 public:
   typedef unique_ptr<h5d> ptr;
-  static ptr create(hdf5::node::Group loc, string name, hid_t type,
-                    hdf5::dataspace::Simple dsp,
+  static ptr create(hdf5::node::Group loc, string name,
+                    hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
                     hdf5::property::DatasetCreationList dcpl,
                     CollectiveQueue *cq);
   static ptr open_single(hdf5::node::Group loc, string name,
