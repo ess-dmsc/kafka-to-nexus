@@ -419,7 +419,10 @@ void HDFFile::write_ds_generic(std::string const &dtype,
       write_ds_numeric<double>(parent, name, dcpl, dataspace, vals);
     }
     if (dtype == "string") {
-      if (element_size == H5T_VARIABLE) {
+      // TODO
+      // We currently not support fixed length strings, apparently some
+      // to-be-tracked issue with h5cpp at the moment.
+      if (true || element_size == H5T_VARIABLE) {
         write_ds_string(parent, name, dcpl, dataspace, vals);
       } else {
         write_ds_string_fixed_size(parent, name, dcpl, dataspace, element_size,
@@ -656,8 +659,8 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
     hdf5::property::LinkCreationList lcpl;
     lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    auto fixed_string = hdf5::datatype::String::variable();
-    fixed_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    auto var_string = hdf5::datatype::String::variable();
+    var_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
     root_group = h5file.root();
 
@@ -668,7 +671,7 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
       if (mem != value->MemberEnd()) {
         if (mem->value.IsArray()) {
           for (auto &child : mem->value.GetArray()) {
-            create_hdf_structures(&child, root_group, 0, lcpl, fixed_string,
+            create_hdf_structures(&child, root_group, 0, lcpl, var_string,
                                   stream_hdf_info, path);
           }
         }
