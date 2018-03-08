@@ -71,8 +71,8 @@ writer_typed_array<DT, FV>::writer_typed_array(hdf5::node::Group hdf_group,
     return;
   }
   LOG(Sev::Debug, "f142 init_impl  ncols: {}", ncols);
-  this->ds = h5::h5d_chunked_2d<DT>::create(static_cast<hid_t>(hdf_group),
-                                            source_name, ncols, 64 * 1024, cq);
+  this->ds = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols,
+                                            64 * 1024, cq);
   if (!this->ds) {
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
@@ -90,8 +90,8 @@ writer_typed_array<DT, FV>::writer_typed_array(
     return;
   }
   LOG(Sev::Debug, "f142 writer_typed_array reopen  ncols: {}", ncols);
-  ds = h5::h5d_chunked_2d<DT>::open(static_cast<hid_t>(hdf_group), source_name,
-                                    ncols, cq, hdf_store);
+  ds = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols, cq,
+                                    hdf_store);
   if (!ds) {
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
@@ -129,8 +129,8 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
                                                  CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 init_impl  scalar");
-  this->ds = h5::h5d_chunked_1d<DT>::create(static_cast<hid_t>(hdf_group),
-                                            source_name, 64 * 1024, cq);
+  this->ds =
+      h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
   if (!this->ds) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
@@ -145,8 +145,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
                                                  HDFIDStore *hdf_store)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 init_impl  scalar");
-  ds = h5::h5d_chunked_1d<DT>::open(static_cast<hid_t>(hdf_group), source_name,
-                                    cq, hdf_store);
+  ds = h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
   if (!this->ds) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
@@ -517,26 +516,23 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
           "Could not create a writer implementation for value_type {}", type);
       return HDFWriterModule::InitResult::ERROR_IO();
     }
-    this->ds_timestamp = h5::h5d_chunked_1d<uint64_t>::create(
-        static_cast<hid_t>(hdf_group), "time", 64 * 1024, cq);
+    this->ds_timestamp =
+        h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024, cq);
     this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        static_cast<hid_t>(hdf_group), "cue_timestamp_zero", 64 * 1024, cq);
+        hdf_group, "cue_timestamp_zero", 64 * 1024, cq);
     this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
-        static_cast<hid_t>(hdf_group), "cue_index", 64 * 1024, cq);
+        hdf_group, "cue_index", 64 * 1024, cq);
     if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
     if (do_writer_forwarder_internal) {
       this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_seq_data",
-          64 * 1024, cq);
+          hdf_group, source_name + "__fwdinfo_seq_data", 64 * 1024, cq);
       this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_seq_fwd",
-          64 * 1024, cq);
+          hdf_group, source_name + "__fwdinfo_seq_fwd", 64 * 1024, cq);
       this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_ts_data",
-          64 * 1024, cq);
+          hdf_group, source_name + "__fwdinfo_ts_data", 64 * 1024, cq);
       if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
         impl.reset();
         return HDFWriterModule::InitResult::ERROR_IO();
@@ -568,13 +564,12 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
     return HDFWriterModule::InitResult::ERROR_IO();
   }
 
-  auto hdf_group_id = static_cast<hid_t>(hdf_group);
   this->ds_timestamp =
-      h5::h5d_chunked_1d<uint64_t>::open(hdf_group_id, "time", cq, hdf_store);
+      h5::h5d_chunked_1d<uint64_t>::open(hdf_group, "time", cq, hdf_store);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      hdf_group_id, "cue_timestamp_zero", cq, hdf_store);
-  this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::open(
-      hdf_group_id, "cue_index", cq, hdf_store);
+      hdf_group, "cue_timestamp_zero", cq, hdf_store);
+  this->ds_cue_index =
+      h5::h5d_chunked_1d<uint64_t>::open(hdf_group, "cue_index", cq, hdf_store);
   if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
     impl.reset();
     return HDFWriterModule::InitResult::ERROR_IO();
@@ -590,11 +585,11 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
 
   if (do_writer_forwarder_internal) {
     this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
-        hdf_group_id, source_name + "__fwdinfo_seq_data", cq, hdf_store);
+        hdf_group, source_name + "__fwdinfo_seq_data", cq, hdf_store);
     this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
-        hdf_group_id, source_name + "__fwdinfo_seq_fwd", cq, hdf_store);
+        hdf_group, source_name + "__fwdinfo_seq_fwd", cq, hdf_store);
     this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
-        hdf_group_id, source_name + "__fwdinfo_ts_data", cq, hdf_store);
+        hdf_group, source_name + "__fwdinfo_ts_data", cq, hdf_store);
     if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();

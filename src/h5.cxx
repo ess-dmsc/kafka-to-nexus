@@ -48,7 +48,7 @@ void h5d::init_basics() {
   }
 }
 
-h5d::ptr h5d::create(hid_t loc, string name, hid_t type,
+h5d::ptr h5d::create(hdf5::node::Group loc, string name, hid_t type,
                      hdf5::dataspace::Simple dsp,
                      hdf5::property::DatasetCreationList dcpl,
                      CollectiveQueue *cq) {
@@ -65,8 +65,9 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type,
   if (err < 0) {
     LOG(Sev::Debug, "failed H5Pset_fill_value");
   }
-  o.id = H5Dcreate1(loc, name.c_str(), static_cast<hid_t>(o.Type),
-                    static_cast<hid_t>(dsp), static_cast<hid_t>(dcpl));
+  o.id = H5Dcreate1(static_cast<hid_t>(loc), name.c_str(),
+                    static_cast<hid_t>(o.Type), static_cast<hid_t>(dsp),
+                    static_cast<hid_t>(dcpl));
   if (o.id < 0) {
     LOG(Sev::Error, "H5Dcreate1 failed");
     ret.reset();
@@ -76,13 +77,13 @@ h5d::ptr h5d::create(hid_t loc, string name, hid_t type,
   return ret;
 }
 
-h5d::ptr h5d::open_single(hid_t loc, string name, CollectiveQueue *cq,
-                          HDFIDStore *hdf_store) {
+h5d::ptr h5d::open_single(hdf5::node::Group loc, string name,
+                          CollectiveQueue *cq, HDFIDStore *hdf_store) {
   // Open in single-process mode
   auto ret = ptr(new h5d);
   auto &o = *ret;
   o.name = name;
-  o.id = H5Dopen2(loc, name.c_str(), H5P_DEFAULT);
+  o.id = H5Dopen2(static_cast<hid_t>(loc), name.c_str(), H5P_DEFAULT);
   if (o.id < 0) {
     LOG(Sev::Error, "H5Dopen2 failed");
     ret.reset();
@@ -92,7 +93,7 @@ h5d::ptr h5d::open_single(hid_t loc, string name, CollectiveQueue *cq,
   return ret;
 }
 
-h5d::ptr h5d::open(hid_t loc, string name, CollectiveQueue *cq,
+h5d::ptr h5d::open(hdf5::node::Group loc, string name, CollectiveQueue *cq,
                    HDFIDStore *hdf_store) {
   return open_single(loc, name, cq, hdf_store);
 }
@@ -349,8 +350,8 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
 
 template <typename T>
 typename h5d_chunked_1d<T>::ptr
-h5d_chunked_1d<T>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                          CollectiveQueue *cq) {
+h5d_chunked_1d<T>::create(hdf5::node::Group loc, string name,
+                          hsize_t chunk_bytes, CollectiveQueue *cq) {
   hdf5::dataspace::Simple dsp({0}, {H5S_UNLIMITED});
   hdf5::property::DatasetCreationList dcpl;
   dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / sizeof(T))});
@@ -359,24 +360,23 @@ h5d_chunked_1d<T>::create(hid_t loc, string name, hsize_t chunk_bytes,
     return nullptr;
   }
   // todo: With these changes, return ::ptr directly.  Also in 2d case.
-  auto ret = new h5d_chunked_1d<T>(loc, name, move(*ds));
+  auto ret = new h5d_chunked_1d<T>(name, move(*ds));
   return ptr(ret);
 }
 
 template <typename T>
-typename h5d_chunked_1d<T>::ptr h5d_chunked_1d<T>::open(hid_t loc, string name,
-                                                        CollectiveQueue *cq,
-                                                        HDFIDStore *hdf_store) {
+typename h5d_chunked_1d<T>::ptr
+h5d_chunked_1d<T>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq,
+                        HDFIDStore *hdf_store) {
   auto ds = h5d::open(loc, name, cq, hdf_store);
   if (!ds) {
     return ptr();
   }
-  return ptr(new h5d_chunked_1d<T>(loc, name, move(*ds)));
+  return ptr(new h5d_chunked_1d<T>(name, move(*ds)));
 }
 
 template <typename T>
-h5d_chunked_1d<T>::h5d_chunked_1d(hid_t loc, string name, h5d ds_)
-    : ds(move(ds_)) {
+h5d_chunked_1d<T>::h5d_chunked_1d(string name, h5d ds_) : ds(move(ds_)) {
   if (ds.id < 0) {
     LOG(Sev::Critical, "not a dataset");
   } else {
@@ -495,7 +495,7 @@ template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
 
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
-h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
+h5d_chunked_2d<T>::create(hdf5::node::Group loc, string name, hsize_t ncols,
                           hsize_t chunk_bytes, CollectiveQueue *cq) {
   hdf5::dataspace::Simple dsp({0, ncols}, {H5S_UNLIMITED, ncols});
   hdf5::property::DatasetCreationList dcpl;
@@ -506,24 +506,23 @@ h5d_chunked_2d<T>::create(hid_t loc, string name, hsize_t ncols,
   if (!ds) {
     return nullptr;
   }
-  auto ret = new h5d_chunked_2d<T>(loc, name, move(*ds), ncols);
+  auto ret = new h5d_chunked_2d<T>(name, move(*ds), ncols);
   return ptr(ret);
 }
 
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
-h5d_chunked_2d<T>::open(hid_t loc, string name, hsize_t ncols,
+h5d_chunked_2d<T>::open(hdf5::node::Group loc, string name, hsize_t ncols,
                         CollectiveQueue *cq, HDFIDStore *hdf_store) {
   auto ds = h5d::open(loc, name, cq, hdf_store);
   if (!ds) {
     return ptr();
   }
-  return ptr(new h5d_chunked_2d<T>(loc, name, move(*ds), ncols));
+  return ptr(new h5d_chunked_2d<T>(name, move(*ds), ncols));
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(hid_t loc, string name, h5d ds_,
-                                  hsize_t ncols)
+h5d_chunked_2d<T>::h5d_chunked_2d(string name, h5d ds_, hsize_t ncols)
     : ds(move(ds_)), ncols(ncols) {
   if (ds.id < 0) {
     LOG(Sev::Critical, "not a dataset");
@@ -640,65 +639,38 @@ template append_ret h5d::append_data_1d(int16_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(int32_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(int64_t const *data, hsize_t nlen);
 
-template h5d_chunked_1d<uint8_t>::ptr
-h5d_chunked_1d<uint8_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                CollectiveQueue *cq);
-template h5d_chunked_1d<uint16_t>::ptr
-h5d_chunked_1d<uint16_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                 CollectiveQueue *cq);
-template h5d_chunked_1d<uint32_t>::ptr
-h5d_chunked_1d<uint32_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                 CollectiveQueue *cq);
-template h5d_chunked_1d<uint64_t>::ptr
-h5d_chunked_1d<uint64_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                 CollectiveQueue *cq);
-template h5d_chunked_1d<int8_t>::ptr
-h5d_chunked_1d<int8_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                               CollectiveQueue *cq);
-template h5d_chunked_1d<int16_t>::ptr
-h5d_chunked_1d<int16_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                CollectiveQueue *cq);
-template h5d_chunked_1d<int32_t>::ptr
-h5d_chunked_1d<int32_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                CollectiveQueue *cq);
-template h5d_chunked_1d<int64_t>::ptr
-h5d_chunked_1d<int64_t>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                                CollectiveQueue *cq);
-template h5d_chunked_1d<float>::ptr
-h5d_chunked_1d<float>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                              CollectiveQueue *cq);
-template h5d_chunked_1d<double>::ptr
-h5d_chunked_1d<double>::create(hid_t loc, string name, hsize_t chunk_bytes,
-                               CollectiveQueue *cq);
+template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::create(hdf5::node::Group loc, string name, hsize_t chunk_bytes, CollectiveQueue *cq);
 
-template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::open(hid_t loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
 
-template h5d_chunked_1d<uint8_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 h5d ds);
-template h5d_chunked_1d<uint16_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                  h5d ds);
-template h5d_chunked_1d<uint32_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                  h5d ds);
-template h5d_chunked_1d<uint64_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                  h5d ds);
-template h5d_chunked_1d<int8_t>::h5d_chunked_1d(hid_t loc, string name, h5d ds);
-template h5d_chunked_1d<int16_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 h5d ds);
-template h5d_chunked_1d<int32_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 h5d ds);
-template h5d_chunked_1d<int64_t>::h5d_chunked_1d(hid_t loc, string name,
-                                                 h5d ds);
-template h5d_chunked_1d<float>::h5d_chunked_1d(hid_t loc, string name, h5d ds);
-template h5d_chunked_1d<double>::h5d_chunked_1d(hid_t loc, string name, h5d ds);
+template h5d_chunked_1d< uint8_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d<uint16_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d<uint32_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d<uint64_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d<  int8_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d< int16_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d< int32_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d< int64_t>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d<   float>::h5d_chunked_1d(string name, h5d ds);
+template h5d_chunked_1d<  double>::h5d_chunked_1d(string name, h5d ds);
 
 template h5d_chunked_1d<uint8_t>::~h5d_chunked_1d();
 template h5d_chunked_1d<uint16_t>::~h5d_chunked_1d();
@@ -764,72 +736,52 @@ template append_ret
 h5d_chunked_1d<double>::h5d_chunked_1d::append_data_1d(double const *data,
                                                        hsize_t nlen);
 
-template h5d_chunked_2d<uint8_t>::ptr
-h5d_chunked_2d<uint8_t>::create(hid_t loc, string name, hsize_t ncols,
-                                hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<uint16_t>::ptr
-h5d_chunked_2d<uint16_t>::create(hid_t loc, string name, hsize_t ncols,
-                                 hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<uint32_t>::ptr
-h5d_chunked_2d<uint32_t>::create(hid_t loc, string name, hsize_t ncols,
-                                 hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<uint64_t>::ptr
-h5d_chunked_2d<uint64_t>::create(hid_t loc, string name, hsize_t ncols,
-                                 hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<int8_t>::ptr
-h5d_chunked_2d<int8_t>::create(hid_t loc, string name, hsize_t ncols,
-                               hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<int16_t>::ptr
-h5d_chunked_2d<int16_t>::create(hid_t loc, string name, hsize_t ncols,
-                                hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<int32_t>::ptr
-h5d_chunked_2d<int32_t>::create(hid_t loc, string name, hsize_t ncols,
-                                hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<int64_t>::ptr
-h5d_chunked_2d<int64_t>::create(hid_t loc, string name, hsize_t ncols,
-                                hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<float>::ptr
-h5d_chunked_2d<float>::create(hid_t loc, string name, hsize_t ncols,
-                              hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<double>::ptr
-h5d_chunked_2d<double>::create(hid_t loc, string name, hsize_t ncols,
-                               hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::create(hdf5::node::Group loc, string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
 
 
-template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::open(hdf5::node::Group loc, string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
 
 
-template h5d_chunked_2d< uint8_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<uint16_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<uint32_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<uint64_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<  int8_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d< int16_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d< int32_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d< int64_t>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<   float>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<  double>::h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< uint8_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<uint16_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<uint32_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<uint64_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<  int8_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< int16_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< int32_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< int64_t>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<   float>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<  double>::h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
 
 
-template h5d_chunked_2d<uint8_t>::~h5d_chunked_2d();
+template h5d_chunked_2d< uint8_t>::~h5d_chunked_2d();
 template h5d_chunked_2d<uint16_t>::~h5d_chunked_2d();
 template h5d_chunked_2d<uint32_t>::~h5d_chunked_2d();
 template h5d_chunked_2d<uint64_t>::~h5d_chunked_2d();
-template h5d_chunked_2d<int8_t>::~h5d_chunked_2d();
-template h5d_chunked_2d<int16_t>::~h5d_chunked_2d();
-template h5d_chunked_2d<int32_t>::~h5d_chunked_2d();
-template h5d_chunked_2d<int64_t>::~h5d_chunked_2d();
-template h5d_chunked_2d<float>::~h5d_chunked_2d();
-template h5d_chunked_2d<double>::~h5d_chunked_2d();
+template h5d_chunked_2d<  int8_t>::~h5d_chunked_2d();
+template h5d_chunked_2d< int16_t>::~h5d_chunked_2d();
+template h5d_chunked_2d< int32_t>::~h5d_chunked_2d();
+template h5d_chunked_2d< int64_t>::~h5d_chunked_2d();
+template h5d_chunked_2d<   float>::~h5d_chunked_2d();
+template h5d_chunked_2d<  double>::~h5d_chunked_2d();
 
 template append_ret
 h5d_chunked_2d<uint8_t>::h5d_chunked_2d::append_data_2d(uint8_t const *data,

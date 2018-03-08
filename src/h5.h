@@ -41,13 +41,13 @@ struct append_ret {
 class h5d {
 public:
   typedef unique_ptr<h5d> ptr;
-  static ptr create(hid_t loc, string name, hid_t type,
+  static ptr create(hdf5::node::Group loc, string name, hid_t type,
                     hdf5::dataspace::Simple dsp,
                     hdf5::property::DatasetCreationList dcpl,
                     CollectiveQueue *cq);
-  static ptr open_single(hid_t loc, string name, CollectiveQueue *cq,
-                         HDFIDStore *hdf_store);
-  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+  static ptr open_single(hdf5::node::Group loc, string name,
+                         CollectiveQueue *cq, HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group loc, string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d(h5d &&x);
   ~h5d();
@@ -81,9 +81,9 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y);
 template <typename T> class h5d_chunked_1d {
 public:
   typedef unique_ptr<h5d_chunked_1d<T>> ptr;
-  static ptr create(hid_t loc, string name, hsize_t chunk_bytes,
+  static ptr create(hdf5::node::Group loc, string name, hsize_t chunk_bytes,
                     CollectiveQueue *cq);
-  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+  static ptr open(hdf5::node::Group loc, string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
@@ -94,7 +94,7 @@ public:
   void buffer_init(size_t buf_size, size_t buf_packet_max);
 
 private:
-  h5d_chunked_1d(hid_t loc, string name, h5d ds);
+  h5d_chunked_1d(string name, h5d ds);
   hdf5::dataspace::Simple dsp_wr;
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
@@ -113,10 +113,10 @@ template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y);
 template <typename T> class h5d_chunked_2d {
 public:
   typedef unique_ptr<h5d_chunked_2d<T>> ptr;
-  static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
-                    CollectiveQueue *cq);
-  static ptr open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq,
-                  HDFIDStore *hdf_store);
+  static ptr create(hdf5::node::Group loc, string name, hsize_t ncols,
+                    hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group loc, string name, hsize_t ncols,
+                  CollectiveQueue *cq, HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();
@@ -126,7 +126,7 @@ public:
   void buffer_init(size_t buf_size, size_t buf_packet_max);
 
 private:
-  h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
+  h5d_chunked_2d(string name, h5d ds, hsize_t ncols);
   hdf5::dataspace::Simple dsp_wr;
   hsize_t ncols;
   size_t buf_size = 0;
