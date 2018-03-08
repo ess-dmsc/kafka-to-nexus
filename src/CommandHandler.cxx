@@ -323,9 +323,10 @@ void CommandHandler::addStreamSourceToWriterModule(
       ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
       try {
+        auto RootGroup = Task->hdf_file.h5file.root();
         auto Err = HDFWriterModule->reopen(
-            static_cast<hid_t>(Task->hdf_file.h5file),
-            StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr, nullptr);
+            RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr,
+            nullptr);
         if (Err.is_ERR()) {
           LOG(Sev::Error, "can not reopen HDF file for stream {}",
               StreamSettings.StreamHDFInfoObj.hdf_parent_name);

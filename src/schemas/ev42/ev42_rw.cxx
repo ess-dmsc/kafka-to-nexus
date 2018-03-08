@@ -65,8 +65,8 @@ public:
                       std::string hdf_parent_name,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
-  InitResult reopen(hid_t hdf_file, string hdf_parent_name, CollectiveQueue *cq,
-                    HDFIDStore *hdf_store) override;
+  InitResult reopen(hdf5::node::Group hdf_file, string hdf_parent_name,
+                    CollectiveQueue *cq, HDFIDStore *hdf_store) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
@@ -161,11 +161,12 @@ HDFWriterModule::init_hdf(hdf5::node::Group &hdf_parent, string hdf_parent_name,
   return HDFWriterModule::InitResult::OK();
 }
 
-HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
+HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
                                                     string hdf_parent_name,
                                                     CollectiveQueue *cq,
                                                     HDFIDStore *hdf_store) {
-  auto hid = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
+  auto hid = H5Gopen2(static_cast<hid_t>(hdf_file), hdf_parent_name.data(),
+                      H5P_DEFAULT);
   if (hid < 0) {
     LOG(Sev::Error, "can not open HDF group");
     return HDFWriterModule::InitResult::ERROR_IO();

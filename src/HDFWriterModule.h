@@ -117,8 +117,9 @@ public:
                               rapidjson::Value const *attributes,
                               CollectiveQueue *cq) = 0;
 
-  virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,
-                            CollectiveQueue *cq, HDFIDStore *hdf_store) = 0;
+  virtual InitResult reopen(hdf5::node::Group hdf_file,
+                            std::string hdf_parent_name, CollectiveQueue *cq,
+                            HDFIDStore *hdf_store) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   virtual WriteResult write(Msg const &msg) = 0;
