@@ -1262,14 +1262,14 @@ TEST_F(T_CommandHandler, createStaticDatasetWithLongIntegerValue) {
 
   std::string CommandWithLongInt = R""({
       "children": [
-      {
-        "name": "features",
-        "values": 10138143369737381149,
-        "type": "dataset",
-        "dataset": {
-          "type": "uint64"
-      }
-    }
+        {
+          "name": "features",
+          "values": 10138143369737381149,
+          "type": "dataset",
+          "dataset": {
+            "type": "uint64"
+          }
+        }
       ]
     })"";
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;

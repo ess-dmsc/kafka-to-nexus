@@ -41,14 +41,29 @@ static void write_attribute(hdf5::node::Node &node, const std::string &name,
 }
 
 template <typename DT>
+static void append_value(rapidjson::Value const *vals, std::vector<DT> &ret) {
+  if (vals->IsInt()) {
+    ret.push_back(static_cast<DT>(vals->GetInt()));
+  } else if (vals->IsInt64()) {
+    ret.push_back(static_cast<DT>(vals->GetInt64()));
+  } else if (vals->IsUint()) {
+    ret.push_back(static_cast<DT>(vals->GetUint()));
+  } else if (vals->IsUint64()) {
+    ret.push_back(static_cast<DT>(vals->GetUint64()));
+  } else if (vals->IsFloat()) {
+    ret.push_back(static_cast<DT>(vals->GetFloat()));
+  } else if (vals->IsDouble()) {
+    ret.push_back(static_cast<DT>(vals->GetDouble()));
+  } else {
+    LOG(Sev::Error, "Unhandled type in HDFFile::append_value()")
+  }
+}
+
+template <typename DT>
 static std::vector<DT> populate_blob(rapidjson::Value const *vals,
                                      hssize_t goal_size) {
   std::vector<DT> ret;
-  if (vals->IsInt()) {
-    ret.push_back(vals->GetInt());
-  } else if (vals->IsDouble()) {
-    ret.push_back(vals->GetDouble());
-  } else if (vals->IsArray()) {
+  if (vals->IsArray()) {
     std::stack<rapidjson::Value const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
@@ -60,8 +75,6 @@ static std::vector<DT> populate_blob(rapidjson::Value const *vals,
       if (as.size() > 10) {
         break;
       }
-      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
-      // an.back());
       if (ai.top() >= an.top()) {
         as.pop();
         ai.pop();
@@ -75,21 +88,15 @@ static std::vector<DT> populate_blob(rapidjson::Value const *vals,
         ai.push(0);
         size_t n = v.GetArray().Size();
         an.push(n);
-      } else if (v.IsInt()) {
-        ret.push_back((DT)v.GetInt());
-        ai.top()++;
-      } else if (v.IsInt64()) {
-        ret.push_back((DT)v.GetInt64());
-        ai.top()++;
-      } else if (v.IsUint64()) {
-        ret.push_back((DT)v.GetUint64());
-        ai.top()++;
-      } else if (v.IsDouble()) {
-        ret.push_back((DT)v.GetDouble());
+      } else {
+        append_value(&v, ret);
         ai.top()++;
       }
     }
+  } else {
+    append_value(vals, ret);
   }
+
   if (static_cast<hssize_t>(ret.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate numeric blob ";
