@@ -6,6 +6,7 @@
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
+#include "HDFFileTestHelper.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -1166,13 +1167,7 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file =
-        hdf5::file::create("tmp-fixedlen.h5", hdf5::file::AccessFlags::TRUNCATE,
-                           hdf5::property::FileCreationList(), fapl);
+    auto hdf_file = HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1203,13 +1198,7 @@ public:
   }
 
   static void dataset_static_1d_string_variable() {
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file =
-        hdf5::file::create("tmp-varlen.h5", hdf5::file::AccessFlags::TRUNCATE,
-                           hdf5::property::FileCreationList(), fapl);
+    auto hdf_file = HDFFileTestHelper::createInMemoryTestFile("tmp-varlen.h5");
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1264,4 +1253,30 @@ TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
 
 TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
   T_CommandHandler::dataset_static_1d_string_variable();
+}
+
+TEST_F(T_CommandHandler, createStaticDatasetWithLongIntegerValue) {
+  using namespace hdf5;
+
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("test-long-int-error.nxs");
+
+  std::string CommandWithLongInt = R""({
+      "children": [
+      {
+        "name": "features",
+        "values": 10138143369737381149,
+        "type": "dataset",
+        "dataset": {
+          "type": "uint64"
+      }
+    }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithLongInt, EmptyStreamHDFInfo);
+
+  auto Dataset = hdf5::node::get_dataset(TestFile.root_group, "/features");
+  uint64_t Value;
+  Dataset.read(Value);
+  ASSERT_EQ(Value, 10138143369737381149U);
 }
