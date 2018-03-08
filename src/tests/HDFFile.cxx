@@ -1257,8 +1257,10 @@ TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
 }
 
 template <typename T>
-void testType(FileWriter::HDFFile &TestFile, const std::pair<std::string, T> NameAndValue) {
-  auto Dataset = hdf5::node::get_dataset(TestFile.root_group, "/" + NameAndValue.first);
+void testType(FileWriter::HDFFile &TestFile,
+              const std::pair<std::string, T> NameAndValue) {
+  auto Dataset =
+      hdf5::node::get_dataset(TestFile.root_group, "/" + NameAndValue.first);
   auto OutputValue = NameAndValue.second;
   Dataset.read(OutputValue);
   ASSERT_EQ(OutputValue, NameAndValue.second);
@@ -1266,23 +1268,23 @@ void testType(FileWriter::HDFFile &TestFile, const std::pair<std::string, T> Nam
 
 TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
   using namespace hdf5;
+  using HDFFileTestHelper::createCommandForDataset;
 
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-dataset-int-types.nxs");
 
   const std::pair<std::string, uint32_t> TestUint32 = {"uint32", 37381149};
-  const std::pair<std::string, uint64_t> TestUint64 = {"uint64", 10138143369737381149U};
+  const std::pair<std::string, uint64_t> TestUint64 = {"uint64",
+                                                       10138143369737381149U};
   const std::pair<std::string, int32_t> TestInt32 = {"int32", -7381149};
-  const std::pair<std::string, int64_t> TestInt64 = {"int64", -138143369737381149};
+  const std::pair<std::string, int64_t> TestInt64 = {"int64",
+                                                     -138143369737381149};
 
   std::stringstream CommandStream;
-  CommandStream
-      << R""({"children": [)""
-      << HDFFileTestHelper::createCommandForDataset(TestUint32) << ",\n"
-      << HDFFileTestHelper::createCommandForDataset(TestUint64) << ",\n"
-      << HDFFileTestHelper::createCommandForDataset(TestInt32) << ",\n"
-      << HDFFileTestHelper::createCommandForDataset(TestInt64)
-      << "]}";
+  CommandStream << R""({"children": [)"" << createCommandForDataset(TestUint32)
+                << ",\n" << createCommandForDataset(TestUint64) << ",\n"
+                << createCommandForDataset(TestInt32) << ",\n"
+                << createCommandForDataset(TestInt64) << "]}";
 
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandStream.str(), EmptyStreamHDFInfo);
