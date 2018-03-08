@@ -65,17 +65,10 @@ def docker_dependencies(image_key) {
                         conan remote add \
                             --insert 0 \
                             ${conan_remote} ${local_conan_server}
-                        cat ../${project}/CMakeLists.txt
-                        conan install --build=outdated ../${project}/conan/conanfile.txt
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
-
-        def checkout_script = """
-                        git clone -b master https://github.com/ess-dmsc/streaming-data-types.git
-                    """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${checkout_script}\""
     } catch (e) {
-        failure_function(e, "Get dependencies for (${container_name(image_key)}) failed")
+        failure_function(e, "Add conan remote for (${container_name(image_key)}) failed")
     }
 }
 
@@ -88,7 +81,6 @@ def docker_cmake(image_key) {
         }
         def configure_script = """
                         cd build
-                        . ./activate_run.sh
                         cmake ../${project} -DREQUIRE_GTEST=ON ${coverage_on}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
@@ -142,6 +134,7 @@ def docker_coverage(image_key) {
         junit "build/${test_output}"
 
         withCredentials([string(credentialsId: 'kafka-to-nexus-codecov-token', variable: 'TOKEN')]) {
+            sh "cp ${project}/codecov.yml codecov.yml"
             sh "curl -s https://codecov.io/bash | bash -s - -f build/coverage.info -t ${TOKEN} -C ${scm_vars.GIT_COMMIT}"
         }
     } catch (e) {
@@ -236,17 +229,7 @@ def get_macos_pipeline()
                     }
                 }
 
-                dir("${project}") {
-                    sh "git clone -b master https://github.com/ess-dmsc/streaming-data-types.git"
-                }
-
                 dir("${project}/build") {
-                    try {
-                        sh "conan install --build=outdated ../code/conan"
-                    } catch (e) {
-                        failure_function(e, 'MacOSX / getting dependencies failed')
-                    }
-
                     try {
                         sh "cmake -DREQUIRE_GTEST=ON ../code"
                     } catch (e) {
@@ -255,7 +238,7 @@ def get_macos_pipeline()
 
                     try {
                         sh "make VERBOSE=1"
-                        sh "./tests/tests"
+                        sh ". ./activate_run.sh && ./tests/tests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
                     }

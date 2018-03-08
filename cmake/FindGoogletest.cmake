@@ -13,7 +13,7 @@ endfunction()
 set(REQUIRE_GTEST FALSE CACHE BOOL "Require Google Test")
 
 if (REQUIRE_GTEST)
-	find_library(GMOCK_MAIN_LIB gmock_main)
+	find_library(GMOCK_MAIN_LIB NAMES gmock_main gmock_maind)
 	if (GMOCK_MAIN_LIB)
 		message(STATUS "Google Test found")
 		set(have_gtest TRUE)
