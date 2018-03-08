@@ -651,8 +651,6 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
   try {
     check_hdf_version();
 
-    // These never gets used?!?!
-    hdf5::dataspace::Scalar dsp_sc;
     hdf5::property::AttributeCreationList acpl;
     acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
