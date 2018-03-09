@@ -655,12 +655,12 @@ public:
           auto &children = ch;
           Document ds1(&a);
           ds1.Parse(R""({
-        "type": "stream",
-        "attributes": {
-          "this_will_be_a_double": 0.125,
-          "this_will_be_a_int64": 123
-        }
-      })"");
+            "type": "stream",
+            "attributes": {
+              "this_will_be_a_double": 0.125,
+              "this_will_be_a_int64": 123
+            }
+          })"");
           Value stream;
           stream.SetObject();
           if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
