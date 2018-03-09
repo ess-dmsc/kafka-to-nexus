@@ -236,9 +236,19 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     if (sext2[0] - sext[0] > (1u << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
-    LOG(Sev::Debug, "snext: {:12}  set_extent\n  from: {:12}  to: {:12}\n  "
-                    "from: {:12}  to: {:12}",
-        snext, sext.at(0), sext2.at(0), sext.at(1), sext2.at(1));
+    if (sext.size() == 1) {
+      LOG(Sev::Debug,
+          "snext: {:12}  set_extent  d: 1\n  from: {:12}  to: {:12}", snext,
+          sext.at(0), sext2.at(0));
+    } else if (sext.size() == 2) {
+      LOG(Sev::Debug,
+          "snext: {:12}  set_extent  d: 2\n  from: {:12}  to: {:12}\n  "
+          "from: {:12}  to: {:12}",
+          snext, sext.at(0), sext2.at(0), sext.at(1), sext2.at(1));
+    } else {
+      LOG(Sev::Debug, "snext: {:12}  set_extent  d: {}   NOT SUPPORTED",
+          sext.size());
+    }
 
     auto t2 = CLK::now();
     if (not cq) {
@@ -257,7 +267,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         }
       }
     }
-    sext.at(1) = sext2.at(1);
+    for (size_t i = 1; i < sext.size(); ++i) {
+      sext.at(i) = sext2.at(i);
+    }
     auto t3 = CLK::now();
     LOG(Sev::Debug, "h5d::append_data_1d set_extent: {} + {}",
         duration_cast<MS>(t2 - t1).count(), duration_cast<MS>(t3 - t2).count());
