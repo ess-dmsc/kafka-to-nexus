@@ -23,18 +23,16 @@ void swap(hsize_t &x, hsize_t &y) {
 
 void h5d::init_basics() {
   herr_t err = 0;
-  Type = hdf5::datatype::Datatype(hdf5::ObjectHandle(H5Dget_type(id)));
-  DSPTgt = hdf5::dataspace::Simple(hdf5::ObjectHandle(H5Dget_space(id)));
+  Type = Dataset.datatype();
+  DSPTgt = Dataset.dataspace();
   ndims = DSPTgt.rank();
   snow = {{0, 0}};
-  H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), sext.data(),
-                            smax.data());
   sext = DSPTgt.current_dimensions();
   smax = DSPTgt.maximum_dimensions();
   if (log_level >= 9) {
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} {}: {:21} {:21}", name,
-          i1, sext.at(i1), smax.at(i1));
+      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", name, i1,
+          sext.at(i1), smax.at(i1));
     }
   }
   try {
@@ -54,28 +52,27 @@ h5d::ptr h5d::create(hdf5::node::Group loc, string name,
                      hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
                      hdf5::property::DatasetCreationList dcpl,
                      CollectiveQueue *cq) {
-  // Creation is done in single process mode.
-  // Can do set_extent here.
-  auto ret = ptr(new h5d);
-  auto &o = *ret;
-  herr_t err = 0;
-  o.Type = Type;
-  o.name = name;
-  err = H5Pset_fill_value(static_cast<hid_t>(dcpl), static_cast<hid_t>(o.Type),
-                          nullptr);
-  if (err < 0) {
-    LOG(Sev::Debug, "failed H5Pset_fill_value");
-  }
-  o.id = H5Dcreate1(static_cast<hid_t>(loc), name.c_str(),
-                    static_cast<hid_t>(o.Type), static_cast<hid_t>(dsp),
-                    static_cast<hid_t>(dcpl));
-  if (o.id < 0) {
-    LOG(Sev::Error, "H5Dcreate1 failed");
-    ret.reset();
+  try {
+    // Creation is done in single process mode.
+    // Can do set_extent here.
+    auto ret = ptr(new h5d);
+    auto &o = *ret;
+    herr_t err = 0;
+    o.Type = Type;
+    o.name = name;
+    err = H5Pset_fill_value(static_cast<hid_t>(dcpl),
+                            static_cast<hid_t>(o.Type), nullptr);
+    if (err < 0) {
+      LOG(Sev::Debug, "failed H5Pset_fill_value");
+    }
+    o.Dataset = loc.create_dataset(name, o.Type, dsp,
+                                   hdf5::property::LinkCreationList(), dcpl,
+                                   hdf5::property::DatasetAccessList());
+    o.init_basics();
     return ret;
+  } catch (...) {
+    return {nullptr};
   }
-  o.init_basics();
-  return ret;
 }
 
 h5d::ptr h5d::open_single(hdf5::node::Group loc, string name,
@@ -84,12 +81,7 @@ h5d::ptr h5d::open_single(hdf5::node::Group loc, string name,
   auto ret = ptr(new h5d);
   auto &o = *ret;
   o.name = name;
-  o.id = H5Dopen2(static_cast<hid_t>(loc), name.c_str(), H5P_DEFAULT);
-  if (o.id < 0) {
-    LOG(Sev::Error, "H5Dopen2 failed");
-    ret.reset();
-    return ret;
-  }
+  o.Dataset = loc.get_dataset(name);
   o.init_basics();
   return ret;
 }
@@ -102,26 +94,10 @@ h5d::ptr h5d::open(hdf5::node::Group loc, string name, CollectiveQueue *cq,
 h5d::h5d(h5d &&x) { swap(*this, x); }
 
 h5d::~h5d() {
-  if (id != -1) {
-    LOG(Sev::Debug, "~h5d ds");
-    herr_t err = 0;
-    char ds_name[512];
-    auto &buf = ds_name;
-    auto bufn = H5Iget_name(id, buf, 512);
-    H5O_info_t oi;
-    H5Oget_info(id, &oi);
-    if (not cq) {
-      err = H5Dset_extent(id, snow.data());
-      if (err < 0) {
-        LOG(Sev::Error, "H5Dset_extent failed");
-      }
-      err = H5Dclose(id);
-      if (err < 0) {
-        LOG(Sev::Error, "error closing dataset  {}  {:.{}}  H5Iget_ref: {}  "
-                        "H5O_info_t.rc: {}",
-            id, buf, bufn, H5Iget_ref(id), oi.rc);
-      }
-      id = -1;
+  LOG(Sev::Debug, "~h5d ds");
+  if (Dataset.is_valid()) {
+    if (!cq) {
+      Dataset.extent(snow);
     }
   }
 }
@@ -130,10 +106,10 @@ h5d::h5d() {}
 
 void swap(h5d &x, h5d &y) {
   using std::swap;
-  swap(x.id, y.id);
   swap(x.name, y.name);
   swap(x.Type, y.Type);
   swap(x.PLTransfer, y.PLTransfer);
+  swap(x.Dataset, y.Dataset);
   swap(x.ndims, y.ndims);
   swap(x.DSPMem, y.DSPMem);
   swap(x.DSPTgt, y.DSPTgt);
@@ -156,43 +132,16 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using MS = std::chrono::milliseconds;
   auto t1 = CLK::now();
   LOG(Sev::Debug, "append_data_{}d", ndims);
+  auto ds_name = static_cast<std::string>(Dataset.link().path());
   if (log_level >= 9) {
-    array<char, 64> buf1;
-    auto n1 = H5Iget_name(id, buf1.data(), buf1.size());
-    if (n1 > 0) {
-      LOG(Sev::Debug, "append_data_1d {} for dataset {:.{}}", nlen, buf1.data(),
-          n1);
-    }
+    LOG(Sev::Debug, "append_data_1d {} for dataset {}", nlen, ds_name);
   }
   using AT = array<hsize_t, 2>;
   herr_t err;
 
-  char ds_name[512];
-  {
-    auto &buf = ds_name;
-    auto bufn = H5Iget_name(id, buf, 512);
-    buf[bufn] = '\0';
+  for (size_t i = 1; i < sext.size(); ++i) {
+    sext[i] = smax[i];
   }
-
-  // TODO
-  // Is there still a need to look up the DSP because some extent might have
-  // happened in some other process? Yes, sure!!
-  // Therefore, always lookup the dataspace from the hdf_store!
-
-  if (false && log_level >= 9) {
-    // Just for debugging
-    AT snow, smax;
-    err = H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), snow.data(),
-                                    smax.data());
-    if (err < 0) {
-      LOG(Sev::Error, "failed H5Sget_simple_extent_dims");
-    }
-    for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "H5Sget_simple_extent_dims {} {:3} / {:3}", i1,
-          snow.at(i1), smax.at(i1));
-    }
-  }
-  sext[1] = smax[1];
 
   hsize_t nlen_0 = nlen;
   if (ndims == 2) {
@@ -251,13 +200,14 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
 
     auto t2 = CLK::now();
-    if (not cq) {
-      err = H5Dset_extent(id, sext2.data());
-      if (err < 0) {
+    if (!cq) {
+      try {
+        Dataset.extent(sext2);
+      } catch (...) {
         LOG(Sev::Error, "H5Dset_extent failed");
         return {AppendResult::ERROR};
       }
-      DSPTgt = hdf5::dataspace::Simple(hdf5::ObjectHandle(H5Dget_space(id)));
+      DSPTgt = Dataset.dataspace();
       if (true) {
         err = H5Sget_simple_extent_dims(static_cast<hid_t>(DSPTgt), sext.data(),
                                         smax.data());
@@ -325,18 +275,18 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     return {AppendResult::ERROR};
   }
   auto t2 = CLK::now();
-  err = H5Dwrite(id, static_cast<hid_t>(Type), static_cast<hid_t>(DSPMem),
-                 static_cast<hid_t>(DSPTgt), static_cast<hid_t>(PLTransfer),
-                 data);
+  err = H5Dwrite(static_cast<hid_t>(Dataset), static_cast<hid_t>(Type),
+                 static_cast<hid_t>(DSPMem), static_cast<hid_t>(DSPTgt),
+                 static_cast<hid_t>(PLTransfer), data);
   if (err < 0) {
     if (cq) {
     } else {
       LOG(Sev::Error, "write failed  ds_name: {}", ds_name);
     }
     if (log_level >= 7) {
-      AT sext, smax;
-      hid_t dsp = H5Dget_space(id);
-      err = H5Sget_simple_extent_dims(dsp, sext.data(), smax.data());
+      auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
+      auto sext = dsp.current_dimensions();
+      auto smax = dsp.current_dimensions();
       if (err < 0) {
         LOG(Sev::Error, "fail H5Sget_simple_extent_dims");
       }
@@ -392,32 +342,20 @@ h5d_chunked_1d<T>::open(hdf5::node::Group loc, string name, CollectiveQueue *cq,
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(string name, h5d ds_) : ds(move(ds_)) {
-  if (ds.id < 0) {
+  if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");
-  } else {
-    if (H5Iis_valid(ds.id) != 1) {
-      LOG(Sev::Critical, "invalid ds.id: {}", ds.id);
-    } else {
-      if (H5Iget_type(ds.id) != H5I_DATASET) {
-        LOG(Sev::Critical, "not H5I_DATASET ds.id: {}", ds.id);
-      } else {
-        auto dsp = H5Dget_space(ds.id);
-        if (dsp < 0) {
-          LOG(Sev::Critical, "failed H5Dget_space");
-        } else {
-          auto ndims = H5Sget_simple_extent_ndims(dsp);
-          if (ndims != 1) {
-            LOG(Sev::Critical, "wrong dimension ds.id: {}  dsp: {}  ndims: {}",
-                ds.id, dsp, ndims);
-          } else {
-            std::vector<hsize_t> snow(1), smax(1);
-            H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
-            dsp_wr = hdf5::dataspace::Simple(snow, smax);
-          }
-        }
-      }
-    }
+    throw std::runtime_error("Not a dataset");
   }
+  auto dsp = hdf5::dataspace::Simple(ds.Dataset.dataspace());
+  auto ndims = dsp.rank();
+  if (ndims != 1) {
+    auto msg =
+        fmt::format("wrong dimension Dataset: {}  ndims: {}",
+                    static_cast<std::string>(ds.Dataset.link().path()), ndims);
+    LOG(Sev::Critical, "{}", msg);
+    throw std::runtime_error(msg);
+  }
+  dsp_wr = hdf5::dataspace::Simple(dsp);
 }
 
 template <typename T>
@@ -541,32 +479,20 @@ h5d_chunked_2d<T>::open(hdf5::node::Group loc, string name, hsize_t ncols,
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(string name, h5d ds_, hsize_t ncols)
     : ds(move(ds_)), ncols(ncols) {
-  if (ds.id < 0) {
+  if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");
-  } else {
-    if (H5Iis_valid(ds.id) != 1) {
-      LOG(Sev::Critical, "invalid ds.id: {}", ds.id);
-    } else {
-      if (H5Iget_type(ds.id) != H5I_DATASET) {
-        LOG(Sev::Critical, "not H5I_DATASET ds.id: {}", ds.id);
-      } else {
-        auto dsp = H5Dget_space(ds.id);
-        if (dsp < 0) {
-          LOG(Sev::Critical, "failed H5Dget_space");
-        } else {
-          auto ndims = H5Sget_simple_extent_ndims(dsp);
-          if (ndims != 2) {
-            LOG(Sev::Critical, "wrong dimension ds.id: {}  dsp: {}  ndims: {}",
-                ds.id, dsp, ndims);
-          } else {
-            std::vector<hsize_t> snow(2), smax(2);
-            H5Sget_simple_extent_dims(dsp, snow.data(), smax.data());
-            dsp_wr = hdf5::dataspace::Simple(snow, smax);
-          }
-        }
-      }
-    }
+    throw std::runtime_error("Not a dataset");
   }
+  auto dsp = hdf5::dataspace::Simple(ds.Dataset.dataspace());
+  auto ndims = dsp.rank();
+  if (ndims != 2) {
+    auto msg =
+        fmt::format("wrong dimension Dataset: {}  ndims: {}",
+                    static_cast<std::string>(ds.Dataset.link().path()), ndims);
+    LOG(Sev::Critical, "{}", msg);
+    throw std::runtime_error(msg);
+  }
+  dsp_wr = hdf5::dataspace::Simple(dsp);
 }
 
 template <typename T>

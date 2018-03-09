@@ -56,7 +56,7 @@ public:
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
   string name;
-  hid_t id = -1;
+  hdf5::node::Dataset Dataset;
   hdf5::datatype::Datatype Type;
   hdf5::property::DatasetTransferList PLTransfer;
   hsize_t ndims = -1;
