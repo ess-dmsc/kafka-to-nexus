@@ -24,6 +24,104 @@ using std::vector;
 using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
+template <typename T>
+static void write_attribute(hdf5::node::Node &node, const std::string &name,
+                            T value) {
+  hdf5::property::AttributeCreationList acpl;
+  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  node.attributes.create<T>(name, acpl).write(value);
+}
+
+template <typename T>
+static void write_attribute(hdf5::node::Node &node, const std::string &name,
+                            std::vector<T> values) {
+  hdf5::property::AttributeCreationList acpl;
+  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  node.attributes.create<T>(name, {values.size()}, acpl).write(values);
+}
+
+template <typename DT>
+static std::vector<DT> populate_blob(rapidjson::Value const *vals,
+                                     hssize_t goal_size) {
+  std::vector<DT> ret;
+  if (vals->IsInt()) {
+    ret.push_back(vals->GetInt());
+  } else if (vals->IsDouble()) {
+    ret.push_back(vals->GetDouble());
+  } else if (vals->IsArray()) {
+    std::stack<rapidjson::Value const *> as;
+    std::stack<size_t> ai;
+    std::stack<size_t> an;
+    as.push(vals);
+    ai.push(0);
+    an.push(vals->GetArray().Size());
+
+    while (not as.empty()) {
+      if (as.size() > 10) {
+        break;
+      }
+      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
+      // an.back());
+      if (ai.top() >= an.top()) {
+        as.pop();
+        ai.pop();
+        an.pop();
+        continue;
+      }
+      auto &v = as.top()->GetArray()[ai.top()];
+      if (v.IsArray()) {
+        ai.top()++;
+        as.push(&v);
+        ai.push(0);
+        size_t n = v.GetArray().Size();
+        an.push(n);
+      } else if (v.IsInt()) {
+        ret.push_back((DT)v.GetInt());
+        ai.top()++;
+      } else if (v.IsInt64()) {
+        ret.push_back((DT)v.GetInt64());
+        ai.top()++;
+      } else if (v.IsUint64()) {
+        ret.push_back((DT)v.GetUint64());
+        ai.top()++;
+      } else if (v.IsDouble()) {
+        ret.push_back((DT)v.GetDouble());
+        ai.top()++;
+      }
+    }
+  }
+  if (static_cast<hssize_t>(ret.size()) != goal_size) {
+    std::stringstream ss;
+    ss << "Failed to populate numeric blob ";
+    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+
+  return ret;
+}
+
+template <typename T>
+static void writeAttrNumeric(hdf5::node::Node &Node, const std::string &Name,
+                             rapidjson::Value const *Values) {
+  hssize_t length = 1;
+  if (Values->IsArray()) {
+    length = Values->GetArray().Size();
+  }
+  auto ValueData = populate_blob<T>(Values, length);
+  try {
+    if (Values->IsArray()) {
+      write_attribute(Node, Name, ValueData);
+    } else {
+      write_attribute(Node, Name, ValueData[0]);
+    }
+  } catch (std::exception &e) {
+    std::stringstream ss;
+    ss << "Failed numeric attribute write in ";
+    ss << Node.link().path() << "/" << Name;
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+}
+
 HDFFile::HDFFile() {
 // Keep this.  Will be used later to test against different lib versions
 #if H5_VERSION_GE(1, 8, 0) && H5_VERSION_LE(1, 10, 99)
@@ -111,18 +209,138 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
 
 void HDFFile::write_attributes(hdf5::node::Node &node,
                                rapidjson::Value const *jsv) {
-  if (jsv->IsObject()) {
-    for (auto &at : jsv->GetObject()) {
-      if (at.value.IsString()) {
-        write_attribute_str(node, at.name.GetString(), at.value.GetString());
+  if (jsv->IsArray()) {
+    writeArrayOfAttributes(node, jsv);
+  } else if (jsv->IsObject()) {
+    writeObjectOfAttributes(node, jsv);
+  }
+}
+
+/// Write attributes defined in an array of attribute objects
+/// Unlike a single attribute object this allows specifying type and dataset
+/// \param Node : node to write attributes on
+/// \param JsonValue : json value array of attribute objects
+void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
+                                     const rapidjson::Value *JsonValue) {
+  for (const auto &Attribute : JsonValue->GetArray()) {
+    if (Attribute.IsObject()) {
+      string Name;
+      if (auto NameString = get_string(&Attribute, "name")) {
+        Name = NameString.v;
+      } else {
+        continue;
       }
-      if (at.value.IsInt64()) {
-        write_attribute(node, at.name.GetString(), at.value.GetInt64());
-      }
-      if (at.value.IsDouble()) {
-        write_attribute(node, at.name.GetString(), at.value.GetDouble());
+
+      auto attr = Attribute.GetObject();
+      auto ValuesField = attr.FindMember("values");
+
+      if (ValuesField != attr.MemberEnd()) {
+        std::string DType;
+        auto AttrType = get_string(&Attribute, "type");
+        auto Values = &ValuesField->value;
+        if (AttrType) {
+          DType = AttrType.v;
+          writeAttrOfSpecifiedType(DType, Node, Name, Values);
+        } else {
+          if (ValuesField->value.IsArray()) {
+            LOG(Sev::Warning, "Attributes with array values must specify type")
+            continue;
+          }
+          writeScalarAttribute(Node, Name, Values);
+        }
       }
     }
+  }
+}
+
+/// Write scalar or array attribute of specfied type
+/// \param DType : type of the attribute values
+/// \param Node : group or dataset to add attribute to
+/// \param Name : name of the attribute
+/// \param Values : the attribute values
+void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
+                                       hdf5::node::Node &Node,
+                                       std::string const &Name,
+                                       rapidjson::Value const *Values) {
+  try {
+    if (DType == "uint8") {
+      writeAttrNumeric<uint8_t>(Node, Name, Values);
+    }
+    if (DType == "uint16") {
+      writeAttrNumeric<uint16_t>(Node, Name, Values);
+    }
+    if (DType == "uint32") {
+      writeAttrNumeric<uint32_t>(Node, Name, Values);
+    }
+    if (DType == "uint64") {
+      writeAttrNumeric<uint64_t>(Node, Name, Values);
+    }
+    if (DType == "int8") {
+      writeAttrNumeric<int8_t>(Node, Name, Values);
+    }
+    if (DType == "int16") {
+      writeAttrNumeric<int16_t>(Node, Name, Values);
+    }
+    if (DType == "int32") {
+      writeAttrNumeric<int32_t>(Node, Name, Values);
+    }
+    if (DType == "int64") {
+      writeAttrNumeric<int64_t>(Node, Name, Values);
+    }
+    if (DType == "float") {
+      writeAttrNumeric<float>(Node, Name, Values);
+    }
+    if (DType == "double") {
+      writeAttrNumeric<double>(Node, Name, Values);
+    }
+    if (DType == "string") {
+      if (Values->IsArray()) {
+        auto ValueArray = populate_strings(Values, Values->GetArray().Size());
+        auto StringAttr = Node.attributes.create(
+            Name, hdf5::datatype::create<std::string>(),
+            hdf5::dataspace::Simple{{Values->GetArray().Size()}});
+        StringAttr.write(ValueArray);
+      } else {
+        const std::string StringValue = Values->GetString();
+        auto string_type = hdf5::datatype::String::fixed(StringValue.size());
+        auto StringAttr = Node.attributes.create(Name, string_type,
+                                                 hdf5::dataspace::Scalar());
+        StringAttr.write(Values->GetString(), string_type);
+      }
+    }
+  } catch (std::exception &e) {
+    std::stringstream ss;
+    ss << "Failed attribute write in ";
+    ss << Node.link().path() << "/" << Name;
+    ss << " type='" << DType << "'";
+    std::throw_with_nested(std::runtime_error(ss.str()));
+  }
+}
+
+/// Write attributes defined in an object of name-value pairs
+/// \param node : node to write attributes on
+/// \param jsv : json value object of attributes
+void HDFFile::writeObjectOfAttributes(hdf5::node::Node &node,
+                                      const rapidjson::Value *jsv) {
+  for (auto &at : jsv->GetObject()) {
+    const std::string Name = at.name.GetString();
+    writeScalarAttribute(node, Name, &at.value);
+  }
+}
+
+/// Write a scalar attribute when the type is to be inferred
+/// \param Node : Group or dataset to write attribute to
+/// \param Name : Name of the attribute
+/// \param AttrValue : Json value containing the attribute value
+void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
+                                   const std::string &Name,
+                                   const rapidjson::Value *AttrValue) {
+  if (AttrValue->IsString()) {
+    write_attribute_str(Node, Name, AttrValue->GetString());
+  } else if (AttrValue->IsInt64()) {
+    write_attribute(Node, Name, AttrValue->GetInt64());
+  } else if (AttrValue->IsDouble()) {
+    write_attribute(Node, Name, AttrValue->GetDouble());
   }
 }
 
@@ -132,66 +350,6 @@ void HDFFile::write_attributes_if_present(hdf5::node::Node &node,
   if (mem != jsv->MemberEnd()) {
     write_attributes(node, &mem->value);
   }
-}
-
-template <typename DT>
-static std::vector<DT> populate_blob(rapidjson::Value const *vals,
-                                     hssize_t goal_size) {
-  std::vector<DT> ret;
-  if (vals->IsInt()) {
-    ret.push_back(vals->GetInt());
-  } else if (vals->IsDouble()) {
-    ret.push_back(vals->GetDouble());
-  } else if (vals->IsArray()) {
-    std::stack<rapidjson::Value const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(vals);
-    ai.push(0);
-    an.push(vals->GetArray().Size());
-
-    while (not as.empty()) {
-      if (as.size() > 10) {
-        break;
-      }
-      // LOG(Sev::Error, "level: {}  ai: {}  an: {}", as.size(), ai.back(),
-      // an.back());
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->GetArray()[ai.top()];
-      if (v.IsArray()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        size_t n = v.GetArray().Size();
-        an.push(n);
-      } else if (v.IsInt()) {
-        ret.push_back((DT)v.GetInt());
-        ai.top()++;
-      } else if (v.IsInt64()) {
-        ret.push_back((DT)v.GetInt64());
-        ai.top()++;
-      } else if (v.IsUint64()) {
-        ret.push_back((DT)v.GetUint64());
-        ai.top()++;
-      } else if (v.IsDouble()) {
-        ret.push_back((DT)v.GetDouble());
-        ai.top()++;
-      }
-    }
-  }
-  if (static_cast<hssize_t>(ret.size()) != goal_size) {
-    std::stringstream ss;
-    ss << "Failed to populate numeric blob ";
-    ss << " size mismatch " << ret.size() << "!=" << goal_size;
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
-
-  return ret;
 }
 
 std::vector<std::string> HDFFile::populate_strings(rapidjson::Value const *vals,
@@ -521,9 +679,7 @@ void HDFFile::write_dataset(hdf5::node::Group &parent,
   write_ds_generic(dtype, parent, name, sizes, max, element_size, vals);
   auto dset = hdf5::node::Dataset(parent.nodes[name]);
 
-  // Handle attributes on this dataset
-  if (auto x = get_object(*value, "attributes"))
-    write_attributes(dset, x.v);
+  write_attributes_if_present(dset, value);
 }
 
 void HDFFile::create_hdf_structures(rapidjson::Value const *value,
@@ -643,6 +799,13 @@ void HDFFile::init(std::string filename,
         hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
+}
+
+void HDFFile::init(const std::string &nexus_structure,
+                   std::vector<StreamHDFInfo> &stream_hdf_info) {
+  rapidjson::Document document;
+  document.Parse(nexus_structure.c_str());
+  init(document, stream_hdf_info);
 }
 
 void HDFFile::init(rapidjson::Value const &nexus_structure,

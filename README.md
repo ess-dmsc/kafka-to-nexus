@@ -79,7 +79,14 @@ the `HDFWriterModule` which should be used for writing.
 Depending on the `HDFWriterModule`, there will be more options specific to the
 `HDFWriterModule`.
 
-Command to start writing a file:
+#### Command to start writing a file:
+
+Further documentation:
+- [Groups](docs/groups.md)
+- [~~Datasets~~ documentation not yet written]()
+- [Attributes](docs/attributes.md)
+- [~~File Attributes~~ documentation not yet written]()
+- [~~Streams~~ documentation not yet written]()
 
 ```json
 {
@@ -160,7 +167,18 @@ Command to start writing a file:
               "string_size": 32,
               "size": ["unlimited"]
             },
-            "values": ["the-scalar-string", "another-one"]
+            "values": ["the-scalar-string", "another-one"],
+            "attributes": [
+            {
+              "name": "scalar_attribute",
+              "values": 42
+            },
+            {
+              "name": "vector_attribute",
+              "values": [1,2,3],
+              "type": "uint32"
+            }
+            ]
           }
         ]
       }
@@ -177,13 +195,13 @@ Command to start writing a file:
 }
 ```
 
-Command to exit the file writer:
+#### Command to exit the file writer:
 
 ```json
 {"cmd": "FileWriter_exit"}
 ```
 
-Command to stop a single file:
+#### Command to stop a single file:
 
 ```json
 {
@@ -193,7 +211,7 @@ Command to stop a single file:
 }
 ```
 
-Commands can be given in the configuration file as well:
+#### Commands can be given in the configuration file as well:
 
 ```json
 {
@@ -202,7 +220,6 @@ Commands can be given in the configuration file as well:
   ]
 }
 ```
-
 
 
 ### Options for the f142 writer module
