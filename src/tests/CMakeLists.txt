@@ -1,13 +1,5 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
 
-set(libraries_testing ${libraries_common})
-list(REMOVE_ITEM libraries_testing ${RDKAFKA_LIBRARIES_CXX} ${RDKAFKA_LIBRARIES_C})
-list(APPEND libraries_testing 
-#	 ${FAKE_RDKAFKA}/lib/librdkafka++-fake.a 
-	 ${FAKE_RDKAFKA}/lib/librdkafka-fake.a 
-	 ${FAKE_RDKAFKA}/lib/librdkafka-fake-utils.a
-	)
-
 message(STATUS "libraries_testing ${libraries_testing}")
 
 set(tgt "tests")
@@ -25,7 +17,6 @@ status_writer.cxx
 command_handler.cxx
 stream_master.cxx
 streamer_options.cxx
-streamer.cxx
 #broker_settings.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
@@ -33,6 +24,23 @@ set(includes
 HDFFileTestHelper.h
 )
 add_executable(${tgt} ${sources} ${includes})
+
+set(libraries_testing ${libraries_common})
+
+if(NOT ${FAKE_RDKAFKA} STREQUAL "")
+	message(STATUS "Build with fake librdkafka: " ${FAKE_RDKAFKA})
+	list(REMOVE_ITEM libraries_testing ${RDKAFKA_LIBRARIES_CXX} ${RDKAFKA_LIBRARIES_C})
+	list(APPEND libraries_testing 
+		${FAKE_RDKAFKA}/lib/librdkafka-fake.a 
+	 	${FAKE_RDKAFKA}/lib/librdkafka-fake-utils.a
+		)
+	list(APPEND sources
+		streamer.cxx
+		)
+endif()
+
+add_executable(${tgt} ${sources})
+
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${FAKE_RDKAFKA})
