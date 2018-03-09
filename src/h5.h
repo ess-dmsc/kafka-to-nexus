@@ -62,9 +62,9 @@ public:
   hsize_t ndims = -1;
   hdf5::dataspace::Simple DSPMem;
   hdf5::dataspace::Simple DSPTgt;
-  std::array<hsize_t, 2> snow;
-  std::array<hsize_t, 2> smax;
-  std::array<hsize_t, 2> sext;
+  hdf5::Dimensions snow;
+  hdf5::Dimensions smax;
+  hdf5::Dimensions sext;
   CollectiveQueue *cq = nullptr;
   HDFIDStore *hdf_store = nullptr;
   int mpi_rank = -1;
