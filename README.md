@@ -236,12 +236,11 @@ Tooling
 
 ### Conan
 
-For downloading and configuring dependencies there are three options:
-- By default conan is used to download and configure dependencies, this is done automatically by CMake.
-conan is required to be installed and in the `path`.
-- conan can be run manually to generate a `conanbuildinfo.cmake` file in the build directory, to use this specify the CMake parameter `CONANBUILDINFO_ENABLE=true`.
-- conan can be disabled by specifying the CMake parameter `CONAN_DISABLE=true`. CMake will try to find system installed libraries or paths can be specified manually.
-
+For downloading and configuring dependencies there are three options which can be set using the `CONAN` CMake parameter with one of the following values:
+- `AUTO` - (default) conan is used to download and configure dependencies, this is done automatically by CMake.
+conan is required to be installed and in the `path`. A non-default conan profile can be specified by setting `CONAN_PROFILE`.
+- `MANUAL` - conan can be run manually to generate a `conanbuildinfo.cmake` file in the build directory.
+- `DISABLE` - conan is disabled. CMake will try to find system installed libraries or paths can be specified manually.
 
 
 If using conan, the following remote repositories are required to be configured:
