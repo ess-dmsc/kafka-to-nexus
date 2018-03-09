@@ -10,10 +10,18 @@ if(CMAKE_COMPILER_IS_GNUCXX AND COV)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
 endif()
 
-if(NOT CONAN_DISABLE)
+SET(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
+if(CONANBUILDINFO_ENABLE)
+  if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
+    conan_basic_setup(NO_OUTPUT_DIRS SKIP_RPATH)
+  else()
+    MESSAGE(FATAL_ERROR "CONANBUILDINFO_ENABLE is true but no file named conanbuildinfo.cmake found in build directory")
+  endif()
+elseif(NOT CONAN_DISABLE)
   include(${CMAKE_MODULE_PATH}/conan.cmake)
   conan_cmake_run(CONANFILE conan/conanfile.txt
-          PROFILE default
+          PROFILE ${CONAN_PROFILE}
           BASIC_SETUP NO_OUTPUT_DIRS SKIP_RPATH
           BUILD_TYPE "None"
           BUILD outdated)
