@@ -251,9 +251,16 @@ Tooling
 - C++ compiler with c++11 support
 - Doxygen if you would like to make docs
 
-### Conan repositories
+### Conan
 
-The following remote repositories are required to be configured:
+For downloading and configuring dependencies there are three options which can be set using the `CONAN` CMake parameter with one of the following values:
+- `AUTO` - (default) conan is used to download and configure dependencies, this is done automatically by CMake.
+conan is required to be installed and in the `path`. A non-default conan profile can be specified by setting `CONAN_PROFILE`.
+- `MANUAL` - conan can be run manually to generate a `conanbuildinfo.cmake` file in the build directory.
+- `DISABLE` - conan is disabled. CMake will try to find system installed libraries or paths can be specified manually.
+
+
+If using conan, the following remote repositories are required to be configured:
 
 - https://api.bintray.com/conan/ess-dmsc/conan
 - https://api.bintray.com/conan/conan-community/conan
