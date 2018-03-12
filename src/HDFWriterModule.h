@@ -38,8 +38,8 @@ public:
   /// \return True if okay.
   inline bool is_OK() { return v == 0; }
 
-  /// Indicates if any error has occurred. More specific query function will come
-  /// as need arises.
+  /// Indicates if any error has occurred. More specific query function will
+  /// come as need arises.
   ///
   /// \return True if any error has occurred
   inline bool is_ERR() { return v < 0; }
@@ -99,8 +99,8 @@ public:
   inline bool is_OK() { return v == 0; }
   inline bool is_OK_WITH_TIMESTAMP() { return v == 1; }
 
-  /// Indicates if any error has occurred. More specific query function will come
-  /// as need arises.
+  /// Indicates if any error has occurred. More specific query function will
+  /// come as need arises.
   ///
   /// \return True if any error has occurred.
   inline bool is_ERR() { return v < 0; }
