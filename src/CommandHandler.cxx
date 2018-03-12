@@ -60,12 +60,6 @@ struct StreamSettings {
   std::string ConfigStreamJson;
 };
 
-/// Given a task and the `nexus_structure` as json string, set up the
-/// basic HDF file structure.
-///
-/// \param Task The task which will write the HDF file.
-/// \param NexusStructureString The structure of the NeXus file.
-/// \return The related stream settings.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString) const {
@@ -191,9 +185,6 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-/// Given a JSON string, create a new file writer task.
-///
-/// \param Command The command for configuring the new task.
 void CommandHandler::handleNew(std::string const &Command) {
   using std::move;
   using std::string;
@@ -288,10 +279,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   g_N_HANDLED += 1;
 }
 
-/// Configure the HDF writer modules for writing.
-///
-/// \param StreamSettingsList The settings for the stream.
-/// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
@@ -336,7 +323,6 @@ void CommandHandler::addStreamSourceToWriterModule(
   }
 }
 
-/// Stop and remove all ongoing file writer jobs.
 void CommandHandler::handleFileWriterTaskClearAll() {
   if (MasterPtr) {
     for (auto &x : MasterPtr->stream_masters) {
@@ -346,16 +332,12 @@ void CommandHandler::handleFileWriterTaskClearAll() {
   FileWriterTasks.clear();
 }
 
-/// Stop the whole file writer application.
 void CommandHandler::handleExit() {
   if (MasterPtr) {
     MasterPtr->stop();
   }
 }
 
-/// Stops a given job.
-///
-/// \param Command The command for defining which job to stop.
 void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
   if (!MasterPtr) {
@@ -400,9 +382,6 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 }
 
-/// Parses the given command and passes it on to a more specific handler.
-///
-/// \param Command The command to parse.
 void CommandHandler::handle(std::string const &Command) {
   using nlohmann::json;
   json Doc;
@@ -472,9 +451,6 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-/// Passes content of the message to the command handler.
-///
-/// \param Msg The message.
 void CommandHandler::handle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }
