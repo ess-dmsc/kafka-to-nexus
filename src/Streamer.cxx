@@ -106,6 +106,13 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   KafkaW::PollStatus Poll = ConsumerW->poll();
 
   if (Poll.isEmpty() || Poll.isEOP()) {
+    if ((Options.StopTimestamp.count() > 0) &&
+        (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
+      LOG(Sev::Info, "Close topic {} after time expired",
+          MessageProcessor.topic());
+      Sources.clear();
+      return ProcessMessageResult::STOP();
+    }
     return ProcessMessageResult::OK();
   }
   if (Poll.isErr()) {
@@ -117,9 +124,8 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR();
   }
 
-  auto MessageTime = MessageProcessor.time_difference_from_message(Message);
-
-  LOG(Sev::Critical, "{}\t-\t{}", MessageTime.sourcename, MessageTime.dt);
+  DemuxTopic::DT MessageTime =
+      MessageProcessor.time_difference_from_message(Message);
 
   // size_t MessageLength = msg->len();
   // if the source is not in the source_list return OK (ignore)
@@ -132,11 +138,13 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
       Sources.end()) {
     return ProcessMessageResult::OK();
   }
-  if (MessageTime.dt < Options.StartTimestamp.count()) {
+  if (MessageTime.dt < std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           Options.StartTimestamp).count()) {
     return ProcessMessageResult::OK();
   }
   if (Options.StopTimestamp.count() > 0 &&
-      MessageTime.dt > Options.StopTimestamp.count()) {
+      MessageTime.dt > std::chrono::duration_cast<std::chrono::nanoseconds>(
+                           Options.StopTimestamp).count()) {
     if (removeSource(MessageTime.sourcename)) {
       return ProcessMessageResult::STOP();
     }
@@ -147,8 +155,10 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   MessageInfo.message(Message.size());
 
   // Write the message. Log any error and return the result of processing
-  auto result = MessageProcessor.process_message(std::move(Message));
-  LOG(Sev::Debug, "Message timestamp : {}", result.ts());
+  ProcessMessageResult result =
+      MessageProcessor.process_message(std::move(Message));
+  LOG(Sev::Debug, "Processed: {}::{}\tpulse_time: {}", MessageProcessor.topic(),
+      MessageTime.sourcename, result.ts());
   if (!result.is_OK()) {
     MessageInfo.error();
   }
