@@ -25,7 +25,9 @@ static void logMissingKey(std::string const &Key, std::string const &Context) {
 }
 
 /// Helper function to extract the broker from the file writer command.
-
+///
+/// \param Command The raw command JSON.
+/// \return The broker specified in the command
 std::string findBroker(std::string const &Command) {
   nlohmann::json Doc = parseOrThrow(Command);
   if (auto x = get<std::string>("broker", Doc)) {
@@ -48,8 +50,7 @@ static int g_N_HANDLED = 0;
 CommandHandler::CommandHandler(MainOpt &Config_, Master *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
-// POD
-
+/// Holder for the stream settings.
 struct StreamSettings {
   StreamHDFInfo StreamHDFInfoObj;
   std::string Topic;
@@ -59,9 +60,12 @@ struct StreamSettings {
   std::string ConfigStreamJson;
 };
 
-/// \brief Given a task and the `nexus_structure` as json string, set up the
+/// Given a task and the `nexus_structure` as json string, set up the
 /// basic HDF file structure.
-
+///
+/// \param Task The task which will write the HDF file.
+/// \param NexusStructureString The structure of the NeXus file.
+/// \return The related stream settings.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString) const {
@@ -79,9 +83,12 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 }
 
 /// Extracts the information about the stream from the json command and calls
-/// the corresponding HDF writer modules to set u pthe initial HDF structures
+/// the corresponding HDF writer modules to set up the initial HDF structures
 /// in the output file.
-
+///
+/// \param Task The task which will write the HDF file.
+/// \param StreamHDFInfoList
+/// \return
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
@@ -184,17 +191,9 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-/// \brief Given a JSON string, create a new file writer job.
+/// Given a JSON string, create a new file writer task.
 ///
-/// Creates a new `FileWriterTask`, sets information such as file name, job id.
-/// Goes on and calls `initializeHDF` to initialize the basic HDF group
-/// structure in the output file. It then extracts the information about the
-/// data streams by calling `extractStreamInformationFromJson`. The HDF file is
-/// closed and re-opened to optionally support SWMR and parallel writing. In a
-/// second pass, it calls `addStreamSourceToWriterModule` to instantiate
-/// `Source` objects which in turn re-open the HDF datasets for writing.
-/// Finally, we register the `FileWriterTask` with `Master`.
-
+/// \param Command The command for configuring the new task.
 void CommandHandler::handleNew(std::string const &Command) {
   using std::move;
   using std::string;
@@ -240,6 +239,8 @@ void CommandHandler::handleNew(std::string const &Command) {
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
+  // The HDF file is closed and re-opened to (optionally) support SWMR and
+  // parallel writing.
   Task->hdf_close();
   Task->hdf_reopen();
 
@@ -260,6 +261,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 
   if (MasterPtr) {
+    // Register the task with master.
     std::string br = findBroker(Command);
 
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
@@ -286,13 +288,10 @@ void CommandHandler::handleNew(std::string const &Command) {
   g_N_HANDLED += 1;
 }
 
-/// \brief Given a `FileWriterTask` and a list of `StreamSettings`, it sets up
-/// the HDF writer modules for writing.
+/// Configure the HDF writer modules for writing.
 ///
-/// It creates the `HDFWriterModule` instances which in turn re-open the
-/// previously created HDF datasets. It creates then a `Source` instance for
-/// each stream and adds those to the `FileWriterTask`.
-
+/// \param StreamSettingsList The settings for the stream.
+/// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
@@ -315,6 +314,7 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
 
+      // Reopen the previously created HDF dataset.
       rapidjson::Document ConfigStream;
       ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
@@ -327,6 +327,7 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
 
+      // Create a Source instance for the stream and add to the task.
       Source ThisSource(StreamSettings.Source, move(HDFWriterModule));
       ThisSource._topic = std::string(StreamSettings.Topic);
       ThisSource.do_process_message = Config.source_do_process_message;
@@ -336,7 +337,6 @@ void CommandHandler::addStreamSourceToWriterModule(
 }
 
 /// Stop and remove all ongoing file writer jobs.
-
 void CommandHandler::handleFileWriterTaskClearAll() {
   if (MasterPtr) {
     for (auto &x : MasterPtr->stream_masters) {
@@ -347,15 +347,15 @@ void CommandHandler::handleFileWriterTaskClearAll() {
 }
 
 /// Stop the whole file writer application.
-
 void CommandHandler::handleExit() {
   if (MasterPtr) {
     MasterPtr->stop();
   }
 }
 
-/// Stops a given job
-
+/// Stops a given job.
+///
+/// \param Command The command for defining which job to stop.
 void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
   if (!MasterPtr) {
@@ -401,7 +401,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
 }
 
 /// Parses the given command and passes it on to a more specific handler.
-
+///
+/// \param Command The command to parse.
 void CommandHandler::handle(std::string const &Command) {
   using nlohmann::json;
   json Doc;
@@ -471,8 +472,9 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-/// Given a `Msg`, call `CommandHandler::handle(std::string const &Command)`.
-
+/// Passes content of the message to the command handler.
+///
+/// \param Msg The message.
 void CommandHandler::handle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }
