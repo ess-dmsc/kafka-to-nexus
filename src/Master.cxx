@@ -43,6 +43,7 @@ void Master::handle_command(std::string const &command) {
 }
 
 void Master::run() {
+  // Set up connection to the Kafka status topic if desired.
   if (config.do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
         config.kafka_status_uri.host_port, config.kafka_status_uri.topic);
@@ -56,9 +57,13 @@ void Master::run() {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }
   }
+
+  // Interpret commands given directly in the configuration file, useful
+  // for testing.
   for (auto const &cmd : config.commands_from_config_file) {
     this->handle_command(cmd);
   }
+
   command_listener.start();
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
