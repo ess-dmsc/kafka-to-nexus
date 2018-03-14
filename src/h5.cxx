@@ -44,10 +44,11 @@ h5d::ptr h5d::create(hdf5::node::Group loc, string name,
     herr_t err = 0;
     o.Type = Type;
     o.name = name;
-    err = H5Pset_fill_value(static_cast<hid_t>(dcpl),
-                            static_cast<hid_t>(o.Type), nullptr);
-    if (err < 0) {
-      LOG(Sev::Debug, "failed H5Pset_fill_value");
+    {
+      // Use NULL as fill value.
+      // Looks weird because we work around the current h5cpp API.
+      int *fillptr = nullptr;
+      dcpl.fill_value(*fillptr, Type);
     }
     o.Dataset = loc.create_dataset(name, o.Type, dsp,
                                    hdf5::property::LinkCreationList(), dcpl,
