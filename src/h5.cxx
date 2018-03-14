@@ -31,10 +31,6 @@ void h5d::init_basics() {
         RuntimeError("hdf5::dataspace::Simple ctor failure"));
   }
   PLTransfer = hdf5::property::DatasetTransferList();
-  err = H5Pset_edc_check(static_cast<hid_t>(PLTransfer), H5Z_DISABLE_EDC);
-  if (err < 0) {
-    LOG(Sev::Debug, "failed H5Pset_edc_check");
-  }
 }
 
 h5d::ptr h5d::create(hdf5::node::Group loc, string name,
