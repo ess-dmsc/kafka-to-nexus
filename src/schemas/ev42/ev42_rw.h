@@ -10,7 +10,7 @@
 namespace FileWriter {
 namespace Schemas {
 namespace ev42 {
-template<typename T> using uptr = std::unique_ptr<T>;
+template <typename T> using uptr = std::unique_ptr<T>;
 
 struct append_ret {
   int status;
@@ -23,7 +23,7 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
   bool verify(Msg const &msg) const override;
   std::string source_name(Msg const &msg) const override;
   uint64_t timestamp(Msg const &msg) const override;
-  //add in others
+  // add in others
 };
 
 class HDFWriterModule : public FileWriter::HDFWriterModule {
@@ -35,8 +35,8 @@ public:
                       std::string hdf_parent_name,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
-  InitResult reopen(hid_t hdf_file, std::string hdf_parent_name, CollectiveQueue *cq,
-                    HDFIDStore *hdf_store) override;
+  InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,
+                    CollectiveQueue *cq, HDFIDStore *hdf_store) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;

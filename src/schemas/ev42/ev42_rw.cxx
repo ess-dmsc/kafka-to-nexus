@@ -8,7 +8,6 @@ static EventMessage const *get_fbuf(char const *data) {
   return GetEventMessage(data);
 }
 
-
 bool FlatbufferReader::verify(Msg const &msg) const {
   flatbuffers::Verifier veri((uint8_t *)msg.data(), msg.size());
   return VerifyEventMessageBuffer(veri);
@@ -31,7 +30,6 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
 
 FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     g_registrar_FlatbufferReader(fbid_from_str("ev42"));
-
 
 FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
   return FileWriter::HDFWriterModule::ptr(new HDFWriterModule);
@@ -63,10 +61,9 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   }
 }
 
-HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
-                          rapidjson::Value const *attributes,
-                          CollectiveQueue *cq) {
+HDFWriterModule::InitResult HDFWriterModule::init_hdf(
+    hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
+    rapidjson::Value const *attributes, CollectiveQueue *cq) {
   try {
     auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
