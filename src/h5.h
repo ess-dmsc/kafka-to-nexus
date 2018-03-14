@@ -22,8 +22,6 @@ public:
   RuntimeError(std::string const &x) : std::runtime_error(x) {}
 };
 
-template <typename T> hid_t nat_type();
-
 void swap(hsize_t &, hsize_t &);
 
 enum class AppendResult : uint32_t {

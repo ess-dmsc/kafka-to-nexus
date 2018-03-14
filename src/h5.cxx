@@ -4,17 +4,6 @@
 
 namespace h5 {
 
-template <> hid_t nat_type<float>() { return H5T_NATIVE_FLOAT; }
-template <> hid_t nat_type<double>() { return H5T_NATIVE_DOUBLE; }
-template <> hid_t nat_type<int8_t>() { return H5T_NATIVE_INT8; }
-template <> hid_t nat_type<int16_t>() { return H5T_NATIVE_INT16; }
-template <> hid_t nat_type<int32_t>() { return H5T_NATIVE_INT32; }
-template <> hid_t nat_type<int64_t>() { return H5T_NATIVE_INT64; }
-template <> hid_t nat_type<uint8_t>() { return H5T_NATIVE_UINT8; }
-template <> hid_t nat_type<uint16_t>() { return H5T_NATIVE_UINT16; }
-template <> hid_t nat_type<uint32_t>() { return H5T_NATIVE_UINT32; }
-template <> hid_t nat_type<uint64_t>() { return H5T_NATIVE_UINT64; }
-
 void swap(hsize_t &x, hsize_t &y) {
   x ^= y;
   y ^= x;
