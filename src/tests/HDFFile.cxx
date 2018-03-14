@@ -1257,8 +1257,8 @@ TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
 }
 
 template <typename T>
-void testType(FileWriter::HDFFile &TestFile,
-              const std::pair<std::string, T> NameAndValue) {
+void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
+                           const std::pair<std::string, T> NameAndValue) {
   auto Dataset =
       hdf5::node::get_dataset(TestFile.root_group, "/" + NameAndValue.first);
   auto OutputValue = NameAndValue.second;
@@ -1290,8 +1290,8 @@ TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandStream.str(), EmptyStreamHDFInfo);
 
-  testType(TestFile, TestUint32);
-  testType(TestFile, TestUint64);
-  testType(TestFile, TestInt32);
-  testType(TestFile, TestInt64);
+  verifyWrittenDatatype(TestFile, TestUint32);
+  verifyWrittenDatatype(TestFile, TestUint64);
+  verifyWrittenDatatype(TestFile, TestInt32);
+  verifyWrittenDatatype(TestFile, TestInt64);
 }
