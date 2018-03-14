@@ -310,9 +310,8 @@ h5d_chunked_1d<T>::create(hdf5::node::Group loc, string name,
                           hsize_t chunk_bytes, CollectiveQueue *cq) {
   hdf5::dataspace::Simple dsp({0}, {H5S_UNLIMITED});
   hdf5::property::DatasetCreationList dcpl;
-  dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / sizeof(T))});
-  auto Type = hdf5::datatype::Datatype(
-      hdf5::ObjectHandle(nat_type<T>(), hdf5::ObjectHandle::Policy::WITH_WARD));
+  auto Type = hdf5::datatype::create<T>().native_type();
+  dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / Type.size())});
   auto ds = h5d::create(loc, name, Type, dsp, dcpl, cq);
   if (!ds) {
     return nullptr;
@@ -445,11 +444,8 @@ h5d_chunked_2d<T>::create(hdf5::node::Group loc, string name, hsize_t ncols,
                           hsize_t chunk_bytes, CollectiveQueue *cq) {
   hdf5::dataspace::Simple dsp({0, ncols}, {H5S_UNLIMITED, ncols});
   hdf5::property::DatasetCreationList dcpl;
-  dcpl.chunk(
-      {std::max<hsize_t>(1, chunk_bytes / ncols / H5Tget_size(nat_type<T>())),
-       ncols});
-  auto Type = hdf5::datatype::Datatype(
-      hdf5::ObjectHandle(nat_type<T>(), hdf5::ObjectHandle::Policy::WITH_WARD));
+  auto Type = hdf5::datatype::create<T>().native_type();
+  dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / ncols / Type.size()), ncols});
   auto ds = h5d::create(loc, name, Type, dsp, dcpl, cq);
   if (!ds) {
     return nullptr;
