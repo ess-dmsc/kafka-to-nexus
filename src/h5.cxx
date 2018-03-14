@@ -186,7 +186,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       try {
         Dataset.extent(sext2);
       } catch (...) {
-        LOG(Sev::Error, "H5Dset_extent failed");
+        LOG(Sev::Error, "Dataset.extent()");
         return {AppendResult::ERROR};
       }
       DSPTgt = Dataset.dataspace();
@@ -206,8 +206,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     auto sext = DSPTgt.current_dimensions();
     auto smax = DSPTgt.maximum_dimensions();
     for (size_t i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "H5Sget_simple_extent_dims {:20} {}: {:21} {:21}", name,
-          i1, sext.at(i1), smax.at(i1));
+      LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", name, i1,
+          sext.at(i1), smax.at(i1));
     }
   }
 
@@ -266,8 +266,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       auto sext = dsp.current_dimensions();
       auto smax = dsp.current_dimensions();
       for (size_t i1 = 0; i1 < ndims; ++i1) {
-        LOG(Sev::Debug, "H5Sget_simple_extent_dims {}: {:12} {:12}", i1,
-            sext.at(i1), smax.at(i1));
+        LOG(Sev::Debug, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
+            smax.at(i1));
       }
     }
     return {AppendResult::ERROR};
