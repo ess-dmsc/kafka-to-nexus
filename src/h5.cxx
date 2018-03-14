@@ -11,7 +11,6 @@ void swap(hsize_t &x, hsize_t &y) {
 }
 
 void h5d::init_basics() {
-  herr_t err = 0;
   Type = Dataset.datatype();
   DSPTgt = Dataset.dataspace();
   ndims = DSPTgt.rank();
