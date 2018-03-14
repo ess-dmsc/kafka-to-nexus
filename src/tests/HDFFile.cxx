@@ -6,6 +6,7 @@
 #include "../helper.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
+#include "HDFFileTestHelper.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -1166,13 +1167,8 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file =
-        hdf5::file::create("tmp-fixedlen.h5", hdf5::file::AccessFlags::TRUNCATE,
-                           hdf5::property::FileCreationList(), fapl);
+    auto hdf_file =
+        HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1203,13 +1199,7 @@ public:
   }
 
   static void dataset_static_1d_string_variable() {
-    hdf5::property::FileAccessList fapl;
-    fapl.driver(hdf5::file::MemoryDriver());
-
-    FileWriter::HDFFile hdf_file;
-    hdf_file.h5file =
-        hdf5::file::create("tmp-varlen.h5", hdf5::file::AccessFlags::TRUNCATE,
-                           hdf5::property::FileCreationList(), fapl);
+    auto hdf_file = HDFFileTestHelper::createInMemoryTestFile("tmp-varlen.h5");
 
     rapidjson::Document nexus_structure;
     nexus_structure.Parse(R""({
@@ -1264,4 +1254,44 @@ TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
 
 TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
   T_CommandHandler::dataset_static_1d_string_variable();
+}
+
+template <typename T>
+void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
+                           const std::pair<std::string, T> NameAndValue) {
+  auto Dataset =
+      hdf5::node::get_dataset(TestFile.root_group, "/" + NameAndValue.first);
+  auto OutputValue = NameAndValue.second;
+  Dataset.read(OutputValue);
+  ASSERT_EQ(OutputValue, NameAndValue.second);
+}
+
+TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
+  using namespace hdf5;
+  using HDFFileTestHelper::createCommandForDataset;
+
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("test-dataset-int-types.nxs");
+
+  const std::pair<std::string, uint32_t> TestUint32 = {"uint32", 37381149};
+  const std::pair<std::string, uint64_t> TestUint64 = {"uint64",
+                                                       10138143369737381149U};
+  const std::pair<std::string, int32_t> TestInt32 = {"int32", -7381149};
+  const std::pair<std::string, int64_t> TestInt64 = {"int64",
+                                                     -138143369737381149};
+
+  std::stringstream CommandStream;
+  CommandStream << R""({"children": [)"" << createCommandForDataset(TestUint32)
+                << ",\n"
+                << createCommandForDataset(TestUint64) << ",\n"
+                << createCommandForDataset(TestInt32) << ",\n"
+                << createCommandForDataset(TestInt64) << "]}";
+
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandStream.str(), EmptyStreamHDFInfo);
+
+  verifyWrittenDatatype(TestFile, TestUint32);
+  verifyWrittenDatatype(TestFile, TestUint64);
+  verifyWrittenDatatype(TestFile, TestInt32);
+  verifyWrittenDatatype(TestFile, TestInt64);
 }

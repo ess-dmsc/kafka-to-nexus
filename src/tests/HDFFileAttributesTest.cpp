@@ -1,24 +1,14 @@
 #include "../HDFFile.h"
+#include "HDFFileTestHelper.h"
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
-
-FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename) {
-  hdf5::property::FileAccessList fapl;
-  fapl.driver(hdf5::file::MemoryDriver());
-
-  FileWriter::HDFFile TestFile;
-  TestFile.h5file =
-      hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE,
-                         hdf5::property::FileCreationList(), fapl);
-
-  return TestFile;
-}
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsNumericalAttributeItIsWrittenToFile) {
   using namespace hdf5;
 
-  auto TestFile = createInMemoryTestFile("test-numerical-attribute.nxs");
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("test-numerical-attribute.nxs");
 
   std::string CommandWithNumericalAttr = R""({
       "children": [
@@ -47,7 +37,8 @@ TEST(HDFFileAttributesTest,
      whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
   using namespace hdf5;
 
-  auto TestFile = createInMemoryTestFile("test-scalar-string-attribute.nxs");
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
+      "test-scalar-string-attribute.nxs");
 
   std::string CommandWithScalarStringAttr = R""({
       "children": [
@@ -76,7 +67,8 @@ TEST(HDFFileAttributesTest,
      whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
   using namespace hdf5;
 
-  auto TestFile = createInMemoryTestFile("test-array-of-attributes.nxs");
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("test-array-of-attributes.nxs");
 
   std::string CommandWithArrayOfAttrs = R""({
     "children": [
@@ -119,7 +111,8 @@ TEST(HDFFileAttributesTest,
      whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
   using namespace hdf5;
 
-  auto TestFile = createInMemoryTestFile("test-typed-attribute.nxs");
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("test-typed-attribute.nxs");
 
   std::string CommandWithTypedAttrs = R""({
     "children": [
@@ -150,7 +143,8 @@ TEST(HDFFileAttributesTest,
 TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   using namespace hdf5;
 
-  auto TestFile = createInMemoryTestFile("test-array-attribute.nxs");
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("test-array-attribute.nxs");
 
   std::string CommandWithArrayAttr = R""({
     "children": [
