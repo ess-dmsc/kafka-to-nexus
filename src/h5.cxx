@@ -41,7 +41,6 @@ h5d::ptr h5d::create(hdf5::node::Group loc, string name,
     // Can do set_extent here.
     auto ret = ptr(new h5d);
     auto &o = *ret;
-    herr_t err = 0;
     o.Type = Type;
     o.name = name;
     {
