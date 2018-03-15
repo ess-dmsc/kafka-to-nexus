@@ -39,8 +39,6 @@ if(NOT ${FAKE_RDKAFKA} STREQUAL "")
 		)
 endif()
 
-add_executable(${tgt} ${sources})
-
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${FAKE_RDKAFKA})

@@ -252,7 +252,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
   }
-  if (auto x = get<uint64_t>("stop_time", Doc)) {
+  if (auto x = find<uint64_t>("stop_time", Doc)) {
     std::chrono::milliseconds StopTime(x.inner());
     if (StopTime.count() != 0) {
       LOG(Sev::Info, "StopTime: {}", StopTime.count());
