@@ -337,7 +337,7 @@ h5d_chunked_1d<T>::h5d_chunked_1d(std::string name, h5d ds_)
 
 template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x)
-    : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
+    : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() {
   LOG(Sev::Debug,
@@ -472,7 +472,7 @@ h5d_chunked_2d<T>::h5d_chunked_2d(std::string name, h5d ds_, hsize_t ncols)
 
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(h5d_chunked_2d &&x)
-    : ds(move(x.ds)), dsp_wr(move(x.dsp_wr)) {}
+    : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_2d<T>::~h5d_chunked_2d() { flush_buf(); }
 
