@@ -25,8 +25,8 @@ int main(int argc, char **argv) {
              "  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n",
              GIT_COMMIT);
   CLI::App App{
-      "Forwards EPICS process variables to Kafka topics.\n"
-      "Controlled via JSON packets sent over the configuration topic.\n"};
+      "Writes NeXus files in a format specified with a json template.\n"
+      "Writer modules can be used to populate the file from Kafka topics.\n"};
   auto Options = std::unique_ptr<MainOpt>(new MainOpt());
   setCLIOptions(App, *Options);
 
