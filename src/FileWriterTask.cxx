@@ -19,7 +19,6 @@ rapidjson::Document hdf_parse(std::string const &structure) {
   }
   return StructureDocument;
 }
-
 }
 
 using std::string;
@@ -65,10 +64,9 @@ void FileWriterTask::add_source(Source &&source) {
   }
 }
 
-
 void FileWriterTask::hdf_init(std::string const &NexusStructure,
-                             std::string const &ConfigFile,
-                             std::vector<StreamHDFInfo> &stream_hdf_info) {
+                              std::string const &ConfigFile,
+                              std::vector<StreamHDFInfo> &stream_hdf_info) {
   filename_full = hdf_filename;
   if (!hdf_output_prefix.empty()) {
     filename_full = hdf_output_prefix + "/" + filename_full;

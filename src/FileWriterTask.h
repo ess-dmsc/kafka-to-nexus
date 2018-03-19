@@ -46,8 +46,9 @@ private:
   std::vector<DemuxTopic> _demuxers;
   void add_source(Source &&source);
   /// Called by CommandHandler on setup.
-  void hdf_init(std::string const &NexusStructure, std::string const &ConfigFile,
-               std::vector<StreamHDFInfo> &stream_hdf_info);
+  void hdf_init(std::string const &NexusStructure,
+                std::string const &ConfigFile,
+                std::vector<StreamHDFInfo> &stream_hdf_info);
   void hdf_close();
   int hdf_reopen();
   void job_id_init(const std::string &);

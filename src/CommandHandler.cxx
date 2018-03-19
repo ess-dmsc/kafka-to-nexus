@@ -67,8 +67,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
-  Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                        StreamHDFInfoList);
+  Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(), StreamHDFInfoList);
   return StreamHDFInfoList;
 }
 
