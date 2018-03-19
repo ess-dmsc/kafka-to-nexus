@@ -13,7 +13,8 @@ namespace FileWriter {
 
 class ParseError : public std::runtime_error {
 public:
-  ParseError(std::string err) : std::runtime_error("Parse ERROR: " + err) {}
+  explicit ParseError(std::string err)
+      : std::runtime_error("Parse ERROR: " + err) {}
 };
 
 /**
