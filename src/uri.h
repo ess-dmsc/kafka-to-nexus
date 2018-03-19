@@ -39,7 +39,7 @@ public:
   /// `path/path`.
   bool require_host_slashes = true;
   /// The URI string //<host>:<port>/<topic>
-  std::string URIString = "//"+host_port+"/"+topic;
+  std::string getURIString() { return "//" + host_port + "/" + topic; }
 
 private:
   void update_deps();

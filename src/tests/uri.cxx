@@ -27,7 +27,7 @@ TEST(URI, host_port) {
 TEST(URI, expectedURIStringWhenHostPortAndTopicAreSpecified) {
   std::string TestURIString = "//myhost:345/mytopic";
   URI TestURI(TestURIString);
-  ASSERT_EQ(TestURI.URIString, TestURIString);
+  ASSERT_EQ(TestURI.getURIString(), TestURIString);
 }
 
 TEST(URI, host_port_noslashes) {

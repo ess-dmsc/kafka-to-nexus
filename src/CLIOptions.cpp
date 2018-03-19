@@ -10,7 +10,7 @@ CLI::Option *uri_option(CLI::App &App, std::string Name, uri::URI &URIArg,
   CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
   Opt->set_custom_option("URI", 1);
   if (Defaulted) {
-    Opt->set_default_str(URIArg.URIString);
+    Opt->set_default_str(URIArg.getURIString());
   }
   return Opt;
 }
