@@ -9,6 +9,19 @@
 
 namespace FileWriter {
 
+namespace {
+rapidjson::Document hdf_parse(std::string const &structure) {
+  rapidjson::Document StructureDocument;
+  StructureDocument.Parse(structure.c_str());
+  if (StructureDocument.HasParseError()) {
+    LOG(Sev::Critical, "Parse Error: ", structure)
+    throw FileWriter::ParseError(structure);
+  }
+  return StructureDocument;
+}
+
+}
+
 using std::string;
 using std::vector;
 
@@ -52,17 +65,8 @@ void FileWriterTask::add_source(Source &&source) {
   }
 }
 
-rapidjson::Document hdf_parse(std::string structure) {
-  rapidjson::Document StructureDocument;
-  StructureDocument.Parse(structure.c_str());
-  if (StructureDocument.HasParseError()) {
-    LOG(Sev::Critical, "Parse Error: ", structure)
-    throw FileWriter::ParseError(structure);
-  }
-  return StructureDocument;
-}
 
-int FileWriterTask::hdf_init(std::string const &NexusStructure,
+void FileWriterTask::hdf_init(std::string const &NexusStructure,
                              std::string const &ConfigFile,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
   filename_full = hdf_filename;
@@ -82,8 +86,6 @@ int FileWriterTask::hdf_init(std::string const &NexusStructure,
         hdf_output_prefix, hdf_filename);
     throw;
   }
-
-  return 0;
 }
 
 void FileWriterTask::hdf_close() { hdf_file.close(); }
