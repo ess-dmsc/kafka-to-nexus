@@ -1,4 +1,9 @@
 #include "ev42_rw.h"
+#include "../../HDFFile.h"
+#include "../../helper.h"
+#include "../../json.h"
+#include "schemas/ev42_events_generated.h"
+#include <limits>
 
 namespace FileWriter {
 namespace Schemas {

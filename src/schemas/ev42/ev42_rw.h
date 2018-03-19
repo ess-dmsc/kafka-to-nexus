@@ -1,11 +1,6 @@
 #include "../../FlatbufferReader.h"
-#include "../../HDFFile.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
-#include "../../helper.h"
-#include "../../json.h"
-#include "schemas/ev42_events_generated.h"
-#include <limits>
 
 namespace FileWriter {
 namespace Schemas {
