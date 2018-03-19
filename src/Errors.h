@@ -23,6 +23,7 @@ enum class StreamerErrorCode {
   configuration_error = -1,
   topic_partition_error = -2,
   not_initialized = -1000,
+  unknown_error = -1001
 };
 
 /// Convert the StreamMasterErrorCode in a string. If the code is not known

@@ -27,14 +27,14 @@ class Metadata;
 class TopicPartition;
 } // namespace RdKafka
 
-class StreamerTest;
+class T_Streamer;
 
 namespace FileWriter {
 
 /// Connect to kafka topics eventually at a given point in time
 /// and consume messages
 class Streamer {
-  friend class ::StreamerTest;
+  friend class ::T_Streamer;
 
 public:
   using SEC = Status::StreamerErrorCode;
@@ -115,7 +115,19 @@ private:
   std::future<SEC> IsConnected;
   std::once_flag ConnectionStatus;
 
-  SEC connect(std::string);
+  //----------------------------------------------------------------------------
+  /// @brief      Create a consumer with the options specified in the class
+  /// constructor. Conncts to the topic, eventualli at the specified timestamp.
+  ///
+  /// @param[in]  TopicName  The topic to consume
+  ///
+  /// @return     If the connection is successful returns ``SEC::writing``. If
+  /// the
+  /// consumer can't be created returns ``SEC::configuration_error``, if the
+  /// topic is
+  /// not in the partition ``SEC::topic_partition_error``;
+  ///
+  SEC connect(std::string TopicName);
 };
 
 /// Consume a Kafka message and process it according to

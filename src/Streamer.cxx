@@ -29,15 +29,11 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
                  this, TopicName);
 }
 
-/// Create a RdKafka::Consumer a vector containing all the TopicPartition for
-/// the given topic. If a start time is specified retrieve the correct initial
-/// log. Assign the TopicPartition vector to the Consumer
-/// \param TopicName the topic that the Streamer will consume
-/// \param Options a StreamerOptions object
-/// that contains configuration parameters for the Streamer and the KafkaConfig
+// pass the topic by value: this allow the constructor to go out of scope
+// without resulting in an error
 FileWriter::Streamer::SEC FileWriter::Streamer::connect(std::string TopicName) {
 
-  LOG(Sev::Critical, "Connecting to {}", TopicName);
+  LOG(Sev::Debug, "Connecting to {}", TopicName);
   try {
     Consumer.reset(new KafkaW::Consumer(Options.Settings));
     if (Options.StartTimestamp.count()) {
@@ -56,7 +52,6 @@ FileWriter::Streamer::SEC FileWriter::Streamer::connect(std::string TopicName) {
     return SEC::configuration_error;
   }
 
-  LOG(Sev::Critical, "Connected to topic {}", TopicName);
   return SEC::writing;
 }
 
@@ -91,7 +86,6 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   if (int(RunStatus) < 0) {
     return ProcessMessageResult::ERR();
   }
-  //  LOG(Sev::Critical, "{}", Err2Str(RunStatus));
 
   // consume message and make sure that's ok
   KafkaW::PollStatus Poll = Consumer->poll();
