@@ -64,14 +64,14 @@ int FileWriterTask::hdf_init(std::string const &NexusStructure,
   NexusStructureDocument.Parse(NexusStructure.c_str());
   if (NexusStructureDocument.HasParseError()) {
     LOG(Sev::Critical, "Parse ERROR:", NexusStructure);
-    return -1;
+    throw;
   }
 
   rapidjson::Document ConfigFileDocument;
   ConfigFileDocument.Parse(ConfigFile.c_str());
   if (ConfigFileDocument.HasParseError()) {
     LOG(Sev::Critical, "Parse ERROR:", ConfigFile);
-    return -1;
+    throw;
   }
 
   try {
@@ -81,7 +81,7 @@ int FileWriterTask::hdf_init(std::string const &NexusStructure,
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
         hdf_output_prefix, hdf_filename);
-    return -1;
+    throw;
   }
 
   return 0;
