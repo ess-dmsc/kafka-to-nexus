@@ -57,7 +57,7 @@ public:
   hdf5::node::Dataset Dataset;
   hdf5::datatype::Datatype Type;
   hdf5::property::DatasetTransferList PLTransfer;
-  hsize_t ndims = -1;
+  int ndims = -1;
   hdf5::dataspace::Simple DSPMem;
   hdf5::dataspace::Simple DSPTgt;
   hdf5::Dimensions snow;

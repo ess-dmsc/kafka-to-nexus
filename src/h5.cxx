@@ -18,7 +18,7 @@ void h5d::init_basics() {
   sext = DSPTgt.current_dimensions();
   smax = DSPTgt.maximum_dimensions();
   if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < ndims; ++i1) {
+    for (int i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", name, i1,
           sext.at(i1), smax.at(i1));
     }
@@ -205,7 +205,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     LOG(Sev::Debug, "try to get the dsp dims:");
     auto sext = DSPTgt.current_dimensions();
     auto smax = DSPTgt.maximum_dimensions();
-    for (size_t i1 = 0; i1 < ndims; ++i1) {
+    for (int i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", name, i1,
           sext.at(i1), smax.at(i1));
     }
@@ -248,7 +248,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     tgt_stride[i] = 1;
   }
   if (log_level >= 9) {
-    for (size_t i1 = 0; i1 < ndims; ++i1) {
+    for (int i1 = 0; i1 < ndims; ++i1) {
       LOG(Sev::Debug, "select tgt  i1: {}  start: {}  count: {}", i1,
           tgt_offset.at(i1), tgt_count.at(i1));
     }
@@ -265,7 +265,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
       auto sext = dsp.current_dimensions();
       auto smax = dsp.current_dimensions();
-      for (size_t i1 = 0; i1 < ndims; ++i1) {
+      for (int i1 = 0; i1 < ndims; ++i1) {
         LOG(Sev::Debug, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
             smax.at(i1));
       }
