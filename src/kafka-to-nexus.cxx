@@ -1,5 +1,5 @@
-#include "CLIOptions.h"
 #include "kafka-to-nexus.h"
+#include "CLIOptions.h"
 #include "MainOpt.h"
 #include "Master.h"
 #include "logger.h"
@@ -31,6 +31,7 @@ int main(int argc, char **argv) {
   setCLIOptions(App, *Options);
 
   CLI11_PARSE(App, argc, argv);
+  Options->parse_config_file();
 
   // For the signal handler
   g_main_opt.store(Options.get());

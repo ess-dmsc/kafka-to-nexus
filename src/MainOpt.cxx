@@ -10,12 +10,12 @@
 
 using uri::URI;
 
-int MainOpt::parse_config_file(std::string fname) {
-  if (fname.empty()) {
+int MainOpt::parse_config_file() {
+  if (config_filename.empty()) {
     LOG(Sev::Notice, "given config filename is empty");
     return -1;
   }
-  auto jsontxt = gulp(fname);
+  auto jsontxt = gulp(config_filename);
   return parse_config_json(std::string(jsontxt.data(), jsontxt.size()));
 }
 

@@ -41,16 +41,20 @@ CLI::Option *add_option(CLI::App &App, std::string Name, uri::URI &URIArg,
 }
 
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
-  App.set_config("--config-file", "", "Specify an ini file to set config",
-                 false)
+  // disable ini config file
+  App.set_config();
+  // and add option for json config file instead
+  App.add_option("--config-file", MainOptions.config_filename,
+                 "Specify a json file to set config")
       ->check(CLI::ExistingFile);
+
   add_option(
       App, "--command-uri", MainOptions.command_broker_uri,
       "<//host[:port][/topic]> Kafka broker/topic to listen for commands");
   add_option(App, "--status-uri", MainOptions.kafka_status_uri,
              MainOptions.do_kafka_status,
              "<//host[:port][/topic]> Kafka broker/topic to publish status "
-                 "updates on");
+             "updates on");
   App.add_option("--kafka-gelf", MainOptions.kafka_gelf,
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
@@ -61,8 +65,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       ->check(CLI::Range(1, 7));
   App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
                  "<absolute/or/relative/directory> Directory which gets "
-                     "prepended to the HDF output filenames in the file write "
-                     "commands");
+                 "prepended to the HDF output filenames in the file write "
+                 "commands");
   App.add_flag("--logpid-sleep", MainOptions.logpid_sleep);
   App.add_flag("--use-signal-handler", MainOptions.use_signal_handler);
   App.add_option("--teamid", MainOptions.teamid);

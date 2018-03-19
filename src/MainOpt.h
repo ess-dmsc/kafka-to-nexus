@@ -39,14 +39,16 @@ struct MainOpt {
   std::string graylog_logger_address;
   /// Used by the signal handler.
   std::atomic<FileWriter::Master *> master{nullptr};
-  /// The parsed configuration file given by the `--config-file` option.
+  /// The configuration file given by the `--config-file` option.
   rapidjson::Document config_file;
+  /// The configuration filename given by the `--config-file` option.
+  std::string config_filename;
   /// Keeps commands contained in the configuration file.  The configuration
   /// file may contain commands which are executed before any other command
   /// from the Kafka command topic.
   std::vector<std::string> commands_from_config_file;
   /// Called on startup when a `--config-file` is found.
-  int parse_config_file(std::string fname);
+  int parse_config_file();
   /// Used in turn by `parse_config_file` to parse the json data.
   int parse_config_json(std::string json);
   /// Kafka broker and topic where file writer commands are published.
