@@ -21,13 +21,7 @@ enum class StreamerErrorCode {
   writing = 1,
   has_finished = 0,
   configuration_error = -1,
-  consumer_error = -2,
-  metadata_error = -3,
-  topic_partition_error = -4,
-  assign_error = -5,
-  topic_error = -6,
-  offset_error = -7,
-  start_time_error = -8,
+  topic_partition_error = -2,
   not_initialized = -1000,
 };
 

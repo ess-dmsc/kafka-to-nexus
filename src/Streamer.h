@@ -18,9 +18,7 @@
 
 #include "KafkaW/KafkaW.h"
 
-#include <condition_variable>
-#include <mutex>
-#include <thread>
+#include <future>
 
 namespace RdKafka {
 class Conf;
@@ -42,16 +40,24 @@ public:
   using SEC = Status::StreamerErrorCode;
 
   Streamer() = default;
-  /// Constructor
-  /// \param broker name or address of one of the brokers in the partition
-  /// \param topic_name name of the topic to listen for messages
-  /// \param Opts configuration options for the streamer and RdKafka
+
+  //----------------------------------------------------------------------------
+  /// @brief      Constructor
+  ///
+  /// @param[in]  broker      Broker name or address of one of the brokers in
+  /// the partition
+  /// @param[in]  topic_name  Name of the topic to consume
+  /// @param[in]  Opts        Opts configuration options for the streamer and
+  /// RdKafka
+  ///
+  /// @remark     Throws an exception if fails (e.g. missing broker or topic)
+  ///
   Streamer(const std::string &broker, const std::string &topic_name,
            const FileWriter::StreamerOptions &Opts);
   Streamer(const Streamer &) = delete;
   Streamer(Streamer &&other) = default;
 
-  ~Streamer();
+  ~Streamer() = default;
 
   /// Generic template method that process a message according to a policy T
   /// \param mp instance of the policy that describe how to process the message
@@ -64,13 +70,29 @@ public:
   /// sure that the Streamer status is StreamerErrorCode::has_finished
   SEC closeStream();
 
-  /// Return the number of different sources in the topic whose last message is
-  /// not older than the stop time (if specified)
+  //----------------------------------------------------------------------------
+  /// @brief      Return the number of different sources whose last message is
+  /// not older than the stop time
+  ///
+  /// @return     The number of sources
+  ///
   const size_t numSources() { return Sources.size(); }
   void setSources(std::unordered_map<std::string, Source> &SourceList);
+  //----------------------------------------------------------------------------
+  /// @brief      Removes the source from the sources list.
+  ///
+  /// @param[in]  SourceName  The name of the source to be removed
+  ///
+  /// @return     True if success, else false (e.g. the source is not in the
+  /// list)
+  ///
   bool removeSource(const std::string &SourceName);
 
-  /// Return a StreamerErrorCode that describes the status of the Streamer
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the status of the Streamer. See "Error.h"
+  ///
+  /// @return     The current status
+  ///
   SEC &runStatus() { return RunStatus; }
 
   /// Return all the informations about the messages consumed
@@ -81,23 +103,19 @@ public:
   StreamerOptions &getOptions() { return Options; }
 
 private:
-  std::unique_ptr<KafkaW::Consumer> ConsumerW;
+  std::unique_ptr<KafkaW::Consumer> Consumer;
   KafkaW::BrokerSettings Settings;
 
   SEC RunStatus{ SEC::not_initialized };
   Status::MessageInfo MessageInfo;
 
-  std::thread ConnectThread;
-  std::mutex ConnectionReady;
-
-  std::mutex ConnectionLock;
-  std::condition_variable ConnectionInit;
-  std::atomic<bool> Initialising{ false };
-
   std::vector<std::string> Sources;
   StreamerOptions Options;
 
-  void connect(const std::string &);
+  std::future<SEC> IsConnected;
+  std::once_flag ConnectionStatus;
+
+  SEC connect(std::string);
 };
 
 /// Consume a Kafka message and process it according to
@@ -108,8 +126,11 @@ private:
 /// messages generated earlier than the start time. If the message is correctly
 /// processed update a Status object.
 ///
-///\param mp instance of a DemuxTopic that implements the process_message
+///\param MessageProcessor instance of a DemuxTopic that implements the
+/// process_message
 /// method.
-template <> ProcessMessageResult Streamer::write<>(FileWriter::DemuxTopic &);
+template <>
+ProcessMessageResult
+Streamer::write<>(FileWriter::DemuxTopic &MessageProcessor);
 
 } // namespace FileWriter

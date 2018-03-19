@@ -1,16 +1,12 @@
 #include "Streamer.h"
 
 #include "helper.h"
-#include "logger.h"
-
-#include <algorithm>
-#include <memory>
 
 namespace FileWriter {
 std::chrono::milliseconds systemTime() {
-  using namespace std::chrono;
-  system_clock::time_point now = system_clock::now();
-  return duration_cast<std::chrono::milliseconds>(now.time_since_epoch());
+  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      now.time_since_epoch());
 }
 } // namespace FileWriter
 
@@ -20,25 +16,18 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
     : RunStatus{ SEC::not_initialized }, Options(Opts) {
 
   if (TopicName.empty() || Broker.empty()) {
-    LOG(Sev::Error, "Broker and topic required");
     RunStatus = SEC::not_initialized;
-    return;
+    throw std::runtime_error("Missing broker or topic");
   }
 
   Options.Settings.ConfigurationStrings["group.id"] = TopicName;
   Options.Settings.ConfigurationStrings["auto.create.topics.enable"] = "false";
   Options.Settings.Address = Broker;
 
-  ConnectThread = std::thread([&] {
-    this->connect(std::ref(TopicName));
-    return;
-  });
-
-  std::unique_lock<std::mutex> lk(ConnectionLock);
-  ConnectionInit.wait(lk, [&] { return this->Initialising.load(); });
+  IsConnected =
+      std::async(std::launch::async, &FileWriter::Streamer::Streamer::connect,
+                 this, TopicName);
 }
-
-FileWriter::Streamer::~Streamer() { closeStream(); }
 
 /// Create a RdKafka::Consumer a vector containing all the TopicPartition for
 /// the given topic. If a start time is specified retrieve the correct initial
@@ -46,42 +35,33 @@ FileWriter::Streamer::~Streamer() { closeStream(); }
 /// \param TopicName the topic that the Streamer will consume
 /// \param Options a StreamerOptions object
 /// that contains configuration parameters for the Streamer and the KafkaConfig
-void FileWriter::Streamer::connect(const std::string &TopicName) {
-  std::lock_guard<std::mutex> lock(ConnectionReady);
+FileWriter::Streamer::SEC FileWriter::Streamer::connect(std::string TopicName) {
 
-  std::lock_guard<std::mutex> lk(ConnectionLock);
-  Initialising = true;
-  ConnectionInit.notify_all();
-
-  LOG(Sev::Debug, "Connecting to {}", TopicName);
+  LOG(Sev::Critical, "Connecting to {}", TopicName);
   try {
-    ConsumerW.reset(new KafkaW::Consumer(Options.Settings));
-
+    Consumer.reset(new KafkaW::Consumer(Options.Settings));
     if (Options.StartTimestamp.count()) {
-      ConsumerW->addTopic(TopicName,
-                          Options.StartTimestamp - Options.BeforeStartTime);
+      Consumer->addTopic(TopicName,
+                         Options.StartTimestamp - Options.BeforeStartTime);
     } else {
-      ConsumerW->addTopic(TopicName);
+      Consumer->addTopic(TopicName);
     }
-    // if the topic cannot be found in the metadata sets an error flag
-    if (!ConsumerW->topicPresent(TopicName)) {
-      RunStatus = SEC::topic_partition_error;
-      return;
+    // Error if the topic cannot be found in the metadata
+    if (!Consumer->topicPresent(TopicName)) {
+      return SEC::topic_partition_error;
     }
-    LOG(Sev::Debug, "Connected to topic {}", TopicName);
-    RunStatus = SEC::writing;
   }
-  catch (std::exception &e) {
-    LOG(Sev::Error, "{}", e.what());
-    RunStatus = SEC::configuration_error;
+  catch (std::exception &Error) {
+    LOG(Sev::Error, "{}", Error.what());
+    return SEC::configuration_error;
   }
+
+  LOG(Sev::Critical, "Connected to topic {}", TopicName);
+  return SEC::writing;
 }
 
 FileWriter::Streamer::SEC FileWriter::Streamer::closeStream() {
-  std::lock_guard<std::mutex> lock(ConnectionReady);
-  if (ConnectThread.joinable()) {
-    ConnectThread.join();
-  }
+  Sources.clear();
   RunStatus = SEC::has_finished;
   return RunStatus;
 }
@@ -90,21 +70,31 @@ template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
 
-  if (RunStatus == SEC::not_initialized) {
-    return ProcessMessageResult::OK();
+  // wait for connect() to finish
+  try {
+    if (IsConnected.valid()) {
+      if (IsConnected.wait_for(std::chrono::milliseconds(1000)) !=
+          std::future_status::ready) {
+        LOG(Sev::Critical, "... still not ready");
+        return ProcessMessageResult::OK();
+      }
+      std::call_once(ConnectionStatus,
+                     [&]() { RunStatus = IsConnected.get(); });
+    }
   }
-  std::lock_guard<std::mutex> lock(
-      ConnectionReady); // make sure that connect is completed
+  catch (std::exception &Error) {
+    LOG(Sev::Critical, "{}", Error.what());
+  }
 
+  // make sure that the connection is ok
+  // attention: connect() handles exceptions
   if (int(RunStatus) < 0) {
     return ProcessMessageResult::ERR();
   }
-  if (RunStatus == SEC::has_finished) {
-    return ProcessMessageResult::STOP();
-  }
+  //  LOG(Sev::Critical, "{}", Err2Str(RunStatus));
 
-  KafkaW::PollStatus Poll = ConsumerW->poll();
-
+  // consume message and make sure that's ok
+  KafkaW::PollStatus Poll = Consumer->poll();
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) &&
         (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
@@ -119,21 +109,16 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR();
   }
 
+  // convert from KafkaW to Msg
   Msg Message(Msg::fromKafkaW(std::move(Poll.isMsg())));
   if (Message.type == MsgType::Invalid) {
     return ProcessMessageResult::ERR();
   }
 
+  // Make sure that the message source is relevant and that the message is in
+  // the correct time window
   DemuxTopic::DT MessageTime =
       MessageProcessor.time_difference_from_message(Message);
-
-  // size_t MessageLength = msg->len();
-  // if the source is not in the source_list return OK (ignore)
-  // if StartTimestamp is set and timestamp < start_time skip message and
-  // return
-  // OK, if StopTimestamp is set, timestamp > stop_time and the source is
-  // still
-  // present remove source and return STOP else process the message
   if (std::find(Sources.begin(), Sources.end(), MessageTime.sourcename) ==
       Sources.end()) {
     return ProcessMessageResult::OK();
@@ -186,7 +171,8 @@ bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
   return true;
 }
 
-/// Method that parse the json configuration and parse the options to be used in
+/// Method that parse the json configuration and parse the options to be used
+/// in
 /// RdKafka::Config
 void
 FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
@@ -208,7 +194,8 @@ FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
   }
 }
 
-/// Method that parse the json configuration and sets the parameters used in the
+/// Method that parse the json configuration and sets the parameters used in
+/// the
 /// Streamer
 void
 FileWriter::StreamerOptions::setStreamerOptions(const rapidjson::Value *Opt) {

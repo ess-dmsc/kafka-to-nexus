@@ -45,9 +45,14 @@ public:
         WriterTask(std::move(file_writer_task)) {
 
     for (auto &d : Demuxers) {
-      Streamers.emplace(std::piecewise_construct,
-                        std::forward_as_tuple(d.topic()),
-                        std::forward_as_tuple(broker, d.topic(), options));
+      try {
+        Streamers.emplace(std::piecewise_construct,
+                          std::forward_as_tuple(d.topic()),
+                          std::forward_as_tuple(broker, d.topic(), options));
+      }
+      catch (std::exception &e) {
+        LOG(Sev::Critical, "{}", e.what());
+      }
       Streamers[d.topic()].setSources(d.sources());
     }
     NumStreamers = Streamers.size();
@@ -136,11 +141,16 @@ public:
   std::string getJobId() const { return WriterTask->job_id(); }
 
 private:
-  /// Process the messages in Stream for at most TopicWriteDuration
-  /// std::chrono::milliseconds. If the TopicWriteDuration time is elapsed or
-  /// the stream is stopped and other stream are active the method returns
-  /// SMEC::running. If all the streams have finished returns
-  /// SMEC::has_finished.
+  //------------------------------------------------------------------------------
+  /// @brief      Process the messages in Stream for at most TopicWriteDuration
+  /// std::chrono::milliseconds.
+  ///
+  /// @param      Stream  A reference to the Streamer that will consume messages
+  /// @param      Demux   The demux associated with the topic
+  ///
+  /// @return     The status of the consumption. If there are still working
+  /// streams returns ``running``, if all the streams are terminated return
+  /// ``has_finished``, if some error occur..
   SMEC processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
@@ -154,6 +164,11 @@ private:
           return closeStream(Stream, Demux.topic());
         }
         return SMEC::running;
+      }
+      if (ProcessResult.is_ERR()) {
+        LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
+            Err2Str(Stream.runStatus()));
+        return SMEC::streamer_error;
       }
     }
     return SMEC::running;
@@ -174,31 +189,14 @@ private:
 
       for (auto &Demux : Demuxers) {
         auto &s = Streamers[Demux.topic()];
+
         // If the stream is active process the messages
-        if (s.runStatus() == SEC::writing) {
-          SMEC ProcessResult = processStreamResult(s, Demux);
-          if (ProcessResult == SMEC::has_finished) {
-            break;
-          }
+        SMEC ProcessResult = processStreamResult(s, Demux);
+        if (ProcessResult == SMEC::has_finished) {
           continue;
         }
-        // If the stream has finished skip to the next stream. Breaking the
-        // allow the re-evaluation of NumStreamers
-        if (s.runStatus() == SEC::has_finished) {
-          continue;
-        }
-        // If the Kafka connection is not ready skip to the next stream.
-        // Nevertheless if there's only one stream wait some time in order
-        // to prevent spinning
-        if (s.runStatus() == SEC::not_initialized) {
-          if (Streamers.size() == 1) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-          }
-          continue;
-        }
-        if (int(s.runStatus()) < 0) {
-          LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
-              Err2Str(s.runStatus()));
+        if (ProcessResult == SMEC::streamer_error) {
+          // remove stream or try reconnect?
           continue;
         }
       }
