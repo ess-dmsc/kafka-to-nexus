@@ -1,3 +1,5 @@
+[![Build Status](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/badge/icon)](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/)
+[![codecov](https://codecov.io/gh/ess-dmsc/kafka-to-nexus/branch/master/graph/badge.svg)](https://codecov.io/gh/ess-dmsc/kafka-to-nexus)
 # Kafka to Nexus file writing
 
 - [Usage](#usage)
@@ -79,7 +81,14 @@ the `HDFWriterModule` which should be used for writing.
 Depending on the `HDFWriterModule`, there will be more options specific to the
 `HDFWriterModule`.
 
-Command to start writing a file:
+#### Command to start writing a file:
+
+Further documentation:
+- [Groups](docs/groups.md)
+- [~~Datasets~~ documentation not yet written]()
+- [Attributes](docs/attributes.md)
+- [~~File Attributes~~ documentation not yet written]()
+- [~~Streams~~ documentation not yet written]()
 
 ```json
 {
@@ -160,7 +169,18 @@ Command to start writing a file:
               "string_size": 32,
               "size": ["unlimited"]
             },
-            "values": ["the-scalar-string", "another-one"]
+            "values": ["the-scalar-string", "another-one"],
+            "attributes": [
+            {
+              "name": "scalar_attribute",
+              "values": 42
+            },
+            {
+              "name": "vector_attribute",
+              "values": [1,2,3],
+              "type": "uint32"
+            }
+            ]
           }
         ]
       }
@@ -177,13 +197,13 @@ Command to start writing a file:
 }
 ```
 
-Command to exit the file writer:
+#### Command to exit the file writer:
 
 ```json
 {"cmd": "FileWriter_exit"}
 ```
 
-Command to stop a single file:
+#### Command to stop a single file:
 
 ```json
 {
@@ -193,7 +213,7 @@ Command to stop a single file:
 }
 ```
 
-Commands can be given in the configuration file as well:
+#### Commands can be given in the configuration file as well:
 
 ```json
 {
@@ -202,7 +222,6 @@ Commands can be given in the configuration file as well:
   ]
 }
 ```
-
 
 
 ### Options for the f142 writer module
@@ -234,9 +253,16 @@ Tooling
 - C++ compiler with c++11 support
 - Doxygen if you would like to make docs
 
-### Conan repositories
+### Conan
 
-The following remote repositories are required to be configured:
+For downloading and configuring dependencies there are three options which can be set using the `CONAN` CMake parameter with one of the following values:
+- `AUTO` - (default) conan is used to download and configure dependencies, this is done automatically by CMake.
+conan is required to be installed and in the `path`. A non-default conan profile can be specified by setting `CONAN_PROFILE`.
+- `MANUAL` - conan can be run manually to generate a `conanbuildinfo.cmake` file in the build directory.
+- `DISABLE` - conan is disabled. CMake will try to find system installed libraries or paths can be specified manually.
+
+
+If using conan, the following remote repositories are required to be configured:
 
 - https://api.bintray.com/conan/ess-dmsc/conan
 - https://api.bintray.com/conan/conan-community/conan
