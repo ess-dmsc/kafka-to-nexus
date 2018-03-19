@@ -7,7 +7,7 @@ librdkafka/0.11.3-dm1@ess-dmsc/stable
 RapidJSON/1.1.0-dm2@ess-dmsc/stable
 jsonformoderncpp/3.1.0@vthiery/stable
 graylog-logger/1.0.3-dm1@ess-dmsc/stable
-h5cpp/0.0.4-dm1@ess-dmsc/stable
+h5cpp/0.0.5@ess-dmsc/stable
 streaming-data-types/3e85b23@ess-dmsc/stable
 cli11/1.3.0@bincrafters/stable
 

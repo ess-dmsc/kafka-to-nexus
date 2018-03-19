@@ -30,10 +30,10 @@ private:
 };
 
 template <typename T>
-JsonMaybe<T> get(std::string Key, nlohmann::json const &Json);
+JsonMaybe<T> find(std::string Key, nlohmann::json const &Json);
 
 template <typename T>
-JsonMaybe<T> get(std::string Key, nlohmann::json const &Json) {
+JsonMaybe<T> find(std::string Key, nlohmann::json const &Json) {
   auto It = Json.find(Key);
   if (It != Json.end()) {
     return JsonMaybe<T>(It.value().get<T>());

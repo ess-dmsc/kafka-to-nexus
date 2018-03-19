@@ -6,6 +6,8 @@ set(sources
 tests.cxx
 roundtrip.cxx
 HDFFile.cxx
+HDFFileAttributesTest.cpp
+HDFFileTestHelper.cpp
 helper.cxx
 json.cxx
 uri.cxx
@@ -16,7 +18,10 @@ stream_master.cxx
 streamer_options.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
-add_executable(${tgt} ${sources})
+set(includes
+HDFFileTestHelper.h
+)
+add_executable(${tgt} ${sources} ${includes})
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})

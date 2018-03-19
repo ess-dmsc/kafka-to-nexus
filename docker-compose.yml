@@ -21,7 +21,7 @@ services:
         KAFKA_ADVERTISED_HOST_NAME: localhost
         KAFKA_ADVERTISED_PORT: 9092
         KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-        KAFKA_MESSAGE_MAX_BYTES: 10000000
+        KAFKA_MESSAGE_MAX_BYTES: 20000000
         KAFKA_BROKER_ID: 0
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
@@ -60,3 +60,5 @@ services:
         STATUS_URI: "//localhost:9092/TEST_writerStatus"
         KAFKA_BROKER: "localhost"
         GRAYLOG_ADDRESS: "localhost:12201"
+      volumes:
+        - ./manual-testing/output-files:/output-files
