@@ -11,6 +11,11 @@ class Test___FileWriterTask___Create01;
 
 namespace FileWriter {
 
+class ParseError : public std::runtime_error {
+public:
+  ParseError(std::string err) : std::runtime_error("Parse ERROR: " + err) {}
+};
+
 /**
 Represents the task of writing a HDF file.
 It contains the list of Source and DemuxTopic

@@ -52,6 +52,16 @@ void FileWriterTask::add_source(Source &&source) {
   }
 }
 
+rapidjson::Document hdf_parse(std::string structure) {
+  rapidjson::Document StructureDocument;
+  StructureDocument.Parse(structure.c_str());
+  if (StructureDocument.HasParseError()) {
+    LOG(Sev::Critical, "Parse Error: ", structure)
+    throw FileWriter::ParseError(structure);
+  }
+  return StructureDocument;
+}
+
 int FileWriterTask::hdf_init(std::string const &NexusStructure,
                              std::string const &ConfigFile,
                              std::vector<StreamHDFInfo> &stream_hdf_info) {
@@ -60,19 +70,8 @@ int FileWriterTask::hdf_init(std::string const &NexusStructure,
     filename_full = hdf_output_prefix + "/" + filename_full;
   }
 
-  rapidjson::Document NexusStructureDocument;
-  NexusStructureDocument.Parse(NexusStructure.c_str());
-  if (NexusStructureDocument.HasParseError()) {
-    LOG(Sev::Critical, "Parse ERROR:", NexusStructure);
-    throw;
-  }
-
-  rapidjson::Document ConfigFileDocument;
-  ConfigFileDocument.Parse(ConfigFile.c_str());
-  if (ConfigFileDocument.HasParseError()) {
-    LOG(Sev::Critical, "Parse ERROR:", ConfigFile);
-    throw;
-  }
+  rapidjson::Document NexusStructureDocument = hdf_parse(NexusStructure);
+  rapidjson::Document ConfigFileDocument = hdf_parse(ConfigFile);
 
   try {
     hdf_file.init(filename_full, NexusStructureDocument, ConfigFileDocument,
