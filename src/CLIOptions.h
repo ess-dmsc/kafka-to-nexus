@@ -4,11 +4,11 @@
 
 // Forward declarations
 namespace CLI {
-  class App;
-  class Option;
+class App;
+class Option;
 }
 namespace uri {
-  class URI;
+class URI;
 }
 struct MainOpt;
 
