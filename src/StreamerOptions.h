@@ -16,18 +16,11 @@
 
 #include "KafkaW/BrokerSettings.h"
 #include <chrono>
-#include <string>
-#include <vector>
-
-class StreamerOptions_Test;
 
 namespace FileWriter {
 
 /// Class that contains configuration parameters for the Streamer
 class StreamerOptions {
-  friend class Streamer;
-  friend class CommandHandler;
-  friend class StreamerOptionsTest_Test;
 
 public:
   void setStreamerOptions(const rapidjson::Value *);

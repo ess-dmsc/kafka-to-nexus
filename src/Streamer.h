@@ -20,13 +20,6 @@
 
 #include <future>
 
-namespace RdKafka {
-class Conf;
-class KafkaConsumer;
-class Metadata;
-class TopicPartition;
-} // namespace RdKafka
-
 class T_Streamer;
 
 namespace FileWriter {

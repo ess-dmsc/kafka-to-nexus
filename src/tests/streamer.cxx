@@ -3,8 +3,6 @@
 #include <gtest/gtest.h>
 #include <librdkafka/utils.h>
 
-#include <iostream>
-
 using Streamer = FileWriter::Streamer;
 using SEC = Streamer::SEC;
 const std::string BrokerAddress{"192.168.10.11"};
