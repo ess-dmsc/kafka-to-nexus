@@ -10,17 +10,13 @@
 
 namespace FileWriter {
 
-class MessageProcessor {
-public:
-  virtual ProcessMessageResult process_message(Msg &&msg) = 0;
-};
-
 /// Represents a sourcename on a topic.
 /// The sourcename can be empty.
 /// This is meant for highest efficiency on topics which are exclusively used
 /// for only one sourcename.
-class DemuxTopic : public TimeDifferenceFromMessage, public MessageProcessor {
+class DemuxTopic {
 public:
+  using DT = TimeDifferenceFromMessage_DT;
   DemuxTopic(std::string topic);
   DemuxTopic(DemuxTopic &&x);
   ~DemuxTopic();
@@ -28,9 +24,9 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(Msg &&msg) override;
+  ProcessMessageResult process_message(Msg &&msg);
   /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(Msg const &msg) override;
+  DT time_difference_from_message(Msg const &msg);
   std::unordered_map<std::string, Source> &sources();
 
   Source &add_source(Source &&source) {
