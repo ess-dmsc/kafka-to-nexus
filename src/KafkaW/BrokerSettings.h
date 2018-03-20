@@ -19,4 +19,4 @@ public:
   std::map<std::string, int> ConfigurationIntegers;
   std::map<std::string, std::string> ConfigurationStrings;
 };
-}
+} // namespace KafkaW

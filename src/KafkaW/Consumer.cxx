@@ -50,8 +50,9 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
     ll = Sev::Warning;
     // rd_kafka_dump(stdout, rk);
   }
-  LOG(ll, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
-          "errorstring: {}  message: {}",
+  LOG(ll,
+      "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
+      "errorstring: {}  message: {}",
       self->id, self->ConsumerBrokerSettings.Address, err_i,
       rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
@@ -240,4 +241,4 @@ PollStatus Consumer::poll() {
   }
   return PollStatus::Err();
 }
-}
+} // namespace KafkaW

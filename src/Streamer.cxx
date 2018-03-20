@@ -13,7 +13,7 @@ std::chrono::milliseconds systemTime() {
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
                                const FileWriter::StreamerOptions &Opts)
-    : RunStatus{ SEC::not_initialized }, Options(Opts) {
+    : RunStatus{SEC::not_initialized}, Options(Opts) {
 
   if (TopicName.empty() || Broker.empty()) {
     RunStatus = SEC::not_initialized;
@@ -46,8 +46,7 @@ FileWriter::Streamer::SEC FileWriter::Streamer::connect(std::string TopicName) {
     if (!Consumer->topicPresent(TopicName)) {
       return SEC::topic_partition_error;
     }
-  }
-  catch (std::exception &Error) {
+  } catch (std::exception &Error) {
     LOG(Sev::Error, "{}", Error.what());
     return SEC::configuration_error;
   }
@@ -76,8 +75,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
       std::call_once(ConnectionStatus,
                      [&]() { RunStatus = IsConnected.get(); });
     }
-  }
-  catch (std::exception &Error) {
+  } catch (std::exception &Error) {
     LOG(Sev::Critical, "{}", Error.what());
   }
 
@@ -118,12 +116,14 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK();
   }
   if (MessageTime.dt < std::chrono::duration_cast<std::chrono::nanoseconds>(
-                           Options.StartTimestamp).count()) {
+                           Options.StartTimestamp)
+                           .count()) {
     return ProcessMessageResult::OK();
   }
   if (Options.StopTimestamp.count() > 0 &&
       MessageTime.dt > std::chrono::duration_cast<std::chrono::nanoseconds>(
-                           Options.StopTimestamp).count()) {
+                           Options.StopTimestamp)
+                           .count()) {
     if (removeSource(MessageTime.sourcename)) {
       return ProcessMessageResult::STOP();
     }
@@ -168,8 +168,8 @@ bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
 /// Method that parse the json configuration and parse the options to be used
 /// in
 /// RdKafka::Config
-void
-FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
+void FileWriter::StreamerOptions::setRdKafkaOptions(
+    const rapidjson::Value *Opt) {
 
   if (!Opt->IsObject()) {
     LOG(Sev::Warning, "Unable to parse steamer options");
@@ -191,8 +191,8 @@ FileWriter::StreamerOptions::setRdKafkaOptions(const rapidjson::Value *Opt) {
 /// Method that parse the json configuration and sets the parameters used in
 /// the
 /// Streamer
-void
-FileWriter::StreamerOptions::setStreamerOptions(const rapidjson::Value *Opt) {
+void FileWriter::StreamerOptions::setStreamerOptions(
+    const rapidjson::Value *Opt) {
 
   if (!Opt->IsObject()) {
     LOG(Sev::Warning, "Unable to parse steamer options");

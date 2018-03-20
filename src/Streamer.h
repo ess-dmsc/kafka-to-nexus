@@ -106,7 +106,7 @@ private:
   std::unique_ptr<KafkaW::Consumer> Consumer;
   KafkaW::BrokerSettings Settings;
 
-  SEC RunStatus{ SEC::not_initialized };
+  SEC RunStatus{SEC::not_initialized};
   Status::MessageInfo MessageInfo;
 
   std::vector<std::string> Sources;

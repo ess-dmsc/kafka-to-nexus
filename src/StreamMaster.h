@@ -49,8 +49,7 @@ public:
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(d.topic()),
                           std::forward_as_tuple(broker, d.topic(), options));
-      }
-      catch (std::exception &e) {
+      } catch (std::exception &e) {
         LOG(Sev::Critical, "{}", e.what());
       }
       Streamers[d.topic()].setSources(d.sources());
@@ -111,7 +110,7 @@ public:
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const std::chrono::milliseconds &report_ms =
-                  std::chrono::milliseconds{ 1000 }) {
+                  std::chrono::milliseconds{1000}) {
     if (!ReportThread.joinable()) {
       ReportPtr.reset(new Report(p, report_ms));
       ReportThread =
@@ -247,12 +246,12 @@ private:
   std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;
-  std::atomic<SMEC> RunStatus{ SMEC::not_started };
-  std::atomic<bool> Stop{ false };
-  std::unique_ptr<FileWriterTask> WriterTask{ nullptr };
-  std::unique_ptr<Report> ReportPtr{ nullptr };
-  std::chrono::milliseconds TopicWriteDuration{ 1000 };
-  size_t NumStreamers{ 0 };
+  std::atomic<SMEC> RunStatus{SMEC::not_started};
+  std::atomic<bool> Stop{false};
+  std::unique_ptr<FileWriterTask> WriterTask{nullptr};
+  std::unique_ptr<Report> ReportPtr{nullptr};
+  std::chrono::milliseconds TopicWriteDuration{1000};
+  size_t NumStreamers{0};
 };
 
 } // namespace FileWriter

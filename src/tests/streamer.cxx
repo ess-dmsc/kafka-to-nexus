@@ -1,13 +1,13 @@
 #include "Streamer.h"
 
-#include <librdkafka/utils.h>
 #include <gtest/gtest.h>
+#include <librdkafka/utils.h>
 
 #include <iostream>
 
 using Streamer = FileWriter::Streamer;
 using SEC = Streamer::SEC;
-const std::string BrokerAddress{ "192.168.10.11" };
+const std::string BrokerAddress{"192.168.10.11"};
 FileWriter::StreamerOptions EmptyOpts;
 
 class T_Streamer : public ::testing::Test {
@@ -69,8 +69,9 @@ TEST_F(T_Streamer, configuration_doesn_t_accept_option_is_no_error) {
   // create option
   FileWriter::StreamerOptions Opts;
   rapidjson::Document Document;
-  Document.Parse(std::string(
-      "{ \"ms-before-start\": 10, \"consumer-timeout-ms\" : 10 }").c_str());
+  Document.Parse(
+      std::string("{ \"ms-before-start\": 10, \"consumer-timeout-ms\" : 10 }")
+          .c_str());
   Opts.setStreamerOptions((rapidjson::Value *)&Document);
 
   Streamer Stream(BrokerAddress, "any.random.topic", Opts);

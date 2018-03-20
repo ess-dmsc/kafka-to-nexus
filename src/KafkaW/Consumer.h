@@ -3,9 +3,9 @@
 #include "BrokerSettings.h"
 #include "Msg.h"
 #include "PollStatus.h"
+#include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
-#include <chrono>
 
 namespace KafkaW {
 
@@ -19,15 +19,15 @@ public:
   ~Consumer();
   void init();
   void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
-                                       std::chrono::milliseconds{ 0 });
+                                       std::chrono::milliseconds{0});
   void dumpCurrentSubscription();
   void dumpMetadata();
   bool topicPresent(const std::string &Topic);
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_assign;
+      on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
-  on_rebalance_start;
+      on_rebalance_start;
   rd_kafka_t *RdKafka = nullptr;
 
 private:
@@ -44,4 +44,4 @@ private:
   rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
 };
-}
+} // namespace KafkaW

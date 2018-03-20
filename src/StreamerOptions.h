@@ -35,12 +35,12 @@ public:
   // private:
 
   KafkaW::BrokerSettings Settings;
-  std::chrono::milliseconds StartTimestamp{ 0 };
-  std::chrono::milliseconds StopTimestamp{ 0 };
-  std::chrono::milliseconds BeforeStartTime{ 1000 };
-  std::chrono::milliseconds AfterStopTime{ 1000 };
-  std::chrono::milliseconds ConsumerTimeout{ 1000 };
-  int NumMetadataRetry{ 5 };
+  std::chrono::milliseconds StartTimestamp{0};
+  std::chrono::milliseconds StopTimestamp{0};
+  std::chrono::milliseconds BeforeStartTime{1000};
+  std::chrono::milliseconds AfterStopTime{1000};
+  std::chrono::milliseconds ConsumerTimeout{1000};
+  int NumMetadataRetry{5};
 };
 
 } // namespace FileWriter

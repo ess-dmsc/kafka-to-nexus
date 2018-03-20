@@ -3,9 +3,9 @@
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include "json.h"
+#include <chrono>
 #include <future>
 #include <nlohmann/json.hpp>
-#include <chrono>
 
 using std::array;
 using std::vector;
@@ -15,8 +15,7 @@ namespace FileWriter {
 static nlohmann::json parseOrThrow(std::string const &Command) {
   try {
     return nlohmann::json::parse(Command);
-  }
-  catch (nlohmann::detail::parse_error &e) {
+  } catch (nlohmann::detail::parse_error &e) {
     LOG(Sev::Warning, "Can not parse command: {}", Command);
     throw;
   }
@@ -88,8 +87,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
-  using nlohmann::detail::out_of_range;
   using nlohmann::json;
+  using nlohmann::detail::out_of_range;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto const &stream : StreamHDFInfoList) {
@@ -99,8 +98,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     json ConfigStream;
     try {
       ConfigStream = json::parse(stream.config_stream);
-    }
-    catch (nlohmann::detail::parse_error const &e) {
+    } catch (nlohmann::detail::parse_error const &e) {
       LOG(Sev::Warning, "Invalid json: {}", stream.config_stream);
       continue;
     }
@@ -189,10 +187,10 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 void CommandHandler::handleNew(std::string const &Command) {
+  using nlohmann::json;
+  using nlohmann::detail::out_of_range;
   using std::move;
   using std::string;
-  using nlohmann::detail::out_of_range;
-  using nlohmann::json;
   json Doc = parseOrThrow(Command);
 
   auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
@@ -265,12 +263,11 @@ void CommandHandler::handleNew(std::string const &Command) {
     std::string br = findBroker(Command);
 
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s =
-        std::unique_ptr<StreamMaster<Streamer> >(new StreamMaster<Streamer>(
-            br, std::move(Task), Config.StreamerConfiguration));
+    auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
+        br, std::move(Task), Config.StreamerConfiguration));
     if (MasterPtr->status_producer) {
       s->report(MasterPtr->status_producer,
-                std::chrono::milliseconds{ Config.status_master_interval });
+                std::chrono::milliseconds{Config.status_master_interval});
     }
     if (Config.topic_write_duration.count()) {
       s->TopicWriteDuration = Config.topic_write_duration;
@@ -359,8 +356,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   nlohmann::json Doc;
   try {
     Doc = nlohmann::json::parse(Command);
-  }
-  catch (...) {
+  } catch (...) {
     LOG(Sev::Warning, "Can not parse command: {}", Command);
     return;
   }
@@ -375,7 +371,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  int counter{ 0 };
+  int counter{0};
   for (auto &x : MasterPtr->stream_masters) {
     if (x->getJobId() == JobID) {
       if (StopTime.count() != 0) {
@@ -401,8 +397,7 @@ void CommandHandler::handle(std::string const &Command) {
   json Doc;
   try {
     Doc = json::parse(Command);
-  }
-  catch (...) {
+  } catch (...) {
     LOG(Sev::Error, "Can not parse json command: {}", Command);
     return;
   }
@@ -454,24 +449,20 @@ void CommandHandler::handle(std::string const &Command) {
 void CommandHandler::tryToHandle(std::string const &Command) {
   try {
     handle(Command);
-  }
-  catch (nlohmann::detail::parse_error &e) {
+  } catch (nlohmann::detail::parse_error &e) {
     LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
-  }
-  catch (nlohmann::detail::out_of_range &e) {
+  } catch (nlohmann::detail::out_of_range &e) {
     LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
-  }
-  catch (nlohmann::detail::type_error &e) {
+  } catch (nlohmann::detail::type_error &e) {
     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
-  }
-  catch (...) {
+  } catch (...) {
     LOG(Sev::Error, "Unexpected error while handling command: {}", Command);
     throw;
   }
 }
 
 void CommandHandler::handle(Msg const &Msg) {
-  tryToHandle({(char *)Msg.data(), Msg.size() });
+  tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 
 } // namespace FileWriter
