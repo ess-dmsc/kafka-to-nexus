@@ -4,12 +4,6 @@ namespace KafkaW {
 
 PollStatus::~PollStatus() { reset(); }
 
-PollStatus PollStatus::Okkk() {
-  PollStatus ret;
-  ret.state = PollStatusContent::Msg;
-  return ret;
-}
-
 PollStatus PollStatus::Err() {
   PollStatus ret;
   ret.state = PollStatusContent::Err;

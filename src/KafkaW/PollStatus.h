@@ -14,7 +14,6 @@ enum class PollStatusContent {
 
 class PollStatus {
 public:
-  static PollStatus Okkk();
   static PollStatus Err();
   static PollStatus EOP();
   static PollStatus Empty();
