@@ -79,7 +79,7 @@ public:
     return msg;
   }
 
-  static Msg fromKafkaW(std::unique_ptr<KafkaW::Msg> KafkaWMsg) {
+  static Msg fromKafkaW(std::unique_ptr<KafkaW::Msg> &&KafkaWMsg) {
     Msg msg;
     msg.type = MsgType::KafkaW;
     msg.var.kafkaw_msg = KafkaWMsg.release();
