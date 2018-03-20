@@ -16,11 +16,18 @@ namespace FileWriter {
 /// for only one sourcename.
 class DemuxTopic {
 public:
-  using DT = TimeDifferenceFromMessage_DT;
+  using DT = TimeDifferenceFromMessage;
   DemuxTopic(std::string topic);
   DemuxTopic(DemuxTopic &&x);
   ~DemuxTopic();
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the name of the topic that contains the source
+  ///
+  /// @return     The topic
+  ///
   std::string const &topic() const;
+
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
@@ -29,6 +36,15 @@ public:
   DT time_difference_from_message(Msg const &msg);
   std::unordered_map<std::string, Source> &sources();
 
+  //----------------------------------------------------------------------------
+  /// @brief      Adds a source.
+  ///
+  /// @param[in]  source  the name of the source, that must match the content of
+  /// the flatbuffer
+  ///
+  /// @return     A reference to the source that has been added to the source
+  /// list
+  ///
   Source &add_source(Source &&source) {
     using std::move;
     auto k = source.sourcename();
