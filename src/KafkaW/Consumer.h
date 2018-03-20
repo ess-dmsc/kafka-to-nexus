@@ -4,7 +4,6 @@
 #include "Msg.h"
 #include "PollStatus.h"
 #include <functional>
-#include <functional>
 #include <librdkafka/rdkafka.h>
 
 namespace KafkaW {
