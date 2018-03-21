@@ -17,6 +17,7 @@ status_writer.cxx
 command_handler.cxx
 stream_master.cxx
 streamer_options.cxx
+MainOpt_tests.cxx
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(includes

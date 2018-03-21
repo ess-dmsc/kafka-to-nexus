@@ -18,8 +18,7 @@ protected:
           std::future_status::ready) {
         LOG(Sev::Critical, "... still not ready");
       } else {
-        std::call_once(Stream.ConnectionStatus,
-                       [&]() { Stream.RunStatus = Stream.IsConnected.get(); });
+        Stream.RunStatus = Stream.IsConnected.get();
       }
       return Stream.RunStatus;
     }

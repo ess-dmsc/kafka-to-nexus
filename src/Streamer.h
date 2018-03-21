@@ -106,7 +106,6 @@ private:
   StreamerOptions Options;
 
   std::future<SEC> IsConnected;
-  std::once_flag ConnectionStatus;
 
   //----------------------------------------------------------------------------
   /// @brief      Create a consumer with the options specified in the class

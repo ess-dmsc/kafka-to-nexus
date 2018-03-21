@@ -64,16 +64,15 @@ template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
 
-  // wait for connect() to finish
   try {
+    // wait for connect() to finish
     if (IsConnected.valid()) {
-      if (IsConnected.wait_for(std::chrono::milliseconds(1000)) !=
+      if (IsConnected.wait_for(std::chrono::milliseconds(100)) !=
           std::future_status::ready) {
         LOG(Sev::Critical, "... still not ready");
         return ProcessMessageResult::OK();
       }
-      std::call_once(ConnectionStatus,
-                     [&]() { RunStatus = IsConnected.get(); });
+      RunStatus = IsConnected.get();
     }
   } catch (std::exception &Error) {
     LOG(Sev::Critical, "{}", Error.what());
