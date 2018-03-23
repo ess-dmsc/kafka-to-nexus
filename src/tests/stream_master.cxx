@@ -16,14 +16,14 @@
 namespace stub {
 class Streamer {
 public:
-  using Error = FileWriter::Status::StreamerErrorCode;
+  using Error = FileWriter::Status::StreamerError;
   using Options = std::vector<std::string>;
 
   Streamer() {}
   Streamer(const std::string &, const std::string &, const Options &,
            const Options &) {}
   const Error set_start_time(const std::chrono::milliseconds &) const {
-    return Error::no_error;
+    return Error::OK();
   }
   int &n_sources() { return n_src; };
 

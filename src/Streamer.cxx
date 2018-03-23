@@ -13,10 +13,9 @@ std::chrono::milliseconds systemTime() {
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
                                const FileWriter::StreamerOptions &Opts)
-    : RunStatus{SEC::not_initialized}, Options(Opts) {
+    : Options(Opts) {
 
   if (TopicName.empty() || Broker.empty()) {
-    RunStatus = SEC::not_initialized;
     throw std::runtime_error("Missing broker or topic");
   }
 
@@ -31,7 +30,8 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
-FileWriter::Streamer::SEC FileWriter::Streamer::connect(std::string TopicName) {
+FileWriter::Streamer::StreamerError
+FileWriter::Streamer::connect(std::string TopicName) {
 
   LOG(Sev::Debug, "Connecting to {}", TopicName);
   try {
@@ -44,20 +44,20 @@ FileWriter::Streamer::SEC FileWriter::Streamer::connect(std::string TopicName) {
     }
     // Error if the topic cannot be found in the metadata
     if (!Consumer->topicPresent(TopicName)) {
-      return SEC::topic_partition_error;
+      return StreamerError::TOPIC_PARTITION_ERROR();
     }
   } catch (std::exception &Error) {
     LOG(Sev::Error, "{}", Error.what());
-    return SEC::configuration_error;
+    return StreamerError::CONFIGURATION_ERROR();
   }
 
-  return SEC::writing;
+  return (RunStatus = StreamerError::WRITING());
 }
 
-FileWriter::Streamer::SEC FileWriter::Streamer::closeStream() {
+FileWriter::Streamer::StreamerError FileWriter::Streamer::closeStream() {
   Sources.clear();
-  RunStatus = SEC::has_finished;
-  return RunStatus;
+  RunStatus = StreamerError::HAS_FINISHED();
+  return (RunStatus = StreamerError::HAS_FINISHED());
 }
 
 template <>
@@ -80,7 +80,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
 
   // make sure that the connection is ok
   // attention: connect() handles exceptions
-  if (int(RunStatus) < 0) {
+  if (!RunStatus.connectionOK()) {
     return ProcessMessageResult::ERR();
   }
 

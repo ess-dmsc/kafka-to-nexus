@@ -4,14 +4,14 @@
 #include <librdkafka/utils.h>
 
 using Streamer = FileWriter::Streamer;
-using SEC = Streamer::SEC;
+using StreamerError = FileWriter::Status::StreamerError;
 const std::string BrokerAddress{"192.168.10.11"};
 FileWriter::StreamerOptions EmptyOpts;
 
 class T_Streamer : public ::testing::Test {
 
 protected:
-  SEC getStatus(Streamer &Stream) {
+  StreamerError getStatus(Streamer &Stream) {
 
     if (Stream.IsConnected.valid()) {
       if (Stream.IsConnected.wait_for(std::chrono::milliseconds(1000)) !=
@@ -22,7 +22,7 @@ protected:
       }
       return Stream.RunStatus;
     }
-    return SEC::unknown_error;
+    return StreamerError::UNKNOWN_ERROR();
   }
 };
 
@@ -30,7 +30,7 @@ protected:
 TEST_F(T_Streamer, error_no_sources_on_empty_constructor) {
   Streamer Stream;
   EXPECT_EQ(Stream.numSources(), 0ul);
-  EXPECT_EQ(Stream.runStatus(), SEC::not_initialized);
+  EXPECT_TRUE(Stream.runStatus() == StreamerError::NOT_INITIALIZED());
 }
 
 TEST_F(T_Streamer, error_if_broker_argument_is_empty) {
@@ -46,14 +46,14 @@ TEST_F(T_Streamer, error_if_rdkafka_can_t_create_configuration) {
   Streamer Stream(BrokerAddress, "any.random.topic", EmptyOpts);
 
   EXPECT_EQ(Stream.numSources(), 0ul);
-  EXPECT_EQ(getStatus(Stream), SEC::configuration_error);
+  EXPECT_TRUE(getStatus(Stream) == StreamerError::CONFIGURATION_ERROR());
 }
 
 TEST_F(T_Streamer, rdkafka_can_create_configuration) {
   setConfigurationValid();
   addTopic("any.random.topic");
   Streamer Stream(BrokerAddress, "any.random.topic", EmptyOpts);
-  EXPECT_EQ(getStatus(Stream), SEC::writing);
+  EXPECT_TRUE(getStatus(Stream) == StreamerError::WRITING());
 }
 
 TEST_F(T_Streamer, configuration_doesn_t_accept_option_is_no_error) {
@@ -75,8 +75,7 @@ TEST_F(T_Streamer, configuration_doesn_t_accept_option_is_no_error) {
 
   // invalid option is not added to the list
   EXPECT_EQ(getConfigurationOptionsSize(), 0ul);
-
-  EXPECT_EQ(getStatus(Stream), SEC::writing);
+  EXPECT_TRUE(getStatus(Stream) == StreamerError::WRITING());
 
   resetTopics();
 }
@@ -90,17 +89,18 @@ TEST_F(T_Streamer, error_if_topic_is_not_present_in_broker) {
   resetTopicPartitionMetadata();
 
   Streamer Stream(BrokerAddress, "missing.topic", EmptyOpts);
-  EXPECT_EQ(getStatus(Stream), SEC::topic_partition_error);
+  EXPECT_TRUE(getStatus(Stream) == StreamerError::TOPIC_PARTITION_ERROR());
 }
 
 TEST_F(T_Streamer, connection_successful) {
   addTopic("test.topic");
 
   Streamer Stream(BrokerAddress, "test.topic", EmptyOpts);
-  EXPECT_EQ(getStatus(Stream), SEC::writing);
+  EXPECT_TRUE(getStatus(Stream) == StreamerError::WRITING());
 }
 
 TEST_F(T_Streamer, consume_timeout_is_not_error) {
+  addTopic("test.topic");
   Streamer Stream(BrokerAddress, "test.topic", EmptyOpts);
   FileWriter::DemuxTopic Demux("streamer.test.topic");
   FileWriter::ProcessMessageResult ProcessResult = Stream.write(Demux);

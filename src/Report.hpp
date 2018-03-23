@@ -12,7 +12,7 @@
 namespace FileWriter {
 
 class Report {
-  using SMEC = Status::StreamMasterErrorCode;
+  using StreamMasterError = Status::StreamMasterError;
 
 public:
   Report() {}
@@ -27,18 +27,20 @@ public:
 
   template <class S>
   void report(S &streamer, std::atomic<bool> &stop,
-              std::atomic<SMEC> &stream_master_status) {
+              std::atomic<StreamMasterError> &stream_master_status) {
     while (!stop.load()) {
       std::this_thread::sleep_for(report_ms_);
-      SMEC error = produce_single_report(streamer, stream_master_status);
-      if (error == SMEC::report_failure) {
+      StreamMasterError error =
+          produce_single_report(streamer, stream_master_status);
+      if (error == StreamMasterError::REPORT_ERROR()) {
         stream_master_status = error;
         return;
       }
     }
     std::this_thread::sleep_for(report_ms_);
-    SMEC error = produce_single_report(streamer, stream_master_status);
-    if (error != SMEC::no_error) { // termination message
+    StreamMasterError error =
+        produce_single_report(streamer, stream_master_status);
+    if (!error.isOK()) { // termination message
       stream_master_status = error;
     }
     return;
@@ -46,12 +48,13 @@ public:
 
 private:
   template <class S>
-  SMEC produce_single_report(S &streamer,
-                             std::atomic<SMEC> &stream_master_status) {
+  StreamMasterError
+  produce_single_report(S &streamer,
+                        std::atomic<StreamMasterError> &stream_master_status) {
     if (!report_producer_) {
       LOG(Sev::Error,
           "ProucerTopic error: can't produce StreamMaster status report");
-      return SMEC::report_failure;
+      return StreamMasterError::REPORT_ERROR();
     }
 
     info.status(stream_master_status);
@@ -65,7 +68,7 @@ private:
         Status::pprint<Status::JSONStreamWriter>(info);
     report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
                               value.size());
-    return SMEC::no_error;
+    return StreamMasterError::OK();
   }
 
   Status::StreamMasterInfo info;

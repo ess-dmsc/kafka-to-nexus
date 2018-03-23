@@ -28,10 +28,9 @@ namespace FileWriter {
 /// and consume messages
 class Streamer {
   friend class ::T_Streamer;
+  using StreamerError = Status::StreamerError;
 
 public:
-  using SEC = Status::StreamerErrorCode;
-
   Streamer() = default;
 
   //----------------------------------------------------------------------------
@@ -61,7 +60,7 @@ public:
 
   /// Disconnect the kafka consumer and destroy the TopicPartition vector. Make
   /// sure that the Streamer status is StreamerErrorCode::has_finished
-  SEC closeStream();
+  StreamerError closeStream();
 
   //----------------------------------------------------------------------------
   /// @brief      Return the number of different sources whose last message is
@@ -86,7 +85,7 @@ public:
   ///
   /// @return     The current status
   ///
-  SEC &runStatus() { return RunStatus; }
+  StreamerError &runStatus() { return RunStatus; }
 
   /// Return all the informations about the messages consumed
   Status::MessageInfo &messageInfo() { return MessageInfo; }
@@ -99,13 +98,13 @@ private:
   std::unique_ptr<KafkaW::Consumer> Consumer;
   KafkaW::BrokerSettings Settings;
 
-  SEC RunStatus{SEC::not_initialized};
+  StreamerError RunStatus;
   Status::MessageInfo MessageInfo;
 
   std::vector<std::string> Sources;
   StreamerOptions Options;
 
-  std::future<SEC> IsConnected;
+  std::future<StreamerError> IsConnected;
 
   //----------------------------------------------------------------------------
   /// @brief      Create a consumer with the options specified in the class
@@ -119,7 +118,7 @@ private:
   /// topic is
   /// not in the partition ``SEC::topic_partition_error``;
   ///
-  SEC connect(std::string TopicName);
+  StreamerError connect(std::string TopicName);
 };
 
 /// Consume a Kafka message and process it according to
