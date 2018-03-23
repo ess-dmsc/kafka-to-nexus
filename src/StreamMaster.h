@@ -49,10 +49,11 @@ public:
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(d.topic()),
                           std::forward_as_tuple(broker, d.topic(), options));
+        Streamers[d.topic()].setSources(d.sources());
       } catch (std::exception &e) {
+        RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", e.what());
       }
-      Streamers[d.topic()].setSources(d.sources());
     }
     NumStreamers = Streamers.size();
   }
@@ -90,6 +91,11 @@ public:
   /// Start the streams writing. Return true if successful, false
   /// in case of failure
   bool start() {
+    if (NumStreamers == 0) {
+      Stop = true;
+      stopImplemented();
+      return WriteThread.joinable();
+    }
     LOG(Sev::Info, "StreamMaster: start");
     Stop = false;
 
@@ -111,12 +117,14 @@ public:
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const std::chrono::milliseconds &report_ms =
                   std::chrono::milliseconds{1000}) {
-    if (!ReportThread.joinable()) {
-      ReportPtr.reset(new Report(p, report_ms));
-      ReportThread =
-          std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
-    } else {
-      LOG(Sev::Debug, "Status report already started, nothing to do");
+    if (NumStreamers != 0) {
+      if (!ReportThread.joinable()) {
+        ReportPtr.reset(new Report(p, report_ms));
+        ReportThread =
+            std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
+      } else {
+        LOG(Sev::Debug, "Status report already started, nothing to do");
+      }
     }
   }
 
