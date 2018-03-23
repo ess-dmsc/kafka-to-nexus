@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../HDFFile.h"
+#include "../MainOpt.h"
 #include <h5cpp/hdf5.hpp>
+
+void SetTestOptions(MainOpt *Options);
 
 namespace HDFFileTestHelper {
 
