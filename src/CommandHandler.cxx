@@ -351,7 +351,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (!MasterPtr) {
     return;
   }
-  LOG(Sev::Critical, "{}", Command);
+  LOG(Sev::Debug, "{}", Command);
 
   nlohmann::json Doc;
   try {
