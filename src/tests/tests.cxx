@@ -1,8 +1,8 @@
 #include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
+#include "HDFFileTestHelper.h"
 #include "helper.h"
 #include "roundtrip.h"
-#include "HDFFileTestHelper.h"
 #include <gtest/gtest.h>
 
 #include <h5cpp/error/error.hpp>

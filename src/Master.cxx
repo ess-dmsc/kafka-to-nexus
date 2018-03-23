@@ -41,13 +41,13 @@ void Master::handle_command(std::string const &command) {
 }
 
 struct OnScopeExit {
-  OnScopeExit(std::function<void()> Action) : ExitAction(Action) {};
-  ~OnScopeExit() {ExitAction();};
+  OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
+  ~OnScopeExit() { ExitAction(); };
   std::function<void()> ExitAction;
 };
 
 void Master::run() {
-  OnScopeExit SetExitFlag([this](){HasExitedRunLoop = true;});
+  OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
   // Set up connection to the Kafka status topic if desired.
   if (config.do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",

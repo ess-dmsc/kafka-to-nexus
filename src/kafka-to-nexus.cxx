@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <string>
 
-//These should only be visible in this translation unit
+// These should only be visible in this translation unit
 static std::atomic_bool GotSignal{false};
 static std::atomic_int SignalId{0};
 
@@ -81,7 +81,7 @@ int main(int argc, char **argv) {
 
   FileWriter::Master Master(*opt);
   std::thread MasterThread([&Master] { Master.run(); });
-  
+
   while (not Master.RunLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
@@ -91,7 +91,7 @@ int main(int argc, char **argv) {
       break;
     }
   }
-  
+
   MasterThread.join();
   return 0;
 }

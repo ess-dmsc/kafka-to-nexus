@@ -40,10 +40,8 @@ public:
   std::string file_writer_process_id() const;
 
   MainOpt &config;
-  
-  bool RunLoopExited() {
-    return HasExitedRunLoop;
-  };
+
+  bool RunLoopExited() { return HasExitedRunLoop; };
 
 private:
   CommandListener command_listener;

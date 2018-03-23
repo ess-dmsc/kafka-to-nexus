@@ -26,13 +26,9 @@ using std::vector;
 
 static MainOpt *TestOptions;
 
-void SetTestOptions(MainOpt *Options) {
-  TestOptions = Options;
-}
+void SetTestOptions(MainOpt *Options) { TestOptions = Options; }
 
-MainOpt* getTestOptions() {
-  return TestOptions;
-}
+MainOpt *getTestOptions() { return TestOptions; }
 
 void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
   rapidjson::Document cfg;
@@ -393,8 +389,9 @@ public:
     })"");
     json_command.FindMember("file_attributes")
         ->value.GetObject()
-        .AddMember("file_name", rapidjson::Value(hdf_output_filename.c_str(),
-                                                 json_command.GetAllocator()),
+        .AddMember("file_name",
+                   rapidjson::Value(hdf_output_filename.c_str(),
+                                    json_command.GetAllocator()),
                    json_command.GetAllocator());
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");

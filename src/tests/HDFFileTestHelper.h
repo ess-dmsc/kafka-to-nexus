@@ -32,4 +32,4 @@ createCommandForDataset(const std::pair<std::string, T> NameAndValue) {
 
   return Command;
 }
-}
+} // namespace HDFFileTestHelper
