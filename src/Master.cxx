@@ -82,8 +82,7 @@ void Master::run() {
     stream_masters.erase(
         std::remove_if(stream_masters.begin(), stream_masters.end(),
                        [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
-                         return Iter->status() ==
-                                Status::StreamMasterErrorCode::is_removable;
+                         return Iter->status().isRemovable();
                        }),
         stream_masters.end());
   }

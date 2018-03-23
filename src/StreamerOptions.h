@@ -14,27 +14,20 @@
 
 #include <rapidjson/schema.h>
 
+#include "KafkaW/BrokerSettings.h"
 #include <chrono>
-#include <map>
-#include <string>
-#include <vector>
-
-class StreamerOptions_Test;
 
 namespace FileWriter {
 
 /// Class that contains configuration parameters for the Streamer
 class StreamerOptions {
-  friend class Streamer;
-  friend class CommandHandler;
-  friend class StreamerOptionsTest_Test;
 
 public:
   void setStreamerOptions(const rapidjson::Value *);
   void setRdKafkaOptions(const rapidjson::Value *);
   // private:
 
-  std::vector<std::pair<std::string, std::string>> RdKafkaOptions;
+  KafkaW::BrokerSettings Settings;
   std::chrono::milliseconds StartTimestamp{0};
   std::chrono::milliseconds StopTimestamp{0};
   std::chrono::milliseconds BeforeStartTime{1000};

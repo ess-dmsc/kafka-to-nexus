@@ -148,9 +148,18 @@ void Consumer::init() {
   PartitionList = rd_kafka_topic_partition_list_new(16);
 }
 
-void Consumer::addTopic(std::string Topic) {
+void Consumer::addTopic(std::string Topic,
+                        const std::chrono::milliseconds &StartTime) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   int Partition = RD_KAFKA_PARTITION_UA;
+
+  if (StartTime.count() > 0) {
+    LOG(Sev::Info, "Consumer::StartTime  {}", StartTime.count());
+    rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
+    rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition)
+        ->offset = StartTime.count();
+  }
+
   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
   int err = rd_kafka_subscribe(RdKafka, PartitionList);
   KERR(RdKafka, err);
@@ -158,6 +167,27 @@ void Consumer::addTopic(std::string Topic) {
     LOG(Sev::Error, "could not subscribe");
     throw std::runtime_error("can not subscribe");
   }
+}
+
+bool Consumer::topicPresent(const std::string &TopicName) {
+  const rd_kafka_metadata_t *Metadata;
+  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
+
+  if (!Metadata) {
+    LOG(Sev::Error, "could not crete metadata");
+    return false;
+  }
+
+  bool IsPresent = false;
+  for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
+    if (Metadata->topics[topic].topic == TopicName) {
+      IsPresent = true;
+      break;
+    }
+  }
+  rd_kafka_metadata_destroy(Metadata);
+  //      const_cast<const struct rd_kafka_metadata *>(Metadata));
+  return IsPresent;
 }
 
 void Consumer::dumpCurrentSubscription() {
@@ -189,6 +219,7 @@ PollStatus Consumer::poll() {
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   std::unique_ptr<Msg> m2(new Msg);
+
   m2->MsgPtr = msg;
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
     return PollStatus::newWithMsg(std::move(m2));
@@ -208,4 +239,4 @@ PollStatus Consumer::poll() {
   }
   return PollStatus::Err();
 }
-}
+} // namespace KafkaW

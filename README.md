@@ -403,6 +403,11 @@ contains
 ```
 with the location where it has found `gtest`.
 
+To enable tests for the ``Streamer`` the [librdkafka-fake](https://github.com/ess-dmsc/librdkafka-fake) implementation of librdkafka must be enabled with
+```
+-DFAKE_RDKAFKA=<path>
+```
+
 Start the `gtest` based test suite via:
 ```
 ./tests/tests
@@ -485,10 +490,3 @@ the first and last event to be written (see Streamer options);
 converts the error code into a human readable string). 
 * each topic is written continously for at most `topic-write-interval`. this value can be configured in the config file (default 1000ms)
 
-More tests involving the network:
-```
-tests/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
-tests/streammaster_test --kafka_broker=<broker>:<port>"
-```
-Tests are implemented using the gtest suite. They support all the command
-line option provided by gtest.

@@ -3,6 +3,7 @@
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include "json.h"
+#include <chrono>
 #include <future>
 #include <nlohmann/json.hpp>
 
@@ -86,8 +87,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
-  using nlohmann::detail::out_of_range;
   using nlohmann::json;
+  using nlohmann::detail::out_of_range;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto const &stream : StreamHDFInfoList) {
@@ -186,10 +187,10 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 void CommandHandler::handleNew(std::string const &Command) {
+  using nlohmann::json;
+  using nlohmann::detail::out_of_range;
   using std::move;
   using std::string;
-  using nlohmann::detail::out_of_range;
-  using nlohmann::json;
   json Doc = parseOrThrow(Command);
 
   auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
@@ -249,10 +250,12 @@ void CommandHandler::handleNew(std::string const &Command) {
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
   }
-
-  std::chrono::milliseconds StopTime(0);
   if (auto x = find<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
+    std::chrono::milliseconds StopTime(x.inner());
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info, "StopTime: {}", StopTime.count());
+      Config.StreamerConfiguration.StopTimestamp = StopTime;
+    }
   }
 
   if (MasterPtr) {
@@ -270,11 +273,6 @@ void CommandHandler::handleNew(std::string const &Command) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
-
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      s->setStopTime(StopTime);
-    }
 
     MasterPtr->stream_masters.push_back(std::move(s));
   } else {
@@ -353,6 +351,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (!MasterPtr) {
     return;
   }
+  LOG(Sev::Debug, "{}", Command);
+
   nlohmann::json Doc;
   try {
     Doc = nlohmann::json::parse(Command);
@@ -426,7 +426,7 @@ void CommandHandler::handle(std::string const &Command) {
       return;
     }
     if (CommandMain == "FileWriter_stop") {
-      handleStreamMasterStop(Doc);
+      handleStreamMasterStop(Command);
       return;
     }
     if (CommandMain == "file_writer_tasks_clear_all") {

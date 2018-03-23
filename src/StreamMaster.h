@@ -33,8 +33,8 @@ namespace FileWriter {
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
 template <typename Streamer> class StreamMaster {
-  using SEC = Status::StreamerErrorCode;
-  using SMEC = Status::StreamMasterErrorCode;
+  using StreamerError = Status::StreamerError;
+  using StreamMasterError = Status::StreamMasterError;
   friend class CommandHandler;
 
 public:
@@ -45,10 +45,15 @@ public:
         WriterTask(std::move(file_writer_task)) {
 
     for (auto &d : Demuxers) {
-      Streamers.emplace(std::piecewise_construct,
-                        std::forward_as_tuple(d.topic()),
-                        std::forward_as_tuple(broker, d.topic(), options));
-      Streamers[d.topic()].setSources(d.sources());
+      try {
+        Streamers.emplace(std::piecewise_construct,
+                          std::forward_as_tuple(d.topic()),
+                          std::forward_as_tuple(broker, d.topic(), options));
+        Streamers[d.topic()].setSources(d.sources());
+      } catch (std::exception &e) {
+        RunStatus = StreamMasterError::STREAMER_ERROR();
+        LOG(Sev::Critical, "{}", e.what());
+      }
     }
     NumStreamers = Streamers.size();
   }
@@ -86,6 +91,11 @@ public:
   /// Start the streams writing. Return true if successful, false
   /// in case of failure
   bool start() {
+    if (NumStreamers == 0) {
+      Stop = true;
+      stopImplemented();
+      return WriteThread.joinable();
+    }
     LOG(Sev::Info, "StreamMaster: start");
     Stop = false;
 
@@ -107,12 +117,14 @@ public:
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
               const std::chrono::milliseconds &report_ms =
                   std::chrono::milliseconds{1000}) {
-    if (!ReportThread.joinable()) {
-      ReportPtr.reset(new Report(p, report_ms));
-      ReportThread =
-          std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
-    } else {
-      LOG(Sev::Debug, "Status report already started, nothing to do");
+    if (NumStreamers != 0) {
+      if (!ReportThread.joinable()) {
+        ReportPtr.reset(new Report(p, report_ms));
+        ReportThread =
+            std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
+      } else {
+        LOG(Sev::Debug, "Status report already started, nothing to do");
+      }
     }
   }
 
@@ -120,12 +132,13 @@ public:
   /// current file
   FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
 
-  /// Returns the current StreamMaster state, or SMEC::streamer_error if any
+  /// Returns the current StreamMaster state, or
+  /// StreamMasterError::streamer_error if any
   /// stream is in any error state
-  const SMEC status() {
+  const StreamMasterError status() {
     for (auto &s : Streamers) {
-      if (int(s.second.runStatus()) < 0) {
-        return SMEC::streamer_error;
+      if (s.second.runStatus().connectionOK()) {
+        return StreamMasterError::STREAMER_ERROR();
       }
     }
     return RunStatus.load();
@@ -136,91 +149,86 @@ public:
   std::string getJobId() const { return WriterTask->job_id(); }
 
 private:
-  /// Process the messages in Stream for at most TopicWriteDuration
-  /// std::chrono::milliseconds. If the TopicWriteDuration time is elapsed or
-  /// the stream is stopped and other stream are active the method returns
-  /// SMEC::running. If all the streams have finished returns
-  /// SMEC::has_finished.
-  SMEC processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
+  //------------------------------------------------------------------------------
+  /// @brief      Process the messages in Stream for at most TopicWriteDuration
+  /// std::chrono::milliseconds.
+  ///
+  /// @param      Stream  A reference to the Streamer that will consume messages
+  /// @param      Demux   The demux associated with the topic
+  ///
+  /// @return     The status of the consumption. If there are still working
+  /// streams returns ``running``, if all the streams are terminated return
+  /// ``has_finished``, if some error occur..
+  StreamMasterError processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
            TopicWriteDuration) {
       if (Stop) {
-        return SMEC::has_finished;
+        return StreamMasterError::HAS_FINISHED();
       }
       FileWriter::ProcessMessageResult ProcessResult = Stream.write(Demux);
       if (ProcessResult.is_STOP()) {
         if (Stream.numSources() == 0) {
           return closeStream(Stream, Demux.topic());
         }
-        return SMEC::running;
+        return StreamMasterError::RUNNING();
+      }
+      if (ProcessResult.is_ERR()) {
+        LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
+            Err2Str(Stream.runStatus()));
+        return StreamMasterError::STREAMER_ERROR();
       }
     }
-    return SMEC::running;
+    return StreamMasterError::RUNNING();
   }
 
   /// Main loop that handles the writer process for each stream. The streams
   /// write as long as Stop is false and there are open streams. As the method
-  /// starts the StreamMaster state is set to SMEC::running. If a
+  /// starts the StreamMaster state is set to StreamMasterError::running. If a
   /// stream is in the SEC::writing state process the messages. If the state is
   /// SEC::has_finished or SEC::not_initialized skip the stream. A negative
   /// state represents an error, which is logged. When the method terminates
   /// (i.e. messages are not processed anymore) the StreamMaster state changes
-  /// to SMEC::has_finished.
+  /// to StreamMasterError::has_finished.
   void run() {
     using namespace std::chrono;
-    RunStatus = SMEC::running;
+    RunStatus = StreamMasterError::RUNNING();
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
 
       for (auto &Demux : Demuxers) {
         auto &s = Streamers[Demux.topic()];
+
         // If the stream is active process the messages
-        if (s.runStatus() == SEC::writing) {
-          SMEC ProcessResult = processStreamResult(s, Demux);
-          if (ProcessResult == SMEC::has_finished) {
-            break;
-          }
+        StreamMasterError ProcessResult = processStreamResult(s, Demux);
+        if (ProcessResult == StreamMasterError::HAS_FINISHED()) {
           continue;
         }
-        // If the stream has finished skip to the next stream. Breaking the
-        // allow the re-evaluation of NumStreamers
-        if (s.runStatus() == SEC::has_finished) {
-          continue;
-        }
-        // If the Kafka connection is not ready skip to the next stream.
-        // Nevertheless if there's only one stream wait some time in order
-        // to prevent spinning
-        if (s.runStatus() == SEC::not_initialized) {
-          if (Streamers.size() == 1) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(500));
-          }
-          continue;
-        }
-        if (int(s.runStatus()) < 0) {
-          LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
-              int(s.runStatus()));
+        if (ProcessResult == StreamMasterError::STREAMER_ERROR()) {
+          // remove stream or try reconnect?
           continue;
         }
       }
     }
-    RunStatus = SMEC::has_finished;
+    RunStatus = StreamMasterError::HAS_FINISHED();
     stopImplemented();
   }
 
   /// Close the Kafka connection in the selected stream, set its value to
   /// SEC::has_finished and reduces the counter of the open streams. If there
-  /// are other open streams return SMEC::has_finished, else Stop becomes true
-  /// and return SMEC::has_finished
-  SMEC closeStream(Streamer &Stream, const std::string &TopicName) {
+  /// are other open streams return StreamMasterError::has_finished, else Stop
+  /// becomes true
+  /// and return StreamMasterError::has_finished
+  StreamMasterError closeStream(Streamer &Stream,
+                                const std::string &TopicName) {
     LOG(Sev::Debug, "All sources in Stream have expired, close connection");
-    Stream.runStatus() = SEC::has_finished;
+    Stream.runStatus() = Status::StreamerError::HAS_FINISHED();
     Stream.closeStream();
     NumStreamers--;
     if (NumStreamers != 0) {
-      return SMEC::running;
+      return StreamMasterError::RUNNING();
     }
     Stop = true;
-    return SMEC::has_finished;
+    return StreamMasterError::HAS_FINISHED();
   }
 
   /// Implementation of the stop command. Make sure that the Streamers
@@ -233,7 +241,7 @@ private:
     for (auto &s : Streamers) {
       LOG(Sev::Info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
-      if (v != SEC::has_finished) {
+      if (!v.hasFinished()) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
       } else {
@@ -241,7 +249,7 @@ private:
       }
     }
     Streamers.clear();
-    RunStatus = SMEC::is_removable;
+    RunStatus = StreamMasterError::IS_REMOVABLE();
     LOG(Sev::Info, "RunStatus:  {}", Err2Str(RunStatus));
   }
 
@@ -249,7 +257,7 @@ private:
   std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;
-  std::atomic<SMEC> RunStatus{SMEC::not_started};
+  std::atomic<StreamMasterError> RunStatus;
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};
