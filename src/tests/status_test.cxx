@@ -221,11 +221,10 @@ TEST(MessageInfo, compute_derived_quantities) {
   EXPECT_NEAR(Size.second, 1.5811388300841898, 10e-3); // unbiased
   EXPECT_NEAR(Frequency.first, 1e3 * MessagesSize.size() / Duration.count(),
               10e-3);
-  EXPECT_NEAR(
-      Throughput.first,
-      1e3 * std::accumulate(MessagesSize.begin(), MessagesSize.end(), 0.0) /
-          Duration.count(),
-      10e-3);
+  EXPECT_NEAR(Throughput.first, 1e3 * std::accumulate(MessagesSize.begin(),
+                                                      MessagesSize.end(), 0.0) /
+                                    Duration.count(),
+              10e-3);
 }
 
 TEST(MessageInfo, derived_quantities_null_divider) {

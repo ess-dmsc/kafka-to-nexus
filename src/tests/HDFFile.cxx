@@ -18,11 +18,11 @@
 #include <vector>
 
 using std::array;
+using std::string;
+using std::vector;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
-using std::string;
-using std::vector;
 
 static MainOpt *TestOptions;
 
@@ -389,9 +389,8 @@ public:
     })"");
     json_command.FindMember("file_attributes")
         ->value.GetObject()
-        .AddMember("file_name",
-                   rapidjson::Value(hdf_output_filename.c_str(),
-                                    json_command.GetAllocator()),
+        .AddMember("file_name", rapidjson::Value(hdf_output_filename.c_str(),
+                                                 json_command.GetAllocator()),
                    json_command.GetAllocator());
     auto cmd = json_to_string(json_command);
     auto fname = get_string(&json_command, "file_attributes.file_name");
