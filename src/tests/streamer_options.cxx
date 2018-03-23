@@ -4,8 +4,6 @@
 #include <gtest/gtest.h>
 #include <rapidjson/document.h>
 
-namespace FileWriter {
-
 class StreamerOptionsTest : public ::testing::Test {
   virtual void SetUp() {}
 
@@ -82,14 +80,6 @@ TEST_F(StreamerOptionsTest, set_rdkafka_options_fills_options_vector) {
   CompareRdKafkaOptionsWith(Strings, Integers);
 }
 
-// TEST_F(StreamerOptionsTest, streamer_empty_json_doesn_t_change_defaults) {
-//   rapidjson::Document optj;
-//   optj.Parse("{ \"streamer\" : {} }");
-//   ConfigureStreamerWithJson(optj);
-//   FileWriter::StreamerOptions Defaults;
-//   CompareSteamerOptionsWith(Defaults);
-// }
-
 TEST_F(StreamerOptionsTest, set_streamer_options_matches_expected) {
   rapidjson::Document optj;
   optj.Parse("{\"streamer\" : {\"ms-before-start\" : 10, "
@@ -98,5 +88,3 @@ TEST_F(StreamerOptionsTest, set_streamer_options_matches_expected) {
   CompareSteamerOptionsWith(std::chrono::milliseconds(10),
                             std::chrono::milliseconds(10), 1);
 }
-
-} // namespace FileWriter
