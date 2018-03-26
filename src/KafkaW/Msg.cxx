@@ -4,7 +4,11 @@
 
 namespace KafkaW {
 
-Msg::~Msg() { rd_kafka_message_destroy((rd_kafka_message_t *)MsgPtr); }
+Msg::~Msg() {
+  if (MsgPtr) {
+    rd_kafka_message_destroy((rd_kafka_message_t *)MsgPtr);
+  }
+}
 
 uchar *Msg::data() { return (uchar *)((rd_kafka_message_t *)MsgPtr)->payload; }
 
@@ -17,4 +21,10 @@ char const *Msg::topicName() {
 int32_t Msg::partition() { return ((rd_kafka_message_t *)MsgPtr)->partition; }
 
 int64_t Msg::offset() { return ((rd_kafka_message_t *)MsgPtr)->offset; }
+
+void *Msg::releaseMsgPtr() {
+  void *ptr = MsgPtr;
+  MsgPtr = nullptr;
+  return ptr;
+}
 }

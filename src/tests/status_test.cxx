@@ -3,10 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <random>
-#include <thread>
-#include <type_traits>
 
-using StreamMasterErrorCode = FileWriter::Status::StreamMasterErrorCode;
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
 

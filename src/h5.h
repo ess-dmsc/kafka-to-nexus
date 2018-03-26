@@ -2,59 +2,21 @@
 
 #include "CollectiveQueue.h"
 #include <array>
+#include <h5cpp/hdf5.hpp>
 #include <hdf5.h>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace h5 {
 
-using std::unique_ptr;
-using std::move;
-using std::array;
-using std::vector;
-using std::string;
-
-template <typename T> hid_t nat_type();
+class RuntimeError : public std::runtime_error {
+public:
+  RuntimeError(std::string const &x) : std::runtime_error(x) {}
+};
 
 void swap(hsize_t &, hsize_t &);
-
-namespace h5p {
-
-class dataset_create {
-public:
-  typedef unique_ptr<dataset_create> ptr;
-  static ptr chunked1(hid_t type, hsize_t bytes);
-  static ptr chunked2(hid_t type, hsize_t ncols, hsize_t bytes);
-  dataset_create(dataset_create &&x);
-  ~dataset_create();
-  friend void swap(dataset_create &x, dataset_create &y);
-  hid_t id = -1;
-
-private:
-  dataset_create();
-  dataset_create(dataset_create const &x);
-};
-
-} // namespace h5p
-
-class h5d;
-
-class h5s {
-public:
-  typedef unique_ptr<h5s> ptr;
-  template <size_t N> static ptr simple_unlim(array<hsize_t, N> const &sini);
-  h5s(h5d const &x);
-  h5s(h5s &&x);
-  ~h5s();
-  friend void swap(h5s &x, h5s &y);
-  hid_t id = -1;
-  vector<hsize_t> sini;
-  vector<hsize_t> smax;
-
-private:
-  h5s();
-};
 
 enum class AppendResult : uint32_t {
   OK,
@@ -70,12 +32,14 @@ struct append_ret {
 
 class h5d {
 public:
-  typedef unique_ptr<h5d> ptr;
-  static ptr create(hid_t loc, string name, hid_t type, h5s dsp,
-                    h5p::dataset_create dcpl, CollectiveQueue *cq);
-  static ptr open_single(hid_t loc, string name, CollectiveQueue *cq,
-                         HDFIDStore *hdf_store);
-  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+  typedef std::unique_ptr<h5d> ptr;
+  static ptr create(hdf5::node::Group loc, std::string name,
+                    hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
+                    hdf5::property::DatasetCreationList dcpl,
+                    CollectiveQueue *cq);
+  static ptr open_single(hdf5::node::Group loc, std::string name,
+                         CollectiveQueue *cq, HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d(h5d &&x);
   ~h5d();
@@ -83,18 +47,16 @@ public:
   void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
-  string name;
-  hid_t id = -1;
-  hid_t type = -1;
-  hid_t pl_transfer = -1;
-  hsize_t ndims = -1;
-  hid_t dsp_mem = -1;
-  hid_t dsp_tgt = -1;
-  std::array<hsize_t, 2> snow;
-  std::array<hsize_t, 2> smax;
-  std::array<hsize_t, 2> sext;
-  std::array<hsize_t, 2> mem_max;
-  std::array<hsize_t, 2> mem_now;
+  std::string name;
+  hdf5::node::Dataset Dataset;
+  hdf5::datatype::Datatype Type;
+  hdf5::property::DatasetTransferList PLTransfer;
+  int ndims = -1;
+  hdf5::dataspace::Simple DSPMem;
+  hdf5::dataspace::Simple DSPTgt;
+  hdf5::Dimensions snow;
+  hdf5::Dimensions smax;
+  hdf5::Dimensions sext;
   CollectiveQueue *cq = nullptr;
   HDFIDStore *hdf_store = nullptr;
   int mpi_rank = -1;
@@ -102,6 +64,7 @@ public:
 private:
   h5d();
   void init_basics();
+  uint64_t TotalNanosecondsSpent = 0;
 };
 
 template <typename T> class h5d_chunked_1d;
@@ -109,10 +72,10 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y);
 
 template <typename T> class h5d_chunked_1d {
 public:
-  typedef unique_ptr<h5d_chunked_1d<T>> ptr;
-  static ptr create(hid_t loc, string name, hsize_t chunk_bytes,
-                    CollectiveQueue *cq);
-  static ptr open(hid_t loc, string name, CollectiveQueue *cq,
+  typedef std::unique_ptr<h5d_chunked_1d<T>> ptr;
+  static ptr create(hdf5::node::Group loc, std::string name,
+                    hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
@@ -123,8 +86,8 @@ public:
   void buffer_init(size_t buf_size, size_t buf_packet_max);
 
 private:
-  h5d_chunked_1d(hid_t loc, string name, h5d ds);
-  h5s dsp_wr;
+  h5d_chunked_1d(std::string name, h5d ds);
+  hdf5::dataspace::Simple dsp_wr;
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
   size_t buf_n = 0;
@@ -141,11 +104,11 @@ template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y);
 
 template <typename T> class h5d_chunked_2d {
 public:
-  typedef unique_ptr<h5d_chunked_2d<T>> ptr;
-  static ptr create(hid_t loc, string name, hsize_t ncols, hsize_t chunk_bytes,
-                    CollectiveQueue *cq);
-  static ptr open(hid_t loc, string name, hsize_t ncols, CollectiveQueue *cq,
-                  HDFIDStore *hdf_store);
+  typedef std::unique_ptr<h5d_chunked_2d<T>> ptr;
+  static ptr create(hdf5::node::Group loc, std::string name, hsize_t ncols,
+                    hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group loc, std::string name, hsize_t ncols,
+                  CollectiveQueue *cq, HDFIDStore *hdf_store);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();
@@ -155,8 +118,8 @@ public:
   void buffer_init(size_t buf_size, size_t buf_packet_max);
 
 private:
-  h5d_chunked_2d(hid_t loc, string name, h5d ds, hsize_t ncols);
-  h5s dsp_wr;
+  h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
+  hdf5::dataspace::Simple dsp_wr;
   hsize_t ncols;
   size_t buf_size = 0;
   size_t buf_packet_max = 0;

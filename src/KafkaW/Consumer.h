@@ -3,6 +3,7 @@
 #include "BrokerSettings.h"
 #include "Msg.h"
 #include "PollStatus.h"
+#include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
 
@@ -17,8 +18,11 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer();
   void init();
-  void addTopic(std::string Topic);
+  void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
+                                       std::chrono::milliseconds{0});
   void dumpCurrentSubscription();
+  void dumpMetadata();
+  bool topicPresent(const std::string &Topic);
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
@@ -40,4 +44,4 @@ private:
   rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
 };
-}
+} // namespace KafkaW

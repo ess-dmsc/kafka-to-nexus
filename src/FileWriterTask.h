@@ -11,6 +11,12 @@ class Test___FileWriterTask___Create01;
 
 namespace FileWriter {
 
+class ParseError : public std::runtime_error {
+public:
+  explicit ParseError(std::string err)
+      : std::runtime_error("Parse ERROR: " + err) {}
+};
+
 /**
 Represents the task of writing a HDF file.
 It contains the list of Source and DemuxTopic
@@ -41,8 +47,9 @@ private:
   std::vector<DemuxTopic> _demuxers;
   void add_source(Source &&source);
   /// Called by CommandHandler on setup.
-  int hdf_init(std::string const &NexusStructure, std::string const &ConfigFile,
-               std::vector<StreamHDFInfo> &stream_hdf_info);
+  void hdf_init(std::string const &NexusStructure,
+                std::string const &ConfigFile,
+                std::vector<StreamHDFInfo> &stream_hdf_info);
   void hdf_close();
   int hdf_reopen();
   void job_id_init(const std::string &);

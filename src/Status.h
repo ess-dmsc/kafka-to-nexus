@@ -77,7 +77,6 @@ private:
 /// reduce the same information to give a global overview of the amount of data
 /// that has been processed.
 class StreamMasterInfo {
-  using SMEC = StreamMasterErrorCode;
 
 public:
   StreamMasterInfo() : StartTime{std::chrono::system_clock::now()} {}
@@ -96,13 +95,13 @@ public:
   MessageInfo &getTotal() { return Total; }
 
   /// Set the status
-  SMEC &status(const SMEC &other) {
+  StreamMasterError &status(const StreamMasterError &other) {
     Status = other;
     return Status;
   }
 
   /// Return the registered status.
-  SMEC &status() { return Status; }
+  StreamMasterError &status() { return Status; }
 
   /// Set the ETA of the next message
   /// \param ToNextMessage std::chrono::milliseconds from the last message to
@@ -125,7 +124,7 @@ private:
   std::map<std::string, MessageInfo> StreamsInfo;
   std::chrono::system_clock::time_point StartTime;
   std::chrono::milliseconds NextMessageRelativeEta;
-  SMEC Status{SMEC::not_started};
+  StreamMasterError Status;
 };
 
 /// Return the average size and relative standard deviation of the number of

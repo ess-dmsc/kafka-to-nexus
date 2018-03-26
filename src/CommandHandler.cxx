@@ -3,6 +3,7 @@
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include "json.h"
+#include <chrono>
 #include <future>
 #include <nlohmann/json.hpp>
 
@@ -67,12 +68,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
-  int x = Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                        StreamHDFInfoList);
-  if (x) {
-    LOG(Sev::Error, "hdf_init failed, cancel this command");
-    throw std::runtime_error("");
-  }
+  Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(), StreamHDFInfoList);
   return StreamHDFInfoList;
 }
 
@@ -86,8 +82,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
-  using nlohmann::detail::out_of_range;
   using nlohmann::json;
+  using nlohmann::detail::out_of_range;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto const &stream : StreamHDFInfoList) {
@@ -186,10 +182,10 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 void CommandHandler::handleNew(std::string const &Command) {
+  using nlohmann::json;
+  using nlohmann::detail::out_of_range;
   using std::move;
   using std::string;
-  using nlohmann::detail::out_of_range;
-  using nlohmann::json;
   json Doc = parseOrThrow(Command);
 
   auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
@@ -221,7 +217,11 @@ void CommandHandler::handleNew(std::string const &Command) {
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   if (auto x = find<nlohmann::json>("nexus_structure", Doc)) {
-    StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
+    try {
+      StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
+    } catch (std::runtime_error const &e) {
+      LOG(Sev::Error, "Failed to initializeHDF: {}", e.what());
+    }
   } else {
     logMissingKey("nexus_structure", Doc.dump());
     return;
@@ -245,10 +245,12 @@ void CommandHandler::handleNew(std::string const &Command) {
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
   }
-
-  std::chrono::milliseconds StopTime(0);
   if (auto x = find<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
+    std::chrono::milliseconds StopTime(x.inner());
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info, "StopTime: {}", StopTime.count());
+      Config.StreamerConfiguration.StopTimestamp = StopTime;
+    }
   }
 
   if (MasterPtr) {
@@ -266,11 +268,6 @@ void CommandHandler::handleNew(std::string const &Command) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
-
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      s->setStopTime(StopTime);
-    }
 
     MasterPtr->stream_masters.push_back(std::move(s));
   } else {
@@ -305,12 +302,18 @@ void CommandHandler::addStreamSourceToWriterModule(
       rapidjson::Document ConfigStream;
       ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
-      auto Err = HDFWriterModule->reopen(
-          static_cast<hid_t>(Task->hdf_file.h5file),
-          StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr, nullptr);
-      if (Err.is_ERR()) {
-        LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+      try {
+        auto RootGroup = Task->hdf_file.h5file.root();
+        auto Err = HDFWriterModule->reopen(
+            RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr,
+            nullptr);
+        if (Err.is_ERR()) {
+          LOG(Sev::Error, "can not reopen HDF file for stream {}",
+              StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+          continue;
+        }
+      } catch (std::runtime_error const &e) {
+        LOG(Sev::Error, "Exception on HDFWriterModule->reopen(): {}", e.what());
         continue;
       }
 
@@ -343,6 +346,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (!MasterPtr) {
     return;
   }
+  LOG(Sev::Debug, "{}", Command);
+
   nlohmann::json Doc;
   try {
     Doc = nlohmann::json::parse(Command);
@@ -416,7 +421,7 @@ void CommandHandler::handle(std::string const &Command) {
       return;
     }
     if (CommandMain == "FileWriter_stop") {
-      handleStreamMasterStop(Doc);
+      handleStreamMasterStop(Command);
       return;
     }
     if (CommandMain == "file_writer_tasks_clear_all") {
