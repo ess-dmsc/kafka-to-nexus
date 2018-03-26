@@ -139,17 +139,9 @@ TEST(StatusWriter, add_empty_message_info) {
   EXPECT_EQ(getDoubleValue("stdandard_deviation",
                            json["streamer"][Topic]["statistics"]["size"]),
             0.0);
-  EXPECT_EQ(getDoubleValue("average",
-                           json["streamer"][Topic]["statistics"]["frequency"]),
+  EXPECT_EQ(getDoubleValue("frequency", json["streamer"][Topic]["statistics"]),
             0.0);
-  EXPECT_EQ(getDoubleValue("stdandard_deviation",
-                           json["streamer"][Topic]["statistics"]["frequency"]),
-            0.0);
-  EXPECT_EQ(getDoubleValue("average",
-                           json["streamer"][Topic]["statistics"]["throughput"]),
-            0.0);
-  EXPECT_EQ(getDoubleValue("stdandard_deviation",
-                           json["streamer"][Topic]["statistics"]["throughput"]),
+  EXPECT_EQ(getDoubleValue("throughput", json["streamer"][Topic]["statistics"]),
             0.0);
 }
 
@@ -181,21 +173,68 @@ TEST(StatusWriter, add_valid_message_updates_streamer_info) {
                            json["streamer"][Topic]["statistics"]["size"]),
             0.0);
   EXPECT_EQ(
-      getDoubleValue("average",
-                     json["streamer"][Topic]["statistics"]["frequency"]),
+      getDoubleValue("frequency", json["streamer"][Topic]["statistics"]),
       NumMessages /
           std::chrono::duration_cast<std::chrono::seconds>(SinceLastMessage)
               .count());
-  // EXPECT_EQ(getDoubleValue("stdandard_deviation",
-  //                          json["streamer"][Topic]["statistics"]["frequency"]),
-  //           0.0);
   EXPECT_EQ(
-      getDoubleValue("average",
-                     json["streamer"][Topic]["statistics"]["throughput"]),
+      getDoubleValue("throughput", json["streamer"][Topic]["statistics"]),
       MessageSizeBytes * 1e-6 /
           std::chrono::duration_cast<std::chrono::seconds>(SinceLastMessage)
               .count());
-  // EXPECT_EQ(getDoubleValue("stdandard_deviation",
-  //                          json["streamer"][Topic]["statistics"]["throughput"]),
-  //           0.0);
+}
+
+std::pair<double, double>
+FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &);
+
+double
+FileWriter::Status::messageFrequency(const FileWriter::Status::MessageInfo &,
+                                     const std::chrono::milliseconds &);
+
+double
+FileWriter::Status::messageThroughput(const FileWriter::Status::MessageInfo &,
+                                      const std::chrono::milliseconds &);
+
+TEST(StatFunctions, messageSize) {
+  const size_t NumMessages = 100;
+  const size_t MessageBytes = 1024;
+  MessageInfo Message;
+  for (size_t i = 0; i < NumMessages; ++i) {
+    Message.message(MessageBytes * i);
+  }
+  std::pair<double, double> MessageSize =
+      FileWriter::Status::messageSize(Message);
+  EXPECT_DOUBLE_EQ(MessageSize.first, 0.050688);
+  EXPECT_DOUBLE_EQ(MessageSize.second, 0.0297077677833032);
+}
+
+TEST(StatFunctions, messageFrequency) {
+  std::chrono::milliseconds TimeBetweenMessages{1500};
+  const size_t NumMessages = 100;
+  const size_t MessageBytes = 1024;
+  MessageInfo Message;
+  for (size_t i = 0; i < NumMessages; ++i) {
+    Message.message(MessageBytes * i);
+  }
+
+  double Frequency =
+      FileWriter::Status::messageFrequency(Message, TimeBetweenMessages);
+  EXPECT_DOUBLE_EQ(Frequency,
+                   NumMessages / (1e-3 * TimeBetweenMessages.count()));
+}
+
+TEST(StatFunctions, messageThroughput) {
+  std::chrono::milliseconds TimeBetweenMessages{1500};
+  const size_t NumMessages = 100;
+  const size_t MessageBytes = 1024;
+  MessageInfo Message;
+  for (size_t i = 0; i < NumMessages; ++i) {
+    Message.message(MessageBytes * i);
+  }
+
+  double Throughput =
+      FileWriter::Status::messageThroughput(Message, TimeBetweenMessages);
+  EXPECT_DOUBLE_EQ(Throughput,
+                   ((NumMessages - 1) * NumMessages / 2 * MessageBytes * 1e-6) /
+                       (1e-3 * TimeBetweenMessages.count()));
 }

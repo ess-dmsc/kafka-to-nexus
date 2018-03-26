@@ -9,19 +9,19 @@
 #include "StatusWriter.h"
 #include "logger.h"
 
-using ReportType = FileWriter::Status::NLJSONWriter;
-
 namespace FileWriter {
 
 class Report {
   using StreamMasterError = Status::StreamMasterError;
+  using ReportType = FileWriter::Status::NLJSONStreamWriter;
 
 public:
-  Report() {}
+  Report() : ReportMs{std::chrono::milliseconds{1000}} {}
   Report(std::shared_ptr<KafkaW::ProducerTopic> KafkaProducer,
+         const std::string &JID,
          const std::chrono::milliseconds &MsBetweenReports =
              std::chrono::milliseconds{1000})
-      : Producer{KafkaProducer}, ReportMs{MsBetweenReports} {}
+      : Producer{KafkaProducer}, JobId(JID), ReportMs{MsBetweenReports} {}
   Report(const Report &) = delete;
   Report(Report &&) = default;
   Report &operator=(Report &&) = default;
@@ -30,8 +30,8 @@ public:
   template <class S>
   void report(std::map<std::string, S> &Streamers, std::atomic<bool> &Stop,
               std::atomic<StreamMasterError> &StreamMasterStatus) {
-    while (!Stop.load()) {
 
+    while (!Stop.load()) {
       StreamMasterError error = produceReport(Streamers, StreamMasterStatus);
       if (error == StreamMasterError::REPORT_ERROR()) {
         StreamMasterStatus = error;
@@ -58,21 +58,26 @@ private:
       return StreamMasterError::REPORT_ERROR();
     }
 
-    Informations.setTimeToNextMessage(ReportMs);
-    Informations.StreamMasterStatus = StreamMasterStatus;
+    ReportType Reporter;
+    Reporter.setJobId(JobId);
     for (auto &Element : Streamers) {
-      // Lock in method add makes sure that value can not be modified while
-      // added, but don't care about syncronisation among different Streamer
+      // Writes in JSON format Streamer informations
+      Reporter.write(Element.second.messageInfo(), Element.first, ReportMs);
+      // Compute cumulative stats
       Informations.add(Element.second.messageInfo());
     }
-    // Status::JSONStreamWriter::ReturnType value =
-    //     Status::pprint<Status::JSONStreamWriter>(info);
-    // report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-    //                           value.size());
+    Informations.setTimeToNextMessage(ReportMs);
+    Informations.StreamMasterStatus = StreamMasterStatus;
+    Reporter.write(Informations);
+    ReportType::ReturnType Value = Reporter.get();
+    Producer->produce(reinterpret_cast<unsigned char *>(&Value[0]),
+                      Value.size());
+
     return StreamMasterError::OK();
   }
   Status::StreamMasterInfo Informations;
   std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
+  std::string JobId;
   std::chrono::milliseconds ReportMs;
 };
 } // namespace FileWriter

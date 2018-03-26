@@ -146,11 +146,11 @@ TEST(MessageInfo, compute_derived_quantities) {
   auto Throughput = FileWriter::Status::messageThroughput(MsgInfo, Duration);
   EXPECT_DOUBLE_EQ(Size.first, 3.0);
   EXPECT_NEAR(Size.second, 1.5811388300841898, 10e-3); // unbiased
-  EXPECT_NEAR(Frequency.first, 1e3 * MessagesSize.size() / Duration.count(),
-              10e-3);
-  EXPECT_NEAR(Throughput.first, 1e3 * std::accumulate(MessagesSize.begin(),
-                                                      MessagesSize.end(), 0.0) /
-                                    Duration.count(),
+  EXPECT_NEAR(Frequency, 1e3 * MessagesSize.size() / Duration.count(), 10e-3);
+  EXPECT_NEAR(Frequency, 1e3 * MessagesSize.size() / Duration.count(), 10e-3);
+  EXPECT_NEAR(Throughput, 1e3 * std::accumulate(MessagesSize.begin(),
+                                                MessagesSize.end(), 0.0) /
+                              Duration.count(),
               10e-3);
 }
 
@@ -164,9 +164,7 @@ TEST(MessageInfo, derived_quantities_null_divider) {
   std::chrono::milliseconds Duration(0);
 
   auto Frequency = FileWriter::Status::messageFrequency(MsgInfo, Duration);
-  auto throughput = FileWriter::Status::messageThroughput(MsgInfo, Duration);
-  EXPECT_DOUBLE_EQ(0.0, Frequency.first);
-  EXPECT_DOUBLE_EQ(0.0, Frequency.second);
-  EXPECT_DOUBLE_EQ(0.0, throughput.first);
-  EXPECT_DOUBLE_EQ(0.0, throughput.second);
+  auto Throughput = FileWriter::Status::messageThroughput(MsgInfo, Duration);
+  EXPECT_DOUBLE_EQ(0.0, Frequency);
+  EXPECT_DOUBLE_EQ(0.0, Throughput);
 }

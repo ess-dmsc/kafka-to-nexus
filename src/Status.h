@@ -133,24 +133,40 @@ private:
   std::chrono::milliseconds MillisecondsToNextMessage{0};
 };
 
-/// Return the average size and relative standard deviation of the number of
-/// messages \param Value the MessageInfo object that stores the data \return
-/// the {average size, standard deviation} pair
-const std::pair<double, double> messageSize(const MessageInfo &Information);
+//------------------------------------------------------------------------------
+/// @brief      Return the average size and relative standard deviation of the
+/// number of
+/// messages between two reports
+///
+/// @param[in]  Information  The MessageInfo object that stores the data
+///
+/// @return     A pair containing {average size, standard deviation}
+///
+std::pair<double, double> messageSize(const MessageInfo &Information);
 
-/// Return the frequency and the relative standard deviation of the number of
-/// messages \param value the MessageInfo object that stores the data \return
-/// the {frequency, standard deviation} pair
-const std::pair<double, double>
-messageFrequency(const MessageInfo &Information,
-                 const std::chrono::milliseconds &Duration);
+//------------------------------------------------------------------------------
+/// @brief      Return the frequency of the messages that are consumed
+///
+/// @param[in]  Information  The MessageInfo object that stores the data
+/// @param[in]  Duration     The amount of time between two report
+///
+/// @return     The number of message consumed per sescond if the amount of time
+/// is larger enough, 0 otherwise
+///
+double messageFrequency(const MessageInfo &Information,
+                        const std::chrono::milliseconds &Duration);
 
-/// Return the throughput and the relative standard deviation of the number of
-/// messages \param value the MessageInfo object that stores the data \return
-/// the {throughput, standard deviation} pair
-const std::pair<double, double>
-messageThroughput(const MessageInfo &Information,
-                  const std::chrono::milliseconds &Duration);
+//------------------------------------------------------------------------------
+/// @brief      Return the throughput of the writer, assuming that each message
+/// consumed correctly is written
+///
+/// @param[in]  Information  The MessageInfo object that stores the data
+/// @param[in]  Duration     The amount of time between two report
+///
+/// @return     The throughput if the amount of time is larger enough, 0
+/// otherwise
+double messageThroughput(const MessageInfo &Information,
+                         const std::chrono::milliseconds &Duration);
 
 } // namespace Status
 } // namespace FileWriter

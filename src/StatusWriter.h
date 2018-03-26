@@ -34,53 +34,9 @@ class MessageInfo;
 namespace FileWriter {
 namespace Status {
 
-/// Serialise the content of a StreamMasterInfo object in JSON
-/// format. In order to access to the serialised message ont of the
-/// two helper classes JSONStreamWriter and JSONWriter must be
-/// used. The JSON message contains global information about the
-/// StreamMaster as well information about each Streamer. For each
-/// Streamer the average message size, the average message frequency
-/// and the throughput are computed as well.
-//
-/// The JSON message has the following form
-/// \code
-///{
-///    "type": "stream_master_status",
-///    "next_message_eta_ms": 2000,
-///    "stream_master": {
-///        "state": "not_started",
-///        "messages": 270.0,
-///        "Mbytes": 212.2,
-///        "errors": 30.0,
-///        "runtime": 0
-///    },
-///    "streamer": {
-///        "first-stream": {
-///            "status": {
-///                "messages": 90.0,
-///                "Mbytes": 65.0,
-///                "errors": 10.0
-///            },
-///            "statistics": {
-///                "size": {
-///                    "average": 0.7,
-///                    "stdandard_deviation": 0.5
-///                },
-///                "frequency": {
-///                    "average": 45.0,
-///                    "stdandard_deviation": 0.0
-///                },
-///                "throughput": {
-///                    "average": 32.5,
-///                    "stdandard_deviation": 0.0
-///                }
-///            }
-///        }
-/// }
-/// \endcode
-
 class NLWriterBase {
   friend class NLJSONWriter;
+  friend class NLJSONStreamWriter;
 
 private:
   NLWriterBase();
@@ -90,6 +46,8 @@ private:
 
   NLWriterBase &operator=(const NLWriterBase &) = default;
   NLWriterBase &operator=(NLWriterBase &&) = default;
+
+  void setJobId(const std::string &JobId);
   void write(StreamMasterInfo &Informations);
   void write(MessageInfo &Informations, const std::string &Topic,
              const std::chrono::milliseconds &SinceLastMessage);
@@ -102,10 +60,32 @@ class NLJSONWriter {
 public:
   using ReturnType = nlohmann::json;
 
-  void write(StreamMasterInfo &Informations);
+  void setJobId(const std::string &JobId) { Base.setJobId(JobId); }
+  void write(StreamMasterInfo &Informations) { Base.write(Informations); }
   void write(MessageInfo &Informations, const std::string &Topic,
-             const std::chrono::milliseconds &SinceLastMessage);
-  ReturnType get();
+             const std::chrono::milliseconds &SinceLastMessage) {
+    Base.write(Informations, Topic, SinceLastMessage);
+  }
+  ReturnType get() { return Base.json; }
+
+private:
+  /// The main object responsible of serialization
+  NLWriterBase Base;
+};
+
+/// Helper class that give access to the JSON message
+class NLJSONStreamWriter {
+public:
+  using ReturnType = std::string;
+
+  void setJobId(const std::string &JobId) { Base.setJobId(JobId); }
+  void write(StreamMasterInfo &Informations) { Base.write(Informations); }
+  void write(MessageInfo &Informations, const std::string &Topic,
+             const std::chrono::milliseconds &SinceLastMessage) {
+    Base.write(Informations, Topic, SinceLastMessage);
+  }
+
+  ReturnType get() { return Base.json.dump(4); }
 
 private:
   /// The main object responsible of serialization

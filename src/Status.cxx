@@ -1,8 +1,7 @@
 #include <cmath>
 
-#include <rapidjson/document.h>
-
 #include "Status.h"
+#include "logger.h"
 
 /// Return the average given the sum of the elements and their number
 /// \param sum the sum of the elements
@@ -21,7 +20,7 @@ double standardDeviation(const double &Sum, const double &SumSquared,
   }
 }
 
-const std::pair<double, double>
+std::pair<double, double>
 FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Value) {
   if (Value.getMessages().first == 0) { // nan causes failure in JSON
     return std::pair<double, double>{};
@@ -33,31 +32,22 @@ FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Value) {
   return result;
 }
 
-const std::pair<double, double> FileWriter::Status::messageFrequency(
+double FileWriter::Status::messageFrequency(
     const FileWriter::Status::MessageInfo &Value,
     const std::chrono::milliseconds &TimeDifference) {
   if (TimeDifference.count() < 1e-10) {
-    return std::pair<double, double>({0, 0});
+    return 0.0;
   }
-  std::pair<double, double> result(
-      1e3 * average(Value.getMessages().first, TimeDifference.count()),
-      1e3 * standardDeviation(Value.getMessages().first,
-                              Value.getMessages().second,
-                              TimeDifference.count()));
-  return result;
+  return 1e3 * average(Value.getMessages().first, TimeDifference.count());
 }
 
-const std::pair<double, double> FileWriter::Status::messageThroughput(
+double FileWriter::Status::messageThroughput(
     const FileWriter::Status::MessageInfo &Value,
     const std::chrono::milliseconds &TimeDifference) {
   if (TimeDifference.count() < 1e-10) {
-    return std::pair<double, double>({0, 0});
+    return 0.0;
   }
-  std::pair<double, double> result(
-      1e3 * average(Value.getMbytes().first, TimeDifference.count()),
-      1e3 * standardDeviation(Value.getMbytes().first, Value.getMbytes().second,
-                              TimeDifference.count()));
-  return result;
+  return 1e3 * average(Value.getMbytes().first, TimeDifference.count());
 }
 
 void FileWriter::Status::MessageInfo::message(const double &MessageSize) {
@@ -99,11 +89,9 @@ std::pair<double, double> &operator+=(std::pair<double, double> &First,
 
 void FileWriter::Status::StreamMasterInfo::add(
     FileWriter::Status::MessageInfo &Info) {
-  std::lock_guard<std::mutex> Lock(Info.getMutex());
   Mbytes += Info.getMbytes();
   Messages += Info.getMessages();
   Errors += Info.getErrors();
-  Info.reset();
 }
 
 void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
