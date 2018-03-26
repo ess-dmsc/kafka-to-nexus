@@ -8,6 +8,7 @@ using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
 
 constexpr int NumMessages{10000};
+constexpr int NumErrors{10000};
 
 double RandomGaussian() {
   static std::default_random_engine Generator;
@@ -66,122 +67,50 @@ TEST(MessageInfo, add_messages) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, reduce_message_info_empty) {
-
-  std::vector<MessageInfo> MsgInfoVec(10);
-  MessageInfo MsgInfo;
-  for (auto &Elem : MsgInfoVec) {
-    MsgInfo += Elem;
-  }
-
-  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, 0.0);
-  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, 0.0);
-  EXPECT_NEAR(MsgInfo.getMbytes().first, 0.0, 1e-6);
-  EXPECT_NEAR(MsgInfo.getMbytes().second, 0.0, 1e-12);
-  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
-}
-
-TEST(MessageInfo, reduce_message_info) {
-  std::vector<MessageInfo> MsgInfoVec(10);
-
-  double TotalMessages{0.0}, TotalMessages2{0.0};
-  double TotalSize{0.0}, TotalSize2{0.0};
-  for (auto &Elem : MsgInfoVec) {
-    for (int i = 0; i < 10; ++i) {
-      Elem.message(std::fabs(RandomGaussian()));
-    }
-    TotalMessages += Elem.getMessages().first;
-    TotalMessages2 += Elem.getMessages().second;
-    TotalSize += Elem.getMbytes().first;
-    TotalSize2 += Elem.getMbytes().second;
-  }
-
-  MessageInfo MsgInfo;
-  for (auto &Elem : MsgInfoVec) {
-    MsgInfo += Elem;
-  }
-
-  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, TotalMessages);
-  EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, TotalMessages2);
-  EXPECT_NEAR(MsgInfo.getMbytes().first, TotalSize, 1e-6);
-  EXPECT_NEAR(MsgInfo.getMbytes().second, TotalSize2, 1e-12);
-  EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
-}
-
-TEST(MessageInfo, copy_message_info) {
-  MessageInfo MsgInfo;
-  for (int i = 0; i < NumMessages; ++i) {
-    MsgInfo.message(std::fabs(RandomGaussian()));
-  }
-  for (int i = 0; i < 10; ++i) {
-    MsgInfo.error();
-  }
-  MessageInfo NewMsgInfo;
-  NewMsgInfo = MsgInfo;
-
-  EXPECT_EQ(NewMsgInfo.getMessages().first, MsgInfo.getMessages().first);
-  EXPECT_EQ(NewMsgInfo.getMessages().second, MsgInfo.getMessages().second);
-  EXPECT_EQ(NewMsgInfo.getMbytes().first, MsgInfo.getMbytes().first);
-  EXPECT_EQ(NewMsgInfo.getMbytes().second, MsgInfo.getMbytes().second);
-  EXPECT_EQ(NewMsgInfo.getErrors(), MsgInfo.getErrors());
-}
-
 TEST(StreamMasterInfo, initialize_empty) {
   StreamMasterInfo Info;
-  auto &Value = Info.info();
-  EXPECT_TRUE(Value.size() == 0);
+  EXPECT_EQ(Info.getMbytes().first, 0.0);
+  EXPECT_EQ(Info.getMbytes().second, 0.0);
+  EXPECT_EQ(Info.getMessages().first, 0.0);
+  EXPECT_EQ(Info.getMessages().second, 0.0);
+  EXPECT_EQ(Info.getErrors(), 0.0);
+  EXPECT_EQ(Info.getTimeToNextMessage(), std::chrono::milliseconds{0});
 }
 
 TEST(StreamMasterInfo, add_one_info) {
   StreamMasterInfo Info;
+  MessageInfo MsgInfo;
+  const double MessageBytes{1000};
 
-  // other is required because MessageInfo::add() resets s
-  MessageInfo MsgInfo, Other;
   for (int i = 0; i < NumMessages; ++i) {
-    auto msg = std::fabs(RandomGaussian());
-    MsgInfo.message(msg);
-    Other.message(msg);
+    MsgInfo.message(MessageBytes);
   }
-  for (int i = 0; i < 10; ++i) {
+  for (int i = 0; i < NumErrors; ++i) {
     MsgInfo.error();
-    Other.error();
   }
-  Info.add("topic", MsgInfo);
+  Info.add(MsgInfo);
 
-  auto &Value = Info.info();
-  EXPECT_TRUE(Value.size() == 1);
-
-  EXPECT_EQ(Value["topic"].getMessages().first, Other.getMessages().first);
-  EXPECT_EQ(Value["topic"].getMessages().second, Other.getMessages().second);
-  EXPECT_EQ(Value["topic"].getMbytes().first, Other.getMbytes().first);
-  EXPECT_EQ(Value["topic"].getMbytes().second, Other.getMbytes().second);
-  EXPECT_EQ(Value["topic"].getErrors(), Other.getErrors());
+  EXPECT_NEAR(Info.getMbytes().first, NumMessages * MessageBytes * 1e-6, 1e-6);
+  EXPECT_NEAR(Info.getMbytes().second,
+              NumMessages * (MessageBytes * 1e-6) * (MessageBytes * 1e-6),
+              1e-6);
+  EXPECT_EQ(Info.getMessages().first, NumMessages);
+  EXPECT_EQ(Info.getMessages().second, NumMessages);
+  EXPECT_EQ(Info.getErrors(), NumErrors);
+  EXPECT_EQ(Info.getTimeToNextMessage(), std::chrono::milliseconds{0});
 }
 
-TEST(StreamMasterInfo, add_multiple_infos) {
+TEST(StreamMasterInfo, add_accumulate_infos) {
+  const size_t NumStreamers{13};
   StreamMasterInfo Info;
-  const std::vector<std::string> Topics{"first", "second", "third"};
-
-  for (auto &t : Topics) {
-    MessageInfo MsgInfo;
-    Info.add(t, MsgInfo);
-  }
-
-  auto &Value = Info.info();
-  EXPECT_TRUE(Value.size() == Topics.size());
-}
-
-TEST(StreamMasterInfo, add_accumulate_all_infos) {
-  StreamMasterInfo Info;
-  const std::vector<std::string> Topics{"first", "second", "third"};
 
   double TotalMessages{0.0}, TotalMessages2{0.0};
   double TotalSize{0.0}, TotalSize2{0.0};
   double TotalErrors{0.0};
 
-  for (auto &t : Topics) {
+  for (size_t i = 0; i < NumStreamers; ++i) {
     MessageInfo MsgInfo;
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < NumMessages; ++i) {
       auto MessageSize = std::fabs(RandomGaussian());
       MsgInfo.message(MessageSize);
 
@@ -190,19 +119,17 @@ TEST(StreamMasterInfo, add_accumulate_all_infos) {
       TotalSize += MessageSize * 1e-6;
       TotalSize2 += MessageSize * MessageSize * 1e-12;
     }
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < NumErrors; ++i) {
       MsgInfo.error();
       TotalErrors += 1.0;
     }
-    Info.add(t, MsgInfo);
+    Info.add(MsgInfo);
   }
-
-  auto &Value = Info.getTotal();
-  EXPECT_DOUBLE_EQ(Value.getMessages().first, TotalMessages);
-  EXPECT_DOUBLE_EQ(Value.getMessages().second, TotalMessages2);
-  EXPECT_NEAR(Value.getMbytes().first, TotalSize, 1e-6);
-  EXPECT_NEAR(Value.getMbytes().second, TotalSize2, 1e-12);
-  EXPECT_DOUBLE_EQ(Value.getErrors(), TotalErrors);
+  EXPECT_DOUBLE_EQ(Info.getMessages().first, TotalMessages);
+  EXPECT_DOUBLE_EQ(Info.getMessages().second, TotalMessages2);
+  EXPECT_NEAR(Info.getMbytes().first, TotalSize, 1e-6);
+  EXPECT_NEAR(Info.getMbytes().second, TotalSize2, 1e-12);
+  EXPECT_DOUBLE_EQ(Info.getErrors(), TotalErrors);
 }
 
 TEST(MessageInfo, compute_derived_quantities) {

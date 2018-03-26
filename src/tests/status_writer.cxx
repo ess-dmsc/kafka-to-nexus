@@ -8,6 +8,14 @@
 #include "rapidjson/prettywriter.h"
 #include "rapidjson/writer.h"
 
+std::string getStringValue(const std::string &Key, nlohmann::json &Document) {
+  if (auto x = find<std::string>(Key, Document)) {
+    return x.inner();
+  } else {
+    return "";
+  }
+}
+
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
 using StreamWriter = FileWriter::Status::JSONStreamWriter;
@@ -41,11 +49,25 @@ TEST(StatusWriter, create_report_streamers) {
         mi.error();
       }
     }
-    info.add(t, mi);
+    info.add(mi);
   }
 
   StreamWriter writer;
   auto s = writer.write(info);
 
   // ASSERT_EQ(s,expect);
+}
+
+TEST(StatusWriter, create_empty_nl_writer) {
+  FileWriter::Status::NLJSONWriter Writer;
+  StreamMasterInfo sm;
+  nlohmann::json json = Writer.write(sm);
+  EXPECT_EQ(getStringValue("type", json), "stream_master_status");
+}
+
+TEST(StatusWriter, create_non_empty_nl_writer) {
+  FileWriter::Status::NLJSONWriter Writer;
+  StreamMasterInfo sm;
+  nlohmann::json json = Writer.write(sm);
+  std::cout << json.dump(4) << "\n";
 }

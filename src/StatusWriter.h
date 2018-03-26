@@ -20,7 +20,7 @@
 #define RAPIDJSON_HAS_STDSTRING 1
 #endif
 
-#include "rapidjson/document.h"
+#include "json.h"
 #include <chrono>
 
 namespace FileWriter {
@@ -117,6 +117,22 @@ public:
   /// return it
   /// \param Informations the StreamMasterInfo object to be serialized
   ReturnType write(StreamMasterInfo &) const;
+
+private:
+  /// The main object responsible of serialization
+  JSONWriterBase Base;
+};
+
+/// Helper class that give access to the JSON message created in the
+/// JSONWriterBase in the form of a rapidjson::Document
+class NLJSONWriter {
+public:
+  using ReturnType = nlohmann::json;
+
+  /// Serialize a StreamMasterInfo object into a rapidjson::Document and return
+  /// it
+  /// \param Informations the StreamMasterInfo object to be serialized
+  ReturnType write(StreamMasterInfo &Informations) const;
 
 private:
   /// The main object responsible of serialization

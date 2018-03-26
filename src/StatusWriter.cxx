@@ -19,47 +19,49 @@ JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
   auto &Allocator = Document.GetAllocator();
   Document.SetObject();
 
-  std::chrono::milliseconds next_message_relative_eta_ms =
-      Information.getTimeToNextMessage();
-  { // message type
-    Document.AddMember("type", "stream_master_status", Allocator);
-    Document.AddMember("next_message_eta_ms",
-                       next_message_relative_eta_ms.count(), Allocator);
-  }
-  { // stream master info
-    rapidjson::Value StreamMasterInformation;
-    StreamMasterInformation.SetObject();
-    StreamMasterInformation.AddMember(
-        "state", rapidjson::StringRef(Err2Str(Information.status()).c_str()),
-        Allocator);
-    StreamMasterInformation.AddMember(
-        "messages", Information.getTotal().getMessages().first, Allocator);
-    StreamMasterInformation.AddMember(
-        "Mbytes", Information.getTotal().getMbytes().first, Allocator);
-    StreamMasterInformation.AddMember(
-        "errors", Information.getTotal().getErrors(), Allocator);
-    StreamMasterInformation.AddMember("runtime", Information.runTime().count(),
-                                      Allocator);
-    Document.AddMember("stream_master", StreamMasterInformation, Allocator);
-  }
-  { // streamers info
-    rapidjson::Value StreamerInformation;
-    StreamerInformation.SetObject();
-    for (auto &TopicName : Information.info()) {
-      rapidjson::Value Key(TopicName.first.c_str(), Allocator);
-      rapidjson::Value Value;
-      Value.SetObject();
-      Value.AddMember("status", primaryQuantities(TopicName.second, Allocator),
-                      Allocator);
-      Value.AddMember("statistics",
-                      derivedQuantities(TopicName.second,
-                                        next_message_relative_eta_ms,
-                                        Allocator),
-                      Allocator);
-      StreamerInformation.AddMember(Key, Value, Allocator);
-    }
-    Document.AddMember("streamer", StreamerInformation, Allocator);
-  }
+  // std::chrono::milliseconds next_message_relative_eta_ms =
+  //     Information.getTimeToNextMessage();
+  // { // message type
+  //   Document.AddMember("type", "stream_master_status", Allocator);
+  //   Document.AddMember("next_message_eta_ms",
+  //                      next_message_relative_eta_ms.count(), Allocator);
+  // }
+  // { // stream master info
+  //   rapidjson::Value StreamMasterInformation;
+  //   StreamMasterInformation.SetObject();
+  //   StreamMasterInformation.AddMember(
+  //       "state", rapidjson::StringRef(Err2Str(Information.status()).c_str()),
+  //       Allocator);
+  //   StreamMasterInformation.AddMember(
+  //       "messages", Information.getTotal().getMessages().first, Allocator);
+  //   StreamMasterInformation.AddMember(
+  //       "Mbytes", Information.getTotal().getMbytes().first, Allocator);
+  //   StreamMasterInformation.AddMember(
+  //       "errors", Information.getTotal().getErrors(), Allocator);
+  //   StreamMasterInformation.AddMember("runtime",
+  //   Information.runTime().count(),
+  //                                     Allocator);
+  //   Document.AddMember("stream_master", StreamMasterInformation, Allocator);
+  // }
+  // { // streamers info
+  //   rapidjson::Value StreamerInformation;
+  //   StreamerInformation.SetObject();
+  //   for (auto &TopicName : Information.info()) {
+  //     rapidjson::Value Key(TopicName.first.c_str(), Allocator);
+  //     rapidjson::Value Value;
+  //     Value.SetObject();
+  //     Value.AddMember("status", primaryQuantities(TopicName.second,
+  //     Allocator),
+  //                     Allocator);
+  //     Value.AddMember("statistics",
+  //                     derivedQuantities(TopicName.second,
+  //                                       next_message_relative_eta_ms,
+  //                                       Allocator),
+  //                     Allocator);
+  //     StreamerInformation.AddMember(Key, Value, Allocator);
+  //   }
+  //   Document.AddMember("streamer", StreamerInformation, Allocator);
+  // }
   return Document;
 }
 
@@ -88,7 +90,7 @@ JSONWriterBase::primaryQuantities(MessageInfo &Information,
 /// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
 /// written
 template <class AllocatorType>
-rapidjson::Value createDerivedQuantity(MessageInfo::value_type &Quantity,
+rapidjson::Value createDerivedQuantity(std::pair<double, double> &Quantity,
                                        AllocatorType &Allocator) {
   rapidjson::Value Result;
   Result.SetObject();
@@ -137,6 +139,30 @@ JSONStreamWriter::write(StreamMasterInfo &Information) const {
 
 JSONWriter::ReturnType JSONWriter::write(StreamMasterInfo &Information) const {
   return Base.writeImplemented(Information);
+}
+
+nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
+  // MessageInfo Summary = Information.getTotal();
+  // nlohmann::json Value = {
+  //   "stream_master" : { { "state", Err2Str(Information.status()).c_str() },
+  //                       { "messages", Summary.getMessages() },
+  //                       { "Mbytes", Summary.getMbytes() },
+  //                       { "errors", Summary.getErrors() },
+  //                       { "runtime", Summary.runTime().count() } }
+  // };
+  // return Value;
+  return nlohmann::json{};
+}
+
+NLJSONWriter::ReturnType
+NLJSONWriter::write(StreamMasterInfo &Information) const {
+  using json = nlohmann::json;
+  // stream master
+  json Result = {
+      {"type", "stream_master_status"},
+      {"next_message_eta_ms", Information.getTimeToNextMessage().count()},
+      {"stream_master", {{"state", ""}, {"a", "b"}}}};
+  return Result;
 }
 
 } // namespace Status

@@ -57,12 +57,12 @@ private:
       return StreamMasterError::REPORT_ERROR();
     }
 
-    info.status(stream_master_status);
+    //    info.status(stream_master_status);
     info.setTimeToNextMessage(report_ms_);
 
     for (auto &s : streamer) {
       std::lock_guard<std::mutex> Lock(s.second.messageInfo().getMutex());
-      info.add(s.first, s.second.messageInfo());
+      info.add(s.second.messageInfo());
     }
     Status::JSONStreamWriter::ReturnType value =
         Status::pprint<Status::JSONStreamWriter>(info);
