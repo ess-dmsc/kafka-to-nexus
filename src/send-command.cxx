@@ -1,24 +1,20 @@
+#include "CLIOptions.h"
 #include "KafkaW/KafkaW.h"
-#include "logger.h"
-#include <cstdio>
-#include <cstdlib>
-#include <getopt.h>
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/stringbuffer.h>
-#include <string>
-
 #include "helper.h"
 #include "uri.h"
 
+#include <CLI/CLI.hpp>
+#include <cstdio>
+#include <cstdlib>
 #include <fstream>
-#include <iostream>
+#include <rapidjson/document.h>
+#include <rapidjson/prettywriter.h>
+#include <string>
 
 using uri::URI;
 
 // POD
 struct MainOpt {
-  bool help = false;
   uint64_t teamid = 0;
   URI broker{"localhost:9092/commands"};
   KafkaW::BrokerSettings BrokerSettings;
@@ -102,82 +98,29 @@ int main(int argc, char **argv) {
 
   MainOpt opt;
 
-  static struct option long_options[] = {
-      {"help", no_argument, 0, 'h'},
-      {"teamid", required_argument, 0, 0},
-      {"cmd", required_argument, 0, 0},
-      {"broker", required_argument, 0, 0},
-      {0, 0, 0, 0},
-  };
-  int option_index = 0;
-  bool getopt_error = false;
-  while (true) {
-    int c = getopt_long(argc, argv, "v:h", long_options, &option_index);
-    // LOG(Sev::Dbg, "c getopt {}", c);
-    if (c == -1)
-      break;
-    if (c == '?') {
-      getopt_error = true;
-    }
-    switch (c) {
-    case 'v':
-      try {
-        log_level = std::stoi(std::string(optarg));
-      } catch (std::invalid_argument &e) {
-        std::cout << "Severity level of verbosity argument is not an integer."
-                  << std::endl;
-      }
-      break;
-    case 'h':
-      opt.help = true;
-      break;
-    case 0:
-      auto lname = long_options[option_index].name;
-      if (std::string("broker") == lname) {
-        opt.broker = URI(optarg);
-      }
-      if (std::string("help") == lname) {
-        opt.help = true;
-      }
-      if (std::string("teamid") == lname) {
-        opt.teamid = strtoul(optarg, nullptr, 0);
-      }
-      if (std::string("cmd") == lname) {
-        opt.cmd = optarg;
-      }
-      break;
-    }
-  }
+  fmt::print("send-command {:.7} (ESS, BrightnESS)\n"
+             "  Contact: dominik.werder@psi.ch\n\n",
+             GIT_COMMIT);
 
-  if (getopt_error) {
-    LOG(Sev::Notice, "ERROR parsing command line options");
-    opt.help = true;
-    return 1;
-  }
+  CLI::App App{
+      "Writes NeXus files in a format specified with a json template.\n"
+      "Writer modules can be used to populate the file from Kafka topics.\n"};
 
-  printf("send-command	%.7s\n", GIT_COMMIT);
-  printf("	Contact: dominik.werder@psi.ch\n\n");
-
-  if (opt.help) {
-    printf("Send a command to kafka-to-nexus.\n"
-           "\n"
-           "kafka-to-nexus\n"
-           "  --help, -h\n"
-           "\n"
-           "  --broker          <//host[:port]/topic>\n"
-           "    Host, port, topic where the command should be sent to.\n"
-           "\n"
-           "  --cmd             <command>\n"
-           "    Use a command file: file:<filename>\n"
-           "    Stop writing file-with-id and timestamp (optional): "
-           "stop:<jobid>[:<timestamp>]\n"
-           "    Terminate the filewriter process: exit\n"
-           "\n"
-           "   -v\n"
-           "    Increase verbosity\n"
-           "\n");
-    return 1;
-  }
+  App.set_config(); // disable ini config file
+  App.add_option("--teamid", opt.teamid, "");
+  App.add_option(
+      "--cmd", opt.cmd,
+      "<command>\n"
+      "                              Use a command file: file:<filename>\n"
+      "                              Stop writing file-with-id and timestamp "
+      "(optional): stop:<jobid>[:<timestamp>]\n"
+      "                              Terminate the filewriter process: exit");
+  add_option(App, "--broker", opt.broker,
+             "<//host[:port]/topic>\n"
+             "                              Host, port, topic where the "
+             "command should be sent to.",
+             false);
+  CLI11_PARSE(App, argc, argv);
 
   opt.BrokerSettings.Address = opt.broker.host_port;
   auto producer = std::make_shared<KafkaW::Producer>(opt.BrokerSettings);
