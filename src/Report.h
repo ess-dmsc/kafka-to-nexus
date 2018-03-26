@@ -9,6 +9,8 @@
 #include "StatusWriter.h"
 #include "logger.h"
 
+using ReportType = FileWriter::Status::NLJSONWriter;
+
 namespace FileWriter {
 
 class Report {
@@ -16,32 +18,30 @@ class Report {
 
 public:
   Report() {}
-  Report(std::shared_ptr<KafkaW::ProducerTopic> producer,
-         const std::chrono::milliseconds &report_ms =
+  Report(std::shared_ptr<KafkaW::ProducerTopic> KafkaProducer,
+         const std::chrono::milliseconds &MsBetweenReports =
              std::chrono::milliseconds{1000})
-      : report_producer_{producer}, report_ms_{report_ms} {}
-  Report(const Report &other) = delete;
-  Report(Report &&other) = default;
-  Report &operator=(Report &&other) = default;
+      : Producer{KafkaProducer}, ReportMs{MsBetweenReports} {}
+  Report(const Report &) = delete;
+  Report(Report &&) = default;
+  Report &operator=(Report &&) = default;
   ~Report() = default;
 
   template <class S>
-  void report(S &streamer, std::atomic<bool> &stop,
-              std::atomic<StreamMasterError> &stream_master_status) {
-    while (!stop.load()) {
-      std::this_thread::sleep_for(report_ms_);
-      StreamMasterError error =
-          produce_single_report(streamer, stream_master_status);
+  void report(std::map<std::string, S> &Streamers, std::atomic<bool> &Stop,
+              std::atomic<StreamMasterError> &StreamMasterStatus) {
+    while (!Stop.load()) {
+
+      StreamMasterError error = produceReport(Streamers, StreamMasterStatus);
       if (error == StreamMasterError::REPORT_ERROR()) {
-        stream_master_status = error;
+        StreamMasterStatus = error;
         return;
       }
     }
-    std::this_thread::sleep_for(report_ms_);
-    StreamMasterError error =
-        produce_single_report(streamer, stream_master_status);
-    if (!error.isOK()) { // termination message
-      stream_master_status = error;
+    // produce termination message
+    StreamMasterError error = produceReport(Streamers, StreamMasterStatus);
+    if (error != StreamMasterError::REPORT_ERROR()) {
+      StreamMasterStatus = error;
     }
     return;
   }
@@ -49,30 +49,30 @@ public:
 private:
   template <class S>
   StreamMasterError
-  produce_single_report(S &streamer,
-                        std::atomic<StreamMasterError> &stream_master_status) {
-    if (!report_producer_) {
+  produceReport(std::map<std::string, S> &Streamers,
+                std::atomic<StreamMasterError> &StreamMasterStatus) {
+    std::this_thread::sleep_for(ReportMs);
+    if (!Producer) {
       LOG(Sev::Error,
           "ProucerTopic error: can't produce StreamMaster status report");
       return StreamMasterError::REPORT_ERROR();
     }
 
-    //    info.status(stream_master_status);
-    info.setTimeToNextMessage(report_ms_);
-
-    for (auto &s : streamer) {
-      std::lock_guard<std::mutex> Lock(s.second.messageInfo().getMutex());
-      info.add(s.second.messageInfo());
+    Informations.setTimeToNextMessage(ReportMs);
+    Informations.StreamMasterStatus = StreamMasterStatus;
+    for (auto &Element : Streamers) {
+      // Lock in method add makes sure that value can not be modified while
+      // added, but don't care about syncronisation among different Streamer
+      Informations.add(Element.second.messageInfo());
     }
-    Status::JSONStreamWriter::ReturnType value =
-        Status::pprint<Status::JSONStreamWriter>(info);
-    report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
-                              value.size());
+    // Status::JSONStreamWriter::ReturnType value =
+    //     Status::pprint<Status::JSONStreamWriter>(info);
+    // report_producer_->produce(reinterpret_cast<unsigned char *>(&value[0]),
+    //                           value.size());
     return StreamMasterError::OK();
   }
-
-  Status::StreamMasterInfo info;
-  std::shared_ptr<KafkaW::ProducerTopic> report_producer_{nullptr};
-  std::chrono::milliseconds report_ms_;
+  Status::StreamMasterInfo Informations;
+  std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
+  std::chrono::milliseconds ReportMs;
 };
 } // namespace FileWriter

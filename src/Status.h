@@ -123,6 +123,8 @@ public:
   /// \return the pair {number of messages, number of messages\f$^2\f$}
   double getErrors() const;
 
+  StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED()};
+
 private:
   std::pair<double, double> Mbytes{0, 0};
   std::pair<double, double> Messages{0, 0};

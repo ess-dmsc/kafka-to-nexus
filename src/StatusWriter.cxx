@@ -9,161 +9,68 @@
 
 namespace FileWriter {
 namespace Status {
-
-/// Serialize the information contained in a StreamMasterInfo object
-/// into a JSON message stored as a rapidjson::Document.
-/// \param Information the StreamMasterInfo object to be serialized
-rapidjson::Document
-JSONWriterBase::writeImplemented(StreamMasterInfo &Information) const {
-  rapidjson::Document Document;
-  auto &Allocator = Document.GetAllocator();
-  Document.SetObject();
-
-  // std::chrono::milliseconds next_message_relative_eta_ms =
-  //     Information.getTimeToNextMessage();
-  // { // message type
-  //   Document.AddMember("type", "stream_master_status", Allocator);
-  //   Document.AddMember("next_message_eta_ms",
-  //                      next_message_relative_eta_ms.count(), Allocator);
-  // }
-  // { // stream master info
-  //   rapidjson::Value StreamMasterInformation;
-  //   StreamMasterInformation.SetObject();
-  //   StreamMasterInformation.AddMember(
-  //       "state", rapidjson::StringRef(Err2Str(Information.status()).c_str()),
-  //       Allocator);
-  //   StreamMasterInformation.AddMember(
-  //       "messages", Information.getTotal().getMessages().first, Allocator);
-  //   StreamMasterInformation.AddMember(
-  //       "Mbytes", Information.getTotal().getMbytes().first, Allocator);
-  //   StreamMasterInformation.AddMember(
-  //       "errors", Information.getTotal().getErrors(), Allocator);
-  //   StreamMasterInformation.AddMember("runtime",
-  //   Information.runTime().count(),
-  //                                     Allocator);
-  //   Document.AddMember("stream_master", StreamMasterInformation, Allocator);
-  // }
-  // { // streamers info
-  //   rapidjson::Value StreamerInformation;
-  //   StreamerInformation.SetObject();
-  //   for (auto &TopicName : Information.info()) {
-  //     rapidjson::Value Key(TopicName.first.c_str(), Allocator);
-  //     rapidjson::Value Value;
-  //     Value.SetObject();
-  //     Value.AddMember("status", primaryQuantities(TopicName.second,
-  //     Allocator),
-  //                     Allocator);
-  //     Value.AddMember("statistics",
-  //                     derivedQuantities(TopicName.second,
-  //                                       next_message_relative_eta_ms,
-  //                                       Allocator),
-  //                     Allocator);
-  //     StreamerInformation.AddMember(Key, Value, Allocator);
-  //   }
-  //   Document.AddMember("streamer", StreamerInformation, Allocator);
-  // }
-  return Document;
+NLWriterBase::NLWriterBase() {
+  json = {{"type", "stream_master_status"},
+          {"next_message_eta_ms", 0},
+          {"job_id", 0}};
 }
 
-/// Format the number received of messages, the received megabytes and the
-/// number of errors in a rapidjson::Value object
-/// \param Information a MessageInfo object containing information about the
-/// messages consumed by the Streamer
-/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
-/// written
-template <class AllocatorType>
-rapidjson::Value
-JSONWriterBase::primaryQuantities(MessageInfo &Information,
-                                  AllocatorType &Allocator) const {
-  rapidjson::Value Value;
-  Value.SetObject();
-  Value.AddMember("messages", Information.getMessages().first, Allocator);
-  Value.AddMember("Mbytes", Information.getMbytes().first, Allocator);
-  Value.AddMember("errors", Information.getErrors(), Allocator);
+nlohmann::json StreamMasterToJson(StreamMasterInfo &Informations) {
+  nlohmann::json Value = {{"state", Err2Str(Informations.StreamMasterStatus)},
+                          {"messages", Informations.getMessages().first},
+                          {"Mbytes", Informations.getMbytes().first},
+                          {"errors", Informations.getErrors()},
+                          {"runtime", Informations.runTime().count()}};
   return Value;
 }
 
-/// Return the average and the standard value of the quantity as a
-/// rapidjson::Value object
-/// \param Quantity a MessageInfo::value_type object containing statistical
-/// information about the quantity of interest
-/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
-/// written
-template <class AllocatorType>
-rapidjson::Value createDerivedQuantity(std::pair<double, double> &Quantity,
-                                       AllocatorType &Allocator) {
-  rapidjson::Value Result;
-  Result.SetObject();
-  Result.AddMember("average", Quantity.first, Allocator);
-  Result.AddMember("stdandard_deviation", Quantity.second, Allocator);
-  return Result;
+nlohmann::json
+StreamerToJson(MessageInfo &Informations,
+               const std::chrono::milliseconds &SinceLastMessage) {
+  auto Size = messageSize(Informations);
+  auto Frequency =
+      FileWriter::Status::messageFrequency(Informations, SinceLastMessage);
+  auto Throughput =
+      FileWriter::Status::messageThroughput(Informations, SinceLastMessage);
+
+  nlohmann::json Status = {"status",
+                           {{"messages", Informations.getMessages().first},
+                            {"Mbytes", Informations.getMbytes().first},
+                            {"errors", Informations.getErrors()}}};
+
+  nlohmann::json Statistics = {
+      "statistics",
+      {{"size",
+        {{"average", Size.first}, {"stdandard_deviation", Size.second}}},
+       {"frequency",
+        {{"average", Frequency.first},
+         {"stdandard_deviation", Frequency.second}}},
+       {"throughput",
+        {{"average", Throughput.first},
+         {"stdandard_deviation", Throughput.second}}}}};
+
+  return nlohmann::json{Status, Statistics};
 }
 
-/// Compute average message size, the message frequency and the Streamer
-/// throughput and return them as a rapidjson::Value object
-/// \param Information a MessageInfo object containing information about the
-/// messages consumed by the Streamer
-/// \param Duration
-/// \param Allocator the rapidjson::Allocator for the rapidjson::Document to be
-/// written
-template <class AllocatorType>
-rapidjson::Value
-JSONWriterBase::derivedQuantities(MessageInfo &Info,
-                                  const std::chrono::milliseconds &Duration,
-                                  AllocatorType &Allocator) const {
-  auto Size = messageSize(Info);
-  auto Frequency = FileWriter::Status::messageFrequency(Info, Duration);
-  auto Throughput = FileWriter::Status::messageThroughput(Info, Duration);
+void NLWriterBase::write(StreamMasterInfo &Informations) {
+  json["next_message_eta_ms"] = Informations.getTimeToNextMessage().count();
+  json["stream_master"] = StreamMasterToJson(Informations);
+};
 
-  rapidjson::Value Value;
-  Value.SetObject();
-  Value.AddMember("size", createDerivedQuantity(Size, Allocator), Allocator);
-  Value.AddMember("frequency", createDerivedQuantity(Frequency, Allocator),
-                  Allocator);
-  Value.AddMember("throughput", createDerivedQuantity(Throughput, Allocator),
-                  Allocator);
-
-  return Value;
+void NLWriterBase::write(MessageInfo &Informations, const std::string &Topic,
+                         const std::chrono::milliseconds &SinceLastMessage) {
+  json["streamer"][Topic] = StreamerToJson(Informations, SinceLastMessage);
 }
 
-JSONStreamWriter::ReturnType
-JSONStreamWriter::write(StreamMasterInfo &Information) const {
-  auto Value = Base.writeImplemented(Information);
-  rapidjson::StringBuffer Buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> Writer(Buffer);
-  Writer.SetMaxDecimalPlaces(1);
-  Value.Accept(Writer);
-  std::string String(Buffer.GetString());
-  return String;
+void NLJSONWriter::write(StreamMasterInfo &Informations) {
+  Base.write(Informations);
+}
+void NLJSONWriter::write(MessageInfo &Informations, const std::string &Topic,
+                         const std::chrono::milliseconds &SinceLastMessage) {
+  Base.write(Informations, Topic, SinceLastMessage);
 }
 
-JSONWriter::ReturnType JSONWriter::write(StreamMasterInfo &Information) const {
-  return Base.writeImplemented(Information);
-}
-
-nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
-  // MessageInfo Summary = Information.getTotal();
-  // nlohmann::json Value = {
-  //   "stream_master" : { { "state", Err2Str(Information.status()).c_str() },
-  //                       { "messages", Summary.getMessages() },
-  //                       { "Mbytes", Summary.getMbytes() },
-  //                       { "errors", Summary.getErrors() },
-  //                       { "runtime", Summary.runTime().count() } }
-  // };
-  // return Value;
-  return nlohmann::json{};
-}
-
-NLJSONWriter::ReturnType
-NLJSONWriter::write(StreamMasterInfo &Information) const {
-  using json = nlohmann::json;
-  // stream master
-  json Result = {
-      {"type", "stream_master_status"},
-      {"next_message_eta_ms", Information.getTimeToNextMessage().count()},
-      {"stream_master", {{"state", ""}, {"a", "b"}}}};
-  return Result;
-}
+nlohmann::json NLJSONWriter::get() { return Base.json; }
 
 } // namespace Status
 

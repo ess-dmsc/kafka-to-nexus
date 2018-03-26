@@ -15,10 +15,10 @@
 
 #pragma once
 
-#if RAPIDJSON_HAS_STDSTRING == 0
-#undef RAPIDJSON_HAS_STDSTRING
-#define RAPIDJSON_HAS_STDSTRING 1
-#endif
+// #if RAPIDJSON_HAS_STDSTRING == 0
+// #undef RAPIDJSON_HAS_STDSTRING
+// #define RAPIDJSON_HAS_STDSTRING 1
+// #endif
 
 #include "json.h"
 #include <chrono>
@@ -78,72 +78,39 @@ namespace Status {
 ///        }
 /// }
 /// \endcode
-class JSONWriterBase {
-  friend class JSONWriter;
-  friend class JSONStreamWriter;
+
+class NLWriterBase {
+  friend class NLJSONWriter;
 
 private:
-  using ReturnType = rapidjson::Document;
+  NLWriterBase();
+  NLWriterBase(const NLWriterBase &) = default;
+  NLWriterBase(NLWriterBase &&) = default;
+  ~NLWriterBase() = default;
 
-  ReturnType writeImplemented(StreamMasterInfo &) const;
-  template <class Allocator>
-  rapidjson::Value primaryQuantities(MessageInfo &, Allocator &) const;
-  template <class Allocator>
-  rapidjson::Value derivedQuantities(MessageInfo &,
-                                     const std::chrono::milliseconds &,
-                                     Allocator &) const;
+  NLWriterBase &operator=(const NLWriterBase &) = default;
+  NLWriterBase &operator=(NLWriterBase &&) = default;
+  void write(StreamMasterInfo &Informations);
+  void write(MessageInfo &Informations, const std::string &Topic,
+             const std::chrono::milliseconds &SinceLastMessage);
+
+  nlohmann::json json;
 };
 
-/// Helper class that give access to the JSON message created in the
-/// JSONWriterBase in the form of a rapidjson::Document
-class JSONWriter {
-public:
-  using ReturnType = rapidjson::Document;
-
-  /// Serialize a StreamMasterInfo object into a rapidjson::Document and return
-  /// it
-  /// \param Informations the StreamMasterInfo object to be serialized
-  ReturnType write(StreamMasterInfo &Informations) const;
-
-private:
-  /// The main object responsible of serialization
-  JSONWriterBase Base;
-};
-
-class JSONStreamWriter {
-public:
-  using ReturnType = std::string;
-  /// Serialize a StreamMasterInfo object into a JSON formatted string and
-  /// return it
-  /// \param Informations the StreamMasterInfo object to be serialized
-  ReturnType write(StreamMasterInfo &) const;
-
-private:
-  /// The main object responsible of serialization
-  JSONWriterBase Base;
-};
-
-/// Helper class that give access to the JSON message created in the
-/// JSONWriterBase in the form of a rapidjson::Document
+/// Helper class that give access to the JSON message
 class NLJSONWriter {
 public:
   using ReturnType = nlohmann::json;
 
-  /// Serialize a StreamMasterInfo object into a rapidjson::Document and return
-  /// it
-  /// \param Informations the StreamMasterInfo object to be serialized
-  ReturnType write(StreamMasterInfo &Informations) const;
+  void write(StreamMasterInfo &Informations);
+  void write(MessageInfo &Informations, const std::string &Topic,
+             const std::chrono::milliseconds &SinceLastMessage);
+  ReturnType get();
 
 private:
   /// The main object responsible of serialization
-  JSONWriterBase Base;
+  NLWriterBase Base;
 };
-
-template <class WriterType>
-typename WriterType::ReturnType pprint(StreamMasterInfo &Information) {
-  WriterType Writer;
-  return Writer.write(Information);
-}
 
 } // namespace Status
 } // namespace FileWriter

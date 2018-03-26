@@ -63,6 +63,9 @@ public:
   bool operator==(const StreamMasterError &Other) {
     return Value == Other.Value;
   }
+  bool operator!=(const StreamMasterError &Other) {
+    return Value == Other.Value;
+  }
 
 private:
   int Value{0};
