@@ -79,6 +79,5 @@ struct MainOpt {
   std::chrono::milliseconds topic_write_duration;
 };
 
-std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
 void setup_logger_from_options(MainOpt const &opt);
 extern std::atomic<MainOpt *> g_main_opt;

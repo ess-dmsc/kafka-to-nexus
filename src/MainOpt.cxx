@@ -1,7 +1,6 @@
 #include "MainOpt.h"
 #include "helper.h"
 #include "uri.h"
-#include <getopt.h>
 #include <iostream>
 #include <rapidjson/prettywriter.h>
 #include <rapidjson/schema.h>
