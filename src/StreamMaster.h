@@ -12,7 +12,7 @@
 #pragma once
 
 #include "FileWriterTask.h"
-#include "Report.hpp"
+#include "Report.h"
 
 #include <atomic>
 #include <condition_variable>
