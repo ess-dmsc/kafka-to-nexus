@@ -3,9 +3,9 @@
 #include "uri.h"
 #include <CLI/CLI.hpp>
 
-CLI::Option *uri_option(CLI::App &App, std::string Name, uri::URI &URIArg,
-                        CLI::callback_t Fun, std::string Description,
-                        bool Defaulted) {
+CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
+                       CLI::callback_t Fun, const std::string &Description,
+                       bool Defaulted) {
 
   CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
   Opt->set_custom_option("URI", 1);
@@ -16,28 +16,29 @@ CLI::Option *uri_option(CLI::App &App, std::string Name, uri::URI &URIArg,
 }
 
 /// Use for adding a URI option
-CLI::Option *add_option(CLI::App &App, std::string Name, uri::URI &URIArg,
-                        std::string Description = "", bool Defaulted = false) {
+CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
+                       std::string Description = "", bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
     URIArg.parse(Results[0]);
     return true;
   };
 
-  return uri_option(App, Name, URIArg, Fun, Description, Defaulted);
+  return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
 }
 
 /// Use for adding a URI option, if the URI is given then TrueIfOptionGiven is
 /// set to true
-CLI::Option *add_option(CLI::App &App, std::string Name, uri::URI &URIArg,
-                        bool &TrueIfOptionGiven, std::string Description = "",
-                        bool Defaulted = false) {
+CLI::Option *addOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
+                       bool &TrueIfOptionGiven,
+                       const std::string &Description = "",
+                       bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg, &TrueIfOptionGiven](CLI::results_t Results) {
     TrueIfOptionGiven = true;
     URIArg.parse(Results[0]);
     return true;
   };
 
-  return uri_option(App, Name, URIArg, Fun, Description, Defaulted);
+  return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
 }
 
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
@@ -48,13 +49,13 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 
-  add_option(
+  addOption(
       App, "--command-uri", MainOptions.command_broker_uri,
       "<//host[:port][/topic]> Kafka broker/topic to listen for commands");
-  add_option(App, "--status-uri", MainOptions.kafka_status_uri,
-             MainOptions.do_kafka_status,
-             "<//host[:port][/topic]> Kafka broker/topic to publish status "
-             "updates on");
+  addOption(App, "--status-uri", MainOptions.kafka_status_uri,
+            MainOptions.do_kafka_status,
+            "<//host[:port][/topic]> Kafka broker/topic to publish status "
+            "updates on");
   App.add_option("--kafka-gelf", MainOptions.kafka_gelf,
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,

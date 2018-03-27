@@ -115,11 +115,11 @@ int main(int argc, char **argv) {
       "                              Stop writing file-with-id and timestamp "
       "(optional): stop:<jobid>[:<timestamp>]\n"
       "                              Terminate the filewriter process: exit");
-  add_option(App, "--broker", opt.broker,
-             "<//host[:port]/topic>\n"
-             "                              Host, port, topic where the "
-             "command should be sent to.",
-             false);
+  addOption(App, "--broker", opt.broker,
+            "<//host[:port]/topic>\n"
+              "                              Host, port, topic where the "
+              "command should be sent to.",
+            false);
   CLI11_PARSE(App, argc, argv);
 
   opt.BrokerSettings.Address = opt.broker.host_port;
