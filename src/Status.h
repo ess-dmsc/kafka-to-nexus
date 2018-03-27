@@ -46,26 +46,46 @@ public:
   MessageInfo &operator=(MessageInfo &&Other) = delete;
 
   /// Add the information about a new message
+
+  //----------------------------------------------------------------------------
+  /// @brief      Increments the number of messages that have been correctly
+  /// processed by one unit and the number of processed megabytes accordingly.
+  ///
+  /// @param[in]  MessageSize  The message size in bytes
+  ///
   void message(const double &MessageSize);
 
-  /// Increment the error count
+  //----------------------------------------------------------------------------
+  /// @brief      Increments the error count by one unit
+  ///
   void error();
 
-  /// Reset all the counters
+  //----------------------------------------------------------------------------
+  /// @brief      Reset the counters
+  ///
   void reset();
 
-  /// Return the number of megabytes
-  /// \return the {MB received, \f$\rm{MB received}^2\f$} pair
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the number of megabytes processed.
+  ///
+  /// @return     A pair {MB received, \f$\rm{MB received}^2\f$}
+  ///
   std::pair<double, double> getMbytes() const;
 
-  /// Return the number of messages whose information has been stored
-  /// \return the pair {number of messages, number of messages\f$\ 2\f$}
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the number of messages that have been processed
+  /// correctly
+  ///
+  /// @return     A pair {number of messages, number of messages\f$\ 2\f$}.
+  ///
   std::pair<double, double> getMessages() const;
 
-  /// Return the number of errors whose information has been stored
-  /// \return the pair {number of messages, number of messages\f$^2\f$}
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the number of messages recognised as error
+  ///
+  /// @return     The number of messages.
+  ///
   double getErrors() const;
-  std::mutex &getMutex() { return Mutex; }
 
 private:
   double Messages{0};
@@ -90,39 +110,79 @@ public:
   StreamMasterInfo &operator=(const StreamMasterInfo &) = default;
   StreamMasterInfo &operator=(StreamMasterInfo &&) = default;
 
-  /// Add new information about the stream on the topic \param topic. If a
-  /// message info for the topic already exists it's updated, if doesn't exist
-  /// it's created with the current values
+  //----------------------------------------------------------------------------
+  /// @brief      Adds the informations collected for a stream
+  ///
+  /// @param      info  The MessageInfo object containing all the informations
+  ///
   void add(MessageInfo &info);
 
   /// Set the ETA of the next message
   /// \param ToNextMessage std::chrono::milliseconds from the last message to
   /// the next
+
+  //----------------------------------------------------------------------------
+  /// @brief      Sets the estimate time to next message. The next message is
+  /// expected to arrive at [time of lastmessage] + [ToNextMessage]
+  ///
+  /// @param[in]  ToNextMessage  milliseconds in  next message
+  ///
   void setTimeToNextMessage(const std::chrono::milliseconds &ToNextMessage);
+
   /// get the time difference between two consecutive status messages
   /// \result std::chrono::milliseconds from the last message to the next
+
+  //----------------------------------------------------------------------------
+  /// @brief      Gets the expected time difference from the lase message to
+  /// next.
+  ///
+  /// @return     The milliseconds after the last message.
+  ///
   const std::chrono::milliseconds getTimeToNextMessage();
 
-  /// Get the ETA of the next message
-  /// \return ToNextMessage std::chrono::milliseconds from the last message to
-  /// the next
-  const std::chrono::milliseconds timeToNextMessage();
-  /// Return the total execution time
-  /// \return std::chrono::milliseconds since the class has been created
+  /// @brief Returns the total execution time
+  /// @return Milliseconds since the write command has been issued
   const std::chrono::milliseconds runTime();
 
   /// Return the number of megabytes
   /// \return the {MB received, \f$\rm{MB received}^2\f$} pair
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the total number of megabytes processed for the
+  /// current file.
+  ///
+  /// @return     The pair {MB received, \f$\rm{MB received}^2\f$}.
+  ///
   std::pair<double, double> getMbytes() const;
 
   /// Return the number of messages whose information has been stored
   /// \return the pair {number of messages, number of messages\f$\ 2\f$}
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the total number of messages processed for the current
+  /// file.
+  ///
+  /// @return     The pair {number of messages, number of messages\f$\ 2\f$}.
+  ///
   std::pair<double, double> getMessages() const;
 
   /// Return the number of errors whose information has been stored
   /// \return the pair {number of messages, number of messages\f$^2\f$}
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the total number of error in the messages processed
+  /// for the current file.
+  ///
+  /// @return     The number of errors.
+  ///
   double getErrors() const;
 
+  //----------------------------------------------------------------------------
+  /// @brief Returns the error status of the StreamMaster associated with the
+  /// file
+  ///
+  /// @return The StreamMaster status.
+  ///
   StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED()};
 
 private:

@@ -92,6 +92,7 @@ void FileWriter::Status::StreamMasterInfo::add(
   Mbytes += Info.getMbytes();
   Messages += Info.getMessages();
   Errors += Info.getErrors();
+  Info.reset();
 }
 
 void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
