@@ -123,4 +123,3 @@ FileWriter::Status::StreamMasterInfo::getMessages() const {
 double FileWriter::Status::StreamMasterInfo::getErrors() const {
   return Errors;
 }
-
