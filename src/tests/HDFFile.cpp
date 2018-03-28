@@ -24,9 +24,7 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
-MainOpt getTestOptions() {
-  return MainOpt();
-}
+MainOpt getTestOptions() { return MainOpt(); }
 
 void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
   rapidjson::Document cfg;

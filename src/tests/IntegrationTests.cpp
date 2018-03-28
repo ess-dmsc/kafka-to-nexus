@@ -1,7 +1,7 @@
 #include "MainOpt.h"
 #include "roundtrip.h"
-#include <librdkafka/rdkafka.h>
 #include <gtest/gtest.h>
+#include <librdkafka/rdkafka.h>
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -16,5 +16,4 @@ int main(int argc, char **argv) {
 }
 
 static_assert(RD_KAFKA_RESP_ERR_NO_ERROR == 0,
-             "Make sure that NO_ERROR is and stays 0");
-
+              "Make sure that NO_ERROR is and stays 0");
