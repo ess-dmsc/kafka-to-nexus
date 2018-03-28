@@ -15,7 +15,7 @@ std::string parse_json_command(const std::string &filename) {
   return cmd;
 }
 
-TEST(CommandHandler_Test, test_found_broker_matches_expected) {
+TEST(CommandHandler_Test, TestFoundBrokerMatchesExpected) {
   rapidjson::Document new_01;
   std::string Cmd01 =
       parse_json_command(std::string(TEST_DATA_PATH) + "/msg-cmd-new-01.json");
@@ -23,7 +23,7 @@ TEST(CommandHandler_Test, test_found_broker_matches_expected) {
   ASSERT_EQ(FileWriter::findBroker(Cmd01), "localhost:9092");
 }
 
-TEST(CommandHandler_Test, test_missing_broker_set_to_default) {
+TEST(CommandHandler_Test, TestMissingBrokerSetToDefault) {
   rapidjson::Document new_00;
   std::string Cmd00 =
       parse_json_command(std::string(TEST_DATA_PATH) + "/msg-cmd-new-00.json");
