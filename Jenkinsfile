@@ -81,7 +81,7 @@ def docker_cmake(image_key) {
         }
         def configure_script = """
                         cd build
-                        cmake ../${project} -DREQUIRE_GTEST=ON ${coverage_on}
+                        cmake ../${project} ${coverage_on}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
     } catch (e) {
@@ -95,7 +95,7 @@ def docker_build(image_key) {
         def build_script = """
                       cd build
                       . ./activate_run.sh
-                      make VERBOSE=1
+                      make all UnitTests VERBOSE=1
                   """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
     } catch (e) {
@@ -109,7 +109,7 @@ def docker_test(image_key) {
         def test_script = """
                         cd build
                         . ./activate_run.sh
-                        ./tests/tests
+                        ./tests/UnitTests
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${test_script}\""
     } catch (e) {
@@ -124,7 +124,7 @@ def docker_coverage(image_key) {
         def coverage_script = """
                         cd build
                         . ./activate_run.sh
-                        ./tests/tests -- --gtest_output=xml:${test_output}
+                        ./tests/UnitTests -- --gtest_output=xml:${test_output}
                         make coverage
                         lcov --directory . --capture --output-file coverage.info
                         lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
@@ -231,14 +231,14 @@ def get_macos_pipeline()
 
                 dir("${project}/build") {
                     try {
-                        sh "cmake -DREQUIRE_GTEST=ON ../code"
+                        sh "cmake ../code"
                     } catch (e) {
                         failure_function(e, 'MacOSX / CMake failed')
                     }
 
                     try {
-                        sh "make VERBOSE=1"
-                        sh ". ./activate_run.sh && ./tests/tests"
+                        sh "make all UnitTests VERBOSE=1"
+                        sh ". ./activate_run.sh && ./tests/UnitTests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
                     }

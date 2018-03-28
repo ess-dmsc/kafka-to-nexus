@@ -22,7 +22,7 @@ HDFFileTestHelper.h
 
 
 
-add_executable(UnitTests ${UnitTests_SRC} ${UnitTests_INC})
+add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
 
 
 add_dependencies(UnitTests flatbuffers_generate)
@@ -61,7 +61,7 @@ set(IntegrationTest_INC
   roundtrip.h
 )
 
-add_executable(IntegrationTest ${IntegrationTest_SRC} ${IntegrationTest_INC})
+add_executable(IntegrationTest EXCLUDE_FROM_ALL ${IntegrationTest_SRC} ${IntegrationTest_INC})
 add_dependencies(IntegrationTest flatbuffers_generate)
 target_compile_definitions(IntegrationTest PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
 target_compile_definitions(IntegrationTest PRIVATE ${compile_defs_common})
