@@ -144,6 +144,7 @@ set(kafka_to_nexus_INC
   Status.h
   StatusWriter.h
   Streamer.h
+  StreamerOptions.h
   StreamMaster.h
   TimeDifferenceFromMessage.h
   TopicReader.h

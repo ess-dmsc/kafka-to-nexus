@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Alloc.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include "uri.h"
@@ -69,7 +68,6 @@ struct MainOpt {
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
   bool source_do_process_message = true;
-  Alloc::sptr jm;
   bool logpid_sleep = false;
   // Max interval (in std::chrono::milliseconds) to spend writing each topic
   // before switch to the next
