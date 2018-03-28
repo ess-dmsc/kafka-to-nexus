@@ -16,7 +16,7 @@ double RandomGaussian() {
   return Normal(Generator);
 }
 
-TEST(MessageInfo, zero_initialisation) {
+TEST(MessageInfo, everythingIsZeroAtInitialisation) {
   MessageInfo MsgInfo;
   ASSERT_DOUBLE_EQ(MsgInfo.getMessages().first, 0.0);
   ASSERT_DOUBLE_EQ(MsgInfo.getMessages().second, 0.0);
@@ -25,7 +25,7 @@ TEST(MessageInfo, zero_initialisation) {
   ASSERT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, add_one_message) {
+TEST(MessageInfo, addOneMessage) {
   MessageInfo MsgInfo;
   const double NewMessageBytes{1024};
   MsgInfo.message(NewMessageBytes);
@@ -38,7 +38,7 @@ TEST(MessageInfo, add_one_message) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, add_one_error) {
+TEST(MessageInfo, addOneError) {
   MessageInfo MsgInfo;
   MsgInfo.error();
 
@@ -49,7 +49,7 @@ TEST(MessageInfo, add_one_error) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 1.0);
 }
 
-TEST(MessageInfo, add_messages) {
+TEST(MessageInfo, addMessages) {
   MessageInfo MsgInfo;
 
   double accum{0.0}, accum2{0.0};
@@ -67,7 +67,7 @@ TEST(MessageInfo, add_messages) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(StreamMasterInfo, initialize_empty) {
+TEST(StreamMasterInfo, everythingIsZeroAtInitialisation) {
   StreamMasterInfo Info;
   EXPECT_EQ(Info.getMbytes().first, 0.0);
   EXPECT_EQ(Info.getMbytes().second, 0.0);
@@ -77,7 +77,7 @@ TEST(StreamMasterInfo, initialize_empty) {
   EXPECT_EQ(Info.getTimeToNextMessage(), std::chrono::milliseconds{0});
 }
 
-TEST(StreamMasterInfo, add_one_info) {
+TEST(StreamMasterInfo, addOneInfo) {
   StreamMasterInfo Info;
   MessageInfo MsgInfo;
   const double MessageBytes{1000};
@@ -100,7 +100,7 @@ TEST(StreamMasterInfo, add_one_info) {
   EXPECT_EQ(Info.getTimeToNextMessage(), std::chrono::milliseconds{0});
 }
 
-TEST(StreamMasterInfo, add_accumulate_infos) {
+TEST(StreamMasterInfo, accumulateInfos) {
   const size_t NumStreamers{13};
   StreamMasterInfo Info;
 
@@ -132,7 +132,7 @@ TEST(StreamMasterInfo, add_accumulate_infos) {
   EXPECT_DOUBLE_EQ(Info.getErrors(), TotalErrors);
 }
 
-TEST(MessageInfo, compute_derived_quantities) {
+TEST(MessageInfo, computeDerivedQuantities) {
   const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
   MessageInfo MsgInfo;
 
@@ -154,7 +154,7 @@ TEST(MessageInfo, compute_derived_quantities) {
               10e-3);
 }
 
-TEST(MessageInfo, derived_quantities_null_divider) {
+TEST(MessageInfo, derivedQuantitiesAreZeroIfFactorIsNull) {
   const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
   MessageInfo MsgInfo;
 

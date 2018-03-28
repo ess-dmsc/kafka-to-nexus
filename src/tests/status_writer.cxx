@@ -38,11 +38,7 @@ double getDoubleValue(const std::string &Key, nlohmann::json &Document) {
   return -1;
 }
 
-template <class T> class TD;
-
-constexpr int n_messages{100};
-
-TEST(StatusWriter, empty_writer_has_default_fields) {
+TEST(StatusWriter, emptyWriterHasDefaultFields) {
   NLJSONWriter Writer;
   StreamMasterInfo sm;
   nlohmann::json json = Writer.get();
@@ -51,7 +47,7 @@ TEST(StatusWriter, empty_writer_has_default_fields) {
   EXPECT_EQ(getIntegerValue("job_id", json), 0);
 }
 
-TEST(StatusWriter, add_empty_stream_master_info_uses_defaults) {
+TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   FileWriter::Status::NLJSONWriter Writer;
   StreamMasterInfo sm;
   Writer.write(sm);
@@ -65,7 +61,7 @@ TEST(StatusWriter, add_empty_stream_master_info_uses_defaults) {
   EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
 }
 
-TEST(StatusWriter, show_time_to_next_message) {
+TEST(StatusWriter, showTimeToNextMessage) {
   StreamMasterInfo sm;
   sm.setTimeToNextMessage(std::chrono::milliseconds{1000});
 
@@ -76,7 +72,7 @@ TEST(StatusWriter, show_time_to_next_message) {
   EXPECT_EQ(getDoubleValue("next_message_eta_ms", json), 1000.0);
 }
 
-TEST(StatusWriter, add_message_updates_stream_master) {
+TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   const size_t MessageSizeBytes = 1024;
   MessageInfo Message;
   StreamMasterInfo sm;
@@ -98,7 +94,7 @@ TEST(StatusWriter, add_message_updates_stream_master) {
   EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
 }
 
-TEST(StatusWriter, add_error_updates_stream_master) {
+TEST(StatusWriter, addErrorUpdatesStreamMaster) {
   MessageInfo Message;
   StreamMasterInfo sm;
 
@@ -117,7 +113,7 @@ TEST(StatusWriter, add_error_updates_stream_master) {
   EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
 }
 
-TEST(StatusWriter, add_empty_message_info) {
+TEST(StatusWriter, addEmptyMessageInfo) {
   MessageInfo Message;
   std::chrono::milliseconds SinceLastMessage{1000};
   std::string Topic{"no-topic"};
@@ -145,7 +141,7 @@ TEST(StatusWriter, add_empty_message_info) {
             0.0);
 }
 
-TEST(StatusWriter, add_valid_message_updates_streamer_info) {
+TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
   const size_t MessageSizeBytes = 1024;
   const double NumMessages = 1.0;
   MessageInfo Message;
@@ -183,17 +179,6 @@ TEST(StatusWriter, add_valid_message_updates_streamer_info) {
           std::chrono::duration_cast<std::chrono::seconds>(SinceLastMessage)
               .count());
 }
-
-std::pair<double, double>
-FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &);
-
-double
-FileWriter::Status::messageFrequency(const FileWriter::Status::MessageInfo &,
-                                     const std::chrono::milliseconds &);
-
-double
-FileWriter::Status::messageThroughput(const FileWriter::Status::MessageInfo &,
-                                      const std::chrono::milliseconds &);
 
 TEST(StatFunctions, messageSize) {
   const size_t NumMessages = 100;
