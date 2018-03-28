@@ -207,7 +207,7 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
   } catch (std::runtime_error const &e) {
     LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
                       "timestamp in HDF file")
-    current_time_zone = locate_zone("Zulu");
+    current_time_zone = locate_zone("UTC");
   }
   auto now = make_zoned(current_time_zone,
                         floor<std::chrono::milliseconds>(system_clock::now()));
