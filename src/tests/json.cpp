@@ -1,19 +1,17 @@
-#include "../json.h"
-#include "../logger.h"
+#include "json.h"
 #include <gtest/gtest.h>
 
 using namespace rapidjson;
 
-TEST(json, merge_with_exactly_one_conflicting_key) {
+TEST(json, MergeWithExactlyOneConflictingKey) {
   Document jd1, jd2;
   jd1.Parse(R""({"k1": "string1"})"");
   jd2.Parse(R""({"k1": "string2"})"");
   auto jd3 = merge(jd1, jd2);
-  LOG(Sev::Debug, "{}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jd2);
 }
 
-TEST(json, merge_two_different_keys) {
+TEST(json, MergeTwoDifferentKeys) {
   Document jd1, jd2, jde;
   jd1.Parse(R""({"k1": "string1"})"");
   jd2.Parse(R""({"k2": "string2"})"");
@@ -22,11 +20,10 @@ TEST(json, merge_two_different_keys) {
   "k2": "string2"
 })"");
   auto jd3 = merge(jd1, jd2);
-  LOG(Sev::Debug, "{}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jde);
 }
 
-TEST(json, merge_3_keys_with_more_complicated_structures) {
+TEST(json, Merge3KeysWithMoreComplicatedStructures) {
   Document jd1, jd2, jde;
   jd1.Parse(R""({
   "k1": 500,
@@ -55,11 +52,10 @@ TEST(json, merge_3_keys_with_more_complicated_structures) {
   }
 })"");
   auto jd3 = merge(jd1, jd2);
-  LOG(Sev::Debug, "{}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jde);
 }
 
-TEST(json, merge_deeper_nested_keys) {
+TEST(json, MergeDeeperNestedKeys) {
   Document jd1, jd2, jde;
 
   jd1.Parse(R""({
@@ -106,7 +102,5 @@ TEST(json, merge_deeper_nested_keys) {
 })"");
 
   auto jd3 = merge(jd1, jd2);
-  LOG(Sev::Debug, "expected: {}", json_to_string(jde));
-  LOG(Sev::Debug, "returned: {}", json_to_string(jd3));
   ASSERT_TRUE(jd3 == jde);
 }

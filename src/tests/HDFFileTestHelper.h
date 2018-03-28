@@ -4,8 +4,6 @@
 #include "../MainOpt.h"
 #include <h5cpp/hdf5.hpp>
 
-void SetTestOptions(MainOpt *Options);
-
 namespace HDFFileTestHelper {
 
 FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename);

@@ -1,5 +1,4 @@
-#include "../MainOpt.h"
-#include "../logger.h"
+#include "MainOpt.h"
 #include <gtest/gtest.h>
 
 using namespace rapidjson;
@@ -9,7 +8,7 @@ std::vector<char> vector_from_literal(char const *literal) {
   return ret;
 }
 
-TEST(MainOpt, parse_hdf_output_prefix_from_command_line) {
+TEST(MainOpt, ParseHdfOutputPrefixFromCommandLine) {
   std::vector<std::string> arg_strings = {"/some/program/name",
                                           "--hdf-output-prefix", "/some/path"};
   std::vector<std::vector<char>> args;
@@ -25,7 +24,7 @@ TEST(MainOpt, parse_hdf_output_prefix_from_command_line) {
   ASSERT_EQ(parse_opt_return.second->hdf_output_prefix, "/some/path");
 }
 
-TEST(MainOpt, parse_hdf_output_prefix_from_json_file) {
+TEST(MainOpt, ParseHdfOutputPrefixFromJsonFile) {
   std::string jsontxt(R""({"hdf-output-prefix": "/some/directory"})"");
   std::vector<std::string> arg_strings = {"/some/program/name"};
   std::vector<std::vector<char>> args;

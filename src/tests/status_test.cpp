@@ -15,7 +15,7 @@ double RandomGaussian() {
   return Normal(Generator);
 }
 
-TEST(MessageInfo, zero_initialisation) {
+TEST(MessageInfo, ZeroInitialisation) {
   MessageInfo MsgInfo;
   ASSERT_DOUBLE_EQ(MsgInfo.getMessages().first, 0.0);
   ASSERT_DOUBLE_EQ(MsgInfo.getMessages().second, 0.0);
@@ -24,7 +24,7 @@ TEST(MessageInfo, zero_initialisation) {
   ASSERT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, add_one_message) {
+TEST(MessageInfo, AddOneMessage) {
   MessageInfo MsgInfo;
   const double NewMessageBytes{1024};
   MsgInfo.message(NewMessageBytes);
@@ -37,7 +37,7 @@ TEST(MessageInfo, add_one_message) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, add_one_error) {
+TEST(MessageInfo, AddOneError) {
   MessageInfo MsgInfo;
   MsgInfo.error();
 
@@ -48,7 +48,7 @@ TEST(MessageInfo, add_one_error) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 1.0);
 }
 
-TEST(MessageInfo, add_messages) {
+TEST(MessageInfo, AddMessages) {
   MessageInfo MsgInfo;
 
   double accum{0.0}, accum2{0.0};
@@ -66,7 +66,7 @@ TEST(MessageInfo, add_messages) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, reduce_message_info_empty) {
+TEST(MessageInfo, ReduceMessageInfoEmpty) {
 
   std::vector<MessageInfo> MsgInfoVec(10);
   MessageInfo MsgInfo;
@@ -81,7 +81,7 @@ TEST(MessageInfo, reduce_message_info_empty) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, reduce_message_info) {
+TEST(MessageInfo, ReduceMessageInfo) {
   std::vector<MessageInfo> MsgInfoVec(10);
 
   double TotalMessages{0.0}, TotalMessages2{0.0};
@@ -108,7 +108,7 @@ TEST(MessageInfo, reduce_message_info) {
   EXPECT_DOUBLE_EQ(MsgInfo.getErrors(), 0.0);
 }
 
-TEST(MessageInfo, copy_message_info) {
+TEST(MessageInfo, CopyMessageInfo) {
   MessageInfo MsgInfo;
   for (int i = 0; i < NumMessages; ++i) {
     MsgInfo.message(std::fabs(RandomGaussian()));
@@ -126,13 +126,13 @@ TEST(MessageInfo, copy_message_info) {
   EXPECT_EQ(NewMsgInfo.getErrors(), MsgInfo.getErrors());
 }
 
-TEST(StreamMasterInfo, initialize_empty) {
+TEST(StreamMasterInfo, InitializeEmpty) {
   StreamMasterInfo Info;
   auto &Value = Info.info();
   EXPECT_TRUE(Value.size() == 0);
 }
 
-TEST(StreamMasterInfo, add_one_info) {
+TEST(StreamMasterInfo, AddOneInfo) {
   StreamMasterInfo Info;
 
   // other is required because MessageInfo::add() resets s
@@ -158,7 +158,7 @@ TEST(StreamMasterInfo, add_one_info) {
   EXPECT_EQ(Value["topic"].getErrors(), Other.getErrors());
 }
 
-TEST(StreamMasterInfo, add_multiple_infos) {
+TEST(StreamMasterInfo, AddMultipleInfos) {
   StreamMasterInfo Info;
   const std::vector<std::string> Topics{"first", "second", "third"};
 
@@ -171,7 +171,7 @@ TEST(StreamMasterInfo, add_multiple_infos) {
   EXPECT_TRUE(Value.size() == Topics.size());
 }
 
-TEST(StreamMasterInfo, add_accumulate_all_infos) {
+TEST(StreamMasterInfo, AddAccumulateAllInfos) {
   StreamMasterInfo Info;
   const std::vector<std::string> Topics{"first", "second", "third"};
 
@@ -205,7 +205,7 @@ TEST(StreamMasterInfo, add_accumulate_all_infos) {
   EXPECT_DOUBLE_EQ(Value.getErrors(), TotalErrors);
 }
 
-TEST(MessageInfo, compute_derived_quantities) {
+TEST(MessageInfo, ComputeDerivedQuantities) {
   const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
   MessageInfo MsgInfo;
 
@@ -227,7 +227,7 @@ TEST(MessageInfo, compute_derived_quantities) {
               10e-3);
 }
 
-TEST(MessageInfo, derived_quantities_null_divider) {
+TEST(MessageInfo, DerivedQuantitiesNullDivider) {
   const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
   MessageInfo MsgInfo;
 

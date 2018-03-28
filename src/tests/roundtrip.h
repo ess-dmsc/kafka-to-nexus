@@ -4,7 +4,6 @@
 
 class Roundtrip : public ::testing::Test {
 public:
-  static MainOpt *opt;
 };
 
 namespace FileWriter {

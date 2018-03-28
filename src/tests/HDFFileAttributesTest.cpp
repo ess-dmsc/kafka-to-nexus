@@ -1,4 +1,4 @@
-#include "../HDFFile.h"
+#include "HDFFile.h"
 #include "HDFFileTestHelper.h"
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>

@@ -24,11 +24,9 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 
-static MainOpt *TestOptions;
-
-void SetTestOptions(MainOpt *Options) { TestOptions = Options; }
-
-MainOpt *getTestOptions() { return TestOptions; }
+MainOpt getTestOptions() {
+  return MainOpt();
+}
 
 void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
   rapidjson::Document cfg;
@@ -90,7 +88,7 @@ void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
 }
 
 // Verify
-TEST(HDFFile, create) {
+TEST(HDFFile, Create) {
   auto fname = "tmp-test.h5";
   unlink(fname);
   using namespace FileWriter;
@@ -103,7 +101,7 @@ TEST(HDFFile, create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    auto cmd = gulp("tests/msg-cmd-new-03.json");
+    auto cmd = gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
     LOG(Sev::Debug, "cmd: {:.{}}", cmd.data(), cmd.size());
     rapidjson::Document d;
     d.Parse(cmd.data(), cmd.size());
@@ -133,7 +131,7 @@ public:
   }
 
   static void create_static_file_with_hdf_output_prefix() {
-    MainOpt &main_opt = *getTestOptions();
+    MainOpt main_opt = getTestOptions();
     std::string const hdf_output_prefix = "tmp-relative-output";
     std::string const hdf_output_filename = "tmp-file-with-hdf-prefix.h5";
 #ifdef _MSC_VER
@@ -168,7 +166,7 @@ public:
   }
 
   static void create_static_dataset() {
-    MainOpt &main_opt = *getTestOptions();
+    MainOpt main_opt = getTestOptions();
     merge_config_into_main_opt(main_opt, R""({})"");
     std::string const hdf_output_filename = "tmp-static-dataset.h5";
     unlink(hdf_output_filename.c_str());
@@ -370,7 +368,7 @@ public:
   }
 
   static void write_attributes_at_top_level_of_the_file() {
-    MainOpt &main_opt = *getTestOptions();
+    MainOpt main_opt = getTestOptions();
     merge_config_into_main_opt(main_opt, R""({})"");
     std::string const hdf_output_filename = "tmp_write_top_level_attributes.h5";
     unlink(hdf_output_filename.c_str());
@@ -495,7 +493,7 @@ public:
   }
 
   static void data_ev42() {
-    MainOpt &main_opt = *getTestOptions();
+    MainOpt main_opt = getTestOptions();
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
@@ -912,7 +910,7 @@ public:
   };
 
   static void data_f142() {
-    MainOpt &main_opt = *getTestOptions();
+    MainOpt main_opt = getTestOptions();
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
@@ -1235,30 +1233,30 @@ public:
   }
 };
 
-TEST_F(T_CommandHandler, new_03) { T_CommandHandler::new_03(); }
+TEST_F(T_CommandHandler, New03) { T_CommandHandler::new_03(); }
 
-TEST_F(T_CommandHandler, create_static_file_with_hdf_output_prefix) {
+TEST_F(T_CommandHandler, CreateStaticFileWithHdfOutputPrefix) {
   T_CommandHandler::create_static_file_with_hdf_output_prefix();
 }
 
-TEST_F(T_CommandHandler, create_static_dataset) {
+TEST_F(T_CommandHandler, CreateStaticDataset) {
   T_CommandHandler::create_static_dataset();
 }
 
-TEST_F(T_CommandHandler, write_attributes_at_top_level_of_the_file) {
+TEST_F(T_CommandHandler, WriteAttributesAtTopLevelOfTheFile) {
   T_CommandHandler::write_attributes_at_top_level_of_the_file();
 }
 
-TEST_F(T_CommandHandler, data_ev42) { T_CommandHandler::data_ev42(); }
+TEST_F(T_CommandHandler, DataEv42) { T_CommandHandler::data_ev42(); }
 
-TEST_F(T_CommandHandler, data_f142) { T_CommandHandler::data_f142(); }
+TEST_F(T_CommandHandler, DataF142) { T_CommandHandler::data_f142(); }
 
 // TODO Disabled because h5cpp seems unhappy about fixed length strings.
 // TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
 //  T_CommandHandler::dataset_static_1d_string_fixed();
 //}
 
-TEST_F(T_CommandHandler, dataset_static_1d_string_variable) {
+TEST_F(T_CommandHandler, DatasetStatic1DStringVariable) {
   T_CommandHandler::dataset_static_1d_string_variable();
 }
 

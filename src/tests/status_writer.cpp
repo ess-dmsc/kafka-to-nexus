@@ -16,14 +16,14 @@ template <class T> class TD;
 
 constexpr int n_messages{100};
 
-TEST(StatusWriter, create_document) {
+TEST(StatusWriter, CreateDocument) {
   StreamMasterInfo info;
   StreamWriter writer;
   auto value = writer.write(info);
   EXPECT_TRUE(value.size() > 0);
 }
 
-TEST(StatusWriter, create_report_streamers) {
+TEST(StatusWriter, CreateReportStreamers) {
   std::default_random_engine generator;
   std::normal_distribution<double> normal(0.0, 1.024e6);
 

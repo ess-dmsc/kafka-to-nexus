@@ -3,7 +3,6 @@
 #include "../Master.h"
 #include "../Msg.h"
 #include "../helper.h"
-#include "../logger.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "schemas/f141_epics_nt_generated.h"
 #include <array>
@@ -16,8 +15,6 @@
 #include <string>
 #include <type_traits>
 #include <vector>
-
-MainOpt *Roundtrip::opt = nullptr;
 
 namespace FileWriter {
 namespace Test {
@@ -63,14 +60,13 @@ struct _has_teamid<T, decltype((void)T::teamid, 0)> : std::true_type {
 };
 
 void roundtrip_simple_01(MainOpt &opt) {
-  LOG(Sev::Info, "Run test:  Test::roundtrip_simple_01");
   using namespace FileWriter;
   using namespace rapidjson;
   using namespace BrightnESS::FlatBufs::f141_epics_nt;
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
   Master m(opt);
-  auto fn_cmd = "tests/msg-conf-new-01.json";
+  auto fn_cmd = std::string(TEST_DATA_PATH) + "/msg-conf-new-01.json";
   auto of = produce_command_from_file(opt.command_broker_uri, fn_cmd);
   opt.start_at_command_offset = of - 1;
   std::thread t1([&m] { ASSERT_NO_THROW(m.run()); });
@@ -141,19 +137,18 @@ void roundtrip_simple_01(MainOpt &opt) {
   while (CLK::now() - start < MS(5000)) {
     std::this_thread::sleep_for(MS(200));
   }
-  LOG(Sev::Info, "Stop Master");
   m.stop();
   t1.join();
 }
 
-TEST_F(Roundtrip, simple_01) {
+TEST_F(Roundtrip, Simple01) {
   // disabled
   return;
-  FileWriter::Test::roundtrip_simple_01(*opt);
+  MainOpt TestOptions;
+  FileWriter::Test::roundtrip_simple_01(TestOptions);
 }
 
 void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
-  LOG(Sev::Debug, "roundtrip_remote_kafka");
   using namespace FileWriter;
   using namespace rapidjson;
   using CLK = std::chrono::steady_clock;
@@ -230,7 +225,6 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   while (CLK::now() - start < MS(4000)) {
     std::this_thread::sleep_for(MS(200));
   }
-  LOG(Sev::Info, "Stop Master");
   m.stop();
   t1.join();
 }
@@ -238,7 +232,8 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
 } // namespace Test
 } // namespace FileWriter
 
-TEST_F(Roundtrip, ev42_remote_kafka) {
-  FileWriter::Test::roundtrip_remote_kafka(*Roundtrip::opt,
-                                           "tests/msg-cmd-new-03.json");
+TEST_F(Roundtrip, Ev42RemoteKafka) {
+  MainOpt TestOptions;
+  FileWriter::Test::roundtrip_remote_kafka(TestOptions,
+                                           std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
 }

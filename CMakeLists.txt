@@ -30,10 +30,6 @@ elseif(NOT ${CONAN} MATCHES "DISABLE")
   MESSAGE(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
 endif()
 
-# Yes, there exists also FindGTest.
-# Yes, we do want to use this one instead:
-find_package(Googletest)
-
 add_subdirectory(src)
 
 option(RUN_DOXYGEN "Run doxygen" TRUE)
