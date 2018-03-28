@@ -143,10 +143,10 @@ public:
   inline ~Msg() {
     switch (type) {
     case MsgType::RdKafka:
-      delete[] var.rdkafka_msg;
+      delete var.rdkafka_msg;
       break;
     case MsgType::KafkaW:
-      delete[] var.kafkaw_msg;
+      delete var.kafkaw_msg;
       break;
     case MsgType::Owned:
       delete[] var.owned;
