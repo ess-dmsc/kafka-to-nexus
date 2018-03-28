@@ -1,7 +1,10 @@
 #pragma once
 
 #include "../HDFFile.h"
+#include "../MainOpt.h"
 #include <h5cpp/hdf5.hpp>
+
+void SetTestOptions(MainOpt *Options);
 
 namespace HDFFileTestHelper {
 
@@ -29,4 +32,4 @@ createCommandForDataset(const std::pair<std::string, T> NameAndValue) {
 
   return Command;
 }
-}
+} // namespace HDFFileTestHelper

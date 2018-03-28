@@ -116,7 +116,7 @@ private:
   int8_t v = -1;
   uint64_t timestamp_ = 0;
 };
-}
+} // namespace HDFWriterModule_detail
 
 /// Writes a given flatbuffer to HDF.
 ///
@@ -206,5 +206,5 @@ public:
     HDFWriterModuleRegistry::registrate(key, value);
   }
 };
-}
-}
+} // namespace HDFWriterModuleRegistry
+} // namespace FileWriter

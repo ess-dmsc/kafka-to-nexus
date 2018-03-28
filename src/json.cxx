@@ -36,8 +36,8 @@ rapidjson::Document stringToRapidjsonOrThrow(std::string const &JsonString) {
 rapidjson::Document merge(rapidjson::Value const &v1,
                           rapidjson::Value const &v2) {
   using namespace rapidjson;
-  using std::string;
   using std::deque;
+  using std::string;
   Document ret;
   auto &a = ret.GetAllocator();
   ret.CopyFrom(v1, a);

@@ -29,7 +29,7 @@ void registrate(Key key, Value value) {
   }
   m[key] = std::move(value);
 }
-}
+} // namespace HDFWriterModuleRegistry
 
 namespace HDFWriterModule_detail {
 
@@ -62,5 +62,5 @@ std::string WriteResult::to_str() const {
   }
   return it->second;
 }
-}
-}
+} // namespace HDFWriterModule_detail
+} // namespace FileWriter

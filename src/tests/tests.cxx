@@ -1,6 +1,7 @@
 #include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
 #include "CLIOptions.h"
+#include "HDFFileTestHelper.h"
 #include "helper.h"
 #include "roundtrip.h"
 #include <CLI/CLI.hpp>
@@ -26,7 +27,7 @@ int main(int argc, char **argv) {
 
   g_main_opt.store(Options.get());
   setup_logger_from_options(*Options);
-  Roundtrip::opt = Options.get();
+  SetTestOptions(Options.get());
 
   auto gtest_result = RUN_ALL_TESTS();
 

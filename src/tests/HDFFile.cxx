@@ -18,11 +18,17 @@
 #include <vector>
 
 using std::array;
+using std::string;
+using std::vector;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
-using std::string;
-using std::vector;
+
+static MainOpt *TestOptions;
+
+void SetTestOptions(MainOpt *Options) { TestOptions = Options; }
+
+MainOpt *getTestOptions() { return TestOptions; }
 
 void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
   rapidjson::Document cfg;
@@ -127,7 +133,7 @@ public:
   }
 
   static void create_static_file_with_hdf_output_prefix() {
-    MainOpt &main_opt = *g_main_opt.load();
+    MainOpt &main_opt = *getTestOptions();
     std::string const hdf_output_prefix = "tmp-relative-output";
     std::string const hdf_output_filename = "tmp-file-with-hdf-prefix.h5";
 #ifdef _MSC_VER
@@ -162,7 +168,7 @@ public:
   }
 
   static void create_static_dataset() {
-    MainOpt &main_opt = *g_main_opt.load();
+    MainOpt &main_opt = *getTestOptions();
     merge_config_into_main_opt(main_opt, R""({})"");
     std::string const hdf_output_filename = "tmp-static-dataset.h5";
     unlink(hdf_output_filename.c_str());
@@ -364,7 +370,7 @@ public:
   }
 
   static void write_attributes_at_top_level_of_the_file() {
-    MainOpt &main_opt = *g_main_opt.load();
+    MainOpt &main_opt = *getTestOptions();
     merge_config_into_main_opt(main_opt, R""({})"");
     std::string const hdf_output_filename = "tmp_write_top_level_attributes.h5";
     unlink(hdf_output_filename.c_str());
@@ -489,7 +495,7 @@ public:
   }
 
   static void data_ev42() {
-    MainOpt &main_opt = *g_main_opt.load();
+    MainOpt &main_opt = *getTestOptions();
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
@@ -902,7 +908,7 @@ public:
   };
 
   static void data_f142() {
-    MainOpt &main_opt = *g_main_opt.load();
+    MainOpt &main_opt = *getTestOptions();
     bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed

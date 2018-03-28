@@ -10,13 +10,13 @@
 #include <cstdlib>
 #include <string>
 
-void signal_handler(int signal) {
-  LOG(Sev::Notice, "SIGNAL {}", signal);
-  if (auto opt = g_main_opt.load()) {
-    if (auto m = opt->master.load()) {
-      m->stop();
-    }
-  }
+// These should only be visible in this translation unit
+static std::atomic_bool GotSignal{false};
+static std::atomic_int SignalId{0};
+
+void signal_handler(int Signal) {
+  GotSignal = true;
+  SignalId = Signal;
 }
 
 int main(int argc, char **argv) {
@@ -43,11 +43,19 @@ int main(int argc, char **argv) {
 
   setup_logger_from_options(*Options);
 
-  FileWriter::Master m(*Options);
-  Options->master = &m;
-  std::thread t1([&m] { m.run(); });
-  t1.join();
-  Options->master = nullptr;
+  FileWriter::Master Master(*Options);
+  std::thread MasterThread([&Master] { Master.run(); });
 
+  while (not Master.RunLoopExited()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (GotSignal) {
+      LOG(Sev::Notice, "SIGNAL {}", SignalId);
+      Master.stop();
+      GotSignal = false;
+      break;
+    }
+  }
+
+  MasterThread.join();
   return 0;
 }

@@ -7,8 +7,8 @@
 namespace uri {
 
 using std::array;
-using std::vector;
 using std::string;
+using std::vector;
 
 /// Thin parser for URIs.
 class URI {
@@ -44,4 +44,4 @@ public:
 private:
   void update_deps();
 };
-}
+} // namespace uri
