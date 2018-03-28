@@ -33,9 +33,6 @@ int main(int argc, char **argv) {
   CLI11_PARSE(App, argc, argv);
   Options->parse_config_file();
 
-  // For the signal handler
-  g_main_opt.store(Options.get());
-
   if (Options->use_signal_handler) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);

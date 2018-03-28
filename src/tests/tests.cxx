@@ -24,8 +24,6 @@ int main(int argc, char **argv) {
   setCLIOptions(App, *Options);
 
   CLI11_PARSE(App, argc, argv);
-
-  g_main_opt.store(Options.get());
   setup_logger_from_options(*Options);
   SetTestOptions(Options.get());
 
