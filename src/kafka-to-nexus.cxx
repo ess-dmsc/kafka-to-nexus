@@ -7,21 +7,19 @@
 #include <cstdlib>
 #include <string>
 
-void signal_handler(int signal) {
-  LOG(Sev::Notice, "SIGNAL {}", signal);
-  if (auto opt = g_main_opt.load()) {
-    if (auto m = opt->master.load()) {
-      m->stop();
-    }
-  }
+// These should only be visible in this translation unit
+static std::atomic_bool GotSignal{false};
+static std::atomic_int SignalId{0};
+
+void signal_handler(int Signal) {
+  GotSignal = true;
+  SignalId = Signal;
 }
 
 int main(int argc, char **argv) {
   auto po = parse_opt(argc, argv);
   auto opt = std::move(po.second);
   opt->init();
-  // For the signal handler
-  g_main_opt.store(opt.get());
 
   fmt::print("kafka-to-nexus {:.7} (ESS, BrightnESS)\n", GIT_COMMIT);
   fmt::print("  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n");
@@ -81,11 +79,19 @@ int main(int argc, char **argv) {
 
   setup_logger_from_options(*opt);
 
-  FileWriter::Master m(*opt);
-  opt->master = &m;
-  std::thread t1([&m] { m.run(); });
-  t1.join();
-  opt->master = nullptr;
+  FileWriter::Master Master(*opt);
+  std::thread MasterThread([&Master] { Master.run(); });
 
+  while (not Master.RunLoopExited()) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    if (GotSignal) {
+      LOG(Sev::Notice, "SIGNAL {}", SignalId);
+      Master.stop();
+      GotSignal = false;
+      break;
+    }
+  }
+
+  MasterThread.join();
   return 0;
 }

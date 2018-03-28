@@ -129,4 +129,4 @@ void URI::parse(string uri) {
   }
   update_deps();
 }
-}
+} // namespace uri

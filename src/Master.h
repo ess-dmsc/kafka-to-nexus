@@ -41,9 +41,12 @@ public:
 
   MainOpt &config;
 
+  bool RunLoopExited() { return HasExitedRunLoop; };
+
 private:
   CommandListener command_listener;
   std::atomic<bool> do_run{true};
+  std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> stream_masters;
   std::string file_writer_process_id_;
   friend class CommandHandler;

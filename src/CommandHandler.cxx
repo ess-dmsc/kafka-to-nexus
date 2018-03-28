@@ -82,8 +82,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
-  using nlohmann::json;
   using nlohmann::detail::out_of_range;
+  using nlohmann::json;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto const &stream : StreamHDFInfoList) {
@@ -182,8 +182,8 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 void CommandHandler::handleNew(std::string const &Command) {
-  using nlohmann::json;
   using nlohmann::detail::out_of_range;
+  using nlohmann::json;
   using std::move;
   using std::string;
   json Doc = parseOrThrow(Command);
