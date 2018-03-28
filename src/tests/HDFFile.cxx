@@ -463,7 +463,8 @@ public:
 
         // Allocate memory on JM AND CHECK IT!
         msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize()));
+            (char const *)fb.builder->GetBufferPointer(),
+            fb.builder->GetSize()));
         if (msgs.back().size() < 8) {
           LOG(Sev::Error, "error");
           exit(1);
@@ -578,7 +579,7 @@ public:
       LOG(Sev::Info, "unit_test.filename: {}", x.v);
       filename = x.v;
     }
-    
+
     vector<SourceDataGen> sources;
     for (size_t i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -900,7 +901,8 @@ public:
         fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize()));
+            (char const *)fb.builder->GetBufferPointer(),
+            fb.builder->GetSize()));
       }
     }
   };
@@ -1128,8 +1130,7 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg));
+            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg));
             source.n_fed++;
           }
         }

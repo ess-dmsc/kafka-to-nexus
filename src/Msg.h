@@ -139,19 +139,20 @@ public:
   } var;
   size_t _size = 0;
 
+  /// TODO: Is this the correct usage of delete?
   inline ~Msg() {
     switch (type) {
     case MsgType::RdKafka:
-      delete var.rdkafka_msg;
+      delete[] var.rdkafka_msg;
       break;
     case MsgType::KafkaW:
-      delete var.kafkaw_msg;
+      delete[] var.kafkaw_msg;
       break;
     case MsgType::Owned:
-      delete var.owned;
+      delete[] var.owned;
       break;
     case MsgType::Shared:
-      delete var.shared;
+      delete[] var.shared;
       break;
     case MsgType::Cheap:
       break;
