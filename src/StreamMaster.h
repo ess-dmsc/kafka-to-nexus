@@ -12,7 +12,7 @@
 #pragma once
 
 #include "FileWriterTask.h"
-#include "Report.hpp"
+#include "Report.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -115,11 +115,11 @@ public:
   }
 
   void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const std::chrono::milliseconds &report_ms =
+              const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000}) {
     if (NumStreamers != 0) {
       if (!ReportThread.joinable()) {
-        ReportPtr.reset(new Report(p, report_ms));
+        ReportPtr.reset(new Report(p, WriterTask->job_id(), ReportMs));
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {

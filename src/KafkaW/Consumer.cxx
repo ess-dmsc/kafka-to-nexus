@@ -186,7 +186,6 @@ bool Consumer::topicPresent(const std::string &TopicName) {
     }
   }
   rd_kafka_metadata_destroy(Metadata);
-  //      const_cast<const struct rd_kafka_metadata *>(Metadata));
   return IsPresent;
 }
 
