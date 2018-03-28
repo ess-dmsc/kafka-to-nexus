@@ -40,12 +40,7 @@ class MessageInfo {
 
 public:
   MessageInfo() = default;
-  MessageInfo(const MessageInfo &Other) = default;
-  MessageInfo(MessageInfo &&Other) = default;
   ~MessageInfo() = default;
-  MessageInfo &operator=(MessageInfo &&Other) = delete;
-
-  /// Add the information about a new message
 
   //----------------------------------------------------------------------------
   /// @brief      Increments the number of messages that have been correctly

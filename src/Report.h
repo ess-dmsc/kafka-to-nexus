@@ -64,18 +64,18 @@ private:
       // Writes in JSON format Streamer informations
       Reporter.write(Element.second.messageInfo(), Element.first, ReportMs);
       // Compute cumulative stats
-      Informations.add(Element.second.messageInfo());
+      Information.add(Element.second.messageInfo());
     }
-    Informations.setTimeToNextMessage(ReportMs);
-    Informations.StreamMasterStatus = StreamMasterStatus;
-    Reporter.write(Informations);
+    Information.setTimeToNextMessage(ReportMs);
+    Information.StreamMasterStatus = StreamMasterStatus;
+    Reporter.write(Information);
     ReportType::ReturnType Value = Reporter.get();
     Producer->produce(reinterpret_cast<unsigned char *>(&Value[0]),
                       Value.size());
 
     return StreamMasterError::OK();
   }
-  Status::StreamMasterInfo Informations;
+  Status::StreamMasterInfo Information;
   std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
   std::string JobId;
   std::chrono::milliseconds ReportMs;

@@ -4,28 +4,28 @@
 namespace FileWriter {
 namespace Status {
 
-nlohmann::json StreamMasterToJson(StreamMasterInfo &Informations) {
-  nlohmann::json Value = {{"state", Err2Str(Informations.StreamMasterStatus)},
-                          {"messages", Informations.getMessages().first},
-                          {"Mbytes", Informations.getMbytes().first},
-                          {"errors", Informations.getErrors()},
-                          {"runtime", Informations.runTime().count()}};
+nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
+  nlohmann::json Value = {{"state", Err2Str(Information.StreamMasterStatus)},
+                          {"messages", Information.getMessages().first},
+                          {"Mbytes", Information.getMbytes().first},
+                          {"errors", Information.getErrors()},
+                          {"runtime", Information.runTime().count()}};
   return Value;
 }
 
 nlohmann::json
-StreamerToJson(MessageInfo &Informations,
+StreamerToJson(MessageInfo &Information,
                const std::chrono::milliseconds &SinceLastMessage) {
-  std::pair<double, double> Size = messageSize(Informations);
+  std::pair<double, double> Size = messageSize(Information);
   double Frequency =
-      FileWriter::Status::messageFrequency(Informations, SinceLastMessage);
+      FileWriter::Status::messageFrequency(Information, SinceLastMessage);
   double Throughput =
-      FileWriter::Status::messageThroughput(Informations, SinceLastMessage);
+      FileWriter::Status::messageThroughput(Information, SinceLastMessage);
 
   nlohmann::json Status = {"status",
-                           {{"messages", Informations.getMessages().first},
-                            {"Mbytes", Informations.getMbytes().first},
-                            {"errors", Informations.getErrors()}}};
+                           {{"messages", Information.getMessages().first},
+                            {"Mbytes", Information.getMbytes().first},
+                            {"errors", Information.getErrors()}}};
 
   nlohmann::json Statistics = {
       "statistics",
@@ -47,14 +47,14 @@ void NLWriterBase::setJobId(const std::string &JobId) {
   json["job_id"] = JobId;
 }
 
-void NLWriterBase::write(StreamMasterInfo &Informations) {
-  json["next_message_eta_ms"] = Informations.getTimeToNextMessage().count();
-  json["stream_master"] = StreamMasterToJson(Informations);
+void NLWriterBase::write(StreamMasterInfo &Information) {
+  json["next_message_eta_ms"] = Information.getTimeToNextMessage().count();
+  json["stream_master"] = StreamMasterToJson(Information);
 }
 
-void NLWriterBase::write(MessageInfo &Informations, const std::string &Topic,
+void NLWriterBase::write(MessageInfo &Information, const std::string &Topic,
                          const std::chrono::milliseconds &SinceLastMessage) {
-  json["streamer"][Topic] = StreamerToJson(Informations, SinceLastMessage);
+  json["streamer"][Topic] = StreamerToJson(Information, SinceLastMessage);
 }
 
 } // namespace Status

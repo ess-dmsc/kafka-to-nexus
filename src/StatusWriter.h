@@ -48,8 +48,8 @@ private:
   NLWriterBase &operator=(NLWriterBase &&) = default;
 
   void setJobId(const std::string &JobId);
-  void write(StreamMasterInfo &Informations);
-  void write(MessageInfo &Informations, const std::string &Topic,
+  void write(StreamMasterInfo &Information);
+  void write(MessageInfo &Information, const std::string &Topic,
              const std::chrono::milliseconds &SinceLastMessage);
 
   nlohmann::json json;
@@ -61,10 +61,10 @@ public:
   using ReturnType = nlohmann::json;
 
   void setJobId(const std::string &JobId) { Base.setJobId(JobId); }
-  void write(StreamMasterInfo &Informations) { Base.write(Informations); }
-  void write(MessageInfo &Informations, const std::string &Topic,
+  void write(StreamMasterInfo &Information) { Base.write(Information); }
+  void write(MessageInfo &Information, const std::string &Topic,
              const std::chrono::milliseconds &SinceLastMessage) {
-    Base.write(Informations, Topic, SinceLastMessage);
+    Base.write(Information, Topic, SinceLastMessage);
   }
   ReturnType get() { return Base.json; }
 
@@ -79,10 +79,10 @@ public:
   using ReturnType = std::string;
 
   void setJobId(const std::string &JobId) { Base.setJobId(JobId); }
-  void write(StreamMasterInfo &Informations) { Base.write(Informations); }
-  void write(MessageInfo &Informations, const std::string &Topic,
+  void write(StreamMasterInfo &Information) { Base.write(Information); }
+  void write(MessageInfo &Information, const std::string &Topic,
              const std::chrono::milliseconds &SinceLastMessage) {
-    Base.write(Informations, Topic, SinceLastMessage);
+    Base.write(Information, Topic, SinceLastMessage);
   }
 
   ReturnType get() { return Base.json.dump(4); }
