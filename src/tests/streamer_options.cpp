@@ -43,6 +43,12 @@ void StreamerOptionsTest::CompareRdKafkaOptionsWith(
   EXPECT_EQ(Options.NumMetadataRetry, Other.NumMetadataRetry);
 }
 
+void StreamerOptionsTest::CompareRdKafkaOptionsWith(
+    const std::map<std::string, std::string> &Strings = {},
+    const std::map<std::string, std::string> &Integers = {}) {
+  EXPECT_EQ(Options.Settings.ConfigurationStrings, Strings);
+}
+
 void StreamerOptionsTest::CompareSteamerOptionsWith(
     const std::chrono::milliseconds &ConsumerTimeout,
     const std::chrono::milliseconds &BeforeStartTime,
@@ -52,7 +58,7 @@ void StreamerOptionsTest::CompareSteamerOptionsWith(
   EXPECT_EQ(Options.NumMetadataRetry, NumMetadataRetry);
 }
 
-TEST_F(StreamerOptionsTest, RdkafkaEmptyJsonDoesnTChangeDefaults) {
+TEST_F(StreamerOptionsTest, rdkafkaEmptyJsonDoesnTChangeDefaults) {
   rapidjson::Document optj;
   optj.Parse("{ \"kafka\" : {} }");
 
@@ -61,7 +67,7 @@ TEST_F(StreamerOptionsTest, RdkafkaEmptyJsonDoesnTChangeDefaults) {
   CompareRdKafkaOptionsWith(Defaults);
 }
 
-TEST_F(StreamerOptionsTest, SetRdkafkaOptionsFillsOptionsVector) {
+TEST_F(StreamerOptionsTest, setRdkafkaOptionsFillsOptionsVector) {
   rapidjson::Document optj;
   std::map<std::string, std::string> Strings;
   std::map<std::string, std::string> Integers;
@@ -71,10 +77,10 @@ TEST_F(StreamerOptionsTest, SetRdkafkaOptionsFillsOptionsVector) {
   optj.Parse("{ \"kafka\" : { \"timeout.ms\" : 10, \"api.version.request\" : "
              "\"true\", \"metadata.broker\" : \"localhost:9092\"}}");
   ConfigureRdKafkaWithJson(optj);
-  EXPECT_EQ(Options.Settings.ConfigurationStrings, Strings);
+  CompareRdKafkaOptionsWith(Strings, Integers);
 }
 
-TEST_F(StreamerOptionsTest, SetStreamerOptionsMatchesExpected) {
+TEST_F(StreamerOptionsTest, setStreamerOptionsMatchesExpected) {
   rapidjson::Document optj;
   optj.Parse("{\"streamer\" : {\"ms-before-start\" : 10, "
              "\"consumer-timeout-ms\" : 10, \"metadata-retry\" : 1}}");
