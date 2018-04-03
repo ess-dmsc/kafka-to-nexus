@@ -16,6 +16,18 @@ void sleep_ms(size_t ms) {
 
 uint64_t getpid_wrapper() { return getpid(); }
 
+/// Wrapper, because it may need some Windows implementation in the future.
+std::string gethostname_wrapper() {
+  std::vector<char> Buffer;
+  Buffer.resize(1024);
+  int Result = gethostname(Buffer.data(), Buffer.size());
+  Buffer.back() = '\0';
+  if (Result != 0) {
+    return "";
+  }
+  return Buffer.data();
+}
+
 std::vector<char> gulp(std::string fname) {
   std::vector<char> ret;
   std::ifstream ifs(fname, std::ios::binary | std::ios::ate);
