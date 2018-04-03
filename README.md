@@ -45,13 +45,13 @@ Available options include:
   ],
   "hdf-output-prefix": "./absolute/or/relative/path/to/hdf/output/directory",
   [OPTIONAL]"kafka" : {
-	"any-rdkafka-option": "value"
+  "any-rdkafka-option": "value"
   },
   [OPTIONAL]"streamer" : {
-	"ms-before-start" : 1000
+  "ms-before-start" : 1000
   },
   [OPTIONAL]"stream-master" : {
-	"topic-write-interval" : 1000
+  "topic-write-interval" : 1000
   },
   "service_id": "this_is_filewriter_instance_HOST_PID_EXAMPLENAME"
 }
@@ -215,9 +215,9 @@ Further documentation:
 
 ```json
 {
-	"cmd": "FileWriter_stop",
-	"job_id": "job-unique-identifier",
-	"stop_time" : <[OPTIONAL] timestamp-in-milliseconds>,
+  "cmd": "FileWriter_stop",
+  "job_id": "job-unique-identifier",
+  "stop_time" : <[OPTIONAL] timestamp-in-milliseconds>,
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
@@ -466,7 +466,7 @@ sources to be implemented) and consumes a message in the specified topic. Some f
 * initial timestamp is specified using ``set_start_time``
 * connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
 * Kafka::Config and streamer options can be optionally configured using ``kafka`` and ``streamer`` fields in the configuration file. ``kafka`` can contain any option that RdKafka accepts. `streamer` accetps:
-	- `ms-before-start` milliseconds before the `start_time` to start writing from
+  - `ms-before-start` milliseconds before the `start_time` to start writing from
     - `consumer-timeout-ms` the maximum time in milliseconds the consumer waits
       before return with error status
     - `metadata-retry` maxim number of retries to connect to specifies broker
