@@ -106,10 +106,10 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
   return HDFWriterModule::InitResult::OK();
 }
 
-
 HDFWriterModule::InitResult
-HDFWriterModule::reopen(hdf5::node::Group hdf_parent, std::string hdf_parent_name,
-                        CollectiveQueue *cq, HDFIDStore *hdf_store) {
+HDFWriterModule::reopen(hdf5::node::Group hdf_parent,
+                        std::string hdf_parent_name, CollectiveQueue *cq,
+                        HDFIDStore *hdf_store) {
   auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
 
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
