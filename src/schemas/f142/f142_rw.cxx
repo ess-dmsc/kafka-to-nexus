@@ -10,11 +10,9 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-
 #include "schemas/f142_logdata_generated.h"
 
 template <typename T> using uptr = std::unique_ptr<T>;
-
 
 static FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
@@ -235,7 +233,8 @@ value_type_array_from_string(std::string type) {
 // should make this templated..
 
 writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
-                            std::string type, std::string s, CollectiveQueue *cq) {
+                            std::string type, std::string s,
+                            CollectiveQueue *cq) {
 
   using R = writer_typed_base *;
   auto &hg = hdf_group;
@@ -307,10 +306,9 @@ writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
   return (writer_typed_base *)nullptr;
 }
 
-
 writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
-                                 std::string type, std::string s, CollectiveQueue *cq,
-                                 HDFIDStore *hdf_store) {
+                                 std::string type, std::string s,
+                                 CollectiveQueue *cq, HDFIDStore *hdf_store) {
 
   using R = writer_typed_base *;
   auto &hg = hdf_group;
@@ -427,7 +425,6 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
     // static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name);
     // exit(1);
     auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
-
 
     std::string s("value");
     impl.reset(impl_fac(hdf_group, array_size, type, s, cq));

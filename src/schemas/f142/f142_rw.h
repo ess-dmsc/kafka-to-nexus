@@ -50,7 +50,6 @@ public:
   Value _fb_value_type_id = Value::NONE;
 };
 
-
 class FlatbufferReader : public FileWriter::FlatbufferReader {
   bool verify(Msg const &msg) const override;
   std::string source_name(Msg const &msg) const override;
@@ -67,9 +66,9 @@ public:
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group hdf_file,
-                                                      std::string hdf_parent_name,
-                                                      CollectiveQueue *cq,
-                                                      HDFIDStore *hdf_store) override;
+                                     std::string hdf_parent_name,
+                                     CollectiveQueue *cq,
+                                     HDFIDStore *hdf_store) override;
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                  int mpi_rank) override;
   WriteResult write(Msg const &msg) override;
