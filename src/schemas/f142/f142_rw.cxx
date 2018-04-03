@@ -10,10 +10,55 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-static LogData const *get_fbuf(char const *data) { return GetLogData(data); }
+
+#include "schemas/f142_logdata_generated.h"
+
+using std::array;
+using std::vector;
+using std::string;
+template <typename T> using uptr = std::unique_ptr<T>;
+using FBUF = LogData;
+
+class writer_typed_base {
+public:
+  virtual ~writer_typed_base() = default;
+  virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
+};
 
 template <typename DT, typename FV>
-writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
+class writer_typed_array : public writer_typed_base {
+public:
+  writer_typed_array(hdf5::node::Group hdf_group,
+                     std::string const &source_name, hsize_t ncols,
+                     Value fb_value_type_id, CollectiveQueue *cq);
+  writer_typed_array(hdf5::node::Group, std::string const &source_name,
+                     hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq,
+                     HDFIDStore *hdf_store);
+  ~writer_typed_array() override = default;
+  h5::append_ret write_impl(FBUF const *fbuf) override;
+  uptr<h5::h5d_chunked_2d<DT>> ds;
+  Value _fb_value_type_id = Value::NONE;
+};
+
+template <typename DT, typename FV>
+class writer_typed_scalar : public writer_typed_base {
+public:
+  writer_typed_scalar(hdf5::node::Group hdf_group,
+                      std::string const &source_name, Value fb_value_type_id,
+                      CollectiveQueue *cq);
+  writer_typed_scalar(hdf5::node::Group hdf_group,
+                      std::string const &source_name, Value fb_value_type_id,
+                      CollectiveQueue *cq, HDFIDStore *hdf_store);
+  ~writer_typed_scalar() override = default;
+  h5::append_ret write_impl(FBUF const *fbuf) override;
+  uptr<h5::h5d_chunked_1d<DT>> ds;
+  Value _fb_value_type_id = Value::NONE;
+};
+
+static FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
+
+template <typename DT, typename FV>
+writer_typed_array<DT, FV>::writer_typed_array(hdf5::node::Group hdf_group,
                                                std::string const &source_name,
                                                hsize_t ncols,
                                                Value fb_value_type_id,
@@ -35,7 +80,7 @@ writer_typed_array<DT, FV>::writer_typed_array(hid_t hdf_group,
 
 template <typename DT, typename FV>
 writer_typed_array<DT, FV>::writer_typed_array(
-    hid_t hdf_group, std::string const &source_name, hsize_t ncols,
+    hdf5::node::Group hdf_group, std::string const &source_name, hsize_t ncols,
     Value fb_value_type_id, CollectiveQueue *cq, HDFIDStore *hdf_store)
     : _fb_value_type_id(fb_value_type_id) {
   if (ncols <= 0) {
@@ -76,7 +121,7 @@ h5::append_ret writer_typed_array<DT, FV>::write_impl(LogData const *fbuf) {
 }
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
+writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
                                                  std::string const &source_name,
                                                  Value fb_value_type_id,
                                                  CollectiveQueue *cq)
@@ -91,7 +136,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
 }
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::writer_typed_scalar(hid_t hdf_group,
+writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
                                                  std::string const &source_name,
                                                  Value fb_value_type_id,
                                                  CollectiveQueue *cq,
@@ -228,9 +273,9 @@ value_type_array_from_string(std::string type) {
 
 // should make this templated..
 
-writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size,
-                            std::string type, std::string s,
-                            CollectiveQueue *cq) {
+writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
+                            string type, string s, CollectiveQueue *cq) {
+
   using R = writer_typed_base *;
   auto &hg = hdf_group;
   if (array_size == 0) {
@@ -301,9 +346,11 @@ writer_typed_base *impl_fac(hid_t hdf_group, size_t array_size,
   return (writer_typed_base *)nullptr;
 }
 
-writer_typed_base *impl_fac_open(hid_t hdf_group, size_t array_size,
-                                 std::string type, std::string s,
-                                 CollectiveQueue *cq, HDFIDStore *hdf_store) {
+
+writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
+                                 string type, string s, CollectiveQueue *cq,
+                                 HDFIDStore *hdf_store) {
+
   using R = writer_typed_base *;
   auto &hg = hdf_group;
   if (array_size == 0) {
@@ -415,36 +462,37 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
     hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
     rapidjson::Value const *attributes, CollectiveQueue *cq) {
   try {
+    // LOG(Sev::Error, "hdf_parent: {}   hdf_parent_name: {}",
+    // static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name);
+    // exit(1);
     auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
 
-    std::string s("value");
-    impl.reset(
-        impl_fac(static_cast<hid_t>(hdf_group), array_size, type, s, cq));
+
+    string s("value");
+    impl.reset(impl_fac(hdf_group, array_size, type, s, cq));
+
     if (!impl) {
       LOG(Sev::Error,
           "Could not create a writer implementation for value_type {}", type);
       return HDFWriterModule::InitResult::ERROR_IO();
     }
-    this->ds_timestamp = h5::h5d_chunked_1d<uint64_t>::create(
-        static_cast<hid_t>(hdf_group), "time", 64 * 1024, cq);
+    this->ds_timestamp =
+        h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024, cq);
     this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        static_cast<hid_t>(hdf_group), "cue_timestamp_zero", 64 * 1024, cq);
+        hdf_group, "cue_timestamp_zero", 64 * 1024, cq);
     this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
-        static_cast<hid_t>(hdf_group), "cue_index", 64 * 1024, cq);
+        hdf_group, "cue_index", 64 * 1024, cq);
     if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
     if (do_writer_forwarder_internal) {
       this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_seq_data",
-          64 * 1024, cq);
+          hdf_group, source_name + "__fwdinfo_seq_data", 64 * 1024, cq);
       this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_seq_fwd",
-          64 * 1024, cq);
+          hdf_group, source_name + "__fwdinfo_seq_fwd", 64 * 1024, cq);
       this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-          static_cast<hid_t>(hdf_group), source_name + "__fwdinfo_ts_data",
-          64 * 1024, cq);
+          hdf_group, source_name + "__fwdinfo_ts_data", 64 * 1024, cq);
       if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
         impl.reset();
         return HDFWriterModule::InitResult::ERROR_IO();
@@ -463,17 +511,14 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
   return HDFWriterModule::InitResult::OK();
 }
 
-HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
+HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
                                                     std::string hdf_parent_name,
                                                     CollectiveQueue *cq,
                                                     HDFIDStore *hdf_store) {
-  auto hdf_group = H5Gopen2(hdf_file, hdf_parent_name.data(), H5P_DEFAULT);
-  if (hdf_group < 0) {
-    LOG(Sev::Error, "can not open HDF group");
-    return HDFWriterModule::InitResult::ERROR_IO();
-  }
 
-  std::string s("value");
+  auto hdf_group = hdf5::node::get_group(hdf_file, hdf_parent_name);
+  string s("value");
+
   impl.reset(impl_fac_open(hdf_group, array_size, type, s, cq, hdf_store));
   if (!impl) {
     LOG(Sev::Error,
@@ -516,7 +561,6 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hid_t hdf_file,
     ds_ts_data->buffer_init(buffer_size, buffer_packet_max);
   }
 
-  H5Gclose(hdf_group);
   return HDFWriterModule::InitResult::OK();
 }
 

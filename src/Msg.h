@@ -1,10 +1,12 @@
 #pragma once
 
 #include "Alloc.h"
+#include "KafkaW/Msg.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <vector>
@@ -16,6 +18,7 @@ enum class MsgType : int {
   Owned = 0,
   RdKafka = 1,
   Shared = 2,
+  KafkaW = 3,
   Cheap = 22,
 };
 
@@ -40,7 +43,6 @@ public:
       p1 = (char *)jm->alloc(len * sizeof(char));
       if (not jm->check_in_range(p1)) {
         LOG(Sev::Error, "try again...");
-        // exit(1);
       } else
         break;
     }
@@ -56,21 +58,32 @@ public:
   }
 
   static Msg cheap(Msg const &msg, std::shared_ptr<Alloc> &jm) {
-    if (msg.type != MsgType::Shared) {
-      throw "msg.type != MsgType::Shared";
-    }
     Msg ret;
+    if (msg.type != MsgType::Shared) {
+      LOG(Sev::Critical, "msg.type != MsgType::Shared");
+      return ret;
+    }
     ret.type = MsgType::Cheap;
     ret.var.cheap = msg.var.shared;
     ret._size = msg._size;
     return ret;
   }
 
+  /// Can be removed when we use the KafkaW wrapper everywhere.
+
   static Msg rdkafka(std::unique_ptr<RdKafka::Message> &&rdkafka_msg) {
     Msg msg;
     msg.type = MsgType::RdKafka;
     msg.var.rdkafka_msg = rdkafka_msg.release();
     msg._size = msg.var.rdkafka_msg->len();
+    return msg;
+  }
+
+  static Msg fromKafkaW(std::unique_ptr<KafkaW::Msg> &&KafkaWMsg) {
+    Msg msg;
+    msg.type = MsgType::KafkaW;
+    msg.var.kafkaw_msg = KafkaWMsg.release();
+    msg._size = 0;
     return msg;
   }
 
@@ -95,7 +108,9 @@ public:
   inline char const *data() const {
     switch (type) {
     case MsgType::RdKafka:
-      return (char const *)var.rdkafka_msg->payload();
+      return static_cast<char const *>(var.rdkafka_msg->payload());
+    case MsgType::KafkaW:
+      return reinterpret_cast<char const *>(var.kafkaw_msg->data());
     case MsgType::Owned:
       return var.owned;
     case MsgType::Shared:
@@ -104,7 +119,6 @@ public:
       return var.cheap;
     default:
       LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
-      exit(1);
     }
     return "";
   }
@@ -113,6 +127,8 @@ public:
     switch (type) {
     case MsgType::RdKafka:
       return var.rdkafka_msg->len();
+    case MsgType::KafkaW:
+      return var.kafkaw_msg->size();
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:
@@ -121,7 +137,6 @@ public:
       return _size;
     default:
       LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
-      exit(1);
     }
     return 0;
   }
@@ -129,6 +144,7 @@ public:
   MsgType type = MsgType::Invalid;
   union Var {
     RdKafka::Message *rdkafka_msg;
+    KafkaW::Msg *kafkaw_msg;
     char const *owned;
     char const *shared;
     char const *cheap;
@@ -138,15 +154,15 @@ public:
   inline ~Msg() {
     switch (type) {
     case MsgType::RdKafka:
-      // var.rdkafka_msg.~unique_ptr<RdKafka::Message>();
       delete var.rdkafka_msg;
       break;
+    case MsgType::KafkaW:
+      delete var.kafkaw_msg;
+      break;
     case MsgType::Owned:
-      // var.owned.~V0();
       delete var.owned;
       break;
     case MsgType::Shared:
-      // var.shared.~shared_ptr<std::vector<char>>();
       delete var.shared;
       break;
     case MsgType::Cheap:
@@ -155,11 +171,8 @@ public:
       break;
     default:
       LOG(Sev::Error, "unhandled type: {}", static_cast<int>(type));
-      exit(1);
     }
   }
-
-private:
 };
 
 } // namespace FileWriter

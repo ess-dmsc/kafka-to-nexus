@@ -1,3 +1,5 @@
+[![Build Status](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/badge/icon)](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/)
+[![codecov](https://codecov.io/gh/ess-dmsc/kafka-to-nexus/branch/master/graph/badge.svg)](https://codecov.io/gh/ess-dmsc/kafka-to-nexus)
 # Kafka to Nexus file writing
 
 - [Usage](#usage)
@@ -264,6 +266,7 @@ If using conan, the following remote repositories are required to be configured:
 
 - https://api.bintray.com/conan/ess-dmsc/conan
 - https://api.bintray.com/conan/conan-community/conan
+- https://api.bintray.com/conan/vthiery/conan-packages
 
 You can add them by running
 ```
@@ -400,6 +403,11 @@ contains
 ```
 with the location where it has found `gtest`.
 
+To enable tests for the ``Streamer`` the [librdkafka-fake](https://github.com/ess-dmsc/librdkafka-fake) implementation of librdkafka must be enabled with
+```
+-DFAKE_RDKAFKA=<path>
+```
+
 Start the `gtest` based test suite via:
 ```
 ./tests/tests
@@ -482,10 +490,3 @@ the first and last event to be written (see Streamer options);
 converts the error code into a human readable string). 
 * each topic is written continously for at most `topic-write-interval`. this value can be configured in the config file (default 1000ms)
 
-More tests involving the network:
-```
-tests/streamer_test --kafka_broker=<broker>:<port>  --kafka_topic="<topic name>"
-tests/streammaster_test --kafka_broker=<broker>:<port>"
-```
-Tests are implemented using the gtest suite. They support all the command
-line option provided by gtest.

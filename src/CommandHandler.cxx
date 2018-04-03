@@ -3,6 +3,7 @@
 #include "HDFWriterModule.h"
 #include "helper.h"
 #include "json.h"
+#include <chrono>
 #include <future>
 #include <nlohmann/json.hpp>
 
@@ -30,7 +31,7 @@ static void logMissingKey(std::string const &Key, std::string const &Context) {
 /// \return The broker specified in the command
 std::string findBroker(std::string const &Command) {
   nlohmann::json Doc = parseOrThrow(Command);
-  if (auto x = get<std::string>("broker", Doc)) {
+  if (auto x = find<std::string>("broker", Doc)) {
     std::string BrokerHostPort = x.inner();
     if (BrokerHostPort.substr(0, 2) == "//") {
       uri::URI u(BrokerHostPort);
@@ -67,12 +68,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
-  int x = Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(),
-                        StreamHDFInfoList);
-  if (x) {
-    LOG(Sev::Error, "hdf_init failed, cancel this command");
-    throw std::runtime_error("");
-  }
+  Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(), StreamHDFInfoList);
   return StreamHDFInfoList;
 }
 
@@ -103,7 +99,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     }
 
     json ConfigStreamInner;
-    if (auto x = get<json>("stream", ConfigStream)) {
+    if (auto x = find<json>("stream", ConfigStream)) {
       ConfigStreamInner = x.inner();
     } else {
       logMissingKey("stream", ConfigStream.dump());
@@ -113,26 +109,26 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
     LOG(Sev::Info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
 
-    if (auto x = get<json>("topic", ConfigStreamInner)) {
+    if (auto x = find<json>("topic", ConfigStreamInner)) {
       StreamSettings.Topic = x.inner();
     } else {
       logMissingKey("topic", ConfigStreamInner.dump());
       continue;
     }
 
-    if (auto x = get<std::string>("source", ConfigStreamInner)) {
+    if (auto x = find<std::string>("source", ConfigStreamInner)) {
       StreamSettings.Source = x.inner();
     } else {
       logMissingKey("source", ConfigStreamInner.dump());
       continue;
     }
 
-    if (auto x = get<std::string>("writer_module", ConfigStreamInner)) {
+    if (auto x = find<std::string>("writer_module", ConfigStreamInner)) {
       StreamSettings.Module = x.inner();
     } else {
       logMissingKey("writer_module", ConfigStreamInner.dump());
       // Allow the old key name as well:
-      if (auto x = get<std::string>("module", ConfigStreamInner)) {
+      if (auto x = find<std::string>("module", ConfigStreamInner)) {
         StreamSettings.Module = x.inner();
         LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
                          "\"stream.writer_module\" instead.");
@@ -142,7 +138,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
       }
     }
 
-    if (auto x = get<bool>("run_parallel", ConfigStream)) {
+    if (auto x = find<bool>("run_parallel", ConfigStream)) {
       StreamSettings.RunParallel = x.inner();
     }
     if (StreamSettings.RunParallel) {
@@ -170,7 +166,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     HDFWriterModule->parse_config(ConfigStreamRapidjson, nullptr);
     CollectiveQueue *cq = nullptr;
     rapidjson::Document AttributesDocument;
-    if (auto x = get<json>("attributes", ConfigStream)) {
+    if (auto x = find<json>("attributes", ConfigStream)) {
       AttributesDocument = stringToRapidjsonOrThrow(x.inner().dump());
     }
     rapidjson::Value const *AttributesPtr = nullptr;
@@ -186,14 +182,14 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 void CommandHandler::handleNew(std::string const &Command) {
-  using std::move;
-  using std::string;
   using nlohmann::detail::out_of_range;
   using nlohmann::json;
+  using std::move;
+  using std::string;
   json Doc = parseOrThrow(Command);
 
   auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
-  if (auto x = get<std::string>("job_id", Doc)) {
+  if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
       logMissingKey("job_id", Doc.dump());
@@ -205,8 +201,8 @@ void CommandHandler::handleNew(std::string const &Command) {
     return;
   }
 
-  if (auto y = get<nlohmann::json>("file_attributes", Doc)) {
-    if (auto x = get<std::string>("file_name", y.inner())) {
+  if (auto y = find<nlohmann::json>("file_attributes", Doc)) {
+    if (auto x = find<std::string>("file_name", y.inner())) {
       Task->set_hdf_filename(Config.hdf_output_prefix, x.inner());
     } else {
       logMissingKey("file_attributes.file_name", Doc.dump());
@@ -220,8 +216,12 @@ void CommandHandler::handleNew(std::string const &Command) {
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
-  if (auto x = get<nlohmann::json>("nexus_structure", Doc)) {
-    StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
+  if (auto x = find<nlohmann::json>("nexus_structure", Doc)) {
+    try {
+      StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
+    } catch (std::runtime_error const &e) {
+      LOG(Sev::Error, "Failed to initializeHDF: {}", e.what());
+    }
   } else {
     logMissingKey("nexus_structure", Doc.dump());
     return;
@@ -238,17 +238,19 @@ void CommandHandler::handleNew(std::string const &Command) {
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   // Must be done before StreamMaster instantiation
-  if (auto x = get<uint64_t>("start_time", Doc)) {
+  if (auto x = find<uint64_t>("start_time", Doc)) {
     std::chrono::milliseconds StartTime(x.inner());
     if (StartTime.count() != 0) {
       LOG(Sev::Info, "StartTime: {}", StartTime.count());
       Config.StreamerConfiguration.StartTimestamp = StartTime;
     }
   }
-
-  std::chrono::milliseconds StopTime(0);
-  if (auto x = get<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
+  if (auto x = find<uint64_t>("stop_time", Doc)) {
+    std::chrono::milliseconds StopTime(x.inner());
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info, "StopTime: {}", StopTime.count());
+      Config.StreamerConfiguration.StopTimestamp = StopTime;
+    }
   }
 
   if (MasterPtr) {
@@ -266,11 +268,6 @@ void CommandHandler::handleNew(std::string const &Command) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
-
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      s->setStopTime(StopTime);
-    }
 
     MasterPtr->stream_masters.push_back(std::move(s));
   } else {
@@ -305,12 +302,18 @@ void CommandHandler::addStreamSourceToWriterModule(
       rapidjson::Document ConfigStream;
       ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
       HDFWriterModule->parse_config(ConfigStream, nullptr);
-      auto Err = HDFWriterModule->reopen(
-          static_cast<hid_t>(Task->hdf_file.h5file),
-          StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr, nullptr);
-      if (Err.is_ERR()) {
-        LOG(Sev::Error, "can not reopen HDF file for stream {}",
-            StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+      try {
+        auto RootGroup = Task->hdf_file.h5file.root();
+        auto Err = HDFWriterModule->reopen(
+            RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name, nullptr,
+            nullptr);
+        if (Err.is_ERR()) {
+          LOG(Sev::Error, "can not reopen HDF file for stream {}",
+              StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+          continue;
+        }
+      } catch (std::runtime_error const &e) {
+        LOG(Sev::Error, "Exception on HDFWriterModule->reopen(): {}", e.what());
         continue;
       }
 
@@ -343,6 +346,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (!MasterPtr) {
     return;
   }
+  LOG(Sev::Debug, "{}", Command);
+
   nlohmann::json Doc;
   try {
     Doc = nlohmann::json::parse(Command);
@@ -351,14 +356,14 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     return;
   }
   string JobID;
-  if (auto x = get<std::string>("job_id", Doc)) {
+  if (auto x = find<std::string>("job_id", Doc)) {
     JobID = x.inner();
   } else {
     logMissingKey("job_id", Doc.dump());
     return;
   }
   std::chrono::milliseconds StopTime(0);
-  if (auto x = get<uint64_t>("stop_time", Doc)) {
+  if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
   int counter{0};
@@ -396,7 +401,7 @@ void CommandHandler::handle(std::string const &Command) {
   if (MasterPtr) {
     TeamId = MasterPtr->config.teamid;
   }
-  if (auto x = get<uint64_t>("teamid", Doc)) {
+  if (auto x = find<uint64_t>("teamid", Doc)) {
     CommandTeamId = x.inner();
   }
   if (CommandTeamId != TeamId) {
@@ -405,7 +410,7 @@ void CommandHandler::handle(std::string const &Command) {
     return;
   }
 
-  if (auto x = get<std::string>("cmd", Doc)) {
+  if (auto x = find<std::string>("cmd", Doc)) {
     std::string CommandMain = x.inner();
     if (CommandMain == "FileWriter_new") {
       handleNew(Command);
@@ -416,11 +421,11 @@ void CommandHandler::handle(std::string const &Command) {
       return;
     }
     if (CommandMain == "FileWriter_stop") {
-      handleStreamMasterStop(Doc);
+      handleStreamMasterStop(Command);
       return;
     }
     if (CommandMain == "file_writer_tasks_clear_all") {
-      if (auto y = get<std::string>("recv_type", Doc)) {
+      if (auto y = find<std::string>("recv_type", Doc)) {
         std::string ReceiverType = y.inner();
         if (ReceiverType == "FileWriter") {
           handleFileWriterTaskClearAll();

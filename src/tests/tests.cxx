@@ -1,5 +1,6 @@
 #include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
+#include "HDFFileTestHelper.h"
 #include "helper.h"
 #include "roundtrip.h"
 #include <gtest/gtest.h>
@@ -21,10 +22,8 @@ int main(int argc, char **argv) {
     return 1;
   }
   auto opt = std::move(po.second);
-  g_main_opt.store(opt.get());
   setup_logger_from_options(*opt);
-
-  Roundtrip::opt = opt.get();
+  SetTestOptions(opt.get());
 
   auto gtest_result = RUN_ALL_TESTS();
 

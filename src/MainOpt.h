@@ -38,8 +38,6 @@ struct MainOpt {
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.
   std::string graylog_logger_address;
-  /// Used by the signal handler.
-  std::atomic<FileWriter::Master *> master{nullptr};
   /// The parsed configuration file given by the `--config-file` option.
   rapidjson::Document config_file;
   /// Keeps commands contained in the configuration file.  The configuration
@@ -80,4 +78,3 @@ struct MainOpt {
 
 std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
 void setup_logger_from_options(MainOpt const &opt);
-extern std::atomic<MainOpt *> g_main_opt;
