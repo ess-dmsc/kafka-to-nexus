@@ -30,8 +30,8 @@ public:
                       std::string hdf_parent_name,
                       rapidjson::Value const *attributes,
                       CollectiveQueue *cq) override;
-  InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,
-                    CollectiveQueue *cq, HDFIDStore *hdf_store) override;
+  HDFWriterModule::InitResult reopen(hdf5::node::Group hdf_parent, std::string hdf_parent_name,
+      CollectiveQueue *cq, HDFIDStore *hdf_store) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;

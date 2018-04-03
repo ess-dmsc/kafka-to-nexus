@@ -108,7 +108,7 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
 
 
 HDFWriterModule::InitResult
-HDFWriterModule::reopen(hdf5::node::Group hdf_parent, string hdf_parent_name,
+HDFWriterModule::reopen(hdf5::node::Group hdf_parent, std::string hdf_parent_name,
                         CollectiveQueue *cq, HDFIDStore *hdf_store) {
   auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
 
