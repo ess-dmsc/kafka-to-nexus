@@ -20,7 +20,7 @@
 ### Running kafka-to-nexus
 
 ```
-./kafka-to-nexus -h
+./kafka-to-nexus --help
 ```
 
 For example:
@@ -52,7 +52,8 @@ Available options include:
   },
   [OPTIONAL]"stream-master" : {
 	"topic-write-interval" : 1000
-  }
+  },
+  "service_id": "this_is_filewriter_instance_HOST_PID_EXAMPLENAME"
 }
 ```
 
@@ -62,6 +63,9 @@ Available options include:
 - `kafka` Kafka configuration for consumers in Streamer
 - `streamer` Configuration option for the Streamer
 - `stream-master` Configuration option for the StreamMaster
+- `service_id` If multiple instances listen on the same Kafka command topic,
+  the `service_id` let's the filewriter filter the commands to interpret.
+
 
 ### Send command to kafka-to-nexus
 
@@ -190,17 +194,21 @@ Further documentation:
     "file_name": "some.h5"
   },
   "cmd": "FileWriter_new",
-  "job_id" : "unique-identifier",
-  "broker" : "localhost:9092",
-  [OPTIONAL]"start_time" : <timestamp in milliseconds>,
-  [OPTIONAL]"stop_time" : <timestamp in milliseconds>,
+  "job_id": "unique-identifier",
+  "broker": "localhost:9092",
+  "start_time": <[OPTIONAL] timestamp in milliseconds>,
+  "stop_time": <[OPTIONAL] timestamp in milliseconds>,
+  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
 
 #### Command to exit the file writer:
 
 ```json
-{"cmd": "FileWriter_exit"}
+{
+  "cmd": "FileWriter_exit",
+  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
+}
 ```
 
 #### Command to stop a single file:
@@ -209,7 +217,8 @@ Further documentation:
 {
 	"cmd": "FileWriter_stop",
 	"job_id": "job-unique-identifier",
-	"[OPTIONAL]stop_time" : "timestamp-in-milliseconds"
+	"stop_time" : <[OPTIONAL] timestamp-in-milliseconds>,
+  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
 
