@@ -6,6 +6,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <functional>
 
 #include <rapidjson/document.h>
 #include <rapidjson/prettywriter.h>
@@ -13,9 +14,6 @@
 #include <unistd.h>
 
 namespace FileWriter {
-
-using std::string;
-using std::vector;
 
 Master::Master(MainOpt &config) : config(config), command_listener(config) {
   std::vector<char> buffer;
@@ -42,7 +40,14 @@ void Master::handle_command(std::string const &command) {
   command_handler.tryToHandle(command);
 }
 
+struct OnScopeExit {
+  OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
+  ~OnScopeExit() { ExitAction(); };
+  std::function<void()> ExitAction;
+};
+
 void Master::run() {
+  OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
   // Set up connection to the Kafka status topic if desired.
   if (config.do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
@@ -85,8 +90,7 @@ void Master::run() {
     stream_masters.erase(
         std::remove_if(stream_masters.begin(), stream_masters.end(),
                        [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
-                         return Iter->status() ==
-                                Status::StreamMasterErrorCode::is_removable;
+                         return Iter->status().isRemovable();
                        }),
         stream_masters.end());
   }

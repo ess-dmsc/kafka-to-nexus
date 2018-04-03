@@ -48,5 +48,5 @@ public:
     FlatbufferReaderRegistry::add(fbid, std::unique_ptr<T>(new T));
   }
 };
-}
-}
+} // namespace FlatbufferReaderRegistry
+} // namespace FileWriter

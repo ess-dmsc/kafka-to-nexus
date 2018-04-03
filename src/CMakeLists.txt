@@ -139,7 +139,7 @@ set(kafka_to_nexus_INC
   Msg.h
   MsgParser.h
   ProcessMessageResult.h
-  Report.hpp
+  Report.h
   Source.h
   Status.h
   StatusWriter.h

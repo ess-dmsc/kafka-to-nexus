@@ -70,7 +70,6 @@ void roundtrip_simple_01(MainOpt &opt) {
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
   Master m(opt);
-  opt.master = &m;
   auto fn_cmd = "tests/msg-conf-new-01.json";
   auto of = produce_command_from_file(opt.command_broker_uri, fn_cmd);
   opt.start_at_command_offset = of - 1;
@@ -181,7 +180,6 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
   auto of = produce_command_from_string(broker_common, cmd_buf1.GetString());
   opt.start_at_command_offset = of - 1;
   Master m(opt);
-  opt.master = &m;
   std::thread t1([&m] { ASSERT_NO_THROW(m.run()); });
 
   // We want the streamers to be ready

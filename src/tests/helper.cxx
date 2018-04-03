@@ -4,50 +4,50 @@
 #include <rapidjson/stringbuffer.h>
 
 TEST(helper, split_01) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("", "");
   ASSERT_TRUE(v == vector<string>({""}));
 }
 
 TEST(helper, split_02) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("abc", "");
   ASSERT_TRUE(v == vector<string>({"abc"}));
 }
 
 TEST(helper, split_03) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("a/b", "/");
   ASSERT_TRUE(v == vector<string>({"a", "b"}));
 }
 
 TEST(helper, split_04) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("/a/b", "/");
   ASSERT_TRUE(v == vector<string>({"a", "b"}));
 }
 
 TEST(helper, split_05) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("ac/dc/", "/");
   ASSERT_TRUE(v == vector<string>({"ac", "dc"}));
 }
 
 TEST(helper, split_06) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("/ac/dc/", "/");
   ASSERT_TRUE(v == vector<string>({"ac", "dc"}));
 }
 
 TEST(helper, split_07) {
-  using std::vector;
   using std::string;
+  using std::vector;
   auto v = split("/some/longer/thing/for/testing", "/");
   ASSERT_TRUE(v ==
               vector<string>({"some", "longer", "thing", "for", "testing"}));

@@ -5,9 +5,15 @@
 
 namespace KafkaW {
 
+enum class PollStatusContent {
+  Msg,
+  Err,
+  EOP,
+  Empty,
+};
+
 class PollStatus {
 public:
-  static PollStatus Ok();
   static PollStatus Err();
   static PollStatus EOP();
   static PollStatus Empty();
@@ -24,7 +30,7 @@ public:
   std::unique_ptr<Msg> isMsg();
 
 private:
-  int state = -1;
+  PollStatusContent state = PollStatusContent::Err;
   void *data = nullptr;
 };
 }

@@ -116,7 +116,7 @@ private:
   int8_t v = -1;
   uint64_t timestamp_ = 0;
 };
-}
+} // namespace HDFWriterModule_detail
 
 /// Writes a given flatbuffer to HDF.
 ///
@@ -160,8 +160,9 @@ public:
                               rapidjson::Value const *attributes,
                               CollectiveQueue *cq) = 0;
 
-  virtual InitResult reopen(hid_t hdf_file, std::string hdf_parent_name,
-                            CollectiveQueue *cq, HDFIDStore *hdf_store) = 0;
+  virtual InitResult reopen(hdf5::node::Group hdf_file,
+                            std::string hdf_parent_name, CollectiveQueue *cq,
+                            HDFIDStore *hdf_store) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   ///
@@ -205,5 +206,5 @@ public:
     HDFWriterModuleRegistry::registrate(key, value);
   }
 };
-}
-}
+} // namespace HDFWriterModuleRegistry
+} // namespace FileWriter

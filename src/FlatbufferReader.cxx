@@ -55,5 +55,5 @@ void add(FBID fbid, FlatbufferReader::ptr &&item) {
   }
   m[fbid] = std::move(item);
 }
-}
-}
+} // namespace FlatbufferReaderRegistry
+} // namespace FileWriter

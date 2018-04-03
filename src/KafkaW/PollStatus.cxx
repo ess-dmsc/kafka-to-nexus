@@ -4,33 +4,27 @@ namespace KafkaW {
 
 PollStatus::~PollStatus() { reset(); }
 
-PollStatus PollStatus::Ok() {
-  PollStatus ret;
-  ret.state = 0;
-  return ret;
-}
-
 PollStatus PollStatus::Err() {
   PollStatus ret;
-  ret.state = -1;
+  ret.state = PollStatusContent::Err;
   return ret;
 }
 
 PollStatus PollStatus::EOP() {
   PollStatus ret;
-  ret.state = -2;
+  ret.state = PollStatusContent::EOP;
   return ret;
 }
 
 PollStatus PollStatus::Empty() {
   PollStatus ret;
-  ret.state = -3;
+  ret.state = PollStatusContent::Empty;
   return ret;
 }
 
 PollStatus PollStatus::newWithMsg(std::unique_ptr<Msg> Msg) {
   PollStatus ret;
-  ret.state = 1;
+  ret.state = PollStatusContent::Msg;
   ret.data = Msg.release();
   return ret;
 }
@@ -46,29 +40,30 @@ PollStatus &PollStatus::operator=(PollStatus &&x) {
 }
 
 void PollStatus::reset() {
-  if (state == 1) {
+  if (state == PollStatusContent::Msg) {
     if (auto x = (Msg *)data) {
       delete x;
     }
   }
-  state = -1;
+  state = PollStatusContent::Empty;
   data = nullptr;
 }
 
 PollStatus::PollStatus() {}
 
-bool PollStatus::isOk() { return state == 0; }
+bool PollStatus::isOk() { return state == PollStatusContent::Msg; }
 
-bool PollStatus::isErr() { return state == -1; }
+bool PollStatus::isErr() { return state == PollStatusContent::Err; }
 
-bool PollStatus::isEOP() { return state == -2; }
+bool PollStatus::isEOP() { return state == PollStatusContent::EOP; }
 
-bool PollStatus::isEmpty() { return state == -3; }
+bool PollStatus::isEmpty() { return state == PollStatusContent::Empty; }
 
 std::unique_ptr<Msg> PollStatus::isMsg() {
-  if (state == 1) {
+  if (state == PollStatusContent::Msg) {
     std::unique_ptr<Msg> ret((Msg *)data);
     data = nullptr;
+    state = PollStatusContent::Empty;
     return ret;
   }
   return nullptr;

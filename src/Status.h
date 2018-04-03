@@ -30,45 +30,64 @@ namespace Status {
 
 /// \class MessageInfo
 /// Stores cumulative information about received messages: number, size (in
-/// Megabytes) and number of errors
+/// Megabytes) and number of errors. Assuming a 1-to-1 mapping between Streamer
+/// and Topic there will be no concurrent updates of the information, so that
+/// members are not required to be atomic. Nevertheless there is concurrency
+/// between writes (Streamer) and reads (Report). If no syncronisation mechanism
+/// would be present there can be a mixing of updated and non-updated
+/// informations, which the mutex allows to avoid.
 class MessageInfo {
 
 public:
-  using value_type = std::pair<double, double>;
-  /// Implement the = operator for MessageInfo.
-  const MessageInfo &operator=(const MessageInfo &Info);
+  MessageInfo() = default;
+  ~MessageInfo() = default;
 
-  /// Implement the += operator for MessageInfo using atomic_add
-  const MessageInfo &operator+=(const MessageInfo &Info);
+  //----------------------------------------------------------------------------
+  /// @brief      Increments the number of messages that have been correctly
+  /// processed by one unit and the number of processed megabytes accordingly.
+  ///
+  /// @param[in]  MessageSize  The message size in bytes
+  ///
+  void message(const double &MessageSize);
 
-  /// Add the information about a new message
-  const MessageInfo &message(const double &MessageSize);
+  //----------------------------------------------------------------------------
+  /// @brief      Increments the error count by one unit
+  ///
+  void error();
 
-  /// Increment the error count
-  const MessageInfo &error();
-
-  /// Reset all the counters
+  //----------------------------------------------------------------------------
+  /// @brief      Reset the counters
+  ///
   void reset();
 
-  /// Return the number of megabytes
-  /// \return the {MB received, \f$\rm{MB received}^2\f$} pair
-  value_type getMbytes() const;
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the number of megabytes processed.
+  ///
+  /// @return     A pair {MB received, \f$\rm{MB received}^2\f$}
+  ///
+  std::pair<double, double> getMbytes() const;
 
-  /// Return the number of messages whose information has been stored
-  /// \return the pair {number of messages, number of messages\f$\ 2\f$}
-  value_type getMessages() const;
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the number of messages that have been processed
+  /// correctly
+  ///
+  /// @return     A pair {number of messages, number of messages\f$\ 2\f$}.
+  ///
+  std::pair<double, double> getMessages() const;
 
-  /// Return the number of errors whose information has been stored
-  /// \return the pair {number of messages, number of messages\f$^2\f$}
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the number of messages recognised as error
+  ///
+  /// @return     The number of messages.
+  ///
   double getErrors() const;
-  std::mutex &getMutex() { return Mutex; }
 
 private:
-  std::atomic<double> Messages{0};
-  std::atomic<double> MessagesSquare{0};
-  std::atomic<double> Mbytes{0};
-  std::atomic<double> MbytesSquare{0};
-  std::atomic<double> Errors{0};
+  double Messages{0};
+  double MessagesSquare{0};
+  double Mbytes{0};
+  double MbytesSquare{0};
+  double Errors{0};
   std::mutex Mutex;
 };
 
@@ -77,75 +96,132 @@ private:
 /// reduce the same information to give a global overview of the amount of data
 /// that has been processed.
 class StreamMasterInfo {
-  using SMEC = StreamMasterErrorCode;
 
 public:
   StreamMasterInfo() : StartTime{std::chrono::system_clock::now()} {}
+  StreamMasterInfo(const StreamMasterInfo &) = default;
+  StreamMasterInfo(StreamMasterInfo &&) = default;
+  ~StreamMasterInfo() = default;
+  StreamMasterInfo &operator=(const StreamMasterInfo &) = default;
+  StreamMasterInfo &operator=(StreamMasterInfo &&) = default;
 
-  /// Add new information about the stream on the topic \param topic. If a
-  /// message info for the topic already exists it's updated, if doesn't exist
-  /// it's created with the current values
-  void add(const std::string &topic, MessageInfo &info);
-
-  /// Return the whole collection of information.
-  /// \return a map <topic name, messages information>
-  std::map<std::string, MessageInfo> &info() { return StreamsInfo; }
-
-  /// Return the cumulative information.
-  /// \return a message info where all the messages information are accumulated
-  MessageInfo &getTotal() { return Total; }
-
-  /// Set the status
-  SMEC &status(const SMEC &other) {
-    Status = other;
-    return Status;
-  }
-
-  /// Return the registered status.
-  SMEC &status() { return Status; }
+  //----------------------------------------------------------------------------
+  /// @brief      Adds the informations collected for a stream
+  ///
+  /// @param      info  The MessageInfo object containing all the informations
+  ///
+  void add(MessageInfo &info);
 
   /// Set the ETA of the next message
   /// \param ToNextMessage std::chrono::milliseconds from the last message to
   /// the next
+
+  //----------------------------------------------------------------------------
+  /// @brief      Sets the estimate time to next message. The next message is
+  /// expected to arrive at [time of lastmessage] + [ToNextMessage]
+  ///
+  /// @param[in]  ToNextMessage  milliseconds in  next message
+  ///
   void setTimeToNextMessage(const std::chrono::milliseconds &ToNextMessage);
+
   /// get the time difference between two consecutive status messages
   /// \result std::chrono::milliseconds from the last message to the next
+
+  //----------------------------------------------------------------------------
+  /// @brief      Gets the expected time difference from the lase message to
+  /// next.
+  ///
+  /// @return     The milliseconds after the last message.
+  ///
   const std::chrono::milliseconds getTimeToNextMessage();
 
-  /// Get the ETA of the next message
-  /// \return ToNextMessage std::chrono::milliseconds from the last message to
-  /// the next
-  const std::chrono::milliseconds timeToNextMessage();
-  /// Return the total execution time
-  /// \return std::chrono::milliseconds since the class has been created
+  /// @brief Returns the total execution time
+  /// @return Milliseconds since the write command has been issued
   const std::chrono::milliseconds runTime();
 
+  /// Return the number of megabytes
+  /// \return the {MB received, \f$\rm{MB received}^2\f$} pair
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the total number of megabytes processed for the
+  /// current file.
+  ///
+  /// @return     The pair {MB received, \f$\rm{MB received}^2\f$}.
+  ///
+  std::pair<double, double> getMbytes() const;
+
+  /// Return the number of messages whose information has been stored
+  /// \return the pair {number of messages, number of messages\f$\ 2\f$}
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the total number of messages processed for the current
+  /// file.
+  ///
+  /// @return     The pair {number of messages, number of messages\f$\ 2\f$}.
+  ///
+  std::pair<double, double> getMessages() const;
+
+  /// Return the number of errors whose information has been stored
+  /// \return the pair {number of messages, number of messages\f$^2\f$}
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the total number of error in the messages processed
+  /// for the current file.
+  ///
+  /// @return     The number of errors.
+  ///
+  double getErrors() const;
+
+  //----------------------------------------------------------------------------
+  /// @brief Returns the error status of the StreamMaster associated with the
+  /// file
+  ///
+  /// @return The StreamMaster status.
+  ///
+  StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED()};
+
 private:
-  MessageInfo Total;
-  std::map<std::string, MessageInfo> StreamsInfo;
+  std::pair<double, double> Mbytes{0, 0};
+  std::pair<double, double> Messages{0, 0};
+  double Errors{0};
   std::chrono::system_clock::time_point StartTime;
-  std::chrono::milliseconds NextMessageRelativeEta;
-  SMEC Status{SMEC::not_started};
+  std::chrono::milliseconds MillisecondsToNextMessage{0};
 };
 
-/// Return the average size and relative standard deviation of the number of
-/// messages \param Value the MessageInfo object that stores the data \return
-/// the {average size, standard deviation} pair
-const std::pair<double, double> messageSize(const MessageInfo &Information);
+//------------------------------------------------------------------------------
+/// @brief      Return the average size and relative standard deviation of the
+/// number of
+/// messages between two reports
+///
+/// @param[in]  Information  The MessageInfo object that stores the data
+///
+/// @return     A pair containing {average size, standard deviation}
+///
+std::pair<double, double> messageSize(const MessageInfo &Information);
 
-/// Return the frequency and the relative standard deviation of the number of
-/// messages \param value the MessageInfo object that stores the data \return
-/// the {frequency, standard deviation} pair
-const std::pair<double, double>
-messageFrequency(const MessageInfo &Information,
-                 const std::chrono::milliseconds &Duration);
+//------------------------------------------------------------------------------
+/// @brief      Return the frequency of the messages that are consumed
+///
+/// @param[in]  Information  The MessageInfo object that stores the data
+/// @param[in]  Duration     The amount of time between two report
+///
+/// @return     The number of message consumed per sescond if the amount of time
+/// is larger enough, 0 otherwise
+///
+double messageFrequency(const MessageInfo &Information,
+                        const std::chrono::milliseconds &Duration);
 
-/// Return the throughput and the relative standard deviation of the number of
-/// messages \param value the MessageInfo object that stores the data \return
-/// the {throughput, standard deviation} pair
-const std::pair<double, double>
-messageThroughput(const MessageInfo &Information,
-                  const std::chrono::milliseconds &Duration);
+//------------------------------------------------------------------------------
+/// @brief      Return the throughput of the writer, assuming that each message
+/// consumed correctly is written
+///
+/// @param[in]  Information  The MessageInfo object that stores the data
+/// @param[in]  Duration     The amount of time between two report
+///
+/// @return     The throughput if the amount of time is larger enough, 0
+/// otherwise
+double messageThroughput(const MessageInfo &Information,
+                         const std::chrono::milliseconds &Duration);
 
 } // namespace Status
 } // namespace FileWriter

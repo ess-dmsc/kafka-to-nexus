@@ -10,29 +10,41 @@
 
 namespace FileWriter {
 
-class MessageProcessor {
-public:
-  virtual ProcessMessageResult process_message(Msg &&msg) = 0;
-};
-
 /// Represents a sourcename on a topic.
 /// The sourcename can be empty.
 /// This is meant for highest efficiency on topics which are exclusively used
 /// for only one sourcename.
-class DemuxTopic : public TimeDifferenceFromMessage, public MessageProcessor {
+class DemuxTopic {
 public:
+  using DT = TimeDifferenceFromMessage;
   DemuxTopic(std::string topic);
   DemuxTopic(DemuxTopic &&x);
   ~DemuxTopic();
+
+  //----------------------------------------------------------------------------
+  /// @brief      Returns the name of the topic that contains the source
+  ///
+  /// @return     The topic
+  ///
   std::string const &topic() const;
+
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(Msg &&msg) override;
+  ProcessMessageResult process_message(Msg &&msg);
   /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(Msg const &msg) override;
+  DT time_difference_from_message(Msg const &msg);
   std::unordered_map<std::string, Source> &sources();
 
+  //----------------------------------------------------------------------------
+  /// @brief      Adds a source.
+  ///
+  /// @param[in]  source  the name of the source, that must match the content of
+  /// the flatbuffer
+  ///
+  /// @return     A reference to the source that has been added to the source
+  /// list
+  ///
   Source &add_source(Source &&source) {
     using std::move;
     auto k = source.sourcename();

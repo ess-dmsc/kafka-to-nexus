@@ -654,7 +654,7 @@ void HDFFile::write_dataset(hdf5::node::Group &parent,
       }
     }
 
-    if (auto x = get_int(ds.v, "string_size")) {
+    if (auto x = get_uint(ds.v, "string_size")) {
       if ((x.v > 0) && (x.v != H5T_VARIABLE)) {
         element_size = x.v;
       }

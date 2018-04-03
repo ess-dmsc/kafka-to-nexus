@@ -1,8 +1,7 @@
 #include <cmath>
 
-#include <rapidjson/document.h>
-
 #include "Status.h"
+#include "logger.h"
 
 /// Return the average given the sum of the elements and their number
 /// \param sum the sum of the elements
@@ -21,7 +20,7 @@ double standardDeviation(const double &Sum, const double &SumSquared,
   }
 }
 
-const std::pair<double, double>
+std::pair<double, double>
 FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Value) {
   if (Value.getMessages().first == 0) { // nan causes failure in JSON
     return std::pair<double, double>{};
@@ -33,79 +32,36 @@ FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Value) {
   return result;
 }
 
-const std::pair<double, double> FileWriter::Status::messageFrequency(
+double FileWriter::Status::messageFrequency(
     const FileWriter::Status::MessageInfo &Value,
     const std::chrono::milliseconds &TimeDifference) {
   if (TimeDifference.count() < 1e-10) {
-    return std::pair<double, double>({0, 0});
+    return 0.0;
   }
-  std::pair<double, double> result(
-      1e3 * average(Value.getMessages().first, TimeDifference.count()),
-      1e3 * standardDeviation(Value.getMessages().first,
-                              Value.getMessages().second,
-                              TimeDifference.count()));
-  return result;
+  return 1e3 * average(Value.getMessages().first, TimeDifference.count());
 }
 
-const std::pair<double, double> FileWriter::Status::messageThroughput(
+double FileWriter::Status::messageThroughput(
     const FileWriter::Status::MessageInfo &Value,
     const std::chrono::milliseconds &TimeDifference) {
   if (TimeDifference.count() < 1e-10) {
-    return std::pair<double, double>({0, 0});
+    return 0.0;
   }
-  std::pair<double, double> result(
-      1e3 * average(Value.getMbytes().first, TimeDifference.count()),
-      1e3 * standardDeviation(Value.getMbytes().first, Value.getMbytes().second,
-                              TimeDifference.count()));
-  return result;
+  return 1e3 * average(Value.getMbytes().first, TimeDifference.count());
 }
 
-/// Implement atomic_add for a generic type. The type must implement operator +
-/// and =
-template <class T> void atomic_add(std::atomic<T> &Value, const T &Other) {
-  T Current = Value.load();
-  while (!Value.compare_exchange_weak(Current, Current + Other)) {
-    Current = Value.load();
-  }
-}
-
-const FileWriter::Status::MessageInfo &FileWriter::Status::MessageInfo::
-operator=(const FileWriter::Status::MessageInfo &Other) {
-  Mbytes.store(Other.Mbytes.load());
-  MbytesSquare.store(Other.MbytesSquare.load());
-  Messages.store(Other.Messages.load());
-  MessagesSquare.store(Other.MessagesSquare.load());
-  Errors.store(Other.Errors.load());
-  return *this;
-}
-
-const FileWriter::Status::MessageInfo &FileWriter::Status::MessageInfo::
-operator+=(const FileWriter::Status::MessageInfo &Other) {
-  std::lock_guard<std::mutex> Lock(Mutex);
-  atomic_add(Mbytes, Other.Mbytes.load());
-  atomic_add(MbytesSquare, Other.MbytesSquare.load());
-  atomic_add(Messages, Other.Messages.load());
-  atomic_add(MessagesSquare, Other.MessagesSquare.load());
-  atomic_add(Errors, Other.Errors.load());
-  return *this;
-}
-
-const FileWriter::Status::MessageInfo &
-FileWriter::Status::MessageInfo::message(const double &MessageSize) {
+void FileWriter::Status::MessageInfo::message(const double &MessageSize) {
   std::lock_guard<std::mutex> Lock(Mutex);
   double Size = MessageSize * 1e-6;
-  atomic_add(Mbytes, Size);
-  atomic_add(MbytesSquare, Size * Size);
-  atomic_add(Messages, 1.0);
-  atomic_add(MessagesSquare, 1.0);
-  return *this;
+  Mbytes += Size;
+  MbytesSquare += Size * Size;
+  Messages++;
+  MessagesSquare++;
 }
 
-const FileWriter::Status::MessageInfo &
-FileWriter::Status::MessageInfo::error() {
+void FileWriter::Status::MessageInfo::error() {
   std::lock_guard<std::mutex> lock(Mutex);
-  atomic_add(Errors, 1.0);
-  return *this;
+  Errors++;
 }
 
 void FileWriter::Status::MessageInfo::reset() {
@@ -115,48 +71,55 @@ void FileWriter::Status::MessageInfo::reset() {
 }
 
 std::pair<double, double> FileWriter::Status::MessageInfo::getMbytes() const {
-  return std::pair<double, double>{Mbytes.load(), MbytesSquare.load()};
+  return std::pair<double, double>{Mbytes, MbytesSquare};
 }
 
 std::pair<double, double> FileWriter::Status::MessageInfo::getMessages() const {
-  return std::pair<double, double>{Messages.load(), MessagesSquare.load()};
+  return std::pair<double, double>{Messages, MessagesSquare};
 }
 
-double FileWriter::Status::MessageInfo::getErrors() const {
-  return Errors.load();
+double FileWriter::Status::MessageInfo::getErrors() const { return Errors; }
+
+std::pair<double, double> &operator+=(std::pair<double, double> &First,
+                                      const std::pair<double, double> &Second) {
+  First.first += Second.first;
+  First.second += Second.second;
+  return First;
 }
 
-////////////////////////
-// StreamMasterInfo
 void FileWriter::Status::StreamMasterInfo::add(
-    const std::string &topic, FileWriter::Status::MessageInfo &info) {
-  // The lock prevents Streamer::write from update info while
-  // collecting these stats, or this function from reset while/after
-  // Streamer::write updates. Pairs with MessageInfo::message(error) lock
-  if (StreamsInfo.find(topic) != StreamsInfo.end()) {
-    //    std::lock_guard<std::mutex> lock(info.getMutex());
-    StreamsInfo[topic] = info;
-    Total += info;
-    info.reset();
-  } else {
-    //    std::lock_guard<std::mutex> lock(info.getMutex());
-    StreamsInfo[topic] += info;
-    Total += info;
-    info.reset();
-  }
+    FileWriter::Status::MessageInfo &Info) {
+  Mbytes += Info.getMbytes();
+  Messages += Info.getMessages();
+  Errors += Info.getErrors();
+  Info.reset();
 }
 
 void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
     const std::chrono::milliseconds &ToNextMessage) {
-  NextMessageRelativeEta = ToNextMessage;
+  MillisecondsToNextMessage = ToNextMessage;
 }
 const std::chrono::milliseconds
 FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() {
-  return NextMessageRelativeEta;
+  return MillisecondsToNextMessage;
 }
 const std::chrono::milliseconds
 FileWriter::Status::StreamMasterInfo::runTime() {
   auto result = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now() - StartTime);
   return result;
+}
+
+std::pair<double, double>
+FileWriter::Status::StreamMasterInfo::getMbytes() const {
+  return Mbytes;
+}
+
+std::pair<double, double>
+FileWriter::Status::StreamMasterInfo::getMessages() const {
+  return Messages;
+}
+
+double FileWriter::Status::StreamMasterInfo::getErrors() const {
+  return Errors;
 }

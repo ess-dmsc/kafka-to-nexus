@@ -25,5 +25,5 @@
   },
   "cmd": "FileWriter_new",
   "job_id" : "1234567890abcdef",
-  "broker": "192.168.10.11:9092"
+  "broker": "ess01.psi.ch:9092"
 }

@@ -4,8 +4,8 @@
 
 namespace FileWriter {
 
-using std::vector;
 using std::string;
+using std::vector;
 
 CommandListener::CommandListener(MainOpt &config) : config(config) {}
 

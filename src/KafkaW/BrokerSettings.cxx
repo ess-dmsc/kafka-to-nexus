@@ -20,9 +20,7 @@ BrokerSettings::BrokerSettings() {
       {"heartbeat.interval.ms", 500},
       {"statistics.interval.ms", 600 * 1000},
   };
-  ConfigurationStrings = {
-      {"api.version.request", "true"},
-  };
+  ConfigurationStrings = {{"api.version.request", "true"}};
 }
 
 void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) {
@@ -46,4 +44,4 @@ void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) {
     }
   }
 }
-}
+} // namespace KafkaW
