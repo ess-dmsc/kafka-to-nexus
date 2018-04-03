@@ -106,6 +106,7 @@ void Master::statistics() {
   rapidjson::Document js_status;
   auto &a = js_status.GetAllocator();
   js_status.SetObject();
+  js_status.AddMember("service_id", Value(config.service_id.c_str(), a), a);
   js_status.AddMember("type", StringRef("filewriter_status_master"), a);
   Value js_files;
   js_files.SetObject();
