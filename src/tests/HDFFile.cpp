@@ -1,5 +1,4 @@
 #include "../HDFFile.h"
-#include "../Alloc.h"
 #include "../CommandHandler.h"
 #include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
@@ -445,8 +444,7 @@ public:
     int n_events_per_message = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(int n, int n_events_per_message_,
-                     std::shared_ptr<Alloc> &jm) {
+    void pregenerate(int n, int n_events_per_message_) {
       n_events_per_message = n_events_per_message_;
       LOG(Sev::Debug, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
@@ -461,8 +459,8 @@ public:
 
         // Allocate memory on JM AND CHECK IT!
         msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
-            jm));
+            (char const *)fb.builder->GetBufferPointer(),
+            fb.builder->GetSize()));
         if (msgs.back().size() < 8) {
           LOG(Sev::Error, "error");
           exit(1);
@@ -529,10 +527,6 @@ public:
       "shm": 2100100100
     })"");
 
-    // TODO
-    // This must go somewhere else...
-    main_opt.init();
-
     if (auto x =
             get_uint(&main_opt.config_file, "unit_test.hdf.do_verification")) {
       do_verification = x.v == 1;
@@ -578,7 +572,6 @@ public:
       filename = x.v;
     }
 
-    auto &jm = main_opt.jm;
     vector<SourceDataGen> sources;
     for (size_t i1 = 0; i1 < n_sources; ++i1) {
       sources.emplace_back();
@@ -587,7 +580,7 @@ public:
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
       s.run_parallel = true;
-      s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
+      s.pregenerate(n_msgs_per_source, n_events_per_message);
     }
     if (false) {
       vector<std::thread> threads_pregen;
@@ -595,8 +588,8 @@ public:
         auto &s = sources.back();
         LOG(Sev::Debug, "push pregen {}", i1);
         threads_pregen.push_back(
-            std::thread([&jm, &s, n_msgs_per_source, n_events_per_message] {
-              s.pregenerate(n_msgs_per_source, n_events_per_message, jm);
+            std::thread([&s, n_msgs_per_source, n_events_per_message] {
+              s.pregenerate(n_msgs_per_source, n_events_per_message);
             }));
       }
       for (auto &x : threads_pregen) {
@@ -610,7 +603,7 @@ public:
       auto &s = sources.back();
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("stream_for_main_thread_{:04}", 0);
-      s.pregenerate(17, 71, jm);
+      s.pregenerate(17, 71);
     }
 
     rapidjson::Document json_command;
@@ -751,7 +744,7 @@ public:
               do_run = false;
             }
             auto res = fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg, jm));
+                FileWriter::Msg::cheap(msg));
             if (res.is_ERR()) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
@@ -885,8 +878,7 @@ public:
     size_t n_fed = 0;
     /// Generates n test messages which we can later feed from memory into the
     /// file writer.
-    void pregenerate(size_t array_size, uint64_t n,
-                     std::shared_ptr<Alloc> &jm) {
+    void pregenerate(size_t array_size, uint64_t n) {
       LOG(Sev::Debug, "generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
@@ -901,8 +893,8 @@ public:
         fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(), fb.builder->GetSize(),
-            jm));
+            (char const *)fb.builder->GetBufferPointer(),
+            fb.builder->GetSize()));
       }
     }
   };
@@ -957,7 +949,7 @@ public:
       // Currently, we assume only one topic!
       s.topic = "topic.with.multiple.sources";
       s.source = fmt::format("for_example_motor_{:04}", i1);
-      s.pregenerate(array_size, n_msgs_per_source, main_opt.jm);
+      s.pregenerate(array_size, n_msgs_per_source);
     }
 
     if (false) {
@@ -1130,8 +1122,7 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg, main_opt.jm));
+            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg));
             source.n_fed++;
           }
         }

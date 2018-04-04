@@ -20,8 +20,6 @@ set(UnitTests_INC
 HDFFileTestHelper.h
 )
 
-
-
 add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
 
 

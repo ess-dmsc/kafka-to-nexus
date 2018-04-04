@@ -1,7 +1,9 @@
+#include "CLIOptions.h"
 #include "MainOpt.h"
 #include "roundtrip.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafka.h>
+#include <CLI/CLI.hpp>
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -9,9 +11,14 @@ int main(int argc, char **argv) {
   if (po.first) {
     return 1;
   }
-  auto opt = std::move(po.second);
-  setup_logger_from_options(*opt);
-  SetTestOptions(opt.get());
+  CLI::App App{""};
+  auto Options = std::unique_ptr<MainOpt>(new MainOpt());
+  setCLIOptions(App, *Options);
+
+  CLI11_PARSE(App, argc, argv);
+  setup_logger_from_options(*Options);
+  SetTestOptions(Options.get());
+  
   return RUN_ALL_TESTS();
 }
 

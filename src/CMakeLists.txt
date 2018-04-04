@@ -108,7 +108,7 @@ set(kafka_to_nexus_SRC
   MainOpt.cxx
   ${FMT_SRC}
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
-)
+  CLIOptions.cpp)
 
 set(kafka_to_nexus_INC
   CommandHandler.h
@@ -144,6 +144,7 @@ set(kafka_to_nexus_INC
   Status.h
   StatusWriter.h
   Streamer.h
+  StreamerOptions.h
   StreamMaster.h
   TimeDifferenceFromMessage.h
   TopicReader.h
@@ -155,6 +156,7 @@ set(kafka_to_nexus_INC
   date/tzblobs.h
   schemas/ev42/ev42_synth.h
   schemas/f142/f142_synth.h
+  CLIOptions.h
 )
 
 set(tgt "kafka_to_nexus__objects")
