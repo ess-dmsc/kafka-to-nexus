@@ -24,7 +24,6 @@ class StreamerOptions;
 
 // POD
 struct MainOpt {
-  void init();
   bool help = false;
   bool gtest = false;
   bool use_signal_handler = true;
@@ -38,14 +37,16 @@ struct MainOpt {
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.
   std::string graylog_logger_address;
-  /// The parsed configuration file given by the `--config-file` option.
+  /// The configuration file given by the `--config-file` option.
   rapidjson::Document config_file;
+  /// The configuration filename given by the `--config-file` option.
+  std::string config_filename;
   /// Keeps commands contained in the configuration file.  The configuration
   /// file may contain commands which are executed before any other command
   /// from the Kafka command topic.
   std::vector<std::string> commands_from_config_file;
   /// Called on startup when a `--config-file` is found.
-  int parse_config_file(std::string fname);
+  int parse_config_file();
   /// Used in turn by `parse_config_file` to parse the json data.
   int parse_config_json(std::string json);
   /// Kafka broker and topic where file writer commands are published.
@@ -76,5 +77,4 @@ struct MainOpt {
   std::chrono::milliseconds topic_write_duration;
 };
 
-std::pair<int, std::unique_ptr<MainOpt>> parse_opt(int argc, char **argv);
 void setup_logger_from_options(MainOpt const &opt);
