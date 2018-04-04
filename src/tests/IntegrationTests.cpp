@@ -7,10 +7,6 @@
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
-  auto po = parse_opt(argc, argv);
-  if (po.first) {
-    return 1;
-  }
   CLI::App App{""};
   auto Options = std::unique_ptr<MainOpt>(new MainOpt());
   setCLIOptions(App, *Options);

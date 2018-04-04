@@ -13,7 +13,7 @@ status_writer.cpp
 command_handler.cpp
 stream_master.cpp
 streamer_options.cpp
-MainOpt_tests.cpp
+MainOptTest.cpp
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC
