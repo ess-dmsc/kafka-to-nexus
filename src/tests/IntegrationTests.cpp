@@ -1,9 +1,9 @@
 #include "CLIOptions.h"
 #include "MainOpt.h"
 #include "roundtrip.h"
+#include <CLI/CLI.hpp>
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafka.h>
-#include <CLI/CLI.hpp>
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
@@ -14,7 +14,7 @@ int main(int argc, char **argv) {
   CLI11_PARSE(App, argc, argv);
   setup_logger_from_options(*Options);
   SetTestOptions(Options.get());
-  
+
   return RUN_ALL_TESTS();
 }
 
