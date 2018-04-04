@@ -90,7 +90,7 @@ static vector<string> hostport(string s) {
 
 static string trim(string s) {
   string::size_type a = 0;
-  while (s.find(" ", a) == a) {
+  while (s.find(' ', a) == a) {
     ++a;
   }
   s = s.substr(a);
@@ -113,7 +113,7 @@ void URI::parse(string uri) {
   }
   auto s = proto[1];
   if (not require_host_slashes) {
-    if (s.find("/") != 0) {
+    if (s.find('/') != 0) {
       s = "//" + s;
     }
   }
@@ -122,7 +122,7 @@ void URI::parse(string uri) {
     host = hp[0];
   }
   if (not hp[1].empty()) {
-    port = strtoul(hp[1].data(), nullptr, 10);
+    port = static_cast<uint32_t>(strtoul(hp[1].data(), nullptr, 10));
   }
   if (not hp[2].empty()) {
     path = hp[2];

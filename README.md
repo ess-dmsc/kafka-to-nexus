@@ -267,6 +267,7 @@ If using conan, the following remote repositories are required to be configured:
 - https://api.bintray.com/conan/ess-dmsc/conan
 - https://api.bintray.com/conan/conan-community/conan
 - https://api.bintray.com/conan/vthiery/conan-packages
+- https://api.bintray.com/conan/bincrafters/public-conan
 
 You can add them by running
 ```

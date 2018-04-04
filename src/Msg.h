@@ -1,6 +1,5 @@
 #pragma once
 
-#include "Alloc.h"
 #include "KafkaW/Msg.h"
 #include "logger.h"
 #include <atomic>
@@ -35,19 +34,8 @@ public:
     return msg;
   }
 
-  static Msg shared(char const *data, size_t len, std::shared_ptr<Alloc> &jm) {
-    jm->use_this();
-    Alloc::tcache_flush();
-    char *p1;
-    while (true) {
-      p1 = (char *)jm->alloc(len * sizeof(char));
-      if (not jm->check_in_range(p1)) {
-        LOG(Sev::Error, "try again...");
-      } else
-        break;
-    }
-    jm->use_default();
-    Alloc::tcache_flush();
+  static Msg shared(char const *data, size_t len) {
+    char *p1 = new char[len];
 
     Msg msg;
     msg.type = MsgType::Shared;
@@ -57,7 +45,7 @@ public:
     return msg;
   }
 
-  static Msg cheap(Msg const &msg, std::shared_ptr<Alloc> &jm) {
+  static Msg cheap(Msg const &msg) {
     Msg ret;
     if (msg.type != MsgType::Shared) {
       LOG(Sev::Critical, "msg.type != MsgType::Shared");
@@ -151,6 +139,7 @@ public:
   } var;
   size_t _size = 0;
 
+  /// TODO: Is this the correct usage of delete?
   inline ~Msg() {
     switch (type) {
     case MsgType::RdKafka:
@@ -160,10 +149,10 @@ public:
       delete var.kafkaw_msg;
       break;
     case MsgType::Owned:
-      delete var.owned;
+      delete[] var.owned;
       break;
     case MsgType::Shared:
-      delete var.shared;
+      delete[] var.shared;
       break;
     case MsgType::Cheap:
       break;
