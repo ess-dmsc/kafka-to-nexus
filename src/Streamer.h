@@ -18,6 +18,7 @@
 
 #include "KafkaW/KafkaW.h"
 
+#include <chrono>
 #include <future>
 
 class T_Streamer;
