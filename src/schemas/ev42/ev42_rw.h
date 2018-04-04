@@ -7,13 +7,6 @@ namespace Schemas {
 namespace ev42 {
 template <typename T> using uptr = std::unique_ptr<T>;
 
-struct append_ret {
-  int status;
-  uint64_t written_bytes;
-  uint64_t ix0;
-  operator bool() const { return status == 0; }
-};
-
 class FlatbufferReader : public FileWriter::FlatbufferReader {
   bool verify(Msg const &msg) const override;
   std::string source_name(Msg const &msg) const override;

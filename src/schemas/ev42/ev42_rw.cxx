@@ -3,11 +3,17 @@
 #include "../../helper.h"
 #include "../../json.h"
 #include "schemas/ev42_events_generated.h"
-#include <limits>
 
 namespace FileWriter {
 namespace Schemas {
 namespace ev42 {
+
+struct append_ret {
+  int status;
+  uint64_t written_bytes;
+  uint64_t ix0;
+  operator bool() const { return status == 0; }
+};
 
 static EventMessage const *get_fbuf(char const *data) {
   return GetEventMessage(data);
