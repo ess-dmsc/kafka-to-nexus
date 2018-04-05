@@ -156,6 +156,7 @@ set(kafka_to_nexus_INC
   date/tzblobs.h
   schemas/ev42/ev42_synth.h
   schemas/f142/f142_synth.h
+  schemas/f142/f142_rw.h
   schemas/ev42/ev42_rw.h
   CLIOptions.h
 )

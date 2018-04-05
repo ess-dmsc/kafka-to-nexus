@@ -1,11 +1,8 @@
+#include "f142_rw.h"
 #include "../../CollectiveQueue.h"
-#include "../../FlatbufferReader.h"
 #include "../../HDFFile.h"
-#include "../../HDFWriterModule.h"
-#include "../../h5.h"
 #include "../../helper.h"
 #include "../../json.h"
-#include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
 #include <limits>
 
@@ -15,47 +12,7 @@ namespace f142 {
 
 #include "schemas/f142_logdata_generated.h"
 
-using std::array;
-using std::vector;
-using std::string;
 template <typename T> using uptr = std::unique_ptr<T>;
-using FBUF = LogData;
-
-class writer_typed_base {
-public:
-  virtual ~writer_typed_base() = default;
-  virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
-};
-
-template <typename DT, typename FV>
-class writer_typed_array : public writer_typed_base {
-public:
-  writer_typed_array(hdf5::node::Group hdf_group,
-                     std::string const &source_name, hsize_t ncols,
-                     Value fb_value_type_id, CollectiveQueue *cq);
-  writer_typed_array(hdf5::node::Group, std::string const &source_name,
-                     hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq,
-                     HDFIDStore *hdf_store);
-  ~writer_typed_array() override = default;
-  h5::append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_2d<DT>> ds;
-  Value _fb_value_type_id = Value::NONE;
-};
-
-template <typename DT, typename FV>
-class writer_typed_scalar : public writer_typed_base {
-public:
-  writer_typed_scalar(hdf5::node::Group hdf_group,
-                      std::string const &source_name, Value fb_value_type_id,
-                      CollectiveQueue *cq);
-  writer_typed_scalar(hdf5::node::Group hdf_group,
-                      std::string const &source_name, Value fb_value_type_id,
-                      CollectiveQueue *cq, HDFIDStore *hdf_store);
-  ~writer_typed_scalar() override = default;
-  h5::append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_1d<DT>> ds;
-  Value _fb_value_type_id = Value::NONE;
-};
 
 static FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
@@ -103,7 +60,7 @@ writer_typed_array<DT, FV>::writer_typed_array(
 }
 
 template <typename DT, typename FV>
-h5::append_ret writer_typed_array<DT, FV>::write_impl(FBUF const *fbuf) {
+h5::append_ret writer_typed_array<DT, FV>::write_impl(LogData const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != _fb_value_type_id) {
     return {h5::AppendResult::ERROR, 0, 0};
@@ -155,7 +112,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
 }
 
 template <typename DT, typename FV>
-h5::append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
+h5::append_ret writer_typed_scalar<DT, FV>::write_impl(LogData const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != _fb_value_type_id) {
     return {h5::AppendResult::ERROR, 0, 0};
@@ -170,12 +127,6 @@ h5::append_ret writer_typed_scalar<DT, FV>::write_impl(FBUF const *fbuf) {
   }
   return this->ds->append_data_1d(&v2, 1);
 }
-
-class FlatbufferReader : public FileWriter::FlatbufferReader {
-  bool verify(Msg const &msg) const override;
-  std::string source_name(Msg const &msg) const override;
-  uint64_t timestamp(Msg const &msg) const override;
-};
 
 bool FlatbufferReader::verify(Msg const &msg) const {
   auto veri = flatbuffers::Verifier((uint8_t *)msg.data(), msg.size());
@@ -200,43 +151,6 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
 FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     g_registrar_FlatbufferReader(fbid_from_str("f142"));
 
-class HDFWriterModule : public FileWriter::HDFWriterModule {
-public:
-  static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                      std::string hdf_parent_name,
-                      rapidjson::Value const *attributes,
-                      CollectiveQueue *cq) override;
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override;
-  InitResult reopen(hdf5::node::Group hdf_file, std::string hdf_parent_name,
-                    CollectiveQueue *cq, HDFIDStore *hdf_store) override;
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
-  WriteResult write(Msg const &msg) override;
-  int32_t flush() override;
-  int32_t close() override;
-
-  uptr<writer_typed_base> impl;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_data;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
-  bool do_flush_always = false;
-  bool do_writer_forwarder_internal = false;
-  uint64_t total_written_bytes = 0;
-  uint64_t index_at_bytes = 0;
-  // set by default to a large value:
-  uint64_t index_every_bytes = !0;
-  uint64_t ts_max = 0;
-  size_t array_size = 0;
-  std::string source_name;
-  std::string type;
-  CollectiveQueue *cq = nullptr;
-};
-
 FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
   return FileWriter::HDFWriterModule::ptr(new HDFWriterModule);
 }
@@ -245,7 +159,7 @@ template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
 
 static FileWriter::Schemas::f142::Value
-value_type_scalar_from_string(string type) {
+value_type_scalar_from_string(std::string type) {
   if (type == "int8") {
     return Value::Byte;
   }
@@ -280,7 +194,7 @@ value_type_scalar_from_string(string type) {
 }
 
 static FileWriter::Schemas::f142::Value
-value_type_array_from_string(string type) {
+value_type_array_from_string(std::string type) {
   if (type == "int8") {
     return Value::ArrayByte;
   }
@@ -319,7 +233,9 @@ value_type_array_from_string(string type) {
 // should make this templated..
 
 writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
-                            string type, string s, CollectiveQueue *cq) {
+                            std::string type, std::string s,
+                            CollectiveQueue *cq) {
+
   using R = writer_typed_base *;
   auto &hg = hdf_group;
   if (array_size == 0) {
@@ -391,8 +307,9 @@ writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
 }
 
 writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
-                                 string type, string s, CollectiveQueue *cq,
-                                 HDFIDStore *hdf_store) {
+                                 std::string type, std::string s,
+                                 CollectiveQueue *cq, HDFIDStore *hdf_store) {
+
   using R = writer_typed_base *;
   auto &hg = hdf_group;
   if (array_size == 0) {
@@ -509,8 +426,9 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
     // exit(1);
     auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
 
-    string s("value");
+    std::string s("value");
     impl.reset(impl_fac(hdf_group, array_size, type, s, cq));
+
     if (!impl) {
       LOG(Sev::Error,
           "Could not create a writer implementation for value_type {}", type);
@@ -555,8 +473,10 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
                                                     std::string hdf_parent_name,
                                                     CollectiveQueue *cq,
                                                     HDFIDStore *hdf_store) {
+
   auto hdf_group = hdf5::node::get_group(hdf_file, hdf_parent_name);
-  string s("value");
+  std::string s("value");
+
   impl.reset(impl_fac_open(hdf_group, array_size, type, s, cq, hdf_store));
   if (!impl) {
     LOG(Sev::Error,
