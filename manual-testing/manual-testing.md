@@ -11,12 +11,10 @@ kafkacat -P -b localhost -t TEST_writerCommand -p 0 stop-command.json
 kafkacat -P -b localhost -t TEST_writerCommand -p 0 writer-exit.json
 ```
 
-The resulting file can be copied out of the container. Get the container id from the output of `docker ps`. Then do
-```
-docker cp <CONTAINER_ID>:/kafka_to_nexus/output_file.nxs <DESTINATION_PATH>
-```
+The resulting file can be found in `manual-testing/output-files` as the docker-compose script mounts this location as the output directory for the file writer.
 
 ### Increasing allowed message size
+
 For large commands (>1MB) it is necessary to increase the `message.max.bytes` and `replica.fetch.max.bytes` on the broker. When using the Kafka docker container this is achieved by specifying the follwing environment variables in the docker-compose script:
 ```
 KAFKA_MESSAGE_MAX_BYTES: 20000000
