@@ -19,6 +19,8 @@
 
 MainOpt *Roundtrip::opt = nullptr;
 
+void SetTestOptions(MainOpt *Options) { Roundtrip::opt = Options; };
+
 namespace FileWriter {
 namespace Test {
 
@@ -70,7 +72,7 @@ void roundtrip_simple_01(MainOpt &opt) {
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
   Master m(opt);
-  auto fn_cmd = "tests/msg-conf-new-01.json";
+  auto fn_cmd = std::string(TEST_DATA_PATH) + "/msg-conf-new-01.json";
   auto of = produce_command_from_file(opt.command_broker_uri, fn_cmd);
   opt.start_at_command_offset = of - 1;
   std::thread t1([&m] { ASSERT_NO_THROW(m.run()); });
@@ -239,6 +241,6 @@ void roundtrip_remote_kafka(MainOpt &opt, string fn_cmd) {
 } // namespace FileWriter
 
 TEST_F(Roundtrip, ev42_remote_kafka) {
-  FileWriter::Test::roundtrip_remote_kafka(*Roundtrip::opt,
-                                           "tests/msg-cmd-new-03.json");
+  FileWriter::Test::roundtrip_remote_kafka(
+      *Roundtrip::opt, std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
 }
