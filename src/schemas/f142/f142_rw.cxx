@@ -417,14 +417,15 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   }
 }
 
-HDFWriterModule::InitResult HDFWriterModule::init_hdf(
-    hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
-    rapidjson::Value const *attributes, CollectiveQueue *cq) {
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(HDFWriterModuleInitParameters InitParameters,
+                          rapidjson::Value const *attributes) {
+  auto &HDFGroup = InitParameters.HDFGroup;
+  // Keep these for now, experimenting with those on another branch.
+  CollectiveQueue *cq = nullptr;
   try {
-    auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
-
     std::string s("value");
-    impl.reset(impl_fac(hdf_group, array_size, type, s, cq));
+    impl.reset(impl_fac(HDFGroup, array_size, type, s, cq));
 
     if (!impl) {
       LOG(Sev::Error,
@@ -432,49 +433,46 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
       return HDFWriterModule::InitResult::ERROR_IO();
     }
     this->ds_timestamp =
-        h5::h5d_chunked_1d<uint64_t>::create(hdf_group, "time", 64 * 1024, cq);
+        h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, "time", 64 * 1024, cq);
     this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, "cue_timestamp_zero", 64 * 1024, cq);
+        HDFGroup, "cue_timestamp_zero", 64 * 1024, cq);
     this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, "cue_index", 64 * 1024, cq);
+        HDFGroup, "cue_index", 64 * 1024, cq);
     if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
     if (do_writer_forwarder_internal) {
       this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-          hdf_group, source_name + "__fwdinfo_seq_data", 64 * 1024, cq);
+          HDFGroup, source_name + "__fwdinfo_seq_data", 64 * 1024, cq);
       this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-          hdf_group, source_name + "__fwdinfo_seq_fwd", 64 * 1024, cq);
+          HDFGroup, source_name + "__fwdinfo_seq_fwd", 64 * 1024, cq);
       this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-          hdf_group, source_name + "__fwdinfo_ts_data", 64 * 1024, cq);
+          HDFGroup, source_name + "__fwdinfo_ts_data", 64 * 1024, cq);
       if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
         impl.reset();
         return HDFWriterModule::InitResult::ERROR_IO();
       }
     }
     if (attributes) {
-      HDFFile::write_attributes(hdf_group, attributes);
+      HDFFile::write_attributes(HDFGroup, attributes);
     }
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error,
-        "ERROR f142 could not init hdf_parent: {}  name: {}  trace: {}",
-        static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name,
-        message);
+    LOG(Sev::Error, "ERROR f142 could not init HDFGroup: {}  trace: {}",
+        static_cast<std::string>(HDFGroup.link().path()), message);
   }
   return HDFWriterModule::InitResult::OK();
 }
 
-HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
-                                                    std::string hdf_parent_name,
-                                                    CollectiveQueue *cq,
-                                                    HDFIDStore *hdf_store) {
-
-  auto hdf_group = hdf5::node::get_group(hdf_file, hdf_parent_name);
+HDFWriterModule::InitResult
+HDFWriterModule::reopen(HDFWriterModuleInitParameters InitParameters) {
+  auto &HDFGroup = InitParameters.HDFGroup;
+  // Keep these for now, experimenting with those on another branch.
+  CollectiveQueue *cq = nullptr;
+  HDFIDStore *hdf_store = nullptr;
   std::string s("value");
-
-  impl.reset(impl_fac_open(hdf_group, array_size, type, s, cq, hdf_store));
+  impl.reset(impl_fac_open(HDFGroup, array_size, type, s, cq, hdf_store));
   if (!impl) {
     LOG(Sev::Error,
         "Could not create a writer implementation for value_type {}", type);
@@ -482,11 +480,11 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
   }
 
   this->ds_timestamp =
-      h5::h5d_chunked_1d<uint64_t>::open(hdf_group, "time", cq, hdf_store);
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "time", cq, hdf_store);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      hdf_group, "cue_timestamp_zero", cq, hdf_store);
+      HDFGroup, "cue_timestamp_zero", cq, hdf_store);
   this->ds_cue_index =
-      h5::h5d_chunked_1d<uint64_t>::open(hdf_group, "cue_index", cq, hdf_store);
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_index", cq, hdf_store);
   if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
     impl.reset();
     return HDFWriterModule::InitResult::ERROR_IO();
@@ -502,11 +500,11 @@ HDFWriterModule::InitResult HDFWriterModule::reopen(hdf5::node::Group hdf_file,
 
   if (do_writer_forwarder_internal) {
     this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
-        hdf_group, source_name + "__fwdinfo_seq_data", cq, hdf_store);
+        HDFGroup, source_name + "__fwdinfo_seq_data", cq, hdf_store);
     this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
-        hdf_group, source_name + "__fwdinfo_seq_fwd", cq, hdf_store);
+        HDFGroup, source_name + "__fwdinfo_seq_fwd", cq, hdf_store);
     this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
-        hdf_group, source_name + "__fwdinfo_ts_data", cq, hdf_store);
+        HDFGroup, source_name + "__fwdinfo_ts_data", cq, hdf_store);
     if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();

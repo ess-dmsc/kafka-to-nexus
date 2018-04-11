@@ -164,7 +164,6 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     auto ConfigStreamRapidjson =
         stringToRapidjsonOrThrow(ConfigStreamInner.dump());
     HDFWriterModule->parse_config(ConfigStreamRapidjson, nullptr);
-    CollectiveQueue *cq = nullptr;
     rapidjson::Document AttributesDocument;
     if (auto x = find<json>("attributes", ConfigStream)) {
       AttributesDocument = stringToRapidjsonOrThrow(x.inner().dump());
@@ -174,7 +173,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
       AttributesPtr = &AttributesDocument;
     }
     auto StreamGroup = hdf5::node::get_group(RootGroup, stream.hdf_parent_name);
-    HDFWriterModule->init_hdf(StreamGroup, ".", AttributesPtr, cq);
+    HDFWriterModule->init_hdf({StreamGroup}, AttributesPtr);
     HDFWriterModule->close();
     HDFWriterModule.reset();
   }
@@ -306,7 +305,7 @@ void CommandHandler::addStreamSourceToWriterModule(
         auto RootGroup = Task->hdf_file.h5file.root();
         auto StreamGroup = hdf5::node::get_group(
             RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name);
-        auto Err = HDFWriterModule->reopen(StreamGroup, ".", nullptr, nullptr);
+        auto Err = HDFWriterModule->reopen({StreamGroup});
         if (Err.is_ERR()) {
           LOG(Sev::Error, "can not reopen HDF file for stream {}",
               StreamSettings.StreamHDFInfoObj.hdf_parent_name);
