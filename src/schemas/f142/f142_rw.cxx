@@ -421,9 +421,6 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
     hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
     rapidjson::Value const *attributes, CollectiveQueue *cq) {
   try {
-    // LOG(Sev::Error, "hdf_parent: {}   hdf_parent_name: {}",
-    // static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name);
-    // exit(1);
     auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
 
     std::string s("value");
