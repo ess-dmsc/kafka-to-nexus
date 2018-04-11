@@ -5,6 +5,7 @@
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "schemas/senv_data_generated.h"
+#include "Datasets.h"
 
 namespace senv {
   using KafkaMessage = FileWriter::Msg;
@@ -32,7 +33,7 @@ namespace senv {
                                 rapidjson::Value const *attributes,
                                 CollectiveQueue *cq) override;
     
-    InitResult reopen(hdf5::node::Group hdf_file,
+    InitResult reopen(hdf5::node::Group hdf_parent,
                               std::string hdf_parent_name, CollectiveQueue *cq,
                               HDFIDStore *hdf_store) override;
     
@@ -45,6 +46,9 @@ namespace senv {
     void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                    int mpi_rank) override;
   protected:
-    
+    NeXusDataset::RawValue Value;
+    NeXusDataset::Time Timestamp;
+    NeXusDataset::CueIndex CueTimestampIndex;
+    NeXusDataset::CueTimestampZero CueTimestamp;
   };
 } //namespace senv

@@ -57,10 +57,31 @@ namespace senv {
                       std::string hdf_parent_name,
                       rapidjson::Value const *attributes,
                                                    CollectiveQueue *cq) {
+    const int DefaultChunkSize = 1024;
+    try {
+      auto CurrentGroup = hdf_parent.get_group(hdf_parent_name);
+      NeXusDataset::RawValue(CurrentGroup, DefaultChunkSize);
+      NeXusDataset::Time(CurrentGroup, DefaultChunkSize);
+      NeXusDataset::CueIndex(CurrentGroup, DefaultChunkSize);
+      NeXusDataset::CueTimestampZero(CurrentGroup, DefaultChunkSize);
+    } catch (std::exception &E) {
+      LOG(Sev::Error, "Unable to initialise fast sample environment data tree in HDF file.");
+      return HDFWriterModule::InitResult::ERROR_IO();
+    }
     return FileWriterBase::InitResult::OK();
   }
   
-  FileWriterBase::InitResult FastSampleEnvironmentWriter::reopen(hdf5::node::Group hdf_file, std::string hdf_parent_name, CollectiveQueue *cq, HDFIDStore *hdf_store) {
+  FileWriterBase::InitResult FastSampleEnvironmentWriter::reopen(hdf5::node::Group hdf_parent, std::string hdf_parent_name, CollectiveQueue *cq, HDFIDStore *hdf_store) {
+    try {
+      auto CurrentGroup = hdf_parent.get_group(hdf_parent_name);
+      Value = NeXusDataset::RawValue(CurrentGroup);
+      Timestamp = NeXusDataset::Time(CurrentGroup);
+      CueTimestampIndex = NeXusDataset::CueIndex(CurrentGroup);
+      CueTimestamp = NeXusDataset::CueTimestampZero(CurrentGroup);
+    } catch (std::exception &E) {
+      LOG(Sev::Error, "Failed to reopen datasets in HDF file.");
+      return HDFWriterModule::InitResult::ERROR_IO();
+    }
     return FileWriterBase::InitResult::OK();
   }
   

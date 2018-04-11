@@ -15,6 +15,7 @@ stream_master.cpp
 streamer_options.cpp
 MainOptTest.cpp
 FastSampleEnvironmentWriterTests.cpp
+NeXusDatasets.cpp
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC

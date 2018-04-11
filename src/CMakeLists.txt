@@ -106,6 +106,7 @@ set(kafka_to_nexus_SRC
   schemas/ev42/ev42_rw.cxx
   schemas/ev42/ev42_synth.cxx
   schemas/senv/FastSampleEnvironmentWriter.cpp
+  schemas/senv/Datasets.cpp
   MainOpt.cxx
   ${FMT_SRC}
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
@@ -161,6 +162,7 @@ set(kafka_to_nexus_INC
   schemas/ev42/ev42_rw.h
   CLIOptions.h
   schemas/senv/FastSampleEnvironmentWriter.h
+  schemas/senv/Datasets.h
 )
 
 set(tgt "kafka_to_nexus__objects")

@@ -64,3 +64,44 @@ TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   FileWriter::Msg TestMessage2 = FileWriter::Msg::owned(TempData.get(), FileSize);
   EXPECT_FALSE(ReaderUnderTest->verify(TestMessage2));
 }
+
+class FastSampleEnvironmentWriter : public ::testing::Test {
+public:
+  void SetUp() override {
+    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
+    RootGroup = File.root();
+    RootGroup.create_group(NXLogGroup);
+  };
+  
+  void TearDown() override {
+    File.close();
+  };
+  std::string TestFileName{"SomeTestFile.hdf5"};
+  std::string NXLogGroup{"SomeParentName"};
+  hdf5::file::File File;
+  hdf5::node::Group RootGroup;
+};
+
+TEST_F(FastSampleEnvironmentWriter, InitFile) {
+  {
+    senv::FastSampleEnvironmentWriter Writer;
+    EXPECT_TRUE(Writer.init_hdf(RootGroup, NXLogGroup, nullptr, nullptr).is_OK());
+  }
+  ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
+  auto ParentGroup = RootGroup.get_group(NXLogGroup);
+  EXPECT_TRUE(ParentGroup.has_dataset("raw_value"));
+  EXPECT_TRUE(ParentGroup.has_dataset("cue_index"));
+  EXPECT_TRUE(ParentGroup.has_dataset("time"));
+  EXPECT_TRUE(ParentGroup.has_dataset("cue_timestamp_zero"));
+}
+
+TEST_F(FastSampleEnvironmentWriter, ReopenFileFailure) {
+  senv::FastSampleEnvironmentWriter Writer;
+  EXPECT_FALSE(Writer.reopen(RootGroup, NXLogGroup, nullptr, nullptr).is_OK());
+}
+
+TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
+  senv::FastSampleEnvironmentWriter Writer;
+  EXPECT_TRUE(Writer.init_hdf(RootGroup, NXLogGroup, nullptr, nullptr).is_OK());
+  EXPECT_TRUE(Writer.reopen(RootGroup, NXLogGroup, nullptr, nullptr).is_OK());
+}
