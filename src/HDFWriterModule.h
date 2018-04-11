@@ -153,14 +153,14 @@ public:
   virtual void parse_config(rapidjson::Value const &config_stream,
                             rapidjson::Value const *config_module) = 0;
 
-  /// Initialize the HDF file.
+  /// Initialise the HDF file.
   ///
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   ///
-  /// \param HDFGroup The HDF group instance into which this HDFWriterModule
-  /// should write its data.
+  /// \param InitParameters Contains most importantly the \p HDFGroup into
+  /// which this HDFWriterModule should write its data.
   /// \param HDFAttributes Additional attributes which the HDFWriterModule
   /// should write to the file.
   /// \return The result.
@@ -169,8 +169,8 @@ public:
 
   /// Reopen the HDF objects which are used by this HDFWriterModule.
   ///
-  /// \param HDFGroup The HDF group instance into which this HDFWriterModule
-  /// should write its data.
+  /// \param InitParameters Contains most importantly the \p HDFGroup into
+  /// which this HDFWriterModule should write its data.
   /// \return The result.
   virtual InitResult reopen(HDFWriterModuleInitParameters InitParameters) = 0;
 
