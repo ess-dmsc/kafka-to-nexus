@@ -10,12 +10,10 @@
 namespace senv {
   
   FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>
-  RegisterSenvGuard(FileWriter::fbid_from_str("senv"));
+  RegisterSenvGuard("senv");
   
-  FileWriter::HDFWriterModuleRegistry::Registrar
-  RegisterSenvWriter("senv", [](){
-    return std::unique_ptr<FileWriterBase>(new FastSampleEnvironmentWriter());
-  });
+  FileWriter::HDFWriterModuleRegistry::Registrar<FastSampleEnvironmentWriter>
+  RegisterSenvWriter("senv");
   
   std::string nanoSecEpochToISO8601(std::uint64_t time) {
     time_t secondsPart = time / 1000000000;
