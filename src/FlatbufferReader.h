@@ -25,27 +25,27 @@ public:
   virtual uint64_t timestamp(Msg const &msg) const = 0;
 };
 
-using FBID = std::array<char, 4>;
-FBID fbid_from_str(char const *x);
-
 /// \brief Keeps track of the registered FlatbufferReader instances.
 
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// FlatbufferReaderRegistry.
 
 namespace FlatbufferReaderRegistry {
-using Key = FBID;
-using Value = FlatbufferReader::ptr;
-std::map<Key, Value> &items();
-FlatbufferReader::ptr &find(FBID const &fbid);
+using ReaderPtr = FlatbufferReader::ptr;
+std::map<std::string, ReaderPtr> &getReaders();
+
+/// @todo The following two functions should probably throw an exception if key
+/// is not found.
+FlatbufferReader::ptr &find(std::string const &FlatbufferID);
 FlatbufferReader::ptr &find(Msg const &msg);
 
-void add(FBID fbid, FlatbufferReader::ptr &&item);
+void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item);
 
 template <typename T> class Registrar {
 public:
-  explicit Registrar(FBID fbid) {
-    FlatbufferReaderRegistry::add(fbid, std::unique_ptr<T>(new T));
+  explicit Registrar(std::string FlatbufferID) {
+    FlatbufferReaderRegistry::addReader(FlatbufferID,
+                                        std::unique_ptr<T>(new T));
   }
 };
 } // namespace FlatbufferReaderRegistry
