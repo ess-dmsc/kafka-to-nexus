@@ -2,7 +2,6 @@
 
 #include "CollectiveQueue.h"
 #include "Msg.h"
-#include "helper.h"
 #include <fmt/format.h>
 #include <functional>
 #include <h5cpp/hdf5.hpp>
@@ -198,6 +197,9 @@ using ModuleFactory = std::function<std::unique_ptr<HDFWriterModule>()>;
 
 std::map<std::string, ModuleFactory> &getFactories();
 void addWriterModule(std::string key, ModuleFactory value);
+
+/// @todo This function should probably throw an exception if key
+/// is not found.
 ModuleFactory &find(std::string const &key);
 
 template <class Module> class Registrar {

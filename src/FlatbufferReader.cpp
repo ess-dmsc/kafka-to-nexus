@@ -32,7 +32,7 @@ FlatbufferReader::ptr &find(Msg const &msg) {
   return find(key);
 }
 
-void add(std::string FlatbufferID, FlatbufferReader::ptr &&item) {
+void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item) {
   auto &m = getReaders();
   if (FlatbufferID.size() != 4) {
     throw std::runtime_error(

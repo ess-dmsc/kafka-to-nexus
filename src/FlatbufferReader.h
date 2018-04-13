@@ -39,12 +39,12 @@ std::map<std::string, ReaderPtr> &getReaders();
 FlatbufferReader::ptr &find(std::string const &FlatbufferID);
 FlatbufferReader::ptr &find(Msg const &msg);
 
-void add(std::string FlatbufferID, FlatbufferReader::ptr &&item);
+void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item);
 
 template <typename T> class Registrar {
 public:
   explicit Registrar(std::string FlatbufferID) {
-    FlatbufferReaderRegistry::add(FlatbufferID, std::unique_ptr<T>(new T));
+    FlatbufferReaderRegistry::addReader(FlatbufferID, std::unique_ptr<T>(new T));
   }
 };
 } // namespace FlatbufferReaderRegistry
