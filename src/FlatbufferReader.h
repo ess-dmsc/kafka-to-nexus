@@ -32,9 +32,10 @@ public:
 
 namespace FlatbufferReaderRegistry {
 using ReaderPtr = FlatbufferReader::ptr;
-  std::map<std::string, ReaderPtr> &getReaders();
+std::map<std::string, ReaderPtr> &getReaders();
 
-  /// @todo The following two functions should probably throw an exception if key is not found.
+/// @todo The following two functions should probably throw an exception if key
+/// is not found.
 FlatbufferReader::ptr &find(std::string const &FlatbufferID);
 FlatbufferReader::ptr &find(Msg const &msg);
 

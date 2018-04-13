@@ -194,21 +194,20 @@ public:
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// HDFWriterModuleRegistry.
 namespace HDFWriterModuleRegistry {
-  using ModuleFactory = std::function<std::unique_ptr<HDFWriterModule>()>;
+using ModuleFactory = std::function<std::unique_ptr<HDFWriterModule>()>;
 
-  std::map<std::string, ModuleFactory> &getFactories();
-  void addWriterModule(std::string key, ModuleFactory value);
-  ModuleFactory &find(std::string const &key);
-  
-  template <class Module>
-  class Registrar {
-  public:
-    explicit Registrar(std::string FlatbufferID) {
-      auto FactoryFunction = [](){
-        return std::unique_ptr<HDFWriterModule>(new Module());
-      };
-      addWriterModule(FlatbufferID, FactoryFunction);
+std::map<std::string, ModuleFactory> &getFactories();
+void addWriterModule(std::string key, ModuleFactory value);
+ModuleFactory &find(std::string const &key);
+
+template <class Module> class Registrar {
+public:
+  explicit Registrar(std::string FlatbufferID) {
+    auto FactoryFunction = []() {
+      return std::unique_ptr<HDFWriterModule>(new Module());
+    };
+    addWriterModule(FlatbufferID, FactoryFunction);
   };
-  };
+};
 } // namespace HDFWriterModuleRegistry
 } // namespace FileWriter
