@@ -8,19 +8,14 @@
 #include "FastSampleEnvironmentWriter.h"
 
 namespace senv {
-  using WriterFactory = FileWriter::HDFWriterModuleRegistry::Value;
-  using WriterRegistrator = FileWriter::HDFWriterModuleRegistry::Registrar;
   
-  std::unique_ptr<FileWriterBase> InstantiateWriter() {
+  FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>
+  RegisterSenvGuard(FileWriter::fbid_from_str("senv"));
+  
+  FileWriter::HDFWriterModuleRegistry::Registrar
+  RegisterSenvWriter("senv", [](){
     return std::unique_ptr<FileWriterBase>(new FastSampleEnvironmentWriter());
-  };
-  
-  WriterRegistrator RegisteredWriter("senv", InstantiateWriter);
-  
-  using WriteGuardRegistrator = FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>;
-  
-  WriteGuardRegistrator RegisteredGuard(std::array<char,4>{{'s', 'e', 'n', 'v'}});
-
+  });
   
   std::string nanoSecEpochToISO8601(std::uint64_t time) {
     time_t secondsPart = time / 1000000000;
@@ -86,11 +81,12 @@ namespace senv {
   }
   
   FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
+    //auto FbPointer = GetSampleEnvironmentData(Message.data());
+    
     return FileWriterBase::WriteResult::OK();
   }
   
   std::int32_t FastSampleEnvironmentWriter::flush() {
-    LOG(Sev::Error, "Flush not implemented.");
     return 0;
   }
   
