@@ -3,28 +3,20 @@
 
 namespace FileWriter {
 
-/// `x` must be a string of exactly 4 characters. `NULL` terminator is not
-/// required.
-FBID fbid_from_str(char const *x) {
-  FBID ret;
-  memcpy(ret.data(), x, 4);
-  return ret;
-}
-
 namespace FlatbufferReaderRegistry {
 
-std::map<FlatbufferReaderRegistry::Key, FlatbufferReaderRegistry::Value> &
-items() {
-  static std::map<FlatbufferReaderRegistry::Key,
-                  FlatbufferReaderRegistry::Value>
+  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &
+getReaders() {
+  static std::map<std::string,
+                  FlatbufferReaderRegistry::ReaderPtr>
       _items;
   return _items;
 }
 
-FlatbufferReaderRegistry::Value &
-find(FlatbufferReaderRegistry::Key const &key) {
-  static FlatbufferReaderRegistry::Value empty;
-  auto &_items = items();
+FlatbufferReaderRegistry::ReaderPtr &
+find(std::string const &key) {
+  static FlatbufferReaderRegistry::ReaderPtr empty;
+  auto &_items = getReaders();
   auto f = _items.find(key);
   if (f == _items.end()) {
     return empty;
@@ -40,20 +32,21 @@ FlatbufferReader::ptr &find(Msg const &msg) {
     static FlatbufferReader::ptr empty;
     return empty;
   }
-  FlatbufferReaderRegistry::Key key;
-  memcpy(&key, msg.data() + 4, 4);
+  std::string key(msg.data() + 4, 4);
   return find(key);
 }
 
-void add(FBID fbid, FlatbufferReader::ptr &&item) {
-  auto &m = items();
-  if (m.find(fbid) != m.end()) {
+void add(std::string FlatbufferID, FlatbufferReader::ptr &&item) {
+  auto &m = getReaders();
+  if (FlatbufferID.size() != 4) {
+    throw std::runtime_error("FlatbufferReader ID must be a 4 character string.");
+  }
+  if (m.find(FlatbufferID) != m.end()) {
     auto s =
-        fmt::format("ERROR FlatbufferReader for FBID [{:.{}}] exists already",
-                    fbid.data(), fbid.size());
+        fmt::format("ERROR FlatbufferReader for ID [{}] exists already", FlatbufferID);
     throw std::runtime_error(s);
   }
-  m[fbid] = std::move(item);
+  m[FlatbufferID] = std::move(item);
 }
 } // namespace FlatbufferReaderRegistry
 } // namespace FileWriter
