@@ -118,14 +118,6 @@ private:
 };
 } // namespace HDFWriterModule_detail
 
-/// Group together parameters as used in `HDFWriterModule::init_hdf` and
-/// `HDFWriterModule::reopen` for future extensibility.
-struct HDFWriterModuleInitParameters {
-  HDFWriterModuleInitParameters(hdf5::node::Group &HDFGroup_)
-      : HDFGroup(HDFGroup_) {}
-  hdf5::node::Group &HDFGroup;
-};
-
 /// Writes a given flatbuffer to HDF.
 ///
 /// Base class for the writer modules which are responsible for actually
@@ -164,7 +156,7 @@ public:
   /// \param HDFAttributes Additional attributes which the HDFWriterModule
   /// should write to the file.
   /// \return The result.
-  virtual InitResult init_hdf(HDFWriterModuleInitParameters InitParameters,
+  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
                               rapidjson::Value const *HDFAttributes) = 0;
 
   /// Reopen the HDF objects which are used by this HDFWriterModule.
@@ -172,7 +164,7 @@ public:
   /// \param InitParameters Contains most importantly the \p HDFGroup into
   /// which this HDFWriterModule should write its data.
   /// \return The result.
-  virtual InitResult reopen(HDFWriterModuleInitParameters InitParameters) = 0;
+  virtual InitResult reopen(hdf5::node::Group &HDFGroup) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   ///

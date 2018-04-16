@@ -59,12 +59,11 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  InitResult init_hdf(HDFWriterModuleInitParameters InitParameters,
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       rapidjson::Value const *attributes) override;
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override;
-  HDFWriterModule::InitResult
-  reopen(HDFWriterModuleInitParameters InitParameters) override;
+  HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                  int mpi_rank) override;
   WriteResult write(Msg const &msg) override;

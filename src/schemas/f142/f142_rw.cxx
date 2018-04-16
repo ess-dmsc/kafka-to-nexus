@@ -418,9 +418,8 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::init_hdf(HDFWriterModuleInitParameters InitParameters,
+HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           rapidjson::Value const *attributes) {
-  auto &HDFGroup = InitParameters.HDFGroup;
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
   try {
@@ -466,8 +465,7 @@ HDFWriterModule::init_hdf(HDFWriterModuleInitParameters InitParameters,
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::reopen(HDFWriterModuleInitParameters InitParameters) {
-  auto &HDFGroup = InitParameters.HDFGroup;
+HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
   HDFIDStore *hdf_store = nullptr;
