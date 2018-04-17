@@ -16,6 +16,37 @@ public:
   hdf5::node::Group RootGroup;
 };
 
+TEST_F(DatasetCreation, AppendDataOnce) {
+  int ChunkSize = 256;
+  std::array<const std::uint16_t, 4> SomeData{{0, 1, 2, 3}};
+  NeXusDataset::ExtensibleDataset<std::uint16_t> TestDataset(RootGroup, "SomeDataset", ChunkSize);
+  TestDataset.appendData(SomeData);
+  auto DataspaceSize = TestDataset.dataspace().size();
+  EXPECT_EQ(DataspaceSize, SomeData.size());
+  std::vector<std::uint16_t> Buffer(DataspaceSize);
+  TestDataset.read(Buffer);
+  for (int i = 0; i < DataspaceSize; i++) {
+    ASSERT_EQ(Buffer.at(i), SomeData.at(i));
+  }
+}
+
+TEST_F(DatasetCreation, AppendDataTwice) {
+  int ChunkSize = 256;
+  std::array<const std::uint16_t, 4> SomeData{{0, 1, 2, 3}};
+  NeXusDataset::ExtensibleDataset<std::uint16_t> TestDataset(RootGroup, "SomeDataset", ChunkSize);
+  TestDataset.appendData(SomeData);
+  TestDataset.appendData(SomeData);
+  auto DataspaceSize = TestDataset.dataspace().size();
+  EXPECT_EQ(DataspaceSize, SomeData.size() * 2);
+  std::vector<std::uint16_t> Buffer(DataspaceSize);
+  TestDataset.read(Buffer);
+  for (int i = 0; i < DataspaceSize; i++) {
+    ASSERT_EQ(Buffer.at(i), SomeData.at(i % SomeData.size())) << "Failed at i = " << i;
+  }
+}
+
+//--------------------------------------------------
+
 TEST_F(DatasetCreation, RawValueDefaultCreation) {
   int ChunkSize = 256;
   {

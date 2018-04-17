@@ -6,6 +6,33 @@
 #include "../../HDFWriterModule.h"
 #include "schemas/senv_data_generated.h"
 #include "Datasets.h"
+#include "gsl/span"
+#include <h5cpp/datatype/type_trait.hpp>
+
+namespace hdf5 {
+namespace datatype {
+  template<>
+  class TypeTrait<unsigned short const> {
+  public:
+    using Type = unsigned short const;
+    using TypeClass = Integer;
+    static TypeClass create(const Type & = Type()) {
+      return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_USHORT)));
+    }
+  };
+  
+  template<typename T>
+  class TypeTrait<gsl::span<T>> {
+  public:
+    using Type = gsl::span<T>;
+    using TypeClass = typename TypeTrait<T>::TypeClass;
+    static TypeClass create(const Type & = Type()) {
+      return TypeTrait<T>::create();
+    }
+  };
+    
+}
+}
 
 namespace senv {
   using KafkaMessage = FileWriter::Msg;

@@ -79,7 +79,9 @@ namespace senv {
   }
   
   FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
-    //auto FbPointer = GetSampleEnvironmentData(Message.data());
+    auto FbPointer = GetSampleEnvironmentData(Message.data());
+    gsl::span<const std::uint16_t> DataSpan(reinterpret_cast<const std::uint16_t*>(FbPointer->Values()->Data()), FbPointer->Values()->size());
+    Value.appendData(DataSpan);
     
     return FileWriterBase::WriteResult::OK();
   }
