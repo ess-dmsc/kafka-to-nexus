@@ -151,18 +151,20 @@ public:
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   ///
-  /// \param hdf_file The HDF file handle.
-  /// \param hdf_parent_name Path to the group into which this HDFWriterModule
-  /// should put its data.
+  /// \param InitParameters Contains most importantly the \p HDFGroup into
+  /// which this HDFWriterModule should write its data.
+  /// \param HDFAttributes Additional attributes which the HDFWriterModule
+  /// should write to the file.
   /// \return The result.
-  virtual InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                              std::string hdf_parent_name,
-                              rapidjson::Value const *attributes,
-                              CollectiveQueue *cq) = 0;
+  virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                              rapidjson::Value const *HDFAttributes) = 0;
 
-  virtual InitResult reopen(hdf5::node::Group hdf_file,
-                            std::string hdf_parent_name, CollectiveQueue *cq,
-                            HDFIDStore *hdf_store) = 0;
+  /// Reopen the HDF objects which are used by this HDFWriterModule.
+  ///
+  /// \param InitParameters Contains most importantly the \p HDFGroup into
+  /// which this HDFWriterModule should write its data.
+  /// \return The result.
+  virtual InitResult reopen(hdf5::node::Group &HDFGroup) = 0;
 
   /// Process the message in some way, for example write to the HDF file.
   ///

@@ -72,23 +72,24 @@ void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
   }
 }
 
-HDFWriterModule::InitResult HDFWriterModule::init_hdf(
-    hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
-    rapidjson::Value const *attributes, CollectiveQueue *cq) {
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
+                          rapidjson::Value const *attributes) {
+  // Keep these for now, experimenting with those on another branch.
+  CollectiveQueue *cq = nullptr;
   try {
-    auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-        hdf_group, "event_time_offset", chunk_bytes, cq);
+        HDFGroup, "event_time_offset", chunk_bytes, cq);
     this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-        hdf_group, "event_id", chunk_bytes, cq);
+        HDFGroup, "event_id", chunk_bytes, cq);
     this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, "event_time_zero", chunk_bytes, cq);
+        HDFGroup, "event_time_zero", chunk_bytes, cq);
     this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
-        hdf_group, "event_index", chunk_bytes, cq);
+        HDFGroup, "event_index", chunk_bytes, cq);
     this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
-        hdf_group, "cue_index", chunk_bytes, cq);
+        HDFGroup, "cue_index", chunk_bytes, cq);
     this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        hdf_group, "cue_timestamp_zero", chunk_bytes, cq);
+        HDFGroup, "cue_timestamp_zero", chunk_bytes, cq);
 
     if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
         !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
@@ -100,36 +101,32 @@ HDFWriterModule::InitResult HDFWriterModule::init_hdf(
       ds_cue_timestamp_zero.reset();
     }
     if (attributes) {
-      HDFFile::write_attributes(hdf_group, attributes);
+      HDFFile::write_attributes(HDFGroup, attributes);
     }
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error,
-        "ERROR ev42 could not init hdf_parent: {}  name: {}  trace: {}",
-        static_cast<std::string>(hdf_parent.link().path()), hdf_parent_name,
-        message);
+    LOG(Sev::Error, "ERROR ev42 could not init hdf_parent: {}  trace: {}",
+        static_cast<std::string>(HDFGroup.link().path()), message);
   }
   return HDFWriterModule::InitResult::OK();
 }
 
 HDFWriterModule::InitResult
-HDFWriterModule::reopen(hdf5::node::Group hdf_parent,
-                        std::string hdf_parent_name, CollectiveQueue *cq,
-                        HDFIDStore *hdf_store) {
-  auto hdf_group = hdf5::node::get_group(hdf_parent, hdf_parent_name);
-
+HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
+  // Keep these for now, experimenting with those on another branch.
+  HDFIDStore *hdf_store = nullptr;
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
-      hdf_group, "event_time_offset", cq, hdf_store);
+      HDFGroup, "event_time_offset", cq, hdf_store);
   this->ds_event_id =
-      h5::h5d_chunked_1d<uint32_t>::open(hdf_group, "event_id", cq, hdf_store);
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id", cq, hdf_store);
   this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      hdf_group, "event_time_zero", cq, hdf_store);
+      HDFGroup, "event_time_zero", cq, hdf_store);
   this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::open(
-      hdf_group, "event_index", cq, hdf_store);
+      HDFGroup, "event_index", cq, hdf_store);
   this->ds_cue_index =
-      h5::h5d_chunked_1d<uint32_t>::open(hdf_group, "cue_index", cq, hdf_store);
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index", cq, hdf_store);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      hdf_group, "cue_timestamp_zero", cq, hdf_store);
+      HDFGroup, "cue_timestamp_zero", cq, hdf_store);
 
   ds_event_time_offset->buffer_init(buffer_size, buffer_packet_max);
   ds_event_id->buffer_init(buffer_size, buffer_packet_max);
