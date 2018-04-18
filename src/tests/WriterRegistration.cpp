@@ -18,14 +18,11 @@ class DummyWriter : public HDFWriterModule {
 public:
   void parse_config(rapidjson::Value const &config_stream,
                     rapidjson::Value const *config_module) override {}
-  InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                      std::string hdf_parent_name,
-                      rapidjson::Value const *attributes,
-                      CollectiveQueue *cq) override {
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                      rapidjson::Value const *attributes) override {
     return InitResult::OK();
   }
-  InitResult reopen(hdf5::node::Group hdf_file, std::string hdf_parent_name,
-                    CollectiveQueue *cq, HDFIDStore *hdf_store) override {
+  InitResult reopen(hdf5::node::Group &HDFGrup) override {
     return InitResult::OK();
   }
   WriteResult write(Msg const &msg) override { return WriteResult::OK(); }

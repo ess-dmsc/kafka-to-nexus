@@ -156,10 +156,10 @@ set(kafka_to_nexus_INC
   date/tz_private.h
   date/tz.h
   date/tzblobs.h
-  schemas/ev42/ev42_synth.h
-  schemas/f142/f142_synth.h
-  schemas/f142/f142_rw.h
   schemas/ev42/ev42_rw.h
+  schemas/ev42/ev42_synth.h
+  schemas/f142/f142_rw.h
+  schemas/f142/f142_synth.h
   CLIOptions.h
   schemas/senv/FastSampleEnvironmentWriter.h
   schemas/senv/Datasets.h
