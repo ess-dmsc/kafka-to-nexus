@@ -41,14 +41,14 @@ TEST_F(ReaderRegistrationTest, SameKeyRegistration) {
       std::runtime_error);
 }
 
-TEST_F(ReaderRegistrationTest, KeyToShort) {
+TEST_F(ReaderRegistrationTest, KeyTooShort) {
   std::string TestKey("tem");
   EXPECT_THROW(
       FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey),
       std::runtime_error);
 }
 
-TEST_F(ReaderRegistrationTest, KeyToLong) {
+TEST_F(ReaderRegistrationTest, KeyTooLong) {
   std::string TestKey("tempp");
   EXPECT_THROW(
       FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey),
