@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
-#include <fstream>
-#include <memory>
 #include "schemas/senv/FastSampleEnvironmentWriter.h"
+#include <fstream>
+#include <gtest/gtest.h>
+#include <memory>
 
 class FastSampleEnvironmentReader : public ::testing::Test {
 public:
@@ -26,12 +26,12 @@ public:
     RawBuffer.reset(new std::int8_t[FileSize]);
     std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), FileSize);
   };
-  
+
   void SetUp() override {
     ASSERT_NE(RawBuffer.get(), nullptr);
     ReaderUnderTest.reset(new senv::SampleEnvironmentDataGuard());
   };
-  
+
   std::unique_ptr<senv::SampleEnvironmentDataGuard> ReaderUnderTest;
   static std::unique_ptr<std::int8_t[]> RawBuffer;
   static size_t FileSize;
@@ -39,29 +39,33 @@ public:
 std::unique_ptr<std::int8_t[]> FastSampleEnvironmentReader::RawBuffer{nullptr};
 size_t FastSampleEnvironmentReader::FileSize{0};
 
-
 TEST_F(FastSampleEnvironmentReader, GetSourceName) {
-  FileWriter::Msg TestMessage = FileWriter::Msg::owned((char*)RawBuffer.get(), FileSize);
+  FileWriter::Msg TestMessage =
+      FileWriter::Msg::owned((char *)RawBuffer.get(), FileSize);
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
 }
 
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
-  FileWriter::Msg TestMessage = FileWriter::Msg::owned((char*)RawBuffer.get(), FileSize);
+  FileWriter::Msg TestMessage =
+      FileWriter::Msg::owned((char *)RawBuffer.get(), FileSize);
   EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
-  FileWriter::Msg TestMessage = FileWriter::Msg::owned((char*)RawBuffer.get(), FileSize);
+  FileWriter::Msg TestMessage =
+      FileWriter::Msg::owned((char *)RawBuffer.get(), FileSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
 
 TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   std::unique_ptr<char[]> TempData(new char[FileSize]);
   std::memcpy(TempData.get(), RawBuffer.get(), FileSize);
-  FileWriter::Msg TestMessage1 = FileWriter::Msg::owned(TempData.get(), FileSize);
+  FileWriter::Msg TestMessage1 =
+      FileWriter::Msg::owned(TempData.get(), FileSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[4] = 'h';
-  FileWriter::Msg TestMessage2 = FileWriter::Msg::owned(TempData.get(), FileSize);
+  FileWriter::Msg TestMessage2 =
+      FileWriter::Msg::owned(TempData.get(), FileSize);
   EXPECT_FALSE(ReaderUnderTest->verify(TestMessage2));
 }
 
@@ -72,10 +76,8 @@ public:
     RootGroup = File.root();
     RootGroup.create_group(NXLogGroup);
   };
-  
-  void TearDown() override {
-    File.close();
-  };
+
+  void TearDown() override { File.close(); };
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
   hdf5::file::File File;
@@ -85,7 +87,8 @@ public:
 TEST_F(FastSampleEnvironmentWriter, InitFile) {
   {
     senv::FastSampleEnvironmentWriter Writer;
-    EXPECT_TRUE(Writer.init_hdf(RootGroup, NXLogGroup, nullptr, nullptr).is_OK());
+    EXPECT_TRUE(
+        Writer.init_hdf(RootGroup, NXLogGroup, nullptr, nullptr).is_OK());
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto ParentGroup = RootGroup.get_group(NXLogGroup);
