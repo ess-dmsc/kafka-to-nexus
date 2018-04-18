@@ -57,11 +57,11 @@ void FastSampleEnvironmentWriter::parse_config(
 }
 
 FileWriterBase::InitResult FastSampleEnvironmentWriter::init_hdf(
-    hdf5::node::Group &hdf_parent, std::string hdf_parent_name,
-    rapidjson::Value const *attributes, CollectiveQueue *cq) {
+    hdf5::node::Group &HDFGroup,
+    rapidjson::Value const *attributes) {
   const int DefaultChunkSize = 1024;
   try {
-    auto CurrentGroup = hdf_parent.get_group(hdf_parent_name);
+    auto &CurrentGroup = HDFGroup;
     NeXusDataset::RawValue(CurrentGroup, DefaultChunkSize);
     NeXusDataset::Time(CurrentGroup, DefaultChunkSize);
     NeXusDataset::CueIndex(CurrentGroup, DefaultChunkSize);
@@ -75,10 +75,9 @@ FileWriterBase::InitResult FastSampleEnvironmentWriter::init_hdf(
 }
 
 FileWriterBase::InitResult FastSampleEnvironmentWriter::reopen(
-    hdf5::node::Group hdf_parent, std::string hdf_parent_name,
-    CollectiveQueue *cq, HDFIDStore *hdf_store) {
+    hdf5::node::Group &HDFGroup) {
   try {
-    auto CurrentGroup = hdf_parent.get_group(hdf_parent_name);
+    auto &CurrentGroup = HDFGroup;
     Value = NeXusDataset::RawValue(CurrentGroup);
     Timestamp = NeXusDataset::Time(CurrentGroup);
     CueTimestampIndex = NeXusDataset::CueIndex(CurrentGroup);

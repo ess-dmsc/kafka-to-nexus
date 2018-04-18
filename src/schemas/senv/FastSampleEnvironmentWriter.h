@@ -53,12 +53,9 @@ public:
                     rapidjson::Value const *config_module) override;
 
   InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                      std::string hdf_parent_name,
-                      rapidjson::Value const *attributes,
-                      CollectiveQueue *cq) override;
+                      rapidjson::Value const *attributes) override;
 
-  InitResult reopen(hdf5::node::Group hdf_parent, std::string hdf_parent_name,
-                    CollectiveQueue *cq, HDFIDStore *hdf_store) override;
+  InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   WriteResult write(KafkaMessage const &Message) override;
 
