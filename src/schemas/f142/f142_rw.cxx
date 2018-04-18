@@ -148,8 +148,7 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
   return fbuf->timestamp();
 }
 
-static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
-    RegisterEPICSDataReaderModule("f142");
+static FlatbufferReaderRegistry::Registrar<FlatbufferReader> RegisterReader("f142");
 
 template <typename T, typename V> using WA = writer_typed_array<T, V>;
 template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
@@ -592,8 +591,7 @@ int32_t HDFWriterModule::flush() { return 0; }
 
 int32_t HDFWriterModule::close() { return 0; }
 
-static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
-    RegisterEPICSDataWriterModule("f142");
+static HDFWriterModuleRegistry::Registrar<HDFWriterModule> RegisterWriter("f142");
 
 } // namespace f142
 } // namespace Schemas
