@@ -39,12 +39,8 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
   return fbuf->pulse_time();
 }
 
-FlatbufferReaderRegistry::Registrar<FlatbufferReader>
-    g_registrar_FlatbufferReader(fbid_from_str("ev42"));
-
-FileWriter::HDFWriterModule::ptr HDFWriterModule::create() {
-  return FileWriter::HDFWriterModule::ptr(new HDFWriterModule);
-}
+static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
+    RegisterReader("ev42");
 
 void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
                                    rapidjson::Value const *config_module) {
@@ -220,8 +216,8 @@ void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
   ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
 }
 
-HDFWriterModuleRegistry::Registrar
-    g_registrar_HDFWriterModule("ev42", HDFWriterModule::create);
+static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
+    RegisterWriter("ev42");
 
 } // namespace ev42
 } // namespace Schemas

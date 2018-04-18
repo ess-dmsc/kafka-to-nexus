@@ -14,6 +14,8 @@ command_handler.cpp
 stream_master.cpp
 streamer_options.cpp
 MainOptTest.cpp
+ReaderRegistration.cpp
+WriterRegistration.cpp
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC
