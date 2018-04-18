@@ -39,7 +39,8 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
   return fbuf->pulse_time();
 }
 
-static FlatbufferReaderRegistry::Registrar<FlatbufferReader> RegisterReader("ev42");
+static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
+    RegisterReader("ev42");
 
 void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
                                    rapidjson::Value const *config_module) {
@@ -218,7 +219,8 @@ void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
   ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
 }
 
-static HDFWriterModuleRegistry::Registrar<HDFWriterModule> RegisterWriter("ev42");
+static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
+    RegisterWriter("ev42");
 
 } // namespace ev42
 } // namespace Schemas
