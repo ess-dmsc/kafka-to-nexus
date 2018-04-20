@@ -8,20 +8,22 @@
 #include "schemas/senv_data_generated.h"
 #include <h5cpp/datatype/type_trait.hpp>
 
+/// \brief Used to write c-arrays to hdf5 files using h5cpp.
+/// The member functions of this class need no extra documentation.
 template <typename T> class ArrayAdapter {
-private:
-  T *data_;
-  size_t size_;
-
 public:
   ArrayAdapter(T *data, size_t size) : data_(data), size_(size) {}
   size_t size() const { return size_; }
   T *data() { return data_; }
   const T *data() const { return data_; }
+private:
+  T *data_;
+  size_t size_;
 };
 
 namespace hdf5 {
 namespace datatype {
+// \brief Required for h5cpp to write const unsigned short data.
 template <> class TypeTrait<std::uint16_t const> {
 public:
   using Type = unsigned short const;
@@ -30,6 +32,8 @@ public:
     return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
   }
 };
+
+// \brief Required for h5cpp to write const unsigned long long int data.
 template <> class TypeTrait<std::uint64_t const> {
 public:
   using Type = unsigned short const;
@@ -38,6 +42,8 @@ public:
     return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
   }
 };
+
+// \brief Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using Type = ArrayAdapter<T>;
@@ -46,8 +52,10 @@ public:
     return TypeTrait<T>::create();
   }
 };
-}
+} // namespace datatype
 namespace dataspace {
+
+// \brief Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using DataspaceType = Simple;
@@ -65,14 +73,14 @@ public:
     return reinterpret_cast<const void *>(data.data());
   }
 };
-}
-}
+} // namspace dataspace
+} // namespace hdf5
 
 namespace senv {
 using KafkaMessage = FileWriter::Msg;
 using FBReaderBase = FileWriter::FlatbufferReader;
-std::string nanoSecEpochToISO8601(std::uint64_t time);
 
+/// \brief See parent class for documentation.
 class SampleEnvironmentDataGuard : public FBReaderBase {
 public:
   bool verify(KafkaMessage const &Message) const override;
@@ -81,6 +89,8 @@ public:
 };
 
 using FileWriterBase = FileWriter::HDFWriterModule;
+
+/// \brief See parent class for documentation.
 class FastSampleEnvironmentWriter : public FileWriterBase {
 public:
   FastSampleEnvironmentWriter() = default;

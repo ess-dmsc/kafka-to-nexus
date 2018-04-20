@@ -15,18 +15,6 @@ FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>
 FileWriter::HDFWriterModuleRegistry::Registrar<FastSampleEnvironmentWriter>
     RegisterSenvWriter("senv");
 
-std::string nanoSecEpochToISO8601(std::uint64_t time) {
-  time_t secondsPart = time / 1000000000;
-  tm *tmPtr = gmtime(&secondsPart);
-  std::uint64_t nSecPart = time - std::uint64_t(secondsPart * 1000000000);
-  double printedSecs = double(nSecPart) / 1000000000 + tmPtr->tm_sec;
-  std::string formatString =
-      "{0:>4d}-{1:0>2d}-{2:0>2d}T{3:0>2d}:{4:0>2d}:{5:0>9.6f}Z";
-  return fmt::format(formatString, tmPtr->tm_year + 1900, tmPtr->tm_mon + 1,
-                     tmPtr->tm_mday, tmPtr->tm_hour, tmPtr->tm_min,
-                     printedSecs);
-}
-
 bool SampleEnvironmentDataGuard::verify(KafkaMessage const &Message) const {
   auto Verifier =
       flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
