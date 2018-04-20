@@ -92,11 +92,28 @@ FileWriterBase::InitResult FastSampleEnvironmentWriter::reopen(
 FileWriterBase::WriteResult
 FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
-  gsl::span<const std::uint16_t> DataSpan(
-      reinterpret_cast<const std::uint16_t *>(FbPointer->Values()->Data()),
-      FbPointer->Values()->size());
-  Value.appendData(DataSpan);
-
+  auto TempDataPtr = FbPointer->Values()->data();
+  auto TempDataSize = FbPointer->Values()->size();
+  if (TempDataSize == 0) {
+    return FileWriterBase::WriteResult::OK();
+  }
+  ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
+  auto NrOfElements = Value.dataspace().size();
+  CueTimestampIndex.appendElement(static_cast<std::uint32_t>(NrOfElements));
+  CueTimestamp.appendElement(FbPointer->PacketTimestamp());
+  Value.appendData(CArray);
+  if (flatbuffers::IsFieldPresent(FbPointer, SampleEnvironmentData::VT_TIMESTAMPS) and FbPointer->Values()->size() == FbPointer->Timestamps()->size()) {
+    auto TimestampPtr = FbPointer->Timestamps()->data();
+    auto TimestampSize = FbPointer->Timestamps()->size();
+    ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
+    Timestamp.appendData(TSArray);
+  } else {
+    std::vector<std::uint64_t> TempTimeStamps(TempDataSize);
+    for (int i = 0; i < TempDataSize; i++) {
+      TempTimeStamps.at(i) = FbPointer->PacketTimestamp() + static_cast<std::uint64_t>(i * FbPointer->TimeDelta());
+    }
+    Timestamp.appendData(TempTimeStamps);
+  }
   return FileWriterBase::WriteResult::OK();
 }
 

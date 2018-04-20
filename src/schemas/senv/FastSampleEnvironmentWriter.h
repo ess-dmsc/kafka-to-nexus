@@ -5,30 +5,69 @@
 #include "../../HDFWriterModule.h"
 #include "../../Msg.h"
 #include "Datasets.h"
-#include "gsl/span"
 #include "schemas/senv_data_generated.h"
 #include <h5cpp/datatype/type_trait.hpp>
 
+
+template<typename T> class ArrayAdapter
+{
+private:
+  T *data_;
+  size_t size_;
+public:
+  ArrayAdapter(T *data,size_t size) : data_(data), size_(size) {}
+  size_t size() const {return size_;}
+  T *data() {return data_;}
+  const  T *data() const {return data_;}
+};
+
 namespace hdf5 {
 namespace datatype {
-template <> class TypeTrait<unsigned short const> {
+  template <> class TypeTrait<std::uint16_t const> {
 public:
   using Type = unsigned short const;
   using TypeClass = Integer;
   static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_USHORT)));
+    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
   }
 };
-
-template <typename T> class TypeTrait<gsl::span<T>> {
-public:
-  using Type = gsl::span<T>;
-  using TypeClass = typename TypeTrait<T>::TypeClass;
-  static TypeClass create(const Type & = Type()) {
-    return TypeTrait<T>::create();
-  }
-};
+  template <> class TypeTrait<std::uint64_t const> {
+  public:
+    using Type = unsigned short const;
+    using TypeClass = Integer;
+    static TypeClass create(const Type & = Type()) {
+      return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
+    }
+  };
+  template <typename T>
+  class TypeTrait<ArrayAdapter<T>> {
+  public:
+    using Type = ArrayAdapter<T>;
+    using TypeClass = typename TypeTrait<T>::TypeClass;
+    static TypeClass create(const Type & = Type()) {
+      return TypeTrait<T>::create();
+    }
+  };
 }
+  namespace dataspace {
+    template<typename T>
+    class TypeTrait<ArrayAdapter<T>> {
+    public:
+      using DataspaceType = Simple;
+      
+      static DataspaceType create(const ArrayAdapter<T> &value) {
+        return Simple(hdf5::Dimensions{value.size()}, hdf5::Dimensions{value.size()});
+      }
+      
+      static void *ptr(ArrayAdapter<T> &data) {
+        return reinterpret_cast<void *>(data.data());
+      }
+      
+      static const void *cptr(const ArrayAdapter<T> &data) {
+        return reinterpret_cast<const void *>(data.data());
+      }
+    };
+  }
 }
 
 namespace senv {
