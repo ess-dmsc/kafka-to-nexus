@@ -18,14 +18,15 @@ public:
             {
                 static_cast<unsigned long long>(ChunkSize),
             }) {}
-  
+
   /// \brief Will open dataset with the given name.
-  /// \throw std::runtime_error if dataset can not be opened. This is the case if the dataset does not yet exist.
+  /// \throw std::runtime_error if dataset can not be opened. This is the case
+  /// if the dataset does not yet exist.
   ExtensibleDataset(hdf5::node::Group Parent, std::string Name) {
     Dataset::operator=(Parent.get_dataset(Name));
     NrOfElements = dataspace().size();
   }
-  
+
   /// \brief Append data to dataset that is contained in some sort of container.
   template <typename T> void appendData(T const &NewData) {
     Dataset::extent(0,
@@ -35,7 +36,7 @@ public:
     write(NewData, Selection);
     NrOfElements += NewData.size();
   }
-  
+
   /// \brief Append single scalar values to dataset.
   template <typename T> void appendElement(T const &NewElement) {
     Dataset::extent(0, 1); // Extend size() element along dimenions 0

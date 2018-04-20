@@ -16,6 +16,7 @@ public:
   size_t size() const { return size_; }
   T *data() { return data_; }
   const T *data() const { return data_; }
+
 private:
   T *data_;
   size_t size_;
