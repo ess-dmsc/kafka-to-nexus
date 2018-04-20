@@ -93,8 +93,7 @@ public:
 TEST_F(FastSampleEnvironmentWriter, InitFile) {
   {
     senv::FastSampleEnvironmentWriter Writer;
-    EXPECT_TRUE(
-        Writer.init_hdf(UsedGroup, nullptr).is_OK());
+    EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
@@ -121,14 +120,15 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(reinterpret_cast<char*>(Buffer.get()), BufferSize);
+  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
+      reinterpret_cast<char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
   auto FbPointer = GetSampleEnvironmentData(TestMsg.data());
-  
+
   auto DataspaceSize = RawValuesDataset.dataspace().size();
   EXPECT_EQ(DataspaceSize, FbPointer->Values()->size());
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
@@ -136,7 +136,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(AppendedValues.at(i), FbPointer->Values()->operator[](i));
   }
-  
+
   auto NrOfTimeStampElements = TimestampDataset.dataspace().size();
   EXPECT_EQ(NrOfTimeStampElements, DataspaceSize);
   std::vector<std::uint64_t> TimestampsVector(NrOfTimeStampElements);
@@ -144,11 +144,11 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   for (int j = 0; j < DataspaceSize; j++) {
     EXPECT_EQ(TimestampsVector.at(j), FbPointer->Timestamps()->operator[](j));
   }
-  
+
   std::vector<std::int32_t> CueIndex(1);
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
-  
+
   std::vector<std::int32_t> CueTimestamp(1);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
@@ -160,7 +160,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(reinterpret_cast<char*>(Buffer.get()), BufferSize);
+  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
+      reinterpret_cast<char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
@@ -168,22 +169,23 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
   auto FbPointer = GetSampleEnvironmentData(TestMsg.data());
-  
+
   auto DataspaceSize = RawValuesDataset.dataspace().size();
   EXPECT_EQ(DataspaceSize, FbPointer->Values()->size() * 2);
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
   RawValuesDataset.read(AppendedValues);
   for (int i = 0; i < DataspaceSize; i++) {
-    ASSERT_EQ(AppendedValues.at(i), FbPointer->Values()->operator[](i % FbPointer->Values()->size()));
+    ASSERT_EQ(AppendedValues.at(i),
+              FbPointer->Values()->operator[](i % FbPointer->Values()->size()));
   }
-  
+
   EXPECT_EQ(TimestampDataset.dataspace().size(), DataspaceSize);
-  
+
   std::vector<std::int32_t> CueIndex(2);
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
   EXPECT_EQ(CueIndex.at(1), FbPointer->Values()->size());
-  
+
   std::vector<std::int32_t> CueTimestamp(2);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
@@ -195,14 +197,15 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
   auto FbPointer = GetSampleEnvironmentData(Buffer.get());
   auto ValueLengthPtr =
-  reinterpret_cast<flatbuffers::uoffset_t *>(
-                                             const_cast<std::uint8_t *>(FbPointer->Values()->Data())) -
-  1;
+      reinterpret_cast<flatbuffers::uoffset_t *>(
+          const_cast<std::uint8_t *>(FbPointer->Values()->Data())) -
+      1;
   *ValueLengthPtr = 0;
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(reinterpret_cast<char*>(Buffer.get()), BufferSize);
+  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
+      reinterpret_cast<char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -219,20 +222,21 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
   auto FbPointer = GetSampleEnvironmentData(Buffer.get());
   auto TimestampsLengthPtr =
-  reinterpret_cast<flatbuffers::uoffset_t *>(
-                                             const_cast<std::uint8_t *>(FbPointer->Timestamps()->Data())) -
-  1;
+      reinterpret_cast<flatbuffers::uoffset_t *>(
+          const_cast<std::uint8_t *>(FbPointer->Timestamps()->Data())) -
+      1;
   *TimestampsLengthPtr = 0;
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(reinterpret_cast<char*>(Buffer.get()), BufferSize);
+  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
+      reinterpret_cast<char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
   auto CueTimestampZeroDataset = UsedGroup.get_dataset("cue_timestamp_zero");
-  
+
   auto DataspaceSize = RawValuesDataset.dataspace().size();
   EXPECT_EQ(DataspaceSize, FbPointer->Values()->size());
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
@@ -240,20 +244,18 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(AppendedValues.at(i), FbPointer->Values()->operator[](i));
   }
-  
+
   auto NrOfTimeStampElements = TimestampDataset.dataspace().size();
   EXPECT_EQ(NrOfTimeStampElements, DataspaceSize);
   std::vector<std::uint64_t> TimestampsVector(NrOfTimeStampElements);
   TimestampDataset.read(TimestampsVector);
   EXPECT_EQ(TimestampsVector.at(0), FbPointer->PacketTimestamp());
-  
+
   std::vector<std::int32_t> CueIndex(1);
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
-  
+
   std::vector<std::int32_t> CueTimestamp(1);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
 }
-
-

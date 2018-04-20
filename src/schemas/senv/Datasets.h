@@ -25,16 +25,14 @@ public:
     Dataset::extent(0,
                     NewData.size()); // Extend size() element along dimenions 0
     hdf5::dataspace::Hyperslab Selection{
-      {NrOfElements}, {static_cast<unsigned long long>(NewData.size())}};
+        {NrOfElements}, {static_cast<unsigned long long>(NewData.size())}};
     write(NewData, Selection);
     NrOfElements += NewData.size();
   }
-  
+
   template <typename T> void appendElement(T const &NewElement) {
-    Dataset::extent(0,
-                    1); // Extend size() element along dimenions 0
-    hdf5::dataspace::Hyperslab Selection{
-      {NrOfElements}, {1}};
+    Dataset::extent(0, 1); // Extend size() element along dimenions 0
+    hdf5::dataspace::Hyperslab Selection{{NrOfElements}, {1}};
     write(NewElement, Selection);
     NrOfElements += 1;
   }

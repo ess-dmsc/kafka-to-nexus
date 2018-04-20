@@ -56,9 +56,9 @@ void FastSampleEnvironmentWriter::parse_config(
                   "FastSampleEnvironmentWriter class.");
 }
 
-FileWriterBase::InitResult FastSampleEnvironmentWriter::init_hdf(
-    hdf5::node::Group &HDFGroup,
-    rapidjson::Value const *attributes) {
+FileWriterBase::InitResult
+FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
+                                      rapidjson::Value const *attributes) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
@@ -74,8 +74,8 @@ FileWriterBase::InitResult FastSampleEnvironmentWriter::init_hdf(
   return FileWriterBase::InitResult::OK();
 }
 
-FileWriterBase::InitResult FastSampleEnvironmentWriter::reopen(
-    hdf5::node::Group &HDFGroup) {
+FileWriterBase::InitResult
+FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Value = NeXusDataset::RawValue(CurrentGroup);
@@ -102,7 +102,9 @@ FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(NrOfElements));
   CueTimestamp.appendElement(FbPointer->PacketTimestamp());
   Value.appendData(CArray);
-  if (flatbuffers::IsFieldPresent(FbPointer, SampleEnvironmentData::VT_TIMESTAMPS) and FbPointer->Values()->size() == FbPointer->Timestamps()->size()) {
+  if (flatbuffers::IsFieldPresent(FbPointer,
+                                  SampleEnvironmentData::VT_TIMESTAMPS) and
+      FbPointer->Values()->size() == FbPointer->Timestamps()->size()) {
     auto TimestampPtr = FbPointer->Timestamps()->data();
     auto TimestampSize = FbPointer->Timestamps()->size();
     ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
@@ -110,7 +112,9 @@ FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
   } else {
     std::vector<std::uint64_t> TempTimeStamps(TempDataSize);
     for (int i = 0; i < TempDataSize; i++) {
-      TempTimeStamps.at(i) = FbPointer->PacketTimestamp() + static_cast<std::uint64_t>(i * FbPointer->TimeDelta());
+      TempTimeStamps.at(i) =
+          FbPointer->PacketTimestamp() +
+          static_cast<std::uint64_t>(i * FbPointer->TimeDelta());
     }
     Timestamp.appendData(TempTimeStamps);
   }
