@@ -108,6 +108,12 @@ TEST_F(FastSampleEnvironmentWriter, ReopenFileFailure) {
   EXPECT_FALSE(Writer.reopen(UsedGroup).is_OK());
 }
 
+TEST_F(FastSampleEnvironmentWriter, InitFileFail) {
+  senv::FastSampleEnvironmentWriter Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_FALSE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+}
+
 TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
