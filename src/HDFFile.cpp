@@ -787,14 +787,26 @@ extern "C" char const GIT_COMMIT[];
 void HDFFile::init(std::string filename,
                    rapidjson::Value const &nexus_structure,
                    rapidjson::Value const &config_file,
-                   std::vector<StreamHDFInfo> &stream_hdf_info) {
-
+                   std::vector<StreamHDFInfo> &stream_hdf_info,
+                   bool UseHDFSWMR) {
+  if (std::ifstream(filename).good()) {
+    // File exists already
+    throw std::runtime_error(
+        fmt::format("The file \"{}\" exists already.", filename));
+  }
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     set_common_props(fcpl, fapl);
-    h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
-                                fcpl, fapl);
+    if (UseHDFSWMR) {
+      h5file =
+          hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE |
+                                           hdf5::file::AccessFlags::SWMR_WRITE,
+                             fcpl, fapl);
+    } else {
+      h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
+                                  fcpl, fapl);
+    }
     init(nexus_structure, stream_hdf_info);
   } catch (std::exception &e) {
     LOG(Sev::Error,

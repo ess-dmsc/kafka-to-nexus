@@ -92,7 +92,7 @@ TEST(HDFFile, Create) {
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
   f1.init("tmp-test.h5", rapidjson::Value().SetObject(),
-          rapidjson::Value().SetObject(), stream_hdf_info);
+          rapidjson::Value().SetObject(), stream_hdf_info, true);
 }
 
 class T_CommandHandler : public testing::Test {

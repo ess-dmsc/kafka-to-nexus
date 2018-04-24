@@ -74,10 +74,17 @@ void FileWriterTask::hdf_init(std::string const &NexusStructure,
 
   rapidjson::Document NexusStructureDocument = hdf_parse(NexusStructure);
   rapidjson::Document ConfigFileDocument = hdf_parse(ConfigFile);
+  if (ConfigFileDocument.HasParseError()) {
+    ConfigFileDocument = rapidjson::Document();
+    ConfigFileDocument.SetObject();
+  }
+  if (ConfigFileDocument.IsNull()) {
+    ConfigFileDocument.SetObject();
+  }
 
   try {
     hdf_file.init(filename_full, NexusStructureDocument, ConfigFileDocument,
-                  stream_hdf_info);
+                  stream_hdf_info, UseHDFSWMR);
   } catch (...) {
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
