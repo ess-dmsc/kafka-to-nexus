@@ -2,10 +2,10 @@
 
 #include "../../helper.h"
 
+#include "FastSampleEnvironmentWriter.h"
+#include "HDFFile.h"
 #include <iostream>
 #include <limits>
-
-#include "FastSampleEnvironmentWriter.h"
 
 namespace senv {
 
@@ -54,6 +54,9 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
     NeXusDataset::Time(CurrentGroup, DefaultChunkSize);
     NeXusDataset::CueIndex(CurrentGroup, DefaultChunkSize);
     NeXusDataset::CueTimestampZero(CurrentGroup, DefaultChunkSize);
+    if (attributes) {
+      FileWriter::HDFFile::write_attributes(HDFGroup, attributes);
+    }
   } catch (std::exception &E) {
     LOG(Sev::Error,
         "Unable to initialise fast sample environment data tree in HDF file.");
