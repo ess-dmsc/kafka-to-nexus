@@ -240,6 +240,11 @@ Please note, the HDF documentation itself warns:
 "The HDF5 file that is accessed by SWMR HDF5 applications must be located on a
 file system that complies with the POSIX `write()` semantics."
 
+Also:
+
+"The writer is not allowed to modify or append to any data items containing
+variable-size datatypes (including string and region references datatypes)."
+
 To enable SWMR when writing a file, add to the `FileWriter_new` command:
 
 ```
