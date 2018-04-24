@@ -65,6 +65,9 @@ ProcessMessageResult Source::process_message(Msg &msg) {
     if (ret.is_ERR()) {
       return ProcessMessageResult::ERR();
     }
+    if (HDFFileForSWMR) {
+      HDFFileForSWMR->SWMRFlush();
+    }
     if (ret.is_OK_WITH_TIMESTAMP()) {
       return ProcessMessageResult::OK(ret.timestamp());
     }

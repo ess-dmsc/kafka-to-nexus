@@ -50,6 +50,9 @@ FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_output_prefix,
 }
 
 void FileWriterTask::add_source(Source &&source) {
+  if (UseHDFSWMR) {
+    source.HDFFileForSWMR = &hdf_file;
+  }
   bool found = false;
   for (auto &d : _demuxers) {
     if (d.topic() == source.topic()) {

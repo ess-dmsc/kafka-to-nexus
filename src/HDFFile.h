@@ -2,6 +2,7 @@
 
 #include "Msg.h"
 #include <H5Ipublic.h>
+#include <chrono>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <rapidjson/document.h>
@@ -45,6 +46,10 @@ public:
 
   static void write_attribute_str(hdf5::node::Node &node, std::string name,
                                   std::string value);
+
+  /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
+  /// file.
+  void SWMRFlush();
 
   hdf5::file::File h5file;
   hdf5::node::Group root_group;
@@ -121,6 +126,10 @@ private:
                                        hdf5::node::Node &Node,
                                        std::string const &Name,
                                        rapidjson::Value const *Values);
+
+  using CLOCK = std::chrono::steady_clock;
+  std::chrono::milliseconds SWMRFlushInterval{10000};
+  std::chrono::time_point<CLOCK> SWMRFlushLast = CLOCK::now();
 };
 
 } // namespace FileWriter

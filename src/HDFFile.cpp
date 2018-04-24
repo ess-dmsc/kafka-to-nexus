@@ -900,9 +900,17 @@ void HDFFile::reopen(std::string filename,
 
 void HDFFile::flush() {
   try {
-    h5file.flush(hdf5::file::Scope::LOCAL);
+    h5file.flush(hdf5::file::Scope::GLOBAL);
   } catch (...) {
     std::throw_with_nested(std::runtime_error("HDFFile failed to flush!"));
+  }
+}
+
+void HDFFile::SWMRFlush() {
+  auto Now = CLOCK::now();
+  if (Now - SWMRFlushLast > SWMRFlushInterval) {
+    flush();
+    SWMRFlushLast = Now;
   }
 }
 

@@ -41,6 +41,7 @@ public:
   to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
   void close_writer_module();
   bool is_parallel = false;
+  HDFFile *HDFFileForSWMR = nullptr;
 
 private:
   Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
