@@ -231,6 +231,25 @@ Further documentation:
 - `array_size`: The size of the array. Scalar if not specified or `0`.
 
 
+### Single Writer, Multiple Reader support
+
+The filewriter can use HDF's Single Writer Multiple Reader feature (SWMR).
+
+Please note, the HDF documentation itself warns:
+
+"The HDF5 file that is accessed by SWMR HDF5 applications must be located on a
+file system that complies with the POSIX `write()` semantics."
+
+To enable SWMR when writing a file, add to the `FileWriter_new` command:
+
+```
+{
+  "use_hdf_swmr": true
+}
+```
+
+
+
 ## Installation
 
 ### Requirements
