@@ -2,17 +2,16 @@
 
 /// \file
 /// \brief This file acts as a template for creating file writing modules.
-/// All the classes and their usage is throughly explained in this file. The
+/// All of the classes required are explained here. The
 /// only thing missing from this header file is the registration of the file
 /// writing module which must reside in an implementation file. See the
 /// accompanying TestWriter.cpp for instructions on how this should be done.
-/// A file writing module consist of two classes. The first class is the
-/// flatbuffer reader part which must inherit from the abstract class
-/// FileWriter::FlatbufferReader and implement its pure virtual functions. These
-/// virtual functions are called to verify the flatbuffer contents, extract a
-/// source name and extract a timestamp from the flatbuffer. See the
-/// documentation of the individual memberfunctions for more information on how
-/// these should be implemented.
+/// A file writing module comprises two classes. The first class is the
+/// flatbuffer reader which must implement the FileWriter::FlatbufferReader
+/// interface. The virtual functions to be overridden are called to verify the
+/// flatbuffer contents and extract a source name and a timestamp from the
+/// flatbuffer. See the documentation of the individual member functions for
+/// more information on how these should be implemented.
 /// The second class which you must implement is a class that inherits from the
 /// abstract class FileWriter::HDFWriterModule. This class should implement the
 /// actual writing of flatbuffer data to the HDF5 file. More information on the
@@ -23,25 +22,23 @@
 #include "../../HDFWriterModule.h"
 #include <iostream>
 
-/// \brief A seperate namespace for this specific file writing module. This is
-/// not strictly requried but minimizes the risk for name collisions.
+/// \brief A separate namespace for this specific file writing module. Use this
+/// to minimize the risk of name collisions.
 namespace TemplateWriter {
 
 /// \brief This class is used to extract information from a flatbuffer which
-/// uses a specifc four character file identifier.
+/// uses a specific four character file identifier.
 /// See TestWriter.cpp for code which is used to tie a file identifier to an
 /// instance of this class. Note that this class is only instantiated once in
 /// the entire run of the application.
 class ReaderClass : public FileWriter::FlatbufferReader {
 public:
   /// \brief Is used to verify the contents of a flatbuffer.
-  /// The original intent of this member function is likely that it should be
-  /// used to implement calls to the Verify*Buffer() function available for the
-  /// flatbuffer schema that you are using. This function checks the pointers in
-  /// the current flatbuffer in order to ensure that none of them falls outside
-  /// the range (size) of the buffer. A few other checks are also done, see the
-  /// flatbuffer documentation for more information on this. Implementing
-  /// additional checks, e.g. determining if the falls with in an expected
+  /// The Verify*Buffer() function available for the flatbuffer schema that you
+  /// are using can be called here. This function check all offsets, sizes
+  /// of fields, and null termination of strings to ensure that when a buffer
+  /// is accessed, all reads will end up inside the buffer. Implementing
+  /// additional checks, e.g. determining if a value falls with in an expected
   /// range, is also possible here.
   /// \note There are at least two good arguments for having this function not
   /// actually implement any verification of the data, return true by default
@@ -49,13 +46,13 @@ public:
   /// \li This member function is called on the data AFTER
   /// FileWriter::FlatbufferReader::source_name(), thus somewhat defeating the
   /// point of having it.
-  /// \li Verifying a flutbuffer can (for some flatbuffer schemas) be relatively
+  /// \li Verifying a flatbuffer can (for some flatbuffer schemas) be relatively
   /// expensive and it is currently not possible to set the application to not
   /// call this function.
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   /// \param[in] Message The structure containing a pointer to a buffer
-  /// containing datat received from the Kafka broker and the size of the
+  /// containing data received from the Kafka broker and the size of the
   /// buffer.
   /// \return true if the data was verified as "correct", false otherwise.
   bool verify(FileWriter::Msg const &Message) const override {
@@ -76,7 +73,7 @@ public:
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   /// \param[in] Message The structure containing a pointer to a buffer
-  /// containing datat received from the Kafka broker and the size of the
+  /// containing data received from the Kafka broker and the size of the
   /// buffer.
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
@@ -89,15 +86,15 @@ public:
   /// The file writer can be set to write data only in a specific "time window".
   /// Thus function is in that case used to extract the time of a flatbuffer and
   /// thus decide if its data should be written to file or not. Note that there
-  /// are currently no specification or documenatation as to which epoch is to
+  /// are currently no specification or documentation as to which epoch is to
   /// be used nor unit of time and prefix. With that said, the current
-  /// implementations appears to try to use (when possible) Unix epoch and nano
-  /// seconds.
+  /// implementations appears to try to use (when possible) Unix epoch and
+  /// nanoseconds.
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   /// \param[in] Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
-  /// \return The timestamp of the flatbuffer as nano seconds since Unix epoch
+  /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
   uint64_t timestamp(FileWriter::Msg const &Message) const override {
     std::cout << "ReaderClass::timestamp()\n";
@@ -109,7 +106,7 @@ public:
 /// This class is instantiated twice for every new data source. First for
 /// initialising the hdf-file (creating datasets etc.). The second instantiation
 /// is used for writing the actual data. More information on this can be found
-/// in the documenation for the member functions below.
+/// in the documentation for the member functions below.
 class WriterClass : public FileWriter::HDFWriterModule {
 public:
   /// \brief Constructor, initialise state here.
@@ -126,12 +123,12 @@ public:
   /// instantiation. Thus if you have any resources that you allocate/claim in
   /// the constructor, you should probable return those here (the destructor)
   /// instead of in FileWriter::HDFWriterModule::close().
-  ~WriterClass() { std::cout << "WriterClass::~WriterClass()\n"; }
+  ~WriterClass() override { std::cout << "WriterClass::~WriterClass()\n"; }
 
   /// \brief Used to pass configuration/settings to the current instance of this
   /// file writing module.
   /// Settings/configurations are passed in JSON form, contained in a
-  /// rapidjson::Value object (one is unused, see the paramater documentation).
+  /// rapidjson::Value object (one is unused, see the parameter documentation).
   /// To extract the information you want, you will need to implement JSON
   /// parsing code here. As this prototype does not have a return value and
   /// exceptions should not be thrown, the only way to inform the user of a
@@ -201,7 +198,7 @@ public:
   /// allowed to do when a file has been opened in SWMR mode:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// This member function is called in the second instantiation of this class
-  /// (for a spcific data source). The order in which methods (relevant to this
+  /// (for a specific data source). The order in which methods (relevant to this
   /// class) are called is as follows:
   /// \li FileWriter::HDFWriterModule::HDFWriterModule()
   /// \li FileWriter::HDFWriterModule::parse_config()
@@ -223,9 +220,9 @@ public:
     return InitResult::OK();
   }
 
-  /// \brief Implements the data writing functionalty of the file writing
+  /// \brief Implements the data writing functionality of the file writing
   /// module.
-  /// To properly support SWMR, only writes to datsets are allowed in this
+  /// To properly support SWMR, only writes to datasets are allowed in this
   /// member function. See the following link for limitations when using a file
   /// in SWMR mode:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
@@ -258,7 +255,7 @@ public:
 
   /// \brief Should (probably) not implement any functionality.
   /// In the current implementation, this member function is called only after
-  /// FileWriter::HDFWriterModule::init_hdf() and nowehere else. Thus, this
+  /// FileWriter::HDFWriterModule::init_hdf() and nowhere else. Thus, this
   /// member function should not be trusted to be called and any cleanup should
   /// be done in the destructor instead (or as well).
   /// \note This call is executed in catch-all block (which re-throws)
