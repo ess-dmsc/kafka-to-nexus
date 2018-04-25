@@ -174,7 +174,7 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   auto MetadataResult = rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
 
   if (MetadataResult != RD_KAFKA_RESP_ERR_NO_ERROR) {
-    LOG(Sev::Error, "could not crete metadata");
+    LOG(Sev::Error, "could not create metadata");
     return false;
   }
 
