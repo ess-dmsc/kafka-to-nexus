@@ -171,10 +171,10 @@ void Consumer::addTopic(std::string Topic,
 
 bool Consumer::topicPresent(const std::string &TopicName) {
   const rd_kafka_metadata_t *Metadata;
-  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
+  auto MetadataResult = rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
 
-  if (!Metadata) {
-    LOG(Sev::Error, "could not crete metadata");
+  if (MetadataResult != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    LOG(Sev::Error, "could not create metadata");
     return false;
   }
 
