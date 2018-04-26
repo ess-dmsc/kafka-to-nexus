@@ -1,36 +1,24 @@
+/** Copyright (C) 2018 European Spallation Source ERIC */
+
+/** \file
+ *
+ *  \brief Implement datasets used by the ADC file writing module.
+ */
+
 #include "Datasets.h"
 
 namespace NeXusDataset {
-RawValue::RawValue(hdf5::node::Group parent, int ChunkSize)
-    : ExtensibleDataset<std::uint16_t>(parent, "raw_value", ChunkSize) {}
+RawValue::RawValue(hdf5::node::Group parent, Mode CMode, int ChunkSize)
+    : ExtensibleDataset<std::uint16_t>(parent, "raw_value", CMode, ChunkSize) {}
 
-RawValue::RawValue(hdf5::node::Group parent)
-    : ExtensibleDataset<std::uint16_t>() {
-  Dataset::operator=(parent.get_dataset("raw_value"));
-}
+Time::Time(hdf5::node::Group parent, Mode CMode, int ChunkSize)
+    : ExtensibleDataset<std::uint64_t>(parent, "time", CMode, ChunkSize) {}
 
-Time::Time(hdf5::node::Group parent, int ChunkSize)
-    : ExtensibleDataset<std::uint64_t>(parent, "time", ChunkSize) {}
+CueIndex::CueIndex(hdf5::node::Group parent, Mode CMode, int ChunkSize)
+    : ExtensibleDataset<std::uint32_t>(parent, "cue_index", CMode, ChunkSize) {}
 
-Time::Time(hdf5::node::Group parent) : ExtensibleDataset<std::uint64_t>() {
-  Dataset::operator=(parent.get_dataset("time"));
-}
-
-CueIndex::CueIndex(hdf5::node::Group parent, int ChunkSize)
-    : ExtensibleDataset<std::uint32_t>(parent, "cue_index", ChunkSize) {}
-
-CueIndex::CueIndex(hdf5::node::Group parent)
-    : ExtensibleDataset<std::uint32_t>() {
-  Dataset::operator=(parent.get_dataset("cue_index"));
-}
-
-CueTimestampZero::CueTimestampZero(hdf5::node::Group parent, int ChunkSize)
-    : ExtensibleDataset<std::uint64_t>(parent, "cue_timestamp_zero",
+CueTimestampZero::CueTimestampZero(hdf5::node::Group parent, Mode CMode,
+                                   int ChunkSize)
+    : ExtensibleDataset<std::uint64_t>(parent, "cue_timestamp_zero", CMode,
                                        ChunkSize) {}
-
-CueTimestampZero::CueTimestampZero(hdf5::node::Group parent)
-    : ExtensibleDataset<std::uint64_t>() {
-  Dataset::operator=(parent.get_dataset("cue_timestamp_zero"));
-}
-
 } // namespace NeXusDataset

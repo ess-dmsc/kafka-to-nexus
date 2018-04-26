@@ -1,4 +1,9 @@
-// Add comments (description)
+/** Copyright (C) 2018 European Spallation Source ERIC */
+
+/** \file
+ *
+ *  \brief Implement classes required to implement the ADC file writing module.
+ */
 
 #include "../../helper.h"
 
@@ -9,12 +14,14 @@
 
 namespace senv {
 
-// Add comment
-static FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>
+// Register the timestamp and name extraction class for this module
+static FileWriter::FlatbufferReaderRegistry::Registrar<
+    SampleEnvironmentDataGuard>
     RegisterSenvGuard("senv");
 
-// Add comment
-static FileWriter::HDFWriterModuleRegistry::Registrar<FastSampleEnvironmentWriter>
+// Register the file writing part of this module
+static FileWriter::HDFWriterModuleRegistry::Registrar<
+    FastSampleEnvironmentWriter>
     RegisterSenvWriter("senv");
 
 bool SampleEnvironmentDataGuard::verify(KafkaMessage const &Message) const {
@@ -50,17 +57,21 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::RawValue(CurrentGroup, DefaultChunkSize);
-    NeXusDataset::Time(CurrentGroup, DefaultChunkSize);
-    NeXusDataset::CueIndex(CurrentGroup, DefaultChunkSize);
-    NeXusDataset::CueTimestampZero(CurrentGroup, DefaultChunkSize);
+    NeXusDataset::RawValue(CurrentGroup, NeXusDataset::Mode::Create,
+                           DefaultChunkSize);
+    NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Create,
+                       DefaultChunkSize);
+    NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Create,
+                           DefaultChunkSize);
+    NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
+                                   DefaultChunkSize);
     if (attributes) {
       FileWriter::HDFFile::write_attributes(HDFGroup, attributes);
     }
   } catch (std::exception &E) {
-    LOG(Sev::Error,
-        "Unable to initialise fast sample environment data tree in HDF file.");
-        // \todo Write exception string to logger
+    LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
+                    "HDF file with error message: \"{}\"",
+        E.what());
     return HDFWriterModule::InitResult::ERROR_IO();
   }
   return FileWriterBase::InitResult::OK();
@@ -70,16 +81,29 @@ FileWriterBase::InitResult
 FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::RawValue(CurrentGroup);
-    Timestamp = NeXusDataset::Time(CurrentGroup);
-    CueTimestampIndex = NeXusDataset::CueIndex(CurrentGroup);
-    CueTimestamp = NeXusDataset::CueTimestampZero(CurrentGroup);
+    Value = NeXusDataset::RawValue(CurrentGroup, NeXusDataset::Mode::Open);
+    Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
+    CueTimestampIndex =
+        NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
+    CueTimestamp =
+        NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG(Sev::Error, "Failed to reopen datasets in HDF file.");
-    // \todo Write exception string to logger
+    LOG(Sev::Error,
+        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        std::string(E.what()));
     return HDFWriterModule::InitResult::ERROR_IO();
   }
   return FileWriterBase::InitResult::OK();
+}
+
+std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
+                                              double TimeDelta,
+                                              int NumberOfElements) {
+  std::vector<std::uint64_t> ReturnVector(NumberOfElements);
+  for (int i = 0; i < NumberOfElements; i++) {
+    ReturnVector[i] = OriginTimeStamp + std::llround(i * TimeDelta);
+  }
+  return ReturnVector;
 }
 
 FileWriterBase::WriteResult
@@ -87,31 +111,28 @@ FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();
-  if (TempDataSize == 0) { //Add log message
-    // Add assert
+  if (TempDataSize == 0) {
+    LOG(Sev::Warning,
+        "Received a flatbuffer with zero (0) data elements in it.");
     return FileWriterBase::WriteResult::OK();
   }
   ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
-  auto NrOfElements = Value.dataspace().size(); //Redundant
-  CueTimestampIndex.appendElement(static_cast<std::uint32_t>(NrOfElements));
+  auto CueIndexValue = Value.dataspace().size();
+  CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
   CueTimestamp.appendElement(FbPointer->PacketTimestamp());
-  Value.appendData(CArray);
+  Value.appendArray(CArray);
+  // Time-stamps are available in the flatbuffer
   if (flatbuffers::IsFieldPresent(FbPointer,
                                   SampleEnvironmentData::VT_TIMESTAMPS) and
       FbPointer->Values()->size() == FbPointer->Timestamps()->size()) {
     auto TimestampPtr = FbPointer->Timestamps()->data();
     auto TimestampSize = FbPointer->Timestamps()->size();
     ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
-    Timestamp.appendData(TSArray);
-  } else {
-    // Move to function
-    std::vector<std::uint64_t> TempTimeStamps(TempDataSize);
-    for (int i = 0; i < TempDataSize; i++) {
-      TempTimeStamps.at(i) =
-          FbPointer->PacketTimestamp() +
-          static_cast<std::uint64_t>(i * FbPointer->TimeDelta());
-    }
-    Timestamp.appendData(TempTimeStamps);
+    Timestamp.appendArray(TSArray);
+  } else { // If timestamps are not available, generate them
+    std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(
+        FbPointer->PacketTimestamp(), FbPointer->TimeDelta(), TempDataSize));
+    Timestamp.appendArray(TempTimeStamps);
   }
   return FileWriterBase::WriteResult::OK();
 }

@@ -1,3 +1,10 @@
+/** Copyright (C) 2018 European Spallation Source ERIC */
+
+/** \file
+ *
+ *  \brief Define classes required to implement the ADC file writing module.
+ */
+
 #pragma once
 
 #include "../../FlatbufferReader.h"
@@ -7,6 +14,10 @@
 #include "Datasets.h"
 #include "schemas/senv_data_generated.h"
 #include <h5cpp/datatype/type_trait.hpp>
+
+/// \todo The following helper classes are used to interface with the h5cpp
+/// library. They must be removed from here when they are added to the h5cpp
+/// library.
 
 /// \brief Used to write c-arrays to hdf5 files using h5cpp.
 ///
@@ -91,6 +102,10 @@ public:
 };
 
 using FileWriterBase = FileWriter::HDFWriterModule;
+
+std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
+                                              double TimeDelta,
+                                              int NumberOfElements);
 
 /// \brief See parent class for documentation.
 class FastSampleEnvironmentWriter : public FileWriterBase {
