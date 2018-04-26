@@ -39,16 +39,16 @@ class ReaderClass : public FileWriter::FlatbufferReader {
 public:
   /// \brief Is used to verify the contents of a flatbuffer.
   ///
-  /// The `Verify*Buffer()` function available for the flatbuffer schema that you
-  /// are using can be called here. This function check all offsets, sizes
+  /// The `Verify*Buffer()` function available for the flatbuffer schema that
+  /// you are using can be called here. This function check all offsets, sizes
   /// of fields, and null termination of strings to ensure that when a buffer
   /// is accessed, all reads will end up inside the buffer. Implementing
   /// additional checks, e.g. determining if a value falls with in an expected
   /// range, is also possible here.
   ///
   /// \note There are at least two good arguments for having this function not
-  /// actually implement any verification of the data and return true by default:
-  /// \li This member function is called on the data AFTER
+  /// actually implement any verification of the data and return true by
+  /// default: \li This member function is called on the data AFTER
   /// FileWriter::FlatbufferReader::source_name(), thus somewhat defeating the
   /// point of having it.
   /// \li Verifying a flatbuffer can (for some flatbuffer schemas) be relatively
@@ -182,8 +182,8 @@ public:
   /// This member function is used to initialise HDF groups, datasets,
   /// attributes etc. As SWMR (single writer, multiple reader) support in HDF5
   /// only allows for writing data pre-existing datasets, this
-  /// function must implement the init functionality. A list of rules to follow when
-  /// using SWMR can be found here:
+  /// function must implement the init functionality. A list of rules to follow
+  /// when using SWMR can be found here:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// When initialising the HDF5 file, the call order (relevant to this class)
   /// is as follows:
@@ -319,4 +319,4 @@ public:
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                  int mpi_rank) override {}
 };
-} // namespace senv
+} // namespace TemplateWriter
