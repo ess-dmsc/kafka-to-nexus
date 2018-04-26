@@ -105,6 +105,7 @@ set(kafka_to_nexus_SRC
   schemas/f142/f142_synth.cxx
   schemas/ev42/ev42_rw.cxx
   schemas/ev42/ev42_synth.cxx
+  schemas/template/TemplateWriter.cpp
   MainOpt.cxx
   ${FMT_SRC}
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
@@ -158,6 +159,7 @@ set(kafka_to_nexus_INC
   schemas/ev42/ev42_synth.h
   schemas/f142/f142_rw.h
   schemas/f142/f142_synth.h
+  schemas/template/TemplateWriter.h
   CLIOptions.h
 )
 
