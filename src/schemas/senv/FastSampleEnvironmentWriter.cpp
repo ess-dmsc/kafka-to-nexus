@@ -1,4 +1,4 @@
-
+// Add comments (description)
 
 #include "../../helper.h"
 
@@ -9,18 +9,18 @@
 
 namespace senv {
 
-FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>
+// Add comment
+static FileWriter::FlatbufferReaderRegistry::Registrar<SampleEnvironmentDataGuard>
     RegisterSenvGuard("senv");
 
-FileWriter::HDFWriterModuleRegistry::Registrar<FastSampleEnvironmentWriter>
+// Add comment
+static FileWriter::HDFWriterModuleRegistry::Registrar<FastSampleEnvironmentWriter>
     RegisterSenvWriter("senv");
 
 bool SampleEnvironmentDataGuard::verify(KafkaMessage const &Message) const {
   auto Verifier =
       flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
-  if (VerifySampleEnvironmentDataBuffer(Verifier))
-    return true;
-  return false;
+  return VerifySampleEnvironmentDataBuffer(Verifier);
 }
 
 uint64_t
@@ -60,6 +60,7 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
   } catch (std::exception &E) {
     LOG(Sev::Error,
         "Unable to initialise fast sample environment data tree in HDF file.");
+        // \todo Write exception string to logger
     return HDFWriterModule::InitResult::ERROR_IO();
   }
   return FileWriterBase::InitResult::OK();
@@ -75,6 +76,7 @@ FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp = NeXusDataset::CueTimestampZero(CurrentGroup);
   } catch (std::exception &E) {
     LOG(Sev::Error, "Failed to reopen datasets in HDF file.");
+    // \todo Write exception string to logger
     return HDFWriterModule::InitResult::ERROR_IO();
   }
   return FileWriterBase::InitResult::OK();
@@ -85,11 +87,12 @@ FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();
-  if (TempDataSize == 0) {
+  if (TempDataSize == 0) { //Add log message
+    // Add assert
     return FileWriterBase::WriteResult::OK();
   }
   ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
-  auto NrOfElements = Value.dataspace().size();
+  auto NrOfElements = Value.dataspace().size(); //Redundant
   CueTimestampIndex.appendElement(static_cast<std::uint32_t>(NrOfElements));
   CueTimestamp.appendElement(FbPointer->PacketTimestamp());
   Value.appendData(CArray);
@@ -101,6 +104,7 @@ FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
     ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
     Timestamp.appendData(TSArray);
   } else {
+    // Move to function
     std::vector<std::uint64_t> TempTimeStamps(TempDataSize);
     for (int i = 0; i < TempDataSize; i++) {
       TempTimeStamps.at(i) =

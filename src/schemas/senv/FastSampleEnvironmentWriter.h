@@ -9,6 +9,7 @@
 #include <h5cpp/datatype/type_trait.hpp>
 
 /// \brief Used to write c-arrays to hdf5 files using h5cpp.
+///
 /// The member functions of this class need no extra documentation.
 template <typename T> class ArrayAdapter {
 public:

@@ -17,7 +17,7 @@ public:
             hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::UNLIMITED}),
             {
                 static_cast<unsigned long long>(ChunkSize),
-            }) {}
+            }) {} // Make explicit
 
   /// \brief Will open dataset with the given name.
   /// \throw std::runtime_error if dataset can not be opened. This is the case
@@ -25,7 +25,12 @@ public:
   ExtensibleDataset(hdf5::node::Group Parent, std::string Name) {
     Dataset::operator=(Parent.get_dataset(Name));
     NrOfElements = dataspace().size();
-  }
+  }  // Make explicit
+
+  // Think about the constructors above
+
+  // static ExtensibleDataset create(...)
+  // static ExtensibleDataset open(...)
 
   /// \brief Append data to dataset that is contained in some sort of container.
   template <typename T> void appendData(T const &NewData) {
@@ -39,7 +44,7 @@ public:
 
   /// \brief Append single scalar values to dataset.
   template <typename T> void appendElement(T const &NewElement) {
-    Dataset::extent(0, 1); // Extend size() element along dimenions 0
+    Dataset::extent(0, 1); // Extend by 1 element along dimenions 0
     hdf5::dataspace::Hyperslab Selection{{NrOfElements}, {1}};
     write(NewElement, Selection);
     NrOfElements += 1;
@@ -49,6 +54,7 @@ private:
   size_t NrOfElements{0};
 };
 
+//Make all of single param constructors explicit
 class RawValue : public ExtensibleDataset<std::uint16_t> {
 public:
   RawValue() = default;
