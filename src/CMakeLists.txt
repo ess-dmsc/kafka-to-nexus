@@ -105,6 +105,8 @@ set(kafka_to_nexus_SRC
   schemas/f142/f142_synth.cxx
   schemas/ev42/ev42_rw.cxx
   schemas/ev42/ev42_synth.cxx
+  schemas/senv/FastSampleEnvironmentWriter.cpp
+  schemas/senv/Datasets.cpp
   schemas/template/TemplateWriter.cpp
   MainOpt.cxx
   ${FMT_SRC}
@@ -161,6 +163,8 @@ set(kafka_to_nexus_INC
   schemas/f142/f142_synth.h
   schemas/template/TemplateWriter.h
   CLIOptions.h
+  schemas/senv/FastSampleEnvironmentWriter.h
+  schemas/senv/Datasets.h
 )
 
 set(tgt "kafka_to_nexus__objects")

@@ -14,6 +14,8 @@ command_handler.cpp
 stream_master.cpp
 streamer_options.cpp
 MainOptTest.cpp
+FastSampleEnvironmentWriterTests.cpp
+NeXusDatasets.cpp
 ReaderRegistration.cpp
 WriterRegistration.cpp
 TemplateWriterTests.cpp

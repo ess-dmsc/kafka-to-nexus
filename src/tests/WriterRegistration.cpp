@@ -52,14 +52,14 @@ TEST_F(WriterRegistrationTest, SameKeyRegistration) {
       std::runtime_error);
 }
 
-TEST_F(WriterRegistrationTest, KeyToShort) {
+TEST_F(WriterRegistrationTest, KeyTooShort) {
   std::string TestKey("tem");
   EXPECT_THROW(
       HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey),
       std::runtime_error);
 }
 
-TEST_F(WriterRegistrationTest, KeyToLong) {
+TEST_F(WriterRegistrationTest, KeyTooLong) {
   std::string TestKey("tempp");
   EXPECT_THROW(
       HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey),
