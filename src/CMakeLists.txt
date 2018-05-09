@@ -71,44 +71,44 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
-  Status.cxx
-  StatusWriter.cxx
-  Errors.cxx
-  Streamer.cxx
-  kafka_util.cxx
-  Master.cxx
-  CommandListener.cxx
-  CommandHandler.cxx
-  TimeDifferenceFromMessage.cxx
-  FileWriterTask.cxx
-  Source.cxx
-  DemuxTopic.cxx
+  Status.cpp
+  StatusWriter.cpp
+  Errors.cpp
+  Streamer.cpp
+  kafka_util.cpp
+  Master.cpp
+  CommandListener.cpp
+  CommandHandler.cpp
+  TimeDifferenceFromMessage.cpp
+  FileWriterTask.cpp
+  Source.cpp
+  DemuxTopic.cpp
   FlatbufferReader.cpp
-  HDFFile.cxx
+  HDFFile.cpp
   HDFWriterModule.cpp
-  KafkaW/BrokerSettings.cxx
-  KafkaW/TopicSettings.cxx
-  KafkaW/KafkaW.cxx
-  KafkaW/Msg.cxx
-  KafkaW/PollStatus.cxx
-  KafkaW/Consumer.cxx
-  KafkaW/Producer.cxx
-  KafkaW/ProducerTopic.cxx
-  helper.cxx
-  logger.cxx
-  json.cxx
-  uri.cxx
-  h5.cxx
+  KafkaW/BrokerSettings.cpp
+  KafkaW/TopicSettings.cpp
+  KafkaW/KafkaW.cpp
+  KafkaW/Msg.cpp
+  KafkaW/PollStatus.cpp
+  KafkaW/Consumer.cpp
+  KafkaW/Producer.cpp
+  KafkaW/ProducerTopic.cpp
+  helper.cpp
+  logger.cpp
+  json.cpp
+  uri.cpp
+  h5.cpp
   date/tz.cpp
   date/tzblobs.cpp
-  schemas/f142/f142_rw.cxx
-  schemas/f142/f142_synth.cxx
-  schemas/ev42/ev42_rw.cxx
-  schemas/ev42/ev42_synth.cxx
+  schemas/f142/f142_rw.cpp
+  schemas/f142/f142_synth.cpp
+  schemas/ev42/ev42_rw.cpp
+  schemas/ev42/ev42_synth.cpp
   schemas/senv/FastSampleEnvironmentWriter.cpp
   schemas/senv/Datasets.cpp
   schemas/template/TemplateWriter.cpp
-  MainOpt.cxx
+  MainOpt.cpp
   ${FMT_SRC}
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp)
@@ -180,7 +180,7 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 set(tgt "send-command")
 set(sources
-  send-command.cxx
+        send-command.cpp
   $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
@@ -192,7 +192,7 @@ target_link_libraries(${tgt} ${libraries_common})
 
 set(tgt "kafka-to-nexus")
 set(sources
-  kafka-to-nexus.cxx
+        kafka-to-nexus.cpp
   $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})

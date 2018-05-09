@@ -159,8 +159,8 @@ public:
   /// configurations are in the base of the JSON object and you should thus be
   /// able to extract relevant settings without navigating a JSON tree, unless
   /// the settings are by design in a tree structure. Examples of extracting
-  /// settings from the JSON structure can be found in the files ev42_rw.cxx and
-  /// f142_rw.cxx.
+  /// settings from the JSON structure can be found in the files ev42_rw.cpp and
+  /// f142_rw.cpp.
   ///
   /// \note This call is executed in a catch-all block (which re-throws)
   /// relatively high up in call hierarchy the first time it is called for a
@@ -207,7 +207,7 @@ public:
   /// \param[in] attributes There is no actual documentation on what this
   /// parameter contains but based on existing implementations, this
   /// rapidjson::Value instance contains attributes that you are responsible for
-  /// writing to file. See ev42_rw.cxx and f142_rw.cxx for examples on how this
+  /// writing to file. See ev42_rw.cpp and f142_rw.cpp for examples on how this
   /// can be done.
   ///
   /// \return An instance of InitResult. Note that these instances can only be
