@@ -283,6 +283,44 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   return {AppendResult::OK, sizeof(T) * nlen, tgt_offset[0]};
 }
 
+/// \brief Write a string to this dataset.
+///
+/// Writes the given string to the dataset if the dataset can contain strings.
+append_ret h5d::append(std::string const &String) {
+  try {
+    if (!Dataset.is_valid()) {
+      LOG(Sev::Error, "Dataset is not valid");
+      return {AppendResult::ERROR};
+    }
+    {
+      auto Type = Dataset.datatype();
+      auto TypeHid = static_cast<hid_t>(Type);
+      if (H5Tget_class(TypeHid) != H5T_STRING || !H5Tis_variable_str(TypeHid)) {
+        LOG(Sev::Error, "Unexpected datatype");
+        return {AppendResult::ERROR};
+      }
+    }
+    hdf5::dataspace::Simple SpaceTarget(Dataset.dataspace());
+    auto CurrentDimensions = SpaceTarget.current_dimensions();
+    CurrentDimensions.at(0) += 1;
+    Dataset.extent(CurrentDimensions);
+    SpaceTarget = Dataset.dataspace();
+    CurrentDimensions = SpaceTarget.current_dimensions();
+    hdf5::dataspace::Simple SpaceMemory;
+    SpaceMemory.dimensions({1});
+    SpaceMemory.selection.all();
+    hdf5::dataspace::Hyperslab TargetSlab(
+        {SpaceTarget.current_dimensions().at(0) - 1}, {1}, {1}, {1});
+    SpaceTarget.selection(hdf5::dataspace::SelectionOperation::SET, TargetSlab);
+    Dataset.write(String, Dataset.datatype(), SpaceMemory, SpaceTarget);
+    snow = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
+    return {AppendResult::OK, String.size(), 0};
+  } catch (std::runtime_error const &e) {
+    LOG(Sev::Error, "exception while writing: {}", e.what());
+    return {AppendResult::ERROR};
+  }
+}
+
 template <typename T>
 append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
   return append_data_1d(data, nlen);

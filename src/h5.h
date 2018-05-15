@@ -47,6 +47,7 @@ public:
   void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
+  append_ret append(std::string const &String);
   std::string name;
   hdf5::node::Dataset Dataset;
   hdf5::datatype::Datatype Type;
