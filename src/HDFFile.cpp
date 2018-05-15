@@ -475,9 +475,8 @@ static void write_ds_numeric(hdf5::node::Group &parent, std::string name,
                              rapidjson::Value const *vals) {
 
   try {
-    auto ds =
-        parent.create_dataset(name, hdf5::datatype::create<DT>(), dataspace,
-                              hdf5::property::LinkCreationList(), dcpl);
+    auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(),
+                                    dataspace, dcpl);
     ds.write(populate_blob<DT>(vals, dataspace.size()));
   } catch (std::exception &e) {
     std::stringstream ss;
@@ -497,8 +496,7 @@ void HDFFile::write_ds_string(hdf5::node::Group &parent, std::string name,
     dt.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     dt.padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto ds = parent.create_dataset(name, dt, dataspace,
-                                    hdf5::property::LinkCreationList(), dcpl);
+    auto ds = parent.create_dataset(name, dt, dataspace, dcpl);
     ds.write(populate_strings(vals, dataspace.size()), dt, dataspace, dataspace,
              hdf5::property::DatasetTransferList());
   } catch (std::exception &e) {
@@ -520,8 +518,7 @@ void HDFFile::write_ds_string_fixed_size(
     dt.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     dt.padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto ds = parent.create_dataset(name, dt, dataspace,
-                                    hdf5::property::LinkCreationList(), dcpl);
+    auto ds = parent.create_dataset(name, dt, dataspace, dcpl);
 
     dt.padding(hdf5::datatype::StringPad::NULLPAD);
     ds.write(populate_fixed_strings(vals, element_size, dataspace.size()), dt,
