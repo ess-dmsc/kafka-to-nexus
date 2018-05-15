@@ -12,7 +12,7 @@ namespace FileWriter {
 
 /// Interface for reading essential information from the flatbuffer which is
 /// needed for example to extract timing information and name of the source.
-/// Example: Please see `src/schemas/ev42/ev42_rw.cxx`.
+/// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 
 class FlatbufferReader {
 public:
@@ -27,7 +27,7 @@ public:
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
 
-/// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
+/// See for example `src/schemas/ev42/ev42_rw.cpp` and search for
 /// FlatbufferReaderRegistry.
 
 namespace FlatbufferReaderRegistry {

@@ -127,7 +127,7 @@ private:
 /// must be unique.  This id is used in the file writer json command.  The id
 /// can be arbitrary but should as a convention contain the flatbuffer schema
 /// id (`FBID`) like `FBID_<writer-module-name>`.
-/// Example: Please see `src/schemas/ev42/ev42_rw.cxx`.
+/// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class HDFWriterModule {
 public:
   using ptr = std::unique_ptr<HDFWriterModule>;

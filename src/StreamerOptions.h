@@ -6,7 +6,7 @@
 ///
 /// \file This file contains the declaration of the StreamerOptions class, which
 /// is used to configure the Streamer and the RdKafka configuration used int the
-/// Streamer. Implementation is in Streamer.cxx
+/// Streamer. Implementation is in Streamer.cpp
 ///
 //===----------------------------------------------------------------------===//
 
