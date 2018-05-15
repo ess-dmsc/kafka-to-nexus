@@ -50,6 +50,19 @@ public:
   Value _fb_value_type_id = Value::NONE;
 };
 
+class WriterScalarString : public writer_typed_base {
+public:
+  WriterScalarString(hdf5::node::Group hdf_group,
+                     std::string const &source_name, Value fb_value_type_id,
+                     CollectiveQueue *cq);
+  WriterScalarString(hdf5::node::Group hdf_group,
+                     std::string const &source_name, Value fb_value_type_id,
+                     CollectiveQueue *cq, HDFIDStore *hdf_store);
+  h5::append_ret write_impl(FBUF const *fbuf) override;
+  h5::Chunked1DString::ptr ds;
+  Value _fb_value_type_id = Value::String;
+};
+
 class FlatbufferReader : public FileWriter::FlatbufferReader {
   bool verify(Msg const &msg) const override;
   std::string source_name(Msg const &msg) const override;
