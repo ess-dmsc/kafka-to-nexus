@@ -333,7 +333,8 @@ h5d_chunked_1d<T>::create(hdf5::node::Group loc, std::string name,
   hdf5::dataspace::Simple dsp({0}, {H5S_UNLIMITED});
   hdf5::property::DatasetCreationList dcpl;
   auto Type = hdf5::datatype::create<T>().native_type();
-  dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / Type.size())});
+  hsize_t MimimumChunkSize = 1024;
+  dcpl.chunk({std::max<hsize_t>(MimimumChunkSize, chunk_bytes / Type.size())});
   auto ds = h5d::create(loc, name, Type, dsp, dcpl, cq);
   if (!ds) {
     return nullptr;
