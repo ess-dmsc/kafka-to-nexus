@@ -100,6 +100,23 @@ private:
   uint64_t count_append_bytes = 0;
 };
 
+/// \brief Specialized chunked dataset for strings.
+class Chunked1DString {
+public:
+  typedef std::unique_ptr<Chunked1DString> ptr;
+  static ptr create(hdf5::node::Group loc, std::string name,
+                    hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
+                  HDFIDStore *hdf_store);
+  append_ret append(std::string const &String);
+  AppendResult flushBuffer();
+  void bufferInit(size_t BufferSize, size_t BufferPacketMax);
+  h5d ds;
+
+private:
+  Chunked1DString(std::string name, h5d ds);
+};
+
 template <typename T> class h5d_chunked_2d;
 template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y);
 

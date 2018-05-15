@@ -462,6 +462,52 @@ template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
   return AppendResult::OK;
 }
 
+Chunked1DString::Chunked1DString(std::string name, h5d ds)
+    : ds(std::move(ds)) {}
+
+Chunked1DString::ptr Chunked1DString::create(hdf5::node::Group Node,
+                                             std::string Name,
+                                             hsize_t ChunkBytes,
+                                             CollectiveQueue *cq) {
+  hdf5::dataspace::Simple Space({0}, {H5S_UNLIMITED});
+  hdf5::property::DatasetCreationList dcpl;
+  auto Type = hdf5::datatype::String::variable();
+  Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  hsize_t MimimumChunkSize = 1024;
+  dcpl.chunk({std::max<hsize_t>(MimimumChunkSize, ChunkBytes)});
+  auto ds = h5d::create(Node, Name, Type, Space, dcpl, cq);
+  if (!ds) {
+    return nullptr;
+  }
+  auto ret = new Chunked1DString(Name, std::move(*ds));
+  return ptr(ret);
+}
+
+Chunked1DString::ptr Chunked1DString::open(hdf5::node::Group Node,
+                                           std::string Name,
+                                           CollectiveQueue *cq,
+                                           HDFIDStore *hdf_store) {
+  auto ds = h5d::open(Node, Name, cq, hdf_store);
+  if (!ds) {
+    LOG(Sev::Error, "Could not open dataset: {}", Name);
+    return ptr();
+  }
+  return ptr(new Chunked1DString(Name, std::move(*ds)));
+}
+
+append_ret Chunked1DString::append(std::string const &String) {
+  return ds.append(String);
+}
+
+AppendResult Chunked1DString::flushBuffer() {
+  // Currently no buffering
+  return AppendResult::OK;
+}
+
+void Chunked1DString::bufferInit(size_t BufferSize, size_t BufferPacketMax) {
+  // Currently no buffering
+}
+
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
 h5d_chunked_2d<T>::create(hdf5::node::Group loc, std::string name,
