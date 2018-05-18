@@ -161,18 +161,31 @@ private:
   /// ``has_finished``, if some error occur..
   StreamMasterError processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
+    FileWriter::ProcessMessageResult ProcessResult;
+
+    // process stream Stream fir at most TopicWriteDuration milliseconds
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
            TopicWriteDuration) {
       if (Stop) {
         return StreamMasterError::HAS_FINISHED();
       }
-      FileWriter::ProcessMessageResult ProcessResult = Stream.write(Demux);
+
+      // if Streamer throws the stream is closed, but the writing continues
+      try {
+        ProcessResult = Stream.write(Demux);
+      } catch (...) {
+        closeStream(Stream, Demux.topic());
+        return StreamMasterError::STREAMER_ERROR();
+      }
+      // decreases the count of sources in the stream, eventually closes the
+      // stream
       if (ProcessResult.is_STOP()) {
         if (Stream.numSources() == 0) {
           return closeStream(Stream, Demux.topic());
         }
         return StreamMasterError::RUNNING();
       }
+      // if there's any error in the messages logs it
       if (ProcessResult.is_ERR()) {
         LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
@@ -204,7 +217,6 @@ private:
           continue;
         }
         if (ProcessResult == StreamMasterError::STREAMER_ERROR()) {
-          // remove stream or try reconnect?
           continue;
         }
       }

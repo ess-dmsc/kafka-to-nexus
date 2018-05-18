@@ -44,6 +44,8 @@ FileWriter::Streamer::connect(std::string TopicName) {
     }
     // Error if the topic cannot be found in the metadata
     if (!Consumer->topicPresent(TopicName)) {
+      LOG(Sev::Error, "Topic {} not in broker, remove corresponding stream",
+          TopicName);
       return StreamerError::TOPIC_PARTITION_ERROR();
     }
   } catch (std::exception &Error) {
@@ -51,7 +53,7 @@ FileWriter::Streamer::connect(std::string TopicName) {
     return StreamerError::CONFIGURATION_ERROR();
   }
 
-  return (RunStatus = StreamerError::WRITING());
+  return StreamerError::WRITING();
 }
 
 FileWriter::Streamer::StreamerError FileWriter::Streamer::closeStream() {
@@ -81,7 +83,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   // make sure that the connection is ok
   // attention: connect() handles exceptions
   if (!RunStatus.connectionOK()) {
-    return ProcessMessageResult::ERR();
+    throw std::runtime_error(Err2Str(RunStatus));
   }
 
   // consume message and make sure that's ok

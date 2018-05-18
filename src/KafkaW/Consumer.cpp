@@ -170,15 +170,15 @@ void Consumer::addTopic(std::string Topic,
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
-  const rd_kafka_metadata_t *Metadata;
-  auto MetadataResult = rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
-
-  if (MetadataResult != RD_KAFKA_RESP_ERR_NO_ERROR) {
-    LOG(Sev::Error, "could not create metadata");
-    return false;
-  }
+  const rd_kafka_metadata_t *Metadata{nullptr};
+  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
 
   bool IsPresent = false;
+  if (!Metadata) {
+    LOG(Sev::Error, "could not create metadata");
+    return IsPresent;
+  }
+
   for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
     if (Metadata->topics[topic].topic == TopicName) {
       IsPresent = true;
