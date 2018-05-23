@@ -153,14 +153,14 @@ void Consumer::addTopic(std::string Topic,
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   int Partition = RD_KAFKA_PARTITION_UA;
 
-  if (StartTime.count() > 0) {
-    LOG(Sev::Info, "Consumer::StartTime  {}", StartTime.count());
-    rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
-    rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition)
-        ->offset = StartTime.count();
+  rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
+  for (int i = 0; i < PartitionList->cnt; ++i) {
+    if (StartTime.count() > 0) {
+      PartitionList->elems[i].offset = StartTime.count();
+      rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
+    }
   }
 
-  rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
   int err = rd_kafka_subscribe(RdKafka, PartitionList);
   KERR(RdKafka, err);
   if (err) {
