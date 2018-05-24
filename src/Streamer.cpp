@@ -195,21 +195,19 @@ void FileWriter::StreamerOptions::setStreamerOptions(
   }
   for (auto Option = Options.begin(); Option != Options.end(); ++Option) {
     if (Option.value().is_number_integer()) {
-      LOG(Sev::Info, "Set {}: {}", Option.key(), Option.value().get<int64_t>());
+      auto Value = Option.value().get<int64_t>();
+      LOG(Sev::Info, "Set {}: {}", Option.key(), Value);
       if (Option.key() == "ms-before-start") {
-        BeforeStartTime =
-            std::chrono::milliseconds(Option.value().get<int64_t>());
+        BeforeStartTime = std::chrono::milliseconds(Value);
       }
       if (Option.key() == "ms-after-stop") {
-        AfterStopTime =
-            std::chrono::milliseconds(Option.value().get<int64_t>());
+        AfterStopTime = std::chrono::milliseconds(Value);
       }
       if (Option.key() == "consumer-timeout-ms") {
-        ConsumerTimeout =
-            std::chrono::milliseconds(Option.value().get<int64_t>());
+        ConsumerTimeout = std::chrono::milliseconds(Value);
       }
       if (Option.key() == "metadata-retry") {
-        NumMetadataRetry = Option.value().get<int64_t>();
+        NumMetadataRetry = Value;
       }
     } else if (Option.value().is_string()) {
       Settings.ConfigurationStrings[Option.key()] =
