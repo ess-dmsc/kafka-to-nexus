@@ -398,6 +398,8 @@ void CommandHandler::handle(std::string const &Command) {
 
   if (auto x = find<std::string>("service_id", Doc)) {
     if (x.inner() != Config.service_id) {
+      LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
+          x.inner());
       return;
     }
   } else {
