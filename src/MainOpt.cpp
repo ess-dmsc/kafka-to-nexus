@@ -23,6 +23,12 @@ int MainOpt::parse_config_json(std::string json) {
   // Parse the JSON configuration and extract parameters.
   // Currently, these parameters take precedence over what is given on the
   // command line.
+  nlohmann::json Config;
+  try {
+    Config = nlohmann::json::parse(json);
+  } catch (...) {
+    return 1;
+  }
   auto &d = config_file;
   d.Parse(json.data(), json.size());
   if (d.HasParseError()) {
@@ -53,11 +59,11 @@ int MainOpt::parse_config_json(std::string json) {
       }
     }
   }
-  if (auto o = get_object(d, "streamer")) {
-    StreamerConfiguration.setStreamerOptions(o.v);
+  if (auto o = find<nlohmann::json>("streamer", Config)) {
+    StreamerConfiguration.setStreamerOptions(o.inner());
   }
-  if (auto o = get_object(d, "kafka")) {
-    StreamerConfiguration.setRdKafkaOptions(o.v);
+  if (auto o = find<nlohmann::json>("kafka", Config)) {
+    StreamerConfiguration.setRdKafkaOptions(o.inner());
   }
   if (auto o = get_string(&d, "hdf-output-prefix")) {
     hdf_output_prefix = o.v;

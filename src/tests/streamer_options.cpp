@@ -8,13 +8,11 @@ class StreamerOptionsTest : public ::testing::Test {
   virtual void SetUp() {}
 
 public:
-  void ConfigureRdKafkaWithJson(const rapidjson::Document &optj) {
-    ASSERT_TRUE(optj.HasMember("kafka"));
-    Options.setRdKafkaOptions(&optj["kafka"]);
+  void ConfigureRdKafkaWithJson(nlohmann::json const &Json) {
+    Options.setRdKafkaOptions(Json["kafka"]);
   }
-  void ConfigureStreamerWithJson(const rapidjson::Document &optj) {
-    ASSERT_TRUE(optj.HasMember("streamer"));
-    Options.setStreamerOptions(&optj["streamer"]);
+  void ConfigureStreamerWithJson(nlohmann::json const &Json) {
+    Options.setStreamerOptions(Json["streamer"]);
   }
 
   void CompareRdKafkaOptionsWith(const FileWriter::StreamerOptions &);
@@ -59,32 +57,29 @@ void StreamerOptionsTest::CompareSteamerOptionsWith(
 }
 
 TEST_F(StreamerOptionsTest, rdkafkaEmptyJsonDoesnTChangeDefaults) {
-  rapidjson::Document optj;
-  optj.Parse("{ \"kafka\" : {} }");
-
-  ConfigureRdKafkaWithJson(optj);
+  auto Json = nlohmann::json::parse("{ \"kafka\" : {} }");
+  ConfigureRdKafkaWithJson(Json);
   FileWriter::StreamerOptions Defaults;
   CompareRdKafkaOptionsWith(Defaults);
 }
 
 TEST_F(StreamerOptionsTest, setRdkafkaOptionsFillsOptionsVector) {
-  rapidjson::Document optj;
+  auto Json = nlohmann::json::parse(
+      R"""({ "kafka": { "timeout.ms": 10, "api.version.request": "true", "metadata.broker": "localhost:9092"}})""");
   std::map<std::string, std::string> Strings;
   std::map<std::string, std::string> Integers;
   Integers["timeout.ms"] = 10;
   Strings["api.version.request"] = "true";
   Strings["metadata.broker"] = "localhost:9092";
-  optj.Parse("{ \"kafka\" : { \"timeout.ms\" : 10, \"api.version.request\" : "
-             "\"true\", \"metadata.broker\" : \"localhost:9092\"}}");
-  ConfigureRdKafkaWithJson(optj);
+  ConfigureRdKafkaWithJson(Json);
   CompareRdKafkaOptionsWith(Strings, Integers);
 }
 
 TEST_F(StreamerOptionsTest, setStreamerOptionsMatchesExpected) {
-  rapidjson::Document optj;
-  optj.Parse("{\"streamer\" : {\"ms-before-start\" : 10, "
-             "\"consumer-timeout-ms\" : 10, \"metadata-retry\" : 1}}");
-  ConfigureStreamerWithJson(optj);
+  auto Json = nlohmann::json::parse(
+      "{\"streamer\" : {\"ms-before-start\" : 10, "
+      "\"consumer-timeout-ms\" : 10, \"metadata-retry\" : 1}}");
+  ConfigureStreamerWithJson(Json);
   CompareSteamerOptionsWith(std::chrono::milliseconds(10),
                             std::chrono::milliseconds(10), 1);
 }
