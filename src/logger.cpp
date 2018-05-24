@@ -17,6 +17,7 @@
 #endif
 
 int log_level = 3;
+std::string g_ServiceID;
 
 // adhoc namespace because it would now collide with ::Logger defined
 // in gralog_logger
@@ -114,7 +115,8 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     npre = 0;
   }
   auto f1 = file + npre;
-  auto lmsg = fmt::format("{}:{} [{}]:  {}\n", f1, line, level, s1);
+  auto lmsg = fmt::format("{}:{} [{}] [ServiceID:{}]:  {}\n", f1, line, level,
+                          g_ServiceID, s1);
   fwrite(lmsg.c_str(), 1, lmsg.size(), log_file);
   if (level < 7 && do_run_kafka.load()) {
     // If we will use logging to Kafka in the future, refactor a bit to reduce
@@ -128,6 +130,9 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     d.AddMember("level", Value(level), a);
     d.AddMember("_FILE", Value(file, a), a);
     d.AddMember("_LINE", Value(line), a);
+    if (!g_ServiceID.empty()) {
+      d.AddMember("ServiceID", Value(g_ServiceID.c_str(), a), a);
+    }
     StringBuffer buf1;
     Writer<StringBuffer> wr(buf1);
     d.Accept(wr);
