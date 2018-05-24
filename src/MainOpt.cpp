@@ -9,6 +9,11 @@
 
 using uri::URI;
 
+MainOpt::MainOpt() {
+  service_id = fmt::format("kafka-to-nexus--host:{}--pid:{}",
+                           gethostname_wrapper(), getpid_wrapper());
+}
+
 int MainOpt::parse_config_file() {
   if (config_filename.empty()) {
     LOG(Sev::Notice, "given config filename is empty");
@@ -75,11 +80,15 @@ int MainOpt::parse_config_json(std::string json) {
   if (auto o = get_bool(&d, "source_do_process_message")) {
     source_do_process_message = o.v;
   }
+  if (auto o = get_string(&d, "service_id")) {
+    service_id = o.v;
+  }
 
   return 0;
 }
 
 void setup_logger_from_options(MainOpt const &opt) {
+  g_ServiceID = opt.service_id;
   if (!opt.kafka_gelf.empty()) {
     URI uri(opt.kafka_gelf);
     log_kafka_gelf_start(uri.host, uri.topic);
