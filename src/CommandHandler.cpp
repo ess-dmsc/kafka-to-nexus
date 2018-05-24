@@ -5,7 +5,6 @@
 #include "json.h"
 #include <chrono>
 #include <future>
-#include <nlohmann/json.hpp>
 
 using std::array;
 using std::vector;
