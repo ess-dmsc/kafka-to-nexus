@@ -64,7 +64,7 @@ Available options include:
 - `streamer` Configuration option for the Streamer
 - `stream-master` Configuration option for the StreamMaster
 - `service_id` If multiple instances listen on the same Kafka command topic,
-  the `service_id` let's the filewriter filter the commands to interpret.
+  the `service_id` lets the filewriter filter the commands to interpret.
 
 
 ### Send command to kafka-to-nexus
