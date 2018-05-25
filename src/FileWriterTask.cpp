@@ -23,6 +23,7 @@ rapidjson::Document hdf_parse(std::string const &structure) {
 
 using std::string;
 using std::vector;
+using nlohmann::json;
 
 std::atomic<uint32_t> n_FileWriterTask_created{0};
 
@@ -75,9 +76,12 @@ void FileWriterTask::hdf_init(std::string const &NexusStructure,
   rapidjson::Document NexusStructureDocument = hdf_parse(NexusStructure);
   rapidjson::Document ConfigFileDocument = hdf_parse(ConfigFile);
 
+  auto NexusStructureDocumentJson =
+      json::parse(json_to_string(NexusStructureDocument));
+  auto ConfigFileDocumentJson = json::parse(json_to_string(ConfigFileDocument));
   try {
-    hdf_file.init(filename_full, NexusStructureDocument, ConfigFileDocument,
-                  stream_hdf_info);
+    hdf_file.init(filename_full, NexusStructureDocumentJson,
+                  ConfigFileDocumentJson, stream_hdf_info);
   } catch (...) {
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
@@ -90,7 +94,7 @@ void FileWriterTask::hdf_close() { hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
   try {
-    hdf_file.reopen(filename_full, rapidjson::Value());
+    hdf_file.reopen(filename_full, json::object());
   } catch (...) {
     return -1;
   }

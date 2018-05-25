@@ -91,8 +91,8 @@ TEST(HDFFile, Create) {
   using namespace FileWriter;
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
-  f1.init("tmp-test.h5", rapidjson::Value().SetObject(),
-          rapidjson::Value().SetObject(), stream_hdf_info);
+  f1.init("tmp-test.h5", nlohmann::json::object(), nlohmann::json::object(),
+          stream_hdf_info);
 }
 
 class T_CommandHandler : public testing::Test {
@@ -1180,7 +1180,9 @@ public:
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-    hdf_file.init(nexus_structure, stream_hdf_info);
+    auto NexusStructureJson =
+        nlohmann::json::parse(json_to_string(nexus_structure));
+    hdf_file.init(NexusStructureJson, stream_hdf_info);
 
     auto ds =
         hdf5::node::get_dataset(hdf_file.root_group, "string_fixed_1d_fixed");
@@ -1210,7 +1212,9 @@ public:
     })"");
     ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-    hdf_file.init(nexus_structure, stream_hdf_info);
+    auto NexusStructureJson =
+        nlohmann::json::parse(json_to_string(nexus_structure));
+    hdf_file.init(NexusStructureJson, stream_hdf_info);
 
     auto ds = hdf5::node::get_dataset(hdf_file.root_group,
                                       "string_fixed_1d_variable");

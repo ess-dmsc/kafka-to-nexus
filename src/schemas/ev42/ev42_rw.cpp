@@ -97,7 +97,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       ds_cue_timestamp_zero.reset();
     }
     if (attributes) {
-      HDFFile::write_attributes(HDFGroup, attributes);
+      auto AttributesJson = nlohmann::json::parse(json_to_string(*attributes));
+      HDFFile::write_attributes(HDFGroup, &AttributesJson);
     }
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);

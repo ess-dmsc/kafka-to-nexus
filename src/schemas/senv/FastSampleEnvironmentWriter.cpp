@@ -66,7 +66,8 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
     NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
                                    DefaultChunkSize);
     if (attributes) {
-      FileWriter::HDFFile::write_attributes(HDFGroup, attributes);
+      auto AttributesJson = nlohmann::json::parse(json_to_string(*attributes));
+      FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
     }
   } catch (std::exception &E) {
     LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
