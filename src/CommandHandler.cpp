@@ -162,7 +162,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     }
 
     auto RootGroup = Task->hdf_file.h5file.root();
-    HDFWriterModule->parse_config(ConfigStreamInner.dump(), nullptr);
+    HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
     auto Attributes = json::object();
     if (auto x = find<json>("attributes", ConfigStream)) {
       Attributes = x.inner();
