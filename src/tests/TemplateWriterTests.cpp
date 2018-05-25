@@ -11,7 +11,7 @@ TEST(TemplateTests, ReaderReturnValues) {
 TEST(TemplateTests, WriterReturnValues) {
   TemplateWriter::WriterClass SomeWriter;
   hdf5::node::Group SomeGroup;
-  EXPECT_TRUE(SomeWriter.init_hdf(SomeGroup, nullptr).is_OK());
+  EXPECT_TRUE(SomeWriter.init_hdf(SomeGroup, "{}").is_OK());
   EXPECT_TRUE(SomeWriter.reopen(SomeGroup).is_OK());
   EXPECT_TRUE(SomeWriter.write(FileWriter::Msg()).is_OK());
   EXPECT_EQ(SomeWriter.flush(), 0);
