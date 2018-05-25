@@ -37,8 +37,7 @@ public:
   uint64_t processed_messages_count() const;
   ProcessMessageResult process_message(Msg &msg);
   std::string to_str() const;
-  rapidjson::Document
-  to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
+  nlohmann::json to_json() const;
   void close_writer_module();
   bool is_parallel = false;
 
