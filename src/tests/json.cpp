@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 
 using namespace rapidjson;
+using nlohmann::json;
 
 TEST(json, MergeWithExactlyOneConflictingKey) {
   Document jd1, jd2;
@@ -103,4 +104,26 @@ TEST(json, MergeDeeperNestedKeys) {
 
   auto jd3 = merge(jd1, jd2);
   ASSERT_TRUE(jd3 == jde);
+}
+
+TEST(json, givenFloatGettingAsIntWillUnfortunatelySucceed) {
+  auto Doc = json::parse(R"""({"float": 2.0})""");
+  auto const &Element = Doc["float"];
+  try {
+    ASSERT_EQ(2, Element.get<int64_t>());
+  } catch (...) {
+    bool TheGetDoesUnfortunatelyNotThrow = false;
+    ASSERT_TRUE(TheGetDoesUnfortunatelyNotThrow);
+  }
+}
+
+TEST(json, givenIntegerAsStringGettingAsIntWillFail) {
+  auto Doc = json::parse(R"""({"integer_string": "123"})""");
+  auto const &Element = Doc["integer_string"];
+  try {
+    Element.get<int64_t>();
+    bool TheGetShouldHaveThrown = false;
+    ASSERT_TRUE(TheGetShouldHaveThrown);
+  } catch (...) {
+  }
 }
