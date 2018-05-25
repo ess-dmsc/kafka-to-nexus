@@ -3,6 +3,7 @@
 #include "../KafkaW/KafkaW.h"
 #include "../MainOpt.h"
 #include "../helper.h"
+#include "../json.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
 #include "HDFFileTestHelper.h"
@@ -11,7 +12,6 @@
 #include <gtest/gtest.h>
 #include <hdf5.h>
 #include <random>
-#include <rapidjson/document.h>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -30,10 +30,8 @@ void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
   main_opt.ConfigJSON.merge_patch(json::parse(JSONString));
 }
 
-rapidjson::Document basic_command(string filename) {
-  rapidjson::Document cmd;
-  auto &a = cmd.GetAllocator();
-  cmd.Parse(R""({
+json basic_command(string filename) {
+  auto Command = json::parse(R""({
     "cmd": "FileWriter_new",
     "nexus_structure": {
       "children": []
@@ -42,16 +40,12 @@ rapidjson::Document basic_command(string filename) {
     },
     "job_id": "some_unique_id"
   })"");
-  cmd.FindMember("file_attributes")
-      ->value.GetObject()
-      .AddMember("file_name", rapidjson::Value(filename.c_str(), a), a);
-  return cmd;
+  Command["file_attributes"]["file_name"] = filename;
+  return Command;
 }
 
-void command_add_static_dataset_1d(rapidjson::Document &cmd) {
-  auto &a = cmd.GetAllocator();
-  rapidjson::Document j(&a);
-  j.Parse(R""({
+void command_add_static_dataset_1d(json &Command) {
+  auto Json = json::parse(R""({
     "type": "group",
     "name": "some_group",
     "attributes": {
@@ -66,11 +60,7 @@ void command_add_static_dataset_1d(rapidjson::Document &cmd) {
       }
     ]
   })"");
-  cmd.FindMember("nexus_structure")
-      ->value.GetObject()
-      .FindMember("children")
-      ->value.GetArray()
-      .PushBack(j, a);
+  Command["nexus_structure"]["children"].push_back(Json);
 }
 
 void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
@@ -107,15 +97,17 @@ TEST(HDFFile, Create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    auto cmd = gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
-    LOG(Sev::Debug, "cmd: {:.{}}", cmd.data(), cmd.size());
-    rapidjson::Document d;
-    d.Parse(cmd.data(), cmd.size());
-    char const *fname = d["file_attributes"]["file_name"].GetString();
-    unlink(fname);
+    auto CommandString =
+        gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
+    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
+        CommandString.size());
+    auto Command = json::parse(CommandString);
+    std::string fname = Command["file_attributes"]["file_name"];
+    unlink(fname.c_str());
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+    ch.handle(
+        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -151,12 +143,12 @@ public:
       merge_config_into_main_opt(main_opt, jsontxt);
       main_opt.hdf_output_prefix = hdf_output_prefix;
     }
-    rapidjson::Document json_command = basic_command(hdf_output_filename);
+    auto json_command = basic_command(hdf_output_filename);
     command_add_static_dataset_1d(json_command);
 
-    auto cmd = json_to_string(json_command);
-    auto fname = get_string(&json_command, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8u);
+    auto cmd = json_command.dump();
+    std::string fname = json_command["file_attributes"]["file_name"];
+    ASSERT_GT(fname.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
@@ -166,7 +158,7 @@ public:
     main_opt.hdf_output_prefix = "";
 
     // Verification
-    auto file = hdf5::file::open(hdf_output_prefix + "/" + fname.v,
+    auto file = hdf5::file::open(hdf_output_prefix + "/" + fname,
                                  hdf5::file::AccessFlags::READONLY);
     ASSERT_TRUE(file.is_valid());
   }
