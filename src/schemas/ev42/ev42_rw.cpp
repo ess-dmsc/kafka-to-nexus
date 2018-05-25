@@ -8,6 +8,8 @@ namespace FileWriter {
 namespace Schemas {
 namespace ev42 {
 
+using nlohmann::json;
+
 struct append_ret {
   int status;
   uint64_t written_bytes;
@@ -44,31 +46,64 @@ static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
-  if (auto x =
-          find<uint64_t>("nexus.indices.index_every_kb", ConfigurationStream)) {
-    index_every_bytes = uint64_t(x.inner() * 1024);
+  auto ConfigurationStreamJson = json::parse(ConfigurationStream);
+  try {
+    index_every_bytes =
+        ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
+            .get<uint64_t>() *
+        1024;
     LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
-  } else if (auto x = find<uint64_t>("nexus.indices.index_every_mb",
-                                     ConfigurationStream)) {
-    index_every_bytes = uint64_t(x.inner() * 1024 * 1024);
-    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+  } catch (...) { /* it's ok if not found */
   }
-  if (auto x =
-          find<uint64_t>("nexus.chunk.chunk_n_elements", ConfigurationStream)) {
+  try {
+    index_every_bytes =
+        ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
+            .get<uint64_t>() *
+        1024 * 1024;
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    ConfigurationStreamJson["nexus"]["chunk"]["chunk_n_elements"]
+        .get<uint64_t>();
     LOG(Sev::Error, "chunk_n_elements is no longer supported");
+  } catch (...) { /* it's ok if not found */
   }
-  if (auto x = find<uint64_t>("nexus.chunk.chunk_kb", ConfigurationStream)) {
-    chunk_bytes = (1 << 10) * x.inner();
+  try {
+    chunk_bytes =
+        ConfigurationStreamJson["nexus"]["chunk"]["chunk_kb"].get<uint64_t>() *
+        1024;
     LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
+  } catch (...) { /* it's ok if not found */
   }
-  if (auto x = find<uint64_t>("nexus.buffer.size_kb", ConfigurationStream)) {
-    buffer_size = (1 << 10) * x.inner();
+  try {
+    chunk_bytes =
+        ConfigurationStreamJson["nexus"]["chunk"]["chunk_mb"].get<uint64_t>() *
+        1024 * 1024;
+    LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    buffer_size =
+        ConfigurationStreamJson["nexus"]["buffer"]["size_kb"].get<uint64_t>() *
+        1024;
     LOG(Sev::Debug, "buffer_size: {}", buffer_size);
+  } catch (...) { /* it's ok if not found */
   }
-  if (auto x =
-          find<uint64_t>("nexus.buffer.packet_max_kb", ConfigurationStream)) {
-    buffer_packet_max = (1 << 10) * x.inner();
+  try {
+    buffer_size =
+        ConfigurationStreamJson["nexus"]["buffer"]["size_mb"].get<uint64_t>() *
+        1024 * 1024;
+    LOG(Sev::Debug, "buffer_size: {}", buffer_size);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    buffer_packet_max =
+        ConfigurationStreamJson["nexus"]["buffer"]["packet_max_kb"]
+            .get<uint64_t>() *
+        1024;
     LOG(Sev::Debug, "buffer_packet_max: {}", buffer_packet_max);
+  } catch (...) { /* it's ok if not found */
   }
 }
 

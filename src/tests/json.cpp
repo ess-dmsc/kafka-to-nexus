@@ -1,4 +1,5 @@
 #include "json.h"
+#include "logger.h"
 #include <gtest/gtest.h>
 
 using namespace rapidjson;
@@ -126,4 +127,27 @@ TEST(json, givenIntegerAsStringGettingAsIntWillFail) {
     ASSERT_TRUE(TheGetShouldHaveThrown);
   } catch (...) {
   }
+}
+
+TEST(json, givenLargeUnsignedIntegerGettingAsSignedUnfortunatelySucceeds) {
+  // 9223372036854775807
+  // 18446744073709551615
+  auto Doc = json::parse(R"""({"value": 18446744073709551615})""");
+  auto const &Element = Doc["value"];
+  ASSERT_TRUE(Element.is_number_unsigned());
+  ASSERT_TRUE(Element.is_number_integer());
+  ASSERT_EQ(0xffffffffffffffffu, Element.get<uint64_t>());
+  ASSERT_EQ(-1, Element.get<int64_t>());
+}
+
+TEST(json, givenTooLargeUnsignedJsonInputFails) {
+  // 9223372036854775807
+  // 18446744073709551615
+  auto Doc = json::parse(R"""({"value": 18446744073709551616})""");
+  ASSERT_TRUE(Doc.is_object());
+  auto const &Element = Doc["value"];
+  ASSERT_FALSE(Element.is_number_unsigned());
+  ASSERT_FALSE(Element.is_number_integer());
+  ASSERT_TRUE(Element.is_number());
+  ASSERT_TRUE(Element.is_number_float());
 }
