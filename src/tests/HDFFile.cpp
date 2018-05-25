@@ -22,13 +22,12 @@ using std::vector;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
+using nlohmann::json;
 
 MainOpt getTestOptions() { return MainOpt(); }
 
-void merge_config_into_main_opt(MainOpt &main_opt, string jsontxt) {
-  rapidjson::Document cfg;
-  cfg.Parse(jsontxt.c_str());
-  main_opt.config_file = merge(cfg, main_opt.config_file);
+void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
+  main_opt.ConfigJSON.merge_patch(json::parse(JSONString));
 }
 
 rapidjson::Document basic_command(string filename) {
@@ -82,6 +81,16 @@ void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
   }})"",
                            job_cmd.FindMember("job_id")->value.GetString());
   ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+}
+
+void send_stop(FileWriter::CommandHandler &ch, json const &CommandJSON) {
+  auto Command = json::parse(R""({
+    "recv_type": "FileWriter",
+    "cmd": "file_writer_tasks_clear_all"
+  })"");
+  Command["job_id"] = CommandJSON["job_id"];
+  auto CommandString = Command.dump();
+  ch.handle(FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
 }
 
 // Verify
@@ -490,7 +499,6 @@ public:
 
   static void data_ev42() {
     MainOpt main_opt = getTestOptions();
-    bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
@@ -527,49 +535,62 @@ public:
       "shm": 2100100100
     })"");
 
-    if (auto x =
-            get_uint(&main_opt.config_file, "unit_test.hdf.do_verification")) {
-      do_verification = x.v == 1;
+    bool do_verification = true;
+    try {
+      do_verification =
+          main_opt.ConfigJSON["unit_test"]["hdf"]["do_verification"]
+              .get<int64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
+    } catch (...) {
     }
 
     size_t n_msgs_per_source = 1;
-    if (auto x =
-            get_uint(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
-      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
-      n_msgs_per_source = x.v;
+    try {
+      n_msgs_per_source =
+          main_opt.ConfigJSON["unit_test"]["n_msgs_per_source"].get<int64_t>();
+      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
+    } catch (...) {
     }
 
     size_t n_sources = 1;
-    if (auto x = get_uint(&main_opt.config_file, "unit_test.n_sources")) {
-      LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
-      n_sources = x.v;
+    try {
+      n_sources = main_opt.ConfigJSON["unit_test"]["n_sources"].get<int64_t>();
+      LOG(Sev::Debug, "unit_test.n_sources: {}", n_sources);
+    } catch (...) {
     }
 
     size_t n_events_per_message = 1;
-    if (auto x =
-            get_uint(&main_opt.config_file, "unit_test.n_events_per_message")) {
-      LOG(Sev::Debug, "unit_test.n_events_per_message: {}", x.v);
-      n_events_per_message = x.v;
+    try {
+      n_events_per_message =
+          main_opt.ConfigJSON["unit_test"]["n_events_per_message"]
+              .get<int64_t>();
+      LOG(Sev::Debug, "unit_test.n_events_per_message: {}",
+          n_events_per_message);
+    } catch (...) {
     }
 
     size_t feed_msgs_times = 1;
-    if (auto x = get_uint(&main_opt.config_file, "unit_test.feed_msgs_times")) {
-      LOG(Sev::Info, "unit_test.feed_msgs_times: {}", x.v);
-      feed_msgs_times = x.v;
+    try {
+      feed_msgs_times =
+          main_opt.ConfigJSON["unit_test"]["feed_msgs_times"].get<int64_t>();
+      LOG(Sev::Debug, "unit_test.feed_msgs_times: {}", feed_msgs_times);
+    } catch (...) {
     }
 
     int feed_msgs_seconds = 1;
-    if (auto x =
-            get_int(&main_opt.config_file, "unit_test.feed_msgs_seconds")) {
-      LOG(Sev::Info, "unit_test.feed_msgs_seconds: {}", x.v);
-      feed_msgs_seconds = x.v;
+    try {
+      feed_msgs_seconds =
+          main_opt.ConfigJSON["unit_test"]["feed_msgs_seconds"].get<int64_t>();
+      LOG(Sev::Debug, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
+    } catch (...) {
     }
 
     string filename = "tmp-ev42.h5";
-    if (auto x = get_string(&main_opt.config_file, "unit_test.filename")) {
-      LOG(Sev::Info, "unit_test.filename: {}", x.v);
-      filename = x.v;
+    try {
+      filename =
+          main_opt.ConfigJSON["unit_test"]["filename"].get<std::string>();
+      LOG(Sev::Debug, "unit_test.filename: {}", filename);
+    } catch (...) {
     }
 
     vector<SourceDataGen> sources;
@@ -606,104 +627,74 @@ public:
       s.pregenerate(17, 71);
     }
 
-    rapidjson::Document json_command;
+    auto CommandJSON = json::object();
     {
-      using namespace rapidjson;
-      auto &j = json_command;
-      auto &a = j.GetAllocator();
-      j.SetObject();
-      Value nexus_structure;
-      nexus_structure.SetObject();
-
-      Value children;
-      children.SetArray();
-
+      auto NexusStructure = json::object();
+      auto Children = json::array();
       {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", "some_group", a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        g1.AddMember("children", ch, a);
-        children.PushBack(g1, a);
+        auto Group = json::parse(R""({
+          "type": "group",
+          "name": "some_group",
+          "attributes": {
+            "NX_class": "NXinstrument"
+          },
+          "children": []
+        })"");
+        Children.push_back(Group);
       }
 
-      auto json_stream = [&a, &main_opt](string source, string topic,
-                                         string module,
-                                         bool run_parallel) -> Value {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", Value(source.c_str(), a), a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
+      auto json_stream = [&main_opt](string Source, string Topic, string Module,
+                                     bool run_parallel) -> json {
+        auto Group = json::object();
+        Group["type"] = "group";
+        Group["name"] = Source;
+        auto Attr = json::object();
+        Attr["NX_class"] = "NXinstrument";
+        Group["attributes"] = Attr;
+        auto Children = json::array();
         {
-          auto &children = ch;
-          Document ds1(&a);
-          ds1.Parse(R""({
+          auto Dataset = json::parse(R""({
             "type": "stream",
             "attributes": {
               "this_will_be_a_double": 0.125,
               "this_will_be_a_int64": 123
             }
           })"");
-          Value stream;
-          stream.SetObject();
-          if (auto main_nexus = get_object(main_opt.config_file, "nexus")) {
-            Value nx;
-            nx.CopyFrom(*main_nexus.v, a);
-            stream.AddMember("nexus", std::move(nx), a);
+          auto Stream = json::object();
+          if (auto x = find<json>("nexus", main_opt.ConfigJSON)) {
+            Stream["nexus"] = x.inner();
           }
-          stream.AddMember("topic", Value(topic.c_str(), a), a);
-          stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("writer_module", Value(module.c_str(), a), a);
-          stream.AddMember("type", Value("uint32", a), a);
-          stream.AddMember(
-              "n_mpi_workers",
-              std::move(Value().CopyFrom(
-                  main_opt.config_file["unit_test"]["n_mpi_workers"], a)),
-              a);
-          stream.AddMember("run_parallel", Value(run_parallel), a);
-          ds1.AddMember("stream", stream, a);
-          children.PushBack(ds1, a);
+          Stream["topic"] = Topic;
+          Stream["source"] = Source;
+          Stream["writer_module"] = Module;
+          Stream["type"] = "uint32";
+          Stream["n_mpi_workers"] =
+              main_opt.ConfigJSON["unit_test"]["n_mpi_workers"].get<uint64_t>();
+          Stream["run_parallel"] = run_parallel;
+          Dataset["stream"] = Stream;
+          Children.push_back(Dataset);
         }
-        g1.AddMember("children", ch, a);
-        return g1;
+        Group["children"] = Children;
+        return Group;
       };
 
       for (auto &source : sources) {
-        children.PushBack(json_stream(source.source, source.topic, "ev42",
-                                      source.run_parallel),
-                          a);
+        Children.push_back(json_stream(source.source, source.topic, "ev42",
+                                       source.run_parallel));
       }
 
-      nexus_structure.AddMember("children", children, a);
-      j.AddMember("nexus_structure", nexus_structure, a);
-      {
-        Value v;
-        v.SetObject();
-        v.AddMember("file_name", Value(filename.c_str(), a), a);
-        j.AddMember("file_attributes", v, a);
-      }
-      j.AddMember("cmd", StringRef("FileWriter_new"), a);
-      j.AddMember("job_id", StringRef("000000000042"), a);
+      NexusStructure["children"] = Children;
+      CommandJSON["nexus_structure"] = NexusStructure;
+      CommandJSON["file_attributes"] = json::object();
+      CommandJSON["file_attributes"]["file_name"] = filename;
+      CommandJSON["cmd"] = "FileWriter_new";
+      CommandJSON["job_id"] = "000000000042";
     }
 
-    auto cmd = json_to_string(json_command);
-    LOG(Sev::Debug, "command: {}", cmd);
+    LOG(Sev::Debug, "CommandJSON: {}", CommandJSON.dump());
 
-    auto &d = json_command;
-    auto fname = get_string(&d, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), size_t{8});
+    auto fname = CommandJSON["file_attributes"]["file_name"].get<std::string>();
+    ASSERT_GT(fname.size(), size_t(8));
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
@@ -713,7 +704,9 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
 
-      ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
+      auto CommandString = CommandJSON.dump();
+      ch.handle(
+          FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
       ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
 
       auto &fwt = ch.FileWriterTasks.at(0);
@@ -774,7 +767,7 @@ public:
       LOG(Sev::Debug, "processing done in {} ms",
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
-      send_stop(ch, json_command);
+      send_stop(ch, CommandJSON);
       ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
@@ -901,7 +894,6 @@ public:
 
   static void data_f142() {
     MainOpt main_opt = getTestOptions();
-    bool do_verification = true;
 
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
@@ -917,29 +909,36 @@ public:
       }
     })"");
 
-    if (auto x =
-            get_int(&main_opt.config_file, "unit_test.hdf.do_verification")) {
-      do_verification = x.v == 1;
+    bool do_verification = true;
+    try {
+      do_verification =
+          main_opt.ConfigJSON["unit_test"]["hdf"]["do_verification"]
+              .get<uint64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
+    } catch (...) {
     }
 
     int n_msgs_per_source = 1;
-    if (auto x =
-            get_int(&main_opt.config_file, "unit_test.n_msgs_per_source")) {
-      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", x.v);
-      n_msgs_per_source = int(x.v);
+    try {
+      n_msgs_per_source =
+          main_opt.ConfigJSON["unit_test"]["n_msgs_per_source"].get<uint64_t>();
+      LOG(Sev::Debug, "n_msgs_per_source: {}", n_msgs_per_source);
+    } catch (...) {
     }
 
     int n_sources = 1;
-    if (auto x = get_int(&main_opt.config_file, "unit_test.n_sources")) {
-      LOG(Sev::Debug, "unit_test.n_sources: {}", x.v);
-      n_sources = int(x.v);
+    try {
+      n_sources = main_opt.ConfigJSON["unit_test"]["n_sources"].get<uint64_t>();
+      LOG(Sev::Debug, "n_sources: {}", n_sources);
+    } catch (...) {
     }
 
     size_t array_size = 0;
-    if (auto x = get_int(&main_opt.config_file, "unit_test.f142_array_size")) {
-      LOG(Sev::Debug, "unit_test.f142_array_size: {}", x.v);
-      array_size = size_t(x.v);
+    try {
+      array_size =
+          main_opt.ConfigJSON["unit_test"]["array_size"].get<uint64_t>();
+      LOG(Sev::Debug, "array_size: {}", array_size);
+    } catch (...) {
     }
 
     vector<SourceDataGen_f142> sources;

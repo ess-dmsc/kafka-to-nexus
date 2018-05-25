@@ -1,6 +1,7 @@
 #pragma once
 
 #include "StreamerOptions.h"
+#include "json.h"
 #include "logger.h"
 #include "uri.h"
 
@@ -9,7 +10,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <rapidjson/document.h>
 #include <string>
 #include <utility>
 #include <vector>
@@ -37,7 +37,7 @@ struct MainOpt {
   /// Can optionally use the `graylog_logger` library to log to this address.
   std::string graylog_logger_address;
   /// The configuration file given by the `--config-file` option.
-  rapidjson::Document config_file;
+  nlohmann::json ConfigJSON = nlohmann::json::object();
   /// The configuration filename given by the `--config-file` option.
   std::string config_filename;
   /// Keeps commands contained in the configuration file.  The configuration
