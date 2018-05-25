@@ -172,8 +172,8 @@ public:
   /// relevant only to the current instance of this file writing module.
   /// \param[in] config_module This parameter is currently unused and thus any
   /// calls to this member function will have this parameter set to `nullptr`.
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override {
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override {
     std::cout << "WriterClass::parse_config()\n";
   }
 
@@ -215,8 +215,8 @@ public:
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
-  InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                      rapidjson::Value const *attributes) override {
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                      std::string const &HDFAttributes) override {
     std::cout << "WriterClass::init_hdf()\n";
     return InitResult::OK();
   }
