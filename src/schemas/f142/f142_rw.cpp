@@ -10,6 +10,8 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+using nlohmann::json;
+
 #include "schemas/f142_logdata_generated.h"
 
 template <typename T> using uptr = std::unique_ptr<T>;
@@ -388,19 +390,20 @@ writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
-  auto str = find<std::string>("source", ConfigurationStream);
+  auto ConfigurationStreamJson = json::parse(ConfigurationStream);
+  auto str = find<std::string>("source", ConfigurationStreamJson);
   if (!str) {
     return;
   }
   source_name = str.inner();
 
-  str = find<std::string>("type", ConfigurationStream);
+  str = find<std::string>("type", ConfigurationStreamJson);
   if (!str) {
     return;
   }
   type = str.inner();
 
-  if (auto x = find<uint64_t>("array_size", ConfigurationStream)) {
+  if (auto x = find<uint64_t>("array_size", ConfigurationStreamJson)) {
     array_size = size_t(x.inner());
   }
   LOG(Sev::Debug,
@@ -408,12 +411,21 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
       "array_size: {}",
       source_name, type, array_size);
 
-  if (auto x =
-          find<int64_t>("nexus.indices.index_every_kb", ConfigurationStream)) {
-    index_every_bytes = uint64_t(x.inner()) * 1024;
-  } else if (auto x = find<int64_t>("nexus.indices.index_every_mb",
-                                    ConfigurationStream)) {
-    index_every_bytes = uint64_t(x.inner()) * 1024 * 1024;
+  try {
+    index_every_bytes =
+        ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
+            .get<uint64_t>() *
+        1024;
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    index_every_bytes =
+        ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
+            .get<uint64_t>() *
+        1024 * 1024;
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+  } catch (...) { /* it's ok if not found */
   }
 }
 
