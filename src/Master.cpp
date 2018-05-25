@@ -112,8 +112,9 @@ void Master::statistics() {
   for (auto &stream_master : stream_masters) {
     auto fwt_id_str =
         fmt::format("{}", stream_master->getFileWriterTask().job_id());
-    auto fwt = stream_master->getFileWriterTask().stats(a);
-    js_files.AddMember(Value(fwt_id_str.c_str(), a), fwt, a);
+    auto fwt = stream_master->getFileWriterTask().stats();
+    js_files.AddMember(Value(fwt_id_str.c_str(), a),
+                       Value(fwt.dump().c_str(), a), a);
   }
   js_status.AddMember("files", js_files, a);
   rapidjson::StringBuffer buffer;
