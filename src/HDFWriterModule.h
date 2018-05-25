@@ -7,7 +7,6 @@
 #include <h5cpp/hdf5.hpp>
 #include <map>
 #include <memory>
-#include <rapidjson/document.h>
 #include <string>
 
 namespace FileWriter {
@@ -142,8 +141,8 @@ public:
   /// stream.
   /// \param config_module Configuration for all instances of this
   /// HDFWriterModule.
-  virtual void parse_config(rapidjson::Value const &config_stream,
-                            rapidjson::Value const *config_module) = 0;
+  virtual void parse_config(std::string const &ConfigurationStream,
+                            std::string const &ConfigurationModule) = 0;
 
   /// Initialise the HDF file.
   ///
@@ -157,7 +156,7 @@ public:
   /// should write to the file.
   /// \return The result.
   virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                              rapidjson::Value const *HDFAttributes) = 0;
+                              std::string const &HDFAttributes) = 0;
 
   /// Reopen the HDF objects which are used by this HDFWriterModule.
   ///

@@ -42,35 +42,39 @@ uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
 static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("ev42");
 
-void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
-                                   rapidjson::Value const *config_module) {
-  if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
-    index_every_bytes = uint64_t(x.v * 1024);
+void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
+                                   std::string const &ConfigurationModule) {
+  if (auto x =
+          find<uint64_t>("nexus.indices.index_every_kb", ConfigurationStream)) {
+    index_every_bytes = uint64_t(x.inner() * 1024);
     LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
-  } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
-    index_every_bytes = uint64_t(x.v * 1024 * 1024);
+  } else if (auto x = find<uint64_t>("nexus.indices.index_every_mb",
+                                     ConfigurationStream)) {
+    index_every_bytes = uint64_t(x.inner() * 1024 * 1024);
     LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
   }
-  if (auto x = get_int(&config_stream, "nexus.chunk.chunk_n_elements")) {
+  if (auto x =
+          find<uint64_t>("nexus.chunk.chunk_n_elements", ConfigurationStream)) {
     LOG(Sev::Error, "chunk_n_elements is no longer supported");
   }
-  if (auto x = get_int(&config_stream, "nexus.chunk.chunk_kb")) {
-    chunk_bytes = (1 << 10) * x.v;
+  if (auto x = find<uint64_t>("nexus.chunk.chunk_kb", ConfigurationStream)) {
+    chunk_bytes = (1 << 10) * x.inner();
     LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
   }
-  if (auto x = get_int(&config_stream, "nexus.buffer.size_kb")) {
-    buffer_size = (1 << 10) * x.v;
+  if (auto x = find<uint64_t>("nexus.buffer.size_kb", ConfigurationStream)) {
+    buffer_size = (1 << 10) * x.inner();
     LOG(Sev::Debug, "buffer_size: {}", buffer_size);
   }
-  if (auto x = get_int(&config_stream, "nexus.buffer.packet_max_kb")) {
-    buffer_packet_max = (1 << 10) * x.v;
+  if (auto x =
+          find<uint64_t>("nexus.buffer.packet_max_kb", ConfigurationStream)) {
+    buffer_packet_max = (1 << 10) * x.inner();
     LOG(Sev::Debug, "buffer_packet_max: {}", buffer_packet_max);
   }
 }
 
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
-                          rapidjson::Value const *attributes) {
+                          std::string const &HDFAttributes) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
   try {
@@ -96,10 +100,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       ds_cue_index.reset();
       ds_cue_timestamp_zero.reset();
     }
-    if (attributes) {
-      auto AttributesJson = nlohmann::json::parse(json_to_string(*attributes));
-      HDFFile::write_attributes(HDFGroup, &AttributesJson);
-    }
+    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
+    HDFFile::write_attributes(HDFGroup, &AttributesJson);
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
     LOG(Sev::Error, "ERROR ev42 could not init hdf_parent: {}  trace: {}",

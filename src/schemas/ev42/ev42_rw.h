@@ -17,10 +17,10 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override;
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      rapidjson::Value const *attributes) override;
+                      std::string const &HDFAttributes) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
