@@ -1,5 +1,4 @@
 #include "json.h"
-#include "logger.h"
 #include <gtest/gtest.h>
 
 using namespace rapidjson;
