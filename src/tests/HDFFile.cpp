@@ -1036,11 +1036,8 @@ public:
   }
 
   static void dataset_static_1d_string_fixed() {
-    auto hdf_file =
-        HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
-
-    rapidjson::Document nexus_structure;
-    nexus_structure.Parse(R""({
+    auto File = HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
+    auto NexusStructure = json::parse(R""({
       "children": [
         {
           "type": "dataset",
@@ -1054,14 +1051,9 @@ public:
         }
       ]
     })"");
-    ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-    auto NexusStructureJson =
-        nlohmann::json::parse(json_to_string(nexus_structure));
-    hdf_file.init(NexusStructureJson, stream_hdf_info);
-
-    auto ds =
-        hdf5::node::get_dataset(hdf_file.root_group, "string_fixed_1d_fixed");
+    File.init(NexusStructure, stream_hdf_info);
+    auto ds = hdf5::node::get_dataset(File.root_group, "string_fixed_1d_fixed");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
@@ -1070,10 +1062,8 @@ public:
   }
 
   static void dataset_static_1d_string_variable() {
-    auto hdf_file = HDFFileTestHelper::createInMemoryTestFile("tmp-varlen.h5");
-
-    rapidjson::Document nexus_structure;
-    nexus_structure.Parse(R""({
+    auto File = HDFFileTestHelper::createInMemoryTestFile("tmp-varlen.h5");
+    auto NexusStructure = json::parse(R""({
       "children": [
         {
           "type": "dataset",
@@ -1086,14 +1076,10 @@ public:
         }
       ]
     })"");
-    ASSERT_EQ(nexus_structure.HasParseError(), false);
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-    auto NexusStructureJson =
-        nlohmann::json::parse(json_to_string(nexus_structure));
-    hdf_file.init(NexusStructureJson, stream_hdf_info);
-
-    auto ds = hdf5::node::get_dataset(hdf_file.root_group,
-                                      "string_fixed_1d_variable");
+    File.init(NexusStructure, stream_hdf_info);
+    auto ds =
+        hdf5::node::get_dataset(File.root_group, "string_fixed_1d_variable");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
