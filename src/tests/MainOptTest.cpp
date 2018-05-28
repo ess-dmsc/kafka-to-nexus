@@ -3,8 +3,6 @@
 #include <CLI/CLI.hpp>
 #include <gtest/gtest.h>
 
-using namespace rapidjson;
-
 std::vector<char> vector_from_literal(char const *literal) {
   std::vector<char> ret(literal, literal + strlen(literal) + 1);
   return ret;
