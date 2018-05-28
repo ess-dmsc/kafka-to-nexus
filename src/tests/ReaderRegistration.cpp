@@ -27,9 +27,9 @@ TEST_F(ReaderRegistrationTest, SimpleRegistration) {
   std::map<std::string, ReaderPtr> &Readers =
       FlatbufferReaderRegistry::getReaders();
   std::string TestKey("temp");
-  EXPECT_EQ(Readers.size(), 0);
+  EXPECT_EQ(Readers.size(), 0u);
   { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
-  EXPECT_EQ(Readers.size(), 1);
+  EXPECT_EQ(Readers.size(), 1u);
   EXPECT_NE(Readers.find(TestKey), Readers.end());
 }
 
