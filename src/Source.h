@@ -56,8 +56,6 @@ private:
   friend class CommandHandler;
   friend class FileWriterTask;
   friend class SourceFactory_by_FileWriterTask;
-  friend std::vector<std::unique_ptr<Source>>
-  find_source(rapidjson::Document const &, rapidjson::Document const *);
   friend class ::Test___FileWriterTask___Create01;
   friend void swap(Source &x, Source &y);
 };
