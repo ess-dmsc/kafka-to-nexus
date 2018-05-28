@@ -1,17 +1,16 @@
 #include "CLIOptions.h"
 #include "KafkaW/KafkaW.h"
 #include "helper.h"
+#include "json.h"
 #include "uri.h"
-
 #include <CLI/CLI.hpp>
 #include <cstdio>
 #include <cstdlib>
 #include <fstream>
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
 #include <string>
 
 using uri::URI;
+using nlohmann::json;
 
 // POD
 struct MainOpt {
@@ -22,66 +21,45 @@ struct MainOpt {
 };
 
 std::string make_command(const std::string &broker, const uint64_t &teamid) {
-  using namespace rapidjson;
-  Document d;
-  auto &a = d.GetAllocator();
-  d.SetObject();
-  d.AddMember("cmd", Value("FileWriter_new", a), a);
-  d.AddMember("teamid", teamid, a);
-  d.AddMember("broker", Value(broker.c_str(), a), a);
-  d.AddMember("filename",
-              Value(fmt::format("tmp-{:016x}.h5", teamid).c_str(), a), a);
-  Value sa;
-  sa.SetArray();
-  {
-    Value st;
-    st.SetObject();
-    st.AddMember("broker", Value(broker.c_str(), a), a);
-    st.AddMember("topic", Value("topic.with.multiple.sources", a), a);
-    st.AddMember("source", Value("source-00", a), a);
-    sa.PushBack(st, a);
-  }
-  d.AddMember("streams", sa, a);
-  StringBuffer buf1;
-  PrettyWriter<StringBuffer> wr(buf1);
-  d.Accept(wr);
-  return buf1.GetString();
+  auto Command = json::parse(R""({
+    "cmd": "FileWriter_new",
+    "streams": [
+      {}
+    ]
+  })"");
+  Command["teamid"] = teamid;
+  Command["broker"] = broker;
+  Command["filename"] = fmt::format("tmp-{:016x}.h5", teamid);
+  Command["streams"][0]["broker"] = broker;
+  Command["streams"][0]["topic"] = "topic.with.multiple.sources";
+  Command["streams"][0]["source"] = "source-00";
+  return Command.dump();
 }
 
 std::string make_command_exit(const std::string &broker,
                               const uint64_t &teamid) {
-  using namespace rapidjson;
-  Document d;
-  auto &a = d.GetAllocator();
-  d.SetObject();
-  d.AddMember("cmd", Value("FileWriter_exit", a), a);
-  d.AddMember("teamid", teamid, a);
-  StringBuffer buf1;
-  PrettyWriter<StringBuffer> wr(buf1);
-  d.Accept(wr);
-  return buf1.GetString();
+  auto Command = json::parse(R""({
+    "cmd": "FileWriter_exit",
+    ]
+  })"");
+  Command["teamid"] = teamid;
+  return Command.dump();
 }
 
 std::string make_command_stop(
     const std::string &broker, const std::string &job_id,
     const std::chrono::milliseconds &stop_time = std::chrono::milliseconds{0}) {
-  using namespace rapidjson;
-  Document d;
-  auto &a = d.GetAllocator();
-  d.SetObject();
-  d.AddMember("cmd", Value("FileWriter_stop", a), a);
-  d.AddMember("job_id", rapidjson::StringRef(job_id.c_str(), job_id.size()), a);
-  if (stop_time.count()) {
-    d.AddMember("stop_time", stop_time.count(), a);
+  auto Command = json::parse(R""({
+    "cmd": "FileWriter_stop"
+  })"");
+  Command["job_id"] = job_id;
+  if (stop_time.count() != 0) {
+    Command["stop_time"] = stop_time.count();
   }
-  StringBuffer buf1;
-  PrettyWriter<StringBuffer> wr(buf1);
-  d.Accept(wr);
-  return buf1.GetString();
+  return Command.dump();
 }
 
 std::string make_command_from_file(const std::string &filename) {
-  using namespace rapidjson;
   std::ifstream ifs(filename);
   if (!ifs.good()) {
     LOG(Sev::Warning, "can not open file {}", filename);
