@@ -105,6 +105,7 @@ void Master::statistics() {
   using nlohmann::json;
   auto Status = json::object();
   Status["type"] = "filewriter_status_master";
+  Status["service_id"] = config.service_id;
   Status["files"] = json::object();
   for (auto &stream_master : stream_masters) {
     auto FilewriterTaskID =

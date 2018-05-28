@@ -15,6 +15,7 @@
 #endif
 
 int log_level = 3;
+std::string g_ServiceID;
 
 // adhoc namespace because it would now collide with ::Logger defined
 // in gralog_logger
@@ -112,7 +113,8 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     npre = 0;
   }
   auto f1 = file + npre;
-  auto lmsg = fmt::format("{}:{} [{}]:  {}\n", f1, line, level, s1);
+  auto lmsg = fmt::format("{}:{} [{}] [ServiceID:{}]:  {}\n", f1, line, level,
+                          g_ServiceID, s1);
   fwrite(lmsg.c_str(), 1, lmsg.size(), log_file);
   if (level < 7 && do_run_kafka.load()) {
     // If we will use logging to Kafka in the future, refactor a bit to reduce
@@ -123,8 +125,11 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     Doc["level"] = level;
     Doc["_FILE"] = file;
     Doc["_LINE"] = line;
-    auto s1 = Doc.dump();
-    topic->produce((KafkaW::uchar *)s1.data(), s1.size());
+    if (!g_ServiceID.empty()) {
+      Doc["ServiceID"] = g_ServiceID;
+    }
+    auto Buffer = Doc.dump();
+    topic->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {

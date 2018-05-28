@@ -26,6 +26,11 @@ struct MainOpt {
   bool help = false;
   bool gtest = false;
   bool use_signal_handler = true;
+  /// Each running filewriter should be identifiable by some id.
+  /// This service_id is announced in the status updates.
+  /// It is by default a combination of hostname and process id.
+  /// Can be set via command line or configuration file.
+  std::string service_id;
   /// Kafka options, they get parsed from the configuration file and passed on
   /// to the StreamMaster.
   std::map<std::string, std::string> kafka;
@@ -73,6 +78,7 @@ struct MainOpt {
   // Max interval (in std::chrono::milliseconds) to spend writing each topic
   // before switch to the next
   std::chrono::milliseconds topic_write_duration;
+  MainOpt();
 };
 
 void setup_logger_from_options(MainOpt const &opt);
