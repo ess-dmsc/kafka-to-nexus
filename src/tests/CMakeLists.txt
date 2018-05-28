@@ -55,13 +55,11 @@ if(NOT ${FAKE_RDKAFKA} STREQUAL "")
 endif()
 
 set(IntegrationTest_SRC
-  roundtrip.cpp
   IntegrationTests.cpp
   $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 
 set(IntegrationTest_INC
-  roundtrip.h
 )
 
 add_executable(IntegrationTest EXCLUDE_FROM_ALL ${IntegrationTest_SRC} ${IntegrationTest_INC})

@@ -2,7 +2,6 @@
 
 #include "json.h"
 #include <gtest/gtest.h>
-#include <rapidjson/document.h>
 
 class StreamerOptionsTest : public ::testing::Test {
   virtual void SetUp() {}
