@@ -53,7 +53,7 @@ TEST_F(FastSampleEnvironmentReader, GetSourceName) {
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
   FileWriter::Msg TestMessage =
       FileWriter::Msg::owned((char *)RawBuffer.get(), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789);
+  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
@@ -155,7 +155,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
 
-  std::vector<std::int32_t> CueTimestamp(1);
+  std::vector<std::uint32_t> CueTimestamp(1);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
 }
@@ -187,12 +187,12 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
 
   EXPECT_EQ(TimestampDataset.dataspace().size(), DataspaceSize);
 
-  std::vector<std::int32_t> CueIndex(2);
+  std::vector<std::uint32_t> CueIndex(2);
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
-  EXPECT_EQ(CueIndex.at(0), 0);
+  EXPECT_EQ(CueIndex.at(0), 0u);
   EXPECT_EQ(CueIndex.at(1), FbPointer->Values()->size());
 
-  std::vector<std::int32_t> CueTimestamp(2);
+  std::vector<std::uint32_t> CueTimestamp(2);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
   EXPECT_EQ(CueTimestamp.at(1), FbPointer->PacketTimestamp());
@@ -261,7 +261,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
 
-  std::vector<std::int32_t> CueTimestamp(1);
+  std::vector<std::uint32_t> CueTimestamp(1);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
 }
