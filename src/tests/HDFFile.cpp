@@ -311,8 +311,7 @@ public:
     merge_config_into_main_opt(main_opt, R""({})"");
     std::string const hdf_output_filename = "tmp_write_top_level_attributes.h5";
     unlink(hdf_output_filename.c_str());
-    rapidjson::Document json_command;
-    json_command.Parse(R""({
+    auto CommandJSON = json::parse(R""({
       "cmd": "FileWriter_new",
       "nexus_structure": {
         "attributes": {
@@ -324,24 +323,20 @@ public:
       },
       "job_id": "832yhtwgfskdf"
     })"");
-    json_command.FindMember("file_attributes")
-        ->value.GetObject()
-        .AddMember("file_name", rapidjson::Value(hdf_output_filename.c_str(),
-                                                 json_command.GetAllocator()),
-                   json_command.GetAllocator());
-    auto cmd = json_to_string(json_command);
-    auto fname = get_string(&json_command, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8u);
+    CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
+    auto CommandString = CommandJSON.dump();
+    std::string Filename = CommandJSON["file_attributes"]["file_name"];
+    ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+    ch.handle(
+        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
     ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
-    send_stop(ch, json_command);
+    send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
 
     // Verification
-    auto file =
-        hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
     auto root_group = file.root();
     {
       auto attr = root_group.attributes["some_top_level_int"];
