@@ -1,15 +1,10 @@
-#include <gtest/gtest.h>
-
 #include <StatusWriter.h>
 #include <StreamMaster.h>
 #include <StreamerOptions.h>
-
-#include <librdkafka/rdkafkacpp.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/stringbuffer.h>
-
 #include <algorithm>
 #include <cstdint>
+#include <gtest/gtest.h>
+#include <librdkafka/rdkafkacpp.h>
 #include <random>
 #include <stdexcept>
 
