@@ -96,7 +96,6 @@ set(kafka_to_nexus_SRC
   KafkaW/ProducerTopic.cpp
   helper.cpp
   logger.cpp
-  json.cpp
   uri.cpp
   h5.cpp
   date/tz.cpp
