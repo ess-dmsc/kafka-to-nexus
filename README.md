@@ -239,7 +239,6 @@ Further documentation:
 - git
 - flatbuffers (headers and working `flatc`)
 - librdkafka
-- rapidjson
 - hdf5
 - libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
 - `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
@@ -293,8 +292,6 @@ Locations of dependencies can be supplied via the standard
 `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` variables.
 
 - `flatbuffers` Headers plus `flatc`, therefore set `CMAKE_INCLUDE_PATH` and `CMAKE_PROGRAM_PATH`.
-
-- `rapidjson`
 
 - `HDF5`
 
@@ -361,8 +358,8 @@ the code.  Support for new schemas can be added in the same way.
 
 Schema plugins can access configuration options which got passed via the
 `FileWriter_new` json command.  The writer implementation, meaning the class
-which derives from `FBSchemaWriter`, can read its member variable
-`rapidjson::Document const * config_stream` which contains all the options.
+which derives from `HDFWriterModule`, gets passed these options as a json
+string.
 
 In this example, we assume that a stream uses the `f142` schema.  We tell the
 writer for the `f142` schema to write an index entry every 3 megabytes:
