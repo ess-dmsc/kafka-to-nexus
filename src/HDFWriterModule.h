@@ -150,10 +150,15 @@ public:
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   ///
-  /// \param InitParameters Contains most importantly the \p HDFGroup into
-  /// which this HDFWriterModule should write its data.
-  /// \param HDFAttributes Additional attributes which the HDFWriterModule
-  /// should write to the file.
+  /// \param[in] HDFGroup The \p HDFGroup into which this HDFWriterModule
+  /// should write its data.
+  /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
+  /// structure which the HDFWriterModule should write to the file. Because the
+  /// HDFWriterModule is free to create the structure and datasets according to
+  /// its needs, it must also take the reposnsibility to write these
+  /// attributes.
+  /// \param[in] HDFAttributes Json string of the attributes associated with the
+  /// stream, as defined by the "attributes" key in the Nexus structure.
   /// \return The result.
   virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
                               std::string const &HDFAttributes) = 0;
