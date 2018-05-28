@@ -25,22 +25,7 @@ set(UnitTests_INC
 HDFFileTestHelper.h
 )
 
-add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
-
-
-add_dependencies(UnitTests flatbuffers_generate)
-target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
-target_include_directories(UnitTests PRIVATE ${path_include_common})
-target_link_libraries(UnitTests ${GTEST_BOTH_LIBRARIES} ${libraries_common})
-
-get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
-target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
-
-enable_testing()
-add_test(AllTests UnitTests)
-
-#-------------- Integration tests --------------
-
+# replace librdkafka with fake in order to test the Streamer
 set(libraries_testing ${libraries_common})
 if(NOT ${FAKE_RDKAFKA} STREQUAL "")
   message(STATUS "Build with fake librdkafka: " ${FAKE_RDKAFKA})
@@ -49,10 +34,25 @@ if(NOT ${FAKE_RDKAFKA} STREQUAL "")
     ${FAKE_RDKAFKA}/lib/librdkafka-fake.a
      ${FAKE_RDKAFKA}/lib/librdkafka-fake-utils.a
     )
-  list(APPEND sources
-    streamer.cxx
-    )
+  list(APPEND path_include_common ${FAKE_RDKAFKA} )
+  list(APPEND UnitTests_SRC streamer.cpp)
 endif()
+
+add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
+
+
+add_dependencies(UnitTests flatbuffers_generate)
+target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
+target_include_directories(UnitTests PRIVATE ${path_include_common})
+target_link_libraries(UnitTests ${GTEST_BOTH_LIBRARIES} ${libraries_testing})
+
+get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
+target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
+
+enable_testing()
+add_test(AllTests UnitTests)
+
+#-------------- Integration tests --------------
 
 set(IntegrationTest_SRC
   roundtrip.cpp
@@ -70,4 +70,3 @@ target_compile_definitions(IntegrationTest PRIVATE TEST_DATA_PATH="${TEST_DATA_P
 target_compile_definitions(IntegrationTest PRIVATE ${compile_defs_common})
 target_include_directories(IntegrationTest PRIVATE ${path_include_common} ${FAKE_RDKAFKA})
 target_link_libraries(IntegrationTest ${GTEST_BOTH_LIBRARIES} ${libraries_testing})
-
