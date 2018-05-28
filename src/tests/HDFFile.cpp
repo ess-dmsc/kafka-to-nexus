@@ -406,11 +406,10 @@ public:
     }
   };
 
-  static void recreate_file(rapidjson::Value *json_command) {
+  static void recreate_file(json const &CommandJSON) {
     // now try to recreate the file for testing:
-    auto m = json_command->FindMember("file_attributes");
-    auto fn = m->value.GetObject().FindMember("file_name")->value.GetString();
-    auto file = hdf5::file::create(fn, hdf5::file::AccessFlags::TRUNCATE);
+    std::string Filename = CommandJSON["file_attributes"]["file_name"];
+    auto file = hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE);
   }
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
@@ -879,144 +878,93 @@ public:
       s.pregenerate(array_size, n_msgs_per_source);
     }
 
-    if (false) {
-      for (auto &source : sources) {
-        LOG(Sev::Debug, "msgs: {}  {}", source.source, source.msgs.size());
-      }
-    }
-
-    rapidjson::Document json_command;
-    {
-      using namespace rapidjson;
-      auto &j = json_command;
-      auto &a = j.GetAllocator();
-      j.SetObject();
-      Value nexus_structure;
-      nexus_structure.SetObject();
-
-      Value children;
-      children.SetArray();
-
-      {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", "some_group", a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        {
-          auto &children = ch;
-          Value ds1;
-          ds1.SetObject();
-          ds1.AddMember("type", "dataset", a);
-          ds1.AddMember("name", "created_by_filewriter", a);
-          Value attr;
-          attr.SetObject();
-          attr.AddMember("NX_class", "NXdetector", a);
-          attr.AddMember("this_will_be_a_double", Value(0.123), a);
-          attr.AddMember("this_will_be_a_int64", Value(123), a);
-          ds1.AddMember("attributes", attr, a);
-          Value dataset;
-          dataset.SetObject();
-          dataset.AddMember("space", "simple", a);
-          dataset.AddMember("type", "uint64", a);
-          Value dataset_size;
-          dataset_size.SetArray();
-          dataset_size.PushBack("unlimited", a);
-          dataset_size.PushBack(Value(4), a);
-          dataset_size.PushBack(Value(2), a);
-          dataset.AddMember("size", dataset_size, a);
-          ds1.AddMember("dataset", dataset, a);
-          children.PushBack(ds1, a);
-        }
-        g1.AddMember("children", ch, a);
-        children.PushBack(g1, a);
-      }
-
-      auto json_stream = [&a, array_size](string source, string topic,
-                                          string module) -> Value {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", Value(source.c_str(), a), a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        {
-          auto &children = ch;
-          Value ds1;
-          ds1.SetObject();
-          ds1.AddMember("type", "stream", a);
-          Value attr;
-          attr.SetObject();
-          attr.AddMember("this_will_be_a_double", Value(0.123), a);
-          attr.AddMember("this_will_be_a_int64", Value(123), a);
-          ds1.AddMember("attributes", attr, a);
-          Document cfg_nexus;
-          cfg_nexus.Parse(R""(
-            {
-              "nexus": {
-                "indices": {
-                  "index_every_mb": 1
+    auto CommandJSON = json::parse(R""({
+      "nexus_structure": {
+        "children": [
+          {
+            "type": "group",
+            "name": "some_group",
+            "attributes": {
+              "NX_class": "NXinstrument"
+            },
+            "children": [
+              {
+                "type": "dataset",
+                "name": "created_by_filewriter",
+                "attributes": {
+                  "NX_class": "NXdetector",
+                  "this_will_be_a_double": 0.123,
+                  "this_will_be_a_int64": 123
                 },
-                "chunk": {
-                  "chunk_kb": 1024
+                "dataset": {
+                  "space": "simple",
+                  "type": "uint64",
+                  "size": ["unlimited", 4, 2]
+                }
+              }
+            ]
+          }
+        ]
+      }
+    })"");
+
+    {
+      auto MakeStreamJSON = [array_size](string Source, string Topic,
+                                         string Module) -> json {
+        auto Group = json::parse(R""({
+          "type": "group",
+          "attributes": {
+            "NX_class": "NXinstrument"
+          },
+          "children": [
+            {
+              "type": "stream",
+              "attributes": {
+                "this_will_be_a_double": 0.123,
+                "this_will_be_a_int64": 123
+              },
+              "stream": {
+                "nexus": {
+                  "indices": {
+                    "index_every_mb": 1
+                  },
+                  "chunk": {
+                    "chunk_kb": 1024
+                  }
                 }
               }
             }
-          )"");
-          Value stream;
-          stream.CopyFrom(cfg_nexus, a);
-          stream.AddMember("topic", Value(topic.c_str(), a), a);
-          stream.AddMember("source", Value(source.c_str(), a), a);
-          stream.AddMember("writer_module", Value(module.c_str(), a), a);
-          if (array_size == 0) {
-            stream.AddMember("type", Value("double", a), a);
-          } else {
-            stream.AddMember("type", Value("float", a), a);
-            stream.AddMember("array_size", Value().SetInt(array_size), a);
-          }
-          ds1.AddMember("stream", stream, a);
-          children.PushBack(ds1, a);
+          ]
+        })"");
+        Group["name"] = Source;
+        auto &Stream = Group["children"][0]["stream"];
+        Stream["topic"] = Topic;
+        Stream["source"] = Source;
+        Stream["writer_module"] = Module;
+        if (array_size == 0) {
+          Stream["type"] = "double";
+        } else {
+          Stream["type"] = "float";
+          Stream["array_size"] = array_size;
         }
-        g1.AddMember("children", ch, a);
-        return g1;
+        return Group;
       };
 
       for (auto &source : sources) {
-        children.PushBack(json_stream(source.source, source.topic, "f142"), a);
+        CommandJSON["nexus_structure"]["children"].push_back(
+            MakeStreamJSON(source.source, source.topic, "f142"));
       }
-      {
-        Document d;
-        d.Parse(
-            R"({"type":"group", "name":"a-subgroup", "children":[{"type":"group","name":"another-subgroup"}]})");
-        children.PushBack(Value().CopyFrom(d, a), a);
-      }
-      nexus_structure.AddMember("children", children, a);
-      j.AddMember("nexus_structure", nexus_structure, a);
-      {
-        Value v;
-        v.SetObject();
-        v.AddMember("file_name", StringRef("tmp-f142.h5"), a);
-        j.AddMember("file_attributes", v, a);
-      }
-      j.AddMember("cmd", StringRef("FileWriter_new"), a);
-      j.AddMember("job_id", StringRef("0000000data_f142"), a);
+      CommandJSON["nexus_structure"]["children"].push_back(json::parse(
+          R""({"type":"group", "name":"a-subgroup", "children":[{"type":"group","name":"another-subgroup"}]})""));
+      CommandJSON["file_attributes"] = json::object();
+      CommandJSON["file_attributes"]["file_name"] = "tmp-f142.h5";
+      CommandJSON["cmd"] = "FileWriter_new";
+      CommandJSON["job_id"] = "0000000data_f142";
     }
 
-    auto cmd = json_to_string(json_command);
-    // LOG(Sev::Debug, "command: {}", cmd);
-
-    auto &d = json_command;
-    auto fname = get_string(&d, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8u);
+    auto CommandString = CommandJSON.dump();
+    std::string Filename = CommandJSON["file_attributes"]["file_name"];
+    ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
@@ -1029,9 +977,10 @@ public:
     }
 
     for (int file_i = 0; file_i < 1; ++file_i) {
-      unlink(string(fname).c_str());
+      unlink(Filename.c_str());
 
-      ch.handle(FileWriter::Msg::owned((char const *)cmd.data(), cmd.size()));
+      ch.handle(FileWriter::Msg::owned((char const *)CommandString.data(),
+                                       CommandString.size()));
       ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
 
       auto &fwt = ch.FileWriterTasks.at(0);
@@ -1058,7 +1007,7 @@ public:
       LOG(Sev::Debug, "processing done in {} ms",
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
-      send_stop(ch, json_command);
+      send_stop(ch, CommandJSON);
       ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
