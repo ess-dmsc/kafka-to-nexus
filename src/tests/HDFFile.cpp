@@ -168,198 +168,139 @@ public:
     merge_config_into_main_opt(main_opt, R""({})"");
     std::string const hdf_output_filename = "tmp-static-dataset.h5";
     unlink(hdf_output_filename.c_str());
-    rapidjson::Document json_command;
+    auto CommandJSON = json::object();
     {
-      using namespace rapidjson;
-      auto &j = json_command;
-      auto &a = j.GetAllocator();
-      j.SetObject();
-      Value nexus_structure;
-      nexus_structure.SetObject();
-
-      Value children;
-      children.SetArray();
-
+      auto NexusStructure = json::object();
+      auto Children = json::array();
       {
-        Value g1;
-        g1.SetObject();
-        g1.AddMember("type", "group", a);
-        g1.AddMember("name", "some_group", a);
-        Value attr;
-        attr.SetObject();
-        attr.AddMember("NX_class", "NXinstrument", a);
-        g1.AddMember("attributes", attr, a);
-        Value ch;
-        ch.SetArray();
-        {
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "value",
-                  "values": 42.24,
-                  "attributes": {"units":"degree"}
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "more_complex_set",
-                  "dataset": {
-                    "space": "simple",
-                    "type": "double",
-                    "size": ["unlimited", 2]
-                  },
-                  "values": [
-                    [13.1, 14]
-                  ]
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "string_scalar",
-                  "dataset": {
-                    "type": "string"
-                  },
-                  "values": "the-scalar-string"
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "string_1d",
-                  "dataset": {
-                    "type": "string",
-                    "size": ["unlimited"]
-                  },
-                  "values": ["the-scalar-string", "another-one"]
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "string_2d",
-                  "dataset": {
-                    "type": "string",
-                    "size": ["unlimited", 2]
-                  },
-                  "values": [
-                    ["the-scalar-string", "another-one"],
-                    ["string_1_0", "string_1_1"]
-                  ]
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "string_3d",
-                  "dataset": {
-                    "type": "string",
-                    "size": ["unlimited", 3, 2]
-                  },
-                  "values": [
-                    [
-                      ["string_0_0_0", "string_0_0_1"],
-                      ["string_0_1_0", "string_0_1_1"],
-                      ["string_0_2_0", "string_0_2_1"]
-                    ],
-                    [
-                      ["string_1_0_0", "string_1_0_1"],
-                      ["string_1_1_0", "string_1_1_1"],
-                      ["string_1_2_0", "string_1_2_1"]
-                    ]
-                  ]
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          // TODO
-          // Disabled because h5cpp seems unhappy about fixed length strings
-          // currently.
-          if (false) {
-            Document jd;
-            jd.Parse(
-                R""({
-                  "type": "dataset",
-                  "name": "string_fixed_1d",
-                  "dataset": {
-                    "type":"string",
-                    "string_size": 32,
-                    "size": ["unlimited"]
-                  },
-                  "values": ["the-scalar-string", "another-one"]
-                })"");
-            ch.PushBack(Value().CopyFrom(jd, a), a);
-          }
-          {
-            Document jd;
-            jd.Parse(
-                R""({"type":"dataset", "name": "big_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 4, 2]}})"");
+        auto Group = json::parse(R""({
+          "type": "group",
+          "name": "some_group",
+          "attributes": {
+            "NX_class": "NXinstrument"
+          },
+          "children": [
             {
-              Value values;
-              values.SetArray();
-              for (size_t i1 = 0; i1 < 7; ++i1) {
-                Value v1;
-                v1.SetArray();
-                for (size_t i2 = 0; i2 < 4; ++i2) {
-                  Value v2;
-                  v2.SetArray();
-                  for (size_t i3 = 0; i3 < 2; ++i3) {
-                    v2.PushBack(Value().SetInt(1000 * i1 + 10 * i2 + i3), a);
-                  }
-                  v1.PushBack(v2, a);
-                }
-                values.PushBack(v1, a);
-              }
-              jd.AddMember("values", values, a);
+              "type": "dataset",
+              "name": "value",
+              "values": 42.24,
+              "attributes": {"units":"degree"}
+            },
+            {
+              "type": "dataset",
+              "name": "more_complex_set",
+              "dataset": {
+                "space": "simple",
+                "type": "double",
+                "size": ["unlimited", 2]
+              },
+              "values": [
+                [13.1, 14]
+              ]
+            },
+            {
+              "type": "dataset",
+              "name": "string_scalar",
+              "dataset": {
+                "type": "string"
+              },
+              "values": "the-scalar-string"
+            },
+            {
+              "type": "dataset",
+              "name": "string_1d",
+              "dataset": {
+                "type": "string",
+                "size": ["unlimited"]
+              },
+              "values": ["the-scalar-string", "another-one"]
+            },
+            {
+              "type": "dataset",
+              "name": "string_2d",
+              "dataset": {
+                "type": "string",
+                "size": ["unlimited", 2]
+              },
+              "values": [
+                ["the-scalar-string", "another-one"],
+                ["string_1_0", "string_1_1"]
+              ]
+            },
+            {
+              "type": "dataset",
+              "name": "string_3d",
+              "dataset": {
+                "type": "string",
+                "size": ["unlimited", 3, 2]
+              },
+              "values": [
+                [
+                  ["string_0_0_0", "string_0_0_1"],
+                  ["string_0_1_0", "string_0_1_1"],
+                  ["string_0_2_0", "string_0_2_1"]
+                ],
+                [
+                  ["string_1_0_0", "string_1_0_1"],
+                  ["string_1_1_0", "string_1_1_1"],
+                  ["string_1_2_0", "string_1_2_1"]
+                ]
+              ]
+            },
+            {
+              "NOTE": "Disabled because h5cpp seems unhappy about fixed length strings currently.",
+              "type": "DISABLED_dataset",
+              "name": "string_fixed_1d",
+              "dataset": {
+                "type":"string",
+                "string_size": 32,
+                "size": ["unlimited"]
+              },
+              "values": ["the-scalar-string", "another-one"]
             }
-            ch.PushBack(Value().CopyFrom(jd, a), a);
+          ]
+        })"");
+        {
+          auto Dataset = json::parse(
+              R""({"type":"dataset", "name": "big_set", "dataset": {"space":"simple", "type":"double", "size":["unlimited", 4, 2]}})"");
+          auto Values = json::array();
+          for (size_t i1 = 0; i1 < 7; ++i1) {
+            auto V1 = json::array();
+            for (size_t i2 = 0; i2 < 4; ++i2) {
+              auto V2 = json::array();
+              for (size_t i3 = 0; i3 < 2; ++i3) {
+                V2.push_back(1000 * i1 + 10 * i2 + i3);
+              }
+              V1.push_back(V2);
+            }
+            Values.push_back(V1);
           }
+          Dataset["values"] = Values;
+          Group["children"].push_back(Dataset);
         }
-        g1.AddMember("children", ch, a);
-        children.PushBack(g1, a);
+        Children.push_back(Group);
       }
-      nexus_structure.AddMember("children", children, a);
-      j.AddMember("nexus_structure", nexus_structure, a);
-      {
-        Value v;
-        v.SetObject();
-        v.AddMember("file_name", StringRef(hdf_output_filename.c_str()), a);
-        j.AddMember("file_attributes", v, a);
-      }
-      j.AddMember("cmd", StringRef("FileWriter_new"), a);
-      j.AddMember("job_id", StringRef("000000000dataset"), a);
+      NexusStructure["children"] = Children;
+      CommandJSON["nexus_structure"] = NexusStructure;
+      CommandJSON["file_attributes"] = json::object();
+      CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
+      CommandJSON["cmd"] = "FileWriter_new";
+      CommandJSON["job_id"] = "000000000dataset";
     }
 
-    auto cmd = json_to_string(json_command);
-    auto fname = get_string(&json_command, "file_attributes.file_name");
-    ASSERT_GT(fname.v.size(), 8u);
+    auto CommandString = CommandJSON.dump();
+    std::string Filename = CommandJSON["file_attributes"]["file_name"];
+    ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+    ch.handle(
+        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
     ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
-    send_stop(ch, json_command);
+    send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
 
     // Verification
-    auto file =
-        hdf5::file::open(string(fname), hdf5::file::AccessFlags::READONLY);
+    auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
     auto ds = hdf5::node::get_dataset(file.root(), "/some_group/value");
     ASSERT_EQ(ds.datatype(), hdf5::datatype::create<double>());
     ASSERT_TRUE(ds.attributes["units"].is_valid());
