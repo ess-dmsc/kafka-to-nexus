@@ -39,9 +39,9 @@ TEST_F(WriterRegistrationTest, SimpleRegistration) {
   std::map<std::string, ModuleFactory> &Factories =
       HDFWriterModuleRegistry::getFactories();
   std::string TestKey("temp");
-  EXPECT_EQ(Factories.size(), 0);
+  EXPECT_EQ(Factories.size(), 0u);
   { HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey); }
-  EXPECT_EQ(Factories.size(), 1);
+  EXPECT_EQ(Factories.size(), 1u);
   EXPECT_NE(Factories.find(TestKey), Factories.end());
 }
 
