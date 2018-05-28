@@ -63,16 +63,6 @@ void command_add_static_dataset_1d(json &Command) {
   Command["nexus_structure"]["children"].push_back(Json);
 }
 
-void send_stop(FileWriter::CommandHandler &ch, rapidjson::Value &job_cmd) {
-  string cmd = fmt::format(R""({{
-    "recv_type": "FileWriter",
-    "cmd": "file_writer_tasks_clear_all",
-    "job_id": "{}"
-  }})"",
-                           job_cmd.FindMember("job_id")->value.GetString());
-  ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-}
-
 void send_stop(FileWriter::CommandHandler &ch, json const &CommandJSON) {
   auto Command = json::parse(R""({
     "recv_type": "FileWriter",
