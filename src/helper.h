@@ -22,8 +22,3 @@ std::vector<char> gulp(std::string fname);
 std::vector<char> binary_to_hex(char const *data, uint32_t len);
 
 std::vector<std::string> split(std::string const &input, std::string token);
-
-template <typename T>
-std::pair<short int, T> to_num(const std::string &string) {
-  return std::pair<short int, T>(false, 0);
-}

@@ -81,33 +81,3 @@ std::vector<std::string> split(std::string const &input, std::string token) {
   }
   return ret;
 }
-
-template <> std::pair<short int, int> to_num(const std::string &string) {
-  int result;
-  try {
-    result = std::stoi(string);
-  } catch (std::exception &e) {
-    return {false, 0};
-  }
-  return {true, result};
-}
-
-template <> std::pair<short int, uint64_t> to_num(const std::string &string) {
-  uint64_t result;
-  try {
-    result = std::stoull(string);
-  } catch (std::exception &e) {
-    return {false, 0};
-  }
-  return {true, result};
-}
-
-template <> std::pair<short int, double> to_num(const std::string &string) {
-  double result;
-  try {
-    result = std::stod(string);
-  } catch (std::exception &e) {
-    return {false, 0};
-  }
-  return {true, result};
-}
