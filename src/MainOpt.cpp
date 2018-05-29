@@ -41,7 +41,7 @@ int MainOpt::parse_config_json(std::string ConfigJSONString) {
     kafka_status_uri = uri;
     do_kafka_status = true;
   }
-  if (auto v = find<uint64_t>("status-master-interval", ConfigJSON)) {
+  if (auto v = find<uint32_t>("status-master-interval", ConfigJSON)) {
     status_master_interval = v.inner();
   }
   if (auto v = find<json>("stream-master", ConfigJSON)) {
