@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-void sleep_ms(size_t ms);
-
 uint64_t getpid_wrapper();
 
 std::string gethostname_wrapper();

@@ -7,10 +7,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-void sleep_ms(size_t ms) {
-  std::this_thread::sleep_for(std::chrono::milliseconds(ms));
-}
-
 uint64_t getpid_wrapper() { return getpid(); }
 
 /// Wrapper, because it may need some Windows implementation in the future.
