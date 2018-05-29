@@ -37,8 +37,7 @@ public:
   uint64_t processed_messages_count() const;
   ProcessMessageResult process_message(Msg &msg);
   std::string to_str() const;
-  rapidjson::Document
-  to_json(rapidjson::MemoryPoolAllocator<> *a = nullptr) const;
+  nlohmann::json to_json() const;
   void close_writer_module();
   bool is_parallel = false;
 
@@ -57,8 +56,6 @@ private:
   friend class CommandHandler;
   friend class FileWriterTask;
   friend class SourceFactory_by_FileWriterTask;
-  friend std::vector<std::unique_ptr<Source>>
-  find_source(rapidjson::Document const &, rapidjson::Document const *);
   friend class ::Test___FileWriterTask___Create01;
   friend void swap(Source &x, Source &y);
 };

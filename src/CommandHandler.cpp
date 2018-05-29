@@ -5,16 +5,17 @@
 #include "json.h"
 #include <chrono>
 #include <future>
-#include <nlohmann/json.hpp>
 
 using std::array;
 using std::vector;
 
 namespace FileWriter {
 
-static nlohmann::json parseOrThrow(std::string const &Command) {
+using nlohmann::json;
+
+static json parseOrThrow(std::string const &Command) {
   try {
-    return nlohmann::json::parse(Command);
+    return json::parse(Command);
   } catch (nlohmann::detail::parse_error &e) {
     LOG(Sev::Warning, "Can not parse command: {}", Command);
     throw;
@@ -161,19 +162,13 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     }
 
     auto RootGroup = Task->hdf_file.h5file.root();
-    auto ConfigStreamRapidjson =
-        stringToRapidjsonOrThrow(ConfigStreamInner.dump());
-    HDFWriterModule->parse_config(ConfigStreamRapidjson, nullptr);
-    rapidjson::Document AttributesDocument;
+    HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
+    auto Attributes = json::object();
     if (auto x = find<json>("attributes", ConfigStream)) {
-      AttributesDocument = stringToRapidjsonOrThrow(x.inner().dump());
-    }
-    rapidjson::Value const *AttributesPtr = nullptr;
-    if (AttributesDocument.IsObject()) {
-      AttributesPtr = &AttributesDocument;
+      Attributes = x.inner();
     }
     auto StreamGroup = hdf5::node::get_group(RootGroup, stream.hdf_parent_name);
-    HDFWriterModule->init_hdf({StreamGroup}, AttributesPtr);
+    HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
     HDFWriterModule->close();
     HDFWriterModule.reset();
   }
@@ -298,9 +293,7 @@ void CommandHandler::addStreamSourceToWriterModule(
       }
 
       // Reopen the previously created HDF dataset.
-      rapidjson::Document ConfigStream;
-      ConfigStream.Parse(StreamSettings.ConfigStreamJson.c_str());
-      HDFWriterModule->parse_config(ConfigStream, nullptr);
+      HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
       try {
         auto RootGroup = Task->hdf_file.h5file.root();
         auto StreamGroup = hdf5::node::get_group(

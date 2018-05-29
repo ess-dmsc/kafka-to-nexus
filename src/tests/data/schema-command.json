@@ -15,7 +15,7 @@
 			"items": {
 				"type": "object",
 				"properties": {
-					"DOC------TODO": "Does this really enforce strings??  Does not seem so in rapid json",
+					"DOC------TODO": "Does this really enforce strings??",
 					"broker": "string",
 					"topic": "string",
 

@@ -90,26 +90,18 @@ std::unordered_map<std::string, Source> &DemuxTopic::sources() {
   return _sources_map;
 }
 
-std::string DemuxTopic::to_str() const { return json_to_string(to_json()); }
+std::string DemuxTopic::to_str() const { return to_json().dump(); }
 
-rapidjson::Document
-DemuxTopic::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
-  using namespace rapidjson;
-  Document jd;
-  if (_a)
-    jd = Document(_a);
-  auto &a = jd.GetAllocator();
-  jd.SetObject();
-  auto &v = jd;
-  v.AddMember("__KLASS__", "DemuxTopic", a);
-  v.AddMember("topic", Value(topic().data(), a), a);
-  Value kl;
-  kl.SetArray();
+nlohmann::json DemuxTopic::to_json() const {
+  auto JSON = nlohmann::json::object();
+  JSON["__KLASS__"] = "DemuxTopic";
+  JSON["topic"] = topic();
+  auto Sources = nlohmann::json::array();
   for (auto it = _sources_map.cbegin(); it != _sources_map.cend(); ++it) {
-    kl.PushBack(it->second.to_json(&a), a);
+    Sources.push_back(it->second.to_json());
   }
-  v.AddMember("sources", kl, a);
-  return jd;
+  JSON["sources"] = Sources;
+  return JSON;
 }
 
 std::chrono::milliseconds &DemuxTopic::stop_time() { return _stop_time; }

@@ -2,14 +2,11 @@
 #include "CommandHandler.h"
 #include "Msg.h"
 #include "helper.h"
+#include "json.h"
 #include "logger.h"
-
 #include <algorithm>
 #include <chrono>
 #include <functional>
-
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -102,29 +99,22 @@ void Master::run() {
 }
 
 void Master::statistics() {
-  using namespace rapidjson;
-  rapidjson::Document js_status;
-  auto &a = js_status.GetAllocator();
-  js_status.SetObject();
-  js_status.AddMember("service_id", Value(config.service_id.c_str(), a), a);
-  js_status.AddMember("type", StringRef("filewriter_status_master"), a);
-  Value js_files;
-  js_files.SetObject();
+  if (!status_producer) {
+    return;
+  }
+  using nlohmann::json;
+  auto Status = json::object();
+  Status["type"] = "filewriter_status_master";
+  Status["service_id"] = config.service_id;
+  Status["files"] = json::object();
   for (auto &stream_master : stream_masters) {
-    auto fwt_id_str =
+    auto FilewriterTaskID =
         fmt::format("{}", stream_master->getFileWriterTask().job_id());
-    auto fwt = stream_master->getFileWriterTask().stats(a);
-    js_files.AddMember(Value(fwt_id_str.c_str(), a), fwt, a);
+    auto FilewriterTaskStatus = stream_master->getFileWriterTask().stats();
+    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
-  js_status.AddMember("files", js_files, a);
-  rapidjson::StringBuffer buffer;
-  rapidjson::PrettyWriter<rapidjson::StringBuffer> writer(buffer);
-  writer.SetIndent(' ', 2);
-  js_status.Accept(writer);
-  if (status_producer) {
-    status_producer->produce((KafkaW::uchar *)buffer.GetString(),
-                             buffer.GetSize());
-  }
+  auto Buffer = Status.dump();
+  status_producer->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
 }
 
 void Master::stop() { do_run = false; }

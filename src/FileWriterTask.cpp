@@ -10,19 +10,21 @@
 namespace FileWriter {
 
 namespace {
-rapidjson::Document hdf_parse(std::string const &structure) {
-  rapidjson::Document StructureDocument;
-  StructureDocument.Parse(structure.c_str());
-  if (StructureDocument.HasParseError()) {
-    LOG(Sev::Critical, "Parse Error: ", structure)
-    throw FileWriter::ParseError(structure);
-  }
-  return StructureDocument;
-}
-}
 
 using std::string;
 using std::vector;
+using nlohmann::json;
+
+json hdf_parse(std::string const &Structure) {
+  try {
+    auto StructureDocument = json::parse(Structure);
+    return StructureDocument;
+  } catch (...) {
+    LOG(Sev::Error, "Parse Error: ", Structure)
+    throw FileWriter::ParseError(Structure);
+  }
+}
+}
 
 std::atomic<uint32_t> n_FileWriterTask_created{0};
 
@@ -72,11 +74,11 @@ void FileWriterTask::hdf_init(std::string const &NexusStructure,
     filename_full = hdf_output_prefix + "/" + filename_full;
   }
 
-  rapidjson::Document NexusStructureDocument = hdf_parse(NexusStructure);
-  rapidjson::Document ConfigFileDocument = hdf_parse(ConfigFile);
+  auto NexusStructureJson = hdf_parse(NexusStructure);
+  auto ConfigFileJson = hdf_parse(ConfigFile);
 
   try {
-    hdf_file.init(filename_full, NexusStructureDocument, ConfigFileDocument,
+    hdf_file.init(filename_full, NexusStructureJson, ConfigFileJson,
                   stream_hdf_info);
   } catch (...) {
     LOG(Sev::Warning,
@@ -90,7 +92,7 @@ void FileWriterTask::hdf_close() { hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
   try {
-    hdf_file.reopen(filename_full, rapidjson::Value());
+    hdf_file.reopen(filename_full, json::object());
   } catch (...) {
     return -1;
   }
@@ -102,29 +104,20 @@ std::string FileWriterTask::job_id() const { return _job_id; }
 
 void FileWriterTask::job_id_init(const std::string &s) { _job_id = s; }
 
-rapidjson::Value FileWriterTask::stats(
-    rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const {
-  using namespace rapidjson;
-  Value js_topics;
-  js_topics.SetObject();
+json FileWriterTask::stats() const {
+  auto Topics = json::object();
   for (auto &d : _demuxers) {
-    Value demux;
-    demux.SetObject();
-    demux.AddMember("messages_processed",
-                    Value().SetUint64(d.messages_processed.load()), a);
-    demux.AddMember("error_message_too_small",
-                    Value().SetUint64(d.error_message_too_small.load()), a);
-    demux.AddMember("error_no_flatbuffer_reader",
-                    Value().SetUint64(d.error_no_flatbuffer_reader.load()), a);
-    demux.AddMember("error_no_source_instance",
-                    Value().SetUint64(d.error_no_source_instance.load()), a);
-    js_topics.AddMember(Value(d.topic().c_str(), a), demux, a);
+    auto Demux = json::object();
+    Demux["messages_processed"] = d.messages_processed.load();
+    Demux["error_message_too_small"] = d.error_message_too_small.load();
+    Demux["error_no_flatbuffer_reader"] = d.error_no_flatbuffer_reader.load();
+    Demux["error_no_source_instance"] = d.error_no_source_instance.load();
+    Topics[d.topic()] = Demux;
   }
-  Value js_fwt;
-  js_fwt.SetObject();
-  js_fwt.AddMember("filename", Value(hdf_filename.c_str(), a), a);
-  js_fwt.AddMember("topics", js_topics, a);
-  return js_fwt;
+  auto FWT = json::object();
+  FWT["filename"] = hdf_filename;
+  FWT["topics"] = Topics;
+  return FWT;
 }
 
 } // namespace FileWriter

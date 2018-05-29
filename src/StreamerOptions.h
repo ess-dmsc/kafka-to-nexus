@@ -12,9 +12,8 @@
 
 #pragma once
 
-#include <rapidjson/schema.h>
-
 #include "KafkaW/BrokerSettings.h"
+#include "json.h"
 #include <chrono>
 
 namespace FileWriter {
@@ -23,8 +22,8 @@ namespace FileWriter {
 class StreamerOptions {
 
 public:
-  void setStreamerOptions(const rapidjson::Value *);
-  void setRdKafkaOptions(const rapidjson::Value *);
+  void setStreamerOptions(nlohmann::json const &Options);
+  void setRdKafkaOptions(nlohmann::json const &Options);
   // private:
 
   KafkaW::BrokerSettings Settings;

@@ -1,3 +1,4 @@
+#include "../json.h"
 #include <HDFWriterModule.h>
 #include <gtest/gtest.h>
 
@@ -16,10 +17,10 @@ public:
 
 class DummyWriter : public HDFWriterModule {
 public:
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override {}
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      rapidjson::Value const *attributes) override {
+                      std::string const &HDFAttributes) override {
     return InitResult::OK();
   }
   InitResult reopen(hdf5::node::Group &HDFGrup) override {

@@ -1,11 +1,8 @@
 #include "MainOpt.h"
 #include "helper.h"
+#include "json.h"
 #include "uri.h"
 #include <iostream>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/schema.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 
 using uri::URI;
 
@@ -23,67 +20,55 @@ int MainOpt::parse_config_file() {
   return parse_config_json(std::string(jsontxt.data(), jsontxt.size()));
 }
 
-int MainOpt::parse_config_json(std::string json) {
-  using namespace rapidjson;
+int MainOpt::parse_config_json(std::string ConfigJSONString) {
   // Parse the JSON configuration and extract parameters.
   // Currently, these parameters take precedence over what is given on the
   // command line.
-  auto &d = config_file;
-  d.Parse(json.data(), json.size());
-  if (d.HasParseError()) {
-    LOG(Sev::Notice, "configuration is not well formed");
-    return -5;
+  using nlohmann::json;
+  try {
+    ConfigJSON = json::parse(ConfigJSONString);
+  } catch (...) {
+    return 1;
   }
-  {
-    auto o = get_string(&d, "command-uri");
-    if (o.found()) {
-      URI uri("//localhost:9092/kafka-to-nexus.command");
-      uri.parse(o.v);
-      command_broker_uri = uri;
-    }
+  if (auto v = find<std::string>("command-uri", ConfigJSON)) {
+    URI uri("//localhost:9092/kafka-to-nexus.command");
+    uri.parse(v.inner());
+    command_broker_uri = uri;
   }
-  if (auto o = get_string(&d, "status-uri")) {
+  if (auto v = find<std::string>("status-uri", ConfigJSON)) {
     URI uri("//localhost:9092/kafka-to-nexus.status");
-    uri.parse(o.v);
+    uri.parse(v.inner());
     kafka_status_uri = uri;
     do_kafka_status = true;
   }
-  if (auto o = get_int(&d, "status-master-interval")) {
-    status_master_interval = o.v;
+  if (auto v = find<uint32_t>("status-master-interval", ConfigJSON)) {
+    status_master_interval = v.inner();
   }
-  if (auto o = get_object(d, "stream-master")) {
-    for (auto &m : o.v->GetObject()) {
-      if (m.name.GetString() == std::string{"topic-write-interval"}) {
-        topic_write_duration = std::chrono::milliseconds{m.value.GetUint64()};
-      }
+  if (auto v = find<json>("stream-master", ConfigJSON)) {
+    if (auto v2 = find<uint64_t>("topic-write-interval", v.inner())) {
+      topic_write_duration = std::chrono::milliseconds(v2.inner());
     }
   }
-  if (auto o = get_object(d, "streamer")) {
-    StreamerConfiguration.setStreamerOptions(o.v);
+  if (auto v = find<json>("streamer", ConfigJSON)) {
+    StreamerConfiguration.setStreamerOptions(v.inner());
   }
-  if (auto o = get_object(d, "kafka")) {
-    StreamerConfiguration.setRdKafkaOptions(o.v);
+  if (auto v = find<json>("kafka", ConfigJSON)) {
+    StreamerConfiguration.setRdKafkaOptions(v.inner());
   }
-  if (auto o = get_string(&d, "hdf-output-prefix")) {
-    hdf_output_prefix = o.v;
+  if (auto v = find<std::string>("hdf-output-prefix", ConfigJSON)) {
+    hdf_output_prefix = v.inner();
   }
-  if (auto a = get_array(d, "commands")) {
-    for (auto &e : a.v->GetArray()) {
-      Document js_command;
-      js_command.CopyFrom(e, js_command.GetAllocator());
-      rapidjson::StringBuffer buf;
-      rapidjson::Writer<StringBuffer> wr(buf);
-      js_command.Accept(wr);
-      commands_from_config_file.emplace_back(buf.GetString(), buf.GetSize());
+  if (auto v = find<json>("commands", ConfigJSON)) {
+    for (auto const &Command : v.inner()) {
+      commands_from_config_file.emplace_back(Command.dump());
     }
   }
-  if (auto o = get_bool(&d, "source_do_process_message")) {
-    source_do_process_message = o.v;
+  if (auto v = find<bool>("source_do_process_message", ConfigJSON)) {
+    source_do_process_message = v.inner();
   }
-  if (auto o = get_string(&d, "service_id")) {
-    service_id = o.v;
+  if (auto v = find<std::string>("service_id", ConfigJSON)) {
+    service_id = v.inner();
   }
-
   return 0;
 }
 
