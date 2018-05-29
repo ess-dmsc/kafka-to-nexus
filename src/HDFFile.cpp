@@ -623,11 +623,11 @@ void HDFFile::write_dataset(hdf5::node::Group &Parent,
     if (auto ds_size = find<json>("size", dso)) {
       if (ds_size.inner().is_array()) {
         auto a = ds_size.inner();
-        for (size_t i1 = 0; i1 < a.size(); ++i1) {
-          if (a[i1].is_number_integer()) {
-            sizes.push_back(a[i1].get<int64_t>());
-          } else if (a[i1].is_string()) {
-            if (a[i1].get<std::string>() == "unlimited") {
+        for (auto const &Element : a) {
+          if (Element.is_number_integer()) {
+            sizes.push_back(Element.get<int64_t>());
+          } else if (Element.is_string()) {
+            if (Element.get<std::string>() == "unlimited") {
               sizes.push_back(H5S_UNLIMITED);
             }
           }
