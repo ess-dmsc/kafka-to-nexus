@@ -1,10 +1,14 @@
 project = "kafka-to-nexus"
 clangformat_os = "fedora25"
 test_and_coverage_os = "centos7"
-archive_os = "centos7"
+release_os = "centos7-release"
 
 images = [
         'centos7': [
+                'name': 'essdmscdm/centos7-build-node:3.0.0',
+                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
+        ],
+        'centos7-release': [
                 'name': 'essdmscdm/centos7-build-node:3.0.0',
                 'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
         ],
@@ -89,6 +93,23 @@ def docker_cmake(image_key) {
     }
 }
 
+def docker_cmake_release(image_key) {
+    try {
+        def custom_sh = images[image_key]['sh']
+        def configure_script = """
+                        cd build && \
+                        cmake ../${project} \
+                            -DCMAKE_BUILD_TYPE=Release \
+                            -DCMAKE_SKIP_RPATH=FALSE \
+                            -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
+                            -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE
+                    """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
+    } catch (e) {
+        failure_function(e, "CMake step for (${container_name(image_key)}) failed")
+    }
+}
+
 def docker_build(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
@@ -166,12 +187,15 @@ def docker_formatting(image_key) {
 def docker_archive(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
-        def archive_output = "file-writer.tar.gz"
+        def archive_output = "${project}-${image_key}.tar.gz"
         def archive_script = """
-                    cd build
-                    rm -rf file-writer; mkdir file-writer
-                    cp kafka-to-nexus send-command file-writer/
-                    tar czf ${archive_output} file-writer
+                    cd build && \
+                    rm -rf ${project}; mkdir ${project} && \
+                    mkdir ${project}/bin && \
+                    cp ./bin/{kafka-to-nexus,send-command} ${project}/bin/ && \
+                    cp -r ./lib ${project}/ && \
+                    cp -r ./licenses ${project}/ && \
+                    tar czf ${archive_output} ${project}
                 """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
         sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
@@ -191,7 +215,14 @@ def get_pipeline(image_key) {
 
                 docker_copy_code(image_key)
                 docker_dependencies(image_key)
-                docker_cmake(image_key)
+
+                if (image_key != release_os) {
+                    docker_cmake(image_key)
+                }
+                else {
+                    docker_cmake_release(image_key)
+                }
+
                 docker_build(image_key)
 
                 if (image_key == test_and_coverage_os) {
@@ -205,7 +236,7 @@ def get_pipeline(image_key) {
                     docker_formatting(image_key)
                 }
 
-                if (image_key == archive_os) {
+                if (image_key == release_os) {
                     docker_archive(image_key)
                 }
 
