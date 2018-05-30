@@ -103,7 +103,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // convert from KafkaW to Msg
-  Msg Message(Msg::fromKafkaW(std::move(Poll.isMsg())));
+  Msg Message(Msg::fromKafkaW(Poll.isMsg()));
   if (Message.type == MsgType::Invalid) {
     return ProcessMessageResult::ERR();
   }
