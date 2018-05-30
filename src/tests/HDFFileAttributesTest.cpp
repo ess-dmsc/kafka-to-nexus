@@ -137,7 +137,7 @@ TEST(HDFFileAttributesTest,
                      .attributes["uint32_attribute"];
   uint32_t IntValue;
   IntAttr.read(IntValue);
-  ASSERT_EQ(IntValue, 42);
+  ASSERT_EQ(IntValue, 42u);
 }
 
 TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {

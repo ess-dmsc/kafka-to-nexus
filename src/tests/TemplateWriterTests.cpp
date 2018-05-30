@@ -5,7 +5,7 @@ TEST(TemplateTests, ReaderReturnValues) {
   TemplateWriter::ReaderClass SomeReader;
   EXPECT_TRUE(SomeReader.verify(FileWriter::Msg()));
   EXPECT_EQ(SomeReader.source_name(FileWriter::Msg()), std::string(""));
-  EXPECT_EQ(SomeReader.timestamp(FileWriter::Msg()), 0);
+  EXPECT_EQ(SomeReader.timestamp(FileWriter::Msg()), 0u);
 }
 
 TEST(TemplateTests, WriterReturnValues) {

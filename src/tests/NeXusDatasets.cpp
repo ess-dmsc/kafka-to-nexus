@@ -24,7 +24,7 @@ TEST_F(DatasetCreation, AppendDataOnce) {
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
   TestDataset.appendArray(SomeData);
   auto DataspaceSize = TestDataset.dataspace().size();
-  EXPECT_EQ(DataspaceSize, SomeData.size());
+  EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size());
   std::vector<std::uint16_t> Buffer(DataspaceSize);
   TestDataset.read(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
@@ -40,7 +40,7 @@ TEST_F(DatasetCreation, AppendDataTwice) {
   TestDataset.appendArray(SomeData);
   TestDataset.appendArray(SomeData);
   auto DataspaceSize = TestDataset.dataspace().size();
-  EXPECT_EQ(DataspaceSize, SomeData.size() * 2);
+  EXPECT_EQ(static_cast<uint64_t>(DataspaceSize), SomeData.size() * 2);
   std::vector<std::uint16_t> Buffer(DataspaceSize);
   TestDataset.read(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
@@ -52,7 +52,7 @@ TEST_F(DatasetCreation, AppendDataTwice) {
 //--------------------------------------------------
 
 TEST_F(DatasetCreation, RawValueDefaultCreation) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::RawValue ADCValues(RootGroup, NeXusDataset::Mode::Create,
                                      ChunkSize);
@@ -67,7 +67,7 @@ TEST_F(DatasetCreation, RawValueDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, RawValueReOpen) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::RawValue ADCValues(RootGroup, NeXusDataset::Mode::Create,
                                      ChunkSize);
@@ -77,7 +77,7 @@ TEST_F(DatasetCreation, RawValueReOpen) {
 }
 
 TEST_F(DatasetCreation, RawValueThrowOnExists) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::RawValue ADCValues(RootGroup, NeXusDataset::Mode::Create,
                                      ChunkSize);
@@ -90,7 +90,7 @@ TEST_F(DatasetCreation, RawValueThrowOnExists) {
 //--------------------------------------------------
 
 TEST_F(DatasetCreation, TimeDefaultCreation) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::Time Timestamps(RootGroup, NeXusDataset::Mode::Create,
                                   ChunkSize);
@@ -105,7 +105,7 @@ TEST_F(DatasetCreation, TimeDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, TimeReOpen) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::Time Timestamps(RootGroup, NeXusDataset::Mode::Create,
                                   ChunkSize);
@@ -115,7 +115,7 @@ TEST_F(DatasetCreation, TimeReOpen) {
 }
 
 TEST_F(DatasetCreation, TimeThrowOnExists) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::Time Timestamps(RootGroup, NeXusDataset::Mode::Create,
                                   ChunkSize);
@@ -128,7 +128,7 @@ TEST_F(DatasetCreation, TimeThrowOnExists) {
 //--------------------------------------------------
 
 TEST_F(DatasetCreation, CueIndexDefaultCreation) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::CueIndex Cue(RootGroup, NeXusDataset::Mode::Create,
                                ChunkSize);
@@ -143,7 +143,7 @@ TEST_F(DatasetCreation, CueIndexDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, CueIndexReOpen) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::CueIndex Cue(RootGroup, NeXusDataset::Mode::Create,
                                ChunkSize);
@@ -153,7 +153,7 @@ TEST_F(DatasetCreation, CueIndexReOpen) {
 }
 
 TEST_F(DatasetCreation, CueIndexThrowOnExists) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::CueIndex Cue(RootGroup, NeXusDataset::Mode::Create,
                                ChunkSize);
@@ -166,7 +166,7 @@ TEST_F(DatasetCreation, CueIndexThrowOnExists) {
 //--------------------------------------------------
 
 TEST_F(DatasetCreation, CueTimestampZeroDefaultCreation) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::CueTimestampZero Cue(RootGroup, NeXusDataset::Mode::Create,
                                        ChunkSize);
@@ -181,7 +181,7 @@ TEST_F(DatasetCreation, CueTimestampZeroDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, CueTimestampZeroReOpen) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::CueTimestampZero Cue(RootGroup, NeXusDataset::Mode::Create,
                                        ChunkSize);
@@ -191,7 +191,7 @@ TEST_F(DatasetCreation, CueTimestampZeroReOpen) {
 }
 
 TEST_F(DatasetCreation, CueTimestampZeroThrowOnExists) {
-  int ChunkSize = 256;
+  size_t ChunkSize = 256;
   {
     NeXusDataset::CueTimestampZero Cue(RootGroup, NeXusDataset::Mode::Create,
                                        ChunkSize);
