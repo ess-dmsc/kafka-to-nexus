@@ -13,9 +13,9 @@ SET(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses def
 SET(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
 
 if(CMAKE_BUILD_TYPE MATCHES "Release")
-  set(OUTPUT_DIRS "NO_OUTPUT_DIRS")
-else()
   set(OUTPUT_DIRS "")
+else()
+  set(OUTPUT_DIRS "NO_OUTPUT_DIRS")
 endif()
 
 if(${CONAN} MATCHES "AUTO")
