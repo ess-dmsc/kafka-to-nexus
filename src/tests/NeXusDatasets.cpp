@@ -1,4 +1,5 @@
 #include "schemas/senv/Datasets.h"
+#include "schemas/senv/FastSampleEnvironmentWriter.h"
 #include <gtest/gtest.h>
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/datatype/type_trait.hpp>
