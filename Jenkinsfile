@@ -130,7 +130,7 @@ def docker_test(image_key) {
         def test_script = """
                         cd build
                         . ./activate_run.sh
-                        ./tests/UnitTests
+                        ./bin/UnitTests
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${test_script}\""
     } catch (e) {
