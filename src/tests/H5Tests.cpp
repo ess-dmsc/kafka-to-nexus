@@ -23,9 +23,36 @@ TEST(H5, writeStringToDataset) {
   ASSERT_NE(ds, nullptr);
   std::string ExpectedValue("Some string value");
   ds->append(ExpectedValue);
-  auto Dataset = File.root().get_dataset("DummyDataset");
 
   // Read back
+  auto Dataset = File.root().get_dataset("DummyDataset");
+  hdf5::dataspace::Simple SpaceFile({1});
+  hdf5::dataspace::Simple SpaceMem({1});
+  SpaceFile.selection.all();
+  SpaceMem.selection.all();
+  std::vector<char const *> Data;
+  Data.resize(1);
+  // Dataset.read(Data, Type, SpaceMem, SpaceFile);
+  H5Dread(static_cast<hid_t>(Dataset), static_cast<hid_t>(Type),
+          static_cast<hid_t>(SpaceMem), static_cast<hid_t>(SpaceFile),
+          H5P_DEFAULT, Data.data());
+  ASSERT_EQ(ExpectedValue, std::string(Data.at(0)));
+}
+
+TEST(H5, writeUsingChunked1DString) {
+  auto File = createInMemoryFile();
+  hdf5::dataspace::Simple Space({0}, {H5S_UNLIMITED});
+  hdf5::property::DatasetCreationList DCPL;
+  auto Type = hdf5::datatype::String::variable();
+  Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  DCPL.chunk({1});
+  std::string ExpectedValue("Some string value");
+  auto ChunkedDataset =
+      h5::Chunked1DString::create(File.root(), "DummyDataset", 64, nullptr);
+  ChunkedDataset->append(ExpectedValue);
+
+  // Read back
+  auto Dataset = File.root().get_dataset("DummyDataset");
   hdf5::dataspace::Simple SpaceFile({1});
   hdf5::dataspace::Simple SpaceMem({1});
   SpaceFile.selection.all();
