@@ -114,7 +114,7 @@ public:
   h5d ds;
 
 private:
-  Chunked1DString(std::string name, h5d ds);
+  Chunked1DString(h5d ds);
 };
 
 template <typename T> class h5d_chunked_2d;

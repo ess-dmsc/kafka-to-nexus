@@ -460,8 +460,7 @@ template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
   return AppendResult::OK;
 }
 
-Chunked1DString::Chunked1DString(std::string name, h5d ds)
-    : ds(std::move(ds)) {}
+Chunked1DString::Chunked1DString(h5d ds) : ds(std::move(ds)) {}
 
 Chunked1DString::ptr Chunked1DString::create(hdf5::node::Group Node,
                                              std::string Name,
@@ -477,7 +476,7 @@ Chunked1DString::ptr Chunked1DString::create(hdf5::node::Group Node,
   if (!ds) {
     return nullptr;
   }
-  auto ret = new Chunked1DString(Name, std::move(*ds));
+  auto ret = new Chunked1DString(std::move(*ds));
   return ptr(ret);
 }
 
@@ -490,7 +489,7 @@ Chunked1DString::ptr Chunked1DString::open(hdf5::node::Group Node,
     LOG(Sev::Error, "Could not open dataset: {}", Name);
     return ptr();
   }
-  return ptr(new Chunked1DString(Name, std::move(*ds)));
+  return ptr(new Chunked1DString(std::move(*ds)));
 }
 
 append_ret Chunked1DString::append(std::string const &String) {
