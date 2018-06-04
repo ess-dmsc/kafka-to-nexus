@@ -769,7 +769,8 @@ extern "C" char const GIT_COMMIT[];
 
 void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
                    nlohmann::json const &config_file,
-                   std::vector<StreamHDFInfo> &stream_hdf_info, bool UseHDFSWMR) {
+                   std::vector<StreamHDFInfo> &stream_hdf_info,
+                   bool UseHDFSWMR) {
   if (std::ifstream(filename).good()) {
     // File exists already
     throw std::runtime_error(

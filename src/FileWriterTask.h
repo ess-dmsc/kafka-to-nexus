@@ -41,7 +41,7 @@ public:
   std::string hdf_filename;
   std::string filename_full;
   HDFFile hdf_file;
-  bool UseHDFSWMR = false;
+  bool UseHDFSWMR = true;
 
 private:
   std::vector<DemuxTopic> _demuxers;
