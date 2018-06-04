@@ -263,7 +263,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
     s->start();
 
-    MasterPtr->stream_masters.push_back(std::move(s));
+    MasterPtr->addStream(std::move(s));
   } else {
     FileWriterTasks.emplace_back(std::move(Task));
   }
@@ -320,7 +320,7 @@ void CommandHandler::addStreamSourceToWriterModule(
 
 void CommandHandler::handleFileWriterTaskClearAll() {
   if (MasterPtr) {
-    for (auto &x : MasterPtr->stream_masters) {
+    for (auto &x : MasterPtr->getStreamMasters()) {
       x->stop();
     }
   }
@@ -359,7 +359,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
   int counter{0};
-  for (auto &x : MasterPtr->stream_masters) {
+  for (auto &x : MasterPtr->getStreamMasters()) {
     if (x->getJobId() == JobID) {
       if (StopTime.count() != 0) {
         LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,

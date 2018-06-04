@@ -27,7 +27,13 @@ public:
   void run();
 
   /// Stop running.
-  void stop();
+  virtual void stop();
+  virtual std::vector<std::unique_ptr<StreamMaster<Streamer>>>& getStreamMasters() {
+    return stream_masters;
+  }
+  virtual void addStream(std::unique_ptr<StreamMaster<Streamer>> NewStream) {
+    stream_masters.emplace_back(std::move(NewStream));
+  }
   void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg);
   void handle_command(std::string const &command);
   std::function<void(void)> cb_on_filewriter_new;
@@ -49,7 +55,6 @@ private:
   std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> stream_masters;
   std::string file_writer_process_id_;
-  friend class CommandHandler;
 };
 
 } // namespace FileWriter
