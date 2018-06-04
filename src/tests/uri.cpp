@@ -157,5 +157,5 @@ TEST(URI, host_default_topic) {
 TEST(URI, trim) {
   URI TestURI("  //some:123     ");
   ASSERT_EQ(TestURI.host, "some");
-  ASSERT_EQ(TestURI.port, 123);
+  ASSERT_EQ(TestURI.port, 123u);
 }

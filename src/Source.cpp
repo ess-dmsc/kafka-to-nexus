@@ -3,9 +3,6 @@
 #include "logger.h"
 #include <chrono>
 #include <fstream>
-#include <rapidjson/document.h>
-#include <rapidjson/prettywriter.h>
-#include <rapidjson/stringbuffer.h>
 #include <thread>
 
 #ifndef SOURCE_DO_PROCESS_MESSAGE
@@ -82,21 +79,14 @@ uint64_t Source::processed_messages_count() const {
 
 void Source::close_writer_module() { _hdf_writer_module.reset(); }
 
-std::string Source::to_str() const { return json_to_string(to_json()); }
+std::string Source::to_str() const { return to_json().dump(); }
 
-rapidjson::Document
-Source::to_json(rapidjson::MemoryPoolAllocator<> *_a) const {
-  using namespace rapidjson;
-  Document jd;
-  if (_a)
-    jd = Document(_a);
-  auto &a = jd.GetAllocator();
-  jd.SetObject();
-  auto &v = jd;
-  v.AddMember("__KLASS__", "Source", a);
-  v.AddMember("topic", Value().SetString(topic().data(), a), a);
-  v.AddMember("source", Value().SetString(sourcename().data(), a), a);
-  return jd;
+nlohmann::json Source::to_json() const {
+  auto JSON = nlohmann::json::object();
+  JSON["__KLASS__"] = "Source";
+  JSON["topic"] = topic();
+  JSON["source"] = sourcename();
+  return JSON;
 }
 
 } // namespace FileWriter

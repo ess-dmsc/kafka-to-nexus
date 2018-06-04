@@ -1,3 +1,4 @@
+#include "../json.h"
 #include <HDFWriterModule.h>
 #include <gtest/gtest.h>
 
@@ -16,10 +17,10 @@ public:
 
 class DummyWriter : public HDFWriterModule {
 public:
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override {}
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      rapidjson::Value const *attributes) override {
+                      std::string const &HDFAttributes) override {
     return InitResult::OK();
   }
   InitResult reopen(hdf5::node::Group &HDFGrup) override {
@@ -38,9 +39,9 @@ TEST_F(WriterRegistrationTest, SimpleRegistration) {
   std::map<std::string, ModuleFactory> &Factories =
       HDFWriterModuleRegistry::getFactories();
   std::string TestKey("temp");
-  EXPECT_EQ(Factories.size(), 0);
+  EXPECT_EQ(Factories.size(), 0u);
   { HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey); }
-  EXPECT_EQ(Factories.size(), 1);
+  EXPECT_EQ(Factories.size(), 1u);
   EXPECT_NE(Factories.find(TestKey), Factories.end());
 }
 

@@ -15,11 +15,6 @@
 
 #pragma once
 
-// #if RAPIDJSON_HAS_STDSTRING == 0
-// #undef RAPIDJSON_HAS_STDSTRING
-// #define RAPIDJSON_HAS_STDSTRING 1
-// #endif
-
 #include "json.h"
 #include <chrono>
 

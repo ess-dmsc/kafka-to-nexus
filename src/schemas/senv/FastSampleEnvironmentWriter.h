@@ -113,11 +113,11 @@ public:
   FastSampleEnvironmentWriter() = default;
   ~FastSampleEnvironmentWriter() = default;
 
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override;
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override;
 
-  InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                      rapidjson::Value const *attributes) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                      std::string const &HDFAttributes) override;
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 

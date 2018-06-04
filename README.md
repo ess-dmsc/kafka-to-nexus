@@ -20,7 +20,7 @@
 ### Running kafka-to-nexus
 
 ```
-./kafka-to-nexus -h
+./kafka-to-nexus --help
 ```
 
 For example:
@@ -45,14 +45,15 @@ Available options include:
   ],
   "hdf-output-prefix": "./absolute/or/relative/path/to/hdf/output/directory",
   [OPTIONAL]"kafka" : {
-	"any-rdkafka-option": "value"
+  "any-rdkafka-option": "value"
   },
   [OPTIONAL]"streamer" : {
-	"ms-before-start" : 1000
+  "ms-before-start" : 1000
   },
   [OPTIONAL]"stream-master" : {
-	"topic-write-interval" : 1000
-  }
+  "topic-write-interval" : 1000
+  },
+  "service_id": "this_is_filewriter_instance_HOST_PID_EXAMPLENAME"
 }
 ```
 
@@ -62,6 +63,9 @@ Available options include:
 - `kafka` Kafka configuration for consumers in Streamer
 - `streamer` Configuration option for the Streamer
 - `stream-master` Configuration option for the StreamMaster
+- `service_id` If multiple instances listen on the same Kafka command topic,
+  the `service_id` lets the filewriter filter the commands to interpret.
+
 
 ### Send command to kafka-to-nexus
 
@@ -190,26 +194,31 @@ Further documentation:
     "file_name": "some.h5"
   },
   "cmd": "FileWriter_new",
-  "job_id" : "unique-identifier",
-  "broker" : "localhost:9092",
-  [OPTIONAL]"start_time" : <timestamp in milliseconds>,
-  [OPTIONAL]"stop_time" : <timestamp in milliseconds>,
+  "job_id": "unique-identifier",
+  "broker": "localhost:9092",
+  "start_time": <[OPTIONAL] timestamp in milliseconds>,
+  "stop_time": <[OPTIONAL] timestamp in milliseconds>,
+  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
 
 #### Command to exit the file writer:
 
 ```json
-{"cmd": "FileWriter_exit"}
+{
+  "cmd": "FileWriter_exit",
+  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
+}
 ```
 
 #### Command to stop a single file:
 
 ```json
 {
-	"cmd": "FileWriter_stop",
-	"job_id": "job-unique-identifier",
-	"[OPTIONAL]stop_time" : "timestamp-in-milliseconds"
+  "cmd": "FileWriter_stop",
+  "job_id": "job-unique-identifier",
+  "stop_time" : <[OPTIONAL] timestamp-in-milliseconds>,
+  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
 
@@ -263,7 +272,6 @@ To enable SWMR when writing a file, add to the `FileWriter_new` command:
 - git
 - flatbuffers (headers and working `flatc`)
 - librdkafka
-- rapidjson
 - hdf5
 - libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
 - `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
@@ -317,8 +325,6 @@ Locations of dependencies can be supplied via the standard
 `CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` variables.
 
 - `flatbuffers` Headers plus `flatc`, therefore set `CMAKE_INCLUDE_PATH` and `CMAKE_PROGRAM_PATH`.
-
-- `rapidjson`
 
 - `HDF5`
 
@@ -385,8 +391,8 @@ the code.  Support for new schemas can be added in the same way.
 
 Schema plugins can access configuration options which got passed via the
 `FileWriter_new` json command.  The writer implementation, meaning the class
-which derives from `FBSchemaWriter`, can read its member variable
-`rapidjson::Document const * config_stream` which contains all the options.
+which derives from `HDFWriterModule`, gets passed these options as a json
+string.
 
 In this example, we assume that a stream uses the `f142` schema.  We tell the
 writer for the `f142` schema to write an index entry every 3 megabytes:
@@ -481,7 +487,7 @@ sources to be implemented) and consumes a message in the specified topic. Some f
 * initial timestamp is specified using ``set_start_time``
 * connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
 * Kafka::Config and streamer options can be optionally configured using ``kafka`` and ``streamer`` fields in the configuration file. ``kafka`` can contain any option that RdKafka accepts. `streamer` accetps:
-	- `ms-before-start` milliseconds before the `start_time` to start writing from
+  - `ms-before-start` milliseconds before the `start_time` to start writing from
     - `consumer-timeout-ms` the maximum time in milliseconds the consumer waits
       before return with error status
     - `metadata-retry` maxim number of retries to connect to specifies broker

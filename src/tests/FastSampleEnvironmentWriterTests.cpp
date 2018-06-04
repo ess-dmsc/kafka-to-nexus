@@ -53,7 +53,7 @@ TEST_F(FastSampleEnvironmentReader, GetSourceName) {
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
   FileWriter::Msg TestMessage =
       FileWriter::Msg::owned((char *)RawBuffer.get(), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789);
+  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
@@ -93,7 +93,7 @@ public:
 TEST_F(FastSampleEnvironmentWriter, InitFile) {
   {
     senv::FastSampleEnvironmentWriter Writer;
-    EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+    EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
@@ -110,13 +110,13 @@ TEST_F(FastSampleEnvironmentWriter, ReopenFileFailure) {
 
 TEST_F(FastSampleEnvironmentWriter, InitFileFail) {
   senv::FastSampleEnvironmentWriter Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
-  EXPECT_FALSE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
+  EXPECT_FALSE(Writer.init_hdf(UsedGroup, "{}").is_OK());
 }
 
 TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
   senv::FastSampleEnvironmentWriter Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
 }
 
@@ -124,7 +124,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
   senv::FastSampleEnvironmentWriter Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::Msg TestMsg = FileWriter::Msg::owned(
       reinterpret_cast<char *>(Buffer.get()), BufferSize);
@@ -155,7 +155,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
 
-  std::vector<std::int32_t> CueTimestamp(1);
+  std::vector<std::uint32_t> CueTimestamp(1);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
 }
@@ -164,7 +164,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
   senv::FastSampleEnvironmentWriter Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::Msg TestMsg = FileWriter::Msg::owned(
       reinterpret_cast<char *>(Buffer.get()), BufferSize);
@@ -187,12 +187,12 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
 
   EXPECT_EQ(TimestampDataset.dataspace().size(), DataspaceSize);
 
-  std::vector<std::int32_t> CueIndex(2);
+  std::vector<std::uint32_t> CueIndex(2);
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
-  EXPECT_EQ(CueIndex.at(0), 0);
+  EXPECT_EQ(CueIndex.at(0), 0u);
   EXPECT_EQ(CueIndex.at(1), FbPointer->Values()->size());
 
-  std::vector<std::int32_t> CueTimestamp(2);
+  std::vector<std::uint32_t> CueTimestamp(2);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
   EXPECT_EQ(CueTimestamp.at(1), FbPointer->PacketTimestamp());
@@ -208,7 +208,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
       1;
   *ValueLengthPtr = 0;
   senv::FastSampleEnvironmentWriter Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::Msg TestMsg = FileWriter::Msg::owned(
       reinterpret_cast<char *>(Buffer.get()), BufferSize);
@@ -233,7 +233,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
       1;
   *TimestampsLengthPtr = 0;
   senv::FastSampleEnvironmentWriter Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, nullptr).is_OK());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::Msg TestMsg = FileWriter::Msg::owned(
       reinterpret_cast<char *>(Buffer.get()), BufferSize);
@@ -261,7 +261,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   EXPECT_NO_THROW(CueIndexDataset.read(CueIndex));
   EXPECT_EQ(CueIndex.at(0), 0);
 
-  std::vector<std::int32_t> CueTimestamp(1);
+  std::vector<std::uint32_t> CueTimestamp(1);
   EXPECT_NO_THROW(CueTimestampZeroDataset.read(CueTimestamp));
   EXPECT_EQ(CueTimestamp.at(0), FbPointer->PacketTimestamp());
 }

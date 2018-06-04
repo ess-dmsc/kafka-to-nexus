@@ -13,11 +13,6 @@
   async: 60
   poll: 10
 
-- name: make sure rapidjson is installed
-  include: rapidjson.yml
-  async: 60
-  poll: 10
-
 - name: make sure streaming data types are installed
   include: streaming_data_types.yml
   async: 60

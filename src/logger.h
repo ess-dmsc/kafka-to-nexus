@@ -17,6 +17,8 @@
 
 extern int log_level;
 
+extern std::string g_ServiceID;
+
 // These severity level correspond to the RFC3164 (syslog) severity levels
 enum class Sev : int {
   Emergency = 0, // Do not use, reserved for system errors

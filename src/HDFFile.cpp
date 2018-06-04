@@ -13,14 +13,12 @@
 #include <unistd.h>
 #define HAS_REMOTE_API 0
 #include "date/tz.h"
-#include <nlohmann/json.hpp>
 
 namespace FileWriter {
 
 using std::array;
 using std::string;
 using std::vector;
-
 using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
@@ -41,37 +39,31 @@ static void write_attribute(hdf5::node::Node &node, const std::string &name,
 }
 
 template <typename DT>
-static void append_value(rapidjson::Value const *vals, std::vector<DT> &ret) {
-  if (vals->IsInt()) {
-    ret.push_back(static_cast<DT>(vals->GetInt()));
-  } else if (vals->IsInt64()) {
-    ret.push_back(static_cast<DT>(vals->GetInt64()));
-  } else if (vals->IsUint()) {
-    ret.push_back(static_cast<DT>(vals->GetUint()));
-  } else if (vals->IsUint64()) {
-    ret.push_back(static_cast<DT>(vals->GetUint64()));
-  } else if (vals->IsFloat()) {
-    ret.push_back(static_cast<DT>(vals->GetFloat()));
-  } else if (vals->IsDouble()) {
-    ret.push_back(static_cast<DT>(vals->GetDouble()));
+static void append_value(nlohmann::json const *Value, std::vector<DT> &Buffer) {
+  if (Value->is_number_integer()) {
+    Buffer.push_back(Value->get<int64_t>());
+  } else if (Value->is_number_unsigned()) {
+    Buffer.push_back(Value->get<uint64_t>());
+  } else if (Value->is_number_float()) {
+    Buffer.push_back(Value->get<double>());
   } else {
     LOG(Sev::Error, "Unhandled type in HDFFile::append_value()")
   }
 }
 
 template <typename DT>
-static std::vector<DT> populate_blob(rapidjson::Value const *vals,
+static std::vector<DT> populate_blob(nlohmann::json const *Value,
                                      hssize_t goal_size) {
-  std::vector<DT> ret;
-  if (vals->IsArray()) {
-    std::stack<rapidjson::Value const *> as;
+  std::vector<DT> Buffer;
+  if (Value->is_array()) {
+    std::stack<json const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
-    as.push(vals);
+    as.push(Value);
     ai.push(0);
-    an.push(vals->GetArray().Size());
+    an.push(Value->size());
 
-    while (not as.empty()) {
+    while (!as.empty()) {
       if (as.size() > 10) {
         break;
       }
@@ -81,42 +73,41 @@ static std::vector<DT> populate_blob(rapidjson::Value const *vals,
         an.pop();
         continue;
       }
-      auto &v = as.top()->GetArray()[ai.top()];
-      if (v.IsArray()) {
+      auto const &v = as.top()->at(ai.top());
+      if (v.is_array()) {
         ai.top()++;
         as.push(&v);
         ai.push(0);
-        size_t n = v.GetArray().Size();
-        an.push(n);
+        an.push(v.size());
       } else {
-        append_value(&v, ret);
+        append_value(&v, Buffer);
         ai.top()++;
       }
     }
   } else {
-    append_value(vals, ret);
+    append_value(Value, Buffer);
   }
 
-  if (static_cast<hssize_t>(ret.size()) != goal_size) {
+  if (static_cast<hssize_t>(Buffer.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate numeric blob ";
-    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    ss << " size mismatch " << Buffer.size() << "!=" << goal_size;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
-  return ret;
+  return Buffer;
 }
 
 template <typename T>
 static void writeAttrNumeric(hdf5::node::Node &Node, const std::string &Name,
-                             rapidjson::Value const *Values) {
-  hssize_t length = 1;
-  if (Values->IsArray()) {
-    length = Values->GetArray().Size();
+                             nlohmann::json const *Value) {
+  hssize_t Length = 1;
+  if (Value->is_array()) {
+    Length = Value->size();
   }
-  auto ValueData = populate_blob<T>(Values, length);
+  auto ValueData = populate_blob<T>(Value, Length);
   try {
-    if (Values->IsArray()) {
+    if (Value->is_array()) {
       write_attribute(Node, Name, ValueData);
     } else {
       write_attribute(Node, Name, ValueData[0]);
@@ -214,12 +205,12 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
   write_hdf_attribute_iso8601(node, name, now);
 }
 
-void HDFFile::write_attributes(hdf5::node::Node &node,
-                               rapidjson::Value const *jsv) {
-  if (jsv->IsArray()) {
-    writeArrayOfAttributes(node, jsv);
-  } else if (jsv->IsObject()) {
-    writeObjectOfAttributes(node, jsv);
+void HDFFile::write_attributes(hdf5::node::Node &Node,
+                               nlohmann::json const *Value) {
+  if (Value->is_array()) {
+    writeArrayOfAttributes(Node, Value);
+  } else if (Value->is_object()) {
+    writeObjectOfAttributes(Node, Value);
   }
 }
 
@@ -228,32 +219,30 @@ void HDFFile::write_attributes(hdf5::node::Node &node,
 /// \param Node : node to write attributes on
 /// \param JsonValue : json value array of attribute objects
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     const rapidjson::Value *JsonValue) {
-  for (const auto &Attribute : JsonValue->GetArray()) {
-    if (Attribute.IsObject()) {
+                                     nlohmann::json const *Value) {
+  if (!Value->is_array()) {
+    return;
+  }
+  for (auto const &Attribute : *Value) {
+    if (Attribute.is_object()) {
       string Name;
-      if (auto NameString = get_string(&Attribute, "name")) {
-        Name = NameString.v;
+      if (auto NameMaybe = find<std::string>("name", Attribute)) {
+        Name = NameMaybe.inner();
       } else {
         continue;
       }
-
-      auto attr = Attribute.GetObject();
-      auto ValuesField = attr.FindMember("values");
-
-      if (ValuesField != attr.MemberEnd()) {
+      if (auto ValuesMaybe = find<json>("values", Attribute)) {
         std::string DType;
-        auto AttrType = get_string(&Attribute, "type");
-        auto Values = &ValuesField->value;
-        if (AttrType) {
-          DType = AttrType.v;
-          writeAttrOfSpecifiedType(DType, Node, Name, Values);
+        auto const &Values = ValuesMaybe.inner();
+        if (auto AttrType = find<std::string>("type", Attribute)) {
+          DType = AttrType.inner();
+          writeAttrOfSpecifiedType(DType, Node, Name, &Values);
         } else {
-          if (ValuesField->value.IsArray()) {
+          if (Values.is_array()) {
             LOG(Sev::Warning, "Attributes with array values must specify type")
             continue;
           }
-          writeScalarAttribute(Node, Name, Values);
+          writeScalarAttribute(Node, Name, &Values);
         }
       }
     }
@@ -268,7 +257,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
 void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
                                        hdf5::node::Node &Node,
                                        std::string const &Name,
-                                       rapidjson::Value const *Values) {
+                                       nlohmann::json const *Values) {
   try {
     if (DType == "uint8") {
       writeAttrNumeric<uint8_t>(Node, Name, Values);
@@ -301,18 +290,18 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
       writeAttrNumeric<double>(Node, Name, Values);
     }
     if (DType == "string") {
-      if (Values->IsArray()) {
-        auto ValueArray = populate_strings(Values, Values->GetArray().Size());
-        auto StringAttr = Node.attributes.create(
-            Name, hdf5::datatype::create<std::string>(),
-            hdf5::dataspace::Simple{{Values->GetArray().Size()}});
+      if (Values->is_array()) {
+        auto ValueArray = populate_strings(Values, Values->size());
+        auto StringAttr =
+            Node.attributes.create(Name, hdf5::datatype::create<std::string>(),
+                                   hdf5::dataspace::Simple{{Values->size()}});
         StringAttr.write(ValueArray);
       } else {
-        const std::string StringValue = Values->GetString();
+        std::string const StringValue = Values->get<std::string>();
         auto string_type = hdf5::datatype::String::fixed(StringValue.size());
         auto StringAttr = Node.attributes.create(Name, string_type,
                                                  hdf5::dataspace::Scalar());
-        StringAttr.write(Values->GetString(), string_type);
+        StringAttr.write(StringValue, string_type);
       }
     }
   } catch (std::exception &e) {
@@ -327,11 +316,11 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
 /// Write attributes defined in an object of name-value pairs
 /// \param node : node to write attributes on
 /// \param jsv : json value object of attributes
-void HDFFile::writeObjectOfAttributes(hdf5::node::Node &node,
-                                      const rapidjson::Value *jsv) {
-  for (auto &at : jsv->GetObject()) {
-    const std::string Name = at.name.GetString();
-    writeScalarAttribute(node, Name, &at.value);
+void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
+                                      nlohmann::json const *Value) {
+  for (auto It = Value->begin(); It != Value->end(); ++It) {
+    auto const Name = It.key();
+    writeScalarAttribute(Node, Name, &It.value());
   }
 }
 
@@ -341,39 +330,41 @@ void HDFFile::writeObjectOfAttributes(hdf5::node::Node &node,
 /// \param AttrValue : Json value containing the attribute value
 void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   const rapidjson::Value *AttrValue) {
-  if (AttrValue->IsString()) {
-    write_attribute_str(Node, Name, AttrValue->GetString());
-  } else if (AttrValue->IsInt64()) {
-    write_attribute(Node, Name, AttrValue->GetInt64());
-  } else if (AttrValue->IsDouble()) {
-    write_attribute(Node, Name, AttrValue->GetDouble());
+                                   nlohmann::json const *AttrValue) {
+  if (AttrValue->is_string()) {
+    write_attribute_str(Node, Name, AttrValue->get<std::string>());
+  } else if (AttrValue->is_number_integer()) {
+    write_attribute(Node, Name, AttrValue->get<int64_t>());
+  } else if (AttrValue->is_number_unsigned()) {
+    write_attribute(Node, Name, AttrValue->get<uint64_t>());
+  } else if (AttrValue->is_number_float()) {
+    write_attribute(Node, Name, AttrValue->get<double>());
   }
 }
 
-void HDFFile::write_attributes_if_present(hdf5::node::Node &node,
-                                          rapidjson::Value const *jsv) {
-  auto mem = jsv->FindMember("attributes");
-  if (mem != jsv->MemberEnd()) {
-    write_attributes(node, &mem->value);
+void HDFFile::write_attributes_if_present(hdf5::node::Node &Node,
+                                          nlohmann::json const *Value) {
+  if (auto AttributesMaybe = find<json>("attributes", *Value)) {
+    auto const Attributes = AttributesMaybe.inner();
+    write_attributes(Node, &Attributes);
   }
 }
 
-std::vector<std::string> HDFFile::populate_strings(rapidjson::Value const *vals,
+std::vector<std::string> HDFFile::populate_strings(nlohmann::json const *Value,
                                                    hssize_t goal_size) {
-  std::vector<std::string> ret;
-  if (vals->IsString()) {
-    std::string sss(vals->GetString());
-    ret.push_back(sss);
-  } else if (vals->IsArray()) {
-    std::stack<rapidjson::Value const *> as;
+  std::vector<std::string> Buffer;
+  if (Value->is_string()) {
+    auto String = Value->get<std::string>();
+    Buffer.push_back(String);
+  } else if (Value->is_array()) {
+    std::stack<json const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
-    as.push(vals);
+    as.push(Value);
     ai.push(0);
-    an.push(vals->GetArray().Size());
+    an.push(Value->size());
 
-    while (not as.empty()) {
+    while (!as.empty()) {
       if (as.size() > 10) {
         break;
       }
@@ -383,56 +374,52 @@ std::vector<std::string> HDFFile::populate_strings(rapidjson::Value const *vals,
         an.pop();
         continue;
       }
-      auto &v = as.top()->GetArray()[ai.top()];
-      if (v.IsArray()) {
+      auto &v = as.top()->at(ai.top());
+      if (v.is_array()) {
         ai.top()++;
         as.push(&v);
         ai.push(0);
-        size_t n = v.GetArray().Size();
-        an.push(n);
-      } else if (v.IsString()) {
-        std::string sss(v.GetString());
-        ret.push_back(sss);
+        an.push(v.size());
+      } else if (v.is_string()) {
+        Buffer.push_back(v.get<std::string>());
         ai.top()++;
       }
     }
   }
 
-  if (static_cast<hssize_t>(ret.size()) != goal_size) {
+  if (static_cast<hssize_t>(Buffer.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate string(variable) blob ";
-    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    ss << " size mismatch " << Buffer.size() << "!=" << goal_size;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
-  return ret;
+  return Buffer;
 }
 
 std::vector<std::string>
-HDFFile::populate_fixed_strings(rapidjson::Value const *vals, size_t fixed_at,
+HDFFile::populate_fixed_strings(nlohmann::json const *Value, size_t FixedAt,
                                 hssize_t goal_size) {
-
-  if (fixed_at >= 1024 * 1024) {
-    std::stringstream ss;
-    ss << "Failed to allocate fixed-size string dataset ";
-    ss << " bad element size: " << fixed_at;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+  if (FixedAt >= 1024 * 1024) {
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Failed to allocate fixed-size string dataset, bad element size: {}",
+        FixedAt)));
   }
 
-  std::vector<std::string> ret;
-  if (vals->IsString()) {
-    std::string sss(vals->GetString());
-    sss.resize(fixed_at, '\0');
-    ret.push_back(sss);
-  } else if (vals->IsArray()) {
-    std::stack<rapidjson::Value const *> as;
+  std::vector<std::string> Buffer;
+  if (Value->is_string()) {
+    auto String = Value->get<std::string>();
+    String.resize(FixedAt, '\0');
+    Buffer.push_back(String);
+  } else if (Value->is_array()) {
+    std::stack<json const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
-    as.push(vals);
+    as.push(Value);
     ai.push(0);
-    an.push(vals->GetArray().Size());
+    an.push(Value->size());
 
-    while (not as.empty()) {
+    while (!as.empty()) {
       if (as.size() > 10) {
         break;
       }
@@ -442,37 +429,36 @@ HDFFile::populate_fixed_strings(rapidjson::Value const *vals, size_t fixed_at,
         an.pop();
         continue;
       }
-      auto &v = as.top()->GetArray()[ai.top()];
-      if (v.IsArray()) {
+      auto &v = as.top()->at(ai.top());
+      if (v.is_array()) {
         ai.top()++;
         as.push(&v);
         ai.push(0);
-        size_t n = v.GetArray().Size();
-        an.push(n);
-      } else if (v.IsString()) {
-        std::string sss(v.GetString());
-        sss.resize(fixed_at, '\0');
-        ret.push_back(sss);
+        an.push(v.size());
+      } else if (v.is_string()) {
+        auto String = v.get<std::string>();
+        String.resize(FixedAt, '\0');
+        Buffer.push_back(String);
         ai.top()++;
       }
     }
   }
 
-  if (static_cast<hssize_t>(ret.size()) != goal_size) {
+  if (static_cast<hssize_t>(Buffer.size()) != goal_size) {
     std::stringstream ss;
     ss << "Failed to populate string(fixed) blob ";
-    ss << " size mismatch " << ret.size() << "!=" << goal_size;
+    ss << " size mismatch " << Buffer.size() << "!=" << goal_size;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
-  return ret;
+  return Buffer;
 }
 
 template <typename DT>
 static void write_ds_numeric(hdf5::node::Group &parent, std::string name,
                              hdf5::property::DatasetCreationList &dcpl,
                              hdf5::dataspace::Dataspace &dataspace,
-                             rapidjson::Value const *vals) {
+                             nlohmann::json const *vals) {
 
   try {
     auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(),
@@ -489,7 +475,7 @@ static void write_ds_numeric(hdf5::node::Group &parent, std::string name,
 void HDFFile::write_ds_string(hdf5::node::Group &parent, std::string name,
                               hdf5::property::DatasetCreationList &dcpl,
                               hdf5::dataspace::Dataspace &dataspace,
-                              rapidjson::Value const *vals) {
+                              nlohmann::json const *vals) {
 
   try {
     auto dt = hdf5::datatype::String::variable();
@@ -511,7 +497,7 @@ void HDFFile::write_ds_string_fixed_size(
     hdf5::node::Group &parent, std::string name,
     hdf5::property::DatasetCreationList &dcpl,
     hdf5::dataspace::Dataspace &dataspace, hsize_t element_size,
-    rapidjson::Value const *vals) {
+    nlohmann::json const *vals) {
 
   try {
     auto dt = hdf5::datatype::String::fixed(element_size);
@@ -538,7 +524,7 @@ void HDFFile::write_ds_generic(std::string const &dtype,
                                std::vector<hsize_t> const &sizes,
                                std::vector<hsize_t> const &max,
                                hsize_t element_size,
-                               rapidjson::Value const *vals) {
+                               nlohmann::json const *vals) {
   try {
 
     hdf5::property::DatasetCreationList dcpl;
@@ -607,86 +593,84 @@ void HDFFile::write_ds_generic(std::string const &dtype,
   }
 }
 
-void HDFFile::write_dataset(hdf5::node::Group &parent,
-                            rapidjson::Value const *value) {
-  std::string name;
-  if (auto x = get_string(value, "name")) {
-    name = x.v;
+void HDFFile::write_dataset(hdf5::node::Group &Parent,
+                            nlohmann::json const *Value) {
+  std::string Name;
+  if (auto NameMaybe = find<std::string>("name", *Value)) {
+    Name = NameMaybe.inner();
   } else {
     return;
   }
 
-  std::string dtype = "int64";
+  std::string DataType = "int64";
   hsize_t element_size = H5T_VARIABLE;
 
   std::vector<hsize_t> sizes;
-  auto ds = get_object(*value, "dataset");
-  if (ds) {
-    auto dso = ds.v->GetObject();
-    auto ds_space = get_string(ds.v, "space");
-    if (ds_space) {
-      if (ds_space.v != "simple") {
+  if (auto ds = find<json>("dataset", *Value)) {
+    auto dso = ds.inner();
+    if (auto ds_space = find<std::string>("space", dso)) {
+      if (ds_space.inner() != "simple") {
         LOG(Sev::Warning, "sorry, can only handle simple data spaces");
         return;
       }
     }
 
-    auto ds_type = get_string(ds.v, "type");
-    if (ds_type) {
-      dtype = ds_type.v;
+    if (auto ds_type = find<std::string>("type", dso)) {
+      DataType = ds_type.inner();
     }
 
     // optional, default to scalar
-    auto ds_size = get_array(*ds.v, "size");
-    if (ds_size) {
-      auto a = ds_size.v->GetArray();
-      for (size_t i1 = 0; i1 < a.Size(); ++i1) {
-        if (a[i1].IsInt()) {
-          sizes.push_back(a[i1].GetInt());
-        } else if (a[i1].IsString()) {
-          if (string("unlimited") == a[i1].GetString()) {
-            sizes.push_back(H5S_UNLIMITED);
+    if (auto ds_size = find<json>("size", dso)) {
+      if (ds_size.inner().is_array()) {
+        auto a = ds_size.inner();
+        for (auto const &Element : a) {
+          if (Element.is_number_integer()) {
+            sizes.push_back(Element.get<int64_t>());
+          } else if (Element.is_string()) {
+            if (Element.get<std::string>() == "unlimited") {
+              sizes.push_back(H5S_UNLIMITED);
+            }
           }
         }
       }
     }
 
-    if (auto x = get_uint(ds.v, "string_size")) {
-      if ((x.v > 0) && (x.v != H5T_VARIABLE)) {
-        element_size = x.v;
+    if (auto x = find<uint64_t>("string_size", dso)) {
+      if ((x.inner() > 0) && (x.inner() != H5T_VARIABLE)) {
+        element_size = x.inner();
       }
     }
   }
 
-  auto ds_values_it = value->FindMember("values");
-  if (ds_values_it == value->MemberEnd()) {
+  auto ds_values_maybe = find<json>("values", *Value);
+  if (!ds_values_maybe) {
     return;
   }
-  auto ds_values = &ds_values_it->value;
+  auto ds_values = ds_values_maybe.inner();
 
-  if (ds_values->IsDouble()) {
-    dtype = "double";
+  if (ds_values.is_number_float()) {
+    DataType = "double";
   }
 
   auto max = sizes;
-  if (not sizes.empty()) {
+  if (!sizes.empty()) {
     if (sizes[0] == H5S_UNLIMITED) {
-      if (ds_values->IsArray()) {
-        sizes[0] = ds_values->GetArray().Size();
+      if (ds_values.is_array()) {
+        sizes[0] = ds_values.size();
       } else {
         sizes[0] = 1;
       }
     }
   }
 
-  auto vals = ds_values;
-  write_ds_generic(dtype, parent, name, sizes, max, element_size, vals);
-  auto dset = hdf5::node::Dataset(parent.nodes[name]);
+  write_ds_generic(DataType, Parent, Name, sizes, max, element_size,
+                   &ds_values);
+  auto dset = hdf5::node::Dataset(Parent.nodes[Name]);
 
-  write_attributes_if_present(dset, value);
+  write_attributes_if_present(dset, Value);
 }
 
-void HDFFile::create_hdf_structures(rapidjson::Value const *value,
+void HDFFile::create_hdf_structures(nlohmann::json const *value,
                                     hdf5::node::Group &parent, uint16_t level,
                                     hdf5::property::LinkCreationList lcpl,
                                     hdf5::datatype::String hdf_type_strfix,
@@ -697,29 +681,28 @@ void HDFFile::create_hdf_structures(rapidjson::Value const *value,
 
     // The HDF object that we will maybe create at the current level.
     hdf5::node::Group hdf_this;
-    if (auto type = get_string(value, "type")) {
-      if (type.v == "group") {
-        if (auto name = get_string(value, "name")) {
-
+    if (auto TypeMaybe = find<std::string>("type", *value)) {
+      auto Type = TypeMaybe.inner();
+      if (Type == "group") {
+        if (auto NameMaybe = find<std::string>("name", *value)) {
+          auto Name = NameMaybe.inner();
           try {
-            hdf_this = parent.create_group(name.v, lcpl);
-            path.push_back(name.v);
+            hdf_this = parent.create_group(Name, lcpl);
+            path.push_back(Name);
           } catch (...) {
-            LOG(Sev::Critical, "failed to create group  name: {}",
-                name.v.c_str());
+            LOG(Sev::Critical, "failed to create group  Name: {}", Name);
           }
         }
       }
-      if (type.v == "stream") {
+      if (Type == "stream") {
         string pathstr;
         for (auto &x : path) {
           pathstr += "/" + x;
         }
 
-        stream_hdf_info.push_back(
-            StreamHDFInfo{pathstr, json_to_string(*value)});
+        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value->dump()});
       }
-      if (type.v == "dataset") {
+      if (Type == "dataset") {
         write_dataset(parent, value);
       }
     }
@@ -728,11 +711,11 @@ void HDFFile::create_hdf_structures(rapidjson::Value const *value,
     // recursion with the (optional) "children" array.
     if (hdf_this.is_valid()) {
       write_attributes_if_present(hdf_this, value);
-      auto mem = value->FindMember("children");
-      if (mem != value->MemberEnd()) {
-        if (mem->value.IsArray()) {
-          for (auto &child : mem->value.GetArray()) {
-            create_hdf_structures(&child, hdf_this, level + 1, lcpl,
+      if (auto ChildrenMaybe = find<json>("children", *value)) {
+        auto Children = ChildrenMaybe.inner();
+        if (Children.is_array()) {
+          for (auto &Child : Children) {
+            create_hdf_structures(&Child, hdf_this, level + 1, lcpl,
                                   hdf_type_strfix, stream_hdf_info, path);
           }
         }
@@ -784,11 +767,9 @@ void HDFFile::check_hdf_version() {
 
 extern "C" char const GIT_COMMIT[];
 
-void HDFFile::init(std::string filename,
-                   rapidjson::Value const &nexus_structure,
-                   rapidjson::Value const &config_file,
-                   std::vector<StreamHDFInfo> &stream_hdf_info,
-                   bool UseHDFSWMR) {
+void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
+                   nlohmann::json const &config_file,
+                   std::vector<StreamHDFInfo> &stream_hdf_info, bool UseHDFSWMR) {
   if (std::ifstream(filename).good()) {
     // File exists already
     throw std::runtime_error(
@@ -819,12 +800,11 @@ void HDFFile::init(std::string filename,
 
 void HDFFile::init(const std::string &nexus_structure,
                    std::vector<StreamHDFInfo> &stream_hdf_info) {
-  rapidjson::Document document;
-  document.Parse(nexus_structure.c_str());
-  init(document, stream_hdf_info);
+  auto Document = nlohmann::json::parse(nexus_structure);
+  init(Document, stream_hdf_info);
 }
 
-void HDFFile::init(rapidjson::Value const &nexus_structure,
+void HDFFile::init(nlohmann::json const &nexus_structure,
                    std::vector<StreamHDFInfo> &stream_hdf_info) {
 
   try {
@@ -842,13 +822,13 @@ void HDFFile::init(rapidjson::Value const &nexus_structure,
     root_group = h5file.root();
 
     std::deque<std::string> path;
-    if (nexus_structure.IsObject()) {
+    if (nexus_structure.is_object()) {
       auto value = &nexus_structure;
-      auto mem = value->FindMember("children");
-      if (mem != value->MemberEnd()) {
-        if (mem->value.IsArray()) {
-          for (auto &child : mem->value.GetArray()) {
-            create_hdf_structures(&child, root_group, 0, lcpl, var_string,
+      if (auto ChildrenMaybe = find<json>("children", *value)) {
+        auto Children = ChildrenMaybe.inner();
+        if (Children.is_array()) {
+          for (auto &Child : Children) {
+            create_hdf_structures(&Child, root_group, 0, lcpl, var_string,
                                   stream_hdf_info, path);
           }
         }
@@ -880,8 +860,7 @@ void HDFFile::close() {
   }
 }
 
-void HDFFile::reopen(std::string filename,
-                     rapidjson::Value const &config_file) {
+void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;

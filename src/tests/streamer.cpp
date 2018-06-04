@@ -1,4 +1,5 @@
 #include "Streamer.h"
+#include "json.h"
 
 #include <gtest/gtest.h>
 #include <librdkafka/utils.h>
@@ -63,13 +64,13 @@ TEST_F(T_Streamer, configurationDoesnTAcceptOptionIsNoError) {
   setConfigurationOptionInvalid();
   addTopic("any.random.topic");
 
-  // create option
+  // Create StreamerOptions and apply some options from json to it
   FileWriter::StreamerOptions Opts;
-  rapidjson::Document Document;
-  Document.Parse(
-      std::string("{ \"ms-before-start\": 10, \"consumer-timeout-ms\" : 10 }")
-          .c_str());
-  Opts.setStreamerOptions((rapidjson::Value *)&Document);
+  auto Document = nlohmann::json::parse(R""("{
+    "ms-before-start": 10,
+    "consumer-timeout-ms": 10
+  })"");
+  Opts.setStreamerOptions(Document);
 
   Streamer Stream(BrokerAddress, "any.random.topic", Opts);
 

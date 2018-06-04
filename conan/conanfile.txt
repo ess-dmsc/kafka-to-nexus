@@ -5,7 +5,6 @@ FlatBuffers/1.8.0@ess-dmsc/stable
 hdf5/1.10.2-dm2@ess-dmsc/stable
 h5cpp/0.0.7@ess-dmsc/stable
 librdkafka/0.11.3-dm1@ess-dmsc/stable
-RapidJSON/1.1.0-dm2@ess-dmsc/stable
 jsonformoderncpp/3.1.0@vthiery/stable
 graylog-logger/1.0.3-dm1@ess-dmsc/stable
 streaming-data-types/361bf7b@ess-dmsc/stable
