@@ -124,13 +124,13 @@ def docker_build(image_key) {
     }
 }
 
-def docker_test(image_key) {
+def docker_test(image_key, test_dir) {
     try {
         def custom_sh = images[image_key]['sh']
         def test_script = """
                         cd build
                         . ./activate_run.sh
-                        ./bin/UnitTests
+                        ./${test_dir}/UnitTests
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${test_script}\""
     } catch (e) {
@@ -228,8 +228,10 @@ def get_pipeline(image_key) {
                 if (image_key == test_and_coverage_os) {
                     docker_coverage(image_key)
                 }
-                else {
-                    docker_test(image_key)
+                else if (image_key == release_os) {
+                    docker_test(image_key, "bin")
+                } else {
+                    docker_test(image_key, "tests")
                 }
 
                 if (image_key == clangformat_os) {
