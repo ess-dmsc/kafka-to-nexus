@@ -18,6 +18,7 @@ FastSampleEnvironmentWriterTests.cpp
 NeXusDatasets.cpp
 ReaderRegistration.cpp
 WriterRegistration.cpp
+CommandHandlerTest.cpp
 TemplateWriterTests.cpp
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
