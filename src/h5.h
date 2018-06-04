@@ -109,8 +109,6 @@ public:
   static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   append_ret append(std::string const &String);
-  AppendResult flushBuffer();
-  void bufferInit(size_t BufferSize, size_t BufferPacketMax);
   h5d ds;
 
 private:

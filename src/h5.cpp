@@ -496,15 +496,6 @@ append_ret Chunked1DString::append(std::string const &String) {
   return ds.append(String);
 }
 
-AppendResult Chunked1DString::flushBuffer() {
-  // Currently no buffering
-  return AppendResult::OK;
-}
-
-void Chunked1DString::bufferInit(size_t BufferSize, size_t BufferPacketMax) {
-  // Currently no buffering
-}
-
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
 h5d_chunked_2d<T>::create(hdf5::node::Group loc, std::string name,
