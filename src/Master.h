@@ -28,7 +28,8 @@ public:
 
   /// Stop running.
   virtual void stop();
-  virtual std::vector<std::unique_ptr<StreamMaster<Streamer>>>& getStreamMasters() {
+  virtual std::vector<std::unique_ptr<StreamMaster<Streamer>>> &
+  getStreamMasters() {
     return stream_masters;
   }
   virtual void addStream(std::unique_ptr<StreamMaster<Streamer>> NewStream) {
