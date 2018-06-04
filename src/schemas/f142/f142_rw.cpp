@@ -10,6 +10,8 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+using nlohmann::json;
+
 #include "schemas/f142_logdata_generated.h"
 
 template <typename T> using uptr = std::unique_ptr<T>;
@@ -436,36 +438,50 @@ writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
 
 // clang-format: on
 
-void HDFWriterModule::parse_config(rapidjson::Value const &config_stream,
-                                   rapidjson::Value const *config_module) {
-  auto str = get_string(&config_stream, "source");
+void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
+                                   std::string const &ConfigurationModule) {
+  auto ConfigurationStreamJson = json::parse(ConfigurationStream);
+  auto str = find<std::string>("source", ConfigurationStreamJson);
   if (!str) {
     return;
   }
-  source_name = str.v;
-  str = get_string(&config_stream, "type");
+  source_name = str.inner();
+
+  str = find<std::string>("type", ConfigurationStreamJson);
   if (!str) {
     return;
   }
-  type = str.v;
-  if (auto x = get_uint(&config_stream, "array_size")) {
-    array_size = size_t(x.v);
+  type = str.inner();
+
+  if (auto x = find<uint64_t>("array_size", ConfigurationStreamJson)) {
+    array_size = size_t(x.inner());
   }
   LOG(Sev::Debug,
       "HDFWriterModule::parse_config f142 source_name: {}  type: {}  "
       "array_size: {}",
       source_name, type, array_size);
 
-  if (auto x = get_int(&config_stream, "nexus.indices.index_every_kb")) {
-    index_every_bytes = uint64_t(x.v) * 1024;
-  } else if (auto x = get_int(&config_stream, "nexus.indices.index_every_mb")) {
-    index_every_bytes = uint64_t(x.v) * 1024 * 1024;
+  try {
+    index_every_bytes =
+        ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
+            .get<uint64_t>() *
+        1024;
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    index_every_bytes =
+        ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
+            .get<uint64_t>() *
+        1024 * 1024;
+    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+  } catch (...) { /* it's ok if not found */
   }
 }
 
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
-                          rapidjson::Value const *attributes) {
+                          std::string const &HDFAttributes) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
   try {
@@ -499,9 +515,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         return HDFWriterModule::InitResult::ERROR_IO();
       }
     }
-    if (attributes) {
-      HDFFile::write_attributes(HDFGroup, attributes);
-    }
+    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
+    HDFFile::write_attributes(HDFGroup, &AttributesJson);
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
     LOG(Sev::Error, "ERROR f142 could not init HDFGroup: {}  trace: {}",

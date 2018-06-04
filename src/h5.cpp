@@ -49,9 +49,7 @@ h5d::ptr h5d::create(hdf5::node::Group loc, std::string name,
       int *fillptr = nullptr;
       dcpl.fill_value(*fillptr, Type);
     }
-    o.Dataset = loc.create_dataset(name, o.Type, dsp,
-                                   hdf5::property::LinkCreationList(), dcpl,
-                                   hdf5::property::DatasetAccessList());
+    o.Dataset = loc.create_dataset(name, o.Type, dsp, dcpl);
     o.init_basics();
     return ret;
   } catch (...) {

@@ -8,10 +8,6 @@ flatbuffers_src: https://github.com/google/flatbuffers.git
 flatbuffers_version: master
 flatbuffers: '{{software_dest}}/flatbuffers-{{flatbuffers_version}}'
 
-rapidjson_src: https://github.com/miloyip/rapidjson.git
-rapidjson_version: master
-rapidjson: '{{ software_dest }}/rapidjson-{{rapidjson_version}}'
-
 rdkafka_src: https://github.com/edenhill/librdkafka.git
 rdkafka_version: 0.9.4.x
 rdkafka: '{{ software_dest }}/rdkafka-{{rdkafka_version}}'
@@ -32,7 +28,7 @@ filewriter_src: https://github.com/ess-dmsc/kafka-to-nexus.git
 filewriter_version: master
 filewriter: '{{software_dest}}/kafka-to-nexus'
 
-filewriter_inc: '"{{hdf5}}/include;{{flatbuffers}}/include;{{rapidjson}}/include;{{rdkafka}}/include;{{streaming_data_types}};{{fmt}}/include"'
+filewriter_inc: '"{{hdf5}}/include;{{flatbuffers}}/include;{{rdkafka}}/include;{{streaming_data_types}};{{fmt}}/include"'
 filewriter_lib: '"{{hdf5}}/lib;{{flatbuffers}}/lib;{{rdkafka}}/lib;{{fmt}}/lib"'
 filewriter_bin: '{{flatbuffers}}/bin'
 

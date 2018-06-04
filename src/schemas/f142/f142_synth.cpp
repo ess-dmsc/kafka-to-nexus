@@ -37,7 +37,7 @@ fb synth::next(uint64_t seq, size_t nele) {
     T *a1 = nullptr;
     auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
                                                      (uint8_t **)&a1);
-    for (int i1 = 0; i1 < nele; ++i1) {
+    for (size_t i1 = 0; i1 < nele; ++i1) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }
@@ -51,7 +51,7 @@ fb synth::next(uint64_t seq, size_t nele) {
     T *a1 = nullptr;
     auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
                                                      (uint8_t **)&a1);
-    for (int i1 = 0; i1 < nele; ++i1) {
+    for (size_t i1 = 0; i1 < nele; ++i1) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }
@@ -65,7 +65,7 @@ fb synth::next(uint64_t seq, size_t nele) {
     T *a1 = nullptr;
     auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
                                                      (uint8_t **)&a1);
-    for (int i1 = 0; i1 < nele; ++i1) {
+    for (size_t i1 = 0; i1 < nele; ++i1) {
       // a1[i1] = impl->rnd() >> 25;
       a1[i1] = seq;
     }

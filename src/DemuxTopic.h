@@ -54,8 +54,7 @@ public:
   }
 
   std::string to_str() const;
-  rapidjson::Document
-  to_json(rapidjson::MemoryPoolAllocator<> *_a = nullptr) const;
+  nlohmann::json to_json() const;
   std::chrono::milliseconds &stop_time();
 
   /// Counts the number of processed message.

@@ -1,14 +1,12 @@
 #include "logger.h"
 #include "KafkaW/KafkaW.h"
+#include "json.h"
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include <memory>
-#include <rapidjson/document.h>
-#include <rapidjson/stringbuffer.h>
-#include <rapidjson/writer.h>
 #include <string>
 #include <thread>
 #ifdef HAVE_GRAYLOG_LOGGER
@@ -17,6 +15,7 @@
 #endif
 
 int log_level = 3;
+std::string g_ServiceID;
 
 // adhoc namespace because it would now collide with ::Logger defined
 // in gralog_logger
@@ -114,25 +113,23 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     npre = 0;
   }
   auto f1 = file + npre;
-  auto lmsg = fmt::format("{}:{} [{}]:  {}\n", f1, line, level, s1);
+  auto lmsg = fmt::format("{}:{} [{}] [ServiceID:{}]:  {}\n", f1, line, level,
+                          g_ServiceID, s1);
   fwrite(lmsg.c_str(), 1, lmsg.size(), log_file);
   if (level < 7 && do_run_kafka.load()) {
     // If we will use logging to Kafka in the future, refactor a bit to reduce
     // duplicate work..
-    using namespace rapidjson;
-    Document d;
-    auto &a = d.GetAllocator();
-    d.SetObject();
-    d.AddMember("version", "1.1", a);
-    d.AddMember("short_message", Value(lmsg.c_str(), a), a);
-    d.AddMember("level", Value(level), a);
-    d.AddMember("_FILE", Value(file, a), a);
-    d.AddMember("_LINE", Value(line), a);
-    StringBuffer buf1;
-    Writer<StringBuffer> wr(buf1);
-    d.Accept(wr);
-    auto s1 = buf1.GetString();
-    topic->produce((unsigned char *)s1, strlen(s1));
+    auto Doc = nlohmann::json::object();
+    Doc["version"] = "1.1";
+    Doc["short_message"] = lmsg;
+    Doc["level"] = level;
+    Doc["_FILE"] = file;
+    Doc["_LINE"] = line;
+    if (!g_ServiceID.empty()) {
+      Doc["ServiceID"] = g_ServiceID;
+    }
+    auto Buffer = Doc.dump();
+    topic->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {

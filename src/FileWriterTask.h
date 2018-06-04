@@ -2,8 +2,8 @@
 
 #include "DemuxTopic.h"
 #include "Source.h"
+#include "json.h"
 #include <memory>
-#include <rapidjson/document.h>
 #include <string>
 #include <vector>
 
@@ -36,8 +36,7 @@ public:
   std::vector<DemuxTopic> &demuxers();
   uint64_t id() const;
   std::string job_id() const;
-  rapidjson::Value
-  stats(rapidjson::MemoryPoolAllocator<rapidjson::CrtAllocator> &a) const;
+  nlohmann::json stats() const;
   std::string hdf_output_prefix;
   std::string hdf_filename;
   std::string filename_full;

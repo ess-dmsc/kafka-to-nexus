@@ -73,9 +73,9 @@ class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      rapidjson::Value const *attributes) override;
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override;
+                      std::string const &HDFAttributes) override;
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                  int mpi_rank) override;

@@ -151,16 +151,15 @@ public:
   /// file writing module.
   ///
   /// Settings/configurations are passed in JSON form, contained in a
-  /// rapidjson::Value object (one is unused, see the parameter documentation).
-  /// To extract the information you want, you will need to implement JSON
-  /// parsing code here. As this prototype does not have a return value and
-  /// exceptions should not be thrown, the only way to inform the user of a
-  /// non-fatal error is to write a log message (see logger.h"). The
-  /// configurations are in the base of the JSON object and you should thus be
-  /// able to extract relevant settings without navigating a JSON tree, unless
-  /// the settings are by design in a tree structure. Examples of extracting
-  /// settings from the JSON structure can be found in the files ev42_rw.cpp and
-  /// f142_rw.cpp.
+  /// std::string (one is unused, see the parameter documentation).  To extract
+  /// the information you want, you will need to implement JSON parsing code
+  /// here. As this prototype does not have a return value and exceptions
+  /// should not be thrown, the only way to inform the user of a non-fatal
+  /// error is to write a log message (see logger.h"). The configurations are
+  /// in the base of the JSON object and you should thus be able to extract
+  /// relevant settings without navigating a JSON tree, unless the settings are
+  /// by design in a tree structure. Examples of extracting settings from the
+  /// JSON structure can be found in the files ev42_rw.cpp and f142_rw.cpp.
   ///
   /// \note This call is executed in a catch-all block (which re-throws)
   /// relatively high up in call hierarchy the first time it is called for a
@@ -172,8 +171,8 @@ public:
   /// relevant only to the current instance of this file writing module.
   /// \param[in] config_module This parameter is currently unused and thus any
   /// calls to this member function will have this parameter set to `nullptr`.
-  void parse_config(rapidjson::Value const &config_stream,
-                    rapidjson::Value const *config_module) override {
+  void parse_config(std::string const &ConfigurationStream,
+                    std::string const &ConfigurationModule) override {
     std::cout << "WriterClass::parse_config()\n";
   }
 
@@ -204,19 +203,18 @@ public:
   ///
   /// \param[in] hdf_parent This is the HDF5 group where the relevant
   /// datasets should be created.
-  /// \param[in] attributes There is no actual documentation on what this
-  /// parameter contains but based on existing implementations, this
-  /// rapidjson::Value instance contains attributes that you are responsible for
-  /// writing to file. See ev42_rw.cpp and f142_rw.cpp for examples on how this
-  /// can be done.
-  ///
+  /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
+  /// structure which the HDFWriterModule should write to the file. Because the
+  /// HDFWriterModule is free to create the structure and datasets according to
+  /// its needs, it must also take the reposnsibility to write these
+  /// attributes.
   /// \return An instance of InitResult. Note that these instances can only be
   /// constructed using the static methods InitResult::OK(),
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
-  InitResult init_hdf(hdf5::node::Group &hdf_parent,
-                      rapidjson::Value const *attributes) override {
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                      std::string const &HDFAttributes) override {
     std::cout << "WriterClass::init_hdf()\n";
     return InitResult::OK();
   }

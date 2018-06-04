@@ -45,15 +45,15 @@ SampleEnvironmentDataGuard::source_name(const KafkaMessage &Message) const {
 }
 
 void FastSampleEnvironmentWriter::parse_config(
-    const rapidjson::Value &config_stream,
-    const rapidjson::Value *config_module) {
+    std::string const &ConfigurationStream,
+    std::string const &ConfigurationModule) {
   LOG(Sev::Debug, "There are currently no runtime configurable options in the "
                   "FastSampleEnvironmentWriter class.");
 }
 
 FileWriterBase::InitResult
 FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
-                                      rapidjson::Value const *attributes) {
+                                      std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
@@ -65,9 +65,8 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
                            DefaultChunkSize);
     NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
                                    DefaultChunkSize);
-    if (attributes) {
-      FileWriter::HDFFile::write_attributes(HDFGroup, attributes);
-    }
+    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
+    FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
     LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
                     "HDF file with error message: \"{}\"",

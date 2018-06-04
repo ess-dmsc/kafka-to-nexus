@@ -9,7 +9,6 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 find_package(Fmt REQUIRED)
-find_package(Rapidjson REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
@@ -41,7 +40,6 @@ set(path_include_common
   ${RDKAFKA_INCLUDE_DIR}
   ${HDF5_INCLUDE_DIRS}
   ${FLATBUFFERS_INCLUDE_DIR}
-  ${RAPIDJSON_INCLUDE_DIR}
   ${H5CPP_INCLUDE_DIR}
   ${Boost_INCLUDE_DIRS}
   ${CURL_INCLUDE_DIRS}
@@ -96,7 +94,6 @@ set(kafka_to_nexus_SRC
   KafkaW/ProducerTopic.cpp
   helper.cpp
   logger.cpp
-  json.cpp
   uri.cpp
   h5.cpp
   date/tz.cpp
