@@ -81,12 +81,11 @@ h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
 }
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
-                                                 std::string const &source_name,
-                                                 Value fb_value_type_id,
-                                                 CollectiveQueue *cq)
+WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
+                                   std::string const &source_name,
+                                   Value fb_value_type_id, CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
-  LOG(Sev::Debug, "f142 init_impl  scalar");
+  LOG(Sev::Debug, "f142 WriterScalar ctor");
   this->ds =
       h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
   if (!this->ds) {
@@ -96,13 +95,12 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
 }
 
 template <typename DT, typename FV>
-writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
-                                                 std::string const &source_name,
-                                                 Value fb_value_type_id,
-                                                 CollectiveQueue *cq,
-                                                 HDFIDStore *hdf_store)
+WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
+                                   std::string const &source_name,
+                                   Value fb_value_type_id, CollectiveQueue *cq,
+                                   HDFIDStore *hdf_store)
     : _fb_value_type_id(fb_value_type_id) {
-  LOG(Sev::Debug, "f142 init_impl  scalar");
+  LOG(Sev::Debug, "f142 WriterScalar ctor");
   ds = h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
   if (!this->ds) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
@@ -113,7 +111,7 @@ writer_typed_scalar<DT, FV>::writer_typed_scalar(hdf5::node::Group hdf_group,
 }
 
 template <typename DT, typename FV>
-h5::append_ret writer_typed_scalar<DT, FV>::write_impl(LogData const *fbuf) {
+h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != _fb_value_type_id) {
     return {h5::AppendResult::ERROR, 0, 0};
@@ -153,7 +151,7 @@ static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("f142");
 
 template <typename T, typename V> using WA = WriterArray<T, V>;
-template <typename T, typename V> using WS = writer_typed_scalar<T, V>;
+template <typename T, typename V> using WS = WriterScalar<T, V>;
 
 static FileWriter::Schemas::f142::Value
 value_type_scalar_from_string(std::string type) {
