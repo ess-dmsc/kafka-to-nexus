@@ -48,6 +48,12 @@ static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_array_
 
 // clang-format on
 
+template <FileWriter::Schemas::f142::Value> struct Bla;
+template <> struct Bla<Value::UByte> {
+  using C_TYPE = uint8_t;
+  using FB_VALUE_TYPE = UByte;
+};
+
 WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
                           std::string type, std::string s,
                           CollectiveQueue *cq) {
@@ -72,7 +78,8 @@ WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
       return new WS<int64_t, Long>(hg, s, vt, cq);
     }
     if (type == "uint8") {
-      return new WS<uint8_t, UByte>(hg, s, vt, cq);
+      using X = Bla<Value::UByte>;
+      return new WS<X::C_TYPE, X::FB_VALUE_TYPE>(hg, s, vt, cq);
     }
     if (type == "uint16") {
       return new WS<uint16_t, UShort>(hg, s, vt, cq);
