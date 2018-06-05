@@ -9,10 +9,6 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-#include "schemas/f142_logdata_generated.h"
-
-using FBUF = LogData;
-
 template <typename DT, typename FV> class WriterArray : public WriterTypedBase {
 public:
   WriterArray(hdf5::node::Group hdf_group, std::string const &source_name,
