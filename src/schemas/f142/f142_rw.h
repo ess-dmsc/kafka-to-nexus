@@ -1,6 +1,7 @@
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
+#include "WriterTypedBase.h"
 #include <array>
 #include <flatbuffers/flatbuffers.h>
 #include <memory>
@@ -13,11 +14,6 @@ namespace Schemas {
 namespace f142 {
 #include "schemas/f142_logdata_generated.h"
 using FBUF = LogData;
-
-class WriterTypedBase {
-public:
-  virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
-};
 
 template <typename DT, typename FV>
 class writer_typed_array : public WriterTypedBase {
