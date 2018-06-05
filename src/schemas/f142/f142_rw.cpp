@@ -18,23 +18,35 @@ using nlohmann::json;
 template <typename T, typename V> using WA = WriterArray<T, V>;
 template <typename T, typename V> using WS = WriterScalar<T, V>;
 
-static std::map<std::string, FileWriter::Schemas::f142::Value>
-    value_type_scalar_from_string{
-        {"uint8", Value::UByte}, {"uint16", Value::UShort},
-        {"uint32", Value::UInt}, {"uint64", Value::ULong},
-        {"int8", Value::Byte},   {"int16", Value::Short},
-        {"int32", Value::Int},   {"int64", Value::Long},
-        {"float", Value::Float}, {"double", Value::Double},
-    };
+// clang-format off
 
-static std::map<std::string, FileWriter::Schemas::f142::Value>
-    value_type_array_from_string{
-        {"uint8", Value::ArrayUByte}, {"uint16", Value::ArrayUShort},
-        {"uint32", Value::ArrayUInt}, {"uint64", Value::ArrayULong},
-        {"int8", Value::ArrayByte},   {"int16", Value::ArrayShort},
-        {"int32", Value::ArrayInt},   {"int64", Value::ArrayLong},
-        {"float", Value::ArrayFloat}, {"double", Value::ArrayDouble},
-    };
+static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_scalar_from_string {
+  { "uint8", Value::UByte},
+  {"uint16", Value::UShort},
+  {"uint32", Value::UInt},
+  {"uint64", Value::ULong},
+  {  "int8", Value::Byte},
+  { "int16", Value::Short},
+  { "int32", Value::Int},
+  { "int64", Value::Long},
+  { "float", Value::Float},
+  {"double", Value::Double},
+};
+
+static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_array_from_string {
+  { "uint8", Value::ArrayUByte},
+  {"uint16", Value::ArrayUShort},
+  {"uint32", Value::ArrayUInt},
+  {"uint64", Value::ArrayULong},
+  {  "int8", Value::ArrayByte},
+  { "int16", Value::ArrayShort},
+  { "int32", Value::ArrayInt},
+  { "int64", Value::ArrayLong},
+  { "float", Value::ArrayFloat},
+  {"double", Value::ArrayDouble},
+};
+
+// clang-format on
 
 WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
                           std::string type, std::string s,
