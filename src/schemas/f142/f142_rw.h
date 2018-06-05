@@ -14,14 +14,13 @@ namespace f142 {
 #include "schemas/f142_logdata_generated.h"
 using FBUF = LogData;
 
-class writer_typed_base {
+class WriterTypedBase {
 public:
-  virtual ~writer_typed_base() = default;
   virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
 };
 
 template <typename DT, typename FV>
-class writer_typed_array : public writer_typed_base {
+class writer_typed_array : public WriterTypedBase {
 public:
   writer_typed_array(hdf5::node::Group hdf_group,
                      std::string const &source_name, hsize_t ncols,
@@ -29,14 +28,13 @@ public:
   writer_typed_array(hdf5::node::Group, std::string const &source_name,
                      hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq,
                      HDFIDStore *hdf_store);
-  ~writer_typed_array() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
   Value _fb_value_type_id = Value::NONE;
 };
 
 template <typename DT, typename FV>
-class writer_typed_scalar : public writer_typed_base {
+class writer_typed_scalar : public WriterTypedBase {
 public:
   writer_typed_scalar(hdf5::node::Group hdf_group,
                       std::string const &source_name, Value fb_value_type_id,
@@ -44,7 +42,6 @@ public:
   writer_typed_scalar(hdf5::node::Group hdf_group,
                       std::string const &source_name, Value fb_value_type_id,
                       CollectiveQueue *cq, HDFIDStore *hdf_store);
-  ~writer_typed_scalar() override = default;
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
   Value _fb_value_type_id = Value::NONE;
@@ -70,7 +67,7 @@ public:
   int32_t flush() override;
   int32_t close() override;
 
-  uptr<writer_typed_base> impl;
+  uptr<WriterTypedBase> impl;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;

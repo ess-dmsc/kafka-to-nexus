@@ -230,11 +230,11 @@ value_type_array_from_string(std::string type) {
 
 // should make this templated..
 
-writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
-                            std::string type, std::string s,
-                            CollectiveQueue *cq) {
+WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
+                          std::string type, std::string s,
+                          CollectiveQueue *cq) {
 
-  using R = writer_typed_base *;
+  using R = WriterTypedBase *;
   auto &hg = hdf_group;
   if (array_size == 0) {
     auto vt = value_type_scalar_from_string(type);
@@ -301,14 +301,14 @@ writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
       return (R) new WA<double, ArrayDouble>(hg, s, array_size, vt, cq);
     }
   }
-  return (writer_typed_base *)nullptr;
+  return nullptr;
 }
 
-writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
-                                 std::string type, std::string s,
-                                 CollectiveQueue *cq, HDFIDStore *hdf_store) {
+WriterTypedBase *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
+                               std::string type, std::string s,
+                               CollectiveQueue *cq, HDFIDStore *hdf_store) {
 
-  using R = writer_typed_base *;
+  using R = WriterTypedBase *;
   auto &hg = hdf_group;
   if (array_size == 0) {
     if (type == "int8") {
@@ -383,7 +383,7 @@ writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
                                              Value::ArrayDouble, cq, hdf_store);
     }
   }
-  return (writer_typed_base *)nullptr;
+  return nullptr;
 }
 
 // clang-format: on
