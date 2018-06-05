@@ -3,8 +3,6 @@
 #include "../../logger.h"
 #include "WriterTypedBase.h"
 
-template <typename T> using uptr = std::unique_ptr<T>;
-
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
