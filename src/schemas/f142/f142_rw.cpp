@@ -18,40 +18,14 @@ using nlohmann::json;
 template <typename T, typename V> using WA = WriterArray<T, V>;
 template <typename T, typename V> using WS = WriterScalar<T, V>;
 
-static FileWriter::Schemas::f142::Value
-value_type_scalar_from_string(std::string type) {
-  if (type == "int8") {
-    return Value::Byte;
-  }
-  if (type == "int16") {
-    return Value::Short;
-  }
-  if (type == "int32") {
-    return Value::Int;
-  }
-  if (type == "int64") {
-    return Value::Long;
-  }
-  if (type == "uint8") {
-    return Value::UByte;
-  }
-  if (type == "uint16") {
-    return Value::UShort;
-  }
-  if (type == "uint32") {
-    return Value::UInt;
-  }
-  if (type == "uint64") {
-    return Value::ULong;
-  }
-  if (type == "float") {
-    return Value::Float;
-  }
-  if (type == "double") {
-    return Value::Double;
-  }
-  return Value::Int;
-}
+static std::map<std::string, FileWriter::Schemas::f142::Value>
+    value_type_scalar_from_string{
+        {"uint8", Value::UByte}, {"uint16", Value::UShort},
+        {"uint32", Value::UInt}, {"uint64", Value::ULong},
+        {"int8", Value::Byte},   {"int16", Value::Short},
+        {"int32", Value::Int},   {"int64", Value::Long},
+        {"float", Value::Float}, {"double", Value::Double},
+    };
 
 static FileWriter::Schemas::f142::Value
 value_type_array_from_string(std::string type) {
@@ -99,7 +73,11 @@ WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
   using R = WriterTypedBase *;
   auto &hg = hdf_group;
   if (array_size == 0) {
-    auto vt = value_type_scalar_from_string(type);
+    auto ValueTypeMaybe = value_type_scalar_from_string.find(type);
+    if (ValueTypeMaybe == value_type_scalar_from_string.end()) {
+      return nullptr;
+    }
+    auto vt = ValueTypeMaybe->second;
     if (type == "int8") {
       return (R) new WS<int8_t, Byte>(hg, s, vt, cq);
     }
