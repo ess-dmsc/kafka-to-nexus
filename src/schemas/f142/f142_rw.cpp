@@ -36,15 +36,10 @@ static std::map<std::string, FileWriter::Schemas::f142::Value>
         {"float", Value::ArrayFloat}, {"double", Value::ArrayDouble},
     };
 
-// clang-format: off
-
-// should make this templated..
-
 WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
                           std::string type, std::string s,
                           CollectiveQueue *cq) {
 
-  using R = WriterTypedBase *;
   auto &hg = hdf_group;
   if (array_size == 0) {
     auto ValueTypeMaybe = value_type_scalar_from_string.find(type);
@@ -53,34 +48,34 @@ WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
     }
     auto vt = ValueTypeMaybe->second;
     if (type == "int8") {
-      return (R) new WS<int8_t, Byte>(hg, s, vt, cq);
+      return new WS<int8_t, Byte>(hg, s, vt, cq);
     }
     if (type == "int16") {
-      return (R) new WS<int16_t, Short>(hg, s, vt, cq);
+      return new WS<int16_t, Short>(hg, s, vt, cq);
     }
     if (type == "int32") {
-      return (R) new WS<int32_t, Int>(hg, s, vt, cq);
+      return new WS<int32_t, Int>(hg, s, vt, cq);
     }
     if (type == "int64") {
-      return (R) new WS<int64_t, Long>(hg, s, vt, cq);
+      return new WS<int64_t, Long>(hg, s, vt, cq);
     }
     if (type == "uint8") {
-      return (R) new WS<uint8_t, UByte>(hg, s, vt, cq);
+      return new WS<uint8_t, UByte>(hg, s, vt, cq);
     }
     if (type == "uint16") {
-      return (R) new WS<uint16_t, UShort>(hg, s, vt, cq);
+      return new WS<uint16_t, UShort>(hg, s, vt, cq);
     }
     if (type == "uint32") {
-      return (R) new WS<uint32_t, UInt>(hg, s, vt, cq);
+      return new WS<uint32_t, UInt>(hg, s, vt, cq);
     }
     if (type == "uint64") {
-      return (R) new WS<uint64_t, ULong>(hg, s, vt, cq);
+      return new WS<uint64_t, ULong>(hg, s, vt, cq);
     }
     if (type == "float") {
-      return (R) new WS<float, Float>(hg, s, vt, cq);
+      return new WS<float, Float>(hg, s, vt, cq);
     }
     if (type == "double") {
-      return (R) new WS<double, Double>(hg, s, vt, cq);
+      return new WS<double, Double>(hg, s, vt, cq);
     }
   } else {
     auto ValueTypeMaybe = value_type_array_from_string.find(type);
@@ -89,34 +84,34 @@ WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
     }
     auto vt = ValueTypeMaybe->second;
     if (type == "int8") {
-      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size, vt, cq);
+      return new WA<int8_t, ArrayByte>(hg, s, array_size, vt, cq);
     }
     if (type == "int16") {
-      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size, vt, cq);
+      return new WA<int16_t, ArrayShort>(hg, s, array_size, vt, cq);
     }
     if (type == "int32") {
-      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size, vt, cq);
+      return new WA<int32_t, ArrayInt>(hg, s, array_size, vt, cq);
     }
     if (type == "int64") {
-      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size, vt, cq);
+      return new WA<int64_t, ArrayLong>(hg, s, array_size, vt, cq);
     }
     if (type == "uint8") {
-      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size, vt, cq);
+      return new WA<uint8_t, ArrayUByte>(hg, s, array_size, vt, cq);
     }
     if (type == "uint16") {
-      return (R) new WA<uint16_t, ArrayUShort>(hg, s, array_size, vt, cq);
+      return new WA<uint16_t, ArrayUShort>(hg, s, array_size, vt, cq);
     }
     if (type == "uint32") {
-      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size, vt, cq);
+      return new WA<uint32_t, ArrayUInt>(hg, s, array_size, vt, cq);
     }
     if (type == "uint64") {
-      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size, vt, cq);
+      return new WA<uint64_t, ArrayULong>(hg, s, array_size, vt, cq);
     }
     if (type == "float") {
-      return (R) new WA<float, ArrayFloat>(hg, s, array_size, vt, cq);
+      return new WA<float, ArrayFloat>(hg, s, array_size, vt, cq);
     }
     if (type == "double") {
-      return (R) new WA<double, ArrayDouble>(hg, s, array_size, vt, cq);
+      return new WA<double, ArrayDouble>(hg, s, array_size, vt, cq);
     }
   }
   return nullptr;
@@ -126,85 +121,82 @@ WriterTypedBase *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
                                std::string type, std::string s,
                                CollectiveQueue *cq, HDFIDStore *hdf_store) {
 
-  using R = WriterTypedBase *;
   auto &hg = hdf_group;
   if (array_size == 0) {
     if (type == "int8") {
-      return (R) new WS<int8_t, Byte>(hg, s, Value::Byte, cq, hdf_store);
+      return new WS<int8_t, Byte>(hg, s, Value::Byte, cq, hdf_store);
     }
     if (type == "int16") {
-      return (R) new WS<int16_t, Short>(hg, s, Value::Short, cq, hdf_store);
+      return new WS<int16_t, Short>(hg, s, Value::Short, cq, hdf_store);
     }
     if (type == "int32") {
-      return (R) new WS<int32_t, Int>(hg, s, Value::Int, cq, hdf_store);
+      return new WS<int32_t, Int>(hg, s, Value::Int, cq, hdf_store);
     }
     if (type == "int64") {
-      return (R) new WS<int64_t, Long>(hg, s, Value::Long, cq, hdf_store);
+      return new WS<int64_t, Long>(hg, s, Value::Long, cq, hdf_store);
     }
     if (type == "uint8") {
-      return (R) new WS<uint8_t, UByte>(hg, s, Value::UByte, cq, hdf_store);
+      return new WS<uint8_t, UByte>(hg, s, Value::UByte, cq, hdf_store);
     }
     if (type == "uint16") {
-      return (R) new WS<uint16_t, UShort>(hg, s, Value::UShort, cq, hdf_store);
+      return new WS<uint16_t, UShort>(hg, s, Value::UShort, cq, hdf_store);
     }
     if (type == "uint32") {
-      return (R) new WS<uint32_t, UInt>(hg, s, Value::UInt, cq, hdf_store);
+      return new WS<uint32_t, UInt>(hg, s, Value::UInt, cq, hdf_store);
     }
     if (type == "uint64") {
-      return (R) new WS<uint64_t, ULong>(hg, s, Value::ULong, cq, hdf_store);
+      return new WS<uint64_t, ULong>(hg, s, Value::ULong, cq, hdf_store);
     }
     if (type == "float") {
-      return (R) new WS<float, Float>(hg, s, Value::Float, cq, hdf_store);
+      return new WS<float, Float>(hg, s, Value::Float, cq, hdf_store);
     }
     if (type == "double") {
-      return (R) new WS<double, Double>(hg, s, Value::Double, cq, hdf_store);
+      return new WS<double, Double>(hg, s, Value::Double, cq, hdf_store);
     }
   } else {
     if (type == "int8") {
-      return (R) new WA<int8_t, ArrayByte>(hg, s, array_size, Value::ArrayByte,
-                                           cq, hdf_store);
+      return new WA<int8_t, ArrayByte>(hg, s, array_size, Value::ArrayByte, cq,
+                                       hdf_store);
     }
     if (type == "int16") {
-      return (R) new WA<int16_t, ArrayShort>(hg, s, array_size,
-                                             Value::ArrayShort, cq, hdf_store);
+      return new WA<int16_t, ArrayShort>(hg, s, array_size, Value::ArrayShort,
+                                         cq, hdf_store);
     }
     if (type == "int32") {
-      return (R) new WA<int32_t, ArrayInt>(hg, s, array_size, Value::ArrayInt,
-                                           cq, hdf_store);
+      return new WA<int32_t, ArrayInt>(hg, s, array_size, Value::ArrayInt, cq,
+                                       hdf_store);
     }
     if (type == "int64") {
-      return (R) new WA<int64_t, ArrayLong>(hg, s, array_size, Value::ArrayLong,
-                                            cq, hdf_store);
+      return new WA<int64_t, ArrayLong>(hg, s, array_size, Value::ArrayLong, cq,
+                                        hdf_store);
     }
     if (type == "uint8") {
-      return (R) new WA<uint8_t, ArrayUByte>(hg, s, array_size,
-                                             Value::ArrayUByte, cq, hdf_store);
+      return new WA<uint8_t, ArrayUByte>(hg, s, array_size, Value::ArrayUByte,
+                                         cq, hdf_store);
     }
     if (type == "uint16") {
-      return (R) new WA<uint16_t, ArrayUShort>(
-          hg, s, array_size, Value::ArrayUShort, cq, hdf_store);
+      return new WA<uint16_t, ArrayUShort>(hg, s, array_size,
+                                           Value::ArrayUShort, cq, hdf_store);
     }
     if (type == "uint32") {
-      return (R) new WA<uint32_t, ArrayUInt>(hg, s, array_size,
-                                             Value::ArrayUInt, cq, hdf_store);
+      return new WA<uint32_t, ArrayUInt>(hg, s, array_size, Value::ArrayUInt,
+                                         cq, hdf_store);
     }
     if (type == "uint64") {
-      return (R) new WA<uint64_t, ArrayULong>(hg, s, array_size,
-                                              Value::ArrayULong, cq, hdf_store);
+      return new WA<uint64_t, ArrayULong>(hg, s, array_size, Value::ArrayULong,
+                                          cq, hdf_store);
     }
     if (type == "float") {
-      return (R) new WA<float, ArrayFloat>(hg, s, array_size, Value::ArrayFloat,
-                                           cq, hdf_store);
+      return new WA<float, ArrayFloat>(hg, s, array_size, Value::ArrayFloat, cq,
+                                       hdf_store);
     }
     if (type == "double") {
-      return (R) new WA<double, ArrayDouble>(hg, s, array_size,
-                                             Value::ArrayDouble, cq, hdf_store);
+      return new WA<double, ArrayDouble>(hg, s, array_size, Value::ArrayDouble,
+                                         cq, hdf_store);
     }
   }
   return nullptr;
 }
-
-// clang-format: on
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
