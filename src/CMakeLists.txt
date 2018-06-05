@@ -99,6 +99,7 @@ set(kafka_to_nexus_SRC
   date/tz.cpp
   date/tzblobs.cpp
   schemas/f142/f142_rw.cpp
+  schemas/f142/FlatbufferReader.cpp
   schemas/f142/f142_synth.cpp
   schemas/ev42/ev42_rw.cpp
   schemas/ev42/ev42_synth.cpp

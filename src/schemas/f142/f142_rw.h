@@ -1,4 +1,3 @@
-#include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "Common.h"
@@ -10,12 +9,6 @@
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
-
-class FlatbufferReader : public FileWriter::FlatbufferReader {
-  bool verify(Msg const &msg) const override;
-  std::string source_name(Msg const &msg) const override;
-  uint64_t timestamp(Msg const &msg) const override;
-};
 
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
