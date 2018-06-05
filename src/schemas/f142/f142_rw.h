@@ -12,18 +12,18 @@ template <typename T> using uptr = std::unique_ptr<T>;
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
+
 #include "schemas/f142_logdata_generated.h"
+
 using FBUF = LogData;
 
-template <typename DT, typename FV>
-class writer_typed_array : public WriterTypedBase {
+template <typename DT, typename FV> class WriterArray : public WriterTypedBase {
 public:
-  writer_typed_array(hdf5::node::Group hdf_group,
-                     std::string const &source_name, hsize_t ncols,
-                     Value fb_value_type_id, CollectiveQueue *cq);
-  writer_typed_array(hdf5::node::Group, std::string const &source_name,
-                     hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq,
-                     HDFIDStore *hdf_store);
+  WriterArray(hdf5::node::Group hdf_group, std::string const &source_name,
+              hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq);
+  WriterArray(hdf5::node::Group, std::string const &source_name, hsize_t ncols,
+              Value fb_value_type_id, CollectiveQueue *cq,
+              HDFIDStore *hdf_store);
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
   Value _fb_value_type_id = Value::NONE;
