@@ -27,40 +27,14 @@ static std::map<std::string, FileWriter::Schemas::f142::Value>
         {"float", Value::Float}, {"double", Value::Double},
     };
 
-static FileWriter::Schemas::f142::Value
-value_type_array_from_string(std::string type) {
-  if (type == "int8") {
-    return Value::ArrayByte;
-  }
-  if (type == "int16") {
-    return Value::ArrayShort;
-  }
-  if (type == "int32") {
-    return Value::ArrayInt;
-  }
-  if (type == "int64") {
-    return Value::ArrayLong;
-  }
-  if (type == "uint8") {
-    return Value::ArrayUByte;
-  }
-  if (type == "uint16") {
-    return Value::ArrayUShort;
-  }
-  if (type == "uint32") {
-    return Value::ArrayUInt;
-  }
-  if (type == "uint64") {
-    return Value::ArrayULong;
-  }
-  if (type == "float") {
-    return Value::ArrayFloat;
-  }
-  if (type == "double") {
-    return Value::ArrayDouble;
-  }
-  return Value::Int;
-}
+static std::map<std::string, FileWriter::Schemas::f142::Value>
+    value_type_array_from_string{
+        {"uint8", Value::ArrayUByte}, {"uint16", Value::ArrayUShort},
+        {"uint32", Value::ArrayUInt}, {"uint64", Value::ArrayULong},
+        {"int8", Value::ArrayByte},   {"int16", Value::ArrayShort},
+        {"int32", Value::ArrayInt},   {"int64", Value::ArrayLong},
+        {"float", Value::ArrayFloat}, {"double", Value::ArrayDouble},
+    };
 
 // clang-format: off
 
@@ -109,7 +83,11 @@ WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
       return (R) new WS<double, Double>(hg, s, vt, cq);
     }
   } else {
-    auto vt = value_type_array_from_string(type);
+    auto ValueTypeMaybe = value_type_array_from_string.find(type);
+    if (ValueTypeMaybe == value_type_array_from_string.end()) {
+      return nullptr;
+    }
+    auto vt = ValueTypeMaybe->second;
     if (type == "int8") {
       return (R) new WA<int8_t, ArrayByte>(hg, s, array_size, vt, cq);
     }
