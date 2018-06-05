@@ -1,14 +1,11 @@
 #pragma once
 
-template <typename T> using uptr = std::unique_ptr<T>;
+#include "../../h5.h"
+#include "Common.h"
 
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
-
-#include "schemas/f142_logdata_generated.h"
-
-using FBUF = LogData;
 
 class WriterTypedBase {
 public:
