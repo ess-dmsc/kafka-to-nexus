@@ -15,9 +15,6 @@ namespace f142 {
 
 using nlohmann::json;
 
-template <typename T, typename V> using WA = WriterArray<T, V>;
-template <typename T, typename V> using WS = WriterScalar<T, V>;
-
 // clang-format off
 
 static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_scalar_from_string {
@@ -46,20 +43,22 @@ static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_array_
   {"double", Value::ArrayDouble},
 };
 
-// clang-format on
-
-template <FileWriter::Schemas::f142::Value> struct Bla;
-template <> struct Bla<Value::UByte> {
-  using C_TYPE = uint8_t;
-  using FB_VALUE_TYPE = UByte;
+static std::map<std::string, std::unique_ptr<WriterFactory>> value_type_defs_from_string {
+  //{ "uint8", std::move() },
 };
+
+// clang-format on
 
 WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
                           std::string type, std::string s,
                           CollectiveQueue *cq) {
-
+  new WriterFactoryImpl<Value::UByte>();
+  // std::unique_ptr<WriterFactory> A = std::move(
+  // std::unique_ptr<WriterFactoryImpl<Value::UByte>>(new
+  // WriterFactoryImpl<Value::UByte>()) );
   auto &hg = hdf_group;
   if (array_size == 0) {
+    // Convention is that array_size == 0 means scalar type.
     auto ValueTypeMaybe = value_type_scalar_from_string.find(type);
     if (ValueTypeMaybe == value_type_scalar_from_string.end()) {
       return nullptr;
@@ -78,8 +77,7 @@ WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
       return new WS<int64_t, Long>(hg, s, vt, cq);
     }
     if (type == "uint8") {
-      using X = Bla<Value::UByte>;
-      return new WS<X::C_TYPE, X::FB_VALUE_TYPE>(hg, s, vt, cq);
+      return new WS<uint8_t, UByte>(hg, s, vt, cq);
     }
     if (type == "uint16") {
       return new WS<uint16_t, UShort>(hg, s, vt, cq);

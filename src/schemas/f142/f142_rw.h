@@ -1,6 +1,8 @@
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
 #include "Common.h"
+#include "WriterArray.h"
+#include "WriterScalar.h"
 #include "WriterTypedBase.h"
 #include <array>
 #include <memory>
@@ -43,6 +45,35 @@ public:
   std::string type;
   CollectiveQueue *cq = nullptr;
 };
+
+// clang-format off
+
+template <typename T, typename V> using WA = WriterArray<T, V>;
+template <typename T, typename V> using WS = WriterScalar<T, V>;
+
+struct WriterFactory {
+static 
+virtual ~WriterFactory() = default;
+virtual WriterTypedBase * createWriter(hdf5::node::Group Group, std::string Name, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) = 0;
+};
+
+template <FileWriter::Schemas::f142::Value VV> struct WriterFactoryImpl : public WriterFactory {
+bool const IsArray;
+using C_TYPE = uint8_t;
+using FB_VALUE_TYPE = UByte;
+~WriterFactoryImpl() override = default;
+WriterTypedBase * createWriter(hdf5::node::Group Group, std::string Name, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
+  if (IsArray) {
+    return WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq);
+  }
+  return WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq);
+}
+};
+
+template <> struct WriterFactoryImpl <Value::UByte>      { bool const IsArray = false; using C_TYPE = uint8_t; using FB_VALUE_TYPE = UByte; };
+template <> struct WriterFactoryImpl <Value::ArrayUByte> { bool const IsArray = true;  using C_TYPE = uint8_t; using FB_VALUE_TYPE = ArrayUByte; };
+
+// clang-format on
 }
 }
 }
