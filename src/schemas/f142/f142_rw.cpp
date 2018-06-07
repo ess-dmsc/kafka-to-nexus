@@ -43,8 +43,12 @@ static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_array_
   {"double", Value::ArrayDouble},
 };
 
-static std::map<std::string, std::unique_ptr<WriterFactory>> value_type_defs_from_string {
-  //{ "uint8", std::move() },
+static std::map<std::string, WriterFactory *> value_type_defs_from_string {
+  { "uint8", new WriterFactoryScalar< uint8_t, UByte>() },
+};
+
+static std::map<std::string, std::unique_ptr<WriterFactory> > value_type_defs_from_string_2 {
+  //{ "uint8", {new WriterFactoryScalar< uint8_t, UByte>()} },
 };
 
 // clang-format on
@@ -52,10 +56,7 @@ static std::map<std::string, std::unique_ptr<WriterFactory>> value_type_defs_fro
 WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
                           std::string type, std::string s,
                           CollectiveQueue *cq) {
-  new WriterFactoryImpl<Value::UByte>();
-  // std::unique_ptr<WriterFactory> A = std::move(
-  // std::unique_ptr<WriterFactoryImpl<Value::UByte>>(new
-  // WriterFactoryImpl<Value::UByte>()) );
+  std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint8_t, UByte>());
   auto &hg = hdf_group;
   if (array_size == 0) {
     // Convention is that array_size == 0 means scalar type.
