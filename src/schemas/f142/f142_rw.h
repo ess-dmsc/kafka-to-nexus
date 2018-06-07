@@ -12,7 +12,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-class HDFWriterModule : public FileWriter::HDFWriterModule {
+class HDFWriterModule final : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
