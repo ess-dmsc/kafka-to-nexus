@@ -15,205 +15,88 @@ namespace f142 {
 
 using nlohmann::json;
 
-// clang-format off
-
-static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_scalar_from_string {
-  { "uint8", Value::UByte},
-  {"uint16", Value::UShort},
-  {"uint32", Value::UInt},
-  {"uint64", Value::ULong},
-  {  "int8", Value::Byte},
-  { "int16", Value::Short},
-  { "int32", Value::Int},
-  { "int64", Value::Long},
-  { "float", Value::Float},
-  {"double", Value::Double},
+enum class Rank {
+  SCALAR,
+  ARRAY,
 };
 
-static std::map<std::string, FileWriter::Schemas::f142::Value> value_type_array_from_string {
-  { "uint8", Value::ArrayUByte},
-  {"uint16", Value::ArrayUShort},
-  {"uint32", Value::ArrayUInt},
-  {"uint64", Value::ArrayULong},
-  {  "int8", Value::ArrayByte},
-  { "int16", Value::ArrayShort},
-  { "int32", Value::ArrayInt},
-  { "int64", Value::ArrayLong},
-  { "float", Value::ArrayFloat},
-  {"double", Value::ArrayDouble},
-};
+static std::map<Rank, std::map<std::string, std::unique_ptr<WriterFactory>>>
+    name_to_value_traits;
 
-static std::map<std::string, WriterFactory *> value_type_defs_from_string {
-  { "uint8", new WriterFactoryScalar< uint8_t, UByte>() },
-};
+namespace {
 
-static std::map<std::string, std::unique_ptr<WriterFactory> > value_type_defs_from_string_2 {
-  //{ "uint8", {new WriterFactoryScalar< uint8_t, UByte>()} },
-};
+struct InitTypeMap {
+  InitTypeMap() {
+    // name_to_value_traits[Rank::SCALAR];
+    // name_to_value_traits[Rank::ARRAY];
+    auto &Scalar = name_to_value_traits[Rank::SCALAR];
+    auto &Array = name_to_value_traits[Rank::ARRAY];
+    // clang-format off
+  Scalar[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< uint8_t, UByte>);
+  Scalar["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint16_t, UShort>);
+  Scalar["uint32"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint32_t, UInt>);
+  Scalar["uint64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint64_t, ULong>);
+  Scalar[  "int8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  int8_t, Byte>);
+  Scalar[ "int16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int16_t, Short>);
+  Scalar[ "int32"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int32_t, Int>);
+  Scalar[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int64_t, Long>);
+  Scalar[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<   float, Float>);
+  Scalar["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  double, Double>);
 
-// clang-format on
-
-WriterTypedBase *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
-                          std::string type, std::string s,
-                          CollectiveQueue *cq) {
-  std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint8_t, UByte>());
-  auto &hg = hdf_group;
-  if (array_size == 0) {
-    // Convention is that array_size == 0 means scalar type.
-    auto ValueTypeMaybe = value_type_scalar_from_string.find(type);
-    if (ValueTypeMaybe == value_type_scalar_from_string.end()) {
-      return nullptr;
-    }
-    auto vt = ValueTypeMaybe->second;
-    if (type == "int8") {
-      return new WS<int8_t, Byte>(hg, s, vt, cq);
-    }
-    if (type == "int16") {
-      return new WS<int16_t, Short>(hg, s, vt, cq);
-    }
-    if (type == "int32") {
-      return new WS<int32_t, Int>(hg, s, vt, cq);
-    }
-    if (type == "int64") {
-      return new WS<int64_t, Long>(hg, s, vt, cq);
-    }
-    if (type == "uint8") {
-      return new WS<uint8_t, UByte>(hg, s, vt, cq);
-    }
-    if (type == "uint16") {
-      return new WS<uint16_t, UShort>(hg, s, vt, cq);
-    }
-    if (type == "uint32") {
-      return new WS<uint32_t, UInt>(hg, s, vt, cq);
-    }
-    if (type == "uint64") {
-      return new WS<uint64_t, ULong>(hg, s, vt, cq);
-    }
-    if (type == "float") {
-      return new WS<float, Float>(hg, s, vt, cq);
-    }
-    if (type == "double") {
-      return new WS<double, Double>(hg, s, vt, cq);
-    }
-  } else {
-    auto ValueTypeMaybe = value_type_array_from_string.find(type);
-    if (ValueTypeMaybe == value_type_array_from_string.end()) {
-      return nullptr;
-    }
-    auto vt = ValueTypeMaybe->second;
-    if (type == "int8") {
-      return new WA<int8_t, ArrayByte>(hg, s, array_size, vt, cq);
-    }
-    if (type == "int16") {
-      return new WA<int16_t, ArrayShort>(hg, s, array_size, vt, cq);
-    }
-    if (type == "int32") {
-      return new WA<int32_t, ArrayInt>(hg, s, array_size, vt, cq);
-    }
-    if (type == "int64") {
-      return new WA<int64_t, ArrayLong>(hg, s, array_size, vt, cq);
-    }
-    if (type == "uint8") {
-      return new WA<uint8_t, ArrayUByte>(hg, s, array_size, vt, cq);
-    }
-    if (type == "uint16") {
-      return new WA<uint16_t, ArrayUShort>(hg, s, array_size, vt, cq);
-    }
-    if (type == "uint32") {
-      return new WA<uint32_t, ArrayUInt>(hg, s, array_size, vt, cq);
-    }
-    if (type == "uint64") {
-      return new WA<uint64_t, ArrayULong>(hg, s, array_size, vt, cq);
-    }
-    if (type == "float") {
-      return new WA<float, ArrayFloat>(hg, s, array_size, vt, cq);
-    }
-    if (type == "double") {
-      return new WA<double, ArrayDouble>(hg, s, array_size, vt, cq);
-    }
+  Array[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< uint8_t, ArrayUByte>);
+  Array["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint16_t, ArrayUShort>);
+  Array["uint32"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint32_t, ArrayUInt>);
+  Array["uint64"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint64_t, ArrayULong>);
+  Array[  "int8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<  int8_t, ArrayByte>);
+  Array[ "int16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int16_t, ArrayShort>);
+  Array[ "int32"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int32_t, ArrayInt>);
+  Array[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int64_t, ArrayLong>);
+  Array[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<   float, ArrayFloat>);
+  Array["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<  double, ArrayDouble>);
+    // clang-format on
   }
-  return nullptr;
+};
+
+InitTypeMap TriggerInitTypeMap;
 }
 
-WriterTypedBase *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
-                               std::string type, std::string s,
-                               CollectiveQueue *cq, HDFIDStore *hdf_store) {
-
-  auto &hg = hdf_group;
-  if (array_size == 0) {
-    if (type == "int8") {
-      return new WS<int8_t, Byte>(hg, s, Value::Byte, cq, hdf_store);
-    }
-    if (type == "int16") {
-      return new WS<int16_t, Short>(hg, s, Value::Short, cq, hdf_store);
-    }
-    if (type == "int32") {
-      return new WS<int32_t, Int>(hg, s, Value::Int, cq, hdf_store);
-    }
-    if (type == "int64") {
-      return new WS<int64_t, Long>(hg, s, Value::Long, cq, hdf_store);
-    }
-    if (type == "uint8") {
-      return new WS<uint8_t, UByte>(hg, s, Value::UByte, cq, hdf_store);
-    }
-    if (type == "uint16") {
-      return new WS<uint16_t, UShort>(hg, s, Value::UShort, cq, hdf_store);
-    }
-    if (type == "uint32") {
-      return new WS<uint32_t, UInt>(hg, s, Value::UInt, cq, hdf_store);
-    }
-    if (type == "uint64") {
-      return new WS<uint64_t, ULong>(hg, s, Value::ULong, cq, hdf_store);
-    }
-    if (type == "float") {
-      return new WS<float, Float>(hg, s, Value::Float, cq, hdf_store);
-    }
-    if (type == "double") {
-      return new WS<double, Double>(hg, s, Value::Double, cq, hdf_store);
-    }
-  } else {
-    if (type == "int8") {
-      return new WA<int8_t, ArrayByte>(hg, s, array_size, Value::ArrayByte, cq,
-                                       hdf_store);
-    }
-    if (type == "int16") {
-      return new WA<int16_t, ArrayShort>(hg, s, array_size, Value::ArrayShort,
-                                         cq, hdf_store);
-    }
-    if (type == "int32") {
-      return new WA<int32_t, ArrayInt>(hg, s, array_size, Value::ArrayInt, cq,
-                                       hdf_store);
-    }
-    if (type == "int64") {
-      return new WA<int64_t, ArrayLong>(hg, s, array_size, Value::ArrayLong, cq,
-                                        hdf_store);
-    }
-    if (type == "uint8") {
-      return new WA<uint8_t, ArrayUByte>(hg, s, array_size, Value::ArrayUByte,
-                                         cq, hdf_store);
-    }
-    if (type == "uint16") {
-      return new WA<uint16_t, ArrayUShort>(hg, s, array_size,
-                                           Value::ArrayUShort, cq, hdf_store);
-    }
-    if (type == "uint32") {
-      return new WA<uint32_t, ArrayUInt>(hg, s, array_size, Value::ArrayUInt,
-                                         cq, hdf_store);
-    }
-    if (type == "uint64") {
-      return new WA<uint64_t, ArrayULong>(hg, s, array_size, Value::ArrayULong,
-                                          cq, hdf_store);
-    }
-    if (type == "float") {
-      return new WA<float, ArrayFloat>(hg, s, array_size, Value::ArrayFloat, cq,
-                                       hdf_store);
-    }
-    if (type == "double") {
-      return new WA<double, ArrayDouble>(hg, s, array_size, Value::ArrayDouble,
-                                         cq, hdf_store);
-    }
+std::unique_ptr<WriterTypedBase>
+impl_fac(hdf5::node::Group HDFGroup, size_t ArraySize, std::string TypeName,
+         std::string SourceName, CollectiveQueue *cq) {
+  Rank TheRank = Rank::SCALAR;
+  if (ArraySize > 0) {
+    TheRank = Rank::ARRAY;
   }
-  return nullptr;
+  auto ValueTraitsMaybe = name_to_value_traits[TheRank].find(TypeName);
+  if (ValueTraitsMaybe == name_to_value_traits[TheRank].end()) {
+    return nullptr;
+  }
+  auto &ValueTraits = ValueTraitsMaybe->second;
+  return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
+                                   ValueTraits->getValueUnionID(), cq);
+}
+
+std::unique_ptr<WriterTypedBase>
+impl_fac_open(hdf5::node::Group HDFGroup, size_t ArraySize,
+              std::string TypeName, std::string SourceName, CollectiveQueue *cq,
+              HDFIDStore *HDFStore) {
+  Rank TheRank = Rank::SCALAR;
+  if (ArraySize > 0) {
+    TheRank = Rank::ARRAY;
+  }
+  auto ValueTraitsMaybe = name_to_value_traits[TheRank].find(TypeName);
+  if (ValueTraitsMaybe == name_to_value_traits[TheRank].end()) {
+    return nullptr;
+  }
+  auto &ValueTraits = ValueTraitsMaybe->second;
+  if (!ValueTraits) {
+    LOG(Sev::Critical, "Could not get ValueTraits for TypeName: {}  ArraySize: "
+                       "{}  name_to_value_traits.size(): {}",
+        TypeName, ArraySize, name_to_value_traits[TheRank].size());
+  }
+  return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
+                                   ValueTraits->getValueUnionID(), cq,
+                                   HDFStore);
 }
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
@@ -264,7 +147,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
   CollectiveQueue *cq = nullptr;
   try {
     std::string s("value");
-    impl.reset(impl_fac(HDFGroup, array_size, type, s, cq));
+    impl = impl_fac(HDFGroup, array_size, type, s, cq);
 
     if (!impl) {
       LOG(Sev::Error,
@@ -309,7 +192,7 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   CollectiveQueue *cq = nullptr;
   HDFIDStore *hdf_store = nullptr;
   std::string s("value");
-  impl.reset(impl_fac_open(HDFGroup, array_size, type, s, cq, hdf_store));
+  impl = impl_fac_open(HDFGroup, array_size, type, s, cq, hdf_store);
   if (!impl) {
     LOG(Sev::Error,
         "Could not create a writer implementation for value_type {}", type);

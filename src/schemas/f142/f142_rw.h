@@ -53,32 +53,44 @@ template <typename T, typename V> using WA = WriterArray<T, V>;
 template <typename T, typename V> using WS = WriterScalar<T, V>;
 
 struct WriterFactory {
-virtual ~WriterFactory() = default;
-virtual WriterTypedBase * createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) = 0;
+virtual std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) = 0;
+virtual std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq, HDFIDStore *HDFStore) = 0;
+virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
 };
 
-template <typename C_TYPE, typename FB_VALUE_TYPE> struct WriterFactoryScalar : public WriterFactory {
+template <typename C_TYPE, typename FB_VALUE_TYPE>
+struct WriterFactoryScalar : public WriterFactory {
 bool const IsArray = false;
-~WriterFactoryScalar() override = default;
-WriterTypedBase * createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
-  return new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq);
+FileWriter::Schemas::f142::Value ValueUnionID = ValueTraits<FB_VALUE_TYPE>::enum_value;
+
+std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
+  return std::unique_ptr<WriterTypedBase>(new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq));
 }
+
+std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq, HDFIDStore *HDFStore) {
+  return std::unique_ptr<WriterTypedBase>(new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq, HDFStore));
+}
+
+FileWriter::Schemas::f142::Value getValueUnionID() override { return ValueUnionID; }
+
 };
 
+template <typename C_TYPE, typename FB_VALUE_TYPE>
 struct WriterFactoryArray : public WriterFactory {
 bool const IsArray = true;
-using C_TYPE = uint8_t;
-using FB_VALUE_TYPE = ArrayUByte;
-~WriterFactoryArray() override = default;
-WriterTypedBase * createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
-  return new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns, ValueUnionID, cq);
+FileWriter::Schemas::f142::Value ValueUnionID = ValueTraits<FB_VALUE_TYPE>::enum_value;
+
+std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
+  return std::unique_ptr<WriterTypedBase>(new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns, ValueUnionID, cq));
 }
+
+std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq, HDFIDStore *HDFStore) {
+  return std::unique_ptr<WriterTypedBase>(new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns, ValueUnionID, cq, HDFStore));
+}
+
+FileWriter::Schemas::f142::Value getValueUnionID() override { return ValueUnionID; }
+
 };
-
-struct WriterFactoryUByte    : public WriterFactoryScalar< uint8_t, UByte> {};
-struct WriterFactoryUShort   : public WriterFactoryScalar<uint16_t, UShort> {};
-
-struct WriterFactoryArrayUByte   : public WriterFactoryScalar< uint8_t, ArrayUByte> {};
 
 // clang-format on
 }
