@@ -57,7 +57,6 @@ virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
 
 template <typename C_TYPE, typename FB_VALUE_TYPE>
 struct WriterFactoryScalar : public WriterFactory {
-bool const IsArray = false;
 FileWriter::Schemas::f142::Value ValueUnionID = ValueTraits<FB_VALUE_TYPE>::enum_value;
 
 std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
@@ -74,7 +73,6 @@ FileWriter::Schemas::f142::Value getValueUnionID() override { return ValueUnionI
 
 template <typename C_TYPE, typename FB_VALUE_TYPE>
 struct WriterFactoryArray : public WriterFactory {
-bool const IsArray = true;
 FileWriter::Schemas::f142::Value ValueUnionID = ValueTraits<FB_VALUE_TYPE>::enum_value;
 
 std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) {
