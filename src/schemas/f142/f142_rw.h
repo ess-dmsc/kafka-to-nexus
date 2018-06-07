@@ -25,6 +25,7 @@ public:
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
+  ~HDFWriterModule() {}
 
   uptr<WriterTypedBase> impl;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
