@@ -49,9 +49,6 @@ public:
 
 // clang-format off
 
-template <typename T, typename V> using WA = WriterArray<T, V>;
-template <typename T, typename V> using WS = WriterScalar<T, V>;
-
 struct WriterFactory {
 virtual std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq) = 0;
 virtual std::unique_ptr<WriterTypedBase> createWriter(hdf5::node::Group Group, std::string Name, size_t Columns, FileWriter::Schemas::f142::Value ValueUnionID, CollectiveQueue *cq, HDFIDStore *HDFStore) = 0;
