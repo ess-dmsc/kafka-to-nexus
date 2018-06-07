@@ -28,6 +28,8 @@ struct append_ret {
   uint64_t written_bytes;
   uint64_t ix0;
   operator bool() const { return status == AppendResult::OK; }
+  // Heap allocation only in sad path, so it's fast.
+  std::string ErrorString;
 };
 
 class h5d {

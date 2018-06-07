@@ -53,17 +53,22 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
 
 template <typename DT, typename FV>
 h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *fbuf) {
+  h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != _fb_value_type_id) {
-    return {h5::AppendResult::ERROR, 0, 0};
+    Result.ErrorString =
+        fmt::format("vt == Value::NONE || vt != _fb_value_type_id");
+    return Result;
   }
   auto v1 = (FV const *)fbuf->value();
   if (!v1) {
-    return {h5::AppendResult::ERROR, 0, 0};
+    Result.ErrorString = fmt::format("value() in flatbuffer is nullptr");
+    return Result;
   }
   auto v2 = v1->value();
   if (!this->ds) {
-    return {h5::AppendResult::ERROR, 0, 0};
+    Result.ErrorString = fmt::format("Dataset is nullptr");
+    return Result;
   }
   return this->ds->append_data_1d(&v2, 1);
 }
