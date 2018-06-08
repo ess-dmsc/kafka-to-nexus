@@ -5,6 +5,7 @@
 #include "WriterScalar.h"
 #include "WriterTypedBase.h"
 #include <array>
+#include <chrono>
 #include <memory>
 #include <vector>
 
@@ -45,6 +46,11 @@ public:
   std::string source_name;
   std::string type;
   CollectiveQueue *cq = nullptr;
+  using CLOCK = std::chrono::steady_clock;
+  using MS = std::chrono::milliseconds;
+  MS ErrorLogMinInterval{500};
+  std::chrono::time_point<CLOCK> TimestampLastErrorLog{CLOCK::now() -
+                                                       ErrorLogMinInterval};
 };
 
 // clang-format off

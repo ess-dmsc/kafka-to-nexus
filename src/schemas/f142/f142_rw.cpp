@@ -238,13 +238,21 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto fbuf = get_fbuf(msg.data());
   if (!impl) {
-    LOG(Sev::Warning,
-        "sorry, but we were unable to initialize for this kind of messages");
+    auto Now = CLOCK::now();
+    if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
+      TimestampLastErrorLog = Now;
+      LOG(Sev::Warning,
+          "sorry, but we were unable to initialize for this kind of messages");
+    }
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
   auto wret = impl->write_impl(fbuf);
   if (!wret) {
-    LOG(Sev::Error, "write failed");
+    auto Now = CLOCK::now();
+    if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
+      TimestampLastErrorLog = Now;
+      LOG(Sev::Error, "write failed: {}", wret.ErrorString);
+    }
   }
   total_written_bytes += wret.written_bytes;
   ts_max = std::max(fbuf->timestamp(), ts_max);
