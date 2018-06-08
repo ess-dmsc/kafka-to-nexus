@@ -242,12 +242,12 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
       LOG(Sev::Error, "write failed: {}", wret.ErrorString);
     }
   }
-  total_written_bytes += wret.written_bytes;
+  WrittenBytesTotal += wret.written_bytes;
   ts_max = std::max(fbuf->timestamp(), ts_max);
-  if (total_written_bytes > index_at_bytes + index_every_bytes) {
+  if (WrittenBytesTotal > index_at_bytes + index_every_bytes) {
     this->ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
     this->ds_cue_index->append_data_1d(&wret.ix0, 1);
-    index_at_bytes = total_written_bytes;
+    index_at_bytes = WrittenBytesTotal;
   }
   {
     auto x = fbuf->timestamp();

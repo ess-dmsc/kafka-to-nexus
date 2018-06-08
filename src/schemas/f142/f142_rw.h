@@ -51,7 +51,7 @@ public:
   std::vector<DatasetInfo> DatasetInfoList;
   bool do_flush_always = false;
   bool DoWriteForwarderInternalDebugInfo = false;
-  uint64_t total_written_bytes = 0;
+  uint64_t WrittenBytesTotal = 0;
   uint64_t index_at_bytes = 0;
   // set by default to a large value:
   uint64_t index_every_bytes = !0;
