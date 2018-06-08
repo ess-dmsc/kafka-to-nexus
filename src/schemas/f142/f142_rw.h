@@ -42,9 +42,9 @@ public:
   // set by default to a large value:
   uint64_t index_every_bytes = !0;
   uint64_t ts_max = 0;
-  size_t array_size = 0;
-  std::string source_name;
-  std::string type;
+  size_t ArraySize = 0;
+  std::string SourceName;
+  std::string TypeName;
   CollectiveQueue *cq = nullptr;
   using CLOCK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;

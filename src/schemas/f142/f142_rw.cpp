@@ -81,7 +81,7 @@ enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
 
 std::unique_ptr<WriterTypedBase>
 createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
-                      std::string TypeName, std::string SourceName,
+                      std::string TypeName, std::string DatasetName,
                       CollectiveQueue *cq, HDFIDStore *HDFStore,
                       CreateWriterTypedBaseMethod Method) {
   Rank TheRank = Rank::SCALAR;
@@ -99,36 +99,40 @@ createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
   }
   auto const &ValueTraits = ValueTraitsMaybe.value();
   if (Method == CreateWriterTypedBaseMethod::OPEN) {
-    return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
+    return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
                                      ValueTraits->getValueUnionID(), cq,
                                      HDFStore);
   }
-  return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
+  return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
                                    ValueTraits->getValueUnionID(), cq);
 }
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
-  auto str = find<std::string>("source", ConfigurationStreamJson);
-  if (!str) {
+  if (auto SourceNameMaybe =
+          find<std::string>("source", ConfigurationStreamJson)) {
+    SourceName = SourceNameMaybe.inner();
+  } else {
+    LOG(Sev::Error, "ket \"source\" is not specified in json command");
     return;
   }
-  source_name = str.inner();
 
-  str = find<std::string>("type", ConfigurationStreamJson);
-  if (!str) {
+  if (auto TypeNameMaybe = find<std::string>("type", ConfigurationStreamJson)) {
+    TypeName = TypeNameMaybe.inner();
+  } else {
     return;
   }
-  type = str.inner();
 
-  if (auto x = find<uint64_t>("array_size", ConfigurationStreamJson)) {
-    array_size = size_t(x.inner());
+  if (auto ArraySizeMaybe =
+          find<uint64_t>("array_size", ConfigurationStreamJson)) {
+    ArraySize = size_t(ArraySizeMaybe.inner());
   }
+
   LOG(Sev::Debug,
       "HDFWriterModule::parse_config f142 source_name: {}  type: {}  "
       "array_size: {}",
-      source_name, type, array_size);
+      SourceName, TypeName, ArraySize);
 
   try {
     index_every_bytes =
@@ -155,13 +159,13 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
   CollectiveQueue *cq = nullptr;
   HDFIDStore *HDFStore = nullptr;
   try {
-    std::string s("value");
-    impl = createWriterTypedBase(HDFGroup, array_size, type, s, cq, HDFStore,
-                                 CreateWriterTypedBaseMethod::CREATE);
+    impl = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value", cq,
+                                 HDFStore, CreateWriterTypedBaseMethod::CREATE);
 
     if (!impl) {
       LOG(Sev::Error,
-          "Could not create a writer implementation for value_type {}", type);
+          "Could not create a writer implementation for value_type {}",
+          TypeName);
       return HDFWriterModule::InitResult::ERROR_IO();
     }
     this->ds_timestamp =
@@ -176,11 +180,11 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     }
     if (do_writer_forwarder_internal) {
       this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, source_name + "__fwdinfo_seq_data", 64 * 1024, cq);
+          HDFGroup, SourceName + "__fwdinfo_seq_data", 64 * 1024, cq);
       this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, source_name + "__fwdinfo_seq_fwd", 64 * 1024, cq);
+          HDFGroup, SourceName + "__fwdinfo_seq_fwd", 64 * 1024, cq);
       this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, source_name + "__fwdinfo_ts_data", 64 * 1024, cq);
+          HDFGroup, SourceName + "__fwdinfo_ts_data", 64 * 1024, cq);
       if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
         impl.reset();
         return HDFWriterModule::InitResult::ERROR_IO();
@@ -201,12 +205,11 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
   HDFIDStore *HDFStore = nullptr;
-  std::string s("value");
-  impl = createWriterTypedBase(HDFGroup, array_size, type, s, cq, HDFStore,
-                               CreateWriterTypedBaseMethod::OPEN);
+  impl = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value", cq,
+                               HDFStore, CreateWriterTypedBaseMethod::OPEN);
   if (!impl) {
     LOG(Sev::Error,
-        "Could not create a writer implementation for value_type {}", type);
+        "Could not create a writer implementation for value_type {}", TypeName);
     return HDFWriterModule::InitResult::ERROR_IO();
   }
 
@@ -231,11 +234,11 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 
   if (do_writer_forwarder_internal) {
     this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, source_name + "__fwdinfo_seq_data", cq, HDFStore);
+        HDFGroup, SourceName + "__fwdinfo_seq_data", cq, HDFStore);
     this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, source_name + "__fwdinfo_seq_fwd", cq, HDFStore);
+        HDFGroup, SourceName + "__fwdinfo_seq_fwd", cq, HDFStore);
     this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, source_name + "__fwdinfo_ts_data", cq, HDFStore);
+        HDFGroup, SourceName + "__fwdinfo_ts_data", cq, HDFStore);
     if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
