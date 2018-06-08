@@ -161,7 +161,7 @@ HDFWriterModule::HDFWriterModule() {
   DatasetInfoList.push_back({std::string("cue_timestamp_zero"),
       ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetCueTimestampZero});
   DatasetInfoList.push_back({std::string("cue_index"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_cue_index});
+      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetCueIndex});
   if (DoWriteForwarderInternalDebugInfo) {
     DatasetInfoList.push_back({std::string("__fwdinfo_seq_data"),
       ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_seq_data});
@@ -252,7 +252,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   ts_max = std::max(fbuf->timestamp(), ts_max);
   if (WrittenBytesTotal > IndexAtBytes + IndexEveryBytes) {
     this->DatasetCueTimestampZero->append_data_1d(&ts_max, 1);
-    this->ds_cue_index->append_data_1d(&wret.ix0, 1);
+    this->DatasetCueIndex->append_data_1d(&wret.ix0, 1);
     IndexAtBytes = WrittenBytesTotal;
   }
   {
