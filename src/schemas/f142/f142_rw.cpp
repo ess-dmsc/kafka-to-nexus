@@ -133,19 +133,19 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
       SourceName, TypeName, ArraySize);
 
   try {
-    index_every_bytes =
+    IndexEveryBytes =
         ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
             .get<uint64_t>() *
         1024;
-    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+    LOG(Sev::Debug, "index_every_bytes: {}", IndexEveryBytes);
   } catch (...) { /* it's ok if not found */
   }
   try {
-    index_every_bytes =
+    IndexEveryBytes =
         ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
             .get<uint64_t>() *
         1024 * 1024;
-    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+    LOG(Sev::Debug, "index_every_bytes: {}", IndexEveryBytes);
   } catch (...) { /* it's ok if not found */
   }
 }
@@ -244,7 +244,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   }
   WrittenBytesTotal += wret.written_bytes;
   ts_max = std::max(fbuf->timestamp(), ts_max);
-  if (WrittenBytesTotal > IndexAtBytes + index_every_bytes) {
+  if (WrittenBytesTotal > IndexAtBytes + IndexEveryBytes) {
     this->ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
     this->ds_cue_index->append_data_1d(&wret.ix0, 1);
     IndexAtBytes = WrittenBytesTotal;
