@@ -28,7 +28,7 @@ makeValueFloat(float Value) {
   LogDataBuilder.add_value_type(FileWriter::Schemas::f142::Value::Float);
   FileWriter::Schemas::f142::FinishLogDataBuffer(Builder,
                                                  LogDataBuilder.Finish());
-  return std::move(BuilderPtr);
+  return BuilderPtr;
 }
 
 TEST(Schema_f142, basic) {
