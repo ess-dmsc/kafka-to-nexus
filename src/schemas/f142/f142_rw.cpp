@@ -166,7 +166,7 @@ HDFWriterModule::HDFWriterModule() {
     DatasetInfoList.push_back({std::string("__fwdinfo_seq_data"),
       ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetSeqData});
     DatasetInfoList.push_back({std::string("__fwdinfo_seq_fwd"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_seq_fwd});
+      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetSeqFwd});
     DatasetInfoList.push_back({std::string("__fwdinfo_ts_data"),
       ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_ts_data});
   }
@@ -268,7 +268,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
       }
       {
         auto x = fi->seq_fwd();
-        this->ds_seq_fwd->append_data_1d(&x, 1);
+        this->DatasetSeqFwd->append_data_1d(&x, 1);
       }
       {
         auto x = fi->ts_data();

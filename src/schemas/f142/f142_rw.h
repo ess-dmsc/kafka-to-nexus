@@ -46,7 +46,7 @@ public:
   uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueTimestampZero;
   uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueIndex;
   uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqData;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqFwd;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
   std::vector<DatasetInfo> DatasetInfoList;
   bool do_flush_always = false;
