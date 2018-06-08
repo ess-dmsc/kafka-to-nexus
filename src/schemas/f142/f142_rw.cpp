@@ -77,28 +77,13 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
   return FoundInMap<typename T::mapped_type>(It->second);
 }
 
-std::unique_ptr<WriterTypedBase>
-impl_fac(hdf5::node::Group HDFGroup, size_t ArraySize, std::string TypeName,
-         std::string SourceName, CollectiveQueue *cq) {
-  Rank TheRank = Rank::SCALAR;
-  if (ArraySize > 0) {
-    TheRank = Rank::ARRAY;
-  }
-  auto ValueTraitsMaybe =
-      findInMap<std::map<std::string, std::unique_ptr<WriterFactory>>>(
-          RankAndTypenameToValueTraits[TheRank], TypeName);
-  if (!ValueTraitsMaybe.found()) {
-    return nullptr;
-  }
-  auto const &ValueTraits = ValueTraitsMaybe.value();
-  return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
-                                   ValueTraits->getValueUnionID(), cq);
-}
+enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
 
 std::unique_ptr<WriterTypedBase>
-impl_fac_open(hdf5::node::Group HDFGroup, size_t ArraySize,
-              std::string TypeName, std::string SourceName, CollectiveQueue *cq,
-              HDFIDStore *HDFStore) {
+createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
+                      std::string TypeName, std::string SourceName,
+                      CollectiveQueue *cq, HDFIDStore *HDFStore,
+                      CreateWriterTypedBaseMethod Method) {
   Rank TheRank = Rank::SCALAR;
   if (ArraySize > 0) {
     TheRank = Rank::ARRAY;
@@ -113,9 +98,13 @@ impl_fac_open(hdf5::node::Group HDFGroup, size_t ArraySize,
     return nullptr;
   }
   auto const &ValueTraits = ValueTraitsMaybe.value();
+  if (Method == CreateWriterTypedBaseMethod::OPEN) {
+    return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
+                                     ValueTraits->getValueUnionID(), cq,
+                                     HDFStore);
+  }
   return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
-                                   ValueTraits->getValueUnionID(), cq,
-                                   HDFStore);
+                                   ValueTraits->getValueUnionID(), cq);
 }
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
@@ -164,9 +153,11 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
+  HDFIDStore *HDFStore = nullptr;
   try {
     std::string s("value");
-    impl = impl_fac(HDFGroup, array_size, type, s, cq);
+    impl = createWriterTypedBase(HDFGroup, array_size, type, s, cq, HDFStore,
+                                 CreateWriterTypedBaseMethod::CREATE);
 
     if (!impl) {
       LOG(Sev::Error,
@@ -209,9 +200,10 @@ HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
-  HDFIDStore *hdf_store = nullptr;
+  HDFIDStore *HDFStore = nullptr;
   std::string s("value");
-  impl = impl_fac_open(HDFGroup, array_size, type, s, cq, hdf_store);
+  impl = createWriterTypedBase(HDFGroup, array_size, type, s, cq, HDFStore,
+                               CreateWriterTypedBaseMethod::OPEN);
   if (!impl) {
     LOG(Sev::Error,
         "Could not create a writer implementation for value_type {}", type);
@@ -219,11 +211,11 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   }
 
   this->ds_timestamp =
-      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "time", cq, hdf_store);
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "time", cq, HDFStore);
   this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      HDFGroup, "cue_timestamp_zero", cq, hdf_store);
+      HDFGroup, "cue_timestamp_zero", cq, HDFStore);
   this->ds_cue_index =
-      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_index", cq, hdf_store);
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_index", cq, HDFStore);
   if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
     impl.reset();
     return HDFWriterModule::InitResult::ERROR_IO();
@@ -239,11 +231,11 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 
   if (do_writer_forwarder_internal) {
     this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, source_name + "__fwdinfo_seq_data", cq, hdf_store);
+        HDFGroup, source_name + "__fwdinfo_seq_data", cq, HDFStore);
     this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, source_name + "__fwdinfo_seq_fwd", cq, hdf_store);
+        HDFGroup, source_name + "__fwdinfo_seq_fwd", cq, HDFStore);
     this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, source_name + "__fwdinfo_ts_data", cq, hdf_store);
+        HDFGroup, source_name + "__fwdinfo_ts_data", cq, HDFStore);
     if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
