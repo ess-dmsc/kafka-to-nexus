@@ -187,9 +187,9 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
   CollectiveQueue *cq = nullptr;
   HDFIDStore *HDFStore = nullptr;
   try {
-    impl = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value", cq,
-                                 HDFStore, CreateMethod);
-    if (!impl) {
+    ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
+                                        cq, HDFStore, CreateMethod);
+    if (!ValueWriter) {
       LOG(Sev::Error,
           "Could not create a writer implementation for value_type {}",
           TypeName);
@@ -225,7 +225,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto fbuf = get_fbuf(msg.data());
-  if (!impl) {
+  if (!ValueWriter) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
       TimestampLastErrorLog = Now;
@@ -234,7 +234,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
     }
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto wret = impl->write_impl(fbuf);
+  auto wret = ValueWriter->write_impl(fbuf);
   if (!wret) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {

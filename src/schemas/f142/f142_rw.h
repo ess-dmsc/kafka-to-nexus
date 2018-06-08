@@ -41,7 +41,7 @@ public:
   HDFWriterModule();
   ~HDFWriterModule() {}
 
-  uptr<WriterTypedBase> impl;
+  uptr<WriterTypedBase> ValueWriter;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;
