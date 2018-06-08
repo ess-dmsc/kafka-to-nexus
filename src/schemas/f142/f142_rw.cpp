@@ -244,10 +244,10 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   }
   WrittenBytesTotal += wret.written_bytes;
   ts_max = std::max(fbuf->timestamp(), ts_max);
-  if (WrittenBytesTotal > index_at_bytes + index_every_bytes) {
+  if (WrittenBytesTotal > IndexAtBytes + index_every_bytes) {
     this->ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
     this->ds_cue_index->append_data_1d(&wret.ix0, 1);
-    index_at_bytes = WrittenBytesTotal;
+    IndexAtBytes = WrittenBytesTotal;
   }
   {
     auto x = fbuf->timestamp();
