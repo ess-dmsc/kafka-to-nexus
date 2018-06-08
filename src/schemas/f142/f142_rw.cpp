@@ -168,7 +168,7 @@ HDFWriterModule::HDFWriterModule() {
     DatasetInfoList.push_back({std::string("__fwdinfo_seq_fwd"),
       ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetSeqFwd});
     DatasetInfoList.push_back({std::string("__fwdinfo_ts_data"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_ts_data});
+      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetTsData});
   }
   // clang-format on
 }
@@ -272,7 +272,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
       }
       {
         auto x = fi->ts_data();
-        this->ds_ts_data->append_data_1d(&x, 1);
+        this->DatasetTsData->append_data_1d(&x, 1);
       }
     }
   }
