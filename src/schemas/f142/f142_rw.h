@@ -43,7 +43,7 @@ public:
 
   uptr<WriterTypedBase> ValueWriter;
   uptr<h5::h5d_chunked_1d<uint64_t>> DatasetTimestamp;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueTimestampZero;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_data;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
