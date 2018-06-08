@@ -150,6 +150,23 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   }
 }
 
+HDFWriterModule::HDFWriterModule() {
+  // Setup the parameters for our datasets
+  size_t ChunkBytes = 64 * 1024;
+  size_t BufferSize = 16 * 1024;
+  size_t BufferPacketMaxSize = 1024;
+  // clang-format off
+  DatasetInfoList.push_back({std::string("time"),                  ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_timestamp});
+  DatasetInfoList.push_back({std::string("cue_timestamp_zero"),    ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_cue_timestamp_zero});
+  DatasetInfoList.push_back({std::string("cue_index"),             ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_cue_index});
+  if (DoWriteForwarderInternalDebugInfo) {
+    DatasetInfoList.push_back({std::string("__fwdinfo_seq_data"),  ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_seq_data});
+    DatasetInfoList.push_back({std::string("__fwdinfo_seq_fwd"),   ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_seq_fwd});
+    DatasetInfoList.push_back({std::string("__fwdinfo_ts_data"),   ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_ts_data});
+  }
+  // clang-format on
+}
+
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
@@ -179,60 +196,23 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       return HDFWriterModule::InitResult::ERROR_IO();
     }
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
-      this->ds_timestamp =
-          h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, "time", 64 * 1024, cq);
-      this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, "cue_timestamp_zero", 64 * 1024, cq);
-      this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, "cue_index", 64 * 1024, cq);
-      if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
-        impl.reset();
-        return HDFWriterModule::InitResult::ERROR_IO();
-      }
-      if (DoWriteForwarderInternalDebugInfo) {
-        this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-            HDFGroup, SourceName + "__fwdinfo_seq_data", 64 * 1024, cq);
-        this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-            HDFGroup, SourceName + "__fwdinfo_seq_fwd", 64 * 1024, cq);
-        this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-            HDFGroup, SourceName + "__fwdinfo_ts_data", 64 * 1024, cq);
-        if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
-          impl.reset();
+      for (auto const &Info : DatasetInfoList) {
+        *Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
+                                                         Info.ChunkBytes, cq);
+        if (Info.Ptr->get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
       }
       auto AttributesJson = nlohmann::json::parse(*HDFAttributesPtr);
       HDFFile::write_attributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
-      this->ds_timestamp =
-          h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "time", cq, HDFStore);
-      this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-          HDFGroup, "cue_timestamp_zero", cq, HDFStore);
-      this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::open(
-          HDFGroup, "cue_index", cq, HDFStore);
-      if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
-        impl.reset();
-        return HDFWriterModule::InitResult::ERROR_IO();
-      }
-      size_t BufferSize = 16 * 1024;
-      size_t BufferPacketMaxSize = 1024;
-      ds_timestamp->buffer_init(BufferSize, BufferPacketMaxSize);
-      ds_cue_timestamp_zero->buffer_init(BufferSize, BufferPacketMaxSize);
-      ds_cue_index->buffer_init(BufferSize, BufferPacketMaxSize);
-      if (DoWriteForwarderInternalDebugInfo) {
-        this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
-            HDFGroup, SourceName + "__fwdinfo_seq_data", cq, HDFStore);
-        this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
-            HDFGroup, SourceName + "__fwdinfo_seq_fwd", cq, HDFStore);
-        this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
-            HDFGroup, SourceName + "__fwdinfo_ts_data", cq, HDFStore);
-        if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
-          impl.reset();
+      for (auto const &Info : DatasetInfoList) {
+        *Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
+                                                       HDFStore);
+        if ((*Info.Ptr).get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
-        ds_seq_data->buffer_init(BufferSize, BufferPacketMaxSize);
-        ds_seq_fwd->buffer_init(BufferSize, BufferPacketMaxSize);
-        ds_ts_data->buffer_init(BufferSize, BufferPacketMaxSize);
+        (*Info.Ptr)->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
       }
     }
   } catch (std::exception &e) {
@@ -293,37 +273,28 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
 }
 
-void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                                int mpi_rank) {
+void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
+                                int MPIRank) {
   this->cq = cq;
-  ds_timestamp->ds.cq = cq;
-  ds_timestamp->ds.hdf_store = hdf_store;
-  ds_timestamp->ds.mpi_rank = mpi_rank;
-
-  ds_cue_timestamp_zero->ds.cq = cq;
-  ds_cue_timestamp_zero->ds.hdf_store = hdf_store;
-  ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
-
-  ds_cue_index->ds.cq = cq;
-  ds_cue_index->ds.hdf_store = hdf_store;
-  ds_cue_index->ds.mpi_rank = mpi_rank;
-
-  ds_seq_data->ds.cq = cq;
-  ds_seq_data->ds.hdf_store = hdf_store;
-  ds_seq_data->ds.mpi_rank = mpi_rank;
-
-  ds_seq_fwd->ds.cq = cq;
-  ds_seq_fwd->ds.hdf_store = hdf_store;
-  ds_seq_fwd->ds.mpi_rank = mpi_rank;
-
-  ds_ts_data->ds.cq = cq;
-  ds_ts_data->ds.hdf_store = hdf_store;
-  ds_ts_data->ds.mpi_rank = mpi_rank;
+  for (auto const &Info : DatasetInfoList) {
+    auto &Dataset = (*Info.Ptr)->ds;
+    Dataset.cq = cq;
+    Dataset.hdf_store = HDFStore;
+    Dataset.mpi_rank = MPIRank;
+  }
 }
 
-int32_t HDFWriterModule::flush() { return 0; }
+int32_t HDFWriterModule::flush() {
+  for (auto const &Info : DatasetInfoList) {
+    (*Info.Ptr)->flush_buf();
+  }
+  return 0;
+}
 
-int32_t HDFWriterModule::close() { return 0; }
+int32_t HDFWriterModule::close() {
+  // This HDFWriterModule has nothing special to do here.
+  return 0;
+}
 
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
     RegisterWriter("f142");

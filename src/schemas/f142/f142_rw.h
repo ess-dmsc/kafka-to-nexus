@@ -15,6 +15,14 @@ namespace f142 {
 
 enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
 
+struct DatasetInfo {
+  std::string Name;
+  size_t ChunkBytes;
+  size_t BufferSize;
+  size_t BufferPacketMaxSize;
+  uptr<h5::h5d_chunked_1d<uint64_t>> *Ptr;
+};
+
 class HDFWriterModule final : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
@@ -31,6 +39,7 @@ public:
   WriteResult write(Msg const &msg) override;
   int32_t flush() override;
   int32_t close() override;
+  HDFWriterModule();
   ~HDFWriterModule() {}
 
   uptr<WriterTypedBase> impl;
@@ -40,6 +49,7 @@ public:
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_data;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
+  std::vector<DatasetInfo> DatasetInfoList;
   bool do_flush_always = false;
   bool DoWriteForwarderInternalDebugInfo = false;
   uint64_t total_written_bytes = 0;
