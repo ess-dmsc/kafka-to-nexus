@@ -13,6 +13,8 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
+
 class HDFWriterModule final : public FileWriter::HDFWriterModule {
 public:
   static FileWriter::HDFWriterModule::ptr create();
@@ -21,6 +23,9 @@ public:
   void parse_config(std::string const &ConfigurationStream,
                     std::string const &ConfigurationModule) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                      std::string const *HDFAttributes,
+                      CreateWriterTypedBaseMethod CreateMethod);
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                  int mpi_rank) override;
   WriteResult write(Msg const &msg) override;

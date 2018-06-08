@@ -77,8 +77,6 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
   return FoundInMap<typename T::mapped_type>(It->second);
 }
 
-enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
-
 std::unique_ptr<WriterTypedBase>
 createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
                       std::string TypeName, std::string DatasetName,
@@ -155,98 +153,93 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
+  return init_hdf(HDFGroup, &HDFAttributes,
+                  CreateWriterTypedBaseMethod::CREATE);
+}
+
+HDFWriterModule::InitResult
+HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
+  return init_hdf(HDFGroup, nullptr, CreateWriterTypedBaseMethod::OPEN);
+}
+
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
+                          std::string const *HDFAttributesPtr,
+                          CreateWriterTypedBaseMethod CreateMethod) {
   // Keep these for now, experimenting with those on another branch.
   CollectiveQueue *cq = nullptr;
   HDFIDStore *HDFStore = nullptr;
   try {
     impl = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value", cq,
-                                 HDFStore, CreateWriterTypedBaseMethod::CREATE);
-
+                                 HDFStore, CreateMethod);
     if (!impl) {
       LOG(Sev::Error,
           "Could not create a writer implementation for value_type {}",
           TypeName);
       return HDFWriterModule::InitResult::ERROR_IO();
     }
-    this->ds_timestamp =
-        h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, "time", 64 * 1024, cq);
-    this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        HDFGroup, "cue_timestamp_zero", 64 * 1024, cq);
-    this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
-        HDFGroup, "cue_index", 64 * 1024, cq);
-    if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
-      impl.reset();
-      return HDFWriterModule::InitResult::ERROR_IO();
-    }
-    if (DoWriteForwarderInternalDebugInfo) {
-      this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, SourceName + "__fwdinfo_seq_data", 64 * 1024, cq);
-      this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, SourceName + "__fwdinfo_seq_fwd", 64 * 1024, cq);
-      this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
-          HDFGroup, SourceName + "__fwdinfo_ts_data", 64 * 1024, cq);
-      if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+    if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
+      this->ds_timestamp =
+          h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, "time", 64 * 1024, cq);
+      this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+          HDFGroup, "cue_timestamp_zero", 64 * 1024, cq);
+      this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::create(
+          HDFGroup, "cue_index", 64 * 1024, cq);
+      if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
         impl.reset();
         return HDFWriterModule::InitResult::ERROR_IO();
       }
+      if (DoWriteForwarderInternalDebugInfo) {
+        this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
+            HDFGroup, SourceName + "__fwdinfo_seq_data", 64 * 1024, cq);
+        this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
+            HDFGroup, SourceName + "__fwdinfo_seq_fwd", 64 * 1024, cq);
+        this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::create(
+            HDFGroup, SourceName + "__fwdinfo_ts_data", 64 * 1024, cq);
+        if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+          impl.reset();
+          return HDFWriterModule::InitResult::ERROR_IO();
+        }
+      }
+      auto AttributesJson = nlohmann::json::parse(*HDFAttributesPtr);
+      HDFFile::write_attributes(HDFGroup, &AttributesJson);
+    } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
+      this->ds_timestamp =
+          h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "time", cq, HDFStore);
+      this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
+          HDFGroup, "cue_timestamp_zero", cq, HDFStore);
+      this->ds_cue_index = h5::h5d_chunked_1d<uint64_t>::open(
+          HDFGroup, "cue_index", cq, HDFStore);
+      if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
+        impl.reset();
+        return HDFWriterModule::InitResult::ERROR_IO();
+      }
+      size_t BufferSize = 16 * 1024;
+      size_t BufferPacketMaxSize = 1024;
+      ds_timestamp->buffer_init(BufferSize, BufferPacketMaxSize);
+      ds_cue_timestamp_zero->buffer_init(BufferSize, BufferPacketMaxSize);
+      ds_cue_index->buffer_init(BufferSize, BufferPacketMaxSize);
+      if (DoWriteForwarderInternalDebugInfo) {
+        this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
+            HDFGroup, SourceName + "__fwdinfo_seq_data", cq, HDFStore);
+        this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
+            HDFGroup, SourceName + "__fwdinfo_seq_fwd", cq, HDFStore);
+        this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
+            HDFGroup, SourceName + "__fwdinfo_ts_data", cq, HDFStore);
+        if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
+          impl.reset();
+          return HDFWriterModule::InitResult::ERROR_IO();
+        }
+        ds_seq_data->buffer_init(BufferSize, BufferPacketMaxSize);
+        ds_seq_fwd->buffer_init(BufferSize, BufferPacketMaxSize);
+        ds_ts_data->buffer_init(BufferSize, BufferPacketMaxSize);
+      }
     }
-    auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFFile::write_attributes(HDFGroup, &AttributesJson);
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
     LOG(Sev::Error, "ERROR f142 could not init HDFGroup: {}  trace: {}",
         static_cast<std::string>(HDFGroup.link().path()), message);
   }
-  return HDFWriterModule::InitResult::OK();
-}
-
-HDFWriterModule::InitResult
-HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
-  // Keep these for now, experimenting with those on another branch.
-  CollectiveQueue *cq = nullptr;
-  HDFIDStore *HDFStore = nullptr;
-  impl = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value", cq,
-                               HDFStore, CreateWriterTypedBaseMethod::OPEN);
-  if (!impl) {
-    LOG(Sev::Error,
-        "Could not create a writer implementation for value_type {}", TypeName);
-    return HDFWriterModule::InitResult::ERROR_IO();
-  }
-
-  this->ds_timestamp =
-      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "time", cq, HDFStore);
-  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      HDFGroup, "cue_timestamp_zero", cq, HDFStore);
-  this->ds_cue_index =
-      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_index", cq, HDFStore);
-  if (!ds_timestamp || !ds_cue_timestamp_zero || !ds_cue_index) {
-    impl.reset();
-    return HDFWriterModule::InitResult::ERROR_IO();
-  }
-
-  size_t BufferSize = 16 * 1024;
-  size_t BufferPacketMaxSize = 1024;
-
-  ds_timestamp->buffer_init(BufferSize, BufferPacketMaxSize);
-  ds_cue_timestamp_zero->buffer_init(BufferSize, BufferPacketMaxSize);
-  ds_cue_index->buffer_init(BufferSize, BufferPacketMaxSize);
-
-  if (DoWriteForwarderInternalDebugInfo) {
-    this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, SourceName + "__fwdinfo_seq_data", cq, HDFStore);
-    this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, SourceName + "__fwdinfo_seq_fwd", cq, HDFStore);
-    this->ds_ts_data = h5::h5d_chunked_1d<uint64_t>::open(
-        HDFGroup, SourceName + "__fwdinfo_ts_data", cq, HDFStore);
-    if (!ds_seq_data || !ds_seq_fwd || !ds_ts_data) {
-      impl.reset();
-      return HDFWriterModule::InitResult::ERROR_IO();
-    }
-    ds_seq_data->buffer_init(BufferSize, BufferPacketMaxSize);
-    ds_seq_fwd->buffer_init(BufferSize, BufferPacketMaxSize);
-    ds_ts_data->buffer_init(BufferSize, BufferPacketMaxSize);
-  }
-
   return HDFWriterModule::InitResult::OK();
 }
 
