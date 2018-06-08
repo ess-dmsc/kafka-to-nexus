@@ -16,11 +16,12 @@ hdf5::file::File createInMemoryTestFile(std::string const &Filename) {
                             FAPL);
 }
 
-static std::unique_ptr<flatbuffers::FlatBufferBuilder> makeFlatbuffer() {
+static std::unique_ptr<flatbuffers::FlatBufferBuilder>
+makeValueFloat(float Value) {
   auto BuilderPtr = make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   FileWriter::Schemas::f142::FloatBuilder FloatBuilder(Builder);
-  FloatBuilder.add_value(0.125);
+  FloatBuilder.add_value(Value);
   auto FloatOffset = FloatBuilder.Finish().Union();
   FileWriter::Schemas::f142::LogDataBuilder LogDataBuilder(Builder);
   LogDataBuilder.add_value(FloatOffset);
@@ -31,7 +32,7 @@ static std::unique_ptr<flatbuffers::FlatBufferBuilder> makeFlatbuffer() {
 }
 
 TEST(Schema_f142, basic) {
-  size_t N = 16;
+  std::vector<float> Expected{0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
   auto File = createInMemoryTestFile("tmp-dummy.h5");
   {
     FileWriter::Schemas::f142::HDFWriterModule WriterModule;
@@ -39,8 +40,8 @@ TEST(Schema_f142, basic) {
     WriterModule.ArraySize = 0;
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    auto Builder = makeFlatbuffer();
-    for (size_t i = 0; i < N; ++i) {
+    for (auto Value : Expected) {
+      auto Builder = makeValueFloat(Value);
       auto Msg = FileWriter::Msg::owned(
           reinterpret_cast<char *>(Builder->GetBufferPointer()),
           Builder->GetSize());
@@ -54,6 +55,7 @@ TEST(Schema_f142, basic) {
 
   auto Dataset = hdf5::node::get_dataset(File.root(), "value");
   std::vector<float> Data;
+  size_t N = Expected.size();
   Data.resize(N);
   hdf5::dataspace::Simple SpaceFile({N});
   hdf5::dataspace::Simple SpaceMem({N});
@@ -62,6 +64,6 @@ TEST(Schema_f142, basic) {
   Dataset.read(*Data.data(), Dataset.datatype(), SpaceFile, SpaceMem,
                hdf5::property::DatasetTransferList());
   for (size_t i = 0; i < N; ++i) {
-    ASSERT_EQ(Data.at(i), 0.125);
+    ASSERT_EQ(Data.at(i), Expected.at(i));
   }
 }
