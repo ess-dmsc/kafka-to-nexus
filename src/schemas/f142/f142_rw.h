@@ -36,7 +36,7 @@ public:
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
   bool do_flush_always = false;
-  bool do_writer_forwarder_internal = false;
+  bool DoWriteForwarderInternalDebugInfo = false;
   uint64_t total_written_bytes = 0;
   uint64_t index_at_bytes = 0;
   // set by default to a large value:

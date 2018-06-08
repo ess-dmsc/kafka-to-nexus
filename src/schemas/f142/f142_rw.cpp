@@ -178,7 +178,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
-    if (do_writer_forwarder_internal) {
+    if (DoWriteForwarderInternalDebugInfo) {
       this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::create(
           HDFGroup, SourceName + "__fwdinfo_seq_data", 64 * 1024, cq);
       this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::create(
@@ -232,7 +232,7 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   ds_cue_timestamp_zero->buffer_init(buffer_size, buffer_packet_max);
   ds_cue_index->buffer_init(buffer_size, buffer_packet_max);
 
-  if (do_writer_forwarder_internal) {
+  if (DoWriteForwarderInternalDebugInfo) {
     this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
         HDFGroup, SourceName + "__fwdinfo_seq_data", cq, HDFStore);
     this->ds_seq_fwd = h5::h5d_chunked_1d<uint64_t>::open(
@@ -281,7 +281,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
     auto x = fbuf->timestamp();
     this->ds_timestamp->append_data_1d(&x, 1);
   }
-  if (do_writer_forwarder_internal) {
+  if (DoWriteForwarderInternalDebugInfo) {
     if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
       auto fi = (fwdinfo_1_t *)fbuf->fwdinfo();
       {
