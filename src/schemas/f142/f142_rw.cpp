@@ -27,8 +27,6 @@ namespace {
 
 struct InitTypeMap {
   InitTypeMap() {
-    // name_to_value_traits[Rank::SCALAR];
-    // name_to_value_traits[Rank::ARRAY];
     auto &Scalar = name_to_value_traits[Rank::SCALAR];
     auto &Array = name_to_value_traits[Rank::ARRAY];
     // clang-format off
