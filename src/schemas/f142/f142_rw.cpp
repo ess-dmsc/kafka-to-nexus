@@ -224,13 +224,12 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
     return HDFWriterModule::InitResult::ERROR_IO();
   }
 
-  // TODO take from config
-  size_t buffer_size = 1024 * 1024;
-  size_t buffer_packet_max = 0;
+  size_t BufferSize = 16 * 1024;
+  size_t BufferPacketMaxSize = 1024;
 
-  ds_timestamp->buffer_init(buffer_size, buffer_packet_max);
-  ds_cue_timestamp_zero->buffer_init(buffer_size, buffer_packet_max);
-  ds_cue_index->buffer_init(buffer_size, buffer_packet_max);
+  ds_timestamp->buffer_init(BufferSize, BufferPacketMaxSize);
+  ds_cue_timestamp_zero->buffer_init(BufferSize, BufferPacketMaxSize);
+  ds_cue_index->buffer_init(BufferSize, BufferPacketMaxSize);
 
   if (DoWriteForwarderInternalDebugInfo) {
     this->ds_seq_data = h5::h5d_chunked_1d<uint64_t>::open(
@@ -243,9 +242,9 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
       impl.reset();
       return HDFWriterModule::InitResult::ERROR_IO();
     }
-    ds_seq_data->buffer_init(buffer_size, buffer_packet_max);
-    ds_seq_fwd->buffer_init(buffer_size, buffer_packet_max);
-    ds_ts_data->buffer_init(buffer_size, buffer_packet_max);
+    ds_seq_data->buffer_init(BufferSize, BufferPacketMaxSize);
+    ds_seq_fwd->buffer_init(BufferSize, BufferPacketMaxSize);
+    ds_ts_data->buffer_init(BufferSize, BufferPacketMaxSize);
   }
 
   return HDFWriterModule::InitResult::OK();
