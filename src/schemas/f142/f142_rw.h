@@ -25,7 +25,6 @@ struct DatasetInfo {
 
 class HDFWriterModule final : public FileWriter::HDFWriterModule {
 public:
-  static FileWriter::HDFWriterModule::ptr create();
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   void parse_config(std::string const &ConfigurationStream,
