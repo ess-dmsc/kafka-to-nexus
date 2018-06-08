@@ -156,7 +156,7 @@ HDFWriterModule::HDFWriterModule() {
   size_t BufferSize = 16 * 1024;
   size_t BufferPacketMaxSize = 1024;
   // clang-format off
-  DatasetInfoList.push_back({std::string("time"),                  ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_timestamp});
+  DatasetInfoList.push_back({std::string("time"),                  ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetTimestamp});
   DatasetInfoList.push_back({std::string("cue_timestamp_zero"),    ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_cue_timestamp_zero});
   DatasetInfoList.push_back({std::string("cue_index"),             ChunkBytes, BufferSize, BufferPacketMaxSize, &ds_cue_index});
   if (DoWriteForwarderInternalDebugInfo) {
@@ -251,7 +251,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   }
   {
     auto x = fbuf->timestamp();
-    this->ds_timestamp->append_data_1d(&x, 1);
+    this->DatasetTimestamp->append_data_1d(&x, 1);
   }
   if (DoWriteForwarderInternalDebugInfo) {
     if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
