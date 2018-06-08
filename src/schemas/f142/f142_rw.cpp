@@ -21,14 +21,14 @@ enum class Rank {
 };
 
 static std::map<Rank, std::map<std::string, std::unique_ptr<WriterFactory>>>
-    name_to_value_traits;
+    RankAndTypenameToValueTraits;
 
 namespace {
 
 struct InitTypeMap {
   InitTypeMap() {
-    auto &Scalar = name_to_value_traits[Rank::SCALAR];
-    auto &Array = name_to_value_traits[Rank::ARRAY];
+    auto &Scalar = RankAndTypenameToValueTraits[Rank::SCALAR];
+    auto &Array = RankAndTypenameToValueTraits[Rank::ARRAY];
     // clang-format off
   Scalar[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< uint8_t, UByte>);
   Scalar["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint16_t, UShort>);
@@ -58,6 +58,25 @@ struct InitTypeMap {
 InitTypeMap TriggerInitTypeMap;
 }
 
+/// Helper struct to make branching on a found map entry more concise.
+template <typename T> struct FoundInMap {
+  FoundInMap() : Value(nullptr) {}
+  FoundInMap(T const &Value) : Value(&Value) {}
+  bool found() const { return Value != nullptr; }
+  T const &value() const { return *Value; }
+  T const *Value;
+};
+
+/// Helper function to make branching on a found map entry more concise.
+template <typename T, typename K>
+FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
+  auto It = Map.find(Key);
+  if (It == Map.end()) {
+    return FoundInMap<typename T::mapped_type>();
+  }
+  return FoundInMap<typename T::mapped_type>(It->second);
+}
+
 std::unique_ptr<WriterTypedBase>
 impl_fac(hdf5::node::Group HDFGroup, size_t ArraySize, std::string TypeName,
          std::string SourceName, CollectiveQueue *cq) {
@@ -65,11 +84,13 @@ impl_fac(hdf5::node::Group HDFGroup, size_t ArraySize, std::string TypeName,
   if (ArraySize > 0) {
     TheRank = Rank::ARRAY;
   }
-  auto ValueTraitsMaybe = name_to_value_traits[TheRank].find(TypeName);
-  if (ValueTraitsMaybe == name_to_value_traits[TheRank].end()) {
+  auto ValueTraitsMaybe =
+      findInMap<std::map<std::string, std::unique_ptr<WriterFactory>>>(
+          RankAndTypenameToValueTraits[TheRank], TypeName);
+  if (!ValueTraitsMaybe.found()) {
     return nullptr;
   }
-  auto &ValueTraits = ValueTraitsMaybe->second;
+  auto const &ValueTraits = ValueTraitsMaybe.value();
   return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
                                    ValueTraits->getValueUnionID(), cq);
 }
@@ -82,16 +103,16 @@ impl_fac_open(hdf5::node::Group HDFGroup, size_t ArraySize,
   if (ArraySize > 0) {
     TheRank = Rank::ARRAY;
   }
-  auto ValueTraitsMaybe = name_to_value_traits[TheRank].find(TypeName);
-  if (ValueTraitsMaybe == name_to_value_traits[TheRank].end()) {
+  auto ValueTraitsMaybe =
+      findInMap<std::map<std::string, std::unique_ptr<WriterFactory>>>(
+          RankAndTypenameToValueTraits[TheRank], TypeName);
+  if (!ValueTraitsMaybe.found()) {
+    LOG(Sev::Error, "Could not get ValueTraits for TypeName: {}  ArraySize: {} "
+                    " RankAndTypenameToValueTraits.size(): {}",
+        TypeName, ArraySize, RankAndTypenameToValueTraits[TheRank].size());
     return nullptr;
   }
-  auto &ValueTraits = ValueTraitsMaybe->second;
-  if (!ValueTraits) {
-    LOG(Sev::Critical, "Could not get ValueTraits for TypeName: {}  ArraySize: "
-                       "{}  name_to_value_traits.size(): {}",
-        TypeName, ArraySize, name_to_value_traits[TheRank].size());
-  }
+  auto const &ValueTraits = ValueTraitsMaybe.value();
   return ValueTraits->createWriter(HDFGroup, SourceName, ArraySize,
                                    ValueTraits->getValueUnionID(), cq,
                                    HDFStore);
