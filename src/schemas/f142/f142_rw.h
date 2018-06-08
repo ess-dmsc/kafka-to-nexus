@@ -49,13 +49,12 @@ public:
   uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqFwd;
   uptr<h5::h5d_chunked_1d<uint64_t>> DatasetTsData;
   std::vector<DatasetInfo> DatasetInfoList;
-  bool do_flush_always = false;
   bool DoWriteForwarderInternalDebugInfo = false;
   uint64_t WrittenBytesTotal = 0;
   uint64_t IndexAtBytes = 0;
   // set by default to a large value:
   uint64_t IndexEveryBytes = std::numeric_limits<uint64_t>::max();
-  uint64_t ts_max = 0;
+  uint64_t TimestampMax = 0;
   size_t ArraySize = 0;
   std::string SourceName;
   std::string TypeName;

@@ -249,9 +249,9 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
     }
   }
   WrittenBytesTotal += wret.written_bytes;
-  ts_max = std::max(fbuf->timestamp(), ts_max);
+  TimestampMax = std::max(fbuf->timestamp(), TimestampMax);
   if (WrittenBytesTotal > IndexAtBytes + IndexEveryBytes) {
-    this->DatasetCueTimestampZero->append_data_1d(&ts_max, 1);
+    this->DatasetCueTimestampZero->append_data_1d(&TimestampMax, 1);
     this->DatasetCueIndex->append_data_1d(&wret.ix0, 1);
     IndexAtBytes = WrittenBytesTotal;
   }
