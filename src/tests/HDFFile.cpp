@@ -81,7 +81,7 @@ TEST(HDFFile, Create) {
   HDFFile f1;
   std::vector<StreamHDFInfo> stream_hdf_info;
   f1.init("tmp-test.h5", nlohmann::json::object(), nlohmann::json::object(),
-          stream_hdf_info);
+          stream_hdf_info, true);
 }
 
 class T_CommandHandler : public testing::Test {

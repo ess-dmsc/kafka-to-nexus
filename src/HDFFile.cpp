@@ -769,14 +769,26 @@ extern "C" char const GIT_COMMIT[];
 
 void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
                    nlohmann::json const &config_file,
-                   std::vector<StreamHDFInfo> &stream_hdf_info) {
-
+                   std::vector<StreamHDFInfo> &stream_hdf_info,
+                   bool UseHDFSWMR) {
+  if (std::ifstream(filename).good()) {
+    // File exists already
+    throw std::runtime_error(
+        fmt::format("The file \"{}\" exists already.", filename));
+  }
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     set_common_props(fcpl, fapl);
-    h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
-                                fcpl, fapl);
+    if (UseHDFSWMR) {
+      h5file =
+          hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE |
+                                           hdf5::file::AccessFlags::SWMR_WRITE,
+                             fcpl, fapl);
+    } else {
+      h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
+                                  fcpl, fapl);
+    }
     init(nexus_structure, stream_hdf_info);
   } catch (std::exception &e) {
     LOG(Sev::Error,
@@ -868,9 +880,17 @@ void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
 
 void HDFFile::flush() {
   try {
-    h5file.flush(hdf5::file::Scope::LOCAL);
+    h5file.flush(hdf5::file::Scope::GLOBAL);
   } catch (...) {
     std::throw_with_nested(std::runtime_error("HDFFile failed to flush!"));
+  }
+}
+
+void HDFFile::SWMRFlush() {
+  auto Now = CLOCK::now();
+  if (Now - SWMRFlushLast > SWMRFlushInterval) {
+    flush();
+    SWMRFlushLast = Now;
   }
 }
 

@@ -40,6 +40,7 @@ public:
   nlohmann::json to_json() const;
   void close_writer_module();
   bool is_parallel = false;
+  HDFFile *HDFFileForSWMR = nullptr;
 
 private:
   Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);

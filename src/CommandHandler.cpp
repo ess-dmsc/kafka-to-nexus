@@ -221,6 +221,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     return;
   }
 
+  if (auto x = find<bool>("use_hdf_swmr", Doc)) {
+    Task->UseHDFSWMR = x.inner();
+  }
+
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
 

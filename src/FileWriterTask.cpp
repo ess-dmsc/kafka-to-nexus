@@ -52,6 +52,9 @@ FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_output_prefix,
 }
 
 void FileWriterTask::add_source(Source &&source) {
+  if (UseHDFSWMR) {
+    source.HDFFileForSWMR = &hdf_file;
+  }
   bool found = false;
   for (auto &d : _demuxers) {
     if (d.topic() == source.topic()) {
@@ -79,7 +82,7 @@ void FileWriterTask::hdf_init(std::string const &NexusStructure,
 
   try {
     hdf_file.init(filename_full, NexusStructureJson, ConfigFileJson,
-                  stream_hdf_info);
+                  stream_hdf_info, UseHDFSWMR);
   } catch (...) {
     LOG(Sev::Warning,
         "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",

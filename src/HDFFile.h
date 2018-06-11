@@ -3,6 +3,7 @@
 #include "Msg.h"
 #include "json.h"
 #include <H5Ipublic.h>
+#include <chrono>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 #include <string>
@@ -26,7 +27,7 @@ public:
 
   void init(std::string filename, nlohmann::json const &nexus_structure,
             nlohmann::json const &config_file,
-            std::vector<StreamHDFInfo> &stream_hdf_info);
+            std::vector<StreamHDFInfo> &stream_hdf_info, bool UseHDFSWMR);
 
   void init(const std::string &nexus_structure,
             std::vector<StreamHDFInfo> &stream_hdf_info);
@@ -45,6 +46,10 @@ public:
 
   static void write_attribute_str(hdf5::node::Node &node, std::string name,
                                   std::string value);
+
+  /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
+  /// file.
+  void SWMRFlush();
 
   hdf5::file::File h5file;
   hdf5::node::Group root_group;
@@ -120,6 +125,10 @@ private:
                                        hdf5::node::Node &Node,
                                        std::string const &Name,
                                        nlohmann::json const *Values);
+
+  using CLOCK = std::chrono::steady_clock;
+  std::chrono::milliseconds SWMRFlushInterval{10000};
+  std::chrono::time_point<CLOCK> SWMRFlushLast = CLOCK::now();
 };
 
 } // namespace FileWriter
