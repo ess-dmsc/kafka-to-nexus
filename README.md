@@ -399,6 +399,13 @@ Not that many in this release, but will be extended with upcoming changes:
   - `nexus.indices.index_every_mb`
     Write an index entry (in Nexus terminology: cue entry) every given
     megabytes.
+  - `nexus.chunk.chunk_mb`
+    Size of the HDF chunks given in megabytes.
+  - `nexus.buffer.size_kb`
+    Small messages can additionally be buffered to reduce HDF writes. This
+    gives the buffer size in kilobytes.
+  - `nexus.buffer.packet_max_kb`
+    Maximum size of messages to be considered for buffering in kilobytes.
 
 
 ## Running Tests
