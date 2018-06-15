@@ -15,11 +15,14 @@ namespace f142 {
 
 using nlohmann::json;
 
+/// Used to indicate the rank of the HDF dataset to be written.
 enum class Rank {
   SCALAR,
   ARRAY,
 };
 
+/// Map Rank and a name of a type to the factory of the corresponding
+/// dataset writer.  The map gets initialized at
 static std::map<Rank, std::map<std::string, std::unique_ptr<WriterFactory>>>
     RankAndTypenameToValueTraits;
 
@@ -77,6 +80,15 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
   return FoundInMap<typename T::mapped_type>(It->second);
 }
 
+/// Instantiate a new writer.
+/// \param HDFGroup The HDF group into which this writer will place the dataset.
+/// \param ArraySize Zero if scalar, or the size of the array.
+/// \param TypeName The name of the datatype to be written.
+/// \param Datasetname Name of the dataset to be written.
+/// \param cq (Currently used on experimental branch, remove from this PR)
+/// \param HDFStore (Currently used on experimental branch, remove from this PR)
+/// \param Method Either CREATE or OPEN, will either create the HDF dataset, or
+/// open the dataset again.
 std::unique_ptr<WriterTypedBase>
 createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
                       std::string TypeName, std::string DatasetName,
@@ -105,6 +117,7 @@ createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
                                    ValueTraits->getValueUnionID(), cq);
 }
 
+/// Parse the configuration given to the HDFWriterModule in form of JSON.
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
@@ -150,6 +163,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   }
 }
 
+/// Initialize some parameters and the list of datasets to be created.
 HDFWriterModule::HDFWriterModule() {
   // Setup the parameters for our datasets
   size_t ChunkBytes = 64 * 1024;
@@ -173,6 +187,8 @@ HDFWriterModule::HDFWriterModule() {
   // clang-format on
 }
 
+/// Implement the HDFWriterModule interface, forward to the CREATE case of
+/// `init_hdf`.
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
@@ -180,6 +196,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                   CreateWriterTypedBaseMethod::CREATE);
 }
 
+/// Implement the HDFWriterModule interface, forward to the OPEN case of
+/// `init_hdf`.
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   return init_hdf(HDFGroup, nullptr, CreateWriterTypedBaseMethod::OPEN);
@@ -229,6 +247,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
   return HDFWriterModule::InitResult::OK();
 }
 
+/// Inspect the incoming FlatBuffer from the message and write the content to
+/// datasets.
 HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   auto fbuf = get_fbuf(msg.data());
   if (!ValueWriter) {
@@ -279,6 +299,7 @@ HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
   return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
 }
 
+/// Experimental usage on the parallel writer branch.
 void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
                                 int MPIRank) {
   this->cq = cq;
@@ -290,6 +311,7 @@ void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
   }
 }
 
+/// Implement HDFWriterModule interface, just flushing.
 int32_t HDFWriterModule::flush() {
   for (auto const &Info : DatasetInfoList) {
     (*Info.Ptr)->flush_buf();
