@@ -6,7 +6,11 @@
 
 using uri::URI;
 
-MainOpt::MainOpt() {
+// For reasons unknown, the presence of the constructor caused the integration
+// test to fail, with the NeXus file being created, but no data written to it.
+// While the cause of this problem is not discovered and fixed, use the
+// following init function.
+void MainOpt::init() {
   service_id = fmt::format("kafka-to-nexus--host:{}--pid:{}",
                            gethostname_wrapper(), getpid_wrapper());
 }

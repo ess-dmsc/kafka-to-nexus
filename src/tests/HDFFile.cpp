@@ -24,7 +24,11 @@ using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 using nlohmann::json;
 
-MainOpt getTestOptions() { return MainOpt(); }
+MainOpt getTestOptions() {
+  MainOpt mo;
+  mo.init();
+  return mo;
+}
 
 void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
   main_opt.ConfigJSON.merge_patch(json::parse(JSONString));

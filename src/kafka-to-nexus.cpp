@@ -28,6 +28,7 @@ int main(int argc, char **argv) {
       "Writes NeXus files in a format specified with a json template.\n"
       "Writer modules can be used to populate the file from Kafka topics.\n"};
   auto Options = std::unique_ptr<MainOpt>(new MainOpt());
+  Options->init();
   setCLIOptions(App, *Options);
 
   CLI11_PARSE(App, argc, argv);
