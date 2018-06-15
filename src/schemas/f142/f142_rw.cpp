@@ -319,8 +319,11 @@ int32_t HDFWriterModule::flush() {
   return 0;
 }
 
+/// Implement HDFWriterModule interface.
 int32_t HDFWriterModule::close() {
-  // This HDFWriterModule has nothing special to do here.
+  for (auto const &Info : DatasetInfoList) {
+    (*Info.Ptr).reset();
+  }
   return 0;
 }
 
