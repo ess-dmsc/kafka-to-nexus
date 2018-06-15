@@ -25,9 +25,9 @@ using std::chrono::steady_clock;
 using nlohmann::json;
 
 MainOpt getTestOptions() {
-  MainOpt mo;
-  mo.init();
-  return mo;
+  MainOpt TestOptions;
+  TestOptions.init();
+  return TestOptions;
 }
 
 void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
