@@ -188,6 +188,14 @@ def docker_archive(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
         def archive_output = "${project}-${image_key}.tar.gz"
+
+        git_commit = sh(
+            script: """docker exec ${container_name(image_key)} ${custom_sh} -c \"
+                    cd ${project} && git rev-parse HEAD
+                \"""",
+            returnStdout: true
+        ).trim()
+
         def archive_script = """
                     cd build && \
                     rm -rf ${project}; mkdir ${project} && \
@@ -196,10 +204,17 @@ def docker_archive(image_key) {
                     cp -r ./lib ${project}/ && \
                     cp -r ./licenses ${project}/ && \
                     tar czf ${archive_output} ${project}
+
+                    # Create file with build information
+                    touch BUILD_INFO
+                    echo 'Repository: ${project}/${env.BRANCH_NAME}' >> BUILD_INFO
+                    echo 'Commit: ${git_commit}' >> BUILD_INFO
+                    echo 'Jenkins build: ${BUILD_NUMBER}' >> BUILD_INFO
                 """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
         sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
-        archiveArtifacts "${archive_output}"
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/BUILD_INFO ./"
+        archiveArtifacts "${archive_output},BUILD_INFO"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
