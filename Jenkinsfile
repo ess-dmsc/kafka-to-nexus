@@ -196,10 +196,17 @@ def docker_archive(image_key) {
                     cp -r ./lib ${project}/ && \
                     cp -r ./licenses ${project}/ && \
                     tar czf ${archive_output} ${project}
+
+                    # Create file with build information
+                    touch BUILD_INFO
+                    echo 'Repository: ${project}/${env.BRANCH_NAME}' >> BUILD_INFO
+                    echo 'Commit: ${scm_vars.GIT_COMMIT}' >> BUILD_INFO
+                    echo 'Jenkins build: ${BUILD_NUMBER}' >> BUILD_INFO
                 """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
         sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
-        archiveArtifacts "${archive_output}"
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/BUILD_INFO ./"
+        archiveArtifacts "${archive_output},BUILD_INFO"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
