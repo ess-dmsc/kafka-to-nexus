@@ -6,23 +6,23 @@ release_os = "centos7-release"
 images = [
         'centos7': [
                 'name': 'essdmscdm/centos7-build-node:3.0.0',
-                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
+                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'
         ],
         'centos7-release': [
                 'name': 'essdmscdm/centos7-build-node:3.0.0',
-                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
+                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'
         ],
         'fedora25'    : [
                 'name': 'essdmscdm/fedora25-build-node:1.0.0',
-                'sh'  : 'sh'
+                'sh'  : 'bash -e'
         ],
         'ubuntu1604'  : [
                 'name': 'essdmscdm/ubuntu16.04-build-node:2.1.0',
-                'sh'  : 'sh'
+                'sh'  : 'bash -e'
         ],
         'ubuntu1710': [
                 'name': 'essdmscdm/ubuntu17.10-build-node:2.0.0',
-                'sh': 'sh'
+                'sh': 'bash -e'
         ]
 ]
 
@@ -97,7 +97,7 @@ def docker_cmake_release(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
         def configure_script = """
-                        cd build && \
+                        cd build
                         cmake ../${project} \
                             -DCMAKE_BUILD_TYPE=Release \
                             -DCMAKE_SKIP_RPATH=FALSE \
@@ -189,12 +189,12 @@ def docker_archive(image_key) {
         def custom_sh = images[image_key]['sh']
         def archive_output = "${project}-${image_key}.tar.gz"
         def archive_script = """
-                    cd build && \
-                    rm -rf ${project}; mkdir ${project} && \
-                    mkdir ${project}/bin && \
-                    cp ./bin/{kafka-to-nexus,send-command} ${project}/bin/ && \
-                    cp -r ./lib ${project}/ && \
-                    cp -r ./licenses ${project}/ && \
+                    cd build
+                    rm -rf ${project}; mkdir ${project}
+                    mkdir ${project}/bin
+                    cp ./bin/{kafka-to-nexus,send-command} ${project}/bin/
+                    cp -r ./lib ${project}/
+                    cp -r ./licenses ${project}/
                     tar czf ${archive_output} ${project}
 
                     # Create file with build information
@@ -217,7 +217,7 @@ def docker_cppcheck(image_key) {
         def custom_sh = images[image_key]['sh']
         def test_output = "cppcheck.txt"
         def cppcheck_script = """
-                        cd ${project} && \
+                        cd ${project}
                         cppcheck --enable=all --inconclusive --template="{file},{line},{severity},{id},{message}" src/ 2> ${test_output}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${cppcheck_script}\""
