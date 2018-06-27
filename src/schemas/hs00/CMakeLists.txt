@@ -1,6 +1,7 @@
 set(hs00_module_SRC
   Reader.cpp
   Writer.cpp
+  Exceptions.cpp
   Shape.cpp
 )
 
