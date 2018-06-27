@@ -3,6 +3,7 @@ set(hs00_module_SRC
   Writer.cpp
   Exceptions.cpp
   Shape.cpp
+  Dimension.cpp
 )
 
 set(hs00_module_INC
@@ -10,6 +11,7 @@ set(hs00_module_INC
   Writer.h
   Exceptions.h
   Shape.h
+  Dimension.cpp
 )
 
 create_module(hs00_module)

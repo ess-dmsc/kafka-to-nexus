@@ -1,4 +1,5 @@
 #include "json.h"
+#include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
 #include "schemas/hs00/Shape.h"
 #include <gtest/gtest.h>
