@@ -7,14 +7,14 @@ namespace Schemas {
 namespace hs00 {
 
 template <typename EdgeType>
-Shape<EdgeType> Shape<EdgeType>::createFromJSON(json const &Json) {
+Shape<EdgeType> Shape<EdgeType>::createFromJson(json const &Json) {
   if (!Json.is_array()) {
     throw UnexpectedJsonInput();
   }
   throw unimplemented();
 }
 
-template Shape<double> Shape<double>::createFromJSON(json const &Json);
+template Shape<double> Shape<double>::createFromJson(json const &Json);
 }
 }
 }
