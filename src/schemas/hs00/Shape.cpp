@@ -14,6 +14,8 @@ Shape<EdgeType> Shape<EdgeType>::createFromJson(json const &Json) {
   throw unimplemented();
 }
 
+template Shape<uint32_t> Shape<uint32_t>::createFromJson(json const &Json);
+template Shape<uint64_t> Shape<uint64_t>::createFromJson(json const &Json);
 template Shape<double> Shape<double>::createFromJson(json const &Json);
 }
 }
