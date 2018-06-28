@@ -12,10 +12,10 @@ Dimension<EdgeType> Dimension<EdgeType>::createFromJson(json const &Json) {
   }
   Dimension Dim;
   try {
-    Dim.Size = Json["size"];
-    Dim.Unit = Json["unit"];
-    Dim.Label = Json["label"];
-    auto const &JsonEdges = Json["edges"];
+    Dim.Size = Json.at("size");
+    Dim.Unit = Json.at("unit");
+    Dim.Label = Json.at("label");
+    auto const &JsonEdges = Json.at("edges");
     if (!JsonEdges.is_array()) {
       throw UnexpectedJsonInput();
     }

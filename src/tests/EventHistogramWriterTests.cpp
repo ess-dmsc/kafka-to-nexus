@@ -12,13 +12,30 @@ using FileWriter::Schemas::hs00::Dimension;
 using FileWriter::Schemas::hs00::Shape;
 using FileWriter::Schemas::hs00::WriterTyped;
 
-TEST(EventHistogramWriter, DimensionWithInconsistentSizeThrows) {
-  auto Json = json::parse(R"""({
+json createTestDimensionJson() {
+  return json::parse(R"""({
     "size": 4,
     "label": "Velocity",
     "unit": "m/s",
     "edges": [2, 3, 4, 5]
   })""");
+}
+
+TEST(EventHistogramWriter, DimensionWithoutSizeThrows) {
+  auto Json = createTestDimensionJson();
+  Json.erase("size");
+  ASSERT_THROW(Dimension<double>::createFromJson(Json), UnexpectedJsonInput);
+}
+
+TEST(EventHistogramWriter, DimensionWithoutLabelThrows) {
+  auto Json = createTestDimensionJson();
+  Json.erase("label");
+  ASSERT_THROW(Dimension<double>::createFromJson(Json), UnexpectedJsonInput);
+}
+
+TEST(EventHistogramWriter, DimensionWithoutUnitThrows) {
+  auto Json = createTestDimensionJson();
+  Json.erase("unit");
   ASSERT_THROW(Dimension<double>::createFromJson(Json), UnexpectedJsonInput);
 }
 
