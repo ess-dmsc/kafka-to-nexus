@@ -59,8 +59,8 @@ TEST(EventHistogramWriter, ShapeFromJsonThrowsIfInvalidInput) {
   ASSERT_THROW(Shape<double>::createFromJson(Json), UnexpectedJsonInput);
 }
 
-TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
-  auto Json = json::parse(R"""([
+json createTestShapeJson() {
+  return json::parse(R""([
     {
       "size": 4,
       "label": "Position",
@@ -79,7 +79,11 @@ TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
       "unit": "ns",
       "edges": [0, 2, 4, 6]
     }
-  ])""");
+  ])"");
+}
+
+TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
+  auto Json = createTestShapeJson();
   auto TheShape = Shape<double>::createFromJson(Json);
   ASSERT_EQ(TheShape.getNDIM(), 3u);
 }
@@ -91,8 +95,11 @@ hdf5::file::File createFileInMemory(std::string Name) {
                             hdf5::property::FileCreationList(), FAPL);
 }
 
-TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
-  auto Json = json::parse(R"""({
+json createTestWriterTypedJson() {
+  return json::parse(R""({
+    "source_name": "SomeHistogrammer",
+    "data_type": "uint64_t",
+    "edge_type": "double",
     "shape": [
       {
         "size": 4,
@@ -113,6 +120,10 @@ TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
         "edges": [0, 2, 4, 6]
       }
     ]
-  })""");
+  })"");
+}
+
+TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
+  auto Json = createTestWriterTypedJson();
   auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
 }
