@@ -2,6 +2,7 @@
 #include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
 #include "schemas/hs00/Shape.h"
+#include "schemas/hs00/Writer.h"
 #include "schemas/hs00/WriterTyped.h"
 #include "schemas/hs00_event_histogram_generated.h"
 #include <flatbuffers/flatbuffers.h>
@@ -14,6 +15,7 @@ using FileWriter::Schemas::hs00::UnexpectedJsonInput;
 using FileWriter::Schemas::hs00::Dimension;
 using FileWriter::Schemas::hs00::Shape;
 using FileWriter::Schemas::hs00::WriterTyped;
+using FileWriter::Schemas::hs00::Writer;
 
 json createTestDimensionJson() {
   return json::parse(R"""({
@@ -218,4 +220,10 @@ std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
   EHBuilder.add_data(DataValue);
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
   return std::move(BuilderPtr);
+}
+
+TEST(EventHistogramWriter, WriterInitHDF) {
+  auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
+  auto Group = File.root();
+  Writer::create();
 }
