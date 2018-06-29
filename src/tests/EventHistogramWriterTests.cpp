@@ -3,8 +3,11 @@
 #include "schemas/hs00/Exceptions.h"
 #include "schemas/hs00/Shape.h"
 #include "schemas/hs00/WriterTyped.h"
+#include "schemas/hs00_event_histogram_generated.h"
+#include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
+#include <memory>
 
 using json = nlohmann::json;
 using FileWriter::Schemas::hs00::UnexpectedJsonInput;
@@ -165,4 +168,54 @@ TEST(EventHistogramWriter, WriterTypedReopen) {
   size_t ChunkBytes = 64 * 1024;
   TheWriterTyped.createHDFStructure(Group, ChunkBytes);
   TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
+}
+
+std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
+  auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
+      new flatbuffers::FlatBufferBuilder);
+  auto &Builder = *BuilderPtr;
+  ArrayDoubleBuilder ArrayBuilder(Builder);
+  ArrayBuilder.add_value(
+      Builder.CreateVector(std::vector<double>({1, 2, 3, 4})));
+  auto Array = ArrayBuilder.Finish().Union();
+
+  std::vector<size_t> DimLengths{4, 6, 3};
+  std::vector<flatbuffers::Offset<DimensionMetaData>> DMDs;
+  for (auto Length : DimLengths) {
+    DimensionMetaDataBuilder DMDBuilder(Builder);
+    DMDBuilder.add_length(Length);
+    DMDBuilder.add_bin_boundaries(Array);
+    DMDs.push_back(DMDBuilder.Finish());
+  }
+  auto DMDA = Builder.CreateVector(DMDs);
+
+  std::vector<uint32_t> ThisLengths{4, 6, 3};
+  std::vector<uint32_t> ThisOffsets{4, 6, 3};
+
+  auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
+  auto ThisOffsetsVector = Builder.CreateVector(ThisOffsets);
+
+  flatbuffers::Offset<void> DataValue;
+  {
+    size_t TotalElements = 1;
+    for (auto x : ThisLengths) {
+      TotalElements *= x;
+    }
+    std::vector<uint64_t> Data(TotalElements, 0xcafe);
+    ArrayULongBuilder ArrayBuilder(Builder);
+    ArrayBuilder.add_value(Builder.CreateVector(Data));
+    DataValue = ArrayBuilder.Finish().Union();
+  }
+
+  auto Source = Builder.CreateString("Testsource");
+
+  EventHistogramBuilder EHBuilder(Builder);
+  EHBuilder.add_source(Source);
+  EHBuilder.add_timestamp(123);
+  EHBuilder.add_dim_metadata(DMDA);
+  EHBuilder.add_current_shape(ThisLengthsVector);
+  EHBuilder.add_offset(ThisOffsetsVector);
+  EHBuilder.add_data(DataValue);
+  FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
+  return std::move(BuilderPtr);
 }
