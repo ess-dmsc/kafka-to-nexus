@@ -20,10 +20,12 @@ fi
 
 echo /kafka_to_nexus/kafka-to-nexus --command-uri ${COMMAND_URI:="//localhost:9092/TEST_writerCommand"} \
   --status-uri ${STATUS_URI:="//localhost:9092/TEST_writerStatus"} \
-  --graylog-logger-address ${GRAYLOG_ADDRESS:="localhost:12201"} -v 3 \
-  --hdf-output-prefix ${HDF_OUTPUT_PREFIX:="/output-files/"}
+  --graylog-logger-address ${GRAYLOG_ADDRESS:="localhost:12201"} \
+  --hdf-output-prefix ${HDF_OUTPUT_PREFIX:="/output-files/"} \
+  -v=${LOG_LEVEL:="3"}
 
 /kafka_to_nexus/kafka-to-nexus --command-uri ${COMMAND_URI:="//localhost:9092/TEST_writerCommand"} \
   --status-uri ${STATUS_URI:="//localhost:9092/TEST_writerStatus"} \
-  --graylog-logger-address ${GRAYLOG_ADDRESS:="localhost:12201"} -v 3 \
-  --hdf-output-prefix ${HDF_OUTPUT_PREFIX:="/output-files/"}
+  --graylog-logger-address ${GRAYLOG_ADDRESS:="localhost:12201"} \
+  --hdf-output-prefix ${HDF_OUTPUT_PREFIX:="/output-files/"} \
+  -v=${LOG_LEVEL:="3"}
