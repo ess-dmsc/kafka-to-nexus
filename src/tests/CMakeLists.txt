@@ -10,7 +10,7 @@ json.cpp
 uri.cpp
 status_test.cpp
 status_writer.cpp
-command_handler.cpp
+CommandHandlerTests.cpp
 stream_master.cpp
 streamer_options.cpp
 MainOptTest.cpp
