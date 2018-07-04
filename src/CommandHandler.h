@@ -5,6 +5,7 @@
 #include <memory>
 
 class T_CommandHandler;
+class CommandHandler_Testing;
 
 namespace FileWriter {
 
@@ -64,6 +65,7 @@ private:
   Master *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
   friend class ::T_CommandHandler;
+  friend class ::CommandHandler_Testing;
 };
 
 std::string findBroker(std::string const &);

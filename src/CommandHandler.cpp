@@ -461,6 +461,15 @@ void CommandHandler::tryToHandle(std::string const &Command) {
     LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
   } catch (nlohmann::detail::type_error &e) {
     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
+  } catch (std::runtime_error &e) {
+    // Originates from h5cpp:
+    if (std::string(e.what()).find(
+            "Cannot obtain ObjectId from an invalid file instance!") == 0) {
+    } else {
+      LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
+          e.what(), Command);
+      throw;
+    }
   } catch (...) {
     LOG(Sev::Error, "Unexpected error while handling command: {}", Command);
     throw;
