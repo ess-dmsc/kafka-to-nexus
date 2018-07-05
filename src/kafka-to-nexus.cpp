@@ -42,7 +42,23 @@ int main(int argc, char **argv) {
   setup_logger_from_options(*Options);
 
   FileWriter::Master Master(*Options);
-  std::thread MasterThread([&Master] { Master.run(); });
+  std::thread MasterThread([&Master] {
+    try {
+      Master.run();
+    } catch (std::system_error const &e) {
+      LOG(Sev::Critical,
+          "std::system_error  code: {}  category: {}  message: {}  what: {}",
+          e.code().value(), e.code().category().name(), e.code().message(),
+          e.what());
+      throw;
+    } catch (std::runtime_error const &e) {
+      LOG(Sev::Critical, "std::runtime_error  what: {}", e.what());
+      throw;
+    } catch (std::exception const &e) {
+      LOG(Sev::Critical, "std::exception  what: {}", e.what());
+      throw;
+    }
+  });
 
   while (not Master.RunLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
