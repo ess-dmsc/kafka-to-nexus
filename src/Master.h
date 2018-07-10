@@ -56,7 +56,6 @@ private:
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
   std::string file_writer_process_id_;
   MainOpt &MainOpt_;
-  friend class CommandHandler;
 };
 
 } // namespace FileWriter
