@@ -28,7 +28,7 @@ TEST(CommandHandler_Test, TestMissingBrokerSetToDefault) {
 class CommandHandler_Testing : public testing::Test {
 protected:
   static size_t FileWriterTasksSize(CommandHandler const &CommandHandler) {
-    return CommandHandler.FileWriterTasks.size();
+    return CommandHandler.getNumberOfFileWriterTasks();
   }
 };
 

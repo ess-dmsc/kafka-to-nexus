@@ -1,6 +1,8 @@
 #include "CommandHandler.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
+#include "StreamMaster.h"
+#include "Streamer.h"
 #include "helper.h"
 #include "json.h"
 #include <chrono>
@@ -49,7 +51,7 @@ std::string findBroker(std::string const &Command) {
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
-CommandHandler::CommandHandler(MainOpt &Config_, Master *MasterPtr_)
+CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
 /// Holder for the stream settings.
@@ -258,8 +260,8 @@ void CommandHandler::handleNew(std::string const &Command) {
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
         br, std::move(Task), Config.StreamerConfiguration));
-    if (MasterPtr->status_producer) {
-      s->report(MasterPtr->status_producer,
+    if (auto status_producer = MasterPtr->getStatusProducer()) {
+      s->report(status_producer,
                 std::chrono::milliseconds{Config.status_master_interval});
     }
     if (Config.topic_write_duration.count()) {
@@ -267,7 +269,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
     s->start();
 
-    MasterPtr->stream_masters.push_back(std::move(s));
+    MasterPtr->addStreamMaster(std::move(s));
   } else {
     FileWriterTasks.emplace_back(std::move(Task));
   }
@@ -324,9 +326,7 @@ void CommandHandler::addStreamSourceToWriterModule(
 
 void CommandHandler::handleFileWriterTaskClearAll() {
   if (MasterPtr) {
-    for (auto &x : MasterPtr->stream_masters) {
-      x->stop();
-    }
+    MasterPtr->stopStreamMasters();
   }
   FileWriterTasks.clear();
 }
@@ -362,24 +362,18 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  int counter{0};
-  for (auto &x : MasterPtr->stream_masters) {
-    if (x->getJobId() == JobID) {
-      if (StopTime.count() != 0) {
-        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
-            StopTime.count());
-        x->setStopTime(StopTime);
-      } else {
-        LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
-        x->stop();
-      }
-      ++counter;
+  auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+  if (StreamMaster) {
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
+          StopTime.count());
+      StreamMaster->setStopTime(StopTime);
+    } else {
+      LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
+      StreamMaster->stop();
     }
-  }
-  if (counter == 0) {
-    LOG(Sev::Warning, "no file with id : {}", JobID);
-  } else if (counter > 1) {
-    LOG(Sev::Warning, "error: multiple files with id : {}", JobID);
+  } else {
+    LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
   }
 }
 
@@ -409,9 +403,6 @@ void CommandHandler::handle(std::string const &Command) {
 
   uint64_t TeamId = 0;
   uint64_t CommandTeamId = 0;
-  if (MasterPtr) {
-    TeamId = MasterPtr->config.teamid;
-  }
   if (auto x = find<uint64_t>("teamid", Doc)) {
     CommandTeamId = x.inner();
   }
@@ -481,6 +472,10 @@ void CommandHandler::tryToHandle(std::string const &Command) {
 
 void CommandHandler::handle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
+}
+
+size_t CommandHandler::getNumberOfFileWriterTasks() const {
+  return FileWriterTasks.size();
 }
 
 } // namespace FileWriter

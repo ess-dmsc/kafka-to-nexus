@@ -37,6 +37,22 @@ void Master::handle_command(std::string const &command) {
   command_handler.tryToHandle(command);
 }
 
+std::unique_ptr<StreamMaster<Streamer>> &
+Master::getStreamMasterForJobID(std::string JobID) {
+  for (auto &StreamMaster : StreamMasters) {
+    if (StreamMaster->getJobId() == JobID) {
+      return StreamMaster;
+    }
+  }
+  static std::unique_ptr<StreamMaster<Streamer>> NotFound;
+  return NotFound;
+}
+
+void Master::addStreamMaster(
+    std::unique_ptr<StreamMaster<Streamer>> StreamMaster) {
+  StreamMasters.push_back(std::move(StreamMaster));
+}
+
 struct OnScopeExit {
   OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
   ~OnScopeExit() { ExitAction(); };
@@ -84,18 +100,22 @@ void Master::run() {
     }
 
     // Remove any job which is in 'is_removable' state
-    stream_masters.erase(
-        std::remove_if(stream_masters.begin(), stream_masters.end(),
+    StreamMasters.erase(
+        std::remove_if(StreamMasters.begin(), StreamMasters.end(),
                        [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
                          return Iter->status().isRemovable();
                        }),
-        stream_masters.end());
+        StreamMasters.end());
   }
   LOG(Sev::Info, "calling stop on all stream_masters");
-  for (auto &x : stream_masters) {
+  stopStreamMasters();
+  LOG(Sev::Info, "called stop on all stream_masters");
+}
+
+void Master::stopStreamMasters() {
+  for (auto &x : StreamMasters) {
     x->stop();
   }
-  LOG(Sev::Info, "called stop on all stream_masters");
 }
 
 void Master::statistics() {
@@ -107,10 +127,10 @@ void Master::statistics() {
   Status["type"] = "filewriter_status_master";
   Status["service_id"] = config.service_id;
   Status["files"] = json::object();
-  for (auto &stream_master : stream_masters) {
+  for (auto &StreamMaster : StreamMasters) {
     auto FilewriterTaskID =
-        fmt::format("{}", stream_master->getFileWriterTask().job_id());
-    auto FilewriterTaskStatus = stream_master->getFileWriterTask().stats();
+        fmt::format("{}", StreamMaster->getFileWriterTask().job_id());
+    auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
