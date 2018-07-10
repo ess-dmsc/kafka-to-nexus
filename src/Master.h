@@ -43,7 +43,7 @@ public:
   /// The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
-  std::string file_writer_process_id() const;
+  std::string file_writer_process_id() const override;
 
   bool RunLoopExited() override { return HasExitedRunLoop; };
   // std::function<void(void)> cb_on_filewriter_new;
