@@ -7,8 +7,6 @@
 #include "Msg.h"
 #include <memory>
 
-class T_CommandHandler;
-
 namespace FileWriter {
 
 struct StreamSettings;
@@ -46,6 +44,7 @@ public:
   void tryToHandle(std::string const &Command);
 
   size_t getNumberOfFileWriterTasks() const;
+  std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
 
 private:
   /// Configure the HDF writer modules for writing.
@@ -68,7 +67,6 @@ private:
   MainOpt &Config;
   MasterI *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
-  friend class ::T_CommandHandler;
 };
 
 std::string findBroker(std::string const &);

@@ -478,4 +478,15 @@ size_t CommandHandler::getNumberOfFileWriterTasks() const {
   return FileWriterTasks.size();
 }
 
+std::unique_ptr<FileWriterTask> &
+CommandHandler::getFileWriterTaskByJobID(std::string JobID) {
+  for (auto &Task : FileWriterTasks) {
+    if (Task->job_id() == JobID) {
+      return Task;
+    }
+  }
+  static std::unique_ptr<FileWriterTask> NotFound;
+  return NotFound;
+}
+
 } // namespace FileWriter
