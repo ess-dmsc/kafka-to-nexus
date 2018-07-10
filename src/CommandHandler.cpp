@@ -465,6 +465,9 @@ void CommandHandler::tryToHandle(std::string const &Command) {
     // Originates from h5cpp:
     if (std::string(e.what()).find(
             "Cannot obtain ObjectId from an invalid file instance!") == 0) {
+      LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
+                        "output file already exists.  command: {}",
+          Command);
     } else {
       LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
           e.what(), Command);
