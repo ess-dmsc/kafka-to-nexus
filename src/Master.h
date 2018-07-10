@@ -48,7 +48,6 @@ public:
   bool RunLoopExited() override { return HasExitedRunLoop; };
   // std::function<void(void)> cb_on_filewriter_new;
   std::shared_ptr<KafkaW::ProducerTopic> status_producer;
-  MainOpt &config;
 
 private:
   CommandListener command_listener;
@@ -56,6 +55,7 @@ private:
   std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
   std::string file_writer_process_id_;
+  MainOpt &MainOpt_;
   friend class CommandHandler;
 };
 
