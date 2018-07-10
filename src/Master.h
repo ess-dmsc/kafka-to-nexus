@@ -37,6 +37,8 @@ public:
   void stopStreamMasters() override;
   std::unique_ptr<StreamMaster<Streamer>> &
   getStreamMasterForJobID(std::string JobID) override;
+  MainOpt &getMainOpt() override;
+  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
   /// The unique identifier for this file writer on the network.
   ///

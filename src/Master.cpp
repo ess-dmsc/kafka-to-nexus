@@ -143,4 +143,10 @@ std::string Master::file_writer_process_id() const {
   return file_writer_process_id_;
 }
 
+MainOpt &Master::getMainOpt() { return config; }
+
+std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
+  return status_producer;
+}
+
 } // namespace FileWriter
