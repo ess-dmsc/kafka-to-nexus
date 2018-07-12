@@ -43,12 +43,29 @@ void WriterTyped<DataType, EdgeType>::createHDFStructure(
   auto Type = hdf5::datatype::create<DataType>().native_type();
   hdf5::dataspace::Simple Space;
   {
+    auto const &Dims = TheShape.getDimensions();
     std::vector<hsize_t> SizeNow{0};
     std::vector<hsize_t> SizeMax{H5S_UNLIMITED};
+    for (auto Dim : Dims) {
+      SizeNow.push_back(0);
+      SizeMax.push_back(Dim.getSize());
+    }
     Space = hdf5::dataspace::Simple(SizeNow, SizeMax);
   }
   hdf5::property::DatasetCreationList DCPL;
-  DCPL.chunk({std::max<hsize_t>(1, ChunkBytes / Type.size())});
+  {
+    auto Dims = Space.maximum_dimensions();
+    std::vector<hsize_t> ChunkElements(Dims.size());
+    ChunkElements.at(0) = ChunkBytes / Type.size();
+    for (size_t i = 1; i < Dims.size(); ++i) {
+      ChunkElements.at(i) = Dims.at(i);
+      ChunkElements.at(0) /= Dims.at(i);
+    }
+    if (ChunkElements.at(0) == 0) {
+      ChunkElements.at(0) = 1;
+    }
+    DCPL.chunk(ChunkElements);
+  }
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
 }
 
@@ -65,6 +82,15 @@ WriterTyped<uint64_t, double>::createHDFStructure(hdf5::node::Group &Group,
 template <typename DataType, typename EdgeType>
 HDFWriterModule::WriteResult
 WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
+  if (!Dataset.is_valid()) {
+    return HDFWriterModule::WriteResult::ERROR_IO();
+  }
+  auto Dims = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
+  if (Dims.size() < 1) {
+    return HDFWriterModule::WriteResult::ERROR_IO();
+  }
+  Dims.at(0) += 1;
+  Dataset.extent(Dims);
   return HDFWriterModule::WriteResult::OK();
 }
 }
