@@ -242,6 +242,7 @@ FileWriter::FlatbufferMessage createTestMessage() {
   EHBuilder.add_dim_metadata(DMDA);
   EHBuilder.add_current_shape(ThisLengthsVector);
   EHBuilder.add_offset(ThisOffsetsVector);
+  EHBuilder.add_data_type(Array::ArrayULong);
   EHBuilder.add_data(DataValue);
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
   return FileWriter::FlatbufferMessage(
@@ -277,7 +278,11 @@ TEST_F(EventHistogramWriter, WriteMessage) {
   Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
-  Writer->write(createTestMessage());
+  auto X = Writer->write(createTestMessage());
+  if (!X.is_OK()) {
+    throw std::runtime_error(X.to_str());
+  }
+  ASSERT_TRUE(X.is_OK());
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 1u);

@@ -1,10 +1,13 @@
 #include "WriterTyped.h"
 #include "../../helper.h"
 #include "Exceptions.h"
+#include <flatbuffers/flatbuffers.h>
 
 namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
+
+#include "schemas/hs00_event_histogram_generated.h"
 
 template <typename DataType, typename EdgeType>
 typename WriterTyped<DataType, EdgeType>::ptr
@@ -79,18 +82,37 @@ template void
 WriterTyped<uint64_t, double>::createHDFStructure(hdf5::node::Group &Group,
                                                   size_t ChunkBytes);
 
+template <typename DataType> Array getMatchingFlatbufferType(DataType *);
+template <> Array getMatchingFlatbufferType(uint32_t *) {
+  return Array::ArrayUInt;
+}
+template <> Array getMatchingFlatbufferType(uint64_t *) {
+  return Array::ArrayULong;
+}
+template <> Array getMatchingFlatbufferType(double *) {
+  return Array::ArrayDouble;
+}
+
+// Array::ArrayULong
+
 template <typename DataType, typename EdgeType>
 HDFWriterModule::WriteResult
 WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
   if (!Dataset.is_valid()) {
-    return HDFWriterModule::WriteResult::ERROR_IO();
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("invalid dataset");
   }
   auto Dims = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
   if (Dims.size() < 1) {
-    return HDFWriterModule::WriteResult::ERROR_IO();
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Dims.size() < 1");
   }
   Dims.at(0) += 1;
   Dataset.extent(Dims);
+  auto EvMsg = GetEventHistogram(Message.data());
+  if (EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        "EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)");
+  }
+  EvMsg->data();
   return HDFWriterModule::WriteResult::OK();
 }
 }
