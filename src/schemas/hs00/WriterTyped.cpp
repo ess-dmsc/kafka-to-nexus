@@ -50,7 +50,7 @@ void WriterTyped<DataType, EdgeType>::createHDFStructure(
     std::vector<hsize_t> SizeNow{0};
     std::vector<hsize_t> SizeMax{H5S_UNLIMITED};
     for (auto Dim : Dims) {
-      SizeNow.push_back(0);
+      SizeNow.push_back(Dim.getSize());
       SizeMax.push_back(Dim.getSize());
     }
     Space = hdf5::dataspace::Simple(SizeNow, SizeMax);
