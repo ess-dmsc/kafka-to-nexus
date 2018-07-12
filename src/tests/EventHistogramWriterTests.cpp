@@ -225,5 +225,6 @@ std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
 TEST(EventHistogramWriter, WriterInitHDF) {
   auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
   auto Group = File.root();
-  Writer::create();
+  auto Writer = Writer::create();
+  ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
 }
