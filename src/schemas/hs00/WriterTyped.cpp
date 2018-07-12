@@ -61,6 +61,12 @@ WriterTyped<uint64_t, double>::createFromHDF(hdf5::node::Group &Group);
 template void
 WriterTyped<uint64_t, double>::createHDFStructure(hdf5::node::Group &Group,
                                                   size_t ChunkBytes);
+
+template <typename DataType, typename EdgeType>
+HDFWriterModule::WriteResult
+WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
+  return HDFWriterModule::WriteResult::OK();
+}
 }
 }
 }

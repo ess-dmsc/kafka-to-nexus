@@ -28,6 +28,8 @@ public:
   /// writer module.
   void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes) override;
 
+  HDFWriterModule::WriteResult write(FlatbufferMessage const &Message) override;
+
 private:
   std::string SourceName;
   Shape<EdgeType> TheShape;

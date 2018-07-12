@@ -28,14 +28,20 @@ Writer::reopen(hdf5::node::Group &HDFGroup) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
   }
-  throw unimplemented();
+  TheWriterUntyped = WriterUntyped::createFromHDF(HDFGroup);
+  if (!TheWriterUntyped) {
+    return FileWriter::HDFWriterModule::InitResult::ERROR_IO();
+  }
   return FileWriter::HDFWriterModule::InitResult::OK();
 }
 
 FileWriter::HDFWriterModule::WriteResult
 Writer::write(FlatbufferMessage const &Message) {
-  throw unimplemented();
-  return FileWriter::HDFWriterModule::WriteResult::OK();
+  if (!TheWriterUntyped) {
+    throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
+                             "that you call parse_config() before.");
+  }
+  return TheWriterUntyped->write(Message);
 }
 
 int32_t Writer::flush() {

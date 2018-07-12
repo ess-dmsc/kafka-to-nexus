@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../HDFWriterModule.h"
 #include "Shape.h"
 #include "json.h"
 #include <h5cpp/hdf5.hpp>
@@ -26,11 +27,22 @@ public:
   virtual void createHDFStructure(hdf5::node::Group &Group,
                                   size_t ChunkBytes) = 0;
 
+  virtual HDFWriterModule::WriteResult
+  write(FlatbufferMessage const &Message) = 0;
+
 private:
   template <typename DataType> static ptr createFromJsonL1(json const &Json);
 
   template <typename DataType, typename EdgeType>
   static ptr createFromJsonL2(json const &Json);
+
+  template <typename DataType>
+  static WriterUntyped::ptr createFromHDFWithDataType(hdf5::node::Group &Group,
+                                                      json const &Json);
+
+  template <typename DataType, typename EdgeType>
+  static WriterUntyped::ptr
+  createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group);
 };
 }
 }
