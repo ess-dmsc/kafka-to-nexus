@@ -201,7 +201,7 @@ TEST_F(EventHistogramWriter, WriterTypedReopen) {
   TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
 }
 
-FileWriter::FlatbufferMessage createTestMessage() {
+FileWriter::FlatbufferMessage createTestMessage(size_t ix, uint64_t V0) {
   using namespace FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
@@ -224,8 +224,9 @@ FileWriter::FlatbufferMessage createTestMessage() {
   }
   auto DMDA = Builder.CreateVector(DMDs);
 
-  std::vector<uint32_t> ThisLengths{4, 6, 3};
-  std::vector<uint32_t> ThisOffsets{4, 6, 3};
+  std::vector<uint32_t> ThisLengths{2, 3, 3};
+  std::vector<uint32_t> ThisOffsets{(uint32_t(ix) / 2) * 2,
+                                    (uint32_t(ix) % 2) * 3, 0};
 
   auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
   auto ThisOffsetsVector = Builder.CreateVector(ThisOffsets);
@@ -236,7 +237,10 @@ FileWriter::FlatbufferMessage createTestMessage() {
     for (auto x : ThisLengths) {
       TotalElements *= x;
     }
-    std::vector<uint64_t> Data(TotalElements, 0xcafe);
+    std::vector<uint64_t> Data(TotalElements);
+    for (size_t i = 0; i < Data.size(); ++i) {
+      Data.at(i) = V0 + i;
+    }
     auto Vec = Builder.CreateVector(Data);
     ArrayULongBuilder ArrayBuilder(Builder);
     ArrayBuilder.add_value(Vec);
@@ -278,8 +282,9 @@ TEST_F(EventHistogramWriter, WriterReopen) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
 }
 
-TEST_F(EventHistogramWriter, WriteMessage) {
-  auto File = createFileInMemory("Test.EventHistogramWriter.WriteMessage");
+TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
+  auto File = createFileInMemory(
+      "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages");
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
@@ -287,8 +292,8 @@ TEST_F(EventHistogramWriter, WriteMessage) {
   Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
-  for (size_t i = 0; i < 2; ++i) {
-    auto X = Writer->write(createTestMessage());
+  for (size_t i = 0; i < 4; ++i) {
+    auto X = Writer->write(createTestMessage(i, 100 * (1 + i)));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -296,14 +301,11 @@ TEST_F(EventHistogramWriter, WriteMessage) {
   }
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
-  ASSERT_EQ(Dataspace.current_dimensions().at(0), 2u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(0), 1u);
   ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
   ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
   ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
-}
-
-TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
-  ASSERT_TRUE(false);
+  // todo: check the actual written content.
 }
 
 TEST_F(EventHistogramWriter, WriteMultipleHistograms) { ASSERT_TRUE(false); }

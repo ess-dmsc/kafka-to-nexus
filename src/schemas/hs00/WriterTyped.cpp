@@ -90,14 +90,6 @@ template <> Array getMatchingFlatbufferType(double *) {
   return Array::ArrayDouble;
 }
 
-// Array::ArrayULong
-
-static hdf5::dataspace::Simple makeDSPMem(std::vector<hsize_t> const &Dims) {
-  auto D = Dims;
-  D.at(0) = 1;
-  return {D, D};
-}
-
 template <typename DataType, typename EdgeType>
 HDFWriterModule::WriteResult
 WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
@@ -108,28 +100,54 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
   if (Dims.size() < 1) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Dims.size() < 1");
   }
-  Dims.at(0) += 1;
+  if (Dims.at(0) == 0) {
+    Dims.at(0) += 1;
+  }
   Dataset.extent(Dims);
   auto EvMsg = GetEventHistogram(Message.data());
   if (EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)");
   }
-  size_t ExpectedLinearDataSize = 1;
-  for (size_t i = 1; i < Dims.size(); ++i) {
-    ExpectedLinearDataSize *= Dims.at(i);
-  }
   auto DataPtr =
       static_cast<FlatbufferDataType const *>(EvMsg->data())->value();
+  auto MsgShape = EvMsg->current_shape();
+  auto MsgOffset = EvMsg->offset();
+  if (!MsgShape) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        "Missing current_shape");
+  }
+  if (!MsgOffset) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Missing offset");
+  }
+  if (MsgShape->size() != Dims.size() - 1) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        "Wrong size of shape");
+  }
+  if (MsgOffset->size() != Dims.size() - 1) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        "Wrong size of offset");
+  }
+  for (size_t i = 0; i < Dims.size() - 1; ++i) {
+    if (MsgOffset->data()[i] + MsgShape->data()[i] > Dims.at(i + 1)) {
+      return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+          "Shape not consistent");
+    }
+  }
+  size_t ExpectedLinearDataSize = 1;
+  for (size_t i = 0; i < MsgShape->size(); ++i) {
+    ExpectedLinearDataSize *= MsgShape->data()[i];
+  }
   if (ExpectedLinearDataSize != DataPtr->size()) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "Unexpected payload size");
   }
+  hdf5::dataspace::Simple DSPMem;
   auto DSPFile = Dataset.dataspace();
   {
     std::vector<hsize_t> Offset(Dims.size());
     Offset.at(0) = Dims.at(0) - 1;
-    auto Block = Dims;
+    std::vector<hsize_t> Block(Dims.size());
     Block.at(0) = 1;
     auto Count = Dims;
     auto Stride = Dims;
@@ -137,10 +155,14 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
       Count.at(i) = 1;
       Stride.at(i) = 1;
     }
+    for (size_t i = 1; i < Count.size(); ++i) {
+      Offset.at(i) = MsgOffset->data()[i - 1];
+      Block.at(i) = MsgShape->data()[i - 1];
+    }
     DSPFile.selection(hdf5::dataspace::SelectionOperation::SET,
                       hdf5::dataspace::Hyperslab(Offset, Block, Count, Stride));
+    DSPMem = hdf5::dataspace::Simple(Block, Block);
   }
-  auto DSPMem = makeDSPMem(Dims);
   Dataset.write(*DataPtr->data(),
                 hdf5::datatype::create<DataType>().native_type(), DSPMem,
                 DSPFile);
