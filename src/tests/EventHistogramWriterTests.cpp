@@ -12,6 +12,14 @@
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 
+namespace FileWriter {
+namespace Schemas {
+namespace hs00 {
+#include "schemas/hs00_event_histogram_generated.h"
+}
+}
+}
+
 using json = nlohmann::json;
 using FileWriter::Schemas::hs00::UnexpectedJsonInput;
 using FileWriter::Schemas::hs00::Dimension;
@@ -194,6 +202,7 @@ TEST_F(EventHistogramWriter, WriterTypedReopen) {
 }
 
 FileWriter::FlatbufferMessage createTestMessage() {
+  using namespace FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
   auto &Builder = *BuilderPtr;
@@ -278,18 +287,19 @@ TEST_F(EventHistogramWriter, WriteMessage) {
   Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
-  auto X = Writer->write(createTestMessage());
-  if (!X.is_OK()) {
-    throw std::runtime_error(X.to_str());
+  for (size_t i = 0; i < 2; ++i) {
+    auto X = Writer->write(createTestMessage());
+    if (!X.is_OK()) {
+      throw std::runtime_error(X.to_str());
+    }
+    ASSERT_TRUE(X.is_OK());
   }
-  ASSERT_TRUE(X.is_OK());
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
-  ASSERT_EQ(Dataspace.current_dimensions().at(0), 1u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(0), 2u);
   ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
   ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
   ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
-  // do more checks
 }
 
 TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
