@@ -169,9 +169,16 @@ TEST_F(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
       createTestWriterTypedJson());
 }
 
-hdf5::file::File createFileInMemory(std::string Name) {
+enum class FileCreationLocation { Default, Memory, Disk };
+
+hdf5::file::File createFile(std::string Name, FileCreationLocation Location) {
   hdf5::property::FileAccessList FAPL;
-  FAPL.driver(hdf5::file::MemoryDriver());
+  if (Location == FileCreationLocation::Default) {
+    Location = FileCreationLocation::Memory;
+  }
+  if (Location == FileCreationLocation::Memory) {
+    FAPL.driver(hdf5::file::MemoryDriver());
+  }
   return hdf5::file::create(Name, hdf5::file::AccessFlags::TRUNCATE,
                             hdf5::property::FileCreationList(), FAPL);
 }
@@ -179,8 +186,9 @@ hdf5::file::File createFileInMemory(std::string Name) {
 TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   auto Json = createTestWriterTypedJson();
   auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
-  auto File = createFileInMemory(
-      "Test.EventHistogramWriter.WriterTypedCreateHDFStructure");
+  auto File =
+      createFile("Test.EventHistogramWriter.WriterTypedCreateHDFStructure",
+                 FileCreationLocation::Default);
   auto Group = File.root();
   size_t ChunkBytes = 64 * 1024;
   TheWriterTyped->createHDFStructure(Group, ChunkBytes);
@@ -194,7 +202,8 @@ TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
 TEST_F(EventHistogramWriter, WriterTypedReopen) {
   auto Json = createTestWriterTypedJson();
   auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
-  auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
+  auto File = createFile("Test.EventHistogramWriter.WriterTypedReopen",
+                         FileCreationLocation::Default);
   auto Group = File.root();
   size_t ChunkBytes = 64 * 1024;
   TheWriterTyped->createHDFStructure(Group, ChunkBytes);
@@ -264,7 +273,8 @@ FileWriter::FlatbufferMessage createTestMessage(size_t ix, uint64_t V0) {
 }
 
 TEST_F(EventHistogramWriter, WriterInitHDF) {
-  auto File = createFileInMemory("Test.EventHistogramWriter.WriterInitHDF");
+  auto File = createFile("Test.EventHistogramWriter.WriterInitHDF",
+                         FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
@@ -272,7 +282,8 @@ TEST_F(EventHistogramWriter, WriterInitHDF) {
 }
 
 TEST_F(EventHistogramWriter, WriterReopen) {
-  auto File = createFileInMemory("Test.EventHistogramWriter.WriterReopen");
+  auto File = createFile("Test.EventHistogramWriter.WriterReopen",
+                         FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
@@ -283,8 +294,9 @@ TEST_F(EventHistogramWriter, WriterReopen) {
 }
 
 TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
-  auto File = createFileInMemory(
-      "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages");
+  auto File = createFile(
+      "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages",
+      FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
