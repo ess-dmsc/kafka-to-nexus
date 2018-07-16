@@ -146,9 +146,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
-    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
     main_opt.hdf_output_prefix = "";
 
     // Verification
@@ -289,9 +289,9 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(
         FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
-    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, CommandJSON);
-    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
 
     // Verification
     auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
@@ -325,9 +325,9 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(
         FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
-    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, CommandJSON);
-    ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
 
     // Verification
     auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
@@ -609,7 +609,7 @@ public:
       CommandJSON["file_attributes"] = json::object();
       CommandJSON["file_attributes"]["file_name"] = filename;
       CommandJSON["cmd"] = "FileWriter_new";
-      CommandJSON["job_id"] = "000000000042";
+      CommandJSON["job_id"] = "test-ev42";
     }
 
     LOG(Sev::Debug, "CommandJSON: {}", CommandJSON.dump());
@@ -628,9 +628,9 @@ public:
       auto CommandString = CommandJSON.dump();
       ch.handle(
           FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
-      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
-      auto &fwt = ch.FileWriterTasks.at(0);
+      auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
       LOG(Sev::Debug, "processing...");
@@ -689,7 +689,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, CommandJSON);
-      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -953,7 +953,7 @@ public:
       CommandJSON["file_attributes"] = json::object();
       CommandJSON["file_attributes"]["file_name"] = "tmp-f142.h5";
       CommandJSON["cmd"] = "FileWriter_new";
-      CommandJSON["job_id"] = "0000000data_f142";
+      CommandJSON["job_id"] = "unit_test_job_data_f142";
     }
 
     auto CommandString = CommandJSON.dump();
@@ -975,9 +975,9 @@ public:
 
       ch.handle(FileWriter::Msg::owned((char const *)CommandString.data(),
                                        CommandString.size()));
-      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)1);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
-      auto &fwt = ch.FileWriterTasks.at(0);
+      auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
       LOG(Sev::Debug, "processing...");
@@ -1002,7 +1002,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, CommandJSON);
-      ASSERT_EQ(ch.FileWriterTasks.size(), (size_t)0);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());

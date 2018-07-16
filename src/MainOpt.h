@@ -16,11 +16,6 @@
 
 struct rd_kafka_topic_partition_list_s;
 
-namespace FileWriter {
-class Master;
-class StreamerOptions;
-} // namespace FileWriter
-
 // POD
 struct MainOpt {
   bool help = false;
