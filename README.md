@@ -247,6 +247,11 @@ Further documentation:
 
 The filewriter can use HDF's Single Writer Multiple Reader feature (SWMR).
 
+To write, as well as to read HDF files which use the SWMR feature requires at
+least HDF version 1.10.  This means that also tools like HDFView are required
+to link against at least HDF 1.10 in order to open HDF files which were written
+in SWMR mode.
+
 Please note, the HDF documentation itself warns:
 
 "The HDF5 file that is accessed by SWMR HDF5 applications must be located on a
