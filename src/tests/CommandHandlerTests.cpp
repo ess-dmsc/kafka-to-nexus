@@ -69,3 +69,38 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
             static_cast<size_t>(0));
   unlink("tmp-dummy-hdf");
 }
+
+void createFileWithOptionalSWMR(bool UseSWMR) {
+  unlink("tmp_swmr_enable.h5");
+  MainOpt MainOpt;
+  CommandHandler CommandHandler(MainOpt, nullptr);
+  std::string CommandString = R"""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "tmp_swmr_enable.h5"
+  },
+  "use_hdf_swmr": true,
+  "job_id": "tmp_swmr_enable",
+  "broker": "//localhost:202020",
+  "nexus_structure": { "children": [] }
+})""";
+  auto Command = nlohmann::json::parse(CommandString);
+  Command["use_hdf_swmr"] = UseSWMR;
+  CommandString = Command.dump();
+  CommandHandler.handle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
+            static_cast<size_t>(1));
+  auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");
+  ASSERT_EQ(Task->hdf_file.isSWMREnabled(), UseSWMR);
+  unlink("tmp_swmr_enable.h5");
+}
+
+TEST_F(CommandHandler_Testing, OpenFileInNonSWMRMode) {
+  createFileWithOptionalSWMR(false);
+}
+
+TEST_F(CommandHandler_Testing, OpenFileInSWMRMode) {
+  createFileWithOptionalSWMR(true);
+}
