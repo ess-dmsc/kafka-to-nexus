@@ -785,6 +785,7 @@ void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
           hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE |
                                            hdf5::file::AccessFlags::SWMR_WRITE,
                              fcpl, fapl);
+      isSWMREnabled_ = true;
     } else {
       h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
                                   fcpl, fapl);
@@ -893,5 +894,7 @@ void HDFFile::SWMRFlush() {
     SWMRFlushLast = Now;
   }
 }
+
+bool HDFFile::isSWMREnabled() const { return isSWMREnabled_; }
 
 } // namespace FileWriter
