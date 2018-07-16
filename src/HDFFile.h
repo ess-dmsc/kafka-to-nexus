@@ -51,6 +51,8 @@ public:
   /// file.
   void SWMRFlush();
 
+  bool isSWMREnabled() const;
+
   hdf5::file::File h5file;
   hdf5::node::Group root_group;
 
@@ -125,6 +127,8 @@ private:
                                        hdf5::node::Node &Node,
                                        std::string const &Name,
                                        nlohmann::json const *Values);
+
+  bool isSWMREnabled_ = false;
 
   using CLOCK = std::chrono::steady_clock;
   std::chrono::milliseconds SWMRFlushInterval{10000};

@@ -209,6 +209,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     return;
   }
 
+  if (auto x = find<bool>("use_hdf_swmr", Doc)) {
+    Task->UseHDFSWMR = x.inner();
+  }
+
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
@@ -221,10 +225,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   } else {
     logMissingKey("nexus_structure", Doc.dump());
     return;
-  }
-
-  if (auto x = find<bool>("use_hdf_swmr", Doc)) {
-    Task->UseHDFSWMR = x.inner();
   }
 
   std::vector<StreamSettings> StreamSettingsList =
