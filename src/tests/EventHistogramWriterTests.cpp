@@ -376,21 +376,24 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 3; ++i) {
-    auto X = Writer->write(createTestMessage(10000, i, 10000 + 100 * (1 + i)));
+    auto X =
+        Writer->write(createTestMessage(100000, i, 100000 + 1000 * (1 + i)));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
     ASSERT_TRUE(X.is_OK());
   }
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(20000, i, 20000 + 100 * (1 + i)));
+    auto X =
+        Writer->write(createTestMessage(200000, i, 200000 + 1000 * (1 + i)));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
     ASSERT_TRUE(X.is_OK());
   }
   for (size_t i = 1; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(30000, i, 30000 + 100 * (1 + i)));
+    auto X =
+        Writer->write(createTestMessage(300000, i, 300000 + 1000 * (1 + i)));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
