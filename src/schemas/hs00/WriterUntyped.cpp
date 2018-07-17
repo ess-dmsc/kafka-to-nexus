@@ -9,7 +9,11 @@ namespace hs00 {
 
 template <typename DataType>
 WriterUntyped::ptr WriterUntyped::createFromJsonL1(json const &Json) {
-  if (Json.at("edge_type") == "double") {
+  if (Json.at("edge_type") == "uint32") {
+    return WriterUntyped::createFromJsonL2<DataType, uint32_t>(Json);
+  } else if (Json.at("edge_type") == "uint64") {
+    return WriterUntyped::createFromJsonL2<DataType, uint64_t>(Json);
+  } else if (Json.at("edge_type") == "double") {
     return WriterUntyped::createFromJsonL2<DataType, double>(Json);
   } else {
     throw std::runtime_error(
@@ -26,8 +30,12 @@ WriterUntyped::ptr WriterUntyped::createFromJsonL2(json const &Json) {
 }
 
 WriterUntyped::ptr WriterUntyped::createFromJson(json const &Json) {
-  if (Json.at("data_type") == "uint64") {
+  if (Json.at("data_type") == "uint32") {
+    return WriterUntyped::createFromJsonL1<uint32_t>(Json);
+  } else if (Json.at("data_type") == "uint64") {
     return WriterUntyped::createFromJsonL1<uint64_t>(Json);
+  } else if (Json.at("data_type") == "double") {
+    return WriterUntyped::createFromJsonL1<double>(Json);
   } else {
     throw std::runtime_error(
         fmt::format("unimplemented data_type: {}",
@@ -40,8 +48,12 @@ WriterUntyped::ptr WriterUntyped::createFromHDF(hdf5::node::Group &Group) {
   std::string JsonString;
   Group.attributes["created_from_json"].read(JsonString);
   auto Json = json::parse(JsonString);
-  if (Json.at("data_type") == "uint64") {
+  if (Json.at("data_type") == "uint32") {
+    return WriterUntyped::createFromHDFWithDataType<uint32_t>(Group, Json);
+  } else if (Json.at("data_type") == "uint64") {
     return WriterUntyped::createFromHDFWithDataType<uint64_t>(Group, Json);
+  } else if (Json.at("data_type") == "double") {
+    return WriterUntyped::createFromHDFWithDataType<double>(Group, Json);
   } else {
     throw std::runtime_error(
         fmt::format("unimplemented data_type: {}",

@@ -77,15 +77,37 @@ void WriterTyped<DataType, EdgeType>::createHDFStructure(
   }
 }
 
-template WriterTyped<uint64_t, double>::ptr
-WriterTyped<uint64_t, double>::createFromJson(json const &Json);
+// clang-format off
+template WriterTyped<uint32_t, uint32_t>::ptr WriterTyped<uint32_t, uint32_t>::createFromJson(json const &Json);
+template WriterTyped<uint32_t, uint64_t>::ptr WriterTyped<uint32_t, uint64_t>::createFromJson(json const &Json);
+template WriterTyped<uint32_t,   double>::ptr WriterTyped<uint32_t,   double>::createFromJson(json const &Json);
+template WriterTyped<uint64_t, uint32_t>::ptr WriterTyped<uint64_t, uint32_t>::createFromJson(json const &Json);
+template WriterTyped<uint64_t, uint64_t>::ptr WriterTyped<uint64_t, uint64_t>::createFromJson(json const &Json);
+template WriterTyped<uint64_t,   double>::ptr WriterTyped<uint64_t,   double>::createFromJson(json const &Json);
+template WriterTyped<  double, uint32_t>::ptr WriterTyped<  double, uint32_t>::createFromJson(json const &Json);
+template WriterTyped<  double, uint64_t>::ptr WriterTyped<  double, uint64_t>::createFromJson(json const &Json);
+template WriterTyped<  double,   double>::ptr WriterTyped<  double,   double>::createFromJson(json const &Json);
 
-template WriterTyped<uint64_t, double>::ptr
-WriterTyped<uint64_t, double>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<uint32_t, uint32_t>::ptr WriterTyped<uint32_t, uint32_t>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<uint32_t, uint64_t>::ptr WriterTyped<uint32_t, uint64_t>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<uint32_t,   double>::ptr WriterTyped<uint32_t,   double>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<uint64_t, uint32_t>::ptr WriterTyped<uint64_t, uint32_t>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<uint64_t, uint64_t>::ptr WriterTyped<uint64_t, uint64_t>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<uint64_t,   double>::ptr WriterTyped<uint64_t,   double>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<  double, uint32_t>::ptr WriterTyped<  double, uint32_t>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<  double, uint64_t>::ptr WriterTyped<  double, uint64_t>::createFromHDF(hdf5::node::Group &Group);
+template WriterTyped<  double,   double>::ptr WriterTyped<  double,   double>::createFromHDF(hdf5::node::Group &Group);
 
-template void
-WriterTyped<uint64_t, double>::createHDFStructure(hdf5::node::Group &Group,
-                                                  size_t ChunkBytes);
+template void WriterTyped<uint32_t, uint32_t>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<uint32_t, uint64_t>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<uint32_t,   double>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<uint64_t, uint32_t>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<uint64_t, uint64_t>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<uint64_t,   double>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<  double, uint32_t>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<  double, uint64_t>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+template void WriterTyped<  double,   double>::createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+// clang-format on
 
 template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 template <> Array getMatchingFlatbufferType(uint32_t *) {
