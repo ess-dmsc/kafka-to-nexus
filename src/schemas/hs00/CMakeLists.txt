@@ -6,6 +6,8 @@ set(hs00_module_SRC
   Exceptions.cpp
   Shape.cpp
   Dimension.cpp
+  Slice.cpp
+  HistogramRecord.cpp
 )
 
 set(hs00_module_INC
@@ -16,6 +18,8 @@ set(hs00_module_INC
   Exceptions.h
   Shape.h
   Dimension.h
+  Slice.h
+  HistogramRecord.h
 )
 
 create_module(hs00_module)

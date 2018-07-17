@@ -1,5 +1,6 @@
 #pragma once
 
+#include "HistogramRecord.h"
 #include "Shape.h"
 #include "WriterUntyped.h"
 #include "json.h"
@@ -48,6 +49,9 @@ private:
   typename std::conditional<std::is_same<DataType,   double>::value, ArrayDouble,
   std::nullptr_t>::type>::type>::type;
   // clang-format on
+
+  std::map<uint64_t, HistogramRecord> HistogramRecords;
+  std::vector<HistogramRecord> HistogramRecordsFreed;
 };
 }
 }
