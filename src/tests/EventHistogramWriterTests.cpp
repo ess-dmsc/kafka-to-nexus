@@ -364,8 +364,15 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
     }
     ASSERT_TRUE(X.is_OK());
   }
-  for (size_t i = 1; i < 4; ++i) {
+  for (size_t i = 0; i < 4; ++i) {
     auto X = Writer->write(createTestMessage(20000, i, 20000 + 100 * (1 + i)));
+    if (!X.is_OK()) {
+      throw std::runtime_error(X.to_str());
+    }
+    ASSERT_TRUE(X.is_OK());
+  }
+  for (size_t i = 1; i < 4; ++i) {
+    auto X = Writer->write(createTestMessage(30000, i, 30000 + 100 * (1 + i)));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -373,10 +380,12 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   }
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
-  ASSERT_EQ(Dataspace.current_dimensions().at(0), 2u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(0), 3u);
   ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
   ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
   ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
 }
 
-TEST_F(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {}
+TEST_F(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
+  // exact strategy still to be decided upon.
+}
