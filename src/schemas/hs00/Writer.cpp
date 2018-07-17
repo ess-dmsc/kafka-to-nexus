@@ -59,6 +59,8 @@ void Writer::enable_cq(CollectiveQueue *, HDFIDStore *, int) {}
 FileWriter::HDFWriterModule::ptr Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new Writer);
 }
+
+static HDFWriterModuleRegistry::Registrar<Writer> RegisterWriter("hs00");
 }
 }
 }
