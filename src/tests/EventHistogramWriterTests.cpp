@@ -4,6 +4,7 @@
 #include "schemas/hs00/Exceptions.h"
 #include "schemas/hs00/Reader.h"
 #include "schemas/hs00/Shape.h"
+#include "schemas/hs00/Slice.h"
 #include "schemas/hs00/Writer.h"
 #include "schemas/hs00/WriterTyped.h"
 #include "schemas/hs00_event_histogram_generated.h"
@@ -24,6 +25,7 @@ using json = nlohmann::json;
 using FileWriter::Schemas::hs00::UnexpectedJsonInput;
 using FileWriter::Schemas::hs00::Dimension;
 using FileWriter::Schemas::hs00::Shape;
+using FileWriter::Schemas::hs00::Slice;
 using FileWriter::Schemas::hs00::WriterTyped;
 using FileWriter::Schemas::hs00::Writer;
 
@@ -120,6 +122,31 @@ TEST_F(EventHistogramWriter, ShapeCreatedFromValidInput) {
   auto Json = createTestShapeJson();
   auto TheShape = Shape<double>::createFromJson(Json);
   ASSERT_EQ(TheShape.getNDIM(), 3u);
+}
+
+TEST(EventHistogramWriter, SliceNoOverlap) {
+  auto A = Slice::fromOffsetsSizes({0}, {2});
+  auto B = Slice::fromOffsetsSizes({2}, {2});
+  ASSERT_FALSE(A.doesOverlap(B));
+  ASSERT_FALSE(B.doesOverlap(A));
+  A = Slice::fromOffsetsSizes({0, 6}, {2, 2});
+  B = Slice::fromOffsetsSizes({2, 2}, {2, 2});
+  ASSERT_FALSE(A.doesOverlap(B));
+  ASSERT_FALSE(B.doesOverlap(A));
+}
+
+TEST(EventHistogramWriter, SliceOverfullOverlap) {
+  auto A = Slice::fromOffsetsSizes({1, 6}, {2, 2});
+  auto B = Slice::fromOffsetsSizes({0, 2}, {4, 8});
+  ASSERT_TRUE(A.doesOverlap(B));
+  ASSERT_TRUE(B.doesOverlap(A));
+}
+
+TEST(EventHistogramWriter, SlicePartialOverlap) {
+  auto A = Slice::fromOffsetsSizes({1, 6}, {2, 2});
+  auto B = Slice::fromOffsetsSizes({0, 7}, {2, 1});
+  ASSERT_TRUE(A.doesOverlap(B));
+  ASSERT_TRUE(B.doesOverlap(A));
 }
 
 json createTestWriterTypedJson() {

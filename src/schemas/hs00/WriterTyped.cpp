@@ -149,12 +149,17 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
   if (HistogramRecords.find(Timestamp) == HistogramRecords.end()) {
     HistogramRecords[Timestamp] = HistogramRecord::create();
   }
-  // auto & Record = HistogramRecords[Timestamp];
-  Slice::fromOffsetsSizes(
+  auto &Record = HistogramRecords[Timestamp];
+  auto TheSlice = Slice::fromOffsetsSizes(
       std::vector<uint32_t>(MsgOffset->data(),
                             MsgOffset->data() + MsgOffset->size()),
       std::vector<uint32_t>(MsgShape->data(),
                             MsgShape->data() + MsgShape->size()));
+  if (!Record.hasEmptySlice(TheSlice)) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        "Slice already at least partially filled");
+  }
+  Record.addSlice(TheSlice);
   hdf5::dataspace::Simple DSPMem;
   auto DSPFile = Dataset.dataspace();
   {
