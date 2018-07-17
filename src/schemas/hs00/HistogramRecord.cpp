@@ -6,9 +6,10 @@ namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
 
-HistogramRecord HistogramRecord::fromHDFIndex(size_t HDFIndex_) {
+HistogramRecord HistogramRecord::create(size_t HDFIndex_, size_t TotalItems_) {
   HistogramRecord TheHistogramRecord;
   TheHistogramRecord.HDFIndex = HDFIndex_;
+  TheHistogramRecord.TotalItems = TotalItems_;
   return TheHistogramRecord;
 }
 
@@ -24,6 +25,12 @@ bool HistogramRecord::hasEmptySlice(Slice const &Slice) {
 void HistogramRecord::addSlice(Slice Slice) { Slices.push_back(Slice); }
 
 size_t HistogramRecord::getHDFIndex() const { return HDFIndex; }
+
+void HistogramRecord::addToItemsWritten(size_t Written) {
+  ItemsWritten += Written;
+}
+
+bool HistogramRecord::isFull() const { return ItemsWritten == TotalItems; }
 }
 }
 }

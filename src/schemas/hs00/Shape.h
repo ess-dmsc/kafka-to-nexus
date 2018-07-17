@@ -16,6 +16,7 @@ public:
   static Shape createFromJson(json const &Json);
   size_t getNDIM() const;
   std::vector<Dimension<EdgeType>> const &getDimensions() const;
+  size_t getTotalItems() const;
 
 private:
   std::vector<Dimension<EdgeType>> Dimensions;

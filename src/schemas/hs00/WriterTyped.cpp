@@ -151,7 +151,8 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
         "Unexpected payload size");
   }
   if (HistogramRecords.find(Timestamp) == HistogramRecords.end()) {
-    HistogramRecords[Timestamp] = HistogramRecord::fromHDFIndex(Dims.at(0));
+    HistogramRecords[Timestamp] =
+        HistogramRecord::create(Dims.at(0), TheShape.getTotalItems());
     Dims.at(0) += 1;
     Dataset.extent(Dims);
   }
@@ -190,6 +191,7 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
   Dataset.write(*DataPtr->data(),
                 hdf5::datatype::create<DataType>().native_type(), DSPMem,
                 DSPFile);
+  Record.addToItemsWritten(DataPtr->size());
   {
     std::vector<uint64_t> Timestamps;
     Timestamps.resize(hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
