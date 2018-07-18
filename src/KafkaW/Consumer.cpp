@@ -151,13 +151,18 @@ void Consumer::init() {
 void Consumer::addTopic(std::string Topic,
                         const std::chrono::milliseconds &StartTime) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
-  int Partition = RD_KAFKA_PARTITION_UA;
 
-  rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(), Partition);
+  auto numberOfPartitions = queryNumberOfPartitions(Topic);
+  rd_kafka_topic_partition_list_add_range(PartitionList, Topic.c_str(), 0,
+                                          numberOfPartitions - 1);
+
   for (int i = 0; i < PartitionList->cnt; ++i) {
     if (StartTime.count() > 0) {
       PartitionList->elems[i].offset = StartTime.count();
       rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
+      LOG(Sev::Debug, "Topic: {}, Partition: {}, Offset: {}, StartTime: {}",
+          Topic, PartitionList->elems[i].partition,
+          PartitionList->elems[i].offset, StartTime.count());
     }
   }
 
@@ -167,6 +172,23 @@ void Consumer::addTopic(std::string Topic,
     LOG(Sev::Error, "could not subscribe");
     throw std::runtime_error("can not subscribe");
   }
+}
+
+int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
+  const rd_kafka_metadata_t *Metadata{nullptr};
+  auto err = rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
+
+  if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    LOG(Sev::Error,
+        "Failed to query metadata in Consumer::queryNumberOfPartitions");
+  } else {
+    for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
+      if (Metadata->topics[topic].topic == TopicName) {
+        return Metadata->topics[topic].partition_cnt;
+      }
+    }
+  }
+  return 1;
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
