@@ -1,0 +1,14 @@
+#pragma once
+
+namespace FileWriter {
+namespace Schemas {
+namespace hs00 {
+
+/// Some JSON input was not understood, but no harm is caused, we can continue.
+class UnexpectedJsonInput : public std::runtime_error {
+public:
+  UnexpectedJsonInput() : std::runtime_error("UnexpectedJsonInput") {}
+};
+}
+}
+}

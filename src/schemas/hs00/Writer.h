@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
@@ -25,6 +27,11 @@ public:
   bool DoFlushEachWrite = false;
   uint64_t TotalWrittenBytes = 0;
 };
+
+std::runtime_error unimplemented() {
+  exit(200);
+  return std::runtime_error("unimplemented");
+}
 }
 }
 }

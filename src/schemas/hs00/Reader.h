@@ -1,3 +1,5 @@
+#pragma once
+
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
