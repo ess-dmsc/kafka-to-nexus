@@ -88,13 +88,6 @@ TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
   ASSERT_EQ(TheShape.getNDIM(), 3u);
 }
 
-hdf5::file::File createFileInMemory(std::string Name) {
-  hdf5::property::FileAccessList FAPL;
-  FAPL.driver(hdf5::file::MemoryDriver());
-  return hdf5::file::create(Name, hdf5::file::AccessFlags::TRUNCATE,
-                            hdf5::property::FileCreationList(), FAPL);
-}
-
 json createTestWriterTypedJson() {
   return json::parse(R""({
     "source_name": "SomeHistogrammer",
@@ -138,6 +131,38 @@ TEST(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
 }
 
 TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
+  auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(
+      createTestWriterTypedJson());
+}
+
+hdf5::file::File createFileInMemory(std::string Name) {
+  hdf5::property::FileAccessList FAPL;
+  FAPL.driver(hdf5::file::MemoryDriver());
+  return hdf5::file::create(Name, hdf5::file::AccessFlags::TRUNCATE,
+                            hdf5::property::FileCreationList(), FAPL);
+}
+
+TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   auto Json = createTestWriterTypedJson();
   auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
+  auto File = createFileInMemory(
+      "Test.EventHistogramWriter.WriterTypedCreateHDFStructure");
+  auto Group = File.root();
+  size_t ChunkBytes = 64 * 1024;
+  TheWriterTyped.createHDFStructure(Group, ChunkBytes);
+  std::string StoredJson;
+  Group.attributes["created_from_json"].read(StoredJson);
+  ASSERT_EQ(json::parse(StoredJson), Json);
+  auto Dataset = Group.get_dataset("histograms");
+  // Everything fine as long as we don't throw.
+}
+
+TEST(EventHistogramWriter, WriterTypedReopen) {
+  auto Json = createTestWriterTypedJson();
+  auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
+  auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
+  auto Group = File.root();
+  size_t ChunkBytes = 64 * 1024;
+  TheWriterTyped.createHDFStructure(Group, ChunkBytes);
+  TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
 }
