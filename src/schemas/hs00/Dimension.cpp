@@ -7,12 +7,67 @@ namespace hs00 {
 
 template <typename EdgeType>
 Dimension<EdgeType> Dimension<EdgeType>::createFromJson(json const &Json) {
-  if (!Json.is_array()) {
+  if (!Json.is_object()) {
     throw UnexpectedJsonInput();
   }
-  throw unimplemented();
+  Dimension Dim;
+  try {
+    Dim.Size = Json["size"];
+    Dim.Unit = Json["unit"];
+    Dim.Label = Json["label"];
+    auto const &JsonEdges = Json["edges"];
+    if (!JsonEdges.is_array()) {
+      throw UnexpectedJsonInput();
+    }
+    if (JsonEdges.size() == size_t(-1) || JsonEdges.size() != Dim.Size + 1) {
+      throw UnexpectedJsonInput();
+    }
+    for (auto const &E : JsonEdges) {
+      Dim.Edges.push_back(E);
+    }
+  } catch (json::out_of_range const &e) {
+    std::throw_with_nested(UnexpectedJsonInput());
+  }
+  return Dim;
 }
 
+template <typename EdgeType> size_t Dimension<EdgeType>::getSize() const {
+  return Size;
+}
+
+template <typename EdgeType> std::string Dimension<EdgeType>::getLabel() const {
+  return Label;
+}
+
+template <typename EdgeType> std::string Dimension<EdgeType>::getUnit() const {
+  return Unit;
+}
+
+template <typename EdgeType>
+std::vector<EdgeType> const &Dimension<EdgeType>::getEdges() const {
+  return Edges;
+}
+
+template size_t Dimension<uint32_t>::getSize() const;
+template size_t Dimension<uint64_t>::getSize() const;
+template size_t Dimension<double>::getSize() const;
+
+template std::string Dimension<uint32_t>::getLabel() const;
+template std::string Dimension<uint64_t>::getLabel() const;
+template std::string Dimension<double>::getLabel() const;
+
+template std::string Dimension<uint32_t>::getUnit() const;
+template std::string Dimension<uint64_t>::getUnit() const;
+template std::string Dimension<double>::getUnit() const;
+
+template std::vector<uint32_t> const &Dimension<uint32_t>::getEdges() const;
+template std::vector<uint64_t> const &Dimension<uint64_t>::getEdges() const;
+template std::vector<double> const &Dimension<double>::getEdges() const;
+
+template Dimension<uint32_t>
+Dimension<uint32_t>::createFromJson(json const &Json);
+template Dimension<uint64_t>
+Dimension<uint64_t>::createFromJson(json const &Json);
 template Dimension<double> Dimension<double>::createFromJson(json const &Json);
 }
 }

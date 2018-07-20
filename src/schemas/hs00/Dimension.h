@@ -13,11 +13,17 @@ private:
   using json = nlohmann::json;
 
 public:
-  Dimension createFromJson(json const &Json);
-  size_t size() const;
-  std::string label() const;
-  std::string unit() const;
-  std::vector<EdgeType> const &edges() const;
+  static Dimension createFromJson(json const &Json);
+  size_t getSize() const;
+  std::string getLabel() const;
+  std::string getUnit() const;
+  std::vector<EdgeType> const &getEdges() const;
+
+private:
+  size_t Size = 0;
+  std::string Label;
+  std::string Unit;
+  std::vector<EdgeType> Edges;
 };
 }
 }
