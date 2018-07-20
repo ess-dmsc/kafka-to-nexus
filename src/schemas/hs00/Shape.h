@@ -12,7 +12,7 @@ private:
   using json = nlohmann::json;
 
 public:
-  static Shape createFromJSON(json const &Json);
+  static Shape createFromJson(json const &Json);
 
 private:
   std::vector<EdgeType> edges;

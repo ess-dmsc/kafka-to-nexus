@@ -7,7 +7,8 @@ using json = nlohmann::json;
 using FileWriter::Schemas::hs00::UnexpectedJsonInput;
 using FileWriter::Schemas::hs00::Shape;
 
-TEST(EventHistogramWriter, ShapeFromJSON) {
+TEST(EventHistogramWriter, ShapeFromJsonThrowsIfInvalidInput) {
+  // The value of "shape" should be an array, so this should throw:
   auto Json = json::parse(R"""({ "shape": {} })""");
-  ASSERT_THROW(Shape<double>::createFromJSON(Json), UnexpectedJsonInput);
+  ASSERT_THROW(Shape<double>::createFromJson(Json), UnexpectedJsonInput);
 }
