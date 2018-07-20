@@ -153,7 +153,7 @@ json createTestWriterTypedJson() {
   return json::parse(R""({
     "source_name": "SomeHistogrammer",
     "data_type": "uint64",
-    "error_type": "uint64",
+    "error_type": "double",
     "edge_type": "double",
     "shape": [
       {
@@ -296,7 +296,7 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
     }
     std::vector<double> Data(TotalElements);
     for (size_t i = 0; i < Data.size(); ++i) {
-      Data.at(i) = (V0 + i) / 10;
+      Data.at(i) = (V0 + i) * 1e-5;
     }
     auto Vec = Builder.CreateVector(Data);
     ArrayDoubleBuilder ArrayBuilder(Builder);
@@ -304,10 +304,7 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
     ErrorValue = ArrayBuilder.Finish().Union();
   }
 
-  auto Source = Builder.CreateString("Testsource");
-
   EventHistogramBuilder EHBuilder(Builder);
-  EHBuilder.add_source(Source);
   EHBuilder.add_timestamp(Timestamp);
   EHBuilder.add_dim_metadata(DMDA);
   EHBuilder.add_current_shape(ThisLengthsVector);
