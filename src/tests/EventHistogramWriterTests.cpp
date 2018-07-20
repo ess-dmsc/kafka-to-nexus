@@ -38,3 +38,28 @@ TEST(EventHistogramWriter, ShapeFromJsonThrowsIfInvalidInput) {
   auto Json = json::parse(R"""({ "shape": {} })""");
   ASSERT_THROW(Shape<double>::createFromJson(Json), UnexpectedJsonInput);
 }
+
+TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
+  auto Json = json::parse(R"""([
+		{
+			"size": 4,
+			"label": "Position",
+			"unit": "mm",
+			"edges": [2, 3, 4, 5, 6]
+		},
+		{
+			"size": 6,
+			"label": "Position",
+			"unit": "mm",
+			"edges": [-3, -2, -1, 0, 1, 2, 3]
+		},
+		{
+			"size": 3,
+			"label": "Time",
+			"unit": "ns",
+			"edges": [0, 2, 4, 6]
+		}
+	])""");
+  auto TheShape = Shape<double>::createFromJson(Json);
+  ASSERT_EQ(TheShape.getNDIM(), 3u);
+}
