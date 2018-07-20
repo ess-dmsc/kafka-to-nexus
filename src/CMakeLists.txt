@@ -104,6 +104,7 @@ set(kafka_to_nexus_SRC
   schemas/ev42/ev42_synth.cpp
   schemas/senv/FastSampleEnvironmentWriter.cpp
   schemas/senv/Datasets.cpp
+  schemas/hs00/Exceptions.cpp
   schemas/hs00/Reader.cpp
   schemas/hs00/Writer.cpp
   schemas/hs00/Shape.cpp
