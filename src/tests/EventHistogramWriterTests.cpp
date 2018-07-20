@@ -219,7 +219,7 @@ std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
   EHBuilder.add_offset(ThisOffsetsVector);
   EHBuilder.add_data(DataValue);
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
-  return std::move(BuilderPtr);
+  return BuilderPtr;
 }
 
 TEST(EventHistogramWriter, WriterInitHDF) {
