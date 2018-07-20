@@ -108,6 +108,7 @@ set(kafka_to_nexus_SRC
   schemas/hs00/Reader.cpp
   schemas/hs00/Writer.cpp
   schemas/hs00/Shape.cpp
+  schemas/hs00/Dimension.cpp
   schemas/template/TemplateWriter.cpp
   MainOpt.cpp
   ${FMT_SRC}
@@ -166,6 +167,7 @@ set(kafka_to_nexus_INC
   schemas/hs00/Reader.h
   schemas/hs00/Writer.h
   schemas/hs00/Shape.h
+  schemas/hs00/Dimension.h
   schemas/template/TemplateWriter.h
   CLIOptions.h
   schemas/senv/FastSampleEnvironmentWriter.h
