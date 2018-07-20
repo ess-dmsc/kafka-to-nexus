@@ -123,6 +123,20 @@ json createTestWriterTypedJson() {
   })"");
 }
 
+TEST(EventHistogramWriter, WriterTypedWithoutSourceNameThrows) {
+  auto Json = createTestWriterTypedJson();
+  Json.erase("source_name");
+  ASSERT_THROW((WriterTyped<uint64_t, double>::createFromJson(Json)),
+               UnexpectedJsonInput);
+}
+
+TEST(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
+  auto Json = createTestWriterTypedJson();
+  Json.erase("shape");
+  ASSERT_THROW((WriterTyped<uint64_t, double>::createFromJson(Json)),
+               UnexpectedJsonInput);
+}
+
 TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
   auto Json = createTestWriterTypedJson();
   auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);

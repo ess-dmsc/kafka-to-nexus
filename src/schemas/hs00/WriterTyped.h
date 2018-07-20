@@ -24,7 +24,8 @@ public:
   void createHDFStructure(hdf5::node::Group const &Group);
 
 private:
-  Shape<EdgeType> OurShape;
+  std::string SourceName;
+  Shape<EdgeType> TheShape;
 };
 }
 }
