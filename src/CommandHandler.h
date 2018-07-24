@@ -35,6 +35,7 @@ public:
   /// Passes content of the message to the command handler.
   ///
   /// \param Msg The message.
+  /// \param MsgTimestamp The rd_kafka_message_timestamp when available
   void handle(Msg const &msg, int64_t MsgTimestamp = -1);
 
   /// Parses the given command and passes it on to a more specific handler.
@@ -71,5 +72,7 @@ private:
 };
 
 std::string findBroker(std::string const &);
+std::chrono::milliseconds findTime(nlohmann::json const &Doc,
+                                   std::string const &TimeName);
 
 } // namespace FileWriter

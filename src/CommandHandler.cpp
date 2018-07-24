@@ -31,6 +31,17 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
+std::chrono::milliseconds findTime(nlohmann::json const &Doc,
+                                   std::string const &TimeName) {
+  if (auto x = find<uint64_t>(TimeName, Doc)) {
+    std::chrono::milliseconds Time(x.inner());
+    if (Time.count() != 0) {
+      return Time;
+    }
+  }
+  return std::chrono::milliseconds{-1};
+}
+
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
@@ -242,25 +253,15 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
-  // Must be done before StreamMaster instantiation
-  if (auto x = find<uint64_t>("start_time", Doc)) {
-    std::chrono::milliseconds StartTime(x.inner());
-    if (StartTime.count() != 0) {
-      Config.StreamerConfiguration.StartTimestamp = StartTime;
-    } else {
-      Config.StreamerConfiguration.StartTimestamp = KafkaMsgTimestamp;
-    }
-  } else {
-    Config.StreamerConfiguration.StartTimestamp = KafkaMsgTimestamp;
+  std::chrono::milliseconds Time = findTime(Doc, "start_time");
+  if (Time.count() > 0) {
+    Config.StreamerConfiguration.StartTimestamp = Time;
   }
   LOG(Sev::Info, "Start time: {}",
       Config.StreamerConfiguration.StartTimestamp.count());
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    std::chrono::milliseconds StopTime(x.inner());
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      Config.StreamerConfiguration.StopTimestamp = StopTime;
-    }
+  Time = findTime(Doc, "stop_time");
+  if (Time.count() > 0) {
+    Config.StreamerConfiguration.StopTimestamp = Time;
   }
 
   if (MasterPtr) {
@@ -371,10 +372,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   } else {
     throwMissingKey("job_id", Doc.dump());
   }
-  std::chrono::milliseconds StopTime(0);
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
-  }
+  std::chrono::milliseconds StopTime = findTime(Doc, "stop_time");
   if (MasterPtr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
