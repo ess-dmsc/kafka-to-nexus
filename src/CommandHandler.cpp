@@ -191,6 +191,10 @@ void CommandHandler::handleNew(std::string const &Command) {
       logMissingKey("job_id", Doc.dump());
       return;
     }
+    if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
+      LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
+      return;
+    }
     Task->job_id_init(JobID);
   } else {
     logMissingKey("job_id", Doc.dump());
