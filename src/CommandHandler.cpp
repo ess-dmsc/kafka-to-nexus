@@ -46,7 +46,9 @@ std::chrono::milliseconds findTime(nlohmann::json const &Doc,
 static int g_N_HANDLED = 0;
 
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
-    : Config(Config_), MasterPtr(MasterPtr_) {}
+    : Config(Config_), MasterPtr(MasterPtr_),
+      KafkaMsgTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch())) {}
 
 /// Holder for the stream settings.
 struct StreamSettings {
@@ -184,14 +186,9 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-// <<<<<<< 4771428b09d2dadb2870752bc1e51eb11e82067b
-// void CommandHandler::handleNew(std::string const &Command) {
-// =======
 void CommandHandler::handleNew(std::string const &Command,
                                const std::chrono::milliseconds StartTime) {
   using nlohmann::detail::out_of_range;
-  // >>>>>>> Do not use class member for message timestamp but propagate in
-  // methods
   using nlohmann::json;
   using std::move;
   using std::string;
@@ -258,6 +255,7 @@ void CommandHandler::handleNew(std::string const &Command,
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
+  // Must be done before StreamMaster instantiation.
   // If start time not specified use command message timestamp
   std::chrono::milliseconds Time = findTime(Doc, "start_time");
   if (Time.count() > 0) {
@@ -270,6 +268,8 @@ void CommandHandler::handleNew(std::string const &Command,
   Time = findTime(Doc, "stop_time");
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StopTimestamp = Time;
+    LOG(Sev::Info, "Stop time: {}ms",
+        Config.StreamerConfiguration.StopTimestamp.count());
   }
 
   if (MasterPtr) {
@@ -470,8 +470,6 @@ void CommandHandler::handle(std::string const &Command,
 void CommandHandler::tryToHandle(std::string const &Command,
                                  const int64_t MsgTimestampMilliseconds) {
   try {
-    // <<<<<<< 4771428b09d2dadb2870752bc1e51eb11e82067b
-    //    handle(Command);
     if (MsgTimestampMilliseconds > 0) {
       handle(Command, std::chrono::milliseconds{MsgTimestampMilliseconds});
       LOG(Sev::Info, "Kafka command message timestamp : {}",
@@ -493,17 +491,7 @@ void CommandHandler::tryToHandle(std::string const &Command,
   } catch (json::type_error const &E) {
     LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
   } catch (std::runtime_error const &E) {
-    // =======
 
-    //   } catch (nlohmann::detail::parse_error &e) {
-    //     LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
-    //   } catch (nlohmann::detail::out_of_range &e) {
-    //     LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
-    //   } catch (nlohmann::detail::type_error &e) {
-    //     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
-    //   } catch (std::runtime_error &e) {
-    // >>>>>>> Do not use class member for message timestamp but propagate in
-    // methods
     // Originates from h5cpp:
     if (std::string(E.what()).find(
             "Cannot obtain ObjectId from an invalid file instance!") == 0) {

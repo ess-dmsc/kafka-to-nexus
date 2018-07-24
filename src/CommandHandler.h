@@ -70,6 +70,7 @@ private:
   MainOpt &Config;
   MasterI *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
+  std::chrono::milliseconds KafkaMsgTimestamp;
 };
 
 std::string findBroker(std::string const &);
