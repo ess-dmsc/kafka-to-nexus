@@ -35,7 +35,9 @@ static void throwMissingKey(std::string const &Key,
 static int g_N_HANDLED = 0;
 
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
-    : Config(Config_), MasterPtr(MasterPtr_) {}
+    : Config(Config_), MasterPtr(MasterPtr_),
+      KafkaMsgTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch())) {}
 
 /// Holder for the stream settings.
 struct StreamSettings {
@@ -244,10 +246,15 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (auto x = find<uint64_t>("start_time", Doc)) {
     std::chrono::milliseconds StartTime(x.inner());
     if (StartTime.count() != 0) {
-      LOG(Sev::Info, "StartTime: {}", StartTime.count());
       Config.StreamerConfiguration.StartTimestamp = StartTime;
+    } else {
+      Config.StreamerConfiguration.StartTimestamp = KafkaMsgTimestamp;
     }
+  } else {
+    Config.StreamerConfiguration.StartTimestamp = KafkaMsgTimestamp;
   }
+  LOG(Sev::Info, "Start time: {}",
+      Config.StreamerConfiguration.StartTimestamp.count());
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     std::chrono::milliseconds StopTime(x.inner());
     if (StopTime.count() != 0) {
@@ -489,7 +496,14 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::handle(Msg const &Msg) {
+void CommandHandler::handle(Msg const &Msg, int64_t MsgTimestamp) {
+  // if kafka message timestamp is invalid (e.g. old broker) use current time
+  if (MsgTimestamp > 0) {
+    KafkaMsgTimestamp = std::chrono::milliseconds{MsgTimestamp};
+  } else {
+    LOG(Sev::Warning, "Invalid KafkaMsgTimestamp, using current time",
+        MsgTimestamp);
+  }
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 

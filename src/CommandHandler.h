@@ -35,7 +35,7 @@ public:
   /// Passes content of the message to the command handler.
   ///
   /// \param Msg The message.
-  void handle(Msg const &msg);
+  void handle(Msg const &msg, int64_t MsgTimestamp = -1);
 
   /// Parses the given command and passes it on to a more specific handler.
   ///
@@ -67,6 +67,7 @@ private:
   MainOpt &Config;
   MasterI *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
+  std::chrono::milliseconds KafkaMsgTimestamp;
 };
 
 std::string findBroker(std::string const &);

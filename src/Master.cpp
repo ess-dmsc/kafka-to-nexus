@@ -30,7 +30,8 @@ Master::Master(MainOpt &MainOpt_)
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.handle(Msg::owned((char const *)msg->data(), msg->size()));
+  command_handler.handle(Msg::owned((char const *)msg->data(), msg->size()),
+                         msg->timestamp());
 }
 
 void Master::handle_command(std::string const &command) {
