@@ -23,10 +23,10 @@ $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
+MM.h
 )
 
 add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
-
 
 add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})

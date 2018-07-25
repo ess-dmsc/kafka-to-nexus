@@ -191,9 +191,11 @@ void CommandHandler::handleNew(std::string const &Command) {
       logMissingKey("job_id", Doc.dump());
       return;
     }
-    if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-      LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
-      return;
+    if (MasterPtr) { // workaround to prevent seg fault in tests
+      if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
+        LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
+        return;
+      }
     }
     Task->job_id_init(JobID);
   } else {
@@ -365,6 +367,9 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   std::chrono::milliseconds StopTime(0);
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
+  }
+  if (!MasterPtr) { // workaround to prevent seg fault in tests
+    return;
   }
   auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
   if (StreamMaster) {
