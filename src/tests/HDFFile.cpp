@@ -7,7 +7,7 @@
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
 #include "HDFFileTestHelper.h"
-#include "MM.h"
+#include "MasterMock.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
