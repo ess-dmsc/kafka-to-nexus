@@ -101,10 +101,10 @@ TEST_F(MessageTimeExtractionTest, Success) {
     EXPECT_NO_THROW(TestDemuxer.sources().at(SourceName));
     EXPECT_NO_THROW(Result = TestDemuxer.process_message(std::move(CurrentMessage)));
     EXPECT_EQ(Result, ProcessMessageResult::OK);
-    EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(1));
-    EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_no_source_instance.load(), size_t(0));
+    EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(1));
+    EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
   }
   
   TEST_F(DemuxerTest, WrongSourceName) {
@@ -121,10 +121,10 @@ TEST_F(MessageTimeExtractionTest, Success) {
     TestDemuxer.add_source(std::move(DummySource));
     EXPECT_NO_THROW(Result = TestDemuxer.process_message(std::move(CurrentMessage)));
     EXPECT_EQ(Result, ProcessMessageResult::ERR);
-    EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_no_source_instance.load(), size_t(1));
+    EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(1));
   }
   
   TEST_F(DemuxerTest, WrongKey) {
@@ -142,10 +142,10 @@ TEST_F(MessageTimeExtractionTest, Success) {
     TestDemuxer.add_source(std::move(DummySource));
     EXPECT_NO_THROW(Result = TestDemuxer.process_message(std::move(CurrentMessage)));
     EXPECT_EQ(Result, ProcessMessageResult::ERR);
-    EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(1));
-    EXPECT_EQ(TestDemuxer.error_no_source_instance.load(), size_t(0));
+    EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(1));
+    EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
   }
   
   TEST_F(DemuxerTest, MessageTooSmall) {
@@ -162,10 +162,10 @@ TEST_F(MessageTimeExtractionTest, Success) {
     TestDemuxer.add_source(std::move(DummySource));
     EXPECT_NO_THROW(Result = TestDemuxer.process_message(std::move(CurrentMessage)));
     EXPECT_EQ(Result, ProcessMessageResult::ERR);
-    EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(1));
-    EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(0));
-    EXPECT_EQ(TestDemuxer.error_no_source_instance.load(), size_t(0));
+    EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(1));
+    EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
+    EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
   }
 
 } // namespace FileWriter
