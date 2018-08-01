@@ -108,21 +108,22 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
 
   // Make sure that the message source is relevant and that the message is in
   // the correct time window
-  MessageTimestamp CurrentMsgTime =
-      getMessageTime(Message);
+  MessageTimestamp CurrentMsgTime = getMessageTime(Message);
   if (std::find(Sources.begin(), Sources.end(), CurrentMsgTime.Sourcename) ==
       Sources.end()) {
     return ProcessMessageResult::OK;
   }
-  if (CurrentMsgTime.Timestamp < std::chrono::duration_cast<std::chrono::nanoseconds>(
-                           Options.StartTimestamp)
-                           .count()) {
+  if (CurrentMsgTime.Timestamp <
+      std::chrono::duration_cast<std::chrono::nanoseconds>(
+          Options.StartTimestamp)
+          .count()) {
     return ProcessMessageResult::OK;
   }
   if (Options.StopTimestamp.count() > 0 &&
-      CurrentMsgTime.Timestamp > std::chrono::duration_cast<std::chrono::nanoseconds>(
-                           Options.StopTimestamp)
-                           .count()) {
+      CurrentMsgTime.Timestamp >
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+              Options.StopTimestamp)
+              .count()) {
     if (removeSource(CurrentMsgTime.Sourcename)) {
       return ProcessMessageResult::STOP;
     }

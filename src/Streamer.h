@@ -130,8 +130,8 @@ private:
 ///\param MessageProcessor instance of a DemuxTopic that implements the
 /// process_message
 /// method.
-//template <>
-//ProcessMessageResult
-//Streamer::write<>(FileWriter::DemuxTopic &MessageProcessor);
+// template <>
+// ProcessMessageResult
+// Streamer::write<>(FileWriter::DemuxTopic &MessageProcessor);
 
 } // namespace FileWriter

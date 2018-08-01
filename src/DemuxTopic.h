@@ -1,7 +1,7 @@
 #pragma once
+#include "MessageTimestamp.h"
 #include "ProcessMessageResult.h"
 #include "Source.h"
-#include "MessageTimestamp.h"
 #include "json.h"
 #include <chrono>
 #include <functional>
@@ -10,11 +10,11 @@
 #include <vector>
 
 namespace FileWriter {
-  
-  /// \brief Extract the source name and timestamp from a message
-  /// \todo This function should be replaced or changed as it enables random
-  /// access to memory.
-  MessageTimestamp getMessageTime(Msg const &Msg);
+
+/// \brief Extract the source name and timestamp from a message
+/// \todo This function should be replaced or changed as it enables random
+/// access to memory.
+MessageTimestamp getMessageTime(Msg const &Msg);
 
 /// Implements the logic of extracting the message type key and source name
 /// and then passing the message to the right filewriting module instance

@@ -6,8 +6,7 @@
 
 namespace FileWriter {
 
-DemuxTopic::DemuxTopic(std::string TopicName)
-    : Topic(TopicName) {}
+DemuxTopic::DemuxTopic(std::string TopicName) : Topic(TopicName) {}
 
 DemuxTopic::~DemuxTopic() {
   // Empty dtor kept to simplify merge in a later PR which will add code here.
@@ -25,7 +24,8 @@ MessageTimestamp getMessageTime(Msg const &Msg) {
   try {
     auto &Reader = FlatbufferReaderRegistry::find(Msg);
     if (!Reader) {
-      throw std::runtime_error("Unable to locate reader with the correct key in the registry.");
+      throw std::runtime_error(
+          "Unable to locate reader with the correct key in the registry.");
     }
     auto Name = Reader->source_name(Msg);
     return MessageTimestamp(Name, Reader->timestamp(Msg));
@@ -43,13 +43,14 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&Msg) {
   try {
     auto &Reader = FlatbufferReaderRegistry::find(Msg);
     if (!Reader) {
-      LOG(Sev::Debug, "Unable to locate reader with the correct key in the registry.");
+      LOG(Sev::Debug,
+          "Unable to locate reader with the correct key in the registry.");
       ++error_no_flatbuffer_reader;
       return ProcessMessageResult::ERR;
     }
     CurrentSourceName = Reader->source_name(Msg);
   } catch (std::runtime_error &E) {
-    LOG(Sev::Error, "{}" ,E.what());
+    LOG(Sev::Error, "{}", E.what());
     ++error_message_too_small;
     return ProcessMessageResult::ERR;
   }
@@ -60,7 +61,8 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&Msg) {
     ++messages_processed;
     return ProcessingResult;
   } catch (std::out_of_range &e) {
-    LOG(Sev::Debug, "Source with name \"{}\" is not in list.", CurrentSourceName);
+    LOG(Sev::Debug, "Source with name \"{}\" is not in list.",
+        CurrentSourceName);
     ++error_no_source_instance;
   }
   return ProcessMessageResult::ERR;

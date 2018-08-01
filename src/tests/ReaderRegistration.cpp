@@ -88,6 +88,7 @@ TEST_F(ReaderRegistrationTest, MsgKeyNotFound) {
 TEST_F(ReaderRegistrationTest, MsgShort) {
   std::string TestData("dumy");
   Msg TestMessage = Msg::owned(TestData.data(), TestData.size());
-  EXPECT_THROW(FlatbufferReaderRegistry::find(TestMessage).get(), std::runtime_error);
+  EXPECT_THROW(FlatbufferReaderRegistry::find(TestMessage).get(),
+               std::runtime_error);
 }
 } // namespace FileWriter

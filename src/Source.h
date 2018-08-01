@@ -3,9 +3,9 @@
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
+#include "MessageTimestamp.h"
 #include "Msg.h"
 #include "ProcessMessageResult.h"
-#include "MessageTimestamp.h"
 #include "json.h"
 #include <string>
 
