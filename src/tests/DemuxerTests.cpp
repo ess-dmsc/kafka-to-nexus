@@ -52,7 +52,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   MessageTimestamp MessageInfo;
   EXPECT_NO_THROW(MessageInfo = getMessageTime(CurrentMessage));
   EXPECT_EQ(MessageInfo.Sourcename, "SomeSourceName");
-  EXPECT_EQ(MessageInfo.Timestamp, 42ul);
+  EXPECT_EQ(MessageInfo.Timestamp, 42l);
 }
 
   TEST_F(MessageTimeExtractionTest, WrongKey) {
