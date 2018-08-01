@@ -172,7 +172,7 @@ private:
 
       // if Streamer throws the stream is closed, but the writing continues
       try {
-        ProcessResult = Stream.write(Demux);
+        ProcessResult = Stream.pollAndProcess(Demux);
       } catch (...) {
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();

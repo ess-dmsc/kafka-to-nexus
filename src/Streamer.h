@@ -54,7 +54,7 @@ public:
 
   /// Method that process a message
   /// \param mp instance of the policy that describe how to process the message
-  ProcessMessageResult write(FileWriter::DemuxTopic &MessageProcessor);
+  ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
 
   /// Disconnect the kafka consumer and destroy the TopicPartition vector. Make
   /// sure that the Streamer status is StreamerErrorCode::has_finished
@@ -118,20 +118,5 @@ private:
   ///
   StreamerError connect(std::string TopicName);
 };
-
-/// Consume a Kafka message and process it according to
-/// DemuxTopic::process_message. If the message contains errors return
-/// ProcessMessageResult::ERR() and increase the count of error messages in the
-/// status, else ProcessMessageResult::OK(). If there are no messages within the
-/// given time return a poll timeout. If a start time is set discard all the
-/// messages generated earlier than the start time. If the message is correctly
-/// processed update a Status object.
-///
-///\param MessageProcessor instance of a DemuxTopic that implements the
-/// process_message
-/// method.
-// template <>
-// ProcessMessageResult
-// Streamer::write<>(FileWriter::DemuxTopic &MessageProcessor);
 
 } // namespace FileWriter

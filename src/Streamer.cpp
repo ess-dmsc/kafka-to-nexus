@@ -62,7 +62,7 @@ FileWriter::Streamer::StreamerError FileWriter::Streamer::closeStream() {
 }
 
 FileWriter::ProcessMessageResult
-FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
+FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   try {
     // wait for connect() to finish
