@@ -14,7 +14,7 @@ public:
   }
 };
 
-class DummyReader : public FileWriter::FlatbufferReader {
+class DummyReader2 : public FileWriter::FlatbufferReader {
 public:
   bool verify(Msg const &msg) const override { return true; }
   std::string source_name(Msg const &msg) const override {
@@ -45,7 +45,7 @@ public:
 
 TEST_F(MessageTimeExtractionTest, Success) {
   std::string TestKey("temp");
-  { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
+  { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
   FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
@@ -58,7 +58,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   TEST_F(MessageTimeExtractionTest, WrongKey) {
     std::string TestKey("temp");
     std::string MessageKey("temr");
-    { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
+    { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
     char *TestData = new char[8];
     std::memcpy(TestData + 4, MessageKey.c_str(), 4);
     FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
@@ -68,7 +68,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
 
   TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
     std::string TestKey("temp");
-    { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
+    { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
     char *TestData = new char[8];
     std::memcpy(TestData + 4, TestKey.c_str(), 4);
     FileWriter::Msg CurrentMessage = Msg::owned(TestData, 7);
@@ -88,7 +88,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   TEST_F(DemuxerTest, Success) {
     std::string TestKey("temp");
     std::string SourceName("SomeSourceName");
-    { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
+    { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
     char *TestData = new char[8];
     std::memcpy(TestData + 4, TestKey.c_str(), 4);
     FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
@@ -97,6 +97,8 @@ TEST_F(MessageTimeExtractionTest, Success) {
     DummyWriter::ptr Writer(new DummyWriter);
     Source DummySource(SourceName, std::move(Writer));
     TestDemuxer.add_source(std::move(DummySource));
+    ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
+    EXPECT_NO_THROW(TestDemuxer.sources().at(SourceName));
     EXPECT_NO_THROW(Result = TestDemuxer.process_message(std::move(CurrentMessage)));
     EXPECT_EQ(Result, ProcessMessageResult::OK);
     EXPECT_EQ(TestDemuxer.messages_processed, size_t(1));
@@ -108,7 +110,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   TEST_F(DemuxerTest, WrongSourceName) {
     std::string TestKey("temp");
     std::string SourceName("WrongSourceName");
-    { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
+    { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
     char *TestData = new char[8];
     std::memcpy(TestData + 4, TestKey.c_str(), 4);
     FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
@@ -129,7 +131,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
     std::string TestKey("temp");
     std::string AltKey("temo");
     std::string SourceName("SomeSourceName");
-    { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(AltKey); }
+    { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(AltKey); }
     char *TestData = new char[8];
     std::memcpy(TestData + 4, TestKey.c_str(), 4);
     FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
@@ -149,7 +151,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   TEST_F(DemuxerTest, MessageTooSmall) {
     std::string TestKey("temp");
     std::string SourceName("SomeSourceName");
-    { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
+    { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
     char *TestData = new char[8];
     std::memcpy(TestData + 4, TestKey.c_str(), 4);
     FileWriter::Msg CurrentMessage = Msg::owned(TestData, 7);
