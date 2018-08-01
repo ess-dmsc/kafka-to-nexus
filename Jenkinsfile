@@ -100,6 +100,7 @@ def docker_cmake_release(image_key) {
         def custom_sh = images[image_key]['sh']
         def configure_script = """
                         cd build
+                        . ./activate_run.sh
                         cmake ../${project} \
                             -DCMAKE_BUILD_TYPE=Release \
                             -DCMAKE_SKIP_RPATH=FALSE \
