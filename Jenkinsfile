@@ -69,6 +69,7 @@ def docker_dependencies(image_key) {
                         conan remote add \
                             --insert 0 \
                             ${conan_remote} ${local_conan_server}
+                        conan install --build=outdated ../conan/
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
     } catch (e) {
@@ -85,6 +86,7 @@ def docker_cmake(image_key) {
         }
         def configure_script = """
                         cd build
+                        . ./activate_run.sh
                         cmake ../${project} ${coverage_on}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
