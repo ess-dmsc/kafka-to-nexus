@@ -44,7 +44,7 @@ void dwlog(Sev level, char const *fmt, char const *file, int line,
   try {
     dwlog_inner(static_cast<int>(level), file, line, func,
                 fmt::format(fmt, args...));
-  } catch (fmt::format_error &e) {
+  } catch (fmt::FormatError &e) {
     dwlog_inner(static_cast<int>(level), file, line, func,
                 fmt::format("ERROR in format: {}: {}", e.what(), fmt));
   }
