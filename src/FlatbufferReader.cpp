@@ -1,5 +1,6 @@
 #include "FlatbufferReader.h"
 #include <flatbuffers/flatbuffers.h>
+#include <stdexcept>
 
 namespace FileWriter {
 
@@ -23,10 +24,7 @@ FlatbufferReaderRegistry::ReaderPtr &find(std::string const &key) {
 FlatbufferReader::ptr &find(Msg const &msg) {
   static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
   if (msg.size() < 8) {
-    LOG(Sev::Warning, "flatbuffer message is too small: {} expect at least 8",
-        msg.size());
-    static FlatbufferReader::ptr empty;
-    return empty;
+    throw std::runtime_error(fmt::format("Flatbuffer message is too small: got {} bytes, expected at least 8.", msg.size()));
   }
   std::string key(msg.data() + 4, 4);
   return find(key);

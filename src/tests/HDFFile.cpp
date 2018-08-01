@@ -659,17 +659,17 @@ public:
             }
             auto res = fwt->demuxers().at(0).process_message(
                 FileWriter::Msg::cheap(msg));
-            if (res.is_ERR()) {
+            if (res == FileWriter::ProcessMessageResult::ERR) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
               break;
             }
-            if (res.is_ALL_SOURCES_FULL()) {
+            if (res == FileWriter::ProcessMessageResult::ALL_SOURCES_FULL) {
               LOG(Sev::Error, "is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
-            if (res.is_STOP()) {
+            if (res == FileWriter::ProcessMessageResult::STOP) {
               LOG(Sev::Error, "is_STOP");
               do_run = false;
               break;

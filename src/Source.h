@@ -5,7 +5,7 @@
 #include "HDFWriterModule.h"
 #include "Msg.h"
 #include "ProcessMessageResult.h"
-#include "TimeDifferenceFromMessage.h"
+#include "MessageTimestamp.h"
 #include "json.h"
 #include <string>
 
@@ -30,6 +30,7 @@ private:
 /// for only one sourcename.
 class Source {
 public:
+  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
   Source(Source &&) noexcept;
   ~Source() = default;
   std::string const &topic() const;
@@ -43,8 +44,6 @@ public:
   HDFFile *HDFFileForSWMR = nullptr;
 
 private:
-  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
-
   std::string _topic;
   std::string _sourcename;
   std::unique_ptr<HDFWriterModule> _hdf_writer_module;

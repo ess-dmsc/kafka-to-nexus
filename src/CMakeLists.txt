@@ -77,7 +77,6 @@ set(kafka_to_nexus_SRC
   Master.cpp
   CommandListener.cpp
   CommandHandler.cpp
-  TimeDifferenceFromMessage.cpp
   FileWriterTask.cpp
   Source.cpp
   DemuxTopic.cpp
@@ -146,7 +145,7 @@ set(kafka_to_nexus_INC
   Streamer.h
   StreamerOptions.h
   StreamMaster.h
-  TimeDifferenceFromMessage.h
+  MessageTimestamp.h
   TopicReader.h
   uri.h
   date/date.h

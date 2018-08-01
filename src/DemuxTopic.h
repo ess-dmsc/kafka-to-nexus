@@ -1,7 +1,7 @@
 #pragma once
 #include "ProcessMessageResult.h"
 #include "Source.h"
-#include "TimeDifferenceFromMessage.h"
+#include "MessageTimestamp.h"
 #include "json.h"
 #include <chrono>
 #include <functional>
@@ -10,15 +10,18 @@
 #include <vector>
 
 namespace FileWriter {
+  
+  /// \brief Extract the source name and timestamp from a message
+  /// \todo This function should be replaced or changed as it enables random
+  /// access to memory.
+  MessageTimestamp getMessageTime(Msg const &Msg);
 
-/// Represents a sourcename on a topic.
-/// The sourcename can be empty.
-/// This is meant for highest efficiency on topics which are exclusively used
-/// for only one sourcename.
+/// Implements the logic of extracting the message type key and source name
+/// and then passing the message to the right filewriting module instance
+/// based on this information.
 class DemuxTopic {
 public:
-  using DT = TimeDifferenceFromMessage;
-  DemuxTopic(std::string topic);
+  DemuxTopic(std::string TopicName);
   DemuxTopic(DemuxTopic &&x);
   ~DemuxTopic();
 
@@ -33,8 +36,6 @@ public:
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
   ProcessMessageResult process_message(Msg &&msg);
-  /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(Msg const &msg);
   std::unordered_map<std::string, Source> &sources();
 
   //----------------------------------------------------------------------------
@@ -50,12 +51,8 @@ public:
     using std::move;
     auto k = source.sourcename();
     std::pair<std::string, Source> v{k, move(source)};
-    return _sources_map.insert(move(v)).first->second;
+    return TopicSources.insert(move(v)).first->second;
   }
-
-  std::string to_str() const;
-  nlohmann::json to_json() const;
-  std::chrono::milliseconds &stop_time();
 
   /// Counts the number of processed message.
   std::atomic<size_t> messages_processed{0};
@@ -70,10 +67,9 @@ public:
   std::atomic<size_t> error_no_source_instance{0};
 
 private:
-  std::string _topic;
-  std::unordered_map<std::string, Source> _sources_map;
+  std::string Topic;
+  std::unordered_map<std::string, Source> TopicSources;
   friend void swap(DemuxTopic &x, DemuxTopic &y);
-  std::chrono::milliseconds _stop_time;
 };
 
 } // namespace FileWriter

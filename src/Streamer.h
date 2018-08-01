@@ -52,12 +52,9 @@ public:
 
   ~Streamer() = default;
 
-  /// Generic template method that process a message according to a policy T
+  /// Method that process a message
   /// \param mp instance of the policy that describe how to process the message
-  template <class T> ProcessMessageResult write(T &mp) {
-    LOG(Sev::Warning, "fake_recv");
-    return ProcessMessageResult::ERR();
-  }
+  ProcessMessageResult write(FileWriter::DemuxTopic &MessageProcessor);
 
   /// Disconnect the kafka consumer and destroy the TopicPartition vector. Make
   /// sure that the Streamer status is StreamerErrorCode::has_finished
@@ -133,8 +130,8 @@ private:
 ///\param MessageProcessor instance of a DemuxTopic that implements the
 /// process_message
 /// method.
-template <>
-ProcessMessageResult
-Streamer::write<>(FileWriter::DemuxTopic &MessageProcessor);
+//template <>
+//ProcessMessageResult
+//Streamer::write<>(FileWriter::DemuxTopic &MessageProcessor);
 
 } // namespace FileWriter

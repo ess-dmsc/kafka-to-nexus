@@ -61,7 +61,6 @@ FileWriter::Streamer::StreamerError FileWriter::Streamer::closeStream() {
   return (RunStatus = StreamerError::HAS_FINISHED());
 }
 
-template <>
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
 
@@ -71,7 +70,7 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
       if (IsConnected.wait_for(std::chrono::milliseconds(100)) !=
           std::future_status::ready) {
         LOG(Sev::Critical, "... still not ready");
-        return ProcessMessageResult::OK();
+        return ProcessMessageResult::OK;
       }
       RunStatus = IsConnected.get();
     }
@@ -93,41 +92,41 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
       LOG(Sev::Info, "Close topic {} after time expired",
           MessageProcessor.topic());
       Sources.clear();
-      return ProcessMessageResult::STOP();
+      return ProcessMessageResult::STOP;
     }
-    return ProcessMessageResult::OK();
+    return ProcessMessageResult::OK;
   }
   if (Poll.isErr()) {
-    return ProcessMessageResult::ERR();
+    return ProcessMessageResult::ERR;
   }
 
   // convert from KafkaW to Msg
   Msg Message(Msg::fromKafkaW(Poll.isMsg()));
   if (Message.type == MsgType::Invalid) {
-    return ProcessMessageResult::ERR();
+    return ProcessMessageResult::ERR;
   }
 
   // Make sure that the message source is relevant and that the message is in
   // the correct time window
-  DemuxTopic::DT MessageTime =
-      MessageProcessor.time_difference_from_message(Message);
-  if (std::find(Sources.begin(), Sources.end(), MessageTime.sourcename) ==
+  MessageTimestamp CurrentMsgTime =
+      getMessageTime(Message);
+  if (std::find(Sources.begin(), Sources.end(), CurrentMsgTime.Sourcename) ==
       Sources.end()) {
-    return ProcessMessageResult::OK();
+    return ProcessMessageResult::OK;
   }
-  if (MessageTime.dt < std::chrono::duration_cast<std::chrono::nanoseconds>(
+  if (CurrentMsgTime.Timestamp < std::chrono::duration_cast<std::chrono::nanoseconds>(
                            Options.StartTimestamp)
                            .count()) {
-    return ProcessMessageResult::OK();
+    return ProcessMessageResult::OK;
   }
   if (Options.StopTimestamp.count() > 0 &&
-      MessageTime.dt > std::chrono::duration_cast<std::chrono::nanoseconds>(
+      CurrentMsgTime.Timestamp > std::chrono::duration_cast<std::chrono::nanoseconds>(
                            Options.StopTimestamp)
                            .count()) {
-    if (removeSource(MessageTime.sourcename)) {
-      return ProcessMessageResult::STOP();
+    if (removeSource(CurrentMsgTime.Sourcename)) {
+      return ProcessMessageResult::STOP;
     }
-    return ProcessMessageResult::ERR();
+    return ProcessMessageResult::ERR;
   }
 
   // Collect information about the data received
@@ -136,9 +135,9 @@ FileWriter::Streamer::write(FileWriter::DemuxTopic &MessageProcessor) {
   // Write the message. Log any error and return the result of processing
   ProcessMessageResult result =
       MessageProcessor.process_message(std::move(Message));
-  LOG(Sev::Debug, "Processed: {}::{}\tpulse_time: {}", MessageProcessor.topic(),
-      MessageTime.sourcename, result.ts());
-  if (!result.is_OK()) {
+  LOG(Sev::Debug, "Processed: {}::{}", MessageProcessor.topic(),
+      CurrentMsgTime.Sourcename);
+  if (ProcessMessageResult::OK != result) {
     MessageInfo.error();
   }
   return result;

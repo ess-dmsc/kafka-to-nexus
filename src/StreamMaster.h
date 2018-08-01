@@ -179,14 +179,14 @@ private:
       }
       // decreases the count of sources in the stream, eventually closes the
       // stream
-      if (ProcessResult.is_STOP()) {
+      if (ProcessResult == ProcessMessageResult::STOP) {
         if (Stream.numSources() == 0) {
           return closeStream(Stream, Demux.topic());
         }
         return StreamMasterError::RUNNING();
       }
       // if there's any error in the messages logs it
-      if (ProcessResult.is_ERR()) {
+      if (ProcessResult == ProcessMessageResult::ERR) {
         LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR();

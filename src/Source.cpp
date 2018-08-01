@@ -46,31 +46,31 @@ ProcessMessageResult Source::process_message(Msg &msg) {
   auto &reader = FlatbufferReaderRegistry::find(msg);
   if (!reader->verify(msg)) {
     LOG(Sev::Error, "buffer not verified");
-    return ProcessMessageResult::ERR();
+    return ProcessMessageResult::ERR;
   }
   if (!do_process_message) {
-    return ProcessMessageResult::OK();
+    return ProcessMessageResult::OK;
   }
   if (!is_parallel) {
     if (!_hdf_writer_module) {
       LOG(Sev::Debug, "!_hdf_writer_module for {}", _sourcename);
-      return ProcessMessageResult::ERR();
+      return ProcessMessageResult::ERR;
     }
     auto ret = _hdf_writer_module->write(msg);
     _cnt_msg_written += 1;
     _processed_messages_count += 1;
     if (ret.is_ERR()) {
-      return ProcessMessageResult::ERR();
+      return ProcessMessageResult::ERR;
     }
     if (HDFFileForSWMR) {
       HDFFileForSWMR->SWMRFlush();
     }
     if (ret.is_OK_WITH_TIMESTAMP()) {
-      return ProcessMessageResult::OK(ret.timestamp());
+      return ProcessMessageResult::OK;
     }
-    return ProcessMessageResult::OK();
+    return ProcessMessageResult::OK;
   }
-  return ProcessMessageResult::ERR();
+  return ProcessMessageResult::ERR;
 }
 
 uint64_t Source::processed_messages_count() const {
