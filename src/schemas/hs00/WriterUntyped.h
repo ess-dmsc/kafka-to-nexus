@@ -10,11 +10,9 @@ namespace Schemas {
 namespace hs00 {
 
 class WriterUntyped {
-private:
+public:
   using ptr = std::unique_ptr<WriterUntyped>;
   using json = nlohmann::json;
-
-public:
   /// Create a WriterTyped from Json, used when a new write command arrives at
   /// the file writer.
   static ptr createFromJson(json const &Json);
@@ -27,6 +25,12 @@ public:
   /// writer module.
   virtual void createHDFStructure(hdf5::node::Group &Group,
                                   size_t ChunkBytes) = 0;
+
+private:
+  template <typename DataType> static ptr createFromJsonL1(json const &Json);
+
+  template <typename DataType, typename EdgeType>
+  static ptr createFromJsonL2(json const &Json);
 };
 }
 }

@@ -96,7 +96,7 @@ TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
 json createTestWriterTypedJson() {
   return json::parse(R""({
     "source_name": "SomeHistogrammer",
-    "data_type": "uint64_t",
+    "data_type": "uint64",
     "edge_type": "double",
     "shape": [
       {
@@ -154,7 +154,7 @@ TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
       "Test.EventHistogramWriter.WriterTypedCreateHDFStructure");
   auto Group = File.root();
   size_t ChunkBytes = 64 * 1024;
-  TheWriterTyped.createHDFStructure(Group, ChunkBytes);
+  TheWriterTyped->createHDFStructure(Group, ChunkBytes);
   std::string StoredJson;
   Group.attributes["created_from_json"].read(StoredJson);
   ASSERT_EQ(json::parse(StoredJson), Json);
@@ -168,7 +168,7 @@ TEST(EventHistogramWriter, WriterTypedReopen) {
   auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
   auto Group = File.root();
   size_t ChunkBytes = 64 * 1024;
-  TheWriterTyped.createHDFStructure(Group, ChunkBytes);
+  TheWriterTyped->createHDFStructure(Group, ChunkBytes);
   TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
 }
 
@@ -226,5 +226,6 @@ TEST(EventHistogramWriter, WriterInitHDF) {
   auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
   auto Group = File.root();
   auto Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
 }

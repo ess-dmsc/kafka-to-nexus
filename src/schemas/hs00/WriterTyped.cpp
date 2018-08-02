@@ -1,4 +1,5 @@
 #include "WriterTyped.h"
+#include "../../helper.h"
 #include "Exceptions.h"
 
 namespace FileWriter {
@@ -6,12 +7,13 @@ namespace Schemas {
 namespace hs00 {
 
 template <typename DataType, typename EdgeType>
-WriterTyped<DataType, EdgeType>
+typename WriterTyped<DataType, EdgeType>::ptr
 WriterTyped<DataType, EdgeType>::createFromJson(json const &Json) {
   if (!Json.is_object()) {
     throw UnexpectedJsonInput();
   }
-  WriterTyped<DataType, EdgeType> TheWriterTyped;
+  auto TheWriterTypedPtr = make_unique<WriterTyped<DataType, EdgeType>>();
+  auto &TheWriterTyped = *TheWriterTypedPtr;
   try {
     TheWriterTyped.SourceName = Json.at("source_name");
     TheWriterTyped.TheShape = Shape<EdgeType>::createFromJson(Json.at("shape"));
@@ -19,18 +21,19 @@ WriterTyped<DataType, EdgeType>::createFromJson(json const &Json) {
   } catch (json::out_of_range const &) {
     std::throw_with_nested(UnexpectedJsonInput());
   }
-  return TheWriterTyped;
+  return TheWriterTypedPtr;
 }
 
 template <typename DataType, typename EdgeType>
-WriterTyped<DataType, EdgeType>
+typename WriterTyped<DataType, EdgeType>::ptr
 WriterTyped<DataType, EdgeType>::createFromHDF(hdf5::node::Group &Group) {
   std::string JsonString;
   Group.attributes["created_from_json"].read(JsonString);
-  auto TheWriterTyped =
+  auto TheWriterTypedPtr =
       WriterTyped<DataType, EdgeType>::createFromJson(json::parse(JsonString));
+  auto &TheWriterTyped = *TheWriterTypedPtr;
   TheWriterTyped.Dataset = Group.get_dataset("histograms");
-  return TheWriterTyped;
+  return TheWriterTypedPtr;
 }
 
 template <typename DataType, typename EdgeType>
@@ -49,10 +52,10 @@ void WriterTyped<DataType, EdgeType>::createHDFStructure(
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
 }
 
-template WriterTyped<uint64_t, double>
+template WriterTyped<uint64_t, double>::ptr
 WriterTyped<uint64_t, double>::createFromJson(json const &Json);
 
-template WriterTyped<uint64_t, double>
+template WriterTyped<uint64_t, double>::ptr
 WriterTyped<uint64_t, double>::createFromHDF(hdf5::node::Group &Group);
 
 template void

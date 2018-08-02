@@ -2,6 +2,7 @@
 
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
+#include "WriterUntyped.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -21,6 +22,8 @@ public:
   int32_t flush() override;
   int32_t close() override;
   void enable_cq(CollectiveQueue *, HDFIDStore *, int) override;
+
+  WriterUntyped::ptr TheWriterUntyped;
 
   hsize_t ChunkBytes = 1 << 18;
   bool DoFlushEachWrite = false;
