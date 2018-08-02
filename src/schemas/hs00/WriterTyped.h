@@ -36,7 +36,8 @@ public:
   /// writer module.
   void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes) override;
 
-  HDFWriterModule::WriteResult write(FlatbufferMessage const &Message) override;
+  HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,
+                                     bool DoFlushEachWrite) override;
 
 private:
   std::string SourceName;
@@ -166,7 +167,7 @@ template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
-    FlatbufferMessage const &Message) {
+    FlatbufferMessage const &Message, bool DoFlushEachWrite) {
   if (!Dataset.is_valid()) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("invalid dataset");
   }
@@ -334,7 +335,9 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
     }
   }
 
-  Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
+  if (DoFlushEachWrite) {
+    Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
+  }
   return HDFWriterModule::WriteResult::OK();
 }
 }

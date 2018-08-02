@@ -41,7 +41,7 @@ Writer::write(FlatbufferMessage const &Message) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
   }
-  return TheWriterUntyped->write(Message);
+  return TheWriterUntyped->write(Message, DoFlushEachWrite);
 }
 
 int32_t Writer::flush() {

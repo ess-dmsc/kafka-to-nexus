@@ -27,8 +27,8 @@ public:
   virtual void createHDFStructure(hdf5::node::Group &Group,
                                   size_t ChunkBytes) = 0;
 
-  virtual HDFWriterModule::WriteResult
-  write(FlatbufferMessage const &Message) = 0;
+  virtual HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,
+                                             bool DoFlushEachWrite) = 0;
 
 private:
   template <typename DataType> static ptr createFromJsonL1(json const &Json);
