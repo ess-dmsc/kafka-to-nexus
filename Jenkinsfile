@@ -5,24 +5,20 @@ release_os = "centos7-release"
 
 images = [
         'centos7': [
-                'name': 'essdmscdm/centos7-build-node:3.0.0',
+                'name': 'essdmscdm/centos7-build-node:3.1.0',
                 'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'
         ],
         'centos7-release': [
-                'name': 'essdmscdm/centos7-build-node:3.0.0',
+                'name': 'essdmscdm/centos7-build-node:3.1.0',
                 'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'
         ],
         'fedora25'    : [
-                'name': 'essdmscdm/fedora25-build-node:1.0.0',
+                'name': 'essdmscdm/fedora25-build-node:2.0.0',
                 'sh'  : 'bash -e'
         ],
-        'ubuntu1604'  : [
-                'name': 'essdmscdm/ubuntu16.04-build-node:2.1.0',
+        'ubuntu1804'  : [
+                'name': 'essdmscdm/ubuntu18.04-build-node:1.1.0',
                 'sh'  : 'bash -e'
-        ],
-        'ubuntu1710': [
-                'name': 'essdmscdm/ubuntu17.10-build-node:2.0.0',
-                'sh': 'bash -e'
         ]
 ]
 
@@ -69,6 +65,7 @@ def docker_dependencies(image_key) {
                         conan remote add \
                             --insert 0 \
                             ${conan_remote} ${local_conan_server}
+                        conan install --build=outdated ../${project}/conan/
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
     } catch (e) {
@@ -85,6 +82,7 @@ def docker_cmake(image_key) {
         }
         def configure_script = """
                         cd build
+                        . ./activate_run.sh
                         cmake ../${project} ${coverage_on}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
@@ -98,6 +96,7 @@ def docker_cmake_release(image_key) {
         def custom_sh = images[image_key]['sh']
         def configure_script = """
                         cd build
+                        . ./activate_run.sh
                         cmake ../${project} \
                             -DCMAKE_BUILD_TYPE=Release \
                             -DCMAKE_SKIP_RPATH=FALSE \
