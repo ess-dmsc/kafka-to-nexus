@@ -1,6 +1,6 @@
 [requires]
 gtest/3121b20-dm3@ess-dmsc/stable
-fmt/4.1.0@bincrafters/stable
+fmt/5.1.0@bincrafters/stable
 FlatBuffers/1.9.0@ess-dmsc/stable
 hdf5/1.10.2-dm2@ess-dmsc/stable
 h5cpp/0.0.7@ess-dmsc/stable
