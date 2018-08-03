@@ -1,13 +1,10 @@
 #include "WriterTyped.h"
 #include "../../helper.h"
 #include "Exceptions.h"
-#include <flatbuffers/flatbuffers.h>
 
 namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
-
-#include "schemas/hs00_event_histogram_generated.h"
 
 template <typename DataType, typename EdgeType>
 typename WriterTyped<DataType, EdgeType>::ptr
@@ -95,6 +92,12 @@ template <> Array getMatchingFlatbufferType(double *) {
 
 // Array::ArrayULong
 
+static hdf5::dataspace::Simple makeDSPMem(std::vector<hsize_t> const &Dims) {
+  auto D = Dims;
+  D.at(0) = 1;
+  return {D, D};
+}
+
 template <typename DataType, typename EdgeType>
 HDFWriterModule::WriteResult
 WriterTyped<DataType, EdgeType>::write(Msg const &Msg) {
@@ -112,7 +115,35 @@ WriterTyped<DataType, EdgeType>::write(Msg const &Msg) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)");
   }
-  EvMsg->data();
+  size_t ExpectedLinearDataSize = 1;
+  for (size_t i = 1; i < Dims.size(); ++i) {
+    ExpectedLinearDataSize *= Dims.at(i);
+  }
+  auto DataPtr =
+      static_cast<FlatbufferDataType const *>(EvMsg->data())->value();
+  if (ExpectedLinearDataSize != DataPtr->size()) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        "Unexpected payload size");
+  }
+  auto DSPFile = Dataset.dataspace();
+  {
+    std::vector<hsize_t> Offset(Dims.size());
+    Offset.at(0) = Dims.at(0) - 1;
+    auto Block = Dims;
+    Block.at(0) = 1;
+    auto Count = Dims;
+    auto Stride = Dims;
+    for (size_t i = 0; i < Count.size(); ++i) {
+      Count.at(i) = 1;
+      Stride.at(i) = 1;
+    }
+    DSPFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                      hdf5::dataspace::Hyperslab(Offset, Block, Count, Stride));
+  }
+  auto DSPMem = makeDSPMem(Dims);
+  Dataset.write(*DataPtr->data(),
+                hdf5::datatype::create<DataType>().native_type(), DSPMem,
+                DSPFile);
   return HDFWriterModule::WriteResult::OK();
 }
 }

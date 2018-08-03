@@ -3,12 +3,16 @@
 #include "Shape.h"
 #include "WriterUntyped.h"
 #include "json.h"
+#include <flatbuffers/flatbuffers.h>
 #include <h5cpp/hdf5.hpp>
+#include <type_traits>
 #include <vector>
 
 namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
+
+#include "schemas/hs00_event_histogram_generated.h"
 
 template <typename DataType, typename EdgeType>
 class WriterTyped : public WriterUntyped {
@@ -17,6 +21,7 @@ private:
 
 public:
   using ptr = std::unique_ptr<WriterTyped>;
+
   /// Create a WriterTyped from Json, used when a new write command arrives at
   /// the file writer.
   static ptr createFromJson(json const &Json);
@@ -35,6 +40,14 @@ private:
   Shape<EdgeType> TheShape;
   std::string CreatedFromJson;
   hdf5::node::Dataset Dataset;
+
+  // clang-format off
+  using FlatbufferDataType =
+  typename std::conditional<std::is_same<DataType, uint32_t>::value, ArrayUInt,
+  typename std::conditional<std::is_same<DataType, uint64_t>::value, ArrayULong,
+  typename std::conditional<std::is_same<DataType,   double>::value, ArrayDouble,
+  std::nullptr_t>::type>::type>::type;
+  // clang-format on
 };
 }
 }
