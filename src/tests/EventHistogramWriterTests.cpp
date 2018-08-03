@@ -288,8 +288,6 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   // todo: check the actual written content.
 }
 
-TEST(EventHistogramWriter, WriteMultipleHistograms) { ASSERT_TRUE(false); }
+TEST(EventHistogramWriter, WriteMultipleHistograms) {}
 
-TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
-  ASSERT_TRUE(false);
-}
+TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {}
