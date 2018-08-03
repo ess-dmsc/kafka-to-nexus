@@ -1,3 +1,4 @@
+#include "Msg.h"
 #include "json.h"
 #include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
@@ -172,21 +173,24 @@ TEST(EventHistogramWriter, WriterTypedReopen) {
   TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
 }
 
-std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
+FileWriter::Msg createTestMessage() {
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
   auto &Builder = *BuilderPtr;
-  ArrayDoubleBuilder ArrayBuilder(Builder);
-  ArrayBuilder.add_value(
-      Builder.CreateVector(std::vector<double>({1, 2, 3, 4})));
-  auto Array = ArrayBuilder.Finish().Union();
+  flatbuffers::Offset<void> BinBoundaries;
+  {
+    auto Vec = Builder.CreateVector(std::vector<double>({1, 2, 3, 4}));
+    ArrayDoubleBuilder ArrayBuilder(Builder);
+    ArrayBuilder.add_value(Vec);
+    BinBoundaries = ArrayBuilder.Finish().Union();
+  }
 
   std::vector<size_t> DimLengths{4, 6, 3};
   std::vector<flatbuffers::Offset<DimensionMetaData>> DMDs;
   for (auto Length : DimLengths) {
     DimensionMetaDataBuilder DMDBuilder(Builder);
     DMDBuilder.add_length(Length);
-    DMDBuilder.add_bin_boundaries(Array);
+    DMDBuilder.add_bin_boundaries(BinBoundaries);
     DMDs.push_back(DMDBuilder.Finish());
   }
   auto DMDA = Builder.CreateVector(DMDs);
@@ -204,8 +208,9 @@ std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
       TotalElements *= x;
     }
     std::vector<uint64_t> Data(TotalElements, 0xcafe);
+    auto Vec = Builder.CreateVector(Data);
     ArrayULongBuilder ArrayBuilder(Builder);
-    ArrayBuilder.add_value(Builder.CreateVector(Data));
+    ArrayBuilder.add_value(Vec);
     DataValue = ArrayBuilder.Finish().Union();
   }
 
@@ -219,13 +224,53 @@ std::unique_ptr<flatbuffers::FlatBufferBuilder> createTestMessage() {
   EHBuilder.add_offset(ThisOffsetsVector);
   EHBuilder.add_data(DataValue);
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
-  return BuilderPtr;
+  return FileWriter::Msg::owned(
+      reinterpret_cast<const char *>(Builder.GetBufferPointer()),
+      Builder.GetSize());
 }
 
 TEST(EventHistogramWriter, WriterInitHDF) {
-  auto File = createFileInMemory("Test.EventHistogramWriter.WriterTypedReopen");
+  auto File = createFileInMemory("Test.EventHistogramWriter.WriterInitHDF");
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
+}
+
+TEST(EventHistogramWriter, WriterReopen) {
+  auto File = createFileInMemory("Test.EventHistogramWriter.WriterReopen");
+  auto Group = File.root();
+  auto Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
+  Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->reopen(Group).is_OK());
+}
+
+TEST(EventHistogramWriter, WriteMessage) {
+  auto File = createFileInMemory("Test.EventHistogramWriter.WriteMessage");
+  auto Group = File.root();
+  auto Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
+  Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  Writer->write(createTestMessage());
+  auto Histograms = Group.get_dataset("histograms");
+  hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
+  ASSERT_EQ(Dataspace.current_dimensions().at(0), 1u);
+  // do more checks
+  ASSERT_TRUE(false);
+}
+
+TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
+  ASSERT_TRUE(false);
+}
+
+TEST(EventHistogramWriter, WriteMultipleHistograms) { ASSERT_TRUE(false); }
+
+TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
+  ASSERT_TRUE(false);
 }
