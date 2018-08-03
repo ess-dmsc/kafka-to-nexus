@@ -69,6 +69,10 @@ public:
   /// \return The error result.
   static inline WriteResult ERROR_IO() { return WriteResult(-1); }
 
+  static inline WriteResult ERROR_WITH_MESSAGE(std::string Message) {
+    return WriteResult(Message);
+  }
+
   /// Indicates that the flatbuffer contained semantically invalid data, even
   /// though the flatbuffer is technically valid.
   ///
@@ -112,8 +116,10 @@ public:
 
 private:
   explicit inline WriteResult(int8_t v) : v(v) {}
+  explicit inline WriteResult(std::string Message) : v(-5), Message(Message) {}
   int8_t v = -1;
   uint64_t timestamp_ = 0;
+  std::string Message;
 };
 } // namespace HDFWriterModule_detail
 

@@ -54,6 +54,7 @@ static std::map<int8_t, std::string> const g_WriteResult_strings{
     {-2, "ERROR_BAD_FLATBUFFER"},
     {-3, "ERROR_DATA_STRUCTURE_MISMATCH"},
     {-4, "ERROR_DATA_TYPE_MISMATCH"},
+    {-5, "ERROR_WITH_MESSAGE"},
 };
 
 std::string WriteResult::to_str() const {
@@ -61,6 +62,9 @@ std::string WriteResult::to_str() const {
   auto const it = m.find(v);
   if (it == m.end()) {
     return "ERROR_UNKNOWN_VALUE";
+  }
+  if (v == -5) {
+    return std::string(it->second) + ": " + Message;
   }
   return it->second;
 }
