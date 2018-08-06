@@ -182,8 +182,8 @@ void Consumer::commitOffsets() const {
   auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
   KERR(RdKafka, CommitErr);
   if (CommitErr) {
-      LOG(Sev::Error, "Could not commit offsets in Consumer");
-    }
+    LOG(Sev::Error, "Could not commit offsets in Consumer");
+  }
 }
 
 int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
