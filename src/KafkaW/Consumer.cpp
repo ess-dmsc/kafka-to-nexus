@@ -166,11 +166,23 @@ void Consumer::addTopic(std::string Topic,
     }
   }
 
+  if (StartTime.count() > 0) {
+    commitOffsets();
+  }
+
   int err = rd_kafka_subscribe(RdKafka, PartitionList);
   KERR(RdKafka, err);
   if (err) {
     LOG(Sev::Error, "could not subscribe");
     throw std::runtime_error("can not subscribe");
+  }
+}
+
+void Consumer::commitOffsets() const {
+  auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
+  KERR(RdKafka, CommitErr);
+  if (CommitErr) {
+    LOG(Sev::Error, "Could not commit offsets in Consumer");
   }
 }
 

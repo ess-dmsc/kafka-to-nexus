@@ -43,5 +43,7 @@ private:
                            void *opaque);
   rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
+
+  void commitOffsets() const;
 };
 } // namespace KafkaW
