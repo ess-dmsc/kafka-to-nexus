@@ -27,6 +27,17 @@ std::vector<Dimension<EdgeType>> const &Shape<EdgeType>::getDimensions() const {
   return Dimensions;
 }
 
+template <typename EdgeType> size_t Shape<EdgeType>::getTotalItems() const {
+  if (Dimensions.size() == 0) {
+    return 0;
+  }
+  size_t N = 1;
+  for (auto &D : Dimensions) {
+    N *= D.getSize();
+  }
+  return N;
+}
+
 template Shape<uint32_t> Shape<uint32_t>::createFromJson(json const &Json);
 template Shape<uint64_t> Shape<uint64_t>::createFromJson(json const &Json);
 template Shape<double> Shape<double>::createFromJson(json const &Json);
@@ -41,6 +52,10 @@ template std::vector<Dimension<uint64_t>> const &
 Shape<uint64_t>::getDimensions() const;
 template std::vector<Dimension<double>> const &
 Shape<double>::getDimensions() const;
+
+template size_t Shape<uint32_t>::getTotalItems() const;
+template size_t Shape<uint64_t>::getTotalItems() const;
+template size_t Shape<double>::getTotalItems() const;
 }
 }
 }
