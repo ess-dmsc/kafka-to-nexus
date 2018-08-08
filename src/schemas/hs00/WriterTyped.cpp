@@ -105,6 +105,10 @@ WriterTyped<DataType, EdgeType>::write(Msg const &Msg) {
   }
   Dataset.extent(Dims);
   auto EvMsg = GetEventHistogram(Msg.data());
+  uint64_t Timestamp = EvMsg->timestamp();
+  if (Timestamp == 0) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Timestamp == 0");
+  }
   if (EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "EvMsg->data_type() != getMatchingFlatbufferType<DataType>(nullptr)");
@@ -142,6 +146,15 @@ WriterTyped<DataType, EdgeType>::write(Msg const &Msg) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "Unexpected payload size");
   }
+  if (HistogramRecords.find(Timestamp) == HistogramRecords.end()) {
+    HistogramRecords[Timestamp] = HistogramRecord::create();
+  }
+  // auto & Record = HistogramRecords[Timestamp];
+  Slice::fromOffsetsSizes(
+      std::vector<uint32_t>(MsgOffset->data(),
+                            MsgOffset->data() + MsgOffset->size()),
+      std::vector<uint32_t>(MsgShape->data(),
+                            MsgShape->data() + MsgShape->size()));
   hdf5::dataspace::Simple DSPMem;
   auto DSPFile = Dataset.dataspace();
   {

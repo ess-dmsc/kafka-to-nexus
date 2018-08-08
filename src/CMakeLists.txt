@@ -110,6 +110,8 @@ set(kafka_to_nexus_SRC
   schemas/hs00/WriterTyped.cpp
   schemas/hs00/WriterUntyped.cpp
   schemas/hs00/Shape.cpp
+  schemas/hs00/Slice.cpp
+  schemas/hs00/HistogramRecord.cpp
   schemas/hs00/Dimension.cpp
   schemas/template/TemplateWriter.cpp
   MainOpt.cpp
@@ -171,6 +173,8 @@ set(kafka_to_nexus_INC
   schemas/hs00/WriterTyped.h
   schemas/hs00/WriterUntyped.h
   schemas/hs00/Shape.h
+  schemas/hs00/Slice.h
+  schemas/hs00/HistogramRecord.h
   schemas/hs00/Dimension.h
   schemas/template/TemplateWriter.h
   CLIOptions.h
