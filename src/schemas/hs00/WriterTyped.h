@@ -41,6 +41,7 @@ private:
   Shape<EdgeType> TheShape;
   std::string CreatedFromJson;
   hdf5::node::Dataset Dataset;
+  hdf5::node::Dataset DatasetTimestamps;
 
   // clang-format off
   using FlatbufferDataType =

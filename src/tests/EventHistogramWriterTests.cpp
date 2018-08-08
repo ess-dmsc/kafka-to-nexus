@@ -216,7 +216,7 @@ TEST(EventHistogramWriter, WriterTypedReopen) {
   TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
 }
 
-FileWriter::Msg createTestMessage(size_t ix, uint64_t V0) {
+FileWriter::Msg createTestMessage(uint64_t Timestamp, size_t ix, uint64_t V0) {
   using namespace FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
@@ -266,7 +266,7 @@ FileWriter::Msg createTestMessage(size_t ix, uint64_t V0) {
 
   EventHistogramBuilder EHBuilder(Builder);
   EHBuilder.add_source(Source);
-  EHBuilder.add_timestamp(123);
+  EHBuilder.add_timestamp(Timestamp);
   EHBuilder.add_dim_metadata(DMDA);
   EHBuilder.add_current_shape(ThisLengthsVector);
   EHBuilder.add_offset(ThisOffsetsVector);
@@ -311,7 +311,7 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(i, 100 * (1 + i)));
+    auto X = Writer->write(createTestMessage(300, i, 100 * (1 + i)));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -323,9 +323,38 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
   ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
   ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
-  // todo: check the actual written content.
 }
 
-TEST(EventHistogramWriter, WriteMultipleHistograms) {}
+TEST(EventHistogramWriter, WriteMultipleHistograms) {
+  auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
+                         FileCreationLocation::Disk);
+  auto Group = File.root();
+  auto Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
+  Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  for (size_t i = 0; i < 3; ++i) {
+    auto X = Writer->write(createTestMessage(10000, i, 10000 + 100 * (1 + i)));
+    if (!X.is_OK()) {
+      throw std::runtime_error(X.to_str());
+    }
+    ASSERT_TRUE(X.is_OK());
+  }
+  for (size_t i = 1; i < 4; ++i) {
+    auto X = Writer->write(createTestMessage(20000, i, 20000 + 100 * (1 + i)));
+    if (!X.is_OK()) {
+      throw std::runtime_error(X.to_str());
+    }
+    ASSERT_TRUE(X.is_OK());
+  }
+  auto Histograms = Group.get_dataset("histograms");
+  hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
+  ASSERT_EQ(Dataspace.current_dimensions().at(0), 2u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
+}
 
 TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {}
