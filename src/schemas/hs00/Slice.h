@@ -17,6 +17,7 @@ public:
 private:
   std::vector<uint32_t> Offsets;
   std::vector<uint32_t> Sizes;
+  void printOverlap(Slice const &This, Slice const &Other);
 };
 }
 }

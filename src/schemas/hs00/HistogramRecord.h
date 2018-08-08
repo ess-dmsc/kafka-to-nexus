@@ -11,6 +11,8 @@ namespace hs00 {
 class HistogramRecord {
 public:
   static HistogramRecord create();
+  bool hasEmptySlice(Slice const &Slice);
+  void addSlice(Slice Slice);
 
 private:
   uint64_t Timestamp = 0;
