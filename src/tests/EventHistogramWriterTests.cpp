@@ -132,6 +132,7 @@ json createTestWriterTypedJson() {
   return json::parse(R""({
     "source_name": "SomeHistogrammer",
     "data_type": "uint64",
+    "error_type": "uint64",
     "edge_type": "double",
     "shape": [
       {
@@ -159,19 +160,19 @@ json createTestWriterTypedJson() {
 TEST(EventHistogramWriter, WriterTypedWithoutSourceNameThrows) {
   auto Json = createTestWriterTypedJson();
   Json.erase("source_name");
-  ASSERT_THROW((WriterTyped<uint64_t, double>::createFromJson(Json)),
+  ASSERT_THROW((WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json)),
                UnexpectedJsonInput);
 }
 
 TEST(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
   auto Json = createTestWriterTypedJson();
   Json.erase("shape");
-  ASSERT_THROW((WriterTyped<uint64_t, double>::createFromJson(Json)),
+  ASSERT_THROW((WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json)),
                UnexpectedJsonInput);
 }
 
 TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
-  auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(
+  auto TheWriterTyped = WriterTyped<uint64_t, double, uint64_t>::createFromJson(
       createTestWriterTypedJson());
 }
 
@@ -191,7 +192,8 @@ hdf5::file::File createFile(std::string Name, FileCreationLocation Location) {
 
 TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   auto Json = createTestWriterTypedJson();
-  auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
+  auto TheWriterTyped =
+      WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json);
   auto File =
       createFile("Test.EventHistogramWriter.WriterTypedCreateHDFStructure",
                  FileCreationLocation::Default);
@@ -207,13 +209,15 @@ TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
 
 TEST(EventHistogramWriter, WriterTypedReopen) {
   auto Json = createTestWriterTypedJson();
-  auto TheWriterTyped = WriterTyped<uint64_t, double>::createFromJson(Json);
+  auto TheWriterTyped =
+      WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json);
   auto File = createFile("Test.EventHistogramWriter.WriterTypedReopen",
                          FileCreationLocation::Default);
   auto Group = File.root();
   size_t ChunkBytes = 64 * 1024;
   TheWriterTyped->createHDFStructure(Group, ChunkBytes);
-  TheWriterTyped = WriterTyped<uint64_t, double>::createFromHDF(Group);
+  TheWriterTyped =
+      WriterTyped<uint64_t, double, uint64_t>::createFromHDF(Group);
 }
 
 FileWriter::Msg createTestMessage(uint64_t Timestamp, size_t ix, uint64_t V0) {

@@ -41,7 +41,8 @@ private:
 
   template <typename DataType, typename EdgeType>
   static WriterUntyped::ptr
-  createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group);
+  createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group,
+                                       json const &Json);
 };
 }
 }
