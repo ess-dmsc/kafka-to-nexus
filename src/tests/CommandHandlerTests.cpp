@@ -16,6 +16,40 @@ protected:
   }
 };
 
+TEST_F(CommandHandler_Testing, MissingTimeInHandleNewCommand) {
+  std::ifstream CommandFile(std::string(TEST_DATA_PATH) +
+                            "/msg-cmd-new-01.json");
+  nlohmann::json Command;
+  CommandFile >> Command;
+  EXPECT_EQ(findTime(Command, "start_time").count(), -1);
+  EXPECT_EQ(findTime(Command, "stop_time").count(), -1);
+}
+
+TEST_F(CommandHandler_Testing, FindTimeHandleNewCommand) {
+  std::ifstream CommandFile(std::string(TEST_DATA_PATH) +
+                            "/msg-cmd-new-00.json");
+  nlohmann::json Command;
+  CommandFile >> Command;
+  EXPECT_EQ(findTime(Command, "start_time").count(), 123456789);
+  EXPECT_EQ(findTime(Command, "stop_time").count(), 123456790);
+}
+
+TEST_F(CommandHandler_Testing, MissingTimeHandleStopCommand) {
+  std::ifstream CommandFile(std::string(TEST_DATA_PATH) +
+                            "/msg-conf-stop.json");
+  nlohmann::json Command;
+  CommandFile >> Command;
+  EXPECT_EQ(findTime(Command, "stop_time").count(), -1);
+}
+
+TEST_F(CommandHandler_Testing, FindTimeHandleStopCommand) {
+  std::ifstream CommandFile(std::string(TEST_DATA_PATH) +
+                            "/msg-conf-stop-01.json");
+  nlohmann::json Command;
+  CommandFile >> Command;
+  EXPECT_EQ(findTime(Command, "stop_time").count(), 987654321);
+}
+
 TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
   std::ofstream ofs;
   ofs.open("tmp-dummy-hdf");

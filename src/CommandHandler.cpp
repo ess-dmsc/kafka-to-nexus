@@ -253,9 +253,12 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
+  // If start time not specified use command message timestamp
   std::chrono::milliseconds Time = findTime(Doc, "start_time");
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StartTimestamp = Time;
+  } else {
+    Config.StreamerConfiguration.StartTimestamp = KafkaMsgTimestamp;
   }
   LOG(Sev::Info, "Start time: {}",
       Config.StreamerConfiguration.StartTimestamp.count());
