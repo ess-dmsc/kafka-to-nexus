@@ -301,6 +301,39 @@ WriterTyped<DataType, EdgeType, ErrorType>::write(Msg const &Msg) {
     DatasetTimestamps.extent({Timestamps.size() / 2, 2});
     DatasetTimestamps.write(Timestamps);
   }
+
+  if (EvMsg->info()) {
+    {
+      auto TypeMem = hdf5::datatype::String(
+          hdf5::datatype::create<std::string>().native_type());
+      TypeMem.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+      auto DSPFile = hdf5::dataspace::Simple(DatasetInfo.dataspace());
+      auto Dims = DSPFile.current_dimensions();
+      Dims.at(0) += 1;
+      DatasetInfo.extent(Dims);
+      DSPFile = hdf5::dataspace::Simple(DatasetInfo.dataspace());
+      DSPFile.selection(
+          hdf5::dataspace::SelectionOperation::SET,
+          hdf5::dataspace::Hyperslab({Dims.at(0) - 1}, {1}, {1}, {1}));
+      DSPMem = hdf5::dataspace::Simple({1}, {1});
+      DatasetInfo.write(std::vector<std::string>({EvMsg->info()->c_str()}),
+                        TypeMem, DSPMem, DSPFile);
+    }
+    {
+      auto DSPFile = hdf5::dataspace::Simple(DatasetInfoTimestamp.dataspace());
+      auto Dims = DSPFile.current_dimensions();
+      Dims.at(0) += 1;
+      DatasetInfoTimestamp.extent(Dims);
+      DSPFile = hdf5::dataspace::Simple(DatasetInfo.dataspace());
+      DSPFile.selection(
+          hdf5::dataspace::SelectionOperation::SET,
+          hdf5::dataspace::Hyperslab({Dims.at(0) - 1}, {1}, {1}, {1}));
+      auto DSPMem = hdf5::dataspace::Simple({1}, {1});
+      auto TypeMem = hdf5::datatype::create<uint64_t>().native_type();
+      DatasetInfoTimestamp.write(Timestamp, TypeMem, DSPMem, DSPFile);
+    }
+  }
+
   Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
   return HDFWriterModule::WriteResult::OK();
 }
