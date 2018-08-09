@@ -70,8 +70,8 @@ void WriterTyped<DataType, EdgeType>::createHDFStructure(
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
   {
     hdf5::property::DatasetCreationList DCPL;
-    DCPL.chunk({4 * 1024});
-    auto Space = hdf5::dataspace::Simple({0}, {H5S_UNLIMITED});
+    DCPL.chunk({4 * 1024, 2});
+    auto Space = hdf5::dataspace::Simple({0, 2}, {H5S_UNLIMITED, 2});
     auto Type = hdf5::datatype::create<uint64_t>().native_type();
     DatasetTimestamps = Group.create_dataset("timestamps", Type, Space, DCPL);
   }
@@ -216,13 +216,17 @@ WriterTyped<DataType, EdgeType>::write(Msg const &Msg) {
   Record.addToItemsWritten(DataPtr->size());
   {
     std::vector<uint64_t> Timestamps;
-    Timestamps.resize(hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
+    Timestamps.resize(2 *
+                      hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
                           .current_dimensions()
                           .at(0));
     DatasetTimestamps.read(Timestamps, hdf5::property::DatasetTransferList());
-    Timestamps.resize(HistogramRecords.size());
-    Timestamps.at(Record.getHDFIndex()) = Timestamp;
-    DatasetTimestamps.extent({Timestamps.size()});
+    Timestamps.resize(2 * HistogramRecords.size());
+    Timestamps.at(2 * Record.getHDFIndex()) = Timestamp;
+    if (Record.isFull()) {
+      Timestamps.at(2 * Record.getHDFIndex() + 1) = 1;
+    }
+    DatasetTimestamps.extent({Timestamps.size() / 2, 2});
     DatasetTimestamps.write(Timestamps);
   }
   Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
