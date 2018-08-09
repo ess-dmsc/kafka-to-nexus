@@ -262,6 +262,22 @@ FileWriter::Msg createTestMessage(uint64_t Timestamp, size_t ix, uint64_t V0) {
     DataValue = ArrayBuilder.Finish().Union();
   }
 
+  flatbuffers::Offset<void> ErrorValue;
+  {
+    size_t TotalElements = 1;
+    for (auto x : ThisLengths) {
+      TotalElements *= x;
+    }
+    std::vector<double> Data(TotalElements);
+    for (size_t i = 0; i < Data.size(); ++i) {
+      Data.at(i) = (V0 + i) / 10;
+    }
+    auto Vec = Builder.CreateVector(Data);
+    ArrayDoubleBuilder ArrayBuilder(Builder);
+    ArrayBuilder.add_value(Vec);
+    ErrorValue = ArrayBuilder.Finish().Union();
+  }
+
   auto Source = Builder.CreateString("Testsource");
 
   EventHistogramBuilder EHBuilder(Builder);
@@ -272,6 +288,8 @@ FileWriter::Msg createTestMessage(uint64_t Timestamp, size_t ix, uint64_t V0) {
   EHBuilder.add_offset(ThisOffsetsVector);
   EHBuilder.add_data_type(Array::ArrayULong);
   EHBuilder.add_data(DataValue);
+  EHBuilder.add_errors_type(Array::ArrayDouble);
+  EHBuilder.add_errors(ErrorValue);
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
   return FileWriter::Msg::owned(
       reinterpret_cast<const char *>(Builder.GetBufferPointer()),
