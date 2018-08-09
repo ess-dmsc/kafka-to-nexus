@@ -45,6 +45,8 @@ private:
   hdf5::node::Dataset Dataset;
   hdf5::node::Dataset DatasetErrors;
   hdf5::node::Dataset DatasetTimestamps;
+  hdf5::node::Dataset DatasetInfo;
+  hdf5::node::Dataset DatasetInfoTimestamp;
 
   // clang-format off
   using FlatbufferDataType =
@@ -96,6 +98,8 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromHDF(
   TheWriterTyped.Dataset = Group.get_dataset("histograms");
   TheWriterTyped.DatasetErrors = Group.get_dataset("errors");
   TheWriterTyped.DatasetTimestamps = Group.get_dataset("timestamps");
+  TheWriterTyped.DatasetInfo = Group.get_dataset("info");
+  TheWriterTyped.DatasetInfoTimestamp = Group.get_dataset("info_timestamp");
   return TheWriterTypedPtr;
 }
 
@@ -138,6 +142,23 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     auto Space = hdf5::dataspace::Simple({0, 2}, {H5S_UNLIMITED, 2});
     auto Type = hdf5::datatype::create<uint64_t>().native_type();
     DatasetTimestamps = Group.create_dataset("timestamps", Type, Space, DCPL);
+  }
+  {
+    hdf5::property::DatasetCreationList DCPL;
+    DCPL.chunk({4 * 1024});
+    auto Space = hdf5::dataspace::Simple({0}, {H5S_UNLIMITED});
+    auto Type = hdf5::datatype::create<uint64_t>().native_type();
+    DatasetInfoTimestamp =
+        Group.create_dataset("info_timestamp", Type, Space, DCPL);
+  }
+  {
+    hdf5::property::DatasetCreationList DCPL;
+    DCPL.chunk({4 * 1024});
+    auto Space = hdf5::dataspace::Simple({0}, {H5S_UNLIMITED});
+    auto Type = hdf5::datatype::String(
+        hdf5::datatype::create<std::string>().native_type());
+    Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    DatasetInfo = Group.create_dataset("info", Type, Space, DCPL);
   }
 }
 
