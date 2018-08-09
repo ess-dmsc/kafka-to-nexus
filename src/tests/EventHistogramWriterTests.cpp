@@ -282,6 +282,11 @@ FileWriter::Msg createTestMessage(uint64_t Timestamp, size_t ix, uint64_t V0) {
     ErrorValue = ArrayBuilder.Finish().Union();
   }
 
+  flatbuffers::Offset<flatbuffers::String> Info;
+  if (ix == 0) {
+    Info = Builder.CreateString("Some optional info string.");
+  }
+
   EventHistogramBuilder EHBuilder(Builder);
   EHBuilder.add_timestamp(Timestamp);
   EHBuilder.add_dim_metadata(DMDA);
@@ -291,6 +296,9 @@ FileWriter::Msg createTestMessage(uint64_t Timestamp, size_t ix, uint64_t V0) {
   EHBuilder.add_data(DataValue);
   EHBuilder.add_errors_type(Array::ArrayDouble);
   EHBuilder.add_errors(ErrorValue);
+  if (!Info.IsNull()) {
+    EHBuilder.add_info(Info);
+  }
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
   return FileWriter::Msg::owned(
       reinterpret_cast<const char *>(Builder.GetBufferPointer()),
