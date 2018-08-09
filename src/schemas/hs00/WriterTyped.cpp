@@ -225,6 +225,7 @@ WriterTyped<DataType, EdgeType>::write(Msg const &Msg) {
     DatasetTimestamps.extent({Timestamps.size()});
     DatasetTimestamps.write(Timestamps);
   }
+  Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
   return HDFWriterModule::WriteResult::OK();
 }
 }
