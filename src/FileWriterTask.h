@@ -12,6 +12,7 @@ class Test___FileWriterTask___Create01;
 
 namespace FileWriter {
 
+/// JSON parsing exception.
 class ParseError : public std::runtime_error {
 public:
   explicit ParseError(std::string err)
@@ -40,9 +41,17 @@ public:
   std::string job_id() const;
   nlohmann::json stats() const;
   std::string hdf_output_prefix;
+
+  /// \brief  Name of the file being written
+  ///
+  /// Important for reopen of files.
   std::string hdf_filename;
   std::string filename_full;
+
+  /// \brief  The file being written.
   HDFFile hdf_file;
+
+  /// \brief  Whether we use HDF SWMR, initialized to the default.
   bool UseHDFSWMR = true;
 
 private:
