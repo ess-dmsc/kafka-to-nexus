@@ -130,7 +130,6 @@ TEST(EventHistogramWriter, SlicePartialOverlap) {
 
 json createTestWriterTypedJson() {
   return json::parse(R""({
-    "source_name": "SomeHistogrammer",
     "data_type": "uint64",
     "error_type": "double",
     "edge_type": "double",
@@ -155,13 +154,6 @@ json createTestWriterTypedJson() {
       }
     ]
   })"");
-}
-
-TEST(EventHistogramWriter, WriterTypedWithoutSourceNameThrows) {
-  auto Json = createTestWriterTypedJson();
-  Json.erase("source_name");
-  ASSERT_THROW((WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json)),
-               UnexpectedJsonInput);
 }
 
 TEST(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
