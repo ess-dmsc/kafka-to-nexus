@@ -1,3 +1,5 @@
+/// \file  CommandHandler.cpp
+
 #include "CommandHandler.h"
 #include "EventLogger.h"
 #include "FileWriterTask.h"
