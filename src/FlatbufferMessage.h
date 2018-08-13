@@ -21,6 +21,11 @@ namespace FileWriter {
     UnknownFlatbufferID(const std::string &what) : std::runtime_error(what){};
   };
   
+  class NotValidFlatbuffer : public std::runtime_error {
+  public:
+    NotValidFlatbuffer(const std::string &what) : std::runtime_error(what){};
+  };
+  
   class FlatbufferMessage {
   public:
     FlatbufferMessage();

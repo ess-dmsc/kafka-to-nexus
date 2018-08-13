@@ -12,11 +12,14 @@ namespace FileWriter {
   void FlatbufferMessage::extractPacketInfo() {
     if (DataSize < 8) {
       Valid = false;
-      throw BufferTooSmallError(fmt::format("Flatbuffer was only {} bytes. Expected ≥ 8 bytes."));
+      throw BufferTooSmallError(fmt::format("Flatbuffer was only {} bytes. Expected ≥ 8 bytes.", DataSize));
     }
     std::string FlatbufferID(data() + 4, 4);
     try {
       auto &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
+      if (not Reader->verify(*this)) {
+        throw NotValidFlatbuffer(fmt::format("Buffer which has flatbuffer ID \"{}\" is not a valid flatbuffer of this type.", FlatbufferID));
+      }
       Sourcename = Reader->source_name(*this);
       Timestamp = Reader->timestamp(*this);
     } catch (std::out_of_range &E) {
