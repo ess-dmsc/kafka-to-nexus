@@ -11,11 +11,6 @@
 
 namespace FileWriter {
 
-/// \brief Extract the source name and timestamp from a message
-/// \todo This function should be replaced or changed as it enables random
-/// access to memory.
-MessageTimestamp getMessageTime(Msg const &Msg);
-
 /// Implements the logic of extracting the message type key and source name
 /// and then passing the message to the right filewriting module instance
 /// based on this information.
@@ -35,7 +30,7 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(Msg &&msg);
+  ProcessMessageResult process_message(FlatbufferMessage &&Message);
   std::unordered_map<std::string, Source> &sources();
 
   //----------------------------------------------------------------------------

@@ -66,7 +66,7 @@ public:
   /// buffer.
   ///
   /// \return `true` if the data was verified as "correct", `false` otherwise.
-  bool verify(FileWriter::Msg const &Message) const override {
+  bool verify(FileWriter::FlatbufferMessage const &Message) const override {
     std::cout << "ReaderClass::verify()\n";
     return true;
   }
@@ -92,7 +92,7 @@ public:
   ///
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
-  std::string source_name(FileWriter::Msg const &Message) const override {
+  std::string source_name(FileWriter::FlatbufferMessage const &Message) const override {
     std::cout << "ReaderClass::source_name()\n";
     return "";
   }
@@ -115,7 +115,7 @@ public:
   ///
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
-  uint64_t timestamp(FileWriter::Msg const &Message) const override {
+  uint64_t timestamp(FileWriter::FlatbufferMessage const &Message) const override {
     std::cout << "ReaderClass::timestamp()\n";
     return 0;
   }
@@ -278,7 +278,7 @@ public:
   /// constructed using a set of static member functions defined in
   /// HDFWriterModule.h. In the current implementation, returning a write result
   /// with a timestamp only has an effect on the log messages being generated.
-  WriteResult write(FileWriter::Msg const &Message) override {
+  WriteResult write(FileWriter::FlatbufferMessage const &Message) override {
     std::cout << "WriterClass::write()\n";
     return WriteResult::OK();
   }

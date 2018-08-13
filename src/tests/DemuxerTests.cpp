@@ -16,11 +16,11 @@ public:
 
 class DummyReader2 : public FileWriter::FlatbufferReader {
 public:
-  bool verify(Msg const &msg) const override { return true; }
-  std::string source_name(Msg const &msg) const override {
+  bool verify(FlatbufferMessage const &Message) const override { return true; }
+  std::string source_name(FlatbufferMessage const &Message) const override {
     return "SomeSourceName";
   }
-  std::uint64_t timestamp(Msg const &msg) const override { return 42; }
+  std::uint64_t timestamp(FlatbufferMessage const &Message) const override { return 42; }
 };
 
 class DummyWriter : public HDFWriterModule {
@@ -34,7 +34,7 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGrup) override {
     return InitResult::OK();
   }
-  WriteResult write(Msg const &msg) override { return WriteResult::OK(); }
+  WriteResult write(FlatbufferMessage const &Message) override { return WriteResult::OK(); }
   std::int32_t flush() override { return 0; }
 
   std::int32_t close() override { return 0; }
@@ -48,9 +48,9 @@ TEST_F(MessageTimeExtractionTest, Success) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
   MessageTimestamp MessageInfo;
-  EXPECT_NO_THROW(MessageInfo = getMessageTime(CurrentMessage));
+  EXPECT_TRUE(CurrentMessage.isValid());
   EXPECT_EQ(MessageInfo.Sourcename, "SomeSourceName");
   EXPECT_EQ(MessageInfo.Timestamp, 42l);
 }
@@ -61,9 +61,8 @@ TEST_F(MessageTimeExtractionTest, WrongKey) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, MessageKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
-  MessageTimestamp MessageInfo;
-  EXPECT_THROW(getMessageTime(CurrentMessage), std::runtime_error);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  EXPECT_FALSE(CurrentMessage.isValid());
 }
 
 TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
@@ -71,9 +70,8 @@ TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 7);
-  MessageTimestamp MessageInfo;
-  EXPECT_THROW(getMessageTime(CurrentMessage), std::runtime_error);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 7);
+  EXPECT_FALSE(CurrentMessage.isValid());
 }
 
 class DemuxerTest : public ::testing::Test {
@@ -91,7 +89,7 @@ TEST_F(DemuxerTest, Success) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
@@ -114,7 +112,7 @@ TEST_F(DemuxerTest, WrongSourceName) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
@@ -136,7 +134,7 @@ TEST_F(DemuxerTest, WrongKey) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(AltKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
@@ -157,7 +155,7 @@ TEST_F(DemuxerTest, MessageTooSmall) {
   { FlatbufferReaderRegistry::Registrar<DummyReader2> RegisterIt(TestKey); }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::Msg CurrentMessage = Msg::owned(TestData, 7);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 7);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);

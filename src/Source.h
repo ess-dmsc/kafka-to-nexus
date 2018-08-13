@@ -36,7 +36,7 @@ public:
   std::string const &topic() const;
   std::string const &sourcename() const;
   uint64_t processed_messages_count() const;
-  ProcessMessageResult process_message(Msg &msg);
+  ProcessMessageResult process_message(FlatbufferMessage const &Message);
   std::string to_str() const;
   nlohmann::json to_json() const;
   void close_writer_module();

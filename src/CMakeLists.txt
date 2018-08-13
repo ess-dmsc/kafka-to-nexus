@@ -94,6 +94,7 @@ set(kafka_to_nexus_SRC
   logger.cpp
   uri.cpp
   h5.cpp
+  FlatbufferMessage.cpp
   date/tz.cpp
   date/tzblobs.cpp
   schemas/f142/f142_rw.cpp
@@ -134,6 +135,7 @@ set(kafka_to_nexus_INC
   MainOpt.h
   Master.h
   Msg.h
+  FlatbufferMessage.h
   MsgParser.h
   ProcessMessageResult.h
   Report.h

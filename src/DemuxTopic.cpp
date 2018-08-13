@@ -20,49 +20,18 @@ void swap(DemuxTopic &x, DemuxTopic &y) {
   swap(x.TopicSources, y.TopicSources);
 }
 
-MessageTimestamp getMessageTime(Msg const &Msg) {
-  try {
-    auto &Reader = FlatbufferReaderRegistry::find(Msg);
-    if (!Reader) {
-      throw std::runtime_error(
-          "Unable to locate reader with the correct key in the registry.");
-    }
-    auto Name = Reader->source_name(Msg);
-    return MessageTimestamp(Name, Reader->timestamp(Msg));
-  } catch (std::runtime_error &E) {
-    LOG(Sev::Error, "Problem when getting message time: {}", E.what());
-    throw E;
-  }
-  return MessageTimestamp();
-}
-
 std::string const &DemuxTopic::topic() const { return Topic; }
 
-ProcessMessageResult DemuxTopic::process_message(Msg &&Msg) {
-  std::string CurrentSourceName;
+ProcessMessageResult DemuxTopic::process_message(FlatbufferMessage &&Message) {
+  LOG(Sev::Debug, "Message received from: {}", Message.getSourceName());
   try {
-    auto &Reader = FlatbufferReaderRegistry::find(Msg);
-    if (!Reader) {
-      LOG(Sev::Debug,
-          "Unable to locate reader with the correct key in the registry.");
-      ++error_no_flatbuffer_reader;
-      return ProcessMessageResult::ERR;
-    }
-    CurrentSourceName = Reader->source_name(Msg);
-  } catch (std::runtime_error &E) {
-    LOG(Sev::Error, "{}", E.what());
-    ++error_message_too_small;
-    return ProcessMessageResult::ERR;
-  }
-  LOG(Sev::Debug, "Message received from: {}", CurrentSourceName);
-  try {
-    auto &CurrentSource = TopicSources.at(CurrentSourceName);
-    auto ProcessingResult = CurrentSource.process_message(Msg);
+    auto &CurrentSource = TopicSources.at(Message.getSourceName());
+    auto ProcessingResult = CurrentSource.process_message(Message);
     ++messages_processed;
     return ProcessingResult;
   } catch (std::out_of_range &e) {
     LOG(Sev::Debug, "Source with name \"{}\" is not in list.",
-        CurrentSourceName);
+        Message.getSourceName());
     ++error_no_source_instance;
   }
   return ProcessMessageResult::ERR;

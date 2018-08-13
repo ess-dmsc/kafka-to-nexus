@@ -51,9 +51,9 @@ public:
 };
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
-  bool verify(Msg const &msg) const override;
-  std::string source_name(Msg const &msg) const override;
-  uint64_t timestamp(Msg const &msg) const override;
+  bool verify(FlatbufferMessage const &Message) const override;
+  std::string source_name(FlatbufferMessage const &Message) const override;
+  uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
 
 class HDFWriterModule : public FileWriter::HDFWriterModule {
@@ -66,7 +66,7 @@ public:
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
                  int mpi_rank) override;
-  WriteResult write(Msg const &msg) override;
+  WriteResult write(FlatbufferMessage const &Message) override;
   int32_t flush() override;
   int32_t close() override;
 

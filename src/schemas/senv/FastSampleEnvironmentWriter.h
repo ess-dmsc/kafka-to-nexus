@@ -90,15 +90,15 @@ public:
 } // namespace hdf5
 
 namespace senv {
-using KafkaMessage = FileWriter::Msg;
+using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
 /// \brief See parent class for documentation.
 class SampleEnvironmentDataGuard : public FBReaderBase {
 public:
-  bool verify(KafkaMessage const &Message) const override;
-  std::string source_name(KafkaMessage const &Message) const override;
-  uint64_t timestamp(KafkaMessage const &Message) const override;
+  bool verify(FlatbufferMessage const &Message) const override;
+  std::string source_name(FlatbufferMessage const &Message) const override;
+  uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
 
 using FileWriterBase = FileWriter::HDFWriterModule;
@@ -121,7 +121,7 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  WriteResult write(KafkaMessage const &Message) override;
+  WriteResult write(FlatbufferMessage const &Message) override;
 
   int32_t flush() override;
 

@@ -24,14 +24,14 @@ static FileWriter::HDFWriterModuleRegistry::Registrar<
     FastSampleEnvironmentWriter>
     RegisterSenvWriter("senv");
 
-bool SampleEnvironmentDataGuard::verify(KafkaMessage const &Message) const {
+bool SampleEnvironmentDataGuard::verify(FlatbufferMessage const &Message) const {
   auto Verifier =
       flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
   return VerifySampleEnvironmentDataBuffer(Verifier);
 }
 
 uint64_t
-SampleEnvironmentDataGuard::timestamp(KafkaMessage const &Message) const {
+SampleEnvironmentDataGuard::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   /// \todo This timestamp is currently EPICS epoch. This will have to be sorted
   /// out.
@@ -39,7 +39,7 @@ SampleEnvironmentDataGuard::timestamp(KafkaMessage const &Message) const {
 }
 
 std::string
-SampleEnvironmentDataGuard::source_name(const KafkaMessage &Message) const {
+  SampleEnvironmentDataGuard::source_name(const FileWriter::FlatbufferMessage &Message) const {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   return FbPointer->Name()->str();
 }
@@ -106,7 +106,7 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
 }
 
 FileWriterBase::WriteResult
-FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
+  FastSampleEnvironmentWriter::write(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();

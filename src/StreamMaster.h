@@ -174,6 +174,7 @@ private:
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (...) {
+        LOG(Sev::Error, "Stream closed due to stream error.");
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -213,6 +214,7 @@ private:
 
         // If the stream is active process the messages
         StreamMasterError ProcessResult = processStreamResult(s, Demux);
+        std::cout << "Proces stream result." << std::endl;
         if (ProcessResult == StreamMasterError::HAS_FINISHED()) {
           continue;
         }

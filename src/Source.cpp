@@ -42,12 +42,7 @@ std::string const &Source::topic() const { return _topic; }
 
 std::string const &Source::sourcename() const { return _sourcename; }
 
-ProcessMessageResult Source::process_message(Msg &msg) {
-  auto &reader = FlatbufferReaderRegistry::find(msg);
-  if (!reader->verify(msg)) {
-    LOG(Sev::Error, "buffer not verified");
-    return ProcessMessageResult::ERR;
-  }
+ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
   if (!do_process_message) {
     return ProcessMessageResult::OK;
   }
@@ -56,7 +51,7 @@ ProcessMessageResult Source::process_message(Msg &msg) {
       LOG(Sev::Debug, "!_hdf_writer_module for {}", _sourcename);
       return ProcessMessageResult::ERR;
     }
-    auto ret = _hdf_writer_module->write(msg);
+    auto ret = _hdf_writer_module->write(Message);
     _cnt_msg_written += 1;
     _processed_messages_count += 1;
     if (ret.is_ERR()) {

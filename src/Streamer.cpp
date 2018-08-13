@@ -86,6 +86,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   // consume message and make sure that's ok
   KafkaW::PollStatus Poll = Consumer->poll();
+  std::cout << "Consumer poll." << std::endl;
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) &&
         (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
@@ -101,30 +102,32 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // convert from KafkaW to Msg
-  Msg Message(Msg::fromKafkaW(Poll.isMsg()));
-  if (Message.type == MsgType::Invalid) {
+  auto KafkaMessage = Poll.isMsg();
+  FlatbufferMessage Message(reinterpret_cast<char*>(KafkaMessage->data()), KafkaMessage->size());
+  if (not Message.isValid()) {
     return ProcessMessageResult::ERR;
   }
 
-  // Make sure that the message source is relevant and that the message is in
-  // the correct time window
-  MessageTimestamp CurrentMsgTime = getMessageTime(Message);
-  if (std::find(Sources.begin(), Sources.end(), CurrentMsgTime.Sourcename) ==
+  try {
+  } catch (std::runtime_error &E) {
+    return ProcessMessageResult::ERR;
+  }
+  if (std::find(Sources.begin(), Sources.end(), Message.getSourceName()) ==
       Sources.end()) {
     return ProcessMessageResult::OK;
   }
-  if (CurrentMsgTime.Timestamp <
+  if (Message.getTimestamp() <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           Options.StartTimestamp)
           .count()) {
     return ProcessMessageResult::OK;
   }
   if (Options.StopTimestamp.count() > 0 &&
-      CurrentMsgTime.Timestamp >
+      Message.getTimestamp() >
           std::chrono::duration_cast<std::chrono::nanoseconds>(
               Options.StopTimestamp)
               .count()) {
-    if (removeSource(CurrentMsgTime.Sourcename)) {
+    if (removeSource(Message.getSourceName())) {
       return ProcessMessageResult::STOP;
     }
     return ProcessMessageResult::ERR;
@@ -137,7 +140,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   ProcessMessageResult result =
       MessageProcessor.process_message(std::move(Message));
   LOG(Sev::Debug, "Processed: {}::{}", MessageProcessor.topic(),
-      CurrentMsgTime.Sourcename);
+      Message.getSourceName());
   if (ProcessMessageResult::OK != result) {
     MessageInfo.error();
   }

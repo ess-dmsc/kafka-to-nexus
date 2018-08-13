@@ -657,8 +657,8 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            auto res = fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg));
+            FileWriter::FlatbufferMessage TempMessage((const char*)msg.data(), msg.size());
+            auto res = fwt->demuxers().at(0).process_message(std:: move(TempMessage));
             if (res == FileWriter::ProcessMessageResult::ERR) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
@@ -992,7 +992,8 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg));
+            FileWriter::FlatbufferMessage TempMessage((const char*)msg.data(), msg.size());
+            fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }
         }

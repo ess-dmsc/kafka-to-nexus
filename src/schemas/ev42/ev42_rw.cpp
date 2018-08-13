@@ -21,13 +21,13 @@ static EventMessage const *get_fbuf(char const *data) {
   return GetEventMessage(data);
 }
 
-bool FlatbufferReader::verify(Msg const &msg) const {
-  flatbuffers::Verifier veri((uint8_t *)msg.data(), msg.size());
+bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
+  flatbuffers::Verifier veri((uint8_t *)Message.data(), Message.size());
   return VerifyEventMessageBuffer(veri);
 }
 
-std::string FlatbufferReader::source_name(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data());
+std::string FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
+  auto fbuf = get_fbuf(Message.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
     LOG(Sev::Notice, "message has no source_name");
@@ -36,8 +36,8 @@ std::string FlatbufferReader::source_name(Msg const &msg) const {
   return s1->str();
 }
 
-uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data());
+uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
+  auto fbuf = get_fbuf(Message.data());
   return fbuf->pulse_time();
 }
 
@@ -181,11 +181,11 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   return HDFWriterModule::InitResult::OK();
 }
 
-HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
+HDFWriterModule::WriteResult HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto fbuf = get_fbuf(msg.data());
+  auto fbuf = get_fbuf(Message.data());
   auto w1ret = this->ds_event_time_offset->append_data_1d(
       fbuf->time_of_flight()->data(), fbuf->time_of_flight()->size());
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),

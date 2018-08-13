@@ -130,13 +130,13 @@ h5::append_ret writer_typed_scalar<DT, FV>::write_impl(LogData const *fbuf) {
   return this->ds->append_data_1d(&v2, 1);
 }
 
-bool FlatbufferReader::verify(Msg const &msg) const {
-  auto veri = flatbuffers::Verifier((uint8_t *)msg.data(), msg.size());
+bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
+  auto veri = flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
   return VerifyLogDataBuffer(veri);
 }
 
-std::string FlatbufferReader::source_name(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data());
+std::string FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
+  auto fbuf = get_fbuf(Message.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
     LOG(Sev::Warning, "message has no source name");
@@ -145,8 +145,8 @@ std::string FlatbufferReader::source_name(Msg const &msg) const {
   return s1->str();
 }
 
-uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data());
+uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
+  auto fbuf = get_fbuf(Message.data());
   return fbuf->timestamp();
 }
 
@@ -526,8 +526,8 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   return HDFWriterModule::InitResult::OK();
 }
 
-HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
-  auto fbuf = get_fbuf(msg.data());
+HDFWriterModule::WriteResult HDFWriterModule::write(FlatbufferMessage const &Message) {
+  auto fbuf = get_fbuf(Message.data());
   if (!impl) {
     LOG(Sev::Warning,
         "sorry, but we were unable to initialize for this kind of messages");

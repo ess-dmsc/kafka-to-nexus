@@ -45,32 +45,27 @@ std::unique_ptr<std::int8_t[]> FastSampleEnvironmentReader::RawBuffer{nullptr};
 size_t FastSampleEnvironmentReader::BufferSize{0};
 
 TEST_F(FastSampleEnvironmentReader, GetSourceName) {
-  FileWriter::Msg TestMessage =
-      FileWriter::Msg::owned((char *)RawBuffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(), BufferSize);
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
 }
 
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
-  FileWriter::Msg TestMessage =
-      FileWriter::Msg::owned((char *)RawBuffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(), BufferSize);
   EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
-  FileWriter::Msg TestMessage =
-      FileWriter::Msg::owned((char *)RawBuffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
 
 TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   std::unique_ptr<char[]> TempData(new char[BufferSize]);
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
-  FileWriter::Msg TestMessage1 =
-      FileWriter::Msg::owned(TempData.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage1((const char*)TempData.get(), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[4] = 'h';
-  FileWriter::Msg TestMessage2 =
-      FileWriter::Msg::owned(TempData.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage2((const char*)TempData.get(), BufferSize);
   EXPECT_FALSE(ReaderUnderTest->verify(TestMessage2));
 }
 
@@ -126,8 +121,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
-      reinterpret_cast<char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -166,8 +161,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
-      reinterpret_cast<char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
@@ -210,8 +205,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
-      reinterpret_cast<char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -235,8 +230,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   senv::FastSampleEnvironmentWriter Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
-  FileWriter::Msg TestMsg = FileWriter::Msg::owned(
-      reinterpret_cast<char *>(Buffer.get()), BufferSize);
+  FileWriter::FlatbufferMessage TestMsg(
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
