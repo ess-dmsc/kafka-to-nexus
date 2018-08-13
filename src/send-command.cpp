@@ -39,8 +39,7 @@ std::string make_command(const std::string &broker, const uint64_t &teamid) {
 std::string make_command_exit(const std::string &broker,
                               const uint64_t &teamid) {
   auto Command = json::parse(R""({
-    "cmd": "FileWriter_exit",
-    ]
+    "cmd": "FileWriter_exit"
   })"");
   Command["teamid"] = teamid;
   return Command.dump();

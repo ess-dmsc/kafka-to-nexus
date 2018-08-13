@@ -21,8 +21,8 @@ public:
   void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
                                        std::chrono::milliseconds{0});
   void dumpCurrentSubscription();
-  void dumpMetadata();
   bool topicPresent(const std::string &Topic);
+  int32_t queryNumberOfPartitions(const std::string &TopicName);
   PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
@@ -43,5 +43,7 @@ private:
                            void *opaque);
   rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
+
+  void commitOffsets() const;
 };
 } // namespace KafkaW
