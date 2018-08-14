@@ -233,8 +233,17 @@ TEST_F(EventHistogramWriter, WriterTypedReopen) {
       WriterTyped<uint64_t, double, uint64_t>::createFromHDF(Group);
 }
 
-FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
-                                                uint64_t V0) {
+uint64_t getValueAtFlatIndex(size_t Index) {
+  size_t I0 = Index / (3 * 6);
+  Index = Index % (3 * 6);
+  size_t I1 = Index / 6;
+  Index = Index % 6;
+  size_t I2 = Index;
+  return 100 * (1 + I0) + 10 * (1 + I1) + (1 + I2);
+}
+
+FileWriter::FlatbufferMessage createTestMessage(size_t HistogramID,
+                                                size_t PacketID) {
   using namespace FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
@@ -258,9 +267,10 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
   auto DMDA = Builder.CreateVector(DMDs);
 
   std::vector<uint32_t> ThisLengths{2, 3, 3};
-  std::vector<uint32_t> ThisOffsets{(uint32_t(ix) / 2) * 2,
-                                    (uint32_t(ix) % 2) * 3, 0};
+  std::vector<uint32_t> ThisOffsets{(uint32_t(PacketID) / 2) * 2,
+                                    (uint32_t(PacketID) % 2) * 3, 0};
 
+  uint64_t Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000);
   auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
   auto ThisOffsetsVector = Builder.CreateVector(ThisOffsets);
 
@@ -271,8 +281,22 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
       TotalElements *= x;
     }
     std::vector<uint64_t> Data(TotalElements);
-    for (size_t i = 0; i < Data.size(); ++i) {
-      Data.at(i) = V0 + i;
+    size_t N = 0;
+    for (size_t I0 = 0; I0 < ThisLengths.at(0); ++I0) {
+      for (size_t I1 = 0; I1 < ThisLengths.at(1); ++I1) {
+        for (size_t I2 = 0; I2 < ThisLengths.at(2); ++I2) {
+          size_t O0 = ThisOffsets.at(0);
+          size_t O1 = ThisOffsets.at(1);
+          size_t O2 = ThisOffsets.at(2);
+          size_t K0 = 1 + I0 + O0;
+          size_t K1 = 1 + I1 + O1;
+          size_t K2 = 1 + I2 + O2;
+          Data.at(N) = Timestamp + 100 * K0 + 10 * K1 + K2;
+          // Data.at(N) = Timestamp + getValueAtFlatIndex(6*3*(O0+I0) +
+          // 3*(O1+I1) + (O2+I2));
+          ++N;
+        }
+      }
     }
     auto Vec = Builder.CreateVector(Data);
     ArrayULongBuilder ArrayBuilder(Builder);
@@ -288,7 +312,7 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
     }
     std::vector<double> Data(TotalElements);
     for (size_t i = 0; i < Data.size(); ++i) {
-      Data.at(i) = (V0 + i) * 1e-5;
+      Data.at(i) = i * 1e-5;
     }
     auto Vec = Builder.CreateVector(Data);
     ArrayDoubleBuilder ArrayBuilder(Builder);
@@ -297,7 +321,7 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
   }
 
   flatbuffers::Offset<flatbuffers::String> Info;
-  if (ix == 0) {
+  if (PacketID == 0) {
     Info = Builder.CreateString("Some optional info string.");
   }
   Info = flatbuffers::Offset<flatbuffers::String>(0);
@@ -353,7 +377,7 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(300, i, 100 * (1 + i)));
+    auto X = Writer->write(createTestMessage(0, i));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -377,25 +401,25 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  size_t HistogramID = 0;
   for (size_t i = 0; i < 3; ++i) {
-    auto X =
-        Writer->write(createTestMessage(100000, i, 100000 + 1000 * (1 + i)));
+    auto X = Writer->write(createTestMessage(HistogramID, i));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
     ASSERT_TRUE(X.is_OK());
   }
+  ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
-    auto X =
-        Writer->write(createTestMessage(200000, i, 200000 + 1000 * (1 + i)));
+    auto X = Writer->write(createTestMessage(HistogramID, i));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
     ASSERT_TRUE(X.is_OK());
   }
+  ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
-    auto X =
-        Writer->write(createTestMessage(300000, i, 300000 + 1000 * (1 + i)));
+    auto X = Writer->write(createTestMessage(HistogramID, i));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
