@@ -43,15 +43,9 @@ FileWriter::HDFWriterModule::WriteResult Writer::write(Msg const &Msg) {
   return TheWriterUntyped->write(Msg, DoFlushEachWrite);
 }
 
-int32_t Writer::flush() {
-  throw unimplemented();
-  return 0;
-}
+int32_t Writer::flush() { return 0; }
 
-int32_t Writer::close() {
-  throw unimplemented();
-  return 0;
-}
+int32_t Writer::close() { return 0; }
 
 void Writer::enable_cq(CollectiveQueue *, HDFIDStore *, int) {}
 
