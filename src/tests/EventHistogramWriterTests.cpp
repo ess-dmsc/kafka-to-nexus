@@ -370,7 +370,7 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
 
 TEST(EventHistogramWriter, WriteMultipleHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
-                         FileCreationLocation::Disk);
+                         FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
