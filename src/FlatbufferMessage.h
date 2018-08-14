@@ -25,7 +25,7 @@ namespace FileWriter {
   public:
     NotValidFlatbuffer(const std::string &what) : std::runtime_error(what){};
   };
-  
+  /// \todo Profile code to determine if the exceptions are a performance problem
   class FlatbufferMessage {
   public:
     FlatbufferMessage();

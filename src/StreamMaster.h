@@ -33,7 +33,7 @@ namespace FileWriter {
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
 template <typename Streamer> class StreamMaster {
-  using StreamerError = Status::StreamerError;
+  using StreamerError = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
   friend class CommandHandler;
 
@@ -137,7 +137,7 @@ public:
   /// stream is in any error state
   const StreamMasterError status() {
     for (auto &s : Streamers) {
-      if (s.second.runStatus().connectionOK()) {
+      if (s.second.runStatus() >= StreamerError::IS_CONNECTED) {
         return StreamMasterError::STREAMER_ERROR();
       }
     }
@@ -173,8 +173,8 @@ private:
       // if Streamer throws the stream is closed, but the writing continues
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
-      } catch (...) {
-        LOG(Sev::Error, "Stream closed due to stream error.");
+      } catch (std::exception &E) {
+        LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -235,7 +235,7 @@ private:
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
     LOG(Sev::Debug, "All sources in Stream have expired, close connection");
-    Stream.runStatus() = Status::StreamerError::HAS_FINISHED();
+    Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
     if (NumStreamers != 0) {
@@ -255,7 +255,7 @@ private:
     for (auto &s : Streamers) {
       LOG(Sev::Info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
-      if (!v.hasFinished()) {
+      if (v == StreamerError::HAS_FINISHED) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
       } else {

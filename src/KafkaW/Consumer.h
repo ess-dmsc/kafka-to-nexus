@@ -16,14 +16,14 @@ public:
   Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
-  ~Consumer();
+  virtual ~Consumer();
   void init();
   void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
                                        std::chrono::milliseconds{0});
   void dumpCurrentSubscription();
   bool topicPresent(const std::string &Topic);
   int32_t queryNumberOfPartitions(const std::string &TopicName);
-  PollStatus poll();
+  virtual PollStatus poll();
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>

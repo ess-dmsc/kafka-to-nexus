@@ -60,85 +60,51 @@ StreamMasterError StreamMasterError::STREAMMASTER_ERROR() {
 
 //------------------------------------------------------------------------------
 // StreamerError
-using StreamerError = FileWriter::Status::StreamerError;
-
-StreamerError StreamerError::OK() {
-  StreamerError Err;
-  Err.Value = 1000;
-  return Err;
-}
-StreamerError StreamerError::WRITING() {
-  StreamerError Err;
-  Err.Value = 1;
-  return Err;
-}
-StreamerError StreamerError::HAS_FINISHED() {
-  StreamerError Err;
-  Err.Value = 0;
-  return Err;
-}
-StreamerError StreamerError::NOT_INITIALIZED() {
-  StreamerError Err;
-  Err.Value = -1000;
-  return Err;
-}
-StreamerError StreamerError::CONFIGURATION_ERROR() {
-  StreamerError Err;
-  Err.Value = -1;
-  return Err;
-}
-StreamerError StreamerError::TOPIC_PARTITION_ERROR() {
-  StreamerError Err;
-  Err.Value = -2;
-  return Err;
-}
-StreamerError StreamerError::UNKNOWN_ERROR() {
-  StreamerError Err;
-  Err.Value = -1001;
-  return Err;
-}
+using StreamerStatus = FileWriter::Status::StreamerStatus;
 
 //------------------------------------------------------------------------------
 // Utilities
 
-const std::string FileWriter::Status::Err2Str(const StreamerError &Error) {
-  switch (Error.Value) {
-  case 1:
-    return "Writing";
-  case 0:
-    return "Has Finished";
-  case -1:
-    return "Configuration Error";
-  case -2:
-    return "Topic Partition Error";
-  case -1000:
-    return "Not Initialized";
-  default:
-    return "Unknown error code";
+const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
+  switch (Error) {
+    case StreamerStatus::OK:
+      return "No error.";
+    case StreamerStatus::WRITING:
+      return "Writing";
+    case StreamerStatus::HAS_FINISHED:
+      return "Has Finished";
+    case StreamerStatus::CONFIGURATION_ERROR:
+      return "Configuration Error";
+    case StreamerStatus::TOPIC_PARTITION_ERROR:
+      return "Topic Partition Error";
+    case StreamerStatus::NOT_INITIALIZED:
+      return "Not Initialized";
+    default:
+      return "Unknown error code";
   }
 }
 
 const std::string FileWriter::Status::Err2Str(const StreamMasterError &Error) {
   switch (Error.Value) {
-  case 1000:
-    return "No Error";
-  case 4:
-    return "Stream Can Be Removed";
-  case 3:
-    return "Streamers Empty";
-  case 2:
-    return "Has Finished";
-  case 1:
-    return "Running";
-  case 0:
-    return "Not Started";
-  case -1:
-    return "Streamer Error";
-  case -2:
-    return "Report Error";
-  case -1000:
-    return "Generic Error";
-  default:
-    return "Unknown error code";
+    case 1000:
+      return "No Error";
+    case 4:
+      return "Stream Can Be Removed";
+    case 3:
+      return "Streamers Empty";
+    case 2:
+      return "Has Finished";
+    case 1:
+      return "Running";
+    case 0:
+      return "Not Started";
+    case -1:
+      return "Streamer Error";
+    case -2:
+      return "Report Error";
+    case -1000:
+      return "Generic Error";
+    default:
+      return "Unknown error code";
   }
 }

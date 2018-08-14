@@ -21,15 +21,13 @@
 #include <chrono>
 #include <future>
 
-class T_Streamer;
-
 namespace FileWriter {
+  using ConsumerPtr = std::unique_ptr<KafkaW::Consumer>;
 
 /// Connect to kafka topics eventually at a given point in time
 /// and consume messages
 class Streamer {
-  friend class ::T_Streamer;
-  using StreamerError = Status::StreamerError;
+  using StreamerError = Status::StreamerStatus;
 
 public:
   Streamer() = default;
@@ -92,8 +90,8 @@ public:
   /// Streamer. The method can be used to change the current values
   StreamerOptions &getOptions() { return Options; }
 
-private:
-  std::unique_ptr<KafkaW::Consumer> Consumer;
+protected:
+  ConsumerPtr Consumer;
   KafkaW::BrokerSettings Settings;
 
   StreamerError RunStatus;
@@ -102,8 +100,9 @@ private:
   std::vector<std::string> Sources;
   StreamerOptions Options;
 
-  std::future<StreamerError> IsConnected;
-
+  std::future<std::pair<Status::StreamerStatus,ConsumerPtr>> ConsumerCreated;
+};
+  
   //----------------------------------------------------------------------------
   /// @brief      Create a consumer with the options specified in the class
   /// constructor. Conncts to the topic, eventualli at the specified timestamp.
@@ -116,7 +115,6 @@ private:
   /// topic is
   /// not in the partition ``SEC::topic_partition_error``;
   ///
-  StreamerError connect(std::string TopicName);
-};
+  std::pair<Status::StreamerStatus,ConsumerPtr> createConsumer(std::string const TopicName, StreamerOptions const Options);
 
 } // namespace FileWriter

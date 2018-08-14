@@ -74,43 +74,15 @@ private:
 //------------------------------------------------------------------------------
 /// @brief      Class that helps the Streamer to define its status.
 ///
-class StreamerError {
-  friend const std::string Err2Str(const StreamerError &);
-
-public:
-  static StreamerError OK();
-  static StreamerError WRITING();
-  static StreamerError HAS_FINISHED();
-  static StreamerError NOT_INITIALIZED();
-  static StreamerError CONFIGURATION_ERROR();
-  static StreamerError TOPIC_PARTITION_ERROR();
-  static StreamerError UNKNOWN_ERROR();
-
-  //----------------------------------------------------------------------------
-  /// @brief      Determines if the connection to the Kafka broker is
-  /// successfull.
-  ///
-  /// @return     True if the connection is established, False otherwise
-  ///
-  bool connectionOK() const { return Value >= 0; }
-  //----------------------------------------------------------------------------
-  /// @brief      Determines if the Streamer has finished its job.
-  ///
-  /// @return     True if the stop time has been reached or if the stop command
-  /// has been received, False otherwise.
-  ///
-  bool hasFinished() const { return Value == 0; }
-  //----------------------------------------------------------------------------
-  /// @brief      Compare two different StreamerStatus
-  ///
-  /// @param[in]  Other  The other
-  ///
-  /// @return     True if the status is the same, False otherwise.
-  ///
-  bool operator==(const StreamerError &Other) { return Value == Other.Value; }
-
-private:
-  int Value{-1000};
+enum class StreamerStatus {
+  OK = 1000,
+  WRITING = 2,
+  HAS_FINISHED = 1,
+  IS_CONNECTED = 0,
+  NOT_INITIALIZED = -1000,
+  CONFIGURATION_ERROR = -1,
+  TOPIC_PARTITION_ERROR = -2,
+  UNKNOWN_ERROR = -1001
 };
 
 //------------------------------------------------------------------------------
@@ -120,7 +92,7 @@ private:
 ///
 /// @return     The string that briefly describe the status.
 ///
-const std::string Err2Str(const StreamerError &Error);
+const std::string Err2Str(const StreamerStatus &Error);
 
 //------------------------------------------------------------------------------
 /// @brief      Converts a StreamMasterError status into a human readable
