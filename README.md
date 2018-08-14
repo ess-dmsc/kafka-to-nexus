@@ -229,19 +229,22 @@ We can write the `EventHistogram` stream to HDF with a child in the
         "size": 4,
         "label": "Position",
         "unit": "mm",
-        "edges": [2, 3, 4, 5, 6]
+        "edges": [2, 3, 4, 5, 6],
+        "dataset_name": "x_detector"
       },
       {
         "size": 6,
         "label": "Position",
         "unit": "mm",
-        "edges": [-3, -2, -1, 0, 1, 2, 3]
+        "edges": [-3, -2, -1, 0, 1, 2, 3],
+        "dataset_name": "y_detector"
       },
       {
         "size": 3,
         "label": "Time",
         "unit": "ns",
-        "edges": [0, 2, 4, 6]
+        "edges": [0, 2, 4, 6],
+        "dataset_name": "time_binning"
       }
     ]
   }

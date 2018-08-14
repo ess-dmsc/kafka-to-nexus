@@ -32,7 +32,8 @@ json createTestDimensionJson() {
     "size": 4,
     "label": "Velocity",
     "unit": "m/s",
-    "edges": [2, 3, 4, 5]
+    "edges": [2, 3, 4, 5, 6],
+    "dataset_name": "some_detector"
   })""");
 }
 
@@ -55,12 +56,7 @@ TEST(EventHistogramWriter, DimensionWithoutUnitThrows) {
 }
 
 TEST(EventHistogramWriter, DimensionCreatedFromValidInput) {
-  auto Json = json::parse(R"""({
-    "size": 4,
-    "label": "Velocity",
-    "unit": "m/s",
-    "edges": [2, 3, 4, 5, 6]
-  })""");
+  auto Json = createTestDimensionJson();
   auto Dim = Dimension<double>::createFromJson(Json);
   ASSERT_EQ(Dim.getSize(), 4u);
   ASSERT_EQ(Dim.getLabel(), "Velocity");
@@ -80,19 +76,22 @@ json createTestShapeJson() {
       "size": 4,
       "label": "Position",
       "unit": "mm",
-      "edges": [2, 3, 4, 5, 6]
+      "edges": [2, 3, 4, 5, 6],
+      "dataset_name": "x_detector"
     },
     {
       "size": 6,
       "label": "Position",
       "unit": "mm",
-      "edges": [-3, -2, -1, 0, 1, 2, 3]
+      "edges": [-3, -2, -1, 0, 1, 2, 3],
+      "dataset_name": "y_detector"
     },
     {
       "size": 3,
       "label": "Time",
       "unit": "ns",
-      "edges": [0, 2, 4, 6]
+      "edges": [0, 2, 4, 6],
+      "dataset_name": "time_binning"
     }
   ])"");
 }
@@ -138,19 +137,22 @@ json createTestWriterTypedJson() {
         "size": 4,
         "label": "Position",
         "unit": "mm",
-        "edges": [2, 3, 4, 5, 6]
+        "edges": [2, 3, 4, 5, 6],
+        "dataset_name": "x_detector"
       },
       {
         "size": 6,
         "label": "Position",
         "unit": "mm",
-        "edges": [-3, -2, -1, 0, 1, 2, 3]
+        "edges": [-3, -2, -1, 0, 1, 2, 3],
+        "dataset_name": "y_detector"
       },
       {
         "size": 3,
         "label": "Time",
         "unit": "ns",
-        "edges": [0, 2, 4, 6]
+        "edges": [0, 2, 4, 6],
+        "dataset_name": "time_binning"
       }
     ]
   })"");
