@@ -1,5 +1,6 @@
 #include "Streamer.h"
 #include <gtest/gtest.h>
+#include <trompeloeil.hpp>
 
 namespace FileWriter {
 class StreamerInitTest : public ::testing::Test {
@@ -36,7 +37,11 @@ TEST_F(StreamerInitTest, Success) {
     using Streamer::ConsumerCreated;
   };
   class StreamerProcessTest : public ::testing::Test {
-  public:
+  protected:
+    void SetUp() override {
+      Settings.Address = "127.0.0.1:1";
+    }
+    KafkaW::BrokerSettings Settings;
   };
   
   TEST_F(StreamerProcessTest, CreationNotYetDone) {
@@ -67,20 +72,53 @@ TEST_F(StreamerInitTest, Success) {
   
   class ConsumerEmptyStandIn : public KafkaW::Consumer {
   public:
-    ConsumerEmptyStandIn() : KafkaW::Consumer(KafkaW::BrokerSettings()) {};
-    KafkaW::PollStatus poll() override {
-      return KafkaW::PollStatus::Empty();
-    }
+    ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings) : KafkaW::Consumer(Settings) {};
+    MAKE_MOCK0(poll, KafkaW::PollStatus(), override);
   };
   
   TEST_F(StreamerProcessTest, EmptyPoll) {
     StreamerStandIn TestStreamer;
-    KafkaW::Consumer *EmptyPollerConsumer = new ConsumerEmptyStandIn();
+    ConsumerEmptyStandIn *EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
+    REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(KafkaW::PollStatus::Empty()).TIMES(1);
     TestStreamer.ConsumerCreated = std::async(std::launch::async, [&EmptyPollerConsumer](){
-      return std::pair<Status::StreamerStatus,ConsumerPtr>{Status::StreamerStatus::CONFIGURATION_ERROR, EmptyPollerConsumer};
+      return std::pair<Status::StreamerStatus,ConsumerPtr>{Status::StreamerStatus::OK, EmptyPollerConsumer};
     });
     DemuxTopic Demuxer("SomeTopicName");
     EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  }
+  
+  TEST_F(StreamerProcessTest, EndOfPartition) {
+    StreamerStandIn TestStreamer;
+    ConsumerEmptyStandIn *EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
+    REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(KafkaW::PollStatus::EOP()).TIMES(1);
+    TestStreamer.ConsumerCreated = std::async(std::launch::async, [&EmptyPollerConsumer](){
+      return std::pair<Status::StreamerStatus,ConsumerPtr>{Status::StreamerStatus::OK, EmptyPollerConsumer};
+    });
+    DemuxTopic Demuxer("SomeTopicName");
+    EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  }
+  
+  TEST_F(StreamerProcessTest, PollingError) {
+    StreamerStandIn TestStreamer;
+    ConsumerEmptyStandIn *EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
+    REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(KafkaW::PollStatus::Err()).TIMES(1);
+    TestStreamer.ConsumerCreated = std::async(std::launch::async, [&EmptyPollerConsumer](){
+      return std::pair<Status::StreamerStatus,ConsumerPtr>{Status::StreamerStatus::OK, EmptyPollerConsumer};
+    });
+    DemuxTopic Demuxer("SomeTopicName");
+    EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
+  }
+  
+  TEST_F(StreamerProcessTest, InvalidMessage) {
+    KafkaW::Msg TestMessage;
+    StreamerStandIn TestStreamer;
+    ConsumerEmptyStandIn *EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
+    REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(KafkaW::PollStatus::Err()).TIMES(1);
+    TestStreamer.ConsumerCreated = std::async(std::launch::async, [&EmptyPollerConsumer](){
+      return std::pair<Status::StreamerStatus,ConsumerPtr>{Status::StreamerStatus::OK, EmptyPollerConsumer};
+    });
+    DemuxTopic Demuxer("SomeTopicName");
+    EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
   }
   
 } //namespace FileWriter

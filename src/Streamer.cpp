@@ -95,10 +95,10 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   // consume message and make sure that's ok
   KafkaW::PollStatus Poll = Consumer->poll();
   if (Poll.isEmpty() || Poll.isEOP()) {
-    if ((Options.StopTimestamp.count() > 0) &&
-        (systemTime() > (Options.StopTimestamp + Options.AfterStopTime))) {
-      LOG(Sev::Info, "Close topic \"{}\" after time expired",
-          MessageProcessor.topic());
+    if ((Options.StopTimestamp.count() > 0) and
+        (Options.ConsumerTimeout > (systemTime() - LastMessageTimestamp))) {
+      LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms passed since last message received.",
+          MessageProcessor.topic(), (systemTime() - LastMessageTimestamp).count());
       Sources.clear();
       return ProcessMessageResult::STOP;
     }
@@ -113,6 +113,8 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   FlatbufferMessage Message(reinterpret_cast<char*>(KafkaMessage->data()), KafkaMessage->size());
   if (not Message.isValid()) {
     return ProcessMessageResult::ERR;
+  } else {
+    LastMessageTimestamp = systemTime();
   }
   
   if (std::find(Sources.begin(), Sources.end(), Message.getSourceName()) ==

@@ -101,6 +101,7 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus,ConsumerPtr>> ConsumerCreated;
+  std::chrono::milliseconds LastMessageTimestamp{0};
 };
   
   //----------------------------------------------------------------------------
