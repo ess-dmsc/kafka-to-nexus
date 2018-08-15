@@ -51,7 +51,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
   EXPECT_TRUE(CurrentMessage.isValid());
   EXPECT_EQ(CurrentMessage.getSourceName(), "SomeSourceName");
-  EXPECT_EQ(CurrentMessage.getTimestamp(), 42l);
+  EXPECT_EQ(CurrentMessage.getTimestamp(), 42ul);
 }
 
 TEST_F(MessageTimeExtractionTest, WrongKey) {
