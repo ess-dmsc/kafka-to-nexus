@@ -9,19 +9,20 @@
 
 namespace KafkaW {
 
-  class ConsumerBase {
-  public:
-    ConsumerBase() = default;
-    virtual ~ConsumerBase() = default;
-    virtual void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
-                       std::chrono::milliseconds{0}) = 0;
-    virtual PollStatus poll() = 0;
-    virtual void dumpCurrentSubscription() = 0;
-    virtual bool topicPresent(const std::string &Topic) = 0;
-    virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
-  };
+class ConsumerBase {
+public:
+  ConsumerBase() = default;
+  virtual ~ConsumerBase() = default;
+  virtual void addTopic(std::string Topic,
+                        const std::chrono::milliseconds &StartTime =
+                            std::chrono::milliseconds{0}) = 0;
+  virtual PollStatus poll() = 0;
+  virtual void dumpCurrentSubscription() = 0;
+  virtual bool topicPresent(const std::string &Topic) = 0;
+  virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
+};
 
-  class Consumer : public ConsumerBase {
+class Consumer : public ConsumerBase {
 public:
   Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;

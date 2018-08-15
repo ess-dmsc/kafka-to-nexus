@@ -30,7 +30,8 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  virtual ProcessMessageResult process_message(FlatbufferMessage const &Message);
+  virtual ProcessMessageResult
+  process_message(FlatbufferMessage const &Message);
   std::unordered_map<std::string, Source> &sources();
 
   //----------------------------------------------------------------------------

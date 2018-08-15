@@ -251,9 +251,8 @@ PollStatus Consumer::poll() {
   }
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
-  std::unique_ptr<Msg> m2(new Msg((std::uint8_t*)msg->payload, msg->len, [msg](){
-    rd_kafka_message_destroy(msg);
-  }));
+  std::unique_ptr<Msg> m2(new Msg((std::uint8_t *)msg->payload, msg->len,
+                                  [msg]() { rd_kafka_message_destroy(msg); }));
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
     return PollStatus::newWithMsg(std::move(m2));
   } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {

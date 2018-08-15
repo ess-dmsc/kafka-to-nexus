@@ -20,7 +20,7 @@ enum class MsgType : int {
   KafkaW = 3,
   Cheap = 22,
 };
-  
+
 class Msg {
 public:
   Msg() { type = MsgType::Invalid; }

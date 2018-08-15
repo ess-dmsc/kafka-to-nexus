@@ -1,4 +1,4 @@
- #include "Streamer.h"
+#include "Streamer.h"
 
 #include "helper.h"
 
@@ -22,14 +22,15 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   Options.Settings.ConfigurationStrings["group.id"] = TopicName;
   Options.Settings.Address = Broker;
 
-  ConsumerCreated =
-      std::async(std::launch::async, &FileWriter::createConsumer, TopicName, Options);
+  ConsumerCreated = std::async(std::launch::async, &FileWriter::createConsumer,
+                               TopicName, Options);
 }
 
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
-std::pair<FileWriter::Status::StreamerStatus,FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const TopicName, FileWriter::StreamerOptions const Options) {
+std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
+FileWriter::createConsumer(std::string const TopicName,
+                           FileWriter::StreamerOptions const Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer(new KafkaW::Consumer(Options.Settings));
@@ -43,7 +44,8 @@ FileWriter::createConsumer(std::string const TopicName, FileWriter::StreamerOpti
     if (!Consumer->topicPresent(TopicName)) {
       LOG(Sev::Error, "Topic \"{}\" not in broker, remove corresponding stream",
           TopicName);
-      return {FileWriter::Status::StreamerStatus::TOPIC_PARTITION_ERROR, nullptr};
+      return {FileWriter::Status::StreamerStatus::TOPIC_PARTITION_ERROR,
+              nullptr};
     }
     return {FileWriter::Status::StreamerStatus::WRITING, std::move(Consumer)};
   } catch (std::exception &Error) {
@@ -53,8 +55,6 @@ FileWriter::createConsumer(std::string const TopicName, FileWriter::StreamerOpti
 
   return {FileWriter::Status::StreamerStatus::UNKNOWN_ERROR, nullptr};
 }
-
-
 
 FileWriter::Streamer::StreamerError FileWriter::Streamer::closeStream() {
   Sources.clear();
@@ -72,19 +72,22 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     } else if (ConsumerCreated.valid()) {
       if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
           std::future_status::ready) {
-        LOG(Sev::Warning, "Not yet done setting up consumer. Defering consumption.");
+        LOG(Sev::Warning,
+            "Not yet done setting up consumer. Defering consumption.");
         return ProcessMessageResult::OK;
       }
       auto Temp = ConsumerCreated.get();
       RunStatus = Temp.first;
       Consumer = std::move(Temp.second);
     } else {
-      throw std::runtime_error("Failed to set-up process for creating consumer.");
+      throw std::runtime_error(
+          "Failed to set-up process for creating consumer.");
     }
   } catch (std::runtime_error &Error) {
     throw Error;
   } catch (std::exception &Error) {
-    LOG(Sev::Critical, "Got an exception when waiting for connection: {}", Error.what());
+    LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
+        Error.what());
     throw Error;
   }
 
@@ -99,8 +102,10 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) and
         (Options.ConsumerTimeout < (systemTime() - LastMessageTimestamp))) {
-      LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms passed since last message received.",
-          MessageProcessor.topic(), (systemTime() - LastMessageTimestamp).count());
+      LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
+                     "passed since last message received.",
+          MessageProcessor.topic(),
+          (systemTime() - LastMessageTimestamp).count());
       Sources.clear();
       return ProcessMessageResult::STOP;
     }
@@ -114,20 +119,26 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   auto KafkaMessage = Poll.isMsg();
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message.reset(new FlatbufferMessage(reinterpret_cast<const char*>(KafkaMessage->data()), KafkaMessage->size()));
+    Message.reset(new FlatbufferMessage(
+        reinterpret_cast<const char *>(KafkaMessage->data()),
+        KafkaMessage->size()));
   } catch (std::runtime_error &Error) {
-    LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered. The error was: {}", Error.what());
+    LOG(Sev::Warning,
+        "Message that is not a valid flatbuffer encountered. The error was: {}",
+        Error.what());
     return ProcessMessageResult::ERR;
   }
 
-  LastMessageTimestamp = systemTime(); //For dealing with messsage timeouts
-  
+  LastMessageTimestamp = systemTime(); // For dealing with messsage timeouts
+
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
-    LOG(Sev::Warning, "Message from topic\"{}\" has an unknown source name (\"{}\"), ignoring.", MessageProcessor.topic(), Message->getSourceName());
+    LOG(Sev::Warning, "Message from topic\"{}\" has an unknown source name "
+                      "(\"{}\"), ignoring.",
+        MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
-  
+
   // Timestamp of message is before the "start" timestamp
   if (Message->getTimestamp() <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -135,8 +146,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
           .count()) {
     return ProcessMessageResult::OK;
   }
-  
-  //Check if there is a stop stime configured and the message timestamp is greater than it
+
+  // Check if there is a stop stime configured and the message timestamp is
+  // greater than it
   if (Options.StopTimestamp.count() > 0 &&
       Message->getTimestamp() >
           std::chrono::duration_cast<std::chrono::nanoseconds>(
