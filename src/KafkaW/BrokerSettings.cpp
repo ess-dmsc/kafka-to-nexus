@@ -19,11 +19,8 @@ BrokerSettings::BrokerSettings() {
       {"coordinator.query.interval.ms", 2 * 1000},
       {"heartbeat.interval.ms", 500},
       {"statistics.interval.ms", 600 * 1000},
-      {"session.timeout.ms", 6000},
   };
-  ConfigurationStrings = {{"api.version.request", "true"},
-//    {"debug", "all"},
-  };
+  ConfigurationStrings = {{"api.version.request", "true"}};
 }
 
 void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) {
