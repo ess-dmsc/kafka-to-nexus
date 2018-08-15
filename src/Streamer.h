@@ -94,7 +94,7 @@ protected:
   ConsumerPtr Consumer;
   KafkaW::BrokerSettings Settings;
 
-  StreamerError RunStatus;
+  StreamerError RunStatus{StreamerError::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
   std::vector<std::string> Sources;

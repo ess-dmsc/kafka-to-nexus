@@ -25,28 +25,25 @@ PollStatus PollStatus::Empty() {
 PollStatus PollStatus::newWithMsg(std::unique_ptr<Msg> Msg) {
   PollStatus ret;
   ret.state = PollStatusContent::Msg;
-  ret.data = Msg.release();
+  ret.StoredMessage = std::move(Msg);
   return ret;
 }
 
 PollStatus::PollStatus(PollStatus &&x)
-    : state(std::move(x.state)), data(std::move(x.data)) {}
+    : state(std::move(x.state)), StoredMessage(std::move(x.StoredMessage)) {}
 
 PollStatus &PollStatus::operator=(PollStatus &&x) {
   reset();
   std::swap(state, x.state);
-  std::swap(data, x.data);
+  std::swap(StoredMessage, x.StoredMessage);
   return *this;
 }
 
 void PollStatus::reset() {
   if (state == PollStatusContent::Msg) {
-    if (auto x = (Msg *)data) {
-      delete x;
-    }
+    StoredMessage.reset();
   }
   state = PollStatusContent::Empty;
-  data = nullptr;
 }
 
 PollStatus::PollStatus() {}
@@ -61,10 +58,8 @@ bool PollStatus::isEmpty() { return state == PollStatusContent::Empty; }
 
 std::unique_ptr<Msg> PollStatus::isMsg() {
   if (state == PollStatusContent::Msg) {
-    std::unique_ptr<Msg> ret((Msg *)data);
-    data = nullptr;
     state = PollStatusContent::Empty;
-    return ret;
+    return std::move(StoredMessage);
   }
   return nullptr;
 }

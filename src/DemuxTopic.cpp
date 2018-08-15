@@ -22,7 +22,7 @@ void swap(DemuxTopic &x, DemuxTopic &y) {
 
 std::string const &DemuxTopic::topic() const { return Topic; }
 
-ProcessMessageResult DemuxTopic::process_message(FlatbufferMessage &&Message) {
+ProcessMessageResult DemuxTopic::process_message(FlatbufferMessage const &Message) {
   LOG(Sev::Debug, "Message received from: {}", Message.getSourceName());
   try {
     auto &CurrentSource = TopicSources.at(Message.getSourceName());

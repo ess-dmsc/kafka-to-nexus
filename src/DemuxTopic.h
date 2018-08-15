@@ -18,7 +18,7 @@ class DemuxTopic {
 public:
   DemuxTopic(std::string TopicName);
   DemuxTopic(DemuxTopic &&x);
-  ~DemuxTopic();
+  virtual ~DemuxTopic();
 
   //----------------------------------------------------------------------------
   /// @brief      Returns the name of the topic that contains the source
@@ -30,7 +30,7 @@ public:
   /// To be called by FileMaster when a new message is available for this
   /// source. Streamer currently expects void as return, will add return value
   /// in the future.
-  ProcessMessageResult process_message(FlatbufferMessage &&Message);
+  virtual ProcessMessageResult process_message(FlatbufferMessage const &Message);
   std::unordered_map<std::string, Source> &sources();
 
   //----------------------------------------------------------------------------

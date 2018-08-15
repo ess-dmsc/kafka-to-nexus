@@ -67,7 +67,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   try {
     // wait for connect() to finish
-    if (ConsumerCreated.valid()) {
+    if (RunStatus > StreamerError::IS_CONNECTED) {
+      // Do nothing
+    } else if (ConsumerCreated.valid()) {
       if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
           std::future_status::ready) {
         LOG(Sev::Warning, "Not yet done setting up consumer. Defering consumption.");
@@ -96,7 +98,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   KafkaW::PollStatus Poll = Consumer->poll();
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) and
-        (Options.ConsumerTimeout > (systemTime() - LastMessageTimestamp))) {
+        (Options.ConsumerTimeout < (systemTime() - LastMessageTimestamp))) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms passed since last message received.",
           MessageProcessor.topic(), (systemTime() - LastMessageTimestamp).count());
       Sources.clear();
@@ -110,20 +112,24 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   // convert from KafkaW to Msg
   auto KafkaMessage = Poll.isMsg();
-  FlatbufferMessage Message(reinterpret_cast<char*>(KafkaMessage->data()), KafkaMessage->size());
-  if (not Message.isValid()) {
+  std::unique_ptr<FlatbufferMessage> Message;
+  try {
+    Message.reset(new FlatbufferMessage(reinterpret_cast<const char*>(KafkaMessage->data()), KafkaMessage->size()));
+  } catch (std::runtime_error &Error) {
+    LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered. The error was: {}", Error.what());
     return ProcessMessageResult::ERR;
-  } else {
-    LastMessageTimestamp = systemTime();
   }
+
+  LastMessageTimestamp = systemTime(); //For dealing with messsage timeouts
   
-  if (std::find(Sources.begin(), Sources.end(), Message.getSourceName()) ==
+  if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
+    LOG(Sev::Warning, "Message from topic\"{}\" has an unknown source name (\"{}\"), ignoring.", MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
   
   // Timestamp of message is before the "start" timestamp
-  if (Message.getTimestamp() <
+  if (Message->getTimestamp() <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           Options.StartTimestamp)
           .count()) {
@@ -132,24 +138,24 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   
   //Check if there is a stop stime configured and the message timestamp is greater than it
   if (Options.StopTimestamp.count() > 0 &&
-      Message.getTimestamp() >
+      Message->getTimestamp() >
           std::chrono::duration_cast<std::chrono::nanoseconds>(
               Options.StopTimestamp)
               .count()) {
-    if (removeSource(Message.getSourceName())) {
+    if (removeSource(Message->getSourceName())) {
       return ProcessMessageResult::STOP;
     }
     return ProcessMessageResult::ERR;
   }
 
   // Collect information about the data received
-  MessageInfo.newMessage(Message.size());
+  MessageInfo.newMessage(Message->size());
 
   // Write the message. Log any error and return the result of processing
   ProcessMessageResult result =
-      MessageProcessor.process_message(std::move(Message));
+      MessageProcessor.process_message(*Message.get());
   LOG(Sev::Debug, "Processed: {}::{}", MessageProcessor.topic(),
-      Message.getSourceName());
+      Message->getSourceName());
   if (ProcessMessageResult::OK != result) {
     MessageInfo.error();
   }

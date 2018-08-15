@@ -31,6 +31,6 @@ public:
 
 private:
   PollStatusContent state = PollStatusContent::Err;
-  void *data = nullptr;
+  std::unique_ptr<Msg> StoredMessage{nullptr};
 };
 }
