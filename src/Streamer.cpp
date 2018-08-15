@@ -140,7 +140,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Timestamp of message is before the "start" timestamp
-  if (Message->getTimestamp() <
+  if (static_cast<std::int64_t>(Message->getTimestamp()) <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           Options.StartTimestamp)
           .count()) {
@@ -150,7 +150,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   // Check if there is a stop stime configured and the message timestamp is
   // greater than it
   if (Options.StopTimestamp.count() > 0 &&
-      Message->getTimestamp() >
+      static_cast<std::int64_t>(Message->getTimestamp()) >
           std::chrono::duration_cast<std::chrono::nanoseconds>(
               Options.StopTimestamp)
               .count()) {
