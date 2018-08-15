@@ -40,7 +40,11 @@ FileWriter::HDFWriterModule::WriteResult Writer::write(Msg const &Msg) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
   }
-  return TheWriterUntyped->write(Msg, DoFlushEachWrite);
+  auto Result = TheWriterUntyped->write(Msg, DoFlushEachWrite);
+  if (!Result.is_OK()) {
+    LOG(Sev::Error, "hs00 write error: {}", Result.to_str());
+  }
+  return Result;
 }
 
 int32_t Writer::flush() { return 0; }
