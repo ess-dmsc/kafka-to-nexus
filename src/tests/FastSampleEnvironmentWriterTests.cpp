@@ -26,6 +26,8 @@ std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   return RawBuffer;
 }
 
+using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+
 class FastSampleEnvironmentReader : public ::testing::Test {
 public:
   static void SetUpTestCase() {
@@ -35,6 +37,10 @@ public:
   void SetUp() override {
     ASSERT_NE(RawBuffer.get(), nullptr);
     ReaderUnderTest.reset(new senv::SampleEnvironmentDataGuard());
+    std::map<std::string, ReaderPtr> &Readers =
+    FileWriter::FlatbufferReaderRegistry::getReaders();
+    Readers.clear();
+    FileWriter::FlatbufferReaderRegistry::Registrar<senv::SampleEnvironmentDataGuard> RegisterIt("senv");
   };
 
   std::unique_ptr<senv::SampleEnvironmentDataGuard> ReaderUnderTest;
@@ -64,9 +70,8 @@ TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
   FileWriter::FlatbufferMessage TestMessage1((const char*)TempData.get(), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
-  TempData[4] = 'h';
-  FileWriter::FlatbufferMessage TestMessage2((const char*)TempData.get(), BufferSize);
-  EXPECT_FALSE(ReaderUnderTest->verify(TestMessage2));
+  TempData[3] = 'h';
+  EXPECT_THROW(FileWriter::FlatbufferMessage((const char*)TempData.get(), BufferSize), FileWriter::NotValidFlatbuffer);
 }
 
 class FastSampleEnvironmentWriter : public ::testing::Test {

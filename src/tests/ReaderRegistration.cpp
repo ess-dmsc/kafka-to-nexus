@@ -65,6 +65,6 @@ TEST_F(ReaderRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
   { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
   std::string FailKey("trump");
-  EXPECT_EQ(FlatbufferReaderRegistry::find(FailKey).get(), nullptr);
+  EXPECT_THROW(FlatbufferReaderRegistry::find(FailKey), std::out_of_range);
 }
 } // namespace FileWriter
