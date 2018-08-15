@@ -1,4 +1,5 @@
 #include "Msg.h"
+#include "helper.h"
 #include "json.h"
 #include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
@@ -415,4 +416,26 @@ TEST(EventHistogramWriter, WriteMultipleHistograms) {
 
 TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
   // exact strategy still to be decided upon.
+}
+
+TEST(EventHistogramWriter, WriteAMORExample) {
+  auto File = createFile("Test.EventHistogramWriter.WriteAMORExample",
+                         FileCreationLocation::Default);
+  auto Group = File.root();
+  auto Writer = Writer::create();
+  auto V1 = gulp("/s/amor-hs00-stream");
+  auto V2 = gulp("/s/amor-msg");
+  std::string JsonBulk(V1.data(), V1.data() + V1.size());
+  Writer->parse_config(JsonBulk, "{}");
+  ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
+  Writer = Writer::create();
+  Writer->parse_config(JsonBulk, "{}");
+  ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  auto M = FileWriter::Msg::owned(reinterpret_cast<const char *>(V2.data()),
+                                  V2.size());
+  auto X = Writer->write(M);
+  if (!X.is_OK()) {
+    throw std::runtime_error(X.to_str());
+  }
+  ASSERT_TRUE(X.is_OK());
 }
