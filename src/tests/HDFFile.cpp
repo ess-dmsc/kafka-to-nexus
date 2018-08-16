@@ -5,9 +5,8 @@
 #include "../helper.h"
 #include "../json.h"
 #include "../schemas/ev42/ev42_synth.h"
-//#include "../schemas/ev42/ev42_rw.h"
-//#include "../schemas/f142/f142_rw.h"
 #include "../schemas/f142/f142_synth.h"
+#include "AddReader.h"
 #include "HDFFileTestHelper.h"
 #include <array>
 #include <chrono>
@@ -421,12 +420,7 @@ public:
   }
 
   static void data_ev42() {
-    using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    //    FileWriter::FlatbufferReaderRegistry::Registrar<FileWriter::Schemas::ev42::FlatbufferReader>
-    //    RegisterIt("ev42");
+    AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -824,14 +818,8 @@ public:
   };
 
   static void data_f142() {
-    using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    //    FileWriter::FlatbufferReaderRegistry::Registrar<FileWriter::Schemas::f142::FlatbufferReader>
-    //    RegisterIt("f142");
+    AddF142Reader();
     MainOpt main_opt = getTestOptions();
-
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
       "nexus": {
@@ -1114,9 +1102,9 @@ TEST_F(T_CommandHandler, WriteAttributesAtTopLevelOfTheFile) {
   T_CommandHandler::write_attributes_at_top_level_of_the_file();
 }
 
-TEST_F(T_CommandHandler, DISABLED_DataEv42) { T_CommandHandler::data_ev42(); }
+TEST_F(T_CommandHandler, DataEv42) { T_CommandHandler::data_ev42(); }
 
-TEST_F(T_CommandHandler, DISABLED_DataF142) { T_CommandHandler::data_f142(); }
+TEST_F(T_CommandHandler, DataF142) { T_CommandHandler::data_f142(); }
 
 // TODO Disabled because h5cpp seems unhappy about fixed length strings.
 // TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {

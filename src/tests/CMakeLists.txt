@@ -28,6 +28,8 @@ $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
+AddReader.h
+AddReader.cpp
 )
 
 add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
