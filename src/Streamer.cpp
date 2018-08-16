@@ -56,10 +56,10 @@ FileWriter::createConsumer(std::string const TopicName,
   return {FileWriter::Status::StreamerStatus::UNKNOWN_ERROR, nullptr};
 }
 
-FileWriter::Streamer::StreamerError FileWriter::Streamer::closeStream() {
+FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
   Sources.clear();
-  RunStatus = StreamerError::HAS_FINISHED;
-  return (RunStatus = StreamerError::HAS_FINISHED);
+  RunStatus = StreamerStatus::HAS_FINISHED;
+  return (RunStatus = StreamerStatus::HAS_FINISHED);
 }
 
 FileWriter::ProcessMessageResult
@@ -67,7 +67,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   try {
     // wait for connect() to finish
-    if (RunStatus > StreamerError::IS_CONNECTED) {
+    if (RunStatus > StreamerStatus::IS_CONNECTED) {
       // Do nothing
     } else if (ConsumerCreated.valid()) {
       if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
@@ -93,7 +93,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   // make sure that the connection is ok
   // attention: connect() handles exceptions
-  if (RunStatus < StreamerError::IS_CONNECTED) {
+  if (RunStatus < StreamerStatus::IS_CONNECTED) {
     throw std::runtime_error(Err2Str(RunStatus));
   }
 

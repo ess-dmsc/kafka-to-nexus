@@ -27,7 +27,7 @@ using ConsumerPtr = std::unique_ptr<KafkaW::Consumer>;
 /// Connect to kafka topics eventually at a given point in time
 /// and consume messages
 class Streamer {
-  using StreamerError = Status::StreamerStatus;
+  using StreamerStatus = Status::StreamerStatus;
 
 public:
   Streamer() = default;
@@ -56,7 +56,7 @@ public:
 
   /// Disconnect the kafka consumer and destroy the TopicPartition vector. Make
   /// sure that the Streamer status is StreamerErrorCode::has_finished
-  StreamerError closeStream();
+  StreamerStatus closeStream();
 
   //----------------------------------------------------------------------------
   /// @brief      Return the number of different sources whose last message is
@@ -81,7 +81,7 @@ public:
   ///
   /// @return     The current status
   ///
-  StreamerError &runStatus() { return RunStatus; }
+  StreamerStatus &runStatus() { return RunStatus; }
 
   /// Return all the informations about the messages consumed
   Status::MessageInfo &messageInfo() { return MessageInfo; }
@@ -94,7 +94,7 @@ protected:
   ConsumerPtr Consumer;
   KafkaW::BrokerSettings Settings;
 
-  StreamerError RunStatus{StreamerError::NOT_INITIALIZED};
+  StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
   std::vector<std::string> Sources;
