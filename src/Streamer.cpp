@@ -33,7 +33,7 @@ FileWriter::createConsumer(std::string const TopicName,
                            FileWriter::StreamerOptions const Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer(new KafkaW::Consumer(Options.Settings));
+    FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(Options.Settings);
     if (Options.StartTimestamp.count()) {
       Consumer->addTopic(TopicName,
                          Options.StartTimestamp - Options.BeforeStartTime);
