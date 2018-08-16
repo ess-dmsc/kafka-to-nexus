@@ -97,7 +97,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     throw std::runtime_error(Err2Str(RunStatus));
   }
 
-  // consume message and make sure that's ok
+  // Consume message and exit if we are beyond a message timeout
   KafkaW::PollStatus Poll = Consumer->poll();
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) and
@@ -115,7 +115,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR;
   }
 
-  // convert from KafkaW to Msg
+  // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   auto KafkaMessage = Poll.isMsg();
   std::unique_ptr<FlatbufferMessage> Message;
   try {
