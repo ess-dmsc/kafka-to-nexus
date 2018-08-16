@@ -12,7 +12,6 @@ std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &getReaders() {
 }
 
 FlatbufferReaderRegistry::ReaderPtr &find(std::string const &key) {
-  static FlatbufferReaderRegistry::ReaderPtr empty;
   auto &_items = getReaders();
   return _items.at(key);
 }

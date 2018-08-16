@@ -8,6 +8,16 @@ std::chrono::milliseconds systemTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
       now.time_since_epoch());
 }
+bool stopTimeElapsed(std::uint64_t MessageTimestamp,
+                     std::chrono::milliseconds Stoptime) {
+  if (Stoptime.count() > 0 and
+      static_cast<std::int64_t>(MessageTimestamp) >
+          std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
+              .count()) {
+    return true;
+  }
+  return false;
+}
 } // namespace FileWriter
 
 FileWriter::Streamer::Streamer(const std::string &Broker,
@@ -33,7 +43,8 @@ FileWriter::createConsumer(std::string const TopicName,
                            FileWriter::StreamerOptions const Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(Options.Settings);
+    FileWriter::ConsumerPtr Consumer =
+        std::make_unique<KafkaW::Consumer>(Options.Settings);
     if (Options.StartTimestamp.count()) {
       Consumer->addTopic(TopicName,
                          Options.StartTimestamp - Options.BeforeStartTime);
@@ -149,11 +160,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   // Check if there is a stop stime configured and the message timestamp is
   // greater than it
-  if (Options.StopTimestamp.count() > 0 &&
-      static_cast<std::int64_t>(Message->getTimestamp()) >
-          std::chrono::duration_cast<std::chrono::nanoseconds>(
-              Options.StopTimestamp)
-              .count()) {
+  if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp)) {
     if (removeSource(Message->getSourceName())) {
       return ProcessMessageResult::STOP;
     }

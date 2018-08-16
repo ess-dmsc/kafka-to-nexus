@@ -118,5 +118,6 @@ protected:
 ///
 std::pair<Status::StreamerStatus, ConsumerPtr>
 createConsumer(std::string const TopicName, StreamerOptions const Options);
-
+bool stopTimeElapsed(std::uint64_t MessageTimestamp,
+                     std::chrono::milliseconds Stoptime);
 } // namespace FileWriter

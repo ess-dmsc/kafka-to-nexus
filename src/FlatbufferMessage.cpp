@@ -4,8 +4,9 @@
 namespace FileWriter {
 FlatbufferMessage::FlatbufferMessage() : Valid(false) {}
 
-FlatbufferMessage::FlatbufferMessage(char const *Pointer, size_t const Size)
-    : DataPtr(const_cast<char *>(Pointer)), DataSize(Size) {
+FlatbufferMessage::FlatbufferMessage(char const *const Pointer,
+                                     size_t const Size)
+    : DataPtr(Pointer), DataSize(Size) {
   extractPacketInfo();
 }
 
@@ -34,6 +35,4 @@ void FlatbufferMessage::extractPacketInfo() {
   }
   Valid = true;
 }
-
-FlatbufferMessage::~FlatbufferMessage() {}
 }
