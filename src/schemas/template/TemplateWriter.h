@@ -92,7 +92,8 @@ public:
   ///
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
-  std::string source_name(FileWriter::FlatbufferMessage const &Message) const override {
+  std::string
+  source_name(FileWriter::FlatbufferMessage const &Message) const override {
     std::cout << "ReaderClass::source_name()\n";
     return "";
   }
@@ -115,7 +116,8 @@ public:
   ///
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
-  uint64_t timestamp(FileWriter::FlatbufferMessage const &Message) const override {
+  uint64_t
+  timestamp(FileWriter::FlatbufferMessage const &Message) const override {
     std::cout << "ReaderClass::timestamp()\n";
     return 0;
   }
