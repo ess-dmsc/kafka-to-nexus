@@ -33,7 +33,7 @@ namespace FileWriter {
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
 template <typename Streamer> class StreamMaster {
-  using StreamerError = Status::StreamerStatus;
+  using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
   friend class CommandHandler;
 
@@ -137,7 +137,7 @@ public:
   /// stream is in any error state
   const StreamMasterError status() {
     for (auto &s : Streamers) {
-      if (s.second.runStatus() >= StreamerError::IS_CONNECTED) {
+      if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
         return StreamMasterError::STREAMER_ERROR();
       }
     }
@@ -255,7 +255,7 @@ private:
     for (auto &s : Streamers) {
       LOG(Sev::Info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
-      if (v == StreamerError::HAS_FINISHED) {
+      if (v == StreamerStatus::HAS_FINISHED) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
       } else {
