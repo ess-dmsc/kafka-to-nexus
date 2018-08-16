@@ -25,6 +25,14 @@ Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
   }
 }
 
+Source::~Source() {
+  if (_hdf_writer_module) {
+    _hdf_writer_module->flush();
+    _hdf_writer_module->close();
+    _hdf_writer_module.reset();
+  }
+}
+
 Source::Source(Source &&x) noexcept { swap(*this, x); }
 
 void swap(Source &x, Source &y) {
