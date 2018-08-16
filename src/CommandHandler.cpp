@@ -373,7 +373,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     } else {
       LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
     }
-    MasterPtr->removeStreamMasterForJobID(JobID);
+    // MasterPtr->removeStreamMasterForJobID(JobID);
   }
 }
 
