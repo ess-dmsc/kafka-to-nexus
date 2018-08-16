@@ -38,9 +38,11 @@ public:
     ASSERT_NE(RawBuffer.get(), nullptr);
     ReaderUnderTest.reset(new senv::SampleEnvironmentDataGuard());
     std::map<std::string, ReaderPtr> &Readers =
-    FileWriter::FlatbufferReaderRegistry::getReaders();
+        FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<senv::SampleEnvironmentDataGuard> RegisterIt("senv");
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        senv::SampleEnvironmentDataGuard>
+        RegisterIt("senv");
   };
 
   std::unique_ptr<senv::SampleEnvironmentDataGuard> ReaderUnderTest;
@@ -51,27 +53,33 @@ std::unique_ptr<std::int8_t[]> FastSampleEnvironmentReader::RawBuffer{nullptr};
 size_t FastSampleEnvironmentReader::BufferSize{0};
 
 TEST_F(FastSampleEnvironmentReader, GetSourceName) {
-  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(),
+                                            BufferSize);
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
 }
 
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
-  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(),
+                                            BufferSize);
   EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
-  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(),
+                                            BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
 
 TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   std::unique_ptr<char[]> TempData(new char[BufferSize]);
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
-  FileWriter::FlatbufferMessage TestMessage1((const char*)TempData.get(), BufferSize);
+  FileWriter::FlatbufferMessage TestMessage1((const char *)TempData.get(),
+                                             BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[3] = 'h';
-  EXPECT_THROW(FileWriter::FlatbufferMessage((const char*)TempData.get(), BufferSize), FileWriter::NotValidFlatbuffer);
+  EXPECT_THROW(
+      FileWriter::FlatbufferMessage((const char *)TempData.get(), BufferSize),
+      FileWriter::NotValidFlatbuffer);
 }
 
 class FastSampleEnvironmentWriter : public ::testing::Test {

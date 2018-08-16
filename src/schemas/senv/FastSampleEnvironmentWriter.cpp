@@ -24,7 +24,8 @@ static FileWriter::HDFWriterModuleRegistry::Registrar<
     FastSampleEnvironmentWriter>
     RegisterSenvWriter("senv");
 
-bool SampleEnvironmentDataGuard::verify(FlatbufferMessage const &Message) const {
+bool SampleEnvironmentDataGuard::verify(
+    FlatbufferMessage const &Message) const {
   auto Verifier =
       flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
   return VerifySampleEnvironmentDataBuffer(Verifier);
@@ -38,8 +39,8 @@ SampleEnvironmentDataGuard::timestamp(FlatbufferMessage const &Message) const {
   return FbPointer->PacketTimestamp();
 }
 
-std::string
-  SampleEnvironmentDataGuard::source_name(const FileWriter::FlatbufferMessage &Message) const {
+std::string SampleEnvironmentDataGuard::source_name(
+    const FileWriter::FlatbufferMessage &Message) const {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   return FbPointer->Name()->str();
 }
@@ -105,8 +106,8 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
-FileWriterBase::WriteResult
-  FastSampleEnvironmentWriter::write(const FileWriter::FlatbufferMessage &Message) {
+FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
+    const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();

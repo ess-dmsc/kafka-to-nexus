@@ -26,7 +26,9 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGrup) override {
     return InitResult::OK();
   }
-  WriteResult write(FlatbufferMessage const &Message) override { return WriteResult::OK(); }
+  WriteResult write(FlatbufferMessage const &Message) override {
+    return WriteResult::OK();
+  }
   std::int32_t flush() override { return 0; }
 
   std::int32_t close() override { return 0; }

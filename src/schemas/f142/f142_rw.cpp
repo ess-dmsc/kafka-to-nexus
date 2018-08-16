@@ -135,7 +135,8 @@ bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
   return VerifyLogDataBuffer(veri);
 }
 
-std::string FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
+std::string
+FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
@@ -526,7 +527,8 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   return HDFWriterModule::InitResult::OK();
 }
 
-HDFWriterModule::WriteResult HDFWriterModule::write(FlatbufferMessage const &Message) {
+HDFWriterModule::WriteResult
+HDFWriterModule::write(FlatbufferMessage const &Message) {
   auto fbuf = get_fbuf(Message.data());
   if (!impl) {
     LOG(Sev::Warning,

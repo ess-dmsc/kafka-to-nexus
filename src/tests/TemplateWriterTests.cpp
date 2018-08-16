@@ -4,7 +4,8 @@
 TEST(TemplateTests, ReaderReturnValues) {
   TemplateWriter::ReaderClass SomeReader;
   EXPECT_TRUE(SomeReader.verify(FileWriter::FlatbufferMessage()));
-  EXPECT_EQ(SomeReader.source_name(FileWriter::FlatbufferMessage()), std::string(""));
+  EXPECT_EQ(SomeReader.source_name(FileWriter::FlatbufferMessage()),
+            std::string(""));
   EXPECT_EQ(SomeReader.timestamp(FileWriter::FlatbufferMessage()), 0u);
 }
 

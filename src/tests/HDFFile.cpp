@@ -423,9 +423,10 @@ public:
   static void data_ev42() {
     using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
     std::map<std::string, ReaderPtr> &Readers =
-    FileWriter::FlatbufferReaderRegistry::getReaders();
+        FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-//    FileWriter::FlatbufferReaderRegistry::Registrar<FileWriter::Schemas::ev42::FlatbufferReader> RegisterIt("ev42");
+    //    FileWriter::FlatbufferReaderRegistry::Registrar<FileWriter::Schemas::ev42::FlatbufferReader>
+    //    RegisterIt("ev42");
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -664,8 +665,10 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            FileWriter::FlatbufferMessage TempMessage((const char*)msg.data(), msg.size());
-            auto res = fwt->demuxers().at(0).process_message(std:: move(TempMessage));
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            auto res =
+                fwt->demuxers().at(0).process_message(std::move(TempMessage));
             if (res == FileWriter::ProcessMessageResult::ERR) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
@@ -823,9 +826,10 @@ public:
   static void data_f142() {
     using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
     std::map<std::string, ReaderPtr> &Readers =
-    FileWriter::FlatbufferReaderRegistry::getReaders();
+        FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-//    FileWriter::FlatbufferReaderRegistry::Registrar<FileWriter::Schemas::f142::FlatbufferReader> RegisterIt("f142");
+    //    FileWriter::FlatbufferReaderRegistry::Registrar<FileWriter::Schemas::f142::FlatbufferReader>
+    //    RegisterIt("f142");
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -1004,7 +1008,8 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            FileWriter::FlatbufferMessage TempMessage((const char*)msg.data(), msg.size());
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
             fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }
