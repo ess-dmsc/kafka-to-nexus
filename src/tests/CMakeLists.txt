@@ -34,7 +34,6 @@ AddReader.h
 
 add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
 
-
 add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})

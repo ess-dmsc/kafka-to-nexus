@@ -168,7 +168,6 @@ add_library(${tgt} OBJECT
   ${kafka_to_nexus_SRC}
   ${kafka_to_nexus_INC}
 )
-set_property(TARGET ${tgt} PROPERTY CXX_STANDARD 14)
 
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
