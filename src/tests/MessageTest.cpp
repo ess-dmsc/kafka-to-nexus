@@ -43,7 +43,7 @@ namespace FileWriter {
     EXPECT_TRUE(CurrentMessage.isValid());
     EXPECT_EQ(CurrentMessage.getTimestamp(), std::uint64_t(42));
     EXPECT_EQ(CurrentMessage.getSourceName(), "SomeSourceName");
-    EXPECT_EQ(CurrentMessage.size(), 8);
+    EXPECT_EQ(CurrentMessage.size(), size_t(8));
   }
   
   TEST_F(MessageClassTest, WrongKey) {
