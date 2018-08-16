@@ -77,7 +77,11 @@ uint64_t Source::processed_messages_count() const {
   return _processed_messages_count;
 }
 
-void Source::close_writer_module() { _hdf_writer_module.reset(); }
+void Source::close_writer_module() {
+  LOG(Sev::Debug, "Closing writer module");
+  _hdf_writer_module.reset();
+  LOG(Sev::Debug, "Writer module closed");
+}
 
 std::string Source::to_str() const { return to_json().dump(); }
 
