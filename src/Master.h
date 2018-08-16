@@ -37,6 +37,7 @@ public:
   void stopStreamMasters() override;
   std::unique_ptr<StreamMaster<Streamer>> &
   getStreamMasterForJobID(std::string JobID) override;
+  void removeStreamMasterForJobID(std::string JobID) override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 

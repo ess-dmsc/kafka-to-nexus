@@ -54,6 +54,14 @@ void Master::addStreamMaster(
   StreamMasters.push_back(std::move(StreamMaster));
 }
 
+void Master::removeStreamMasterForJobID(std::string JobID) {
+  StreamMasters.erase(std::remove_if(
+      StreamMasters.begin(), StreamMasters.end(),
+      [&JobID](std::unique_ptr<StreamMaster<Streamer>> const &TheStreamMaster) {
+        return TheStreamMaster->getJobId() == JobID;
+      }));
+}
+
 struct OnScopeExit {
   OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
   ~OnScopeExit() { ExitAction(); };

@@ -339,9 +339,6 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
-  if (!MasterPtr) {
-    return;
-  }
   LOG(Sev::Debug, "{}", Command);
 
   nlohmann::json Doc;
@@ -362,18 +359,21 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
-  if (StreamMaster) {
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
-          StopTime.count());
-      StreamMaster->setStopTime(StopTime);
+  if (MasterPtr) {
+    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+    if (StreamMaster) {
+      if (StopTime.count() != 0) {
+        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
+            StopTime.count());
+        StreamMaster->setStopTime(StopTime);
+      } else {
+        LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
+        StreamMaster->stop();
+      }
     } else {
-      LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
-      StreamMaster->stop();
+      LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
     }
-  } else {
-    LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
+    MasterPtr->removeStreamMasterForJobID(JobID);
   }
 }
 
