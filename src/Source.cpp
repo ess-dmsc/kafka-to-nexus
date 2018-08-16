@@ -60,9 +60,6 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     if (HDFFileForSWMR) {
       HDFFileForSWMR->SWMRFlush();
     }
-    if (ret.is_OK_WITH_TIMESTAMP()) {
-      return ProcessMessageResult::OK;
-    }
     return ProcessMessageResult::OK;
   }
   return ProcessMessageResult::ERR;
