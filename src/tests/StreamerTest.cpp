@@ -221,7 +221,10 @@ TEST_F(StreamerProcessTest, MessageBeforeStartTimestamp) {
   StreamerStandIn TestStreamer;
   TestStreamer.Options.StartTimestamp = std::chrono::milliseconds{1};
   std::string SourceName{"SomeRandomSourceName"};
-  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  auto TempWriterPtr = new WriterModuleStandIn();
+  HDFWriterModule::ptr Writer(TempWriterPtr);
+  ALLOW_CALL(*TempWriterPtr, flush()).RETURN(0);
+  ALLOW_CALL(*TempWriterPtr, close()).RETURN(0);
   FileWriter::Source TestSource(SourceName, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
@@ -268,6 +271,10 @@ TEST_F(StreamerProcessTest, MessageAfterStopTimestamp) {
   TestStreamer.Options.StopTimestamp = std::chrono::milliseconds{1};
   std::string SourceName{"SomeRandomSourceName"};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
   FileWriter::Source TestSource(SourceName, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
@@ -310,6 +317,10 @@ TEST_F(StreamerProcessTest, MessageTimeout) {
   TestStreamer.Options.ConsumerTimeout = std::chrono::milliseconds{1};
   std::string SourceName{"SomeRandomSourceName"};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
   FileWriter::Source TestSource(SourceName, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
