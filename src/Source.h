@@ -28,11 +28,11 @@ private:
 /// The sourcename can be empty.
 /// This is meant for highest efficiency on topics which are exclusively used
 /// for only one sourcename.
-class Source {
+class Source final {
 public:
   Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
   Source(Source &&) noexcept;
-  ~Source() = default;
+  ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
   uint64_t processed_messages_count() const;

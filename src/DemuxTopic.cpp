@@ -8,9 +8,7 @@ namespace FileWriter {
 
 DemuxTopic::DemuxTopic(std::string TopicName) : Topic(TopicName) {}
 
-DemuxTopic::~DemuxTopic() {
-  // Empty dtor kept to simplify merge in a later PR which will add code here.
-}
+DemuxTopic::~DemuxTopic() { LOG(Sev::Debug, "dtor"); }
 
 DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
 
