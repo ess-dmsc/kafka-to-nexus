@@ -144,7 +144,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
-    LOG(Sev::Warning, "Message from topic\"{}\" has an unknown source name "
+    LOG(Sev::Warning, "Message from topic \"{}\" has an unknown source name "
                       "(\"{}\"), ignoring.",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;

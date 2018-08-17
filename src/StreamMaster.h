@@ -188,7 +188,7 @@ private:
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {
-        LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
+        LOG(Sev::Error, "Error in topic \"{}\" : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -214,7 +214,6 @@ private:
 
         // If the stream is active process the messages
         StreamMasterError ProcessResult = processStreamResult(s, Demux);
-        std::cout << "Proces stream result." << std::endl;
         if (ProcessResult == StreamMasterError::HAS_FINISHED()) {
           continue;
         }

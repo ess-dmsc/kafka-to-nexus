@@ -61,7 +61,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
                  "<host:port> Log to Graylog via graylog_logger library");
   App.add_option("-v", log_level,
-                 "Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info)",
+                 "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)",
                  true)
       ->check(CLI::Range(1, 7));
   App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
