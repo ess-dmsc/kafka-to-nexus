@@ -129,34 +129,40 @@ TEST(EventHistogramWriter, SlicePartialOverlap) {
 }
 
 json createTestWriterTypedJson() {
-  return json::parse(R""({
+  auto Json = json::parse(R""({
     "data_type": "uint64",
     "error_type": "double",
     "edge_type": "double",
     "shape": [
       {
-        "size": 4,
+        "size": 64,
         "label": "Position",
         "unit": "mm",
-        "edges": [2, 3, 4, 5, 6],
+        "edges": [],
         "dataset_name": "x_detector"
       },
       {
-        "size": 6,
+        "size": 64,
         "label": "Position",
         "unit": "mm",
-        "edges": [-3, -2, -1, 0, 1, 2, 3],
+        "edges": [],
         "dataset_name": "y_detector"
       },
       {
-        "size": 3,
+        "size": 64,
         "label": "Time",
         "unit": "ns",
-        "edges": [0, 2, 4, 6],
+        "edges": [],
         "dataset_name": "time_binning"
       }
     ]
   })"");
+  for (auto & S : Json["shape"]) {
+    for (size_t I = 0; I <= S["size"]; ++I) {
+      S["edges"].push_back(double(I));
+    }
+  }
+  return Json;
 }
 
 TEST(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
@@ -193,7 +199,7 @@ TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
       createFile("Test.EventHistogramWriter.WriterTypedCreateHDFStructure",
                  FileCreationLocation::Default);
   auto Group = File.root();
-  size_t ChunkBytes = 64 * 1024;
+  size_t ChunkBytes = 2 * 1024 * 1024;
   TheWriterTyped->createHDFStructure(Group, ChunkBytes);
   std::string StoredJson;
   Group.attributes["created_from_json"].read(StoredJson);
@@ -209,7 +215,7 @@ TEST(EventHistogramWriter, WriterTypedReopen) {
   auto File = createFile("Test.EventHistogramWriter.WriterTypedReopen",
                          FileCreationLocation::Default);
   auto Group = File.root();
-  size_t ChunkBytes = 64 * 1024;
+  size_t ChunkBytes = 2 * 1024 * 1024;
   TheWriterTyped->createHDFStructure(Group, ChunkBytes);
   TheWriterTyped =
       WriterTyped<uint64_t, double, uint64_t>::createFromHDF(Group);
@@ -237,7 +243,7 @@ FileWriter::Msg createTestMessage(size_t HistogramID, size_t PacketID) {
     BinBoundaries = ArrayBuilder.Finish().Union();
   }
 
-  std::vector<size_t> DimLengths{4, 6, 3};
+  std::vector<size_t> DimLengths{5, 6, 7};
   std::vector<flatbuffers::Offset<DimensionMetaData>> DMDs;
   for (auto Length : DimLengths) {
     DimensionMetaDataBuilder DMDBuilder(Builder);
@@ -247,9 +253,9 @@ FileWriter::Msg createTestMessage(size_t HistogramID, size_t PacketID) {
   }
   auto DMDA = Builder.CreateVector(DMDs);
 
-  std::vector<uint32_t> ThisLengths{2, 3, 3};
-  std::vector<uint32_t> ThisOffsets{(uint32_t(PacketID) / 2) * 2,
-                                    (uint32_t(PacketID) % 2) * 3, 0};
+  std::vector<uint32_t> ThisLengths{64 / 2, 64 / 2, 64};
+  std::vector<uint32_t> ThisOffsets{(uint32_t(PacketID) / 2) * ThisLengths.at(0),
+                                    (uint32_t(PacketID) % 2) * ThisLengths.at(1), 0};
 
   uint64_t Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000);
   auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
@@ -272,7 +278,8 @@ FileWriter::Msg createTestMessage(size_t HistogramID, size_t PacketID) {
           size_t K0 = 1 + I0 + O0;
           size_t K1 = 1 + I1 + O1;
           size_t K2 = 1 + I2 + O2;
-          Data.at(N) = Timestamp + 100 * K0 + 10 * K1 + K2;
+          Data.at(N) = Timestamp + 1000000 * K0 + 1000 * K1 + K2;
+          Data.at(N) = 0;
           // Data.at(N) = Timestamp + getValueAtFlatIndex(6*3*(O0+I0) +
           // 3*(O1+I1) + (O2+I2));
           ++N;
@@ -366,14 +373,14 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 1u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(1), 64u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(2), 64u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(3), 64u);
 }
 
 TEST(EventHistogramWriter, WriteMultipleHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
-                         FileCreationLocation::Default);
+                         FileCreationLocation::Disk);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
@@ -409,9 +416,9 @@ TEST(EventHistogramWriter, WriteMultipleHistograms) {
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 3u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(2), 6u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(3), 3u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(1), 64u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(2), 64u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(3), 64u);
 }
 
 TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {

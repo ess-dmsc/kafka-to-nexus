@@ -25,7 +25,7 @@ public:
 
   WriterUntyped::ptr TheWriterUntyped;
 
-  hsize_t ChunkBytes = 1 << 18;
+  hsize_t ChunkBytes = 1 << 21;
   bool DoFlushEachWrite = true;
   uint64_t TotalWrittenBytes = 0;
 };
