@@ -11,9 +11,8 @@
 
 namespace FileWriter {
 
-/// Implements the logic of extracting the message type key and source name
-/// and then passing the message to the right filewriting module instance
-/// based on this information.
+/// Used to keep track of file writing modules on one topic and call the correct
+/// module based on sourcename
 class DemuxTopic {
 public:
   DemuxTopic(std::string TopicName);
@@ -28,19 +27,20 @@ public:
   std::string const &topic() const;
 
   /// To be called by FileMaster when a new message is available for this
-  /// source. Streamer currently expects void as return, will add return value
-  /// in the future.
+  /// source.
+  /// \param[in] Message The flatbuffer message that is to be written to file.
+  /// \return A status message indicating if the write was successfull.
   virtual ProcessMessageResult
   process_message(FlatbufferMessage const &Message);
   std::unordered_map<std::string, Source> &sources();
 
   //----------------------------------------------------------------------------
-  /// @brief      Adds a source.
+  /// \brief      Adds a source.
   ///
-  /// @param[in]  source  the name of the source, that must match the content of
+  /// \param[in]  source  the name of the source, that must match the content of
   /// the flatbuffer
   ///
-  /// @return     A reference to the source that has been added to the source
+  /// \return     A reference to the source that has been added to the source
   /// list
   ///
   Source &add_source(Source &&source) {
