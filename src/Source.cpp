@@ -25,13 +25,7 @@ Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
   }
 }
 
-Source::~Source() {
-  if (_hdf_writer_module) {
-    _hdf_writer_module->flush();
-    _hdf_writer_module->close();
-    _hdf_writer_module.reset();
-  }
-}
+Source::~Source() { close_writer_module(); }
 
 Source::Source(Source &&x) noexcept { swap(*this, x); }
 
@@ -86,9 +80,15 @@ uint64_t Source::processed_messages_count() const {
 }
 
 void Source::close_writer_module() {
-  LOG(Sev::Debug, "Closing writer module");
-  _hdf_writer_module.reset();
-  LOG(Sev::Debug, "Writer module closed");
+  if (_hdf_writer_module) {
+    LOG(Sev::Debug, "Closing writer module for {}", _sourcename);
+    _hdf_writer_module->flush();
+    _hdf_writer_module->close();
+    _hdf_writer_module.reset();
+    LOG(Sev::Debug, "Writer module closed for {}", _sourcename);
+  } else {
+    LOG(Sev::Debug, "No writer module to close for {}", _sourcename);
+  }
 }
 
 std::string Source::to_str() const { return to_json().dump(); }
