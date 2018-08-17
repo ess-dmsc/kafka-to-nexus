@@ -853,8 +853,11 @@ void HDFFile::init(nlohmann::json const &nexus_structure,
 
 void HDFFile::close() {
   try {
+    LOG(Sev::Debug, "flushing");
     flush();
+    LOG(Sev::Debug, "closing");
     h5file.close();
+    LOG(Sev::Debug, "closed");
   } catch (std::exception &e) {
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
         h5file.id().file_name().string(), hdf5::error::print_nested(e));
