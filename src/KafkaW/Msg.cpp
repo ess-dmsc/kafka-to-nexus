@@ -1,5 +1,4 @@
 #include "Msg.h"
-#include <librdkafka/rdkafka.h>
 
 namespace KafkaW {
 
@@ -9,10 +8,11 @@ Msg::~Msg() {
   }
 }
 
-int64_t Msg::timestamp() {
-  rd_kafka_timestamp_type_t TSType;
-  // Ignore info about timestamp type
-  return rd_kafka_message_timestamp((rd_kafka_message_t *)DataPointer, &TSType);
+std::pair<rd_kafka_timestamp_type_t, int64_t> Msg::timestamp() {
+  std::pair<rd_kafka_timestamp_type_t, int64_t> TS;
+  TS.second =
+      rd_kafka_message_timestamp((rd_kafka_message_t *)DataPointer, &TS.first);
+  return TS;
 }
 
 } // namespace KafkaW

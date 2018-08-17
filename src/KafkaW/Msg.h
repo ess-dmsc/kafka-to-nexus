@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
+#include <librdkafka/rdkafka.h>
 
 namespace KafkaW {
 // Want to expose this typedef also for users of this namespace
@@ -23,7 +24,7 @@ public:
   std::uint8_t const *data() const { return DataPointer; };
   size_t size() const { return DataSize; };
   std::uint64_t getMessageOffset() const { return MessageOffset; };
-  std::int64_t timestamp();
+  std::pair<rd_kafka_timestamp_type_t, int64_t> timestamp();
 
 private:
   unsigned char const *DataPointer{nullptr};

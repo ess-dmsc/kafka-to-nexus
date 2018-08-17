@@ -34,14 +34,14 @@ TEST_F(CommandHandler_Testing, FindTimeHandleNewCommand) {
   EXPECT_EQ(findTime(Command, "stop_time").count(), 123456790);
 }
 
-TEST(CommandHandler_Testing, MissingTimeHandleStopCommand) {
+TEST_F(CommandHandler_Testing, MissingTimeHandleStopCommand) {
   std::string CommandString(
       R"""({"cmd":"FileWriter_stop"})""");
   nlohmann::json Command = nlohmann::json::parse(CommandString);
   EXPECT_EQ(findTime(Command, "stop_time").count(), -1);
 }
 
-TEST(CommandHandler_Testing, FindTimeHandleStopCommand) {
+TEST_F(CommandHandler_Testing, FindTimeHandleStopCommand) {
   std::string CommandString(
       R"""({"cmd":"FileWriter_stop","stop_time":987654321})""");
   nlohmann::json Command = nlohmann::json::parse(CommandString);

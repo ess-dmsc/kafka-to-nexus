@@ -46,9 +46,7 @@ std::chrono::milliseconds findTime(nlohmann::json const &Doc,
 static int g_N_HANDLED = 0;
 
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
-    : Config(Config_), MasterPtr(MasterPtr_),
-      KafkaMsgTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch())) {}
+    : Config(Config_), MasterPtr(MasterPtr_) {}
 
 /// Holder for the stream settings.
 struct StreamSettings {
@@ -186,7 +184,14 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-void CommandHandler::handleNew(std::string const &Command) {
+// <<<<<<< 4771428b09d2dadb2870752bc1e51eb11e82067b
+// void CommandHandler::handleNew(std::string const &Command) {
+// =======
+void CommandHandler::handleNew(std::string const &Command,
+                               const std::chrono::milliseconds StartTime) {
+  using nlohmann::detail::out_of_range;
+  // >>>>>>> Do not use class member for message timestamp but propagate in
+  // methods
   using nlohmann::json;
   using std::move;
   using std::string;
@@ -258,9 +263,9 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StartTimestamp = Time;
   } else {
-    Config.StreamerConfiguration.StartTimestamp = KafkaMsgTimestamp;
+    Config.StreamerConfiguration.StartTimestamp = StartTime;
   }
-  LOG(Sev::Info, "Start time: {}",
+  LOG(Sev::Info, "Start time: {}ms",
       Config.StreamerConfiguration.StartTimestamp.count());
   Time = findTime(Doc, "stop_time");
   if (Time.count() > 0) {
@@ -395,7 +400,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 }
 
-void CommandHandler::handle(std::string const &Command) {
+void CommandHandler::handle(std::string const &Command,
+                            const std::chrono::milliseconds StartTime) {
   using nlohmann::json;
   json Doc;
   try {
@@ -433,7 +439,7 @@ void CommandHandler::handle(std::string const &Command) {
   if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
     std::string CommandMain = CmdMaybe.inner();
     if (CommandMain == "FileWriter_new") {
-      handleNew(Command);
+      handleNew(Command, StartTime);
       return;
     }
     if (CommandMain == "FileWriter_exit") {
@@ -461,9 +467,25 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
-void CommandHandler::tryToHandle(std::string const &Command) {
+void CommandHandler::tryToHandle(std::string const &Command,
+                                 const int64_t MsgTimestampMilliseconds) {
   try {
-    handle(Command);
+    // <<<<<<< 4771428b09d2dadb2870752bc1e51eb11e82067b
+    //    handle(Command);
+    if (MsgTimestampMilliseconds > 0) {
+      handle(Command, std::chrono::milliseconds{MsgTimestampMilliseconds});
+      LOG(Sev::Info, "Kafka command message timestamp : {}",
+          MsgTimestampMilliseconds);
+    } else {
+      handle(Command, std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::system_clock::now().time_since_epoch()));
+      LOG(Sev::Info,
+          "Kafka command doesn't contain timestamp. Current time : {}",
+          std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::system_clock::now().time_since_epoch())
+              .count());
+    }
+
   } catch (json::parse_error const &E) {
     LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
   } catch (json::out_of_range const &E) {
@@ -471,6 +493,17 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   } catch (json::type_error const &E) {
     LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
   } catch (std::runtime_error const &E) {
+    // =======
+
+    //   } catch (nlohmann::detail::parse_error &e) {
+    //     LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
+    //   } catch (nlohmann::detail::out_of_range &e) {
+    //     LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
+    //   } catch (nlohmann::detail::type_error &e) {
+    //     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
+    //   } catch (std::runtime_error &e) {
+    // >>>>>>> Do not use class member for message timestamp but propagate in
+    // methods
     // Originates from h5cpp:
     if (std::string(E.what()).find(
             "Cannot obtain ObjectId from an invalid file instance!") == 0) {
@@ -497,15 +530,9 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::handle(Msg const &Msg, int64_t MsgTimestamp) {
-  // if kafka message timestamp is invalid (e.g. old broker) use current time
-  if (MsgTimestamp > 0) {
-    KafkaMsgTimestamp = std::chrono::milliseconds{MsgTimestamp};
-  } else {
-    LOG(Sev::Warning, "Invalid KafkaMsgTimestamp, using current time",
-        MsgTimestamp);
-  }
-  tryToHandle({(char *)Msg.data(), Msg.size()});
+void CommandHandler::handle(Msg const &Msg,
+                            const int64_t MsgTimestampMilliseconds) {
+  tryToHandle({(char *)Msg.data(), Msg.size()}, MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

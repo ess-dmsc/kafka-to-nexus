@@ -19,7 +19,8 @@ public:
   /// Given a JSON string, create a new file writer task.
   ///
   /// \param Command The command for configuring the new task.
-  void handleNew(std::string const &Command);
+  void handleNew(std::string const &Command,
+                 const std::chrono::milliseconds MsgTimestamp);
 
   /// Stop the whole file writer application.
   void handleExit();
@@ -36,13 +37,14 @@ public:
   ///
   /// \param Msg The message.
   /// \param MsgTimestamp The rd_kafka_message_timestamp when available
-  void handle(Msg const &msg, int64_t MsgTimestamp = -1);
+  void handle(Msg const &msg, const int64_t MsgTimestamp = -1);
 
   /// Parses the given command and passes it on to a more specific handler.
   ///
   /// \param Command The command to parse.
-  void handle(std::string const &command);
-  void tryToHandle(std::string const &Command);
+  void handle(std::string const &command,
+              const std::chrono::milliseconds MsgTimestamp);
+  void tryToHandle(std::string const &Command, const int64_t MsgTimestamp = -1);
 
   size_t getNumberOfFileWriterTasks() const;
   std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
@@ -68,7 +70,6 @@ private:
   MainOpt &Config;
   MasterI *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
-  std::chrono::milliseconds KafkaMsgTimestamp;
 };
 
 std::string findBroker(std::string const &);
