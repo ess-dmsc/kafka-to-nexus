@@ -46,9 +46,7 @@ std::chrono::milliseconds findTime(nlohmann::json const &Doc,
 static int g_N_HANDLED = 0;
 
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
-    : Config(Config_), MasterPtr(MasterPtr_),
-      KafkaMsgTimestamp(std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch())) {}
+    : Config(Config_), MasterPtr(MasterPtr_) {}
 
 /// Holder for the stream settings.
 struct StreamSettings {
@@ -483,6 +481,7 @@ void CommandHandler::tryToHandle(std::string const &Command,
               .count());
     }
 
+    // <<<<<<< 700b7a6bc5fd158b6f69576c21dff1198517de2f
   } catch (json::parse_error const &E) {
     LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
   } catch (json::out_of_range const &E) {
@@ -491,6 +490,16 @@ void CommandHandler::tryToHandle(std::string const &Command,
     LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
   } catch (std::runtime_error const &E) {
 
+    // =======
+    //   } catch (nlohmann::detail::parse_error &e) {
+    //     LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
+    //   } catch (nlohmann::detail::out_of_range &e) {
+    //     LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
+    //   } catch (nlohmann::detail::type_error &e) {
+    //     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
+    //   } catch (std::runtime_error &e) {
+    // >>>>>>> Do not use class member for message timestamp but propagate in
+    // methods
     // Originates from h5cpp:
     if (std::string(E.what()).find(
             "Cannot obtain ObjectId from an invalid file instance!") == 0) {
