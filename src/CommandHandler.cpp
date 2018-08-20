@@ -163,16 +163,24 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
       continue;
     }
 
-    auto RootGroup = Task->hdf_file.h5file.root();
-    HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
-    auto Attributes = json::object();
-    if (auto x = find<json>("attributes", ConfigStream)) {
-      Attributes = x.inner();
+    try {
+      auto RootGroup = Task->hdf_file.h5file.root();
+      HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
+      auto Attributes = json::object();
+      if (auto x = find<json>("attributes", ConfigStream)) {
+        Attributes = x.inner();
+      }
+      auto StreamGroup =
+          hdf5::node::get_group(RootGroup, stream.hdf_parent_name);
+      HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
+      HDFWriterModule->close();
+      HDFWriterModule.reset();
+    } catch (std::runtime_error const &E) {
+      LOG(Sev::Warning,
+          "Exception while initializing writer module {} for source {}: {}",
+          StreamSettings.Module, StreamSettings.Source, E.what());
+      continue;
     }
-    auto StreamGroup = hdf5::node::get_group(RootGroup, stream.hdf_parent_name);
-    HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
-    HDFWriterModule->close();
-    HDFWriterModule.reset();
   }
   return StreamSettingsList;
 }
@@ -298,28 +306,36 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
 
-      // Reopen the previously created HDF dataset.
-      HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
       try {
-        auto RootGroup = Task->hdf_file.h5file.root();
-        auto StreamGroup = hdf5::node::get_group(
-            RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name);
-        auto Err = HDFWriterModule->reopen({StreamGroup});
-        if (Err.is_ERR()) {
-          LOG(Sev::Error, "can not reopen HDF file for stream {}",
-              StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+        // Reopen the previously created HDF dataset.
+        HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
+        try {
+          auto RootGroup = Task->hdf_file.h5file.root();
+          auto StreamGroup = hdf5::node::get_group(
+              RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+          auto Err = HDFWriterModule->reopen({StreamGroup});
+          if (Err.is_ERR()) {
+            LOG(Sev::Error, "can not reopen HDF file for stream {}",
+                StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+            continue;
+          }
+        } catch (std::runtime_error const &e) {
+          LOG(Sev::Error, "Exception on HDFWriterModule->reopen(): {}",
+              e.what());
           continue;
         }
-      } catch (std::runtime_error const &e) {
-        LOG(Sev::Error, "Exception on HDFWriterModule->reopen(): {}", e.what());
+
+        // Create a Source instance for the stream and add to the task.
+        Source ThisSource(StreamSettings.Source, move(HDFWriterModule));
+        ThisSource._topic = std::string(StreamSettings.Topic);
+        ThisSource.do_process_message = Config.source_do_process_message;
+        Task->add_source(std::move(ThisSource));
+      } catch (std::runtime_error const &E) {
+        LOG(Sev::Warning,
+            "Exception while initializing writer module {} for source {}: {}",
+            StreamSettings.Module, StreamSettings.Source, E.what());
         continue;
       }
-
-      // Create a Source instance for the stream and add to the task.
-      Source ThisSource(StreamSettings.Source, move(HDFWriterModule));
-      ThisSource._topic = std::string(StreamSettings.Topic);
-      ThisSource.do_process_message = Config.source_do_process_message;
-      Task->add_source(std::move(ThisSource));
     }
   }
 }
