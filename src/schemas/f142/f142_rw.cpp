@@ -130,6 +130,47 @@ h5::append_ret writer_typed_scalar<DT, FV>::write_impl(LogData const *fbuf) {
   return this->ds->append_data_1d(&v2, 1);
 }
 
+WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
+                                       std::string const &source_name,
+                                       Value fb_value_type_id,
+                                       CollectiveQueue *cq) {
+  LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
+  this->ds = h5::Chunked1DString::create(hdf_group, source_name, 64 * 1024, cq);
+  if (!this->ds) {
+    LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
+        source_name);
+  }
+}
+
+WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
+                                       std::string const &source_name,
+                                       Value fb_value_type_id,
+                                       CollectiveQueue *cq,
+                                       HDFIDStore *hdf_store) {
+  LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
+  ds = h5::Chunked1DString::open(hdf_group, source_name, cq, hdf_store);
+  if (!this->ds) {
+    LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
+        source_name);
+  }
+}
+
+h5::append_ret WriterScalarString::write_impl(LogData const *fbuf) {
+  auto vt = fbuf->value_type();
+  if (vt != Value::String) {
+    return {h5::AppendResult::ERROR, 0, 0};
+  }
+  auto v1 = static_cast<String const *>(fbuf->value());
+  if (!v1) {
+    return {h5::AppendResult::ERROR, 0, 0};
+  }
+  auto v2 = v1->value();
+  if (!this->ds) {
+    return {h5::AppendResult::ERROR, 0, 0};
+  }
+  return this->ds->append(v2->str());
+}
+
 bool FlatbufferReader::verify(Msg const &msg) const {
   auto veri = flatbuffers::Verifier((uint8_t *)msg.data(), msg.size());
   return VerifyLogDataBuffer(veri);
@@ -188,7 +229,10 @@ value_type_scalar_from_string(std::string type) {
   if (type == "double") {
     return Value::Double;
   }
-  return Value::Int;
+  if (type == "string") {
+    return Value::String;
+  }
+  throw std::runtime_error(fmt::format("Unsupported scalar type {}", type));
 }
 
 static FileWriter::Schemas::f142::Value
@@ -223,7 +267,7 @@ value_type_array_from_string(std::string type) {
   if (type == "double") {
     return Value::ArrayDouble;
   }
-  return Value::Int;
+  throw std::runtime_error(fmt::format("Unsupported array type {}", type));
 }
 
 // clang-format: off
@@ -267,6 +311,9 @@ writer_typed_base *impl_fac(hdf5::node::Group hdf_group, size_t array_size,
     }
     if (type == "double") {
       return (R) new WS<double, Double>(hg, s, vt, cq);
+    }
+    if (type == "string") {
+      return (R) new WriterScalarString(hg, s, vt, cq);
     }
   } else {
     auto vt = value_type_array_from_string(type);
@@ -340,6 +387,9 @@ writer_typed_base *impl_fac_open(hdf5::node::Group hdf_group, size_t array_size,
     }
     if (type == "double") {
       return (R) new WS<double, Double>(hg, s, Value::Double, cq, hdf_store);
+    }
+    if (type == "string") {
+      return (R) new WriterScalarString(hg, s, Value::String, cq, hdf_store);
     }
   } else {
     if (type == "int8") {

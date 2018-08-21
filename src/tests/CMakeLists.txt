@@ -2,6 +2,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
 
 set(UnitTests_SRC
 UnitTests.cpp
+H5Tests.cpp
 HDFFile.cpp
 HDFFileAttributesTest.cpp
 HDFFileTestHelper.cpp
