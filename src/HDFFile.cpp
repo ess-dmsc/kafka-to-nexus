@@ -853,11 +853,15 @@ void HDFFile::init(nlohmann::json const &nexus_structure,
 
 void HDFFile::close() {
   try {
-    LOG(Sev::Debug, "flushing");
-    flush();
-    LOG(Sev::Debug, "closing");
-    h5file.close();
-    LOG(Sev::Debug, "closed");
+    if (h5file.is_valid()) {
+      LOG(Sev::Debug, "flushing");
+      flush();
+      LOG(Sev::Debug, "closing");
+      h5file.close();
+      LOG(Sev::Debug, "closed");
+    } else {
+      LOG(Sev::Debug, "File is not valid, skip close.");
+    }
   } catch (std::exception &e) {
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
         h5file.id().file_name().string(), hdf5::error::print_nested(e));
@@ -884,9 +888,15 @@ void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
 
 void HDFFile::flush() {
   try {
-    h5file.flush(hdf5::file::Scope::GLOBAL);
+    if (h5file.is_valid()) {
+      h5file.flush(hdf5::file::Scope::GLOBAL);
+    }
+  } catch (std::runtime_error const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("HDFFile failed to flush  what: {}", E.what())));
   } catch (...) {
-    std::throw_with_nested(std::runtime_error("HDFFile failed to flush!"));
+    std::throw_with_nested(
+        std::runtime_error("HDFFile failed to flush with unknown exception"));
   }
 }
 

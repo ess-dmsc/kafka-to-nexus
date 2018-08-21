@@ -21,7 +21,8 @@ static json parseOrThrow(std::string const &Command) {
   } catch (json::parse_error const &E) {
     LOG(Sev::Warning, "Can not parse command  what: {}  Command: {}", E.what(),
         Command);
-    throw;
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Can not parse command  what: {}  Command: {}", E.what(), Command)));
   }
 }
 
@@ -222,8 +223,8 @@ void CommandHandler::handleNew(std::string const &Command) {
       StreamHDFInfoList =
           initializeHDF(*Task, NexusStructureMaybe.inner().dump());
     } catch (std::runtime_error const &E) {
-      std::throw_with_nested(
-          fmt::format("Failed to initializeHDF: {}", E.what()));
+      std::throw_with_nested(std::runtime_error(
+          fmt::format("Failed to initializeHDF: {}", E.what())));
     }
   } else {
     throwMissingKey("nexus_structure", Doc.dump());
@@ -467,8 +468,19 @@ void CommandHandler::tryToHandle(std::string const &Command) {
       LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
           E.what(), Command);
     }
+  } catch (std::exception const &E) {
+    LOG(Sev::Error, "Unexpected std::exception while handling command: {}",
+        Command);
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Unexpected std::exception while handling command  what: "
+                    "{}  Command: {}",
+                    E.what(), Command)));
   } catch (...) {
-    LOG(Sev::Error, "Unexpected error while handling command: {}", Command);
+    LOG(Sev::Error, "Unexpected unknown exception while handling command: {}",
+        Command);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Unexpected unknown exception while handling command  Command: {}",
+        Command)));
   }
 }
 
