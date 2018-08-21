@@ -18,34 +18,16 @@ using nlohmann::json;
 static json parseOrThrow(std::string const &Command) {
   try {
     return json::parse(Command);
-  } catch (nlohmann::detail::parse_error &e) {
-    LOG(Sev::Warning, "Can not parse command: {}", Command);
+  } catch (json::parse_error const &E) {
+    LOG(Sev::Warning, "Can not parse command  what: {}  Command: {}", E.what(),
+        Command);
     throw;
   }
 }
 
-static void logMissingKey(std::string const &Key, std::string const &Context) {
-  LOG(Sev::Warning, "Missing key {} from {}", Key, Context);
-}
-
-/// Helper function to extract the broker from the file writer command.
-///
-/// \param Command The raw command JSON.
-/// \return The broker specified in the command
-std::string findBroker(std::string const &Command) {
-  nlohmann::json Doc = parseOrThrow(Command);
-  if (auto x = find<std::string>("broker", Doc)) {
-    std::string BrokerHostPort = x.inner();
-    if (BrokerHostPort.substr(0, 2) == "//") {
-      uri::URI u(BrokerHostPort);
-      return u.host_port;
-    } else {
-      return BrokerHostPort;
-    }
-  } else {
-    logMissingKey("broker", Command);
-  }
-  return std::string("localhost:9092");
+static void throwMissingKey(std::string const &Key,
+                            std::string const &Context) {
+  throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
 // In the future, want to handle many, but not right now.
@@ -82,103 +64,108 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \param Task The task which will write the HDF file.
 /// \param StreamHDFInfoList
 /// \return
+static StreamSettings extractStreamInformationFromJsonForSource(
+    std::unique_ptr<FileWriterTask> const &Task,
+    StreamHDFInfo const &StreamHDFInfo) {
+  using nlohmann::json;
+  StreamSettings StreamSettings;
+  StreamSettings.StreamHDFInfoObj = StreamHDFInfo;
+
+  json ConfigStream;
+  ConfigStream = json::parse(StreamHDFInfo.config_stream);
+
+  json ConfigStreamInner;
+  if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
+    ConfigStreamInner = StreamMaybe.inner();
+  } else {
+    throwMissingKey("stream", ConfigStream.dump());
+  }
+
+  StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
+  LOG(Sev::Info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
+
+  if (auto TopicMaybe = find<json>("topic", ConfigStreamInner)) {
+    StreamSettings.Topic = TopicMaybe.inner();
+  } else {
+    throwMissingKey("topic", ConfigStreamInner.dump());
+  }
+
+  if (auto SourceMaybe = find<std::string>("source", ConfigStreamInner)) {
+    StreamSettings.Source = SourceMaybe.inner();
+  } else {
+    throwMissingKey("source", ConfigStreamInner.dump());
+  }
+
+  if (auto WriterModuleMaybe =
+          find<std::string>("writer_module", ConfigStreamInner)) {
+    StreamSettings.Module = WriterModuleMaybe.inner();
+  } else {
+    // Allow the old key name as well:
+    if (auto ModuleMaybe = find<std::string>("module", ConfigStreamInner)) {
+      StreamSettings.Module = ModuleMaybe.inner();
+      LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
+                       "\"stream.writer_module\" instead.");
+    } else {
+      throwMissingKey("writer_module", ConfigStreamInner.dump());
+    }
+  }
+
+  if (auto RunParallelMaybe = find<bool>("run_parallel", ConfigStream)) {
+    StreamSettings.RunParallel = RunParallelMaybe.inner();
+  }
+  if (StreamSettings.RunParallel) {
+    LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
+  }
+
+  auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+  if (!ModuleFactory) {
+    throw std::runtime_error(
+        fmt::format("Module '{}' is not available", StreamSettings.Module));
+  }
+
+  auto HDFWriterModule = ModuleFactory();
+  if (!HDFWriterModule) {
+    throw std::runtime_error(fmt::format(
+        "Can not create a HDFWriterModule for '{}'", StreamSettings.Module));
+  }
+
+  auto RootGroup = Task->hdf_file.h5file.root();
+  try {
+    HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
+  } catch (std::exception const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Exception while HDFWriterModule::parse_config  module: {} "
+                    " source: {}  what: {}",
+                    StreamSettings.Module, StreamSettings.Source, E.what())));
+  }
+  auto Attributes = json::object();
+  if (auto x = find<json>("attributes", ConfigStream)) {
+    Attributes = x.inner();
+  }
+  auto StreamGroup =
+      hdf5::node::get_group(RootGroup, StreamHDFInfo.hdf_parent_name);
+  HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
+  HDFWriterModule->close();
+  HDFWriterModule.reset();
+  return StreamSettings;
+}
+
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
-  using nlohmann::detail::out_of_range;
-  using nlohmann::json;
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
-  for (auto const &stream : StreamHDFInfoList) {
-    StreamSettings StreamSettings;
-    StreamSettings.StreamHDFInfoObj = stream;
-
-    json ConfigStream;
+  for (auto const &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      ConfigStream = json::parse(stream.config_stream);
-    } catch (nlohmann::detail::parse_error const &e) {
-      LOG(Sev::Warning, "Invalid json: {}", stream.config_stream);
+      StreamSettingsList.push_back(
+          extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
+    } catch (json::parse_error const &E) {
+      LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.config_stream);
       continue;
-    }
-
-    json ConfigStreamInner;
-    if (auto x = find<json>("stream", ConfigStream)) {
-      ConfigStreamInner = x.inner();
-    } else {
-      logMissingKey("stream", ConfigStream.dump());
-      continue;
-    }
-
-    StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
-    LOG(Sev::Info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
-
-    if (auto x = find<json>("topic", ConfigStreamInner)) {
-      StreamSettings.Topic = x.inner();
-    } else {
-      logMissingKey("topic", ConfigStreamInner.dump());
-      continue;
-    }
-
-    if (auto x = find<std::string>("source", ConfigStreamInner)) {
-      StreamSettings.Source = x.inner();
-    } else {
-      logMissingKey("source", ConfigStreamInner.dump());
-      continue;
-    }
-
-    if (auto x = find<std::string>("writer_module", ConfigStreamInner)) {
-      StreamSettings.Module = x.inner();
-    } else {
-      logMissingKey("writer_module", ConfigStreamInner.dump());
-      // Allow the old key name as well:
-      if (auto x = find<std::string>("module", ConfigStreamInner)) {
-        StreamSettings.Module = x.inner();
-        LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
-                         "\"stream.writer_module\" instead.");
-      } else {
-        logMissingKey("module", ConfigStreamInner.dump());
-        continue;
-      }
-    }
-
-    if (auto x = find<bool>("run_parallel", ConfigStream)) {
-      StreamSettings.RunParallel = x.inner();
-    }
-    if (StreamSettings.RunParallel) {
-      LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
-    }
-
-    StreamSettingsList.push_back(StreamSettings);
-
-    auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
-    if (!ModuleFactory) {
-      LOG(Sev::Warning, "Module '{}' is not available", StreamSettings.Module);
-      continue;
-    }
-
-    auto HDFWriterModule = ModuleFactory();
-    if (!HDFWriterModule) {
-      LOG(Sev::Warning, "Can not create a HDFWriterModule for '{}'",
-          StreamSettings.Module);
-      continue;
-    }
-
-    try {
-      auto RootGroup = Task->hdf_file.h5file.root();
-      HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
-      auto Attributes = json::object();
-      if (auto x = find<json>("attributes", ConfigStream)) {
-        Attributes = x.inner();
-      }
-      auto StreamGroup =
-          hdf5::node::get_group(RootGroup, stream.hdf_parent_name);
-      HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
-      HDFWriterModule->close();
-      HDFWriterModule.reset();
     } catch (std::runtime_error const &E) {
       LOG(Sev::Warning,
-          "Exception while initializing writer module {} for source {}: {}",
-          StreamSettings.Module, StreamSettings.Source, E.what());
+          "Exception while initializing writer module  what: {}  json: {}",
+          E.what(), StreamHDFInfo.config_stream);
       continue;
     }
   }
@@ -186,7 +173,6 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
 }
 
 void CommandHandler::handleNew(std::string const &Command) {
-  using nlohmann::detail::out_of_range;
   using nlohmann::json;
   using std::move;
   using std::string;
@@ -196,43 +182,51 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
-      logMissingKey("job_id", Doc.dump());
-      return;
+      throwMissingKey("job_id", Doc.dump());
     }
     Task->job_id_init(JobID);
   } else {
-    logMissingKey("job_id", Doc.dump());
-    return;
+    throwMissingKey("job_id", Doc.dump());
   }
 
-  if (auto y = find<nlohmann::json>("file_attributes", Doc)) {
-    if (auto x = find<std::string>("file_name", y.inner())) {
-      Task->set_hdf_filename(Config.hdf_output_prefix, x.inner());
+  uri::URI Broker("//localhost:9092");
+  if (auto BrokerStringMaybe = find<std::string>("broker", Doc)) {
+    auto BrokerString = BrokerStringMaybe.inner();
+    if (BrokerString.substr(0, 2) != "//") {
+      BrokerString = std::string("//") + BrokerString;
+    }
+    Broker.parse(BrokerString);
+    LOG(Sev::Debug, "Use main broker: {}", Broker.host_port);
+  }
+
+  if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
+    if (auto FileNameMaybe =
+            find<std::string>("file_name", FileAttributesMaybe.inner())) {
+      Task->set_hdf_filename(Config.hdf_output_prefix, FileNameMaybe.inner());
     } else {
-      logMissingKey("file_attributes.file_name", Doc.dump());
-      return;
+      throwMissingKey("file_attributes.file_name", Doc.dump());
     }
   } else {
-    logMissingKey("file_attributes", Doc.dump());
-    return;
+    throwMissingKey("file_attributes", Doc.dump());
   }
 
-  if (auto x = find<bool>("use_hdf_swmr", Doc)) {
-    Task->UseHDFSWMR = x.inner();
+  if (auto UseHDFSWMRMaybe = find<bool>("use_hdf_swmr", Doc)) {
+    Task->UseHDFSWMR = UseHDFSWMRMaybe.inner();
   }
 
   // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
   // the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
-  if (auto x = find<nlohmann::json>("nexus_structure", Doc)) {
+  if (auto NexusStructureMaybe = find<nlohmann::json>("nexus_structure", Doc)) {
     try {
-      StreamHDFInfoList = initializeHDF(*Task, x.inner().dump());
-    } catch (std::runtime_error const &e) {
-      LOG(Sev::Error, "Failed to initializeHDF: {}", e.what());
+      StreamHDFInfoList =
+          initializeHDF(*Task, NexusStructureMaybe.inner().dump());
+    } catch (std::runtime_error const &E) {
+      std::throw_with_nested(
+          fmt::format("Failed to initializeHDF: {}", E.what()));
     }
   } else {
-    logMissingKey("nexus_structure", Doc.dump());
-    return;
+    throwMissingKey("nexus_structure", Doc.dump());
   }
 
   std::vector<StreamSettings> StreamSettingsList =
@@ -263,11 +257,9 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   if (MasterPtr) {
     // Register the task with master.
-    std::string br = findBroker(Command);
-
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        br, std::move(Task), Config.StreamerConfiguration));
+        Broker.host_port, std::move(Task), Config.StreamerConfiguration));
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(status_producer,
                 std::chrono::milliseconds{Config.status_master_interval});
@@ -361,15 +353,13 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   try {
     Doc = nlohmann::json::parse(Command);
   } catch (...) {
-    LOG(Sev::Warning, "Can not parse command: {}", Command);
-    return;
+    std::throw_with_nested(fmt::format("Can not parse command: {}", Command));
   }
   string JobID;
   if (auto x = find<std::string>("job_id", Doc)) {
     JobID = x.inner();
   } else {
-    logMissingKey("job_id", Doc.dump());
-    return;
+    throwMissingKey("job_id", Doc.dump());
   }
   std::chrono::milliseconds StopTime(0);
   if (auto x = find<uint64_t>("stop_time", Doc)) {
@@ -398,14 +388,13 @@ void CommandHandler::handle(std::string const &Command) {
   try {
     Doc = json::parse(Command);
   } catch (...) {
-    LOG(Sev::Error, "Can not parse json command: {}", Command);
-    return;
+    std::throw_with_nested(fmt::format("Can not parse command: {}", Command));
   }
 
-  if (auto x = find<std::string>("service_id", Doc)) {
-    if (x.inner() != Config.service_id) {
+  if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
+    if (ServiceIDMaybe.inner() != Config.service_id) {
       LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
-          x.inner());
+          ServiceIDMaybe.inner());
       return;
     }
   } else {
@@ -427,8 +416,8 @@ void CommandHandler::handle(std::string const &Command) {
     return;
   }
 
-  if (auto x = find<std::string>("cmd", Doc)) {
-    std::string CommandMain = x.inner();
+  if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
+    std::string CommandMain = CmdMaybe.inner();
     if (CommandMain == "FileWriter_new") {
       handleNew(Command);
       return;
@@ -449,7 +438,7 @@ void CommandHandler::handle(std::string const &Command) {
           return;
         }
       } else {
-        logMissingKey("recv_type", Doc.dump());
+        throwMissingKey("recv_type", Doc.dump());
       }
     }
   } else {
@@ -461,27 +450,25 @@ void CommandHandler::handle(std::string const &Command) {
 void CommandHandler::tryToHandle(std::string const &Command) {
   try {
     handle(Command);
-  } catch (nlohmann::detail::parse_error &e) {
-    LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
-  } catch (nlohmann::detail::out_of_range &e) {
-    LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
-  } catch (nlohmann::detail::type_error &e) {
-    LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
-  } catch (std::runtime_error &e) {
+  } catch (json::parse_error const &E) {
+    LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
+  } catch (json::out_of_range const &E) {
+    LOG(Sev::Error, "out_of_range: {}  Command: ", E.what(), Command);
+  } catch (json::type_error const &E) {
+    LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
+  } catch (std::runtime_error const &E) {
     // Originates from h5cpp:
-    if (std::string(e.what()).find(
+    if (std::string(E.what()).find(
             "Cannot obtain ObjectId from an invalid file instance!") == 0) {
       LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
                         "output file already exists.  command: {}",
           Command);
     } else {
       LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
-          e.what(), Command);
-      throw;
+          E.what(), Command);
     }
   } catch (...) {
     LOG(Sev::Error, "Unexpected error while handling command: {}", Command);
-    throw;
   }
 }
 
