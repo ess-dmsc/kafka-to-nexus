@@ -16,11 +16,6 @@
 
 struct rd_kafka_topic_partition_list_s;
 
-namespace FileWriter {
-class Master;
-class StreamerOptions;
-} // namespace FileWriter
-
 // POD
 struct MainOpt {
   bool help = false;
@@ -78,7 +73,9 @@ struct MainOpt {
   // Max interval (in std::chrono::milliseconds) to spend writing each topic
   // before switch to the next
   std::chrono::milliseconds topic_write_duration;
-  MainOpt();
+  // The constructor was removed because of the issue with the integration test
+  // (see cpp file for more details).
+  void init();
 };
 
 void setup_logger_from_options(MainOpt const &opt);

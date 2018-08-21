@@ -1,5 +1,8 @@
 [![Build Status](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/badge/icon)](https://jenkins.esss.dk/dm/job/ess-dmsc/job/kafka-to-nexus/job/master/)
 [![codecov](https://codecov.io/gh/ess-dmsc/kafka-to-nexus/branch/master/graph/badge.svg)](https://codecov.io/gh/ess-dmsc/kafka-to-nexus)
+[![DOI](https://zenodo.org/badge/81435658.svg)](https://zenodo.org/badge/latestdoi/81435658)
+
+
 # Kafka to Nexus file writing
 
 - [Usage](#usage)
@@ -240,6 +243,35 @@ Further documentation:
 - `array_size`: The size of the array. Scalar if not specified or `0`.
 
 
+### Single Writer, Multiple Reader support
+
+The filewriter can use HDF's Single Writer Multiple Reader feature (SWMR).
+
+To write, as well as to read HDF files which use the SWMR feature requires at
+least HDF version 1.10.  This means that also tools like HDFView are required
+to link against at least HDF 1.10 in order to open HDF files which were written
+in SWMR mode.
+
+Please note, the HDF documentation itself warns:
+
+"The HDF5 file that is accessed by SWMR HDF5 applications must be located on a
+file system that complies with the POSIX `write()` semantics."
+
+Also:
+
+"The writer is not allowed to modify or append to any data items containing
+variable-size datatypes (including string and region references datatypes)."
+
+To enable SWMR when writing a file, add to the `FileWriter_new` command:
+
+```
+{
+  "use_hdf_swmr": true
+}
+```
+
+
+
 ## Installation
 
 ### Requirements
@@ -399,6 +431,13 @@ Not that many in this release, but will be extended with upcoming changes:
   - `nexus.indices.index_every_mb`
     Write an index entry (in Nexus terminology: cue entry) every given
     megabytes.
+  - `nexus.chunk.chunk_mb`
+    Size of the HDF chunks given in megabytes.
+  - `nexus.buffer.size_kb`
+    Small messages can additionally be buffered to reduce HDF writes. This
+    gives the buffer size in kilobytes.
+  - `nexus.buffer.packet_max_kb`
+    Maximum size of messages to be considered for buffering in kilobytes.
 
 
 ## Running Tests

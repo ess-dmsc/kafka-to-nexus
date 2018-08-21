@@ -20,7 +20,6 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   }
 
   Options.Settings.ConfigurationStrings["group.id"] = TopicName;
-  Options.Settings.ConfigurationStrings["auto.create.topics.enable"] = "false";
   Options.Settings.Address = Broker;
 
   IsConnected =
