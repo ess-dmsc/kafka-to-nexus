@@ -1,8 +1,18 @@
 #include "../h5.h"
+#include "schemas/f142/f142_rw.h"
+#include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <string>
 #include <vector>
+
+namespace FileWriter {
+namespace Schemas {
+namespace f142 {
+#include "schemas/f142_logdata_generated.h"
+}
+}
+}
 
 hdf5::file::File createInMemoryFile() {
   hdf5::property::FileAccessList fapl;
@@ -64,4 +74,14 @@ TEST(H5, writeUsingChunked1DString) {
           static_cast<hid_t>(SpaceMem), static_cast<hid_t>(SpaceFile),
           H5P_DEFAULT, Data.data());
   ASSERT_EQ(ExpectedValue, std::string(Data.at(0)));
+}
+
+TEST(H5, writeScalarString) {
+  auto File = createInMemoryFile();
+  auto Group = File.root();
+  std::string SourceName("value");
+  FileWriter::Schemas::f142::WriterScalarString Writer(
+      Group, SourceName, FileWriter::Schemas::f142::Value::String, nullptr);
+  ASSERT_TRUE(Group.get_dataset("value").datatype() ==
+              hdf5::datatype::String::variable().native_type());
 }
