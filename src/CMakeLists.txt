@@ -8,7 +8,7 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-find_package(Fmt REQUIRED)
+find_package(fmt REQUIRED)
 find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
@@ -36,7 +36,6 @@ set(compile_defs_common "")
 
 
 set(path_include_common
-  ${FMT_INCLUDE_DIR}
   ${RDKAFKA_INCLUDE_DIR}
   ${HDF5_INCLUDE_DIRS}
   ${FLATBUFFERS_INCLUDE_DIR}
@@ -100,6 +99,7 @@ set(kafka_to_nexus_SRC
   date/tzblobs.cpp
   schemas/f142/f142_rw.cpp
   schemas/f142/FlatbufferReader.cpp
+  schemas/f142/WriterScalarString.cpp
   schemas/f142/f142_synth.cpp
   schemas/ev42/ev42_rw.cpp
   schemas/ev42/ev42_synth.cpp
@@ -107,7 +107,6 @@ set(kafka_to_nexus_SRC
   schemas/senv/Datasets.cpp
   schemas/template/TemplateWriter.cpp
   MainOpt.cpp
-  ${FMT_SRC}
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp)
 
@@ -188,7 +187,7 @@ add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 
 set(tgt "kafka-to-nexus")
@@ -201,7 +200,7 @@ add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common})
+target_link_libraries(${tgt} ${libraries_common}  fmt::fmt)
 
 find_package(GTest)
 

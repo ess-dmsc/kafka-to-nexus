@@ -3,15 +3,20 @@
 
 #include "../Msg.h"
 #include "../helper.h"
+#include "../json.h"
 #include "../schemas/f142/f142_rw.h"
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 
-hdf5::file::File createInMemoryTestFile(std::string const &Filename) {
+using nlohmann::json;
+
+hdf5::file::File createInMemoryTestFile(std::string const &Filename, bool OnDisk = false) {
   hdf5::property::FileCreationList FCPL;
   hdf5::property::FileAccessList FAPL;
-  FAPL.driver(hdf5::file::MemoryDriver());
+  if (!OnDisk) {
+    FAPL.driver(hdf5::file::MemoryDriver());
+  }
   return hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE, FCPL,
                             FAPL);
 }
@@ -31,13 +36,17 @@ makeValueFloat(float Value) {
   return BuilderPtr;
 }
 
-TEST(Schema_f142, basic) {
+TEST(Schema_f142, writeScalarFloat) {
+  auto StreamJson = json::parse(R""({
+    "source": "the_source_01",
+    "writer_module": "f142",
+    "type": "float"
+  })"");
   std::vector<float> Expected{0.125, 0.25, 0.5, 1.0, 2.0, 4.0, 8.0, 16.0};
-  auto File = createInMemoryTestFile("tmp-dummy.h5");
+  auto File = createInMemoryTestFile("Schema_f142.writeScalarFloat");
   {
     FileWriter::Schemas::f142::HDFWriterModule WriterModule;
-    WriterModule.TypeName = "float";
-    WriterModule.ArraySize = 0;
+    WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
     for (auto Value : Expected) {
@@ -61,8 +70,7 @@ TEST(Schema_f142, basic) {
   hdf5::dataspace::Simple SpaceMem({N});
   SpaceFile.selection.all();
   SpaceMem.selection.all();
-  Dataset.read(*Data.data(), Dataset.datatype(), SpaceFile, SpaceMem,
-               hdf5::property::DatasetTransferList());
+  Dataset.read(*Data.data(), Dataset.datatype(), SpaceMem, SpaceFile);
   for (size_t i = 0; i < N; ++i) {
     ASSERT_EQ(Data.at(i), Expected.at(i));
   }

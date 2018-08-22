@@ -36,9 +36,7 @@ ProcessMessageResult ProcessMessageResult::STOP() {
 DemuxTopic::DemuxTopic(std::string topic)
     : _topic(topic), _stop_time(std::numeric_limits<uint64_t>::max()) {}
 
-DemuxTopic::~DemuxTopic() {
-  // Empty dtor kept to simplify merge in a later PR which will add code here.
-}
+DemuxTopic::~DemuxTopic() { LOG(Sev::Debug, "dtor"); }
 
 DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
 

@@ -3,6 +3,7 @@
 #include "Common.h"
 #include "WriterArray.h"
 #include "WriterScalar.h"
+#include "WriterScalarString.h"
 #include "WriterTypedBase.h"
 #include <array>
 #include <chrono>
@@ -178,6 +179,33 @@ struct WriterFactoryArray : public WriterFactory {
     return ValueUnionID;
   }
 };
+
+struct WriterFactoryScalarString : public WriterFactory {
+  FileWriter::Schemas::f142::Value ValueUnionID =
+      ValueTraits<String>::enum_value;
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterScalarString(Group, Name, ValueUnionID, cq));
+  }
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq, HDFIDStore *HDFStore) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterScalarString(Group, Name, ValueUnionID, cq,
+                                                HDFStore));
+  }
+
+  FileWriter::Schemas::f142::Value getValueUnionID() override {
+    return ValueUnionID;
+  }
+};
+
 }
 }
 }

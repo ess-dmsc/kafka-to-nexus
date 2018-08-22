@@ -19,8 +19,12 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
     throw std::runtime_error("Missing broker or topic");
   }
 
-  Options.Settings.ConfigurationStrings["group.id"] = TopicName;
-  Options.Settings.ConfigurationStrings["auto.create.topics.enable"] = "false";
+  Options.Settings.ConfigurationStrings["group.id"] =
+      fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
+                  gethostname_wrapper(), getpid_wrapper(), TopicName,
+                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                      std::chrono::steady_clock::now().time_since_epoch())
+                      .count());
   Options.Settings.Address = Broker;
 
   IsConnected =

@@ -122,6 +122,8 @@ const std::string FileWriter::Status::Err2Str(const StreamMasterError &Error) {
   switch (Error.Value) {
   case 1000:
     return "No Error";
+  case 4:
+    return "Stream Can Be Removed";
   case 3:
     return "Streamers Empty";
   case 2:

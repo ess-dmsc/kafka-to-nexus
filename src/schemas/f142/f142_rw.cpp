@@ -43,6 +43,7 @@ struct InitTypeMap {
   Scalar[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int64_t, Long>);
   Scalar[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<   float, Float>);
   Scalar["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  double, Double>);
+  Scalar["string"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalarString);
 
   Array[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< uint8_t, ArrayUByte>);
   Array["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint16_t, ArrayUShort>);
@@ -117,7 +118,6 @@ createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
                                    ValueTraits->getValueUnionID(), cq);
 }
 
-/// Parse the configuration given to the HDFWriterModule in form of JSON.
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);

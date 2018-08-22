@@ -5,24 +5,20 @@ release_os = "centos7-release"
 
 images = [
         'centos7': [
-                'name': 'essdmscdm/centos7-build-node:3.0.0',
-                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
+                'name': 'essdmscdm/centos7-build-node:3.1.0',
+                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'
         ],
         'centos7-release': [
-                'name': 'essdmscdm/centos7-build-node:3.0.0',
-                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash'
+                'name': 'essdmscdm/centos7-build-node:3.1.0',
+                'sh'  : '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'
         ],
         'fedora25'    : [
-                'name': 'essdmscdm/fedora25-build-node:1.0.0',
-                'sh'  : 'sh'
+                'name': 'essdmscdm/fedora25-build-node:2.0.0',
+                'sh'  : 'bash -e'
         ],
-        'ubuntu1604'  : [
-                'name': 'essdmscdm/ubuntu16.04-build-node:2.1.0',
-                'sh'  : 'sh'
-        ],
-        'ubuntu1710': [
-                'name': 'essdmscdm/ubuntu17.10-build-node:2.0.0',
-                'sh': 'sh'
+        'ubuntu1804'  : [
+                'name': 'essdmscdm/ubuntu18.04-build-node:1.1.0',
+                'sh'  : 'bash -e'
         ]
 ]
 
@@ -31,6 +27,18 @@ base_container_name = "${project}-${env.BRANCH_NAME}-${env.BUILD_NUMBER}"
 def Object container_name(image_key) {
     return "${base_container_name}-${image_key}"
 }
+
+// Set number of old builds to keep.
+properties([[
+    $class: 'BuildDiscarderProperty',
+    strategy: [
+        $class: 'LogRotator',
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '10',
+        daysToKeepStr: '',
+        numToKeepStr: ''
+    ]
+]]);
 
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
@@ -69,6 +77,7 @@ def docker_dependencies(image_key) {
                         conan remote add \
                             --insert 0 \
                             ${conan_remote} ${local_conan_server}
+                        conan install --build=outdated ../${project}/conan/
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${dependencies_script}\""
     } catch (e) {
@@ -85,6 +94,7 @@ def docker_cmake(image_key) {
         }
         def configure_script = """
                         cd build
+                        . ./activate_run.sh
                         cmake ../${project} ${coverage_on}
                     """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${configure_script}\""
@@ -97,7 +107,8 @@ def docker_cmake_release(image_key) {
     try {
         def custom_sh = images[image_key]['sh']
         def configure_script = """
-                        cd build && \
+                        cd build
+                        . ./activate_run.sh
                         cmake ../${project} \
                             -DCMAKE_BUILD_TYPE=Release \
                             -DCMAKE_SKIP_RPATH=FALSE \
@@ -189,22 +200,43 @@ def docker_archive(image_key) {
         def custom_sh = images[image_key]['sh']
         def archive_output = "${project}-${image_key}.tar.gz"
         def archive_script = """
-                    cd build && \
-                    rm -rf ${project}; mkdir ${project} && \
-                    mkdir ${project}/bin && \
-                    cp ./bin/{kafka-to-nexus,send-command} ${project}/bin/ && \
-                    cp -r ./lib ${project}/ && \
-                    cp -r ./licenses ${project}/ && \
+                    cd build
+                    rm -rf ${project}; mkdir ${project}
+                    mkdir ${project}/bin
+                    cp ./bin/{kafka-to-nexus,send-command} ${project}/bin/
+                    cp -r ./lib ${project}/
+                    cp -r ./licenses ${project}/
                     tar czf ${archive_output} ${project}
+
+                    # Create file with build information
+                    touch BUILD_INFO
+                    echo 'Repository: ${project}/${env.BRANCH_NAME}' >> BUILD_INFO
+                    echo 'Commit: ${scm_vars.GIT_COMMIT}' >> BUILD_INFO
+                    echo 'Jenkins build: ${BUILD_NUMBER}' >> BUILD_INFO
                 """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${archive_script}\""
         sh "docker cp ${container_name(image_key)}:/home/jenkins/build/${archive_output} ./"
-        archiveArtifacts "${archive_output}"
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/build/BUILD_INFO ./"
+        archiveArtifacts "${archive_output},BUILD_INFO"
     } catch (e) {
         failure_function(e, "Test step for (${container_name(image_key)}) failed")
     }
 }
 
+def docker_cppcheck(image_key) {
+    try {
+        def custom_sh = images[image_key]['sh']
+        def test_output = "cppcheck.txt"
+        def cppcheck_script = """
+                        cd ${project}
+                        cppcheck --enable=all --inconclusive --template="{file},{line},{severity},{id},{message}" src/ 2> ${test_output}
+                    """
+        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${cppcheck_script}\""
+        sh "docker cp ${container_name(image_key)}:/home/jenkins/${project}/${test_output} ."
+    } catch (e) {
+        failure_function(e, "Cppcheck step for (${container_name(image_key)}) failed")
+    }
+}
 
 def get_pipeline(image_key) {
     return {
@@ -236,6 +268,8 @@ def get_pipeline(image_key) {
 
                 if (image_key == clangformat_os) {
                     docker_formatting(image_key)
+                    docker_cppcheck(image_key)
+                    step([$class: 'WarningsPublisher', parserConfigurations: [[parserName: 'Cppcheck Parser', pattern: 'cppcheck.txt']]])
                 }
 
                 if (image_key == release_os) {

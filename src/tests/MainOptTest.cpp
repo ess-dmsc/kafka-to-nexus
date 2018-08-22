@@ -20,6 +20,7 @@ TEST(MainOpt, parse_hdf_output_prefix_from_command_line) {
 
   CLI::App App{""};
   auto Options = std::unique_ptr<MainOpt>(new MainOpt());
+  Options->init();
   setCLIOptions(App, *Options);
   App.parse(static_cast<int>(argv.size()), argv.data());
 
@@ -38,6 +39,7 @@ TEST(MainOpt, parse_hdf_output_prefix_from_json_file) {
 
   CLI::App App{""};
   auto Options = std::unique_ptr<MainOpt>(new MainOpt());
+  Options->init();
   setCLIOptions(App, *Options);
   App.parse(static_cast<int>(argv.size()), argv.data());
   Options->parse_config_file();

@@ -12,7 +12,8 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &config) : config(config), command_listener(config) {
+Master::Master(MainOpt &MainOpt_)
+    : command_listener(MainOpt_), MainOpt_(MainOpt_) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -28,13 +29,29 @@ Master::Master(MainOpt &config) : config(config), command_listener(config) {
 }
 
 void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
-  CommandHandler command_handler(config, this);
+  CommandHandler command_handler(getMainOpt(), this);
   command_handler.handle(Msg::owned((char const *)msg->data(), msg->size()));
 }
 
 void Master::handle_command(std::string const &command) {
-  CommandHandler command_handler(config, this);
+  CommandHandler command_handler(getMainOpt(), this);
   command_handler.tryToHandle(command);
+}
+
+std::unique_ptr<StreamMaster<Streamer>> &
+Master::getStreamMasterForJobID(std::string JobID) {
+  for (auto &StreamMaster : StreamMasters) {
+    if (StreamMaster->getJobId() == JobID) {
+      return StreamMaster;
+    }
+  }
+  static std::unique_ptr<StreamMaster<Streamer>> NotFound;
+  return NotFound;
+}
+
+void Master::addStreamMaster(
+    std::unique_ptr<StreamMaster<Streamer>> StreamMaster) {
+  StreamMasters.push_back(std::move(StreamMaster));
 }
 
 struct OnScopeExit {
@@ -46,15 +63,16 @@ struct OnScopeExit {
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
   // Set up connection to the Kafka status topic if desired.
-  if (config.do_kafka_status) {
+  if (getMainOpt().do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
-        config.kafka_status_uri.host_port, config.kafka_status_uri.topic);
+        getMainOpt().kafka_status_uri.host_port,
+        getMainOpt().kafka_status_uri.topic);
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = config.kafka_status_uri.host_port;
+    BrokerSettings.Address = getMainOpt().kafka_status_uri.host_port;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
       status_producer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, config.kafka_status_uri.topic);
+          producer, getMainOpt().kafka_status_uri.topic);
     } catch (KafkaW::TopicCreationError const &e) {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }
@@ -62,7 +80,7 @@ void Master::run() {
 
   // Interpret commands given directly in the configuration file, useful
   // for testing.
-  for (auto const &cmd : config.commands_from_config_file) {
+  for (auto const &cmd : getMainOpt().commands_from_config_file) {
     this->handle_command(cmd);
   }
 
@@ -76,26 +94,30 @@ void Master::run() {
       LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(std::move(msg));
     }
-    if (config.do_kafka_status &&
+    if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >
-            std::chrono::milliseconds(config.status_master_interval)) {
+            std::chrono::milliseconds(getMainOpt().status_master_interval)) {
       t_last_statistics = Clock::now();
       statistics();
     }
 
     // Remove any job which is in 'is_removable' state
-    stream_masters.erase(
-        std::remove_if(stream_masters.begin(), stream_masters.end(),
+    StreamMasters.erase(
+        std::remove_if(StreamMasters.begin(), StreamMasters.end(),
                        [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
                          return Iter->status().isRemovable();
                        }),
-        stream_masters.end());
+        StreamMasters.end());
   }
   LOG(Sev::Info, "calling stop on all stream_masters");
-  for (auto &x : stream_masters) {
+  stopStreamMasters();
+  LOG(Sev::Info, "called stop on all stream_masters");
+}
+
+void Master::stopStreamMasters() {
+  for (auto &x : StreamMasters) {
     x->stop();
   }
-  LOG(Sev::Info, "called stop on all stream_masters");
 }
 
 void Master::statistics() {
@@ -105,12 +127,12 @@ void Master::statistics() {
   using nlohmann::json;
   auto Status = json::object();
   Status["type"] = "filewriter_status_master";
-  Status["service_id"] = config.service_id;
+  Status["service_id"] = getMainOpt().service_id;
   Status["files"] = json::object();
-  for (auto &stream_master : stream_masters) {
+  for (auto &StreamMaster : StreamMasters) {
     auto FilewriterTaskID =
-        fmt::format("{}", stream_master->getFileWriterTask().job_id());
-    auto FilewriterTaskStatus = stream_master->getFileWriterTask().stats();
+        fmt::format("{}", StreamMaster->getFileWriterTask().job_id());
+    auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
@@ -121,6 +143,12 @@ void Master::stop() { do_run = false; }
 
 std::string Master::file_writer_process_id() const {
   return file_writer_process_id_;
+}
+
+MainOpt &Master::getMainOpt() { return MainOpt_; }
+
+std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
+  return status_producer;
 }
 
 } // namespace FileWriter

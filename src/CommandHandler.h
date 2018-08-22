@@ -1,10 +1,11 @@
 #pragma once
 
+#include "FileWriterTask.h"
+#include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "Master.h"
+#include "MasterI.h"
+#include "Msg.h"
 #include <memory>
-
-class T_CommandHandler;
 
 namespace FileWriter {
 
@@ -13,7 +14,7 @@ struct StreamSettings;
 /// Interprets and execute commands received.
 class CommandHandler {
 public:
-  CommandHandler(MainOpt &config, Master *master);
+  CommandHandler(MainOpt &config, MasterI *master);
 
   /// Given a JSON string, create a new file writer task.
   ///
@@ -42,6 +43,9 @@ public:
   void handle(std::string const &command);
   void tryToHandle(std::string const &Command);
 
+  size_t getNumberOfFileWriterTasks() const;
+  std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
+
 private:
   /// Configure the HDF writer modules for writing.
   ///
@@ -61,9 +65,8 @@ private:
   initializeHDF(FileWriterTask &Task,
                 std::string const &NexusStructureString) const;
   MainOpt &Config;
-  Master *MasterPtr = nullptr;
+  MasterI *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
-  friend class ::T_CommandHandler;
 };
 
 std::string findBroker(std::string const &);
