@@ -15,7 +15,7 @@ namespace FileWriter {
 /// The sourcename can be empty.
 /// This is meant for highest efficiency on topics which are exclusively used
 /// for only one sourcename.
-class DemuxTopic {
+class DemuxTopic final {
 public:
   using DT = TimeDifferenceFromMessage;
   DemuxTopic(std::string topic);
