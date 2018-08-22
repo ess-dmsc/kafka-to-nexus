@@ -1,5 +1,6 @@
 import os.path
 import pytest
+from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 import docker
 
@@ -67,3 +68,36 @@ def run_containers(cmd, options):
     cmd.up(options)
     print("\nFinished docker-compose up\n", flush=True)
     wait_until_kafka_ready(cmd, options)
+
+
+def build_and_run(options, request):
+    build_filewriter_image()
+    project = project_from_options(os.path.dirname(__file__), options)
+    cmd = TopLevelCommand(project)
+    run_containers(cmd, options)
+
+    def fin():
+        cmd.logs(options)
+        # Stop the containers then remove them and their volumes (--volumes option)
+        print("containers stopping", flush=True)
+        options["--timeout"] = 30
+        cmd.down(options)
+        print("containers stopped", flush=True)
+
+    # Using a finalizer rather than yield in the fixture means
+    # that the containers will be brought down even if tests fail
+    request.addfinalizer(fin)
+
+
+@pytest.fixture(scope="module")
+def docker_compose(request):
+    """
+    :type request: _pytest.python.FixtureRequest
+    """
+    print("Started preparing test environment...", flush=True)
+
+    # Options must be given as long form
+    options = common_options
+    options["--file"] = ["compose/docker-compose.yml"]
+
+    build_and_run(options, request)

@@ -322,6 +322,30 @@ def get_macos_pipeline()
     }
 }
 
+def get_system_tests_pipeline() {
+    return {
+        node('integration-test') {
+        cleanWs()
+        dir("${project}") {
+        stage("System tests: Checkout") {
+          checkout scm
+        }  // stage
+        stage("System tests: Install requirements") {
+        sh """scl enable rh-python35 -- python -m pip install --user --upgrade pip
+        scl enable rh-python35 -- python -m pip install --user -r system-tests/requirements.txt
+        """
+        }  // stage
+        stage("System tests: Run") {
+        sh """cd system-tests/
+        scl enable rh-python35 -- python -m pytest -s  --junitxml=./SystemTestsOutput.xml ./
+        """
+        junit "system-tests/SystemTestsOutput.xml"
+        }  // stage
+      } // dir
+      }  // node
+    }  // return
+} // def
+
 node('docker') {
     cleanWs()
 
@@ -341,6 +365,10 @@ node('docker') {
         builders[image_key] = get_pipeline(image_key)
     }
     builders['macOS'] = get_macos_pipeline()
+
+    if ( env.CHANGE_ID ) {
+        builders['system tests'] = get_system_tests_pipeline()
+    }
 
     parallel builders
 
