@@ -60,7 +60,7 @@ public:
   int32_t close() override;
 
   HDFWriterModule();
-  ~HDFWriterModule() {}
+  ~HDFWriterModule() override = default;
 
   /// Datatype as given in the filewriter json command
   std::string TypeName;
