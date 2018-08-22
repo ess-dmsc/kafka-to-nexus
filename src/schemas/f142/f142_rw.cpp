@@ -65,7 +65,7 @@ InitTypeMap TriggerInitTypeMap;
 /// Helper struct to make branching on a found map entry more concise.
 template <typename T> struct FoundInMap {
   FoundInMap() : Value(nullptr) {}
-  FoundInMap(T const &Value) : Value(&Value) {}
+  explicit FoundInMap(T const &Value) : Value(&Value) {}
   bool found() const { return Value != nullptr; }
   T const &value() const { return *Value; }
   T const *Value;
