@@ -87,7 +87,7 @@ TEST(Schema_f142, writeScalarFloat) {
       auto Msg = FileWriter::Msg::owned(
           reinterpret_cast<char *>(Builder->GetBufferPointer()),
           Builder->GetSize());
-      WriterModule.write(std::move(Msg));
+      WriterModule.write(Msg);
     }
   }
   ASSERT_TRUE(File.root().has_dataset("value"));
@@ -131,7 +131,7 @@ TEST(Schema_f142, writeArrayFloat) {
       auto Msg = FileWriter::Msg::owned(
           reinterpret_cast<char *>(Builder->GetBufferPointer()),
           Builder->GetSize());
-      WriterModule.write(std::move(Msg));
+      WriterModule.write(Msg);
     }
   }
   ASSERT_TRUE(File.root().has_dataset("value"));
@@ -170,7 +170,7 @@ TEST(Schema_f142, writeScalarString) {
       auto Msg = FileWriter::Msg::owned(
           reinterpret_cast<char *>(Builder->GetBufferPointer()),
           Builder->GetSize());
-      WriterModule.write(std::move(Msg));
+      WriterModule.write(Msg);
     }
   }
   ASSERT_TRUE(File.root().has_dataset("value"));
