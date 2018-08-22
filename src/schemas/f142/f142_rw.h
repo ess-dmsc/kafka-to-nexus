@@ -33,7 +33,10 @@ struct DatasetInfo {
   /// Maximum size of a message which is considered for buffering
   size_t BufferPacketMaxSize;
   /// Helper
-  uptr<h5::h5d_chunked_1d<uint64_t>> *Ptr;
+  uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr;
+  DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
+              size_t BufferPacketMaxSize,
+              uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr);
 };
 
 class HDFWriterModule final : public FileWriter::HDFWriterModule {

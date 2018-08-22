@@ -81,6 +81,12 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
   return FoundInMap<typename T::mapped_type>(It->second);
 }
 
+DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
+                         size_t BufferPacketMaxSize,
+                         uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr)
+    : Name(Name), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
+      BufferPacketMaxSize(BufferPacketMaxSize), Ptr(Ptr) {}
+
 /// Instantiate a new writer.
 /// \param HDFGroup The HDF group into which this writer will place the dataset.
 /// \param ArraySize Zero if scalar, or the size of the array.
@@ -169,22 +175,20 @@ HDFWriterModule::HDFWriterModule() {
   size_t ChunkBytes = 64 * 1024;
   size_t BufferSize = 16 * 1024;
   size_t BufferPacketMaxSize = 1024;
-  // clang-format off
-  DatasetInfoList.push_back({std::string("time"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetTimestamp});
-  DatasetInfoList.push_back({std::string("cue_timestamp_zero"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetCueTimestampZero});
-  DatasetInfoList.push_back({std::string("cue_index"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetCueIndex});
+  DatasetInfoList.emplace_back("time", ChunkBytes, BufferSize,
+                               BufferPacketMaxSize, DatasetTimestamp);
+  DatasetInfoList.emplace_back("cue_timestamp_zero", ChunkBytes, BufferSize,
+                               BufferPacketMaxSize, DatasetCueTimestampZero);
+  DatasetInfoList.emplace_back("cue_index", ChunkBytes, BufferSize,
+                               BufferPacketMaxSize, DatasetCueIndex);
   if (DoWriteForwarderInternalDebugInfo) {
-    DatasetInfoList.push_back({std::string("__fwdinfo_seq_data"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetSeqData});
-    DatasetInfoList.push_back({std::string("__fwdinfo_seq_fwd"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetSeqFwd});
-    DatasetInfoList.push_back({std::string("__fwdinfo_ts_data"),
-      ChunkBytes, BufferSize, BufferPacketMaxSize, &DatasetTsData});
+    DatasetInfoList.emplace_back("__fwdinfo_seq_data", ChunkBytes, BufferSize,
+                                 BufferPacketMaxSize, DatasetSeqData);
+    DatasetInfoList.emplace_back("__fwdinfo_seq_fwd", ChunkBytes, BufferSize,
+                                 BufferPacketMaxSize, DatasetSeqFwd);
+    DatasetInfoList.emplace_back("__fwdinfo_ts_data", ChunkBytes, BufferSize,
+                                 BufferPacketMaxSize, DatasetTsData);
   }
-  // clang-format on
 }
 
 /// Implement the HDFWriterModule interface, forward to the CREATE case of
@@ -221,9 +225,9 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     }
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
       for (auto const &Info : DatasetInfoList) {
-        *Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
-                                                         Info.ChunkBytes, cq);
-        if (Info.Ptr->get() == nullptr) {
+        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
+                                                        Info.ChunkBytes, cq);
+        if (Info.Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
       }
@@ -231,12 +235,12 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       HDFFile::write_attributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
-        *Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
-                                                       HDFStore);
-        if ((*Info.Ptr).get() == nullptr) {
+        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
+                                                      HDFStore);
+        if (Info.Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
-        (*Info.Ptr)->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
+        Info.Ptr->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
       }
     }
   } catch (std::exception &e) {
@@ -304,7 +308,7 @@ void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
                                 int MPIRank) {
   this->cq = cq;
   for (auto const &Info : DatasetInfoList) {
-    auto &Dataset = (*Info.Ptr)->ds;
+    auto &Dataset = Info.Ptr->ds;
     Dataset.cq = cq;
     Dataset.hdf_store = HDFStore;
     Dataset.mpi_rank = MPIRank;
@@ -314,7 +318,7 @@ void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
 /// Implement HDFWriterModule interface, just flushing.
 int32_t HDFWriterModule::flush() {
   for (auto const &Info : DatasetInfoList) {
-    (*Info.Ptr)->flush_buf();
+    Info.Ptr->flush_buf();
   }
   return 0;
 }
@@ -322,7 +326,7 @@ int32_t HDFWriterModule::flush() {
 /// Implement HDFWriterModule interface.
 int32_t HDFWriterModule::close() {
   for (auto const &Info : DatasetInfoList) {
-    (*Info.Ptr).reset();
+    Info.Ptr.reset();
   }
   return 0;
 }
