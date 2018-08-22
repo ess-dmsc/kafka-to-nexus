@@ -675,6 +675,28 @@ template h5d_chunked_1d<int64_t>::~h5d_chunked_1d();
 template h5d_chunked_1d<float>::~h5d_chunked_1d();
 template h5d_chunked_1d<double>::~h5d_chunked_1d();
 
+template AppendResult h5d_chunked_1d< uint8_t>::flush_buf();
+template AppendResult h5d_chunked_1d<uint16_t>::flush_buf();
+template AppendResult h5d_chunked_1d<uint32_t>::flush_buf();
+template AppendResult h5d_chunked_1d<uint64_t>::flush_buf();
+template AppendResult h5d_chunked_1d<  int8_t>::flush_buf();
+template AppendResult h5d_chunked_1d< int16_t>::flush_buf();
+template AppendResult h5d_chunked_1d< int32_t>::flush_buf();
+template AppendResult h5d_chunked_1d< int64_t>::flush_buf();
+template AppendResult h5d_chunked_1d<   float>::flush_buf();
+template AppendResult h5d_chunked_1d<  double>::flush_buf();
+
+template AppendResult h5d_chunked_2d< uint8_t>::flush_buf();
+template AppendResult h5d_chunked_2d<uint16_t>::flush_buf();
+template AppendResult h5d_chunked_2d<uint32_t>::flush_buf();
+template AppendResult h5d_chunked_2d<uint64_t>::flush_buf();
+template AppendResult h5d_chunked_2d<  int8_t>::flush_buf();
+template AppendResult h5d_chunked_2d< int16_t>::flush_buf();
+template AppendResult h5d_chunked_2d< int32_t>::flush_buf();
+template AppendResult h5d_chunked_2d< int64_t>::flush_buf();
+template AppendResult h5d_chunked_2d<   float>::flush_buf();
+template AppendResult h5d_chunked_2d<  double>::flush_buf();
+
 template void h5d_chunked_1d< uint8_t>::buffer_init(size_t buf_size, size_t buf_packet_max);
 template void h5d_chunked_1d<uint16_t>::buffer_init(size_t buf_size, size_t buf_packet_max);
 template void h5d_chunked_1d<uint32_t>::buffer_init(size_t buf_size, size_t buf_packet_max);

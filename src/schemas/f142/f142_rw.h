@@ -1,106 +1,211 @@
-#include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
+#include "Common.h"
+#include "WriterArray.h"
+#include "WriterScalar.h"
+#include "WriterScalarString.h"
+#include "WriterTypedBase.h"
 #include <array>
-#include <flatbuffers/flatbuffers.h>
+#include <chrono>
 #include <memory>
 #include <vector>
-
-template <typename T> using uptr = std::unique_ptr<T>;
 
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
-#include "schemas/f142_logdata_generated.h"
-using FBUF = LogData;
 
-class writer_typed_base {
-public:
-  virtual ~writer_typed_base() = default;
-  virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
+/// Because of SWMR, we have to create HDF structures first, then close
+/// everything again, and then reopen those structures from the previously
+/// created file.  This enum is used to indicate which phase we are in.
+enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
+
+/// The HDFWriterModule contains a list of these DatasetInfo, which represents
+/// the essential information about the datasets used in this HDFWriterModule.
+/// By having this information in a separate list we can condense the code
+/// needed for initialization.
+struct DatasetInfo {
+  /// Name of the HDF dataset
+  std::string Name;
+  /// Size of the HDF chunks in bytes
+  size_t ChunkBytes;
+  /// Size of the buffer which is used to optimize writing of small messages
+  size_t BufferSize;
+  /// Maximum size of a message which is considered for buffering
+  size_t BufferPacketMaxSize;
+  /// Helper
+  uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr;
+  DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
+              size_t BufferPacketMaxSize,
+              uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr);
 };
 
-template <typename DT, typename FV>
-class writer_typed_array : public writer_typed_base {
+class HDFWriterModule final : public FileWriter::HDFWriterModule {
 public:
-  writer_typed_array(hdf5::node::Group hdf_group,
-                     std::string const &source_name, hsize_t ncols,
-                     Value fb_value_type_id, CollectiveQueue *cq);
-  writer_typed_array(hdf5::node::Group, std::string const &source_name,
-                     hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq,
-                     HDFIDStore *hdf_store);
-  ~writer_typed_array() override = default;
-  h5::append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_2d<DT>> ds;
-  Value _fb_value_type_id = Value::NONE;
-};
-
-template <typename DT, typename FV>
-class writer_typed_scalar : public writer_typed_base {
-public:
-  writer_typed_scalar(hdf5::node::Group hdf_group,
-                      std::string const &source_name, Value fb_value_type_id,
-                      CollectiveQueue *cq);
-  writer_typed_scalar(hdf5::node::Group hdf_group,
-                      std::string const &source_name, Value fb_value_type_id,
-                      CollectiveQueue *cq, HDFIDStore *hdf_store);
-  ~writer_typed_scalar() override = default;
-  h5::append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_1d<DT>> ds;
-  Value _fb_value_type_id = Value::NONE;
-};
-
-class WriterScalarString : public writer_typed_base {
-public:
-  WriterScalarString(hdf5::node::Group hdf_group,
-                     std::string const &source_name, Value fb_value_type_id,
-                     CollectiveQueue *cq);
-  WriterScalarString(hdf5::node::Group hdf_group,
-                     std::string const &source_name, Value fb_value_type_id,
-                     CollectiveQueue *cq, HDFIDStore *hdf_store);
-  h5::append_ret write_impl(FBUF const *fbuf) override;
-  h5::Chunked1DString::ptr ds;
-  Value _fb_value_type_id = Value::String;
-};
-
-class FlatbufferReader : public FileWriter::FlatbufferReader {
-  bool verify(Msg const &msg) const override;
-  std::string source_name(Msg const &msg) const override;
-  uint64_t timestamp(Msg const &msg) const override;
-};
-
-class HDFWriterModule : public FileWriter::HDFWriterModule {
-public:
-  static FileWriter::HDFWriterModule::ptr create();
+  /// Implements HDFWriterModule interface
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
+  /// Implements HDFWriterModule interface
   void parse_config(std::string const &ConfigurationStream,
                     std::string const &ConfigurationModule) override;
+  /// Implements HDFWriterModule interface
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
+
+  /// Actual initialziation code, mostly shared among CREATE and OPEN phases.
+  InitResult init_hdf(hdf5::node::Group &HDFGroup,
+                      std::string const *HDFAttributes,
+                      CreateWriterTypedBaseMethod CreateMethod);
+
+  /// Write an incoming message which should contain a flatbuffer
   WriteResult write(Msg const &msg) override;
+
+  /// Flush underlying buffers
   int32_t flush() override;
   int32_t close() override;
 
-  uptr<writer_typed_base> impl;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_timestamp;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_index;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_data;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_seq_fwd;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_ts_data;
-  bool do_flush_always = false;
-  bool do_writer_forwarder_internal = false;
-  uint64_t total_written_bytes = 0;
-  uint64_t index_at_bytes = 0;
+  HDFWriterModule();
+  ~HDFWriterModule() override = default;
+
+  /// Datatype as given in the filewriter json command
+  std::string TypeName;
+
+  /// Name of the source that we write
+  std::string SourceName;
+
+  /// Dataset with the actual values, with requested datatype
+  uptr<WriterTypedBase> ValueWriter;
+
+  /// Timestamps of the f142 updates
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetTimestamp;
+
+  /// Index into DatasetTimestamp
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueTimestampZero;
+
+  /// Index into the f142 values
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueIndex;
+
+  // Some optional helper datasets for debugging
+  bool DoWriteForwarderInternalDebugInfo = false;
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqData;
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqFwd;
+  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetTsData;
+
+  /// List of essential information about the datasets used by this
+  /// HDFModuleWriter.  Used in `init_hdf()`
+  std::vector<DatasetInfo> DatasetInfoList;
+
+  uint64_t WrittenBytesTotal = 0;
+  uint64_t IndexAtBytes = 0;
   // set by default to a large value:
-  uint64_t index_every_bytes = !0;
-  uint64_t ts_max = 0;
-  size_t array_size = 0;
-  std::string source_name;
-  std::string type;
+  uint64_t IndexEveryBytes = std::numeric_limits<uint64_t>::max();
+  uint64_t TimestampMax = 0;
+  size_t ArraySize = 0;
+
+  // Helper for experiments on my other branch
+  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
+                 int mpi_rank) override;
   CollectiveQueue *cq = nullptr;
+
+  // Reduce LOG rate in some cases
+  using CLOCK = std::chrono::steady_clock;
+  using MS = std::chrono::milliseconds;
+  MS ErrorLogMinInterval{500};
+  std::chrono::time_point<CLOCK> TimestampLastErrorLog{CLOCK::now() -
+                                                       ErrorLogMinInterval};
+};
+
+/// Interface for creating and opening a dataset for the f142 values of a
+/// dynamically specified datatype.  Implemented by WriterFactoryScalar and
+/// WriterFactoryArray.
+struct WriterFactory {
+  virtual std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq) = 0;
+  virtual std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq, HDFIDStore *HDFStore) = 0;
+  virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
+};
+
+template <typename C_TYPE, typename FB_VALUE_TYPE>
+struct WriterFactoryScalar : public WriterFactory {
+  FileWriter::Schemas::f142::Value ValueUnionID =
+      ValueTraits<FB_VALUE_TYPE>::enum_value;
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq));
+  }
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq, HDFIDStore *HDFStore) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, cq,
+                                                HDFStore));
+  }
+
+  FileWriter::Schemas::f142::Value getValueUnionID() override {
+    return ValueUnionID;
+  }
+};
+
+template <typename C_TYPE, typename FB_VALUE_TYPE>
+struct WriterFactoryArray : public WriterFactory {
+  FileWriter::Schemas::f142::Value ValueUnionID =
+      ValueTraits<FB_VALUE_TYPE>::enum_value;
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns,
+                                               ValueUnionID, cq));
+  }
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq, HDFIDStore *HDFStore) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns,
+                                               ValueUnionID, cq, HDFStore));
+  }
+
+  FileWriter::Schemas::f142::Value getValueUnionID() override {
+    return ValueUnionID;
+  }
+};
+
+struct WriterFactoryScalarString : public WriterFactory {
+  FileWriter::Schemas::f142::Value ValueUnionID =
+      ValueTraits<String>::enum_value;
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterScalarString(Group, Name, ValueUnionID, cq));
+  }
+
+  std::unique_ptr<WriterTypedBase>
+  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               CollectiveQueue *cq, HDFIDStore *HDFStore) override {
+    return std::unique_ptr<WriterTypedBase>(
+        new WriterScalarString(Group, Name, ValueUnionID, cq, HDFStore));
+  }
+
+  FileWriter::Schemas::f142::Value getValueUnionID() override {
+    return ValueUnionID;
+  }
 };
 }
 }

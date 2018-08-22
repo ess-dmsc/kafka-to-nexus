@@ -20,6 +20,7 @@ NeXusDatasets.cpp
 ReaderRegistration.cpp
 WriterRegistration.cpp
 TemplateWriterTests.cpp
+Schema_f142.cpp
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC
