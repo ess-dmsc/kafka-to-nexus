@@ -11,7 +11,8 @@
 
 using nlohmann::json;
 
-hdf5::file::File createInMemoryTestFile(std::string const &Filename, bool OnDisk = false) {
+hdf5::file::File createInMemoryTestFile(std::string const &Filename,
+                                        bool OnDisk = false) {
   hdf5::property::FileCreationList FCPL;
   hdf5::property::FileAccessList FAPL;
   if (!OnDisk) {

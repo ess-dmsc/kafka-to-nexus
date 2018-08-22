@@ -197,15 +197,13 @@ struct WriterFactoryScalarString : public WriterFactory {
                FileWriter::Schemas::f142::Value ValueUnionID,
                CollectiveQueue *cq, HDFIDStore *HDFStore) override {
     return std::unique_ptr<WriterTypedBase>(
-        new WriterScalarString(Group, Name, ValueUnionID, cq,
-                                                HDFStore));
+        new WriterScalarString(Group, Name, ValueUnionID, cq, HDFStore));
   }
 
   FileWriter::Schemas::f142::Value getValueUnionID() override {
     return ValueUnionID;
   }
 };
-
 }
 }
 }
