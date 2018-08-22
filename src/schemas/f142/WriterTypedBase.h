@@ -9,7 +9,7 @@ namespace f142 {
 
 class WriterTypedBase {
 public:
-  virtual ~WriterTypedBase() {}
+  virtual ~WriterTypedBase() = default;
   virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
 };
 }

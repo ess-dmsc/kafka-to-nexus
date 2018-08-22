@@ -14,7 +14,6 @@ public:
   WriterArray(hdf5::node::Group, std::string const &source_name, hsize_t ncols,
               Value fb_value_type_id, CollectiveQueue *cq,
               HDFIDStore *hdf_store);
-  ~WriterArray() override {}
   h5::append_ret write_impl(FBUF const *fbuf) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
   Value _fb_value_type_id = Value::NONE;
