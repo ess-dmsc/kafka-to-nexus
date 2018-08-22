@@ -125,7 +125,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
           find<std::string>("source", ConfigurationStreamJson)) {
     SourceName = SourceNameMaybe.inner();
   } else {
-    LOG(Sev::Error, "ket \"source\" is not specified in json command");
+    LOG(Sev::Error, "Key \"source\" is not specified in json command");
     return;
   }
 

@@ -52,25 +52,25 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
 }
 
 template <typename DT, typename FV>
-h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *fbuf) {
+h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *Buffer) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
-  auto vt = fbuf->value_type();
-  if (vt == Value::NONE || vt != _fb_value_type_id) {
-    Result.ErrorString =
-        fmt::format("vt == Value::NONE || vt != _fb_value_type_id");
+  auto ValueType = Buffer->value_type();
+  if (ValueType == Value::NONE || ValueType != _fb_value_type_id) {
+    Result.ErrorString = fmt::format(
+        "ValueType == Value::NONE || ValueType != _fb_value_type_id");
     return Result;
   }
-  auto v1 = (FV const *)fbuf->value();
-  if (!v1) {
+  auto ValueMember = (FV const *)Buffer->value();
+  if (!ValueMember) {
     Result.ErrorString = fmt::format("value() in flatbuffer is nullptr");
     return Result;
   }
-  auto v2 = v1->value();
+  auto Value = ValueMember->value();
   if (!this->ds) {
     Result.ErrorString = fmt::format("Dataset is nullptr");
     return Result;
   }
-  return this->ds->append_data_1d(&v2, 1);
+  return this->ds->append_data_1d(&Value, 1);
 }
 }
 }
