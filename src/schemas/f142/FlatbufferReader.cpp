@@ -7,8 +7,9 @@ namespace f142 {
 FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
 bool FlatbufferReader::verify(Msg const &msg) const {
-  auto veri = flatbuffers::Verifier((uint8_t *)msg.data(), msg.size());
-  return VerifyLogDataBuffer(veri);
+  auto Verifier = flatbuffers::Verifier(
+      reinterpret_cast<const uint8_t *>(msg.data()), msg.size());
+  return VerifyLogDataBuffer(Verifier);
 }
 
 std::string FlatbufferReader::source_name(Msg const &msg) const {
