@@ -354,7 +354,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   try {
     Doc = nlohmann::json::parse(Command);
   } catch (...) {
-    std::throw_with_nested(fmt::format("Can not parse command: {}", Command));
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("Can not parse command: {}", Command)));
   }
   string JobID;
   if (auto x = find<std::string>("job_id", Doc)) {
@@ -389,7 +390,8 @@ void CommandHandler::handle(std::string const &Command) {
   try {
     Doc = json::parse(Command);
   } catch (...) {
-    std::throw_with_nested(fmt::format("Can not parse command: {}", Command));
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("Can not parse command: {}", Command)));
   }
 
   if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
