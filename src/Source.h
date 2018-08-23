@@ -43,10 +43,12 @@ public:
   HDFFile *HDFFileForSWMR = nullptr;
 
 private:
-  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
+  Source(std::string sourcename, std::string SchemaID,
+         HDFWriterModule::ptr hdf_writer_module);
 
   std::string _topic;
   std::string _sourcename;
+  std::string SchemaID;
   std::unique_ptr<HDFWriterModule> _hdf_writer_module;
 
   uint64_t _processed_messages_count = 0;

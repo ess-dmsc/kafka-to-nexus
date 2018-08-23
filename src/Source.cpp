@@ -17,8 +17,9 @@ Result Result::Ok() {
   return ret;
 }
 
-Source::Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module)
-    : _sourcename(sourcename),
+Source::Source(std::string sourcename, std::string SchemaID,
+               HDFWriterModule::ptr hdf_writer_module)
+    : _sourcename(sourcename), SchemaID(SchemaID),
       _hdf_writer_module(std::move(hdf_writer_module)) {
   if (SOURCE_DO_PROCESS_MESSAGE == 0) {
     do_process_message = false;
@@ -33,6 +34,7 @@ void swap(Source &x, Source &y) {
   using std::swap;
   swap(x._topic, y._topic);
   swap(x._sourcename, y._sourcename);
+  swap(x.SchemaID, y.SchemaID);
   swap(x._hdf_writer_module, y._hdf_writer_module);
   swap(x._processed_messages_count, y._processed_messages_count);
   swap(x._cnt_msg_written, y._cnt_msg_written);
@@ -45,6 +47,11 @@ std::string const &Source::topic() const { return _topic; }
 std::string const &Source::sourcename() const { return _sourcename; }
 
 ProcessMessageResult Source::process_verified_message(Msg &msg) {
+  if (std::string(msg.data() + 4, msg.data() + 8) != SchemaID) {
+    LOG(Sev::Debug, "SchemaID: {} not accepted by source_name: {}", SchemaID,
+        _sourcename);
+    return ProcessMessageResult::ERR();
+  }
   if (!do_process_message) {
     return ProcessMessageResult::OK();
   }

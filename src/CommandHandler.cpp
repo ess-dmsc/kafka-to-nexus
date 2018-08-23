@@ -319,7 +319,8 @@ void CommandHandler::addStreamSourceToWriterModule(
         }
 
         // Create a Source instance for the stream and add to the task.
-        Source ThisSource(StreamSettings.Source, move(HDFWriterModule));
+        Source ThisSource(StreamSettings.Source, StreamSettings.Module,
+                          move(HDFWriterModule));
         ThisSource._topic = std::string(StreamSettings.Topic);
         ThisSource.do_process_message = Config.source_do_process_message;
         Task->add_source(std::move(ThisSource));
