@@ -120,6 +120,33 @@ TEST_F(DemuxerTest, Success) {
   EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
 }
 
+TEST_F(DemuxerTest, WrongFlatbufferID) {
+  std::string TestKey("temp");
+  std::string SourceName("SomeSourceName");
+  {
+    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
+        TestKey);
+  }
+  char *TestData = new char[8];
+  std::memcpy(TestData + 4, TestKey.c_str(), 4);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  ProcessMessageResult Result;
+  DemuxTopic TestDemuxer("SomeTopicName");
+  DummyWriter::ptr Writer(new DummyWriter);
+  std::string AltKey("temi");
+  Source DummySource(SourceName, AltKey, std::move(Writer));
+  TestDemuxer.add_source(std::move(DummySource));
+  ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
+  EXPECT_NO_THROW(TestDemuxer.sources().at(SourceName));
+  EXPECT_NO_THROW(Result =
+                      TestDemuxer.process_message(std::move(CurrentMessage)));
+  EXPECT_EQ(Result, ProcessMessageResult::ERR);
+  EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(1));
+  EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
+  EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
+  EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
+}
+
 TEST_F(DemuxerTest, WrongSourceName) {
   std::string TestKey("temp");
   std::string SourceName("WrongSourceName");
