@@ -225,7 +225,7 @@ TEST_F(StreamerProcessTest, MessageBeforeStartTimestamp) {
   HDFWriterModule::ptr Writer(TempWriterPtr);
   ALLOW_CALL(*TempWriterPtr, flush()).RETURN(0);
   ALLOW_CALL(*TempWriterPtr, close()).RETURN(0);
-  FileWriter::Source TestSource(SourceName, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
@@ -275,7 +275,7 @@ TEST_F(StreamerProcessTest, MessageAfterStopTimestamp) {
       .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
-  FileWriter::Source TestSource(SourceName, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
@@ -321,7 +321,7 @@ TEST_F(StreamerProcessTest, MessageTimeout) {
       .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
-  FileWriter::Source TestSource(SourceName, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));

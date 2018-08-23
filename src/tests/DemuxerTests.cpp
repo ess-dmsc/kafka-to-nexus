@@ -107,7 +107,7 @@ TEST_F(DemuxerTest, Success) {
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
-  Source DummySource(SourceName, std::move(Writer));
+  Source DummySource(SourceName, TestKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
   EXPECT_NO_THROW(TestDemuxer.sources().at(SourceName));
@@ -133,7 +133,7 @@ TEST_F(DemuxerTest, WrongSourceName) {
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
-  Source DummySource(SourceName, std::move(Writer));
+  Source DummySource(SourceName, TestKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
   EXPECT_NO_THROW(Result =
                       TestDemuxer.process_message(std::move(CurrentMessage)));
