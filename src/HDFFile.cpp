@@ -862,10 +862,14 @@ void HDFFile::close() {
     } else {
       LOG(Sev::Error, "File is not valid, skipping flush and close.");
     }
-  } catch (std::exception &e) {
+  } catch (std::exception const &E) {
+    auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
-        h5file.id().file_name().string(), hdf5::error::print_nested(e));
-    std::throw_with_nested(std::runtime_error("HDFFile failed to close!"));
+        h5file.id().file_name().string(), Trace);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
+        boost::filesystem::current_path().string(),
+        h5file.id().file_name().string(), Trace)));
   }
 }
 
@@ -877,12 +881,14 @@ void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
 
     h5file =
         hdf5::file::open(filename, hdf5::file::AccessFlags::READWRITE, fapl);
-  } catch (std::exception &e) {
-    auto message = hdf5::error::print_nested(e);
+  } catch (std::exception const &E) {
+    auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), filename, message);
-    std::throw_with_nested(std::runtime_error("HDFFile failed to reopen!"));
+        boost::filesystem::current_path().string(), filename, Trace);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "HDFFile failed to reopen.  Current Path: {}  Filename: {}  Trace:\n{}",
+        boost::filesystem::current_path().string(), filename, Trace)));
   }
 }
 
