@@ -860,7 +860,7 @@ void HDFFile::close() {
       h5file.close();
       LOG(Sev::Debug, "closed");
     } else {
-      LOG(Sev::Debug, "File is not valid, skip close.");
+      LOG(Sev::Error, "File is not valid, skipping flush and close.");
     }
   } catch (std::exception &e) {
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
