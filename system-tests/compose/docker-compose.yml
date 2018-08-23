@@ -20,8 +20,25 @@ services:
   zookeeper:
     image: zookeeper:3.4
 
+  event-producer:
+    image: screamingudder/nexus-streamer:9d8e39b
+    depends_on:
+    - kafka
+    network_mode: "host"
+    environment:
+      CONFIG_FILE: "/streamer_config.ini"
+      KAFKA_BROKER: "localhost"
+    volumes:
+    - ./config-files/streamer_config.ini:/streamer_config.ini
+
   filewriter:
     image: kafka-to-nexus:latest
     depends_on:
-      - kafka
+    - kafka
     network_mode: "host"
+    environment:
+      CONFIG_FILE: "/file_writer_config.json"
+      KAFKA_BROKER: "localhost"
+    volumes:
+    - ./config-files/file_writer_config.json:/file_writer_config.json
+    - ./output-files:/output-files

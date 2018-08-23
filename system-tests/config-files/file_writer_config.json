@@ -1,0 +1,7 @@
+{
+  "command-uri": "//localhost:9092/TEST_writerCommand",
+  "status-uri": "//localhost:9092/TEST_writerStatus",
+  "graylog-logger-address": "localhost:12201",
+  "status-master-interval": 2000,
+  "hdf-output-prefix": "/output-files/"
+}
