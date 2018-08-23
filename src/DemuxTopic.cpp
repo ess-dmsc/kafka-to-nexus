@@ -71,11 +71,14 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
     ++error_no_flatbuffer_reader;
     return ProcessMessageResult::ERR();
   }
+  if (!reader->verify(msg)) {
+    return ProcessMessageResult::ERR();
+  }
   auto srcn = reader->source_name(msg);
   LOG(Sev::Debug, "Msg is for source_name: {}", srcn);
   try {
     auto &s = _sources_map.at(srcn);
-    auto ret = s.process_message(msg);
+    auto ret = s.process_verified_message(msg);
     ++messages_processed;
     return ret;
   } catch (std::out_of_range &e) {
