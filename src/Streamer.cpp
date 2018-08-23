@@ -140,8 +140,8 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
         KafkaMessage->size()));
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning,
-        "Message that is not a valid flatbuffer encountered. The error was: {}",
-        Error.what());
+        "Message that is not a valid flatbuffer encountered (msg. offset: {}). The error was: {}",
+        KafkaMessage->getMessageOffset(), Error.what());
     return ProcessMessageResult::ERR;
   }
 

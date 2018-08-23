@@ -9,10 +9,10 @@
 
 namespace KafkaW {
 
-class ConsumerBase {
+class ConsumerInterface {
 public:
-  ConsumerBase() = default;
-  virtual ~ConsumerBase() = default;
+  ConsumerInterface() = default;
+  virtual ~ConsumerInterface() = default;
   virtual void addTopic(std::string Topic,
                         const std::chrono::milliseconds &StartTime =
                             std::chrono::milliseconds{0}) = 0;
@@ -22,7 +22,7 @@ public:
   virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
 };
 
-class Consumer : public ConsumerBase {
+class Consumer : public ConsumerInterface {
 public:
   Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;

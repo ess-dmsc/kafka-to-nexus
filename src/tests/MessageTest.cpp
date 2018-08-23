@@ -50,7 +50,7 @@ TEST_F(MessageClassTest, Success) {
   EXPECT_EQ(CurrentMessage.size(), size_t(8));
 }
 
-TEST_F(MessageClassTest, WrongKey) {
+TEST_F(MessageClassTest, WrongFlatbufferID) {
   std::string TestKey("temp");
   std::string AltTestKey("temo");
   {

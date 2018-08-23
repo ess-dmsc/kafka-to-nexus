@@ -2,11 +2,10 @@
 #include "FlatbufferReader.h"
 
 namespace FileWriter {
-FlatbufferMessage::FlatbufferMessage() : Valid(false) {}
 
-FlatbufferMessage::FlatbufferMessage(char const *const Pointer,
+FlatbufferMessage::FlatbufferMessage(char const *const BufferPtr,
                                      size_t const Size)
-    : DataPtr(Pointer), DataSize(Size) {
+    : DataPtr(BufferPtr), DataSize(Size), Valid(false) {
   extractPacketInfo();
 }
 

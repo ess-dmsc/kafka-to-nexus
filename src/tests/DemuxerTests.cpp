@@ -61,7 +61,7 @@ TEST_F(MessageTimeExtractionTest, Success) {
   EXPECT_EQ(CurrentMessage.getTimestamp(), 42ul);
 }
 
-TEST_F(MessageTimeExtractionTest, WrongKey) {
+TEST_F(MessageTimeExtractionTest, WrongFlatbufferID) {
   std::string TestKey("temp");
   std::string MessageKey("temr");
   {
