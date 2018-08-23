@@ -2,6 +2,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
 
 set(UnitTests_SRC
 UnitTests.cpp
+H5Tests.cpp
 HDFFile.cpp
 HDFFileAttributesTest.cpp
 HDFFileTestHelper.cpp
@@ -19,6 +20,7 @@ NeXusDatasets.cpp
 ReaderRegistration.cpp
 WriterRegistration.cpp
 TemplateWriterTests.cpp
+Schema_f142.cpp
 $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC

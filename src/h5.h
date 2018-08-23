@@ -28,6 +28,8 @@ struct append_ret {
   uint64_t written_bytes;
   uint64_t ix0;
   operator bool() const { return status == AppendResult::OK; }
+  // Heap allocation only in sad path, so it's fast.
+  std::string ErrorString;
 };
 
 class h5d {
@@ -47,6 +49,7 @@ public:
   void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
+  append_ret append(std::string const &String);
   std::string name;
   hdf5::node::Dataset Dataset;
   hdf5::datatype::Datatype Type;
@@ -97,6 +100,21 @@ private:
   uint64_t count_buffer_copy_bytes = 0;
   uint64_t count_append_calls = 0;
   uint64_t count_append_bytes = 0;
+};
+
+/// \brief Specialized chunked dataset for strings.
+class Chunked1DString {
+public:
+  typedef std::unique_ptr<Chunked1DString> ptr;
+  static ptr create(hdf5::node::Group loc, std::string name,
+                    hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
+                  HDFIDStore *hdf_store);
+  append_ret append(std::string const &String);
+  h5d ds;
+
+private:
+  Chunked1DString(h5d ds);
 };
 
 template <typename T> class h5d_chunked_2d;

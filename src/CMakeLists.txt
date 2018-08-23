@@ -98,6 +98,8 @@ set(kafka_to_nexus_SRC
   date/tz.cpp
   date/tzblobs.cpp
   schemas/f142/f142_rw.cpp
+  schemas/f142/FlatbufferReader.cpp
+  schemas/f142/WriterScalarString.cpp
   schemas/f142/f142_synth.cpp
   schemas/ev42/ev42_rw.cpp
   schemas/ev42/ev42_synth.cpp
@@ -155,6 +157,9 @@ set(kafka_to_nexus_INC
   schemas/ev42/ev42_rw.h
   schemas/ev42/ev42_synth.h
   schemas/f142/f142_rw.h
+  schemas/f142/WriterTypedBase.h
+  schemas/f142/WriterScalar.h
+  schemas/f142/WriterArray.h
   schemas/f142/f142_synth.h
   schemas/template/TemplateWriter.h
   CLIOptions.h
