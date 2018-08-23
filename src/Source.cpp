@@ -44,12 +44,7 @@ std::string const &Source::topic() const { return _topic; }
 
 std::string const &Source::sourcename() const { return _sourcename; }
 
-ProcessMessageResult Source::process_message(Msg &msg) {
-  auto &reader = FlatbufferReaderRegistry::find(msg);
-  if (!reader->verify(msg)) {
-    LOG(Sev::Error, "buffer not verified");
-    return ProcessMessageResult::ERR();
-  }
+ProcessMessageResult Source::process_verified_message(Msg &msg) {
   if (!do_process_message) {
     return ProcessMessageResult::OK();
   }
