@@ -2,6 +2,7 @@
 
 #include "AddReader.h"
 #include "../schemas/ev42/ev42_rw.h"
+#include "../schemas/f142/FlatbufferReader.h"
 #include "../schemas/f142/f142_rw.h"
 
 void AddF142Reader() {
