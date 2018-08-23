@@ -71,6 +71,9 @@ ProcessMessageResult DemuxTopic::process_message(Msg &&msg) {
     ++error_no_flatbuffer_reader;
     return ProcessMessageResult::ERR();
   }
+  if (!reader->verify(msg)) {
+    return ProcessMessageResult::ERR();
+  }
   auto srcn = reader->source_name(msg);
   LOG(Sev::Debug, "Msg is for source_name: {}", srcn);
   try {
