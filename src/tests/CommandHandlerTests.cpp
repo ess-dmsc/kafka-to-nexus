@@ -105,23 +105,29 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
     "children": [
       {
         "type": "group",
-        "name": "group2",
+        "name": "extra_group",
         "children": [
           {
             "type": "link",
             "name": "some_link_to_value",
-            "target": "../some_group/value"
+            "target": "../a_group/a_subgroup/value"
           }
         ]
       },
       {
         "type": "group",
-        "name": "group1",
+        "name": "a_group",
         "children": [
           {
-            "type": "dataset",
-            "name": "value",
-            "values": 42.24
+            "type": "group",
+            "name": "a_subgroup",
+            "children": [
+              {
+                "type": "dataset",
+                "name": "value",
+                "values": 42.24
+              }
+            ]
           }
         ]
       }
@@ -147,16 +153,7 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
   auto File = hdf5::file::open(Filename);
-  File.root().get_group("group1").get_dataset("value");
-  try {
-    File.root().get_group("group2").get_dataset("some_link_to_value");
-  } catch (std::runtime_error const &E) {
-    if (std::string(E.what()).find(
-            "No node [some_link_to_value] below [/group2]!") == 0) {
-      ASSERT_TRUE(false);
-    } else {
-      throw;
-    }
-  }
+  File.root().get_group("a_group").get_group("a_subgroup").get_dataset("value");
+  File.root().get_group("extra_group").get_dataset("some_link_to_value");
   // unlink(Filename.c_str());
 }
