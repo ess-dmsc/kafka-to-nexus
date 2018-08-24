@@ -7,4 +7,4 @@ Msg::~Msg() {
     OnDelete();
   }
 }
-}
+}  //namespace KafkaW

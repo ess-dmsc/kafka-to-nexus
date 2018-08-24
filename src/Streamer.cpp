@@ -47,7 +47,7 @@ FileWriter::createConsumer(std::string const TopicName,
   try {
     FileWriter::ConsumerPtr Consumer =
         std::make_unique<KafkaW::Consumer>(Options.Settings);
-    if (Options.StartTimestamp.count()) {
+    if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopic(TopicName,
                          Options.StartTimestamp - Options.BeforeStartTime);
     } else {

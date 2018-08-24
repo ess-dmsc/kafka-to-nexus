@@ -43,7 +43,7 @@ public:
   ///
   /// @remark     Throws an exception if fails (e.g. missing broker or topic)
   ///
-  Streamer(const std::string &broker, const std::string &topic_name,
+  Streamer(const std::string &Broker, const std::string &TopicName,
            const FileWriter::StreamerOptions &Opts);
   Streamer(const Streamer &) = delete;
   Streamer(Streamer &&other) = default;

@@ -29,10 +29,10 @@ PollStatus PollStatus::newWithMsg(std::unique_ptr<Msg> Msg) {
   return ret;
 }
 
-PollStatus::PollStatus(PollStatus &&x)
+PollStatus::PollStatus(PollStatus &&x) noexcept
     : state(std::move(x.state)), StoredMessage(std::move(x.StoredMessage)) {}
 
-PollStatus &PollStatus::operator=(PollStatus &&x) {
+PollStatus &PollStatus::operator=(PollStatus &&x) noexcept {
   reset();
   std::swap(state, x.state);
   std::swap(StoredMessage, x.StoredMessage);
@@ -63,4 +63,4 @@ std::unique_ptr<Msg> PollStatus::isMsg() {
   }
   return nullptr;
 }
-}
+} // namespace KafkaW

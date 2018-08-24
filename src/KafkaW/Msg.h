@@ -30,4 +30,4 @@ private:
   std::function<void()> OnDelete;
   std::int64_t MessageOffset{0};
 };
-}
+} //namespace KafkaW
