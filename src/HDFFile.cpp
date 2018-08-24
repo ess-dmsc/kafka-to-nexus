@@ -965,10 +965,81 @@ void HDFFile::flush() {
   }
 }
 
+static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
+  if (!Json.is_object()) {
+    throw std::runtime_error(fmt::format(
+        "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));
+  }
+  auto ChildrenIter = Json.find("children");
+  if (ChildrenIter == Json.end()) {
+    return;
+  }
+  auto &Children = *ChildrenIter;
+  if (!Children.is_array()) {
+    throw std::runtime_error("HDFFile addLinks: \"children\" must be an array");
+  }
+  for (auto const &Child : Children) {
+    if (!Child.is_object()) {
+      continue;
+    }
+    if (Child.find("type") == Child.end()) {
+      continue;
+    }
+    if (Child.at("type") != "group") {
+      continue;
+    }
+    if (Child.find("name") == Child.end()) {
+      continue;
+    }
+    auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
+    addLinks(ChildGroup, Child);
+  }
+  for (auto const &Child : Children) {
+    if (!Child.is_object()) {
+      continue;
+    }
+    if (Child.find("type") == Child.end()) {
+      continue;
+    }
+    if (Child.at("type") != "link") {
+      continue;
+    }
+    if (Child.find("name") == Child.end()) {
+      continue;
+    }
+    if (Child.find("target") == Child.end()) {
+      continue;
+    }
+    auto LinkName = Child.at("name").get<std::string>();
+    auto Target = Child.at("target").get<std::string>();
+    auto GroupBase = Group;
+    auto TargetBase = Target;
+    while (TargetBase.find("../") == 0) {
+      TargetBase = TargetBase.substr(3);
+      GroupBase = GroupBase.link().parent();
+    }
+    auto TargetID =
+        H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+    if (TargetID < 0) {
+      throw std::runtime_error(fmt::format(
+          "can not find target object for link target: {}  in group: {}",
+          Target, std::string(Group.link().path())));
+    }
+    if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), LinkName.c_str(),
+                    H5P_DEFAULT, H5P_DEFAULT)) {
+      throw std::runtime_error(fmt::format(
+          "can not create link name: {}  in group: {}  to target: {}", LinkName,
+          std::string(Group.link().path()), Target));
+    }
+  }
+}
+
 void HDFFile::finalize() {
   LOG(Sev::Debug, "HDFFile::finalize");
   if (H5File.is_valid()) {
     try {
+      auto Group = H5File.root();
+      addLinks(Group, NexusStructure);
     } catch (...) {
       std::throw_with_nested(
           std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
