@@ -148,6 +148,15 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
             static_cast<size_t>(0));
   auto File = hdf5::file::open(Filename);
   File.root().get_group("group1").get_dataset("value");
-  File.root().get_group("group2");
+  try {
+    File.root().get_group("group2").get_dataset("some_link_to_value");
+  } catch (std::runtime_error const &E) {
+    if (std::string(E.what()).find(
+            "No node [some_link_to_value] below [/group2]!") == 0) {
+      ASSERT_TRUE(false);
+    } else {
+      throw;
+    }
+  }
   // unlink(Filename.c_str());
 }
