@@ -39,6 +39,10 @@ public:
   HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,
                                      bool DoFlushEachWrite) override;
 
+  ~WriterTyped() override;
+  int close() override;
+  int copyLatestToData();
+
 private:
   Shape<EdgeType> TheShape;
   std::string CreatedFromJson;
@@ -64,7 +68,98 @@ private:
 
   std::map<uint64_t, HistogramRecord> HistogramRecords;
   std::vector<HistogramRecord> HistogramRecordsFreed;
+
+  size_t ChunkBytes = 1 * 1024 * 1024;
 };
+
+template <typename DataType, typename EdgeType, typename ErrorType>
+WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
+  LOG(Sev::Debug, "WriterTyped dtor");
+}
+
+template <typename DataType, typename EdgeType, typename ErrorType>
+int WriterTyped<DataType, EdgeType, ErrorType>::close() {
+  return copyLatestToData();
+}
+
+template <typename DataType, typename EdgeType, typename ErrorType>
+int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData() {
+  LOG(Sev::Debug, "WriterTyped copyLatestToData");
+  if (Dataset.is_valid()) {
+    auto Type = hdf5::datatype::create<DataType>().native_type();
+    auto SpaceIn = hdf5::dataspace::Simple(Dataset.dataspace());
+    auto Dims = SpaceIn.current_dimensions();
+    auto Offset = Dims;
+    auto Block = Dims;
+    Offset.at(0) = Dims.at(0) - 1;
+    for (size_t I = 1; I < Offset.size(); ++I) {
+      Offset.at(I) = 0;
+    }
+    Block.at(0) = 1;
+    SpaceIn.selection(hdf5::dataspace::SelectionOperation::SET,
+                      hdf5::dataspace::Hyperslab(Offset, Block));
+    hdf5::Dimensions DimsMem;
+    DimsMem.resize(Dims.size());
+    for (size_t I = 0; I < Dims.size(); ++I) {
+      DimsMem.at(I) = Dims.at(I);
+    }
+    DimsMem.at(0) = 1;
+    auto SpaceMem = hdf5::dataspace::Simple(DimsMem, DimsMem);
+    std::vector<DataType> Buffer;
+    size_t N = 1;
+    for (size_t I = 0; I < DimsMem.size(); ++I) {
+      N *= DimsMem.at(I);
+    }
+    Buffer.resize(N);
+    hdf5::property::DatasetCreationList DCPL;
+    hdf5::Dimensions DimsOut;
+    hdf5::dataspace::Simple SpaceOut;
+    {
+      DimsOut.resize(DimsMem.size() - 1);
+      for (size_t I = 1; I < DimsMem.size(); ++I) {
+        DimsOut.at(I - 1) = DimsMem.at(I);
+      }
+      SpaceOut = hdf5::dataspace::Simple(DimsOut, DimsOut);
+      /*
+      hdf5::Dimensions ChunkElements(DimsOut.size());
+      ChunkElements.at(0) = ChunkBytes / Type.size();
+      for (size_t I = 1; I < DimsOut.size(); ++I) {
+        ChunkElements.at(I) = DimsOut.at(I);
+        ChunkElements.at(0) /= DimsOut.at(I);
+      }
+      if (ChunkElements.at(0) == 0) {
+        ChunkElements.at(0) = 1;
+      }
+      for (size_t I = 0; I < ChunkElements.size(); ++I) {
+        LOG(Sev::Critical, "ChunkElements.at({}) = {}", I, ChunkElements.at(I));
+      }
+      DCPL.chunk(ChunkElements);
+      */
+    }
+    bool found = false;
+    try {
+      LOG(Sev::Debug, "try to get latest dataset");
+      Dataset.link().parent().get_dataset("data");
+      found = true;
+    } catch (...) {
+      LOG(Sev::Debug, "error get latest dataset");
+    }
+    if (!found) {
+      for (size_t I = 0; I < DimsOut.size(); ++I) {
+        LOG(Sev::Debug, "I: {}: {}", I, DimsOut.at(I));
+      }
+      Dataset.link().parent().create_dataset("data", Type, SpaceOut, DCPL);
+      Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
+      LOG(Sev::Debug, "created");
+    }
+    auto Latest = Dataset.link().parent().get_dataset("data");
+    if (Dims.at(0) > 0) {
+      Dataset.read(Buffer, Type, SpaceMem, SpaceIn);
+      Latest.write(Buffer, Type, SpaceMem, SpaceOut);
+    }
+  }
+  return 0;
+}
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 typename WriterTyped<DataType, EdgeType, ErrorType>::ptr
@@ -106,6 +201,7 @@ template <typename DataType, typename EdgeType, typename ErrorType>
 void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     hdf5::node::Group &Group, size_t ChunkBytes) {
   Group.attributes.create_from("created_from_json", CreatedFromJson);
+  this->ChunkBytes = ChunkBytes;
   auto Type = hdf5::datatype::create<DataType>().native_type();
   hdf5::dataspace::Simple Space;
   {
@@ -133,6 +229,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     DCPL.chunk(ChunkElements);
   }
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
+  copyLatestToData();
   DatasetErrors = Group.create_dataset(
       "errors", hdf5::datatype::create<ErrorType>().native_type(), Space, DCPL);
   {

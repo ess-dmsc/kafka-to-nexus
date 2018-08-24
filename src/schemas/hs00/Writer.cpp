@@ -46,7 +46,12 @@ Writer::write(FlatbufferMessage const &Message) {
 
 int32_t Writer::flush() { return 0; }
 
-int32_t Writer::close() { return 0; }
+int32_t Writer::close() {
+  if (!TheWriterUntyped) {
+    throw std::runtime_error("TheWriterUntyped is not initialized.");
+  }
+  return TheWriterUntyped->close();
+}
 
 void Writer::enable_cq(CollectiveQueue *, HDFIDStore *, int) {}
 

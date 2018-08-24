@@ -435,6 +435,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
     }
     ASSERT_TRUE(X.is_OK());
   }
+  Writer->close();
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 3u);
