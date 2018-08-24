@@ -19,8 +19,7 @@ Result Result::Ok() {
 
 Source::Source(std::string const &Name, std::string const &ID,
                HDFWriterModule::ptr WriterModule)
-    : SourceName(Name), SchemaID(ID),
-      HDFWriterModule(std::move(WriterModule)) {
+    : SourceName(Name), SchemaID(ID), HDFWriterModule(std::move(WriterModule)) {
   if (SOURCE_DO_PROCESS_MESSAGE == 0) {
     do_process_message = false;
   }

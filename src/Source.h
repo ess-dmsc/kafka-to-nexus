@@ -30,7 +30,7 @@ private:
 /// for only one sourcename.
 class Source final {
 public:
-  Source(std::string const &Name, std::string const  &ID,
+  Source(std::string const &Name, std::string const &ID,
          HDFWriterModule::ptr WriterModule);
   Source(Source &&) noexcept;
   ~Source();
