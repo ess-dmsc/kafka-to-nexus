@@ -456,6 +456,7 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
   if (DoFlushEachWrite) {
     Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
   }
+  LOG(Sev::Debug, "hs00 -------------------------------   DONE");
   return HDFWriterModule::WriteResult::OK();
 }
 }
