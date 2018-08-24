@@ -14,8 +14,7 @@ public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
   virtual void addTopic(std::string Topic,
-                        const std::chrono::milliseconds &StartTime =
-                            std::chrono::milliseconds{0}) = 0;
+                        const std::chrono::milliseconds &StartTime) = 0;
   virtual PollStatus poll() = 0;
   virtual void dumpCurrentSubscription() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
@@ -27,7 +26,7 @@ public:
   Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
-  virtual ~Consumer();
+  ~Consumer() override;
   void init();
   void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
                                        std::chrono::milliseconds{0}) override;

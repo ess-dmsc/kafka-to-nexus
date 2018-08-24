@@ -36,7 +36,7 @@ public:
 
   void SetUp() override {
     ASSERT_NE(RawBuffer.get(), nullptr);
-    ReaderUnderTest.reset(new senv::SampleEnvironmentDataGuard());
+    ReaderUnderTest = std::make_unique<senv::SampleEnvironmentDataGuard>();
     std::map<std::string, ReaderPtr> &Readers =
         FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();

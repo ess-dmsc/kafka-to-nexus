@@ -10,13 +10,10 @@ std::chrono::milliseconds systemTime() {
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime) {
-  if (Stoptime.count() > 0 and
-      static_cast<std::int64_t>(MessageTimestamp) >
-          std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
-              .count()) {
-    return true;
-  }
-  return false;
+  return (Stoptime.count() > 0 and
+          static_cast<std::int64_t>(MessageTimestamp) >
+              std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
+                  .count());
 }
 } // namespace FileWriter
 
@@ -135,9 +132,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   auto KafkaMessage = Poll.isMsg();
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message.reset(new FlatbufferMessage(
+    Message = std::make_unique<FlatbufferMessage>(
         reinterpret_cast<const char *>(KafkaMessage->data()),
-        KafkaMessage->size()));
+        KafkaMessage->size());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
@@ -176,8 +173,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   MessageInfo.newMessage(Message->size());
 
   // Write the message. Log any error and return the result of processing
-  ProcessMessageResult result =
-      MessageProcessor.process_message(*Message.get());
+  ProcessMessageResult result = MessageProcessor.process_message(*Message);
   LOG(Sev::Debug, "Processed: {}::{}", MessageProcessor.topic(),
       Message->getSourceName());
   if (ProcessMessageResult::OK != result) {

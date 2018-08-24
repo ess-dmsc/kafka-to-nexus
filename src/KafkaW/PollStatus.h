@@ -18,7 +18,7 @@ public:
   static PollStatus EOP();
   static PollStatus Empty();
   static PollStatus newWithMsg(std::unique_ptr<Msg> x);
-  PollStatus(PollStatus &&);
+  PollStatus(PollStatus &&) noexcept;
   PollStatus &operator=(PollStatus &&);
   ~PollStatus();
   void reset();

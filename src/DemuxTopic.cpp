@@ -6,7 +6,7 @@
 
 namespace FileWriter {
 
-DemuxTopic::DemuxTopic(std::string TopicName) : Topic(TopicName) {}
+DemuxTopic::DemuxTopic(std::string TopicName) : Topic(std::move(TopicName)) {}
 
 DemuxTopic::~DemuxTopic() { LOG(Sev::Debug, "dtor"); }
 
