@@ -191,6 +191,7 @@ herr_t visitor_show_name(hid_t oid, const char *name, const H5O_info_t *oi,
 
 HDFFile::~HDFFile() {
   try {
+    finalize();
     close();
   }
   // we do this to prevent destructor from throwing
@@ -824,9 +825,9 @@ void HDFFile::checkHDFVersion() {
 
 extern "C" char const GIT_COMMIT[];
 
-void HDFFile::init(const std::string &Filename,
-                   const nlohmann::json &NexusStructure,
-                   const nlohmann::json &ConfigFile,
+void HDFFile::init(std::string const &Filename,
+                   nlohmann::json const &NexusStructure,
+                   nlohmann::json const &ConfigFile,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
   if (std::ifstream(Filename).good()) {
     // File exists already
@@ -855,6 +856,7 @@ void HDFFile::init(const std::string &Filename,
         hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
+  this->NexusStructure = NexusStructure;
 }
 
 void HDFFile::init(const std::string &NexusStructure,
@@ -960,6 +962,17 @@ void HDFFile::flush() {
   } catch (...) {
     std::throw_with_nested(
         std::runtime_error("HDFFile failed to flush with unknown exception"));
+  }
+}
+
+void HDFFile::finalize() {
+  LOG(Sev::Debug, "HDFFile::finalize");
+  if (H5File.is_valid()) {
+    try {
+    } catch (...) {
+      std::throw_with_nested(
+          std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
+    }
   }
 }
 

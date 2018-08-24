@@ -39,6 +39,7 @@ public:
 
   void flush();
   void close();
+  void finalize();
 
   static std::string h5VersionStringLinked();
   static void writeAttributes(hdf5::node::Node &Node,
@@ -123,6 +124,7 @@ private:
                            nlohmann::json const &Values);
 
   bool SWMREnabled = false;
+  nlohmann::json NexusStructure;
 
   using CLOCK = std::chrono::steady_clock;
   std::chrono::milliseconds SWMRFlushInterval{10000};
