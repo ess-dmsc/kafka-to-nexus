@@ -87,3 +87,67 @@ TEST_F(CommandHandler_Testing, OpenFileInNonSWMRMode) {
 TEST_F(CommandHandler_Testing, OpenFileInSWMRMode) {
   createFileWithOptionalSWMR(true);
 }
+
+TEST_F(CommandHandler_Testing, CreateHDFLinks) {
+  std::string Filename("Test.CommandHandler_Testing.CreateHDFLinks");
+  unlink(Filename.c_str());
+  MainOpt MainOpt;
+  CommandHandler CommandHandler(MainOpt, nullptr);
+  auto Command = json::parse(R""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "tmp-dummy-hdf"
+  },
+  "job_id": "vwa98nv983qn98snev",
+  "broker": "//localhost:202020",
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "group2",
+        "children": [
+          {
+            "type": "link",
+            "name": "some_link_to_value",
+            "target": "../some_group/value"
+          }
+        ]
+      },
+      {
+        "type": "group",
+        "name": "group1",
+        "children": [
+          {
+            "type": "dataset",
+            "name": "value",
+            "values": 42.24
+          }
+        ]
+      }
+    ]
+  }
+}
+  )"");
+  Command["file_attributes"]["file_name"] = Filename;
+  auto CommandString = Command.dump();
+  CommandHandler.handle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
+            static_cast<size_t>(1));
+  auto CommandStop = json::parse(R""(
+{
+  "cmd": "file_writer_tasks_clear_all",
+  "recv_type": "FileWriter"
+}
+  )"");
+  CommandString = CommandStop.dump();
+  CommandHandler.handle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
+            static_cast<size_t>(0));
+  auto File = hdf5::file::open(Filename);
+  File.root().get_group("group1").get_dataset("value");
+  File.root().get_group("group2");
+  // unlink(Filename.c_str());
+}
