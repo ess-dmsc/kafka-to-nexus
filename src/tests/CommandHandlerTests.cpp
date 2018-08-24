@@ -165,4 +165,13 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   File.root().get_group("group1").get_dataset("value");
   File.root().get_group("group2");
   unlink(Filename.c_str());
+  try {
+    File.root().get_group("group2").get_dataset("some_link_to_value");
+  } catch (std::runtime_error const &E) {
+    if (std::string(E.what()).find(
+            "No node [some_link_to_value] below [/group2]!") == 0) {
+    } else {
+      ASSERT_TRUE(false);
+    }
+  }
 }
