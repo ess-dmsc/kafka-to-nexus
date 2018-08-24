@@ -144,6 +144,7 @@ herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
 
 HDFFile::~HDFFile() {
   try {
+    finalize();
     close();
   }
   // we do this to prevent destructor from throwing
@@ -785,7 +786,7 @@ void HDFFile::check_hdf_version() {
 
 extern "C" char const GIT_COMMIT[];
 
-void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
+void HDFFile::init(std::string filename, nlohmann::json const &NexusStructure,
                    nlohmann::json const &config_file,
                    std::vector<StreamHDFInfo> &stream_hdf_info,
                    bool UseHDFSWMR) {
@@ -808,7 +809,7 @@ void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
       h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
                                   fcpl, fapl);
     }
-    init(nexus_structure, stream_hdf_info);
+    init(NexusStructure, stream_hdf_info);
   } catch (std::exception &e) {
     LOG(Sev::Error,
         "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
@@ -816,6 +817,7 @@ void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
         hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
+  this->NexusStructure = NexusStructure;
 }
 
 void HDFFile::init(const std::string &nexus_structure,
@@ -921,6 +923,17 @@ void HDFFile::flush() {
   } catch (...) {
     std::throw_with_nested(
         std::runtime_error("HDFFile failed to flush with unknown exception"));
+  }
+}
+
+void HDFFile::finalize() {
+  LOG(Sev::Critical, "HDFFile::finalize");
+  if (h5file.is_valid()) {
+    try {
+    } catch (...) {
+      std::throw_with_nested(
+          std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
+    }
   }
 }
 
