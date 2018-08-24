@@ -18,6 +18,7 @@ public:
   std::string getLabel() const;
   std::string getUnit() const;
   std::vector<EdgeType> const &getEdges() const;
+  std::string getDatasetName() const;
 
 private:
   size_t Size = 0;

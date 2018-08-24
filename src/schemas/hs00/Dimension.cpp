@@ -49,6 +49,11 @@ std::vector<EdgeType> const &Dimension<EdgeType>::getEdges() const {
   return Edges;
 }
 
+template <typename EdgeType>
+std::string Dimension<EdgeType>::getDatasetName() const {
+  return DatasetName;
+}
+
 template size_t Dimension<uint32_t>::getSize() const;
 template size_t Dimension<uint64_t>::getSize() const;
 template size_t Dimension<double>::getSize() const;
@@ -70,6 +75,10 @@ Dimension<uint32_t>::createFromJson(json const &Json);
 template Dimension<uint64_t>
 Dimension<uint64_t>::createFromJson(json const &Json);
 template Dimension<double> Dimension<double>::createFromJson(json const &Json);
+
+template std::string Dimension<uint32_t>::getDatasetName() const;
+template std::string Dimension<uint64_t>::getDatasetName() const;
+template std::string Dimension<double>::getDatasetName() const;
 }
 }
 }

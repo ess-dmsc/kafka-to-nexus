@@ -112,7 +112,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     auto const &Dims = TheShape.getDimensions();
     std::vector<hsize_t> SizeNow{0};
     std::vector<hsize_t> SizeMax{H5S_UNLIMITED};
-    for (auto Dim : Dims) {
+    for (auto const &Dim : Dims) {
       SizeNow.push_back(Dim.getSize());
       SizeMax.push_back(Dim.getSize());
     }
@@ -158,6 +158,29 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
         hdf5::datatype::create<std::string>().native_type());
     Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     DatasetInfo = Group.create_dataset("info", Type, Space, DCPL);
+  }
+  uint64_t DimId = 0;
+  for (auto const &Dim : TheShape.getDimensions()) {
+    hdf5::property::DatasetCreationList DCPL;
+    auto SpaceFile =
+        hdf5::dataspace::Simple({Dim.getSize() + 1}, {Dim.getSize() + 1});
+    auto SpaceMem =
+        hdf5::dataspace::Simple({Dim.getSize() + 1}, {Dim.getSize() + 1});
+    auto TypeMem = hdf5::datatype::create<EdgeType>().native_type();
+    auto Dataset =
+        Group.create_dataset(Dim.getDatasetName(), TypeMem, SpaceFile, DCPL);
+    Dataset.write(Dim.getEdges(), TypeMem, SpaceMem, SpaceFile);
+    hdf5::property::AttributeCreationList ACPL;
+    Dataset.attributes.create_from("axis", 1 + DimId);
+    {
+      auto TypeUTF8 = hdf5::datatype::String(
+          hdf5::datatype::create<std::string>().native_type());
+      TypeUTF8.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+      auto SpaceMem = hdf5::dataspace::Simple({1}, {1});
+      Dataset.attributes.create("units", TypeUTF8, SpaceMem)
+          .write(Dim.getUnit());
+    }
+    ++DimId;
   }
 }
 
