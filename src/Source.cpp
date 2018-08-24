@@ -31,15 +31,14 @@ Source::~Source() { close_writer_module(); }
 Source::Source(Source &&x) noexcept { swap(*this, x); }
 
 void swap(Source &x, Source &y) {
-  using std::swap;
-  swap(x._topic, y._topic);
-  swap(x._sourcename, y._sourcename);
-  swap(x.SchemaID, y.SchemaID);
-  swap(x._hdf_writer_module, y._hdf_writer_module);
-  swap(x._processed_messages_count, y._processed_messages_count);
-  swap(x._cnt_msg_written, y._cnt_msg_written);
-  swap(x.do_process_message, y.do_process_message);
-  swap(x.is_parallel, y.is_parallel);
+  std::swap(x._topic, y._topic);
+  std::swap(x._sourcename, y._sourcename);
+  std::swap(x.SchemaID, y.SchemaID);
+  std::swap(x._hdf_writer_module, y._hdf_writer_module);
+  std::swap(x._processed_messages_count, y._processed_messages_count);
+  std::swap(x._cnt_msg_written, y._cnt_msg_written);
+  std::swap(x.do_process_message, y.do_process_message);
+  std::swap(x.is_parallel, y.is_parallel);
 }
 
 std::string const &Source::topic() const { return _topic; }

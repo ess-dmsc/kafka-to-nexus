@@ -44,10 +44,9 @@ public:
   /// list
   ///
   Source &add_source(Source &&source) {
-    using std::move;
     auto k = source.sourcename();
-    std::pair<std::string, Source> v{k, move(source)};
-    return TopicSources.insert(move(v)).first->second;
+    std::pair<std::string, Source> v{k, std::move(source)};
+    return TopicSources.insert(std::move(v)).first->second;
   }
 
   /// Counts the number of processed message.

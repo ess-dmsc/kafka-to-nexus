@@ -13,9 +13,8 @@ DemuxTopic::~DemuxTopic() { LOG(Sev::Debug, "dtor"); }
 DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
 
 void swap(DemuxTopic &x, DemuxTopic &y) {
-  using std::swap;
-  swap(x.Topic, y.Topic);
-  swap(x.TopicSources, y.TopicSources);
+  std::swap(x.Topic, y.Topic);
+  std::swap(x.TopicSources, y.TopicSources);
 }
 
 std::string const &DemuxTopic::topic() const { return Topic; }
