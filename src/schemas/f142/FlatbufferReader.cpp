@@ -6,14 +6,15 @@ namespace f142 {
 
 FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
-bool FlatbufferReader::verify(Msg const &msg) const {
+bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(
-      reinterpret_cast<const uint8_t *>(msg.data()), msg.size());
+      reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
   return VerifyLogDataBuffer(Verifier);
 }
 
-std::string FlatbufferReader::source_name(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data());
+std::string
+FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
+  auto fbuf = get_fbuf(Message.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
     LOG(Sev::Warning, "message has no source name");
@@ -22,8 +23,8 @@ std::string FlatbufferReader::source_name(Msg const &msg) const {
   return s1->str();
 }
 
-uint64_t FlatbufferReader::timestamp(Msg const &msg) const {
-  auto fbuf = get_fbuf(msg.data());
+uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
+  auto fbuf = get_fbuf(Message.data());
   return fbuf->timestamp();
 }
 

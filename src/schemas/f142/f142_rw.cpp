@@ -253,8 +253,9 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 
 /// Inspect the incoming FlatBuffer from the message and write the content to
 /// datasets.
-HDFWriterModule::WriteResult HDFWriterModule::write(Msg const &msg) {
-  auto fbuf = get_fbuf(msg.data());
+HDFWriterModule::WriteResult
+HDFWriterModule::write(FlatbufferMessage const &Message) {
+  auto fbuf = get_fbuf(Message.data());
   if (!ValueWriter) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {

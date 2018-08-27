@@ -9,21 +9,31 @@
 
 namespace KafkaW {
 
-class Inspect;
+class ConsumerInterface {
+public:
+  ConsumerInterface() = default;
+  virtual ~ConsumerInterface() = default;
+  virtual void addTopic(std::string Topic,
+                        const std::chrono::milliseconds &StartTime) = 0;
+  virtual PollStatus poll() = 0;
+  virtual void dumpCurrentSubscription() = 0;
+  virtual bool topicPresent(const std::string &Topic) = 0;
+  virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
+};
 
-class Consumer {
+class Consumer : public ConsumerInterface {
 public:
   Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
-  ~Consumer();
+  ~Consumer() override;
   void init();
   void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
-                                       std::chrono::milliseconds{0});
-  void dumpCurrentSubscription();
-  bool topicPresent(const std::string &Topic);
-  int32_t queryNumberOfPartitions(const std::string &TopicName);
-  PollStatus poll();
+                                       std::chrono::milliseconds{0}) override;
+  void dumpCurrentSubscription() override;
+  bool topicPresent(const std::string &Topic) override;
+  int32_t queryNumberOfPartitions(const std::string &TopicName) override;
+  PollStatus poll() override;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>

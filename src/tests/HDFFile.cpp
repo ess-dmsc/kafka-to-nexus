@@ -6,6 +6,7 @@
 #include "../json.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
+#include "AddReader.h"
 #include "HDFFileTestHelper.h"
 #include <array>
 #include <chrono>
@@ -419,6 +420,7 @@ public:
   }
 
   static void data_ev42() {
+    AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -657,19 +659,21 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            auto res = fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg));
-            if (res.is_ERR()) {
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            auto res =
+                fwt->demuxers().at(0).process_message(std::move(TempMessage));
+            if (res == FileWriter::ProcessMessageResult::ERR) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
               break;
             }
-            if (res.is_ALL_SOURCES_FULL()) {
+            if (res == FileWriter::ProcessMessageResult::ALL_SOURCES_FULL) {
               LOG(Sev::Error, "is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
-            if (res.is_STOP()) {
+            if (res == FileWriter::ProcessMessageResult::STOP) {
               LOG(Sev::Error, "is_STOP");
               do_run = false;
               break;
@@ -814,8 +818,8 @@ public:
   };
 
   static void data_f142() {
+    AddF142Reader();
     MainOpt main_opt = getTestOptions();
-
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
       "nexus": {
@@ -992,7 +996,9 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg));
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }
         }

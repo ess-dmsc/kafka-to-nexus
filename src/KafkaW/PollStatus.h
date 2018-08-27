@@ -18,8 +18,8 @@ public:
   static PollStatus EOP();
   static PollStatus Empty();
   static PollStatus newWithMsg(std::unique_ptr<Msg> x);
-  PollStatus(PollStatus &&);
-  PollStatus &operator=(PollStatus &&);
+  PollStatus(PollStatus &&) noexcept;
+  PollStatus &operator=(PollStatus &&) noexcept;
   ~PollStatus();
   void reset();
   PollStatus();
@@ -31,6 +31,6 @@ public:
 
 private:
   PollStatusContent state = PollStatusContent::Err;
-  void *data = nullptr;
+  std::unique_ptr<Msg> StoredMessage{nullptr};
 };
 }
