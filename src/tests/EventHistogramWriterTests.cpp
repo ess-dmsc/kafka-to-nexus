@@ -456,6 +456,9 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   auto Writer = Writer::create();
   auto V1 = gulp("/s/amor-hs00-stream");
   auto V2 = gulp("/s/amor-msg");
+  if (V1.empty() && V2.empty()) {
+    return;
+  }
   std::string JsonBulk(V1.data(), V1.data() + V1.size());
   Writer->parse_config(JsonBulk, "{}");
   ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
