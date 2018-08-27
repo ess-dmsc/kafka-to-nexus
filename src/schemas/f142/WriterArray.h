@@ -15,6 +15,7 @@ public:
               Value fb_value_type_id, CollectiveQueue *cq,
               HDFIDStore *hdf_store);
   h5::append_ret write_impl(FBUF const *fbuf) override;
+  void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_2d<DT>> ds;
   Value _fb_value_type_id = Value::NONE;
 };
@@ -86,6 +87,43 @@ h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
     return Result;
   }
   return this->ds->append_data_2d(v2->data(), v2->size());
+}
+
+template <typename DT, typename FV>
+void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
+  LOG(Sev::Critical, "LATEST WRITER");
+  auto &Dataset = ds->ds.Dataset;
+  auto Type = Dataset.datatype();
+  auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
+  auto DimSrc = SpaceSrc.current_dimensions();
+  if (DimSrc.size() < 2) {
+    throw std::runtime_error("unexpected dimensions");
+  }
+  auto DimMem = DimSrc;
+  for (size_t I = 1; I < DimSrc.size(); ++I) {
+    DimMem.at(I - 1) = DimMem.at(I);
+  }
+  DimMem.resize(DimMem.size() - 1);
+  size_t N = 1;
+  for (size_t I = 0; I < DimMem.size(); ++I) {
+    N *= DimMem.at(I);
+  }
+  hdf5::Dimensions Offset;
+  Offset.resize(DimSrc.size());
+  for (size_t I = 0; I < Offset.size(); ++I) {
+    Offset.at(I) = 0;
+  }
+  Offset.at(0) = ds->ds.snow.at(0) - 1;
+  hdf5::Dimensions Block = DimSrc;
+  Block.at(0) = 1;
+  SpaceSrc.selection(hdf5::dataspace::SelectionOperation::SET,
+                     hdf5::dataspace::Hyperslab(Offset, Block));
+  std::vector<char> Buffer(N * Type.size());
+  hdf5::dataspace::Simple SpaceMem(DimMem);
+  Dataset.read(Buffer, Type, SpaceMem, SpaceSrc);
+  auto Latest =
+      Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
+  Latest.write(Buffer, Type, SpaceMem, SpaceMem);
 }
 }
 }
