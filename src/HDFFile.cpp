@@ -848,6 +848,7 @@ void HDFFile::init(std::string const &Filename,
       H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
                                   fcpl, fapl);
     }
+    this->Filename = Filename;
     init(NexusStructure, StreamHDFInfo);
   } catch (std::exception const &E) {
     LOG(Sev::Error,
@@ -919,6 +920,10 @@ void HDFFile::close() {
       LOG(Sev::Debug, "closing");
       H5File.close();
       LOG(Sev::Debug, "closed");
+      // Make sure that h5file.is_valid() == false from now on:
+      H5File = hdf5::file::File();
+    } else {
+      LOG(Sev::Error, "File is not valid, skipping flush and close.");
     }
   } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
@@ -936,10 +941,14 @@ void HDFFile::reopen(std::string const &Filename) {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     setCommonProps(fcpl, fapl);
-
-    H5File =
-        hdf5::file::open(Filename, hdf5::file::AccessFlags::READWRITE, fapl);
-  } catch (const std::exception &E) {
+    hdf5::file::AccessFlagsBase FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+        hdf5::file::AccessFlags::READWRITE);
+    if (SWMREnabled) {
+      FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
+          hdf5::file::AccessFlags::SWMR_WRITE);
+    }
+    H5File = hdf5::file::open(Filename, FAFL, fapl);
+  } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
@@ -1035,14 +1044,25 @@ static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
 
 void HDFFile::finalize() {
   LOG(Sev::Debug, "HDFFile::finalize");
-  if (H5File.is_valid()) {
-    try {
-      auto Group = H5File.root();
-      addLinks(Group, NexusStructure);
-    } catch (...) {
-      std::throw_with_nested(
-          std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
+  if (Filename.empty()) {
+    LOG(Sev::Debug, "HDFFile was never open, skip finalize.");
+    return;
+  }
+  try {
+    if (H5File.is_valid()) {
+      close();
     }
+    hdf5::property::FileCreationList FCPL;
+    hdf5::property::FileAccessList FAPL;
+    setCommonProps(FCPL, FAPL);
+    hdf5::file::AccessFlagsBase FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+        hdf5::file::AccessFlags::READWRITE);
+    H5File = hdf5::file::open(Filename, FAFL, FAPL);
+    auto Group = H5File.root();
+    addLinks(Group, NexusStructure);
+  } catch (...) {
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
   }
 }
 

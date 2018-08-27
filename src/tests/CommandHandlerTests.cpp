@@ -64,7 +64,7 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   "file_attributes": {
     "file_name": "tmp_swmr_enable.h5"
   },
-  "use_hdf_swmr": true,
+  "use_hdf_swmr": false,
   "job_id": "tmp_swmr_enable",
   "broker": "//localhost:202020",
   "nexus_structure": { "children": [] }
@@ -77,7 +77,7 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
             static_cast<size_t>(1));
   auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");
   ASSERT_EQ(Task->swmrEnabled(), UseSWMR);
-  unlink("tmp_swmr_enable.h5");
+  // unlink("tmp_swmr_enable.h5");
 }
 
 TEST_F(CommandHandler_Testing, OpenFileInNonSWMRMode) {

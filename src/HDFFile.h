@@ -124,6 +124,7 @@ private:
                            nlohmann::json const &Values);
 
   bool SWMREnabled = false;
+  std::string Filename;
   nlohmann::json NexusStructure;
 
   using CLOCK = std::chrono::steady_clock;
