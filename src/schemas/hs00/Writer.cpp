@@ -48,9 +48,13 @@ Writer::write(FlatbufferMessage const &Message) {
   return Result;
 }
 
-int32_t Writer::flush() { return 0; }
+int32_t Writer::flush() {
+  LOG(Sev::Debug, "flush");
+  return 0;
+}
 
 int32_t Writer::close() {
+  LOG(Sev::Debug, "close");
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized.");
   }

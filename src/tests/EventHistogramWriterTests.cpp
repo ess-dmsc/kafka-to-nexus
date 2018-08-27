@@ -449,7 +449,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
   // exact strategy still to be decided upon.
 }
 
-TEST(EventHistogramWriter, WriteAMORExample) {
+TEST_F(EventHistogramWriter, WriteAMORExample) {
   auto File = createFile("Test.EventHistogramWriter.WriteAMORExample",
                          FileCreationLocation::Default);
   auto Group = File.root();
@@ -462,8 +462,8 @@ TEST(EventHistogramWriter, WriteAMORExample) {
   Writer = Writer::create();
   Writer->parse_config(JsonBulk, "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
-  auto M = FileWriter::Msg::owned(reinterpret_cast<const char *>(V2.data()),
-                                  V2.size());
+  auto M = FileWriter::FlatbufferMessage(
+      reinterpret_cast<const char *>(V2.data()), V2.size());
   auto X = Writer->write(M);
   if (!X.is_OK()) {
     throw std::runtime_error(X.to_str());

@@ -86,6 +86,7 @@ template <typename DataType, typename EdgeType, typename ErrorType>
 int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData() {
   LOG(Sev::Debug, "WriterTyped copyLatestToData");
   if (Dataset.is_valid()) {
+    LOG(Sev::Debug, "Found valid dataset");
     auto Type = hdf5::datatype::create<DataType>().native_type();
     auto SpaceIn = hdf5::dataspace::Simple(Dataset.dataspace());
     auto Dims = SpaceIn.current_dimensions();
@@ -105,12 +106,6 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData() {
     }
     DimsMem.at(0) = 1;
     auto SpaceMem = hdf5::dataspace::Simple(DimsMem, DimsMem);
-    std::vector<DataType> Buffer;
-    size_t N = 1;
-    for (size_t I = 0; I < DimsMem.size(); ++I) {
-      N *= DimsMem.at(I);
-    }
-    Buffer.resize(N);
     hdf5::property::DatasetCreationList DCPL;
     hdf5::Dimensions DimsOut;
     hdf5::dataspace::Simple SpaceOut;
@@ -145,17 +140,31 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData() {
       LOG(Sev::Debug, "error get latest dataset");
     }
     if (!found) {
+      LOG(Sev::Debug, "Dataset \"data\" not yet present");
       for (size_t I = 0; I < DimsOut.size(); ++I) {
         LOG(Sev::Debug, "I: {}: {}", I, DimsOut.at(I));
       }
       Dataset.link().parent().create_dataset("data", Type, SpaceOut, DCPL);
       Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
-      LOG(Sev::Debug, "created");
+      LOG(Sev::Debug, "Dataset \"data\" created");
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {
+      std::vector<DataType> Buffer;
+      size_t N = 1;
+      for (size_t I = 0; I < DimsMem.size(); ++I) {
+        N *= DimsMem.at(I);
+      }
+      Buffer.resize(N);
       Dataset.read(Buffer, Type, SpaceMem, SpaceIn);
+      size_t S = 0;
+      for (size_t I = 0; I < Buffer.size(); ++I) {
+        S += Buffer.at(I);
+      }
+      LOG(Sev::Debug, "copy latest histogram.  sum: {}", S);
       Latest.write(Buffer, Type, SpaceMem, SpaceOut);
+    } else {
+      LOG(Sev::Debug, "No entries so far");
     }
   }
   return 0;
