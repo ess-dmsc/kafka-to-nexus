@@ -104,6 +104,11 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   "nexus_structure": {
     "children": [
       {
+        "type": "link",
+        "name": "link_at_root",
+        "target": "a_group/a_subgroup/value"
+      },
+      {
         "type": "group",
         "name": "extra_group",
         "children": [
@@ -111,6 +116,11 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
             "type": "link",
             "name": "some_link_to_value",
             "target": "../a_group/a_subgroup/value"
+          },
+          {
+            "type": "link",
+            "name": "some_link_to_a_group",
+            "target": "../a_group/a_subgroup"
           }
         ]
       },
