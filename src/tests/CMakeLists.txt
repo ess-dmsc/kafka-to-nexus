@@ -21,7 +21,6 @@ ReaderRegistration.cpp
 WriterRegistration.cpp
 TemplateWriterTests.cpp
 Schema_f142.cpp
-$<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
@@ -33,7 +32,7 @@ add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
 add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common})
-target_link_libraries(UnitTests ${GTEST_BOTH_LIBRARIES} ${libraries_common} fmt::fmt)
+target_link_libraries(UnitTests kafka_to_nexus__objects ${GTEST_BOTH_LIBRARIES})
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
