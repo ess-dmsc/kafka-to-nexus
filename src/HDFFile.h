@@ -35,7 +35,7 @@ public:
   void init(const nlohmann::json &NexusStructure,
             std::vector<StreamHDFInfo> &StreamHDFInfo);
 
-  void reopen(const std::string &Filename, const nlohmann::json &ConfigFile);
+  void reopen(std::string const &Filename);
 
   void flush();
   void close();
