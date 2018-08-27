@@ -5,6 +5,8 @@
 #include "../helper.h"
 #include "../json.h"
 #include "../schemas/f142/f142_rw.h"
+#include "AddReader.h"
+#include "FlatbufferMessage.h"
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
@@ -70,6 +72,7 @@ makeValueString(std::string Value) {
 }
 
 TEST(Schema_f142, writeScalarFloat) {
+  AddF142Reader();
   auto StreamJson = json::parse(R""({
     "source": "the_source_01",
     "writer_module": "f142",
@@ -84,9 +87,8 @@ TEST(Schema_f142, writeScalarFloat) {
     WriterModule.init_hdf(Group, "{}");
     for (auto Value : Expected) {
       auto Builder = makeValueFloat(Value);
-      auto Msg = FileWriter::Msg::owned(
-          reinterpret_cast<char *>(Builder->GetBufferPointer()),
-          Builder->GetSize());
+      auto Msg = FileWriter::FlatbufferMessage(
+          (char *)Builder->GetBufferPointer(), Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -110,6 +112,7 @@ TEST(Schema_f142, writeScalarFloat) {
 }
 
 TEST(Schema_f142, writeArrayFloat) {
+  AddF142Reader();
   using DT = float;
   auto StreamJson = json::parse(R""({
     "source": "the_source_01",
@@ -128,9 +131,8 @@ TEST(Schema_f142, writeArrayFloat) {
     WriterModule.init_hdf(Group, "{}");
     for (auto Value : Expected) {
       auto Builder = makeValue(Value);
-      auto Msg = FileWriter::Msg::owned(
-          reinterpret_cast<char *>(Builder->GetBufferPointer()),
-          Builder->GetSize());
+      auto Msg = FileWriter::FlatbufferMessage(
+          (char *)Builder->GetBufferPointer(), Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -153,6 +155,7 @@ TEST(Schema_f142, writeArrayFloat) {
 }
 
 TEST(Schema_f142, writeScalarString) {
+  AddF142Reader();
   auto StreamJson = json::parse(R""({
     "source": "the_source_01",
     "writer_module": "f142",
@@ -167,9 +170,8 @@ TEST(Schema_f142, writeScalarString) {
     WriterModule.init_hdf(Group, "{}");
     for (auto Value : Expected) {
       auto Builder = makeValueString(Value);
-      auto Msg = FileWriter::Msg::owned(
-          reinterpret_cast<char *>(Builder->GetBufferPointer()),
-          Builder->GetSize());
+      auto Msg = FileWriter::FlatbufferMessage(
+          (char *)Builder->GetBufferPointer(), Builder->GetSize());
       WriterModule.write(Msg);
     }
   }

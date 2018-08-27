@@ -50,7 +50,7 @@ double FileWriter::Status::messageThroughput(
   return 1e3 * average(Value.getMbytes().first, TimeDifference.count());
 }
 
-void FileWriter::Status::MessageInfo::message(const double &MessageSize) {
+void FileWriter::Status::MessageInfo::newMessage(const double &MessageSize) {
   std::lock_guard<std::mutex> Lock(Mutex);
   double Size = MessageSize * 1e-6;
   Mbytes += Size;

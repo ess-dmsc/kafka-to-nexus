@@ -1,5 +1,7 @@
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
 
+find_package(Trompeloeil REQUIRED)
+
 set(UnitTests_SRC
 UnitTests.cpp
 H5Tests.cpp
@@ -20,14 +22,18 @@ NeXusDatasets.cpp
 ReaderRegistration.cpp
 WriterRegistration.cpp
 TemplateWriterTests.cpp
+DemuxerTests.cpp
+MessageTest.cpp
+StreamerTest.cpp
+AddReader.cpp
 Schema_f142.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
+AddReader.h
 )
 
 add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
-
 
 add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})

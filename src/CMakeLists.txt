@@ -19,13 +19,13 @@ find_package(GitCommitExtract)
 find_package(h5cpp REQUIRED)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=${_GLIBCXX_USE_CXX11_ABI}")
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O3 -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -D_GLIBCXX_USE_NANOSLEEP")
 
 if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.3")
 else()
@@ -76,7 +76,6 @@ set(kafka_to_nexus_SRC
   Master.cpp
   CommandListener.cpp
   CommandHandler.cpp
-  TimeDifferenceFromMessage.cpp
   FileWriterTask.cpp
   Source.cpp
   DemuxTopic.cpp
@@ -95,6 +94,7 @@ set(kafka_to_nexus_SRC
   logger.cpp
   uri.cpp
   h5.cpp
+  FlatbufferMessage.cpp
   date/tz.cpp
   date/tzblobs.cpp
   MainOpt.cpp
@@ -128,6 +128,7 @@ set(kafka_to_nexus_INC
   MainOpt.h
   Master.h
   Msg.h
+  FlatbufferMessage.h
   MsgParser.h
   ProcessMessageResult.h
   Report.h
@@ -137,7 +138,7 @@ set(kafka_to_nexus_INC
   Streamer.h
   StreamerOptions.h
   StreamMaster.h
-  TimeDifferenceFromMessage.h
+  MessageTimestamp.h
   TopicReader.h
   uri.h
   date/date.h
