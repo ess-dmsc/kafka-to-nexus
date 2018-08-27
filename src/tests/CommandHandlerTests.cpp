@@ -155,5 +155,5 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   auto File = hdf5::file::open(Filename);
   File.root().get_group("a_group").get_group("a_subgroup").get_dataset("value");
   File.root().get_group("extra_group").get_dataset("some_link_to_value");
-  // unlink(Filename.c_str());
+  unlink(Filename.c_str());
 }
