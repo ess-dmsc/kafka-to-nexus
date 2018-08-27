@@ -95,7 +95,7 @@ void FileWriterTask::hdf_close() { hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
   try {
-    hdf_file.reopen(filename_full, json::object());
+    hdf_file.reopen(filename_full);
   } catch (...) {
     return -1;
   }

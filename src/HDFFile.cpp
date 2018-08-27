@@ -893,7 +893,7 @@ void HDFFile::close() {
   }
 }
 
-void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
+void HDFFile::reopen(std::string filename) {
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
