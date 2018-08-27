@@ -129,6 +129,7 @@ private:
                                        std::string const &Name,
                                        nlohmann::json const *Values);
 
+  std::string Filename;
   bool isSWMREnabled_ = false;
   nlohmann::json NexusStructure;
 

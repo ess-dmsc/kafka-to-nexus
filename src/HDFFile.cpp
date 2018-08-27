@@ -786,14 +786,14 @@ void HDFFile::check_hdf_version() {
 
 extern "C" char const GIT_COMMIT[];
 
-void HDFFile::init(std::string filename, nlohmann::json const &NexusStructure,
+void HDFFile::init(std::string Filename, nlohmann::json const &NexusStructure,
                    nlohmann::json const &config_file,
                    std::vector<StreamHDFInfo> &stream_hdf_info,
                    bool UseHDFSWMR) {
-  if (std::ifstream(filename).good()) {
+  if (std::ifstream(Filename).good()) {
     // File exists already
     throw std::runtime_error(
-        fmt::format("The file \"{}\" exists already.", filename));
+        fmt::format("The file \"{}\" exists already.", Filename));
   }
   try {
     hdf5::property::FileCreationList fcpl;
@@ -801,19 +801,20 @@ void HDFFile::init(std::string filename, nlohmann::json const &NexusStructure,
     set_common_props(fcpl, fapl);
     if (UseHDFSWMR) {
       h5file =
-          hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE |
+          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
                                            hdf5::file::AccessFlags::SWMR_WRITE,
                              fcpl, fapl);
       isSWMREnabled_ = true;
     } else {
-      h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
+      h5file = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
                                   fcpl, fapl);
     }
+    this->Filename = Filename;
     init(NexusStructure, stream_hdf_info);
   } catch (std::exception &e) {
     LOG(Sev::Error,
         "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), filename,
+        boost::filesystem::current_path().string(), Filename,
         hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
@@ -879,6 +880,8 @@ void HDFFile::close() {
       LOG(Sev::Debug, "closing");
       h5file.close();
       LOG(Sev::Debug, "closed");
+      // Make sure that h5file.is_valid() == false from now on:
+      h5file = hdf5::file::File();
     } else {
       LOG(Sev::Error, "File is not valid, skipping flush and close.");
     }
@@ -899,8 +902,13 @@ void HDFFile::reopen(std::string filename) {
     hdf5::property::FileAccessList fapl;
     set_common_props(fcpl, fapl);
 
-    h5file =
-        hdf5::file::open(filename, hdf5::file::AccessFlags::READWRITE, fapl);
+    hdf5::file::AccessFlagsBase FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+        hdf5::file::AccessFlags::READWRITE);
+    if (isSWMREnabled_) {
+      FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
+          hdf5::file::AccessFlags::SWMR_WRITE);
+    }
+    h5file = hdf5::file::open(filename, FAFL, fapl);
   } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
@@ -996,14 +1004,24 @@ static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
 }
 
 void HDFFile::finalize() {
-  if (h5file.is_valid()) {
-    try {
-      auto Group = h5file.root();
-      addLinks(Group, NexusStructure);
-    } catch (...) {
-      std::throw_with_nested(
-          std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
+  if (Filename.empty()) {
+    LOG(Sev::Debug, "File was never opened, skip finalize()");
+  }
+  try {
+    if (h5file.is_valid()) {
+      close();
     }
+    hdf5::property::FileCreationList FCPL;
+    hdf5::property::FileAccessList FAPL;
+    set_common_props(FCPL, FAPL);
+    hdf5::file::AccessFlagsBase FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+        hdf5::file::AccessFlags::READWRITE);
+    h5file = hdf5::file::open(Filename, FAFL, FAPL);
+    auto Group = h5file.root();
+    addLinks(Group, NexusStructure);
+  } catch (...) {
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
   }
 }
 
