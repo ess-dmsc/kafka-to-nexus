@@ -65,8 +65,6 @@ FileWriter::createConsumer(std::string const TopicName,
     LOG(Sev::Error, "{}", Error.what());
     return {FileWriter::Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
   }
-
-  return {FileWriter::Status::StreamerStatus::UNKNOWN_ERROR, nullptr};
 }
 
 FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
