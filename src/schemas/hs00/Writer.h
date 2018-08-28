@@ -18,7 +18,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
-  WriteResult write(Msg const &msg) override;
+  WriteResult write(FlatbufferMessage const &Message) override;
   int32_t flush() override;
   int32_t close() override;
   void enable_cq(CollectiveQueue *, HDFIDStore *, int) override;

@@ -36,7 +36,7 @@ public:
   /// writer module.
   void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes) override;
 
-  HDFWriterModule::WriteResult write(Msg const &msg,
+  HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,
                                      bool DoFlushEachWrite) override;
 
   ~WriterTyped() override;
@@ -299,7 +299,7 @@ template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 HDFWriterModule::WriteResult
-WriterTyped<DataType, EdgeType, ErrorType>::write(Msg const &Msg,
+WriterTyped<DataType, EdgeType, ErrorType>::write(FlatbufferMessage const &Message,
                                                   bool DoFlushEachWrite) {
   if (!Dataset.is_valid()) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("invalid dataset");
@@ -308,7 +308,7 @@ WriterTyped<DataType, EdgeType, ErrorType>::write(Msg const &Msg,
   if (Dims.size() < 1) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Dims.size() < 1");
   }
-  auto EvMsg = GetEventHistogram(Msg.data());
+  auto EvMsg = GetEventHistogram(Message.data());
   uint64_t Timestamp = EvMsg->timestamp();
   if (Timestamp == 0) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Timestamp == 0");

@@ -76,7 +76,7 @@ TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   const size_t MessageSizeBytes = 1024;
   MessageInfo Message;
   StreamMasterInfo sm;
-  Message.message(MessageSizeBytes);
+  Message.newMessage(MessageSizeBytes);
   sm.add(Message);
 
   FileWriter::Status::NLJSONWriter Writer;
@@ -145,7 +145,7 @@ TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
   const size_t MessageSizeBytes = 1024;
   const double NumMessages = 1.0;
   MessageInfo Message;
-  Message.message(MessageSizeBytes);
+  Message.newMessage(MessageSizeBytes);
 
   std::chrono::milliseconds SinceLastMessage{1000};
   std::string Topic{"no-topic"};
@@ -185,7 +185,7 @@ TEST(StatFunctions, messageSize) {
   const size_t MessageBytes = 1024;
   MessageInfo Message;
   for (size_t i = 0; i < NumMessages; ++i) {
-    Message.message(MessageBytes * i);
+    Message.newMessage(MessageBytes * i);
   }
   std::pair<double, double> MessageSize =
       FileWriter::Status::messageSize(Message);
@@ -199,7 +199,7 @@ TEST(StatFunctions, messageFrequency) {
   const size_t MessageBytes = 1024;
   MessageInfo Message;
   for (size_t i = 0; i < NumMessages; ++i) {
-    Message.message(MessageBytes * i);
+    Message.newMessage(MessageBytes * i);
   }
 
   double Frequency =
@@ -214,7 +214,7 @@ TEST(StatFunctions, messageThroughput) {
   const size_t MessageBytes = 1024;
   MessageInfo Message;
   for (size_t i = 0; i < NumMessages; ++i) {
-    Message.message(MessageBytes * i);
+    Message.newMessage(MessageBytes * i);
   }
 
   double Throughput =

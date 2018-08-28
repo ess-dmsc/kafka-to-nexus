@@ -27,7 +27,7 @@ public:
   virtual void createHDFStructure(hdf5::node::Group &Group,
                                   size_t ChunkBytes) = 0;
 
-  virtual HDFWriterModule::WriteResult write(Msg const &msg,
+  virtual HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,
                                              bool DoFlushEachWrite) = 0;
 
   virtual ~WriterUntyped() = default;

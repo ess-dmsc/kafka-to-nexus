@@ -1,16 +1,19 @@
 #include "Msg.h"
+#include "FlatbufferMessage.h"
 #include "helper.h"
 #include "json.h"
 #include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
 #include "schemas/hs00/Shape.h"
 #include "schemas/hs00/Slice.h"
+#include "schemas/hs00/Reader.h"
 #include "schemas/hs00/Writer.h"
 #include "schemas/hs00/WriterTyped.h"
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
+#include <HDFWriterModule.h>
 
 namespace FileWriter {
 namespace Schemas {
@@ -28,6 +31,22 @@ using FileWriter::Schemas::hs00::Slice;
 using FileWriter::Schemas::hs00::WriterTyped;
 using FileWriter::Schemas::hs00::Writer;
 
+class EventHistogramWriter : public ::testing::Test {
+public:
+  void SetUp() override {
+    using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+    std::map<std::string, ReaderPtr> &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
+    Readers.clear();
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FileWriter::Schemas::hs00::Reader>
+        RegisterIt("hs00");
+    std::map<std::string, FileWriter::HDFWriterModuleRegistry::ModuleFactory> &Writers =
+        FileWriter::HDFWriterModuleRegistry::getFactories();
+    Writers.clear();
+    { FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00"); }
+  }
+};
+
 json createTestDimensionJson() {
   return json::parse(R"""({
     "size": 4,
@@ -38,25 +57,25 @@ json createTestDimensionJson() {
   })""");
 }
 
-TEST(EventHistogramWriter, DimensionWithoutSizeThrows) {
+TEST_F(EventHistogramWriter, DimensionWithoutSizeThrows) {
   auto Json = createTestDimensionJson();
   Json.erase("size");
   ASSERT_THROW(Dimension<double>::createFromJson(Json), UnexpectedJsonInput);
 }
 
-TEST(EventHistogramWriter, DimensionWithoutLabelThrows) {
+TEST_F(EventHistogramWriter, DimensionWithoutLabelThrows) {
   auto Json = createTestDimensionJson();
   Json.erase("label");
   ASSERT_THROW(Dimension<double>::createFromJson(Json), UnexpectedJsonInput);
 }
 
-TEST(EventHistogramWriter, DimensionWithoutUnitThrows) {
+TEST_F(EventHistogramWriter, DimensionWithoutUnitThrows) {
   auto Json = createTestDimensionJson();
   Json.erase("unit");
   ASSERT_THROW(Dimension<double>::createFromJson(Json), UnexpectedJsonInput);
 }
 
-TEST(EventHistogramWriter, DimensionCreatedFromValidInput) {
+TEST_F(EventHistogramWriter, DimensionCreatedFromValidInput) {
   auto Json = createTestDimensionJson();
   auto Dim = Dimension<double>::createFromJson(Json);
   ASSERT_EQ(Dim.getSize(), 4u);
@@ -65,7 +84,7 @@ TEST(EventHistogramWriter, DimensionCreatedFromValidInput) {
   ASSERT_EQ(Dim.getEdges().size(), 5u);
 }
 
-TEST(EventHistogramWriter, ShapeFromJsonThrowsIfInvalidInput) {
+TEST_F(EventHistogramWriter, ShapeFromJsonThrowsIfInvalidInput) {
   // The value of "shape" should be an array, so this should throw:
   auto Json = json::parse(R"""({ "shape": {} })""");
   ASSERT_THROW(Shape<double>::createFromJson(Json), UnexpectedJsonInput);
@@ -97,13 +116,13 @@ json createTestShapeJson() {
   ])"");
 }
 
-TEST(EventHistogramWriter, ShapeCreatedFromValidInput) {
+TEST_F(EventHistogramWriter, ShapeCreatedFromValidInput) {
   auto Json = createTestShapeJson();
   auto TheShape = Shape<double>::createFromJson(Json);
   ASSERT_EQ(TheShape.getNDIM(), 3u);
 }
 
-TEST(EventHistogramWriter, SliceNoOverlap) {
+TEST_F(EventHistogramWriter, SliceNoOverlap) {
   auto A = Slice::fromOffsetsSizes({0}, {2});
   auto B = Slice::fromOffsetsSizes({2}, {2});
   ASSERT_FALSE(A.doesOverlap(B));
@@ -114,14 +133,14 @@ TEST(EventHistogramWriter, SliceNoOverlap) {
   ASSERT_FALSE(B.doesOverlap(A));
 }
 
-TEST(EventHistogramWriter, SliceOverfullOverlap) {
+TEST_F(EventHistogramWriter, SliceOverfullOverlap) {
   auto A = Slice::fromOffsetsSizes({1, 6}, {2, 2});
   auto B = Slice::fromOffsetsSizes({0, 2}, {4, 8});
   ASSERT_TRUE(A.doesOverlap(B));
   ASSERT_TRUE(B.doesOverlap(A));
 }
 
-TEST(EventHistogramWriter, SlicePartialOverlap) {
+TEST_F(EventHistogramWriter, SlicePartialOverlap) {
   auto A = Slice::fromOffsetsSizes({1, 6}, {2, 2});
   auto B = Slice::fromOffsetsSizes({0, 7}, {2, 1});
   ASSERT_TRUE(A.doesOverlap(B));
@@ -165,14 +184,14 @@ json createTestWriterTypedJson() {
   return Json;
 }
 
-TEST(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
+TEST_F(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
   auto Json = createTestWriterTypedJson();
   Json.erase("shape");
   ASSERT_THROW((WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json)),
                UnexpectedJsonInput);
 }
 
-TEST(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
+TEST_F(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
   auto TheWriterTyped = WriterTyped<uint64_t, double, uint64_t>::createFromJson(
       createTestWriterTypedJson());
 }
@@ -191,7 +210,7 @@ hdf5::file::File createFile(std::string Name, FileCreationLocation Location) {
                             hdf5::property::FileCreationList(), FAPL);
 }
 
-TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
+TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   auto Json = createTestWriterTypedJson();
   auto TheWriterTyped =
       WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json);
@@ -208,7 +227,7 @@ TEST(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   // Everything fine as long as we don't throw.
 }
 
-TEST(EventHistogramWriter, WriterTypedReopen) {
+TEST_F(EventHistogramWriter, WriterTypedReopen) {
   auto Json = createTestWriterTypedJson();
   auto TheWriterTyped =
       WriterTyped<uint64_t, double, uint64_t>::createFromJson(Json);
@@ -331,7 +350,7 @@ FileWriter::Msg createTestMessage(size_t HistogramID, size_t PacketID) {
       Builder.GetSize());
 }
 
-TEST(EventHistogramWriter, WriterInitHDF) {
+TEST_F(EventHistogramWriter, WriterInitHDF) {
   auto File = createFile("Test.EventHistogramWriter.WriterInitHDF",
                          FileCreationLocation::Default);
   auto Group = File.root();
@@ -340,7 +359,7 @@ TEST(EventHistogramWriter, WriterInitHDF) {
   ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
 }
 
-TEST(EventHistogramWriter, WriterReopen) {
+TEST_F(EventHistogramWriter, WriterReopen) {
   auto File = createFile("Test.EventHistogramWriter.WriterReopen",
                          FileCreationLocation::Default);
   auto Group = File.root();
@@ -352,7 +371,7 @@ TEST(EventHistogramWriter, WriterReopen) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
 }
 
-TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
+TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   auto File = createFile(
       "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages",
       FileCreationLocation::Default);
@@ -364,7 +383,8 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(0, i));
+    auto M = createTestMessage(0, i);
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -378,7 +398,7 @@ TEST(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   ASSERT_EQ(Dataspace.current_dimensions().at(3), 64u);
 }
 
-TEST(EventHistogramWriter, WriteMultipleHistograms) {
+TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
                          FileCreationLocation::Disk);
   auto Group = File.root();
@@ -390,7 +410,8 @@ TEST(EventHistogramWriter, WriteMultipleHistograms) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   size_t HistogramID = 0;
   for (size_t i = 0; i < 3; ++i) {
-    auto X = Writer->write(createTestMessage(HistogramID, i));
+    auto M = createTestMessage(HistogramID, i);
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -398,7 +419,8 @@ TEST(EventHistogramWriter, WriteMultipleHistograms) {
   }
   ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(HistogramID, i));
+    auto M = createTestMessage(HistogramID, i);
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -406,7 +428,8 @@ TEST(EventHistogramWriter, WriteMultipleHistograms) {
   }
   ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(HistogramID, i));
+    auto M = createTestMessage(HistogramID, i);
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -421,11 +444,11 @@ TEST(EventHistogramWriter, WriteMultipleHistograms) {
   ASSERT_EQ(Dataspace.current_dimensions().at(3), 64u);
 }
 
-TEST(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
+TEST_F(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
   // exact strategy still to be decided upon.
 }
 
-TEST(EventHistogramWriter, WriteAMORExample) {
+TEST_F(EventHistogramWriter, WriteAMORExample) {
   auto File = createFile("Test.EventHistogramWriter.WriteAMORExample",
                          FileCreationLocation::Default);
   auto Group = File.root();
@@ -443,7 +466,7 @@ TEST(EventHistogramWriter, WriteAMORExample) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   auto M = FileWriter::Msg::owned(reinterpret_cast<const char *>(V2.data()),
                                   V2.size());
-  auto X = Writer->write(M);
+  auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
   if (!X.is_OK()) {
     throw std::runtime_error(X.to_str());
   }

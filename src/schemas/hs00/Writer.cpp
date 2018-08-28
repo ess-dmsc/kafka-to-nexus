@@ -35,12 +35,12 @@ Writer::reopen(hdf5::node::Group &HDFGroup) {
   return FileWriter::HDFWriterModule::InitResult::OK();
 }
 
-FileWriter::HDFWriterModule::WriteResult Writer::write(Msg const &Msg) {
+FileWriter::HDFWriterModule::WriteResult Writer::write(FlatbufferMessage const &Message) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
   }
-  auto Result = TheWriterUntyped->write(Msg, DoFlushEachWrite);
+  auto Result = TheWriterUntyped->write(Message, DoFlushEachWrite);
   if (!Result.is_OK()) {
     LOG(Sev::Error, "hs00 write error: {}", Result.to_str());
   }

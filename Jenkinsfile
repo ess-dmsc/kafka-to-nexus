@@ -28,6 +28,18 @@ def Object container_name(image_key) {
     return "${base_container_name}-${image_key}"
 }
 
+// Set number of old builds to keep.
+properties([[
+    $class: 'BuildDiscarderProperty',
+    strategy: [
+        $class: 'LogRotator',
+        artifactDaysToKeepStr: '',
+        artifactNumToKeepStr: '10',
+        daysToKeepStr: '',
+        numToKeepStr: ''
+    ]
+]]);
+
 def failure_function(exception_obj, failureMessage) {
     def toEmails = [[$class: 'DevelopersRecipientProvider']]
     emailext body: '${DEFAULT_CONTENT}\n\"' + failureMessage + '\"\n\nCheck console output at $BUILD_URL to view the results.', recipientProviders: toEmails, subject: '${DEFAULT_SUBJECT}'

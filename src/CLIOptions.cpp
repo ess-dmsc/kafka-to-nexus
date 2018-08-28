@@ -60,9 +60,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
                  "<host:port> Log to Graylog via graylog_logger library");
-  App.add_option("-v", log_level,
-                 "Set logging level. 3 == Error, 7 == Debug. Default: 6 (Info)",
-                 true)
+  App.add_option(
+         "-v", log_level,
+         "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)
       ->check(CLI::Range(1, 7));
   App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
                  "<absolute/or/relative/directory> Directory which gets "

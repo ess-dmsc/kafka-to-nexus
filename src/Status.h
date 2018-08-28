@@ -48,7 +48,7 @@ public:
   ///
   /// @param[in]  MessageSize  The message size in bytes
   ///
-  void message(const double &MessageSize);
+  void newMessage(const double &MessageSize);
 
   //----------------------------------------------------------------------------
   /// @brief      Increments the error count by one unit

@@ -33,7 +33,7 @@ namespace FileWriter {
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
 template <typename Streamer> class StreamMaster {
-  using StreamerError = Status::StreamerError;
+  using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
   friend class CommandHandler;
 
@@ -137,7 +137,7 @@ public:
   /// stream is in any error state
   const StreamMasterError status() {
     for (auto &s : Streamers) {
-      if (s.second.runStatus().connectionOK()) {
+      if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
         return StreamMasterError::STREAMER_ERROR();
       }
     }
@@ -172,22 +172,23 @@ private:
 
       // if Streamer throws the stream is closed, but the writing continues
       try {
-        ProcessResult = Stream.write(Demux);
-      } catch (...) {
+        ProcessResult = Stream.pollAndProcess(Demux);
+      } catch (std::exception &E) {
+        LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
       // decreases the count of sources in the stream, eventually closes the
       // stream
-      if (ProcessResult.is_STOP()) {
+      if (ProcessResult == ProcessMessageResult::STOP) {
         if (Stream.numSources() == 0) {
           return closeStream(Stream, Demux.topic());
         }
         return StreamMasterError::RUNNING();
       }
       // if there's any error in the messages logs it
-      if (ProcessResult.is_ERR()) {
-        LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
+      if (ProcessResult == ProcessMessageResult::ERR) {
+        LOG(Sev::Error, "Error in topic \"{}\" : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -233,7 +234,7 @@ private:
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
     LOG(Sev::Debug, "All sources in Stream have expired, close connection");
-    Stream.runStatus() = Status::StreamerError::HAS_FINISHED();
+    Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
     if (NumStreamers != 0) {
@@ -253,7 +254,7 @@ private:
     for (auto &s : Streamers) {
       LOG(Sev::Info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
-      if (!v.hasFinished()) {
+      if (v == StreamerStatus::HAS_FINISHED) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
       } else {
