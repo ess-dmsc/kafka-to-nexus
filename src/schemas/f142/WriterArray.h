@@ -91,7 +91,6 @@ h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
 
 template <typename DT, typename FV>
 void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
-  LOG(Sev::Critical, "LATEST WRITER");
   auto &Dataset = ds->ds.Dataset;
   auto Type = Dataset.datatype();
   auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
