@@ -1,7 +1,7 @@
-#include <Master.h>
-#include <kafka_util.h>
 #include <CommandListener.h>
+#include <Master.h>
 #include <ctime>
+#include <kafka_util.h>
 
 int DoNotCall() {
   MainOpt SomeOption;
