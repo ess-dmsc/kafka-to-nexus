@@ -1,7 +1,7 @@
 #=============================================================================
 # Generate file-writer module
-# Note that you will still need to manually include the code the
-# 'kafka_to_nexus__objects' target.
+# Note that you will still need to manually include the code in the
+# 'kafka_to_nexus__objects' target (see src/CMakeLists.txt for examples).
 #=============================================================================
 function(create_module module_name)
   add_library(${module_name} OBJECT
