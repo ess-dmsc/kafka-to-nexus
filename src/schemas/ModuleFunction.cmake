@@ -1,6 +1,6 @@
 #=============================================================================
 # Generate file-writer module
-# Note that you will still need to manually inlclude the code the
+# Note that you will still need to manually include the code the
 # 'kafka_to_nexus__objects' target.
 #=============================================================================
 function(create_module module_name)
