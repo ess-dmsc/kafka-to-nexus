@@ -8,7 +8,7 @@
 #include "schemas/hs00/Slice.h"
 #include "schemas/hs00/Writer.h"
 #include "schemas/hs00/WriterTyped.h"
-#include "schemas/hs00_event_histogram_generated.h"
+#include <HDFWriterModule.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
@@ -30,22 +30,24 @@ using FileWriter::Schemas::hs00::Slice;
 using FileWriter::Schemas::hs00::WriterTyped;
 using FileWriter::Schemas::hs00::Writer;
 
+static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
+    FlatbufferReaders;
+
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
-    using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FileWriter::Schemas::hs00::Reader>
-        RegisterIt("hs00");
-    std::map<std::string, FileWriter::HDFWriterModuleRegistry::ModuleFactory>
-        &Writers = FileWriter::HDFWriterModuleRegistry::getFactories();
-    Writers.clear();
-    {
-      FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
+    try {
+      FileWriter::FlatbufferReaderRegistry::Registrar<
+          FileWriter::Schemas::hs00::Reader>
+          RegisterIt("hs00");
+    } catch (...) {
     }
+    try {
+      FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
+    } catch (...) {
+    }
+    FlatbufferReaders["hs00"] = std::unique_ptr<FileWriter::FlatbufferReader>(
+        new FileWriter::Schemas::hs00::Reader);
   }
 };
 

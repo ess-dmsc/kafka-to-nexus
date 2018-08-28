@@ -67,7 +67,7 @@ FileWriter::HDFWriterModule::ptr Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new Writer);
 }
 
-static HDFWriterModuleRegistry::Registrar<Writer> RegisterWriter("hs00");
+HDFWriterModuleRegistry::Registrar<Writer> RegisterWriter("hs00");
 }
 }
 }

@@ -31,7 +31,7 @@ uint64_t Reader::timestamp(FlatbufferMessage const &Message) const {
   return Buffer->timestamp();
 }
 
-static FlatbufferReaderRegistry::Registrar<Reader> RegisterReader("hs00");
+FlatbufferReaderRegistry::Registrar<Reader> RegisterReader("hs00");
 }
 }
 }
