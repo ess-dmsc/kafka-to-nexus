@@ -194,6 +194,55 @@ TEST(Schema_f142, writeScalarString) {
   }
 }
 
+TEST(Schema_f142, writeScalarFloatWithLatestWithoutContent) {
+  auto StreamJson = json::parse(R""({
+    "source": "the_source_01",
+    "writer_module": "f142",
+    "store_latest_into": "the_latest_value",
+    "type": "float"
+  })"");
+  auto File = createInMemoryTestFile(
+      "Schema_f142.writeScalarFloatWithLatestWithoutContent");
+  {
+    FileWriter::Schemas::f142::HDFWriterModule WriterModule;
+    WriterModule.parse_config(StreamJson.dump(), "{}");
+    auto Group = File.root();
+    WriterModule.init_hdf(Group, "{}");
+    WriterModule.close();
+  }
+
+  ASSERT_TRUE(File.root().has_dataset("value"));
+  ASSERT_TRUE(File.root().has_dataset("time"));
+  ASSERT_TRUE(File.root().has_dataset("cue_timestamp_zero"));
+  ASSERT_TRUE(File.root().has_dataset("cue_index"));
+  ASSERT_FALSE(File.root().has_dataset("the_latest_value"));
+}
+
+TEST(Schema_f142, writeArrayFloatWithLatestWithoutContent) {
+  auto StreamJson = json::parse(R""({
+    "source": "the_source_01",
+    "writer_module": "f142",
+    "store_latest_into": "the_latest_value",
+    "type": "float",
+    "array_size": 5
+  })"");
+  auto File = createInMemoryTestFile(
+      "Schema_f142.writeArrayFloatWithLatestWithoutContent");
+  {
+    FileWriter::Schemas::f142::HDFWriterModule WriterModule;
+    WriterModule.parse_config(StreamJson.dump(), "{}");
+    auto Group = File.root();
+    WriterModule.init_hdf(Group, "{}");
+    WriterModule.close();
+  }
+
+  ASSERT_TRUE(File.root().has_dataset("value"));
+  ASSERT_TRUE(File.root().has_dataset("time"));
+  ASSERT_TRUE(File.root().has_dataset("cue_timestamp_zero"));
+  ASSERT_TRUE(File.root().has_dataset("cue_index"));
+  ASSERT_FALSE(File.root().has_dataset("the_latest_value"));
+}
+
 TEST(Schema_f142, writeScalarFloatWithLatest) {
   using DT = float;
   auto StreamJson = json::parse(R""({
@@ -211,8 +260,8 @@ TEST(Schema_f142, writeScalarFloatWithLatest) {
     WriterModule.init_hdf(Group, "{}");
     for (auto Value : Expected) {
       auto Builder = makeValueFloat(Value);
-      auto Msg = FileWriter::Msg::owned(
-          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      auto Msg = FileWriter::FlatbufferMessage(
+          reinterpret_cast<char const *>(Builder->GetBufferPointer()),
           Builder->GetSize());
       WriterModule.write(Msg);
     }
@@ -257,8 +306,8 @@ TEST(Schema_f142, writeArrayFloatWithLatest) {
     WriterModule.init_hdf(Group, "{}");
     for (auto Value : Expected) {
       auto Builder = makeValue(Value);
-      auto Msg = FileWriter::Msg::owned(
-          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      auto Msg = FileWriter::FlatbufferMessage(
+          reinterpret_cast<char const *>(Builder->GetBufferPointer()),
           Builder->GetSize());
       WriterModule.write(Msg);
     }
