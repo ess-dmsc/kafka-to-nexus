@@ -1029,15 +1029,17 @@ static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
     auto TargetID =
         H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
     if (TargetID < 0) {
-      throw std::runtime_error(fmt::format(
-          "can not find target object for link target: {}  in group: {}",
-          Target, std::string(Group.link().path())));
+      LOG(Sev::Warning,
+          "Can not find target object for link target: {}  in group: {}",
+          Target, std::string(Group.link().path()));
+      continue;
     }
     if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), LinkName.c_str(),
                     H5P_DEFAULT, H5P_DEFAULT)) {
-      throw std::runtime_error(fmt::format(
+      LOG(Sev::Warning,
           "can not create link name: {}  in group: {}  to target: {}", LinkName,
-          std::string(Group.link().path()), Target));
+          std::string(Group.link().path()), Target);
+      continue;
     }
   }
 }
