@@ -79,12 +79,11 @@ private:
   static std::vector<std::string> populateStrings(const nlohmann::json *Values,
                                                   hssize_t GoalSize);
 
-  static std::vector<std::string>
-  populateFixedStrings(const nlohmann::json *Values, size_t FixedAt,
-                       hssize_t GoalSize);
+  static std::vector<char> populateFixedStrings(const nlohmann::json *Values,
+                                                size_t FixedAt);
 
   static void
-  WriteStringDataset(hdf5::node::Group &Parent, const std::string &Name,
+  writeStringDataset(hdf5::node::Group &Parent, const std::string &Name,
                      hdf5::property::DatasetCreationList &DatasetCreationList,
                      hdf5::dataspace::Dataspace &Dataspace,
                      const nlohmann::json *Values);

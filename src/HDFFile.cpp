@@ -385,28 +385,25 @@ std::vector<std::string> HDFFile::populateStrings(const nlohmann::json *Values,
   return Buffer;
 }
 
-std::vector<std::string>
-HDFFile::populateFixedStrings(const nlohmann::json *Values, size_t FixedAt,
-                              hssize_t GoalSize) {
+std::vector<char> HDFFile::populateFixedStrings(nlohmann::json const *Value,
+                                                size_t FixedAt) {
   if (FixedAt >= 1024 * 1024) {
     std::throw_with_nested(std::runtime_error(fmt::format(
         "Failed to allocate fixed-size string dataset, bad element size: {}",
         FixedAt)));
   }
-
-  std::vector<std::string> Buffer;
-  if (Values->is_string()) {
-    auto String = Values->get<std::string>();
+  std::vector<char> Buffer;
+  if (Value->is_string()) {
+    auto String = Value->get<std::string>();
     String.resize(FixedAt, '\0');
-    Buffer.push_back(String);
-  } else if (Values->is_array()) {
+    std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
+  } else if (Value->is_array()) {
     std::stack<json const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
-    as.push(Values);
+    as.push(Value);
     ai.push(0);
-    an.push(Values->size());
-
+    an.push(Value->size());
     while (!as.empty()) {
       if (as.size() > 10) {
         break;
@@ -426,19 +423,11 @@ HDFFile::populateFixedStrings(const nlohmann::json *Values, size_t FixedAt,
       } else if (v.is_string()) {
         auto String = v.get<std::string>();
         String.resize(FixedAt, '\0');
-        Buffer.push_back(String);
+        std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
         ai.top()++;
       }
     }
   }
-
-  if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
-    std::stringstream ss;
-    ss << "Failed to populate string(fixed) blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
-
   return Buffer;
 }
 
@@ -472,7 +461,7 @@ static void writeNumericDataset(
   }
 }
 
-void HDFFile::WriteStringDataset(
+void HDFFile::writeStringDataset(
     hdf5::node::Group &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, const nlohmann::json *Values) {
@@ -495,29 +484,47 @@ void HDFFile::WriteStringDataset(
 }
 
 void HDFFile::writeFixedSizeStringDataset(
-    hdf5::node::Group &Parent, const std::string &Name,
+    hdf5::node::Group &Parent, std::string const &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    const nlohmann::json *Values) {
-
+    nlohmann::json const *Values) {
   try {
     auto DataType = hdf5::datatype::String::fixed(ElementSize);
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     DataType.padding(hdf5::datatype::StringPad::NULLTERM);
 
+    try {
+      auto Space = hdf5::dataspace::Simple(Dataspace);
+      auto Dimensions = Space.current_dimensions();
+      LOG(Sev::Debug, "Simple {}  {}", Dimensions.size(), Dimensions.at(0));
+    } catch (...) {
+      try {
+        auto Space = hdf5::dataspace::Scalar(Dataspace);
+        LOG(Sev::Debug, "Scalar");
+      } catch (...) {
+        LOG(Sev::Error,
+            "Unknown dataspace requested for fixed length string dataset {}",
+            Name);
+      }
+    }
+
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
 
-    DataType.padding(hdf5::datatype::StringPad::NULLPAD);
-    Dataset.write(populateFixedStrings(Values, ElementSize, Dataspace.size()),
+    /*
+    Dataset.write(populateFixedStrings(Values, ElementSize),
                   DataType, Dataspace, Dataspace,
                   hdf5::property::DatasetTransferList());
-
-  } catch (const std::exception &e) {
-    std::stringstream ss;
-    ss << "Failed to write fixed-size string dataset ";
-    ss << Parent.link().path() << "/" << Name;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+    */
+    // Fixed string support seems broken in h5cpp
+    auto Data = populateFixedStrings(Values, ElementSize);
+    H5Dwrite(static_cast<hid_t>(Dataset), static_cast<hid_t>(DataType),
+             static_cast<hid_t>(Dataspace), static_cast<hid_t>(Dataspace),
+             H5P_DEFAULT, Data.data());
+  } catch (std::exception const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Failed to write fixed-size string dataset {} in {}", Name,
+                    static_cast<std::string>(Parent.link().path()))));
   }
 }
 
@@ -580,7 +587,13 @@ void HDFFile::writeGenericDataset(const std::string &DataType,
                                   Values);
     }
     if (DataType == "string") {
-      WriteStringDataset(Parent, Name, DatasetCreationList, Dataspace, Values);
+      if (ElementSize == H5T_VARIABLE) {
+        writeStringDataset(Parent, Name, DatasetCreationList, Dataspace,
+                           Values);
+      } else {
+        writeFixedSizeStringDataset(Parent, Name, DatasetCreationList,
+                                    Dataspace, ElementSize, Values);
+      }
     }
   } catch (const std::exception &e) {
     std::stringstream ss;
