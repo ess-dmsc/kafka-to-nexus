@@ -82,20 +82,20 @@ private:
   static std::vector<std::string> populate_strings(nlohmann::json const *vals,
                                                    hssize_t goal_size);
 
-  static std::vector<std::string>
-  populate_fixed_strings(nlohmann::json const *vals, size_t FixedAt,
-                         hssize_t goal_size);
+  static std::vector<char> populate_fixed_strings(nlohmann::json const *Value,
+                                                  size_t FixedAt);
 
   static void write_ds_string(hdf5::node::Group &parent, std::string name,
                               hdf5::property::DatasetCreationList &dcpl,
                               hdf5::dataspace::Dataspace &dataspace,
                               nlohmann::json const *vals);
 
-  static void
-  write_ds_string_fixed_size(hdf5::node::Group &parent, std::string name,
-                             hdf5::property::DatasetCreationList &dcpl,
-                             hdf5::dataspace::Dataspace &dataspace,
-                             hsize_t element_size, nlohmann::json const *vals);
+  static void writeDatasetStringFixed(hdf5::node::Group &Parent,
+                                      std::string Name,
+                                      hdf5::property::DatasetCreationList &DCPL,
+                                      hdf5::dataspace::Dataspace &Dataspace,
+                                      hsize_t ElementSize,
+                                      nlohmann::json const *Values);
 
   static void
   write_ds_generic(std::string const &dtype, hdf5::node::Group &parent,

@@ -1151,3 +1151,135 @@ TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
   verifyWrittenDatatype(TestFile, TestInt32);
   verifyWrittenDatatype(TestFile, TestInt64);
 }
+
+TEST(HDFFile, createStaticDatasetsStrings) {
+  std::string const hdf_output_filename =
+      "Test.HDFFile.createStaticDatasetsStrings";
+  unlink(hdf_output_filename.c_str());
+  auto CommandJSON = json::parse(R""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "some_group",
+        "attributes": {
+          "NX_class": "NXinstrument"
+        },
+        "children": [
+          {
+            "type": "dataset",
+            "name": "string_var_0d",
+            "dataset": {
+              "type": "string"
+            },
+            "values": "the-scalar-string"
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_0d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32
+            },
+            "values": "string_scalar"
+          },
+          {
+            "type": "dataset",
+            "name": "string_var_1d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one", "a-third"]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_1d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32,
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one", "a-third"]
+          },
+          {
+            "type": "dataset",
+            "name": "string_var_2d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited", 2]
+            },
+            "values": [
+              ["string_0_0", "string_0_1"],
+              ["string_1_0", "string_1_1"]
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_2d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32,
+              "size": ["unlimited", 2]
+            },
+            "values": [
+              ["string_0_0", "string_0_1"],
+              ["string_1_0", "string_1_1"]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+  )"");
+  CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
+  auto CommandString = CommandJSON.dump();
+  std::string Filename = CommandJSON["file_attributes"]["file_name"];
+  ASSERT_GT(Filename.size(), 8u);
+  std::vector<FileWriter::StreamHDFInfo> NoStreams;
+  {
+    FileWriter::HDFFile File;
+    File.init(Filename, CommandJSON["nexus_structure"], json::object(),
+              NoStreams, false);
+  }
+  {
+    auto File = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
+    auto StringVar = hdf5::datatype::String::variable();
+    StringVar.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    StringVar.padding(hdf5::datatype::StringPad::NULLTERM);
+    auto StringFix = hdf5::datatype::String::fixed(32);
+    StringFix.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    StringFix.padding(hdf5::datatype::StringPad::NULLTERM);
+    hdf5::node::Dataset Dataset;
+    hdf5::dataspace::Simple SpaceFile;
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_0d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_0d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_1d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_1d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_2d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_2d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    SpaceFile = Dataset.dataspace();
+    // SpaceFile.selection()
+    std::vector<char> Buffer;
+    Buffer.resize(10000);
+    // Dataset.read(Buffer, StringVar, hdf5::dataspace::Simple({1}),
+    // hdf5::dataspace::Simple({1}));
+  }
+}
