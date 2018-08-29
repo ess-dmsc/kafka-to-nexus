@@ -70,6 +70,7 @@ private:
   std::vector<HistogramRecord> HistogramRecordsFreed;
 
   size_t ChunkBytes = 1 * 1024 * 1024;
+  bool DoConvertEdgeTypeToFloat = false;
 };
 
 template <typename DataType, typename EdgeType, typename ErrorType>
@@ -181,6 +182,11 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(json const &Json) {
   auto &TheWriterTyped = *TheWriterTypedPtr;
   try {
     TheWriterTyped.TheShape = Shape<EdgeType>::createFromJson(Json.at("shape"));
+    try {
+      TheWriterTyped.DoConvertEdgeTypeToFloat =
+          Json.at("convert_edge_type_to_float");
+    } catch (json::out_of_range const &) {
+    }
     TheWriterTyped.CreatedFromJson = Json.dump();
   } catch (json::out_of_range const &) {
     std::throw_with_nested(UnexpectedJsonInput());
@@ -279,8 +285,12 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     auto SpaceMem =
         hdf5::dataspace::Simple({Dim.getSize() + 1}, {Dim.getSize() + 1});
     auto TypeMem = hdf5::datatype::create<EdgeType>().native_type();
+    auto TypeSpace = TypeMem;
+    if (DoConvertEdgeTypeToFloat) {
+      TypeSpace = hdf5::datatype::create<float>().native_type();
+    }
     auto Dataset =
-        Group.create_dataset(Dim.getDatasetName(), TypeMem, SpaceFile, DCPL);
+        Group.create_dataset(Dim.getDatasetName(), TypeSpace, SpaceFile, DCPL);
     Dataset.write(Dim.getEdges(), TypeMem, SpaceMem, SpaceFile);
     hdf5::property::AttributeCreationList ACPL;
     Dataset.attributes.create_from("axis", 1 + DimId);
