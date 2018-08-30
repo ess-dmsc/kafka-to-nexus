@@ -83,6 +83,7 @@ def build_and_run(options, request):
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
+        os.remove("output-files/*.nxs")
 
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
@@ -98,6 +99,6 @@ def docker_compose(request):
 
     # Options must be given as long form
     options = common_options
-    options["--file"] = ["compose/docker-compose.yml"]
+    options["--file"] = ["docker-compose.yml"]
 
     build_and_run(options, request)

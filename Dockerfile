@@ -26,6 +26,6 @@ RUN cd kafka_to_nexus && \
     make -j8
 
 RUN mkdir /output-files
-COPY manual-testing/docker_launch.sh /
+COPY docker_launch.sh /
 
 CMD ["./docker_launch.sh"]
