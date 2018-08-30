@@ -186,3 +186,60 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   ASSERT_EQ(ArrayStringAttrValues[0], "A");
   ASSERT_EQ(ArrayStringAttrValues[1], "B");
 }
+
+TEST(HDFFileAttributesTest,
+     ArrayOfAttributesWithFixedLengthStringItIsWrittenAsFixedLengthStrings) {
+  using namespace hdf5;
+
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
+      "test-array-of-attributes-fixed-length.nxs");
+
+  std::string CommandWithArrayOfAttrs = R""({
+    "children": [
+      {
+        "type": "group",
+        "name": "group_with_array_of_attrs",
+        "attributes": [
+          {
+            "name": "string_attribute",
+            "values": "string_value",
+            "type": "string",
+            "string_size": 32
+          },
+          {
+            "name": "string_array_attribute",
+            "values": ["string_value_0", "string_value_1", "string_value_2"],
+            "type": "string",
+            "string_size": 32
+          }
+        ]
+      }
+    ]
+  })"";
+
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
+
+  {
+    auto StringAttr =
+        node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
+            .attributes["string_attribute"];
+    std::string StringValue;
+    StringAttr.read(StringValue, StringAttr.datatype());
+    StringValue.resize(12);
+    ASSERT_EQ(StringValue, "string_value");
+  }
+
+  {
+    auto StringArrayAttr =
+        node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
+            .attributes["string_array_attribute"];
+    std::vector<char> Buffer(3 * 32);
+    ASSERT_LE(0, H5Aread(static_cast<hid_t>(StringArrayAttr),
+                         static_cast<hid_t>(StringArrayAttr.datatype()),
+                         Buffer.data()));
+    ASSERT_EQ(std::string(Buffer.data() + 0 * 32), "string_value_0");
+    ASSERT_EQ(std::string(Buffer.data() + 1 * 32), "string_value_1");
+    ASSERT_EQ(std::string(Buffer.data() + 2 * 32), "string_value_2");
+  }
+}

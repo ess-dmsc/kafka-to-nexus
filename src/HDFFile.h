@@ -121,8 +121,9 @@ private:
 
   static void writeAttrOfSpecifiedType(const std::string &DType,
                                        hdf5::node::Node &Node,
-                                       const std::string &Name,
-                                       const nlohmann::json *Values);
+                                       std::string const &Name,
+                                       uint32_t StringSize,
+                                       nlohmann::json const *Values);
 
   bool SWMREnabled = false;
 
