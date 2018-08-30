@@ -83,7 +83,8 @@ def build_and_run(options, request):
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
-        os.remove("output-files/*.nxs")
+        print("removing output file", flush=True)
+        os.remove("output-files/output_file.nxs")
 
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
