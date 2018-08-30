@@ -161,21 +161,21 @@ json createTestWriterTypedJson() {
     "convert_edge_type_to_float": true,
     "shape": [
       {
-        "size": 64,
+        "size": 1,
         "label": "Position",
         "unit": "mm",
         "edges": [],
         "dataset_name": "x_detector"
       },
       {
-        "size": 64,
+        "size": 1,
         "label": "Position",
         "unit": "mm",
         "edges": [],
         "dataset_name": "y_detector"
       },
       {
-        "size": 64,
+        "size": 1,
         "label": "Time",
         "unit": "ns",
         "edges": [],
@@ -183,6 +183,9 @@ json createTestWriterTypedJson() {
       }
     ]
   })"");
+  Json["shape"][0]["size"] = 4;
+  Json["shape"][1]["size"] = 2;
+  Json["shape"][2]["size"] = 2;
   for (auto &S : Json["shape"]) {
     for (size_t I = 0; I <= S["size"]; ++I) {
       S["edges"].push_back(double(I));
@@ -248,17 +251,23 @@ TEST_F(EventHistogramWriter, WriterTypedReopen) {
       WriterTyped<uint64_t, double, uint64_t>::createFromHDF(Group);
 }
 
-uint64_t getValueAtFlatIndex(size_t Index) {
-  size_t I0 = Index / (3 * 6);
-  Index = Index % (3 * 6);
-  size_t I1 = Index / 6;
-  Index = Index % 6;
-  size_t I2 = Index;
-  return 100 * (1 + I0) + 10 * (1 + I1) + (1 + I2);
+uint64_t getValueAtFlatIndex(uint32_t HistogramID, size_t Index,
+                             std::vector<uint32_t> const &DimLengths) {
+  auto const &Sizes = DimLengths;
+  uint32_t F = Sizes.at(2) * Sizes.at(1);
+  uint32_t I2 = Index / F;
+  Index = Index % F;
+  F = Sizes.at(2);
+  uint32_t I1 = Index / F;
+  Index = Index % F;
+  uint32_t I0 = Index;
+  return (1 + I0) +
+         100 * ((1 + I1) + 100 * ((1 + I2) + 100 * (HistogramID + 1)));
 }
 
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
-createTestMessage(size_t HistogramID, size_t PacketID) {
+createTestMessage(size_t HistogramID, size_t PacketID,
+                  std::vector<uint32_t> const &DimLengths) {
   using namespace FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
@@ -271,7 +280,6 @@ createTestMessage(size_t HistogramID, size_t PacketID) {
     BinBoundaries = ArrayBuilder.Finish().Union();
   }
 
-  std::vector<size_t> DimLengths{5, 6, 7};
   std::vector<flatbuffers::Offset<DimensionMetaData>> DMDs;
   for (auto Length : DimLengths) {
     DimensionMetaDataBuilder DMDBuilder(Builder);
@@ -281,12 +289,16 @@ createTestMessage(size_t HistogramID, size_t PacketID) {
   }
   auto DMDA = Builder.CreateVector(DMDs);
 
-  std::vector<uint32_t> ThisLengths{64 / 2, 64 / 2, 64};
+  std::vector<uint32_t> ThisDivisors{2, 2, 1};
+  std::vector<uint32_t> ThisLengths = DimLengths;
+  for (size_t I = 0; I < ThisLengths.size(); ++I) {
+    ThisLengths.at(I) /= ThisDivisors.at(I);
+  }
   std::vector<uint32_t> ThisOffsets{
       (uint32_t(PacketID) / 2) * ThisLengths.at(0),
       (uint32_t(PacketID) % 2) * ThisLengths.at(1), 0};
 
-  uint64_t Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000);
+  uint64_t Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000000);
   auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
   auto ThisOffsetsVector = Builder.CreateVector(ThisOffsets);
 
@@ -304,13 +316,17 @@ createTestMessage(size_t HistogramID, size_t PacketID) {
           size_t O0 = ThisOffsets.at(0);
           size_t O1 = ThisOffsets.at(1);
           size_t O2 = ThisOffsets.at(2);
-          size_t K0 = 1 + I0 + O0;
-          size_t K1 = 1 + I1 + O1;
-          size_t K2 = 1 + I2 + O2;
-          Data.at(N) = Timestamp + 1000000 * K0 + 1000 * K1 + K2;
+          if (false) {
+            size_t K0 = 1 + I0 + O0;
+            size_t K1 = 1 + I1 + O1;
+            size_t K2 = 1 + I2 + O2;
+            Data.at(N) = Timestamp + 10000 * K0 + 100 * K1 + K2;
+          }
           Data.at(N) = 0;
-          // Data.at(N) = Timestamp + getValueAtFlatIndex(6*3*(O0+I0) +
-          // 3*(O1+I1) + (O2+I2));
+          size_t Flat =
+              (O2 + I2) +
+              DimLengths.at(2) * ((O1 + I1) + DimLengths.at(1) * (O0 + I0));
+          Data.at(N) = getValueAtFlatIndex(HistogramID, Flat, DimLengths);
           ++N;
         }
       }
@@ -397,8 +413,9 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  std::vector<uint32_t> DimLengths{4, 2, 2};
   for (size_t i = 0; i < 4; ++i) {
-    auto M = createTestMessage(0, i);
+    auto M = createTestMessage(0, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
@@ -408,9 +425,9 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 1u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(1), 64u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(2), 64u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(3), 64u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(2), 2u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(3), 2u);
 }
 
 TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
@@ -423,9 +440,10 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  std::vector<uint32_t> DimLengths{4, 2, 2};
   size_t HistogramID = 0;
   for (size_t i = 0; i < 3; ++i) {
-    auto M = createTestMessage(HistogramID, i);
+    auto M = createTestMessage(HistogramID, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
@@ -434,7 +452,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   }
   ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
-    auto M = createTestMessage(HistogramID, i);
+    auto M = createTestMessage(HistogramID, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
@@ -443,7 +461,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   }
   ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
-    auto M = createTestMessage(HistogramID, i);
+    auto M = createTestMessage(HistogramID, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
@@ -454,9 +472,49 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 3u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(1), 64u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(2), 64u);
-  ASSERT_EQ(Dataspace.current_dimensions().at(3), 64u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(2), 2u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(3), 2u);
+}
+
+TEST_F(EventHistogramWriter, WriteManyHistograms) {
+  auto File = createFile("Test.EventHistogramWriter.WriteManyHistograms",
+                         FileCreationLocation::Disk);
+  auto Group = File.root();
+  auto Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->init_hdf(Group, "{}").is_OK());
+  Writer = Writer::create();
+  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  ASSERT_TRUE(Writer->reopen(Group).is_OK());
+  std::vector<uint32_t> DimLengths{4, 2, 2};
+  for (size_t HistogramID = 0; HistogramID < 18; ++HistogramID) {
+    for (size_t i = 0; i < 4; ++i) {
+      auto M = createTestMessage(HistogramID, i, DimLengths);
+      auto X = Writer->write(wrapBuilder(M));
+      if (!X.is_OK()) {
+        throw std::runtime_error(X.to_str());
+      }
+      ASSERT_TRUE(X.is_OK());
+    }
+  }
+  Writer->close();
+  auto Histograms = Group.get_dataset("histograms");
+  hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
+  ASSERT_EQ(Dataspace.current_dimensions().at(0), 4u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(1), 4u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(2), 2u);
+  ASSERT_EQ(Dataspace.current_dimensions().at(3), 2u);
+
+  std::vector<uint64_t> Buffer(DimLengths.at(0) * DimLengths.at(1) *
+                               DimLengths.at(2));
+  Dataspace.selection(hdf5::dataspace::SelectionOperation::SET,
+                      hdf5::dataspace::Hyperslab({1, 0, 0, 0}, {1, 4, 2, 2}));
+  hdf5::dataspace::Simple SpaceMem({4, 2, 2});
+  Histograms.read(Buffer, Histograms.datatype(), SpaceMem, Dataspace);
+  for (size_t Flat = 0; Flat < Buffer.size(); ++Flat) {
+    ASSERT_EQ(Buffer.at(Flat), getValueAtFlatIndex(17, Flat, DimLengths));
+  }
 }
 
 TEST_F(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
