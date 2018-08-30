@@ -1211,11 +1211,13 @@ TEST(HDFFile, createStaticDatasetsStrings) {
             "name": "string_var_2d",
             "dataset": {
               "type": "string",
-              "size": ["unlimited", 2]
+              "size": ["unlimited", 4]
             },
             "values": [
-              ["string_0_0", "string_0_1"],
-              ["string_1_0", "string_1_1"]
+              ["string_0_0", "string_0_1", "string_0_2", "string_0_3"],
+              ["string_1_0", "string_1_1", "string_1_2", "string_1_3"],
+              ["string_2_0", "string_2_1", "string_2_2", "string_2_3"],
+              ["string_3_0", "string_3_1", "string_3_2", "string_3_3"]
             ]
           },
           {
@@ -1224,11 +1226,13 @@ TEST(HDFFile, createStaticDatasetsStrings) {
             "dataset": {
               "type": "string",
               "string_size": 32,
-              "size": ["unlimited", 2]
+              "size": ["unlimited", 4]
             },
             "values": [
-              ["string_0_0", "string_0_1"],
-              ["string_1_0", "string_1_1"]
+              ["string_0_0", "string_0_1", "string_0_2", "string_0_3"],
+              ["string_1_0", "string_1_1", "string_1_2", "string_1_3"],
+              ["string_2_0", "string_2_1", "string_2_2", "string_2_3"],
+              ["string_3_0", "string_3_1", "string_3_2", "string_3_3"]
             ]
           }
         ]
@@ -1269,17 +1273,41 @@ TEST(HDFFile, createStaticDatasetsStrings) {
     Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_1d");
     ASSERT_EQ(Dataset.datatype(), StringFix);
     ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
-    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_2d");
-    ASSERT_EQ(Dataset.datatype(), StringFix);
-    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
-    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_2d");
-    ASSERT_EQ(Dataset.datatype(), StringVar);
-    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
-    SpaceFile = Dataset.dataspace();
-    // SpaceFile.selection()
-    std::vector<char> Buffer;
-    Buffer.resize(10000);
-    // Dataset.read(Buffer, StringVar, hdf5::dataspace::Simple({1}),
-    // hdf5::dataspace::Simple({1}));
+    {
+      auto Dataset =
+          hdf5::node::get_dataset(File.root(), "/some_group/string_fix_2d");
+      ASSERT_EQ(Dataset.datatype(), StringFix);
+      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({2, 1}, {1, 3}));
+      std::vector<char> Buffer(3 * 32);
+      // Dataset.read(*Buffer.data(), StringFix, hdf5::dataspace::Simple({2}),
+      // SpaceFile);
+      hdf5::dataspace::Simple SpaceMem({3});
+      if (0 >
+          H5Dread(static_cast<hid_t>(Dataset), static_cast<hid_t>(StringFix),
+                  static_cast<hid_t>(SpaceMem), static_cast<hid_t>(SpaceFile),
+                  H5P_DEFAULT, Buffer.data())) {
+        ASSERT_TRUE(false);
+      }
+      ASSERT_EQ(std::string(Buffer.data() + 0 * 32), "string_2_1");
+      ASSERT_EQ(std::string(Buffer.data() + 1 * 32), "string_2_2");
+      ASSERT_EQ(std::string(Buffer.data() + 2 * 32), "string_2_3");
+    }
+    {
+      auto Dataset =
+          hdf5::node::get_dataset(File.root(), "/some_group/string_var_2d");
+      ASSERT_EQ(Dataset.datatype(), StringVar);
+      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({2, 1}, {1, 2}));
+      std::vector<std::string> Buffer;
+      Buffer.resize(2);
+      Dataset.read(Buffer, StringVar, hdf5::dataspace::Simple({2}), SpaceFile);
+      ASSERT_EQ(Buffer.at(0), "string_2_1");
+      ASSERT_EQ(Buffer.at(1), "string_2_2");
+    }
   }
 }
