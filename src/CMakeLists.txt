@@ -97,14 +97,6 @@ set(kafka_to_nexus_SRC
   FlatbufferMessage.cpp
   date/tz.cpp
   date/tzblobs.cpp
-  schemas/f142/f142_rw.cpp
-  schemas/f142/FlatbufferReader.cpp
-  schemas/f142/WriterScalarString.cpp
-  schemas/f142/f142_synth.cpp
-  schemas/ev42/ev42_rw.cpp
-  schemas/ev42/ev42_synth.cpp
-  schemas/senv/FastSampleEnvironmentWriter.cpp
-  schemas/senv/Datasets.cpp
   schemas/hs00/Exceptions.cpp
   schemas/hs00/Reader.cpp
   schemas/hs00/Writer.cpp
@@ -114,7 +106,6 @@ set(kafka_to_nexus_SRC
   schemas/hs00/Slice.cpp
   schemas/hs00/HistogramRecord.cpp
   schemas/hs00/Dimension.cpp
-  schemas/template/TemplateWriter.cpp
   MainOpt.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp)
@@ -164,13 +155,6 @@ set(kafka_to_nexus_INC
   date/tz_private.h
   date/tz.h
   date/tzblobs.h
-  schemas/ev42/ev42_rw.h
-  schemas/ev42/ev42_synth.h
-  schemas/f142/f142_rw.h
-  schemas/f142/WriterTypedBase.h
-  schemas/f142/WriterScalar.h
-  schemas/f142/WriterArray.h
-  schemas/f142/f142_synth.h
   schemas/hs00/Exceptions.h
   schemas/hs00/Reader.h
   schemas/hs00/Writer.h
@@ -180,17 +164,19 @@ set(kafka_to_nexus_INC
   schemas/hs00/Slice.h
   schemas/hs00/HistogramRecord.h
   schemas/hs00/Dimension.h
-  schemas/template/TemplateWriter.h
   CLIOptions.h
-  schemas/senv/FastSampleEnvironmentWriter.h
-  schemas/senv/Datasets.h
 )
 
 set(tgt "kafka_to_nexus__objects")
-add_library(${tgt} OBJECT
+add_library(${tgt} STATIC
   ${kafka_to_nexus_SRC}
   ${kafka_to_nexus_INC}
+  $<TARGET_OBJECTS:template_module>
+  $<TARGET_OBJECTS:ev42_module>
+  $<TARGET_OBJECTS:f142_module>
+  $<TARGET_OBJECTS:senv_module>
 )
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
@@ -200,28 +186,28 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 set(tgt "send-command")
 set(sources
         send-command.cpp
-  $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
+target_link_libraries(${tgt} kafka_to_nexus__objects)
 
 
 set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
-  $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common}  fmt::fmt)
+target_link_libraries(${tgt} kafka_to_nexus__objects)
 
 find_package(GTest)
+
+add_subdirectory(schemas)
 
 if (${GTEST_FOUND})
   add_subdirectory(tests)
