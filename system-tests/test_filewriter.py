@@ -1,6 +1,7 @@
 from helpers.kafkahelpers import create_producer, send_writer_command
 from time import sleep
 import h5py
+import numpy as np
 
 def test_data_reaches_file(docker_compose):
     producer = create_producer()
@@ -31,3 +32,5 @@ def test_data_reaches_file(docker_compose):
     assert file["entry/features"][1] == 17055242037422131565
     assert file["entry/title"][...] == 'Blend 1.9_SANS'
     assert file["entry/user_1/affiliation"].value == 'ISIS, STFC'
+    assert np.allclose(file["entry/instrument/monitor1/transformations/location"].attrs["vector"], np.array([0.0, 0.0, -1.0]))
+    assert file["entry/instrument/monitor2/data"].attrs["signal"] == 1
