@@ -672,7 +672,7 @@ void HDFFile::write_dataset(hdf5::node::Group &Parent,
     return;
   }
 
-  std::string DataType = "int64";
+  std::string DataType;
   hsize_t element_size = H5T_VARIABLE;
 
   std::vector<hsize_t> sizes;
@@ -718,8 +718,14 @@ void HDFFile::write_dataset(hdf5::node::Group &Parent,
   }
   auto ds_values = ds_values_maybe.inner();
 
-  if (ds_values.is_number_float()) {
-    DataType = "double";
+  if (DataType.empty()) {
+    if (ds_values.is_number_float()) {
+      DataType = "double";
+    } else if (ds_values.is_number_integer()) {
+      DataType = "int64";
+    } else if (ds_values.is_string()) {
+      DataType = "string";
+    }
   }
 
   auto max = sizes;
