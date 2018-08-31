@@ -48,7 +48,7 @@ public:
   ///
   Streamer(const std::string &Broker, const std::string &TopicName,
            const FileWriter::StreamerOptions &Opts,
-           ReaderModuleFactoriesMap *ReaderModuleFactories);
+           ReaderModuleFactoriesMap &ReaderModuleFactories);
   Streamer(const Streamer &) = delete;
   Streamer(Streamer &&other) = default;
 
@@ -106,7 +106,7 @@ protected:
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
   std::chrono::milliseconds LastMessageTimestamp{0};
-  ReaderModuleFactoriesMap *ReaderModuleFactories;
+  ReaderModuleFactoriesMap &ReaderModuleFactories;
 };
 
 //----------------------------------------------------------------------------

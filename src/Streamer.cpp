@@ -20,7 +20,7 @@ bool stopTimeElapsed(std::uint64_t MessageTimestamp,
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
                                const FileWriter::StreamerOptions &Opts,
-                               ReaderModuleFactoriesMap *ReaderModuleFactories_)
+                               ReaderModuleFactoriesMap &ReaderModuleFactories_)
     : Options(Opts), ReaderModuleFactories(ReaderModuleFactories_) {
 
   if (TopicName.empty() || Broker.empty()) {
@@ -131,12 +131,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   auto KafkaMessage = Poll.isMsg();
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    if (!ReaderModuleFactories) {
-      throw std::runtime_error("ReaderModuleFactories uninitialized");
-    }
     Message = std::make_unique<FlatbufferMessage>(
         reinterpret_cast<const char *>(KafkaMessage->data()),
-        KafkaMessage->size(), *ReaderModuleFactories);
+        KafkaMessage->size(), ReaderModuleFactories);
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",

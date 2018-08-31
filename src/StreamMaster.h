@@ -43,7 +43,7 @@ public:
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
                const StreamerOptions &options,
-               ReaderModuleFactoriesMap *ReaderModuleFactories)
+               ReaderModuleFactoriesMap &ReaderModuleFactories)
       : Demuxers(file_writer_task->demuxers()),
         WriterTask(std::move(file_writer_task)) {
 
@@ -214,7 +214,7 @@ private:
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
 
       for (auto &Demux : Demuxers) {
-        auto &s = Streamers[Demux.topic()];
+        auto &s = Streamers.at(Demux.topic());
 
         // If the stream is active process the messages
         StreamMasterError ProcessResult = processStreamResult(s, Demux);

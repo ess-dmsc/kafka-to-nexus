@@ -20,16 +20,16 @@ public:
 // make sure that a topic exists/not exists
 TEST_F(StreamerInitTest, Success) {
   EXPECT_NO_THROW(
-      Streamer("broker", "topic", StreamerOptions(), &FlatbufferReaders));
+      Streamer("broker", "topic", StreamerOptions(), FlatbufferReaders));
 }
 
 TEST_F(StreamerInitTest, NoBroker) {
-  EXPECT_THROW(Streamer("", "topic", StreamerOptions(), &FlatbufferReaders),
+  EXPECT_THROW(Streamer("", "topic", StreamerOptions(), FlatbufferReaders),
                std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, NoTopic) {
-  EXPECT_THROW(Streamer("broker", "", StreamerOptions(), &FlatbufferReaders),
+  EXPECT_THROW(Streamer("broker", "", StreamerOptions(), FlatbufferReaders),
                std::runtime_error);
 }
 
@@ -50,7 +50,7 @@ class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn()
       : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
-                 &FlatbufferReaders) {}
+                 FlatbufferReaders) {}
   using Streamer::ConsumerCreated;
   using Streamer::Options;
 };
