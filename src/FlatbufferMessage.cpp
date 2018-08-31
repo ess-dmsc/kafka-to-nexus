@@ -19,7 +19,14 @@ void FlatbufferMessage::extractPacketInfo(
   }
   std::string FlatbufferID(data() + 4, 4);
   try {
-    auto &Reader = Readers.at(FlatbufferID);
+    auto ReaderMaybe = Readers.find(FlatbufferID);
+    if (ReaderMaybe == Readers.end()) {
+      Valid = false;
+      throw UnknownFlatbufferID(fmt::format(
+          "Unable to locate reader with the ID \"{}\" in the registry.",
+          FlatbufferID));
+    }
+    auto &Reader = ReaderMaybe->second;
     if (not Reader->verify(*this)) {
       throw NotValidFlatbuffer(
           fmt::format("Buffer which has flatbuffer ID \"{}\" is not a valid "

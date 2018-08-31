@@ -118,11 +118,13 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
   }
 
-  auto ModuleFactory = Options.WriterModuleFactories.at(StreamSettings.Module);
-  if (!ModuleFactory) {
+  auto ModuleFactoryMaybe =
+      Options.WriterModuleFactories.find(StreamSettings.Module);
+  if (ModuleFactoryMaybe == Options.WriterModuleFactories.end()) {
     throw std::runtime_error(
         fmt::format("Module '{}' is not available", StreamSettings.Module));
   }
+  auto ModuleFactory = ModuleFactoryMaybe->second;
 
   auto HDFWriterModule = ModuleFactory();
   if (!HDFWriterModule) {
@@ -287,12 +289,13 @@ void CommandHandler::addStreamSourceToWriterModule(
     if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
-      auto ModuleFactory =
-          Config.WriterModuleFactories.at(StreamSettings.Module);
-      if (!ModuleFactory) {
+      auto ModuleFactoryMaybe =
+          Config.WriterModuleFactories.find(StreamSettings.Module);
+      if (ModuleFactoryMaybe == Config.WriterModuleFactories.end()) {
         LOG(Sev::Info, "Module '{}' is not available", StreamSettings.Module);
         continue;
       }
+      auto ModuleFactory = ModuleFactoryMaybe->second;
 
       auto HDFWriterModule = ModuleFactory();
       if (!HDFWriterModule) {
