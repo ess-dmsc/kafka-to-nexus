@@ -154,10 +154,13 @@ TEST_F(EventHistogramWriter, SlicePartialOverlap) {
 }
 
 json createTestWriterTypedJson() {
+  // The option 'convert_edge_type_to_float' is a temporary special feature for
+  // AMOR.
   auto Json = json::parse(R""({
     "data_type": "uint64",
     "error_type": "double",
     "edge_type": "double",
+    "convert_edge_type_to_float": true,
     "shape": [
       {
         "size": 64,
@@ -230,7 +233,8 @@ TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   Group.attributes["created_from_json"].read(StoredJson);
   ASSERT_EQ(json::parse(StoredJson), Json);
   auto Dataset = Group.get_dataset("histograms");
-  // Everything fine as long as we don't throw.
+  ASSERT_EQ(Group.get_dataset("x_detector").datatype(),
+            hdf5::datatype::create<float>().native_type());
 }
 
 TEST_F(EventHistogramWriter, WriterTypedReopen) {
