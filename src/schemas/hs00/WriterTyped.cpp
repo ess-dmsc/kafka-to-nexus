@@ -13,6 +13,9 @@ template <> Array getMatchingFlatbufferType(uint64_t *) {
 template <> Array getMatchingFlatbufferType(double *) {
   return Array::ArrayDouble;
 }
+template <> Array getMatchingFlatbufferType(float *) {
+  return Array::ArrayFloat;
+}
 }
 }
 }

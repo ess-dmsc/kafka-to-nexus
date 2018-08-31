@@ -14,6 +14,8 @@ WriterUntyped::ptr WriterUntyped::createFromJson(json const &Json) {
     return WriterUntyped::createFromJsonL1<uint64_t>(Json);
   } else if (Json.at("data_type") == "double") {
     return WriterUntyped::createFromJsonL1<double>(Json);
+  } else if (Json.at("data_type") == "float") {
+    return WriterUntyped::createFromJsonL1<float>(Json);
   } else {
     throw std::runtime_error(
         fmt::format("unimplemented data_type: {}",
@@ -29,6 +31,8 @@ WriterUntyped::ptr WriterUntyped::createFromJsonL1(json const &Json) {
     return WriterUntyped::createFromJsonL2<DataType, uint64_t>(Json);
   } else if (Json.at("edge_type") == "double") {
     return WriterUntyped::createFromJsonL2<DataType, double>(Json);
+  } else if (Json.at("edge_type") == "float") {
+    return WriterUntyped::createFromJsonL2<DataType, float>(Json);
   } else {
     throw std::runtime_error(
         fmt::format("unimplemented edge_type: {}",
@@ -44,6 +48,8 @@ WriterUntyped::ptr WriterUntyped::createFromJsonL2(json const &Json) {
     return WriterTyped<DataType, EdgeType, uint64_t>::createFromJson(Json);
   } else if (Json.at("error_type") == "double") {
     return WriterTyped<DataType, EdgeType, double>::createFromJson(Json);
+  } else if (Json.at("error_type") == "float") {
+    return WriterTyped<DataType, EdgeType, float>::createFromJson(Json);
   } else {
     throw std::runtime_error(
         fmt::format("unimplemented error_type: {}",
@@ -62,6 +68,8 @@ WriterUntyped::ptr WriterUntyped::createFromHDF(hdf5::node::Group &Group) {
     return WriterUntyped::createFromHDFWithDataType<uint64_t>(Group, Json);
   } else if (Json.at("data_type") == "double") {
     return WriterUntyped::createFromHDFWithDataType<double>(Group, Json);
+  } else if (Json.at("data_type") == "float") {
+    return WriterUntyped::createFromHDFWithDataType<float>(Group, Json);
   } else {
     throw std::runtime_error(
         fmt::format("unimplemented data_type: {}",
@@ -82,6 +90,9 @@ WriterUntyped::createFromHDFWithDataType(hdf5::node::Group &Group,
   }
   if (Json.at("edge_type") == "double") {
     return WriterUntyped::createFromHDFWithDataTypeAndEdgeType<DataType,   double>(Group, Json);
+  }
+  if (Json.at("edge_type") == "float") {
+    return WriterUntyped::createFromHDFWithDataTypeAndEdgeType<DataType,    float>(Group, Json);
   }
   else {
     throw std::runtime_error(fmt::format(
@@ -104,6 +115,9 @@ WriterUntyped::createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group,
   }
   else if (Json.at("error_type") == "double") {
     return WriterTyped<DataType, EdgeType,   double>::createFromHDF(Group);
+  }
+  else if (Json.at("error_type") == "float") {
+    return WriterTyped<DataType, EdgeType,    float>::createFromHDF(Group);
   }
   else {
     throw std::runtime_error(fmt::format(

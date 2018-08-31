@@ -41,10 +41,12 @@ template <typename EdgeType> size_t Shape<EdgeType>::getTotalItems() const {
 template Shape<uint32_t> Shape<uint32_t>::createFromJson(json const &Json);
 template Shape<uint64_t> Shape<uint64_t>::createFromJson(json const &Json);
 template Shape<double> Shape<double>::createFromJson(json const &Json);
+template Shape<float> Shape<float>::createFromJson(json const &Json);
 
 template size_t Shape<uint32_t>::getNDIM() const;
 template size_t Shape<uint64_t>::getNDIM() const;
 template size_t Shape<double>::getNDIM() const;
+template size_t Shape<float>::getNDIM() const;
 
 template std::vector<Dimension<uint32_t>> const &
 Shape<uint32_t>::getDimensions() const;
@@ -52,10 +54,13 @@ template std::vector<Dimension<uint64_t>> const &
 Shape<uint64_t>::getDimensions() const;
 template std::vector<Dimension<double>> const &
 Shape<double>::getDimensions() const;
+template std::vector<Dimension<float>> const &
+Shape<float>::getDimensions() const;
 
 template size_t Shape<uint32_t>::getTotalItems() const;
 template size_t Shape<uint64_t>::getTotalItems() const;
 template size_t Shape<double>::getTotalItems() const;
+template size_t Shape<float>::getTotalItems() const;
 }
 }
 }
