@@ -7,3 +7,4 @@ pipeline.gdsl
 *.j2~
 *.h~
 *.cxx~
+/system-tests/output-files/*.nxs
