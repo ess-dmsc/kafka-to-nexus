@@ -1,5 +1,4 @@
 set(template_module_SRC
-  TemplateWriter.cpp
 )
 
 set(template_module_INC
