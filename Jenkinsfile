@@ -326,7 +326,7 @@ def get_system_tests_pipeline() {
     return {
         node('integration-test') {
         sh """
-        rm -rf /output-files/*
+        rm -rf /output-files/* || true
         docker stop \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
         docker rm \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
         """
