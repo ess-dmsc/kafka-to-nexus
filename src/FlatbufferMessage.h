@@ -1,5 +1,6 @@
 #pragma once
 
+#include "FlatbufferReader.h"
 #include "KafkaW/Msg.h"
 #include "logger.h"
 #include <atomic>
@@ -7,10 +8,14 @@
 #include <cstdint>
 #include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
+#include <map>
 #include <memory>
 #include <vector>
 
 namespace FileWriter {
+
+class FlatbufferReader;
+
 class BufferTooSmallError : public std::runtime_error {
 public:
   explicit BufferTooSmallError(const std::string &what)
@@ -48,7 +53,9 @@ public:
   /// \throws FileWriter::NotValidFlatbuffer The constructor runs
   /// FileWriter::FlatbufferReader::verify() on the flatbuffer and this
   /// exception is thrown if it returns false.
-  FlatbufferMessage(char const *BufferPtr, size_t const Size);
+  FlatbufferMessage(
+      char const *BufferPtr, size_t const Size,
+      std::map<std::string, std::unique_ptr<FlatbufferReader>> const &Readers);
   /// Default destructor.
   ~FlatbufferMessage() = default;
   /// Returns the state of the FlatbufferMessage.
@@ -76,7 +83,8 @@ public:
   size_t size() const { return DataSize; };
 
 private:
-  void extractPacketInfo();
+  void extractPacketInfo(
+      std::map<std::string, std::unique_ptr<FlatbufferReader>> const &Readers);
   char const *const DataPtr{nullptr};
   size_t const DataSize{0};
   std::string Sourcename;

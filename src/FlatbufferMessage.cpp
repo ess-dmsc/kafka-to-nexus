@@ -3,13 +3,15 @@
 
 namespace FileWriter {
 
-FlatbufferMessage::FlatbufferMessage(char const *const BufferPtr,
-                                     size_t const Size)
+FlatbufferMessage::FlatbufferMessage(
+    char const *const BufferPtr, size_t const Size,
+    std::map<std::string, std::unique_ptr<FlatbufferReader>> const &Readers)
     : DataPtr(BufferPtr), DataSize(Size), Valid(false) {
-  extractPacketInfo();
+  extractPacketInfo(Readers);
 }
 
-void FlatbufferMessage::extractPacketInfo() {
+void FlatbufferMessage::extractPacketInfo(
+    std::map<std::string, std::unique_ptr<FlatbufferReader>> const &Readers) {
   if (DataSize < 8) {
     Valid = false;
     throw BufferTooSmallError(fmt::format(
@@ -17,7 +19,7 @@ void FlatbufferMessage::extractPacketInfo() {
   }
   std::string FlatbufferID(data() + 4, 4);
   try {
-    auto &Reader = FlatbufferReaderRegistry::find(FlatbufferID);
+    auto &Reader = Readers.at(FlatbufferID);
     if (not Reader->verify(*this)) {
       throw NotValidFlatbuffer(
           fmt::format("Buffer which has flatbuffer ID \"{}\" is not a valid "

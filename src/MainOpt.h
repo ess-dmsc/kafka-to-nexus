@@ -1,5 +1,7 @@
 #pragma once
 
+#include "FlatbufferReader.h"
+#include "HDFWriterModule.h"
 #include "StreamerOptions.h"
 #include "json.h"
 #include "logger.h"
@@ -73,9 +75,13 @@ struct MainOpt {
   // Max interval (in std::chrono::milliseconds) to spend writing each topic
   // before switch to the next
   std::chrono::milliseconds topic_write_duration;
-  // The constructor was removed because of the issue with the integration test
-  // (see cpp file for more details).
+  MainOpt();
   void init();
+  std::map<std::string, FileWriter::FlatbufferReader::ptr>
+      ReaderModuleFactories;
+  std::map<std::string,
+           std::function<std::unique_ptr<FileWriter::HDFWriterModule>()>>
+      WriterModuleFactories;
 };
 
 void setup_logger_from_options(MainOpt const &opt);

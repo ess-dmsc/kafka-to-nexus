@@ -332,9 +332,6 @@ int32_t HDFWriterModule::close() {
   return 0;
 }
 
-static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
-    RegisterWriter("f142");
-
 } // namespace f142
 } // namespace Schemas
 } // namespace FileWriter

@@ -67,7 +67,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \return
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamHDFInfo) {
+    StreamHDFInfo const &StreamHDFInfo, MainOpt &Options) {
   using nlohmann::json;
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamHDFInfo;
@@ -118,7 +118,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
   }
 
-  auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+  auto ModuleFactory = Options.WriterModuleFactories.at(StreamSettings.Module);
   if (!ModuleFactory) {
     throw std::runtime_error(
         fmt::format("Module '{}' is not available", StreamSettings.Module));
@@ -153,13 +153,13 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
-    std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
+    std::vector<StreamHDFInfo> const &StreamHDFInfoList, MainOpt &Options) {
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto const &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      StreamSettingsList.push_back(
-          extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
+      StreamSettingsList.push_back(extractStreamInformationFromJsonForSource(
+          Task, StreamHDFInfo, Options));
     } catch (json::parse_error const &E) {
       LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.config_stream);
       continue;
@@ -231,7 +231,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 
   std::vector<StreamSettings> StreamSettingsList =
-      extractStreamInformationFromJson(Task, StreamHDFInfoList);
+      extractStreamInformationFromJson(Task, StreamHDFInfoList, Config);
 
   // The HDF file is closed and re-opened to (optionally) support SWMR and
   // parallel writing.
@@ -260,7 +260,8 @@ void CommandHandler::handleNew(std::string const &Command) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        Broker.host_port, std::move(Task), Config.StreamerConfiguration));
+        Broker.host_port, std::move(Task), Config.StreamerConfiguration,
+        &Config.ReaderModuleFactories));
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(status_producer,
                 std::chrono::milliseconds{Config.status_master_interval});
@@ -286,7 +287,8 @@ void CommandHandler::addStreamSourceToWriterModule(
     if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
-      auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      auto ModuleFactory =
+          Config.WriterModuleFactories.at(StreamSettings.Module);
       if (!ModuleFactory) {
         LOG(Sev::Info, "Module '{}' is not available", StreamSettings.Module);
         continue;

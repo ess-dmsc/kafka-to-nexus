@@ -35,12 +35,15 @@ namespace FileWriter {
 template <typename Streamer> class StreamMaster {
   using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
+  using ReaderModuleFactoriesMap =
+      std::map<std::string, std::unique_ptr<FlatbufferReader>>;
   friend class CommandHandler;
 
 public:
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
-               const StreamerOptions &options)
+               const StreamerOptions &options,
+               ReaderModuleFactoriesMap *ReaderModuleFactories)
       : Demuxers(file_writer_task->demuxers()),
         WriterTask(std::move(file_writer_task)) {
 
@@ -48,8 +51,9 @@ public:
       try {
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(d.topic()),
-                          std::forward_as_tuple(broker, d.topic(), options));
-        Streamers[d.topic()].setSources(d.sources());
+                          std::forward_as_tuple(broker, d.topic(), options,
+                                                ReaderModuleFactories));
+        Streamers.at(d.topic()).setSources(d.sources());
       } catch (std::exception &e) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", e.what());

@@ -27,9 +27,6 @@ uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
   return fbuf->timestamp();
 }
-
-static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
-    RegisterReader("f142");
 }
 }
 }

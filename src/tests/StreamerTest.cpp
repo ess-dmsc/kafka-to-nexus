@@ -5,6 +5,9 @@
 
 using trompeloeil::_;
 
+static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
+    FlatbufferReaders;
+
 namespace FileWriter {
 std::unique_ptr<KafkaW::Msg> generateKafkaMsg(unsigned char const *DataPtr,
                                               size_t const Size) {
@@ -16,15 +19,18 @@ public:
 
 // make sure that a topic exists/not exists
 TEST_F(StreamerInitTest, Success) {
-  EXPECT_NO_THROW(Streamer("broker", "topic", StreamerOptions()));
+  EXPECT_NO_THROW(
+      Streamer("broker", "topic", StreamerOptions(), &FlatbufferReaders));
 }
 
 TEST_F(StreamerInitTest, NoBroker) {
-  EXPECT_THROW(Streamer("", "topic", StreamerOptions()), std::runtime_error);
+  EXPECT_THROW(Streamer("", "topic", StreamerOptions(), &FlatbufferReaders),
+               std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, NoTopic) {
-  EXPECT_THROW(Streamer("broker", "", StreamerOptions()), std::runtime_error);
+  EXPECT_THROW(Streamer("broker", "", StreamerOptions(), &FlatbufferReaders),
+               std::runtime_error);
 }
 
 // Disabled for now as there is a problem with the Consumer that requires a
@@ -42,7 +48,9 @@ TEST_F(StreamerInitTest, NoTopic) {
 
 class StreamerStandIn : public Streamer {
 public:
-  StreamerStandIn() : Streamer("SomeBroker", "SomeTopic", StreamerOptions()) {}
+  StreamerStandIn()
+      : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
+                 &FlatbufferReaders) {}
   using Streamer::ConsumerCreated;
   using Streamer::Options;
 };
@@ -137,9 +145,6 @@ TEST_F(StreamerProcessTest, PollingError) {
 }
 
 TEST_F(StreamerProcessTest, InvalidMessage) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
   unsigned char DataBuffer[]{"0000test"};
   std::string ReaderKey{"test"};
   StreamerStandIn TestStreamer;
@@ -170,13 +175,9 @@ public:
 };
 
 TEST_F(StreamerProcessTest, UnknownSourceName) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
   std::string ReaderKey{"test"};
-
-  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
-      ReaderKey);
+  FlatbufferReaders[ReaderKey] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new StreamerTestDummyReader);
   unsigned char DataBuffer[]{"0000test"};
 
   StreamerStandIn TestStreamer;
@@ -209,13 +210,10 @@ public:
 };
 
 TEST_F(StreamerProcessTest, MessageBeforeStartTimestamp) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
   std::string ReaderKey{"test"};
+  FlatbufferReaders[ReaderKey] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new StreamerTestDummyReader);
 
-  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
-      ReaderKey);
   unsigned char DataBuffer[]{"0000test"};
 
   StreamerStandIn TestStreamer;
@@ -258,13 +256,9 @@ public:
 };
 
 TEST_F(StreamerProcessTest, MessageAfterStopTimestamp) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
   std::string ReaderKey{"test"};
-
-  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
-      RegisterIt(ReaderKey);
+  FlatbufferReaders[ReaderKey] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new StreamerHighTimestampTestDummyReader);
   unsigned char DataBuffer[]{"0000test"};
 
   StreamerStandIn TestStreamer;
@@ -303,13 +297,9 @@ public:
 };
 
 TEST_F(StreamerProcessTest, MessageTimeout) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
   std::string ReaderKey{"test"};
-
-  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
-      ReaderKey);
+  FlatbufferReaders[ReaderKey] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new StreamerTestDummyReader);
   unsigned char DataBuffer[]{"0000test"};
 
   StreamerStandIn TestStreamer;

@@ -14,16 +14,6 @@
 
 namespace senv {
 
-// Register the timestamp and name extraction class for this module
-static FileWriter::FlatbufferReaderRegistry::Registrar<
-    SampleEnvironmentDataGuard>
-    RegisterSenvGuard("senv");
-
-// Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<
-    FastSampleEnvironmentWriter>
-    RegisterSenvWriter("senv");
-
 bool SampleEnvironmentDataGuard::verify(
     FlatbufferMessage const &Message) const {
   auto Verifier =

@@ -25,13 +25,11 @@ TemplateWriterTests.cpp
 DemuxerTests.cpp
 MessageTest.cpp
 StreamerTest.cpp
-AddReader.cpp
 Schema_f142.cpp
 CoverageFix.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
-AddReader.h
 )
 
 add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})

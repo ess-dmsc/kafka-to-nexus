@@ -79,7 +79,6 @@ set(kafka_to_nexus_SRC
   FileWriterTask.cpp
   Source.cpp
   DemuxTopic.cpp
-  FlatbufferReader.cpp
   HDFFile.cpp
   HDFWriterModule.cpp
   KafkaW/BrokerSettings.cpp

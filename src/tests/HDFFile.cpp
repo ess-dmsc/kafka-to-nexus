@@ -6,7 +6,6 @@
 #include "../json.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
-#include "AddReader.h"
 #include "HDFFileTestHelper.h"
 #include <array>
 #include <chrono>
@@ -420,7 +419,6 @@ public:
   }
 
   static void data_ev42() {
-    AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -659,8 +657,9 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
-                                                      msg.size());
+            FileWriter::FlatbufferMessage TempMessage(
+                (const char *)msg.data(), msg.size(),
+                main_opt.ReaderModuleFactories);
             auto res =
                 fwt->demuxers().at(0).process_message(std::move(TempMessage));
             if (res == FileWriter::ProcessMessageResult::ERR) {
@@ -818,7 +817,6 @@ public:
   };
 
   static void data_f142() {
-    AddF142Reader();
     MainOpt main_opt = getTestOptions();
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
@@ -996,8 +994,9 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
-                                                      msg.size());
+            FileWriter::FlatbufferMessage TempMessage(
+                (const char *)msg.data(), msg.size(),
+                main_opt.ReaderModuleFactories);
             fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }

@@ -1,16 +1,36 @@
 #include "MainOpt.h"
 #include "helper.h"
 #include "json.h"
+#include "schemas/ev42/ev42_rw.h"
+#include "schemas/f142/FlatbufferReader.h"
+#include "schemas/f142/f142_rw.h"
+#include "schemas/senv/FastSampleEnvironmentWriter.h"
 #include "uri.h"
 #include <iostream>
 
 using uri::URI;
 
-// For reasons unknown, the presence of the constructor caused the integration
-// test to fail, with the NeXus file being created, but no data written to it.
-// While the cause of this problem is not discovered and fixed, use the
-// following init function.
+MainOpt::MainOpt() { init(); }
+
 void MainOpt::init() {
+  ReaderModuleFactories["f142"] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new FileWriter::Schemas::f142::FlatbufferReader);
+  WriterModuleFactories["f142"] = []() {
+    return std::unique_ptr<FileWriter::HDFWriterModule>(
+        new FileWriter::Schemas::f142::HDFWriterModule);
+  };
+  ReaderModuleFactories["ev42"] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new FileWriter::Schemas::ev42::FlatbufferReader);
+  WriterModuleFactories["ev42"] = []() {
+    return std::unique_ptr<FileWriter::HDFWriterModule>(
+        new FileWriter::Schemas::ev42::HDFWriterModule);
+  };
+  ReaderModuleFactories["senv"] = std::unique_ptr<FileWriter::FlatbufferReader>(
+      new senv::SampleEnvironmentDataGuard);
+  WriterModuleFactories["senv"] = []() {
+    return std::unique_ptr<FileWriter::HDFWriterModule>(
+        new senv::FastSampleEnvironmentWriter);
+  };
   service_id = fmt::format("kafka-to-nexus--host:{}--pid:{}",
                            gethostname_wrapper(), getpid_wrapper());
 }

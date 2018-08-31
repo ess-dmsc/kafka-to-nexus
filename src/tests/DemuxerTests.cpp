@@ -1,18 +1,8 @@
 #include <DemuxTopic.h>
+#include <FlatbufferReader.h>
 #include <gtest/gtest.h>
 
 namespace FileWriter {
-
-using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-
-class MessageTimeExtractionTest : public ::testing::Test {
-public:
-  void SetUp() override {
-    std::map<std::string, ReaderPtr> &Readers =
-        FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-  }
-};
 
 class DemuxerDummyReader2 : public FileWriter::FlatbufferReader {
 public:
@@ -22,6 +12,17 @@ public:
   }
   std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
     return 42;
+  }
+};
+
+static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
+    FlatbufferReaders;
+
+class MessageTimeExtractionTest : public ::testing::Test {
+public:
+  void SetUp() override {
+    FlatbufferReaders["temp"] =
+        std::unique_ptr<FileWriter::FlatbufferReader>(new DemuxerDummyReader2);
   }
 };
 
@@ -49,13 +50,9 @@ public:
 
 TEST_F(MessageTimeExtractionTest, Success) {
   std::string TestKey("temp");
-  {
-    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
-        TestKey);
-  }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8, FlatbufferReaders);
   EXPECT_TRUE(CurrentMessage.isValid());
   EXPECT_EQ(CurrentMessage.getSourceName(), "SomeSourceName");
   EXPECT_EQ(CurrentMessage.getTimestamp(), 42ul);
@@ -64,46 +61,32 @@ TEST_F(MessageTimeExtractionTest, Success) {
 TEST_F(MessageTimeExtractionTest, WrongFlatbufferID) {
   std::string TestKey("temp");
   std::string MessageKey("temr");
-  {
-    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
-        TestKey);
-  }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, MessageKey.c_str(), 4);
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData, 8), UnknownFlatbufferID);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData, 8, FlatbufferReaders),
+               UnknownFlatbufferID);
 }
 
 TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
   std::string TestKey("temp");
-  {
-    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
-        TestKey);
-  }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData, 7), BufferTooSmallError);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData, 7, FlatbufferReaders),
+               BufferTooSmallError);
 }
 
 class DemuxerTest : public ::testing::Test {
 public:
-  void SetUp() override {
-    std::map<std::string, ReaderPtr> &Readers =
-        FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-  }
+  void SetUp() override {}
 };
 
 TEST_F(DemuxerTest, Success) {
   std::string TestKey("temp");
   std::string SourceName("SomeSourceName");
-  {
-    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
-        TestKey);
-  }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8, FlatbufferReaders);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
@@ -122,13 +105,9 @@ TEST_F(DemuxerTest, Success) {
 TEST_F(DemuxerTest, WrongFlatbufferID) {
   std::string TestKey("temp");
   std::string SourceName("SomeSourceName");
-  {
-    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
-        TestKey);
-  }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8, FlatbufferReaders);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
@@ -148,13 +127,9 @@ TEST_F(DemuxerTest, WrongFlatbufferID) {
 TEST_F(DemuxerTest, WrongSourceName) {
   std::string TestKey("temp");
   std::string SourceName("WrongSourceName");
-  {
-    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
-        TestKey);
-  }
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8, FlatbufferReaders);
   ProcessMessageResult Result;
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);

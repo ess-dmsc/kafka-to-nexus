@@ -2,37 +2,6 @@
 
 namespace FileWriter {
 
-namespace HDFWriterModuleRegistry {
-
-std::map<std::string, HDFWriterModuleRegistry::ModuleFactory> &getFactories() {
-  static std::map<std::string, HDFWriterModuleRegistry::ModuleFactory> _items;
-  return _items;
-}
-
-HDFWriterModuleRegistry::ModuleFactory &find(std::string const &key) {
-  static HDFWriterModuleRegistry::ModuleFactory empty;
-  auto &_items = getFactories();
-  auto f = _items.find(key);
-  if (f == _items.end()) {
-    return empty;
-  }
-  return f->second;
-}
-
-void addWriterModule(std::string key, ModuleFactory value) {
-  auto &m = getFactories();
-  if (key.size() != 4) {
-    throw std::runtime_error(
-        "The number of characters in the Flatbuffer id string must be 4.");
-  }
-  if (m.find(key) != m.end()) {
-    auto s = fmt::format("ERROR entry for key [{}] exists already", key);
-    throw std::runtime_error(s);
-  }
-  m[key] = std::move(value);
-}
-} // namespace HDFWriterModuleRegistry
-
 namespace HDFWriterModule_detail {
 
 static std::map<int8_t, std::string> const g_InitResult_strings{

@@ -26,7 +26,8 @@ std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   return RawBuffer;
 }
 
-using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
+    FlatbufferReaders;
 
 class FastSampleEnvironmentReader : public ::testing::Test {
 public:
@@ -37,12 +38,8 @@ public:
   void SetUp() override {
     ASSERT_NE(RawBuffer.get(), nullptr);
     ReaderUnderTest = std::make_unique<senv::SampleEnvironmentDataGuard>();
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        senv::SampleEnvironmentDataGuard>
-        RegisterIt("senv");
+    FlatbufferReaders["senv"] = std::unique_ptr<FileWriter::FlatbufferReader>(
+        new senv::SampleEnvironmentDataGuard);
   };
 
   std::unique_ptr<senv::SampleEnvironmentDataGuard> ReaderUnderTest;
@@ -54,19 +51,19 @@ size_t FastSampleEnvironmentReader::BufferSize{0};
 
 TEST_F(FastSampleEnvironmentReader, GetSourceName) {
   FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(),
-                                            BufferSize);
+                                            BufferSize, FlatbufferReaders);
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
 }
 
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
   FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(),
-                                            BufferSize);
+                                            BufferSize, FlatbufferReaders);
   EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
   FileWriter::FlatbufferMessage TestMessage((const char *)RawBuffer.get(),
-                                            BufferSize);
+                                            BufferSize, FlatbufferReaders);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
 
@@ -74,12 +71,12 @@ TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   std::unique_ptr<char[]> TempData(new char[BufferSize]);
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
   FileWriter::FlatbufferMessage TestMessage1((const char *)TempData.get(),
-                                             BufferSize);
+                                             BufferSize, FlatbufferReaders);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[3] = 'h';
-  EXPECT_THROW(
-      FileWriter::FlatbufferMessage((const char *)TempData.get(), BufferSize),
-      FileWriter::NotValidFlatbuffer);
+  EXPECT_THROW(FileWriter::FlatbufferMessage((const char *)TempData.get(),
+                                             BufferSize, FlatbufferReaders),
+               FileWriter::NotValidFlatbuffer);
 }
 
 class FastSampleEnvironmentWriter : public ::testing::Test {
@@ -135,7 +132,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize,
+      FlatbufferReaders);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -175,7 +173,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize,
+      FlatbufferReaders);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
@@ -219,7 +218,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize,
+      FlatbufferReaders);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
@@ -244,7 +244,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_OK());
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_OK());
   FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize,
+      FlatbufferReaders);
   EXPECT_TRUE(Writer.write(TestMsg).is_OK());
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");

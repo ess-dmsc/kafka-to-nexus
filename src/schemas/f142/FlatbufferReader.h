@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../../FlatbufferMessage.h"
 #include "../../FlatbufferReader.h"
 #include "Common.h"
 

@@ -16,6 +16,7 @@
 #include "StreamerOptions.h"
 #include "logger.h"
 
+#include "FlatbufferReader.h"
 #include "KafkaW/KafkaW.h"
 
 #include <chrono>
@@ -28,6 +29,8 @@ using ConsumerPtr = std::unique_ptr<KafkaW::Consumer>;
 /// and consume messages
 class Streamer {
   using StreamerStatus = Status::StreamerStatus;
+  using ReaderModuleFactoriesMap =
+      std::map<std::string, std::unique_ptr<FlatbufferReader>>;
 
 public:
   Streamer() = default;
@@ -44,7 +47,8 @@ public:
   /// @remark     Throws an exception if fails (e.g. missing broker or topic)
   ///
   Streamer(const std::string &Broker, const std::string &TopicName,
-           const FileWriter::StreamerOptions &Opts);
+           const FileWriter::StreamerOptions &Opts,
+           ReaderModuleFactoriesMap *ReaderModuleFactories);
   Streamer(const Streamer &) = delete;
   Streamer(Streamer &&other) = default;
 
@@ -102,6 +106,7 @@ protected:
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
   std::chrono::milliseconds LastMessageTimestamp{0};
+  ReaderModuleFactoriesMap *ReaderModuleFactories;
 };
 
 //----------------------------------------------------------------------------
