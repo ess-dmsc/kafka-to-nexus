@@ -30,8 +30,6 @@ uint64_t Reader::timestamp(FlatbufferMessage const &Message) const {
   auto Buffer = getRoot(Message.data());
   return Buffer->timestamp();
 }
-
-static FlatbufferReaderRegistry::Registrar<Reader> RegisterReader("hs00");
 }
 }
 }

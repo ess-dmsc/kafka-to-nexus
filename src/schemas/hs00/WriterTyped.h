@@ -239,7 +239,8 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
   }
   {
     if (0 > H5Pset_deflate(static_cast<hid_t>(DCPL), 7)) {
-      LOG(Sev::Critical, "can not use gzip filter on hdf5. Is hdf5 not built with gzip support?");
+      LOG(Sev::Critical, "can not use gzip filter on hdf5. Is hdf5 not built "
+                         "with gzip support?");
     }
   }
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
@@ -298,9 +299,8 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
 template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 
 template <typename DataType, typename EdgeType, typename ErrorType>
-HDFWriterModule::WriteResult
-WriterTyped<DataType, EdgeType, ErrorType>::write(FlatbufferMessage const &Message,
-                                                  bool DoFlushEachWrite) {
+HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
+    FlatbufferMessage const &Message, bool DoFlushEachWrite) {
   if (!Dataset.is_valid()) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("invalid dataset");
   }

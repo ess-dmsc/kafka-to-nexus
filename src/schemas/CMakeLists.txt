@@ -1,5 +1,6 @@
 include(ModuleFunction.cmake)
 add_subdirectory(f142)
 add_subdirectory(ev42)
+add_subdirectory(hs00)
 add_subdirectory(senv)
 add_subdirectory(template)

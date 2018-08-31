@@ -1,19 +1,19 @@
-#include "Msg.h"
 #include "FlatbufferMessage.h"
+#include "Msg.h"
 #include "helper.h"
 #include "json.h"
 #include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
+#include "schemas/hs00/Reader.h"
 #include "schemas/hs00/Shape.h"
 #include "schemas/hs00/Slice.h"
-#include "schemas/hs00/Reader.h"
 #include "schemas/hs00/Writer.h"
 #include "schemas/hs00/WriterTyped.h"
+#include <HDFWriterModule.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
-#include <HDFWriterModule.h>
 
 namespace FileWriter {
 namespace Schemas {
@@ -31,19 +31,21 @@ using FileWriter::Schemas::hs00::Slice;
 using FileWriter::Schemas::hs00::WriterTyped;
 using FileWriter::Schemas::hs00::Writer;
 
+static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
+    FlatbufferReaders;
+
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
-    using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-    std::map<std::string, ReaderPtr> &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
+    /*
     FileWriter::FlatbufferReaderRegistry::Registrar<
         FileWriter::Schemas::hs00::Reader>
         RegisterIt("hs00");
-    std::map<std::string, FileWriter::HDFWriterModuleRegistry::ModuleFactory> &Writers =
-        FileWriter::HDFWriterModuleRegistry::getFactories();
-    Writers.clear();
-    { FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00"); }
+    { FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
+    }
+    */
+    FlatbufferReaders["hs00"] = std::unique_ptr<FileWriter::FlatbufferReader>(
+        new FileWriter::Schemas::hs00::Reader);
   }
 };
 
@@ -176,7 +178,7 @@ json createTestWriterTypedJson() {
       }
     ]
   })"");
-  for (auto & S : Json["shape"]) {
+  for (auto &S : Json["shape"]) {
     for (size_t I = 0; I <= S["size"]; ++I) {
       S["edges"].push_back(double(I));
     }
@@ -273,8 +275,9 @@ FileWriter::Msg createTestMessage(size_t HistogramID, size_t PacketID) {
   auto DMDA = Builder.CreateVector(DMDs);
 
   std::vector<uint32_t> ThisLengths{64 / 2, 64 / 2, 64};
-  std::vector<uint32_t> ThisOffsets{(uint32_t(PacketID) / 2) * ThisLengths.at(0),
-                                    (uint32_t(PacketID) % 2) * ThisLengths.at(1), 0};
+  std::vector<uint32_t> ThisOffsets{
+      (uint32_t(PacketID) / 2) * ThisLengths.at(0),
+      (uint32_t(PacketID) % 2) * ThisLengths.at(1), 0};
 
   uint64_t Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000);
   auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
@@ -384,7 +387,8 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 4; ++i) {
     auto M = createTestMessage(0, i);
-    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
+    auto X = Writer->write(
+        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -411,7 +415,8 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   size_t HistogramID = 0;
   for (size_t i = 0; i < 3; ++i) {
     auto M = createTestMessage(HistogramID, i);
-    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
+    auto X = Writer->write(
+        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -420,7 +425,8 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
     auto M = createTestMessage(HistogramID, i);
-    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
+    auto X = Writer->write(
+        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -429,7 +435,8 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
     auto M = createTestMessage(HistogramID, i);
-    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
+    auto X = Writer->write(
+        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -466,7 +473,8 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   auto M = FileWriter::Msg::owned(reinterpret_cast<const char *>(V2.data()),
                                   V2.size());
-  auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
+  auto X = Writer->write(
+      FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
   if (!X.is_OK()) {
     throw std::runtime_error(X.to_str());
   }

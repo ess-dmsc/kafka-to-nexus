@@ -97,15 +97,6 @@ set(kafka_to_nexus_SRC
   FlatbufferMessage.cpp
   date/tz.cpp
   date/tzblobs.cpp
-  schemas/hs00/Exceptions.cpp
-  schemas/hs00/Reader.cpp
-  schemas/hs00/Writer.cpp
-  schemas/hs00/WriterTyped.cpp
-  schemas/hs00/WriterUntyped.cpp
-  schemas/hs00/Shape.cpp
-  schemas/hs00/Slice.cpp
-  schemas/hs00/HistogramRecord.cpp
-  schemas/hs00/Dimension.cpp
   MainOpt.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp)
@@ -155,15 +146,6 @@ set(kafka_to_nexus_INC
   date/tz_private.h
   date/tz.h
   date/tzblobs.h
-  schemas/hs00/Exceptions.h
-  schemas/hs00/Reader.h
-  schemas/hs00/Writer.h
-  schemas/hs00/WriterTyped.h
-  schemas/hs00/WriterUntyped.h
-  schemas/hs00/Shape.h
-  schemas/hs00/Slice.h
-  schemas/hs00/HistogramRecord.h
-  schemas/hs00/Dimension.h
   CLIOptions.h
 )
 
@@ -175,6 +157,7 @@ add_library(${tgt} STATIC
   $<TARGET_OBJECTS:ev42_module>
   $<TARGET_OBJECTS:f142_module>
   $<TARGET_OBJECTS:senv_module>
+  $<TARGET_OBJECTS:hs00_module>
 )
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 

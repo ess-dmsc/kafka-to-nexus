@@ -35,7 +35,8 @@ Writer::reopen(hdf5::node::Group &HDFGroup) {
   return FileWriter::HDFWriterModule::InitResult::OK();
 }
 
-FileWriter::HDFWriterModule::WriteResult Writer::write(FlatbufferMessage const &Message) {
+FileWriter::HDFWriterModule::WriteResult
+Writer::write(FlatbufferMessage const &Message) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
@@ -65,8 +66,6 @@ void Writer::enable_cq(CollectiveQueue *, HDFIDStore *, int) {}
 FileWriter::HDFWriterModule::ptr Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new Writer);
 }
-
-static HDFWriterModuleRegistry::Registrar<Writer> RegisterWriter("hs00");
 }
 }
 }
