@@ -21,7 +21,7 @@ def test_data_reaches_file(docker_compose):
     # Allow time for the file writing to complete
     sleep(5)
 
-    file = h5py.File("output-files/output_file.nxs", 'r')
+    file = h5py.File("./output-files/output_file.nxs", 'r')
 
     assert file is not None
     assert file.swmr_mode == False
