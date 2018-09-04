@@ -10,4 +10,5 @@ function(create_module module_name)
     ${${module_name}_INC}
   )
   target_include_directories(${module_name} PRIVATE ${path_include_common})
+  set(WRITER_MODULES ${WRITER_MODULES} $<TARGET_OBJECTS:${module_name}> CACHE INTERNAL "WRITER_MODULES")
 endfunction(create_module)
