@@ -2,6 +2,7 @@ from helpers.kafkahelpers import create_producer, send_writer_command
 from time import sleep
 import h5py
 import numpy as np
+import os
 
 
 def test_data_reaches_file(docker_compose):
@@ -15,14 +16,19 @@ def test_data_reaches_file(docker_compose):
     sleep(10)
     # Stop file writing
     send_writer_command("commands/stop-command.json", producer)
-    sleep(10)
+    sleep(20)
     send_writer_command("commands/writer-exit.json", producer)
     producer.flush()
 
     # Allow time for the file writing to complete
-    sleep(35)
+    for i in range(100):
+        if os.path.isfile("output-files/output_file.nxs"):
+            break
+        sleep(1)
+
     file = h5py.File("output-files/output_file.nxs", mode='r')
 
+    # Static checks
     assert not file.swmr_mode
     assert file["entry/start_time"].value == '2016-04-12T02:58:52'
     assert file["entry/end_time"].value == '2016-04-12T03:29:11'
@@ -33,3 +39,8 @@ def test_data_reaches_file(docker_compose):
     assert file["entry/user_1/affiliation"].value == 'ISIS, STFC'
     assert np.allclose(file["entry/instrument/monitor1/transformations/location"].attrs["vector"], np.array([0.0, 0.0, -1.0]))
     assert file["entry/instrument/monitor1/transformations/location"].attrs["transformation_type"] == "translation"
+
+    # Streamed checks
+    assert file["entry/instrument/detector_1/event_data/cue_index"].size != 0
+    assert file["entry/instrument/detector_1/event_data/cue_timestamp_zero"].size != 0
+
