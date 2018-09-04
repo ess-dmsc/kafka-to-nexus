@@ -6,7 +6,7 @@ import numpy as np
 
 def test_data_reaches_file(docker_compose):
     producer = create_producer()
-    sleep(10)
+    sleep(15)
 
     # Start file writing
     send_writer_command("commands/example-json-command.json", producer)
@@ -15,12 +15,12 @@ def test_data_reaches_file(docker_compose):
     sleep(10)
     # Stop file writing
     send_writer_command("commands/stop-command.json", producer)
-    sleep(5)
+    sleep(10)
     send_writer_command("commands/writer-exit.json", producer)
     producer.flush()
 
     # Allow time for the file writing to complete
-    sleep(30)
+    sleep(35)
     file = h5py.File("output-files/output_file.nxs", mode='r')
 
     assert not file.swmr_mode
