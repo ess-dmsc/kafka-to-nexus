@@ -2,7 +2,6 @@ from helpers.kafkahelpers import create_producer, send_writer_command
 from time import sleep
 import h5py
 import numpy as np
-import os
 
 
 def test_data_reaches_file(docker_compose):
