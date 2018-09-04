@@ -153,10 +153,6 @@ set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} STATIC
   ${kafka_to_nexus_SRC}
   ${kafka_to_nexus_INC}
-  $<TARGET_OBJECTS:template_module>
-  $<TARGET_OBJECTS:ev42_module>
-  $<TARGET_OBJECTS:f142_module>
-  $<TARGET_OBJECTS:senv_module>
 )
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
@@ -178,7 +174,11 @@ target_link_libraries(${tgt} kafka_to_nexus__objects)
 
 set(tgt "kafka-to-nexus")
 set(sources
-        kafka-to-nexus.cpp
+  kafka-to-nexus.cpp
+  $<TARGET_OBJECTS:template_module>
+  $<TARGET_OBJECTS:ev42_module>
+  $<TARGET_OBJECTS:f142_module>
+  $<TARGET_OBJECTS:senv_module>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)

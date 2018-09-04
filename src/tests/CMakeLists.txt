@@ -39,7 +39,14 @@ add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
 add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
-target_link_libraries(UnitTests kafka_to_nexus__objects ${GTEST_BOTH_LIBRARIES})
+target_link_libraries(UnitTests 
+  kafka_to_nexus__objects
+  ${GTEST_BOTH_LIBRARIES}
+  $<TARGET_OBJECTS:template_module>
+  $<TARGET_OBJECTS:ev42_module>
+  $<TARGET_OBJECTS:f142_module>
+  $<TARGET_OBJECTS:senv_module>
+)
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
