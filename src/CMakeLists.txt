@@ -150,11 +150,10 @@ set(kafka_to_nexus_INC
 )
 
 set(tgt "kafka_to_nexus__objects")
-add_library(${tgt} STATIC
+add_library(${tgt} OBJECT
   ${kafka_to_nexus_SRC}
   ${kafka_to_nexus_INC}
 )
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
@@ -163,33 +162,33 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 set(tgt "send-command")
 set(sources
-        send-command.cpp
+  send-command.cpp
+  $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} kafka_to_nexus__objects)
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
+set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
+
+add_subdirectory(schemas)
 
 set(tgt "kafka-to-nexus")
 set(sources
   kafka-to-nexus.cpp
-  $<TARGET_OBJECTS:template_module>
-  $<TARGET_OBJECTS:ev42_module>
-  $<TARGET_OBJECTS:f142_module>
-  $<TARGET_OBJECTS:senv_module>
+  $<TARGET_OBJECTS:kafka_to_nexus__objects>
+  ${WRITER_MODULES}
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} kafka_to_nexus__objects)
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 find_package(GTest)
-
-add_subdirectory(schemas)
 
 if (${GTEST_FOUND})
   add_subdirectory(tests)
