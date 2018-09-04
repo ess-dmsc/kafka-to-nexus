@@ -325,10 +325,6 @@ def get_macos_pipeline()
 def get_system_tests_pipeline() {
     return {
         node('integration-test') {
-            sh """rm -rf /output-files/* || true
-            docker stop \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
-            docker rm \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
-            """
             cleanWs()
             dir("${project}") {
                 stage("System tests: Checkout") {
@@ -341,9 +337,15 @@ def get_system_tests_pipeline() {
                 }  // stage
                 stage("System tests: Run") {
                     sh """cd system-tests/
-                    scl enable rh-python35 -- python -m pytest -s  --junitxml=./SystemTestsOutput.xml ./
+                    scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
                     """
                     junit "system-tests/SystemTestsOutput.xml"
+                }  // stage
+                stage ("System tests: Clean Up") {
+                    sh """rm -rf system-tests/output-files/* || true
+                        docker stop \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
+                        docker rm \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
+                        """
                 }  // stage
             } // dir
         }  // node
