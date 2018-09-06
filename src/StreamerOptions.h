@@ -31,8 +31,7 @@ public:
   std::chrono::milliseconds StopTimestamp{0};
   std::chrono::milliseconds BeforeStartTime{1000};
   std::chrono::milliseconds AfterStopTime{1000};
-  /// If we have not received a (valid) message after this much (real) time,
-  /// stop the stream.
+  /// \todo Remove or rename; unused (dead) variable
   std::chrono::milliseconds ConsumerTimeout{1000};
   int NumMetadataRetry{5};
 };

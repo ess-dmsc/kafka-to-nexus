@@ -1,6 +1,6 @@
 #include "Streamer.h"
-
 #include "helper.h"
+#include <ciso646>
 
 namespace FileWriter {
 std::chrono::milliseconds systemTime() {
@@ -112,11 +112,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   KafkaW::PollStatus Poll = Consumer->poll();
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) and
-        (Options.ConsumerTimeout < (systemTime() - LastMessageTimestamp))) {
+        (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
-                     "passed since last message received.",
+                     "passed since stop time.",
           MessageProcessor.topic(),
-          (systemTime() - LastMessageTimestamp).count());
+          (systemTime() - Options.StopTimestamp).count());
       Sources.clear();
       return ProcessMessageResult::STOP;
     }
@@ -139,8 +139,6 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
         KafkaMessage->getMessageOffset(), Error.what());
     return ProcessMessageResult::ERR;
   }
-
-  LastMessageTimestamp = systemTime(); // For dealing with messsage timeouts
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
