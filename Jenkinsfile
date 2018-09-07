@@ -343,8 +343,8 @@ def get_system_tests_pipeline() {
                 }  // stage
                 stage ("System tests: Clean Up") {
                     sh """rm -rf system-tests/output-files/* || true
-                        docker stop \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
-                        docker rm \$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder' || true
+                        docker stop $(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
+                        docker rm $(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
                         """
                 }  // stage
             } // dir

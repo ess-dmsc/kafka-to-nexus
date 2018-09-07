@@ -39,8 +39,3 @@ def test_data_reaches_file(docker_compose):
     assert file["entry/user_1/affiliation"].value == 'ISIS, STFC'
     assert np.allclose(file["entry/instrument/monitor1/transformations/location"].attrs["vector"], np.array([0.0, 0.0, -1.0]))
     assert file["entry/instrument/monitor1/transformations/location"].attrs["transformation_type"] == "translation"
-
-    # Streamed checks
-    assert file["entry/instrument/detector_1/event_data/cue_index"].size != 0
-    assert file["entry/instrument/detector_1/event_data/cue_timestamp_zero"].size != 0
-
