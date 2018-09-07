@@ -327,26 +327,29 @@ def get_system_tests_pipeline() {
         node('integration-test') {
             cleanWs()
             dir("${project}") {
-                stage("System tests: Checkout") {
-                    checkout scm
-                }  // stage
-                stage("System tests: Install requirements") {
-                    sh """scl enable rh-python35 -- python -m pip install --user --upgrade pip
-                    scl enable rh-python35 -- python -m pip install --user -r system-tests/requirements.txt
-                    """
-                }  // stage
-                stage("System tests: Run") {
-                    sh """cd system-tests/
-                    scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
-                    """
-                    junit "system-tests/SystemTestsOutput.xml"
-                }  // stage
-                stage ("System tests: Clean Up") {
-                    sh """rm -rf system-tests/output-files/* || true
-                    docker stop \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
-                    docker rm \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
-                    """
-                }  // stage
+                try {
+                    stage("System tests: Checkout") {
+                        checkout scm
+                    }  // stage
+                    stage("System tests: Install requirements") {
+                        sh """scl enable rh-python35 -- python -m pip install --user --upgrade pip
+                        scl enable rh-python35 -- python -m pip install --user -r system-tests/requirements.txt
+                        """
+                    }  // stage
+                    stage("System tests: Run") {
+                        sh """cd system-tests/
+                        scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
+                        """
+                        junit "system-tests/SystemTestsOutput.xml"
+                    }  // stage
+                }finally {
+                    stage ("System tests: Clean Up") {
+                        sh """rm -rf system-tests/output-files/* || true
+                        docker stop \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
+                        docker rm \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
+                        """
+                    }  // stage
+                }
             } // dir
         }  // node
     }  // return
