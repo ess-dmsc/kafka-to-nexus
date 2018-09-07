@@ -41,7 +41,7 @@ public:
 
   ~WriterTyped() override;
   int close() override;
-  int copyLatestToData();
+  int copyLatestToData(size_t HDFIndex);
 
 private:
   Shape<EdgeType> TheShape;
@@ -71,6 +71,9 @@ private:
 
   size_t ChunkBytes = 1 * 1024 * 1024;
   bool DoConvertEdgeTypeToFloat = false;
+
+  uint64_t LargestTimestampSeen = 0;
+  size_t MaxNumberHistoric = 4;
 };
 
 template <typename DataType, typename EdgeType, typename ErrorType>
@@ -80,11 +83,14 @@ WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 int WriterTyped<DataType, EdgeType, ErrorType>::close() {
-  return copyLatestToData();
+  // Currently copy after each full write
+  // return copyLatestToData();
+  return 0;
 }
 
 template <typename DataType, typename EdgeType, typename ErrorType>
-int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData() {
+int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
+    size_t HDFIndex) {
   LOG(Sev::Debug, "WriterTyped copyLatestToData");
   if (Dataset.is_valid()) {
     LOG(Sev::Debug, "Found valid dataset");
@@ -93,7 +99,7 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData() {
     auto Dims = SpaceIn.current_dimensions();
     auto Offset = Dims;
     auto Block = Dims;
-    Offset.at(0) = Dims.at(0) - 1;
+    Offset.at(0) = HDFIndex;
     for (size_t I = 1; I < Offset.size(); ++I) {
       Offset.at(I) = 0;
     }
@@ -250,7 +256,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     }
   }
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
-  copyLatestToData();
+  copyLatestToData(0);
   DatasetErrors = Group.create_dataset(
       "errors", hdf5::datatype::create<ErrorType>().native_type(), Space, DCPL);
   {
@@ -382,19 +388,38 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
           "Unexpected errors size");
     }
   }
+  if (Timestamp + 40l * 1000000000l < LargestTimestampSeen) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+        fmt::format("Old histogram: Timestamp: {}  LargestTimestampSeen: {}",
+                    Timestamp, LargestTimestampSeen));
+  }
+  if (LargestTimestampSeen < Timestamp) {
+    LargestTimestampSeen = Timestamp;
+  }
+  bool AddNewRow = false;
   if (HistogramRecords.find(Timestamp) == HistogramRecords.end()) {
-    HistogramRecords[Timestamp] =
-        HistogramRecord::create(Dims.at(0), TheShape.getTotalItems());
+    if (HistogramRecords.size() >= MaxNumberHistoric) {
+      auto ReuseHDFIndex = HistogramRecords.begin()->second.getHDFIndex();
+      HistogramRecords.erase(HistogramRecords.begin());
+      HistogramRecords[Timestamp] =
+          HistogramRecord::create(ReuseHDFIndex, TheShape.getTotalItems());
+    } else {
+      HistogramRecords[Timestamp] =
+          HistogramRecord::create(Dims.at(0), TheShape.getTotalItems());
+      AddNewRow = true;
+    }
+  }
+  if (AddNewRow) {
     Dims.at(0) += 1;
     Dataset.extent(Dims);
     DatasetErrors.extent(Dims);
   }
-  auto &Record = HistogramRecords[Timestamp];
   auto TheSlice = Slice::fromOffsetsSizes(
       std::vector<uint32_t>(MsgOffset->data(),
                             MsgOffset->data() + MsgOffset->size()),
       std::vector<uint32_t>(MsgShape->data(),
                             MsgShape->data() + MsgShape->size()));
+  auto &Record = HistogramRecords[Timestamp];
   if (!Record.hasEmptySlice(TheSlice)) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "Slice already at least partially filled");
@@ -404,7 +429,7 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
   auto DSPFile = Dataset.dataspace();
   {
     std::vector<hsize_t> Offset(Dims.size());
-    Offset.at(0) = Dims.at(0) - 1;
+    Offset.at(0) = Record.getHDFIndex();
     std::vector<hsize_t> Block(Dims.size());
     Block.at(0) = 1;
     auto Count = Dims;
@@ -476,6 +501,10 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
       auto TypeMem = hdf5::datatype::create<uint64_t>().native_type();
       DatasetInfoTimestamp.write(Timestamp, TypeMem, DSPMem, DSPFile);
     }
+  }
+
+  if (Record.isFull()) {
+    copyLatestToData(Record.getHDFIndex());
   }
 
   if (DoFlushEachWrite) {
