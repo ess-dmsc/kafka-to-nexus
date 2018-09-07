@@ -31,8 +31,6 @@ public:
   std::chrono::milliseconds StopTimestamp{0};
   std::chrono::milliseconds BeforeStartTime{1000};
   std::chrono::milliseconds AfterStopTime{1000};
-  /// \todo Remove or rename; unused (dead) variable
-  std::chrono::milliseconds ConsumerTimeout{1000};
   int NumMetadataRetry{5};
 };
 

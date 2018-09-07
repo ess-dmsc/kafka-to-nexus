@@ -10,6 +10,9 @@ std::chrono::milliseconds systemTime() {
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime) {
+  LOG(Sev::Debug, "\t\tStoptime:         {}", Stoptime.count());
+  LOG(Sev::Debug, "\t\tMessageTimestamp: {}",
+      static_cast<std::int64_t>(MessageTimestamp));
   return (Stoptime.count() > 0 and
           static_cast<std::int64_t>(MessageTimestamp) >
               std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
@@ -235,9 +238,6 @@ void FileWriter::StreamerOptions::setStreamerOptions(
       }
       if (Option.key() == "ms-after-stop") {
         AfterStopTime = std::chrono::milliseconds(Value);
-      }
-      if (Option.key() == "consumer-timeout-ms") {
-        ConsumerTimeout = std::chrono::milliseconds(Value);
       }
       if (Option.key() == "metadata-retry") {
         NumMetadataRetry = Value;

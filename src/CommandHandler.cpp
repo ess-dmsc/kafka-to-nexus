@@ -372,11 +372,13 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
       if (StopTime.count() != 0) {
-        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
-            StopTime.count());
+        LOG(Sev::Info,
+            "Received request to gracefully stop file with id : {} at {} ms",
+            JobID, StopTime.count());
         StreamMaster->setStopTime(StopTime);
       } else {
-        LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
+        LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
+            JobID);
         StreamMaster->stop();
       }
     } else {
