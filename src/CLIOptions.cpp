@@ -75,6 +75,6 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
-                 "List registered read and writer parts of file-writing modules"
-                 " and then exit.");
+               "List registered read and writer parts of file-writing modules"
+               " and then exit.");
 }
