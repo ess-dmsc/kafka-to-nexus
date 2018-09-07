@@ -1,5 +1,7 @@
 #include "kafka-to-nexus.h"
 #include "CLIOptions.h"
+#include "FlatbufferReader.h"
+#include "HDFWriterModule.h"
 #include "MainOpt.h"
 #include "Master.h"
 #include "logger.h"
@@ -33,6 +35,22 @@ int main(int argc, char **argv) {
 
   CLI11_PARSE(App, argc, argv);
   Options->parse_config_file();
+
+  if (Options->ListWriterModules) {
+    fmt::print("Registered writer/reader classes\n");
+    fmt::print("\n--Identifiers of FlatbufferReader instances\n");
+    for (auto &ReaderPair :
+         FileWriter::FlatbufferReaderRegistry::getReaders()) {
+      fmt::print("---- {}\n", ReaderPair.first);
+    }
+    fmt::print("\n--Identifiers of HDFWriterModule factories\n");
+    for (auto &WriterPair :
+         FileWriter::HDFWriterModuleRegistry::getFactories()) {
+      fmt::print("---- {}\n", WriterPair.first);
+    }
+    fmt::print("\nDone, exiting\n");
+    return 0;
+  }
 
   if (Options->use_signal_handler) {
     std::signal(SIGINT, signal_handler);

@@ -27,19 +27,27 @@ MessageTest.cpp
 StreamerTest.cpp
 AddReader.cpp
 Schema_f142.cpp
-CoverageFix.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
 AddReader.h
 )
 
-add_executable(UnitTests EXCLUDE_FROM_ALL ${UnitTests_SRC} ${UnitTests_INC})
+add_executable(UnitTests EXCLUDE_FROM_ALL
+  ${UnitTests_SRC}
+  ${UnitTests_INC}
+  $<TARGET_OBJECTS:kafka_to_nexus__objects>
+  ${WRITER_MODULES}
+)
 
 add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
-target_link_libraries(UnitTests kafka_to_nexus__objects ${GTEST_BOTH_LIBRARIES})
+target_link_libraries(UnitTests
+  ${GTEST_BOTH_LIBRARIES}
+  ${libraries_common}
+  fmt::fmt
+)
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
