@@ -257,7 +257,7 @@ def get_pipeline(image_key) {
 
                 docker_build(image_key)
 
-                if (image_key == test_and_coverage_os) {
+                if (image_key == test_and_coverage_os && !env.CHANGE_ID) {
                     docker_coverage(image_key)
                 }
                 else if (image_key == release_os) {
