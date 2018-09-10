@@ -69,6 +69,9 @@ public:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
+    LOG(Sev::Info,
+        "Stop StreamMaster for file with id : {}, ready to be removed",
+        getJobId());
   }
 
   StreamMaster &operator=(const StreamMaster &) = delete;
