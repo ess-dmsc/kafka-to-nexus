@@ -1,5 +1,11 @@
 FROM ubuntu:18.04
 
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG http_proxy
+
+ARG https_proxy
+
 # Install packages
 ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools kafkacat"
 RUN apt-get -y update && apt-get install $BUILD_PACKAGES -y --no-install-recommends && \
