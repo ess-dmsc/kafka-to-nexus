@@ -16,7 +16,7 @@ ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/ma
 RUN mkdir kafka_to_nexus
 COPY ./src ../kafka_to_nexus_src/src
 COPY ./conan ../kafka_to_nexus_src/conan
-RUN cd kafka_to_nexus && conan install ../kafka_to_nexus_src/conan/conanfile.txt --build=outdated
+RUN cd kafka_to_nexus && conan install --build=outdated ../kafka_to_nexus_src/conan/conanfile.txt
 COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
 COPY ./cmake ../kafka_to_nexus_src/cmake
 COPY ./Doxygen.conf ../kafka_to_nexus_src/Doxygen.conf
