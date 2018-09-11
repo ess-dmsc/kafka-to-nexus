@@ -14,15 +14,15 @@ ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/ma
 ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/default_profile" "/root/.conan/profiles/default"
 
 RUN mkdir kafka_to_nexus
-RUN cd kafka_to_nexus
 COPY ./src ../kafka_to_nexus_src/src
 COPY ./conan ../kafka_to_nexus_src/conan
+RUN cd kafka_to_nexus && conan install ../kafka_to_nexus_src/conan/conanfile.txt --build=outdated
 COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
 COPY ./cmake ../kafka_to_nexus_src/cmake
 COPY ./Doxygen.conf ../kafka_to_nexus_src/Doxygen.conf
 
 RUN cd kafka_to_nexus && \
-    cmake -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
+    cmake -DCONAN="MANUAL" -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
     make -j8
 
 RUN mkdir /output-files
