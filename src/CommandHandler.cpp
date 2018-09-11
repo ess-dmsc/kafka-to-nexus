@@ -32,8 +32,8 @@ static void throwMissingKey(std::string const &Key,
 }
 
 std::chrono::milliseconds findTime(nlohmann::json const &Doc,
-                                   std::string const &TimeName) {
-  if (auto x = find<uint64_t>(TimeName, Doc)) {
+                                   std::string const &Key) {
+  if (auto x = find<uint64_t>(Key, Doc)) {
     std::chrono::milliseconds Time(x.inner());
     if (Time.count() != 0) {
       return Time;
@@ -381,7 +381,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (MasterPtr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
-      if (StopTime.count() != 0) {
+      if (StopTime.count() > 0) {
         LOG(Sev::Info,
             "Received request to gracefully stop file with id : {} at {} ms",
             JobID, StopTime.count());
@@ -481,7 +481,6 @@ void CommandHandler::tryToHandle(std::string const &Command,
               .count());
     }
 
-    // <<<<<<< 700b7a6bc5fd158b6f69576c21dff1198517de2f
   } catch (json::parse_error const &E) {
     LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
   } catch (json::out_of_range const &E) {
@@ -489,18 +488,6 @@ void CommandHandler::tryToHandle(std::string const &Command,
   } catch (json::type_error const &E) {
     LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
   } catch (std::runtime_error const &E) {
-
-    // =======
-    //   } catch (nlohmann::detail::parse_error &e) {
-    //     LOG(Sev::Error, "parse_error: {}  Command: {}", e.what(), Command);
-    //   } catch (nlohmann::detail::out_of_range &e) {
-    //     LOG(Sev::Error, "out_of_range: {}  Command: ", e.what(), Command);
-    //   } catch (nlohmann::detail::type_error &e) {
-    //     LOG(Sev::Error, "type_error: {}  Command: ", e.what(), Command);
-    //   } catch (std::runtime_error &e) {
-    // >>>>>>> Do not use class member for message timestamp but propagate in
-    // methods
-    // Originates from h5cpp:
     if (std::string(E.what()).find(
             "Cannot obtain ObjectId from an invalid file instance!") == 0) {
       LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
