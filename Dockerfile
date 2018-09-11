@@ -8,8 +8,11 @@ ARG https_proxy
 
 # Install packages
 ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools kafkacat"
-RUN apt-get -y update && apt-get install $BUILD_PACKAGES -y --no-install-recommends && \
-rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y && \
+    apt-get --no-install-recommends -y install $BUILD_PACKAGES && \
+    apt-get -y autoremove && \
+    apt-get clean all && \
+    rm -rf /var/lib/apt/lists/*
 
 RUN pip install conan
 # Force conan to create .conan directory and profile
