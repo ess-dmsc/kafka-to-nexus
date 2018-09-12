@@ -489,7 +489,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::handle(Msg const &Msg) {
+void CommandHandler::tryToHandle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 
