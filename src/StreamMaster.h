@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "FileWriterTask.h"
+#include "EventLogger.h"
 #include "Report.h"
 
 #include <atomic>
@@ -150,6 +150,7 @@ public:
   /// Return the unique job id associated with the streamer (and hence
   /// with the NeXus file)
   std::string getJobId() const { return WriterTask->job_id(); }
+  void setServiceId(const std::string &Id) { ServiceId = Id; }
 
 private:
   //------------------------------------------------------------------------------
@@ -279,6 +280,8 @@ private:
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
+  std::string ServiceId;
+  std::shared_ptr<EventLogger> EventLog;
 };
 
 } // namespace FileWriter
