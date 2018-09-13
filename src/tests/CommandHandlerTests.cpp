@@ -87,3 +87,16 @@ TEST_F(CommandHandler_Testing, OpenFileInNonSWMRMode) {
 TEST_F(CommandHandler_Testing, OpenFileInSWMRMode) {
   createFileWithOptionalSWMR(true);
 }
+
+TEST_F(CommandHandler_Testing, FormatNestedException) {
+  try {
+    try {
+      throw std::runtime_error("2nd_level");
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error("1st_level"));
+    }
+  } catch (std::exception const &E) {
+    ASSERT_EQ(std::string("1st_level\n  2nd_level"),
+              format_nested_exception(E));
+  }
+}

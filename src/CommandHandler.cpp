@@ -7,6 +7,7 @@
 #include "json.h"
 #include <chrono>
 #include <future>
+#include <sstream>
 
 using std::array;
 using std::vector;
@@ -453,39 +454,49 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
+std::string format_nested_exception(std::exception const &E,
+                                    std::stringstream &StrS, int Level) {
+  if (Level > 0) {
+    StrS << '\n';
+  }
+  StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
+  try {
+    std::rethrow_if_nested(E);
+  } catch (std::exception const &E) {
+    format_nested_exception(E, StrS, Level + 1);
+  } catch (...) {
+  }
+  return StrS.str();
+}
+
+std::string format_nested_exception(std::exception const &E) {
+  std::stringstream StrS;
+  return format_nested_exception(E, StrS, 0);
+}
+
+static void dummy_emit_msg(std::string JobID, std::string Code,
+                           std::string ServiceID, std::string Message) {}
+
 void CommandHandler::tryToHandle(std::string const &Command) {
   try {
     handle(Command);
-  } catch (json::parse_error const &E) {
-    LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
-  } catch (json::out_of_range const &E) {
-    LOG(Sev::Error, "out_of_range: {}  Command: ", E.what(), Command);
-  } catch (json::type_error const &E) {
-    LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
-  } catch (std::runtime_error const &E) {
-    // Originates from h5cpp:
-    if (std::string(E.what()).find(
-            "Cannot obtain ObjectId from an invalid file instance!") == 0) {
-      LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
-                        "output file already exists.  command: {}",
-          Command);
-    } else {
-      LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
-          E.what(), Command);
-    }
-  } catch (std::exception const &E) {
-    LOG(Sev::Error, "Unexpected std::exception while handling command: {}",
-        Command);
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Unexpected std::exception while handling command  what: "
-                    "{}  Command: {}",
-                    E.what(), Command)));
   } catch (...) {
-    LOG(Sev::Error, "Unexpected unknown exception while handling command: {}",
-        Command);
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Unexpected unknown exception while handling command  Command: {}",
-        Command)));
+    std::string JobID;
+    try {
+      JobID = nlohmann::json::parse(Command)["job_id"];
+    } catch (...) {
+      JobID = "undefined";
+    }
+    try {
+      std::throw_with_nested(
+          std::runtime_error("Error in CommandHandler::tryToHandle"));
+    } catch (std::runtime_error const &E) {
+      auto Message = fmt::format(
+          "Unexpected std::exception while handling command:\n{}\n{}", Command,
+          format_nested_exception(E));
+      LOG(Sev::Error, Message.c_str());
+      dummy_emit_msg(JobID, "FAIL", Config.service_id, Message);
+    }
   }
 }
 

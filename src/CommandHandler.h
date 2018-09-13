@@ -71,4 +71,6 @@ private:
 
 std::string findBroker(std::string const &);
 
+std::string format_nested_exception(std::exception const &E);
+
 } // namespace FileWriter
