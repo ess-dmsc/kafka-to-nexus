@@ -181,7 +181,12 @@ void CommandHandler::handleNew(std::string const &Command) {
   using std::string;
   json Doc = parseOrThrow(Command);
 
-  auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
+  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
+  if (MasterPtr) {
+    StatusProducer = MasterPtr->getStatusProducer();
+  }
+  auto Task = std::unique_ptr<FileWriterTask>(
+      new FileWriterTask(Config.service_id, StatusProducer));
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -190,6 +195,11 @@ void CommandHandler::handleNew(std::string const &Command) {
     Task->job_id_init(JobID);
   } else {
     throwMissingKey("job_id", Doc.dump());
+  }
+
+  if (MasterPtr) {
+    logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
+             Config.service_id, Task->job_id(), "");
   }
 
   uri::URI Broker("//localhost:9092");
@@ -237,7 +247,7 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   // The HDF file is closed and re-opened to (optionally) support SWMR and
   // parallel writing.
-  Task->hdf_close();
+  Task->hdf_close_before_reopen();
   Task->hdf_reopen();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);

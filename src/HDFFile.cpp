@@ -877,8 +877,6 @@ void HDFFile::close() {
       LOG(Sev::Debug, "closing");
       h5file.close();
       LOG(Sev::Debug, "closed");
-    } else {
-      LOG(Sev::Error, "File is not valid, skipping flush and close.");
     }
   } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);
