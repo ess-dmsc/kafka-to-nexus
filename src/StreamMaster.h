@@ -12,6 +12,7 @@
 #pragma once
 
 #include "EventLogger.h"
+#include "FileWriterTask.h"
 #include "Report.h"
 
 #include <atomic>
@@ -40,10 +41,13 @@ template <typename Streamer> class StreamMaster {
 public:
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
-               const StreamerOptions &options)
+               const StreamerOptions &options,
+               std::shared_ptr<KafkaW::ProducerTopic> p)
       : Demuxers(file_writer_task->demuxers()),
-        WriterTask(std::move(file_writer_task)) {
+        WriterTask(std::move(file_writer_task)), ProducerTopic{p} {
 
+    EventLog = std::make_shared<EventLogger>();
+    EventLog->connect(ProducerTopic, ServiceId, WriterTask->job_id());
     for (auto &d : Demuxers) {
       try {
         Streamers.emplace(std::piecewise_construct,
@@ -53,6 +57,7 @@ public:
       } catch (std::exception &e) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", e.what());
+        EventLog->log(EventLogger::Severity::Error, e.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -117,12 +122,12 @@ public:
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
 
-  void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const std::chrono::milliseconds &ReportMs =
+  void report(const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000}) {
     if (NumStreamers != 0) {
       if (!ReportThread.joinable()) {
-        ReportPtr.reset(new Report(p, WriterTask->job_id(), ReportMs));
+        ReportPtr.reset(
+            new Report(ProducerTopic, WriterTask->job_id(), ReportMs));
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
@@ -281,7 +286,8 @@ private:
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
   std::string ServiceId;
-  std::shared_ptr<EventLogger> EventLog;
+  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
+  std::shared_ptr<EventLogger> EventLog{nullptr};
 };
 
 } // namespace FileWriter

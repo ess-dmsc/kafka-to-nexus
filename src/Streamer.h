@@ -12,6 +12,7 @@
 #pragma once
 
 #include "DemuxTopic.h"
+#include "EventLogger.h"
 #include "Status.h"
 #include "StreamerOptions.h"
 #include "logger.h"
@@ -90,6 +91,8 @@ public:
   /// Streamer. The method can be used to change the current values
   StreamerOptions &getOptions() { return Options; }
 
+  void setEvetLogger(std::shared_ptr<EventLogger> Logger) { EventLog = Logger; }
+
 protected:
   ConsumerPtr Consumer;
   KafkaW::BrokerSettings Settings;
@@ -101,6 +104,7 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
+  std::shared_ptr<EventLogger> EventLog{nullptr};
 };
 
 //----------------------------------------------------------------------------
