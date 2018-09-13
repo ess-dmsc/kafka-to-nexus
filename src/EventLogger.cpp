@@ -1,47 +1,59 @@
 #include "EventLogger.h"
 #include "Report.h"
 
-void FileWriter::EventLogger::connect(std::shared_ptr<KafkaW::ProducerTopic> p,
-                                      const std::string &ServiceId,
-                                      const std::string &JobId) {
-  Producer = p;
-  EventMsg["type"] = "filewriter_event";
-  EventMsg["service_id"] = ServiceId;
-  EventMsg["job_id"] = JobId;
-}
-void FileWriter::EventLogger::log(FileWriter::EventLogger::Severity Level,
-                                  const std::string &Message) {
-  std::string EventMessage{createEventMessage(Level, Message)};
+void FileWriter::logEvent(std::shared_ptr<KafkaW::ProducerTopic> Producer,
+                          FileWriter::StatusCode Code,
+                          const std::string &ServiceId,
+                          const std::string &JobId,
+                          const std::string &Message) {
   if (!Producer) {
     LOG(Sev::Warning,
         "Can't produce filewriter event log, invalid KafkaW::ProducerTopic");
     return;
   }
+
+  nlohmann::json Event;
+  Event["type"] = "filewriter_event";
+  Event["code"] = convertStatusCodeToString(Code);
+  Event["timestamp"] = 0;
+  Event["service_id"] = ServiceId;
+  Event["job_id"] = JobId;
+  Event["message"] = Message;
+
+  std::string EventMessage = Event.dump();
   Producer->produce(reinterpret_cast<unsigned char *>(&EventMessage[0]),
                     EventMessage.size());
 }
 
-std::string FileWriter::EventLogger::createEventMessage(
-    FileWriter::EventLogger::Severity Level, const std::string &Message) {
-  EventMsg["code"] = convertSeverityToString(Level);
-  EventMsg["message"] = Message;
-  EventMsg["timestamp"] = 0;
-  return EventMsg.dump();
-}
-
-std::string FileWriter::EventLogger::convertSeverityToString(
-    FileWriter::EventLogger::Severity Level) {
-  switch (Level) {
-  case FileWriter::EventLogger::Severity::Start:
+std::string FileWriter::convertStatusCodeToString(FileWriter::StatusCode Code) {
+  switch (Code) {
+  case FileWriter::StatusCode::Start:
+    return "START";
     break;
-  case FileWriter::EventLogger::Severity::Close:
+  case FileWriter::StatusCode::Close:
+    return "CLOSE";
     break;
-  case FileWriter::EventLogger::Severity::Error:
+  case FileWriter::StatusCode::Error:
+    return "ERROR";
     break;
-  case FileWriter::EventLogger::Severity::Fail:
+  case FileWriter::StatusCode::Fail:
+    return "FAIL";
     break;
   default:
+    return "UNKNOWN";
     break;
   }
   return "";
 };
+
+void FileWriter::EventLogger::create(std::shared_ptr<KafkaW::ProducerTopic> p,
+                                     const std::string &ServiceId,
+                                     const std::string &JobId) {}
+void FileWriter::EventLogger::log(FileWriter::StatusCode Code,
+                                  const std::string &Message) {}
+
+std::string
+FileWriter::EventLogger::createEventMessage(FileWriter::StatusCode Code,
+                                            const std::string &Message) {
+  return "";
+}

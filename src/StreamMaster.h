@@ -47,7 +47,7 @@ public:
         WriterTask(std::move(file_writer_task)), ProducerTopic{p} {
 
     EventLog = std::make_shared<EventLogger>();
-    EventLog->connect(ProducerTopic, ServiceId, WriterTask->job_id());
+    EventLog->create(ProducerTopic, ServiceId, WriterTask->job_id());
     for (auto &d : Demuxers) {
       try {
         Streamers.emplace(std::piecewise_construct,
@@ -57,7 +57,7 @@ public:
       } catch (std::exception &e) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", e.what());
-        EventLog->log(EventLogger::Severity::Error, e.what());
+        EventLog->log(StatusCode::Error, e.what());
       }
     }
     NumStreamers = Streamers.size();
