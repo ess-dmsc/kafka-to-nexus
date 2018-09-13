@@ -1,4 +1,5 @@
 #include "CommandHandler.h"
+#include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "StreamMaster.h"
@@ -474,9 +475,6 @@ std::string format_nested_exception(std::exception const &E) {
   return format_nested_exception(E, StrS, 0);
 }
 
-static void dummy_emit_msg(std::string JobID, std::string Code,
-                           std::string ServiceID, std::string Message) {}
-
 void CommandHandler::tryToHandle(std::string const &Command) {
   try {
     handle(Command);
@@ -494,8 +492,12 @@ void CommandHandler::tryToHandle(std::string const &Command) {
       auto Message = fmt::format(
           "Unexpected std::exception while handling command:\n{}\n{}", Command,
           format_nested_exception(E));
-      LOG(Sev::Error, Message.c_str());
-      dummy_emit_msg(JobID, "FAIL", Config.service_id, Message);
+      LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
+          convertStatusCodeToString(StatusCode::Fail), Message);
+      if (MasterPtr) {
+        logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
+                 Config.service_id, JobID, Message);
+      }
     }
   }
 }
