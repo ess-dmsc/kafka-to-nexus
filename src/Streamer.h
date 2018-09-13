@@ -91,7 +91,9 @@ public:
   /// Streamer. The method can be used to change the current values
   StreamerOptions &getOptions() { return Options; }
 
-  void setEvetLogger(std::shared_ptr<EventLogger> Logger) { EventLog = Logger; }
+  void setEventLogger(std::shared_ptr<EventLogger> Logger) {
+    EventLog = Logger;
+  }
 
 protected:
   ConsumerPtr Consumer;

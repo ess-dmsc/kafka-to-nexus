@@ -54,10 +54,11 @@ public:
                           std::forward_as_tuple(d.topic()),
                           std::forward_as_tuple(broker, d.topic(), options));
         Streamers[d.topic()].setSources(d.sources());
-      } catch (std::exception &e) {
+        Streamers[d.topic()].setEventLogger(EventLog);
+      } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
-        LOG(Sev::Critical, "{}", e.what());
-        EventLog->log(StatusCode::Error, e.what());
+        LOG(Sev::Critical, "{}", E.what());
+        EventLog->log(StatusCode::Error, E.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -184,6 +185,7 @@ private:
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
         LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
+        EventLog->log(StatusCode::Error, E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
