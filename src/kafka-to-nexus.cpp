@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     std::signal(SIGTERM, signal_handler);
   }
 
-  setup_logger_from_options(*Options);
+  setupLoggerFromOptions(*Options);
 
   FileWriter::Master Master(*Options);
   std::thread MasterThread([&Master] {

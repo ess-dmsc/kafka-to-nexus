@@ -54,7 +54,7 @@ void addMillisecondOption(CLI::App &App, const std::string &Name,
 
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   // and add option for json config file instead
-  App.add_option("--commands-json", MainOptions.config_filename,
+  App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 

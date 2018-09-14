@@ -16,26 +16,26 @@ void MainOpt::init() {
 }
 
 int MainOpt::parseJsonCommands() {
-  if (config_filename.empty()) {
+  if (CommandsJsonFilename.empty()) {
     LOG(Sev::Notice, "given config filename is empty");
     return -1;
   }
-  auto jsontxt = gulp(config_filename);
+  auto jsontxt = gulp(CommandsJsonFilename);
   using nlohmann::json;
   try {
-    ConfigJSON = json::parse(jsontxt);
+    CommandsJson = json::parse(jsontxt);
   } catch (...) {
     return 1;
   }
-  if (auto v = find<json>("commands", ConfigJSON)) {
+  if (auto v = find<json>("commands", CommandsJson)) {
     for (auto const &Command : v.inner()) {
-      commands_from_config_file.emplace_back(Command.dump());
+      CommandsFromJson.emplace_back(Command.dump());
     }
   }
   return 0;
 }
 
-void setup_logger_from_options(MainOpt const &opt) {
+void setupLoggerFromOptions(MainOpt const &opt) {
   g_ServiceID = opt.service_id;
   if (!opt.kafka_gelf.empty()) {
     URI uri(opt.kafka_gelf);
