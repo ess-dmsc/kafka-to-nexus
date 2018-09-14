@@ -27,42 +27,17 @@
 
 ### Configuration Files
 
-The file writer can be configured via `--config-file <json>`
+The file writer can be configured via `--config-file <ini>` which should contain command line options. 
 
-Available options include:
-
-- `command-uri` Kafka URI where the file writer listens for commands
-- `status-uri` Kafka URI where to publish status updates
-- `status-master-interval` Interval in milliseconds for status updates
-- `kafka` Kafka configuration for consumers in Streamer
-- `streamer` Configuration option for the Streamer
-- `stream-master` Configuration option for the StreamMaster
-- `service_id` If multiple instances listen on the same Kafka command topic,
-  the `service_id` lets the filewriter filter the commands to interpret.
-  
 #### Example configuration file:
+```ini
+  command-uri=//broker[:port]/command-topic
+  status-uri=//broker[:port]/status-topic
+  commands-json=./commands.json
+  hdf-output-prefix=./absolute/or/relative/path/to/hdf/output/directory
+  service_id=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
+  streamer-ms-before-start=123456
 ```
-{
-  "command-uri": "//broker[:port]/command-topic",
-  "status-uri": "//broker[:port]/status-topic",
-  "status-master-interval": 2000,
-  "commands": [
-    "a list of commands as discussed below."
-  ],
-  "hdf-output-prefix": "./absolute/or/relative/path/to/hdf/output/directory",
-  [OPTIONAL]"kafka" : {
-  "any-rdkafka-option": "value"
-  },
-  [OPTIONAL]"streamer" : {
-  "ms-before-start" : 1000
-  },
-  [OPTIONAL]"stream-master" : {
-  "topic-write-interval" : 1000
-  },
-  "service_id": "this_is_filewriter_instance_HOST_PID_EXAMPLENAME"
-}
-```
-
 
 
 ### Send command to kafka-to-nexus
