@@ -18,7 +18,7 @@
 #include <condition_variable>
 
 namespace FileWriter {
-class StreamerOptions;
+struct StreamerOptions;
 }
 
 namespace FileWriter {
