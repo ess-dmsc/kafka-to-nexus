@@ -18,14 +18,8 @@
 
 namespace FileWriter {
 
-/// Class that contains configuration parameters for the Streamer
-class StreamerOptions {
-
-public:
-  void setStreamerOptions(nlohmann::json const &Options);
-  void setRdKafkaOptions(nlohmann::json const &Options);
-  // private:
-
+/// Struct that contains configuration parameters for the Streamer
+struct StreamerOptions {
   KafkaW::BrokerSettings Settings;
   std::chrono::milliseconds StartTimestamp{0};
   std::chrono::milliseconds StopTimestamp{0};

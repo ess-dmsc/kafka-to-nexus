@@ -15,8 +15,6 @@ status_test.cpp
 status_writer.cpp
 CommandHandlerTests.cpp
 stream_master.cpp
-streamer_options.cpp
-MainOptTest.cpp
 FastSampleEnvironmentWriterTests.cpp
 NeXusDatasets.cpp
 ReaderRegistration.cpp

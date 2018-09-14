@@ -41,17 +41,26 @@ CLI::Option *addOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
 }
 
+void addMillisecondOption(CLI::App &App, const std::string &Name,
+                          std::chrono::milliseconds &MSArg,
+                          const std::string &Description = "",
+                          bool Defaulted = false) {
+  CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
+    MSArg = std::chrono::milliseconds(std::stoi(Results[0]));
+    return true;
+  };
+  App.add_option(Name, Fun, Description, Defaulted);
+}
+
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
-  // disable ini config file
-  App.set_config();
   // and add option for json config file instead
-  App.add_option("--config-file", MainOptions.config_filename,
+  App.add_option("--commands-json", MainOptions.config_filename,
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 
-  addOption(
-      App, "--command-uri", MainOptions.command_broker_uri,
-      "<//host[:port][/topic]> Kafka broker/topic to listen for commands");
+  addOption(App, "--command-uri", MainOptions.command_broker_uri,
+            "<//host[:port][/topic]> Kafka broker/topic to listen for commands")
+      ->required();
   addOption(App, "--status-uri", MainOptions.kafka_status_uri,
             MainOptions.do_kafka_status,
             "<//host[:port][/topic]> Kafka broker/topic to publish status "
@@ -77,4 +86,19 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
+  addMillisecondOption(App, "--streamer-ms-before-start",
+                       MainOptions.StreamerConfiguration.BeforeStartTime,
+                       "Streamer option - milliseconds before start time",
+                       true);
+  addMillisecondOption(App, "--streamer-ms-after-start",
+                       MainOptions.StreamerConfiguration.AfterStopTime,
+                       "Streamer option - milliseconds after stop time", true);
+  App.add_option("--streamer-metadata-retry",
+                 MainOptions.StreamerConfiguration.NumMetadataRetry,
+                 "Streamer option - ", true);
+  addMillisecondOption(
+      App, "--stream-master-topic-write-interval",
+      MainOptions.topic_write_duration,
+      "Stream-master option - topic write interval (milliseconds)");
+  App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }
