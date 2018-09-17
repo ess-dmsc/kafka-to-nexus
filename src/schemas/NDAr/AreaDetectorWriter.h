@@ -12,14 +12,14 @@
 #include "../../HDFWriterModule.h"
 #include "../../Msg.h"
 #include "NeXusDataset.h"
-#include "schemas/senv_data_generated.h"
+#include "schemas/NDAr_NDArray_schema_generated.h"
 
-namespace senv {
+namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
 /// \brief See parent class for documentation.
-class SampleEnvironmentDataGuard : public FBReaderBase {
+class AreaDetectorDataGuard : public FBReaderBase {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
@@ -33,10 +33,10 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
                                               int NumberOfElements);
 
 /// \brief See parent class for documentation.
-class FastSampleEnvironmentWriter : public FileWriterBase {
+class AreaDetectorWriter : public FileWriterBase {
 public:
-  FastSampleEnvironmentWriter() = default;
-  ~FastSampleEnvironmentWriter() = default;
+  AreaDetectorWriter() = default;
+  ~AreaDetectorWriter() = default;
 
   void parse_config(std::string const &ConfigurationStream,
                     std::string const &ConfigurationModule) override;
@@ -56,9 +56,24 @@ public:
                  int mpi_rank) override;
 
 protected:
-  NeXusDataset::RawValue Value;
+  enum class DataType {
+    int8,
+    uint8,
+    int16,
+    uint16,
+    int32,
+    uint32,
+    int64,
+    uint64,
+    float32,
+    float64,
+    c_string,
+  };
+  int ChunkSize{1024 * 1024};
+  DataType ElementType{DataType::float64};
+  std::unique_ptr<hdf5::node::ChunkedDataset> Values;
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
 };
-} // namespace senv
+} // namespace NDAr

@@ -5,7 +5,7 @@
  *  \brief Implement datasets used by the ADC file writing module.
  */
 
-#include "Datasets.h"
+#include "NeXusDataset.h"
 
 namespace NeXusDataset {
 RawValue::RawValue(hdf5::node::Group parent, Mode CMode, int ChunkSize)
