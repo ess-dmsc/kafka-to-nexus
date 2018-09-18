@@ -34,12 +34,92 @@ private:
 namespace hdf5 {
   namespace datatype {
     // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<std::int8_t const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT8)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<std::uint8_t const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<std::int16_t const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT16)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
     template <> class TypeTrait<std::uint16_t const> {
     public:
       using Type = unsigned short const;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<std::int32_t const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT32)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<std::uint32_t const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<float const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<double const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE)));
+      }
+    };
+    
+    // \brief Required for h5cpp to write const unsigned short data.
+    template <> class TypeTrait<char const> {
+    public:
+      using Type = unsigned short const;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR)));
       }
     };
 
@@ -141,9 +221,44 @@ private:
   size_t NrOfElements{0};
 };
   
+  class MultiDimDatasetBase : public hdf5::node::ChunkedDataset {
+  public:
+    MultiDimDatasetBase() = default;
+    
+    hdf5::Dimensions get_extent() {
+      auto DataSpace = dataspace();
+      return hdf5::dataspace::Simple(DataSpace).current_dimensions();
+    }
+    
+    /// \brief Append data to dataset that is contained in some sort of container.
+    template <typename T> void appendArray(T const &NewData, hdf5::Dimensions Shape) {
+      auto CurrentExtent = get_extent();
+      hdf5::Dimensions Origin(CurrentExtent.size(), 0);
+      Origin[0] = CurrentExtent[0];
+      ++CurrentExtent[0];
+      Shape.insert(Shape.begin(), 1);
+      if (Shape.size() != CurrentExtent.size()) {
+        LOG(Sev::Error, "Data has {} dimension(s) and dataset has {} (+1) dimensions.", Shape.size() - 1, CurrentExtent.size() - 1);
+        throw std::runtime_error("Rank (dimensions) of data to be written is wrong.");
+      }
+      for (int i = 1; i < Shape.size(); i++) {
+        if (Shape[i] > CurrentExtent[i]) {
+          LOG(Sev::Warning, "Dimension {} of new data is larger than that of the dataset. Extending dataset.", i - 1);
+          CurrentExtent[i] = Shape[i];
+        } else if (Shape[i] < CurrentExtent[i]) {
+          LOG(Sev::Warning, "Dimension {} of new data is smaller than that of the dataset. Using 0 as a filler.", i - 1);
+        }
+      }
+      Dataset::extent(CurrentExtent);
+      hdf5::dataspace::Hyperslab Selection{
+        {Origin}, {Shape}};
+      write(NewData, Selection);
+    }
+  };
+  
   /// \brief h5cpp dataset class that implements methods for appending data.
   template <class DataType>
-  class MultiDimDataset : public hdf5::node::ChunkedDataset {
+  class MultiDimDataset : public MultiDimDatasetBase {
   public:
     MultiDimDataset() = default;
     /// \brief Will create or open dataset with the given name.
@@ -159,7 +274,7 @@ private:
     /// \throw std::runtime_error if dataset can not be created/opened.
     MultiDimDataset(hdf5::node::Group Parent, Mode CMode, hdf5::Dimensions Shape,
                     hdf5::Dimensions ChunkSize)
-    : hdf5::node::ChunkedDataset() {
+    : MultiDimDatasetBase() {
       if (Mode::Create == CMode) {
         Shape.insert(Shape.begin(), 0);
         hdf5::Dimensions MaxSize(Shape.size(), int(hdf5::dataspace::Simple::UNLIMITED));
@@ -195,7 +310,7 @@ private:
     /// \note This parameter is ignored when opening an existing dataset.
     /// \param[in] CMode Should the dataset be opened or created.
     /// \throw std::runtime_error if dataset can not opened or the constructor is called with the input NeXusDataset::Mode::Create.
-    MultiDimDataset(hdf5::node::Group Parent, Mode CMode) : hdf5::node::ChunkedDataset() {
+    MultiDimDataset(hdf5::node::Group Parent, Mode CMode) : MultiDimDatasetBase() {
       if (Mode::Create == CMode) {
         throw std::runtime_error("MultiDimDataset::MultiDimDataset(): Additional parameters are requried to create a dataset.");
       } else if (Mode::Open == CMode) {
@@ -204,35 +319,6 @@ private:
         throw std::runtime_error(
                                  "MultiDimDataset::MultiDimDataset(): Unknown mode.");
       }
-    }
-    hdf5::Dimensions get_extent() {
-      auto DataSpace = dataspace();
-      return hdf5::dataspace::Simple(DataSpace).current_dimensions();
-    }
-    
-    /// \brief Append data to dataset that is contained in some sort of container.
-    template <typename T> void appendArray(T const &NewData, hdf5::Dimensions Shape) {
-      auto CurrentExtent = get_extent();
-      hdf5::Dimensions Origin(CurrentExtent.size(), 0);
-      Origin[0] = CurrentExtent[0];
-      ++CurrentExtent[0];
-      Shape.insert(Shape.begin(), 1);
-      if (Shape.size() != CurrentExtent.size()) {
-        LOG(Sev::Error, "Data has {} dimension(s) and dataset has {} (+1) dimensions.", Shape.size() - 1, CurrentExtent.size() - 1);
-        throw std::runtime_error("Rank (dimensions) of data to be written is wrong.");
-      }
-      for (int i = 1; i < Shape.size(); i++) {
-        if (Shape[i] > CurrentExtent[i]) {
-          LOG(Sev::Warning, "Dimension {} of new data is larger than that of the dataset. Extending dataset.", i - 1);
-          CurrentExtent[i] = Shape[i];
-        } else if (Shape[i] < CurrentExtent[i]) {
-          LOG(Sev::Warning, "Dimension {} of new data is smaller than that of the dataset. Using 0 as a filler.", i - 1);
-        }
-      }
-      Dataset::extent(CurrentExtent);
-      hdf5::dataspace::Hyperslab Selection{
-        {Origin}, {Shape}};
-      write(NewData, Selection);
     }
   };
 

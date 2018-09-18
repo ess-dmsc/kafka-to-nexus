@@ -125,6 +125,17 @@ TEST_F(DatasetCreation, NDArrAppendSameSize) {
   EXPECT_EQ(TestData, StoredData);
 }
 
+TEST_F(DatasetCreation, NDArrAppendAnotherType) {
+  hdf5::Dimensions DatasetDimensions{2, 2};
+  NeXusDataset::MultiDimDataset<double> Dataset(RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+  std::vector<int> TestData{2,4,6,8};
+  std::vector<double> CompareData{2,4,6,8};
+  Dataset.appendArray(TestData, DatasetDimensions);
+  std::vector<double> StoredData(TestData.size());
+  Dataset.read(StoredData);
+  EXPECT_EQ(CompareData, StoredData);
+}
+
 TEST_F(DatasetCreation, NDArrAppendSmallerSize1) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});

@@ -56,7 +56,9 @@ public:
                  int mpi_rank) override;
 
 protected:
-  enum class DataType {
+  void initValueDataset(hdf5::node::Group &Parent);
+  void openValueDataset(hdf5::node::Group &Parent);
+  enum class Type {
     int8,
     uint8,
     int16,
@@ -68,11 +70,13 @@ protected:
     float32,
     float64,
     c_string,
-  };
-  int ChunkSize{1024 * 1024};
-  DataType ElementType{DataType::float64};
-  std::unique_ptr<hdf5::node::ChunkedDataset> Values;
+  } ElementType{Type::float64};
+  hdf5::Dimensions ArrayShape{128, 128};
+  hdf5::Dimensions ChunkSize{64};
+  std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
+  int CueInterval{1000};
+  int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
 };

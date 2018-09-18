@@ -29,7 +29,7 @@ bool AreaDetectorDataGuard::verify(
   auto Verifier = flatbuffers::Verifier(reinterpret_cast<const std::uint8_t* const>(Message.data()), Message.size());
   return FB_Tables::VerifyNDArrayBuffer(Verifier);
 }
-
+  
 uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec) {
   return (std::uint64_t(sec) + 631152000L) * 1000000000L + nsec;
 }
@@ -51,10 +51,13 @@ std::string AreaDetectorDataGuard::source_name(
 
   /// \brief Parse config JSON structure.
   ///
-  /// The default is to use double as the element type and a chunk size of 1 MB.
+  /// The default is to use double as the element type.
 void AreaDetectorWriter::parse_config(
     std::string const &ConfigurationStream,
     std::string const &ConfigurationModule) {
+  LOG(Sev::Warning, "No data type specified, using the default (double).");
+  LOG(Sev::Warning, "No array size specified, using the default (128x128). This may be very inefficient.");
+  LOG(Sev::Info, "Using a cue interval of {}.", CueInterval);
   // \todo Implement configuration here
 }
 
@@ -64,6 +67,7 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
+    initValueDataset(CurrentGroup);
     NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Create,
                        DefaultChunkSize);
     NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Create,
@@ -108,35 +112,58 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   }
   return ReturnVector;
 }
+  template<typename DataType, class DatasetType>
+  void appendData(DatasetType &Dataset, const std::uint8_t* Pointer, size_t Size, hdf5::Dimensions Shape) {
+    Dataset->appendArray(ArrayAdapter<DataType>(reinterpret_cast<DataType*>(Pointer), Size), Shape);
+  }
 
 FileWriterBase::WriteResult AreaDetectorWriter::write(
     const FileWriter::FlatbufferMessage &Message) {
-//  auto FbPointer = GetSampleEnvironmentData(Message.data());
-//  auto TempDataPtr = FbPointer->Values()->data();
-//  auto TempDataSize = FbPointer->Values()->size();
-//  if (TempDataSize == 0) {
-//    LOG(Sev::Warning,
-//        "Received a flatbuffer with zero (0) data elements in it.");
-//    return FileWriterBase::WriteResult::OK();
-//  }
-//  ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
-//  auto CueIndexValue = Value.dataspace().size();
-//  CueTimestampIndex.appendElement(static_cast<std::uint32_t>(CueIndexValue));
-//  CueTimestamp.appendElement(FbPointer->PacketTimestamp());
-//  Value.appendArray(CArray);
-//  // Time-stamps are available in the flatbuffer
-//  if (flatbuffers::IsFieldPresent(FbPointer,
-//                                  SampleEnvironmentData::VT_TIMESTAMPS) and
-//      FbPointer->Values()->size() == FbPointer->Timestamps()->size()) {
-//    auto TimestampPtr = FbPointer->Timestamps()->data();
-//    auto TimestampSize = FbPointer->Timestamps()->size();
-//    ArrayAdapter<const std::uint64_t> TSArray(TimestampPtr, TimestampSize);
-//    Timestamp.appendArray(TSArray);
-//  } else { // If timestamps are not available, generate them
-//    std::vector<std::uint64_t> TempTimeStamps(GenerateTimeStamps(
-//        FbPointer->PacketTimestamp(), FbPointer->TimeDelta(), TempDataSize));
-//    Timestamp.appendArray(TempTimeStamps);
-//  }
+  auto NDAr = FB_Tables::GetNDArray(Message.data());
+  auto DataShape = hdf5::Dimensions(NDAr->dims()->begin(), NDAr->dims()->end());
+  auto CurrentTimestamp = epicsTimeToNsec(NDAr->epicsTS()->secPastEpoch(), NDAr->epicsTS()->nsec());
+  FB_Tables::DType Type = NDAr->dataType();
+  auto DataPtr = NDAr->pData()->Data();
+  auto NrOfElements = std::accumulate(std::begin(DataShape), std::end(DataShape), 1, std::multiplies<double>());
+  
+  switch (Type) {
+    case FB_Tables::DType::Int8:
+      appendData<const std::int8_t>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Uint8:
+      appendData<const std::uint8_t>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Int16:
+      appendData<const std::int16_t>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Uint16:
+      appendData<const std::uint16_t>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Int32:
+      appendData<const std::int32_t>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Uint32:
+      appendData<const std::uint32_t>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Float32:
+      appendData<const float>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::Float64:
+      appendData<const double>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    case FB_Tables::DType::c_string:
+      appendData<const char>(Values, DataPtr, NrOfElements, DataShape);
+      break;
+    default:
+      return FileWriterBase::WriteResult::ERROR_BAD_FLATBUFFER();
+      break;
+  }
+  Timestamp.appendElement(CurrentTimestamp);
+  if (++CueCounter == CueInterval) {
+    CueTimestampIndex.appendElement(Timestamp.dataspace().size());
+    CueTimestampIndex.appendElement(CurrentTimestamp);
+    CueCounter = 0;
+  }
   return FileWriterBase::WriteResult::OK();
 }
 
@@ -149,5 +176,92 @@ void AreaDetectorWriter::enable_cq(CollectiveQueue *cq,
                                             int mpi_rank) {
   LOG(Sev::Error, "Collective queue not implemented.");
 }
+  template<typename Type>
+  auto makeIt(hdf5::node::Group &Parent, hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize) -> std::unique_ptr<NeXusDataset::MultiDimDatasetBase> {
+    return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
+  }
+  
+  void AreaDetectorWriter::initValueDataset(hdf5::node::Group &Parent) {
+    switch (ElementType) {
+      case Type::c_string:
+        Values = makeIt<char>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::int8:
+        Values = makeIt<std::int8_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::uint8:
+        Values = makeIt<std::uint8_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::int16:
+        Values = makeIt<std::int16_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::uint16:
+        Values = makeIt<std::uint16_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::int32:
+        Values = makeIt<std::int32_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::uint32:
+        Values = makeIt<std::uint32_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::int64:
+        Values = makeIt<std::int64_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::uint64:
+        Values = makeIt<std::uint64_t>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::float32:
+        Values = makeIt<float>(Parent, ArrayShape, ChunkSize);
+        break;
+      case Type::float64: // Fall through
+      default:
+        Values = makeIt<double>(Parent, ArrayShape, ChunkSize);
+        break;
+    }
+  }
+  
+  template<typename Type>
+  auto openIt(hdf5::node::Group &Parent) -> std::unique_ptr<NeXusDataset::MultiDimDatasetBase> {
+    return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(Parent, NeXusDataset::Mode::Open);
+  }
+  
+  void AreaDetectorWriter::openValueDataset(hdf5::node::Group &Parent) {
+    switch (ElementType) {
+      case Type::c_string:
+        Values = openIt<char>(Parent);
+        break;
+      case Type::int8:
+        Values = openIt<std::int8_t>(Parent);
+        break;
+      case Type::uint8:
+        Values = openIt<std::uint8_t>(Parent);
+        break;
+      case Type::int16:
+        Values = openIt<std::int16_t>(Parent);
+        break;
+      case Type::uint16:
+        Values = openIt<std::uint16_t>(Parent);
+        break;
+      case Type::int32:
+        Values = openIt<std::int32_t>(Parent);
+        break;
+      case Type::uint32:
+        Values = openIt<std::uint32_t>(Parent);
+        break;
+      case Type::int64:
+        Values = openIt<std::int64_t>(Parent);
+        break;
+      case Type::uint64:
+        Values = openIt<std::uint64_t>(Parent);
+        break;
+      case Type::float32:
+        Values = openIt<float>(Parent);
+        break;
+      case Type::float64: // Fall through
+      default:
+        Values = openIt<double>(Parent);
+        break;
+    }
+  }
 
 } // namespace NDAr
