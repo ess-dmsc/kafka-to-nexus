@@ -7,7 +7,7 @@ h5cpp/0.0.7@ess-dmsc/stable
 librdkafka/0.11.4@ess-dmsc/stable
 jsonformoderncpp/3.1.0@vthiery/stable
 graylog-logger/1.0.5-dm1@ess-dmsc/stable
-streaming-data-types/d429d55@ess-dmsc/stable
+streaming-data-types/2246f84@ess-dmsc/stable
 cli11/1.5.3@bincrafters/stable
 cmake_installer/3.10.0@conan/stable
 trompeloeil/v31@ess-dmsc/stable

@@ -159,8 +159,8 @@ json createTestWriterTypedJson() {
   auto Json = json::parse(R""({
     "data_type": "uint64",
     "error_type": "double",
-    "edge_type": "double",
-    "convert_edge_type_to_float": true,
+    "edge_type": "float",
+    "convert_edge_type_to_float": false,
     "shape": [
       {
         "size": 1,
@@ -237,7 +237,7 @@ TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   ASSERT_EQ(json::parse(StoredJson), Json);
   auto Dataset = Group.get_dataset("histograms");
   ASSERT_EQ(Group.get_dataset("x_detector").datatype(),
-            hdf5::datatype::create<float>().native_type());
+            hdf5::datatype::create<double>().native_type());
 }
 
 TEST_F(EventHistogramWriter, WriterTypedReopen) {
@@ -428,7 +428,7 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
 
 TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
-                         FileCreationLocation::Disk);
+                         FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
@@ -475,7 +475,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
 
 TEST_F(EventHistogramWriter, WriteManyHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteManyHistograms",
-                         FileCreationLocation::Disk);
+                         FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");

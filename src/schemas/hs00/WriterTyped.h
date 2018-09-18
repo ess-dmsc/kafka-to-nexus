@@ -57,13 +57,15 @@ private:
   typename std::conditional<std::is_same<DataType, uint32_t>::value, ArrayUInt,
   typename std::conditional<std::is_same<DataType, uint64_t>::value, ArrayULong,
   typename std::conditional<std::is_same<DataType,   double>::value, ArrayDouble,
-  std::nullptr_t>::type>::type>::type;
+  typename std::conditional<std::is_same<DataType,    float>::value, ArrayFloat,
+  std::nullptr_t>::type>::type>::type>::type;
 
   using FlatbufferErrorType =
   typename std::conditional<std::is_same<ErrorType, uint32_t>::value, ArrayUInt,
   typename std::conditional<std::is_same<ErrorType, uint64_t>::value, ArrayULong,
   typename std::conditional<std::is_same<ErrorType,   double>::value, ArrayDouble,
-  std::nullptr_t>::type>::type>::type;
+  typename std::conditional<std::is_same<ErrorType,    float>::value, ArrayFloat,
+  std::nullptr_t>::type>::type>::type>::type;
   // clang-format on
 
   std::map<uint64_t, HistogramRecord> HistogramRecords;
