@@ -132,6 +132,7 @@ FileWriterBase::InitResult
 AreaDetectorWriter::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
+    Values = std::make_unique<NeXusDataset::MultiDimDatasetBase>(CurrentGroup, NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
@@ -230,28 +231,5 @@ void AreaDetectorWriter::enable_cq(CollectiveQueue *cq,
       {Type::float64, [&Parent, this](){return makeIt<std::double_t>(Parent, this->ArrayShape, this->ChunkSize);}},
     };
     Values = CreateValuesMap.at(ElementType)();
-  }
-  
-  template<typename Type>
-  auto openIt(hdf5::node::Group &Parent) -> std::unique_ptr<NeXusDataset::MultiDimDatasetBase> {
-    return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(Parent, NeXusDataset::Mode::Open);
-  }
-  
-  void AreaDetectorWriter::openValueDataset(hdf5::node::Group &Parent) {
-    typedef std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()> OpenFuncType;
-    std::map<Type,OpenFuncType> OpenValuesMap {
-      {Type::c_string, [&Parent](){return openIt<char>(Parent);}},
-      {Type::int8, [&Parent](){return openIt<std::int8_t>(Parent);}},
-      {Type::uint8, [&Parent](){return openIt<std::uint8_t>(Parent);}},
-      {Type::int16, [&Parent](){return openIt<std::int16_t>(Parent);}},
-      {Type::uint16, [&Parent](){return openIt<std::uint16_t>(Parent);}},
-      {Type::int32, [&Parent](){return openIt<std::int32_t>(Parent);}},
-      {Type::uint32, [&Parent](){return openIt<std::uint32_t>(Parent);}},
-      {Type::int64, [&Parent](){return openIt<std::int64_t>(Parent);}},
-      {Type::uint64, [&Parent](){return openIt<std::uint64_t>(Parent);}},
-      {Type::float32, [&Parent](){return openIt<std::float_t>(Parent);}},
-      {Type::float64, [&Parent](){return openIt<std::double_t>(Parent);}},
-    };
-    Values = OpenValuesMap.at(ElementType)();
   }
 } // namespace NDAr

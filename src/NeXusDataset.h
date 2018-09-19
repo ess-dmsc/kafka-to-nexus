@@ -236,6 +236,24 @@ private:
   public:
     MultiDimDatasetBase() = default;
     
+    /// \brief Open a dataset.
+    ///
+    /// Can only be used to open a dataset.
+    /// \param[in] Parent The group/node of the dataset in.
+    /// \note This parameter is ignored when opening an existing dataset.
+    /// \param[in] CMode Should the dataset be opened or created.
+    /// \throw std::runtime_error if dataset can not opened or the constructor is called with the input NeXusDataset::Mode::Create.
+    MultiDimDatasetBase(hdf5::node::Group Parent, Mode CMode) : hdf5::node::ChunkedDataset() {
+      if (Mode::Create == CMode) {
+        throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): Can only open datasets, not create.");
+      } else if (Mode::Open == CMode) {
+        Dataset::operator=(Parent.get_dataset("value"));
+      } else {
+        throw std::runtime_error(
+                                 "MultiDimDatasetBase::MultiDimDatasetBase(): Unknown mode.");
+      }
+    }
+    
     hdf5::Dimensions get_extent() {
       auto DataSpace = dataspace();
       return hdf5::dataspace::Simple(DataSpace).current_dimensions();
@@ -321,16 +339,7 @@ private:
     /// \note This parameter is ignored when opening an existing dataset.
     /// \param[in] CMode Should the dataset be opened or created.
     /// \throw std::runtime_error if dataset can not opened or the constructor is called with the input NeXusDataset::Mode::Create.
-    MultiDimDataset(hdf5::node::Group Parent, Mode CMode) : MultiDimDatasetBase() {
-      if (Mode::Create == CMode) {
-        throw std::runtime_error("MultiDimDataset::MultiDimDataset(): Additional parameters are requried to create a dataset.");
-      } else if (Mode::Open == CMode) {
-        Dataset::operator=(Parent.get_dataset("value"));
-      } else {
-        throw std::runtime_error(
-                                 "MultiDimDataset::MultiDimDataset(): Unknown mode.");
-      }
-    }
+    MultiDimDataset(hdf5::node::Group Parent, Mode CMode) : MultiDimDatasetBase(Parent, CMode) {}
   };
 
 // Make all of single param constructors explicit

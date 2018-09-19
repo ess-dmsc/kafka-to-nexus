@@ -55,7 +55,6 @@ public:
 
 protected:
   void initValueDataset(hdf5::node::Group &Parent);
-  void openValueDataset(hdf5::node::Group &Parent);
   enum class Type {
     int8,
     uint8,
