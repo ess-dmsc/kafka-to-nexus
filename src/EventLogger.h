@@ -68,32 +68,4 @@ void logEvent(std::shared_ptr<ProducerType> Producer, StatusCode Code,
   Producer->produce(reinterpret_cast<unsigned char *>(&EventMessage[0]),
                     EventMessage.size());
 }
-
-//------------------------------------------------------------------------------
-/// @brief      Class for event logger. An EventLogger obects defines a unique
-/// pair of service and job id.
-///
-class EventLogger {
-public:
-  template <class ProducerType>
-  void create(std::shared_ptr<ProducerType> Producer,
-              const std::string &ServiceId, const std::string &JobId) {
-    using namespace std::placeholders;
-    doLogEvent =
-        std::bind(logEvent<ProducerType>, Producer, _1, ServiceId, JobId, _2);
-  }
-  //----------------------------------------------------------------------------
-  /// @brief      Builds a JSON string that contains an event log and emits the
-  /// log via the producer. All the event logs produces with this method have a
-  /// uniquely defined service id and job id.
-  ///
-  /// @param[in]  Code     The code
-  /// @param[in]  Message  The message
-  ///
-  void log(StatusCode Code, const std::string &Message);
-
-private:
-  std::function<void(FileWriter::StatusCode, const std::string &Message)>
-      doLogEvent;
-};
 }

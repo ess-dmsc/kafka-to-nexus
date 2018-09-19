@@ -46,19 +46,17 @@ public:
       : Demuxers(file_writer_task->demuxers()),
         WriterTask(std::move(file_writer_task)), ProducerTopic{p} {
 
-    EventLog = std::make_shared<EventLogger>();
-    EventLog->create(ProducerTopic, ServiceId, WriterTask->job_id());
     for (auto &d : Demuxers) {
       try {
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(d.topic()),
                           std::forward_as_tuple(broker, d.topic(), options));
         Streamers[d.topic()].setSources(d.sources());
-        Streamers[d.topic()].setEventLogger(EventLog);
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", E.what());
-        EventLog->log(StatusCode::Error, E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -185,7 +183,8 @@ private:
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
         LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
-        EventLog->log(StatusCode::Error, E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -289,7 +288,6 @@ private:
   size_t NumStreamers{0};
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
-  std::shared_ptr<EventLogger> EventLog{nullptr};
 };
 
 } // namespace FileWriter

@@ -61,38 +61,3 @@ TEST(EventLogger, eventCodes) {
   Produced = nlohmann::json::parse(Producer->Message);
   EXPECT_EQ(Produced["code"], "FAIL");
 }
-
-TEST(EventLogger, logUsingClass) {
-  std::shared_ptr<FileWriter::EventLogger> LoggerObject{
-      std::make_unique<FileWriter::EventLogger>()};
-  std::shared_ptr<StringProducer> Producer{std::make_shared<StringProducer>()};
-
-  LoggerObject->create(Producer, "service-id-02", "job-id-03");
-  LoggerObject->log(FileWriter::StatusCode::Start, "message-using-object");
-  nlohmann::json Produced = nlohmann::json::parse(Producer->Message);
-
-  EXPECT_EQ(Produced["code"], "START");
-  EXPECT_EQ(Produced["service_id"], "service-id-02");
-  EXPECT_EQ(Produced["job_id"], "job-id-03");
-  EXPECT_EQ(Produced["message"], "message-using-object");
-}
-
-TEST(EventLogger, serviceAndJobIdOutOfScope) {
-  std::shared_ptr<FileWriter::EventLogger> LoggerObject{
-      std::make_unique<FileWriter::EventLogger>()};
-  std::shared_ptr<StringProducer> Producer{std::make_shared<StringProducer>()};
-
-  {
-    std::string TmpServiceId{"service-id-03"};
-    std::string TmpJobId{"job-id-04"};
-    LoggerObject->create(Producer, TmpServiceId, TmpJobId);
-  }
-  LoggerObject->log(FileWriter::StatusCode::Start, "message-using-object");
-
-  nlohmann::json Produced = nlohmann::json::parse(Producer->Message);
-
-  EXPECT_EQ(Produced["code"], "START");
-  EXPECT_EQ(Produced["service_id"], "service-id-03");
-  EXPECT_EQ(Produced["job_id"], "job-id-04");
-  EXPECT_EQ(Produced["message"], "message-using-object");
-}

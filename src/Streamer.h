@@ -91,10 +91,6 @@ public:
   /// Streamer. The method can be used to change the current values
   StreamerOptions &getOptions() { return Options; }
 
-  void setEventLogger(std::shared_ptr<EventLogger> Logger) {
-    EventLog = Logger;
-  }
-
 protected:
   ConsumerPtr Consumer;
   KafkaW::BrokerSettings Settings;
@@ -106,7 +102,6 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
-  std::shared_ptr<EventLogger> EventLog{nullptr};
 };
 
 //----------------------------------------------------------------------------

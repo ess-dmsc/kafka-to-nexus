@@ -20,8 +20,3 @@ std::string FileWriter::convertStatusCodeToString(FileWriter::StatusCode Code) {
   }
   return "";
 };
-
-void FileWriter::EventLogger::log(FileWriter::StatusCode Code,
-                                  const std::string &Message) {
-  doLogEvent(Code, Message);
-}
