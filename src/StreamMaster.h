@@ -11,6 +11,7 @@
 
 #pragma once
 
+#include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "Report.h"
 
@@ -40,9 +41,10 @@ template <typename Streamer> class StreamMaster {
 public:
   StreamMaster(const std::string &broker,
                std::unique_ptr<FileWriterTask> file_writer_task,
-               const StreamerOptions &options)
+               const StreamerOptions &options,
+               std::shared_ptr<KafkaW::ProducerTopic> p)
       : Demuxers(file_writer_task->demuxers()),
-        WriterTask(std::move(file_writer_task)) {
+        WriterTask(std::move(file_writer_task)), ProducerTopic{p} {
 
     for (auto &d : Demuxers) {
       try {
@@ -50,9 +52,11 @@ public:
                           std::forward_as_tuple(d.topic()),
                           std::forward_as_tuple(broker, d.topic(), options));
         Streamers[d.topic()].setSources(d.sources());
-      } catch (std::exception &e) {
+      } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
-        LOG(Sev::Critical, "{}", e.what());
+        LOG(Sev::Critical, "{}", E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -117,12 +121,12 @@ public:
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
 
-  void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const std::chrono::milliseconds &ReportMs =
+  void report(const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000}) {
     if (NumStreamers != 0) {
       if (!ReportThread.joinable()) {
-        ReportPtr.reset(new Report(p, WriterTask->job_id(), ReportMs));
+        ReportPtr.reset(
+            new Report(ProducerTopic, WriterTask->job_id(), ReportMs));
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
@@ -150,6 +154,7 @@ public:
   /// Return the unique job id associated with the streamer (and hence
   /// with the NeXus file)
   std::string getJobId() const { return WriterTask->job_id(); }
+  void setServiceId(const std::string &Id) { ServiceId = Id; }
 
 private:
   //------------------------------------------------------------------------------
@@ -178,6 +183,8 @@ private:
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
         LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -279,6 +286,8 @@ private:
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
+  std::string ServiceId;
+  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
 };
 
 } // namespace FileWriter
