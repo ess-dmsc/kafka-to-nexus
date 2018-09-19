@@ -27,9 +27,35 @@ TEST_F(DatasetCreation, NDArrOpen) {
                   NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, NeXusDataset::Mode::Open));
 }
 
+TEST_F(DatasetCreation, NDArrOpenAlt2) {
+  NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, NeXusDataset::Mode::Create, {10,10}, {5,6,4,3});
+  auto ChunkDims = ADValues.creation_list().chunk();
+  EXPECT_EQ(ChunkDims, (hdf5::Dimensions{1024,10,10}));
+}
+
+TEST_F(DatasetCreation, NDArrOpenAlt3) {
+  NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, NeXusDataset::Mode::Create, {10,10}, {10,10,10});
+  auto ChunkDims = ADValues.creation_list().chunk();
+  EXPECT_EQ(ChunkDims, (hdf5::Dimensions{10,10,10}));
+}
+
+TEST_F(DatasetCreation, NDArrOpenAlt) {
+  size_t ChunkSize = 256;
+  {
+  NeXusDataset::MultiDimDataset<int> ADValues(RootGroup, NeXusDataset::Mode::Create, {10,10}, {ChunkSize});
+  }
+  EXPECT_NO_THROW(
+                  NeXusDataset::MultiDimDataset<int>(RootGroup, NeXusDataset::Mode::Open, {10,10}, {ChunkSize}));
+}
+
 TEST_F(DatasetCreation, NDArrCreateFail) {
   EXPECT_THROW(
               NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, NeXusDataset::Mode::Create), std::runtime_error);
+}
+
+TEST_F(DatasetCreation, NDArrConstructorFail) {
+  EXPECT_THROW(
+               NeXusDataset::MultiDimDataset<int> ReOpened(RootGroup, NeXusDataset::Mode(-43536)), std::runtime_error);
 }
 
 TEST_F(DatasetCreation, NDArrCreationMaxSize) {
@@ -149,6 +175,13 @@ TEST_F(DatasetCreation, NDArrAppendSmallerSize1) {
   EXPECT_EQ(TestData, StoredData);
 }
 
+TEST_F(DatasetCreation, NDArrAppendWrongRank) {
+  hdf5::Dimensions DatasetDimensions{2, 2};
+  NeXusDataset::MultiDimDataset<int> Dataset(RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
+  std::vector<int> TestData{6,8};
+  EXPECT_THROW(Dataset.appendArray(TestData, {2}), std::runtime_error);
+}
+
 TEST_F(DatasetCreation, NDArrAppendSmallerSize2) {
   hdf5::Dimensions DatasetDimensions{2, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
@@ -229,6 +262,12 @@ TEST_F(DatasetCreation, RawValueDefaultCreation) {
   ASSERT_EQ(ChunkDims.size(), 1u);
   EXPECT_EQ(ChunkDims.at(0), ChunkSize);
   EXPECT_EQ(hdf5::datatype::create<std::uint16_t>(), TestDataset.datatype());
+}
+
+TEST_F(DatasetCreation, RawValueConstructorFail) {
+  size_t ChunkSize = 256;
+  EXPECT_THROW(NeXusDataset::RawValue(RootGroup, NeXusDataset::Mode(-1247832),
+                                      ChunkSize), std::runtime_error);
 }
 
 TEST_F(DatasetCreation, RawValueReOpen) {

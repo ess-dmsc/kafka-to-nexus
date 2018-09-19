@@ -318,7 +318,7 @@ private:
           VectorChunkSize = Shape;
           VectorChunkSize[0] = ChunkSize[0];
         } else {
-          LOG(Sev::Error, "Unable to reconcile a chunk size with {} dimensions and chunk size with {} dimensions. Using default values.", Shape.size(), ChunkSize.size());
+          LOG(Sev::Error, "Unable to reconcile a data shape with {} dimensions and chunk size with {} dimensions. Using default values.", Shape.size(), ChunkSize.size());
           VectorChunkSize = Shape;
           VectorChunkSize[0] = 1024;
         }
