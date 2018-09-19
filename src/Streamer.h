@@ -12,6 +12,7 @@
 #pragma once
 
 #include "DemuxTopic.h"
+#include "EventLogger.h"
 #include "Status.h"
 #include "StreamerOptions.h"
 #include "logger.h"
@@ -101,7 +102,6 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
-  std::chrono::milliseconds LastMessageTimestamp{0};
 };
 
 //----------------------------------------------------------------------------

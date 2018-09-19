@@ -260,10 +260,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        Broker.host_port, std::move(Task), Config.StreamerConfiguration));
+        Broker.host_port, std::move(Task), Config.StreamerConfiguration,
+        MasterPtr->getStatusProducer()));
     if (auto status_producer = MasterPtr->getStatusProducer()) {
-      s->report(status_producer,
-                std::chrono::milliseconds{Config.status_master_interval});
+      s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
     if (Config.topic_write_duration.count()) {
       s->TopicWriteDuration = Config.topic_write_duration;
@@ -372,11 +372,13 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
       if (StopTime.count() != 0) {
-        LOG(Sev::Info, "gracefully stop file with id : {} at {} ms", JobID,
-            StopTime.count());
+        LOG(Sev::Info,
+            "Received request to gracefully stop file with id : {} at {} ms",
+            JobID, StopTime.count());
         StreamMaster->setStopTime(StopTime);
       } else {
-        LOG(Sev::Info, "gracefully stop file with id : {}", JobID);
+        LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
+            JobID);
         StreamMaster->stop();
       }
     } else {
@@ -487,7 +489,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::handle(Msg const &Msg) {
+void CommandHandler::tryToHandle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 

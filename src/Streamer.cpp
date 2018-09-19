@@ -1,6 +1,6 @@
 #include "Streamer.h"
-
 #include "helper.h"
+#include <ciso646>
 
 namespace FileWriter {
 std::chrono::milliseconds systemTime() {
@@ -10,6 +10,9 @@ std::chrono::milliseconds systemTime() {
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime) {
+  LOG(Sev::Debug, "\t\tStoptime:         {}", Stoptime.count());
+  LOG(Sev::Debug, "\t\tMessageTimestamp: {}",
+      static_cast<std::int64_t>(MessageTimestamp));
   return (Stoptime.count() > 0 and
           static_cast<std::int64_t>(MessageTimestamp) >
               std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
@@ -112,11 +115,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   KafkaW::PollStatus Poll = Consumer->poll();
   if (Poll.isEmpty() || Poll.isEOP()) {
     if ((Options.StopTimestamp.count() > 0) and
-        (Options.ConsumerTimeout < (systemTime() - LastMessageTimestamp))) {
+        (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
-                     "passed since last message received.",
+                     "passed since stop time.",
           MessageProcessor.topic(),
-          (systemTime() - LastMessageTimestamp).count());
+          (systemTime() - Options.StopTimestamp).count());
       Sources.clear();
       return ProcessMessageResult::STOP;
     }
@@ -139,8 +142,6 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
         KafkaMessage->getMessageOffset(), Error.what());
     return ProcessMessageResult::ERR;
   }
-
-  LastMessageTimestamp = systemTime(); // For dealing with messsage timeouts
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
@@ -237,9 +238,6 @@ void FileWriter::StreamerOptions::setStreamerOptions(
       }
       if (Option.key() == "ms-after-stop") {
         AfterStopTime = std::chrono::milliseconds(Value);
-      }
-      if (Option.key() == "consumer-timeout-ms") {
-        ConsumerTimeout = std::chrono::milliseconds(Value);
       }
       if (Option.key() == "metadata-retry") {
         NumMetadataRetry = Value;

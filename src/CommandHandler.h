@@ -35,7 +35,7 @@ public:
   /// Passes content of the message to the command handler.
   ///
   /// \param Msg The message.
-  void handle(Msg const &msg);
+  void tryToHandle(Msg const &msg);
 
   /// Parses the given command and passes it on to a more specific handler.
   ///
