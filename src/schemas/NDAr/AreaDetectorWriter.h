@@ -28,9 +28,7 @@ public:
 
 using FileWriterBase = FileWriter::HDFWriterModule;
 
-std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
-                                              double TimeDelta,
-                                              int NumberOfElements);
+std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 
 /// \brief See parent class for documentation.
 class AreaDetectorWriter : public FileWriterBase {
@@ -71,7 +69,7 @@ protected:
     float64,
     c_string,
   } ElementType{Type::float64};
-  hdf5::Dimensions ArrayShape{128, 128};
+  hdf5::Dimensions ArrayShape{1, 1};
   hdf5::Dimensions ChunkSize{64};
   std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;

@@ -34,99 +34,110 @@ private:
 namespace hdf5 {
   namespace datatype {
     // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<std::int8_t const> {
+    template<>
+    class TypeTrait<std::int8_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::int8_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT8)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<std::uint8_t const> {
+    template<>
+    class TypeTrait<std::uint8_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::uint8_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<std::int16_t const> {
+    template<>
+    class TypeTrait<std::int16_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::int16_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT16)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<std::uint16_t const> {
+    template<>
+    class TypeTrait<std::uint16_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::uint16_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<std::int32_t const> {
+    template<>
+    class TypeTrait<std::int32_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::int32_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT32)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<std::uint32_t const> {
+    template<>
+    class TypeTrait<std::uint32_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::uint32_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<float const> {
+    template<>
+    class TypeTrait<float const> {
     public:
-      using Type = unsigned short const;
-      using TypeClass = Integer;
+      using Type = float;
+      using TypeClass = Float;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<double const> {
+    template<>
+    class TypeTrait<double const> {
     public:
-      using Type = unsigned short const;
-      using TypeClass = Integer;
+      using Type = double;
+      using TypeClass = Float;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE)));
       }
     };
     
-    // \brief Required for h5cpp to write const unsigned short data.
-    template <> class TypeTrait<char const> {
+    template<>
+    class TypeTrait<char const> {
     public:
-      using Type = unsigned short const;
+      using Type = char;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR)));
       }
     };
-
-    // \brief Required for h5cpp to write const unsigned long long int data.
-    template <> class TypeTrait<std::uint64_t const> {
+    
+    template<>
+    class TypeTrait<std::int64_t const> {
     public:
-      using Type = unsigned short const;
+      using Type = std::int64_t;
+      using TypeClass = Integer;
+      static TypeClass create(const Type & = Type()) {
+        return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT64)));
+      }
+    };
+    
+    template<>
+    class TypeTrait<std::uint64_t const> {
+    public:
+      using Type = std::uint64_t;
       using TypeClass = Integer;
       static TypeClass create(const Type & = Type()) {
         return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
