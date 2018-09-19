@@ -91,15 +91,13 @@ void AreaDetectorWriter::parse_config(
     LOG(Sev::Warning, "Unable to extract array size, using the default (1x1). Error was: {}", E.what());
   }
   
-  try {
-    auto JsonChunkSize = Config["chunk_size"];
-    if (JsonChunkSize.is_array()) {
-      ChunkSize = Config["chunk_size"].get<hdf5::Dimensions>();
-    } else if (JsonChunkSize.is_number_integer()) {
-      ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
-    }
-  } catch (nlohmann::json::exception& E) {
-    LOG(Sev::Warning, "Unable to extract chunk size, using the default (64). This might be very inefficient. Error was: {}", E.what());
+  auto JsonChunkSize = Config["chunk_size"];
+  if (JsonChunkSize.is_array()) {
+    ChunkSize = Config["chunk_size"].get<hdf5::Dimensions>();
+  } else if (JsonChunkSize.is_number_integer()) {
+    ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
+  } else {
+    LOG(Sev::Warning, "Unable to extract chunk size, using the default (64). This might be very inefficient.");
   }
   LOG(Sev::Info, "Using a cue interval of {}.", CueInterval);
 }
@@ -195,7 +193,7 @@ FileWriterBase::WriteResult AreaDetectorWriter::write(
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {
     CueTimestampIndex.appendElement(Timestamp.dataspace().size());
-    CueTimestampIndex.appendElement(CurrentTimestamp);
+    CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }
   return FileWriterBase::WriteResult::OK();

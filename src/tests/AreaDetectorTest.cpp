@@ -82,6 +82,8 @@ public:
   using NDAr::AreaDetectorWriter::Values;
   using NDAr::AreaDetectorWriter::Timestamp;
   using NDAr::AreaDetectorWriter::CueInterval;
+  using NDAr::AreaDetectorWriter::CueTimestamp;
+  using NDAr::AreaDetectorWriter::CueTimestampIndex;
 };
 
 class NDArrWriter : public ::testing::Test {
@@ -132,6 +134,142 @@ TEST_F(NDArrWriter, WriterInitTest) {
   EXPECT_TRUE(UsedGroup.has_dataset("cue_timestamp_zero"));
 }
 
+TEST_F(NDArrWriter, WriterInitFail) {
+  {
+  ADWriterStandIn Temp;
+  Temp.init_hdf(UsedGroup, "{}");
+  }
+  ADWriterStandIn Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_ERR());
+}
+
+TEST_F(NDArrWriter, WriterReOpenFail) {
+  ADWriterStandIn Writer;
+  EXPECT_TRUE(Writer.reopen(UsedGroup).is_ERR());
+}
+
+
+TEST_F(NDArrWriter, WriterInitInt8) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "int8"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::int8_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitUInt8) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "uint8"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::uint8_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitInt16) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "int16"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::int16_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitUInt16) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "uint16"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::uint16_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitInt32) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "int32"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::int32_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitUInt32) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "uint32"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::uint32_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitInt64) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "int64"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::int64_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitUInt64) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "uint64"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::uint64_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitDouble) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "float64"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::double_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitFloat) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "float32"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<std::float_t>(), Writer.Values->datatype());
+}
+
+TEST_F(NDArrWriter, WriterInitChar) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "type": "c_string"
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  EXPECT_EQ(hdf5::datatype::create<char>(), Writer.Values->datatype());
+}
+
 TEST_F(NDArrWriter, WriterDefaultValuesTest) {
   ADWriterStandIn Temp;
   Temp.init_hdf(UsedGroup, "{}");
@@ -153,6 +291,27 @@ TEST_F(NDArrWriter, WriterWriteTest) {
   EXPECT_TRUE(Temp.write(Message).is_OK());
   EXPECT_TRUE(Temp.write(Message).is_OK());
   EXPECT_EQ(2, Temp.Timestamp.dataspace().size());
+}
+
+TEST_F(NDArrWriter, WriterCueCounterTest) {
+  FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "cue_interval": 3
+  })"");
+  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+  for (int i = 0; i < 5; i++) {
+    EXPECT_TRUE(Writer.write(Message).is_OK());
+    if (i < 2) {
+      EXPECT_EQ(0, Writer.CueTimestampIndex.dataspace().size());
+      EXPECT_EQ(0, Writer.CueTimestamp.dataspace().size());
+    } else {
+      EXPECT_EQ(1, Writer.CueTimestampIndex.dataspace().size());
+      EXPECT_EQ(1, Writer.CueTimestamp.dataspace().size());
+    }
+  }
 }
 
 TEST_F(NDArrWriter, WriterDimensionsTest) {
