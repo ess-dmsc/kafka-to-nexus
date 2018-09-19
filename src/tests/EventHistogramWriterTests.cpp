@@ -387,8 +387,7 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 4; ++i) {
     auto M = createTestMessage(0, i);
-    auto X = Writer->write(
-        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -415,8 +414,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   size_t HistogramID = 0;
   for (size_t i = 0; i < 3; ++i) {
     auto M = createTestMessage(HistogramID, i);
-    auto X = Writer->write(
-        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -425,8 +423,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
     auto M = createTestMessage(HistogramID, i);
-    auto X = Writer->write(
-        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -435,8 +432,7 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
     auto M = createTestMessage(HistogramID, i);
-    auto X = Writer->write(
-        FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
+    auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -473,8 +469,7 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   auto M = FileWriter::Msg::owned(reinterpret_cast<const char *>(V2.data()),
                                   V2.size());
-  auto X = Writer->write(
-      FileWriter::FlatbufferMessage(M.data(), M.size(), FlatbufferReaders));
+  auto X = Writer->write(FileWriter::FlatbufferMessage(M.data(), M.size()));
   if (!X.is_OK()) {
     throw std::runtime_error(X.to_str());
   }
