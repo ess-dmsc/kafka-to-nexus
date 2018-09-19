@@ -37,13 +37,17 @@ static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
-    /*
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FileWriter::Schemas::hs00::Reader>
-        RegisterIt("hs00");
-    { FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
+    try {
+      FileWriter::FlatbufferReaderRegistry::Registrar<
+          FileWriter::Schemas::hs00::Reader>
+          RegisterReader("hs00");
+    } catch (...) {
     }
-    */
+    try {
+      FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterWriter(
+          "hs00");
+    } catch (...) {
+    }
     FlatbufferReaders["hs00"] = std::unique_ptr<FileWriter::FlatbufferReader>(
         new FileWriter::Schemas::hs00::Reader);
   }
