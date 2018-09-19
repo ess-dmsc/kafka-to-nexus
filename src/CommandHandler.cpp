@@ -199,7 +199,7 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   if (MasterPtr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
-             Config.service_id, Task->job_id(), "");
+             Config.service_id, Task->job_id(), "Start job");
   }
 
   uri::URI Broker("//localhost:9092");
@@ -493,7 +493,6 @@ void CommandHandler::tryToHandle(std::string const &Command) {
     try {
       JobID = nlohmann::json::parse(Command)["job_id"];
     } catch (...) {
-      JobID = "undefined";
     }
     try {
       std::throw_with_nested(

@@ -47,8 +47,10 @@ FileWriterTask::~FileWriterTask() {
   LOG(Sev::Debug, "~FileWriterTask");
   _demuxers.clear();
   try {
+    hdf_file.close();
     if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Close, ServiceID, JobID, "");
+      logEvent(StatusProducer, StatusCode::Close, ServiceID, JobID,
+               "File closed");
     }
   } catch (std::exception const &E) {
     if (StatusProducer) {
