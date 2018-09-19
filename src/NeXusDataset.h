@@ -270,7 +270,7 @@ private:
         LOG(Sev::Error, "Data has {} dimension(s) and dataset has {} (+1) dimensions.", Shape.size() - 1, CurrentExtent.size() - 1);
         throw std::runtime_error("Rank (dimensions) of data to be written is wrong.");
       }
-      for (int i = 1; i < Shape.size(); i++) {
+      for (size_t i = 1; i < Shape.size(); i++) {
         if (Shape[i] > CurrentExtent[i]) {
           LOG(Sev::Warning, "Dimension {} of new data is larger than that of the dataset. Extending dataset.", i - 1);
           CurrentExtent[i] = Shape[i];
