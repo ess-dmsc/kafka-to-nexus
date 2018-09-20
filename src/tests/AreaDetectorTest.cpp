@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
 #include "schemas/NDAr/AreaDetectorWriter.h"
 #include "schemas/NDAr_NDArray_schema_generated.h"
-#include <fstream>
 #include <cmath>
+#include <fstream>
+#include <gtest/gtest.h>
 
 class AreaDetectorReader : public ::testing::Test {
 public:
@@ -15,21 +15,20 @@ public:
     InFile.seekg(0, InFile.beg);
     InFile.read(RawData.get(), FileSize);
   };
-  
-  static void TearDownTestCase() {};
-  
+
+  static void TearDownTestCase(){};
+
   virtual void SetUp() {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<NDAr::AreaDetectorDataGuard>();
-    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr> &Readers =
-    FileWriter::FlatbufferReaderRegistry::getReaders();
+    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
+        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-    NDAr::AreaDetectorDataGuard> RegisterIt("NDAr");
+    FileWriter::FlatbufferReaderRegistry::Registrar<NDAr::AreaDetectorDataGuard>
+        RegisterIt("NDAr");
   };
-  
-  virtual void TearDown() {
-  };
+
+  virtual void TearDown(){};
   std::unique_ptr<NDAr::AreaDetectorDataGuard> Reader;
   static std::unique_ptr<char[]> RawData;
   static size_t FileSize;
@@ -37,7 +36,6 @@ public:
 
 std::unique_ptr<char[]> AreaDetectorReader::RawData;
 size_t AreaDetectorReader::FileSize = 0;
-
 
 TEST_F(AreaDetectorReader, ValidateTestOk) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
@@ -47,15 +45,23 @@ TEST_F(AreaDetectorReader, ValidateTestOk) {
 TEST_F(AreaDetectorReader, ValidateTestFail) {
   flatbuffers::FlatBufferBuilder builder;
   auto epics_ts = FB_Tables::epicsTimeStamp(0, 0);
-  auto someDims = builder.CreateVector(std::vector<std::uint64_t>({0, 1, 2, 3,}));
-  auto someData = builder.CreateVector(std::vector<std::uint8_t>({0, 1, 2, 3,}));
-  auto tmpPkg = FB_Tables::CreateNDArray(builder, 0, 0, &epics_ts, someDims, FB_Tables::DType::Uint8, someData);
-  builder.Finish(tmpPkg); //Finish without file identifier will fail verify
+  auto someDims = builder.CreateVector(std::vector<std::uint64_t>({
+      0, 1, 2, 3,
+  }));
+  auto someData = builder.CreateVector(std::vector<std::uint8_t>({
+      0, 1, 2, 3,
+  }));
+  auto tmpPkg = FB_Tables::CreateNDArray(builder, 0, 0, &epics_ts, someDims,
+                                         FB_Tables::DType::Uint8, someData);
+  builder.Finish(tmpPkg); // Finish without file identifier will fail verify
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage((char*)builder.GetBufferPointer(), builder.GetSize()), std::runtime_error);
+  EXPECT_THROW(FileWriter::FlatbufferMessage((char *)builder.GetBufferPointer(),
+                                             builder.GetSize()),
+               std::runtime_error);
 }
 
-//We are currently using a static source name, this should be changed eventually
+// We are currently using a static source name, this should be changed
+// eventually
 TEST_F(AreaDetectorReader, SourceNameTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   EXPECT_EQ(Reader->source_name(Message), "ADPluginKafka");
@@ -68,7 +74,8 @@ TEST_F(AreaDetectorReader, TimeStampTest) {
   EXPECT_NE(tempNDArr->epicsTS()->nsec(), 0);
   std::uint64_t unixEpicsSecDiff = 631152000;
   std::uint64_t secToNsec = 1000000000;
-  std::uint64_t tempTimeStamp = (tempNDArr->epicsTS()->secPastEpoch() + unixEpicsSecDiff) * secToNsec;
+  std::uint64_t tempTimeStamp =
+      (tempNDArr->epicsTS()->secPastEpoch() + unixEpicsSecDiff) * secToNsec;
   tempTimeStamp += tempNDArr->epicsTS()->nsec();
   EXPECT_EQ(Reader->timestamp(Message), tempTimeStamp);
 }
@@ -97,23 +104,23 @@ public:
     InFile.seekg(0, InFile.beg);
     InFile.read(RawData.get(), FileSize);
   };
-  
+
   static std::unique_ptr<char[]> RawData;
   static size_t FileSize;
-  
+
   virtual void SetUp() override {
     File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
     RootGroup = File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr> &Readers =
-    FileWriter::FlatbufferReaderRegistry::getReaders();
+    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
+        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-    NDAr::AreaDetectorDataGuard> RegisterIt("NDAr");
+    FileWriter::FlatbufferReaderRegistry::Registrar<NDAr::AreaDetectorDataGuard>
+        RegisterIt("NDAr");
   };
 
   void TearDown() override { File.close(); };
-  
+
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
   hdf5::file::File File;
@@ -125,8 +132,8 @@ size_t NDArrWriter::FileSize = 0;
 
 TEST_F(NDArrWriter, WriterInitTest) {
   {
-  ADWriterStandIn Temp;
-  Temp.init_hdf(UsedGroup, "{}");
+    ADWriterStandIn Temp;
+    Temp.init_hdf(UsedGroup, "{}");
   }
   EXPECT_TRUE(UsedGroup.has_dataset("cue_index"));
   EXPECT_TRUE(UsedGroup.has_dataset("value"));
@@ -136,8 +143,8 @@ TEST_F(NDArrWriter, WriterInitTest) {
 
 TEST_F(NDArrWriter, WriterInitFail) {
   {
-  ADWriterStandIn Temp;
-  Temp.init_hdf(UsedGroup, "{}");
+    ADWriterStandIn Temp;
+    Temp.init_hdf(UsedGroup, "{}");
   }
   ADWriterStandIn Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_ERR());
@@ -148,13 +155,12 @@ TEST_F(NDArrWriter, WriterReOpenFail) {
   EXPECT_TRUE(Writer.reopen(UsedGroup).is_ERR());
 }
 
-
 TEST_F(NDArrWriter, WriterInitInt8) {
   ADWriterStandIn Writer;
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int8"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int8_t>(), Writer.Values->datatype());
@@ -165,7 +171,7 @@ TEST_F(NDArrWriter, WriterInitUInt8) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint8"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint8_t>(), Writer.Values->datatype());
@@ -176,7 +182,7 @@ TEST_F(NDArrWriter, WriterInitInt16) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int16"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int16_t>(), Writer.Values->datatype());
@@ -187,7 +193,7 @@ TEST_F(NDArrWriter, WriterInitUInt16) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint16"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint16_t>(), Writer.Values->datatype());
@@ -198,7 +204,7 @@ TEST_F(NDArrWriter, WriterInitInt32) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int32"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int32_t>(), Writer.Values->datatype());
@@ -209,7 +215,7 @@ TEST_F(NDArrWriter, WriterInitUInt32) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint32"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint32_t>(), Writer.Values->datatype());
@@ -220,7 +226,7 @@ TEST_F(NDArrWriter, WriterInitInt64) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int64"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int64_t>(), Writer.Values->datatype());
@@ -231,7 +237,7 @@ TEST_F(NDArrWriter, WriterInitUInt64) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint64"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint64_t>(), Writer.Values->datatype());
@@ -242,7 +248,7 @@ TEST_F(NDArrWriter, WriterInitDouble) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "float64"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::double_t>(), Writer.Values->datatype());
@@ -253,7 +259,7 @@ TEST_F(NDArrWriter, WriterInitFloat) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "float32"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::float_t>(), Writer.Values->datatype());
@@ -264,7 +270,7 @@ TEST_F(NDArrWriter, WriterInitChar) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "c_string"
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<char>(), Writer.Values->datatype());
@@ -276,8 +282,9 @@ TEST_F(NDArrWriter, WriterDefaultValuesTest) {
   Temp.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<double>(), Temp.Values->datatype());
   auto Dataspace = hdf5::dataspace::Simple(Temp.Values->dataspace());
-  EXPECT_EQ(Dataspace.maximum_dimensions(), (hdf5::Dimensions{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED}));
-  EXPECT_EQ(Dataspace.current_dimensions(), (hdf5::Dimensions{0,1,1}));
+  EXPECT_EQ(Dataspace.maximum_dimensions(),
+            (hdf5::Dimensions{H5S_UNLIMITED, H5S_UNLIMITED, H5S_UNLIMITED}));
+  EXPECT_EQ(Dataspace.current_dimensions(), (hdf5::Dimensions{0, 1, 1}));
   auto CreationProperties = Temp.Values->creation_list();
   auto ChunkDims = CreationProperties.chunk();
   EXPECT_EQ(ChunkDims, (hdf5::Dimensions{64, 1, 1}));
@@ -299,7 +306,7 @@ TEST_F(NDArrWriter, WriterCueCounterTest) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "cue_interval": 3
   })"");
-  Writer.parse_config(JsonConfig.dump(),"");
+  Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   for (int i = 0; i < 5; i++) {
@@ -330,7 +337,8 @@ TEST_F(NDArrWriter, WriterTimeStampTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   auto tempNDArr = FB_Tables::GetNDArray(RawData.get());
-  auto compTs = NDAr::epicsTimeToNsec(tempNDArr->epicsTS()->secPastEpoch(), tempNDArr->epicsTS()->nsec());
+  auto compTs = NDAr::epicsTimeToNsec(tempNDArr->epicsTS()->secPastEpoch(),
+                                      tempNDArr->epicsTS()->nsec());
   Writer.write(Message);
   std::uint64_t storedTs;
   Writer.Timestamp.read(storedTs);
@@ -382,9 +390,9 @@ TEST_F(NDArrWriter, ConfigArraySizeTest) {
     "array_size": [5,5,5]
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1,1}));
+  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
   Writer.parse_config(JsonConfig.dump(), "");
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{5,5,5}));
+  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{5, 5, 5}));
 }
 
 TEST_F(NDArrWriter, ConfigArraySizeFailureTest) {
@@ -392,9 +400,9 @@ TEST_F(NDArrWriter, ConfigArraySizeFailureTest) {
     "array_size": "hello"
   })"");
   ADWriterStandIn Writer;
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1,1}));
+  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
   Writer.parse_config(JsonConfig.dump(), "");
-  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1,1}));
+  EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
 }
 
 TEST_F(NDArrWriter, ConfigChunkSizeTestAlt) {
@@ -414,7 +422,7 @@ TEST_F(NDArrWriter, ConfigChunkSizeTest) {
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
   Writer.parse_config(JsonConfig.dump(), "");
-  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{5,5,5,5}));
+  EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{5, 5, 5, 5}));
 }
 
 TEST_F(NDArrWriter, ConfigChunkSizeFailureTest) {
@@ -428,7 +436,9 @@ TEST_F(NDArrWriter, ConfigChunkSizeFailureTest) {
 }
 
 // Note, you must feed it 1000 elements in total
-void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder, std::uint8_t *DataPtr, size_t DataBytes, FB_Tables::DType Type) {
+void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder,
+                        std::uint8_t *DataPtr, size_t DataBytes,
+                        FB_Tables::DType Type) {
   hdf5::Dimensions storeDims = {10, 10, 10};
   std::vector<std::uint64_t> fbTypeDims(storeDims.begin(), storeDims.end());
   auto fbDims = Builder.CreateVector<std::uint64_t>(fbTypeDims);
@@ -455,13 +465,15 @@ void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder, std::uint8_t *D
 template <class Type>
 bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   std::vector<Type> testData;
-  for (int j = 0; j < 10*10*10; j++) {
+  for (int j = 0; j < 10 * 10 * 10; j++) {
     testData.push_back(j);
   }
   flatbuffers::FlatBufferBuilder builder;
-  GenerateFlatbuffer(builder, (std::uint8_t*)&testData[0], 1000 * (sizeof(testData[0])), FBType);
-  
-  FileWriter::FlatbufferMessage Message((char*) builder.GetBufferPointer(), builder.GetSize());
+  GenerateFlatbuffer(builder, (std::uint8_t *)&testData[0],
+                     1000 * (sizeof(testData[0])), FBType);
+
+  FileWriter::FlatbufferMessage Message((char *)builder.GetBufferPointer(),
+                                        builder.GetSize());
   ADWriterStandIn Writer;
   auto JsonConfig = nlohmann::json::parse(R""({
     "array_size": [10,10,10]
@@ -473,8 +485,9 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
     return false;
   }
   std::vector<Type> dataFromFile(testData.size());
-  hdf5::Dimensions CDims = hdf5::dataspace::Simple(Writer.Values->dataspace()).current_dimensions();
-  hdf5::Dimensions ExpectedDims{{1, 10,10,10}};
+  hdf5::Dimensions CDims =
+      hdf5::dataspace::Simple(Writer.Values->dataspace()).current_dimensions();
+  hdf5::Dimensions ExpectedDims{{1, 10, 10, 10}};
   EXPECT_EQ(CDims, ExpectedDims);
   Writer.Values->read(dataFromFile);
   EXPECT_EQ(dataFromFile, testData);
