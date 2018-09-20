@@ -427,28 +427,17 @@ TEST_F(NDArrWriter, ConfigChunkSizeFailureTest) {
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
 }
 
-TEST_F(NDArrWriter, WriterDoubleTest) {
-  std::vector<std::double_t> testData;
-  for (int j = 0; j < 10*10*10; j++) {
-    testData.push_back(std::sqrt(double(j)));
-  }
-  flatbuffers::FlatBufferBuilder builder;
-
+// Note, you must feed it 1000 elements in total
+void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder, std::uint8_t *DataPtr, size_t DataBytes, FB_Tables::DType Type) {
   hdf5::Dimensions storeDims = {10, 10, 10};
   std::vector<std::uint64_t> fbTypeDims(storeDims.begin(), storeDims.end());
-
-  auto fbDims = builder.CreateVector<std::uint64_t>(fbTypeDims);
-
-  size_t nrOfBytes = sizeof(std::double_t) * testData.size();
-  std::uint8_t *tempPtr;
-  auto payload = builder.CreateUninitializedVector(nrOfBytes, 1, &tempPtr);
-  std::memcpy(tempPtr, testData.data(), nrOfBytes);
-
-  FB_Tables::NDArrayBuilder arrayBuilder(builder);
+  auto fbDims = Builder.CreateVector<std::uint64_t>(fbTypeDims);
+  std::uint8_t *TempPtr;
+  auto payload = Builder.CreateUninitializedVector(DataBytes, 1, &TempPtr);
+  std::memcpy(TempPtr, DataPtr, DataBytes);
+  FB_Tables::NDArrayBuilder arrayBuilder(Builder);
   arrayBuilder.add_dims(fbDims);
-
   arrayBuilder.add_pData(payload);
-  
   auto Seconds = 1;
   auto NanoSeconds = 2;
   auto IdNr = 42;
@@ -457,11 +446,20 @@ TEST_F(NDArrWriter, WriterDoubleTest) {
   arrayBuilder.add_epicsTS(&epics_ts);
   arrayBuilder.add_id(IdNr);
   arrayBuilder.add_timeStamp(Timestamp);
-  arrayBuilder.add_dataType(FB_Tables::DType::Float64);
+  arrayBuilder.add_dataType(Type);
   auto kf_pkg = arrayBuilder.Finish();
-
   // Write data to buffer
-  builder.Finish(kf_pkg, FB_Tables::NDArrayIdentifier());
+  Builder.Finish(kf_pkg, FB_Tables::NDArrayIdentifier());
+}
+
+template <class Type>
+bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
+  std::vector<Type> testData;
+  for (int j = 0; j < 10*10*10; j++) {
+    testData.push_back(j);
+  }
+  flatbuffers::FlatBufferBuilder builder;
+  GenerateFlatbuffer(builder, (std::uint8_t*)&testData[0], 1000 * (sizeof(testData[0])), FBType);
   
   FileWriter::FlatbufferMessage Message((char*) builder.GetBufferPointer(), builder.GetSize());
   ADWriterStandIn Writer;
@@ -471,13 +469,54 @@ TEST_F(NDArrWriter, WriterDoubleTest) {
   Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
-  Writer.write(Message);
-  
-  std::vector<std::double_t> dataFromFile(testData.size());
+  if (Writer.write(Message).is_ERR()) {
+    return false;
+  }
+  std::vector<Type> dataFromFile(testData.size());
   hdf5::Dimensions CDims = hdf5::dataspace::Simple(Writer.Values->dataspace()).current_dimensions();
-  hdf5::Dimensions ExpectedDims{storeDims};
-  ExpectedDims.insert(ExpectedDims.begin(), 1);
+  hdf5::Dimensions ExpectedDims{{1, 10,10,10}};
   EXPECT_EQ(CDims, ExpectedDims);
   Writer.Values->read(dataFromFile);
   EXPECT_EQ(dataFromFile, testData);
+  return true;
+}
+
+TEST_F(NDArrWriter, WriterInt8Test) {
+  EXPECT_TRUE(WriteTest<std::int8_t>(UsedGroup, FB_Tables::DType::Int8));
+}
+
+TEST_F(NDArrWriter, WriterUInt8Test) {
+  EXPECT_TRUE(WriteTest<std::uint8_t>(UsedGroup, FB_Tables::DType::Uint8));
+}
+
+TEST_F(NDArrWriter, WriterInt16Test) {
+  EXPECT_TRUE(WriteTest<std::int16_t>(UsedGroup, FB_Tables::DType::Int16));
+}
+
+TEST_F(NDArrWriter, WriterUInt16Test) {
+  EXPECT_TRUE(WriteTest<std::uint16_t>(UsedGroup, FB_Tables::DType::Uint16));
+}
+
+TEST_F(NDArrWriter, WriterInt32Test) {
+  EXPECT_TRUE(WriteTest<std::int32_t>(UsedGroup, FB_Tables::DType::Int32));
+}
+
+TEST_F(NDArrWriter, WriterUInt32Test) {
+  EXPECT_TRUE(WriteTest<std::uint32_t>(UsedGroup, FB_Tables::DType::Uint32));
+}
+
+TEST_F(NDArrWriter, WriterFloatTest) {
+  EXPECT_TRUE(WriteTest<float>(UsedGroup, FB_Tables::DType::Float32));
+}
+
+TEST_F(NDArrWriter, WriterDoubleTest) {
+  EXPECT_TRUE(WriteTest<double>(UsedGroup, FB_Tables::DType::Float64));
+}
+
+TEST_F(NDArrWriter, WriterCharTest) {
+  EXPECT_TRUE(WriteTest<char>(UsedGroup, FB_Tables::DType::c_string));
+}
+
+TEST_F(NDArrWriter, WriterWrongFBTypeTest) {
+  EXPECT_FALSE(WriteTest<char>(UsedGroup, FB_Tables::DType(9999)));
 }
