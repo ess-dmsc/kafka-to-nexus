@@ -117,6 +117,7 @@ public:
 /// dynamically specified datatype.  Implemented by WriterFactoryScalar and
 /// WriterFactoryArray.
 struct WriterFactory {
+  virtual ~WriterFactory() = default;
   virtual std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
                FileWriter::Schemas::f142::Value ValueUnionID,
