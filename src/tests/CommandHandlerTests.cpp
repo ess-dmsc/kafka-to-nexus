@@ -9,22 +9,6 @@
 using nlohmann::json;
 using namespace FileWriter;
 
-TEST(CommandHandler_Test, TestFoundBrokerMatchesExpected) {
-  auto CommandVector =
-      gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-01.json");
-  ASSERT_EQ(FileWriter::findBroker(
-                std::string(CommandVector.data(), CommandVector.size())),
-            "localhost:9092");
-}
-
-TEST(CommandHandler_Test, TestMissingBrokerSetToDefault) {
-  auto CommandVector =
-      gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-00.json");
-  ASSERT_EQ(FileWriter::findBroker(
-                std::string(CommandVector.data(), CommandVector.size())),
-            "192.168.10.11:9092");
-}
-
 class CommandHandler_Testing : public testing::Test {
 protected:
   static size_t FileWriterTasksSize(CommandHandler const &CommandHandler) {
@@ -62,8 +46,8 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
     ]
   }
 })""");
-  CommandHandler.handle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  // Make sure that using 'tryToHandle' does not let the exception escape
+  CommandHandler.tryToHandle(CommandString);
   // Assert that this command was not accepted by the command handler:
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
@@ -88,8 +72,7 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   auto Command = nlohmann::json::parse(CommandString);
   Command["use_hdf_swmr"] = UseSWMR;
   CommandString = Command.dump();
-  CommandHandler.handle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  CommandHandler.handle(CommandString);
   ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
             static_cast<size_t>(1));
   auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");
@@ -103,4 +86,21 @@ TEST_F(CommandHandler_Testing, OpenFileInNonSWMRMode) {
 
 TEST_F(CommandHandler_Testing, OpenFileInSWMRMode) {
   createFileWithOptionalSWMR(true);
+}
+
+TEST_F(CommandHandler_Testing, FormatNestedException) {
+  try {
+    try {
+      throw std::runtime_error("2nd_level");
+    } catch (...) {
+      std::throw_with_nested(std::runtime_error("1st_level"));
+    }
+  } catch (std::exception const &E) {
+    ASSERT_EQ(std::string("1st_level\n  2nd_level"),
+              format_nested_exception(E));
+  }
+}
+
+TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
+  ASSERT_THROW(parseOrThrow("{ this is not json }"), std::runtime_error);
 }

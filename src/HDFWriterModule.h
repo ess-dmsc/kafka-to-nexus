@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CollectiveQueue.h"
-#include "Msg.h"
+#include "FlatbufferMessage.h"
 #include <fmt/format.h>
 #include <functional>
 #include <h5cpp/hdf5.hpp>
@@ -174,7 +174,7 @@ public:
   ///
   /// \param msg The message to process
   /// \return The result.
-  virtual WriteResult write(Msg const &msg) = 0;
+  virtual WriteResult write(FlatbufferMessage const &Message) = 0;
 
   /// Flush the internal buffer.
   ///

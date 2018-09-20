@@ -47,7 +47,8 @@ static void append_value(nlohmann::json const *Value, std::vector<DT> &Buffer) {
   } else if (Value->is_number_float()) {
     Buffer.push_back(Value->get<double>());
   } else {
-    LOG(Sev::Error, "Unhandled type in HDFFile::append_value()")
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Expect a numeric value but got: {}", Value->dump().substr(0, 256))));
   }
 }
 
@@ -105,18 +106,23 @@ static void writeAttrNumeric(hdf5::node::Node &Node, const std::string &Name,
   if (Value->is_array()) {
     Length = Value->size();
   }
-  auto ValueData = populate_blob<T>(Value, Length);
   try {
-    if (Value->is_array()) {
-      write_attribute(Node, Name, ValueData);
-    } else {
-      write_attribute(Node, Name, ValueData[0]);
+    auto ValueData = populate_blob<T>(Value, Length);
+    try {
+      if (Value->is_array()) {
+        write_attribute(Node, Name, ValueData);
+      } else {
+        write_attribute(Node, Name, ValueData[0]);
+      }
+    } catch (std::exception const &E) {
+      std::throw_with_nested(std::runtime_error(
+          fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
+                      std::string(Node.link().path()), E.what())));
     }
-  } catch (std::exception &e) {
-    std::stringstream ss;
-    ss << "Failed numeric attribute write in ";
-    ss << Node.link().path() << "/" << Name;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+  } catch (std::exception const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Can not populate blob for attribute {} in {}: {}", Name,
+                    std::string(Node.link().path()), E.what())));
   }
 }
 
@@ -455,20 +461,32 @@ HDFFile::populate_fixed_strings(nlohmann::json const *Value, size_t FixedAt,
 }
 
 template <typename DT>
-static void write_ds_numeric(hdf5::node::Group &parent, std::string name,
-                             hdf5::property::DatasetCreationList &dcpl,
-                             hdf5::dataspace::Dataspace &dataspace,
-                             nlohmann::json const *vals) {
+static void write_ds_numeric(hdf5::node::Group &Node, std::string Name,
+                             hdf5::property::DatasetCreationList &DCPL,
+                             hdf5::dataspace::Dataspace &Dataspace,
+                             nlohmann::json const *Values) {
 
   try {
-    auto ds = parent.create_dataset(name, hdf5::datatype::create<DT>(),
-                                    dataspace, dcpl);
-    ds.write(populate_blob<DT>(vals, dataspace.size()));
-  } catch (std::exception &e) {
-    std::stringstream ss;
-    ss << "Failed numeric dataset write in ";
-    ss << parent.link().path() << "/" << name;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+    auto ds = Node.create_dataset(Name, hdf5::datatype::create<DT>(), Dataspace,
+                                  DCPL);
+    try {
+      auto Blob = populate_blob<DT>(Values, Dataspace.size());
+      try {
+        ds.write(Blob);
+      } catch (std::exception const &E) {
+        std::throw_with_nested(std::runtime_error(
+            fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
+                        std::string(Node.link().path()), E.what())));
+      }
+    } catch (std::exception const &E) {
+      std::throw_with_nested(std::runtime_error(
+          fmt::format("Failed populate_blob for numeric attribute {} in {}: {}",
+                      Name, std::string(Node.link().path()), E.what())));
+    }
+  } catch (std::exception const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
+                    std::string(Node.link().path()), E.what())));
   }
 }
 
@@ -853,15 +871,21 @@ void HDFFile::init(nlohmann::json const &nexus_structure,
 
 void HDFFile::close() {
   try {
-    LOG(Sev::Debug, "flushing");
-    flush();
-    LOG(Sev::Debug, "closing");
-    h5file.close();
-    LOG(Sev::Debug, "closed");
-  } catch (std::exception &e) {
+    if (h5file.is_valid()) {
+      LOG(Sev::Debug, "flushing");
+      flush();
+      LOG(Sev::Debug, "closing");
+      h5file.close();
+      LOG(Sev::Debug, "closed");
+    }
+  } catch (std::exception const &E) {
+    auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
-        h5file.id().file_name().string(), hdf5::error::print_nested(e));
-    std::throw_with_nested(std::runtime_error("HDFFile failed to close!"));
+        h5file.id().file_name().string(), Trace);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
+        boost::filesystem::current_path().string(),
+        h5file.id().file_name().string(), Trace)));
   }
 }
 
@@ -873,20 +897,28 @@ void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
 
     h5file =
         hdf5::file::open(filename, hdf5::file::AccessFlags::READWRITE, fapl);
-  } catch (std::exception &e) {
-    auto message = hdf5::error::print_nested(e);
+  } catch (std::exception const &E) {
+    auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), filename, message);
-    std::throw_with_nested(std::runtime_error("HDFFile failed to reopen!"));
+        boost::filesystem::current_path().string(), filename, Trace);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "HDFFile failed to reopen.  Current Path: {}  Filename: {}  Trace:\n{}",
+        boost::filesystem::current_path().string(), filename, Trace)));
   }
 }
 
 void HDFFile::flush() {
   try {
-    h5file.flush(hdf5::file::Scope::GLOBAL);
+    if (h5file.is_valid()) {
+      h5file.flush(hdf5::file::Scope::GLOBAL);
+    }
+  } catch (std::runtime_error const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("HDFFile failed to flush  what: {}", E.what())));
   } catch (...) {
-    std::throw_with_nested(std::runtime_error("HDFFile failed to flush!"));
+    std::throw_with_nested(
+        std::runtime_error("HDFFile failed to flush with unknown exception"));
   }
 }
 

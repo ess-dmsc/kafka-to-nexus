@@ -1,7 +1,7 @@
 #pragma once
+#include "MessageTimestamp.h"
 #include "ProcessMessageResult.h"
 #include "Source.h"
-#include "TimeDifferenceFromMessage.h"
 #include "json.h"
 #include <chrono>
 #include <functional>
@@ -11,16 +11,13 @@
 
 namespace FileWriter {
 
-/// Represents a sourcename on a topic.
-/// The sourcename can be empty.
-/// This is meant for highest efficiency on topics which are exclusively used
-/// for only one sourcename.
-class DemuxTopic final {
+/// Used to keep track of file writing modules on one topic and call the correct
+/// module based on sourcename
+class DemuxTopic {
 public:
-  using DT = TimeDifferenceFromMessage;
-  DemuxTopic(std::string topic);
+  DemuxTopic(std::string TopicName);
   DemuxTopic(DemuxTopic &&x);
-  ~DemuxTopic();
+  virtual ~DemuxTopic();
 
   //----------------------------------------------------------------------------
   /// @brief      Returns the name of the topic that contains the source
@@ -30,32 +27,27 @@ public:
   std::string const &topic() const;
 
   /// To be called by FileMaster when a new message is available for this
-  /// source. Streamer currently expects void as return, will add return value
-  /// in the future.
-  ProcessMessageResult process_message(Msg &&msg);
-  /// Implements TimeDifferenceFromMessage.
-  DT time_difference_from_message(Msg const &msg);
+  /// source.
+  /// \param[in] Message The flatbuffer message that is to be written to file.
+  /// \return A status message indicating if the write was successfull.
+  virtual ProcessMessageResult
+  process_message(FlatbufferMessage const &Message);
   std::unordered_map<std::string, Source> &sources();
 
   //----------------------------------------------------------------------------
-  /// @brief      Adds a source.
+  /// \brief      Adds a source.
   ///
-  /// @param[in]  source  the name of the source, that must match the content of
+  /// \param[in]  source  the name of the source, that must match the content of
   /// the flatbuffer
   ///
-  /// @return     A reference to the source that has been added to the source
+  /// \return     A reference to the source that has been added to the source
   /// list
   ///
   Source &add_source(Source &&source) {
-    using std::move;
     auto k = source.sourcename();
-    std::pair<std::string, Source> v{k, move(source)};
-    return _sources_map.insert(move(v)).first->second;
+    std::pair<std::string, Source> v{k, std::move(source)};
+    return TopicSources.insert(std::move(v)).first->second;
   }
-
-  std::string to_str() const;
-  nlohmann::json to_json() const;
-  std::chrono::milliseconds &stop_time();
 
   /// Counts the number of processed message.
   std::atomic<size_t> messages_processed{0};
@@ -70,10 +62,9 @@ public:
   std::atomic<size_t> error_no_source_instance{0};
 
 private:
-  std::string _topic;
-  std::unordered_map<std::string, Source> _sources_map;
+  std::string Topic;
+  std::unordered_map<std::string, Source> TopicSources;
   friend void swap(DemuxTopic &x, DemuxTopic &y);
-  std::chrono::milliseconds _stop_time;
 };
 
 } // namespace FileWriter

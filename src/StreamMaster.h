@@ -11,15 +11,13 @@
 
 #pragma once
 
+#include "EventLogger.h"
 #include "FileWriterTask.h"
+#include "MainOpt.h"
 #include "Report.h"
 
 #include <atomic>
 #include <condition_variable>
-
-namespace FileWriter {
-class StreamerOptions;
-}
 
 namespace FileWriter {
 
@@ -33,26 +31,31 @@ namespace FileWriter {
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
 template <typename Streamer> class StreamMaster {
-  using StreamerError = Status::StreamerError;
+  using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
   friend class CommandHandler;
 
 public:
-  StreamMaster(const std::string &broker,
-               std::unique_ptr<FileWriterTask> file_writer_task,
-               const StreamerOptions &options)
-      : Demuxers(file_writer_task->demuxers()),
-        WriterTask(std::move(file_writer_task)) {
+  StreamMaster(const std::string &Broker,
+               std::unique_ptr<FileWriterTask> FileWriterTask,
+               const MainOpt &Options,
+               std::shared_ptr<KafkaW::ProducerTopic> Producer)
+      : Demuxers(FileWriterTask->demuxers()),
+        WriterTask(std::move(FileWriterTask)), ServiceId{Options.service_id},
+        ProducerTopic{Producer} {
 
-    for (auto &d : Demuxers) {
+    for (auto &Demux : Demuxers) {
       try {
         Streamers.emplace(std::piecewise_construct,
-                          std::forward_as_tuple(d.topic()),
-                          std::forward_as_tuple(broker, d.topic(), options));
-        Streamers[d.topic()].setSources(d.sources());
-      } catch (std::exception &e) {
+                          std::forward_as_tuple(Demux.topic()),
+                          std::forward_as_tuple(Broker, Demux.topic(),
+                                                Options.StreamerConfiguration));
+        Streamers[Demux.topic()].setSources(Demux.sources());
+      } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
-        LOG(Sev::Critical, "{}", e.what());
+        LOG(Sev::Critical, "{}", E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -69,6 +72,9 @@ public:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
+    LOG(Sev::Info,
+        "Stop StreamMaster for file with id : {}, ready to be removed",
+        getJobId());
   }
 
   StreamMaster &operator=(const StreamMaster &) = delete;
@@ -114,12 +120,12 @@ public:
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
 
-  void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const std::chrono::milliseconds &ReportMs =
+  void report(const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000}) {
     if (NumStreamers != 0) {
       if (!ReportThread.joinable()) {
-        ReportPtr.reset(new Report(p, WriterTask->job_id(), ReportMs));
+        ReportPtr.reset(
+            new Report(ProducerTopic, WriterTask->job_id(), ReportMs));
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
@@ -137,7 +143,7 @@ public:
   /// stream is in any error state
   const StreamMasterError status() {
     for (auto &s : Streamers) {
-      if (s.second.runStatus().connectionOK()) {
+      if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
         return StreamMasterError::STREAMER_ERROR();
       }
     }
@@ -172,22 +178,25 @@ private:
 
       // if Streamer throws the stream is closed, but the writing continues
       try {
-        ProcessResult = Stream.write(Demux);
-      } catch (...) {
+        ProcessResult = Stream.pollAndProcess(Demux);
+      } catch (std::exception &E) {
+        LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
       // decreases the count of sources in the stream, eventually closes the
       // stream
-      if (ProcessResult.is_STOP()) {
+      if (ProcessResult == ProcessMessageResult::STOP) {
         if (Stream.numSources() == 0) {
           return closeStream(Stream, Demux.topic());
         }
         return StreamMasterError::RUNNING();
       }
       // if there's any error in the messages logs it
-      if (ProcessResult.is_ERR()) {
-        LOG(Sev::Error, "Error in topic {} : {}", Demux.topic(),
+      if (ProcessResult == ProcessMessageResult::ERR) {
+        LOG(Sev::Error, "Error in topic \"{}\" : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -233,7 +242,7 @@ private:
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
     LOG(Sev::Debug, "All sources in Stream have expired, close connection");
-    Stream.runStatus() = Status::StreamerError::HAS_FINISHED();
+    Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
     if (NumStreamers != 0) {
@@ -253,7 +262,7 @@ private:
     for (auto &s : Streamers) {
       LOG(Sev::Info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
-      if (!v.hasFinished()) {
+      if (v == StreamerStatus::HAS_FINISHED) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
       } else {
@@ -275,6 +284,8 @@ private:
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
+  std::string ServiceId;
+  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
 };
 
 } // namespace FileWriter

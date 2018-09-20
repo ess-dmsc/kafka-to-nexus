@@ -6,6 +6,7 @@
 #include "../json.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
+#include "AddReader.h"
 #include "HDFFileTestHelper.h"
 #include <array>
 #include <chrono>
@@ -74,7 +75,7 @@ void send_stop(FileWriter::CommandHandler &ch, json const &CommandJSON) {
   })"");
   Command["job_id"] = CommandJSON["job_id"];
   auto CommandString = Command.dump();
-  ch.handle(FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  ch.handle(CommandString);
 }
 
 // Verify
@@ -91,8 +92,10 @@ TEST(HDFFile, Create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    auto CommandString =
+    auto CommandData =
         gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
+    std::string CommandString(CommandData.data(),
+                              CommandData.data() + CommandData.size());
     LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
         CommandString.size());
     auto Command = json::parse(CommandString);
@@ -100,8 +103,7 @@ public:
     unlink(fname.c_str());
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(
-        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+    ch.handle(CommandString);
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -140,12 +142,12 @@ public:
     auto json_command = basic_command(hdf_output_filename);
     command_add_static_dataset_1d(json_command);
 
-    auto cmd = json_command.dump();
+    auto Command = json_command.dump();
     std::string fname = json_command["file_attributes"]["file_name"];
     ASSERT_GT(fname.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+    ch.handle(Command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, json_command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
@@ -287,8 +289,7 @@ public:
     ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(
-        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+    ch.handle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
@@ -323,8 +324,7 @@ public:
     ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(
-        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+    ch.handle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
@@ -419,6 +419,7 @@ public:
   }
 
   static void data_ev42() {
+    AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -626,8 +627,7 @@ public:
       unlink(string(fname).c_str());
 
       auto CommandString = CommandJSON.dump();
-      ch.handle(
-          FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+      ch.handle(CommandString);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
       auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
@@ -657,19 +657,21 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            auto res = fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg));
-            if (res.is_ERR()) {
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            auto res =
+                fwt->demuxers().at(0).process_message(std::move(TempMessage));
+            if (res == FileWriter::ProcessMessageResult::ERR) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
               break;
             }
-            if (res.is_ALL_SOURCES_FULL()) {
+            if (res == FileWriter::ProcessMessageResult::ALL_SOURCES_FULL) {
               LOG(Sev::Error, "is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
-            if (res.is_STOP()) {
+            if (res == FileWriter::ProcessMessageResult::STOP) {
               LOG(Sev::Error, "is_STOP");
               do_run = false;
               break;
@@ -814,8 +816,8 @@ public:
   };
 
   static void data_f142() {
+    AddF142Reader();
     MainOpt main_opt = getTestOptions();
-
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
       "nexus": {
@@ -973,8 +975,7 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(Filename.c_str());
 
-      ch.handle(FileWriter::Msg::owned((char const *)CommandString.data(),
-                                       CommandString.size()));
+      ch.handle(CommandString);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
       auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
@@ -992,7 +993,9 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg));
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }
         }

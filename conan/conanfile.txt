@@ -10,6 +10,7 @@ graylog-logger/1.0.5-dm1@ess-dmsc/stable
 streaming-data-types/d429d55@ess-dmsc/stable
 cli11/1.5.3@bincrafters/stable
 cmake_installer/3.10.0@conan/stable
+trompeloeil/v31@ess-dmsc/stable
 
 [generators]
 cmake

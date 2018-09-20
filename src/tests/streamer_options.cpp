@@ -35,7 +35,6 @@ void StreamerOptionsTest::CompareRdKafkaOptionsWith(
             Other.Settings.ConfigurationIntegers);
   EXPECT_EQ(Options.Settings.ConfigurationStrings,
             Other.Settings.ConfigurationStrings);
-  EXPECT_EQ(Options.ConsumerTimeout.count(), Other.ConsumerTimeout.count());
   EXPECT_EQ(Options.BeforeStartTime.count(), Other.BeforeStartTime.count());
   EXPECT_EQ(Options.NumMetadataRetry, Other.NumMetadataRetry);
 }
@@ -50,7 +49,6 @@ void StreamerOptionsTest::CompareSteamerOptionsWith(
     const std::chrono::milliseconds &ConsumerTimeout,
     const std::chrono::milliseconds &BeforeStartTime,
     const int &NumMetadataRetry) {
-  EXPECT_EQ(Options.ConsumerTimeout.count(), ConsumerTimeout.count());
   EXPECT_EQ(Options.BeforeStartTime.count(), BeforeStartTime.count());
   EXPECT_EQ(Options.NumMetadataRetry, NumMetadataRetry);
 }

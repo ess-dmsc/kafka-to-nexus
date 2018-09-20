@@ -19,13 +19,13 @@ find_package(GitCommitExtract)
 find_package(h5cpp REQUIRED)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=${_GLIBCXX_USE_CXX11_ABI}")
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -std=c++11 -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -std=c++11 -O3 -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -O0 -fno-inline -ggdb -D_GLIBCXX_USE_NANOSLEEP")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -D_GLIBCXX_USE_NANOSLEEP")
 
 if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS "4.9.3")
 else()
@@ -76,10 +76,10 @@ set(kafka_to_nexus_SRC
   Master.cpp
   CommandListener.cpp
   CommandHandler.cpp
-  TimeDifferenceFromMessage.cpp
   FileWriterTask.cpp
   Source.cpp
   DemuxTopic.cpp
+  EventLogger.cpp
   FlatbufferReader.cpp
   HDFFile.cpp
   HDFWriterModule.cpp
@@ -95,15 +95,9 @@ set(kafka_to_nexus_SRC
   logger.cpp
   uri.cpp
   h5.cpp
+  FlatbufferMessage.cpp
   date/tz.cpp
   date/tzblobs.cpp
-  schemas/f142/f142_rw.cpp
-  schemas/f142/f142_synth.cpp
-  schemas/ev42/ev42_rw.cpp
-  schemas/ev42/ev42_synth.cpp
-  schemas/senv/FastSampleEnvironmentWriter.cpp
-  schemas/senv/Datasets.cpp
-  schemas/template/TemplateWriter.cpp
   MainOpt.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp)
@@ -114,6 +108,7 @@ set(kafka_to_nexus_INC
   commandproducer.h
   DemuxTopic.h
   Errors.h
+  EventLogger.h
   FileWriterTask.h
   FlatbufferReader.h
   h5.h
@@ -135,6 +130,7 @@ set(kafka_to_nexus_INC
   MainOpt.h
   Master.h
   Msg.h
+  FlatbufferMessage.h
   MsgParser.h
   ProcessMessageResult.h
   Report.h
@@ -144,7 +140,7 @@ set(kafka_to_nexus_INC
   Streamer.h
   StreamerOptions.h
   StreamMaster.h
-  TimeDifferenceFromMessage.h
+  MessageTimestamp.h
   TopicReader.h
   uri.h
   date/date.h
@@ -152,14 +148,7 @@ set(kafka_to_nexus_INC
   date/tz_private.h
   date/tz.h
   date/tzblobs.h
-  schemas/ev42/ev42_rw.h
-  schemas/ev42/ev42_synth.h
-  schemas/f142/f142_rw.h
-  schemas/f142/f142_synth.h
-  schemas/template/TemplateWriter.h
   CLIOptions.h
-  schemas/senv/FastSampleEnvironmentWriter.h
-  schemas/senv/Datasets.h
 )
 
 set(tgt "kafka_to_nexus__objects")
@@ -175,7 +164,7 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 set(tgt "send-command")
 set(sources
-        send-command.cpp
+  send-command.cpp
   $<TARGET_OBJECTS:kafka_to_nexus__objects>
 )
 add_executable(${tgt} ${sources})
@@ -184,18 +173,22 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
+set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
+
+add_subdirectory(schemas)
 
 set(tgt "kafka-to-nexus")
 set(sources
-        kafka-to-nexus.cpp
+  kafka-to-nexus.cpp
   $<TARGET_OBJECTS:kafka_to_nexus__objects>
+  ${WRITER_MODULES}
 )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common}  fmt::fmt)
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 find_package(GTest)
 

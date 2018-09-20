@@ -7,37 +7,40 @@
 
 - [Usage](#usage)
 - [Installation](#installation)
+- [Configuration Files](#configuration-files)
+- [Commands](#send-command-to-kafka-to-nexus)
 - [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
 
 
 ## Features
 
-- What for file writing command from a Kafka topic
+- Wait for file writing command from a Kafka topic
 - Write data to file
 - Writer plugins can be [configured via the json command](#options-for-schema-plugins)
-- And more coming up...
 
 
 ## Usage
-
-### Running kafka-to-nexus
 
 ```
 ./kafka-to-nexus --help
 ```
 
-For example:
-```
-./kafka-to-nexus --command-uri //kafka-host/filewriter-commands
-```
-
-
-### Configuration File
+### Configuration Files
 
 The file writer can be configured via `--config-file <json>`
 
 Available options include:
 
+- `command-uri` Kafka URI where the file writer listens for commands
+- `status-uri` Kafka URI where to publish status updates
+- `status-master-interval` Interval in milliseconds for status updates
+- `kafka` Kafka configuration for consumers in Streamer
+- `streamer` Configuration option for the Streamer
+- `stream-master` Configuration option for the StreamMaster
+- `service_id` If multiple instances listen on the same Kafka command topic,
+  the `service_id` lets the filewriter filter the commands to interpret.
+  
+#### Example configuration file:
 ```
 {
   "command-uri": "//broker[:port]/command-topic",
@@ -60,14 +63,6 @@ Available options include:
 }
 ```
 
-- `command-uri` Kafka URI where the file writer listens for commands
-- `status-uri` Kafka URI where to publish status updates
-- `status-master-interval` Interval in milliseconds for status updates
-- `kafka` Kafka configuration for consumers in Streamer
-- `streamer` Configuration option for the Streamer
-- `stream-master` Configuration option for the StreamMaster
-- `service_id` If multiple instances listen on the same Kafka command topic,
-  the `service_id` lets the filewriter filter the commands to interpret.
 
 
 ### Send command to kafka-to-nexus
@@ -75,8 +70,7 @@ Available options include:
 Commands in the form of JSON messages are used to start and stop file writing.
 Commands can be send through Kafka via the broker/topic specified by the
 `--command-uri` option.  Commands can also be given in the configuration
-file specified by `--config-file <file.json>` (see a bit later in this
-section).
+file specified by `--config-file <file.json>` (see [commands in config file](#commands-can-be-given-in-the-configuration-file-as-well)).
 
 In the command, the `nexus_structure` defines the HDF hierarchy.
 The `nexus_structure` represents the HDF root object.  The following example
@@ -264,7 +258,7 @@ variable-size datatypes (including string and region references datatypes)."
 
 To enable SWMR when writing a file, add to the `FileWriter_new` command:
 
-```
+```json
 {
   "use_hdf_swmr": true
 }
@@ -291,7 +285,7 @@ Tooling
 - conan
 - cmake (minimum tested is 2.8.11)
 - C++ compiler with c++11 support
-- Doxygen if you would like to make docs
+- Doxygen if you would like to `make docs`
 
 ### Conan
 
@@ -404,7 +398,7 @@ string.
 
 In this example, we assume that a stream uses the `f142` schema.  We tell the
 writer for the `f142` schema to write an index entry every 3 megabytes:
-```
+```json
 {
   "cmd": "FileWriter_new",
   "broker": "<your-broker>",
@@ -516,8 +510,6 @@ The two corresponding methods are
 * time_difference_from_message
 
 Both receive the message payload and size. Return values are ProcessMessageResult and TimeDifferenceFromMessage_DT.
-
-## Source
 
 ## StreamMaster 
 

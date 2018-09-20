@@ -3,9 +3,9 @@
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
+#include "MessageTimestamp.h"
 #include "Msg.h"
 #include "ProcessMessageResult.h"
-#include "TimeDifferenceFromMessage.h"
 #include "json.h"
 #include <string>
 
@@ -30,12 +30,14 @@ private:
 /// for only one sourcename.
 class Source final {
 public:
+  Source(std::string const &Name, std::string const &ID,
+         HDFWriterModule::ptr Writer);
   Source(Source &&) noexcept;
   ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
   uint64_t processed_messages_count() const;
-  ProcessMessageResult process_message(Msg &msg);
+  ProcessMessageResult process_message(FlatbufferMessage const &Message);
   std::string to_str() const;
   nlohmann::json to_json() const;
   void close_writer_module();
@@ -43,11 +45,10 @@ public:
   HDFFile *HDFFileForSWMR = nullptr;
 
 private:
-  Source(std::string sourcename, HDFWriterModule::ptr hdf_writer_module);
-
   std::string _topic;
-  std::string _sourcename;
-  std::unique_ptr<HDFWriterModule> _hdf_writer_module;
+  std::string SourceName;
+  std::string SchemaID;
+  std::unique_ptr<HDFWriterModule> WriterModule;
 
   uint64_t _processed_messages_count = 0;
   uint64_t _cnt_msg_written = 0;

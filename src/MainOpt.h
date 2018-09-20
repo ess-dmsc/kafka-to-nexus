@@ -54,6 +54,9 @@ struct MainOpt {
   /// in the write commands.
   std::string hdf_output_prefix;
 
+  /// Used for command line argument.
+  bool ListWriterModules{false};
+
   /// Whether we want to publish status to Kafka
   bool do_kafka_status = false;
   /// Kafka topic where status updates are to be published

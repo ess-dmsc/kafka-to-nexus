@@ -5,11 +5,14 @@
 #include "MainOpt.h"
 #include "MasterI.h"
 #include "Msg.h"
+#include "json.h"
 #include <memory>
 
 namespace FileWriter {
 
 struct StreamSettings;
+
+nlohmann::json parseOrThrow(std::string const &Command);
 
 /// Interprets and execute commands received.
 class CommandHandler {
@@ -35,7 +38,7 @@ public:
   /// Passes content of the message to the command handler.
   ///
   /// \param Msg The message.
-  void handle(Msg const &msg);
+  void tryToHandle(Msg const &msg);
 
   /// Parses the given command and passes it on to a more specific handler.
   ///
@@ -70,5 +73,7 @@ private:
 };
 
 std::string findBroker(std::string const &);
+
+std::string format_nested_exception(std::exception const &E);
 
 } // namespace FileWriter

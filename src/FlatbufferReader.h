@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Msg.h"
+#include "FlatbufferMessage.h"
 #include "logger.h"
 #include <array>
 #include <map>
@@ -18,11 +18,11 @@ class FlatbufferReader {
 public:
   using ptr = std::unique_ptr<FlatbufferReader>;
   /// Run the flatbuffer verification and return the result.
-  virtual bool verify(Msg const &msg) const = 0;
+  virtual bool verify(FlatbufferMessage const &Message) const = 0;
   /// Extract the 'source_name' from the flatbuffer message.
-  virtual std::string source_name(Msg const &msg) const = 0;
+  virtual std::string source_name(FlatbufferMessage const &Message) const = 0;
   /// Extract the timestamp.
-  virtual uint64_t timestamp(Msg const &msg) const = 0;
+  virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
@@ -37,7 +37,6 @@ std::map<std::string, ReaderPtr> &getReaders();
 /// @todo The following two functions should probably throw an exception if key
 /// is not found.
 FlatbufferReader::ptr &find(std::string const &FlatbufferID);
-FlatbufferReader::ptr &find(Msg const &msg);
 
 void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item);
 
