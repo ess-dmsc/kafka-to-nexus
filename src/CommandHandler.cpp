@@ -260,10 +260,10 @@ void CommandHandler::handleNew(std::string const &Command) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        Broker.host_port, std::move(Task), Config.StreamerConfiguration));
+        Broker.host_port, std::move(Task), Config.StreamerConfiguration,
+        MasterPtr->getStatusProducer()));
     if (auto status_producer = MasterPtr->getStatusProducer()) {
-      s->report(status_producer,
-                std::chrono::milliseconds{Config.status_master_interval});
+      s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
     if (Config.topic_write_duration.count()) {
       s->TopicWriteDuration = Config.topic_write_duration;
