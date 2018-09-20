@@ -39,3 +39,12 @@ def test_data_reaches_file(docker_compose):
     assert file["entry/user_1/affiliation"].value == 'ISIS, STFC'
     assert np.allclose(file["entry/instrument/monitor1/transformations/location"].attrs["vector"], np.array([0.0, 0.0, -1.0]))
     assert file["entry/instrument/monitor1/transformations/location"].attrs["transformation_type"] == "translation"
+
+    # Streamed checks
+    # Ev42 event data (Detector_1)
+    assert file["entry/instrument/detector_1/event_data/event_id"][0] == 3307068
+    assert file["entry/instrument/detector_1/event_data/event_id"][1] == 1422258
+
+    # f142 Sample env (Sample)
+    assert np.isclose(98.25502863210343, file["entry/sample/sample_env_logs/auxanometer/value"][0])
+    assert np.isclose(75.33558352055829, file["entry/sample/sample_env_logs/auxanometer/value"][1])
