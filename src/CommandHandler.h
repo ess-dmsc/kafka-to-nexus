@@ -5,11 +5,14 @@
 #include "MainOpt.h"
 #include "MasterI.h"
 #include "Msg.h"
+#include "json.h"
 #include <memory>
 
 namespace FileWriter {
 
 struct StreamSettings;
+
+nlohmann::json parseOrThrow(std::string const &Command);
 
 /// Interprets and execute commands received.
 class CommandHandler {

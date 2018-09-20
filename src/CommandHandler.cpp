@@ -17,7 +17,7 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-static json parseOrThrow(std::string const &Command) {
+json parseOrThrow(std::string const &Command) {
   try {
     return json::parse(Command);
   } catch (json::parse_error const &E) {

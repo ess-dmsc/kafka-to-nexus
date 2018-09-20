@@ -100,3 +100,7 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
               format_nested_exception(E));
   }
 }
+
+TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
+  ASSERT_THROW(parseOrThrow("{ this is not json }"), std::runtime_error);
+}
