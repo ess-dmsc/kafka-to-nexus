@@ -13,14 +13,11 @@
 
 #include "EventLogger.h"
 #include "FileWriterTask.h"
+#include "MainOpt.h"
 #include "Report.h"
 
 #include <atomic>
 #include <condition_variable>
-
-namespace FileWriter {
-class StreamerOptions;
-}
 
 namespace FileWriter {
 
@@ -39,19 +36,21 @@ template <typename Streamer> class StreamMaster {
   friend class CommandHandler;
 
 public:
-  StreamMaster(const std::string &broker,
-               std::unique_ptr<FileWriterTask> file_writer_task,
-               const StreamerOptions &options,
-               std::shared_ptr<KafkaW::ProducerTopic> p)
-      : Demuxers(file_writer_task->demuxers()),
-        WriterTask(std::move(file_writer_task)), ProducerTopic{p} {
+  StreamMaster(const std::string &Broker,
+               std::unique_ptr<FileWriterTask> FileWriterTask,
+               const MainOpt &Options,
+               std::shared_ptr<KafkaW::ProducerTopic> Producer)
+      : Demuxers(FileWriterTask->demuxers()),
+        WriterTask(std::move(FileWriterTask)), ServiceId{Options.service_id},
+        ProducerTopic{Producer} {
 
-    for (auto &d : Demuxers) {
+    for (auto &Demux : Demuxers) {
       try {
         Streamers.emplace(std::piecewise_construct,
-                          std::forward_as_tuple(d.topic()),
-                          std::forward_as_tuple(broker, d.topic(), options));
-        Streamers[d.topic()].setSources(d.sources());
+                          std::forward_as_tuple(Demux.topic()),
+                          std::forward_as_tuple(Broker, Demux.topic(),
+                                                Options.StreamerConfiguration));
+        Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", E.what());
@@ -154,7 +153,6 @@ public:
   /// Return the unique job id associated with the streamer (and hence
   /// with the NeXus file)
   std::string getJobId() const { return WriterTask->job_id(); }
-  void setServiceId(const std::string &Id) { ServiceId = Id; }
 
 private:
   //------------------------------------------------------------------------------

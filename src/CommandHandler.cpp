@@ -1,4 +1,5 @@
 #include "CommandHandler.h"
+#include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
 #include "StreamMaster.h"
@@ -7,6 +8,7 @@
 #include "json.h"
 #include <chrono>
 #include <future>
+#include <sstream>
 
 using std::array;
 using std::vector;
@@ -15,7 +17,7 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-static json parseOrThrow(std::string const &Command) {
+json parseOrThrow(std::string const &Command) {
   try {
     return json::parse(Command);
   } catch (json::parse_error const &E) {
@@ -179,7 +181,12 @@ void CommandHandler::handleNew(std::string const &Command) {
   using std::string;
   json Doc = parseOrThrow(Command);
 
-  auto Task = std::unique_ptr<FileWriterTask>(new FileWriterTask);
+  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
+  if (MasterPtr) {
+    StatusProducer = MasterPtr->getStatusProducer();
+  }
+  auto Task = std::unique_ptr<FileWriterTask>(
+      new FileWriterTask(Config.service_id, StatusProducer));
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -188,6 +195,11 @@ void CommandHandler::handleNew(std::string const &Command) {
     Task->job_id_init(JobID);
   } else {
     throwMissingKey("job_id", Doc.dump());
+  }
+
+  if (MasterPtr) {
+    logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
+             Config.service_id, Task->job_id(), "Start job");
   }
 
   uri::URI Broker("//localhost:9092");
@@ -235,7 +247,7 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   // The HDF file is closed and re-opened to (optionally) support SWMR and
   // parallel writing.
-  Task->hdf_close();
+  Task->hdf_close_before_reopen();
   Task->hdf_reopen();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
@@ -259,9 +271,9 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        Broker.host_port, std::move(Task), Config.StreamerConfiguration,
-        MasterPtr->getStatusProducer()));
+    auto s = std::unique_ptr<StreamMaster<Streamer>>(
+        new StreamMaster<Streamer>(Broker.host_port, std::move(Task), Config,
+                                   MasterPtr->getStatusProducer()));
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
@@ -453,39 +465,49 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
+std::string format_nested_exception(std::exception const &E,
+                                    std::stringstream &StrS, int Level) {
+  if (Level > 0) {
+    StrS << '\n';
+  }
+  StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
+  try {
+    std::rethrow_if_nested(E);
+  } catch (std::exception const &E) {
+    format_nested_exception(E, StrS, Level + 1);
+  } catch (...) {
+  }
+  return StrS.str();
+}
+
+std::string format_nested_exception(std::exception const &E) {
+  std::stringstream StrS;
+  return format_nested_exception(E, StrS, 0);
+}
+
 void CommandHandler::tryToHandle(std::string const &Command) {
   try {
     handle(Command);
-  } catch (json::parse_error const &E) {
-    LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
-  } catch (json::out_of_range const &E) {
-    LOG(Sev::Error, "out_of_range: {}  Command: ", E.what(), Command);
-  } catch (json::type_error const &E) {
-    LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
-  } catch (std::runtime_error const &E) {
-    // Originates from h5cpp:
-    if (std::string(E.what()).find(
-            "Cannot obtain ObjectId from an invalid file instance!") == 0) {
-      LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
-                        "output file already exists.  command: {}",
-          Command);
-    } else {
-      LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
-          E.what(), Command);
-    }
-  } catch (std::exception const &E) {
-    LOG(Sev::Error, "Unexpected std::exception while handling command: {}",
-        Command);
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Unexpected std::exception while handling command  what: "
-                    "{}  Command: {}",
-                    E.what(), Command)));
   } catch (...) {
-    LOG(Sev::Error, "Unexpected unknown exception while handling command: {}",
-        Command);
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Unexpected unknown exception while handling command  Command: {}",
-        Command)));
+    std::string JobID;
+    try {
+      JobID = nlohmann::json::parse(Command)["job_id"];
+    } catch (...) {
+    }
+    try {
+      std::throw_with_nested(
+          std::runtime_error("Error in CommandHandler::tryToHandle"));
+    } catch (std::runtime_error const &E) {
+      auto Message = fmt::format(
+          "Unexpected std::exception while handling command:\n{}\n{}", Command,
+          format_nested_exception(E));
+      LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
+          convertStatusCodeToString(StatusCode::Fail), Message);
+      if (MasterPtr) {
+        logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
+                 Config.service_id, JobID, Message);
+      }
+    }
   }
 }
 
