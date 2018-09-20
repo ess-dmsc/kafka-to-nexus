@@ -25,6 +25,7 @@ MessageTest.cpp
 StreamerTest.cpp
 AddReader.cpp
 Schema_f142.cpp
+EventLogger.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h

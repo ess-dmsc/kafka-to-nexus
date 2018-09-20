@@ -11,7 +11,9 @@
 
 #pragma once
 
+#include "EventLogger.h"
 #include "FileWriterTask.h"
+#include "MainOpt.h"
 #include "Report.h"
 
 #include <atomic>
@@ -38,21 +40,26 @@ template <typename Streamer> class StreamMaster {
   friend class CommandHandler;
 
 public:
-  StreamMaster(const std::string &broker,
-               std::unique_ptr<FileWriterTask> file_writer_task,
-               const StreamerOptions &options)
-      : Demuxers(file_writer_task->demuxers()),
-        WriterTask(std::move(file_writer_task)) {
+  StreamMaster(const std::string &Broker,
+               std::unique_ptr<FileWriterTask> FileWriterTask,
+               const MainOpt &Options,
+               std::shared_ptr<KafkaW::ProducerTopic> Producer)
+      : Demuxers(FileWriterTask->demuxers()),
+        WriterTask(std::move(FileWriterTask)), ServiceId{Options.service_id},
+        ProducerTopic{Producer} {
 
-    for (auto &d : Demuxers) {
+    for (auto &Demux : Demuxers) {
       try {
         Streamers.emplace(std::piecewise_construct,
-                          std::forward_as_tuple(d.topic()),
-                          std::forward_as_tuple(broker, d.topic(), options));
-        Streamers[d.topic()].setSources(d.sources());
-      } catch (std::exception &e) {
+                          std::forward_as_tuple(Demux.topic()),
+                          std::forward_as_tuple(Broker, Demux.topic(),
+                                                Options.StreamerConfiguration));
+        Streamers[Demux.topic()].setSources(Demux.sources());
+      } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
-        LOG(Sev::Critical, "{}", e.what());
+        LOG(Sev::Critical, "{}", E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -117,12 +124,12 @@ public:
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
 
-  void report(std::shared_ptr<KafkaW::ProducerTopic> p,
-              const std::chrono::milliseconds &ReportMs =
+  void report(const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000}) {
     if (NumStreamers != 0) {
       if (!ReportThread.joinable()) {
-        ReportPtr.reset(new Report(p, WriterTask->job_id(), ReportMs));
+        ReportPtr.reset(
+            new Report(ProducerTopic, WriterTask->job_id(), ReportMs));
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
@@ -178,6 +185,8 @@ private:
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
         LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
+        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
+                 WriterTask->job_id(), E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -279,6 +288,8 @@ private:
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
+  std::string ServiceId;
+  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
 };
 
 } // namespace FileWriter

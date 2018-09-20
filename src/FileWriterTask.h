@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DemuxTopic.h"
+#include "KafkaW/ProducerTopic.h"
 #include "Source.h"
 #include "json.h"
 #include <memory>
@@ -28,7 +29,8 @@ class FileWriterTask final {
   friend class CommandHandler;
 
 public:
-  FileWriterTask();
+  FileWriterTask(std::string ServiceID,
+                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_);
   ~FileWriterTask();
   FileWriterTask &set_hdf_filename(std::string hdf_output_prefix,
                                    std::string hdf_filename);
@@ -50,11 +52,13 @@ private:
   void hdf_init(std::string const &NexusStructure,
                 std::string const &ConfigFile,
                 std::vector<StreamHDFInfo> &stream_hdf_info);
-  void hdf_close();
+  void hdf_close_before_reopen();
   int hdf_reopen();
   void job_id_init(const std::string &);
   uint64_t _id;
-  std::string _job_id;
+  std::string JobID;
+  std::string ServiceID;
+  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
 };
 
 } // namespace FileWriter
