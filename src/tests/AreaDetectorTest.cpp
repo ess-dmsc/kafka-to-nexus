@@ -19,7 +19,7 @@ public:
   static void TearDownTestCase() {};
   
   virtual void SetUp() {
-    ASSERT_NE(FileSize, 0);
+    ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<NDAr::AreaDetectorDataGuard>();
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr> &Readers =
     FileWriter::FlatbufferReaderRegistry::getReaders();
