@@ -27,12 +27,16 @@ int MainOpt::parseJsonCommands() {
   } catch (...) {
     return 1;
   }
-  if (auto v = find<json>("commands", CommandsJson)) {
+  findAndAddCommands();
+  return 0;
+}
+
+void MainOpt::findAndAddCommands() {
+  if (auto v = find<nlohmann::json>("commands", CommandsJson)) {
     for (auto const &Command : v.inner()) {
       CommandsFromJson.emplace_back(Command.dump());
     }
   }
-  return 0;
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {
