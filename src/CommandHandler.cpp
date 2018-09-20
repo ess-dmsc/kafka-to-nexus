@@ -271,9 +271,9 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(new StreamMaster<Streamer>(
-        Broker.host_port, std::move(Task), Config.StreamerConfiguration,
-        MasterPtr->getStatusProducer()));
+    auto s = std::unique_ptr<StreamMaster<Streamer>>(
+        new StreamMaster<Streamer>(Broker.host_port, std::move(Task), Config,
+                                   MasterPtr->getStatusProducer()));
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
