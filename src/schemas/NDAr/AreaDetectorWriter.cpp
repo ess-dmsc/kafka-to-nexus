@@ -42,10 +42,9 @@ AreaDetectorDataGuard::timestamp(FlatbufferMessage const &Message) const {
 
 std::string AreaDetectorDataGuard::source_name(
     const FileWriter::FlatbufferMessage &Message) const {
-  // The flatbuffer schema should probably hold some name mentioning the source
-  // of the data
-  // Until this is done however, use the one defined here
-  // \todo Fix areaDetector name
+  // The source name was left out of the relevant EPICS areaDetector plugin.
+  // There is currently a pull request for adding this variable to the FB
+  // schema. When the variable has been addded, this function will be updated.
   return "ADPluginKafka";
 }
 
@@ -115,6 +114,8 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
                            DefaultChunkSize);
     NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
                                    DefaultChunkSize);
+    auto ClassAttribute = CurrentGroup.attributes.create<std::string>("NX_class");
+    ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {

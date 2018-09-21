@@ -334,6 +334,24 @@ TEST_F(DatasetCreation, TimeDefaultCreation) {
   ASSERT_EQ(ChunkDims.size(), 1u);
   EXPECT_EQ(ChunkDims.at(0), ChunkSize);
   EXPECT_EQ(hdf5::datatype::create<std::uint64_t>(), TestDataset.datatype());
+  bool FoundStartAttr{false};
+  bool FoundUnitAttr{false};
+  for (const auto &Attribute : TestDataset.attributes) {
+    std::string AttributeValue;
+    if (Attribute.name() == "start") {
+      Attribute.read(AttributeValue);
+      if (AttributeValue == "1970-01-01T00:00:00Z") {
+        FoundStartAttr = true;
+      }
+    } else if (Attribute.name() == "units") {
+      Attribute.read(AttributeValue);
+      if (AttributeValue == "ns") {
+        FoundUnitAttr = true;
+      }
+    }
+  }
+  EXPECT_TRUE(FoundStartAttr);
+  EXPECT_TRUE(FoundUnitAttr);
 }
 
 TEST_F(DatasetCreation, TimeReOpen) {
@@ -410,6 +428,24 @@ TEST_F(DatasetCreation, CueTimestampZeroDefaultCreation) {
   ASSERT_EQ(ChunkDims.size(), 1u);
   EXPECT_EQ(ChunkDims.at(0), ChunkSize);
   EXPECT_EQ(hdf5::datatype::create<std::uint64_t>(), TestDataset.datatype());
+  bool FoundStartAttr{false};
+  bool FoundUnitAttr{false};
+  for (const auto &Attribute : TestDataset.attributes) {
+    std::string AttributeValue;
+    if (Attribute.name() == "start") {
+      Attribute.read(AttributeValue);
+      if (AttributeValue == "1970-01-01T00:00:00Z") {
+        FoundStartAttr = true;
+      }
+    } else if (Attribute.name() == "units") {
+      Attribute.read(AttributeValue);
+      if (AttributeValue == "ns") {
+        FoundUnitAttr = true;
+      }
+    }
+  }
+  EXPECT_TRUE(FoundStartAttr);
+  EXPECT_TRUE(FoundUnitAttr);
 }
 
 TEST_F(DatasetCreation, CueTimestampZeroReOpen) {
