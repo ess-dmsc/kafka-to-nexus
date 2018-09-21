@@ -30,7 +30,9 @@ bool AreaDetectorDataGuard::verify(FlatbufferMessage const &Message) const {
 }
 
 std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec) {
-  return (std::uint64_t(sec) + 631152000L) * 1000000000L + nsec;
+  const auto TimeDiffUNIXtoEPICSepoch = 631152000L;
+  const auto NSecMultiplier = 1000000000L;
+  return (sec + TimeDiffUNIXtoEPICSepoch) * NSecMultiplier + nsec;
 }
 
 uint64_t
@@ -149,7 +151,7 @@ AreaDetectorWriter::reopen(hdf5::node::Group &HDFGroup) {
 }
 template <typename DataType, class DatasetType>
 void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
-                hdf5::Dimensions Shape) {
+                hdf5::Dimensions const &Shape) {
   Dataset->appendArray(
       ArrayAdapter<DataType>(reinterpret_cast<DataType *>(Pointer), Size),
       Shape);
@@ -216,16 +218,16 @@ void AreaDetectorWriter::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
   LOG(Sev::Error, "Collective queue not implemented.");
 }
 template <typename Type>
-auto makeIt(hdf5::node::Group &Parent, hdf5::Dimensions Shape,
-            hdf5::Dimensions ChunkSize)
-    -> std::unique_ptr<NeXusDataset::MultiDimDatasetBase> {
+std::unique_ptr<NeXusDataset::MultiDimDatasetBase>
+makeIt(hdf5::node::Group &Parent, hdf5::Dimensions Shape,
+       hdf5::Dimensions const &ChunkSize) {
   return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(
       Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
 }
 
 void AreaDetectorWriter::initValueDataset(hdf5::node::Group &Parent) {
-  typedef std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>
-      OpenFuncType;
+  using OpenFuncType =
+      std::function<std::unique_ptr<NeXusDataset::MultiDimDatasetBase>()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::c_string,
        [&Parent, this]() {
