@@ -219,7 +219,7 @@ void AreaDetectorWriter::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
 }
 template <typename Type>
 std::unique_ptr<NeXusDataset::MultiDimDatasetBase>
-makeIt(hdf5::node::Group &Parent, hdf5::Dimensions Shape,
+makeIt(hdf5::node::Group &Parent, hdf5::Dimensions &Shape,
        hdf5::Dimensions const &ChunkSize) {
   return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(
       Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);
