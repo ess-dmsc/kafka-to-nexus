@@ -127,7 +127,7 @@ def docker_build(image_key) {
         def build_script = """
                       cd build
                       . ./activate_run.sh
-                      make all UnitTests VERBOSE=0
+                      make all UnitTests VERBOSE=1
                   """
         sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${build_script}\""
     } catch (e) {
@@ -310,7 +310,7 @@ def get_macos_pipeline()
                     }
 
                     try {
-                        sh "make all UnitTests VERBOSE=0"
+                        sh "make all UnitTests VERBOSE=1"
                         sh ". ./activate_run.sh && ./tests/UnitTests"
                     } catch (e) {
                         failure_function(e, 'MacOSX / build+test failed')
