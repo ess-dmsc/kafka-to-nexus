@@ -156,8 +156,8 @@ TEST_F(AreaDetectorWriter, WriterAttributeExists) {
   auto ClassAttribute = UsedGroup.attributes.create<std::string>("NX_class");
   ClassAttribute.write("NXlog");
   {
-  ADWriterStandIn Temp;
-  EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}").is_ERR());
+    ADWriterStandIn Temp;
+    EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}").is_ERR());
   }
 }
 
