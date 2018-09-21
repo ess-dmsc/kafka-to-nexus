@@ -33,7 +33,6 @@ namespace FileWriter {
 template <typename Streamer> class StreamMaster {
   using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
-  friend class CommandHandler;
 
 public:
   StreamMaster(const std::string &Broker,
@@ -41,8 +40,9 @@ public:
                const MainOpt &Options,
                std::shared_ptr<KafkaW::ProducerTopic> Producer)
       : Demuxers(FileWriterTask->demuxers()),
-        WriterTask(std::move(FileWriterTask)), ServiceId{Options.service_id},
-        ProducerTopic{Producer} {
+        WriterTask(std::move(FileWriterTask)),
+        TopicWriteDuration{Options.topic_write_duration},
+        ServiceId{Options.service_id}, ProducerTopic{Producer} {
 
     for (auto &Demux : Demuxers) {
       try {

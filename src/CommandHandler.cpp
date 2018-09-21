@@ -277,9 +277,6 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
-    if (Config.topic_write_duration.count()) {
-      s->TopicWriteDuration = Config.topic_write_duration;
-    }
     s->start();
 
     MasterPtr->addStreamMaster(std::move(s));

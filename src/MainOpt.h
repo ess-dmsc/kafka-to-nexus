@@ -69,7 +69,7 @@ struct MainOpt {
   bool logpid_sleep = false;
   // Max interval (in std::chrono::milliseconds) to spend writing each topic
   // before switch to the next
-  std::chrono::milliseconds topic_write_duration;
+  std::chrono::milliseconds topic_write_duration{1000};
   // The constructor was removed because of the issue with the integration test
   // (see cpp file for more details).
   void init();
