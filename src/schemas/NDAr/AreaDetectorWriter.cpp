@@ -9,8 +9,6 @@
 
 #include "AreaDetectorWriter.h"
 #include "HDFFile.h"
-#include <iostream>
-#include <limits>
 
 namespace NDAr {
 
