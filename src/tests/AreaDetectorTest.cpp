@@ -341,6 +341,47 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
   }
 }
 
+void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder,
+                        std::uint8_t *DataPtr, size_t DataBytes,
+                        FB_Tables::DType Type);
+
+TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
+  ADWriterStandIn Writer;
+  auto JsonConfig = nlohmann::json::parse(R""({
+    "cue_interval": 3,
+    "array_size": [10,10,10]
+  })"");
+  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+
+  std::vector<double> TestData;
+  for (int j = 0; j < 10 * 10 * 10; j++) {
+    TestData.push_back(j);
+  }
+
+  for (int i = 0; i < 5; i++) {
+    flatbuffers::FlatBufferBuilder builder;
+    GenerateFlatbuffer(builder, (std::uint8_t *)&TestData[0],
+                       1000 * (sizeof(TestData[0])), FB_Tables::DType::Float64);
+
+    FileWriter::FlatbufferMessage Message((char *)builder.GetBufferPointer(),
+                                          builder.GetSize());
+    EXPECT_TRUE(Writer.write(Message).is_OK());
+  }
+  std::vector<std::uint64_t> CueIndexValues(
+      Writer.CueTimestampIndex.dataspace().size());
+  Writer.CueTimestampIndex.read(CueIndexValues);
+  std::vector<std::uint64_t> CueTimestamps(
+      Writer.CueTimestamp.dataspace().size());
+  Writer.CueTimestamp.read(CueTimestamps);
+  std::vector<std::uint64_t> Timestamps(Writer.Timestamp.dataspace().size());
+  Writer.Timestamp.read(Timestamps);
+  EXPECT_EQ(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0)));
+  EXPECT_NE(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0) + 1));
+  EXPECT_NE(CueTimestamps.at(0), Timestamps.at(CueIndexValues.at(0) - 1));
+}
+
 TEST_F(AreaDetectorWriter, WriterDimensionsTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   ADWriterStandIn Writer;
@@ -468,7 +509,8 @@ void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder,
   FB_Tables::NDArrayBuilder arrayBuilder(Builder);
   arrayBuilder.add_dims(fbDims);
   arrayBuilder.add_pData(payload);
-  auto Seconds = 1;
+  static auto Seconds = 1;
+  Seconds++;
   auto NanoSeconds = 2;
   auto IdNr = 42;
   auto Timestamp = 3.14;

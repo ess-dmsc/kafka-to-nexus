@@ -200,7 +200,7 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {
-    CueTimestampIndex.appendElement(Timestamp.dataspace().size());
+    CueTimestampIndex.appendElement(Timestamp.dataspace().size() - 1);
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }
