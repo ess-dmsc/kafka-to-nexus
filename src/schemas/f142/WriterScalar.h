@@ -91,7 +91,6 @@ h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *Buffer) {
 
 template <typename DT, typename FV>
 void WriterScalar<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
-  LOG(Sev::Critical, "LATEST WRITER");
   auto &Dataset = ds->ds.Dataset;
   auto Type = Dataset.datatype();
   auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
