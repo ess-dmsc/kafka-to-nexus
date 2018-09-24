@@ -129,16 +129,24 @@ void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
   for (size_t I = 0; I < Offset.size(); ++I) {
     Offset.at(I) = 0;
   }
+  if (DimSrc.at(0) == 0) {
+    return;
+  }
+  hdf5::dataspace::Simple SpaceMem(DimMem);
+  hdf5::node::Dataset Latest;
+  try {
+    Latest = Dataset.link().parent().get_dataset(StoreLatestInto);
+  } catch (...) {
+    Latest =
+        Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
+  }
   Offset.at(0) = ds->ds.snow.at(0) - 1;
   hdf5::Dimensions Block = DimSrc;
   Block.at(0) = 1;
   SpaceSrc.selection(hdf5::dataspace::SelectionOperation::SET,
                      hdf5::dataspace::Hyperslab(Offset, Block));
   std::vector<char> Buffer(N * Type.size());
-  hdf5::dataspace::Simple SpaceMem(DimMem);
   Dataset.read(Buffer, Type, SpaceMem, SpaceSrc);
-  auto Latest =
-      Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
   Latest.write(Buffer, Type, SpaceMem, SpaceMem);
 }
 }
