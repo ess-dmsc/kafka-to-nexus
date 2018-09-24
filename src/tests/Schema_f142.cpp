@@ -123,7 +123,7 @@ TEST(Schema_f142, writeArrayFloat) {
   std::vector<std::vector<DT>> Expected{
       {4, 8, 1, 9, 4}, {5, 7, 0, 3, 6}, {4, 2, 2, 4, 2},
   };
-  auto File = createInMemoryTestFile("Schema_f142.writeArrayFloat", true);
+  auto File = createInMemoryTestFile("Schema_f142.writeArrayFloat");
   {
     FileWriter::Schemas::f142::HDFWriterModule WriterModule;
     WriterModule.parse_config(StreamJson.dump(), "{}");
@@ -191,5 +191,95 @@ TEST(Schema_f142, writeScalarString) {
   Dataset.read(Data, Dataset.datatype(), SpaceMem, SpaceFile);
   for (size_t I = 0; I < N; ++I) {
     ASSERT_EQ(Data.at(I), Expected.at(I));
+  }
+}
+
+TEST(Schema_f142, writeScalarFloatWithLatest) {
+  using DT = float;
+  auto StreamJson = json::parse(R""({
+    "source": "the_source_01",
+    "writer_module": "f142",
+    "store_latest_into": "the_latest_value",
+    "type": "float"
+  })"");
+  std::vector<DT> Expected{7, 8, 9};
+  auto File = createInMemoryTestFile("Schema_f142.writeScalarFloatWithLatest");
+  {
+    FileWriter::Schemas::f142::HDFWriterModule WriterModule;
+    WriterModule.parse_config(StreamJson.dump(), "{}");
+    auto Group = File.root();
+    WriterModule.init_hdf(Group, "{}");
+    for (auto Value : Expected) {
+      auto Builder = makeValueFloat(Value);
+      auto Msg = FileWriter::Msg::owned(
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
+      WriterModule.write(Msg);
+    }
+    WriterModule.close();
+  }
+
+  ASSERT_TRUE(File.root().has_dataset("value"));
+  ASSERT_TRUE(File.root().has_dataset("time"));
+  ASSERT_TRUE(File.root().has_dataset("cue_timestamp_zero"));
+  ASSERT_TRUE(File.root().has_dataset("cue_index"));
+  ASSERT_TRUE(File.root().has_dataset("the_latest_value"));
+
+  auto Dataset = hdf5::node::get_dataset(File.root(), "value");
+  for (size_t I = 0; I < Expected.size(); ++I) {
+    DT Data;
+    hdf5::dataspace::Simple SpaceFile(Dataset.dataspace());
+    hdf5::dataspace::Simple SpaceMem({1});
+    SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                        hdf5::dataspace::Hyperslab({I}, {1}));
+    Dataset.read(Data, Dataset.datatype(), SpaceMem, SpaceFile);
+    ASSERT_EQ(Data, Expected.at(I));
+  }
+}
+
+TEST(Schema_f142, writeArrayFloatWithLatest) {
+  using DT = float;
+  auto StreamJson = json::parse(R""({
+    "source": "the_source_01",
+    "writer_module": "f142",
+    "store_latest_into": "the_latest_value",
+    "type": "float",
+    "array_size": 5
+  })"");
+  std::vector<std::vector<DT>> Expected{
+      {4, 8, 1, 9, 4}, {5, 7, 0, 3, 6}, {4, 2, 2, 4, 2},
+  };
+  auto File = createInMemoryTestFile("Schema_f142.writeArrayFloatWithLatest");
+  {
+    FileWriter::Schemas::f142::HDFWriterModule WriterModule;
+    WriterModule.parse_config(StreamJson.dump(), "{}");
+    auto Group = File.root();
+    WriterModule.init_hdf(Group, "{}");
+    for (auto Value : Expected) {
+      auto Builder = makeValue(Value);
+      auto Msg = FileWriter::Msg::owned(
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
+      WriterModule.write(Msg);
+    }
+    WriterModule.close();
+  }
+
+  ASSERT_TRUE(File.root().has_dataset("value"));
+  ASSERT_TRUE(File.root().has_dataset("time"));
+  ASSERT_TRUE(File.root().has_dataset("cue_timestamp_zero"));
+  ASSERT_TRUE(File.root().has_dataset("cue_index"));
+  ASSERT_TRUE(File.root().has_dataset("the_latest_value"));
+
+  auto Dataset = hdf5::node::get_dataset(File.root(), "value");
+  for (size_t I = 0; I < Expected.size(); ++I) {
+    size_t N = Expected.at(0).size();
+    std::vector<DT> Data(N);
+    hdf5::dataspace::Simple SpaceFile(Dataset.dataspace());
+    hdf5::dataspace::Simple SpaceMem({1, N});
+    SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                        hdf5::dataspace::Hyperslab({I, 0}, {1, N}));
+    Dataset.read(Data, Dataset.datatype(), SpaceMem, SpaceFile);
+    ASSERT_EQ(Data, Expected.at(I));
   }
 }

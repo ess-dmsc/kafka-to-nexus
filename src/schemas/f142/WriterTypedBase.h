@@ -12,6 +12,7 @@ class WriterTypedBase {
 public:
   virtual ~WriterTypedBase() = default;
   virtual h5::append_ret write_impl(FBUF const *fbuf) = 0;
+  virtual void storeLatestInto(std::string const &StoreLatestInto) {}
 };
 }
 }

@@ -147,7 +147,8 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   if (auto TypeNameMaybe = find<std::string>("type", ConfigurationStreamJson)) {
     TypeName = TypeNameMaybe.inner();
   } else {
-    return;
+    throw std::runtime_error(
+        fmt::format("Missing key \"type\" in f142 writer configuration"));
   }
 
   if (auto ArraySizeMaybe =
@@ -175,6 +176,11 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
         1024 * 1024;
     LOG(Sev::Debug, "index_every_bytes: {}", IndexEveryBytes);
   } catch (...) { /* it's ok if not found */
+  }
+  if (ConfigurationStreamJson.find("store_latest_into") !=
+      ConfigurationStreamJson.end()) {
+    StoreLatestInto = ConfigurationStreamJson["store_latest_into"];
+    LOG(Sev::Debug, "StoreLatestInto: {}", StoreLatestInto);
   }
 }
 
@@ -335,6 +341,9 @@ int32_t HDFWriterModule::flush() {
 
 /// \brief  Implement HDFWriterModule interface.
 int32_t HDFWriterModule::close() {
+  if (!StoreLatestInto.empty()) {
+    ValueWriter->storeLatestInto(StoreLatestInto);
+  }
   for (auto const &Info : DatasetInfoList) {
     Info.Ptr.reset();
   }
