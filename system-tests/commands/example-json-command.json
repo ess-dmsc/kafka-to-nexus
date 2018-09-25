@@ -36,15 +36,15 @@
                 "children": [
                   {
                     "type": "group",
-                    "name": "auxanometer",
+                    "name": "Det_Temp_RRB",
                     "children": [
                       {
                         "type": "stream",
                         "stream": {
                           "type": "double",
                           "writer_module": "f142",
-                          "source": "FakePV",
-                          "topic": "TEST_metadata"
+                          "source": "Det_Temp_RRB",
+                          "topic": "TEST_sampleEnv"
                         }
                       }
                     ],

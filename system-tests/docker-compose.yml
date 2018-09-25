@@ -21,7 +21,7 @@ services:
     image: zookeeper:3.4
 
   event-producer:
-    image: screamingudder/nexus-streamer:9d8e39b
+    image: screamingudder/nexus-streamer:456f5a6
     depends_on:
     - kafka
     network_mode: "host"

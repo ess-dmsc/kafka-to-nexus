@@ -7,12 +7,12 @@ import os
 
 def test_data_reaches_file(docker_compose):
     producer = create_producer()
-    sleep(15)
+    sleep(30)
     # Start file writing
     send_writer_command("commands/example-json-command.json", producer, start_time=docker_compose)
     producer.flush()
     # Give it some time to accumulate data
-    sleep(10)
+    sleep(15)
     # Stop file writing
     send_writer_command("commands/stop-command.json", producer)
     sleep(20)
@@ -41,9 +41,7 @@ def test_data_reaches_file(docker_compose):
 
     # Streamed checks
     # Ev42 event data (Detector_1)
-    assert file["entry/instrument/detector_1/event_data/event_id"][0] == 3307068
-    assert file["entry/instrument/detector_1/event_data/event_id"][1] == 1422258
-
+    assert file["entry/instrument/detector_1/event_data/event_id"][0] == 99406
+    assert file["entry/instrument/detector_1/event_data/event_id"][1] == 98345
     # f142 Sample env (Sample)
-    assert np.isclose(98.25502863210343, file["entry/sample/sample_env_logs/auxanometer/value"][0])
-    assert np.isclose(75.33558352055829, file["entry/sample/sample_env_logs/auxanometer/value"][1])
+    assert np.isclose(21.0, file["entry/sample/sample_env_logs/Det_Temp_RRB/value"][0])

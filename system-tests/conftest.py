@@ -78,6 +78,7 @@ def build_and_run(options, request):
     build_filewriter_image()
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
+    start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
     run_containers(cmd, options)
 
     def fin():
@@ -91,6 +92,9 @@ def build_and_run(options, request):
     # Using a finalizer rather than yield in the fixture means
     # that the containers will be brought down even if tests fail
     request.addfinalizer(fin)
+    # Return the start time so the filewriter knows when to start consuming data
+    # from to get all data which was published
+    return start_time
 
 
 @pytest.fixture(scope="module")
@@ -103,8 +107,4 @@ def docker_compose(request):
     # Options must be given as long form
     options = common_options
     options["--file"] = ["docker-compose.yml"]
-    start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
-    build_and_run(options, request)
-    # Return the start time so the filewriter knows when to start consuming data
-    # from to get all data which was published
-    return start_time
+    return build_and_run(options, request)
