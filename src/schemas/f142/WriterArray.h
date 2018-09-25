@@ -2,6 +2,7 @@
 
 #include "../../logger.h"
 #include "WriterTypedBase.h"
+#include <numeric>
 
 namespace FileWriter {
 namespace Schemas {
@@ -119,15 +120,10 @@ void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
     DimMem.at(I - 1) = DimMem.at(I);
   }
   DimMem.resize(DimMem.size() - 1);
-  size_t N = 1;
-  for (size_t I = 0; I < DimMem.size(); ++I) {
-    N *= DimMem.at(I);
-  }
+  auto N = std::accumulate(DimMem.begin(), DimMem.end(), 1,
+                           std::multiplies<size_t>());
   hdf5::Dimensions Offset;
-  Offset.resize(DimSrc.size());
-  for (size_t I = 0; I < Offset.size(); ++I) {
-    Offset.at(I) = 0;
-  }
+  Offset.assign(DimSrc.size(), 0);
   if (DimSrc.at(0) == 0) {
     return;
   }
