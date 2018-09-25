@@ -32,7 +32,7 @@ then
       --hdf-output-prefix ${HDF_OUTPUT_PREFIX:="/output-files/"} \
       -v ${LOG_LEVEL:="3"}
 else
-    echo /kafka_to_nexus/kafka-to-nexus --config-file ${CONFIG_FILE}
+    echo /kafka_to_nexus/kafka-to-nexus --config-file ${CONFIG_FILE} -v ${LOG_LEVEL:="3"}
 
-    /kafka_to_nexus/kafka-to-nexus --config-file ${CONFIG_FILE}
+    /kafka_to_nexus/kafka-to-nexus --config-file ${CONFIG_FILE} -v ${LOG_LEVEL:="3"}
 fi

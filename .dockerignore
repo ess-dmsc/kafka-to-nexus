@@ -1,0 +1,4 @@
+.git
+.gitignore
+ansible
+/system-tests/output-files/
