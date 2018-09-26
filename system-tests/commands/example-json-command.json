@@ -1,0 +1,504 @@
+{
+  "broker": "localhost:9092",
+  "cmd": "FileWriter_new",
+  "use_hdf_swmr": false,
+  "start_time": STARTTIME,
+  "file_attributes": {
+    "file_name": "output_file.nxs"
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "entry",
+        "children": [
+          {
+            "type": "dataset",
+            "name": "duration",
+            "values": 1817.0,
+            "dataset": {
+              "type": "float"
+            },
+            "attributes": [
+              {
+                "name": "units",
+                "values": "second"
+              }
+            ]
+          },
+          {
+            "type": "group",
+            "name": "sample",
+            "children": [
+              {
+                "type": "group",
+                "name": "sample_env_logs",
+                "children": [
+                  {
+                    "type": "group",
+                    "name": "Det_Temp_RRB",
+                    "children": [
+                      {
+                        "type": "stream",
+                        "stream": {
+                          "type": "double",
+                          "writer_module": "f142",
+                          "source": "Det_Temp_RRB",
+                          "topic": "TEST_sampleEnv"
+                        }
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXgroup"
+                      }
+                    ]
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "values": "NXgroup"
+                  }
+                ]
+              },
+              {
+                "type": "dataset",
+                "name": "name",
+                "values": " ",
+                "dataset": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "dataset",
+                "name": "type",
+                "values": "Disc",
+                "dataset": {
+                  "type": "string"
+                }
+              }
+            ],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXsample"
+              }
+            ]
+          },
+          {
+            "type": "group",
+            "name": "instrument",
+            "children": [
+              {
+                "type": "group",
+                "name": "monitor1",
+                "children": [
+                  {
+                    "type": "dataset",
+                    "name": "detector_id",
+                    "values": 1,
+                    "dataset": {
+                      "type": "int64"
+                    }
+                  },
+                  {
+                    "type": "group",
+                    "name": "transformations",
+                    "children": [
+                      {
+                        "type": "dataset",
+                        "name": "location",
+                        "values": 12.064,
+                        "dataset": {
+                          "type": "double"
+                        },
+                        "attributes": [
+                          {
+                            "name": "units",
+                            "values": "m"
+                          },
+                          {
+                            "name": "transformation_type",
+                            "values": "translation"
+                          },
+                          {
+                            "type": "double",
+                            "name": "vector",
+                            "values": [
+                              0.0,
+                              0.0,
+                              -1.0
+                            ]
+                          },
+                          {
+                            "name": "NX_class",
+                            "values": "NXtransformation"
+                          },
+                          {
+                            "name": "depends_on",
+                            "values": "."
+                          }
+                        ]
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXtransformation"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "depends_on",
+                    "values": "/entry/instrument/monitor1/transformations/location",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "values": "NXmonitor"
+                  }
+                ]
+              },
+              {
+                "type": "group",
+                "name": "detector_1",
+                "children": [
+                  {
+                    "type": "dataset",
+                    "name": "local_name",
+                    "values": "front-detector",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "location",
+                    "values": 4.148493702538308,
+                    "dataset": {
+                      "type": "double"
+                    },
+                    "attributes": [
+                      {
+                        "name": "units",
+                        "values": "m"
+                      },
+                      {
+                        "name": "transformation_type",
+                        "values": "translation"
+                      },
+                      {
+                        "type": "double",
+                        "name": "vector",
+                        "values": [
+                          0.2651564830210424,
+                          0.0,
+                          0.9642053928037905
+                        ]
+                      },
+                      {
+                        "name": "NX_class",
+                        "values": "NXtransformation"
+                      },
+                      {
+                        "name": "depends_on",
+                        "values": "."
+                      }
+                    ]
+                  },
+                  {
+                    "type": "group",
+                    "name": "event_data",
+                    "children": [
+                      {
+                        "type": "stream",
+                        "stream": {
+                          "writer_module": "ev42",
+                          "source": "NeXus-Streamer",
+                          "topic": "TEST_events"
+                        }
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXevent_data"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "depends_on",
+                    "values": "/entry/instrument/detector_1/location",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "group",
+                    "name": "pixel_shape",
+                    "children": [
+                      {
+                        "type": "dataset",
+                        "name": "cylinders",
+                        "values": [
+                          [
+                            0,
+                            1,
+                            2
+                          ]
+                        ],
+                        "dataset": {
+                          "type": "int32",
+                          "size": [
+                            1,
+                            3
+                          ]
+                        }
+                      },
+                      {
+                        "type": "dataset",
+                        "name": "vertices",
+                        "values": [
+                          [
+                            -0.0010169921875,
+                            0.0,
+                            0.0
+                          ],
+                          [
+                            -0.0010169921875,
+                            0.00405,
+                            0.0
+                          ],
+                          [
+                            0.0010169921875,
+                            0.0,
+                            0.0
+                          ]
+                        ],
+                        "dataset": {
+                          "type": "double",
+                          "size": [
+                            3,
+                            3
+                          ]
+                        },
+                        "attributes": [
+                          {
+                            "name": "units",
+                            "values": "m"
+                          }
+                        ]
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXcylindrical_geometry"
+                      }
+                    ]
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "values": "NXdetector"
+                  }
+                ]
+              },
+              {
+                "type": "group",
+                "name": "source",
+                "children": [
+                  {
+                    "type": "dataset",
+                    "name": "type",
+                    "values": "Pulsed Neutron Source",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "name",
+                    "values": "source",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "group",
+                    "name": "transformations",
+                    "children": [
+                      {
+                        "type": "dataset",
+                        "name": "location",
+                        "values": 0.0,
+                        "dataset": {
+                          "type": "double"
+                        },
+                        "attributes": [
+                          {
+                            "name": "units",
+                            "values": "m"
+                          },
+                          {
+                            "name": "transformation_type",
+                            "values": "translation"
+                          },
+                          {
+                            "type": "double",
+                            "name": "vector",
+                            "values": [
+                              0.0,
+                              0.0,
+                              0.0
+                            ]
+                          },
+                          {
+                            "name": "NX_class",
+                            "values": "NXtransformation"
+                          },
+                          {
+                            "name": "depends_on",
+                            "values": "."
+                          }
+                        ]
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXtransformations"
+                      }
+                    ]
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "probe",
+                    "values": "neutrons",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "depends_on",
+                    "values": "/entry/instrument/source/transformations/location",
+                    "dataset": {
+                      "type": "string"
+                    }
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "values": "NXsource"
+                  }
+                ]
+              }
+            ],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXinstrument"
+              }
+            ]
+          },
+          {
+            "type": "group",
+            "name": "user_1",
+            "children": [
+              {
+                "type": "dataset",
+                "name": "affiliation",
+                "values": "ISIS, STFC",
+                "dataset": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "dataset",
+                "name": "name",
+                "values": "Sans2d Team",
+                "dataset": {
+                  "type": "string"
+                }
+              }
+            ],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXuser"
+              }
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "start_time",
+            "values": "2016-04-12T02:58:52",
+            "dataset": {
+              "type": "string"
+            },
+            "attributes": [
+              {
+                "name": "units",
+                "values": "ISO8601"
+              }
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "features",
+            "values": [
+              10138143369737381149,
+              17055242037422131565
+            ],
+            "dataset": {
+              "type": "uint64",
+              "size": [
+                2
+              ]
+            }
+          },
+          {
+            "type": "dataset",
+            "name": "end_time",
+            "values": "2016-04-12T03:29:11",
+            "dataset": {
+              "type": "string"
+            },
+            "attributes": [
+              {
+                "name": "units",
+                "values": "ISO8601"
+              }
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "title",
+            "values": "Blend 1.9_SANS",
+            "dataset": {
+              "type": "string"
+            }
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXentry"
+          }
+        ]
+      }
+    ]
+  },
+  "job_id": "7f1bd650-8051-11e8-9244-64006a47d649"
+}

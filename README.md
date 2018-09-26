@@ -428,9 +428,9 @@ Start the `gtest` based test suite via:
 ./tests/tests
 ```
 
-## Manual Testing
+## System Tests
 
-See [Manual Testing page](manual-testing/manual-testing.md).
+See [System Tests page](system-tests/README.md).
 
 
 ## Performance
