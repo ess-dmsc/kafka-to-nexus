@@ -76,11 +76,11 @@ def run_containers(cmd, options):
 
 def build_and_run(options, request):
     try:
-        print("Removing file", flush=True)
+        print("Removing previous NeXus file", flush=True)
         os.remove(os.path.join(os.path.join(os.getcwd(), "output-files"), "output_file.nxs"))
-        print("Removed file", flush=True)
+        print("Removed previous NeXus file", flush=True)
     except OSError:
-        print("No file found, continuing..")
+        print("No previous NeXus file found, continuing..")
         pass
 
     build_filewriter_image()
