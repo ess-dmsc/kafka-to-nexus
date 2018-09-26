@@ -20,10 +20,6 @@
 #include <condition_variable>
 
 namespace FileWriter {
-struct StreamerOptions;
-}
-
-namespace FileWriter {
 
 /// The StreamMaster task is coordinate the different Streamers. When
 /// constructed creates a unique Streamer per topic and waits for a
