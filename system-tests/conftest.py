@@ -81,7 +81,6 @@ def build_and_run(options, request):
         print("Removed previous NeXus file", flush=True)
     except OSError:
         print("No previous NeXus file found, continuing..")
-        pass
 
     build_filewriter_image()
     project = project_from_options(os.path.dirname(__file__), options)
