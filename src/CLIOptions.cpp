@@ -41,17 +41,66 @@ CLI::Option *addOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
 }
 
+void addMillisecondOption(CLI::App &App, const std::string &Name,
+                          std::chrono::milliseconds &MSArg,
+                          const std::string &Description = "",
+                          bool Defaulted = false) {
+  CLI::callback_t Fun = [&MSArg](CLI::results_t Results) {
+    MSArg = std::chrono::milliseconds(std::stoi(Results[0]));
+    return true;
+  };
+  App.add_option(Name, Fun, Description, Defaulted);
+}
+
+CLI::Option *SetKeyValueOptions(CLI::App &App, const std::string &Name,
+                                const std::string &Description, bool Defaulted,
+                                const CLI::callback_t &Fun) {
+  CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
+  const auto RequireEvenNumberOfPairs = -2;
+  Opt->set_custom_option("KEY VALUE", RequireEvenNumberOfPairs);
+  return Opt;
+}
+
+CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
+                            std::map<std::string, std::string> &ConfigMap,
+                            std::string const &Description,
+                            bool Defaulted = false) {
+  CLI::callback_t Fun = [&ConfigMap](CLI::results_t Results) {
+    for (size_t i = 0; i < Results.size() / 2; i++) {
+      ConfigMap[Results.at(i * 2)] = Results.at(i * 2 + 1);
+    }
+    return true;
+  };
+  return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
+}
+
+CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
+                            std::map<std::string, int> &ConfigMap,
+                            std::string const &Description,
+                            bool Defaulted = false) {
+  CLI::callback_t Fun = [&ConfigMap](CLI::results_t Results) {
+    for (size_t i = 0; i < Results.size() / 2; i++) {
+      try {
+        ConfigMap[Results.at(i * 2)] = std::stol(Results.at(i * 2 + 1));
+      } catch (std::invalid_argument e) {
+        throw std::runtime_error(
+            fmt::format("Argument {} is not an int", Results.at(i * 2)));
+      }
+    }
+    return true;
+  };
+  return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
+}
+
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
-  // disable ini config file
-  App.set_config();
   // and add option for json config file instead
-  App.add_option("--config-file", MainOptions.config_filename,
+  App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 
-  addOption(
-      App, "--command-uri", MainOptions.command_broker_uri,
-      "<//host[:port][/topic]> Kafka broker/topic to listen for commands");
+  addOption(App, "--command-uri", MainOptions.command_broker_uri,
+            "<//host[:port][/topic]> Kafka broker/topic to listen for commands")
+      ->required();
   addOption(App, "--status-uri", MainOptions.kafka_status_uri,
             MainOptions.do_kafka_status,
             "<//host[:port][/topic]> Kafka broker/topic to publish status "
@@ -61,7 +110,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
                  "<host:port> Log to Graylog via graylog_logger library");
   App.add_option(
-         "-v", log_level,
+         "-v,--verbosity", log_level,
          "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)
       ->check(CLI::Range(1, 7));
   App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
@@ -74,7 +123,32 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--service_id", MainOptions.service_id,
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
+  App.add_option("--status-master-interval", MainOptions.status_master_interval,
+                 "Interval in milliseconds for status updates", true);
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
+  addMillisecondOption(App, "--streamer-ms-before-start",
+                       MainOptions.StreamerConfiguration.BeforeStartTime,
+                       "Streamer option - milliseconds before start time",
+                       true);
+  addMillisecondOption(App, "--streamer-ms-after-start",
+                       MainOptions.StreamerConfiguration.AfterStopTime,
+                       "Streamer option - milliseconds after stop time", true);
+  App.add_option("--streamer-metadata-retry",
+                 MainOptions.StreamerConfiguration.NumMetadataRetry,
+                 "Streamer option - ", true);
+  addMillisecondOption(
+      App, "--stream-master-topic-write-interval",
+      MainOptions.topic_write_duration,
+      "Stream-master option - topic write interval (milliseconds)");
+  addKafkaOption(
+      App, "-S",
+      MainOptions.StreamerConfiguration.Settings.ConfigurationStrings,
+      "LibRDKafka option (String value)");
+  addKafkaOption(
+      App, "-I",
+      MainOptions.StreamerConfiguration.Settings.ConfigurationIntegers,
+      "LibRDKafka option (Integer value)");
+  App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }

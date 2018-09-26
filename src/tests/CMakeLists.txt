@@ -15,8 +15,6 @@ status_test.cpp
 status_writer.cpp
 CommandHandlerTests.cpp
 stream_master.cpp
-streamer_options.cpp
-MainOptTest.cpp
 FastSampleEnvironmentWriterTests.cpp
 NeXusDatasets.cpp
 ReaderRegistration.cpp
@@ -28,6 +26,7 @@ StreamerTest.cpp
 AddReader.cpp
 Schema_f142.cpp
 EventLogger.cpp
+MainOpt.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h

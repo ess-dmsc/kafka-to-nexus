@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
   setCLIOptions(App, *Options);
 
   CLI11_PARSE(App, argc, argv);
-  Options->parse_config_file();
+  Options->parseJsonCommands();
 
   if (Options->ListWriterModules) {
     fmt::print("Registered writer/reader classes\n");
@@ -57,7 +57,7 @@ int main(int argc, char **argv) {
     std::signal(SIGTERM, signal_handler);
   }
 
-  setup_logger_from_options(*Options);
+  setupLoggerFromOptions(*Options);
 
   FileWriter::Master Master(*Options);
   std::thread MasterThread([&Master] {

@@ -81,7 +81,7 @@ void Master::run() {
 
   // Interpret commands given directly in the configuration file, useful
   // for testing.
-  for (auto const &cmd : getMainOpt().commands_from_config_file) {
+  for (auto const &cmd : getMainOpt().CommandsFromJson) {
     this->handle_command(cmd);
   }
 

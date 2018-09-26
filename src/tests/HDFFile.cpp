@@ -32,7 +32,7 @@ MainOpt getTestOptions() {
 }
 
 void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
-  main_opt.ConfigJSON.merge_patch(json::parse(JSONString));
+  main_opt.CommandsJson.merge_patch(json::parse(JSONString));
 }
 
 json basic_command(string filename) {
@@ -460,7 +460,7 @@ public:
     bool do_verification = true;
     try {
       do_verification =
-          main_opt.ConfigJSON["unit_test"]["hdf"]["do_verification"]
+          main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<int64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
     } catch (...) {
@@ -469,14 +469,16 @@ public:
     size_t n_msgs_per_source = 1;
     try {
       n_msgs_per_source =
-          main_opt.ConfigJSON["unit_test"]["n_msgs_per_source"].get<int64_t>();
+          main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
+              .get<int64_t>();
       LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
     size_t n_sources = 1;
     try {
-      n_sources = main_opt.ConfigJSON["unit_test"]["n_sources"].get<int64_t>();
+      n_sources =
+          main_opt.CommandsJson["unit_test"]["n_sources"].get<int64_t>();
       LOG(Sev::Debug, "unit_test.n_sources: {}", n_sources);
     } catch (...) {
     }
@@ -484,7 +486,7 @@ public:
     size_t n_events_per_message = 1;
     try {
       n_events_per_message =
-          main_opt.ConfigJSON["unit_test"]["n_events_per_message"]
+          main_opt.CommandsJson["unit_test"]["n_events_per_message"]
               .get<int64_t>();
       LOG(Sev::Debug, "unit_test.n_events_per_message: {}",
           n_events_per_message);
@@ -494,7 +496,7 @@ public:
     size_t feed_msgs_times = 1;
     try {
       feed_msgs_times =
-          main_opt.ConfigJSON["unit_test"]["feed_msgs_times"].get<int64_t>();
+          main_opt.CommandsJson["unit_test"]["feed_msgs_times"].get<int64_t>();
       LOG(Sev::Debug, "unit_test.feed_msgs_times: {}", feed_msgs_times);
     } catch (...) {
     }
@@ -502,7 +504,8 @@ public:
     int feed_msgs_seconds = 1;
     try {
       feed_msgs_seconds =
-          main_opt.ConfigJSON["unit_test"]["feed_msgs_seconds"].get<int64_t>();
+          main_opt.CommandsJson["unit_test"]["feed_msgs_seconds"]
+              .get<int64_t>();
       LOG(Sev::Debug, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
     } catch (...) {
     }
@@ -510,7 +513,7 @@ public:
     string filename = "tmp-ev42.h5";
     try {
       filename =
-          main_opt.ConfigJSON["unit_test"]["filename"].get<std::string>();
+          main_opt.CommandsJson["unit_test"]["filename"].get<std::string>();
       LOG(Sev::Debug, "unit_test.filename: {}", filename);
     } catch (...) {
     }
@@ -583,7 +586,7 @@ public:
             }
           })"");
           auto Stream = json::object();
-          if (auto x = find<json>("nexus", main_opt.ConfigJSON)) {
+          if (auto x = find<json>("nexus", main_opt.CommandsJson)) {
             Stream["nexus"] = x.inner();
           }
           Stream["topic"] = Topic;
@@ -591,7 +594,8 @@ public:
           Stream["writer_module"] = Module;
           Stream["type"] = "uint32";
           Stream["n_mpi_workers"] =
-              main_opt.ConfigJSON["unit_test"]["n_mpi_workers"].get<uint64_t>();
+              main_opt.CommandsJson["unit_test"]["n_mpi_workers"]
+                  .get<uint64_t>();
           Stream["run_parallel"] = run_parallel;
           Dataset["stream"] = Stream;
           Children.push_back(Dataset);
@@ -835,7 +839,7 @@ public:
     bool do_verification = true;
     try {
       do_verification =
-          main_opt.ConfigJSON["unit_test"]["hdf"]["do_verification"]
+          main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<uint64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
     } catch (...) {
@@ -844,14 +848,16 @@ public:
     int n_msgs_per_source = 1;
     try {
       n_msgs_per_source =
-          main_opt.ConfigJSON["unit_test"]["n_msgs_per_source"].get<uint64_t>();
+          main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
+              .get<uint64_t>();
       LOG(Sev::Debug, "n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
     int n_sources = 1;
     try {
-      n_sources = main_opt.ConfigJSON["unit_test"]["n_sources"].get<uint64_t>();
+      n_sources =
+          main_opt.CommandsJson["unit_test"]["n_sources"].get<uint64_t>();
       LOG(Sev::Debug, "n_sources: {}", n_sources);
     } catch (...) {
     }
@@ -859,7 +865,7 @@ public:
     size_t array_size = 0;
     try {
       array_size =
-          main_opt.ConfigJSON["unit_test"]["array_size"].get<uint64_t>();
+          main_opt.CommandsJson["unit_test"]["array_size"].get<uint64_t>();
       LOG(Sev::Debug, "array_size: {}", array_size);
     } catch (...) {
     }

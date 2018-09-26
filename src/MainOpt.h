@@ -18,7 +18,6 @@ struct rd_kafka_topic_partition_list_s;
 
 // POD
 struct MainOpt {
-  bool help = false;
   bool gtest = false;
   bool use_signal_handler = true;
   /// Each running filewriter should be identifiable by some id.
@@ -26,9 +25,6 @@ struct MainOpt {
   /// It is by default a combination of hostname and process id.
   /// Can be set via command line or configuration file.
   std::string service_id;
-  /// Kafka options, they get parsed from the configuration file and passed on
-  /// to the StreamMaster.
-  std::map<std::string, std::string> kafka;
   /// Streamer options, they get parsed from the configuration file and passed
   /// on to the StreamMaster.
   FileWriter::StreamerOptions StreamerConfiguration;
@@ -36,18 +32,16 @@ struct MainOpt {
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.
   std::string graylog_logger_address;
-  /// The configuration file given by the `--config-file` option.
-  nlohmann::json ConfigJSON = nlohmann::json::object();
-  /// The configuration filename given by the `--config-file` option.
-  std::string config_filename;
+  /// The commands file given by the `--commands-json` option.
+  nlohmann::json CommandsJson = nlohmann::json::object();
+  /// The commands filename given by the `--commands-json` option.
+  std::string CommandsJsonFilename;
   /// Keeps commands contained in the configuration file.  The configuration
   /// file may contain commands which are executed before any other command
   /// from the Kafka command topic.
-  std::vector<std::string> commands_from_config_file;
-  /// Called on startup when a `--config-file` is found.
-  int parse_config_file();
-  /// Used in turn by `parse_config_file` to parse the json data.
-  int parse_config_json(std::string json);
+  std::vector<std::string> CommandsFromJson;
+  /// Called on startup when a `--commands-json` is found.
+  int parseJsonCommands();
   /// Kafka broker and topic where file writer commands are published.
   uri::URI command_broker_uri{"kafka://localhost:9092/kafka-to-nexus.command"};
   /// Path for HDF output. This gets prepended to the HDF output filename given
@@ -55,7 +49,7 @@ struct MainOpt {
   std::string hdf_output_prefix;
 
   /// Used for command line argument.
-  bool ListWriterModules{false};
+  bool ListWriterModules = false;
 
   /// Whether we want to publish status to Kafka
   bool do_kafka_status = false;
@@ -79,6 +73,7 @@ struct MainOpt {
   // The constructor was removed because of the issue with the integration test
   // (see cpp file for more details).
   void init();
+  void findAndAddCommands();
 };
 
-void setup_logger_from_options(MainOpt const &opt);
+void setupLoggerFromOptions(MainOpt const &opt);

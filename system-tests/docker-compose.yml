@@ -37,9 +37,7 @@ services:
     - kafka
     network_mode: "host"
     environment:
-      CONFIG_FILE: "/file_writer_config.json"
-      KAFKA_BROKER: "localhost"
-      LOG_LEVEL: 7
+      CONFIG_FILE: "/file_writer_config.ini"
     volumes:
-    - ./config-files/file_writer_config.json:/file_writer_config.json
+    - ./config-files/file_writer_config.ini:/file_writer_config.ini
     - ./output-files/:/output-files/

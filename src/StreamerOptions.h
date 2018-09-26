@@ -4,7 +4,8 @@
 //
 //===----------------------------------------------------------------------===//
 ///
-/// \file This file contains the declaration of the StreamerOptions class, which
+/// \file This file contains the declaration of the StreamerOptions struct,
+/// which
 /// is used to configure the Streamer and the RdKafka configuration used int the
 /// Streamer. Implementation is in Streamer.cpp
 ///
@@ -18,14 +19,8 @@
 
 namespace FileWriter {
 
-/// Class that contains configuration parameters for the Streamer
-class StreamerOptions {
-
-public:
-  void setStreamerOptions(nlohmann::json const &Options);
-  void setRdKafkaOptions(nlohmann::json const &Options);
-  // private:
-
+/// Contains configuration parameters for the Streamer
+struct StreamerOptions {
   KafkaW::BrokerSettings Settings;
   std::chrono::milliseconds StartTimestamp{0};
   std::chrono::milliseconds StopTimestamp{0};
