@@ -111,7 +111,7 @@ void FileWriterTask::hdf_close_before_reopen() { hdf_file.close(); }
 
 int FileWriterTask::hdf_reopen() {
   try {
-    hdf_file.reopen(filename_full, json::object());
+    hdf_file.reopen(filename_full);
   } catch (std::exception const &E) {
     LOG(Sev::Error, "Exception: {}", E.what());
     if (StatusProducer) {

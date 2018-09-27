@@ -104,3 +104,81 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
 TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
   ASSERT_THROW(parseOrThrow("{ this is not json }"), std::runtime_error);
 }
+
+TEST_F(CommandHandler_Testing, CreateHDFLinks) {
+  std::string Filename("Test.CommandHandler_Testing.CreateHDFLinks");
+  unlink(Filename.c_str());
+  MainOpt MainOpt;
+  CommandHandler CommandHandler(MainOpt, nullptr);
+  auto Command = json::parse(R""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "tmp-dummy-hdf"
+  },
+  "job_id": "vwa98nv983qn98snev",
+  "broker": "//localhost:202020",
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "link",
+        "name": "link_at_root",
+        "target": "a_group/a_subgroup/value"
+      },
+      {
+        "type": "group",
+        "name": "extra_group",
+        "children": [
+          {
+            "type": "link",
+            "name": "some_link_to_value",
+            "target": "../a_group/a_subgroup/value"
+          },
+          {
+            "type": "link",
+            "name": "some_link_to_a_group",
+            "target": "../a_group/a_subgroup"
+          }
+        ]
+      },
+      {
+        "type": "group",
+        "name": "a_group",
+        "children": [
+          {
+            "type": "group",
+            "name": "a_subgroup",
+            "children": [
+              {
+                "type": "dataset",
+                "name": "value",
+                "values": 42.24
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+  )"");
+  Command["file_attributes"]["file_name"] = Filename;
+  auto CommandString = Command.dump();
+  CommandHandler.handle(CommandString);
+  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
+            static_cast<size_t>(1));
+  auto CommandStop = json::parse(R""(
+{
+  "cmd": "file_writer_tasks_clear_all",
+  "recv_type": "FileWriter"
+}
+  )"");
+  CommandString = CommandStop.dump();
+  CommandHandler.handle(CommandString);
+  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
+            static_cast<size_t>(0));
+  auto File = hdf5::file::open(Filename);
+  File.root().get_group("a_group").get_group("a_subgroup").get_dataset("value");
+  File.root().get_group("extra_group").get_dataset("some_link_to_value");
+  unlink(Filename.c_str());
+}
