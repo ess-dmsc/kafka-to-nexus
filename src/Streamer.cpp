@@ -29,7 +29,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
     throw std::runtime_error("Missing broker or topic");
   }
 
-  Options.Settings.ConfigurationStrings["group.id"] =
+  Options.Settings.KafkaConfiguration["group.id"] =
       fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
                   gethostname_wrapper(), getpid_wrapper(), TopicName,
                   std::chrono::duration_cast<std::chrono::milliseconds>(

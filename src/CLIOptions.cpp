@@ -74,24 +74,6 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
-CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
-                            std::map<std::string, int> &ConfigMap,
-                            std::string const &Description,
-                            bool Defaulted = false) {
-  CLI::callback_t Fun = [&ConfigMap](CLI::results_t Results) {
-    for (size_t i = 0; i < Results.size() / 2; i++) {
-      try {
-        ConfigMap[Results.at(i * 2)] = std::stol(Results.at(i * 2 + 1));
-      } catch (std::invalid_argument &e) {
-        throw std::runtime_error(
-            fmt::format("Argument {} is not an int", Results.at(i * 2)));
-      }
-    }
-    return true;
-  };
-  return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
-}
-
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   // and add option for json config file instead
   App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
@@ -146,13 +128,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       App, "--stream-master-topic-write-interval",
       MainOptions.topic_write_duration,
       "Stream-master option - topic write interval (milliseconds)");
-  addKafkaOption(
-      App, "-S,--kafka-config-strings",
-      MainOptions.StreamerConfiguration.Settings.ConfigurationStrings,
-      "LibRDKafka option (String value)");
-  addKafkaOption(
-      App, "-I,--kafka-config-ints",
-      MainOptions.StreamerConfiguration.Settings.ConfigurationIntegers,
-      "LibRDKafka option (Integer value)");
+  addKafkaOption(App, "-S,--kafka-config-options",
+                 MainOptions.StreamerConfiguration.Settings.KafkaConfiguration,
+                 "LibRDKafka options");
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }
