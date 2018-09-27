@@ -13,7 +13,7 @@ find_package(RdKafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
 find_package(FlatBuffers REQUIRED)
 find_package(h5cpp REQUIRED)
-find_package(StreamingDataTypes COMPONENTS d2247ffd906ebeeb68c9b8a2ea9f1d36c1d88a46)
+find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
 find_package(h5cpp REQUIRED)

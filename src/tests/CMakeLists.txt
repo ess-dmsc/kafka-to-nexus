@@ -20,6 +20,7 @@ NeXusDatasets.cpp
 ReaderRegistration.cpp
 WriterRegistration.cpp
 TemplateWriterTests.cpp
+EventHistogramWriterTests.cpp
 DemuxerTests.cpp
 MessageTest.cpp
 StreamerTest.cpp
