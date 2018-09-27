@@ -38,6 +38,7 @@ The file writer can be configured via `--config-file <ini>` which should contain
   service_id=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
   streamer-ms-before-start=123456
   kafka-config-ints=consumer.timeout.ms 501 fetch.message.max.bytes 1234
+  kafka-config-strings=
 ```
 Note that the kafka options are key value pairs and the filewriter can be given multiple by appending the key value pair to the end of the command line option. 
 

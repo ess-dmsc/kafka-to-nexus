@@ -144,7 +144,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                        "Streamer option - stop timestamp (milliseconds)", true);
   App.add_option("--streamer-metadata-retry",
                  MainOptions.StreamerConfiguration.NumMetadataRetry,
-                 "Streamer option - consumer timeout (milliseconds)", true);
+                 "Streamer option - ", true);
   addMillisecondOption(
       App, "--stream-master-topic-write-interval",
       MainOptions.topic_write_duration,
