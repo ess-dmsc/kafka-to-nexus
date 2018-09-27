@@ -125,6 +125,7 @@ private:
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};
+  std::chrono::milliseconds ReportMessageDelay{1000};
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
   std::string ServiceId;

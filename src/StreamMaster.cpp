@@ -23,7 +23,8 @@ FileWriter::StreamMaster::StreamMaster(
     }
   }
   NumStreamers = Streamers.size();
-  runReport(std::chrono::milliseconds{Options.status_master_interval});
+  ReportMessageDelay =
+      std::chrono::milliseconds{Options.status_master_interval};
 }
 
 FileWriter::StreamMaster::~StreamMaster() {
@@ -52,6 +53,7 @@ bool FileWriter::StreamMaster::setStopTime(
 }
 
 bool FileWriter::StreamMaster::start() {
+  runReport(ReportMessageDelay);
   if (NumStreamers == 0) {
     Stop = true;
     stopImplemented();
