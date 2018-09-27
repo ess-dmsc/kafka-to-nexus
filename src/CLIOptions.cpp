@@ -132,22 +132,29 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                        MainOptions.StreamerConfiguration.BeforeStartTime,
                        "Streamer option - milliseconds before start time",
                        true);
-  addMillisecondOption(App, "--streamer-ms-after-start",
+  addMillisecondOption(App, "--streamer-ms-after-stop",
                        MainOptions.StreamerConfiguration.AfterStopTime,
                        "Streamer option - milliseconds after stop time", true);
+  addMillisecondOption(App, "--streamer-start-time",
+                       MainOptions.StreamerConfiguration.StartTimestamp,
+                       "Streamer option - start timestamp (milliseconds)",
+                       true);
+  addMillisecondOption(App, "--streamer-stop-time",
+                       MainOptions.StreamerConfiguration.StopTimestamp,
+                       "Streamer option - stop timestamp (milliseconds)", true);
   App.add_option("--streamer-metadata-retry",
                  MainOptions.StreamerConfiguration.NumMetadataRetry,
-                 "Streamer option - ", true);
+                 "Streamer option - consumer timeout (milliseconds)", true);
   addMillisecondOption(
       App, "--stream-master-topic-write-interval",
       MainOptions.topic_write_duration,
       "Stream-master option - topic write interval (milliseconds)");
   addKafkaOption(
-      App, "-S",
+      App, "-S,--kafka-config-string",
       MainOptions.StreamerConfiguration.Settings.ConfigurationStrings,
       "LibRDKafka option (String value)");
   addKafkaOption(
-      App, "-I",
+      App, "-I,--kafka-config-int",
       MainOptions.StreamerConfiguration.Settings.ConfigurationIntegers,
       "LibRDKafka option (Integer value)");
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
