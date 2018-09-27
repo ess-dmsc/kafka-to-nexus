@@ -354,26 +354,27 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
     ErrorsPtr = ErrorsUnion->value();
   }
   auto MsgShape = EvMsg->current_shape();
-  auto MsgOffset = EvMsg->offset();
   if (!MsgShape) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "Missing current_shape");
-  }
-  if (!MsgOffset) {
-    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Missing offset");
   }
   if (MsgShape->size() != Dims.size() - 1) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
         "Wrong size of shape");
   }
-  if (MsgOffset->size() != Dims.size() - 1) {
-    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
-        "Wrong size of offset");
-  }
-  for (size_t i = 0; i < Dims.size() - 1; ++i) {
-    if (MsgOffset->data()[i] + MsgShape->data()[i] > Dims.at(i + 1)) {
-      return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
-          "Shape not consistent");
+  std::vector<uint32_t> TheOffsets;
+  TheOffsets.resize(MsgShape->size());
+  auto MsgOffset = EvMsg->offset();
+  if (MsgOffset) {
+    if (MsgOffset->size() == MsgShape->size()) {
+      for (size_t I = 0; I < TheOffsets.size(); ++I) {
+        auto X = MsgOffset->data()[I];
+        if (X + MsgShape->data()[I] > Dims.at(I + 1)) {
+          return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE(
+              "Shape not consistent");
+        }
+        TheOffsets.at(I) = X;
+      }
     }
   }
   size_t ExpectedLinearDataSize = 1;
@@ -417,8 +418,8 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
     DatasetErrors.extent(Dims);
   }
   auto TheSlice = Slice::fromOffsetsSizes(
-      std::vector<uint32_t>(MsgOffset->data(),
-                            MsgOffset->data() + MsgOffset->size()),
+      std::vector<uint32_t>(TheOffsets.data(),
+                            TheOffsets.data() + TheOffsets.size()),
       std::vector<uint32_t>(MsgShape->data(),
                             MsgShape->data() + MsgShape->size()));
   auto &Record = HistogramRecords[Timestamp];
@@ -441,7 +442,7 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
       Stride.at(i) = 1;
     }
     for (size_t i = 1; i < Count.size(); ++i) {
-      Offset.at(i) = MsgOffset->data()[i - 1];
+      Offset.at(i) = TheOffsets.at(i - 1);
       Block.at(i) = MsgShape->data()[i - 1];
     }
     DSPFile.selection(hdf5::dataspace::SelectionOperation::SET,
