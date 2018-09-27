@@ -153,6 +153,11 @@ void Consumer::addTopic(std::string Topic,
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
 
   auto numberOfPartitions = queryNumberOfPartitions(Topic);
+  if (numberOfPartitions == 0) {
+    std::string ErrMsg = "No partitions found for topic " + Topic + ". Abort.";
+    throw std::runtime_error(ErrMsg);
+  }
+
   rd_kafka_topic_partition_list_add_range(PartitionList, Topic.c_str(), 0,
                                           numberOfPartitions - 1);
 
@@ -193,14 +198,14 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
   if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
     LOG(Sev::Error,
         "Failed to query metadata in Consumer::queryNumberOfPartitions");
-  } else {
-    for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
-      if (Metadata->topics[topic].topic == TopicName) {
-        return Metadata->topics[topic].partition_cnt;
-      }
+    return 0;
+  }
+  for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
+    if (Metadata->topics[topic].topic == TopicName) {
+      return Metadata->topics[topic].partition_cnt;
     }
   }
-  return 1;
+  return 0;
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
