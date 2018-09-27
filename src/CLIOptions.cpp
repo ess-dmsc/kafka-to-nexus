@@ -82,7 +82,7 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
     for (size_t i = 0; i < Results.size() / 2; i++) {
       try {
         ConfigMap[Results.at(i * 2)] = std::stol(Results.at(i * 2 + 1));
-      } catch (std::invalid_argument e) {
+      } catch (std::invalid_argument &e) {
         throw std::runtime_error(
             fmt::format("Argument {} is not an int", Results.at(i * 2)));
       }
@@ -150,11 +150,11 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       MainOptions.topic_write_duration,
       "Stream-master option - topic write interval (milliseconds)");
   addKafkaOption(
-      App, "-S,--kafka-config-string",
+      App, "-S,--kafka-config-strings",
       MainOptions.StreamerConfiguration.Settings.ConfigurationStrings,
       "LibRDKafka option (String value)");
   addKafkaOption(
-      App, "-I,--kafka-config-int",
+      App, "-I,--kafka-config-ints",
       MainOptions.StreamerConfiguration.Settings.ConfigurationIntegers,
       "LibRDKafka option (Integer value)");
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
