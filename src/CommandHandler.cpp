@@ -273,9 +273,6 @@ void CommandHandler::handleNew(std::string const &Command) {
     auto s = std::unique_ptr<StreamMaster>(
         new StreamMaster(Broker.host_port, std::move(Task), Config,
                          MasterPtr->getStatusProducer()));
-    if (auto status_producer = MasterPtr->getStatusProducer()) {
-      s->report(std::chrono::milliseconds{Config.status_master_interval});
-    }
     s->start();
 
     MasterPtr->addStreamMaster(std::move(s));
