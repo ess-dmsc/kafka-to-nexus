@@ -1,6 +1,8 @@
 #include <StreamMaster.h>
 #include <gtest/gtest.h>
 
+#include <iostream>
+
 class StubStreamer : public FileWriter::StreamerI {
 public:
   using Error = FileWriter::Status::StreamerStatus;
@@ -20,17 +22,11 @@ private:
 
 using StreamMaster = FileWriter::StreamMaster;
 
-// class StreamMaster_Test : public ::testing::Test {
-
-// protected:
-//   virtual void SetUp() {}
-
-// private:
-//   std::unique_ptr<StreamMaster> stream_master;
-// };
-
 TEST(StreamMaster, empty_test) {
   auto fwt =
       std::make_unique<FileWriter::FileWriterTask>("service-id", nullptr);
+
+  fwt->demuxers().push_back(FileWriter::DemuxTopic("dummy-topic"));
+
   StreamMaster Master("dummy-broker", std::move(fwt), MainOpt());
 }
