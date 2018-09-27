@@ -1,12 +1,5 @@
-#include <StatusWriter.h>
 #include <StreamMaster.h>
-#include <StreamerOptions.h>
-#include <algorithm>
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <librdkafka/rdkafkacpp.h>
-#include <random>
-#include <stdexcept>
 
 class StubStreamer : public FileWriter::StreamerI {
 public:
@@ -27,17 +20,17 @@ private:
 
 using StreamMaster = FileWriter::StreamMaster;
 
-class StreamMaster_Test : public ::testing::Test {
+// class StreamMaster_Test : public ::testing::Test {
 
-protected:
-  virtual void SetUp() {}
+// protected:
+//   virtual void SetUp() {}
 
-private:
-  std::unique_ptr<StreamMaster> stream_master;
-};
+// private:
+//   std::unique_ptr<StreamMaster> stream_master;
+// };
 
 TEST(StreamMaster, empty_test) {
-  StreamMaster("no-broker", std::make_unique<FileWriter::FileWriterTask>(
-                                "service-id", nullptr),
-               MainOpt(), nullptr);
+  auto fwt =
+      std::make_unique<FileWriter::FileWriterTask>("service-id", nullptr);
+  StreamMaster Master("dummy-broker", std::move(fwt), MainOpt());
 }

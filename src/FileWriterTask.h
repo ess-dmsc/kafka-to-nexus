@@ -44,6 +44,9 @@ public:
   std::string filename_full;
   HDFFile hdf_file;
   bool UseHDFSWMR = true;
+  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() {
+    return StatusProducer;
+  }
 
 private:
   std::vector<DemuxTopic> _demuxers;

@@ -38,8 +38,7 @@ class StreamMaster {
 public:
   StreamMaster(const std::string &Broker,
                std::unique_ptr<FileWriterTask> FileWriterTask,
-               const MainOpt &Options,
-               std::shared_ptr<KafkaW::ProducerTopic> Producer);
+               const MainOpt &Options);
 
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = default;
@@ -119,17 +118,17 @@ private:
 
   std::map<std::string, std::unique_ptr<StreamerI>> Streamers;
   std::vector<DemuxTopic> &Demuxers;
+  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
+  std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::thread WriteThread;
   std::thread ReportThread;
   std::atomic<StreamMasterError> RunStatus;
   std::atomic<bool> Stop{false};
-  std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds ReportMessageDelay{1000};
   std::chrono::milliseconds TopicWriteDuration{1000};
   size_t NumStreamers{0};
   std::string ServiceId;
-  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
 };
 
 } // namespace FileWriter

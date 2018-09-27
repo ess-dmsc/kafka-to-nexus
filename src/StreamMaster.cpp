@@ -3,11 +3,12 @@
 
 FileWriter::StreamMaster::StreamMaster(
     const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-    const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer)
+    const MainOpt &Options)
     : Demuxers(FileWriterTask->demuxers()),
+      ProducerTopic(FileWriterTask->getStatusProducer()),
       WriterTask(std::move(FileWriterTask)),
       TopicWriteDuration{Options.topic_write_duration},
-      ServiceId{Options.service_id}, ProducerTopic{Producer} {
+      ServiceId{Options.service_id} {
 
   for (auto &Demux : Demuxers) {
     try {
