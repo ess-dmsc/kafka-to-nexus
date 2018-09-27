@@ -15,6 +15,7 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "Report.h"
+#include "Streamer.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -30,7 +31,7 @@ namespace FileWriter {
 /// StreamMaster can regularly send report on the status of the Streamers,
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
-template <typename Streamer> class StreamMaster {
+class StreamMaster {
   using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
 
@@ -48,9 +49,8 @@ public:
       try {
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(Demux.topic()),
-                          std::forward_as_tuple(Broker, Demux.topic(),
-                                                Options.StreamerConfiguration));
-        Streamers[Demux.topic()].setSources(Demux.sources());
+                          std::forward_as_tuple(createStream<Streamer>(
+                              Broker, Demux, Options.StreamerConfiguration)));
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", E.what());
@@ -89,7 +89,12 @@ public:
   /// last message to be written in nanoseconds
   bool setStopTime(const std::chrono::milliseconds &StopTime) {
     for (auto &s : Streamers) {
-      s.second.getOptions().StopTimestamp = StopTime;
+      try {
+        //        s.second->getOptions().StopTimestamp = StopTime;
+      } catch (std::exception &E) {
+        LOG(Sev::Error, "Unable to set stop time in topic {}: {}", s.first,
+            E.what());
+      }
     }
     return true;
   }
@@ -143,7 +148,12 @@ public:
   /// stream is in any error state
   const StreamMasterError status() {
     for (auto &s : Streamers) {
-      if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
+      try {
+        if (s.second->runStatus() >= StreamerStatus::IS_CONNECTED) {
+          return StreamMasterError::STREAMER_ERROR();
+        }
+      } catch (std::exception &E) {
+        LOG(Sev::Error, "Error, invalid stream {}.", s.first);
         return StreamMasterError::STREAMER_ERROR();
       }
     }
@@ -165,11 +175,11 @@ private:
   /// @return     The status of the consumption. If there are still working
   /// streams returns ``running``, if all the streams are terminated return
   /// ``has_finished``, if some error occur..
-  StreamMasterError processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
+  StreamMasterError processStreamResult(DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
     FileWriter::ProcessMessageResult ProcessResult;
 
-    // process stream Stream fir at most TopicWriteDuration milliseconds
+    // process stream for at most TopicWriteDuration milliseconds
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
            TopicWriteDuration) {
       if (Stop) {
@@ -178,26 +188,26 @@ private:
 
       // if Streamer throws the stream is closed, but the writing continues
       try {
-        ProcessResult = Stream.pollAndProcess(Demux);
+        ProcessResult = Streamers[Demux.topic()]->pollAndProcess(Demux);
       } catch (std::exception &E) {
         LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->job_id(), E.what());
-        closeStream(Stream, Demux.topic());
+        closeStream(Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }
       // decreases the count of sources in the stream, eventually closes the
       // stream
       if (ProcessResult == ProcessMessageResult::STOP) {
-        if (Stream.numSources() == 0) {
-          return closeStream(Stream, Demux.topic());
+        if (Streamers[Demux.topic()]->numSources() == 0) {
+          return closeStream(Demux.topic());
         }
         return StreamMasterError::RUNNING();
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {
         LOG(Sev::Error, "Error in topic \"{}\" : {}", Demux.topic(),
-            Err2Str(Stream.runStatus()));
+            Err2Str(Streamers[Demux.topic()]->runStatus()));
         return StreamMasterError::STREAMER_ERROR();
       }
     }
@@ -218,10 +228,9 @@ private:
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
 
       for (auto &Demux : Demuxers) {
-        auto &s = Streamers[Demux.topic()];
 
         // If the stream is active process the messages
-        StreamMasterError ProcessResult = processStreamResult(s, Demux);
+        StreamMasterError ProcessResult = processStreamResult(Demux);
         if (ProcessResult == StreamMasterError::HAS_FINISHED()) {
           continue;
         }
@@ -239,11 +248,10 @@ private:
   /// are other open streams return StreamMasterError::has_finished, else Stop
   /// becomes true
   /// and return StreamMasterError::has_finished
-  StreamMasterError closeStream(Streamer &Stream,
-                                const std::string &TopicName) {
+  StreamMasterError closeStream(const std::string &TopicName) {
     LOG(Sev::Debug, "All sources in Stream have expired, close connection");
-    Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
-    Stream.closeStream();
+    Streamers[TopicName]->runStatus() = Status::StreamerStatus::HAS_FINISHED;
+    Streamers[TopicName]->closeStream();
     NumStreamers--;
     if (NumStreamers != 0) {
       return StreamMasterError::RUNNING();
@@ -261,7 +269,7 @@ private:
     }
     for (auto &s : Streamers) {
       LOG(Sev::Info, "Shut down {}", s.first);
-      auto v = s.second.closeStream();
+      auto v = s.second->closeStream();
       if (v == StreamerStatus::HAS_FINISHED) {
         LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
@@ -274,7 +282,7 @@ private:
     LOG(Sev::Info, "RunStatus:  {}", Err2Str(RunStatus));
   }
 
-  std::map<std::string, Streamer> Streamers;
+  std::map<std::string, std::unique_ptr<StreamerI>> Streamers;
   std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;

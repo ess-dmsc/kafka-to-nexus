@@ -61,21 +61,21 @@ private:
     ReportType Reporter;
     Reporter.setJobId(JobId);
     for (auto &Element : Streamers) {
-      // Writes in JSON format Streamer informations
-      Reporter.write(Element.second.messageInfo(), Element.first, ReportMs);
+      // Writes in JSON format Streamer summary
+      Reporter.write(Element.second->messageInfo(), Element.first, ReportMs);
       // Compute cumulative stats
-      Information.add(Element.second.messageInfo());
+      Summary.add(Element.second->messageInfo());
     }
-    Information.setTimeToNextMessage(ReportMs);
-    Information.StreamMasterStatus = StreamMasterStatus;
-    Reporter.write(Information);
+    Summary.setTimeToNextMessage(ReportMs);
+    Summary.StreamMasterStatus = StreamMasterStatus;
+    Reporter.write(Summary);
     ReportType::ReturnType Value = Reporter.get();
     Producer->produce(reinterpret_cast<unsigned char *>(&Value[0]),
                       Value.size());
 
     return StreamMasterError::OK();
   }
-  Status::StreamMasterInfo Information;
+  Status::StreamMasterInfo Summary;
   std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
   std::string JobId;
   std::chrono::milliseconds ReportMs;

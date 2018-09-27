@@ -70,12 +70,6 @@ FileWriter::createConsumer(std::string const TopicName,
   }
 }
 
-FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
-  Sources.clear();
-  RunStatus = StreamerStatus::HAS_FINISHED;
-  return (RunStatus = StreamerStatus::HAS_FINISHED);
-}
-
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
@@ -143,8 +137,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR;
   }
 
-  if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
-      Sources.end()) {
+  if (not Sources.isPresent(Message->getSourceName())) {
     LOG(Sev::Warning, "Message from topic \"{}\" has an unknown source name "
                       "(\"{}\"), ignoring.",
         MessageProcessor.topic(), Message->getSourceName());
@@ -179,25 +172,4 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     MessageInfo.error();
   }
   return result;
-}
-
-void FileWriter::Streamer::setSources(
-    std::unordered_map<std::string, Source> &SourceList) {
-  for (auto &Src : SourceList) {
-    LOG(Sev::Info, "Add {} to source list", Src.first);
-    Sources.push_back(Src.first);
-  }
-}
-
-bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
-  auto Iter(std::find<std::vector<std::string>::iterator>(
-      Sources.begin(), Sources.end(), SourceName));
-  if (Iter == Sources.end()) {
-    LOG(Sev::Warning, "Can't remove source {}, not in the source list",
-        SourceName);
-    return false;
-  }
-  Sources.erase(Iter);
-  LOG(Sev::Info, "Remove source {}", SourceName);
-  return true;
 }

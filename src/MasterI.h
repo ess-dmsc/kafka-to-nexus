@@ -8,8 +8,7 @@
 
 namespace FileWriter {
 
-template <typename T> class StreamMaster;
-class Streamer;
+class StreamMaster;
 
 /// Listens to the Kafka configuration topic and handles any requests.
 ///
@@ -33,10 +32,9 @@ public:
   virtual bool RunLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;
   virtual std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() = 0;
-  virtual void
-  addStreamMaster(std::unique_ptr<StreamMaster<Streamer>> StreamMaster) = 0;
+  virtual void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) = 0;
   virtual void stopStreamMasters() = 0;
-  virtual std::unique_ptr<StreamMaster<Streamer>> &
+  virtual std::unique_ptr<StreamMaster> &
   getStreamMasterForJobID(std::string JobID) = 0;
 };
 

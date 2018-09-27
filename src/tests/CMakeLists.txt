@@ -14,7 +14,7 @@ uri.cpp
 status_test.cpp
 status_writer.cpp
 CommandHandlerTests.cpp
-stream_master.cpp
+StreamMaster.cpp
 FastSampleEnvironmentWriterTests.cpp
 NeXusDatasets.cpp
 ReaderRegistration.cpp

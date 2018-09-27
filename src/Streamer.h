@@ -56,38 +56,6 @@ public:
   /// \param mp instance of the policy that describe how to process the message
   ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
 
-  /// Disconnect the kafka consumer and destroy the TopicPartition vector. Make
-  /// sure that the Streamer status is StreamerErrorCode::has_finished
-  StreamerStatus closeStream();
-
-  //----------------------------------------------------------------------------
-  /// @brief      Return the number of different sources whose last message is
-  /// not older than the stop time
-  ///
-  /// @return     The number of sources
-  ///
-  const size_t numSources() { return Sources.size(); }
-  void setSources(std::unordered_map<std::string, Source> &SourceList);
-  //----------------------------------------------------------------------------
-  /// @brief      Removes the source from the sources list.
-  ///
-  /// @param[in]  SourceName  The name of the source to be removed
-  ///
-  /// @return     True if success, else false (e.g. the source is not in the
-  /// list)
-  ///
-  bool removeSource(const std::string &SourceName);
-
-  //----------------------------------------------------------------------------
-  /// @brief      Returns the status of the Streamer. See "Error.h"
-  ///
-  /// @return     The current status
-  ///
-  StreamerStatus &runStatus() { return RunStatus; }
-
-  /// Return all the informations about the messages consumed
-  Status::MessageInfo &messageInfo() { return MessageInfo; }
-
   /// Return a reference to the Options that has been set for the current
   /// Streamer. The method can be used to change the current values
   StreamerOptions &getOptions() { return Options; }
@@ -96,12 +64,7 @@ protected:
   ConsumerPtr Consumer;
   KafkaW::BrokerSettings Settings;
 
-  StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
-  Status::MessageInfo MessageInfo;
-
-  std::vector<std::string> Sources;
   StreamerOptions Options;
-
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
 };
 

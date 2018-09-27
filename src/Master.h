@@ -5,7 +5,6 @@
 #include "MainOpt.h"
 #include "MasterI.h"
 #include "StreamMaster.h"
-#include "Streamer.h"
 #include <atomic>
 #include <functional>
 #include <stdexcept>
@@ -32,10 +31,9 @@ public:
   void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) override;
   void handle_command(std::string const &command) override;
   void statistics() override;
-  void addStreamMaster(
-      std::unique_ptr<StreamMaster<Streamer>> StreamMaster) override;
+  void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) override;
   void stopStreamMasters() override;
-  std::unique_ptr<StreamMaster<Streamer>> &
+  std::unique_ptr<StreamMaster> &
   getStreamMasterForJobID(std::string JobID) override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
@@ -53,7 +51,7 @@ private:
   CommandListener command_listener;
   std::atomic<bool> do_run{true};
   std::atomic<bool> HasExitedRunLoop{false};
-  std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
+  std::vector<std::unique_ptr<StreamMaster>> StreamMasters;
   std::string file_writer_process_id_;
   MainOpt &MainOpt_;
 };

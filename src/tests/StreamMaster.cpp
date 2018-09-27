@@ -27,7 +27,7 @@ private:
 };
 } // namespace stub
 
-using StreamMaster = FileWriter::StreamMaster<stub::Streamer>;
+using StreamMaster = FileWriter::StreamMaster;
 
 class StreamMaster_Test : public ::testing::Test {
 
