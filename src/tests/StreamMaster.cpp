@@ -8,15 +8,14 @@
 #include <random>
 #include <stdexcept>
 
-namespace stub {
-class Streamer {
+class StubStreamer : public FileWriter::StreamerI {
 public:
   using Error = FileWriter::Status::StreamerStatus;
   using Options = std::vector<std::string>;
 
-  Streamer() {}
-  Streamer(const std::string &, const std::string &, const Options &,
-           const Options &) {}
+  StubStreamer() {}
+  StubStreamer(const std::string &, const std::string &, const Options &,
+               const Options &) {}
   const Error set_start_time(const std::chrono::milliseconds &) const {
     return Error::OK;
   }
@@ -25,7 +24,6 @@ public:
 private:
   int n_src;
 };
-} // namespace stub
 
 using StreamMaster = FileWriter::StreamMaster;
 
@@ -38,4 +36,8 @@ private:
   std::unique_ptr<StreamMaster> stream_master;
 };
 
-// TEST_F(StreamMaster_Test, empty_test) {}
+TEST(StreamMaster, empty_test) {
+  StreamMaster("no-broker", std::make_unique<FileWriter::FileWriterTask>(
+                                "service-id", nullptr),
+               MainOpt(), nullptr);
+}
