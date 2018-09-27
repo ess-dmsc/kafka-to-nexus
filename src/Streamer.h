@@ -14,6 +14,7 @@
 #include "DemuxTopic.h"
 #include "EventLogger.h"
 #include "Status.h"
+#include "StreamerI.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 
@@ -27,7 +28,7 @@ using ConsumerPtr = std::unique_ptr<KafkaW::Consumer>;
 
 /// Connect to kafka topics eventually at a given point in time
 /// and consume messages
-class Streamer {
+class Streamer : public StreamerI {
   using StreamerStatus = Status::StreamerStatus;
 
 public:

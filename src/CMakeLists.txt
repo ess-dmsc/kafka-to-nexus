@@ -137,6 +137,7 @@ set(kafka_to_nexus_INC
   Source.h
   Status.h
   StatusWriter.h
+  StreamerI.h
   Streamer.h
   StreamerOptions.h
   StreamMaster.h

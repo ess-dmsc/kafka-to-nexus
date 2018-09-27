@@ -27,6 +27,7 @@ AddReader.cpp
 Schema_f142.cpp
 EventLogger.cpp
 MainOpt.cpp
+SourcesHandler.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
