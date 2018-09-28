@@ -7,13 +7,15 @@ namespace KafkaW {
 
 void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) {
   std::vector<char> ErrorString(256);
-  for (auto &c : KafkaConfiguration) {
-    LOG(Sev::Debug, "set config: {} = {}", c.first, c.second);
-    if (RD_KAFKA_CONF_OK != rd_kafka_conf_set(RdKafkaConfiguration,
-                                              c.first.c_str(), c.second.c_str(),
-                                              ErrorString.data(),
-                                              ErrorString.size())) {
-      LOG(Sev::Warning, "error setting config: {} = {}", c.first, c.second);
+  for (const auto &ConfigurationItem : KafkaConfiguration) {
+    LOG(Sev::Debug, "set config: {} = {}", ConfigurationItem.first,
+        ConfigurationItem.second);
+    if (RD_KAFKA_CONF_OK !=
+        rd_kafka_conf_set(RdKafkaConfiguration, ConfigurationItem.first.c_str(),
+                          ConfigurationItem.second.c_str(), ErrorString.data(),
+                          ErrorString.size())) {
+      LOG(Sev::Warning, "error setting config: {} = {}",
+          ConfigurationItem.first, ConfigurationItem.second);
     }
   }
 }
