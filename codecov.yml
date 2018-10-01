@@ -8,3 +8,11 @@ ignore:
 comment:
   layout: "header, diff, tree, changes, sunburst"
   require_changes: false
+
+coverage:
+  status:
+    patch:
+      default:
+        # basic
+        target: auto
+        threshold: 5
