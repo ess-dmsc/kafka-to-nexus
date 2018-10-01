@@ -15,3 +15,7 @@ coverage:
       default:
         target: auto
         threshold: 5
+    project:
+      default:
+        target: auto
+        threshold: 5
