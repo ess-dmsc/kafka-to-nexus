@@ -4,14 +4,17 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+/// \brief  Cast byte blob to flatbuffer message
 FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
 
+/// \brief  Use flatbuffers library to validate a message
 bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(
       reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
   return VerifyLogDataBuffer(Verifier);
 }
 
+/// \brief  Extract name of source from the message
 std::string
 FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
@@ -23,11 +26,13 @@ FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   return s1->str();
 }
 
+/// \brief Extract timestamp from the message
 uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
   return fbuf->timestamp();
 }
 
+/// \brief  Register the Reader with the application's registry
 static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("f142");
 }

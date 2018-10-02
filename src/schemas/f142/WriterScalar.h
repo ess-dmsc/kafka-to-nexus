@@ -7,6 +7,10 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+/// \brief  Implementation for scalar numeric types
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 class WriterScalar : public WriterTypedBase {
 public:
@@ -20,6 +24,10 @@ public:
   Value _fb_value_type_id = Value::NONE;
 };
 
+/// \brief  Create a new dataset for scalar numeric types
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
                                    std::string const &source_name,
@@ -34,6 +42,10 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
   }
 }
 
+/// \brief  Open a dataset for scalar numeric types
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
                                    std::string const &source_name,
@@ -50,6 +62,10 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
   ds->buffer_init(64 * 1024, 0);
 }
 
+/// \brief  Write to a numeric scalar dataset
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *Buffer) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};

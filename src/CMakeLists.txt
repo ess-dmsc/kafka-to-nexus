@@ -105,7 +105,6 @@ set(kafka_to_nexus_SRC
 set(kafka_to_nexus_INC
   CommandHandler.h
   CommandListener.h
-  commandproducer.h
   DemuxTopic.h
   Errors.h
   EventLogger.h

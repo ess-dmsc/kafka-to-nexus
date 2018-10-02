@@ -7,6 +7,10 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+/// \brief  Implementation for array numeric types
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV> class WriterArray : public WriterTypedBase {
 public:
   WriterArray(hdf5::node::Group hdf_group, std::string const &source_name,
@@ -19,6 +23,10 @@ public:
   Value _fb_value_type_id = Value::NONE;
 };
 
+/// \brief  Create a new dataset for array numeric types
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
                                  std::string const &source_name, hsize_t ncols,
@@ -38,6 +46,10 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
   }
 }
 
+/// \brief  Open a dataset for array numeric types
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
                                  std::string const &source_name, hsize_t ncols,
@@ -61,6 +73,10 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
   ds->buffer_init(64 * 1024, 0);
 }
 
+/// \brief  Write to a numeric array dataset
+///
+/// \tparam  DT  The C datatype for this dataset
+/// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
 h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};

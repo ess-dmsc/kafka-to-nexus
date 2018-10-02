@@ -13,6 +13,9 @@ namespace FileWriter {
 
 namespace HDFWriterModule_detail {
 
+/// Result type for the initialization of the writer module. Not an enum but a
+/// class because we wanted to keep the possibility for adding e.g. a message
+/// for the sad case.
 class InitResult {
 public:
   /// Everything was fine.
@@ -53,6 +56,8 @@ private:
   int8_t v = -1;
 };
 
+/// Result type for write operation on the writer module. Not an enum but a
+/// class because we have a message for the sad code path.
 class WriteResult {
 public:
   /// Everything was fine.
@@ -196,20 +201,30 @@ public:
 
 /// Keeps track of the registered FlatbufferReader instances.
 ///
+/// Writer modules register themselfes via instantiation of the `Registrar`.
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// HDFWriterModuleRegistry.
 namespace HDFWriterModuleRegistry {
 using ModuleFactory = std::function<std::unique_ptr<HDFWriterModule>()>;
 
+/// \return A reference to the map of all registered modules.
 std::map<std::string, ModuleFactory> &getFactories();
+
+/// Registers a new writer module. Called by `Registrar`.
 void addWriterModule(std::string key, ModuleFactory value);
 
+/// \return The `ModuleFactory` for the given `key`.
 /// @todo This function should probably throw an exception if key
 /// is not found.
 ModuleFactory &find(std::string const &key);
 
-template <class Module> class Registrar {
+/// Registers the writer module at program start if instantiated in the
+/// namespace of each writer module with the writer module given as `Module`.
+template <typename Module> class Registrar {
 public:
+  /// Register the writer module given in template parameter `Module` under the
+  /// identifier `FlatbufferID`.
+  /// \param FlatbufferID The unique identifier for this writer module.
   explicit Registrar(std::string FlatbufferID) {
     auto FactoryFunction = []() {
       return std::unique_ptr<HDFWriterModule>(new Module());

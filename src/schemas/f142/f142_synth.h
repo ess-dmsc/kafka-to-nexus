@@ -1,4 +1,5 @@
 #pragma once
+
 #include <flatbuffers/flatbuffers.h>
 #include <memory>
 #include <string>
@@ -8,14 +9,18 @@ namespace f142 {
 
 #include "schemas/f142_logdata_generated.h"
 
+/// Wrapper around the flatbuffer builder to facilitate the interface of
+/// `synth`.
 class fb {
 public:
   std::unique_ptr<flatbuffers::FlatBufferBuilder> builder;
   LogData const *root();
 };
 
+/// Forward-declare the implementation.
 class synth_impl;
 
+/// Simple test data generator for the f142 schema.
 class synth {
 public:
   synth(std::string name, Value type);
