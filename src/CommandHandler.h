@@ -19,28 +19,29 @@ class CommandHandler {
 public:
   CommandHandler(MainOpt &config, MasterI *master);
 
-  /// Given a JSON string, create a new file writer task.
+  /// \brief  Given a JSON string, create a new file writer task.
   ///
   /// \param Command The command for configuring the new task.
   void handleNew(std::string const &Command);
 
-  /// Stop the whole file writer application.
+  /// \brief  Stop the whole file writer application.
   void handleExit();
 
-  /// Stop and remove all ongoing file writer jobs.
+  /// \brief  Stop and remove all ongoing file writer jobs.
   void handleFileWriterTaskClearAll();
 
-  /// Stops a given job.
+  /// \brief  Stops a given job.
   ///
   /// \param Command The command for defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
 
-  /// Passes content of the message to the command handler.
+  /// \brief  Passes content of the message to the command handler.
   ///
   /// \param Msg The message.
   void tryToHandle(Msg const &msg);
 
-  /// Parses the given command and passes it on to a more specific handler.
+  /// \brief  Parses the given command and passes it on to a more specific
+  /// handler.
   ///
   /// \param Command The command to parse.
   void handle(std::string const &command);
@@ -50,7 +51,7 @@ public:
   std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
 
 private:
-  /// Configure the HDF writer modules for writing.
+  /// \brief  Configure the HDF writer modules for writing.
   ///
   /// \param StreamSettingsList The settings for the stream.
   /// \param Task The task to configure.
@@ -58,6 +59,8 @@ private:
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
 
+  /// \brief  Set up the basic HDF file structure
+  ///
   /// Given a task and the `nexus_structure` as json string, set up the
   /// basic HDF file structure.
   ///
