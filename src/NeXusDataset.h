@@ -32,7 +32,7 @@ private:
 
 namespace hdf5 {
 namespace datatype {
-// \brief Required for h5cpp to write const unsigned short data.
+/// \brief Required for h5cpp to write const unsigned short data.
 template <> class TypeTrait<std::int8_t const> {
 public:
   using Type = std::int8_t;
@@ -132,7 +132,7 @@ public:
   }
 };
 
-// \brief Required for h5cpp to write data provided using ArrayAdapter.
+/// \brief Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using Type = ArrayAdapter<T>;
@@ -144,7 +144,7 @@ public:
 } // namespace datatype
 namespace dataspace {
 
-// \brief Required for h5cpp to write data provided using ArrayAdapter.
+/// \brief Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using DataspaceType = Simple;
