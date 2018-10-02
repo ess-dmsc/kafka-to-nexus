@@ -32,7 +32,7 @@ private:
 
 namespace hdf5 {
 namespace datatype {
-/// \brief Required for h5cpp to write const unsigned short data.
+/// \brief Required for h5cpp to write const data types.
 template <> class TypeTrait<std::int8_t const> {
 public:
   using Type = std::int8_t;
