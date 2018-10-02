@@ -176,7 +176,8 @@ public:
   /// \param[in] Parent The group/node of the dataset in.
   /// \param[in] Name The name of the dataset.
   /// \param[in] CMode Should the dataset be opened or created.
-  /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset, ignored if the dataset
+  /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset,
+  /// ignored if the dataset
   /// is opened.
   /// \throw std::runtime_error if dataset can not be created/opened.
   ExtensibleDataset(hdf5::node::Group Parent, std::string Name, Mode CMode,
