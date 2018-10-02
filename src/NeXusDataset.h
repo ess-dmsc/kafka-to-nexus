@@ -176,7 +176,7 @@ public:
   /// \param[in] Parent The group/node of the dataset in.
   /// \param[in] Name The name of the dataset.
   /// \param[in] CMode Should the dataset be opened or created.
-  /// \param[in] ChunkSize The hunk size of the dataset, ignored if the dataset
+  /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset, ignored if the dataset
   /// is opened.
   /// \throw std::runtime_error if dataset can not be created/opened.
   ExtensibleDataset(hdf5::node::Group Parent, std::string Name, Mode CMode,
@@ -295,8 +295,9 @@ public:
   /// \param[in] CMode Should the dataset be opened or created.
   /// \param[in] Shape The shape of the array in the NDArray. This vector will
   /// be prepended with one dimension to allow for adding of data.
-  /// \param[in] ChunkSize The hunk size of the dataset, ignored if the dataset
-  /// is opened.
+  /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset,
+  /// ignored if the dataset is opened. Vector must be of size 1 or same size as
+  /// Shape.
   /// \throw std::runtime_error if dataset can not be created/opened.
   MultiDimDataset(hdf5::node::Group Parent, Mode CMode, hdf5::Dimensions Shape,
                   hdf5::Dimensions ChunkSize)
