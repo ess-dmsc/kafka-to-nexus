@@ -300,6 +300,7 @@ FileWriter::FlatbufferMessage createTestMessage(uint64_t Timestamp, size_t ix,
   if (ix == 0) {
     Info = Builder.CreateString("Some optional info string.");
   }
+  Info = flatbuffers::Offset<flatbuffers::String>(0);
 
   EventHistogramBuilder EHBuilder(Builder);
   EHBuilder.add_timestamp(Timestamp);
