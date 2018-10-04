@@ -1,6 +1,7 @@
 set(hs00_module_SRC
   Reader.cpp
   Writer.cpp
+  WriterUntyped.cpp
   WriterTyped.cpp
   Exceptions.cpp
   Shape.cpp
@@ -10,6 +11,7 @@ set(hs00_module_SRC
 set(hs00_module_INC
   Reader.h
   Writer.h
+  WriterUntyped.h
   WriterTyped.h
   Exceptions.h
   Shape.h
