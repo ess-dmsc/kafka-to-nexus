@@ -28,6 +28,7 @@ Schema_f142.cpp
 EventLogger.cpp
 MainOpt.cpp
 SourcesHandler.cpp
+StreamerFactory.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h

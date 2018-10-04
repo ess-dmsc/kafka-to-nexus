@@ -43,10 +43,11 @@ private:
   std::vector<std::string> Sources;
 };
 
-class StreamerI {
+class IStreamer {
   using StreamerStatus = Status::StreamerStatus;
 
 public:
+  virtual std::string getName() const { return "IStreamer"; }
   // StreamerI(const std::string &Broker, const std::string &TopicName,
   //           const FileWriter::StreamerOptions &Opts){};
 
@@ -99,15 +100,5 @@ protected:
   StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
   SourcesHandler Sources;
-};
-
-template <class StreamerType>
-std::unique_ptr<StreamerType> createStream(const std::string &Broker,
-                                           DemuxTopic &Demux,
-                                           const StreamerOptions &Opts) {
-  std::unique_ptr<StreamerType> Streamer =
-      std::make_unique<StreamerType>(Broker, Demux.topic(), Opts);
-  Streamer->setSources(Demux.sources());
-  return Streamer;
 };
 }

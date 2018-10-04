@@ -15,6 +15,7 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "Report.h"
+#include "StreamerFactory.h"
 #include "StreamerI.h"
 
 #include <atomic>
@@ -38,7 +39,8 @@ class StreamMaster {
 public:
   StreamMaster(const std::string &Broker,
                std::unique_ptr<FileWriterTask> FileWriterTask,
-               const MainOpt &Options);
+               const MainOpt &Options,
+               std::unique_ptr<IStreamerFactory> StreamerFactory);
 
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = default;
@@ -116,7 +118,7 @@ private:
   void runReport(const std::chrono::milliseconds &ReportMs =
                      std::chrono::milliseconds{1000});
 
-  std::map<std::string, std::unique_ptr<StreamerI>> Streamers;
+  std::map<std::string, std::unique_ptr<IStreamer>> Streamers;
   std::vector<DemuxTopic> &Demuxers;
   std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};

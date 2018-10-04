@@ -270,8 +270,10 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s = std::unique_ptr<StreamMaster>(
-        new StreamMaster(Broker.host_port, std::move(Task), Config));
+    std::unique_ptr<IStreamerFactory> StreamerFactory{
+        std::make_unique<KafkaStreamerFactory>()};
+    auto s = std::unique_ptr<StreamMaster>(new StreamMaster(
+        Broker.host_port, std::move(Task), Config, std::move(StreamerFactory)));
     s->start();
 
     MasterPtr->addStreamMaster(std::move(s));

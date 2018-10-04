@@ -3,7 +3,7 @@
 
 FileWriter::StreamMaster::StreamMaster(
     const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-    const MainOpt &Options)
+    const MainOpt &Options, std::unique_ptr<IStreamerFactory> StreamerFactory)
     : Demuxers(FileWriterTask->demuxers()),
       ProducerTopic(FileWriterTask->getStatusProducer()),
       WriterTask(std::move(FileWriterTask)),
@@ -14,7 +14,7 @@ FileWriter::StreamMaster::StreamMaster(
     try {
       Streamers.emplace(std::piecewise_construct,
                         std::forward_as_tuple(Demux.topic()),
-                        std::forward_as_tuple(createStream<Streamer>(
+                        std::forward_as_tuple(StreamerFactory->create(
                             Broker, Demux, Options.StreamerConfiguration)));
     } catch (std::exception &E) {
       RunStatus = StreamMasterError::STREAMER_ERROR();
