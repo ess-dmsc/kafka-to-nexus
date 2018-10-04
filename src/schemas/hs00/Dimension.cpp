@@ -15,6 +15,7 @@ Dimension<EdgeType> Dimension<EdgeType>::createFromJson(json const &Json) {
     Dim.Size = Json.at("size");
     Dim.Unit = Json.at("unit");
     Dim.Label = Json.at("label");
+    Dim.DatasetName = Json.at("dataset_name");
     auto const &JsonEdges = Json.at("edges");
     if (!JsonEdges.is_array()) {
       throw UnexpectedJsonInput();

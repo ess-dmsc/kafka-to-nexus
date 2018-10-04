@@ -315,7 +315,7 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
           hdf5::dataspace::SelectionOperation::SET,
           hdf5::dataspace::Hyperslab({Dims.at(0) - 1}, {1}, {1}, {1}));
       DSPMem = hdf5::dataspace::Simple({1}, {1});
-      DatasetInfo.write(std::vector<std::string>({EvMsg->info()->c_str()}),
+      DatasetInfo.write(std::vector<std::string>({EvMsg->info()->str()}),
                         TypeMem, DSPMem, DSPFile);
     }
     {

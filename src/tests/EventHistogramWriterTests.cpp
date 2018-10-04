@@ -53,7 +53,8 @@ json createTestDimensionJson() {
     "size": 4,
     "label": "Velocity",
     "unit": "m/s",
-    "edges": [2, 3, 4, 5]
+    "edges": [2, 3, 4, 5, 6],
+    "dataset_name": "some_detector"
   })""");
 }
 
@@ -76,12 +77,7 @@ TEST_F(EventHistogramWriter, DimensionWithoutUnitThrows) {
 }
 
 TEST_F(EventHistogramWriter, DimensionCreatedFromValidInput) {
-  auto Json = json::parse(R"""({
-    "size": 4,
-    "label": "Velocity",
-    "unit": "m/s",
-    "edges": [2, 3, 4, 5, 6]
-  })""");
+  auto Json = createTestDimensionJson();
   auto Dim = Dimension<double>::createFromJson(Json);
   ASSERT_EQ(Dim.getSize(), 4u);
   ASSERT_EQ(Dim.getLabel(), "Velocity");
@@ -101,19 +97,22 @@ json createTestShapeJson() {
       "size": 4,
       "label": "Position",
       "unit": "mm",
-      "edges": [2, 3, 4, 5, 6]
+      "edges": [2, 3, 4, 5, 6],
+      "dataset_name": "x_detector"
     },
     {
       "size": 6,
       "label": "Position",
       "unit": "mm",
-      "edges": [-3, -2, -1, 0, 1, 2, 3]
+      "edges": [-3, -2, -1, 0, 1, 2, 3],
+      "dataset_name": "y_detector"
     },
     {
       "size": 3,
       "label": "Time",
       "unit": "ns",
-      "edges": [0, 2, 4, 6]
+      "edges": [0, 2, 4, 6],
+      "dataset_name": "time_binning"
     }
   ])"");
 }
@@ -159,19 +158,22 @@ json createTestWriterTypedJson() {
         "size": 4,
         "label": "Position",
         "unit": "mm",
-        "edges": [2, 3, 4, 5, 6]
+        "edges": [2, 3, 4, 5, 6],
+        "dataset_name": "x_detector"
       },
       {
         "size": 6,
         "label": "Position",
         "unit": "mm",
-        "edges": [-3, -2, -1, 0, 1, 2, 3]
+        "edges": [-3, -2, -1, 0, 1, 2, 3],
+        "dataset_name": "y_detector"
       },
       {
         "size": 3,
         "label": "Time",
         "unit": "ns",
-        "edges": [0, 2, 4, 6]
+        "edges": [0, 2, 4, 6],
+        "dataset_name": "time_binning"
       }
     ]
   })"");
@@ -242,8 +244,8 @@ uint64_t getValueAtFlatIndex(size_t Index) {
   return 100 * (1 + I0) + 10 * (1 + I1) + (1 + I2);
 }
 
-FileWriter::FlatbufferMessage createTestMessage(size_t HistogramID,
-                                                size_t PacketID) {
+std::unique_ptr<flatbuffers::FlatBufferBuilder>
+createTestMessage(size_t HistogramID, size_t PacketID) {
   using namespace FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
@@ -324,7 +326,6 @@ FileWriter::FlatbufferMessage createTestMessage(size_t HistogramID,
   if (PacketID == 0) {
     Info = Builder.CreateString("Some optional info string.");
   }
-  Info = flatbuffers::Offset<flatbuffers::String>(0);
 
   EventHistogramBuilder EHBuilder(Builder);
   EHBuilder.add_timestamp(Timestamp);
@@ -339,9 +340,14 @@ FileWriter::FlatbufferMessage createTestMessage(size_t HistogramID,
     EHBuilder.add_info(Info);
   }
   FinishEventHistogramBuffer(Builder, EHBuilder.Finish());
+  return BuilderPtr;
+}
+
+FileWriter::FlatbufferMessage
+wrapBuilder(std::unique_ptr<flatbuffers::FlatBufferBuilder> const &Builder) {
   return FileWriter::FlatbufferMessage(
-      reinterpret_cast<const char *>(Builder.GetBufferPointer()),
-      Builder.GetSize());
+      reinterpret_cast<char const *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
 }
 
 TEST_F(EventHistogramWriter, WriterInitHDF) {
@@ -377,7 +383,8 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(0, i));
+    auto M = createTestMessage(0, i);
+    auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -403,7 +410,8 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   ASSERT_TRUE(Writer->reopen(Group).is_OK());
   size_t HistogramID = 0;
   for (size_t i = 0; i < 3; ++i) {
-    auto X = Writer->write(createTestMessage(HistogramID, i));
+    auto M = createTestMessage(HistogramID, i);
+    auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -411,7 +419,8 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   }
   ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(HistogramID, i));
+    auto M = createTestMessage(HistogramID, i);
+    auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }
@@ -419,7 +428,8 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   }
   ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
-    auto X = Writer->write(createTestMessage(HistogramID, i));
+    auto M = createTestMessage(HistogramID, i);
+    auto X = Writer->write(wrapBuilder(M));
     if (!X.is_OK()) {
       throw std::runtime_error(X.to_str());
     }

@@ -24,6 +24,7 @@ private:
   std::string Label;
   std::string Unit;
   std::vector<EdgeType> Edges;
+  std::string DatasetName;
 };
 }
 }
