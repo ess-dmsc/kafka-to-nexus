@@ -40,7 +40,6 @@ public:
                                      bool DoFlushEachWrite) override;
 
 private:
-  std::string SourceName;
   Shape<EdgeType> TheShape;
   std::string CreatedFromJson;
   hdf5::node::Dataset Dataset;
@@ -77,7 +76,6 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(json const &Json) {
       make_unique<WriterTyped<DataType, EdgeType, ErrorType>>();
   auto &TheWriterTyped = *TheWriterTypedPtr;
   try {
-    TheWriterTyped.SourceName = Json.at("source_name");
     TheWriterTyped.TheShape = Shape<EdgeType>::createFromJson(Json.at("shape"));
     TheWriterTyped.CreatedFromJson = Json.dump();
   } catch (json::out_of_range const &) {
