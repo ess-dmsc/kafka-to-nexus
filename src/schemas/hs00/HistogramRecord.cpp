@@ -6,8 +6,9 @@ namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
 
-HistogramRecord HistogramRecord::create() {
+HistogramRecord HistogramRecord::fromHDFIndex(size_t HDFIndex_) {
   HistogramRecord TheHistogramRecord;
+  TheHistogramRecord.HDFIndex = HDFIndex_;
   return TheHistogramRecord;
 }
 
@@ -21,6 +22,8 @@ bool HistogramRecord::hasEmptySlice(Slice const &Slice) {
 }
 
 void HistogramRecord::addSlice(Slice Slice) { Slices.push_back(Slice); }
+
+size_t HistogramRecord::getHDFIndex() const { return HDFIndex; }
 }
 }
 }

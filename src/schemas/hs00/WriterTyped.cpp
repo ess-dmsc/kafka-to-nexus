@@ -33,6 +33,7 @@ WriterTyped<DataType, EdgeType>::createFromHDF(hdf5::node::Group &Group) {
       WriterTyped<DataType, EdgeType>::createFromJson(json::parse(JsonString));
   auto &TheWriterTyped = *TheWriterTypedPtr;
   TheWriterTyped.Dataset = Group.get_dataset("histograms");
+  TheWriterTyped.DatasetTimestamps = Group.get_dataset("timestamps");
   return TheWriterTypedPtr;
 }
 
@@ -67,6 +68,13 @@ void WriterTyped<DataType, EdgeType>::createHDFStructure(
     DCPL.chunk(ChunkElements);
   }
   Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
+  {
+    hdf5::property::DatasetCreationList DCPL;
+    DCPL.chunk({4 * 1024});
+    auto Space = hdf5::dataspace::Simple({0}, {H5S_UNLIMITED});
+    auto Type = hdf5::datatype::create<uint64_t>().native_type();
+    DatasetTimestamps = Group.create_dataset("timestamps", Type, Space, DCPL);
+  }
 }
 
 template WriterTyped<uint64_t, double>::ptr
@@ -147,7 +155,9 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
         "Unexpected payload size");
   }
   if (HistogramRecords.find(Timestamp) == HistogramRecords.end()) {
-    HistogramRecords[Timestamp] = HistogramRecord::create();
+    HistogramRecords[Timestamp] = HistogramRecord::fromHDFIndex(Dims.at(0));
+    Dims.at(0) += 1;
+    Dataset.extent(Dims);
   }
   auto &Record = HistogramRecords[Timestamp];
   auto TheSlice = Slice::fromOffsetsSizes(
@@ -184,6 +194,17 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
   Dataset.write(*DataPtr->data(),
                 hdf5::datatype::create<DataType>().native_type(), DSPMem,
                 DSPFile);
+  {
+    std::vector<uint64_t> Timestamps;
+    Timestamps.resize(hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
+                          .current_dimensions()
+                          .at(0));
+    DatasetTimestamps.read(Timestamps, hdf5::property::DatasetTransferList());
+    Timestamps.resize(HistogramRecords.size());
+    Timestamps.at(Record.getHDFIndex()) = Timestamp;
+    DatasetTimestamps.extent({Timestamps.size()});
+    DatasetTimestamps.write(Timestamps);
+  }
   return HDFWriterModule::WriteResult::OK();
 }
 }
