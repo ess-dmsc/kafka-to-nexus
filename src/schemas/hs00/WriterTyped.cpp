@@ -108,10 +108,6 @@ WriterTyped<DataType, EdgeType>::write(FlatbufferMessage const &Message) {
   if (Dims.size() < 1) {
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Dims.size() < 1");
   }
-  if (Dims.at(0) == 0) {
-    Dims.at(0) += 1;
-  }
-  Dataset.extent(Dims);
   auto EvMsg = GetEventHistogram(Message.data());
   uint64_t Timestamp = EvMsg->timestamp();
   if (Timestamp == 0) {
