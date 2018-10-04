@@ -10,10 +10,10 @@ set(hs00_module_SRC
 set(hs00_module_INC
   Reader.h
   Writer.h
-  WriterTyped.cpp
+  WriterTyped.h
   Exceptions.h
   Shape.h
-  Dimension.cpp
+  Dimension.h
 )
 
 create_module(hs00_module)
