@@ -124,7 +124,7 @@ TEST_F(EventHistogramWriter, ShapeCreatedFromValidInput) {
   ASSERT_EQ(TheShape.getNDIM(), 3u);
 }
 
-TEST(EventHistogramWriter, SliceNoOverlap) {
+TEST_F(EventHistogramWriter, SliceNoOverlap) {
   auto A = Slice::fromOffsetsSizes({0}, {2});
   auto B = Slice::fromOffsetsSizes({2}, {2});
   ASSERT_FALSE(A.doesOverlap(B));
@@ -135,14 +135,14 @@ TEST(EventHistogramWriter, SliceNoOverlap) {
   ASSERT_FALSE(B.doesOverlap(A));
 }
 
-TEST(EventHistogramWriter, SliceOverfullOverlap) {
+TEST_F(EventHistogramWriter, SliceOverfullOverlap) {
   auto A = Slice::fromOffsetsSizes({1, 6}, {2, 2});
   auto B = Slice::fromOffsetsSizes({0, 2}, {4, 8});
   ASSERT_TRUE(A.doesOverlap(B));
   ASSERT_TRUE(B.doesOverlap(A));
 }
 
-TEST(EventHistogramWriter, SlicePartialOverlap) {
+TEST_F(EventHistogramWriter, SlicePartialOverlap) {
   auto A = Slice::fromOffsetsSizes({1, 6}, {2, 2});
   auto B = Slice::fromOffsetsSizes({0, 7}, {2, 1});
   ASSERT_TRUE(A.doesOverlap(B));
@@ -349,7 +349,7 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
 
 TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
-                         FileCreationLocation::Disk);
+                         FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
