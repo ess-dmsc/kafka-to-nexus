@@ -23,7 +23,8 @@ Writer::reopen(hdf5::node::Group &HDFGroup) {
   return FileWriter::HDFWriterModule::InitResult::OK();
 }
 
-FileWriter::HDFWriterModule::WriteResult Writer::write(Msg const &msg) {
+FileWriter::HDFWriterModule::WriteResult
+Writer::write(FlatbufferMessage const &Message) {
   throw unimplemented();
   return FileWriter::HDFWriterModule::WriteResult::OK();
 }
