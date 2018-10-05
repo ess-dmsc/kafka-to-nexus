@@ -169,10 +169,11 @@ TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
   EXPECT_EQ(getDoubleValue("stdandard_deviation",
                            json["streamer"][Topic]["statistics"]["size"]),
             0.0);
-  EXPECT_EQ(getDoubleValue("frequency", json["streamer"][Topic]["statistics"]),
-            NumMessages / std::chrono::duration_cast<std::chrono::seconds>(
-                              SinceLastMessage)
-                              .count());
+  EXPECT_EQ(
+      getDoubleValue("frequency", json["streamer"][Topic]["statistics"]),
+      NumMessages /
+          std::chrono::duration_cast<std::chrono::seconds>(SinceLastMessage)
+              .count());
   EXPECT_EQ(
       getDoubleValue("throughput", json["streamer"][Topic]["statistics"]),
       MessageSizeBytes * 1e-6 /
