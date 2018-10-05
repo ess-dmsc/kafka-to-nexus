@@ -129,7 +129,6 @@ struct WriterFactory {
                FileWriter::Schemas::f142::Value ValueUnionID,
                CollectiveQueue *cq, HDFIDStore *HDFStore) = 0;
   virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
-  virtual ~WriterFactory() = default;
 };
 
 /// \brief  Factory for scalar writers
