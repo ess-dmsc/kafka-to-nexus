@@ -113,10 +113,13 @@ public:
                                                        ErrorLogMinInterval};
 };
 
+/// \brief  Interface for creating and opening a dataset
+///
 /// Interface for creating and opening a dataset for the f142 values of a
 /// dynamically specified datatype.  Implemented by WriterFactoryScalar and
 /// WriterFactoryArray.
 struct WriterFactory {
+  virtual ~WriterFactory() = default;
   virtual std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
                FileWriter::Schemas::f142::Value ValueUnionID,
@@ -129,6 +132,7 @@ struct WriterFactory {
   virtual ~WriterFactory() = default;
 };
 
+/// \brief  Factory for scalar writers
 template <typename C_TYPE, typename FB_VALUE_TYPE>
 struct WriterFactoryScalar : public WriterFactory {
   FileWriter::Schemas::f142::Value ValueUnionID =
@@ -156,6 +160,7 @@ struct WriterFactoryScalar : public WriterFactory {
   }
 };
 
+/// \brief  Factory for array writers
 template <typename C_TYPE, typename FB_VALUE_TYPE>
 struct WriterFactoryArray : public WriterFactory {
   FileWriter::Schemas::f142::Value ValueUnionID =
@@ -184,6 +189,7 @@ struct WriterFactoryArray : public WriterFactory {
   }
 };
 
+/// \brief  Factory for scalar string writers
 struct WriterFactoryScalarString : public WriterFactory {
   FileWriter::Schemas::f142::Value ValueUnionID =
       ValueTraits<String>::enum_value;

@@ -15,34 +15,36 @@ namespace FileWriter {
 /// module based on sourcename
 class DemuxTopic {
 public:
+  /// Initialize with the given topic name
   DemuxTopic(std::string TopicName);
+
+  /// Move constructor
   DemuxTopic(DemuxTopic &&x);
+
+  /// Virtual destructor apparently because some mock derives from this?
+  /// \todo Should probably use proper interface (eg `DemuxTopicI`)
   virtual ~DemuxTopic();
 
-  //----------------------------------------------------------------------------
-  /// @brief      Returns the name of the topic that contains the source
-  ///
-  /// @return     The topic
-  ///
+  /// Returns the name of the topic that contains the source
+  /// \return The topic
   std::string const &topic() const;
 
-  /// To be called by FileMaster when a new message is available for this
-  /// source.
+  /// Finds the appropriate `Source` for this `Message` and delegates
+  /// processing.
+  /// Called typically from `Streamer`.
   /// \param[in] Message The flatbuffer message that is to be written to file.
   /// \return A status message indicating if the write was successfull.
   virtual ProcessMessageResult
   process_message(FlatbufferMessage const &Message);
+
+  /// \return The list of sources handled on this topic.
   std::unordered_map<std::string, Source> &sources();
 
-  //----------------------------------------------------------------------------
-  /// \brief      Adds a source.
+  /// Adds a source.
   ///
-  /// \param[in]  source  the name of the source, that must match the content of
-  /// the flatbuffer
+  /// \param[in]  source  The `Source` to be added.
   ///
-  /// \return     A reference to the source that has been added to the source
-  /// list
-  ///
+  /// \return A reference to the source that has been added to the source
   Source &add_source(Source &&source) {
     auto k = source.sourcename();
     std::pair<std::string, Source> v{k, std::move(source)};

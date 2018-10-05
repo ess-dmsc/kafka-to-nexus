@@ -25,6 +25,7 @@ MessageTest.cpp
 StreamerTest.cpp
 AddReader.cpp
 Schema_f142.cpp
+AreaDetectorTest.cpp
 EventLogger.cpp
 MainOpt.cpp
 )

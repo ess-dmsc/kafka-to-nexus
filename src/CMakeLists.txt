@@ -100,12 +100,13 @@ set(kafka_to_nexus_SRC
   date/tzblobs.cpp
   MainOpt.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
-  CLIOptions.cpp)
+  CLIOptions.cpp
+  NeXusDataset.cpp
+)
 
 set(kafka_to_nexus_INC
   CommandHandler.h
   CommandListener.h
-  commandproducer.h
   DemuxTopic.h
   Errors.h
   EventLogger.h
@@ -149,6 +150,7 @@ set(kafka_to_nexus_INC
   date/tz.h
   date/tzblobs.h
   CLIOptions.h
+  NeXusDataset.h
 )
 
 set(tgt "kafka_to_nexus__objects")

@@ -16,6 +16,7 @@ namespace FileWriter {
 
 class FlatbufferReader {
 public:
+  virtual ~FlatbufferReader() = default;
   using ptr = std::unique_ptr<FlatbufferReader>;
   /// Run the flatbuffer verification and return the result.
   virtual bool verify(FlatbufferMessage const &Message) const = 0;

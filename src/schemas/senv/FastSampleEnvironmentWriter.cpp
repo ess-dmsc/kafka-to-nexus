@@ -66,6 +66,9 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
                            DefaultChunkSize);
     NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
                                    DefaultChunkSize);
+    auto ClassAttribute =
+        CurrentGroup.attributes.create<std::string>("NX_class");
+    ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {

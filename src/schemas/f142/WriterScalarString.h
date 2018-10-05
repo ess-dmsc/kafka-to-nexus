@@ -7,6 +7,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+/// \brief  Implementation for scalar strings
 class WriterScalarString : public WriterTypedBase {
 public:
   WriterScalarString(hdf5::node::Group hdf_group,
