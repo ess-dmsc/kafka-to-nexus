@@ -23,7 +23,6 @@ public:
   virtual std::string source_name(FlatbufferMessage const &Message) const = 0;
   /// Extract the timestamp.
   virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
-  virtual ~FlatbufferReader() = default;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
