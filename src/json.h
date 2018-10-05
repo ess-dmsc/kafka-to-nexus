@@ -17,9 +17,6 @@ private:
 };
 
 template <typename T>
-JsonMaybe<T> find(std::string Key, nlohmann::json const &Json);
-
-template <typename T>
 JsonMaybe<T> find(std::string Key, nlohmann::json const &Json) {
   auto It = Json.find(Key);
   if (It != Json.end()) {
