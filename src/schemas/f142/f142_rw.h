@@ -126,6 +126,7 @@ struct WriterFactory {
                FileWriter::Schemas::f142::Value ValueUnionID,
                CollectiveQueue *cq, HDFIDStore *HDFStore) = 0;
   virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
+  virtual ~WriterFactory() = default;
 };
 
 template <typename C_TYPE, typename FB_VALUE_TYPE>
@@ -207,6 +208,6 @@ struct WriterFactoryScalarString : public WriterFactory {
     return ValueUnionID;
   }
 };
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter

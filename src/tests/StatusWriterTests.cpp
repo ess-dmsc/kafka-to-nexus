@@ -5,7 +5,6 @@
 
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
-using NLJSONWriter = FileWriter::Status::NLJSONWriter;
 
 std::string getStringValue(const std::string &Key, nlohmann::json &Document) {
   try {
@@ -17,6 +16,7 @@ std::string getStringValue(const std::string &Key, nlohmann::json &Document) {
   }
   return "";
 }
+
 int getIntegerValue(const std::string &Key, nlohmann::json &Document) {
   try {
     if (auto x = find<int>(Key, Document)) {
@@ -27,6 +27,7 @@ int getIntegerValue(const std::string &Key, nlohmann::json &Document) {
   }
   return -1;
 }
+
 double getDoubleValue(const std::string &Key, nlohmann::json &Document) {
   try {
     if (auto x = find<double>(Key, Document)) {
@@ -39,19 +40,19 @@ double getDoubleValue(const std::string &Key, nlohmann::json &Document) {
 }
 
 TEST(StatusWriter, emptyWriterHasDefaultFields) {
-  NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
   StreamMasterInfo sm;
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
   EXPECT_EQ(getStringValue("type", json), "stream_master_status");
   EXPECT_EQ(getIntegerValue("next_message_eta_ms", json), 0);
   EXPECT_EQ(getIntegerValue("job_id", json), 0);
 }
 
 TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
-  FileWriter::Status::NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
   StreamMasterInfo sm;
   Writer.write(sm);
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
   ASSERT_NO_THROW(json.at("stream_master"));
 
   EXPECT_EQ(getDoubleValue("Mbytes", json["stream_master"]), 0.0);
@@ -65,9 +66,9 @@ TEST(StatusWriter, showTimeToNextMessage) {
   StreamMasterInfo sm;
   sm.setTimeToNextMessage(std::chrono::milliseconds{1000});
 
-  FileWriter::Status::NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
   Writer.write(sm);
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   EXPECT_EQ(getDoubleValue("next_message_eta_ms", json), 1000.0);
 }
@@ -79,10 +80,10 @@ TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   Message.newMessage(MessageSizeBytes);
   sm.add(Message);
 
-  FileWriter::Status::NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
 
   Writer.write(sm);
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("stream_master"));
@@ -100,9 +101,9 @@ TEST(StatusWriter, addErrorUpdatesStreamMaster) {
 
   Message.error();
   sm.add(Message);
-  FileWriter::Status::NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
   Writer.write(sm);
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("stream_master"));
@@ -117,11 +118,11 @@ TEST(StatusWriter, addEmptyMessageInfo) {
   MessageInfo Message;
   std::chrono::milliseconds SinceLastMessage{1000};
   std::string Topic{"no-topic"};
-  FileWriter::Status::NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
 
   Writer.write(Message, Topic, SinceLastMessage);
 
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("streamer"));
@@ -149,10 +150,10 @@ TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
 
   std::chrono::milliseconds SinceLastMessage{1000};
   std::string Topic{"no-topic"};
-  FileWriter::Status::NLJSONWriter Writer;
+  FileWriter::Status::StatusWriter Writer;
   Writer.write(Message, Topic, SinceLastMessage);
 
-  nlohmann::json json = Writer.get();
+  nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   std::cout << json.dump(4) << "\n";
 
@@ -168,11 +169,10 @@ TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
   EXPECT_EQ(getDoubleValue("stdandard_deviation",
                            json["streamer"][Topic]["statistics"]["size"]),
             0.0);
-  EXPECT_EQ(
-      getDoubleValue("frequency", json["streamer"][Topic]["statistics"]),
-      NumMessages /
-          std::chrono::duration_cast<std::chrono::seconds>(SinceLastMessage)
-              .count());
+  EXPECT_EQ(getDoubleValue("frequency", json["streamer"][Topic]["statistics"]),
+            NumMessages / std::chrono::duration_cast<std::chrono::seconds>(
+                              SinceLastMessage)
+                              .count());
   EXPECT_EQ(
       getDoubleValue("throughput", json["streamer"][Topic]["statistics"]),
       MessageSizeBytes * 1e-6 /
