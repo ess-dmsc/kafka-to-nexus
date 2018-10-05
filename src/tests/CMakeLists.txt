@@ -12,7 +12,7 @@ helper.cpp
 json.cpp
 uri.cpp
 status_test.cpp
-status_writer.cpp
+StatusWriterTests.cpp
 CommandHandlerTests.cpp
 stream_master.cpp
 FastSampleEnvironmentWriterTests.cpp

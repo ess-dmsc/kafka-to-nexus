@@ -213,6 +213,6 @@ struct WriterFactoryScalarString : public WriterFactory {
     return ValueUnionID;
   }
 };
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter
