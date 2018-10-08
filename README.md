@@ -35,7 +35,7 @@ The file writer can be configured via `--config-file <ini>` which should contain
   status-uri=//broker[:port]/status-topic
   commands-json=./commands.json
   hdf-output-prefix=./absolute/or/relative/path/to/hdf/output/directory
-  service_id=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
+  service-id=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
   streamer-ms-before-start=123456
   kafka-config=consumer.timeout.ms 501 fetch.message.max.bytes 1234 api.version.request true
 ```
