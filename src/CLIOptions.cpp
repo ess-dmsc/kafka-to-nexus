@@ -102,7 +102,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--logpid-sleep", MainOptions.logpid_sleep);
   App.add_flag("--use-signal-handler", MainOptions.use_signal_handler);
   App.add_option("--teamid", MainOptions.teamid);
-  App.add_option("--service_id", MainOptions.service_id,
+  App.add_option("--service-id", MainOptions.service_id,
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
   App.add_option("--status-master-interval", MainOptions.status_master_interval,
