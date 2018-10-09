@@ -373,7 +373,8 @@ node('docker') {
         def image_key = x
         builders[image_key] = get_pipeline(image_key)
     }
-    builders['macOS'] = get_macos_pipeline()
+    // macos is currently not available on the build servers
+    // builders['macOS'] = get_macos_pipeline()
 
     if ( env.CHANGE_ID ) {
         builders['system tests'] = get_system_tests_pipeline()
