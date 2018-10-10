@@ -15,7 +15,7 @@ void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.command_broker_uri.host_port;
-  BrokerSettings.ConfigurationStrings["group.id"] = fmt::format(
+  BrokerSettings.KafkaConfiguration["group.id"] = fmt::format(
       "filewriter--commandhandler--host:{}--pid:{}--topic:{}--time:{}",
       gethostname_wrapper(), getpid_wrapper(), config.command_broker_uri.topic,
       std::chrono::duration_cast<std::chrono::milliseconds>(
