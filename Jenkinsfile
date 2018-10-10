@@ -170,7 +170,7 @@ builders = pipeline_builder.createBuilders { container ->
 
   if (container.key == release_os) {
     pipeline_builder.stage("${container.key}: Formatting") {
-      def archive_output = "${pipeline_builder.project}-${image_key}.tar.gz"
+      def archive_output = "${pipeline_builder.project}-${container.key}.tar.gz"
       container.sh """
         cd build
         rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
