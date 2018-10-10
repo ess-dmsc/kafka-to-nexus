@@ -43,7 +43,7 @@ builders = pipeline_builder.createBuilders { container ->
     dir(pipeline_builder.project) {
       scm_vars = checkout scm
     }
-    container.copyTo(pipelineBuilder.project, pipelineBuilder.project)
+    container.copyTo(pipeline_builder.project, pipeline_builder.project)
   }  // stage
 
   pipeline_builder.stage("${container.key}: Dependencies") {
