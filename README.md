@@ -173,8 +173,8 @@ Further documentation:
   "cmd": "FileWriter_new",
   "job_id": "unique-identifier",
   "broker": "localhost:9092",
-  "start_time": <[OPTIONAL] timestamp in milliseconds>,
-  "stop_time": <[OPTIONAL] timestamp in milliseconds>,
+  "start_time": "[OPTIONAL] timestamp (int) in milliseconds",
+  "stop_time": "[OPTIONAL] timestamp (int) in milliseconds",
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
@@ -195,7 +195,7 @@ Further documentation:
 {
   "cmd": "FileWriter_stop",
   "job_id": "job-unique-identifier",
-  "stop_time" : <[OPTIONAL] timestamp-in-milliseconds>,
+  "stop_time" : "[OPTIONAL] timestamp (int) in milliseconds",
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
