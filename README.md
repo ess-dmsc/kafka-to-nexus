@@ -249,115 +249,56 @@ To enable SWMR when writing a file, add to the `FileWriter_new` command:
 
 ## Installation
 
+For installation using Ansible, please refer to [Installation using
+Ansible](docs/installation-using-ansible.md).
+
+More hints about manual installation without Conan or Ansible, please refer to [Manual Installation](docs/manual-build.md).
+
+
 ### Requirements
 
-- cmake (at least 2.8.11)
-- git
-- flatbuffers (headers and working `flatc`)
-- librdkafka
-- hdf5
-- libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
-- `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
-  and `streaming-data-types` are in the same directory)
-- Optional `graylog_logger`
-
-Tooling
-
-- conan
-- cmake (minimum tested is 2.8.11)
-- C++ compiler with c++11 support
+- `conan`
+- `cmake >= 3.1.0`
+- `git`
+- `hdf5`
+- `c++14`-enabled compiler
 - Doxygen if you would like to `make docs`
+
 
 ### Conan
 
-For downloading and configuring dependencies there are three options which can be set using the `CONAN` CMake parameter with one of the following values:
-- `AUTO` - (default) conan is used to download and configure dependencies, this is done automatically by CMake.
-conan is required to be installed and in the `path`. A non-default conan profile can be specified by setting `CONAN_PROFILE`.
-- `MANUAL` - conan can be run manually to generate a `conanbuildinfo.cmake` file in the build directory.
-- `DISABLE` - conan is disabled. CMake will try to find system installed libraries or paths can be specified manually.
+The supported way for installation is based on Conan.
 
-
-If using conan, the following remote repositories are required to be configured:
+Please configure the following remote repositories using `conan remote add
+<local-name> <remote-url>` where `<local-name>` must be substituted by a locally
+unique name.  Configured remotes can be listed with `conan remote list`.
 
 - https://api.bintray.com/conan/ess-dmsc/conan
 - https://api.bintray.com/conan/conan-community/conan
 - https://api.bintray.com/conan/vthiery/conan-packages
 - https://api.bintray.com/conan/bincrafters/public-conan
 
-You can add them by running
-```
-conan remote add <local-name> <remote-url>
-```
-where `<local-name>` must be substituted by a locally unique name. Configured
-remotes can be listed with `conan remote list`.
+For downloading and configuring dependencies there are three options which can
+be set using the `CONAN` CMake parameter with one of the following values:
+- `AUTO`: (default) conan is used to download and configure dependencies, this
+  is done automatically by CMake.  conan is required to be installed and in the
+  `path`. A non-default conan profile can be specified by setting
+  `CONAN_PROFILE`.
+- `MANUAL`: conan can be run manually to generate a `conanbuildinfo.cmake` file
+  in the build directory.
+- `DISABLE`: conan is disabled. CMake will try to find system installed
+  libraries or paths can be specified manually.
+
 
 ### Build
 
-As usual `cmake`, `make`.
+With the required Conan repositories configured, we can build via:
+
 ```
 conan install <path-to-source>/conan --build=missing
 cmake <path-to-source> [-DREQUIRE_GTEST=TRUE]
 make
 make docs  # optional
-```
-
-#### Usage of your custom builds of the dependencies
-
-If you have dependencies in non-standard locations:
-Locations of dependencies can be supplied via the standard
-`CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` variables.
-
-- `flatbuffers` Headers plus `flatc`, therefore set `CMAKE_INCLUDE_PATH` and `CMAKE_PROGRAM_PATH`.
-
-- `HDF5`
-
-- `graylog_logger` Additionally, set `USE_GRAYLOG_LOGGER=1`
-  - cmake will report if it is found
-
-- `libfmt` Header/Source-only
-  - we expect `fmt/[format.cc, format.h]`
-
-- `Google Test` (optional) Easiest way: `git clone https://github.com/google/googletest.git`
-  in parallel to this repository, or give the repository location in
-  `CMAKE_INCLUDE_PATH` or in `GOOGLETEST_REPOSITORY_DIR`.
-  Enable gtest usage by `REQUIRE_GTEST=1`
-
-If you like full fine-grained control over the locations, you can of course set
-the locations directly as the package-specific variables which can be looked up
-in the `Find...` scripts under `./cmake/` for each package.
-
-
-### Using Ansible
-
-Install using the playbook:
-
-```
-ansible-playbook -i hosts kafka-to-nexus.yml
-```
-
-The filewriter can be installed using the ansible playbook defined in
-`ansible`. The file `roles/kafka-to-nexus/defaults/main.yml` defines
-the variables used during installation. The variables `<dep>_src` and
-`<dep>_version` are the remote source and the required version of the
-dependency, `<dep>` the install location. The sources and builds of
-the dependencies are kept in `sources` and `builds`.
-
-`filewriter_inc`, `filewriter_lib` and `filewriter_bin` defines
-`CMAKE_INCLUDE_PATH`, `CMAKE_LIBRARY_PATH` and `CMAKE_PROGRAM_PATH`.
-
-The default installation has the following structure
-```
-/opt/software/sources/<package1>-<version>
-/opt/software/sources/<package2>-<version>
-...
-/opt/software/builds/<package1>-<version>
-/opt/software/builds/<package2>-<version>
-...
-/opt/software/<package1>-<version>
-/opt/software/<package2>-<version>
-...
-/opt/software/sources/filewriter-<version>
-/opt/software/builds/filewriter-<version>
 ```
 
 
@@ -386,19 +327,25 @@ and `HDFWriterModuleRegistry`.  For an example, please search for `Registrar` in
 
 Tests are built only when `gtest` is detected.  If detected, the `cmake` output
 contains
+
 ```
 -- Using Google Test: [ DISCOVERED_LOCATION_OF_GTEST ]
 ```
+
 with the location where it has found `gtest`.
 
-To enable tests for the ``Streamer`` the [librdkafka-fake](https://github.com/ess-dmsc/librdkafka-fake) implementation of librdkafka must be enabled with
+To enable tests for the ``Streamer`` the
+[librdkafka-fake](https://github.com/ess-dmsc/librdkafka-fake) implementation of
+librdkafka must be enabled with
+
 ```
 -DFAKE_RDKAFKA=<path>
 ```
 
 Start the `gtest` based test suite via:
+
 ```
-./tests/tests
+./tests/UnitTests
 ```
 
 
