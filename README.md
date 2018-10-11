@@ -112,7 +112,7 @@ Further documentation:
               "type": "uint64",
               "size": ["unlimited", 5, 6]
             },
-            "values": [[[0, 1, 2, 3, 4, 5], [...], ...], [...], ...]
+            "values": [[[0, 1, 2, 3, 4, 5], ["…"], "…"], ["…"], "…"]
           },
           {
             "type": "dataset",
