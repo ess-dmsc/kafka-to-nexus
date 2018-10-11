@@ -406,11 +406,6 @@ Start the `gtest` based test suite via:
 See [System Tests page](system-tests/README.md).
 
 
-## Performance
-
-- [Profiling ev42 HDF writer module](docs/profile-ev42.md)
-
-
 ## Documents:
 
 [Nexus-for-ESS](https://confluence.esss.lu.se/display/DMSC/NeXus+for+ESS)
