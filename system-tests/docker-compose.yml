@@ -30,6 +30,7 @@ services:
       KAFKA_BROKER: "localhost"
     volumes:
     - ./config-files/streamer_config.ini:/streamer_config.ini
+    - ./config-files/SANS2D_reduced_with_geometry.nxs:/SANS2D_reduced_with_geometry.nxs
 
   filewriter:
     image: kafka-to-nexus:latest
