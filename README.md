@@ -10,6 +10,7 @@
 - [Configuration Files](#configuration-files)
 - [Commands](#send-command-to-kafka-to-nexus)
 - [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
+  - [hs00 EventHistogram](docs/writer_module_hs00_event_histogram.md)
 
 
 ## Features
@@ -175,67 +176,6 @@ Further documentation:
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
-
-
-### EventHistogram writer module
-
-Schema `hs00_event_histogram.fbs` defines the `EventHistogram` with flatbuffer
-schema id `hs00`.
-
-We can write the `EventHistogram` stream to HDF with a child in the
-`nexus_structure` like:
-
-```json
-{
-  "type": "stream",
-  "stream": {
-    "topic": "topic.with.multiple.sources",
-    "source": "some_histogram_producer",
-    "writer_module": "hs00",
-    "data_type": "uint64",
-    "error_type": "double",
-    "edge_type": "double",
-    "shape": [
-      {
-        "size": 4,
-        "label": "Position",
-        "unit": "mm",
-        "edges": [2, 3, 4, 5, 6],
-        "dataset_name": "x_detector"
-      },
-      {
-        "size": 6,
-        "label": "Position",
-        "unit": "mm",
-        "edges": [-3, -2, -1, 0, 1, 2, 3],
-        "dataset_name": "y_detector"
-      },
-      {
-        "size": 3,
-        "label": "Time",
-        "unit": "ns",
-        "edges": [0, 2, 4, 6],
-        "dataset_name": "time_binning"
-      }
-    ]
-  }
-}
-```
-
-In this command, several data types are defined:
-
-- `data_type`: The type of the array in the flatbuffer member
-  `EventHistogram.data.value`
-- `error_type`: The type of the array in the flatbuffer member
-  `EventHistogram.errors`
-- `error_type`: The type of the array in the flatbuffer member
-  `EventHistogram.dim_metadata.bin_boundaries`
-
-All these three types must be one of `uint32`, `uint64` or `double`.
-
-A single histogram may be represented as multiple `EventHistogram` messages on
-the Kafka topic.  All parts must have the same `EventHistogram.timestamp`.  The
-individual parts must not overlap.
 
 
 #### Command to exit the file writer:
@@ -471,6 +411,8 @@ Not that many in this release, but will be extended with upcoming changes:
     gives the buffer size in kilobytes.
   - `nexus.buffer.packet_max_kb`
     Maximum size of messages to be considered for buffering in kilobytes.
+
+Options for `hs00`: [EventHistogram](docs/writer_module_hs00_event_histogram.md).
 
 
 ## Running Tests
