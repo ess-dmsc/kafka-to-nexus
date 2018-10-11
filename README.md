@@ -65,11 +65,15 @@ Depending on the `HDFWriterModule`, there will be more options specific to the
 #### Command to start writing a file:
 
 Further documentation:
+
 - [Groups](docs/groups.md)
 - [~~Datasets~~ documentation not yet written]()
 - [Attributes](docs/attributes.md)
 - [~~File Attributes~~ documentation not yet written]()
 - [~~Streams~~ documentation not yet written]()
+
+Example to demonstrate streaming (see `for_example_motor`) as well as static
+datasets:
 
 ```json
 {
@@ -158,7 +162,7 @@ Further documentation:
             },
             {
               "name": "vector_attribute",
-              "values": [1,2,3],
+              "values": [1, 2, 3],
               "type": "uint32"
             }
             ]
@@ -294,7 +298,7 @@ be set using the `CONAN` CMake parameter with one of the following values:
 
 With the required Conan repositories configured, we can build via:
 
-```
+```bash
 conan install <path-to-source>/conan --build=missing
 cmake <path-to-source> [-DREQUIRE_GTEST=TRUE]
 make
@@ -344,7 +348,7 @@ librdkafka must be enabled with
 
 Start the `gtest` based test suite via:
 
-```
+```bash
 ./tests/UnitTests
 ```
 
