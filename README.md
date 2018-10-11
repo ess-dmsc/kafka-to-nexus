@@ -10,6 +10,7 @@
 - [Configuration Files](#configuration-files)
 - [Commands](#send-command-to-kafka-to-nexus)
 - [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
+  - [f142 LogData](docs/docs/writer_module_f142_log_data.md)
   - [hs00 EventHistogram](docs/writer_module_hs00_event_histogram.md)
 
 
@@ -17,7 +18,7 @@
 
 - Wait for file writing command from a Kafka topic
 - Write data to file
-- Writer plugins can be [configured via the json command](#options-for-schema-plugins)
+- Writer plugins can be [configured via the json command](#writer-modules)
 
 
 ## Usage
@@ -360,60 +361,25 @@ The default installation has the following structure
 ```
 
 
-## Flatbuffer Schema Plugins
+## Writer Modules
 
-The actual parsing of the different FlatBuffer schemata is handled by plugins
-which register themselves via the `FileWriter::FlatbufferReaderRegistry` and
-`FileWriter::HDFWriterModuleRegistry`.  See for example
-`kafka-to-nexus/src/schemas/ev42/ev42_rw.cxx` and search for `Registrar` in
-the code.  Support for new schemas can be added in the same way.
+Writer modules for the various flatbuffer schemas give the filewriter the
+ability to parse the flatbuffers and write them to HDF5.
 
-
-### Options for Schema Plugins
-
-Schema plugins can access configuration options which got passed via the
-`FileWriter_new` json command.  The writer implementation, meaning the class
-which derives from `HDFWriterModule`, gets passed these options as a json
-string.
-
-In this example, we assume that a stream uses the `f142` schema.  We tell the
-writer for the `f142` schema to write an index entry every 3 megabytes:
-```json
-{
-  "cmd": "FileWriter_new",
-  "broker": "<your-broker>",
-  "streams": [
-    {
-      "topic": "<kafka-topic>",
-      "source": "<some-source-using-schema-f142>",
-      "nexus_path": "/path/to/the/nexus/group",
-      "nexus": {
-        "indices": {
-          "index_every_mb": 3
-        }
-      }
-    }
-  ], ...
-```
+The actual parsing of the different FlatBuffer schemas and conversion to HDF5 is
+handled by modules which register themselves via the `FlatbufferReaderRegistry`
+and `HDFWriterModuleRegistry`.  For an example, please search for `Registrar` in
+`src/schemas/hs00/`.  Support for new schemas can be added in the same way.
 
 
-### Available Options for Schema Plugins
+### Module for f142 LogData
 
-Not that many in this release, but will be extended with upcoming changes:
+[Documentation](docs/writer_module_f142_log_data.md).
 
-- `f142`
-  - `nexus.indices.index_every_mb`
-    Write an index entry (in Nexus terminology: cue entry) every given
-    megabytes.
-  - `nexus.chunk.chunk_mb`
-    Size of the HDF chunks given in megabytes.
-  - `nexus.buffer.size_kb`
-    Small messages can additionally be buffered to reduce HDF writes. This
-    gives the buffer size in kilobytes.
-  - `nexus.buffer.packet_max_kb`
-    Maximum size of messages to be considered for buffering in kilobytes.
 
-Options for `hs00`: [EventHistogram](docs/writer_module_hs00_event_histogram.md).
+### Module for hs00 EventHistogram
+
+[Documentation](docs/writer_module_hs00_event_histogram.md).
 
 
 ## Running Tests
