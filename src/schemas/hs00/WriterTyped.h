@@ -124,21 +124,6 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
         DimsOut.at(I - 1) = DimsMem.at(I);
       }
       SpaceOut = hdf5::dataspace::Simple(DimsOut, DimsOut);
-      /*
-      hdf5::Dimensions ChunkElements(DimsOut.size());
-      ChunkElements.at(0) = ChunkBytes / Type.size();
-      for (size_t I = 1; I < DimsOut.size(); ++I) {
-        ChunkElements.at(I) = DimsOut.at(I);
-        ChunkElements.at(0) /= DimsOut.at(I);
-      }
-      if (ChunkElements.at(0) == 0) {
-        ChunkElements.at(0) = 1;
-      }
-      for (size_t I = 0; I < ChunkElements.size(); ++I) {
-        LOG(Sev::Critical, "ChunkElements.at({}) = {}", I, ChunkElements.at(I));
-      }
-      DCPL.chunk(ChunkElements);
-      */
     }
     bool found = false;
     try {
