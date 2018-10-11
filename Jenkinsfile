@@ -15,6 +15,10 @@ container_build_nodes = [
   'ubuntu1804': new ContainerBuildNode('essdmscdm/ubuntu18.04-build-node:1.2.0', 'bash -e')
 ]
 
+// Define number of old builds to keep. These numbers are somewhat arbitrary,
+// but based on the fact that for the master branch we want to have a certain
+// number of old builds available, while for the other branches we want to be
+// able to deploy easily without using too much disk space.
 def num_artifacts_to_keep
 if (env.BRANCH_NAME == 'master') {
   num_artifacts_to_keep = '5'
@@ -291,6 +295,9 @@ def get_system_tests_pipeline() {
           }  // stage
         } finally {
           stage ("System tests: Clean Up") {
+            // The statements below return true because the build should pass
+            // even if there are no docker containers or output files to be
+            // removed.
             sh """rm -rf system-tests/output-files/* || true
             docker stop \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
             docker rm \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
