@@ -10,6 +10,7 @@
 - [Configuration Files](#configuration-files)
 - [Commands](#send-command-to-kafka-to-nexus)
 - [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
+  - [hs00 EventHistogram](docs/writer_module_hs00_event_histogram.md)
 
 
 ## Features
@@ -174,6 +175,7 @@ Further documentation:
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
+
 
 #### Command to exit the file writer:
 
@@ -408,6 +410,8 @@ Not that many in this release, but will be extended with upcoming changes:
     gives the buffer size in kilobytes.
   - `nexus.buffer.packet_max_kb`
     Maximum size of messages to be considered for buffering in kilobytes.
+
+Options for `hs00`: [EventHistogram](docs/writer_module_hs00_event_histogram.md).
 
 
 ## Running Tests
