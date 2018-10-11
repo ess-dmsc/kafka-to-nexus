@@ -249,6 +249,8 @@ To enable SWMR when writing a file, add to the `FileWriter_new` command:
 
 ## Installation
 
+The supported way for [installation](#install-via-conan) is based on Conan.
+
 For installation using Ansible, please refer to [Installation using
 Ansible](docs/installation-using-ansible.md).
 
@@ -265,9 +267,7 @@ More hints about manual installation without Conan or Ansible, please refer to [
 - Doxygen if you would like to `make docs`
 
 
-### Conan
-
-The supported way for installation is based on Conan.
+### Install via Conan
 
 Please configure the following remote repositories using `conan remote add
 <local-name> <remote-url>` where `<local-name>` must be substituted by a locally
