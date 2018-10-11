@@ -517,10 +517,6 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
   }
 }
 
-TEST_F(EventHistogramWriter, WriteMultipleHistogramsWithMinimumInterval) {
-  // exact strategy still to be decided upon.
-}
-
 TEST_F(EventHistogramWriter, WriteAMORExample) {
   auto File = createFile("Test.EventHistogramWriter.WriteAMORExample",
                          FileCreationLocation::Default);
