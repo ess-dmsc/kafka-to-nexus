@@ -10,7 +10,7 @@
 - [Configuration Files](#configuration-files)
 - [Commands](#send-command-to-kafka-to-nexus)
 - [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
-  - [f142 LogData](docs/docs/writer_module_f142_log_data.md)
+  - [f142 LogData](docs/writer_module_f142_log_data.md)
   - [hs00 EventHistogram](docs/writer_module_hs00_event_histogram.md)
 
 
