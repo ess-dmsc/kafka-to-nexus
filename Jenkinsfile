@@ -292,6 +292,7 @@ def get_system_tests_pipeline() {
             scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
             """
             junit "system-tests/SystemTestsOutput.xml"
+            archiveArtifacts "logs/*.log"
           }  // stage
         } finally {
           stage ("System tests: Clean Up") {

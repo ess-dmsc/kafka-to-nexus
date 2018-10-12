@@ -103,6 +103,15 @@ def build_and_run(options, request):
     # from to get all data which was published
     return start_time
 
+@pytest.fixture(scope="session", autouse=True)
+def remove_logs_from_previous_run(request):
+    print("Removing previous log files", flush=True)
+    dir_name = os.path.join(os.getcwd(), "logs")
+    dirlist = os.listdir(dir_name)
+    for filename in dirlist:
+        if filename.endswith(".log"):
+            os.remove(os.path.join(dir_name, filename))
+    print("Removed previous log files", flush=True)
 
 @pytest.fixture(scope="module")
 def docker_compose(request):
