@@ -89,7 +89,6 @@ def build_and_run(options, request):
     run_containers(cmd, options)
 
     def fin():
-        cmd.logs(options)
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
         options["--timeout"] = 30
