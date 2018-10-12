@@ -10,6 +10,7 @@
 - [Configuration Files](#configuration-files)
 - [Commands](#send-command-to-kafka-to-nexus)
 - [Flatbuffer Schema Plugins](#flatbuffer-schema-plugins)
+  - [f142 LogData](docs/writer_module_f142_log_data.md)
   - [hs00 EventHistogram](docs/writer_module_hs00_event_histogram.md)
 
 
@@ -17,7 +18,7 @@
 
 - Wait for file writing command from a Kafka topic
 - Write data to file
-- Writer plugins can be [configured via the json command](#options-for-schema-plugins)
+- Writer plugins can be [configured via the json command](#writer-modules)
 
 
 ## Usage
@@ -31,15 +32,17 @@
 The file writer can be configured via `--config-file <ini>` which should contain command line options. 
 
 #### Example configuration file:
+
 ```ini
-  command-uri=//broker[:port]/command-topic
-  status-uri=//broker[:port]/status-topic
-  commands-json=./commands.json
-  hdf-output-prefix=./absolute/or/relative/path/to/hdf/output/directory
-  service-id=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
-  streamer-ms-before-start=123456
-  kafka-config=consumer.timeout.ms 501 fetch.message.max.bytes 1234 api.version.request true
+command-uri=//broker[:port]/command-topic
+status-uri=//broker[:port]/status-topic
+commands-json=./commands.json
+hdf-output-prefix=./absolute/or/relative/path/to/hdf/output/directory
+service-id=this_is_filewriter_instance_HOST_PID_EXAMPLENAME
+streamer-ms-before-start=123456
+kafka-config=consumer.timeout.ms 501 fetch.message.max.bytes 1234 api.version.request true
 ```
+
 Note that the kafka options are key value pairs and the filewriter can be given multiple by appending the key value pair to the end of the command line option. 
 
 ### Send command to kafka-to-nexus
@@ -62,11 +65,15 @@ Depending on the `HDFWriterModule`, there will be more options specific to the
 #### Command to start writing a file:
 
 Further documentation:
+
 - [Groups](docs/groups.md)
 - [~~Datasets~~ documentation not yet written]()
 - [Attributes](docs/attributes.md)
 - [~~File Attributes~~ documentation not yet written]()
 - [~~Streams~~ documentation not yet written]()
+
+Example to demonstrate streaming (see `for_example_motor`) as well as static
+datasets:
 
 ```json
 {
@@ -109,7 +116,7 @@ Further documentation:
               "type": "uint64",
               "size": ["unlimited", 5, 6]
             },
-            "values": [[[0, 1, 2, 3, 4, 5], [...], ...], [...], ...]
+            "values": [[[0, 1, 2, 3, 4, 5], ["…"], "…"], ["…"], "…"]
           },
           {
             "type": "dataset",
@@ -155,7 +162,7 @@ Further documentation:
             },
             {
               "name": "vector_attribute",
-              "values": [1,2,3],
+              "values": [1, 2, 3],
               "type": "uint32"
             }
             ]
@@ -170,8 +177,8 @@ Further documentation:
   "cmd": "FileWriter_new",
   "job_id": "unique-identifier",
   "broker": "localhost:9092",
-  "start_time": <[OPTIONAL] timestamp in milliseconds>,
-  "stop_time": <[OPTIONAL] timestamp in milliseconds>,
+  "start_time": "[OPTIONAL] timestamp (int) in milliseconds",
+  "stop_time": "[OPTIONAL] timestamp (int) in milliseconds",
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
@@ -192,7 +199,7 @@ Further documentation:
 {
   "cmd": "FileWriter_stop",
   "job_id": "job-unique-identifier",
-  "stop_time" : <[OPTIONAL] timestamp-in-milliseconds>,
+  "stop_time" : "[OPTIONAL] timestamp (int) in milliseconds",
   "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
 }
 ```
@@ -246,265 +253,115 @@ To enable SWMR when writing a file, add to the `FileWriter_new` command:
 
 ## Installation
 
+The supported way for [installation](#install-via-conan) is based on Conan.
+
+For installation using Ansible, please refer to [Installation using
+Ansible](docs/installation-using-ansible.md).
+
+More hints about manual installation without Conan or Ansible, please refer to [Manual Installation](docs/manual-build.md).
+
+
 ### Requirements
 
-- cmake (at least 2.8.11)
-- git
-- flatbuffers (headers and working `flatc`)
-- librdkafka
-- hdf5
-- libfmt (e.g. `yum install fmt fmt-devel` or `brew install fmt`)
-- `streaming-data-types` repository (clone e.g. so that both `kafka-to-nexus`
-  and `streaming-data-types` are in the same directory)
-- Optional `graylog_logger`
-
-Tooling
-
-- conan
-- cmake (minimum tested is 2.8.11)
-- C++ compiler with c++11 support
+- `conan`
+- `cmake >= 3.1.0`
+- `git`
+- `hdf5`
+- `c++14`-enabled compiler
 - Doxygen if you would like to `make docs`
 
-### Conan
 
-For downloading and configuring dependencies there are three options which can be set using the `CONAN` CMake parameter with one of the following values:
-- `AUTO` - (default) conan is used to download and configure dependencies, this is done automatically by CMake.
-conan is required to be installed and in the `path`. A non-default conan profile can be specified by setting `CONAN_PROFILE`.
-- `MANUAL` - conan can be run manually to generate a `conanbuildinfo.cmake` file in the build directory.
-- `DISABLE` - conan is disabled. CMake will try to find system installed libraries or paths can be specified manually.
+### Install via Conan
 
-
-If using conan, the following remote repositories are required to be configured:
+Please configure the following remote repositories using `conan remote add
+<local-name> <remote-url>` where `<local-name>` must be substituted by a locally
+unique name.  Configured remotes can be listed with `conan remote list`.
 
 - https://api.bintray.com/conan/ess-dmsc/conan
 - https://api.bintray.com/conan/conan-community/conan
 - https://api.bintray.com/conan/vthiery/conan-packages
 - https://api.bintray.com/conan/bincrafters/public-conan
 
-You can add them by running
-```
-conan remote add <local-name> <remote-url>
-```
-where `<local-name>` must be substituted by a locally unique name. Configured
-remotes can be listed with `conan remote list`.
+For downloading and configuring dependencies there are three options which can
+be set using the `CONAN` CMake parameter with one of the following values:
+- `AUTO`: (default) conan is used to download and configure dependencies, this
+  is done automatically by CMake.  conan is required to be installed and in the
+  `path`. A non-default conan profile can be specified by setting
+  `CONAN_PROFILE`.
+- `MANUAL`: conan can be run manually to generate a `conanbuildinfo.cmake` file
+  in the build directory.
+- `DISABLE`: conan is disabled. CMake will try to find system installed
+  libraries or paths can be specified manually.
+
 
 ### Build
 
-As usual `cmake`, `make`.
-```
+With the required Conan repositories configured, we can build via:
+
+```bash
 conan install <path-to-source>/conan --build=missing
 cmake <path-to-source> [-DREQUIRE_GTEST=TRUE]
 make
 make docs  # optional
 ```
 
-#### Usage of your custom builds of the dependencies
 
-If you have dependencies in non-standard locations:
-Locations of dependencies can be supplied via the standard
-`CMAKE_INCLUDE_PATH` and `CMAKE_LIBRARY_PATH` variables.
+## Writer Modules
 
-- `flatbuffers` Headers plus `flatc`, therefore set `CMAKE_INCLUDE_PATH` and `CMAKE_PROGRAM_PATH`.
+Writer modules for the various flatbuffer schemas give the filewriter the
+ability to parse the flatbuffers and write them to HDF5.
 
-- `HDF5`
-
-- `graylog_logger` Additionally, set `USE_GRAYLOG_LOGGER=1`
-  - cmake will report if it is found
-
-- `libfmt` Header/Source-only
-  - we expect `fmt/[format.cc, format.h]`
-
-- `Google Test` (optional) Easiest way: `git clone https://github.com/google/googletest.git`
-  in parallel to this repository, or give the repository location in
-  `CMAKE_INCLUDE_PATH` or in `GOOGLETEST_REPOSITORY_DIR`.
-  Enable gtest usage by `REQUIRE_GTEST=1`
-
-If you like full fine-grained control over the locations, you can of course set
-the locations directly as the package-specific variables which can be looked up
-in the `Find...` scripts under `./cmake/` for each package.
+The actual parsing of the different FlatBuffer schemas and conversion to HDF5 is
+handled by modules which register themselves via the `FlatbufferReaderRegistry`
+and `HDFWriterModuleRegistry`.  For an example, please search for `Registrar` in
+`src/schemas/hs00/`.  Support for new schemas can be added in the same way.
 
 
-### Using Ansible
+### Module for f142 LogData
 
-Install using the playbook:
-
-```
-ansible-playbook -i hosts kafka-to-nexus.yml
-```
-
-The filewriter can be installed using the ansible playbook defined in
-`ansible`. The file `roles/kafka-to-nexus/defaults/main.yml` defines
-the variables used during installation. The variables `<dep>_src` and
-`<dep>_version` are the remote source and the required version of the
-dependency, `<dep>` the install location. The sources and builds of
-the dependencies are kept in `sources` and `builds`.
-
-`filewriter_inc`, `filewriter_lib` and `filewriter_bin` defines
-`CMAKE_INCLUDE_PATH`, `CMAKE_LIBRARY_PATH` and `CMAKE_PROGRAM_PATH`.
-
-The default installation has the following structure
-```
-/opt/software/sources/<package1>-<version>
-/opt/software/sources/<package2>-<version>
-...
-/opt/software/builds/<package1>-<version>
-/opt/software/builds/<package2>-<version>
-...
-/opt/software/<package1>-<version>
-/opt/software/<package2>-<version>
-...
-/opt/software/sources/filewriter-<version>
-/opt/software/builds/filewriter-<version>
-```
+[Documentation](docs/writer_module_f142_log_data.md).
 
 
-## Flatbuffer Schema Plugins
+### Module for hs00 EventHistogram
 
-The actual parsing of the different FlatBuffer schemata is handled by plugins
-which register themselves via the `FileWriter::FlatbufferReaderRegistry` and
-`FileWriter::HDFWriterModuleRegistry`.  See for example
-`kafka-to-nexus/src/schemas/ev42/ev42_rw.cxx` and search for `Registrar` in
-the code.  Support for new schemas can be added in the same way.
-
-
-### Options for Schema Plugins
-
-Schema plugins can access configuration options which got passed via the
-`FileWriter_new` json command.  The writer implementation, meaning the class
-which derives from `HDFWriterModule`, gets passed these options as a json
-string.
-
-In this example, we assume that a stream uses the `f142` schema.  We tell the
-writer for the `f142` schema to write an index entry every 3 megabytes:
-```json
-{
-  "cmd": "FileWriter_new",
-  "broker": "<your-broker>",
-  "streams": [
-    {
-      "topic": "<kafka-topic>",
-      "source": "<some-source-using-schema-f142>",
-      "nexus_path": "/path/to/the/nexus/group",
-      "nexus": {
-        "indices": {
-          "index_every_mb": 3
-        }
-      }
-    }
-  ], ...
-```
-
-
-### Available Options for Schema Plugins
-
-Not that many in this release, but will be extended with upcoming changes:
-
-- `f142`
-  - `nexus.indices.index_every_mb`
-    Write an index entry (in Nexus terminology: cue entry) every given
-    megabytes.
-  - `nexus.chunk.chunk_mb`
-    Size of the HDF chunks given in megabytes.
-  - `nexus.buffer.size_kb`
-    Small messages can additionally be buffered to reduce HDF writes. This
-    gives the buffer size in kilobytes.
-  - `nexus.buffer.packet_max_kb`
-    Maximum size of messages to be considered for buffering in kilobytes.
-
-Options for `hs00`: [EventHistogram](docs/writer_module_hs00_event_histogram.md).
+[Documentation](docs/writer_module_hs00_event_histogram.md).
 
 
 ## Running Tests
 
 Tests are built only when `gtest` is detected.  If detected, the `cmake` output
 contains
+
 ```
 -- Using Google Test: [ DISCOVERED_LOCATION_OF_GTEST ]
 ```
+
 with the location where it has found `gtest`.
 
-To enable tests for the ``Streamer`` the [librdkafka-fake](https://github.com/ess-dmsc/librdkafka-fake) implementation of librdkafka must be enabled with
+To enable tests for the ``Streamer`` the
+[librdkafka-fake](https://github.com/ess-dmsc/librdkafka-fake) implementation of
+librdkafka must be enabled with
+
 ```
 -DFAKE_RDKAFKA=<path>
 ```
 
 Start the `gtest` based test suite via:
+
+```bash
+./tests/UnitTests
 ```
-./tests/tests
-```
+
 
 ## System Tests
 
 See [System Tests page](system-tests/README.md).
 
 
-## Performance
-
-- [Profiling ev42 HDF writer module](docs/profile-ev42.md)
-
-
 ## Documents:
 
 [Nexus-for-ESS](https://confluence.esss.lu.se/display/DMSC/NeXus+for+ESS)
 
+[Older docs on filewriter development](docs/filewriter_dev_docs.md)
+
 [file-writer-2016-10-28](https://confluence.esss.lu.se/download/attachments/48202445/BrightNeXus.pdf?version=1&modificationDate=1477659873237&api=v2)
-
-
-## Archive
-
-These documents are outdated regarding technical documentation, but linked here
-for archival:
-
-- [NeXusFileWriterDesign](docs/NeXusFileWriterDesign.md) (Mark).
-
-
-## Graph of dependencies and data flow
-
- Very early draft so far:
-
-![Flow](flow.svg)
-
-A pictorial representation of the implementation is ![File Writer overall design](docs/FileWriter.jpg)
-
-## Streamer
-
-According to the design the Streamer connects to Kafka (other
-sources to be implemented) and consumes a message in the specified topic. Some features:
-
-* one Streamer per topic
-* multiple Source per streamer
-* initial timestamp is specified using ``set_start_time``
-* connection to the Kafka broker is nonblocking. If the broker address is invalid returns an error
-* Kafka::Config and streamer options can be optionally configured using ``kafka`` and ``streamer`` fields in the configuration file. ``kafka`` can contain any option that RdKafka accepts. `streamer` accetps:
-  - `ms-before-start` milliseconds before the `start_time` to start writing from
-    - `consumer-timeout-ms` the maximum time in milliseconds the consumer waits
-      before return with error status
-    - `metadata-retry` maxim number of retries to connect to specifies broker
-      before return an error
-
-## DemuxTopic
-Mapped 1:1 with topics (and Streamers) drives the message to the correct Source. Derived from classes MessageProcessor and TimeDifferenceFromMessage. The former provides an interface for processing new messages (usually write on disk), the latter the interface process old messaged with the aim of find the first message sent after ECP ```start ```message.
-The two corresponding methods are
-
-* process_message
-* time_difference_from_message
-
-Both receive the message payload and size. Return values are ProcessMessageResult and TimeDifferenceFromMessage_DT.
-
-## StreamMaster 
-
-The StreamMaster receives the array of DemuxTopic from
-FileWriterCommand and instantiates the Streamer array according to the
-topics. Eventually retrieves the list of brokers from Kafka.
-
-* `start_time` and `stop_time` can be used to set the timestamp of
-the first and last event to be written (see Streamer options);
-* upon a `stop` message the ``Master`` can stop the writing;
-* if a `status-uri` is configured sends a (JSON formatted) status
-  report on the corresponding topic;
-* a global `status` flag report the status of
-``StreamMaster``. Definitions are in
-`Status::StreamMasterErrorCode` (the function `Err2Str`
-converts the error code into a human readable string). 
-* each topic is written continously for at most `topic-write-interval`. this value can be configured in the config file (default 1000ms)
-
