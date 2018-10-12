@@ -28,6 +28,7 @@ Schema_f142.cpp
 AreaDetectorTest.cpp
 EventLogger.cpp
 MainOpt.cpp
+EventHistogramWriterTests.cpp
 )
 set(UnitTests_INC
 HDFFileTestHelper.h
