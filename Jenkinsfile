@@ -207,8 +207,7 @@ node {
     }
   }
 
-  // macos is currently not available on the build servers
-  // builders['macOS'] = get_macos_pipeline()
+  builders['macOS'] = get_macos_pipeline()
 
   // System tests currently fail, probably because of build server maintenance window, with:
   // E               docker.errors.BuildError: The command '/bin/sh -c cd kafka_to_nexus &&
