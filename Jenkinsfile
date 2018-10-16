@@ -207,18 +207,11 @@ node {
     }
   }
 
-  // macos is currently not available on the build servers
-  // builders['macOS'] = get_macos_pipeline()
+  builders['macOS'] = get_macos_pipeline()
 
-  // System tests currently fail, probably because of build server maintenance window, with:
-  // E               docker.errors.BuildError: The command '/bin/sh -c cd kafka_to_nexus &&
-  // conan install --build=outdated ../kafka_to_nexus_src/conan/conanfile.txt'
-  // returned a non-zero code: 1
-  //
-  // ../../../../.local/lib/python3.5/site-packages/docker/models/images.py:266: BuildError
-  //if ( env.CHANGE_ID ) {
-  //    builders['system tests'] = get_system_tests_pipeline()
-  //}
+  if ( env.CHANGE_ID ) {
+      builders['system tests'] = get_system_tests_pipeline()
+  }
 
   try {
     parallel builders
@@ -308,33 +301,3 @@ def get_system_tests_pipeline() {
     }  // node
   }  // return
 } // def
-
-node('docker') {
-    cleanWs()
-
-    stage('Checkout') {
-        dir("${project}") {
-            try {
-                scm_vars = checkout scm
-            } catch (e) {
-                failure_function(e, 'Checkout failed')
-            }
-        }
-    }
-
-    def builders = [:]
-    for (x in images.keySet()) {
-        def image_key = x
-        builders[image_key] = get_pipeline(image_key)
-    }
-    builders['macOS'] = get_macos_pipeline()
-
-    if ( env.CHANGE_ID ) {
-        builders['system tests'] = get_system_tests_pipeline()
-    }
-
-    parallel builders
-
-    // Delete workspace when build is done
-    cleanWs()
-}
