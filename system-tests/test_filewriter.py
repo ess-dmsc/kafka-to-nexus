@@ -43,5 +43,3 @@ def test_data_reaches_file(docker_compose):
     assert file["entry/detector_1_events/event_id"][1] == 98345
     # f142 Sample env (Sample)
     assert np.isclose(21.0, file["entry/sample/sample_env_logs/Det_Temp_RRB/value"][0])
-    assert np.isclose(1539267934000000000, file["entry/sample/sample_env_logs/Det_Temp_RRB/time"][0])
-    assert np.isclose(1539267935000000000, file["entry/sample/sample_env_logs/Det_Temp_RRB/time"][1])
