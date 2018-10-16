@@ -12,61 +12,64 @@ namespace FileWriter {
 
 struct StreamSettings;
 
+/// Helper for adding more error information on parse error.
 nlohmann::json parseOrThrow(std::string const &Command);
 
-/// Interprets and execute commands received.
+/// Interpret and execute commands received.
 class CommandHandler {
 public:
+  /// Initialize a new `CommandHandler`.
+  ///
+  /// \param Config Configuration of the file writer.
+  /// \param MasterPtr Optional `Master` which can continue to watch over newly
+  /// created jobs. Not used for example in some tests.
   CommandHandler(MainOpt &config, MasterI *master);
 
-  /// \brief  Given a JSON string, create a new file writer task.
+  /// Given a JSON string, create a new file writer task.
   ///
   /// \param Command The command for configuring the new task.
   void handleNew(std::string const &Command);
 
-  /// \brief  Stop the whole file writer application.
+  /// Stop the whole file writer application.
   void handleExit();
 
-  /// \brief  Stop and remove all ongoing file writer jobs.
+  /// Stop and remove all ongoing file writer jobs.
   void handleFileWriterTaskClearAll();
 
-  /// \brief  Stops a given job.
+  /// Stop a given job.
   ///
-  /// \param Command The command for defining which job to stop.
+  /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
 
-  /// \brief  Passes content of the message to the command handler.
+  /// Pass content of the message to the command handler.
   ///
   /// \param Msg The message.
   void tryToHandle(Msg const &msg);
 
-  /// \brief  Parses the given command and passes it on to a more specific
+  /// Parse the given command and pass it on to a more specific
   /// handler.
   ///
   /// \param Command The command to parse.
   void handle(std::string const &command);
+
+  /// Try to handle command and catch exceptions
   void tryToHandle(std::string const &Command);
 
+  /// Get number of active writer tasks.
+  ///
+  /// \return  Number of active writer tasks.
   size_t getNumberOfFileWriterTasks() const;
+
+  /// Find a writer task given its `JobID`.
+  ///
+  /// \return  The writer task.
   std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
 
 private:
-  /// \brief  Configure the HDF writer modules for writing.
-  ///
-  /// \param StreamSettingsList The settings for the stream.
-  /// \param Task The task to configure.
   void addStreamSourceToWriterModule(
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
 
-  /// \brief  Set up the basic HDF file structure
-  ///
-  /// Given a task and the `nexus_structure` as json string, set up the
-  /// basic HDF file structure.
-  ///
-  /// \param Task The task which will write the HDF file.
-  /// \param NexusStructureString The structure of the NeXus file.
-  /// \return The related stream settings.
   std::vector<StreamHDFInfo>
   initializeHDF(FileWriterTask &Task,
                 std::string const &NexusStructureString) const;
@@ -78,5 +81,7 @@ private:
 std::string findBroker(std::string const &);
 
 std::string format_nested_exception(std::exception const &E);
+std::string format_nested_exception(std::exception const &E,
+                                    std::stringstream &StrS, int Level);
 
 } // namespace FileWriter
