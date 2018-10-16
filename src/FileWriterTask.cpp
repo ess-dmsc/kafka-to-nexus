@@ -123,17 +123,13 @@ int FileWriterTask::hdf_reopen() {
   return 0;
 }
 
-/// \brief  The unique numeric identifier of this job. Could maybe be replaced
-/// by `JobID`.
 uint64_t FileWriterTask::id() const { return _id; }
 
-/// \brief  The `JobID` of this file being written.
 std::string FileWriterTask::job_id() const { return JobID; }
 
 /// \brief  Set our `JobID` to the passed value.
 void FileWriterTask::job_id_init(std::string const &JobID_) { JobID = JobID_; }
 
-/// \brief  Return statistics about this job as JSON.
 json FileWriterTask::stats() const {
   auto Topics = json::object();
   for (auto &d : _demuxers) {
