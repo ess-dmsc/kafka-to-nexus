@@ -33,7 +33,8 @@ public:
   /// contains `host:port`
   std::string host_port;
 
-  /// \brief The port number if specified, or zero to indicate that the port is not
+  /// \brief The port number if specified, or zero to indicate that the port is
+  /// not
   /// specified
   uint32_t port = 0;
 
@@ -43,7 +44,8 @@ public:
   /// If the path can be a valid Kafka topic name, then it is non-empty
   std::string topic;
 
-  /// \brief Whether we require two slashes before the hostname, as required by the
+  /// \brief Whether we require two slashes before the hostname, as required by
+  /// the
   /// standard.
   ///
   /// Otherwise ambiguous because `host/path` could also be a
