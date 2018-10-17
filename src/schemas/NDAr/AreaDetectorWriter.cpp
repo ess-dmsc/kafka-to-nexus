@@ -118,7 +118,7 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
+    FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
     LOG(Sev::Error, "Unable to initialise areaDetector data tree in "
                     "HDF file with error message: \"{}\"",
