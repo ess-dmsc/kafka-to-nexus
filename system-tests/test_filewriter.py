@@ -7,7 +7,7 @@ import os
 
 def test_data_reaches_file(docker_compose):
     producer = create_producer()
-    sleep(10)
+    sleep(20)
     # Start file writing
     send_writer_command("commands/example-json-command.json", producer, start_time=docker_compose)
     producer.flush()
