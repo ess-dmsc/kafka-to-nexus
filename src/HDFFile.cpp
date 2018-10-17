@@ -290,8 +290,8 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
       } else {
         std::string const StringValue = Values->get<std::string>();
         auto StringType = hdf5::datatype::String::fixed(StringValue.size());
-        auto StringAttr = Node.attributes.create(Name, StringType,
-                                                 hdf5::dataspace::Scalar());
+        auto StringAttr =
+            Node.attributes.create(Name, StringType, hdf5::dataspace::Scalar());
         StringAttr.write(StringValue, StringType);
       }
     }
@@ -452,8 +452,8 @@ static void writeNumericDataset(
     hdf5::dataspace::Dataspace &Dataspace, const nlohmann::json *Values) {
 
   try {
-    auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(), Dataspace,
-                                  DatasetCreationPropertyList);
+    auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
+                                       Dataspace, DatasetCreationPropertyList);
     try {
       auto Blob = populateBlob<DT>(Values, Dataspace.size());
       try {
@@ -485,9 +485,10 @@ void HDFFile::WriteStringDataset(
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     DataType.padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto Dataset = Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
-    Dataset.write(populateStrings(Values, Dataspace.size()), DataType, Dataspace,
-             Dataspace, hdf5::property::DatasetTransferList());
+    auto Dataset =
+        Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
+    Dataset.write(populateStrings(Values, Dataspace.size()), DataType,
+                  Dataspace, Dataspace, hdf5::property::DatasetTransferList());
   } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed to write variable-size string dataset ";
@@ -507,11 +508,13 @@ void HDFFile::writeFixedSizeStringDataset(
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     DataType.padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto Dataset = Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
+    auto Dataset =
+        Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
 
     DataType.padding(hdf5::datatype::StringPad::NULLPAD);
-    Dataset.write(populateFixedStrings(Values, ElementSize, Dataspace.size()), DataType,
-             Dataspace, Dataspace, hdf5::property::DatasetTransferList());
+    Dataset.write(populateFixedStrings(Values, ElementSize, Dataspace.size()),
+                  DataType, Dataspace, Dataspace,
+                  hdf5::property::DatasetTransferList());
 
   } catch (const std::exception &e) {
     std::stringstream ss;
@@ -731,7 +734,8 @@ void HDFFile::createHDFStructures(
       Path.pop_back();
     }
   } catch (const std::exception &e) {
-    LOG(Sev::Error, "Failed to create structure  parent={} level={}", std::string(Parent.link().path()), Level)
+    LOG(Sev::Error, "Failed to create structure  parent={} level={}",
+        std::string(Parent.link().path()), Level)
   }
 }
 

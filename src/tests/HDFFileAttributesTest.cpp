@@ -170,9 +170,8 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
-  auto ArrayAttr =
-      node::get_group(TestFile.RootGroup, "group_with_array_attrs")
-          .attributes["array_attribute"];
+  auto ArrayAttr = node::get_group(TestFile.RootGroup, "group_with_array_attrs")
+                       .attributes["array_attribute"];
   std::vector<int> ArrayAttrValues(3);
   ArrayAttr.read(ArrayAttrValues);
   ASSERT_EQ(ArrayAttrValues[0], 1);
