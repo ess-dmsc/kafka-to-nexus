@@ -18,9 +18,11 @@ class CommandListener {
 public:
   CommandListener(MainOpt &config);
   ~CommandListener();
+
   /// Start listening to command messages.
   void start();
   void stop();
+
   /// Check for new command packets and return one if there is.
   KafkaW::PollStatus poll();
 

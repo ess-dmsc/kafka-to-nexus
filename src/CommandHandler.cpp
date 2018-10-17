@@ -479,7 +479,7 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
-/// Helper to get nicer error messages
+/// Helper to get nicer error messages.
 std::string format_nested_exception(std::exception const &E,
                                     std::stringstream &StrS, int Level) {
   if (Level > 0) {
@@ -495,7 +495,7 @@ std::string format_nested_exception(std::exception const &E,
   return StrS.str();
 }
 
-/// Helper to get nicer error messages
+/// Helper to get nicer error messages.
 std::string format_nested_exception(std::exception const &E) {
   std::stringstream StrS;
   return format_nested_exception(E, StrS, 0);

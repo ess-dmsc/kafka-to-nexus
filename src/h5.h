@@ -50,7 +50,8 @@ public:
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
 
-  /// Write a string to this dataset.
+  /// \brief Write a string to this dataset.
+  ///
   /// Writes the given string to the dataset if the dataset can contain strings.
   append_ret append(std::string const &String);
   std::string name;

@@ -15,7 +15,6 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return Opt;
 }
 
-/// Use for adding a URI option
 CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
                        std::string Description = "", bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
@@ -26,8 +25,17 @@ CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
   return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
 }
 
-/// Use for adding a URI option, if the URI is given then TrueIfOptionGiven is
-/// set to true
+/// \brief Adding a URI option.
+///
+/// If the URI is given then TrueIfOptionGiven is set to true
+///
+/// \param App
+/// \param Name
+/// \param URIArg
+/// \param TrueIfOptionGiven
+/// \param Description
+/// \param Defaulted
+/// \return
 CLI::Option *addOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
                        bool &TrueIfOptionGiven,
                        const std::string &Description = "",

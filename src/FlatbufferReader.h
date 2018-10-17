@@ -10,10 +10,10 @@
 
 namespace FileWriter {
 
-/// Interface for reading essential information from the flatbuffer which is
+/// \brief Interface for reading essential information from the flatbuffer which is
 /// needed for example to extract timing information and name of the source.
+///
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
-
 class FlatbufferReader {
 public:
   virtual ~FlatbufferReader() = default;
@@ -29,10 +29,10 @@ public:
   virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
-/// Keeps track of the registered FlatbufferReader instances.
+/// \brief Keeps track of the registered FlatbufferReader instances.
+///
 /// See for example `src/schemas/ev42/ev42_rw.cpp` and search for
 /// FlatbufferReaderRegistry.
-
 namespace FlatbufferReaderRegistry {
 using ReaderPtr = FlatbufferReader::ptr;
 std::map<std::string, ReaderPtr> &getReaders();

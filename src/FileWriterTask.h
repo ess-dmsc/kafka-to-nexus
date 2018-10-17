@@ -37,24 +37,23 @@ public:
   /// Used by Streamer to get the list of demuxers.
   std::vector<DemuxTopic> &demuxers();
 
-  /// The unique numeric identifier of this job. Could maybe be replaced by
-  /// `JobID`.
+  /// Get `_id` of this job.
   uint64_t id() const;
 
-  /// The `JobID` of this file being written.
+  /// Get `JobID` of this file.
   std::string job_id() const;
 
   /// Return statistics about this job as JSON.
   nlohmann::json stats() const;
+
   std::string hdf_output_prefix;
 
   /// Name of the file being written.
-  ///
-  /// Important for reopen of files.
   std::string hdf_filename;
+
   std::string filename_full;
 
-  /// The file being written.
+  /// The file that is being written.
   HDFFile hdf_file;
 
   /// Whether we use HDF SWMR, initialized to the default.
