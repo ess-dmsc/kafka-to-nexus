@@ -220,10 +220,10 @@ void HDFFile::write_attributes(hdf5::node::Node &Node,
   }
 }
 
-/// Write attributes defined in an array of attribute objects
-/// Unlike a single attribute object this allows specifying type and dataset
-/// \param Node : node to write attributes on
-/// \param JsonValue : json value array of attribute objects
+/// Write attributes defined in an array of attribute objects.
+/// Unlike a single attribute object this allows specifying type and dataset.
+/// \param Node : node to write attributes on.
+/// \param JsonValue : json value array of attribute objects.
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
                                      nlohmann::json const *Value) {
   if (!Value->is_array()) {
@@ -255,11 +255,11 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
   }
 }
 
-/// Write scalar or array attribute of specfied type
-/// \param DType : type of the attribute values
-/// \param Node : group or dataset to add attribute to
-/// \param Name : name of the attribute
-/// \param Values : the attribute values
+/// Write scalar or array attribute of specfied type.
+/// \param DType : type of the attribute values.
+/// \param Node : group or dataset to add attribute to.
+/// \param Name : name of the attribute.
+/// \param Values : the attribute values.
 void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
                                        hdf5::node::Node &Node,
                                        std::string const &Name,

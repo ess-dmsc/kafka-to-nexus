@@ -128,7 +128,7 @@ private:
 };
 } // namespace HDFWriterModule_detail
 
-/// Writes a given flatbuffer to HDF.
+/// \brief Writes a given flatbuffer to HDF.
 ///
 /// Base class for the writer modules which are responsible for actually
 /// writing a flatbuffer message to the HDF file.  A HDFWriterModule is
@@ -207,7 +207,7 @@ public:
 
 /// Keeps track of the registered FlatbufferReader instances.
 ///
-/// Writer modules register themselfes via instantiation of the `Registrar`.
+/// Writer modules register themselves via instantiation of the `Registrar`.
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// HDFWriterModuleRegistry.
 namespace HDFWriterModuleRegistry {

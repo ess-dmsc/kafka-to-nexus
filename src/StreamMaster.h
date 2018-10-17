@@ -155,7 +155,6 @@ public:
   std::string getJobId() const { return WriterTask->job_id(); }
 
 private:
-  //------------------------------------------------------------------------------
   /// @brief      Process the messages in Stream for at most TopicWriteDuration
   /// std::chrono::milliseconds.
   ///

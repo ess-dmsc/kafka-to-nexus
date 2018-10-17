@@ -14,7 +14,7 @@
 
 namespace FileWriter {
 
-/// Listens to the Kafka configuration topic and handles any requests.
+/// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
 /// On a new file writing request, creates new nexusWriter instance.
 /// Reacts also to stop, and possibly other future commands.
@@ -22,7 +22,7 @@ class Master : public MasterI {
 public:
   Master(MainOpt &config);
 
-  /// Sets up command listener and handles any commands received.
+  /// \brief Sets up command listener and handles any commands received.
   ///
   /// Continues running until stop requested.
   void run() override;

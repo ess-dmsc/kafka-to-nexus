@@ -18,16 +18,18 @@ class FlatbufferReader {
 public:
   virtual ~FlatbufferReader() = default;
   using ptr = std::unique_ptr<FlatbufferReader>;
+
   /// Run the flatbuffer verification and return the result.
   virtual bool verify(FlatbufferMessage const &Message) const = 0;
+
   /// Extract the 'source_name' from the flatbuffer message.
   virtual std::string source_name(FlatbufferMessage const &Message) const = 0;
+
   /// Extract the timestamp.
   virtual uint64_t timestamp(FlatbufferMessage const &Message) const = 0;
 };
 
-/// \brief Keeps track of the registered FlatbufferReader instances.
-
+/// Keeps track of the registered FlatbufferReader instances.
 /// See for example `src/schemas/ev42/ev42_rw.cpp` and search for
 /// FlatbufferReaderRegistry.
 
@@ -35,8 +37,6 @@ namespace FlatbufferReaderRegistry {
 using ReaderPtr = FlatbufferReader::ptr;
 std::map<std::string, ReaderPtr> &getReaders();
 
-/// @todo The following two functions should probably throw an exception if key
-/// is not found.
 FlatbufferReader::ptr &find(std::string const &FlatbufferID);
 
 void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item);

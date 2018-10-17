@@ -1,9 +1,7 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Define datasets used by the ADC file writing module.
- */
+/// \file
+/// \brief Define datasets used by the ADC file writing module.
 
 #pragma once
 
@@ -11,11 +9,11 @@
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
 
-/// \todo The following helper classes are used to interface with the h5cpp
-/// library. They must be removed from here when they are added to the h5cpp
-/// library.
+// TODO The following helper classes are used to interface with the h5cpp
+// library. They must be removed from here when they are added to the h5cpp
+// library.
 
-/// \brief Used to write c-arrays to hdf5 files using h5cpp.
+/// Used to write c-arrays to hdf5 files using h5cpp.
 ///
 /// The member functions of this class need no extra documentation.
 template <typename T> class ArrayAdapter {
@@ -32,7 +30,7 @@ private:
 
 namespace hdf5 {
 namespace datatype {
-/// \brief Required for h5cpp to write const data types.
+/// Required for h5cpp to write const data types.
 template <> class TypeTrait<std::int8_t const> {
 public:
   using Type = std::int8_t;
@@ -132,7 +130,7 @@ public:
   }
 };
 
-/// \brief Required for h5cpp to write data provided using ArrayAdapter.
+/// Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using Type = ArrayAdapter<T>;

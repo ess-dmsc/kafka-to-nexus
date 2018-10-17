@@ -9,7 +9,7 @@
 
 uint64_t getpid_wrapper() { return getpid(); }
 
-/// Wrapper, because it may need some Windows implementation in the future.
+// Wrapper, because it may need some Windows implementation in the future.
 std::string gethostname_wrapper() {
   std::vector<char> Buffer;
   Buffer.resize(1024);

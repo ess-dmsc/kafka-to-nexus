@@ -86,6 +86,7 @@ void FileWriterTask::add_source(Source &&source) {
   }
 }
 
+/// Called by CommandHandler on setup.
 void FileWriterTask::hdf_init(std::string const &NexusStructure,
                               std::string const &ConfigFile,
                               std::vector<StreamHDFInfo> &stream_hdf_info) {

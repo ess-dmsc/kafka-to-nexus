@@ -28,10 +28,10 @@ public:
   explicit NotValidFlatbuffer(const std::string &what)
       : std::runtime_error(what){};
 };
-/// \todo Profile code to determine if the exceptions are a performance problem
 
-/// A wrapper around a databuffer which holds a flatbuffer. Used to simplify
-/// passing around flatbuffers and the most important pieces of meta-data.
+/// A wrapper around a databuffer which holds a flatbuffer.
+/// Used to simplify passing around flatbuffers and the most important pieces of
+/// meta-data.
 /// \note Does not take ownership of any pointers. You must make sure to
 /// free the pointers you passed yourself.
 class FlatbufferMessage {
