@@ -14,7 +14,7 @@ RUN apt-get update -y && \
     apt-get clean all && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install conan
+RUN pip install conan==1.8.2
 # Force conan to create .conan directory and profile
 RUN conan profile new default
 
