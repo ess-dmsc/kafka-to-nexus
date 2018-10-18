@@ -16,7 +16,6 @@ find_package(h5cpp REQUIRED)
 find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
-find_package(h5cpp REQUIRED)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
