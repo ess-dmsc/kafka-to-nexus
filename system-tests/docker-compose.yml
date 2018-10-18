@@ -42,3 +42,4 @@ services:
     volumes:
     - ./config-files/file_writer_config.ini:/file_writer_config.ini
     - ./output-files/:/output-files/
+    - ./logs/:/filewriter_logs/

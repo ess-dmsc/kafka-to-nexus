@@ -50,4 +50,8 @@ void setupLoggerFromOptions(MainOpt const &opt) {
   if (!opt.graylog_logger_address.empty()) {
     fwd_graylog_logger_enable(opt.graylog_logger_address);
   }
+
+  if (!opt.LogFilename.empty()) {
+    use_log_file(opt.LogFilename);
+  }
 }

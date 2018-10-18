@@ -32,6 +32,8 @@ struct MainOpt {
   std::string kafka_gelf;
   /// Can optionally use the `graylog_logger` library to log to this address.
   std::string graylog_logger_address;
+  /// Used for logging to file
+  std::string LogFilename;
   /// The commands file given by the `--commands-json` option.
   nlohmann::json CommandsJson = nlohmann::json::object();
   /// The commands filename given by the `--commands-json` option.
