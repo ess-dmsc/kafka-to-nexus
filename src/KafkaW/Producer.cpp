@@ -14,12 +14,12 @@ void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
                             void *opaque) {
   auto self = reinterpret_cast<Producer *>(opaque);
   if (!msg) {
-    LOG(Sev::Error, "IID: {}  ERROR msg should never be null", self->id);
+    LOG(Sev::Error, "IID: {} msg should never be null", self->id);
     ++self->Stats.produce_cb_fail;
     return;
   }
   if (msg->err) {
-    LOG(Sev::Error, "IID: {}  ERROR on delivery, {}, topic {}, {} [{}] {}",
+    LOG(Sev::Error, "IID: {} failure on delivery, {}, topic {}, {} [{}] {}",
         self->id, rd_kafka_name(rk), rd_kafka_topic_name(msg->rkt),
         rd_kafka_err2name(msg->err), msg->err, rd_kafka_err2str(msg->err));
     if (msg->err == RD_KAFKA_RESP_ERR__MSG_TIMED_OUT) {

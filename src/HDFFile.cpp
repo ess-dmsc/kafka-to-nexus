@@ -202,7 +202,7 @@ void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
   try {
     current_time_zone = current_zone();
   } catch (std::runtime_error const &e) {
-    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
+    LOG(Sev::Warning, "Failed to detect time zone for use in ISO8601 "
                       "timestamp in HDF file")
     current_time_zone = locate_zone("UTC");
   }
@@ -863,7 +863,7 @@ void HDFFile::init(nlohmann::json const &nexus_structure,
     write_hdf_iso8601_now(root_group, "file_time");
     write_attributes_if_present(root_group, &nexus_structure);
   } catch (std::exception &e) {
-    LOG(Sev::Critical, "ERROR could not initialize  file={}  trace:\n{}",
+    LOG(Sev::Critical, "Could not initialize  file={}  trace:\n{}",
         h5file.id().file_name().string(), hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
