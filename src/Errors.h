@@ -85,7 +85,7 @@ const std::string Err2Str(const StreamerStatus &Error);
 ///
 /// \param[in] Error The error status.
 ///
-/// \return A string that briefly describes the status.
+/// \return  A string that briefly describes the status.
 const std::string Err2Str(const StreamMasterError &Error);
 
 } // namespace Status

@@ -28,8 +28,9 @@ public:
 
   /// \brief Create an instance of Streamer.
   ///
-  /// \param[in] broker       Broker name or address of one of the brokers in
-  /// the partition.
+  /// \param[in] broker    Broker name or address of one of the brokers in the
+  /// partition.
+  ///
   /// \param[in] topic_name   Name of the topic to consume.
   /// \param[in] Opts         Opts configuration options for the streamer and
   /// RdKafka.

@@ -160,8 +160,8 @@ private:
   /// \brief Process the messages in Stream for at most TopicWriteDuration
   /// std::chrono::milliseconds.
   ///
-  /// \param Stream  A reference to the Streamer that will consume messages.
-  /// \param Demux  The demux associated with the topic.
+  /// \param Stream   A reference to the Streamer that will consume messages.
+  /// \param Demux    The demux associated with the topic.
   ///
   /// \return The status of the consumption. If there are still working
   /// streams returns ``running``, if all the streams are terminated return

@@ -52,7 +52,7 @@ static int g_N_HANDLED = 0;
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
-/// Parse the given `NexusStructureString`
+/// \brief Parse the given `NexusStructureString`
 ///
 /// Parse the given `NexusStructureString` and call the initialization of the
 /// HDF structures.
@@ -67,7 +67,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   return StreamHDFInfoList;
 }
 
-/// Extract information about the stream
+/// \brief Extract information about the stream.
 ///
 /// Extract the information about the stream from the json command and calls
 /// the corresponding HDF writer modules to set up initial HDF structures
@@ -299,7 +299,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   g_N_HANDLED += 1;
 }
 
-/// Configure the HDF writer modules for writing.
+/// \brief Configure the HDF writer modules for writing.
 ///
 /// \param StreamSettingsList The settings for the stream.
 /// \param Task The task to configure.

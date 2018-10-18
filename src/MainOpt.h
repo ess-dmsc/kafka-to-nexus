@@ -46,9 +46,8 @@ struct MainOpt {
 
   /// \brief Holds commands from the configuration file.
   ///
-  /// The configuration
-  /// file may contain commands which are executed before any other command
-  /// from the Kafka command topic.
+  /// The configuration file may contain commands which are executed before any
+  /// other command from the Kafka command topic.
   std::vector<std::string> CommandsFromJson;
 
   /// Called on startup when a `--commands-json` is found.
@@ -87,8 +86,7 @@ struct MainOpt {
   bool logpid_sleep = false;
 
   /// \brief Max interval (in std::chrono::milliseconds) to spend writing each
-  /// topic
-  /// before switch to the next.
+  /// topic before switch to the next.
   std::chrono::milliseconds topic_write_duration;
 
   // The constructor was removed because of the issue with the integration test

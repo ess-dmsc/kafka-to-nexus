@@ -33,6 +33,7 @@ public:
 ///
 /// Used to simplify passing around flatbuffers and the most important pieces of
 /// meta-data.
+///
 /// \note Does not take ownership of any pointers. You must make sure to
 /// free the pointers you passed yourself.
 class FlatbufferMessage {
@@ -42,14 +43,18 @@ public:
 
   /// \brief Verifies the data in the flatbuffer to make sure if it is valid.
   ///
-  /// \param[in] BufferPtr Pointer to memory location containing flatbuffer.
-  /// \param[in] Size Size of flatbuffer in bytes.
+  /// \param[in] BufferPtr    Pointer to memory location containing flatbuffer.
+  /// \param[in] Size         Size of flatbuffer in bytes.
   ///
-  /// \throws FileWriter::BufferTooSmallError If the size argument is < 8, it
+  /// \throws     FileWriter::BufferTooSmallError If the size argument is < 8,
+  /// it
   /// can not be a flatbuffer as the identifier is stored in bytes 4 to 8.
-  /// \throws FileWriter::UnknownFlatbufferID If the flatbuffer ID (bytes 4 to
+  ///
+  /// \throws     FileWriter::UnknownFlatbufferID If the flatbuffer ID (bytes 4
+  /// to
   /// 8) is not found in the database, this exception is thrown.
-  /// \throws FileWriter::NotValidFlatbuffer The constructor runs
+  ///
+  /// \throws     FileWriter::NotValidFlatbuffer The constructor runs
   /// FileWriter::FlatbufferReader::verify() on the flatbuffer and this
   /// exception is thrown if it returns false.
   FlatbufferMessage(char const *BufferPtr, size_t const Size);

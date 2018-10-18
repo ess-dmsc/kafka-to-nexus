@@ -15,7 +15,8 @@ struct StreamSettings;
 /// \brief If fails to parse the `Command`, adds error info and throws
 /// exception.
 ///
-/// \param Command Command passed to the program.
+/// \param  Command Command passed to the program.
+///
 /// \return If parsing successful returns `nlohmann::json`, otherwise throws an
 /// exception.
 nlohmann::json parseOrThrow(std::string const &Command);
@@ -34,8 +35,8 @@ class CommandHandler {
 public:
   /// \brief Initialize a new `CommandHandler`.
   ///
-  /// \param Config Configuration of the file writer.
-  /// \param MasterPtr Optional `Master` which can continue to watch over newly
+  /// \param  Config Configuration of the file writer.
+  /// \param  MasterPtr Optional `Master` which can continue to watch over newly
   /// created jobs. Not used for example in some tests.
   CommandHandler(MainOpt &config, MasterI *master);
 

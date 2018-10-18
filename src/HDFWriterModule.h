@@ -88,8 +88,7 @@ public:
   static inline WriteResult ERROR_BAD_FLATBUFFER() { return WriteResult(-2); }
 
   /// \brief Indicates that the data is structurally invalid, for example if it
-  /// has
-  /// the wrong array sizes.
+  /// has the wrong array sizes.
   ///
   /// \return The data structure error result.
   static inline WriteResult ERROR_DATA_STRUCTURE_MISMATCH() {
@@ -162,7 +161,7 @@ public:
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   ///
-  /// \param[in] HDFGroup The \p HDFGroup into which this HDFWriterModule
+  /// \param[in] HDFGroup     The \p HDFGroup into which this HDFWriterModule
   /// should write its data.
   /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
@@ -171,6 +170,7 @@ public:
   /// attributes.
   /// \param[in] HDFAttributes Json string of the attributes associated with the
   /// stream, as defined by the "attributes" key in the Nexus structure.
+  ///
   /// \return The result.
   virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
                               std::string const &HDFAttributes) = 0;
@@ -179,12 +179,14 @@ public:
   ///
   /// \param InitParameters Contains most importantly the \p HDFGroup into
   /// which this HDFWriterModule should write its data.
+  ///
   /// \return The result.
   virtual InitResult reopen(hdf5::node::Group &HDFGroup) = 0;
 
   /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
+  ///
   /// \return The result.
   virtual WriteResult write(FlatbufferMessage const &Message) = 0;
 

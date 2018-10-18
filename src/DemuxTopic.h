@@ -12,8 +12,8 @@
 namespace FileWriter {
 
 /// \brief Used to keep track of file writing modules on one topic and call the
-/// correct
-/// module based on sourcename.
+/// correct module based on sourcename.
+
 class DemuxTopic {
 public:
   /// Initialize with the given \p TopicName.
@@ -62,18 +62,15 @@ public:
   std::atomic<size_t> messages_processed{0};
 
   /// \brief Counts the number of times when a received message is so small that
-  /// it
-  /// can not be a valid flatbuffer.
+  /// it can not be a valid flatbuffer.
   std::atomic<size_t> error_message_too_small{0};
 
   /// \brief Counts the number of times when we can not find a reader for this
-  /// type of
-  /// flatbuffer.
+  /// type of flatbuffer.
   std::atomic<size_t> error_no_flatbuffer_reader{0};
 
   /// \brief Counts the number of times when we can not find a source instance
-  /// for the
-  /// source_name mentioned in the the flatbuffer message.
+  /// for the source_name mentioned in the the flatbuffer message.
   std::atomic<size_t> error_no_source_instance{0};
 
 private:

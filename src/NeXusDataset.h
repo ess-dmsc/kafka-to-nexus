@@ -289,14 +289,18 @@ public:
   /// \brief Will create or open dataset with the given name.
   ///
   /// When opening a dataset, some of the paramaters will be ignored.
-  /// \param[in] Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
-  /// \param[in] CMode Should the dataset be opened or created.
-  /// \param[in] Shape The shape of the array in the NDArray. This vector will
-  /// be prepended with one dimension to allow for adding of data.
+  ///
+  /// \param[in]  Parent The group/node of the dataset in.
+  /// \note       This parameter is ignored when opening an existing dataset.
+  ///
+  /// \param[in] CMode    Should the dataset be opened or created.
+  /// \param[in] Shape    The shape of the array in the NDArray. This vector
+  /// will be prepended with one dimension to allow for adding of data.
+  ///
   /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset,
   /// ignored if the dataset is opened. Vector must be of size 1 or same size as
   /// Shape.
+  ///
   /// \throw std::runtime_error if dataset can not be created/opened.
   MultiDimDataset(hdf5::node::Group Parent, Mode CMode, hdf5::Dimensions Shape,
                   hdf5::Dimensions ChunkSize)
@@ -337,9 +341,13 @@ public:
   /// \brief Open a dataset.
   ///
   /// Can only be used to open a dataset.
-  /// \param[in] Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
-  /// \param[in] CMode Should the dataset be opened or created.
+  ///
+  /// \param[in] Parent   The group/node of the dataset in.
+  /// \note               This parameter is ignored when opening an existing
+  /// dataset.
+  ///
+  /// \param[in] CMode    Should the dataset be opened or created.
+  ///
   /// \throw std::runtime_error if dataset can not opened or the constructor is
   /// called with the input NeXusDataset::Mode::Create.
   MultiDimDataset(hdf5::node::Group Parent, Mode CMode)

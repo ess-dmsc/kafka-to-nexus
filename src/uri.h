@@ -30,26 +30,23 @@ public:
   std::string host;
 
   /// \brief If port was specified (or already non-zero before `URI::parse`) it
-  /// contains `host:port`
+  /// contains `host:port`.
   std::string host_port;
 
   /// \brief The port number if specified, or zero to indicate that the port is
-  /// not
-  /// specified
+  /// not specified.
   uint32_t port = 0;
 
-  /// The path of the URL
+  /// The path of the URL.
   std::string path;
 
-  /// If the path can be a valid Kafka topic name, then it is non-empty
+  /// If the path can be a valid Kafka topic name, then it is non-empty.
   std::string topic;
 
   /// \brief Whether we require two slashes before the hostname, as required by
-  /// the
-  /// standard.
+  /// the standard.
   ///
-  /// Otherwise ambiguous because `host/path` could also be a
-  /// `path/path`.
+  /// Otherwise ambiguous because `host/path` could also be a `path/path`.
   bool require_host_slashes = true;
 
   /// The URI string //<host>:<port>/<topic>
