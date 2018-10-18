@@ -182,7 +182,7 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
   using namespace std::chrono;
   const time_zone *CurrentTimeZone;
   try {
-    current_time_zone = current_zone();
+    CurrentTimeZone = current_zone();
   } catch (const std::runtime_error &e) {
     LOG(Sev::Warning, "Failed to detect time zone for use in ISO8601 "
                       "timestamp in HDF file")
