@@ -13,7 +13,7 @@
 // library. They must be removed from here when they are added to the h5cpp
 // library.
 
-/// Used to write c-arrays to hdf5 files using h5cpp.
+/// \brief Used to write c-arrays to hdf5 files using h5cpp.
 ///
 /// The member functions of this class need no extra documentation.
 template <typename T> class ArrayAdapter {
@@ -142,7 +142,7 @@ public:
 } // namespace datatype
 namespace dataspace {
 
-/// \brief Required for h5cpp to write data provided using ArrayAdapter.
+/// Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using DataspaceType = Simple;
@@ -165,7 +165,7 @@ public:
 
 namespace NeXusDataset {
 enum class Mode { Create, Open };
-/// \brief h5cpp dataset class that implements methods for appending data.
+/// h5cpp dataset class that implements methods for appending data.
 template <class DataType>
 class ExtensibleDataset : public hdf5::node::ChunkedDataset {
 public:
@@ -197,7 +197,7 @@ public:
     }
   }
 
-  /// \brief Append data to dataset that is contained in some sort of container.
+  /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &NewData) {
     Dataset::extent(0,
                     NewData.size()); // Extend size() element along dimenions 0
@@ -207,7 +207,7 @@ public:
     NrOfElements += NewData.size();
   }
 
-  /// \brief Append single scalar values to dataset.
+  /// Append single scalar values to dataset.
   template <typename T> void appendElement(T const &NewElement) {
     Dataset::extent(0, 1); // Extend by 1 element along dimenions 0
     hdf5::dataspace::Hyperslab Selection{{NrOfElements}, {1}};
@@ -249,7 +249,7 @@ public:
     return hdf5::dataspace::Simple(DataSpace).current_dimensions();
   }
 
-  /// \brief Append data to dataset that is contained in some sort of container.
+  /// Append data to dataset that is contained in some sort of container.
   template <typename T>
   void appendArray(T const &NewData, hdf5::Dimensions Shape) {
     auto CurrentExtent = get_extent();
@@ -282,7 +282,7 @@ public:
   }
 };
 
-/// \brief h5cpp dataset class that implements methods for appending data.
+/// h5cpp dataset class that implements methods for appending data.
 template <class DataType> class MultiDimDataset : public MultiDimDatasetBase {
 public:
   MultiDimDataset() = default;

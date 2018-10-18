@@ -1,15 +1,6 @@
-//===-- src/StreamerOptions.h - Streamer consumer options class definition --*-
-// C++ -*-===//
-//
-//
-//===----------------------------------------------------------------------===//
-///
 /// \file This file contains the declaration of the StreamerOptions struct,
-/// which
-/// is used to configure the Streamer and the RdKafka configuration used int the
-/// Streamer. Implementation is in Streamer.cpp
-///
-//===----------------------------------------------------------------------===//
+/// which is used to configure the Streamer and the RdKafka configuration used
+/// int the Streamer. Implementation is in Streamer.cpp
 
 #pragma once
 

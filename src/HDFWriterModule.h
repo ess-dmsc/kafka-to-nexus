@@ -196,7 +196,7 @@ public:
   /// \return Error code.
   virtual int32_t flush() = 0;
 
-  /// \brief Close all open HDF handles.
+  /// \brief Close all open HDF handlers.
   ///
   /// \return Error code.
   virtual int32_t close() = 0;
@@ -227,7 +227,6 @@ void addWriterModule(std::string key, ModuleFactory value);
 /// \brief Get `ModuleFactory for a given `key`.
 ///
 /// \return Matching `ModuleFactory`.
-/// TODO This function should probably throw an exception if key is not found.
 ModuleFactory &find(std::string const &key);
 
 /// \brief  Registers the writer module at program start if instantiated in the

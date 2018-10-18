@@ -17,7 +17,7 @@ class Streamer;
 /// Reacts also to stop, and possibly other future commands.
 class MasterI {
 public:
-  /// Sets up command listener and handles any commands received.
+  /// \brief Sets up command listener and handles any commands received.
   ///
   /// Continues running until stop requested.
   virtual void run() = 0;
@@ -27,7 +27,7 @@ public:
   virtual void handle_command(std::string const &command) = 0;
   virtual void statistics() = 0;
 
-  /// The unique identifier for this file writer on the network.
+  /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
   virtual std::string file_writer_process_id() const = 0;

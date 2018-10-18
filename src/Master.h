@@ -40,7 +40,7 @@ public:
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
-  /// The unique identifier for this file writer on the network.
+  /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
   std::string file_writer_process_id() const override;

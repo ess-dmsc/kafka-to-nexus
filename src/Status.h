@@ -21,8 +21,7 @@ namespace FileWriter {
 namespace Status {
 
 /// \brief Stores cumulative information about received messages: number, size
-/// (in
-/// Megabytes) and number of errors.
+/// (in Megabytes) and number of errors.
 ///
 /// Assuming a 1-to-1 mapping between Streamer
 /// and Topic there will be no concurrent updates of the information, so that
@@ -42,10 +41,10 @@ public:
   /// \param[in]  MessageSize  The message size in bytes
   void newMessage(const double &MessageSize);
 
-  /// \brief Increments the error count by one unit
+  ///  Increments the error count by one unit
   void error();
 
-  /// \brief Reset the counters
+  ///  Reset the counters
   void reset();
 
   /// \brief Returns the number of megabytes processed.
@@ -74,7 +73,7 @@ private:
 };
 
 /// \brief Collect information about each stream using a collection of
-/// MessageInfo and reduce the same information to give a global overview of the
+/// MessageInfo and reduce this information to give a global overview of the
 /// amount of data that has been processed.
 class StreamMasterInfo {
 
@@ -91,20 +90,22 @@ public:
   /// \param info  The MessageInfo object containing all the information.
   void add(MessageInfo &info);
 
-  /// \brief Sets the estimate time to next message. The next message is
-  /// expected to arrive at [time of lastmessage] + [ToNextMessage].
+  /// \brief Sets the estimate time to next message.
   ///
-  /// \param[in]  ToNextMessage  milliseconds in  next message
+  /// The next message is expected to arrive at [time of lastmessage] +
+  /// [ToNextMessage].
+  ///
+  /// \param[in]  ToNextMessage  Milliseconds to  next message.
   void setTimeToNextMessage(const std::chrono::milliseconds &ToNextMessage);
 
   /// \brief Get the time difference between two consecutive status messages.
   ///
-  /// \result std::chrono::milliseconds from the last message to the next
+  /// \return std::chrono::milliseconds from the last message to the next.
   const std::chrono::milliseconds getTimeToNextMessage();
 
-  /// \brief Returns the total execution time
+  /// \brief Returns the total execution time.
   ///
-  /// \return Milliseconds since the write command has been issued
+  /// \return Milliseconds since the write command has been issued.
   const std::chrono::milliseconds runTime();
 
   /// \brief Returns the total number of megabytes processed for the
@@ -113,7 +114,7 @@ public:
   /// \return The pair {MB received, \f$\rm{MB received}^2\f$}.
   std::pair<double, double> getMbytes() const;
 
-  /// \brief Return the number of messages whose information has been stored
+  /// \brief Return the number of messages whose information has been stored.
   ///
   /// \return The pair {number of messages, number of messages\f$\ 2\f$}.
   std::pair<double, double> getMessages() const;
@@ -125,7 +126,7 @@ public:
   double getErrors() const;
 
   /// \brief Returns the error status of the StreamMaster associated with the
-  /// file
+  /// file.
   ///
   /// \return The StreamMaster status.
   StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED()};
@@ -157,7 +158,7 @@ double messageFrequency(const MessageInfo &Information,
                         const std::chrono::milliseconds &Duration);
 
 /// \brief Return the throughput of the writer, assuming that each message
-/// consumed correctly is written
+/// consumed correctly is written.
 ///
 /// \param[in]  Information The MessageInfo object that stores the data
 /// \param[in]  Duration The amount of time between two report

@@ -3,7 +3,7 @@
 #include "Status.h"
 #include "logger.h"
 
-/// Return the average given the sum of the elements and their number
+/// \brief Return the average given the sum of the elements and their number
 /// \param sum the sum of the elements
 /// \param N number of elements
 double average(const double &Sum, const double &N) { return Sum / N; }
