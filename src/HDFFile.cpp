@@ -731,6 +731,7 @@ void HDFFile::createHDFStructures(
       Path.pop_back();
     }
   } catch (const std::exception &e) {
+    // Don't throw here as the file should continue writing
     LOG(Sev::Error, "Failed to create structure  parent={} level={}",
         std::string(Parent.link().path()), Level)
   }
