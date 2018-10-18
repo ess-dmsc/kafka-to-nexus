@@ -137,7 +137,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       ds_cue_timestamp_zero.reset();
     }
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFFile::write_attributes(HDFGroup, &AttributesJson);
+    HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
     LOG(Sev::Error, "ERROR ev42 could not init hdf_parent: {}  trace: {}",

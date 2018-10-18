@@ -241,7 +241,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         }
       }
       auto AttributesJson = nlohmann::json::parse(*HDFAttributesPtr);
-      HDFFile::write_attributes(HDFGroup, &AttributesJson);
+      HDFFile::writeAttributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
