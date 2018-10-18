@@ -1,6 +1,6 @@
 /// \file
 /// This file contains the declaration of the MessageInfo and StreamMasterInfo
-/// classes. MessageInfo collects informations about number and the size of
+/// classes. MessageInfo collects information about number and the size of
 /// messages and the number of errors in a stream. StreamMasterInfo contains a
 /// collection of MessageInfo plus other information in order to provide global
 /// information about a StreamMaster instance.
@@ -26,9 +26,10 @@ namespace Status {
 /// Assuming a 1-to-1 mapping between Streamer
 /// and Topic there will be no concurrent updates of the information, so that
 /// members are not required to be atomic. Nevertheless there is concurrency
-/// between writes (Streamer) and reads (Report). If no syncronisation mechanism
+/// between writes (Streamer) and reads (Report). If no synchronisation
+/// mechanism
 /// would be present there can be a mixing of updated and non-updated
-/// informations, which the mutex allows to avoid.
+/// information, which the mutex allows to avoid.
 class MessageInfo {
 
 public:
@@ -92,7 +93,7 @@ public:
 
   /// \brief Sets the estimate time to next message.
   ///
-  /// The next message is expected to arrive at [time of lastmessage] +
+  /// The next message is expected to arrive at [time of last message] +
   /// [ToNextMessage].
   ///
   /// \param[in]  ToNextMessage  Milliseconds to  next message.

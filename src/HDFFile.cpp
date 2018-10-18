@@ -256,7 +256,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
   }
 }
 
-/// Write scalar or array attribute of specfied type.
+/// Write scalar or array attribute of specified type.
 
 /// \param DType    type of the attribute values.
 /// \param Node     group or dataset to add attribute to.
