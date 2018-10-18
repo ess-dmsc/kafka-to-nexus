@@ -254,7 +254,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     }
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "ERROR f142 could not init HDFGroup: {}  trace: {}",
+    LOG(Sev::Error, "f142 could not init HDFGroup: {}  trace: {}",
         static_cast<std::string>(HDFGroup.link().path()), message);
   }
   return HDFWriterModule::InitResult::OK();
