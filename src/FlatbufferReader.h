@@ -10,8 +10,8 @@
 
 namespace FileWriter {
 
-/// \brief Interface for reading essential information from the flatbuffer which is
-/// needed for example to extract timing information and name of the source.
+/// \brief Interface for reading essential information from the flatbuffer which
+/// is needed for example to extract timing information and name of the source.
 ///
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class FlatbufferReader {
