@@ -90,9 +90,6 @@ static std::vector<DT> populateBlob(const nlohmann::json *Value,
   }
 
   if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
-    LOG(Sev::Warning,
-        "Failed to populate numeric blob \n size mismatch {} != {}",
-        Buffer.size(), GoalSize);
     std::stringstream ss;
     ss << "Failed to populate numeric blob ";
     ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
