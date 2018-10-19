@@ -359,7 +359,8 @@ public:
     }
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile
+  /// \brief Can supply pre-generated test data for a source on a topic to
+  /// profile
   /// the writing.
   class SourceDataGen {
   public:
@@ -373,7 +374,8 @@ public:
     size_t n_fed = 0;
     bool run_parallel = false;
     int n_events_per_message = 0;
-    /// Generates n test messages which we can later feed from memory into the
+    /// \brief Generates n test messages which can be later fed from memory into
+    /// the
     /// file writer.
     void pregenerate(int n, int n_events_per_message_) {
       n_events_per_message = n_events_per_message_;
@@ -784,7 +786,8 @@ public:
     LOG(Sev::Debug, "data_ev42 verification done");
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile
+  /// \brief Can supply pre-generated test data for a source on a topic to
+  /// profile
   /// the writing.
   class SourceDataGen_f142 {
   public:
@@ -796,7 +799,8 @@ public:
     vector<FileWriter::Msg> msgs;
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;
-    /// Generates n test messages which we can later feed from memory into the
+    /// \brief Generates n test messages which we can later feed from memory
+    /// into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
       LOG(Sev::Debug, "generating {} {}...", topic, source);
@@ -1020,7 +1024,8 @@ public:
     }
   }
 
-  /// Read a string from the given dataset at the given position.
+  /// \brief Read a string from the given dataset at the given position.
+  ///
   /// Helper for other unit tests.
   /// So far only for 1d datasets.
   static std::string read_string(const hdf5::node::Dataset &dataset,

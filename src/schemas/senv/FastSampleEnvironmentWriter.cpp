@@ -1,9 +1,7 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Implement classes required to implement the ADC file writing module.
- */
+/// \file
+/// \brief Implement classes required to implement the ADC file writing module.
 
 #include "../../helper.h"
 

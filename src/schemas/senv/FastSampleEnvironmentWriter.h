@@ -1,9 +1,7 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Define classes required to implement the ADC file writing module.
- */
+/// \file
+/// \brief Define classes required to implement the ADC file writing module.
 
 #pragma once
 
@@ -18,7 +16,7 @@ namespace senv {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
-/// \brief See parent class for documentation.
+/// See parent class for documentation.
 class SampleEnvironmentDataGuard : public FBReaderBase {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
@@ -32,7 +30,7 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
                                               double TimeDelta,
                                               int NumberOfElements);
 
-/// \brief See parent class for documentation.
+/// See parent class for documentation.
 class FastSampleEnvironmentWriter : public FileWriterBase {
 public:
   FastSampleEnvironmentWriter() = default;

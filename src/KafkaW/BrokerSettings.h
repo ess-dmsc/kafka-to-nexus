@@ -9,7 +9,6 @@ typedef struct rd_kafka_conf_s rd_kafka_conf_t;
 namespace KafkaW {
 
 /// Collect options used to connect to the broker.
-
 class BrokerSettings {
 public:
   BrokerSettings() = default;

@@ -1,9 +1,7 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Implement classes required to implement the ADC file writing module.
- */
+/// \file
+/// \brief Implement classes required to implement the ADC file writing module.
 
 #include "../../helper.h"
 
@@ -12,11 +10,11 @@
 
 namespace NDAr {
 
-// Register the timestamp and name extraction class for this module
+// Register the timestamp and name extraction class for this module.
 static FileWriter::FlatbufferReaderRegistry::Registrar<AreaDetectorDataGuard>
     RegisterNDArGuard("NDAr");
 
-// Register the file writing part of this module
+// Register the file writing part of this module.
 static FileWriter::HDFWriterModuleRegistry::Registrar<AreaDetectorWriter>
     RegisterNDArWriter("NDAr");
 
