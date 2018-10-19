@@ -209,15 +209,9 @@ node {
 
   builders['macOS'] = get_macos_pipeline()
 
-  // System tests currently fail, probably because of build server maintenance window, with:
-  // E               docker.errors.BuildError: The command '/bin/sh -c cd kafka_to_nexus &&
-  // conan install --build=outdated ../kafka_to_nexus_src/conan/conanfile.txt'
-  // returned a non-zero code: 1
-  //
-  // ../../../../.local/lib/python3.5/site-packages/docker/models/images.py:266: BuildError
-  //if ( env.CHANGE_ID ) {
-  //    builders['system tests'] = get_system_tests_pipeline()
-  //}
+  if ( env.CHANGE_ID ) {
+      builders['system tests'] = get_system_tests_pipeline()
+  }
 
   try {
     parallel builders
@@ -291,6 +285,7 @@ def get_system_tests_pipeline() {
             scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
             """
             junit "system-tests/SystemTestsOutput.xml"
+            archiveArtifacts "system-tests/logs/*.log"
           }  // stage
         } finally {
           stage ("System tests: Clean Up") {

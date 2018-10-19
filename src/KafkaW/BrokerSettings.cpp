@@ -14,7 +14,7 @@ void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) {
         rd_kafka_conf_set(RdKafkaConfiguration, ConfigurationItem.first.c_str(),
                           ConfigurationItem.second.c_str(), ErrorString.data(),
                           ErrorString.size())) {
-      LOG(Sev::Warning, "error setting config: {} = {}",
+      LOG(Sev::Warning, "Failure setting config: {} = {}",
           ConfigurationItem.first, ConfigurationItem.second);
     }
   }

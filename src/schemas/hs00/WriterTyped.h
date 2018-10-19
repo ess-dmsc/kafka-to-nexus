@@ -132,11 +132,11 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     }
     bool found = false;
     try {
-      LOG(Sev::Debug, "try to get latest dataset");
+      LOG(Sev::Debug, "Attempting to get latest dataset");
       Dataset.link().parent().get_dataset("data");
       found = true;
     } catch (...) {
-      LOG(Sev::Debug, "error get latest dataset");
+      LOG(Sev::Debug, "Failed to get latest dataset");
     }
     if (!found) {
       LOG(Sev::Debug, "Dataset \"data\" not yet present");

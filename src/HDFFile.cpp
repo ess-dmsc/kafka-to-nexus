@@ -23,23 +23,23 @@ using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
 template <typename T>
-static void write_attribute(hdf5::node::Node &node, const std::string &name,
-                            T value) {
+static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
+                           T Value) {
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  node.attributes.create<T>(name, acpl).write(value);
+  Node.attributes.create<T>(Name, acpl).write(Value);
 }
 
 template <typename T>
-static void write_attribute(hdf5::node::Node &node, const std::string &name,
-                            std::vector<T> values) {
+static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
+                           std::vector<T> Values) {
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  node.attributes.create<T>(name, {values.size()}, acpl).write(values);
+  Node.attributes.create<T>(Name, {Values.size()}, acpl).write(Values);
 }
 
 template <typename DT>
-static void append_value(nlohmann::json const *Value, std::vector<DT> &Buffer) {
+static void appendValue(const nlohmann::json *Value, std::vector<DT> &Buffer) {
   if (Value->is_number_integer()) {
     Buffer.push_back(Value->get<int64_t>());
   } else if (Value->is_number_unsigned()) {
@@ -53,8 +53,8 @@ static void append_value(nlohmann::json const *Value, std::vector<DT> &Buffer) {
 }
 
 template <typename DT>
-static std::vector<DT> populate_blob(nlohmann::json const *Value,
-                                     hssize_t goal_size) {
+static std::vector<DT> populateBlob(const nlohmann::json *Value,
+                                    hssize_t GoalSize) {
   std::vector<DT> Buffer;
   if (Value->is_array()) {
     std::stack<json const *> as;
@@ -81,18 +81,18 @@ static std::vector<DT> populate_blob(nlohmann::json const *Value,
         ai.push(0);
         an.push(v.size());
       } else {
-        append_value(&v, Buffer);
+        appendValue(&v, Buffer);
         ai.top()++;
       }
     }
   } else {
-    append_value(Value, Buffer);
+    appendValue(Value, Buffer);
   }
 
-  if (static_cast<hssize_t>(Buffer.size()) != goal_size) {
+  if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
     std::stringstream ss;
     ss << "Failed to populate numeric blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << goal_size;
+    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
@@ -101,25 +101,25 @@ static std::vector<DT> populate_blob(nlohmann::json const *Value,
 
 template <typename T>
 static void writeAttrNumeric(hdf5::node::Node &Node, const std::string &Name,
-                             nlohmann::json const *Value) {
+                             const nlohmann::json *Value) {
   hssize_t Length = 1;
   if (Value->is_array()) {
     Length = Value->size();
   }
   try {
-    auto ValueData = populate_blob<T>(Value, Length);
+    auto ValueData = populateBlob<T>(Value, Length);
     try {
       if (Value->is_array()) {
-        write_attribute(Node, Name, ValueData);
+        writeAttribute(Node, Name, ValueData);
       } else {
-        write_attribute(Node, Name, ValueData[0]);
+        writeAttribute(Node, Name, ValueData[0]);
       }
-    } catch (std::exception const &E) {
+    } catch (const std::exception &E) {
       std::throw_with_nested(std::runtime_error(
           fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
                       std::string(Node.link().path()), E.what())));
     }
-  } catch (std::exception const &E) {
+  } catch (const std::exception &E) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("Can not populate blob for attribute {} in {}: {}", Name,
                     std::string(Node.link().path()), E.what())));
@@ -136,7 +136,7 @@ HDFFile::HDFFile() {
 #endif
 }
 
-herr_t visitor_show_name(hid_t oid, char const *name, H5O_info_t const *oi,
+herr_t visitor_show_name(hid_t oid, const char *name, const H5O_info_t *oi,
                          void *op_data) {
   LOG(Sev::Error, "obj refs: {:2}  name: {}", oi->rc, name);
   return 0;
@@ -153,66 +153,48 @@ HDFFile::~HDFFile() {
   }
 }
 
-void HDFFile::write_hdf_ds_scalar_string(hdf5::node::Group &parent,
-                                         std::string name, std::string s1) {
-
-  auto strfix = hdf5::datatype::String::variable();
-  strfix.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-
-  auto dsp = hdf5::dataspace::Scalar();
-  auto ds = parent.create_dataset(name, strfix, dsp);
-  ds.write(s1, strfix, dsp, dsp);
-}
-
-void HDFFile::write_attribute_str(hdf5::node::Node &node, std::string name,
-                                  std::string value) {
+void HDFFile::writeStringAttribute(hdf5::node::Node &Node,
+                                   const std::string &Name,
+                                   const std::string &Value) {
   auto string_type = hdf5::datatype::String::variable();
   string_type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  hdf5::property::AttributeCreationList acpl;
-  acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  hdf5::property::AttributeCreationList AttributeCreationPropertyList;
+  AttributeCreationPropertyList.character_encoding(
+      hdf5::datatype::CharacterEncoding::UTF8);
 
-  auto at = node.attributes.create(name, string_type, hdf5::dataspace::Scalar(),
-                                   acpl);
-  at.write(value, string_type);
+  auto at = Node.attributes.create(Name, string_type, hdf5::dataspace::Scalar(),
+                                   AttributeCreationPropertyList);
+  at.write(Value, string_type);
 }
 
 template <typename T>
-void HDFFile::write_hdf_ds_iso8601(hdf5::node::Group &parent,
-                                   const std::string &name, T &ts) {
+static void writeHDFISO8601Attribute(hdf5::node::Node &Node,
+                                     const std::string &Name, T &TimeStamp) {
   using namespace date;
   using namespace std::chrono;
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  HDFFile::write_hdf_ds_scalar_string(parent, name, s2);
+  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", TimeStamp);
+  HDFFile::writeStringAttribute(Node, Name, s2);
 }
 
-template <typename T>
-static void write_hdf_attribute_iso8601(hdf5::node::Node &node,
-                                        std::string name, T &ts) {
+void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
+                                                  const std::string &Name) {
   using namespace date;
   using namespace std::chrono;
-  auto s2 = format("%Y-%m-%dT%H:%M:%S%z", ts);
-  HDFFile::write_attribute_str(node, name, s2);
-}
-
-void HDFFile::write_hdf_iso8601_now(hdf5::node::Node &node,
-                                    const std::string &name) {
-  using namespace date;
-  using namespace std::chrono;
-  const time_zone *current_time_zone;
+  const time_zone *CurrentTimeZone;
   try {
-    current_time_zone = current_zone();
-  } catch (std::runtime_error const &e) {
-    LOG(Sev::Warning, "ERROR failed to detect time zone for use in ISO8601 "
+    CurrentTimeZone = current_zone();
+  } catch (const std::runtime_error &e) {
+    LOG(Sev::Warning, "Failed to detect time zone for use in ISO8601 "
                       "timestamp in HDF file")
-    current_time_zone = locate_zone("UTC");
+    CurrentTimeZone = locate_zone("UTC");
   }
-  auto now = make_zoned(current_time_zone,
+  auto now = make_zoned(CurrentTimeZone,
                         floor<std::chrono::milliseconds>(system_clock::now()));
-  write_hdf_attribute_iso8601(node, name, now);
+  writeHDFISO8601Attribute(Node, Name, now);
 }
 
-void HDFFile::write_attributes(hdf5::node::Node &Node,
-                               nlohmann::json const *Value) {
+void HDFFile::writeAttributes(hdf5::node::Node &Node,
+                              const nlohmann::json *Value) {
   if (Value->is_array()) {
     writeArrayOfAttributes(Node, Value);
   } else if (Value->is_object()) {
@@ -220,17 +202,18 @@ void HDFFile::write_attributes(hdf5::node::Node &Node,
   }
 }
 
-/// Write attributes defined in an array of attribute objects.
+/// \brief Write attributes defined in an array of attribute objects.
+/// 
 /// Unlike a single attribute object this allows specifying type and dataset.
 ///
 /// \param Node         Nodeto write attributes on.
 /// \param JsonValue    json value array of attribute objects.
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     nlohmann::json const *Value) {
-  if (!Value->is_array()) {
+                                     const nlohmann::json *Values) {
+  if (!Values->is_array()) {
     return;
   }
-  for (auto const &Attribute : *Value) {
+  for (auto const &Attribute : *Values) {
     if (Attribute.is_object()) {
       string Name;
       if (auto NameMaybe = find<std::string>("name", Attribute)) {
@@ -256,16 +239,16 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
   }
 }
 
-/// Write scalar or array attribute of specified type.
-
+/// \brief Write scalar or array attribute of specified type.
+///
 /// \param DType    type of the attribute values.
 /// \param Node     group or dataset to add attribute to.
 /// \param Name     name of the attribute.
 /// \param Values   the attribute values.
 void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
                                        hdf5::node::Node &Node,
-                                       std::string const &Name,
-                                       nlohmann::json const *Values) {
+                                       const std::string &Name,
+                                       const nlohmann::json *Values) {
   try {
     if (DType == "uint8") {
       writeAttrNumeric<uint8_t>(Node, Name, Values);
@@ -299,20 +282,20 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
     }
     if (DType == "string") {
       if (Values->is_array()) {
-        auto ValueArray = populate_strings(Values, Values->size());
+        auto ValueArray = populateStrings(Values, Values->size());
         auto StringAttr =
             Node.attributes.create(Name, hdf5::datatype::create<std::string>(),
                                    hdf5::dataspace::Simple{{Values->size()}});
         StringAttr.write(ValueArray);
       } else {
         std::string const StringValue = Values->get<std::string>();
-        auto string_type = hdf5::datatype::String::fixed(StringValue.size());
-        auto StringAttr = Node.attributes.create(Name, string_type,
-                                                 hdf5::dataspace::Scalar());
-        StringAttr.write(StringValue, string_type);
+        auto StringType = hdf5::datatype::String::fixed(StringValue.size());
+        auto StringAttr =
+            Node.attributes.create(Name, StringType, hdf5::dataspace::Scalar());
+        StringAttr.write(StringValue, StringType);
       }
     }
-  } catch (std::exception &e) {
+  } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed attribute write in ";
     ss << Node.link().path() << "/" << Name;
@@ -321,58 +304,58 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
   }
 }
 
-/// Write attributes defined in an object of name-value pairs.
+/// \brief Write attributes defined in an object of name-value pairs.
 ///
 /// \param node   Node to write attributes on.
 /// \param jsv    Json value object of attributes.
 void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
-                                      nlohmann::json const *Value) {
-  for (auto It = Value->begin(); It != Value->end(); ++It) {
+                                      const nlohmann::json *Values) {
+  for (auto It = Values->begin(); It != Values->end(); ++It) {
     auto const Name = It.key();
     writeScalarAttribute(Node, Name, &It.value());
   }
 }
 
-/// Write a scalar attribute when the type is to be inferred.
+/// \brief Write a scalar attribute when the type is to be inferred.
 ///
 /// \param Node         Group or dataset to write attribute to
 /// \param Name         Name of the attribute
 /// \param AttrValue    Json value containing the attribute value
 void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   nlohmann::json const *AttrValue) {
-  if (AttrValue->is_string()) {
-    write_attribute_str(Node, Name, AttrValue->get<std::string>());
-  } else if (AttrValue->is_number_integer()) {
-    write_attribute(Node, Name, AttrValue->get<int64_t>());
-  } else if (AttrValue->is_number_unsigned()) {
-    write_attribute(Node, Name, AttrValue->get<uint64_t>());
-  } else if (AttrValue->is_number_float()) {
-    write_attribute(Node, Name, AttrValue->get<double>());
+                                   const nlohmann::json *Values) {
+  if (Values->is_string()) {
+    writeStringAttribute(Node, Name, Values->get<std::string>());
+  } else if (Values->is_number_integer()) {
+    writeAttribute(Node, Name, Values->get<int64_t>());
+  } else if (Values->is_number_unsigned()) {
+    writeAttribute(Node, Name, Values->get<uint64_t>());
+  } else if (Values->is_number_float()) {
+    writeAttribute(Node, Name, Values->get<double>());
   }
 }
 
-void HDFFile::write_attributes_if_present(hdf5::node::Node &Node,
-                                          nlohmann::json const *Value) {
-  if (auto AttributesMaybe = find<json>("attributes", *Value)) {
+void HDFFile::writeAttributesIfPresent(hdf5::node::Node &Node,
+                                       const nlohmann::json *Values) {
+  if (auto AttributesMaybe = find<json>("attributes", *Values)) {
     auto const Attributes = AttributesMaybe.inner();
-    write_attributes(Node, &Attributes);
+    writeAttributes(Node, &Attributes);
   }
 }
 
-std::vector<std::string> HDFFile::populate_strings(nlohmann::json const *Value,
-                                                   hssize_t goal_size) {
+std::vector<std::string> HDFFile::populateStrings(const nlohmann::json *Values,
+                                                  hssize_t GoalSize) {
   std::vector<std::string> Buffer;
-  if (Value->is_string()) {
-    auto String = Value->get<std::string>();
+  if (Values->is_string()) {
+    auto String = Values->get<std::string>();
     Buffer.push_back(String);
-  } else if (Value->is_array()) {
+  } else if (Values->is_array()) {
     std::stack<json const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
-    as.push(Value);
+    as.push(Values);
     ai.push(0);
-    an.push(Value->size());
+    an.push(Values->size());
 
     while (!as.empty()) {
       if (as.size() > 10) {
@@ -397,10 +380,10 @@ std::vector<std::string> HDFFile::populate_strings(nlohmann::json const *Value,
     }
   }
 
-  if (static_cast<hssize_t>(Buffer.size()) != goal_size) {
+  if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
     std::stringstream ss;
     ss << "Failed to populate string(variable) blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << goal_size;
+    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
@@ -408,8 +391,8 @@ std::vector<std::string> HDFFile::populate_strings(nlohmann::json const *Value,
 }
 
 std::vector<std::string>
-HDFFile::populate_fixed_strings(nlohmann::json const *Value, size_t FixedAt,
-                                hssize_t goal_size) {
+HDFFile::populateFixedStrings(const nlohmann::json *Values, size_t FixedAt,
+                              hssize_t GoalSize) {
   if (FixedAt >= 1024 * 1024) {
     std::throw_with_nested(std::runtime_error(fmt::format(
         "Failed to allocate fixed-size string dataset, bad element size: {}",
@@ -417,17 +400,17 @@ HDFFile::populate_fixed_strings(nlohmann::json const *Value, size_t FixedAt,
   }
 
   std::vector<std::string> Buffer;
-  if (Value->is_string()) {
-    auto String = Value->get<std::string>();
+  if (Values->is_string()) {
+    auto String = Values->get<std::string>();
     String.resize(FixedAt, '\0');
     Buffer.push_back(String);
-  } else if (Value->is_array()) {
+  } else if (Values->is_array()) {
     std::stack<json const *> as;
     std::stack<size_t> ai;
     std::stack<size_t> an;
-    as.push(Value);
+    as.push(Values);
     ai.push(0);
-    an.push(Value->size());
+    an.push(Values->size());
 
     while (!as.empty()) {
       if (as.size() > 10) {
@@ -454,10 +437,10 @@ HDFFile::populate_fixed_strings(nlohmann::json const *Value, size_t FixedAt,
     }
   }
 
-  if (static_cast<hssize_t>(Buffer.size()) != goal_size) {
+  if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
     std::stringstream ss;
     ss << "Failed to populate string(fixed) blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << goal_size;
+    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 
@@ -465,18 +448,18 @@ HDFFile::populate_fixed_strings(nlohmann::json const *Value, size_t FixedAt,
 }
 
 template <typename DT>
-static void write_ds_numeric(hdf5::node::Group &Node, std::string Name,
-                             hdf5::property::DatasetCreationList &DCPL,
-                             hdf5::dataspace::Dataspace &Dataspace,
-                             nlohmann::json const *Values) {
+static void writeNumericDataset(
+    hdf5::node::Group &Node, const std::string &Name,
+    hdf5::property::DatasetCreationList &DatasetCreationPropertyList,
+    hdf5::dataspace::Dataspace &Dataspace, const nlohmann::json *Values) {
 
   try {
-    auto ds = Node.create_dataset(Name, hdf5::datatype::create<DT>(), Dataspace,
-                                  DCPL);
+    auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
+                                       Dataspace, DatasetCreationPropertyList);
     try {
-      auto Blob = populate_blob<DT>(Values, Dataspace.size());
+      auto Blob = populateBlob<DT>(Values, Dataspace.size());
       try {
-        ds.write(Blob);
+        Dataset.write(Blob);
       } catch (std::exception const &E) {
         std::throw_with_nested(std::runtime_error(
             fmt::format("Failed write for numeric attribute {} in {}: {}", Name,
@@ -494,223 +477,230 @@ static void write_ds_numeric(hdf5::node::Group &Node, std::string Name,
   }
 }
 
-void HDFFile::write_ds_string(hdf5::node::Group &parent, std::string name,
-                              hdf5::property::DatasetCreationList &dcpl,
-                              hdf5::dataspace::Dataspace &dataspace,
-                              nlohmann::json const *vals) {
+void HDFFile::WriteStringDataset(
+    hdf5::node::Group &Parent, const std::string &Name,
+    hdf5::property::DatasetCreationList &DatasetCreationList,
+    hdf5::dataspace::Dataspace &Dataspace, const nlohmann::json *Values) {
 
   try {
-    auto dt = hdf5::datatype::String::variable();
-    dt.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    dt.padding(hdf5::datatype::StringPad::NULLTERM);
+    auto DataType = hdf5::datatype::String::variable();
+    DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    DataType.padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto ds = parent.create_dataset(name, dt, dataspace, dcpl);
-    ds.write(populate_strings(vals, dataspace.size()), dt, dataspace, dataspace,
-             hdf5::property::DatasetTransferList());
-  } catch (std::exception &e) {
+    auto Dataset =
+        Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
+    Dataset.write(populateStrings(Values, Dataspace.size()), DataType,
+                  Dataspace, Dataspace, hdf5::property::DatasetTransferList());
+  } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed to write variable-size string dataset ";
-    ss << parent.link().path() << "/" << name;
+    ss << Parent.link().path() << "/" << Name;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
-void HDFFile::write_ds_string_fixed_size(
-    hdf5::node::Group &parent, std::string name,
-    hdf5::property::DatasetCreationList &dcpl,
-    hdf5::dataspace::Dataspace &dataspace, hsize_t element_size,
-    nlohmann::json const *vals) {
+void HDFFile::writeFixedSizeStringDataset(
+    hdf5::node::Group &Parent, const std::string &Name,
+    hdf5::property::DatasetCreationList &DatasetCreationList,
+    hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
+    const nlohmann::json *Values) {
 
   try {
-    auto dt = hdf5::datatype::String::fixed(element_size);
-    dt.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-    dt.padding(hdf5::datatype::StringPad::NULLTERM);
+    auto DataType = hdf5::datatype::String::fixed(ElementSize);
+    DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    DataType.padding(hdf5::datatype::StringPad::NULLTERM);
 
-    auto ds = parent.create_dataset(name, dt, dataspace, dcpl);
+    auto Dataset =
+        Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
 
-    dt.padding(hdf5::datatype::StringPad::NULLPAD);
-    ds.write(populate_fixed_strings(vals, element_size, dataspace.size()), dt,
-             dataspace, dataspace, hdf5::property::DatasetTransferList());
+    DataType.padding(hdf5::datatype::StringPad::NULLPAD);
+    Dataset.write(populateFixedStrings(Values, ElementSize, Dataspace.size()),
+                  DataType, Dataspace, Dataspace,
+                  hdf5::property::DatasetTransferList());
 
-  } catch (std::exception &e) {
+  } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed to write fixed-size string dataset ";
-    ss << parent.link().path() << "/" << name;
+    ss << Parent.link().path() << "/" << Name;
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
-void HDFFile::write_ds_generic(std::string const &dtype,
-                               hdf5::node::Group &parent,
-                               std::string const &name,
-                               std::vector<hsize_t> const &sizes,
-                               std::vector<hsize_t> const &max,
-                               hsize_t element_size,
-                               nlohmann::json const *vals) {
+void HDFFile::writeGenericDataset(const std::string &DataType,
+                                  hdf5::node::Group &Parent,
+                                  const std::string &Name,
+                                  const std::vector<hsize_t> &Sizes,
+                                  const std::vector<hsize_t> &Max,
+                                  hsize_t ElementSize,
+                                  const nlohmann::json *Values) {
   try {
 
-    hdf5::property::DatasetCreationList dcpl;
-    hdf5::dataspace::Dataspace dataspace = hdf5::dataspace::Scalar();
-    if (!sizes.empty()) {
-      dataspace = hdf5::dataspace::Simple(sizes, max);
-      if (max[0] == H5S_UNLIMITED) {
-        dcpl.chunk(sizes);
+    hdf5::property::DatasetCreationList DatasetCreationList;
+    hdf5::dataspace::Dataspace Dataspace = hdf5::dataspace::Scalar();
+    if (!Sizes.empty()) {
+      Dataspace = hdf5::dataspace::Simple(Sizes, Max);
+      if (Max[0] == H5S_UNLIMITED) {
+        DatasetCreationList.chunk(Sizes);
       }
     }
 
-    if (dtype == "uint8") {
-      write_ds_numeric<uint8_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "uint8") {
+      writeNumericDataset<uint8_t>(Parent, Name, DatasetCreationList, Dataspace,
+                                   Values);
     }
-    if (dtype == "uint16") {
-      write_ds_numeric<uint16_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "uint16") {
+      writeNumericDataset<uint16_t>(Parent, Name, DatasetCreationList,
+                                    Dataspace, Values);
     }
-    if (dtype == "uint32") {
-      write_ds_numeric<uint32_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "uint32") {
+      writeNumericDataset<uint32_t>(Parent, Name, DatasetCreationList,
+                                    Dataspace, Values);
     }
-    if (dtype == "uint64") {
-      write_ds_numeric<uint64_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "uint64") {
+      writeNumericDataset<uint64_t>(Parent, Name, DatasetCreationList,
+                                    Dataspace, Values);
     }
-    if (dtype == "int8") {
-      write_ds_numeric<int8_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "int8") {
+      writeNumericDataset<int8_t>(Parent, Name, DatasetCreationList, Dataspace,
+                                  Values);
     }
-    if (dtype == "int16") {
-      write_ds_numeric<int16_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "int16") {
+      writeNumericDataset<int16_t>(Parent, Name, DatasetCreationList, Dataspace,
+                                   Values);
     }
-    if (dtype == "int32") {
-      write_ds_numeric<int32_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "int32") {
+      writeNumericDataset<int32_t>(Parent, Name, DatasetCreationList, Dataspace,
+                                   Values);
     }
-    if (dtype == "int64") {
-      write_ds_numeric<int64_t>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "int64") {
+      writeNumericDataset<int64_t>(Parent, Name, DatasetCreationList, Dataspace,
+                                   Values);
     }
-    if (dtype == "float") {
-      write_ds_numeric<float>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "float") {
+      writeNumericDataset<float>(Parent, Name, DatasetCreationList, Dataspace,
+                                 Values);
     }
-    if (dtype == "double") {
-      write_ds_numeric<double>(parent, name, dcpl, dataspace, vals);
+    if (DataType == "double") {
+      writeNumericDataset<double>(Parent, Name, DatasetCreationList, Dataspace,
+                                  Values);
     }
-    if (dtype == "string") {
-      // TODO
-      // We currently not support fixed length strings, apparently some
-      // to-be-tracked issue with h5cpp at the moment.
-      if (true || element_size == H5T_VARIABLE) {
-        write_ds_string(parent, name, dcpl, dataspace, vals);
-      } else {
-        write_ds_string_fixed_size(parent, name, dcpl, dataspace, element_size,
-                                   vals);
-      }
+    if (DataType == "string") {
+      WriteStringDataset(Parent, Name, DatasetCreationList, Dataspace, Values);
     }
-  } catch (std::exception &e) {
+  } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed dataset write in ";
-    ss << parent.link().path() << "/" << name;
-    ss << " type='" << dtype << "'";
+    ss << Parent.link().path() << "/" << Name;
+    ss << " type='" << DataType << "'";
     ss << " size(";
-    for (auto s : sizes)
+    for (auto s : Sizes)
       ss << s << " ";
     ss << ")  max(";
-    for (auto s : max)
+    for (auto s : Max)
       ss << s << " ";
     ss << ")  ";
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
-void HDFFile::write_dataset(hdf5::node::Group &Parent,
-                            nlohmann::json const *Value) {
+void HDFFile::writeDataset(hdf5::node::Group &Parent,
+                           const nlohmann::json *Values) {
   std::string Name;
-  if (auto NameMaybe = find<std::string>("name", *Value)) {
+  if (auto NameMaybe = find<std::string>("name", *Values)) {
     Name = NameMaybe.inner();
   } else {
     return;
   }
 
   std::string DataType = "int64";
-  hsize_t element_size = H5T_VARIABLE;
+  hsize_t ElementSize = H5T_VARIABLE;
 
-  std::vector<hsize_t> sizes;
-  if (auto ds = find<json>("dataset", *Value)) {
-    auto dso = ds.inner();
-    if (auto ds_space = find<std::string>("space", dso)) {
-      if (ds_space.inner() != "simple") {
+  std::vector<hsize_t> Sizes;
+  if (auto DatasetJSONObject = find<json>("dataset", *Values)) {
+    auto DatasetInnerObject = DatasetJSONObject.inner();
+    if (auto DataSpaceObject = find<std::string>("space", DatasetInnerObject)) {
+      if (DataSpaceObject.inner() != "simple") {
         LOG(Sev::Warning, "sorry, can only handle simple data spaces");
         return;
       }
     }
 
-    if (auto ds_type = find<std::string>("type", dso)) {
-      DataType = ds_type.inner();
+    if (auto DatasetTypeObject =
+            find<std::string>("type", DatasetInnerObject)) {
+      DataType = DatasetTypeObject.inner();
     }
 
     // optional, default to scalar
-    if (auto ds_size = find<json>("size", dso)) {
-      if (ds_size.inner().is_array()) {
-        auto a = ds_size.inner();
-        for (auto const &Element : a) {
+    if (auto DatasetSizeObject = find<json>("size", DatasetInnerObject)) {
+      if (DatasetSizeObject.inner().is_array()) {
+        auto DatasetSizeInnerObject = DatasetSizeObject.inner();
+        for (auto const &Element : DatasetSizeInnerObject) {
           if (Element.is_number_integer()) {
-            sizes.push_back(Element.get<int64_t>());
+            Sizes.push_back(Element.get<int64_t>());
           } else if (Element.is_string()) {
             if (Element.get<std::string>() == "unlimited") {
-              sizes.push_back(H5S_UNLIMITED);
+              Sizes.push_back(H5S_UNLIMITED);
             }
           }
         }
       }
     }
 
-    if (auto x = find<uint64_t>("string_size", dso)) {
-      if ((x.inner() > 0) && (x.inner() != H5T_VARIABLE)) {
-        element_size = x.inner();
+    if (auto DatasetStringSizeObject =
+            find<uint64_t>("string_size", DatasetInnerObject)) {
+      if ((DatasetStringSizeObject.inner() > 0) &&
+          (DatasetStringSizeObject.inner() != H5T_VARIABLE)) {
+        ElementSize = DatasetStringSizeObject.inner();
       }
     }
   }
 
-  auto ds_values_maybe = find<json>("values", *Value);
-  if (!ds_values_maybe) {
+  auto DatasetValuesObject = find<json>("values", *Values);
+  if (!DatasetValuesObject) {
     return;
   }
-  auto ds_values = ds_values_maybe.inner();
+  auto DatasetValuesInnerObject = DatasetValuesObject.inner();
 
-  if (ds_values.is_number_float()) {
+  if (DatasetValuesInnerObject.is_number_float()) {
     DataType = "double";
   }
 
-  auto max = sizes;
-  if (!sizes.empty()) {
-    if (sizes[0] == H5S_UNLIMITED) {
-      if (ds_values.is_array()) {
-        sizes[0] = ds_values.size();
+  auto Max = Sizes;
+  if (!Sizes.empty()) {
+    if (Sizes[0] == H5S_UNLIMITED) {
+      if (DatasetValuesInnerObject.is_array()) {
+        Sizes[0] = DatasetValuesInnerObject.size();
       } else {
-        sizes[0] = 1;
+        Sizes[0] = 1;
       }
     }
   }
 
-  write_ds_generic(DataType, Parent, Name, sizes, max, element_size,
-                   &ds_values);
+  writeGenericDataset(DataType, Parent, Name, Sizes, Max, ElementSize,
+                      &DatasetValuesInnerObject);
   auto dset = hdf5::node::Dataset(Parent.nodes[Name]);
 
-  write_attributes_if_present(dset, Value);
+  writeAttributesIfPresent(dset, Values);
 }
 
-void HDFFile::create_hdf_structures(nlohmann::json const *value,
-                                    hdf5::node::Group &parent, uint16_t level,
-                                    hdf5::property::LinkCreationList lcpl,
-                                    hdf5::datatype::String hdf_type_strfix,
-                                    std::vector<StreamHDFInfo> &stream_hdf_info,
-                                    std::deque<std::string> &path) {
+void HDFFile::createHDFStructures(
+    const nlohmann::json *Value, hdf5::node::Group &Parent, uint16_t Level,
+    hdf5::property::LinkCreationList LinkCreationPropertyList,
+    hdf5::datatype::String FixedStringHDFType,
+    std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
 
   try {
 
     // The HDF object that we will maybe create at the current level.
     hdf5::node::Group hdf_this;
-    if (auto TypeMaybe = find<std::string>("type", *value)) {
+    if (auto TypeMaybe = find<std::string>("type", *Value)) {
       auto Type = TypeMaybe.inner();
       if (Type == "group") {
-        if (auto NameMaybe = find<std::string>("name", *value)) {
+        if (auto NameMaybe = find<std::string>("name", *Value)) {
           auto Name = NameMaybe.inner();
           try {
-            hdf_this = parent.create_group(Name, lcpl);
-            path.push_back(Name);
+            hdf_this = Parent.create_group(Name, LinkCreationPropertyList);
+            Path.push_back(Name);
           } catch (...) {
             LOG(Sev::Critical, "failed to create group  Name: {}", Name);
           }
@@ -718,47 +708,47 @@ void HDFFile::create_hdf_structures(nlohmann::json const *value,
       }
       if (Type == "stream") {
         string pathstr;
-        for (auto &x : path) {
+        for (auto &x : Path) {
           pathstr += "/" + x;
         }
 
-        stream_hdf_info.push_back(StreamHDFInfo{pathstr, value->dump()});
+        HDFStreamInfo.push_back(StreamHDFInfo{pathstr, Value->dump()});
       }
       if (Type == "dataset") {
-        write_dataset(parent, value);
+        writeDataset(Parent, Value);
       }
     }
 
     // If the current level in the HDF can act as a parent, then continue the
     // recursion with the (optional) "children" array.
     if (hdf_this.is_valid()) {
-      write_attributes_if_present(hdf_this, value);
-      if (auto ChildrenMaybe = find<json>("children", *value)) {
+      writeAttributesIfPresent(hdf_this, Value);
+      if (auto ChildrenMaybe = find<json>("children", *Value)) {
         auto Children = ChildrenMaybe.inner();
         if (Children.is_array()) {
           for (auto &Child : Children) {
-            create_hdf_structures(&Child, hdf_this, level + 1, lcpl,
-                                  hdf_type_strfix, stream_hdf_info, path);
+            createHDFStructures(&Child, hdf_this, Level + 1,
+                                LinkCreationPropertyList, FixedStringHDFType,
+                                HDFStreamInfo, Path);
           }
         }
       }
-      path.pop_back();
+      Path.pop_back();
     }
-  } catch (std::exception &e) {
-    std::stringstream ss;
-    ss << "Failed to create structure  parent=";
-    ss << parent.link().path() << "  level=" << level;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+  } catch (const std::exception &e) {
+    // Don't throw here as the file should continue writing
+    LOG(Sev::Error, "Failed to create structure  parent={} level={}",
+        std::string(Parent.link().path()), Level)
   }
 }
 
 /// Human readable version of the HDF5 headers that we compile against.
-std::string HDFFile::h5_version_string_headers_compile_time() {
+std::string HDFFile::H5VersionStringHeadersCompileTime() {
   return fmt::format("{}.{}.{}", H5_VERS_MAJOR, H5_VERS_MINOR, H5_VERS_RELEASE);
 }
 
 /// Human readable version of the HDF5 libraries that we run with.
-std::string HDFFile::h5_version_string_linked() {
+std::string HDFFile::h5VersionStringLinked() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   return fmt::format("{}.{}.{}", h5_vers_major, h5_vers_minor, h5_vers_release);
@@ -768,71 +758,71 @@ std::string HDFFile::h5_version_string_linked() {
 /// compiled with against the version of the HDF5 libraries that the
 /// kafka-to-nexus is linked against at runtime. Currently, a mismatch in the
 /// release number is logged but does not cause panic.
-void HDFFile::check_hdf_version() {
+void HDFFile::checkHDFVersion() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
     LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
-        h5_version_string_headers_compile_time(), h5_version_string_linked());
+        H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
     exit(1);
   }
   if (h5_vers_minor != H5_VERS_MINOR) {
     LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
-        h5_version_string_headers_compile_time(), h5_version_string_linked());
+        H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
     exit(1);
   }
   if (h5_vers_release != H5_VERS_RELEASE) {
     LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
-        h5_version_string_headers_compile_time(), h5_version_string_linked());
+        H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
   }
 }
 
 extern "C" char const GIT_COMMIT[];
 
-void HDFFile::init(std::string filename, nlohmann::json const &nexus_structure,
-                   nlohmann::json const &config_file,
-                   std::vector<StreamHDFInfo> &stream_hdf_info,
-                   bool UseHDFSWMR) {
-  if (std::ifstream(filename).good()) {
+void HDFFile::init(const std::string &Filename,
+                   const nlohmann::json &NexusStructure,
+                   const nlohmann::json &ConfigFile,
+                   std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
+  if (std::ifstream(Filename).good()) {
     // File exists already
     throw std::runtime_error(
-        fmt::format("The file \"{}\" exists already.", filename));
+        fmt::format("The file \"{}\" exists already.", Filename));
   }
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    set_common_props(fcpl, fapl);
+    setCommonProps(fcpl, fapl);
     if (UseHDFSWMR) {
-      h5file =
-          hdf5::file::create(filename, hdf5::file::AccessFlags::TRUNCATE |
+      H5File =
+          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
                                            hdf5::file::AccessFlags::SWMR_WRITE,
                              fcpl, fapl);
-      isSWMREnabled_ = true;
+      SWMREnabled = true;
     } else {
-      h5file = hdf5::file::create(filename, hdf5::file::AccessFlags::EXCLUSIVE,
+      H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
                                   fcpl, fapl);
     }
-    init(nexus_structure, stream_hdf_info);
-  } catch (std::exception &e) {
+    init(NexusStructure, StreamHDFInfo);
+  } catch (const std::exception &e) {
     LOG(Sev::Error,
         "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), filename,
+        boost::filesystem::current_path().string(), Filename,
         hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
 }
 
-void HDFFile::init(const std::string &nexus_structure,
-                   std::vector<StreamHDFInfo> &stream_hdf_info) {
-  auto Document = nlohmann::json::parse(nexus_structure);
-  init(Document, stream_hdf_info);
+void HDFFile::init(const std::string &NexusStructure,
+                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
+  auto Document = nlohmann::json::parse(NexusStructure);
+  init(Document, StreamHDFInfo);
 }
 
-void HDFFile::init(nlohmann::json const &nexus_structure,
-                   std::vector<StreamHDFInfo> &stream_hdf_info) {
+void HDFFile::init(const nlohmann::json &NexusStructure,
+                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
 
   try {
-    check_hdf_version();
+    checkHDFVersion();
 
     hdf5::property::AttributeCreationList acpl;
     acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -843,81 +833,83 @@ void HDFFile::init(nlohmann::json const &nexus_structure,
     auto var_string = hdf5::datatype::String::variable();
     var_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    root_group = h5file.root();
+    RootGroup = H5File.root();
 
     std::deque<std::string> path;
-    if (nexus_structure.is_object()) {
-      auto value = &nexus_structure;
+    if (NexusStructure.is_object()) {
+      auto value = &NexusStructure;
       if (auto ChildrenMaybe = find<json>("children", *value)) {
         auto Children = ChildrenMaybe.inner();
         if (Children.is_array()) {
           for (auto &Child : Children) {
-            create_hdf_structures(&Child, root_group, 0, lcpl, var_string,
-                                  stream_hdf_info, path);
+            createHDFStructures(&Child, RootGroup, 0, lcpl, var_string,
+                                StreamHDFInfo, path);
           }
         }
       }
     }
 
-    write_attribute_str(root_group, "HDF5_Version", h5_version_string_linked());
-    write_attribute_str(root_group, "file_name",
-                        h5file.id().file_name().stem().string());
-    write_attribute_str(root_group, "creator",
-                        fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
-    write_hdf_iso8601_now(root_group, "file_time");
-    write_attributes_if_present(root_group, &nexus_structure);
+    writeStringAttribute(RootGroup, "HDF5_Version", h5VersionStringLinked());
+    writeStringAttribute(RootGroup, "file_name",
+                         H5File.id().file_name().stem().string());
+    writeStringAttribute(
+        RootGroup, "creator",
+        fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
+    writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
+    writeAttributesIfPresent(RootGroup, &NexusStructure);
   } catch (std::exception &e) {
-    LOG(Sev::Critical, "ERROR could not initialize  file={}  trace:\n{}",
-        h5file.id().file_name().string(), hdf5::error::print_nested(e));
+    LOG(Sev::Critical, "Failed to initialize  file={}  trace:\n{}",
+        H5File.id().file_name().string(), hdf5::error::print_nested(e));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
 }
 
 void HDFFile::close() {
   try {
-    if (h5file.is_valid()) {
+    if (H5File.is_valid()) {
       LOG(Sev::Debug, "flushing");
       flush();
       LOG(Sev::Debug, "closing");
-      h5file.close();
+      H5File.close();
       LOG(Sev::Debug, "closed");
     }
-  } catch (std::exception const &E) {
+  } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
-        h5file.id().file_name().string(), Trace);
+        H5File.id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
         boost::filesystem::current_path().string(),
-        h5file.id().file_name().string(), Trace)));
+        H5File.id().file_name().string(), Trace)));
   }
 }
 
-void HDFFile::reopen(std::string filename, nlohmann::json const &config_file) {
+void HDFFile::reopen(const std::string &Filename,
+                     const nlohmann::json &ConfigFile) {
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    set_common_props(fcpl, fapl);
+    setCommonProps(fcpl, fapl);
 
-    h5file =
-        hdf5::file::open(filename, hdf5::file::AccessFlags::READWRITE, fapl);
-  } catch (std::exception const &E) {
+    H5File =
+        hdf5::file::open(Filename, hdf5::file::AccessFlags::READWRITE, fapl);
+  } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), filename, Trace);
+        boost::filesystem::current_path().string(), Filename, Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to reopen.  Current Path: {}  Filename: {}  Trace:\n{}",
-        boost::filesystem::current_path().string(), filename, Trace)));
+        boost::filesystem::current_path().string(), Filename, Trace)));
   }
 }
 
 void HDFFile::flush() {
   try {
-    if (h5file.is_valid()) {
-      h5file.flush(hdf5::file::Scope::GLOBAL);
+    if (H5File.is_valid()) {
+      H5File.flush(hdf5::file::Scope::GLOBAL);
     }
-  } catch (std::runtime_error const &E) {
+  } catch (const std::runtime_error &E) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("HDFFile failed to flush  what: {}", E.what())));
   } catch (...) {
@@ -934,6 +926,6 @@ void HDFFile::SWMRFlush() {
   }
 }
 
-bool HDFFile::isSWMREnabled() const { return isSWMREnabled_; }
+bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
 
 } // namespace FileWriter

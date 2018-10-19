@@ -244,7 +244,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         }
       }
       auto AttributesJson = nlohmann::json::parse(*HDFAttributesPtr);
-      HDFFile::write_attributes(HDFGroup, &AttributesJson);
+      HDFFile::writeAttributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
@@ -257,7 +257,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     }
   } catch (std::exception &e) {
     auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "ERROR f142 could not init HDFGroup: {}  trace: {}",
+    LOG(Sev::Error, "f142 could not init HDFGroup: {}  trace: {}",
         static_cast<std::string>(HDFGroup.link().path()), message);
   }
   return HDFWriterModule::InitResult::OK();

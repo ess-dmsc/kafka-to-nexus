@@ -109,6 +109,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "commands");
   App.add_flag("--logpid-sleep", MainOptions.logpid_sleep);
   App.add_flag("--use-signal-handler", MainOptions.use_signal_handler);
+  App.add_option("--log-file", MainOptions.LogFilename,
+                 "Specify file to log to");
   App.add_option("--teamid", MainOptions.teamid);
   App.add_option("--service-id", MainOptions.service_id,
                  "Identifier string for this filewriter instance. Otherwise by "

@@ -84,7 +84,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   StreamSettings.StreamHDFInfoObj = StreamHDFInfo;
 
   json ConfigStream;
-  ConfigStream = json::parse(StreamHDFInfo.config_stream);
+  ConfigStream = json::parse(StreamHDFInfo.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -141,7 +141,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
         "Can not create a HDFWriterModule for '{}'", StreamSettings.Module));
   }
 
-  auto RootGroup = Task->hdf_file.h5file.root();
+  auto RootGroup = Task->hdf_file.H5File.root();
   try {
     HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
   } catch (std::exception const &E) {
@@ -155,7 +155,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     Attributes = x.inner();
   }
   auto StreamGroup =
-      hdf5::node::get_group(RootGroup, StreamHDFInfo.hdf_parent_name);
+      hdf5::node::get_group(RootGroup, StreamHDFInfo.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
   HDFWriterModule->close();
   HDFWriterModule.reset();
@@ -173,12 +173,12 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
       StreamSettingsList.push_back(
           extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
     } catch (json::parse_error const &E) {
-      LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.config_stream);
+      LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
     } catch (std::runtime_error const &E) {
       LOG(Sev::Warning,
           "Exception while initializing writer module  what: {}  json: {}",
-          E.what(), StreamHDFInfo.config_stream);
+          E.what(), StreamHDFInfo.ConfigStream);
       continue;
     }
   }
@@ -329,13 +329,13 @@ void CommandHandler::addStreamSourceToWriterModule(
         // Reopen the previously created HDF dataset.
         HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
         try {
-          auto RootGroup = Task->hdf_file.h5file.root();
+          auto RootGroup = Task->hdf_file.H5File.root();
           auto StreamGroup = hdf5::node::get_group(
-              RootGroup, StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+              RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
           auto Err = HDFWriterModule->reopen({StreamGroup});
           if (Err.is_ERR()) {
             LOG(Sev::Error, "can not reopen HDF file for stream {}",
-                StreamSettings.StreamHDFInfoObj.hdf_parent_name);
+                StreamSettings.StreamHDFInfoObj.HDFParentName);
             continue;
           }
         } catch (std::runtime_error const &e) {

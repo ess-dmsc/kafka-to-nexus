@@ -15,8 +15,8 @@ namespace FileWriter {
 
 // POD
 struct StreamHDFInfo {
-  std::string hdf_parent_name;
-  std::string config_stream;
+  std::string HDFParentName;
+  std::string ConfigStream;
 };
 
 class HDFFile final {
@@ -25,27 +25,28 @@ public:
 
   ~HDFFile();
 
-  void init(std::string filename, nlohmann::json const &nexus_structure,
-            nlohmann::json const &config_file,
-            std::vector<StreamHDFInfo> &stream_hdf_info, bool UseHDFSWMR);
+  void init(const std::string &Filename, nlohmann::json const &NexusStructure,
+            nlohmann::json const &ConfigFile,
+            std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR);
 
-  void init(const std::string &nexus_structure,
-            std::vector<StreamHDFInfo> &stream_hdf_info);
+  void init(const std::string &NexusStructure,
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
-  void init(nlohmann::json const &nexus_structure,
-            std::vector<StreamHDFInfo> &stream_hdf_info);
+  void init(const nlohmann::json &NexusStructure,
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
-  void reopen(std::string filename, nlohmann::json const &config_file);
+  void reopen(const std::string &Filename, const nlohmann::json &ConfigFile);
 
   void flush();
   void close();
 
-  static std::string h5_version_string_linked();
-  static void write_attributes(hdf5::node::Node &node,
-                               nlohmann::json const *jsv);
+  static std::string h5VersionStringLinked();
+  static void writeAttributes(hdf5::node::Node &Node,
+                              const nlohmann::json *Value);
 
-  static void write_attribute_str(hdf5::node::Node &node, std::string name,
-                                  std::string value);
+  static void writeStringAttribute(hdf5::node::Node &Node,
+                                   const std::string &Name,
+                                   const std::string &Value);
 
   /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
   /// file.
@@ -53,82 +54,78 @@ public:
 
   bool isSWMREnabled() const;
 
-  hdf5::file::File h5file;
-  hdf5::node::Group root_group;
+  hdf5::file::File H5File;
+  hdf5::node::Group RootGroup;
 
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
 
-  static void check_hdf_version();
-  static std::string h5_version_string_headers_compile_time();
+  static void checkHDFVersion();
+  static std::string H5VersionStringHeadersCompileTime();
 
-  static void create_hdf_structures(nlohmann::json const *value,
-                                    hdf5::node::Group &parent, uint16_t level,
-                                    hdf5::property::LinkCreationList lcpl,
-                                    hdf5::datatype::String hdf_type_strfix,
-                                    std::vector<StreamHDFInfo> &stream_hdf_info,
-                                    std::deque<std::string> &path);
+  static void createHDFStructures(
+      const nlohmann::json *Value, hdf5::node::Group &Parent, uint16_t Level,
+      hdf5::property::LinkCreationList LinkCreationPropertyList,
+      hdf5::datatype::String FixedStringHDFType,
+      std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
 
-  static void write_hdf_ds_scalar_string(hdf5::node::Group &parent,
-                                         std::string name, std::string s1);
+  static void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
+                                                  const std::string &Name);
 
-  static void write_hdf_iso8601_now(hdf5::node::Node &node,
-                                    const std::string &name);
+  static void writeAttributesIfPresent(hdf5::node::Node &Node,
+                                       const nlohmann::json *Values);
 
-  static void write_attributes_if_present(hdf5::node::Node &node,
-                                          nlohmann::json const *jsv);
-
-  static std::vector<std::string> populate_strings(nlohmann::json const *vals,
-                                                   hssize_t goal_size);
+  static std::vector<std::string> populateStrings(const nlohmann::json *Values,
+                                                  hssize_t GoalSize);
 
   static std::vector<std::string>
-  populate_fixed_strings(nlohmann::json const *vals, size_t FixedAt,
-                         hssize_t goal_size);
-
-  static void write_ds_string(hdf5::node::Group &parent, std::string name,
-                              hdf5::property::DatasetCreationList &dcpl,
-                              hdf5::dataspace::Dataspace &dataspace,
-                              nlohmann::json const *vals);
+  populateFixedStrings(const nlohmann::json *Values, size_t FixedAt,
+                       hssize_t GoalSize);
 
   static void
-  write_ds_string_fixed_size(hdf5::node::Group &parent, std::string name,
-                             hdf5::property::DatasetCreationList &dcpl,
-                             hdf5::dataspace::Dataspace &dataspace,
-                             hsize_t element_size, nlohmann::json const *vals);
+  WriteStringDataset(hdf5::node::Group &Parent, const std::string &Name,
+                     hdf5::property::DatasetCreationList &DatasetCreationList,
+                     hdf5::dataspace::Dataspace &Dataspace,
+                     const nlohmann::json *Values);
+
+  static void writeFixedSizeStringDataset(
+      hdf5::node::Group &Parent, const std::string &Name,
+      hdf5::property::DatasetCreationList &DatasetCreationList,
+      hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
+      const nlohmann::json *Values);
+
+  static void writeGenericDataset(const std::string &DataType,
+                                  hdf5::node::Group &Parent,
+                                  const std::string &Name,
+                                  const std::vector<hsize_t> &Sizes,
+                                  const std::vector<hsize_t> &Max,
+                                  hsize_t ElementSize,
+                                  const nlohmann::json *Values);
+
+  static void writeDataset(hdf5::node::Group &Parent,
+                           const nlohmann::json *Values);
 
   static void
-  write_ds_generic(std::string const &dtype, hdf5::node::Group &parent,
-                   std::string const &name, std::vector<hsize_t> const &sizes,
-                   std::vector<hsize_t> const &max, hsize_t element_size,
-                   nlohmann::json const *vals);
+  setCommonProps(hdf5::property::FileCreationList &FileCreationPropertyList,
+                 hdf5::property::FileAccessList &FileAccessPropertyList) {}
 
-  static void write_dataset(hdf5::node::Group &parent,
-                            nlohmann::json const *value);
-
-  static void set_common_props(hdf5::property::FileCreationList &fcpl,
-                               hdf5::property::FileAccessList &fapl) {}
-
-  template <typename T>
-  void write_hdf_ds_iso8601(hdf5::node::Group &parent, const std::string &name,
-                            T &ts);
-
-  static void writeObjectOfAttributes(hdf5::node::Node &node,
-                                      nlohmann::json const *jsv);
+  static void writeObjectOfAttributes(hdf5::node::Node &Node,
+                                      const nlohmann::json *Values);
 
   static void writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     nlohmann::json const *JsonValue);
+                                     const nlohmann::json *Values);
 
   static void writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   nlohmann::json const *AttrValue);
+                                   const nlohmann::json *Values);
 
-  static void writeAttrOfSpecifiedType(std::string const &DType,
+  static void writeAttrOfSpecifiedType(const std::string &DType,
                                        hdf5::node::Node &Node,
-                                       std::string const &Name,
-                                       nlohmann::json const *Values);
+                                       const std::string &Name,
+                                       const nlohmann::json *Values);
 
-  bool isSWMREnabled_ = false;
+  bool SWMREnabled = false;
 
   using CLOCK = std::chrono::steady_clock;
   std::chrono::milliseconds SWMRFlushInterval{10000};
