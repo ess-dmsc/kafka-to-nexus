@@ -203,7 +203,7 @@ void HDFFile::writeAttributes(hdf5::node::Node &Node,
 }
 
 /// \brief Write attributes defined in an array of attribute objects.
-/// 
+///
 /// Unlike a single attribute object this allows specifying type and dataset.
 ///
 /// \param Node         Nodeto write attributes on.
