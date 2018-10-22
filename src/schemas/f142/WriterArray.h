@@ -22,7 +22,7 @@ public:
   h5::append_ret write_impl(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_2d<DT>> ChunkedDataset;
-  Value _fb_value_type_id = Value::NONE;
+  Value FlatbuffersValueTypeId = Value::NONE;
   size_t ChunkSize = 64 * 1024;
 };
 
@@ -33,8 +33,9 @@ public:
 template <typename DT, typename FV>
 WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
                                  std::string const &source_name, hsize_t ncols,
-                                 Value fb_value_type_id, CollectiveQueue *cq)
-    : _fb_value_type_id(fb_value_type_id) {
+                                 Value FlatbuffersValueTypeId,
+                                 CollectiveQueue *cq)
+    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   if (ncols <= 0) {
     LOG(Sev::Error, "can not handle number of columns ncols == {}", ncols);
     return;
@@ -56,9 +57,9 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
 template <typename DT, typename FV>
 WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
                                  std::string const &source_name, hsize_t ncols,
-                                 Value fb_value_type_id, CollectiveQueue *cq,
-                                 HDFIDStore *hdf_store)
-    : _fb_value_type_id(fb_value_type_id) {
+                                 Value FlatbuffersValueTypeId,
+                                 CollectiveQueue *cq, HDFIDStore *hdf_store)
+    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   if (ncols <= 0) {
     LOG(Sev::Error, "can not handle number of columns ncols == {}", ncols);
     return;
@@ -83,7 +84,7 @@ template <typename DT, typename FV>
 h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
   auto vt = fbuf->value_type();
-  if (vt == Value::NONE || vt != _fb_value_type_id) {
+  if (vt == Value::NONE || vt != FlatbuffersValueTypeId) {
     Result.ErrorString =
         fmt::format("vt == Value::NONE || vt != _fb_value_type_id");
     return Result;
