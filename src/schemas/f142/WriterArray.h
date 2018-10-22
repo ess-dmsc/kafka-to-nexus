@@ -21,8 +21,9 @@ public:
               HDFIDStore *hdf_store);
   h5::append_ret write_impl(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
-  uptr<h5::h5d_chunked_2d<DT>> ds;
+  uptr<h5::h5d_chunked_2d<DT>> ChunkedDataset;
   Value _fb_value_type_id = Value::NONE;
+  size_t ChunkSize = 64 * 1024;
 };
 
 /// \brief  Create a new dataset for array numeric types
@@ -39,9 +40,9 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
     return;
   }
   LOG(Sev::Debug, "f142 init_impl  ncols: {}", ncols);
-  this->ds = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols,
-                                            64 * 1024, cq);
-  if (!this->ds) {
+  ChunkedDataset = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols,
+                                                  64 * 1024, cq);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
         source_name, ncols);
@@ -63,16 +64,15 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
     return;
   }
   LOG(Sev::Debug, "f142 writer_typed_array reopen  ncols: {}", ncols);
-  ds = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols, cq,
-                                    hdf_store);
-  if (!ds) {
+  ChunkedDataset = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols,
+                                                cq, hdf_store);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error,
         "could not create hdf dataset  source_name: {}  number of columns: {}",
         source_name, ncols);
     return;
   }
-  // TODO take from config
-  ds->buffer_init(64 * 1024, 0);
+  ChunkedDataset->buffer_init(ChunkSize, 0);
 }
 
 /// \brief  Write to a numeric array dataset
@@ -99,16 +99,16 @@ h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
         fmt::format("value() in value of flatbuffer is nullptr");
     return Result;
   }
-  if (!this->ds) {
+  if (ChunkedDataset == nullptr) {
     Result.ErrorString = fmt::format("Dataset is nullptr");
     return Result;
   }
-  return this->ds->append_data_2d(v2->data(), v2->size());
+  return ChunkedDataset->append_data_2d(v2->data(), v2->size());
 }
 
 template <typename DT, typename FV>
 void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
-  auto &Dataset = ds->ds.Dataset;
+  auto &Dataset = ChunkedDataset->ds.Dataset;
   auto Type = Dataset.datatype();
   auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
   auto DimSrc = SpaceSrc.current_dimensions();
@@ -135,7 +135,7 @@ void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
     Latest =
         Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
   }
-  Offset.at(0) = ds->ds.snow.at(0) - 1;
+  Offset.at(0) = ChunkedDataset->size() - 1;
   hdf5::Dimensions Block = DimSrc;
   Block.at(0) = 1;
   SpaceSrc.selection(hdf5::dataspace::SelectionOperation::SET,

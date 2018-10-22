@@ -620,6 +620,10 @@ template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
   return AppendResult::OK;
 }
 
+template <typename T> size_t h5d_chunked_2d<T>::size() const {
+  return ds.snow.at(0);
+}
+
 // clang-format off
 
 template append_ret h5d::append_data_1d(uint8_t const *data, hsize_t nlen);
@@ -787,6 +791,17 @@ template append_ret h5d_chunked_2d< int32_t>::h5d_chunked_2d::append_data_2d( in
 template append_ret h5d_chunked_2d< int64_t>::h5d_chunked_2d::append_data_2d( int64_t const *data, hsize_t nlen);
 template append_ret h5d_chunked_2d<   float>::h5d_chunked_2d::append_data_2d(   float const *data, hsize_t nlen);
 template append_ret h5d_chunked_2d<  double>::h5d_chunked_2d::append_data_2d(  double const *data, hsize_t nlen);
+
+template size_t h5d_chunked_2d< uint8_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d<uint16_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d<uint32_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d<uint64_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d<  int8_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d< int16_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d< int32_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d< int64_t>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d<   float>::h5d_chunked_2d::size() const;
+template size_t h5d_chunked_2d<  double>::h5d_chunked_2d::size() const;
 
 // clang-format on
 
