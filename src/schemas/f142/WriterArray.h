@@ -19,7 +19,7 @@ public:
   WriterArray(hdf5::node::Group, std::string const &source_name, hsize_t ncols,
               Value fb_value_type_id, CollectiveQueue *cq,
               HDFIDStore *hdf_store);
-  h5::append_ret write_impl(FBUF const *fbuf) override;
+  h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_2d<DT>> ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::NONE;
@@ -81,7 +81,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
+h5::append_ret WriterArray<DT, FV>::write(LogData const *fbuf) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != FlatbuffersValueTypeId) {

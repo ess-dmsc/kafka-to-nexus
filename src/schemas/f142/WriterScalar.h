@@ -19,7 +19,7 @@ public:
   WriterScalar(hdf5::node::Group hdf_group, std::string const &source_name,
                Value fb_value_type_id, CollectiveQueue *cq,
                HDFIDStore *hdf_store);
-  h5::append_ret write_impl(FBUF const *fbuf) override;
+  h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_1d<DT>> ds;
   Value _fb_value_type_id = Value::NONE;
@@ -68,7 +68,7 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-h5::append_ret WriterScalar<DT, FV>::write_impl(LogData const *Buffer) {
+h5::append_ret WriterScalar<DT, FV>::write(LogData const *Buffer) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
   auto ValueType = Buffer->value_type();
   if (ValueType == Value::NONE || ValueType != _fb_value_type_id) {

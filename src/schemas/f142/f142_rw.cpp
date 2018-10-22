@@ -280,7 +280,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     }
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto wret = ValueWriter->write_impl(fbuf);
+  auto wret = ValueWriter->write(fbuf);
   if (!wret) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {

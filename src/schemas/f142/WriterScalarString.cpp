@@ -32,7 +32,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
 }
 
 /// \brief  Write to a scalar string dataset
-h5::append_ret WriterScalarString::write_impl(LogData const *fbuf) {
+h5::append_ret WriterScalarString::write(LogData const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt != Value::String) {
     return {h5::AppendResult::ERROR, 0, 0};
