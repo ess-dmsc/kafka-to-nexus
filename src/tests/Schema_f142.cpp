@@ -298,7 +298,8 @@ TEST(Schema_f142, writeArrayFloatWithLatest) {
   std::vector<std::vector<DT>> Expected{
       {4, 8, 1, 9, 4}, {5, 7, 0, 3, 6}, {4, 2, 2, 4, 2},
   };
-  auto File = createInMemoryTestFile("Schema_f142.writeArrayFloatWithLatest");
+  auto File =
+      createInMemoryTestFile("Schema_f142.writeArrayFloatWithLatest", true);
   {
     FileWriter::Schemas::f142::HDFWriterModule WriterModule;
     WriterModule.parse_config(StreamJson.dump(), "{}");
@@ -321,14 +322,26 @@ TEST(Schema_f142, writeArrayFloatWithLatest) {
   ASSERT_TRUE(File.root().has_dataset("the_latest_value"));
 
   auto Dataset = hdf5::node::get_dataset(File.root(), "value");
+  size_t const N = Expected.at(0).size();
+  ASSERT_EQ(5u, N);
+  std::vector<DT> Data(N);
   for (size_t I = 0; I < Expected.size(); ++I) {
-    size_t N = Expected.at(0).size();
-    std::vector<DT> Data(N);
-    hdf5::dataspace::Simple SpaceFile(Dataset.dataspace());
     hdf5::dataspace::Simple SpaceMem({1, N});
+    hdf5::dataspace::Simple SpaceFile(Dataset.dataspace());
     SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
                         hdf5::dataspace::Hyperslab({I, 0}, {1, N}));
     Dataset.read(Data, Dataset.datatype(), SpaceMem, SpaceFile);
     ASSERT_EQ(Data, Expected.at(I));
+  }
+
+  {
+    auto Dataset = hdf5::node::get_dataset(File.root(), "the_latest_value");
+    std::vector<DT> LatestData(N);
+    auto SpaceMem = hdf5::dataspace::Simple({1, N});
+    auto SpaceFile = hdf5::dataspace::Simple(Dataset.dataspace());
+    SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                        hdf5::dataspace::Hyperslab({0}, {N}));
+    Dataset.read(LatestData, Dataset.datatype(), SpaceMem, SpaceFile);
+    ASSERT_EQ(LatestData, Expected.back());
   }
 }
