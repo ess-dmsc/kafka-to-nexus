@@ -21,7 +21,7 @@ public:
                HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
-  uptr<h5::h5d_chunked_1d<DT>> ds;
+  uptr<h5::h5d_chunked_1d<DT>> ChunkedDataset;
   Value _fb_value_type_id = Value::NONE;
 };
 
@@ -35,9 +35,9 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
                                    Value fb_value_type_id, CollectiveQueue *cq)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
-  this->ds =
+  ChunkedDataset =
       h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
-  if (!this->ds) {
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
   }
@@ -54,13 +54,14 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
                                    HDFIDStore *hdf_store)
     : _fb_value_type_id(fb_value_type_id) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
-  ds = h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
-  if (!this->ds) {
+  ChunkedDataset =
+      h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
   }
   // TODO take from config
-  ds->buffer_init(64 * 1024, 0);
+  ChunkedDataset->buffer_init(64 * 1024, 0);
 }
 
 /// \brief  Write to a numeric scalar dataset
@@ -82,16 +83,16 @@ h5::append_ret WriterScalar<DT, FV>::write(LogData const *Buffer) {
     return Result;
   }
   auto Value = ValueMember->value();
-  if (!this->ds) {
+  if (ChunkedDataset == nullptr) {
     Result.ErrorString = fmt::format("Dataset is nullptr");
     return Result;
   }
-  return this->ds->append_data_1d(&Value, 1);
+  return ChunkedDataset->append_data_1d(&Value, 1);
 }
 
 template <typename DT, typename FV>
 void WriterScalar<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
-  auto &Dataset = ds->ds.Dataset;
+  auto &Dataset = ChunkedDataset->ds.Dataset;
   auto Type = Dataset.datatype();
   auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
   auto DimSrc = SpaceSrc.current_dimensions();
@@ -123,7 +124,7 @@ void WriterScalar<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
     Latest =
         Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
   }
-  Offset.at(0) = ds->ds.snow.at(0) - 1;
+  Offset.at(0) = ChunkedDataset->ds.snow.at(0) - 1;
   hdf5::Dimensions Block = DimSrc;
   Block.at(0) = 1;
   SpaceSrc.selection(hdf5::dataspace::SelectionOperation::SET,
