@@ -17,7 +17,7 @@ public:
                      std::string const &source_name, Value fb_value_type_id,
                      CollectiveQueue *cq, HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
-  h5::Chunked1DString::ptr ds;
+  h5::Chunked1DString::ptr ChunkedDataset;
   Value _fb_value_type_id = Value::String;
 };
 }

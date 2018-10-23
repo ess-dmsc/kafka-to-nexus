@@ -10,8 +10,9 @@ WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
                                        Value fb_value_type_id,
                                        CollectiveQueue *cq) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
-  this->ds = h5::Chunked1DString::create(hdf_group, source_name, 64 * 1024, cq);
-  if (!this->ds) {
+  ChunkedDataset =
+      h5::Chunked1DString::create(hdf_group, source_name, 64 * 1024, cq);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
   }
@@ -24,8 +25,9 @@ WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
                                        CollectiveQueue *cq,
                                        HDFIDStore *hdf_store) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
-  ds = h5::Chunked1DString::open(hdf_group, source_name, cq, hdf_store);
-  if (!this->ds) {
+  ChunkedDataset =
+      h5::Chunked1DString::open(hdf_group, source_name, cq, hdf_store);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
   }
@@ -42,10 +44,10 @@ h5::append_ret WriterScalarString::write(LogData const *fbuf) {
     return {h5::AppendResult::ERROR, 0, 0};
   }
   auto v2 = v1->value();
-  if (!this->ds) {
+  if (ChunkedDataset == nullptr) {
     return {h5::AppendResult::ERROR, 0, 0};
   }
-  return this->ds->append(v2->str());
+  return ChunkedDataset->append(v2->str());
 }
 }
 }
