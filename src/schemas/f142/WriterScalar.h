@@ -23,6 +23,7 @@ public:
   void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_1d<DT>> ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::NONE;
+  size_t ChunkSize = 64 * 1024;
 };
 
 /// \brief  Create a new dataset for scalar numeric types
@@ -61,8 +62,7 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
   }
-  // TODO take from config
-  ChunkedDataset->buffer_init(64 * 1024, 0);
+  ChunkedDataset->buffer_init(ChunkSize, 0);
 }
 
 /// \brief  Write to a numeric scalar dataset
