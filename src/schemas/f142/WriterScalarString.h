@@ -11,14 +11,15 @@ namespace f142 {
 class WriterScalarString : public WriterTypedBase {
 public:
   WriterScalarString(hdf5::node::Group hdf_group,
-                     std::string const &source_name, Value fb_value_type_id,
-                     CollectiveQueue *cq);
+                     std::string const &source_name,
+                     Value FlatbuffersValueTypeId, CollectiveQueue *cq);
   WriterScalarString(hdf5::node::Group hdf_group,
-                     std::string const &source_name, Value fb_value_type_id,
-                     CollectiveQueue *cq, HDFIDStore *hdf_store);
+                     std::string const &source_name,
+                     Value FlatbuffersValueTypeId, CollectiveQueue *cq,
+                     HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
   h5::Chunked1DString::ptr ChunkedDataset;
-  Value _fb_value_type_id = Value::String;
+  Value FlatbuffersValueTypeId = Value::String;
 };
 }
 }

@@ -15,9 +15,9 @@ namespace f142 {
 template <typename DT, typename FV> class WriterArray : public WriterTypedBase {
 public:
   WriterArray(hdf5::node::Group hdf_group, std::string const &source_name,
-              hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq);
+              hsize_t ncols, Value FlatbuffersValueTypeId, CollectiveQueue *cq);
   WriterArray(hdf5::node::Group, std::string const &source_name, hsize_t ncols,
-              Value fb_value_type_id, CollectiveQueue *cq,
+              Value FlatbuffersValueTypeId, CollectiveQueue *cq,
               HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
@@ -86,7 +86,7 @@ h5::append_ret WriterArray<DT, FV>::write(LogData const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt == Value::NONE || vt != FlatbuffersValueTypeId) {
     Result.ErrorString =
-        fmt::format("vt == Value::NONE || vt != _fb_value_type_id");
+        fmt::format("vt == Value::NONE || vt != FlatbuffersValueTypeId");
     return Result;
   }
   auto v1 = (FV const *)fbuf->value();

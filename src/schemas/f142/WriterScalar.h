@@ -22,7 +22,7 @@ public:
   h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_1d<DT>> ChunkedDataset;
-  Value _fb_value_type_id = Value::NONE;
+  Value FlatbuffersValueTypeId = Value::NONE;
 };
 
 /// \brief  Create a new dataset for scalar numeric types
@@ -32,8 +32,9 @@ public:
 template <typename DT, typename FV>
 WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
                                    std::string const &source_name,
-                                   Value fb_value_type_id, CollectiveQueue *cq)
-    : _fb_value_type_id(fb_value_type_id) {
+                                   Value FlatbuffersValueTypeId,
+                                   CollectiveQueue *cq)
+    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
   ChunkedDataset =
       h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
@@ -50,9 +51,9 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
 template <typename DT, typename FV>
 WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
                                    std::string const &source_name,
-                                   Value fb_value_type_id, CollectiveQueue *cq,
-                                   HDFIDStore *hdf_store)
-    : _fb_value_type_id(fb_value_type_id) {
+                                   Value FlatbuffersValueTypeId,
+                                   CollectiveQueue *cq, HDFIDStore *hdf_store)
+    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
   ChunkedDataset =
       h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
@@ -72,9 +73,9 @@ template <typename DT, typename FV>
 h5::append_ret WriterScalar<DT, FV>::write(LogData const *Buffer) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
   auto ValueType = Buffer->value_type();
-  if (ValueType == Value::NONE || ValueType != _fb_value_type_id) {
+  if (ValueType == Value::NONE || ValueType != FlatbuffersValueTypeId) {
     Result.ErrorString = fmt::format(
-        "ValueType == Value::NONE || ValueType != _fb_value_type_id");
+        "ValueType == Value::NONE || ValueType != FlatbuffersValueTypeId");
     return Result;
   }
   auto ValueMember = (FV const *)Buffer->value();
