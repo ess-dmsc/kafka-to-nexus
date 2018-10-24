@@ -14,10 +14,10 @@ namespace f142 {
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV> class WriterArray : public WriterTypedBase {
 public:
-  WriterArray(hdf5::node::Group hdf_group, std::string const &source_name,
+  WriterArray(hdf5::node::Group HdfGroup, std::string const &source_name,
               hsize_t ColumnCount, Value FlatbuffersValueTypeId,
               CollectiveQueue *cq);
-  WriterArray(hdf5::node::Group, std::string const &source_name,
+  WriterArray(hdf5::node::Group HdfGroup, std::string const &source_name,
               hsize_t ColumnCount, Value FlatbuffersValueTypeId,
               CollectiveQueue *cq, HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
@@ -32,7 +32,7 @@ public:
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
+WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
                                  std::string const &source_name,
                                  hsize_t ColumnCount,
                                  Value FlatbuffersValueTypeId,
@@ -44,7 +44,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
     return;
   }
   LOG(Sev::Debug, "f142 init_impl  ColumnCount: {}", ColumnCount);
-  ChunkedDataset = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name,
+  ChunkedDataset = h5::h5d_chunked_2d<DT>::create(HdfGroup, source_name,
                                                   ColumnCount, 64 * 1024, cq);
   if (ChunkedDataset == nullptr) {
     LOG(Sev::Error,
@@ -58,7 +58,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
+WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
                                  std::string const &source_name,
                                  hsize_t ColumnCount,
                                  Value FlatbuffersValueTypeId,
@@ -71,7 +71,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
   }
   LOG(Sev::Debug, "f142 writer_typed_array reopen  ColumnCount: {}",
       ColumnCount);
-  ChunkedDataset = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name,
+  ChunkedDataset = h5::h5d_chunked_2d<DT>::open(HdfGroup, source_name,
                                                 ColumnCount, cq, hdf_store);
   if (ChunkedDataset == nullptr) {
     LOG(Sev::Error,

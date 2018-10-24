@@ -14,9 +14,9 @@ namespace f142 {
 template <typename DT, typename FV>
 class WriterScalar : public WriterTypedBase {
 public:
-  WriterScalar(hdf5::node::Group hdf_group, std::string const &source_name,
+  WriterScalar(hdf5::node::Group HdfGroup, std::string const &source_name,
                Value fb_value_type_id, CollectiveQueue *cq);
-  WriterScalar(hdf5::node::Group hdf_group, std::string const &source_name,
+  WriterScalar(hdf5::node::Group HdfGroup, std::string const &source_name,
                Value fb_value_type_id, CollectiveQueue *cq,
                HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
@@ -31,14 +31,14 @@ public:
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
+WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    std::string const &source_name,
                                    Value FlatbuffersValueTypeId,
                                    CollectiveQueue *cq)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
   ChunkedDataset =
-      h5::h5d_chunked_1d<DT>::create(hdf_group, source_name, 64 * 1024, cq);
+      h5::h5d_chunked_1d<DT>::create(HdfGroup, source_name, 64 * 1024, cq);
   if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
@@ -50,14 +50,14 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group hdf_group,
+WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    std::string const &source_name,
                                    Value FlatbuffersValueTypeId,
                                    CollectiveQueue *cq, HDFIDStore *hdf_store)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
   ChunkedDataset =
-      h5::h5d_chunked_1d<DT>::open(hdf_group, source_name, cq, hdf_store);
+      h5::h5d_chunked_1d<DT>::open(HdfGroup, source_name, cq, hdf_store);
   if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
         source_name);
