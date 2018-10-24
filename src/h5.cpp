@@ -460,6 +460,10 @@ template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
   return AppendResult::OK;
 }
 
+template <typename T> size_t h5d_chunked_1d<T>::size() const {
+  return ds.snow.at(0);
+}
+
 Chunked1DString::Chunked1DString(h5d ds) : ds(std::move(ds)) {}
 
 Chunked1DString::ptr Chunked1DString::create(hdf5::node::Group Node,
@@ -733,6 +737,17 @@ template append_ret h5d_chunked_1d< int32_t>::h5d_chunked_1d::append_data_1d( in
 template append_ret h5d_chunked_1d< int64_t>::h5d_chunked_1d::append_data_1d( int64_t const *data, hsize_t nlen);
 template append_ret h5d_chunked_1d<   float>::h5d_chunked_1d::append_data_1d(   float const *data, hsize_t nlen);
 template append_ret h5d_chunked_1d<  double>::h5d_chunked_1d::append_data_1d(  double const *data, hsize_t nlen);
+
+template size_t h5d_chunked_1d< uint8_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d<uint16_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d<uint32_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d<uint64_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d<  int8_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d< int16_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d< int32_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d< int64_t>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d<   float>::h5d_chunked_1d::size() const;
+template size_t h5d_chunked_1d<  double>::h5d_chunked_1d::size() const;
 
 template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
 template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);

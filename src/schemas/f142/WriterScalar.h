@@ -38,7 +38,7 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
   ChunkedDataset =
-      h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, 64 * 1024, cq);
+      h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, ChunkSize, cq);
   if (ChunkedDataset == nullptr) {
     LOG(Sev::Error, "could not create hdf dataset  SourceName: {}", SourceName);
   }
@@ -123,7 +123,7 @@ void WriterScalar<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
     Latest =
         Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
   }
-  Offset.at(0) = ChunkedDataset->ds.snow.at(0) - 1;
+  Offset.at(0) = ChunkedDataset->size() - 1;
   hdf5::Dimensions Block = DimSrc;
   Block.at(0) = 1;
   SpaceSrc.selection(hdf5::dataspace::SelectionOperation::SET,
