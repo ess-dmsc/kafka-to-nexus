@@ -6,30 +6,28 @@ namespace f142 {
 
 /// \brief  Create a new dataset for scalar stringss
 WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
-                                       std::string const &source_name,
+                                       std::string const &SourceName,
                                        Value fb_value_type_id,
                                        CollectiveQueue *cq) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
   ChunkedDataset =
-      h5::Chunked1DString::create(HdfGroup, source_name, 64 * 1024, cq);
+      h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024, cq);
   if (ChunkedDataset == nullptr) {
-    LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
-        source_name);
+    LOG(Sev::Error, "could not create hdf dataset  SourceName: {}", SourceName);
   }
 }
 
 /// \brief  Open a dataset for scalar strings
 WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
-                                       std::string const &source_name,
+                                       std::string const &SourceName,
                                        Value fb_value_type_id,
                                        CollectiveQueue *cq,
                                        HDFIDStore *hdf_store) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
   ChunkedDataset =
-      h5::Chunked1DString::open(HdfGroup, source_name, cq, hdf_store);
+      h5::Chunked1DString::open(HdfGroup, SourceName, cq, hdf_store);
   if (ChunkedDataset == nullptr) {
-    LOG(Sev::Error, "could not create hdf dataset  source_name: {}",
-        source_name);
+    LOG(Sev::Error, "could not create hdf dataset  SourceName: {}", SourceName);
   }
 }
 

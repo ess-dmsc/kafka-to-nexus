@@ -157,7 +157,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   }
 
   LOG(Sev::Debug,
-      "HDFWriterModule::parse_config f142 source_name: {}  type: {}  "
+      "HDFWriterModule::parse_config f142 SourceName: {}  type: {}  "
       "array_size: {}",
       SourceName, TypeName, ArraySize);
 
