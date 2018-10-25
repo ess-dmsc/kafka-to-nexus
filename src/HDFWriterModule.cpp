@@ -10,7 +10,6 @@ std::map<std::string, HDFWriterModuleRegistry::ModuleFactory> &getFactories() {
 }
 
 HDFWriterModuleRegistry::ModuleFactory &find(std::string const &key) {
-  static HDFWriterModuleRegistry::ModuleFactory empty;
   auto &_items = getFactories();
   return _items.at(key);
 }
