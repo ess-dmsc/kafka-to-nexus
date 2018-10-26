@@ -198,16 +198,26 @@ TEST(HDFFileAttributesTest,
     "children": [
       {
         "type": "group",
-        "name": "group_with_array_of_attrs",
+        "name": "group_with_attributes",
         "attributes": [
           {
-            "name": "string_attribute",
+            "name": "string_variable_attribute",
+            "values": "string_value",
+            "type": "string"
+          },
+          {
+            "name": "string_variable_array_attribute",
+            "values": ["string_value_0", "string_value_1", "string_value_2"],
+            "type": "string"
+          },
+          {
+            "name": "string_fixed_attribute",
             "values": "string_value",
             "type": "string",
             "string_size": 32
           },
           {
-            "name": "string_array_attribute",
+            "name": "string_fixed_array_attribute",
             "values": ["string_value_0", "string_value_1", "string_value_2"],
             "type": "string",
             "string_size": 32
@@ -222,18 +232,49 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
-            .attributes["string_attribute"];
+        node::get_group(TestFile.RootGroup, "group_with_attributes")
+            .attributes["string_variable_attribute"];
+    auto Type = hdf5::datatype::String(StringAttr.datatype());
+    ASSERT_TRUE(Type.is_variable_length());
     std::string StringValue;
     StringAttr.read(StringValue, StringAttr.datatype());
-    StringValue.resize(12);
+    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(StringValue, "string_value");
   }
 
   {
     auto StringArrayAttr =
-        node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
-            .attributes["string_array_attribute"];
+        node::get_group(TestFile.RootGroup, "group_with_attributes")
+            .attributes["string_variable_array_attribute"];
+    auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
+    ASSERT_TRUE(Type.is_variable_length());
+    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    std::vector<std::string> Buffer;
+    Buffer.resize(3);
+    StringArrayAttr.read(Buffer, StringArrayAttr.datatype());
+  }
+
+  {
+    auto StringAttr =
+        node::get_group(TestFile.RootGroup, "group_with_attributes")
+            .attributes["string_fixed_attribute"];
+    auto Type = hdf5::datatype::String(StringAttr.datatype());
+    ASSERT_FALSE(Type.is_variable_length());
+    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    std::string StringValue;
+    StringAttr.read(StringValue, StringAttr.datatype());
+    std::string Expected("string_value");
+    StringValue.resize(Expected.size());
+    ASSERT_EQ(StringValue, Expected.data());
+  }
+
+  {
+    auto StringArrayAttr =
+        node::get_group(TestFile.RootGroup, "group_with_attributes")
+            .attributes["string_fixed_array_attribute"];
+    auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
+    ASSERT_FALSE(Type.is_variable_length());
+    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     std::vector<char> Buffer(3 * 32);
     ASSERT_LE(0, H5Aread(static_cast<hid_t>(StringArrayAttr),
                          static_cast<hid_t>(StringArrayAttr.datatype()),

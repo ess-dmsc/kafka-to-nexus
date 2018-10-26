@@ -246,16 +246,18 @@ void writeAttrStringVariableLength(hdf5::node::Node &Node,
                                    json const &Values) {
   if (Values.is_array()) {
     auto ValueArray = populateStrings(Values, Values.size());
-    auto StringAttr =
-        Node.attributes.create(Name, hdf5::datatype::create<std::string>(),
-                               hdf5::dataspace::Simple{{Values.size()}});
+    auto Type = hdf5::datatype::String::variable();
+    Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    auto StringAttr = Node.attributes.create(
+        Name, Type, hdf5::dataspace::Simple{{Values.size()}});
     StringAttr.write(ValueArray);
   } else {
     std::string const StringValue = Values.get<std::string>();
-    auto StringType = hdf5::datatype::String::fixed(StringValue.size());
+    auto Type = hdf5::datatype::String::variable();
+    Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     auto StringAttr =
-        Node.attributes.create(Name, StringType, hdf5::dataspace::Scalar());
-    StringAttr.write(StringValue, StringType);
+        Node.attributes.create(Name, Type, hdf5::dataspace::Scalar());
+    StringAttr.write(StringValue, Type);
   }
 }
 
@@ -369,7 +371,7 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
 /// \param node : node to write attributes on
 /// \param jsv : json value object of attributes
 void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
-                                      const nlohmann::json *Values) {
+                                      nlohmann::json const *Values) {
   for (auto It = Values->begin(); It != Values->end(); ++It) {
     auto const Name = It.key();
     writeScalarAttribute(Node, Name, &It.value());
