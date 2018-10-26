@@ -296,7 +296,7 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
                      Data.data())) {
       throw std::runtime_error(fmt::format("Attribute {} write failed", Name));
     }
-  } catch (std::exception const &E) {
+  } catch (std::exception const &) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("Failed to write fixed-size string attribute {} in {}",
                     Name, static_cast<std::string>(Node.link().path()))));
@@ -572,16 +572,17 @@ void HDFFile::writeFixedSizeStringDataset(
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
 
-    /*
-    Dataset.write(populateFixedStrings(Values, ElementSize),
-                  DataType, Dataspace, Dataspace,
-                  hdf5::property::DatasetTransferList());
-    */
-    // Fixed string support seems broken in h5cpp
     auto Data = populateFixedStrings(*Values, ElementSize);
     H5Dwrite(static_cast<hid_t>(Dataset), static_cast<hid_t>(DataType),
              static_cast<hid_t>(Dataspace), static_cast<hid_t>(Dataspace),
              H5P_DEFAULT, Data.data());
+    /*
+    Fixed string support seems broken in h5cpp.
+    The analogue of the above should be:
+    Dataset.write(Data.data(), DataType, Dataspace, Dataspace,
+    hdf5::property::DatasetTransferList());
+    which does not produce the expected result.
+    */
   } catch (std::exception const &E) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("Failed to write fixed-size string dataset {} in {}", Name,
@@ -810,7 +811,7 @@ void HDFFile::createHDFStructures(
       }
       Path.pop_back();
     }
-  } catch (const std::exception &e) {
+  } catch (std::exception const &) {
     // Don't throw here as the file should continue writing
     LOG(Sev::Error, "Failed to create structure  parent={} level={}",
         std::string(Parent.link().path()), Level)
@@ -878,11 +879,11 @@ void HDFFile::init(const std::string &Filename,
                                   fcpl, fapl);
     }
     init(NexusStructure, StreamHDFInfo);
-  } catch (const std::exception &e) {
+  } catch (std::exception const &E) {
     LOG(Sev::Error,
         "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
         boost::filesystem::current_path().string(), Filename,
-        hdf5::error::print_nested(e));
+        hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
   }
 }
@@ -932,9 +933,9 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
         fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, &NexusStructure);
-  } catch (std::exception &e) {
+  } catch (std::exception const &E) {
     LOG(Sev::Critical, "Failed to initialize  file={}  trace:\n{}",
-        H5File.id().file_name().string(), hdf5::error::print_nested(e));
+        H5File.id().file_name().string(), hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
 }
@@ -948,7 +949,7 @@ void HDFFile::close() {
       H5File.close();
       LOG(Sev::Debug, "closed");
     }
-  } catch (const std::exception &E) {
+  } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
         H5File.id().file_name().string(), Trace);
@@ -968,7 +969,7 @@ void HDFFile::reopen(const std::string &Filename,
 
     H5File =
         hdf5::file::open(Filename, hdf5::file::AccessFlags::READWRITE, fapl);
-  } catch (const std::exception &E) {
+  } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
@@ -984,9 +985,9 @@ void HDFFile::flush() {
     if (H5File.is_valid()) {
       H5File.flush(hdf5::file::Scope::GLOBAL);
     }
-  } catch (const std::runtime_error &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("HDFFile failed to flush  what: {}", E.what())));
+  } catch (std::runtime_error const &) {
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("HDFFile failed to flush")));
   } catch (...) {
     std::throw_with_nested(
         std::runtime_error("HDFFile failed to flush with unknown exception"));
