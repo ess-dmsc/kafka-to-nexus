@@ -226,9 +226,16 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
         if (auto StringSizeMaybe = find<uint32_t>("string_size", Attribute)) {
           StringSize = StringSizeMaybe.inner();
         }
+        auto Encoding = hdf5::datatype::CharacterEncoding::UTF8;
+        if (auto EncodingString = find<std::string>("encoding", Attribute)) {
+          if (EncodingString.inner() == "ascii") {
+            Encoding = hdf5::datatype::CharacterEncoding::ASCII;
+          }
+        }
         if (auto AttrType = find<std::string>("type", Attribute)) {
           DType = AttrType.inner();
-          writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Values);
+          writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
+                                   Values);
         } else {
           if (Values.is_array()) {
             LOG(Sev::Warning, "Attributes with array values must specify type")
@@ -242,19 +249,18 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
 }
 
 void writeAttrStringVariableLength(hdf5::node::Node &Node,
-                                   std::string const &Name,
-                                   json const &Values) {
+                                   std::string const &Name, json const &Values,
+                                   hdf5::datatype::CharacterEncoding Encoding) {
+  auto Type = hdf5::datatype::String::variable();
+  Type.encoding(Encoding);
+  Type.padding(hdf5::datatype::StringPad::NULLTERM);
   if (Values.is_array()) {
     auto ValueArray = populateStrings(Values, Values.size());
-    auto Type = hdf5::datatype::String::variable();
-    Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     auto StringAttr = Node.attributes.create(
         Name, Type, hdf5::dataspace::Simple{{Values.size()}});
     StringAttr.write(ValueArray);
   } else {
     std::string const StringValue = Values.get<std::string>();
-    auto Type = hdf5::datatype::String::variable();
-    Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     auto StringAttr =
         Node.attributes.create(Name, Type, hdf5::dataspace::Scalar());
     StringAttr.write(StringValue, Type);
@@ -262,7 +268,8 @@ void writeAttrStringVariableLength(hdf5::node::Node &Node,
 }
 
 void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
-                                json const &Values, size_t StringSize) {
+                                json const &Values, size_t StringSize,
+                                hdf5::datatype::CharacterEncoding Encoding) {
   hdf5::dataspace::Dataspace SpaceMem;
   if (Values.is_array()) {
     SpaceMem = hdf5::dataspace::Simple({Values.size()});
@@ -272,7 +279,7 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
   try {
     size_t ElementSize = StringSize;
     auto Type = hdf5::datatype::String::fixed(ElementSize);
-    Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    Type.encoding(Encoding);
     Type.padding(hdf5::datatype::StringPad::NULLTERM);
     auto Attribute = Node.attributes.create(Name, Type, SpaceMem);
     auto SpaceFile = Attribute.dataspace();
@@ -306,11 +313,12 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
 }
 
 void writeAttrString(hdf5::node::Node &Node, std::string const &Name,
-                     nlohmann::json const &Values, size_t const StringSize) {
+                     nlohmann::json const &Values, size_t const StringSize,
+                     hdf5::datatype::CharacterEncoding Encoding) {
   if (StringSize > 0) {
-    writeAttrStringFixedLength(Node, Name, Values, StringSize);
+    writeAttrStringFixedLength(Node, Name, Values, StringSize, Encoding);
   } else {
-    writeAttrStringVariableLength(Node, Name, Values);
+    writeAttrStringVariableLength(Node, Name, Values, Encoding);
   }
 }
 
@@ -319,11 +327,10 @@ void writeAttrString(hdf5::node::Node &Node, std::string const &Name,
 /// \param Node : group or dataset to add attribute to
 /// \param Name : name of the attribute
 /// \param Values : the attribute values
-void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
-                                       hdf5::node::Node &Node,
-                                       std::string const &Name,
-                                       uint32_t StringSize,
-                                       nlohmann::json const &Values) {
+void HDFFile::writeAttrOfSpecifiedType(
+    std::string const &DType, hdf5::node::Node &Node, std::string const &Name,
+    uint32_t StringSize, hdf5::datatype::CharacterEncoding Encoding,
+    nlohmann::json const &Values) {
   try {
     if (DType == "uint8") {
       writeAttrNumeric<uint8_t>(Node, Name, Values);
@@ -356,7 +363,7 @@ void HDFFile::writeAttrOfSpecifiedType(std::string const &DType,
       writeAttrNumeric<double>(Node, Name, Values);
     }
     if (DType == "string") {
-      writeAttrString(Node, Name, Values, StringSize);
+      writeAttrString(Node, Name, Values, StringSize, Encoding);
     }
   } catch (std::exception const &) {
     std::stringstream ss;
