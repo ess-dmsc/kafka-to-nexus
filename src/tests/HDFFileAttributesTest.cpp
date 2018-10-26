@@ -236,9 +236,9 @@ TEST(HDFFileAttributesTest,
             .attributes["string_variable_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
+    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     std::string StringValue;
     StringAttr.read(StringValue, StringAttr.datatype());
-    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(StringValue, "string_value");
   }
 
@@ -282,5 +282,39 @@ TEST(HDFFileAttributesTest,
     ASSERT_EQ(std::string(Buffer.data() + 0 * 32), "string_value_0");
     ASSERT_EQ(std::string(Buffer.data() + 1 * 32), "string_value_1");
     ASSERT_EQ(std::string(Buffer.data() + 2 * 32), "string_value_2");
+  }
+}
+
+TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
+  using namespace hdf5;
+
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
+      "test-object-of-attributes-with-strings.nxs");
+
+  std::string Command = R""({
+    "children": [
+      {
+        "type": "group",
+        "name": "group_with_object_of_attributes",
+        "attributes": {
+          "some_attribute": "Some Value"
+        }
+      }
+    ]
+  })"";
+
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(Command, EmptyStreamHDFInfo);
+
+  {
+    auto StringAttr =
+        node::get_group(TestFile.RootGroup, "group_with_object_of_attributes")
+            .attributes["some_attribute"];
+    auto Type = hdf5::datatype::String(StringAttr.datatype());
+    ASSERT_TRUE(Type.is_variable_length());
+    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    std::string StringValue;
+    StringAttr.read(StringValue, StringAttr.datatype());
+    ASSERT_EQ(StringValue, "Some Value");
   }
 }
