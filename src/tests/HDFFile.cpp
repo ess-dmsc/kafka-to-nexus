@@ -242,17 +242,6 @@ public:
                   ["string_1_2_0", "string_1_2_1"]
                 ]
               ]
-            },
-            {
-              "NOTE": "Disabled because h5cpp seems unhappy about fixed length strings currently.",
-              "type": "DISABLED_dataset",
-              "name": "string_fixed_1d",
-              "dataset": {
-                "type":"string",
-                "string_size": 32,
-                "size": ["unlimited"]
-              },
-              "values": ["the-scalar-string", "another-one"]
             }
           ]
         })"");
