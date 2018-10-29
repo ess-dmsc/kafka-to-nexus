@@ -16,11 +16,9 @@ public:
 /// Check for new commands on the topic, return them to the Master.
 class CommandListener {
 public:
-  CommandListener(MainOpt &config);
-  ~CommandListener();
+  explicit CommandListener(MainOpt &config);
   /// Start listening to command messages.
   void start();
-  void stop();
   /// Check for new command packets and return one if there is.
   KafkaW::PollStatus poll();
 

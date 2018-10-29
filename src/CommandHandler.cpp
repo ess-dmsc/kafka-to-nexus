@@ -202,8 +202,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     StatusProducer = MasterPtr->getStatusProducer();
   }
-  auto Task = std::unique_ptr<FileWriterTask>(
-      new FileWriterTask(Config.service_id, StatusProducer));
+  auto Task = std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -288,9 +287,9 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(
-        new StreamMaster<Streamer>(Broker.host_port, std::move(Task), Config,
-                                   MasterPtr->getStatusProducer()));
+    auto s = std::make_unique<StreamMaster<Streamer>>(
+        Broker.host_port, std::move(Task), Config,
+        MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
