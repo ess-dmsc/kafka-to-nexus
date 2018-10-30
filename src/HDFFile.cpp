@@ -68,10 +68,46 @@ private:
 
 static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
 
-template <typename DT>
-static std::vector<DT> populateBlob(nlohmann::json const &Value,
-                                    size_t GoalSize) {
-  std::vector<DT> Buffer;
+template <typename _DataType> class NumericItemHandler {
+public:
+  using DataType = _DataType;
+  static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
+                     size_t const ItemLength = 0) {
+    appendValue(Value.get<DataType>(), Buffer);
+  }
+};
+
+class StringItemHandler {
+public:
+  using DataType = std::string;
+  static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
+                     size_t const ItemLength = 0) {
+    Buffer.push_back(Value);
+  }
+};
+
+class FixedStringItemHandler {
+public:
+  using DataType = char;
+  static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
+                     size_t const ItemLength = 0) {
+    if (ItemLength >= 1024 * 1024) {
+      std::throw_with_nested(std::runtime_error(fmt::format(
+          "Failed to allocate fixed-size string dataset, bad element size: {}",
+          ItemLength)));
+    }
+    std::string String = Value;
+    String.resize(ItemLength, '\0');
+    std::copy_n(String.data(), String.size(), std::back_inserter(Buffer));
+  }
+};
+
+template <typename DataHandler>
+static std::vector<typename DataHandler::DataType>
+populateBlob(nlohmann::json const &Value, size_t const GoalSize,
+             size_t const ItemLength = 0) {
+  using DataType = typename DataHandler::DataType;
+  std::vector<DataType> Buffer;
   if (Value.is_array()) {
     std::stack<StackItem> Stack;
     Stack.push({Value});
@@ -89,90 +125,17 @@ static std::vector<DT> populateBlob(nlohmann::json const &Value,
         Stack.push({Value});
       } else {
         Stack.top().inc();
-        appendValue(Value.get<DT>(), Buffer);
+        DataHandler::append(Buffer, Value, ItemLength);
       }
     }
   } else {
-    appendValue(Value, Buffer);
+    DataHandler::append(Buffer, Value, ItemLength);
   }
-  if (Buffer.size() != GoalSize) {
+  if (GoalSize != 0 && Buffer.size() != GoalSize) {
     auto What =
         fmt::format("Failed to populate numeric blob, size mismatch: {} != {}",
                     Buffer.size(), GoalSize);
     std::throw_with_nested(std::runtime_error(What));
-  }
-  return Buffer;
-}
-
-std::vector<std::string> populateStrings(nlohmann::json const &Value,
-                                         size_t const GoalSize) {
-  std::vector<std::string> Buffer;
-  if (Value.is_string()) {
-    Buffer.push_back(Value);
-  } else if (Value.is_array()) {
-    std::stack<StackItem> Stack;
-    Stack.push({Value});
-    while (!Stack.empty()) {
-      if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
-        break;
-      }
-      if (Stack.top().exhausted()) {
-        Stack.pop();
-        continue;
-      }
-      auto const &Value = Stack.top().value();
-      if (Value.is_array()) {
-        Stack.top().inc();
-        Stack.push({Value});
-      } else {
-        Stack.top().inc();
-        Buffer.push_back(Value);
-      }
-    }
-  }
-  if (Buffer.size() != GoalSize) {
-    auto What = fmt::format(
-        "Failed to populate variable string blob, size mismatch: {} != {}",
-        Buffer.size(), GoalSize);
-    std::throw_with_nested(std::runtime_error(What));
-  }
-  return Buffer;
-}
-
-std::vector<char> populateFixedStrings(nlohmann::json const &Value,
-                                       size_t const FixedAt) {
-  if (FixedAt >= 1024 * 1024) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Failed to allocate fixed-size string dataset, bad element size: {}",
-        FixedAt)));
-  }
-  std::vector<char> Buffer;
-  if (Value.is_string()) {
-    std::string String = Value;
-    String.resize(FixedAt, '\0');
-    std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
-  } else if (Value.is_array()) {
-    std::stack<StackItem> Stack;
-    Stack.push({Value});
-    while (!Stack.empty()) {
-      if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
-        break;
-      }
-      if (Stack.top().exhausted()) {
-        Stack.pop();
-        continue;
-      }
-      auto const &Value = Stack.top().value();
-      if (Value.is_array()) {
-        Stack.top().inc();
-        Stack.push({Value});
-      } else {
-        Stack.top().inc();
-        std::string String = Value;
-        String.resize(FixedAt, '\0');
-        std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
-      }
-    }
   }
   return Buffer;
 }
@@ -185,7 +148,7 @@ static void writeAttrNumeric(hdf5::node::Node &Node, std::string const &Name,
     Length = Value.size();
   }
   try {
-    auto ValueData = populateBlob<T>(Value, Length);
+    auto ValueData = populateBlob<NumericItemHandler<T>>(Value, Length);
     try {
       if (Value.is_array()) {
         writeAttribute(Node, Name, ValueData);
@@ -333,7 +296,7 @@ void writeAttrStringVariableLength(hdf5::node::Node &Node,
   Type.encoding(Encoding);
   Type.padding(hdf5::datatype::StringPad::NULLTERM);
   if (Values.is_array()) {
-    auto ValueArray = populateStrings(Values, Values.size());
+    auto ValueArray = populateBlob<StringItemHandler>(Values, Values.size());
     auto StringAttr = Node.attributes.create(
         Name, Type, hdf5::dataspace::Simple{{Values.size()}});
     StringAttr.write(ValueArray);
@@ -374,7 +337,7 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
             Name);
       }
     }
-    auto Data = populateFixedStrings(Values, StringSize);
+    auto Data = populateBlob<FixedStringItemHandler>(Values, 0, StringSize);
     LOG(Sev::Debug, "StringSize: {}  Data.size(): {}", StringSize, Data.size());
     // Fixed string support seems broken in h5cpp
     if (0 > H5Awrite(static_cast<hid_t>(Attribute), static_cast<hid_t>(Type),
@@ -497,7 +460,8 @@ static void writeNumericDataset(
     auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
                                        Dataspace, DatasetCreationPropertyList);
     try {
-      auto Blob = populateBlob<DT>(*Values, Dataspace.size());
+      auto Blob =
+          populateBlob<NumericItemHandler<DT>>(*Values, Dataspace.size());
       try {
         Dataset.write(Blob);
       } catch (std::exception const &E) {
@@ -529,8 +493,9 @@ void HDFFile::writeStringDataset(
 
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
-    Dataset.write(populateStrings(Values, Dataspace.size()), DataType,
-                  Dataspace, Dataspace, hdf5::property::DatasetTransferList());
+    Dataset.write(populateBlob<StringItemHandler>(Values, Dataspace.size()),
+                  DataType, Dataspace, Dataspace,
+                  hdf5::property::DatasetTransferList());
   } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed to write variable-size string dataset ";
@@ -567,7 +532,7 @@ void HDFFile::writeFixedSizeStringDataset(
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
 
-    auto Data = populateFixedStrings(*Values, ElementSize);
+    auto Data = populateBlob<FixedStringItemHandler>(*Values, 0, ElementSize);
     H5Dwrite(static_cast<hid_t>(Dataset), static_cast<hid_t>(DataType),
              static_cast<hid_t>(Dataspace), static_cast<hid_t>(Dataspace),
              H5P_DEFAULT, Data.data());

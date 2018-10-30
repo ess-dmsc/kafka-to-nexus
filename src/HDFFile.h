@@ -126,10 +126,4 @@ private:
   std::chrono::time_point<CLOCK> SWMRFlushLast = CLOCK::now();
 };
 
-std::vector<std::string> populateStrings(nlohmann::json const &Values,
-                                         size_t const GoalSize);
-
-std::vector<char> populateFixedStrings(nlohmann::json const &Values,
-                                       size_t const FixedAt);
-
 } // namespace FileWriter
