@@ -36,9 +36,6 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-// In the future, want to handle many, but not right now.
-static int g_N_HANDLED = 0;
-
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
@@ -182,7 +179,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   json Doc = parseOrThrow(Command);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     StatusProducer = MasterPtr->getStatusProducer();
   }
   auto Task =
@@ -197,7 +194,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     throwMissingKey("job_id", Doc.dump());
   }
 
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
              Config.service_id, Task->job_id(), "Start job");
   }
@@ -268,7 +265,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
   }
 
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
     auto s = std::make_unique<StreamMaster<Streamer>>(
@@ -286,7 +283,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   } else {
     FileWriterTasks.emplace_back(std::move(Task));
   }
-  g_N_HANDLED += 1;
 }
 
 void CommandHandler::addStreamSourceToWriterModule(
@@ -351,14 +347,14 @@ void CommandHandler::addStreamSourceToWriterModule(
 }
 
 void CommandHandler::handleFileWriterTaskClearAll() {
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     MasterPtr->stopStreamMasters();
   }
   FileWriterTasks.clear();
 }
 
 void CommandHandler::handleExit() {
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     MasterPtr->stop();
   }
 }
@@ -384,7 +380,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
       if (StopTime.count() != 0) {
@@ -507,7 +503,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
           format_nested_exception(E));
       LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
           convertStatusCodeToString(StatusCode::Fail), Message);
-      if (MasterPtr) {
+      if (MasterPtr != nullptr) {
         logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
                  Config.service_id, JobID, Message);
       }
