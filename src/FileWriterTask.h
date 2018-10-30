@@ -19,7 +19,6 @@ public:
       : std::runtime_error("Parse ERROR: " + err) {}
 };
 
-
 /// \brief Represents the task of writing a HDF file.
 ///
 /// It contains the list of Source and DemuxTopic
