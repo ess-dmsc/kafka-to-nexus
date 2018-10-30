@@ -1,5 +1,6 @@
 #include "HDFFile.h"
 #include "date/date.h"
+#include "date/tz.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
@@ -12,7 +13,6 @@
 #include <stack>
 #include <unistd.h>
 #define HAS_REMOTE_API 0
-#include "date/tz.h"
 
 namespace FileWriter {
 
