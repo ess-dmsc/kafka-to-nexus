@@ -53,3 +53,30 @@ type is optional in the case of scalars, but compulsory for arrays.
   ]
 }
 ``` 
+
+
+## Fixed-length strings and encoding in attributes
+
+Example:
+
+```json
+{
+  "type": "group",
+  "name": "group_with_array_of_attrs",
+  "attributes": [
+    {
+      "name": "string_attribute",
+      "values": "string_value",
+      "type": "string",
+      "encoding": "ascii  (optional, utf8 is the default)",
+      "string_size": 32
+    },
+    {
+      "name": "string_array_attribute",
+      "values": ["string_value_0", "string_value_1", "string_value_2"],
+      "type": "string",
+      "string_size": 32
+    }
+  ]
+}
+```
