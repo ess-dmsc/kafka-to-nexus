@@ -66,6 +66,8 @@ private:
   size_t Size = 0;
 };
 
+static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
+
 template <typename DT>
 static std::vector<DT> populateBlob(nlohmann::json const &Value,
                                     size_t GoalSize) {
@@ -74,7 +76,7 @@ static std::vector<DT> populateBlob(nlohmann::json const &Value,
     std::stack<StackItem> Stack;
     Stack.push({Value});
     while (!Stack.empty()) {
-      if (Stack.size() > 10) {
+      if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
         break;
       }
       if (Stack.top().exhausted()) {
@@ -98,6 +100,79 @@ static std::vector<DT> populateBlob(nlohmann::json const &Value,
         fmt::format("Failed to populate numeric blob, size mismatch: {} != {}",
                     Buffer.size(), GoalSize);
     std::throw_with_nested(std::runtime_error(What));
+  }
+  return Buffer;
+}
+
+std::vector<std::string> populateStrings(nlohmann::json const &Value,
+                                         size_t const GoalSize) {
+  std::vector<std::string> Buffer;
+  if (Value.is_string()) {
+    Buffer.push_back(Value);
+  } else if (Value.is_array()) {
+    std::stack<StackItem> Stack;
+    Stack.push({Value});
+    while (!Stack.empty()) {
+      if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
+        break;
+      }
+      if (Stack.top().exhausted()) {
+        Stack.pop();
+        continue;
+      }
+      auto const &Value = Stack.top().value();
+      if (Value.is_array()) {
+        Stack.top().inc();
+        Stack.push({Value});
+      } else {
+        Stack.top().inc();
+        Buffer.push_back(Value);
+      }
+    }
+  }
+  if (Buffer.size() != GoalSize) {
+    auto What = fmt::format(
+        "Failed to populate variable string blob, size mismatch: {} != {}",
+        Buffer.size(), GoalSize);
+    std::throw_with_nested(std::runtime_error(What));
+  }
+  return Buffer;
+}
+
+std::vector<char> populateFixedStrings(nlohmann::json const &Value,
+                                       size_t const FixedAt) {
+  if (FixedAt >= 1024 * 1024) {
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Failed to allocate fixed-size string dataset, bad element size: {}",
+        FixedAt)));
+  }
+  std::vector<char> Buffer;
+  if (Value.is_string()) {
+    std::string String = Value;
+    String.resize(FixedAt, '\0');
+    std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
+  } else if (Value.is_array()) {
+    std::stack<StackItem> Stack;
+    Stack.push({Value});
+    while (!Stack.empty()) {
+      if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
+        break;
+      }
+      if (Stack.top().exhausted()) {
+        Stack.pop();
+        continue;
+      }
+      auto const &Value = Stack.top().value();
+      if (Value.is_array()) {
+        Stack.top().inc();
+        Stack.push({Value});
+      } else {
+        Stack.top().inc();
+        std::string String = Value;
+        String.resize(FixedAt, '\0');
+        std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
+      }
+    }
   }
   return Buffer;
 }
@@ -410,97 +485,6 @@ void HDFFile::writeAttributesIfPresent(hdf5::node::Node &Node,
     auto const Attributes = AttributesMaybe.inner();
     writeAttributes(Node, &Attributes);
   }
-}
-
-std::vector<std::string> populateStrings(nlohmann::json const &Values,
-                                         size_t const GoalSize) {
-  std::vector<std::string> Buffer;
-  if (Values.is_string()) {
-    std::string String = Values;
-    Buffer.push_back(String);
-  } else if (Values.is_array()) {
-    std::stack<json const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(&Values);
-    ai.push(0);
-    an.push(Values.size());
-    while (!as.empty()) {
-      if (as.size() > 10) {
-        break;
-      }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->at(ai.top());
-      if (v.is_array()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        an.push(v.size());
-      } else if (v.is_string()) {
-        Buffer.push_back(v.get<std::string>());
-        ai.top()++;
-      }
-    }
-  }
-  if (Buffer.size() != GoalSize) {
-    std::stringstream ss;
-    ss << "Failed to populate string(variable) blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
-  return Buffer;
-}
-
-std::vector<char> populateFixedStrings(nlohmann::json const &Values,
-                                       size_t const FixedAt) {
-  if (FixedAt >= 1024 * 1024) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Failed to allocate fixed-size string dataset, bad element size: {}",
-        FixedAt)));
-  }
-  std::vector<char> Buffer;
-  if (Values.is_string()) {
-    std::string String = Values;
-    String.resize(FixedAt, '\0');
-    std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
-  } else if (Values.is_array()) {
-    std::stack<json const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(&Values);
-    ai.push(0);
-    an.push(Values.size());
-    while (!as.empty()) {
-      // Limit the dimensionality of the data array
-      if (as.size() > 10) {
-        break;
-      }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->at(ai.top());
-      if (v.is_array()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        an.push(v.size());
-      } else if (v.is_string()) {
-        auto String = v.get<std::string>();
-        String.resize(FixedAt, '\0');
-        std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
-        ai.top()++;
-      }
-    }
-  }
-  return Buffer;
 }
 
 template <typename DT>
