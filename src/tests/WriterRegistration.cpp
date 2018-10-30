@@ -79,6 +79,6 @@ TEST_F(WriterRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
   { HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey); }
   std::string FailKey("trump");
-  EXPECT_EQ(HDFWriterModuleRegistry::find(FailKey), nullptr);
+  EXPECT_THROW(HDFWriterModuleRegistry::find(FailKey), std::out_of_range);
 }
 } // namespace FileWriter

@@ -106,6 +106,21 @@ public:
     ch.handle(CommandString);
   }
 
+  static void new_04() {
+    auto CommandData =
+        gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-04.json");
+    std::string CommandString(CommandData.data(),
+                              CommandData.data() + CommandData.size());
+    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
+        CommandString.size());
+    auto Command = json::parse(CommandString);
+    std::string fname = Command["file_attributes"]["file_name"];
+    unlink(fname.c_str());
+    MainOpt main_opt;
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    ch.handle(CommandString);
+  }
+
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
                         std::vector<uint32_t> const &event_index,
                         uint64_t cue_timestamp_zero, uint32_t cue_index) {
@@ -1081,6 +1096,8 @@ public:
 };
 
 TEST_F(T_CommandHandler, New03) { T_CommandHandler::new_03(); }
+
+TEST_F(T_CommandHandler, New04) { EXPECT_NO_THROW(T_CommandHandler::new_04()); }
 
 TEST_F(T_CommandHandler, CreateStaticFileWithHdfOutputPrefix) {
   T_CommandHandler::create_static_file_with_hdf_output_prefix();
