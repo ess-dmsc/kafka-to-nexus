@@ -39,63 +39,66 @@ static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
 }
 
 template <typename DT>
-static void appendValue(const nlohmann::json *Value, std::vector<DT> &Buffer) {
-  if (Value->is_number_integer()) {
-    Buffer.push_back(Value->get<int64_t>());
-  } else if (Value->is_number_unsigned()) {
-    Buffer.push_back(Value->get<uint64_t>());
-  } else if (Value->is_number_float()) {
-    Buffer.push_back(Value->get<double>());
+static void appendValue(nlohmann::json const &Value, std::vector<DT> &Buffer) {
+  if (Value.is_number_integer()) {
+    Buffer.push_back(Value.get<int64_t>());
+  } else if (Value.is_number_unsigned()) {
+    Buffer.push_back(Value.get<uint64_t>());
+  } else if (Value.is_number_float()) {
+    Buffer.push_back(Value.get<double>());
   } else {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Expect a numeric value but got: {}", Value->dump().substr(0, 256))));
+    auto What = fmt::format("Expect a numeric value but got: {}",
+                            Value.dump().substr(0, 256));
+    std::throw_with_nested(std::runtime_error(What));
   }
 }
 
-template <typename DT>
-static std::vector<DT> populateBlob(const nlohmann::json *Value,
-                                    hssize_t GoalSize) {
-  std::vector<DT> Buffer;
-  if (Value->is_array()) {
-    std::stack<json const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(Value);
-    ai.push(0);
-    an.push(Value->size());
+class StackItem {
+public:
+  StackItem(nlohmann::json const &Value) : Value(Value), Size(Value.size()) {}
+  void inc() { ++Index; }
+  nlohmann::json const &value() { return Value.at(Index); }
+  bool exhausted() { return !(Index < Size); }
 
-    while (!as.empty()) {
-      if (as.size() > 10) {
+private:
+  nlohmann::json const &Value;
+  size_t Index = 0;
+  size_t Size = 0;
+};
+
+template <typename DT>
+static std::vector<DT> populateBlob(nlohmann::json const &Value,
+                                    size_t GoalSize) {
+  std::vector<DT> Buffer;
+  if (Value.is_array()) {
+    std::stack<StackItem> Stack;
+    Stack.push({Value});
+    while (!Stack.empty()) {
+      if (Stack.size() > 10) {
         break;
       }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
+      if (Stack.top().exhausted()) {
+        Stack.pop();
         continue;
       }
-      auto const &v = as.top()->at(ai.top());
-      if (v.is_array()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        an.push(v.size());
+      auto const &Value = Stack.top().value();
+      if (Value.is_array()) {
+        Stack.top().inc();
+        Stack.push({Value});
       } else {
-        appendValue(&v, Buffer);
-        ai.top()++;
+        Stack.top().inc();
+        appendValue(Value.get<DT>(), Buffer);
       }
     }
   } else {
     appendValue(Value, Buffer);
   }
-
-  if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
-    std::stringstream ss;
-    ss << "Failed to populate numeric blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+  if (Buffer.size() != GoalSize) {
+    auto What =
+        fmt::format("Failed to populate numeric blob, size mismatch: {} != {}",
+                    Buffer.size(), GoalSize);
+    std::throw_with_nested(std::runtime_error(What));
   }
-
   return Buffer;
 }
 
@@ -107,7 +110,7 @@ static void writeAttrNumeric(hdf5::node::Node &Node, std::string const &Name,
     Length = Value.size();
   }
   try {
-    auto ValueData = populateBlob<T>(&Value, Length);
+    auto ValueData = populateBlob<T>(Value, Length);
     try {
       if (Value.is_array()) {
         writeAttribute(Node, Name, ValueData);
@@ -510,7 +513,7 @@ static void writeNumericDataset(
     auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
                                        Dataspace, DatasetCreationPropertyList);
     try {
-      auto Blob = populateBlob<DT>(Values, Dataspace.size());
+      auto Blob = populateBlob<DT>(*Values, Dataspace.size());
       try {
         Dataset.write(Blob);
       } catch (std::exception const &E) {
