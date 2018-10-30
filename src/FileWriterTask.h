@@ -19,12 +19,12 @@ public:
       : std::runtime_error("Parse ERROR: " + err) {}
 };
 
-/**
-Represents the task of writing a HDF file.
-It contains the list of Source and DemuxTopic
-and makes those available to the FileMaster and Streamer.
-Created by Master on command message and passed to FileMaster in ctor.
-*/
+
+/// \brief Represents the task of writing a HDF file.
+///
+/// It contains the list of Source and DemuxTopic
+/// and makes those available to the FileMaster and Streamer.
+/// Created by Master on command message and passed to FileMaster in ctor.
 class FileWriterTask final {
   friend class ::Test___FileWriterTask___Create01;
   friend class CommandHandler;
