@@ -42,11 +42,11 @@ public:
 
   static std::string h5VersionStringLinked();
   static void writeAttributes(hdf5::node::Node &Node,
-                              const nlohmann::json *Value);
+                              nlohmann::json const *Value);
 
   static void writeStringAttribute(hdf5::node::Node &Node,
-                                   const std::string &Name,
-                                   const std::string &Value);
+                                   std::string const &Name,
+                                   std::string const &Value);
 
   /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
   /// file.
@@ -104,14 +104,14 @@ private:
                  hdf5::property::FileAccessList &FileAccessPropertyList) {}
 
   static void writeObjectOfAttributes(hdf5::node::Node &Node,
-                                      const nlohmann::json *Values);
+                                      const nlohmann::json &Values);
 
   static void writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     const nlohmann::json *Values);
+                                     const nlohmann::json &Values);
 
   static void writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   const nlohmann::json *Values);
+                                   const nlohmann::json &Values);
 
   static void
   writeAttrOfSpecifiedType(const std::string &DType, hdf5::node::Node &Node,

@@ -218,7 +218,7 @@ static void writeHDFISO8601Attribute(hdf5::node::Node &Node,
 }
 
 void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
-                                                  const std::string &Name) {
+                                                  std::string const &Name) {
   using namespace date;
   using namespace std::chrono;
   const time_zone *CurrentTimeZone;
@@ -235,11 +235,14 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
 }
 
 void HDFFile::writeAttributes(hdf5::node::Node &Node,
-                              const nlohmann::json *Value) {
+                              nlohmann::json const *Value) {
+  if (Value == nullptr) {
+    return;
+  }
   if (Value->is_array()) {
-    writeArrayOfAttributes(Node, Value);
+    writeArrayOfAttributes(Node, *Value);
   } else if (Value->is_object()) {
-    writeObjectOfAttributes(Node, Value);
+    writeObjectOfAttributes(Node, *Value);
   }
 }
 
@@ -248,11 +251,11 @@ void HDFFile::writeAttributes(hdf5::node::Node &Node,
 /// \param Node : node to write attributes on
 /// \param JsonValue : json value array of attribute objects
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     const nlohmann::json *Values) {
-  if (!Values->is_array()) {
+                                     nlohmann::json const &Values) {
+  if (!Values.is_array()) {
     return;
   }
-  for (auto const &Attribute : *Values) {
+  for (auto const &Attribute : Values) {
     if (Attribute.is_object()) {
       string Name;
       if (auto NameMaybe = find<std::string>("name", Attribute)) {
@@ -282,7 +285,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
             LOG(Sev::Warning, "Attributes with array values must specify type")
             continue;
           }
-          writeScalarAttribute(Node, Name, &Values);
+          writeScalarAttribute(Node, Name, Values);
         }
       }
     }
@@ -417,10 +420,10 @@ void HDFFile::writeAttrOfSpecifiedType(
 /// \param node : node to write attributes on
 /// \param jsv : json value object of attributes
 void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
-                                      nlohmann::json const *Values) {
-  for (auto It = Values->begin(); It != Values->end(); ++It) {
+                                      nlohmann::json const &Values) {
+  for (auto It = Values.begin(); It != Values.end(); ++It) {
     auto const Name = It.key();
-    writeScalarAttribute(Node, Name, &It.value());
+    writeScalarAttribute(Node, Name, It.value());
   }
 }
 
@@ -429,16 +432,16 @@ void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
 /// \param Name : Name of the attribute
 /// \param Values : Json value containing the attribute value
 void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
-                                   const std::string &Name,
-                                   const nlohmann::json *Values) {
-  if (Values->is_string()) {
-    writeStringAttribute(Node, Name, Values->get<std::string>());
-  } else if (Values->is_number_integer()) {
-    writeAttribute(Node, Name, Values->get<int64_t>());
-  } else if (Values->is_number_unsigned()) {
-    writeAttribute(Node, Name, Values->get<uint64_t>());
-  } else if (Values->is_number_float()) {
-    writeAttribute(Node, Name, Values->get<double>());
+                                   std::string const &Name,
+                                   nlohmann::json const &Values) {
+  if (Values.is_string()) {
+    writeStringAttribute(Node, Name, Values);
+  } else if (Values.is_number_integer()) {
+    writeAttribute(Node, Name, Values.get<int64_t>());
+  } else if (Values.is_number_unsigned()) {
+    writeAttribute(Node, Name, Values.get<uint64_t>());
+  } else if (Values.is_number_float()) {
+    writeAttribute(Node, Name, Values.get<double>());
   }
 }
 
