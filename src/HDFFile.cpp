@@ -277,8 +277,7 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
     SpaceMem = hdf5::dataspace::Scalar();
   }
   try {
-    size_t ElementSize = StringSize;
-    auto Type = hdf5::datatype::String::fixed(ElementSize);
+    auto Type = hdf5::datatype::String::fixed(StringSize);
     Type.encoding(Encoding);
     Type.padding(hdf5::datatype::StringPad::NULLTERM);
     auto Attribute = Node.attributes.create(Name, Type, SpaceMem);
@@ -297,9 +296,8 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
             Name);
       }
     }
-    auto Data = populateFixedStrings(Values, ElementSize);
-    LOG(Sev::Debug, "ElementSize: {}  Data.size(): {}", ElementSize,
-        Data.size());
+    auto Data = populateFixedStrings(Values, StringSize);
+    LOG(Sev::Debug, "StringSize: {}  Data.size(): {}", StringSize, Data.size());
     // Fixed string support seems broken in h5cpp
     if (0 > H5Awrite(static_cast<hid_t>(Attribute), static_cast<hid_t>(Type),
                      Data.data())) {
