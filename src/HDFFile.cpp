@@ -473,6 +473,7 @@ std::vector<char> populateFixedStrings(nlohmann::json const &Values,
     ai.push(0);
     an.push(Values.size());
     while (!as.empty()) {
+      // Limit the dimensionality of the data array
       if (as.size() > 10) {
         break;
       }
