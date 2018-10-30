@@ -446,8 +446,8 @@ void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
 }
 
 void HDFFile::writeAttributesIfPresent(hdf5::node::Node &Node,
-                                       const nlohmann::json *Values) {
-  if (auto AttributesMaybe = find<json>("attributes", *Values)) {
+                                       nlohmann::json const &Values) {
+  if (auto AttributesMaybe = find<json>("attributes", Values)) {
     auto const Attributes = AttributesMaybe.inner();
     writeAttributes(Node, &Attributes);
   }
@@ -719,7 +719,7 @@ void HDFFile::writeDataset(hdf5::node::Group &Parent,
                       &DatasetValuesInnerObject);
   auto dset = hdf5::node::Dataset(Parent.nodes[Name]);
 
-  writeAttributesIfPresent(dset, Values);
+  writeAttributesIfPresent(dset, *Values);
 }
 
 void HDFFile::createHDFStructures(
@@ -761,7 +761,7 @@ void HDFFile::createHDFStructures(
     // If the current level in the HDF can act as a parent, then continue the
     // recursion with the (optional) "children" array.
     if (hdf_this.is_valid()) {
-      writeAttributesIfPresent(hdf_this, Value);
+      writeAttributesIfPresent(hdf_this, *Value);
       if (auto ChildrenMaybe = find<json>("children", *Value)) {
         auto Children = ChildrenMaybe.inner();
         if (Children.is_array()) {
@@ -895,7 +895,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
         RootGroup, "creator",
         fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
-    writeAttributesIfPresent(RootGroup, &NexusStructure);
+    writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
     LOG(Sev::Critical, "Failed to initialize  file={}  trace:\n{}",
         H5File.id().file_name().string(), hdf5::error::print_nested(E));

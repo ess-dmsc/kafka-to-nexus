@@ -74,7 +74,7 @@ private:
                                                   const std::string &Name);
 
   static void writeAttributesIfPresent(hdf5::node::Node &Node,
-                                       const nlohmann::json *Values);
+                                       nlohmann::json const &Values);
 
   static void
   writeStringDataset(hdf5::node::Group &Parent, const std::string &Name,
