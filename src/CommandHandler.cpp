@@ -182,7 +182,8 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (MasterPtr) {
     StatusProducer = MasterPtr->getStatusProducer();
   }
-  auto Task = std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
+  auto Task = 
+      std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
