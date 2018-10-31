@@ -35,8 +35,6 @@ namespace FlatbufferReaderRegistry {
 using ReaderPtr = FlatbufferReader::ptr;
 std::map<std::string, ReaderPtr> &getReaders();
 
-/// @todo The following two functions should probably throw an exception if key
-/// is not found.
 FlatbufferReader::ptr &find(std::string const &FlatbufferID);
 
 void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item);
