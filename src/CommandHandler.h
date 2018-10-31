@@ -90,7 +90,6 @@ public:
 
   /// \brief Find a writer task given its `JobID`.
   ///
-
   /// \return  The writer task.
   std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
 
