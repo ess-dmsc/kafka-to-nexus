@@ -22,6 +22,14 @@ using std::vector;
 using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
+/// As a safeguard, limit the maximum dimensions of multi dimensional arrays
+/// that we are willing to write
+static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
+
+/// As a safeguard, limit the maximum size of a string that we are willing to
+/// write
+static size_t const MAX_ALLOWED_STRING_LENGTH = 4 * 1024 * 1024;
+
 template <typename T>
 static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
                            T Value) {
@@ -66,8 +74,6 @@ private:
   size_t Size = 0;
 };
 
-static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
-
 template <typename _DataType> class NumericItemHandler {
 public:
   using DataType = _DataType;
@@ -91,7 +97,7 @@ public:
   using DataType = char;
   static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
                      size_t const ItemLength = 0) {
-    if (ItemLength >= 1024 * 1024) {
+    if (ItemLength >= MAX_ALLOWED_STRING_LENGTH) {
       std::throw_with_nested(std::runtime_error(fmt::format(
           "Failed to allocate fixed-size string dataset, bad element size: {}",
           ItemLength)));
