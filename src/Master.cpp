@@ -89,7 +89,7 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-//    LOG(Sev::Debug, "Master poll");
+    LOG(Sev::Debug, "Master poll");
     auto p = command_listener.poll();
     if (auto msg = p.isMsg()) {
       LOG(Sev::Debug, "Handle a command");
