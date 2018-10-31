@@ -89,7 +89,7 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-    LOG(Sev::Debug, "Master poll");
+//    LOG(Sev::Debug, "Master poll");
     auto p = command_listener.poll();
     if (auto msg = p.isMsg()) {
       LOG(Sev::Debug, "Handle a command");
@@ -132,7 +132,7 @@ void Master::statistics() {
   Status["files"] = json::object();
   for (auto &StreamMaster : StreamMasters) {
     auto FilewriterTaskID =
-        fmt::format("{}", StreamMaster->getFileWriterTask().job_id());
+        fmt::format("{}", StreamMaster->getFileWriterTask().jobID());
     auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }

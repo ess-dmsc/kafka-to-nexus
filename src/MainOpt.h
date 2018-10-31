@@ -67,7 +67,6 @@ struct MainOpt {
   int64_t start_at_command_offset = -1;
   /// Was/is used for testing during development.
   uint64_t teamid = 0;
-  bool source_do_process_message = true;
   bool logpid_sleep = false;
   // Max interval (in std::chrono::milliseconds) to spend writing each topic
   // before switch to the next
