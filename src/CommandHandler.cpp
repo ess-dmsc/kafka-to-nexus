@@ -17,16 +17,6 @@ using std::vector;
 
 namespace FileWriter {
 
-/// Holder for the stream settings.
-struct StreamSettings {
-  StreamHDFInfo StreamHDFInfoObj;
-  std::string Topic;
-  std::string Module;
-  std::string Source;
-  bool RunParallel = false;
-  std::string ConfigStreamJson;
-};
-
 using nlohmann::json;
 
 json parseOrThrow(std::string const &Command) {
