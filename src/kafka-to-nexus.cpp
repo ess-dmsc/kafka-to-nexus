@@ -22,14 +22,13 @@ void signal_handler(int Signal) {
 }
 
 int main(int argc, char **argv) {
-
-  fmt::print("kafka-to-nexus {:.7} (ESS, BrightnESS)\n"
-             "  Contact: dominik.werder@psi.ch, michele.brambilla@psi.ch\n\n",
-             GIT_COMMIT);
-  CLI::App App{
+  CLI::App App{fmt::format(
+      "kafka-to-nexus {:.7} (ESS, BrightnESS)\n"
+      "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
       "Writes NeXus files in a format specified with a json template.\n"
-      "Writer modules can be used to populate the file from Kafka topics.\n"};
-  auto Options = std::unique_ptr<MainOpt>(new MainOpt());
+      "Writer modules can be used to populate the file from Kafka topics.\n",
+      GIT_COMMIT)};
+  auto Options = std::make_unique<MainOpt>();
   Options->init();
   setCLIOptions(App, *Options);
 

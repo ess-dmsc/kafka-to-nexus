@@ -106,6 +106,21 @@ public:
     ch.handle(CommandString);
   }
 
+  static void new_04() {
+    auto CommandData =
+        gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-04.json");
+    std::string CommandString(CommandData.data(),
+                              CommandData.data() + CommandData.size());
+    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
+        CommandString.size());
+    auto Command = json::parse(CommandString);
+    std::string fname = Command["file_attributes"]["file_name"];
+    unlink(fname.c_str());
+    MainOpt main_opt;
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    ch.handle(CommandString);
+  }
+
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
                         std::vector<uint32_t> const &event_index,
                         uint64_t cue_timestamp_zero, uint32_t cue_index) {
@@ -242,17 +257,6 @@ public:
                   ["string_1_2_0", "string_1_2_1"]
                 ]
               ]
-            },
-            {
-              "NOTE": "Disabled because h5cpp seems unhappy about fixed length strings currently.",
-              "type": "DISABLED_dataset",
-              "name": "string_fixed_1d",
-              "dataset": {
-                "type":"string",
-                "string_size": 32,
-                "size": ["unlimited"]
-              },
-              "values": ["the-scalar-string", "another-one"]
             }
           ]
         })"");
@@ -1098,6 +1102,8 @@ public:
 
 TEST_F(T_CommandHandler, New03) { T_CommandHandler::new_03(); }
 
+TEST_F(T_CommandHandler, New04) { EXPECT_NO_THROW(T_CommandHandler::new_04()); }
+
 TEST_F(T_CommandHandler, CreateStaticFileWithHdfOutputPrefix) {
   T_CommandHandler::create_static_file_with_hdf_output_prefix();
 }
@@ -1161,4 +1167,164 @@ TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
   verifyWrittenDatatype(TestFile, TestUint64);
   verifyWrittenDatatype(TestFile, TestInt32);
   verifyWrittenDatatype(TestFile, TestInt64);
+}
+
+TEST(HDFFile, createStaticDatasetsStrings) {
+  std::string const hdf_output_filename =
+      "Test.HDFFile.createStaticDatasetsStrings";
+  unlink(hdf_output_filename.c_str());
+  auto CommandJSON = json::parse(R""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "some_group",
+        "attributes": {
+          "NX_class": "NXinstrument"
+        },
+        "children": [
+          {
+            "type": "dataset",
+            "name": "string_var_0d",
+            "dataset": {
+              "type": "string"
+            },
+            "values": "the-scalar-string"
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_0d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32
+            },
+            "values": "string_scalar"
+          },
+          {
+            "type": "dataset",
+            "name": "string_var_1d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one", "a-third"]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_1d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32,
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one", "a-third"]
+          },
+          {
+            "type": "dataset",
+            "name": "string_var_2d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited", 4]
+            },
+            "values": [
+              ["string_0_0", "string_0_1", "string_0_2", "string_0_3"],
+              ["string_1_0", "string_1_1", "string_1_2", "string_1_3"],
+              ["string_2_0", "string_2_1", "string_2_2", "string_2_3"],
+              ["string_3_0", "string_3_1", "string_3_2", "string_3_3"]
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_2d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32,
+              "size": ["unlimited", 4]
+            },
+            "values": [
+              ["string_0_0", "string_0_1", "string_0_2", "string_0_3"],
+              ["string_1_0", "string_1_1", "string_1_2", "string_1_3"],
+              ["string_2_0", "string_2_1", "string_2_2", "string_2_3"],
+              ["string_3_0", "string_3_1", "string_3_2", "string_3_3"]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+  )"");
+  CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
+  auto CommandString = CommandJSON.dump();
+  std::string Filename = CommandJSON["file_attributes"]["file_name"];
+  ASSERT_GT(Filename.size(), 8u);
+  std::vector<FileWriter::StreamHDFInfo> NoStreams;
+  {
+    FileWriter::HDFFile File;
+    File.init(Filename, CommandJSON["nexus_structure"], json::object(),
+              NoStreams, false);
+  }
+  {
+    auto File = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
+    auto StringVar = hdf5::datatype::String::variable();
+    StringVar.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    StringVar.padding(hdf5::datatype::StringPad::NULLTERM);
+    auto StringFix = hdf5::datatype::String::fixed(32);
+    StringFix.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    StringFix.padding(hdf5::datatype::StringPad::NULLTERM);
+    hdf5::node::Dataset Dataset;
+    hdf5::dataspace::Simple SpaceFile;
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_0d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_0d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_1d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_1d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    {
+      auto Dataset =
+          hdf5::node::get_dataset(File.root(), "/some_group/string_fix_2d");
+      ASSERT_EQ(Dataset.datatype(), StringFix);
+      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({2, 1}, {1, 3}));
+      std::vector<char> Buffer(3 * 32);
+      // Dataset.read(*Buffer.data(), StringFix, hdf5::dataspace::Simple({2}),
+      // SpaceFile);
+      hdf5::dataspace::Simple SpaceMem({3});
+      if (0 >
+          H5Dread(static_cast<hid_t>(Dataset), static_cast<hid_t>(StringFix),
+                  static_cast<hid_t>(SpaceMem), static_cast<hid_t>(SpaceFile),
+                  H5P_DEFAULT, Buffer.data())) {
+        ASSERT_TRUE(false);
+      }
+      ASSERT_EQ(std::string(Buffer.data() + 0 * 32), "string_2_1");
+      ASSERT_EQ(std::string(Buffer.data() + 1 * 32), "string_2_2");
+      ASSERT_EQ(std::string(Buffer.data() + 2 * 32), "string_2_3");
+    }
+    {
+      auto Dataset =
+          hdf5::node::get_dataset(File.root(), "/some_group/string_var_2d");
+      ASSERT_EQ(Dataset.datatype(), StringVar);
+      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({2, 1}, {1, 2}));
+      std::vector<std::string> Buffer;
+      Buffer.resize(2);
+      Dataset.read(Buffer, StringVar, hdf5::dataspace::Simple({2}), SpaceFile);
+      ASSERT_EQ(Buffer.at(0), "string_2_1");
+      ASSERT_EQ(Buffer.at(1), "string_2_2");
+    }
+  }
 }

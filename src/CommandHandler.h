@@ -10,7 +10,16 @@
 
 namespace FileWriter {
 
-struct StreamSettings;
+/// \brief Holder for the stream settings.
+struct StreamSettings {
+  StreamHDFInfo StreamHDFInfoObj;
+  std::string Topic;
+  std::string Module;
+  std::string Source;
+  bool RunParallel = false;
+  std::string ConfigStreamJson;
+};
+
 
 /// \brief If fails to parse the `Command`, adds error info and throws
 /// exception.
@@ -45,6 +54,7 @@ public:
   /// \param Command Command for configuring the new task.
   void handleNew(std::string const &Command);
 
+
   /// Stop the whole file writer application.
   void handleExit();
 
@@ -52,14 +62,17 @@ public:
   void handleFileWriterTaskClearAll();
 
   /// \brief Stop a given job.
+
   ///
   /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
+
 
   /// \brief Pass content of the message to the command handler.
   ///
   /// \param Msg The message.
   void tryToHandle(Msg const &msg);
+
 
   /// \brief Parse the given command and pass it on to a more specific
   /// handler.
@@ -77,10 +90,12 @@ public:
 
   /// \brief Find a writer task given its `JobID`.
   ///
+
   /// \return  The writer task.
   std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
 
 private:
+
   void addStreamSourceToWriterModule(
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);

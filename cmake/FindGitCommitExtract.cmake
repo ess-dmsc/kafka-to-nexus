@@ -3,7 +3,6 @@
 # To use, make your target depend on 'git_commit_current'.
 # It will create ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx which
 # you should add to your list of sources.
-# Contact: Dominik Werder
 
 file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx "extern \"C\" char const GIT_COMMIT[] = \"NOTSET\";\n")
 

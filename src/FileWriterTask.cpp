@@ -99,6 +99,7 @@ void FileWriterTask::hdf_init(std::string const &NexusStructure,
   auto ConfigFileJson = hdf_parse(ConfigFile);
 
   try {
+    LOG(Sev::Info, "Creating HDF file {}", filename_full);
     hdf_file.init(filename_full, NexusStructureJson, ConfigFileJson,
                   stream_hdf_info, UseHDFSWMR);
   } catch (...) {

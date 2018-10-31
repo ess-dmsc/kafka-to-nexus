@@ -46,6 +46,7 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
+
 // In the future, want to handle many, but not right now.
 static int g_N_HANDLED = 0;
 
@@ -75,7 +76,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 ///
 /// \param Task The task which will write the HDF file.
 /// \param StreamHDFInfoList
-/// \return
+///
+/// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
     StreamHDFInfo const &StreamHDFInfo) {
@@ -129,10 +131,13 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
   }
 
-  auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
-  if (!ModuleFactory) {
+  HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+  try {
+    ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+  } catch (std::exception const &E) {
     throw std::runtime_error(
-        fmt::format("Module '{}' is not available", StreamSettings.Module));
+        fmt::format("Error while getting '{}',  source: {}  what: {}",
+                    StreamSettings.Module, StreamSettings.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory();
@@ -192,11 +197,11 @@ void CommandHandler::handleNew(std::string const &Command) {
   json Doc = parseOrThrow(Command);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     StatusProducer = MasterPtr->getStatusProducer();
   }
-  auto Task = std::unique_ptr<FileWriterTask>(
-      new FileWriterTask(Config.service_id, StatusProducer));
+  auto Task =
+      std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -207,7 +212,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     throwMissingKey("job_id", Doc.dump());
   }
 
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
              Config.service_id, Task->job_id(), "Start job");
   }
@@ -278,12 +283,12 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
   }
 
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(
-        new StreamMaster<Streamer>(Broker.host_port, std::move(Task), Config,
-                                   MasterPtr->getStatusProducer()));
+    auto s = std::make_unique<StreamMaster<Streamer>>(
+        Broker.host_port, std::move(Task), Config,
+        MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
@@ -296,7 +301,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   } else {
     FileWriterTasks.emplace_back(std::move(Task));
   }
-  g_N_HANDLED += 1;
 }
 
 /// \brief Configure the HDF writer modules for writing.
@@ -312,9 +316,13 @@ void CommandHandler::addStreamSourceToWriterModule(
     if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
-      auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
-      if (!ModuleFactory) {
-        LOG(Sev::Info, "Module '{}' is not available", StreamSettings.Module);
+      HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+
+      try {
+        ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      } catch (std::exception const &E) {
+        LOG(Sev::Info, "Module '{}' is not available, error {}",
+            StreamSettings.Module, E.what());
         continue;
       }
 
@@ -361,14 +369,14 @@ void CommandHandler::addStreamSourceToWriterModule(
 }
 
 void CommandHandler::handleFileWriterTaskClearAll() {
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     MasterPtr->stopStreamMasters();
   }
   FileWriterTasks.clear();
 }
 
 void CommandHandler::handleExit() {
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     MasterPtr->stop();
   }
 }
@@ -394,7 +402,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
       if (StopTime.count() != 0) {
@@ -495,6 +503,7 @@ std::string format_nested_exception(std::exception const &E,
   return StrS.str();
 }
 
+
 /// Helper to get nicer error messages.
 std::string format_nested_exception(std::exception const &E) {
   std::stringstream StrS;
@@ -519,7 +528,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
           format_nested_exception(E));
       LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
           convertStatusCodeToString(StatusCode::Fail), Message);
-      if (MasterPtr) {
+      if (MasterPtr != nullptr) {
         logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
                  Config.service_id, JobID, Message);
       }
