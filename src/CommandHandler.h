@@ -93,8 +93,7 @@ private:
   ///
   /// \return The related stream settings.
   std::vector<StreamHDFInfo>
-  initializeHDF(FileWriterTask &Task,
-                std::string const &NexusStructureString,
+  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
                 bool UseSwmr) const;
   MainOpt &Config;
   MasterI *MasterPtr = nullptr;

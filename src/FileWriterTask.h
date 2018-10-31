@@ -42,8 +42,7 @@ public:
   /// \param UseSwmr Whether to use SWMR.
   void InitialiseHdf(std::string const &NexusStructure,
                      std::string const &ConfigFile,
-                     std::vector<StreamHDFInfo> &HdfInfo,
-                     bool UseSwmr);
+                     std::vector<StreamHDFInfo> &HdfInfo, bool UseSwmr);
 
   /// \brief  Set the `JobID`.
   ///
@@ -59,8 +58,7 @@ public:
   ///
   /// \param Prefix The path prefix.
   /// \param Name The filename (can include path).
-  void setFilename(std::string const &Prefix,
-                   std::string const &Name);
+  void setFilename(std::string const &Prefix, std::string const &Name);
 
   /// \brief Get the list of demuxers.
   ///

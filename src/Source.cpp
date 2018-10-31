@@ -15,8 +15,7 @@ Result Result::Ok() {
 
 Source::Source(std::string const &Name, std::string const &ID,
                HDFWriterModule::ptr Writer)
-    : SourceName(Name), SchemaID(ID), WriterModule(std::move(Writer)) {
-}
+    : SourceName(Name), SchemaID(ID), WriterModule(std::move(Writer)) {}
 
 Source::~Source() { close_writer_module(); }
 
@@ -91,8 +90,6 @@ nlohmann::json Source::to_json() const {
   return JSON;
 }
 
-void Source::setTopic(std::string const &Name) {
-  Topic_ = Name;
-}
+void Source::setTopic(std::string const &Name) { Topic_ = Name; }
 
 } // namespace FileWriter

@@ -47,8 +47,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
-  Task.InitialiseHdf(NexusStructure.dump(), ConfigFile.dump(), StreamHDFInfoList,
-                     UseSwmr);
+  Task.InitialiseHdf(NexusStructure.dump(), ConfigFile.dump(),
+                     StreamHDFInfoList, UseSwmr);
   return StreamHDFInfoList;
 }
 
@@ -227,8 +227,8 @@ void CommandHandler::handleNew(std::string const &Command) {
     UseSwmr = UseHDFSWMRMaybe.inner();
   }
 
-  // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will contain
-  // the list of streams which have been found in the `nexus_structure`.
+  // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will
+  // contain the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   if (auto NexusStructureMaybe = find<nlohmann::json>("nexus_structure", Doc)) {
     try {

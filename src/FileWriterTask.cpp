@@ -12,9 +12,9 @@ namespace FileWriter {
 
 namespace {
 
+using nlohmann::json;
 using std::string;
 using std::vector;
-using nlohmann::json;
 
 json hdf_parse(std::string const &Structure) {
   try {
@@ -25,7 +25,7 @@ json hdf_parse(std::string const &Structure) {
     throw FileWriter::ParseError(Structure);
   }
 }
-}
+} // namespace
 
 std::atomic<uint32_t> n_FileWriterTask_created{0};
 
@@ -98,16 +98,16 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
   try {
     LOG(Sev::Info, "Creating HDF file {}", Filename);
-    hdfFile.init(Filename, NexusStructureJson, ConfigFileJson,
-                  HdfInfo, UseSwmr);
+    hdfFile.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo,
+                 UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
     closeFile();
     reopenFile();
 
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "can not initialize hdf file {}", Filename)));
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("can not initialize hdf file {}", Filename)));
   }
 }
 
@@ -130,13 +130,9 @@ uint64_t FileWriterTask::id() const { return Id; }
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
-hdf5::node::Group FileWriterTask::hdfGroup() {
-  return hdfFile.H5File.root();
-}
+hdf5::node::Group FileWriterTask::hdfGroup() { return hdfFile.H5File.root(); }
 
-bool FileWriterTask::swmrEnabled() const {
-  return hdfFile.isSWMREnabled();
-}
+bool FileWriterTask::swmrEnabled() const { return hdfFile.isSWMREnabled(); }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
@@ -155,8 +151,6 @@ json FileWriterTask::stats() const {
   FWT["topics"] = Topics;
   return FWT;
 }
-std::string FileWriterTask::filename() const {
-  return Filename;
-}
+std::string FileWriterTask::filename() const { return Filename; }
 
 } // namespace FileWriter

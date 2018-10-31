@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
 #include "FileWriterTask.h"
 #include "Source.h"
+#include <gtest/gtest.h>
 
 TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
   FileWriter::FileWriterTask Task("SomeID", nullptr);
