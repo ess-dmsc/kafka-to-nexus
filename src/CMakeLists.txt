@@ -53,6 +53,7 @@ set(libraries_common
   ${H5CPP_LIBRARIES}
   ${CURL_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${DATE_LIBRARY}
   pthread
   z
 )
