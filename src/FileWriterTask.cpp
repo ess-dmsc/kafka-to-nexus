@@ -32,7 +32,7 @@ std::atomic<uint32_t> n_FileWriterTask_created{0};
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
 
 FileWriterTask::FileWriterTask(
-    std::string ServiceID_,
+    std::string const &ServiceID_,
     std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_)
     : ServiceId(ServiceID_), StatusProducer(std::move(StatusProducer_)) {
   using namespace std::chrono;
