@@ -34,7 +34,7 @@ std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
 FileWriterTask::FileWriterTask(
     std::string ServiceID_,
     std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_)
-    : ServiceId(std::move(ServiceID_)), StatusProducer(std::move(StatusProducer_)) {
+    : ServiceId(ServiceID_), StatusProducer(std::move(StatusProducer_)) {
   using namespace std::chrono;
   Id = static_cast<uint64_t>(
       duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
@@ -63,7 +63,11 @@ FileWriterTask::~FileWriterTask() {
 
 void FileWriterTask::setFilename(std::string const &Prefix,
                                  std::string const &Name) {
-  Filename = Prefix + "/" + Name;
+  if (Prefix.empty()) {
+    Filename = Name;
+  } else {
+    Filename = Prefix + "/" + Name;
+  }
 }
 
 void FileWriterTask::addSource(Source &&Source) {

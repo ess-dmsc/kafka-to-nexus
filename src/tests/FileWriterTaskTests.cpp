@@ -2,12 +2,20 @@
 #include "FileWriterTask.h"
 #include "Source.h"
 
-TEST(FileWriterTask, FullFileNameIsCorrect) {
+TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
   FileWriter::FileWriterTask Task("SomeID", nullptr);
 
   Task.setFilename("SomePrefix", "File.hdf");
 
   ASSERT_EQ("SomePrefix/File.hdf", Task.filename());
+}
+
+TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
+  FileWriter::FileWriterTask Task("SomeID", nullptr);
+
+  Task.setFilename("", "File.hdf");
+
+  ASSERT_EQ("File.hdf", Task.filename());
 }
 
 TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
