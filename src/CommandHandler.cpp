@@ -36,10 +36,6 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-
-// In the future, want to handle many, but not right now.
-static int g_N_HANDLED = 0;
-
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
