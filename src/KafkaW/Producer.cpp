@@ -1,6 +1,7 @@
 #include "Producer.h"
 #include "logger.h"
 #include <vector>
+#include <stdio.h>
 
 namespace KafkaW {
 
