@@ -14,7 +14,7 @@ find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10
 find_package(FlatBuffers REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
-find_package(GraylogLogger)
+find_package(GraylogLogger REQUIRED)
 find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 
@@ -57,15 +57,6 @@ set(libraries_common
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
-if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
-  message(STATUS "Using graylog_logger")
-  list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
-  list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})
-  list(APPEND libraries_common libgraylog_logger)
-elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
-  message(WARNING "graylog_logger requested but not found")
-endif()
-
 set(kafka_to_nexus_SRC
   Status.cpp
   StatusWriter.cpp
@@ -101,6 +92,7 @@ set(kafka_to_nexus_SRC
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp
   NeXusDataset.cpp
+  KafkaGraylogInterface.cpp
 )
 
 set(kafka_to_nexus_INC
@@ -150,6 +142,7 @@ set(kafka_to_nexus_INC
   date/tzblobs.h
   CLIOptions.h
   NeXusDataset.h
+  KafkaGraylogInterface.h
 )
 
 set(tgt "kafka_to_nexus__objects")
@@ -189,7 +182,7 @@ add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt GraylogLogger::graylog_logger_static)
 
 find_package(GTest)
 

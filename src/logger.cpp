@@ -1,166 +1,81 @@
 #include "logger.h"
+#include "KafkaGraylogInterface.h"
 #include "KafkaW/KafkaW.h"
 #include "json.h"
+#include "uri.h"
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <graylog_logger/ConsoleInterface.hpp>
+#include <graylog_logger/FileInterface.hpp>
+#include <graylog_logger/GraylogInterface.hpp>
 #include <memory>
 #include <string>
 #include <thread>
-#ifdef HAVE_GRAYLOG_LOGGER
-#include <graylog_logger/GraylogInterface.hpp>
-#include <graylog_logger/Log.hpp>
-#endif
 
-int log_level = 3;
-std::string g_ServiceID;
-
-// adhoc namespace because it would now collide with ::Logger defined
-// in gralog_logger
-
-namespace DW {
-
-class Logger {
-public:
-  Logger();
-  ~Logger();
-  void use_log_file(std::string fname);
-  void log_kafka_gelf_start(std::string broker, std::string topic);
-  void log_kafka_gelf_stop();
-  FILE *log_file = stdout;
-  void dwlog_inner(int level, char const *file, int line, char const *func,
-                   std::string const &s1);
-  int prefix_len();
-  void fwd_graylog_logger_enable(std::string address);
-
-private:
-  std::atomic<bool> do_run_kafka{false};
-  std::atomic<bool> do_use_graylog_logger{false};
-  std::shared_ptr<KafkaW::Producer> producer;
-  std::unique_ptr<KafkaW::Producer::Topic> topic;
-  std::thread thread_poll;
-};
-
-Logger::Logger() {}
-
-Logger::~Logger() {
-  do_run_kafka = false;
-  if (log_file != nullptr and log_file != stdout) {
-    LOG(Sev::Info, "Closing log");
-    fclose(log_file);
-  }
-  if (thread_poll.joinable()) {
-    thread_poll.join();
-  }
-}
-
-void Logger::use_log_file(std::string fname) {
-  FILE *f1 = fopen(fname.c_str(), "wb");
-  log_file = f1;
-}
-
-void Logger::log_kafka_gelf_start(std::string Address, std::string topicname) {
-  KafkaW::BrokerSettings BrokerSettings;
-  BrokerSettings.Address = Address;
-  producer.reset(new KafkaW::Producer(BrokerSettings));
-  topic.reset(new KafkaW::Producer::Topic(producer, topicname));
-  topic->enableCopy();
-  thread_poll = std::thread([this] {
-    while (do_run_kafka.load()) {
-      producer->poll();
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+std::string Formatter(const Log::LogMessage &Msg) {
+  std::string FileName;
+  std::int64_t LineNr = -1;
+  std::string ServiceID;
+  for (auto &CField : Msg.AdditionalFields) {
+    if (CField.first == "file") {
+      FileName = CField.second.strVal;
+    } else if (CField.first == "line") {
+      LineNr = CField.second.intVal;
+    } else if (CField.first == "ServiceID") {
+      ServiceID = CField.second.strVal;
     }
-  });
-  do_run_kafka = true;
-}
-
-void Logger::log_kafka_gelf_stop() {
-  do_run_kafka = false;
-  // Wait a bit with the cleanup...
-  // auto t = topic.exchange(nullptr);
-  // auto p = producer.exchange(nullptr);
-}
-
-void Logger::fwd_graylog_logger_enable(std::string address) {
-  auto addr = address;
-  int port = 12201;
-  auto col = address.find(":");
-  if (col != std::string::npos) {
-    addr = address.substr(0, col);
-    port = strtol(address.c_str() + col + 1, nullptr, 10);
   }
-#ifdef HAVE_GRAYLOG_LOGGER
+  return fmt::format("{}:{} [{}] [ServiceID:{}]:  {}", FileName, LineNr,
+                     int(Msg.SeverityLevel), ServiceID, Msg.MessageString);
+}
+
+void addGraylogInterface(std::string Address) {
+  if (Address.empty()) {
+    return;
+  }
+  unsigned short Port = 12201;
+  auto ColonPos = Address.find(":");
+  if (ColonPos != std::string::npos) {
+    try {
+      Port = std::stoi(Address.substr(ColonPos + 1, std::string::npos));
+    } catch (std::invalid_argument) {
+      LOG(Sev::Warning, "Unable to extract port number from the string \"{}\", "
+                        "using the default value of {}.",
+          Address, Port);
+    } catch (std::out_of_range) {
+      LOG(Sev::Warning, "The port number in the string \"{}\" is out of range.",
+          Address);
+    }
+  }
+  LOG(Sev::Info, "Enable graylog_logger on {}:{}", Address.substr(0, ColonPos),
+      Port);
+  Log::AddLogHandler(
+      new Log::GraylogInterface(Address.substr(0, ColonPos), Port));
+}
+
+void setupLogging(Sev LoggingLevel, std::string ServiceID, std::string LogFile,
+                  std::string GraylogAddress, std::string KafkaGraylogUri) {
+  Log::SetMinimumSeverity(LoggingLevel);
+
   Log::RemoveAllHandlers();
-  LOG(Sev::Info, "Enable graylog_logger on {}:{}", addr, port);
-  Log::AddLogHandler(new GraylogInterface(addr, port));
-  do_use_graylog_logger = true;
-#else
-  LOG(Sev::Notice,
-      "ERROR not compiled with support for graylog_logger. Would have used "
-      "{}:{}",
-      addr, port);
-#endif
-}
+  Log::AddField("ServiceID", ServiceID);
+  auto CI = new Log::ConsoleInterface();
+  CI->setMessageStringCreatorFunction(Formatter);
+  Log::AddLogHandler(CI);
 
-void Logger::dwlog_inner(int level, char const *file, int line,
-                         char const *func, std::string const &s1) {
-  int npre = prefix_len();
-  int const n2 = strlen(file);
-  if (npre > n2) {
-    // fmt::print(log_file, "ERROR in logging API: npre > n2\n");
-    npre = 0;
+  if (not LogFile.empty()) {
+    auto TempHandler = new Log::FileInterface(LogFile);
+    TempHandler->setMessageStringCreatorFunction(Formatter);
+    Log::AddLogHandler(TempHandler);
   }
-  auto f1 = file + npre;
-  auto lmsg = fmt::format("{}:{} [{}] [ServiceID:{}]:  {}\n", f1, line, level,
-                          g_ServiceID, s1);
-  fwrite(lmsg.c_str(), 1, lmsg.size(), log_file);
-  if (level < 7 && do_run_kafka.load()) {
-    // If we will use logging to Kafka in the future, refactor a bit to reduce
-    // duplicate work..
-    auto Doc = nlohmann::json::object();
-    Doc["version"] = "1.1";
-    Doc["short_message"] = lmsg;
-    Doc["level"] = level;
-    Doc["_FILE"] = file;
-    Doc["_LINE"] = line;
-    if (!g_ServiceID.empty()) {
-      Doc["ServiceID"] = g_ServiceID;
-    }
-    auto Buffer = Doc.dump();
-    topic->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
+
+  addGraylogInterface(GraylogAddress);
+
+  if (not KafkaGraylogUri.empty()) {
+    uri::URI TempUri(KafkaGraylogUri);
+    Log::AddLogHandler(new KafkaGraylogInterface(TempUri.host, TempUri.topic));
   }
-#ifdef HAVE_GRAYLOG_LOGGER
-  if (do_use_graylog_logger.load() and level < 7) {
-    Log::Msg(level, lmsg);
-  }
-#endif
-  // fflush(log_file);
-}
-
-int Logger::prefix_len() {
-  static int n1 = strlen(__FILE__) - 10;
-  return n1;
-}
-
-static Logger g__logger;
-
-} // namespace DW
-
-void use_log_file(std::string fname) { DW::g__logger.use_log_file(fname); }
-
-void dwlog_inner(int level, char const *file, int line, char const *func,
-                 std::string const &s1) {
-  DW::g__logger.dwlog_inner(level, file, line, func, s1);
-}
-
-void log_kafka_gelf_start(std::string broker, std::string topic) {
-  DW::g__logger.log_kafka_gelf_start(broker, topic);
-}
-
-void log_kafka_gelf_stop() {}
-
-void fwd_graylog_logger_enable(std::string address) {
-  DW::g__logger.fwd_graylog_logger_enable(address);
 }

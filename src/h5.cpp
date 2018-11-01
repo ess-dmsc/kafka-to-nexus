@@ -17,11 +17,9 @@ void h5d::init_basics() {
   snow = {{0, 0}};
   sext = DSPTgt.current_dimensions();
   smax = DSPTgt.maximum_dimensions();
-  if (log_level >= 9) {
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", name, i1,
-          sext.at(i1), smax.at(i1));
-    }
+  for (int i1 = 0; i1 < ndims; ++i1) {
+    LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", name, i1,
+        sext.at(i1), smax.at(i1));
   }
   try {
     DSPMem = hdf5::dataspace::Simple({0, 0}, {H5S_UNLIMITED, H5S_UNLIMITED});
@@ -114,9 +112,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t1 = CLK::now();
   LOG(Sev::Debug, "append_data_{}d", ndims);
   auto ds_name = static_cast<std::string>(Dataset.link().path());
-  if (log_level >= 9) {
-    LOG(Sev::Debug, "append_data_1d {} for dataset {}", nlen, ds_name);
-  }
+  LOG(Sev::Debug, "append_data_1d {} for dataset {}", nlen, ds_name);
 
   for (size_t i = 1; i < sext.size(); ++i) {
     sext[i] = smax[i];
@@ -199,14 +195,12 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         std::chrono::duration_cast<MS>(t3 - t2).count());
   }
 
-  if (log_level >= 9) {
-    LOG(Sev::Debug, "try to get the dsp dims:");
-    auto sext = DSPTgt.current_dimensions();
-    auto smax = DSPTgt.maximum_dimensions();
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", name, i1,
-          sext.at(i1), smax.at(i1));
-    }
+  LOG(Sev::Debug, "try to get the dsp dims:");
+  auto sext = DSPTgt.current_dimensions();
+  auto smax = DSPTgt.maximum_dimensions();
+  for (int i1 = 0; i1 < ndims; ++i1) {
+    LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", name, i1, sext.at(i1),
+        smax.at(i1));
   }
 
   {
@@ -245,11 +239,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     tgt_count[i] = sext[1];
     tgt_stride[i] = 1;
   }
-  if (log_level >= 9) {
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "select tgt  i1: {}  start: {}  count: {}", i1,
-          tgt_offset.at(i1), tgt_count.at(i1));
-    }
+  for (int i1 = 0; i1 < ndims; ++i1) {
+    LOG(Sev::Debug, "select tgt  i1: {}  start: {}  count: {}", i1,
+        tgt_offset.at(i1), tgt_count.at(i1));
   }
   DSPTgt.selection(
       hdf5::dataspace::SelectionOperation::SET,
@@ -259,14 +251,12 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     Dataset.write(*data, Type, DSPMem, DSPTgt, PLTransfer);
   } catch (...) {
     LOG(Sev::Error, "write failed  ds_name: {}", ds_name);
-    if (log_level >= 7) {
-      auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
-      auto sext = dsp.current_dimensions();
-      auto smax = dsp.current_dimensions();
-      for (int i1 = 0; i1 < ndims; ++i1) {
-        LOG(Sev::Debug, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
-            smax.at(i1));
-      }
+    auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
+    auto sext = dsp.current_dimensions();
+    auto smax = dsp.current_dimensions();
+    for (int i1 = 0; i1 < ndims; ++i1) {
+      LOG(Sev::Debug, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
+          smax.at(i1));
     }
     return {AppendResult::ERROR};
   }

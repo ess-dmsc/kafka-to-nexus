@@ -11,8 +11,8 @@ using uri::URI;
 // While the cause of this problem is not discovered and fixed, use the
 // following init function.
 void MainOpt::init() {
-  service_id = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                           gethostname_wrapper(), getpid_wrapper());
+  ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
+                          gethostname_wrapper(), getpid_wrapper());
 }
 
 int MainOpt::parseJsonCommands() {
@@ -36,22 +36,5 @@ void MainOpt::findAndAddCommands() {
     for (auto const &Command : v.inner()) {
       CommandsFromJson.emplace_back(Command.dump());
     }
-  }
-}
-
-void setupLoggerFromOptions(MainOpt const &opt) {
-  g_ServiceID = opt.service_id;
-  if (!opt.kafka_gelf.empty()) {
-    URI uri(opt.kafka_gelf);
-    log_kafka_gelf_start(uri.host, uri.topic);
-    LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
-  }
-
-  if (!opt.graylog_logger_address.empty()) {
-    fwd_graylog_logger_enable(opt.graylog_logger_address);
-  }
-
-  if (!opt.LogFilename.empty()) {
-    use_log_file(opt.LogFilename);
   }
 }

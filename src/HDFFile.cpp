@@ -185,7 +185,7 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
     CurrentTimeZone = current_zone();
   } catch (const std::runtime_error &e) {
     LOG(Sev::Warning, "Failed to detect time zone for use in ISO8601 "
-                      "timestamp in HDF file")
+                      "timestamp in HDF file");
     CurrentTimeZone = locate_zone("UTC");
   }
   auto now = make_zoned(CurrentTimeZone,
@@ -238,7 +238,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
                                    Values);
         } else {
           if (Values.is_array()) {
-            LOG(Sev::Warning, "Attributes with array values must specify type")
+            LOG(Sev::Warning, "Attributes with array values must specify type");
             continue;
           }
           writeScalarAttribute(Node, Name, &Values);
@@ -822,7 +822,7 @@ void HDFFile::createHDFStructures(
   } catch (std::exception const &) {
     // Don't throw here as the file should continue writing
     LOG(Sev::Error, "Failed to create structure  parent={} level={}",
-        std::string(Parent.link().path()), Level)
+        std::string(Parent.link().path()), Level);
   }
 }
 

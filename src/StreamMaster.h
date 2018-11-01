@@ -41,7 +41,7 @@ public:
                const MainOpt &Options,
                std::shared_ptr<KafkaW::ProducerTopic> Producer)
       : Demuxers(FileWriterTask->demuxers()),
-        WriterTask(std::move(FileWriterTask)), ServiceId{Options.service_id},
+        WriterTask(std::move(FileWriterTask)), ServiceId{Options.ServiceID},
         ProducerTopic{Producer} {
 
     for (auto &Demux : Demuxers) {

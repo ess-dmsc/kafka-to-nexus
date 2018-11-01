@@ -56,7 +56,8 @@ int main(int argc, char **argv) {
     std::signal(SIGTERM, signal_handler);
   }
 
-  setupLoggerFromOptions(*Options);
+  setupLogging(Options->LoggingLevel, Options->ServiceID, Options->LogFilename,
+               Options->GraylogLoggerAddress, Options->kafka_gelf);
 
   FileWriter::Master Master(*Options);
   std::thread MasterThread([&Master] {

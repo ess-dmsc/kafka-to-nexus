@@ -103,10 +103,8 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
     ++s.produced;
     s.produced_bytes += (uint64_t)Msg->size;
     ++Producer_->TotalMessagesProduced;
-    if (log_level >= 8) {
-      LOG(Sev::Debug, "sent to topic {} partition {}",
+    LOG(Sev::Debug, "sent to topic {} partition {}",
           rd_kafka_topic_name(RdKafkaTopic), partition);
-    }
     Msg.release();
   }
 

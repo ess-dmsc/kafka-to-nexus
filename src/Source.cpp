@@ -63,9 +63,7 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     _cnt_msg_written += 1;
     _processed_messages_count += 1;
     if (ret.is_ERR()) {
-      if (log_level >= static_cast<int>(Sev::Debug)) {
-        LOG(Sev::Debug, "Failure while writing message: {}", ret.to_str());
-      }
+      LOG(Sev::Debug, "Failure while writing message: {}", ret.to_str());
       return ProcessMessageResult::ERR;
     }
     if (HDFFileForSWMR) {

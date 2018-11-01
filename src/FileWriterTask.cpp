@@ -21,7 +21,7 @@ json hdf_parse(std::string const &Structure) {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
   } catch (...) {
-    LOG(Sev::Error, "Parse Error: ", Structure)
+    LOG(Sev::Error, "Parse Error: ", Structure);
     throw FileWriter::ParseError(Structure);
   }
 }

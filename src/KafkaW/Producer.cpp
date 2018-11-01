@@ -170,9 +170,16 @@ void Producer::poll() {
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
       ProducerBrokerSettings.Address, events_handled, outputQueueLength());
-  if (log_level >= 8) {
-    rd_kafka_dump(stdout, RdKafkaPtr);
-  }
+  
+  char *bp;
+  size_t size;
+  FILE *stream;
+  stream = open_memstream (&bp, &size);
+  rd_kafka_dump(stream, RdKafkaPtr);
+  LOG(Sev::Debug, "{}", bp);
+  fclose (stream);
+  free(bp);
+  
   Stats.poll_served += events_handled;
   Stats.out_queue = outputQueueLength();
 }
