@@ -53,6 +53,7 @@ set(libraries_common
   ${Boost_LIBRARIES}
   pthread
   z
+  GraylogLogger::graylog_logger_static
 )
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
@@ -182,7 +183,7 @@ add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt GraylogLogger::graylog_logger_static)
+target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 find_package(GTest)
 
