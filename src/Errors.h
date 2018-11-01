@@ -41,7 +41,7 @@ public:
 
   /// \brief Checks if `StreamMasterError`s are the same.
   ///
-  /// \param[in]  Other  `StreamMasterStatus` to compare with.
+  /// \param  Other  `StreamMasterStatus` to compare with.
   ///
   /// \return True if the status is the same, False otherwise.
   bool operator==(const StreamMasterError &Other) {

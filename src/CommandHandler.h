@@ -20,7 +20,6 @@ struct StreamSettings {
   std::string ConfigStreamJson;
 };
 
-
 /// \brief If fails to parse the `Command`, adds error info and throws
 /// exception.
 ///
@@ -32,10 +31,8 @@ nlohmann::json parseOrThrow(std::string const &Command);
 
 std::string findBroker(std::string const &);
 
-/// Formats exceptions into readable form.
 std::string format_nested_exception(std::exception const &E);
 
-/// Formats exceptions into readable form.
 std::string format_nested_exception(std::exception const &E,
                                     std::stringstream &StrS, int Level);
 
@@ -44,8 +41,8 @@ class CommandHandler {
 public:
   /// \brief Initialize a new `CommandHandler`.
   ///
-  /// \param  Config Configuration of the file writer.
-  /// \param  MasterPtr Optional `Master` which can continue to watch over newly
+  /// \param Config Configuration of the file writer.
+  /// \param MasterPtr Optional `Master` which can continue to watch over newly
   /// created jobs. Not used for example in some tests.
   CommandHandler(MainOpt &config, MasterI *master);
 
@@ -53,7 +50,6 @@ public:
   ///
   /// \param Command Command for configuring the new task.
   void handleNew(std::string const &Command);
-
 
   /// Stop the whole file writer application.
   void handleExit();
@@ -67,12 +63,10 @@ public:
   /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
 
-
   /// \brief Pass content of the message to the command handler.
   ///
   /// \param Msg The message.
   void tryToHandle(Msg const &msg);
-
 
   /// \brief Parse the given command and pass it on to a more specific
   /// handler.
@@ -94,7 +88,6 @@ public:
   std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
 
 private:
-
   void addStreamSourceToWriterModule(
       const std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);

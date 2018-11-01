@@ -16,7 +16,7 @@ public:
 /// Check for new commands on the topic, return them to the Master.
 class CommandListener {
 public:
-  CommandListener(MainOpt &config);
+  explicit CommandListener(MainOpt &config);
   ~CommandListener();
 
   /// Start listening to command messages.

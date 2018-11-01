@@ -153,7 +153,7 @@ std::pair<double, double> messageSize(const MessageInfo &Information);
 /// \param[in]  Information The MessageInfo object that stores the data.
 /// \param[in]  Duration The amount of time between two report.
 ///
-/// \return The number of message consumed per second if the amount of time
+/// \return The number of messages consumed per second if the amount of time
 /// is large enough, 0 otherwise.
 double messageFrequency(const MessageInfo &Information,
                         const std::chrono::milliseconds &Duration);

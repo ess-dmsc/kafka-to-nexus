@@ -213,7 +213,7 @@ private:
   /// process the messages. If the state is SEC::has_finished or
   /// SEC::not_initialized skip the stream. A negative state represents an
   /// error, which is logged. When the method terminates (i.e. messages are not
-  /// processed anymore) the StreamMaster state change to
+  /// processed anymore) the StreamMaster state changes to
   /// StreamMasterError::has_finished.
   void run() {
     using namespace std::chrono;
@@ -241,7 +241,7 @@ private:
   /// SEC::has_finished and reduces the counter of the open streams.
   ///
   /// \return StreamMasterError::has_finished if other streams are open,
-  /// otherwise turn Stop TRUE and return StreamMasterError::has_finished.
+  /// otherwise set Stop TRUE and return StreamMasterError::has_finished.
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
     LOG(Sev::Debug, "All sources in Stream have expired, close connection");
