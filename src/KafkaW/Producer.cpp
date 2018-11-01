@@ -1,7 +1,7 @@
 #include "Producer.h"
 #include "logger.h"
-#include <vector>
 #include <stdio.h>
+#include <vector>
 
 namespace KafkaW {
 
@@ -171,16 +171,16 @@ void Producer::poll() {
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
       ProducerBrokerSettings.Address, events_handled, outputQueueLength());
-  
+
   char *bp;
   size_t size;
   FILE *stream;
-  stream = open_memstream (&bp, &size);
+  stream = open_memstream(&bp, &size);
   rd_kafka_dump(stream, RdKafkaPtr);
   LOG(Sev::Debug, "{}", bp);
-  fclose (stream);
+  fclose(stream);
   free(bp);
-  
+
   Stats.poll_served += events_handled;
   Stats.out_queue = outputQueueLength();
 }
