@@ -35,7 +35,11 @@ std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
 /// \return A "unique" id.
 uint64_t createId(int ExtraValue) {
   using namespace std::chrono;
-  return (static_cast<uint64_t>(duration_cast<nanoseconds>(system_clock::now().time_since_epoch()).count()) << 16) + (ExtraValue & 0xffff);
+  return (static_cast<uint64_t>(
+              duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
+                  .count())
+          << 16) +
+         (ExtraValue & 0xffff);
 }
 
 FileWriterTask::FileWriterTask(
@@ -100,8 +104,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
 
   try {
     LOG(Sev::Info, "Creating HDF file {}", Filename);
-    File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo,
-                 UseSwmr);
+    File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo, UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
     closeFile();
@@ -143,9 +146,12 @@ json FileWriterTask::stats() const {
   for (auto &Demux : Demuxers) {
     auto DemuxStats = json::object();
     DemuxStats["messages_processed"] = Demux.messages_processed.load();
-    DemuxStats["error_message_too_small"] = Demux.error_message_too_small.load();
-    DemuxStats["error_no_flatbuffer_reader"] = Demux.error_no_flatbuffer_reader.load();
-    DemuxStats["error_no_source_instance"] = Demux.error_no_source_instance.load();
+    DemuxStats["error_message_too_small"] =
+        Demux.error_message_too_small.load();
+    DemuxStats["error_no_flatbuffer_reader"] =
+        Demux.error_no_flatbuffer_reader.load();
+    DemuxStats["error_no_source_instance"] =
+        Demux.error_no_source_instance.load();
     Topics[Demux.topic()] = DemuxStats;
   }
   auto FWT = json::object();

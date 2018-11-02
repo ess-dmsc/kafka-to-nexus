@@ -8,10 +8,10 @@
 #include "Streamer.h"
 #include "helper.h"
 #include "json.h"
+#include <algorithm>
 #include <chrono>
 #include <future>
 #include <sstream>
-#include <algorithm>
 
 using std::array;
 using std::vector;
@@ -520,7 +520,9 @@ size_t CommandHandler::getNumberOfFileWriterTasks() const {
 
 std::unique_ptr<FileWriterTask> &
 CommandHandler::getFileWriterTaskByJobID(std::string const &JobID) {
-  auto Task = std::find_if(FileWriterTasks.begin(), FileWriterTasks.end(), [&JobID] (auto const &FwTask) {return FwTask->jobID() == JobID;});
+  auto Task = std::find_if(
+      FileWriterTasks.begin(), FileWriterTasks.end(),
+      [&JobID](auto const &FwTask) { return FwTask->jobID() == JobID; });
 
   if (Task != FileWriterTasks.end()) {
     return *Task;

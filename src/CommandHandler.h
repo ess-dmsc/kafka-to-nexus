@@ -72,7 +72,8 @@ public:
   /// \param JobID The job id to find.
   ///
   /// \return The writer task.
-  std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string const &JobID);
+  std::unique_ptr<FileWriterTask> &
+  getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
   /// \brief Add writer modules for the streams defined in nexus structure.
