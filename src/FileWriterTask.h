@@ -51,7 +51,7 @@ public:
 
   /// \brief Add a source to the demuxers.
   ///
-  /// \param source The source to add.
+  /// \param Source The source to add.
   void addSource(Source &&Source);
 
   /// \brief Set the filename.
@@ -106,7 +106,7 @@ private:
   std::string JobId;
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
-  HDFFile hdfFile;
+  HDFFile File;
 };
 
 } // namespace FileWriter

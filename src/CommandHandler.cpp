@@ -11,6 +11,7 @@
 #include <chrono>
 #include <future>
 #include <sstream>
+#include <algorithm>
 
 using std::array;
 using std::vector;
@@ -518,14 +519,14 @@ size_t CommandHandler::getNumberOfFileWriterTasks() const {
 }
 
 std::unique_ptr<FileWriterTask> &
-CommandHandler::getFileWriterTaskByJobID(std::string JobID) {
-  for (auto &Task : FileWriterTasks) {
-    if (Task->jobID() == JobID) {
-      return Task;
-    }
+CommandHandler::getFileWriterTaskByJobID(std::string const &JobID) {
+  auto Task = std::find_if(FileWriterTasks.begin(), FileWriterTasks.end(), [&JobID] (auto const &FwTask) {return FwTask->jobID() == JobID;});
+
+  if (Task != FileWriterTasks.end()) {
+    return *Task;
   }
-  static std::unique_ptr<FileWriterTask> NotFound;
-  return NotFound;
+
+  throw std::out_of_range("Unable to find task by Job ID");
 }
 
 } // namespace FileWriter
