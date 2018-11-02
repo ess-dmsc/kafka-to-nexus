@@ -28,7 +28,7 @@ public:
   ///
   /// \param ServiceID The service ID.
   /// \param StatusProducer_ The status producer.
-  FileWriterTask(std::string const &ServiceID,
+  FileWriterTask(std::string ServiceID,
                  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_);
 
   /// Destructor.
