@@ -22,6 +22,14 @@ using std::vector;
 using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
+/// As a safeguard, limit the maximum dimensions of multi dimensional arrays
+/// that we are willing to write
+static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
+
+/// As a safeguard, limit the maximum size of a string that we are willing to
+/// write
+static size_t const MAX_ALLOWED_STRING_LENGTH = 4 * 1024 * 1024;
+
 template <typename T>
 static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
                            T Value) {
@@ -39,63 +47,102 @@ static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
 }
 
 template <typename DT>
-static void appendValue(const nlohmann::json *Value, std::vector<DT> &Buffer) {
-  if (Value->is_number_integer()) {
-    Buffer.push_back(Value->get<int64_t>());
-  } else if (Value->is_number_unsigned()) {
-    Buffer.push_back(Value->get<uint64_t>());
-  } else if (Value->is_number_float()) {
-    Buffer.push_back(Value->get<double>());
+static void appendValue(nlohmann::json const &Value, std::vector<DT> &Buffer) {
+  if (Value.is_number_integer()) {
+    Buffer.push_back(Value.get<int64_t>());
+  } else if (Value.is_number_unsigned()) {
+    Buffer.push_back(Value.get<uint64_t>());
+  } else if (Value.is_number_float()) {
+    Buffer.push_back(Value.get<double>());
   } else {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Expect a numeric value but got: {}", Value->dump().substr(0, 256))));
+    auto What = fmt::format("Expect a numeric value but got: {}",
+                            Value.dump().substr(0, 256));
+    std::throw_with_nested(std::runtime_error(What));
   }
 }
 
-template <typename DT>
-static std::vector<DT> populateBlob(const nlohmann::json *Value,
-                                    hssize_t GoalSize) {
-  std::vector<DT> Buffer;
-  if (Value->is_array()) {
-    std::stack<json const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(Value);
-    ai.push(0);
-    an.push(Value->size());
+class StackItem {
+public:
+  StackItem(nlohmann::json const &Value) : Value(Value), Size(Value.size()) {}
+  void inc() { ++Index; }
+  nlohmann::json const &value() { return Value.at(Index); }
+  bool exhausted() { return !(Index < Size); }
 
-    while (!as.empty()) {
-      if (as.size() > 10) {
+private:
+  nlohmann::json const &Value;
+  size_t Index = 0;
+  size_t Size = 0;
+};
+
+template <typename _DataType> class NumericItemHandler {
+public:
+  using DataType = _DataType;
+  static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
+                     size_t const ItemLength = 0) {
+    appendValue(Value.get<DataType>(), Buffer);
+  }
+};
+
+class StringItemHandler {
+public:
+  using DataType = std::string;
+  static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
+                     size_t const ItemLength = 0) {
+    Buffer.push_back(Value);
+  }
+};
+
+class FixedStringItemHandler {
+public:
+  using DataType = char;
+  static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
+                     size_t const ItemLength = 0) {
+    if (ItemLength >= MAX_ALLOWED_STRING_LENGTH) {
+      std::throw_with_nested(std::runtime_error(fmt::format(
+          "Failed to allocate fixed-size string dataset, bad element size: {}",
+          ItemLength)));
+    }
+    std::string String = Value;
+    String.resize(ItemLength, '\0');
+    std::copy_n(String.data(), String.size(), std::back_inserter(Buffer));
+  }
+};
+
+template <typename DataHandler>
+static std::vector<typename DataHandler::DataType>
+populateBlob(nlohmann::json const &Value, size_t const GoalSize,
+             size_t const ItemLength = 0) {
+  using DataType = typename DataHandler::DataType;
+  std::vector<DataType> Buffer;
+  if (Value.is_array()) {
+    std::stack<StackItem> Stack;
+    Stack.push({Value});
+    while (!Stack.empty()) {
+      if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
         break;
       }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
+      if (Stack.top().exhausted()) {
+        Stack.pop();
         continue;
       }
-      auto const &v = as.top()->at(ai.top());
-      if (v.is_array()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        an.push(v.size());
+      auto const &Value = Stack.top().value();
+      if (Value.is_array()) {
+        Stack.top().inc();
+        Stack.push({Value});
       } else {
-        appendValue(&v, Buffer);
-        ai.top()++;
+        Stack.top().inc();
+        DataHandler::append(Buffer, Value, ItemLength);
       }
     }
   } else {
-    appendValue(Value, Buffer);
+    DataHandler::append(Buffer, Value, ItemLength);
   }
-
-  if (static_cast<hssize_t>(Buffer.size()) != GoalSize) {
-    std::stringstream ss;
-    ss << "Failed to populate numeric blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
-    std::throw_with_nested(std::runtime_error(ss.str()));
+  if (GoalSize != 0 && Buffer.size() != GoalSize) {
+    auto What =
+        fmt::format("Failed to populate numeric blob, size mismatch: {} != {}",
+                    Buffer.size(), GoalSize);
+    std::throw_with_nested(std::runtime_error(What));
   }
-
   return Buffer;
 }
 
@@ -107,7 +154,7 @@ static void writeAttrNumeric(hdf5::node::Node &Node, std::string const &Name,
     Length = Value.size();
   }
   try {
-    auto ValueData = populateBlob<T>(&Value, Length);
+    auto ValueData = populateBlob<NumericItemHandler<T>>(Value, Length);
     try {
       if (Value.is_array()) {
         writeAttribute(Node, Name, ValueData);
@@ -177,7 +224,7 @@ static void writeHDFISO8601Attribute(hdf5::node::Node &Node,
 }
 
 void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
-                                                  const std::string &Name) {
+                                                  std::string const &Name) {
   using namespace date;
   using namespace std::chrono;
   const time_zone *CurrentTimeZone;
@@ -194,11 +241,14 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
 }
 
 void HDFFile::writeAttributes(hdf5::node::Node &Node,
-                              const nlohmann::json *Value) {
+                              nlohmann::json const *Value) {
+  if (Value == nullptr) {
+    return;
+  }
   if (Value->is_array()) {
-    writeArrayOfAttributes(Node, Value);
+    writeArrayOfAttributes(Node, *Value);
   } else if (Value->is_object()) {
-    writeObjectOfAttributes(Node, Value);
+    writeObjectOfAttributes(Node, *Value);
   }
 }
 
@@ -207,11 +257,11 @@ void HDFFile::writeAttributes(hdf5::node::Node &Node,
 /// \param Node : node to write attributes on
 /// \param JsonValue : json value array of attribute objects
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     const nlohmann::json *Values) {
-  if (!Values->is_array()) {
+                                     nlohmann::json const &Values) {
+  if (!Values.is_array()) {
     return;
   }
-  for (auto const &Attribute : *Values) {
+  for (auto const &Attribute : Values) {
     if (Attribute.is_object()) {
       string Name;
       if (auto NameMaybe = find<std::string>("name", Attribute)) {
@@ -241,7 +291,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
             LOG(Sev::Warning, "Attributes with array values must specify type")
             continue;
           }
-          writeScalarAttribute(Node, Name, &Values);
+          writeScalarAttribute(Node, Name, Values);
         }
       }
     }
@@ -255,7 +305,7 @@ void writeAttrStringVariableLength(hdf5::node::Node &Node,
   Type.encoding(Encoding);
   Type.padding(hdf5::datatype::StringPad::NULLTERM);
   if (Values.is_array()) {
-    auto ValueArray = populateStrings(Values, Values.size());
+    auto ValueArray = populateBlob<StringItemHandler>(Values, Values.size());
     auto StringAttr = Node.attributes.create(
         Name, Type, hdf5::dataspace::Simple{{Values.size()}});
     StringAttr.write(ValueArray);
@@ -296,7 +346,7 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
             Name);
       }
     }
-    auto Data = populateFixedStrings(Values, StringSize);
+    auto Data = populateBlob<FixedStringItemHandler>(Values, 0, StringSize);
     LOG(Sev::Debug, "StringSize: {}  Data.size(): {}", StringSize, Data.size());
     // Fixed string support seems broken in h5cpp
     if (0 > H5Awrite(static_cast<hid_t>(Attribute), static_cast<hid_t>(Type),
@@ -376,10 +426,10 @@ void HDFFile::writeAttrOfSpecifiedType(
 /// \param node : node to write attributes on
 /// \param jsv : json value object of attributes
 void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
-                                      nlohmann::json const *Values) {
-  for (auto It = Values->begin(); It != Values->end(); ++It) {
+                                      nlohmann::json const &Values) {
+  for (auto It = Values.begin(); It != Values.end(); ++It) {
     auto const Name = It.key();
-    writeScalarAttribute(Node, Name, &It.value());
+    writeScalarAttribute(Node, Name, It.value());
   }
 }
 
@@ -388,116 +438,25 @@ void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
 /// \param Name : Name of the attribute
 /// \param Values : Json value containing the attribute value
 void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
-                                   const std::string &Name,
-                                   const nlohmann::json *Values) {
-  if (Values->is_string()) {
-    writeStringAttribute(Node, Name, Values->get<std::string>());
-  } else if (Values->is_number_integer()) {
-    writeAttribute(Node, Name, Values->get<int64_t>());
-  } else if (Values->is_number_unsigned()) {
-    writeAttribute(Node, Name, Values->get<uint64_t>());
-  } else if (Values->is_number_float()) {
-    writeAttribute(Node, Name, Values->get<double>());
+                                   std::string const &Name,
+                                   nlohmann::json const &Values) {
+  if (Values.is_string()) {
+    writeStringAttribute(Node, Name, Values);
+  } else if (Values.is_number_integer()) {
+    writeAttribute(Node, Name, Values.get<int64_t>());
+  } else if (Values.is_number_unsigned()) {
+    writeAttribute(Node, Name, Values.get<uint64_t>());
+  } else if (Values.is_number_float()) {
+    writeAttribute(Node, Name, Values.get<double>());
   }
 }
 
 void HDFFile::writeAttributesIfPresent(hdf5::node::Node &Node,
-                                       const nlohmann::json *Values) {
-  if (auto AttributesMaybe = find<json>("attributes", *Values)) {
+                                       nlohmann::json const &Values) {
+  if (auto AttributesMaybe = find<json>("attributes", Values)) {
     auto const Attributes = AttributesMaybe.inner();
     writeAttributes(Node, &Attributes);
   }
-}
-
-std::vector<std::string> populateStrings(nlohmann::json const &Values,
-                                         size_t const GoalSize) {
-  std::vector<std::string> Buffer;
-  if (Values.is_string()) {
-    std::string String = Values;
-    Buffer.push_back(String);
-  } else if (Values.is_array()) {
-    std::stack<json const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(&Values);
-    ai.push(0);
-    an.push(Values.size());
-    while (!as.empty()) {
-      if (as.size() > 10) {
-        break;
-      }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->at(ai.top());
-      if (v.is_array()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        an.push(v.size());
-      } else if (v.is_string()) {
-        Buffer.push_back(v.get<std::string>());
-        ai.top()++;
-      }
-    }
-  }
-  if (Buffer.size() != GoalSize) {
-    std::stringstream ss;
-    ss << "Failed to populate string(variable) blob ";
-    ss << " size mismatch " << Buffer.size() << "!=" << GoalSize;
-    std::throw_with_nested(std::runtime_error(ss.str()));
-  }
-  return Buffer;
-}
-
-std::vector<char> populateFixedStrings(nlohmann::json const &Values,
-                                       size_t const FixedAt) {
-  if (FixedAt >= 1024 * 1024) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Failed to allocate fixed-size string dataset, bad element size: {}",
-        FixedAt)));
-  }
-  std::vector<char> Buffer;
-  if (Values.is_string()) {
-    std::string String = Values;
-    String.resize(FixedAt, '\0');
-    std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
-  } else if (Values.is_array()) {
-    std::stack<json const *> as;
-    std::stack<size_t> ai;
-    std::stack<size_t> an;
-    as.push(&Values);
-    ai.push(0);
-    an.push(Values.size());
-    while (!as.empty()) {
-      // Limit the dimensionality of the data array
-      if (as.size() > 10) {
-        break;
-      }
-      if (ai.top() >= an.top()) {
-        as.pop();
-        ai.pop();
-        an.pop();
-        continue;
-      }
-      auto &v = as.top()->at(ai.top());
-      if (v.is_array()) {
-        ai.top()++;
-        as.push(&v);
-        ai.push(0);
-        an.push(v.size());
-      } else if (v.is_string()) {
-        auto String = v.get<std::string>();
-        String.resize(FixedAt, '\0');
-        std::copy_n(String.data(), FixedAt, std::back_inserter(Buffer));
-        ai.top()++;
-      }
-    }
-  }
-  return Buffer;
 }
 
 template <typename DT>
@@ -510,7 +469,8 @@ static void writeNumericDataset(
     auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
                                        Dataspace, DatasetCreationPropertyList);
     try {
-      auto Blob = populateBlob<DT>(Values, Dataspace.size());
+      auto Blob =
+          populateBlob<NumericItemHandler<DT>>(*Values, Dataspace.size());
       try {
         Dataset.write(Blob);
       } catch (std::exception const &E) {
@@ -542,8 +502,9 @@ void HDFFile::writeStringDataset(
 
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
-    Dataset.write(populateStrings(Values, Dataspace.size()), DataType,
-                  Dataspace, Dataspace, hdf5::property::DatasetTransferList());
+    Dataset.write(populateBlob<StringItemHandler>(Values, Dataspace.size()),
+                  DataType, Dataspace, Dataspace,
+                  hdf5::property::DatasetTransferList());
   } catch (const std::exception &e) {
     std::stringstream ss;
     ss << "Failed to write variable-size string dataset ";
@@ -580,7 +541,7 @@ void HDFFile::writeFixedSizeStringDataset(
     auto Dataset =
         Parent.create_dataset(Name, DataType, Dataspace, DatasetCreationList);
 
-    auto Data = populateFixedStrings(*Values, ElementSize);
+    auto Data = populateBlob<FixedStringItemHandler>(*Values, 0, ElementSize);
     H5Dwrite(static_cast<hid_t>(Dataset), static_cast<hid_t>(DataType),
              static_cast<hid_t>(Dataspace), static_cast<hid_t>(Dataspace),
              H5P_DEFAULT, Data.data());
@@ -764,7 +725,7 @@ void HDFFile::writeDataset(hdf5::node::Group &Parent,
                       &DatasetValuesInnerObject);
   auto dset = hdf5::node::Dataset(Parent.nodes[Name]);
 
-  writeAttributesIfPresent(dset, Values);
+  writeAttributesIfPresent(dset, *Values);
 }
 
 void HDFFile::createHDFStructures(
@@ -806,7 +767,7 @@ void HDFFile::createHDFStructures(
     // If the current level in the HDF can act as a parent, then continue the
     // recursion with the (optional) "children" array.
     if (hdf_this.is_valid()) {
-      writeAttributesIfPresent(hdf_this, Value);
+      writeAttributesIfPresent(hdf_this, *Value);
       if (auto ChildrenMaybe = find<json>("children", *Value)) {
         auto Children = ChildrenMaybe.inner();
         if (Children.is_array()) {
@@ -940,7 +901,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
         RootGroup, "creator",
         fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
-    writeAttributesIfPresent(RootGroup, &NexusStructure);
+    writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
     LOG(Sev::Critical, "Failed to initialize  file={}  trace:\n{}",
         H5File.id().file_name().string(), hdf5::error::print_nested(E));
