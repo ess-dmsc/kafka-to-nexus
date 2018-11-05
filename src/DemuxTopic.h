@@ -22,8 +22,6 @@ public:
   /// Move constructor.
   DemuxTopic(DemuxTopic &&x);
 
-  // Virtual destructor apparently because some mock derives from this?
-  // todo Should probably use proper interface (eg `DemuxTopicI`)
   virtual ~DemuxTopic();
 
   /// \brief Returns the name of the topic that contains the source.
