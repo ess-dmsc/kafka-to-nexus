@@ -9,10 +9,6 @@
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
 
-// TODO The following helper classes are used to interface with the h5cpp
-// library. They must be removed from here when they are added to the h5cpp
-// library.
-
 /// \brief Used to write c-arrays to hdf5 files using h5cpp.
 ///
 /// The member functions of this class need no extra documentation.
