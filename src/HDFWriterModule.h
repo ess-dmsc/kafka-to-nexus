@@ -220,8 +220,6 @@ std::map<std::string, ModuleFactory> &getFactories();
 void addWriterModule(std::string key, ModuleFactory value);
 
 /// \return The `ModuleFactory` for the given `key`.
-/// @todo This function should probably throw an exception if key
-/// is not found.
 ModuleFactory &find(std::string const &key);
 
 /// Registers the writer module at program start if instantiated in the

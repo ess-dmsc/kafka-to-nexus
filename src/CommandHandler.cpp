@@ -19,7 +19,6 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-/// \brief  Helper for adding more error information on parse error.
 json parseOrThrow(std::string const &Command) {
   try {
     return json::parse(Command);
@@ -31,37 +30,15 @@ json parseOrThrow(std::string const &Command) {
   }
 }
 
-/// \brief  Helper to throw a common error message type.
+/// \brief Helper to throw a common error message type.
 static void throwMissingKey(std::string const &Key,
                             std::string const &Context) {
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-// In the future, want to handle many, but not right now.
-static int g_N_HANDLED = 0;
-
-/// \brief  Initialize a new `CommandHandler`.
-///
-/// \param Config Configuration of the file writer.
-/// \param MasterPtr Optional `Master` which can continue to watch over newly
-/// created jobs. Not used for example in some tests.
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
-/// \brief  Holder for the stream settings.
-struct StreamSettings {
-  StreamHDFInfo StreamHDFInfoObj;
-  std::string Topic;
-  std::string Module;
-  std::string Source;
-  bool RunParallel = false;
-  std::string ConfigStreamJson;
-};
-
-/// \brief  Parse the given `NexusStructureString`
-///
-/// Parse the given `NexusStructureString` and call the initialization of the
-/// HDF structures.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString) const {
@@ -73,7 +50,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   return StreamHDFInfoList;
 }
 
-/// \brief  Extracts the information about the stream
+/// \brief Extracts the information about the stream
 ///
 /// Extracts the information about the stream from the json command and calls
 /// the corresponding HDF writer modules to set up the initial HDF structures
@@ -81,7 +58,8 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 ///
 /// \param Task The task which will write the HDF file.
 /// \param StreamHDFInfoList
-/// \return
+///
+/// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
     StreamHDFInfo const &StreamHDFInfo) {
@@ -135,10 +113,13 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
   }
 
-  auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
-  if (!ModuleFactory) {
+  HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+  try {
+    ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+  } catch (std::exception const &E) {
     throw std::runtime_error(
-        fmt::format("Module '{}' is not available", StreamSettings.Module));
+        fmt::format("Error while getting '{}',  source: {}  what: {}",
+                    StreamSettings.Module, StreamSettings.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory();
@@ -168,7 +149,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   return StreamSettings;
 }
 
-/// \brief  Helper to extract information about the provided streams.
+/// \brief Helper to extract information about the provided streams.
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
@@ -191,7 +172,6 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-/// \brief  Handle commands which start writing of a file
 void CommandHandler::handleNew(std::string const &Command) {
   using nlohmann::json;
   using std::move;
@@ -199,11 +179,11 @@ void CommandHandler::handleNew(std::string const &Command) {
   json Doc = parseOrThrow(Command);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     StatusProducer = MasterPtr->getStatusProducer();
   }
-  auto Task = std::unique_ptr<FileWriterTask>(
-      new FileWriterTask(Config.service_id, StatusProducer));
+  auto Task =
+      std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -214,7 +194,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     throwMissingKey("job_id", Doc.dump());
   }
 
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
              Config.service_id, Task->job_id(), "Start job");
   }
@@ -285,12 +265,12 @@ void CommandHandler::handleNew(std::string const &Command) {
     }
   }
 
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
-    auto s = std::unique_ptr<StreamMaster<Streamer>>(
-        new StreamMaster<Streamer>(Broker.host_port, std::move(Task), Config,
-                                   MasterPtr->getStatusProducer()));
+    auto s = std::make_unique<StreamMaster<Streamer>>(
+        Broker.host_port, std::move(Task), Config,
+        MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
@@ -303,10 +283,8 @@ void CommandHandler::handleNew(std::string const &Command) {
   } else {
     FileWriterTasks.emplace_back(std::move(Task));
   }
-  g_N_HANDLED += 1;
 }
 
-/// \brief  Add writer modules for the streams defined in nexus structure
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
@@ -316,9 +294,13 @@ void CommandHandler::addStreamSourceToWriterModule(
     if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
-      auto ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
-      if (!ModuleFactory) {
-        LOG(Sev::Info, "Module '{}' is not available", StreamSettings.Module);
+      HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+
+      try {
+        ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      } catch (std::exception const &E) {
+        LOG(Sev::Info, "Module '{}' is not available, error {}",
+            StreamSettings.Module, E.what());
         continue;
       }
 
@@ -364,22 +346,19 @@ void CommandHandler::addStreamSourceToWriterModule(
   }
 }
 
-/// \brief  Handle command to clear all writing tasks
 void CommandHandler::handleFileWriterTaskClearAll() {
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     MasterPtr->stopStreamMasters();
   }
   FileWriterTasks.clear();
 }
 
-/// \brief  Handle command to terminate the program
 void CommandHandler::handleExit() {
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     MasterPtr->stop();
   }
 }
 
-/// \brief  Handle command to stop a specific job
 void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
   LOG(Sev::Debug, "{}", Command);
@@ -401,7 +380,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  if (MasterPtr) {
+  if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster) {
       if (StopTime.count() != 0) {
@@ -420,7 +399,6 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 }
 
-/// \brief  Inspect given command and pass it on to more specialized handlers
 void CommandHandler::handle(std::string const &Command) {
   using nlohmann::json;
   json Doc;
@@ -487,7 +465,6 @@ void CommandHandler::handle(std::string const &Command) {
   LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
-/// \brief  Helper to get nicer error messages
 std::string format_nested_exception(std::exception const &E,
                                     std::stringstream &StrS, int Level) {
   if (Level > 0) {
@@ -503,13 +480,11 @@ std::string format_nested_exception(std::exception const &E,
   return StrS.str();
 }
 
-/// \brief  Helper to get nicer error messages
 std::string format_nested_exception(std::exception const &E) {
   std::stringstream StrS;
   return format_nested_exception(E, StrS, 0);
 }
 
-/// \brief  Try to handle command and catch exceptions
 void CommandHandler::tryToHandle(std::string const &Command) {
   try {
     handle(Command);
@@ -528,7 +503,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
           format_nested_exception(E));
       LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
           convertStatusCodeToString(StatusCode::Fail), Message);
-      if (MasterPtr) {
+      if (MasterPtr != nullptr) {
         logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
                  Config.service_id, JobID, Message);
       }
@@ -541,16 +516,10 @@ void CommandHandler::tryToHandle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }
 
-/// \brief  Get number of active writer tasks.
-///
-/// \return  Number of active writer tasks.
 size_t CommandHandler::getNumberOfFileWriterTasks() const {
   return FileWriterTasks.size();
 }
 
-/// \brief  Find a writer task given its `JobID`.
-///
-/// \return  The writer task.
 std::unique_ptr<FileWriterTask> &
 CommandHandler::getFileWriterTaskByJobID(std::string JobID) {
   for (auto &Task : FileWriterTasks) {

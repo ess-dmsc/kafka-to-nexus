@@ -42,11 +42,11 @@ public:
 
   static std::string h5VersionStringLinked();
   static void writeAttributes(hdf5::node::Node &Node,
-                              const nlohmann::json *Value);
+                              nlohmann::json const *Value);
 
   static void writeStringAttribute(hdf5::node::Node &Node,
-                                   const std::string &Name,
-                                   const std::string &Value);
+                                   std::string const &Name,
+                                   std::string const &Value);
 
   /// If using SWMR, gets invoked by Source and can trigger a flush of the HDF
   /// file.
@@ -74,20 +74,13 @@ private:
                                                   const std::string &Name);
 
   static void writeAttributesIfPresent(hdf5::node::Node &Node,
-                                       const nlohmann::json *Values);
-
-  static std::vector<std::string> populateStrings(const nlohmann::json *Values,
-                                                  hssize_t GoalSize);
-
-  static std::vector<std::string>
-  populateFixedStrings(const nlohmann::json *Values, size_t FixedAt,
-                       hssize_t GoalSize);
+                                       nlohmann::json const &Values);
 
   static void
-  WriteStringDataset(hdf5::node::Group &Parent, const std::string &Name,
+  writeStringDataset(hdf5::node::Group &Parent, const std::string &Name,
                      hdf5::property::DatasetCreationList &DatasetCreationList,
                      hdf5::dataspace::Dataspace &Dataspace,
-                     const nlohmann::json *Values);
+                     nlohmann::json const &Values);
 
   static void writeFixedSizeStringDataset(
       hdf5::node::Group &Parent, const std::string &Name,
@@ -111,19 +104,20 @@ private:
                  hdf5::property::FileAccessList &FileAccessPropertyList) {}
 
   static void writeObjectOfAttributes(hdf5::node::Node &Node,
-                                      const nlohmann::json *Values);
+                                      const nlohmann::json &Values);
 
   static void writeArrayOfAttributes(hdf5::node::Node &Node,
-                                     const nlohmann::json *Values);
+                                     const nlohmann::json &Values);
 
   static void writeScalarAttribute(hdf5::node::Node &Node,
                                    const std::string &Name,
-                                   const nlohmann::json *Values);
+                                   const nlohmann::json &Values);
 
-  static void writeAttrOfSpecifiedType(const std::string &DType,
-                                       hdf5::node::Node &Node,
-                                       const std::string &Name,
-                                       const nlohmann::json *Values);
+  static void
+  writeAttrOfSpecifiedType(const std::string &DType, hdf5::node::Node &Node,
+                           std::string const &Name, uint32_t StringSize,
+                           hdf5::datatype::CharacterEncoding Encoding,
+                           nlohmann::json const &Values);
 
   bool SWMREnabled = false;
 
