@@ -159,7 +159,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK;
   }
 
-  // Check if there is a stop stime configured and the message timestamp is
+  // Check if there is a stoptime configured and the message timestamp is
   // greater than it
   if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp)) {
     if (removeSource(Message->getSourceName())) {

@@ -6,8 +6,6 @@
 #include "../utils.h"
 #include "producer.hpp"
 
-/////////////
-/////////////
 std::string Producer::broker = "localhost";
 std::string Producer::topic = "test";
 

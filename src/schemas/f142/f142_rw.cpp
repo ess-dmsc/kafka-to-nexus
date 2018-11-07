@@ -21,14 +21,14 @@ enum class Rank {
   ARRAY,
 };
 
-/// Map Rank and a name of a type to the factory of the corresponding
-/// dataset writer.  The map gets initialized at
+/// \brief Map Rank and a name of a type to the factory of the corresponding
+/// dataset writer.
 static std::map<Rank, std::map<std::string, std::unique_ptr<WriterFactory>>>
     RankAndTypenameToValueTraits;
 
 namespace {
 
-/// Define mapping from typename to factory functions for the actual HDF
+/// \brief Define mapping from typename to factory functions for the actual HDF
 /// writers.
 struct InitTypeMap {
   InitTypeMap() {
@@ -65,7 +65,7 @@ struct InitTypeMap {
 InitTypeMap TriggerInitTypeMap;
 }
 
-/// \brief  Helper struct to make branching on a found map entry more concise.
+///  Helper struct to make branching on a found map entry more concise.
 template <typename T> struct FoundInMap {
   FoundInMap() : Value(nullptr) {}
   explicit FoundInMap(T const &Value) : Value(&Value) {}
@@ -74,7 +74,7 @@ template <typename T> struct FoundInMap {
   T const *Value;
 };
 
-/// \brief  Helper function to make branching on a found map entry more concise.
+///  Helper function to make branching on a found map entry more concise.
 template <typename T, typename K>
 FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
   auto It = Map.find(Key);
@@ -85,6 +85,7 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
 }
 
 /// \brief  New DatasetInfo.
+///
 /// \param  Name                 Name of the dataset
 /// \param  ChunkBytes           Chunk size in bytes.
 /// \param  BufferSize           Size of in-memory buffer.
@@ -95,7 +96,8 @@ DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
     : Name(Name), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
       BufferPacketMaxSize(BufferPacketMaxSize), Ptr(Ptr) {}
 
-/// Instantiate a new writer.
+/// \brief Instantiate a new writer.
+///
 /// \param HDFGroup The HDF group into which this writer will place the dataset.
 /// \param ArraySize Zero if scalar, or the size of the array.
 /// \param TypeName The name of the datatype to be written.
@@ -132,7 +134,7 @@ createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
                                    ValueTraits->getValueUnionID(), cq);
 }
 
-/// \brief  Parse the configuration for this stream.
+/// Parse the configuration for this stream.
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
                                    std::string const &ConfigurationModule) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
@@ -200,7 +202,8 @@ HDFWriterModule::HDFWriterModule() {
   }
 }
 
-/// Implement the HDFWriterModule interface, forward to the CREATE case of
+/// \brief Implement the HDFWriterModule interface, forward to the CREATE case
+/// of
 /// `init_hdf`.
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
@@ -209,7 +212,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                   CreateWriterTypedBaseMethod::CREATE);
 }
 
-/// Implement the HDFWriterModule interface, forward to the OPEN case of
+/// \brief Implement the HDFWriterModule interface, forward to the OPEN case of
 /// `init_hdf`.
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
@@ -313,7 +316,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
   return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
 }
 
-/// \brief  Experimental usage on the parallel writer branch.
+// Experimental usage on the parallel writer branch.
 void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
                                 int MPIRank) {
   this->cq = cq;
@@ -325,7 +328,7 @@ void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
   }
 }
 
-/// \brief  Implement HDFWriterModule interface, just flushing.
+/// Implement HDFWriterModule interface, just flushing.
 int32_t HDFWriterModule::flush() {
   for (auto const &Info : DatasetInfoList) {
     Info.Ptr->flush_buf();
@@ -333,7 +336,7 @@ int32_t HDFWriterModule::flush() {
   return 0;
 }
 
-/// \brief  Implement HDFWriterModule interface.
+/// Implement HDFWriterModule interface.
 int32_t HDFWriterModule::close() {
   for (auto const &Info : DatasetInfoList) {
     Info.Ptr.reset();
@@ -341,7 +344,7 @@ int32_t HDFWriterModule::close() {
   return 0;
 }
 
-/// \brief  Register the writer module.
+/// Register the writer module.
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
     RegisterWriter("f142");
 

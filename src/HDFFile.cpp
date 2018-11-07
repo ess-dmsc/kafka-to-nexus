@@ -252,10 +252,12 @@ void HDFFile::writeAttributes(hdf5::node::Node &Node,
   }
 }
 
-/// Write attributes defined in an array of attribute objects
-/// Unlike a single attribute object this allows specifying type and dataset
-/// \param Node : node to write attributes on
-/// \param JsonValue : json value array of attribute objects
+/// \brief Write attributes defined in an array of attribute objects.
+///
+/// Unlike a single attribute object this allows specifying type and dataset.
+///
+/// \param Node         Nodeto write attributes on.
+/// \param JsonValue    json value array of attribute objects.
 void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
                                      nlohmann::json const &Values) {
   if (!Values.is_array()) {
@@ -370,11 +372,12 @@ void writeAttrString(hdf5::node::Node &Node, std::string const &Name,
   }
 }
 
-/// Write scalar or array attribute of specfied type
-/// \param DType : type of the attribute values
-/// \param Node : group or dataset to add attribute to
-/// \param Name : name of the attribute
-/// \param Values : the attribute values
+/// \brief Write scalar or array attribute of specified type.
+///
+/// \param DType    type of the attribute values.
+/// \param Node     group or dataset to add attribute to.
+/// \param Name     name of the attribute.
+/// \param Values   the attribute values.
 void HDFFile::writeAttrOfSpecifiedType(
     std::string const &DType, hdf5::node::Node &Node, std::string const &Name,
     uint32_t StringSize, hdf5::datatype::CharacterEncoding Encoding,
@@ -422,21 +425,24 @@ void HDFFile::writeAttrOfSpecifiedType(
   }
 }
 
-/// Write attributes defined in an object of name-value pairs
-/// \param node : node to write attributes on
-/// \param jsv : json value object of attributes
+/// \brief Write attributes defined in an object of name-value pairs.
+///
+/// \param node   Node to write attributes on.
+/// \param jsv    Json value object of attributes.
 void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
                                       nlohmann::json const &Values) {
   for (auto It = Values.begin(); It != Values.end(); ++It) {
+
     auto const Name = It.key();
     writeScalarAttribute(Node, Name, It.value());
   }
 }
 
-/// Write a scalar attribute when the type is to be inferred
-/// \param Node : Group or dataset to write attribute to
-/// \param Name : Name of the attribute
-/// \param Values : Json value containing the attribute value
+/// \brief Write a scalar attribute when the type is to be inferred.
+///
+/// \param Node         Group or dataset to write attribute to
+/// \param Name         Name of the attribute
+/// \param AttrValue    Json value containing the attribute value
 void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
                                    std::string const &Name,
                                    nlohmann::json const &Values) {
@@ -514,10 +520,10 @@ void HDFFile::writeStringDataset(
 }
 
 void HDFFile::writeFixedSizeStringDataset(
-    hdf5::node::Group &Parent, std::string const &Name,
+    hdf5::node::Group &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    nlohmann::json const *Values) {
+    const nlohmann::json *Values) {
   try {
     auto DataType = hdf5::datatype::String::fixed(ElementSize);
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -651,7 +657,7 @@ void HDFFile::writeDataset(hdf5::node::Group &Parent,
     return;
   }
 
-  std::string DataType;
+  std::string DataType = "int64";
   hsize_t ElementSize = H5T_VARIABLE;
 
   std::vector<hsize_t> Sizes;
@@ -700,14 +706,8 @@ void HDFFile::writeDataset(hdf5::node::Group &Parent,
   }
   auto DatasetValuesInnerObject = DatasetValuesObject.inner();
 
-  if (DataType.empty()) {
-    if (DatasetValuesInnerObject.is_number_float()) {
-      DataType = "double";
-    } else if (DatasetValuesInnerObject.is_number_integer()) {
-      DataType = "int64";
-    } else if (DatasetValuesInnerObject.is_string()) {
-      DataType = "string";
-    }
+  if (DatasetValuesInnerObject.is_number_float()) {
+    DataType = "double";
   }
 
   auto Max = Sizes;
@@ -780,7 +780,7 @@ void HDFFile::createHDFStructures(
       }
       Path.pop_back();
     }
-  } catch (std::exception const &) {
+  } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
     LOG(Sev::Error, "Failed to create structure  parent={} level={}",
         std::string(Parent.link().path()), Level)
@@ -918,7 +918,7 @@ void HDFFile::close() {
       H5File.close();
       LOG(Sev::Debug, "closed");
     }
-  } catch (std::exception const &E) {
+  } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
         H5File.id().file_name().string(), Trace);
@@ -938,7 +938,7 @@ void HDFFile::reopen(const std::string &Filename,
 
     H5File =
         hdf5::file::open(Filename, hdf5::file::AccessFlags::READWRITE, fapl);
-  } catch (std::exception const &E) {
+  } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
     LOG(Sev::Error,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
@@ -954,9 +954,9 @@ void HDFFile::flush() {
     if (H5File.is_valid()) {
       H5File.flush(hdf5::file::Scope::GLOBAL);
     }
-  } catch (std::runtime_error const &) {
-    std::throw_with_nested(
-        std::runtime_error(fmt::format("HDFFile failed to flush")));
+  } catch (const std::runtime_error &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("HDFFile failed to flush  what: {}", E.what())));
   } catch (...) {
     std::throw_with_nested(
         std::runtime_error("HDFFile failed to flush with unknown exception"));

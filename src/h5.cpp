@@ -281,9 +281,6 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   return {AppendResult::OK, sizeof(T) * nlen, tgt_offset[0]};
 }
 
-/// \brief Write a string to this dataset.
-///
-/// Writes the given string to the dataset if the dataset can contain strings.
 append_ret h5d::append(std::string const &String) {
   try {
     if (!Dataset.is_valid()) {
