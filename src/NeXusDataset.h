@@ -1,19 +1,13 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Define datasets used by the ADC file writing module.
- */
+/// \file
+/// \brief Define datasets used by the ADC file writing module.
 
 #pragma once
 
 #include "logger.h"
 #include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/hdf5.hpp>
-
-/// \todo The following helper classes are used to interface with the h5cpp
-/// library. They must be removed from here when they are added to the h5cpp
-/// library.
 
 /// \brief Used to write c-arrays to hdf5 files using h5cpp.
 ///
@@ -32,7 +26,7 @@ private:
 
 namespace hdf5 {
 namespace datatype {
-/// \brief Required for h5cpp to write const data types.
+/// Required for h5cpp to write const data types.
 template <> class TypeTrait<std::int8_t const> {
 public:
   using Type = std::int8_t;
@@ -132,7 +126,7 @@ public:
   }
 };
 
-/// \brief Required for h5cpp to write data provided using ArrayAdapter.
+/// Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using Type = ArrayAdapter<T>;
@@ -144,7 +138,7 @@ public:
 } // namespace datatype
 namespace dataspace {
 
-/// \brief Required for h5cpp to write data provided using ArrayAdapter.
+/// Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
   using DataspaceType = Simple;
@@ -167,7 +161,7 @@ public:
 
 namespace NeXusDataset {
 enum class Mode { Create, Open };
-/// \brief h5cpp dataset class that implements methods for appending data.
+/// h5cpp dataset class that implements methods for appending data.
 template <class DataType>
 class ExtensibleDataset : public hdf5::node::ChunkedDataset {
 public:
@@ -199,7 +193,7 @@ public:
     }
   }
 
-  /// \brief Append data to dataset that is contained in some sort of container.
+  /// Append data to dataset that is contained in some sort of container.
   template <typename T> void appendArray(T const &NewData) {
     Dataset::extent(0,
                     NewData.size()); // Extend size() element along dimenions 0
@@ -209,7 +203,7 @@ public:
     NrOfElements += NewData.size();
   }
 
-  /// \brief Append single scalar values to dataset.
+  /// Append single scalar values to dataset.
   template <typename T> void appendElement(T const &NewElement) {
     Dataset::extent(0, 1); // Extend by 1 element along dimenions 0
     hdf5::dataspace::Hyperslab Selection{{NrOfElements}, {1}};
@@ -251,7 +245,7 @@ public:
     return hdf5::dataspace::Simple(DataSpace).current_dimensions();
   }
 
-  /// \brief Append data to dataset that is contained in some sort of container.
+  /// Append data to dataset that is contained in some sort of container.
   template <typename T>
   void appendArray(T const &NewData, hdf5::Dimensions Shape) {
     auto CurrentExtent = get_extent();
@@ -284,21 +278,25 @@ public:
   }
 };
 
-/// \brief h5cpp dataset class that implements methods for appending data.
+/// h5cpp dataset class that implements methods for appending data.
 template <class DataType> class MultiDimDataset : public MultiDimDatasetBase {
 public:
   MultiDimDataset() = default;
   /// \brief Will create or open dataset with the given name.
   ///
   /// When opening a dataset, some of the paramaters will be ignored.
-  /// \param[in] Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
-  /// \param[in] CMode Should the dataset be opened or created.
-  /// \param[in] Shape The shape of the array in the NDArray. This vector will
-  /// be prepended with one dimension to allow for adding of data.
+  ///
+  /// \param[in]  Parent The group/node of the dataset in.
+  /// \note       This parameter is ignored when opening an existing dataset.
+  ///
+  /// \param[in] CMode    Should the dataset be opened or created.
+  /// \param[in] Shape    The shape of the array in the NDArray. This vector
+  /// will be prepended with one dimension to allow for adding of data.
+  ///
   /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset,
   /// ignored if the dataset is opened. Vector must be of size 1 or same size as
   /// Shape.
+  ///
   /// \throw std::runtime_error if dataset can not be created/opened.
   MultiDimDataset(hdf5::node::Group Parent, Mode CMode, hdf5::Dimensions Shape,
                   hdf5::Dimensions ChunkSize)
@@ -339,9 +337,13 @@ public:
   /// \brief Open a dataset.
   ///
   /// Can only be used to open a dataset.
-  /// \param[in] Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
-  /// \param[in] CMode Should the dataset be opened or created.
+  ///
+  /// \param[in] Parent   The group/node of the dataset in.
+  /// \note               This parameter is ignored when opening an existing
+  /// dataset.
+  ///
+  /// \param[in] CMode    Should the dataset be opened or created.
+  ///
   /// \throw std::runtime_error if dataset can not opened or the constructor is
   /// called with the input NeXusDataset::Mode::Create.
   MultiDimDataset(hdf5::node::Group Parent, Mode CMode)

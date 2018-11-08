@@ -19,9 +19,9 @@ public:
 
 /// \brief Represents the task of writing a HDF file.
 ///
-/// It contains the list of Source and DemuxTopic
-/// and makes those available to the FileMaster and Streamer.
-/// Created by Master on command message and passed to FileMaster in ctor.
+/// It contains the list of `Source` and `DemuxTopic`
+/// and makes those available to the FileMaster and `Streamer`.
+/// Created by `Master` on command message and passed to FileMaster in vector.
 class FileWriterTask final {
 public:
   /// Constructor

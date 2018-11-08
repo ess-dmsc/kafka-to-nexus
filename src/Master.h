@@ -14,7 +14,7 @@
 
 namespace FileWriter {
 
-/// Listens to the Kafka configuration topic and handles any requests.
+/// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
 /// On a new file writing request, creates new nexusWriter instance.
 /// Reacts also to stop, and possibly other future commands.
@@ -22,7 +22,7 @@ class Master : public MasterI {
 public:
   Master(MainOpt &config);
 
-  /// Sets up command listener and handles any commands received.
+  /// \brief Sets up command listener and handles any commands received.
   ///
   /// Continues running until stop requested.
   void run() override;
@@ -40,7 +40,7 @@ public:
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
-  /// The unique identifier for this file writer on the network.
+  /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
   std::string file_writer_process_id() const override;

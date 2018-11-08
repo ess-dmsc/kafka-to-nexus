@@ -1,9 +1,7 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Define classes required to implement the ADC file writing module.
- */
+/// \file
+/// \brief Define classes required to implement the ADC file writing module.
 
 #pragma once
 
@@ -18,7 +16,7 @@ namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FBReaderBase = FileWriter::FlatbufferReader;
 
-/// \brief See parent class for documentation.
+/// See parent class for documentation.
 class AreaDetectorDataGuard : public FBReaderBase {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
@@ -30,7 +28,7 @@ using FileWriterBase = FileWriter::HDFWriterModule;
 
 std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 
-/// \brief See parent class for documentation.
+/// See parent class for documentation.
 class AreaDetectorWriter : public FileWriterBase {
 public:
   AreaDetectorWriter() = default;

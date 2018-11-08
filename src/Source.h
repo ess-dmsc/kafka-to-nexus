@@ -21,10 +21,10 @@ private:
   int _res = 0;
 };
 
-/// Represents a sourcename on a topic.
-/// The sourcename can be empty.
-/// This is meant for highest efficiency on topics which are exclusively used
-/// for only one sourcename.
+/// \brief Represents a sourcename on a topic.
+///
+/// The sourcename can be empty. This is meant for highest efficiency on topics
+/// which are exclusively used for only one sourcename.
 class Source final {
 public:
   Source(std::string const &Name, std::string const &ID,

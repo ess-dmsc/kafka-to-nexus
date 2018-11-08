@@ -4,7 +4,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-/// \brief  Create a new dataset for scalar stringss
+/// \brief  Create a new dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
                                        std::string const &source_name,
                                        Value fb_value_type_id,
@@ -17,7 +17,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
   }
 }
 
-/// \brief  Open a dataset for scalar strings
+/// \brief  Open a dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
                                        std::string const &source_name,
                                        Value fb_value_type_id,
@@ -31,7 +31,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group hdf_group,
   }
 }
 
-/// \brief  Write to a scalar string dataset
+/// \brief  Write to a scalar string dataset.
 h5::append_ret WriterScalarString::write_impl(LogData const *fbuf) {
   auto vt = fbuf->value_type();
   if (vt != Value::String) {
