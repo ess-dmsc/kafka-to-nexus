@@ -91,6 +91,7 @@ public:
   append_ret append_data_1d(T const *data, hsize_t nlen);
   AppendResult flush_buf();
   void buffer_init(size_t buf_size, size_t buf_packet_max);
+  size_t size() const;
 
 private:
   h5d_chunked_1d(std::string name, h5d ds);
@@ -138,6 +139,7 @@ public:
   append_ret append_data_2d(T const *data, hsize_t nlen);
   AppendResult flush_buf();
   void buffer_init(size_t buf_size, size_t buf_packet_max);
+  size_t size() const;
 
 private:
   h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);

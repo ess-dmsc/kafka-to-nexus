@@ -99,6 +99,7 @@ public:
   uint64_t IndexEveryBytes = std::numeric_limits<uint64_t>::max();
   uint64_t TimestampMax = 0;
   size_t ArraySize = 0;
+  std::string StoreLatestInto;
 
   // Helper for experiments on my other branch
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,

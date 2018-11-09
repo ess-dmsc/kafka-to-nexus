@@ -220,6 +220,8 @@ datasets:
 - `type`: The data type contained in the flat buffer. Can be `int8` to `int64`,
   similar for `uint8`, `float` and `double`.
 - `array_size`: The size of the array. Scalar if not specified or `0`.
+- `store_latest_into`: (optional) Name of the dataset into which the latest
+  received value should be stored on file writer close.
 
 
 ### Single Writer, Multiple Reader support

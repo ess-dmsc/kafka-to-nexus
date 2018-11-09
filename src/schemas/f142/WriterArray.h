@@ -2,6 +2,7 @@
 
 #include "../../logger.h"
 #include "WriterTypedBase.h"
+#include <numeric>
 
 namespace FileWriter {
 namespace Schemas {
@@ -13,14 +14,17 @@ namespace f142 {
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV> class WriterArray : public WriterTypedBase {
 public:
-  WriterArray(hdf5::node::Group hdf_group, std::string const &source_name,
-              hsize_t ncols, Value fb_value_type_id, CollectiveQueue *cq);
-  WriterArray(hdf5::node::Group, std::string const &source_name, hsize_t ncols,
-              Value fb_value_type_id, CollectiveQueue *cq,
-              HDFIDStore *hdf_store);
-  h5::append_ret write_impl(FBUF const *fbuf) override;
-  uptr<h5::h5d_chunked_2d<DT>> ds;
-  Value _fb_value_type_id = Value::NONE;
+  WriterArray(hdf5::node::Group HdfGroup, std::string const &SourceName,
+              hsize_t ColumnCount, Value FlatbuffersValueTypeId,
+              CollectiveQueue *cq);
+  WriterArray(hdf5::node::Group HdfGroup, std::string const &SourceName,
+              hsize_t ColumnCount, Value FlatbuffersValueTypeId,
+              CollectiveQueue *cq, HDFIDStore *hdf_store);
+  h5::append_ret write(FBUF const *fbuf) override;
+  void storeLatestInto(std::string const &StoreLatestInto) override;
+  uptr<h5::h5d_chunked_2d<DT>> ChunkedDataset;
+  Value FlatbuffersValueTypeId = Value::NONE;
+  size_t ChunkSize = 64 * 1024;
 };
 
 /// \brief  Create a new dataset for array numeric types
@@ -28,21 +32,24 @@ public:
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
-                                 std::string const &source_name, hsize_t ncols,
-                                 Value fb_value_type_id, CollectiveQueue *cq)
-    : _fb_value_type_id(fb_value_type_id) {
-  if (ncols <= 0) {
-    LOG(Sev::Error, "can not handle number of columns ncols == {}", ncols);
+WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
+                                 std::string const &SourceName,
+                                 hsize_t ColumnCount,
+                                 Value FlatbuffersValueTypeId,
+                                 CollectiveQueue *cq)
+    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
+  if (ColumnCount <= 0) {
+    LOG(Sev::Error, "can not handle number of columns ColumnCount == {}",
+        ColumnCount);
     return;
   }
-  LOG(Sev::Debug, "f142 init_impl  ncols: {}", ncols);
-  this->ds = h5::h5d_chunked_2d<DT>::create(hdf_group, source_name, ncols,
-                                            64 * 1024, cq);
-  if (!this->ds) {
+  LOG(Sev::Debug, "f142 init_impl  ColumnCount: {}", ColumnCount);
+  ChunkedDataset = h5::h5d_chunked_2d<DT>::create(HdfGroup, SourceName,
+                                                  ColumnCount, 64 * 1024, cq);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error,
-        "could not create hdf dataset  source_name: {}  number of columns: {}",
-        source_name, ncols);
+        "could not create hdf dataset  SourceName: {}  number of columns: {}",
+        SourceName, ColumnCount);
   }
 }
 
@@ -51,26 +58,28 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
-                                 std::string const &source_name, hsize_t ncols,
-                                 Value fb_value_type_id, CollectiveQueue *cq,
-                                 HDFIDStore *hdf_store)
-    : _fb_value_type_id(fb_value_type_id) {
-  if (ncols <= 0) {
-    LOG(Sev::Error, "can not handle number of columns ncols == {}", ncols);
+WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
+                                 std::string const &SourceName,
+                                 hsize_t ColumnCount,
+                                 Value FlatbuffersValueTypeId,
+                                 CollectiveQueue *cq, HDFIDStore *hdf_store)
+    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
+  if (ColumnCount <= 0) {
+    LOG(Sev::Error, "can not handle number of columns ColumnCount == {}",
+        ColumnCount);
     return;
   }
-  LOG(Sev::Debug, "f142 writer_typed_array reopen  ncols: {}", ncols);
-  ds = h5::h5d_chunked_2d<DT>::open(hdf_group, source_name, ncols, cq,
-                                    hdf_store);
-  if (!ds) {
+  LOG(Sev::Debug, "f142 writer_typed_array reopen  ColumnCount: {}",
+      ColumnCount);
+  ChunkedDataset = h5::h5d_chunked_2d<DT>::open(HdfGroup, SourceName,
+                                                ColumnCount, cq, hdf_store);
+  if (ChunkedDataset == nullptr) {
     LOG(Sev::Error,
-        "could not create hdf dataset  source_name: {}  number of columns: {}",
-        source_name, ncols);
+        "could not create hdf dataset  SourceName: {}  number of columns: {}",
+        SourceName, ColumnCount);
     return;
   }
-  // TODO take from config
-  ds->buffer_init(64 * 1024, 0);
+  ChunkedDataset->buffer_init(ChunkSize, 0);
 }
 
 /// \brief  Write to a numeric array dataset
@@ -78,12 +87,12 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group hdf_group,
 /// \tparam  DT  The C datatype for this dataset
 /// \tparam  FV  The Flatbuffers datatype for this dataset
 template <typename DT, typename FV>
-h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
+h5::append_ret WriterArray<DT, FV>::write(LogData const *fbuf) {
   h5::append_ret Result{h5::AppendResult::ERROR, 0, 0};
   auto vt = fbuf->value_type();
-  if (vt == Value::NONE || vt != _fb_value_type_id) {
+  if (vt == Value::NONE || vt != FlatbuffersValueTypeId) {
     Result.ErrorString =
-        fmt::format("vt == Value::NONE || vt != _fb_value_type_id");
+        fmt::format("vt == Value::NONE || vt != FlatbuffersValueTypeId");
     return Result;
   }
   auto v1 = (FV const *)fbuf->value();
@@ -97,11 +106,50 @@ h5::append_ret WriterArray<DT, FV>::write_impl(LogData const *fbuf) {
         fmt::format("value() in value of flatbuffer is nullptr");
     return Result;
   }
-  if (!this->ds) {
+  if (ChunkedDataset == nullptr) {
     Result.ErrorString = fmt::format("Dataset is nullptr");
     return Result;
   }
-  return this->ds->append_data_2d(v2->data(), v2->size());
+  return ChunkedDataset->append_data_2d(v2->data(), v2->size());
+}
+
+template <typename DT, typename FV>
+void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
+  auto &Dataset = ChunkedDataset->ds.Dataset;
+  auto Type = Dataset.datatype();
+  auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
+  auto DimSrc = SpaceSrc.current_dimensions();
+  if (DimSrc.size() < 2) {
+    throw std::runtime_error("unexpected dimensions");
+  }
+  auto DimMem = DimSrc;
+  for (size_t I = 1; I < DimSrc.size(); ++I) {
+    DimMem.at(I - 1) = DimMem.at(I);
+  }
+  DimMem.resize(DimMem.size() - 1);
+  auto N = std::accumulate(DimMem.begin(), DimMem.end(), 1,
+                           std::multiplies<size_t>());
+  hdf5::Dimensions Offset;
+  Offset.assign(DimSrc.size(), 0);
+  if (DimSrc.at(0) == 0) {
+    return;
+  }
+  hdf5::dataspace::Simple SpaceMem(DimMem);
+  hdf5::node::Dataset Latest;
+  try {
+    Latest = Dataset.link().parent().get_dataset(StoreLatestInto);
+  } catch (...) {
+    Latest =
+        Dataset.link().parent().create_dataset(StoreLatestInto, Type, SpaceMem);
+  }
+  Offset.at(0) = ChunkedDataset->size() - 1;
+  hdf5::Dimensions Block = DimSrc;
+  Block.at(0) = 1;
+  SpaceSrc.selection(hdf5::dataspace::SelectionOperation::SET,
+                     hdf5::dataspace::Hyperslab(Offset, Block));
+  std::vector<char> Buffer(N * Type.size());
+  Dataset.read(Buffer, Type, SpaceMem, SpaceSrc);
+  Latest.write(Buffer, Type, SpaceMem, SpaceMem);
 }
 }
 }
