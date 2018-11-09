@@ -11,7 +11,7 @@ streaming-data-types/2246f84@ess-dmsc/stable
 cli11/1.5.3@bincrafters/stable
 cmake_installer/3.10.0@conan/stable
 trompeloeil/v31@ess-dmsc/stable
-date/2.4.1@bincrafters/stable
+date/4b46deb@ess-dmsc/stable
 
 [generators]
 cmake
@@ -23,6 +23,7 @@ FlatBuffers:shared=True
 gtest:shared=True
 hdf5:shared=True
 librdkafka:shared=True
+date:disable_string_view=True
 
 [imports]
 ., *.dylib* -> ./lib @ keep_path=False

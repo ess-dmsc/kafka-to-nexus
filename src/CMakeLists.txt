@@ -17,7 +17,7 @@ find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe63
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
-find_package(date REQUIRED)
+find_package(Date REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
