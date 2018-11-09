@@ -84,8 +84,11 @@ public:
 
   /// \brief Find a writer task given its `JobID`.
   ///
-  /// \return  The writer task.
-  std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
+  /// \param JobID The job id to find.
+  ///
+  /// \return The writer task.
+  std::unique_ptr<FileWriterTask> &
+  getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
   void addStreamSourceToWriterModule(
@@ -93,8 +96,8 @@ private:
       std::unique_ptr<FileWriterTask> &fwt);
 
   std::vector<StreamHDFInfo>
-  initializeHDF(FileWriterTask &Task,
-                std::string const &NexusStructureString) const;
+  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
+                bool UseSwmr) const;
   MainOpt &Config;
   MasterI *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;

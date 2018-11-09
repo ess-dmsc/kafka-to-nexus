@@ -5,10 +5,6 @@
 #include <fstream>
 #include <thread>
 
-#ifndef SOURCE_DO_PROCESS_MESSAGE
-#define SOURCE_DO_PROCESS_MESSAGE 1
-#endif
-
 namespace FileWriter {
 
 Result Result::Ok() {
@@ -19,28 +15,23 @@ Result Result::Ok() {
 
 Source::Source(std::string const &Name, std::string const &ID,
                HDFWriterModule::ptr Writer)
-    : SourceName(Name), SchemaID(ID), WriterModule(std::move(Writer)) {
-  if (SOURCE_DO_PROCESS_MESSAGE == 0) {
-    do_process_message = false;
-  }
-}
+    : SourceName(Name), SchemaID(ID), WriterModule(std::move(Writer)) {}
 
 Source::~Source() { close_writer_module(); }
 
 Source::Source(Source &&x) noexcept { swap(*this, x); }
 
 void swap(Source &x, Source &y) {
-  std::swap(x._topic, y._topic);
+  std::swap(x.Topic_, y.Topic_);
   std::swap(x.SourceName, y.SourceName);
   std::swap(x.SchemaID, y.SchemaID);
   std::swap(x.WriterModule, y.WriterModule);
   std::swap(x._processed_messages_count, y._processed_messages_count);
   std::swap(x._cnt_msg_written, y._cnt_msg_written);
-  std::swap(x.do_process_message, y.do_process_message);
   std::swap(x.is_parallel, y.is_parallel);
 }
 
-std::string const &Source::topic() const { return _topic; }
+std::string const &Source::topic() const { return Topic_; }
 
 std::string const &Source::sourcename() const { return SourceName; }
 
@@ -51,9 +42,6 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     return ProcessMessageResult::ERR;
   }
 
-  if (!do_process_message) {
-    return ProcessMessageResult::OK;
-  }
   if (!is_parallel) {
     if (!WriterModule) {
       LOG(Sev::Debug, "!_hdf_writer_module for {}", SourceName);
@@ -101,5 +89,7 @@ nlohmann::json Source::to_json() const {
   JSON["source"] = sourcename();
   return JSON;
 }
+
+void Source::setTopic(std::string const &Name) { Topic_ = Name; }
 
 } // namespace FileWriter

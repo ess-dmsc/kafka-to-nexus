@@ -8,6 +8,7 @@
 #include "Streamer.h"
 #include "helper.h"
 #include "json.h"
+#include <algorithm>
 #include <chrono>
 #include <future>
 #include <sstream>
@@ -45,12 +46,14 @@ CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
 /// HDF structures.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
-                              std::string const &NexusStructureString) const {
+                              std::string const &NexusStructureString,
+                              bool UseSwmr) const {
   using nlohmann::json;
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
-  Task.hdf_init(NexusStructure.dump(), ConfigFile.dump(), StreamHDFInfoList);
+  Task.InitialiseHdf(NexusStructure.dump(), ConfigFile.dump(),
+                     StreamHDFInfoList, UseSwmr);
   return StreamHDFInfoList;
 }
 
@@ -132,7 +135,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
         "Can not create a HDFWriterModule for '{}'", StreamSettings.Module));
   }
 
-  auto RootGroup = Task->hdf_file.H5File.root();
+  auto RootGroup = Task->hdfGroup();
   try {
     HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
   } catch (std::exception const &E) {
@@ -193,14 +196,14 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (JobID.empty()) {
       throwMissingKey("job_id", Doc.dump());
     }
-    Task->job_id_init(JobID);
+    Task->setJobId(JobID);
   } else {
     throwMissingKey("job_id", Doc.dump());
   }
 
   if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
-             Config.service_id, Task->job_id(), "Start job");
+             Config.service_id, Task->jobID(), "Start job");
   }
 
   uri::URI Broker("//localhost:9092");
@@ -216,7 +219,7 @@ void CommandHandler::handleNew(std::string const &Command) {
   if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
     if (auto FileNameMaybe =
             find<std::string>("file_name", FileAttributesMaybe.inner())) {
-      Task->set_hdf_filename(Config.hdf_output_prefix, FileNameMaybe.inner());
+      Task->setFilename(Config.hdf_output_prefix, FileNameMaybe.inner());
     } else {
       throwMissingKey("file_attributes.file_name", Doc.dump());
     }
@@ -224,17 +227,18 @@ void CommandHandler::handleNew(std::string const &Command) {
     throwMissingKey("file_attributes", Doc.dump());
   }
 
+  bool UseSwmr = true;
   if (auto UseHDFSWMRMaybe = find<bool>("use_hdf_swmr", Doc)) {
-    Task->UseHDFSWMR = UseHDFSWMRMaybe.inner();
+    UseSwmr = UseHDFSWMRMaybe.inner();
   }
 
-  // When FileWriterTask::hdf_init() returns, `stream_hdf_info` will contain
-  // the list of streams which have been found in the `nexus_structure`.
+  // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will
+  // contain the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   if (auto NexusStructureMaybe = find<nlohmann::json>("nexus_structure", Doc)) {
     try {
       StreamHDFInfoList =
-          initializeHDF(*Task, NexusStructureMaybe.inner().dump());
+          initializeHDF(*Task, NexusStructureMaybe.inner().dump(), UseSwmr);
     } catch (std::runtime_error const &E) {
       std::throw_with_nested(std::runtime_error(
           fmt::format("Failed to initializeHDF: {}", E.what())));
@@ -245,11 +249,6 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
-
-  // The HDF file is closed and re-opened to (optionally) support SWMR and
-  // parallel writing.
-  Task->hdf_close_before_reopen();
-  Task->hdf_reopen();
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
@@ -271,7 +270,7 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   if (MasterPtr != nullptr) {
     // Register the task with master.
-    LOG(Sev::Info, "Write file with job_id: {}", Task->job_id());
+    LOG(Sev::Info, "Write file with job_id: {}", Task->jobID());
     auto s = std::make_unique<StreamMaster<Streamer>>(
         Broker.host_port, std::move(Task), Config,
         MasterPtr->getStatusProducer());
@@ -323,7 +322,7 @@ void CommandHandler::addStreamSourceToWriterModule(
         // Reopen the previously created HDF dataset.
         HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
         try {
-          auto RootGroup = Task->hdf_file.H5File.root();
+          auto RootGroup = Task->hdfGroup();
           auto StreamGroup = hdf5::node::get_group(
               RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
           auto Err = HDFWriterModule->reopen({StreamGroup});
@@ -341,9 +340,8 @@ void CommandHandler::addStreamSourceToWriterModule(
         // Create a Source instance for the stream and add to the task.
         Source ThisSource(StreamSettings.Source, StreamSettings.Module,
                           move(HDFWriterModule));
-        ThisSource._topic = std::string(StreamSettings.Topic);
-        ThisSource.do_process_message = Config.source_do_process_message;
-        Task->add_source(std::move(ThisSource));
+        ThisSource.setTopic(StreamSettings.Topic);
+        Task->addSource(std::move(ThisSource));
       } catch (std::runtime_error const &E) {
         LOG(Sev::Warning,
             "Exception while initializing writer module {} for source {}: {}",
@@ -528,14 +526,16 @@ size_t CommandHandler::getNumberOfFileWriterTasks() const {
 }
 
 std::unique_ptr<FileWriterTask> &
-CommandHandler::getFileWriterTaskByJobID(std::string JobID) {
-  for (auto &Task : FileWriterTasks) {
-    if (Task->job_id() == JobID) {
-      return Task;
-    }
+CommandHandler::getFileWriterTaskByJobID(std::string const &JobID) {
+  auto Task = std::find_if(
+      FileWriterTasks.begin(), FileWriterTasks.end(),
+      [&JobID](auto const &FwTask) { return FwTask->jobID() == JobID; });
+
+  if (Task != FileWriterTasks.end()) {
+    return *Task;
   }
-  static std::unique_ptr<FileWriterTask> NotFound;
-  return NotFound;
+
+  throw std::out_of_range("Unable to find task by Job ID");
 }
 
 } // namespace FileWriter
