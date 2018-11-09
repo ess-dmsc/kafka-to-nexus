@@ -923,7 +923,8 @@ void HDFFile::close() {
       // Make sure that h5file.is_valid() == false from now on:
       H5File = hdf5::file::File();
     } else {
-      LOG(Sev::Error, "File is not valid, skipping flush and close.");
+      // This occurs in unit tests
+      LOG(Sev::Debug, "File is not valid, skipping flush and close.");
     }
   } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
