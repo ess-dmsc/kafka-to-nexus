@@ -1,12 +1,12 @@
 #include "HDFFile.h"
-#include <date/date.h>
-#include <date/tz.h>
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <date/date.h>
+#include <date/tz.h>
 #include <deque>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
@@ -15,10 +15,10 @@
 
 namespace FileWriter {
 
+using nlohmann::json;
 using std::array;
 using std::string;
 using std::vector;
-using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
 template <typename T>
@@ -787,10 +787,10 @@ void HDFFile::init(const std::string &Filename,
     hdf5::property::FileAccessList fapl;
     setCommonProps(fcpl, fapl);
     if (UseHDFSWMR) {
-      H5File =
-          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
-                                           hdf5::file::AccessFlags::SWMR_WRITE,
-                             fcpl, fapl);
+      H5File = hdf5::file::create(Filename,
+                                  hdf5::file::AccessFlags::TRUNCATE |
+                                      hdf5::file::AccessFlags::SWMR_WRITE,
+                                  fcpl, fapl);
       SWMREnabled = true;
     } else {
       H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
