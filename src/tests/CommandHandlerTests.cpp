@@ -76,7 +76,7 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
             static_cast<size_t>(1));
   auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");
-  ASSERT_EQ(Task->hdf_file.isSWMREnabled(), UseSWMR);
+  ASSERT_EQ(Task->swmrEnabled(), UseSWMR);
   unlink("tmp_swmr_enable.h5");
 }
 

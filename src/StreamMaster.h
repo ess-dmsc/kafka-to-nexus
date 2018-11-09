@@ -48,7 +48,7 @@ public:
         RunStatus = StreamMasterError::STREAMER_ERROR();
         LOG(Sev::Critical, "{}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-                 WriterTask->job_id(), E.what());
+                 WriterTask->jobID(), E.what());
       }
     }
     NumStreamers = Streamers.size();
@@ -122,7 +122,7 @@ public:
     if (NumStreamers != 0) {
       if (!ReportThread.joinable()) {
         ReportPtr.reset(
-            new Report(ProducerTopic, WriterTask->job_id(), ReportMs));
+            new Report(ProducerTopic, WriterTask->jobID(), ReportMs));
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
@@ -154,7 +154,7 @@ public:
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
   /// \return Job id as a string.
-  std::string getJobId() const { return WriterTask->job_id(); }
+  std::string getJobId() const { return WriterTask->jobID(); }
 
 private:
   /// \brief Process the messages in Stream for at most TopicWriteDuration
@@ -183,7 +183,7 @@ private:
       } catch (std::exception &E) {
         LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-                 WriterTask->job_id(), E.what());
+                 WriterTask->jobID(), E.what());
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR();
       }

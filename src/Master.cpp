@@ -132,7 +132,7 @@ void Master::statistics() {
   Status["files"] = json::object();
   for (auto &StreamMaster : StreamMasters) {
     auto FilewriterTaskID =
-        fmt::format("{}", StreamMaster->getFileWriterTask().job_id());
+        fmt::format("{}", StreamMaster->getFileWriterTask().jobID());
     auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
