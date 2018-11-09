@@ -7,12 +7,6 @@
 
 namespace FileWriter {
 
-class MessageCallback {
-public:
-  virtual void operator()(int partition, std::string const &topic,
-                          std::string const &msg) = 0;
-};
-
 /// Check for new commands on the topic, return them to the Master.
 class CommandListener {
 public:

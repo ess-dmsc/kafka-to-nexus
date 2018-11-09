@@ -1,5 +1,4 @@
 #pragma once
-#include "MessageTimestamp.h"
 #include "ProcessMessageResult.h"
 #include "Source.h"
 #include "json.h"

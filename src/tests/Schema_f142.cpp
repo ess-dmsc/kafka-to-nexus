@@ -26,7 +26,7 @@ hdf5::file::File createInMemoryTestFile(std::string const &Filename,
 
 static std::unique_ptr<flatbuffers::FlatBufferBuilder>
 makeValueFloat(float Value) {
-  auto BuilderPtr = make_unique<flatbuffers::FlatBufferBuilder>();
+  auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   FileWriter::Schemas::f142::FloatBuilder FloatBuilder(Builder);
   FloatBuilder.add_value(Value);
@@ -41,7 +41,7 @@ makeValueFloat(float Value) {
 
 static std::unique_ptr<flatbuffers::FlatBufferBuilder>
 makeValue(std::vector<float> Value) {
-  auto BuilderPtr = make_unique<flatbuffers::FlatBufferBuilder>();
+  auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   auto ValueOffset = Builder.CreateVector(Value);
   FileWriter::Schemas::f142::ArrayFloatBuilder ValueBuilder(Builder);
@@ -57,7 +57,7 @@ makeValue(std::vector<float> Value) {
 
 static std::unique_ptr<flatbuffers::FlatBufferBuilder>
 makeValueString(std::string Value) {
-  auto BuilderPtr = make_unique<flatbuffers::FlatBufferBuilder>();
+  auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   auto ValueOffset = Builder.CreateString(Value);
   FileWriter::Schemas::f142::StringBuilder ValueBuilder(Builder);

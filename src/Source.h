@@ -3,23 +3,12 @@
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
-#include "MessageTimestamp.h"
 #include "Msg.h"
 #include "ProcessMessageResult.h"
 #include "json.h"
 #include <string>
 
 namespace FileWriter {
-
-class Result {
-public:
-  static Result Ok();
-  bool is_OK();
-  bool is_ERR();
-
-private:
-  int _res = 0;
-};
 
 /// \brief Represents a sourcename on a topic.
 ///
@@ -33,10 +22,7 @@ public:
   ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
-  uint64_t processed_messages_count() const;
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
-  std::string to_str() const;
-  nlohmann::json to_json() const;
   void close_writer_module();
   bool is_parallel = false;
   HDFFile *HDFFileForSWMR = nullptr;

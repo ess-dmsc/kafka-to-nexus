@@ -7,12 +7,6 @@
 
 namespace FileWriter {
 
-Result Result::Ok() {
-  Result ret;
-  ret._res = 0;
-  return ret;
-}
-
 Source::Source(std::string const &Name, std::string const &ID,
                HDFWriterModule::ptr Writer)
     : SourceName(Name), SchemaID(ID), WriterModule(std::move(Writer)) {}
@@ -64,10 +58,6 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
   return ProcessMessageResult::ERR;
 }
 
-uint64_t Source::processed_messages_count() const {
-  return _processed_messages_count;
-}
-
 void Source::close_writer_module() {
   if (WriterModule) {
     LOG(Sev::Debug, "Closing writer module for {}", SourceName);
@@ -78,16 +68,6 @@ void Source::close_writer_module() {
   } else {
     LOG(Sev::Debug, "No writer module to close for {}", SourceName);
   }
-}
-
-std::string Source::to_str() const { return to_json().dump(); }
-
-nlohmann::json Source::to_json() const {
-  auto JSON = nlohmann::json::object();
-  JSON["__KLASS__"] = "Source";
-  JSON["topic"] = topic();
-  JSON["source"] = sourcename();
-  return JSON;
 }
 
 void Source::setTopic(std::string const &Name) { Topic_ = Name; }
