@@ -71,7 +71,7 @@ set(kafka_to_nexus_SRC
   StatusWriter.cpp
   Errors.cpp
   Streamer.cpp
-        Master.cpp
+  Master.cpp
   CommandListener.cpp
   CommandHandler.cpp
   FileWriterTask.cpp
@@ -129,7 +129,7 @@ set(kafka_to_nexus_INC
   Master.h
   Msg.h
   FlatbufferMessage.h
-        ProcessMessageResult.h
+  ProcessMessageResult.h
   Report.h
   Source.h
   Status.h
@@ -137,7 +137,7 @@ set(kafka_to_nexus_INC
   Streamer.h
   StreamerOptions.h
   StreamMaster.h
-        uri.h
+  uri.h
   date/date.h
   date/ios.h
   date/tz_private.h
