@@ -69,4 +69,7 @@ void Source::close_writer_module() {
     LOG(Sev::Debug, "No writer module to close for {}", SourceName);
   }
 }
+
+void Source::setTopic(std::string const &Name) { Topic_ = Name; }
+
 } // namespace FileWriter
