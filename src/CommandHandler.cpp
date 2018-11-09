@@ -423,12 +423,6 @@ void CommandHandler::handle(std::string const &Command) {
           ServiceIDMaybe.inner());
       return;
     }
-  } else {
-    // Currently, we interpret commands which have no service_id.
-    // In the future, we may want to ignore all commands which are not
-    // specifically addressed to us (breaking change).
-    // In that case, just uncomment the following return:
-    // return;
   }
 
   uint64_t TeamId = 0;

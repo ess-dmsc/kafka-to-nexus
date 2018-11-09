@@ -176,7 +176,7 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(json const &Json) {
     throw UnexpectedJsonInput();
   }
   auto TheWriterTypedPtr =
-      make_unique<WriterTyped<DataType, EdgeType, ErrorType>>();
+      std::make_unique<WriterTyped<DataType, EdgeType, ErrorType>>();
   auto &TheWriterTyped = *TheWriterTypedPtr;
   try {
     TheWriterTyped.TheShape = Shape<EdgeType>::createFromJson(Json.at("shape"));

@@ -29,8 +29,6 @@ struct StreamSettings {
 /// exception.
 nlohmann::json parseOrThrow(std::string const &Command);
 
-std::string findBroker(std::string const &);
-
 std::string format_nested_exception(std::exception const &E);
 
 std::string format_nested_exception(std::exception const &E,

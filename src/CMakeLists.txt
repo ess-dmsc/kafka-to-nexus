@@ -71,8 +71,7 @@ set(kafka_to_nexus_SRC
   StatusWriter.cpp
   Errors.cpp
   Streamer.cpp
-  kafka_util.cpp
-  Master.cpp
+        Master.cpp
   CommandListener.cpp
   CommandHandler.cpp
   FileWriterTask.cpp
@@ -116,7 +115,6 @@ set(kafka_to_nexus_INC
   HDFWriterModule.h
   helper.h
   json.h
-  kafka_util.h
   kafka-to-nexus.h
   KafkaW/BrokerSettings.h
   KafkaW/TopicSettings.h
@@ -131,8 +129,7 @@ set(kafka_to_nexus_INC
   Master.h
   Msg.h
   FlatbufferMessage.h
-  MsgParser.h
-  ProcessMessageResult.h
+        ProcessMessageResult.h
   Report.h
   Source.h
   Status.h
@@ -140,9 +137,7 @@ set(kafka_to_nexus_INC
   Streamer.h
   StreamerOptions.h
   StreamMaster.h
-  MessageTimestamp.h
-  TopicReader.h
-  uri.h
+        uri.h
   date/date.h
   date/ios.h
   date/tz_private.h
