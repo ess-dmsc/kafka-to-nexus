@@ -9,7 +9,7 @@ namespace f142 {
 
 #include "schemas/f142_logdata_generated.h"
 
-/// Wrapper around the flatbuffer builder to facilitate the interface of
+/// \brief Wrapper around the flatbuffer builder to facilitate the interface of
 /// `synth`.
 class fb {
 public:

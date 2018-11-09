@@ -76,6 +76,9 @@ private:
   static void writeAttributesIfPresent(hdf5::node::Node &Node,
                                        nlohmann::json const &Values);
 
+  static std::vector<std::string> populateStrings(const nlohmann::json *Values,
+                                                  hssize_t GoalSize);
+
   static void
   writeStringDataset(hdf5::node::Group &Parent, const std::string &Name,
                      hdf5::property::DatasetCreationList &DatasetCreationList,
@@ -114,7 +117,7 @@ private:
                                    const nlohmann::json &Values);
 
   static void
-  writeAttrOfSpecifiedType(const std::string &DType, hdf5::node::Node &Node,
+  writeAttrOfSpecifiedType(std::string const &DType, hdf5::node::Node &Node,
                            std::string const &Name, uint32_t StringSize,
                            hdf5::datatype::CharacterEncoding Encoding,
                            nlohmann::json const &Values);

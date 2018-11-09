@@ -9,9 +9,6 @@
 #include "json.h"
 #include <string>
 
-class Test___FileWriterTask___Create01;
-class CommandHandler_Test;
-
 namespace FileWriter {
 
 class Result {
@@ -24,10 +21,10 @@ private:
   int _res = 0;
 };
 
-/// Represents a sourcename on a topic.
-/// The sourcename can be empty.
-/// This is meant for highest efficiency on topics which are exclusively used
-/// for only one sourcename.
+/// \brief Represents a sourcename on a topic.
+///
+/// The sourcename can be empty. This is meant for highest efficiency on topics
+/// which are exclusively used for only one sourcename.
 class Source final {
 public:
   Source(std::string const &Name, std::string const &ID,
@@ -43,22 +40,15 @@ public:
   void close_writer_module();
   bool is_parallel = false;
   HDFFile *HDFFileForSWMR = nullptr;
+  void setTopic(std::string const &Name);
 
 private:
-  std::string _topic;
+  std::string Topic_;
   std::string SourceName;
   std::string SchemaID;
   std::unique_ptr<HDFWriterModule> WriterModule;
-
   uint64_t _processed_messages_count = 0;
   uint64_t _cnt_msg_written = 0;
-
-  bool do_process_message = true;
-
-  friend class CommandHandler;
-  friend class FileWriterTask;
-  friend class SourceFactory_by_FileWriterTask;
-  friend class ::Test___FileWriterTask___Create01;
   friend void swap(Source &x, Source &y);
 };
 

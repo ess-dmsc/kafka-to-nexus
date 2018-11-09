@@ -49,6 +49,10 @@ public:
   void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
+
+  /// \brief Write a string to this dataset.
+  ///
+  /// Writes the given string to the dataset if the dataset can contain strings.
   append_ret append(std::string const &String);
   std::string name;
   hdf5::node::Dataset Dataset;
@@ -103,7 +107,7 @@ private:
   uint64_t count_append_bytes = 0;
 };
 
-/// \brief Specialized chunked dataset for strings.
+/// Specialized chunked dataset for strings.
 class Chunked1DString {
 public:
   typedef std::unique_ptr<Chunked1DString> ptr;

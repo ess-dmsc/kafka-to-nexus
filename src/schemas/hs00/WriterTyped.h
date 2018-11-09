@@ -25,15 +25,20 @@ private:
 public:
   using ptr = std::unique_ptr<WriterTyped<DataType, EdgeType, ErrorType>>;
 
-  /// Create a WriterTyped from Json, used when a new write command arrives at
-  /// the file writer.
+  /// \brief Create a WriterTyped from Json, used when a new write command
+  /// arrives at the file writer.
   static ptr createFromJson(json const &Json);
 
   static ptr createFromHDF(hdf5::node::Group &Group);
 
-  /// Create the HDF structures. used on arrival of a new write command for the
+  /// \brief Create the HDF structures.
+  ///
+  /// Used on arrival of a new write command for the
   /// file writer to create the initial structure of the HDF file for this
   /// writer module.
+  ///
+  /// \param Group
+  /// \param ChunkBytes
   void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes) override;
 
   HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,

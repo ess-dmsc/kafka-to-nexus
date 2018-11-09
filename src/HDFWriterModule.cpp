@@ -28,7 +28,7 @@ void addWriterModule(std::string key, ModuleFactory value) {
 }
 } // namespace HDFWriterModuleRegistry
 
-/// Implementation details for `HDFWriterModule`
+// Implementation details for `HDFWriterModule`
 namespace HDFWriterModule_detail {
 
 static std::map<int8_t, std::string> const g_InitResult_strings{
