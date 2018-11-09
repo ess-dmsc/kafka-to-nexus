@@ -9,6 +9,8 @@ using std::vector;
 
 CommandListener::CommandListener(MainOpt &config) : config(config) {}
 
+CommandListener::~CommandListener() {}
+
 void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;

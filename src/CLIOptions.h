@@ -18,5 +18,6 @@ CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
                        bool &TrueIfOptionGiven, std::string Description,
                        bool Defaulted);
 
+/// Use for adding a URI option
 CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
                        std::string Description, bool Defaulted);

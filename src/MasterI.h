@@ -11,21 +11,23 @@ namespace FileWriter {
 template <typename T> class StreamMaster;
 class Streamer;
 
-/// Listens to the Kafka configuration topic and handles any requests.
+/// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
 /// On a new file writing request, creates new nexusWriter instance.
 /// Reacts also to stop, and possibly other future commands.
 class MasterI {
 public:
-  /// Sets up command listener and handles any commands received.
+  /// \brief Sets up command listener and handles any commands received.
+  ///
   /// Continues running until stop requested.
   virtual void run() = 0;
+
   virtual void stop() = 0;
   virtual void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) = 0;
   virtual void handle_command(std::string const &command) = 0;
   virtual void statistics() = 0;
 
-  /// The unique identifier for this file writer on the network.
+  /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
   virtual std::string file_writer_process_id() const = 0;

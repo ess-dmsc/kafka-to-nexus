@@ -7,10 +7,10 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-/// \brief  Declare helper to extract flatbuffer data from byte blob
+/// Declare helper to extract flatbuffer data from byte blob
 FBUF const *get_fbuf(char const *data);
 
-/// \brief  Implement Reader interface for f142
+/// Implement Reader interface for f142
 class FlatbufferReader : public FileWriter::FlatbufferReader {
 public:
   bool verify(FlatbufferMessage const &Message) const override;

@@ -57,7 +57,7 @@ public:
     return ret;
   }
 
-  /// Can be removed when we use the KafkaW wrapper everywhere.
+  // Can be removed when we use the KafkaW wrapper everywhere.
 
   static Msg rdkafka(std::unique_ptr<RdKafka::Message> &&rdkafka_msg) {
     Msg msg;

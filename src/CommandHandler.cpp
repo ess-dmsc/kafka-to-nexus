@@ -31,7 +31,7 @@ json parseOrThrow(std::string const &Command) {
   }
 }
 
-/// \brief Helper to throw a common error message type.
+/// Helper to throw a common error message type.
 static void throwMissingKey(std::string const &Key,
                             std::string const &Context) {
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
@@ -40,6 +40,10 @@ static void throwMissingKey(std::string const &Key,
 CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
+/// \brief Parse the given `NexusStructureString`
+///
+/// Parse the given `NexusStructureString` and call the initialization of the
+/// HDF structures.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
@@ -53,10 +57,10 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   return StreamHDFInfoList;
 }
 
-/// \brief Extracts the information about the stream
+/// \brief Extract information about the stream.
 ///
-/// Extracts the information about the stream from the json command and calls
-/// the corresponding HDF writer modules to set up the initial HDF structures
+/// Extract the information about the stream from the json command and calls
+/// the corresponding HDF writer modules to set up initial HDF structures
 /// in the output file.
 ///
 /// \param Task The task which will write the HDF file.
@@ -152,7 +156,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   return StreamSettings;
 }
 
-/// \brief Helper to extract information about the provided streams.
+/// Helper to extract information about the provided streams.
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
@@ -284,6 +288,10 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 }
 
+/// \brief Configure the HDF writer modules for writing.
+///
+/// \param StreamSettingsList The settings for the stream.
+/// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
     const std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
@@ -509,7 +517,6 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-/// \brief  Calls `tryToHandle(std::string const &Command)` with given message
 void CommandHandler::tryToHandle(Msg const &Msg) {
   tryToHandle({(char *)Msg.data(), Msg.size()});
 }

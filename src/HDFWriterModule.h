@@ -13,9 +13,7 @@ namespace FileWriter {
 
 namespace HDFWriterModule_detail {
 
-/// Result type for the initialization of the writer module. Not an enum but a
-/// class because we wanted to keep the possibility for adding e.g. a message
-/// for the sad case.
+/// \brief Result type for the initialization of the writer module.
 class InitResult {
 public:
   /// Everything was fine.
@@ -78,7 +76,8 @@ public:
     return WriteResult(Message);
   }
 
-  /// Indicates that the flatbuffer contained semantically invalid data, even
+  /// \brief Indicates that the flatbuffer contained semantically invalid data,
+  /// even
   /// though the flatbuffer is technically valid.
   ///
   /// The case that the flatbuffer itself is invalid should not occur as that
@@ -88,16 +87,18 @@ public:
   /// \return The bad flatbuffer result.
   static inline WriteResult ERROR_BAD_FLATBUFFER() { return WriteResult(-2); }
 
-  /// Indicates that the data is structurally invalid, for example if it has
-  /// the wrong array sizes.
+  /// \brief Indicates that the data is structurally invalid, for example if it
+  /// has the wrong array sizes.
   ///
   /// \return The data structure error result.
   static inline WriteResult ERROR_DATA_STRUCTURE_MISMATCH() {
     return WriteResult(-3);
   }
 
-  /// A special case of `ERROR_DATA_STRUCTURE_MISMATCH` to indicate that
-  /// the data type does not match, for example a float instead of the expected
+  /// \brief A special case of `ERROR_DATA_STRUCTURE_MISMATCH` to indicate that
+  /// the data type does not match.
+  ///
+  /// For example a float instead of the expected
   /// double.
   ///
   /// \return The data type error result.
@@ -107,13 +108,12 @@ public:
   inline bool is_OK() { return v == 0; }
   inline bool is_OK_WITH_TIMESTAMP() { return v == 1; }
 
-  /// Indicates if any error has occurred. More specific query function will
-  /// come as need arises.
+  /// \brief Indicates if any error has occurred.
   ///
   /// \return True if any error has occurred.
   inline bool is_ERR() { return v < 0; }
 
-  /// Used for status reports.
+  /// \brief Gets status reports.
   ///
   /// \return The status.
   std::string to_str() const;
@@ -128,7 +128,7 @@ private:
 };
 } // namespace HDFWriterModule_detail
 
-/// Writes a given flatbuffer to HDF.
+/// \brief Writes a given flatbuffer to HDF.
 ///
 /// Base class for the writer modules which are responsible for actually
 /// writing a flatbuffer message to the HDF file.  A HDFWriterModule is
@@ -146,7 +146,7 @@ public:
 
   virtual ~HDFWriterModule() = default;
 
-  /// Parses the configuration of a stream.
+  /// \brief Parses the configuration of a stream.
   ///
   /// \param config_stream Configuration from the write file command for this
   /// stream.
@@ -155,39 +155,42 @@ public:
   virtual void parse_config(std::string const &ConfigurationStream,
                             std::string const &ConfigurationModule) = 0;
 
-  /// Initialise the HDF file.
+  /// \brief Initialise the HDF file.
   ///
   /// Called before any data has arrived with the json configuration of this
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   ///
-  /// \param[in] HDFGroup The \p HDFGroup into which this HDFWriterModule
+  /// \param[in] HDFGroup     The \p HDFGroup into which this HDFWriterModule
   /// should write its data.
   /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
-  /// HDFWriterModule is free to create the structure and datasets according to
-  /// its needs, it must also take the reposnsibility to write these
+  /// HDFWriterModule is free to create the structure and data sets according to
+  /// its needs, it must also take the responsibility to write these
   /// attributes.
   /// \param[in] HDFAttributes Json string of the attributes associated with the
   /// stream, as defined by the "attributes" key in the Nexus structure.
+  ///
   /// \return The result.
   virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
                               std::string const &HDFAttributes) = 0;
 
-  /// Reopen the HDF objects which are used by this HDFWriterModule.
+  /// \brief Reopen the HDF objects which are used by this HDFWriterModule.
   ///
   /// \param InitParameters Contains most importantly the \p HDFGroup into
   /// which this HDFWriterModule should write its data.
+  ///
   /// \return The result.
   virtual InitResult reopen(hdf5::node::Group &HDFGroup) = 0;
 
-  /// Process the message in some way, for example write to the HDF file.
+  /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
+  ///
   /// \return The result.
   virtual WriteResult write(FlatbufferMessage const &Message) = 0;
 
-  /// Flush the internal buffer.
+  /// \brief Flush the internal buffer.
   ///
   /// You are expected to flush all the internal buffers which you have to
   /// the HDF file.
@@ -195,8 +198,7 @@ public:
   /// \return Error code.
   virtual int32_t flush() = 0;
 
-  /// Close all open HDF handles, datasets, dataspaces, groups,
-  /// everything.
+  /// \brief Close all open HDF handlers.
   ///
   /// \return Error code.
   virtual int32_t close() = 0;
@@ -205,29 +207,38 @@ public:
                          int mpi_rank) = 0;
 };
 
-/// Keeps track of the registered FlatbufferReader instances.
+/// \brief Keeps track of the registered FlatbufferReader instances.
 ///
-/// Writer modules register themselfes via instantiation of the `Registrar`.
+/// Writer modules register themselves via instantiation of the `Registrar`.
 /// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
 /// HDFWriterModuleRegistry.
 namespace HDFWriterModuleRegistry {
 using ModuleFactory = std::function<std::unique_ptr<HDFWriterModule>()>;
 
-/// \return A reference to the map of all registered modules.
+/// \brief Get all registered modules.
+///
+/// \return A reference to the map of registered modules.
 std::map<std::string, ModuleFactory> &getFactories();
 
-/// Registers a new writer module. Called by `Registrar`.
+/// \brief Registers a new writer module. Called by `Registrar`.
+///
+/// \param key
+/// \param value
 void addWriterModule(std::string key, ModuleFactory value);
 
-/// \return The `ModuleFactory` for the given `key`.
+/// \brief Get `ModuleFactory for a given `key`.
+///
+/// \return Matching `ModuleFactory`.
 ModuleFactory &find(std::string const &key);
 
-/// Registers the writer module at program start if instantiated in the
+/// \brief  Registers the writer module at program start if instantiated in the
 /// namespace of each writer module with the writer module given as `Module`.
 template <typename Module> class Registrar {
 public:
-  /// Register the writer module given in template parameter `Module` under the
+  /// \brief Register the writer module given in template parameter `Module`
+  /// under the
   /// identifier `FlatbufferID`.
+  ///
   /// \param FlatbufferID The unique identifier for this writer module.
   explicit Registrar(std::string FlatbufferID) {
     auto FactoryFunction = []() {

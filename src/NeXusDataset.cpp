@@ -1,10 +1,5 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Implement datasets used by the ADC file writing module.
- */
-
 #include "NeXusDataset.h"
 
 namespace NeXusDataset {
