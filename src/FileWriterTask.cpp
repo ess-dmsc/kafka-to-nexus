@@ -121,7 +121,7 @@ void FileWriterTask::closeFile() { File.close(); }
 
 void FileWriterTask::reopenFile() {
   try {
-    File.reopen(Filename, json::object());
+    File.reopen(Filename);
   } catch (std::exception const &E) {
     LOG(Sev::Error, "Exception: {}", E.what());
     if (StatusProducer) {

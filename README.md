@@ -215,6 +215,53 @@ datasets:
 ```
 
 
+### Links within the HDF File
+
+HDF links are created by placing a child of type `link` in the list of children
+of a group.  Links are created as hard links at the end of file writing.  For
+example:
+
+```
+"nexus_structure": {
+  "children": [
+    {
+      "type": "group",
+      "name": "extra_group",
+      "children": [
+        {
+          "type": "link",
+          "name": "some_link_to_value",
+          "target": "../a_group/a_subgroup/value"
+        },
+        {
+          "type": "link",
+          "name": "some_absolute_link_to_value",
+          "target": "/a_group/a_subgroup/value"
+        }
+      ]
+    },
+    {
+      "type": "group",
+      "name": "a_group",
+      "children": [
+        {
+          "type": "group",
+          "name": "a_subgroup",
+          "children": [
+            {
+              "type": "dataset",
+              "name": "value",
+              "values": 42.24
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+
 ### Options for the f142 writer module
 
 - `type`: The data type contained in the flat buffer. Can be `int8` to `int64`,

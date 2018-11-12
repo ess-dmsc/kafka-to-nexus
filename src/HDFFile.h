@@ -35,10 +35,11 @@ public:
   void init(const nlohmann::json &NexusStructure,
             std::vector<StreamHDFInfo> &StreamHDFInfo);
 
-  void reopen(const std::string &Filename, const nlohmann::json &ConfigFile);
+  void reopen(std::string const &Filename);
 
   void flush();
   void close();
+  void finalize();
 
   static std::string h5VersionStringLinked();
   static void writeAttributes(hdf5::node::Node &Node,
@@ -123,6 +124,8 @@ private:
                            nlohmann::json const &Values);
 
   bool SWMREnabled = false;
+  std::string Filename;
+  nlohmann::json NexusStructure;
 
   using CLOCK = std::chrono::steady_clock;
   std::chrono::milliseconds SWMRFlushInterval{10000};
