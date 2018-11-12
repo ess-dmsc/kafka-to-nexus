@@ -138,6 +138,11 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
             "type": "link",
             "name": "some_link_to_a_group",
             "target": "../a_group/a_subgroup"
+          },
+          {
+            "type": "link",
+            "name": "some_absolute_link_to_a_dataset",
+            "target": "/a_group/a_subgroup/value"
           }
         ]
       },
@@ -179,7 +184,9 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
             static_cast<size_t>(0));
   auto File = hdf5::file::open(Filename);
   File.root().get_group("a_group").get_group("a_subgroup").get_dataset("value");
-  // Expected to fail so far:
   File.root().get_group("extra_group").get_dataset("some_link_to_value");
+  File.root()
+      .get_group("extra_group")
+      .get_dataset("some_absolute_link_to_a_dataset");
   unlink(Filename.c_str());
 }

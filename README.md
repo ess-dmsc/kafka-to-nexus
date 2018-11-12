@@ -232,6 +232,11 @@ example:
           "type": "link",
           "name": "some_link_to_value",
           "target": "../a_group/a_subgroup/value"
+        },
+        {
+          "type": "link",
+          "name": "some_absolute_link_to_value",
+          "target": "/a_group/a_subgroup/value"
         }
       ]
     },
