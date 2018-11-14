@@ -134,8 +134,8 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   std::unique_ptr<FlatbufferMessage> Message;
   try {
     Message = std::make_unique<FlatbufferMessage>(
-        reinterpret_cast<const char *>(KafkaMessage->data()),
-        KafkaMessage->size());
+        reinterpret_cast<const char *>(KafkaMessage->getData()),
+        KafkaMessage->getSize());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",

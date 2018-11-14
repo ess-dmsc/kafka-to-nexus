@@ -27,15 +27,15 @@ public:
       : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)),
         Status(Status), MessageOffset(Offset) {}
 
-  Msg(PollStatus Status) : Status(Status) {}
+  explicit Msg(PollStatus Status) : Status(Status) {}
   ~Msg() {
     if (OnDelete) {
       OnDelete();
     }
   };
-  std::uint8_t const *data() const { return DataPointer; };
-  size_t size() const { return DataSize; };
-  std::uint64_t getMessageOffset() const { return MessageOffset; };
+  std::uint8_t const *getData() const { return DataPointer; };
+  size_t getSize() const { return DataSize; };
+  std::int64_t getMessageOffset() const { return MessageOffset; };
   PollStatus getStatus() const { return Status; };
 
 private:

@@ -85,7 +85,7 @@ class ConsumerEmptyStandIn : public KafkaW::Consumer {
 public:
   ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
       : KafkaW::Consumer(Settings){};
-  MAKE_MOCK0(poll, KafkaW::PollStatus(), override);
+  MAKE_MOCK0(poll, std::unique_ptr<KafkaW::Msg>(), override);
 };
 
 TEST_F(StreamerProcessTest, EmptyPoll) {
@@ -324,11 +324,9 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   auto PollResult = [this, &CallCounter]() {
     CallCounter++;
     if (CallCounter == 1) {
-      return KafkaW::PollStatus::newWithMsg(
           std::unique_ptr<KafkaW::Msg>(generateKafkaMsg(
               reinterpret_cast<const unsigned char *>(this->DataBuffer.c_str()),
               this->DataBuffer.size())));
-    }
     return KafkaW::PollStatus::EOP();
   };
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(PollResult()).TIMES(2);

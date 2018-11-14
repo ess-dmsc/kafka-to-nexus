@@ -98,7 +98,7 @@ public:
     case MsgType::RdKafka:
       return static_cast<char const *>(var.rdkafka_msg->payload());
     case MsgType::KafkaW:
-      return reinterpret_cast<char const *>(var.kafkaw_msg->data());
+      return reinterpret_cast<char const *>(var.kafkaw_msg->getData());
     case MsgType::Owned:
       return var.owned;
     case MsgType::Shared:
@@ -116,7 +116,7 @@ public:
     case MsgType::RdKafka:
       return var.rdkafka_msg->len();
     case MsgType::KafkaW:
-      return var.kafkaw_msg->size();
+      return var.kafkaw_msg->getSize();
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:
