@@ -84,9 +84,7 @@ set(kafka_to_nexus_SRC
   KafkaW/BrokerSettings.cpp
   KafkaW/TopicSettings.cpp
   KafkaW/KafkaW.cpp
-  KafkaW/Msg.cpp
-  KafkaW/PollStatus.cpp
-  KafkaW/Consumer.cpp
+        KafkaW/Consumer.cpp
   KafkaW/Producer.cpp
   KafkaW/ProducerTopic.cpp
   helper.cpp
@@ -120,8 +118,7 @@ set(kafka_to_nexus_INC
   KafkaW/TopicSettings.h
   KafkaW/KafkaW.h
   KafkaW/Msg.h
-  KafkaW/PollStatus.h
-  KafkaW/Consumer.h
+        KafkaW/Consumer.h
   KafkaW/Producer.h
   KafkaW/ProducerTopic.h
   logger.h

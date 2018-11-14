@@ -91,9 +91,9 @@ void Master::run() {
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
     auto p = command_listener.poll();
-    if (auto msg = p.isMsg()) {
+    if (p->getStatus() == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
-      this->handle_command_message(std::move(msg));
+      this->handle_command_message(std::move(p));
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >

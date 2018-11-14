@@ -112,8 +112,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Consume message and exit if we are beyond a message timeout
-  KafkaW::PollStatus Poll = Consumer->poll();
-  if (Poll.isEmpty() || Poll.isEOP()) {
+  auto KafkaMessage = Consumer->poll();
+  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Empty ||
+      KafkaMessage->getStatus() == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
@@ -125,12 +126,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     }
     return ProcessMessageResult::OK;
   }
-  if (Poll.isErr()) {
+  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Err) {
     return ProcessMessageResult::ERR;
   }
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
-  auto KafkaMessage = Poll.isMsg();
   std::unique_ptr<FlatbufferMessage> Message;
   try {
     Message = std::make_unique<FlatbufferMessage>(

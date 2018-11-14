@@ -35,6 +35,8 @@ void CommandListener::start() {
   }
 }
 
-KafkaW::PollStatus CommandListener::poll() { return consumer->poll(); }
+std::unique_ptr<KafkaW::Msg> CommandListener::poll() {
+  return consumer->poll();
+}
 
 } // namespace FileWriter
