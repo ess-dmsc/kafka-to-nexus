@@ -90,10 +90,10 @@ void Master::run() {
   auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
-    auto p = command_listener.poll();
-    if (p->getStatus() == KafkaW::PollStatus::Msg) {
+    auto PollResult = command_listener.poll();
+    if (PollResult->getStatus() == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
-      this->handle_command_message(std::move(p));
+      this->handle_command_message(std::move(PollResult));
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >
