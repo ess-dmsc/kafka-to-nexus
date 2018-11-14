@@ -7,7 +7,7 @@ ARG http_proxy
 ARG https_proxy
 
 # Install packages
-ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools kafkacat"
+ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools kafkacat autoconf libtool automake tzdata"
 RUN apt-get update -y && \
     apt-get --no-install-recommends -y install $BUILD_PACKAGES && \
     apt-get -y autoremove && \
