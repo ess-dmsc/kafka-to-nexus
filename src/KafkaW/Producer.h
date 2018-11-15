@@ -50,7 +50,7 @@ public:
   Producer(BrokerSettings ProducerBrokerSettings_);
   Producer(Producer const &) = delete;
   Producer(Producer &&x);
-  ~Producer();
+  ~Producer() override;
   void pollWhileOutputQueueFilled() override;
   void poll() override;
   uint64_t totalMessagesProduced() override;
