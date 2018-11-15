@@ -10,77 +10,78 @@ void ProducerMsg::deliveryOk() {}
 
 void ProducerMsg::deliveryError() {}
 
-void Producer::cb_delivered(rd_kafka_t *rk, rd_kafka_message_t const *msg,
-                            void *opaque) {
-  auto self = reinterpret_cast<Producer *>(opaque);
-  if (!msg) {
+void Producer::cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
+                            void *Opaque) {
+  auto self = reinterpret_cast<Producer *>(Opaque);
+  if (!Message) {
     LOG(Sev::Error, "IID: {} msg should never be null", self->id);
     ++self->Stats.produce_cb_fail;
     return;
   }
-  if (msg->err) {
+  if (Message->err) {
     LOG(Sev::Error, "IID: {} failure on delivery, {}, topic {}, {} [{}] {}",
-        self->id, rd_kafka_name(rk), rd_kafka_topic_name(msg->rkt),
-        rd_kafka_err2name(msg->err), msg->err, rd_kafka_err2str(msg->err));
-    if (msg->err == RD_KAFKA_RESP_ERR__MSG_TIMED_OUT) {
+        self->id, rd_kafka_name(RK), rd_kafka_topic_name(Message->rkt),
+        rd_kafka_err2name(Message->err), Message->err,
+        rd_kafka_err2str(Message->err));
+    if (Message->err == RD_KAFKA_RESP_ERR__MSG_TIMED_OUT) {
       // TODO
     }
     if (auto &cb = self->on_delivery_failed) {
-      cb(msg);
+      cb(Message);
     }
     ++self->Stats.produce_cb_fail;
   } else {
     if (auto &cb = self->on_delivery_ok) {
-      cb(msg);
+      cb(Message);
     }
     if (false) {
       LOG(Sev::Debug, "IID: {}  Ok delivered ({}, p {}, offset {}, len {})",
-          self->id, rd_kafka_name(rk), msg->partition, msg->offset, msg->len);
+          self->id, rd_kafka_name(RK), Message->partition, Message->offset,
+          Message->len);
     }
     ++self->Stats.produce_cb;
   }
 }
 
-void Producer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
-                        void *opaque) {
-  auto self = reinterpret_cast<Producer *>(opaque);
-  auto err = static_cast<rd_kafka_resp_err_t>(err_i);
+void Producer::cb_error(rd_kafka_t *RK, int ERR_code, char const *ERR_message,
+                        void *Opaque) {
+  auto self = reinterpret_cast<Producer *>(Opaque);
+  auto err = static_cast<rd_kafka_resp_err_t>(ERR_code);
   Sev ll = Sev::Warning;
   if (err == RD_KAFKA_RESP_ERR__TRANSPORT) {
     ll = Sev::Error;
-    // rd_kafka_dump(stdout, rk);
   } else {
     if (self->on_error)
       self->on_error(self, err);
   }
   LOG(ll, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
           "errorstring: {}  message: {}",
-      self->id, self->ProducerBrokerSettings.Address, err_i,
-      rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
+      self->id, self->ProducerBrokerSettings.Address, ERR_code,
+      rd_kafka_err2name(err), rd_kafka_err2str(err), ERR_message);
 }
 
-int Producer::cb_stats(rd_kafka_t *rk, char *json, size_t json_len,
-                       void *opaque) {
-  auto self = reinterpret_cast<Producer *>(opaque);
+int Producer::cb_stats(rd_kafka_t *RK, char *Json, size_t Json_length,
+                       void *Opaque) {
+  auto self = reinterpret_cast<Producer *>(Opaque);
   LOG(Sev::Debug, "IID: {}  INFO cb_stats {} length {}   {:.{}}", self->id,
-      rd_kafka_name(rk), json_len, json, json_len);
+      rd_kafka_name(RK), Json_length, Json, Json_length);
   // What does librdkafka want us to return from this callback?
   return 0;
 }
 
-void Producer::cb_log(rd_kafka_t const *rk, int level, char const *fac,
-                      char const *buf) {
-  auto self = reinterpret_cast<Producer *>(rd_kafka_opaque(rk));
-  LOG(Sev::Debug, "IID: {}  {}  fac: {}", self->id, buf, fac);
+void Producer::cb_log(rd_kafka_t const *RK, int Level, char const *Fac,
+                      char const *Buf) {
+  auto self = reinterpret_cast<Producer *>(rd_kafka_opaque(RK));
+  LOG(Sev::Debug, "IID: {}  {}  Fac: {}", self->id, Buf, Fac);
 }
 
-void Producer::cb_throttle(rd_kafka_t *rk, char const *broker_name,
-                           int32_t broker_id, int throttle_time_ms,
-                           void *opaque) {
-  auto self = reinterpret_cast<Producer *>(opaque);
-  LOG(Sev::Debug, "IID: {}  INFO cb_throttle  broker_id: {}  broker_name: {}  "
+void Producer::cb_throttle(rd_kafka_t *RK, char const *BrokerName,
+                           int32_t BrokerID, int Throttle_time_ms,
+                           void *Opaque) {
+  auto self = reinterpret_cast<Producer *>(Opaque);
+  LOG(Sev::Debug, "IID: {}  INFO cb_throttle  BrokerID: {}  broker_name: {}  "
                   "throttle_time_ms: {}",
-      self->id, broker_id, broker_name, throttle_time_ms);
+      self->id, BrokerID, BrokerName, Throttle_time_ms);
 }
 
 Producer::~Producer() {
