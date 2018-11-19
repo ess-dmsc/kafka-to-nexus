@@ -7,8 +7,7 @@
 
 namespace KafkaW {
 
-class TopicSettings {
-public:
+struct TopicSettings {
   TopicSettings();
   void applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf);
   std::map<std::string, int> ConfigurationIntegers;
