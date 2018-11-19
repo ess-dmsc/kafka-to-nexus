@@ -14,12 +14,12 @@ RUN apt-get update -y && \
     apt-get clean all && \
     rm -rf /var/lib/apt/lists/*
 
-RUN pip install conan==1.8.2
+RUN pip install conan
 # Force conan to create .conan directory and profile
 RUN conan profile new default
 
 # Replace the default profile and remotes with the ones from our Ubuntu build node
-ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/registry.txt" "/root/.conan/registry.txt"
+ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/registry.json" "/root/.conan/registry.json"
 ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/default_profile" "/root/.conan/profiles/default"
 
 RUN mkdir kafka_to_nexus
