@@ -281,8 +281,9 @@ def get_system_tests_pipeline() {
             """
           }  // stage
           stage("System tests: Run") {
-            sh """docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
-                                                          """
+            // Stop and remove any containers that may have been from the job before,
+            // i.e. if a Jenkins job has been aborted.
+            sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
             sh """cd system-tests/
             scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
             """
