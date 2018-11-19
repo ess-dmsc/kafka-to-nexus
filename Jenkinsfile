@@ -281,6 +281,8 @@ def get_system_tests_pipeline() {
             """
           }  // stage
           stage("System tests: Run") {
+            sh """docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
+                                                          """
             sh """cd system-tests/
             scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
             """
@@ -293,8 +295,7 @@ def get_system_tests_pipeline() {
             // even if there are no docker containers or output files to be
             // removed.
             sh """rm -rf system-tests/output-files/* || true
-            docker stop \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
-            docker rm \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
+            docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
             """
           }  // stage
         }  // try/finally
