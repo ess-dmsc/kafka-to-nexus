@@ -53,14 +53,14 @@ public:
   uint64_t outputQueueLength() override;
   static void cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
                            void *Opaque);
-  static void cb_error(rd_kafka_t *RK, int ERR_code, char const *ERR_message,
+  static void cb_error(rd_kafka_t *RK, int ErrorCode, char const *ErrorMessage,
                        void *Opaque);
-  static int cb_stats(rd_kafka_t *RK, char *Json, size_t Json_length,
+  static int cb_stats(rd_kafka_t *RK, char *JSON, size_t JSONLength,
                       void *Opaque);
   static void cb_log(rd_kafka_t const *RK, int Level, char const *Fac,
                      char const *Buf);
   static void cb_throttle(rd_kafka_t *RK, char const *BrokerName,
-                          int32_t BrokerID, int Throttle_time_ms, void *Opaque);
+                          int32_t BrokerID, int ThrottleTime_ms, void *Opaque);
   rd_kafka_t *getRdKafkaPtr() const;
   std::function<void(rd_kafka_message_t const *msg)> on_delivery_ok;
   std::function<void(rd_kafka_message_t const *msg)> on_delivery_failed;
