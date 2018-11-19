@@ -13,8 +13,6 @@ class ProducerTopic;
 class ProducerMsg {
 public:
   virtual ~ProducerMsg() = default;
-  virtual void deliveryOk();
-  virtual void deliveryError();
   uchar *data;
   uint32_t size;
 };
@@ -37,9 +35,7 @@ class ProducerInterface {
 public:
   ProducerInterface() = default;
   virtual ~ProducerInterface() = default;
-  virtual void pollWhileOutputQueueFilled() = 0;
   virtual void poll() = 0;
-  virtual uint64_t totalMessagesProduced() = 0;
   virtual uint64_t outputQueueLength() = 0;
 };
 
@@ -51,9 +47,9 @@ public:
   Producer(Producer const &) = delete;
   Producer(Producer &&x);
   ~Producer() override;
-  void pollWhileOutputQueueFilled() override;
+
   void poll() override;
-  uint64_t totalMessagesProduced() override;
+
   uint64_t outputQueueLength() override;
   static void cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
                            void *Opaque);
