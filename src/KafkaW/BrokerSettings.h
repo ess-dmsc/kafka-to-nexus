@@ -1,7 +1,6 @@
 #pragma once
 
-#include <map>
-#include <string>
+#include "SettingsInterface.h"
 
 struct rd_kafka_conf_s;
 typedef struct rd_kafka_conf_s rd_kafka_conf_t;
@@ -9,12 +8,14 @@ typedef struct rd_kafka_conf_s rd_kafka_conf_t;
 namespace KafkaW {
 
 /// Collect options used to connect to the broker.
-struct BrokerSettings {
+struct BrokerSettings : public KafkaW::SettingsInterface {
   BrokerSettings() = default;
+
+  virtual void apply() override{};
   void apply(rd_kafka_conf_t *RdKafkaConfiguration);
   std::string Address;
   int PollTimeoutMS = 100;
-  std::map<std::string, std::string> KafkaConfiguration = {
+  std::map<std::string, std::string> Configuration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs
       {"socket.timeout.ms", "2000"},
       {"message.max.bytes", "24117248"}, // 23 MiB
@@ -29,6 +30,5 @@ struct BrokerSettings {
       {"statistics.interval.ms", "600000"}, // 1 Min
       {"api.version.request", "true"},
   };
-  ;
 };
 } // namespace KafkaW

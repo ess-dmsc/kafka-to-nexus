@@ -5,7 +5,7 @@ namespace KafkaW {
 
 TopicSettings::TopicSettings() {}
 
-void TopicSettings::applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf) {
+void TopicSettings::apply(rd_kafka_topic_conf_t *conf) {
   std::vector<char> ErrorString(1024);
   for (auto &c : ConfigurationIntegers) {
     std::string ConfigString = fmt::format("{:d}", c.second);
@@ -18,7 +18,7 @@ void TopicSettings::applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf) {
           ConfigString, ErrorString.data());
     }
   }
-  for (auto &c : ConfigurationStrings) {
+  for (auto &c : Configuration) {
     LOG(Sev::Debug, "use  {}: {}", c.first, c.second);
     auto err = rd_kafka_topic_conf_set(conf, c.first.c_str(), c.second.c_str(),
                                        ErrorString.data(), ErrorString.size());

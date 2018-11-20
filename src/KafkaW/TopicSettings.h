@@ -1,16 +1,15 @@
 #pragma once
 
+#include "SettingsInterface.h"
 #include "logger.h"
 #include <librdkafka/rdkafka.h>
-#include <map>
-#include <string>
 
 namespace KafkaW {
 
-struct TopicSettings {
+struct TopicSettings : public KafkaW::SettingsInterface {
   TopicSettings();
-  void applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf);
+  virtual void apply() override{};
+  void apply(rd_kafka_topic_conf_t *conf);
   std::map<std::string, int> ConfigurationIntegers;
-  std::map<std::string, std::string> ConfigurationStrings;
 };
 }

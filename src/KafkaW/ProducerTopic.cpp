@@ -25,7 +25,7 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Producer,
     : Producer_(Producer), Name(Name_) {
   TopicSettings TopicSettings;
   rd_kafka_topic_conf_t *topic_conf = rd_kafka_topic_conf_new();
-  TopicSettings.applySettingsToRdKafkaConf(topic_conf);
+  TopicSettings.apply(topic_conf);
 
   RdKafkaTopic =
       rd_kafka_topic_new(Producer_->getRdKafkaPtr(), Name.c_str(), topic_conf);

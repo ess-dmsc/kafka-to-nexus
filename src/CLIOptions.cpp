@@ -139,7 +139,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       MainOptions.topic_write_duration,
       "Stream-master option - topic write interval (milliseconds)");
   addKafkaOption(App, "-S,--kafka-config",
-                 MainOptions.StreamerConfiguration.Settings.KafkaConfiguration,
+                 MainOptions.StreamerConfiguration.Settings.Configuration,
                  "LibRDKafka options");
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }
