@@ -191,8 +191,7 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
   auto err = rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
 
   if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
-    LOG(Sev::Error,
-        "Failed to query metadata in Consumer::queryNumberOfPartitions");
+    throw std::runtime_error("Error in queryNumberOfPartitions");
   } else {
     for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
       if (Metadata->topics[topic].topic == TopicName) {
@@ -200,7 +199,8 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
       }
     }
   }
-  return 1;
+  throw std::runtime_error(
+      fmt::format("Topic {} not found by queryNumberOfPartitions", TopicName));
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
