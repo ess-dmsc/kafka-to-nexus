@@ -190,9 +190,9 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
   const rd_kafka_metadata_t *Metadata = nullptr;
   int QueryAllTopicsInCluster = 1;
   int TimeoutMS = 2000;
-  auto err = rd_kafka_metadata(RdKafka, QueryAllTopicsInCluster, nullptr,
-                               &Metadata, TimeoutMS);
-  if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
+  auto Error = rd_kafka_metadata(RdKafka, QueryAllTopicsInCluster, nullptr,
+                                 &Metadata, TimeoutMS);
+  if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error("Error in queryNumberOfPartitions");
   } else {
     for (int I = 0; I < Metadata->topic_cnt; ++I) {
