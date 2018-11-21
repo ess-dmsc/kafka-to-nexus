@@ -163,38 +163,38 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
                                    std::chrono::milliseconds const StartTime) {
   LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
       Topic, StartTime.count());
-
   auto numberOfPartitions = queryNumberOfPartitions(Topic);
   rd_kafka_topic_partition_list_add_range(PartitionList, Topic.c_str(), 0,
                                           numberOfPartitions - 1);
-
-  for (int i = 0; i < PartitionList->cnt; ++i) {
-    if (StartTime.count() > 0) {
-      PartitionList->elems[i].offset = StartTime.count();
-      rd_kafka_offsets_for_times(RdKafka, PartitionList, 1000);
-      LOG(Sev::Debug, "Topic: {}, Partition: {}, Offset: {}, StartTime: {}",
-          Topic, PartitionList->elems[i].partition,
-          PartitionList->elems[i].offset, StartTime.count());
-    }
+  // Set all the timestamps before doing a *single* call to
+  // rd_kafka_offsets_for_times
+  for (int I = 0; I < PartitionList->cnt; ++I) {
+    PartitionList->elems[I].offset = StartTime.count();
   }
-
-  if (StartTime.count() > 0) {
-    commitOffsets();
+  int Timeout = 1000;
+  auto Error = rd_kafka_offsets_for_times(RdKafka, PartitionList, Timeout);
+  if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    throw std::runtime_error(
+        fmt::format("Error from rd_kafka_offsets_for_times {}", Error));
   }
-
-  int err = rd_kafka_subscribe(RdKafka, PartitionList);
-  KERR(RdKafka, err);
-  if (err) {
-    LOG(Sev::Error, "could not subscribe");
-    throw std::runtime_error("can not subscribe");
+  for (int I = 0; I < PartitionList->cnt; ++I) {
+    LOG(Sev::Debug, "Topic: {}, Partition: {}, Offset: {}", Topic,
+        PartitionList->elems[I].partition, PartitionList->elems[I].offset);
+  }
+  commitOffsets();
+  Error = rd_kafka_subscribe(RdKafka, PartitionList);
+  KERR(RdKafka, Error);
+  if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    throw std::runtime_error(
+        fmt::format("Error from rd_kafka_subscribe {}", Error));
   }
 }
 
 void Consumer::commitOffsets() const {
   auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
   KERR(RdKafka, CommitErr);
-  if (CommitErr) {
-    LOG(Sev::Error, "Could not commit offsets in Consumer");
+  if (CommitErr != RD_KAFKA_RESP_ERR_NO_ERROR) {
+    throw std::runtime_error("Could not commit offsets in Consumer");
   }
 }
 
