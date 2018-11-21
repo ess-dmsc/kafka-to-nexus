@@ -148,9 +148,19 @@ void Consumer::init() {
   PartitionList = rd_kafka_topic_partition_list_new(16);
 }
 
-void Consumer::addTopic(std::string Topic,
-                        const std::chrono::milliseconds &StartTime) {
+void Consumer::addTopic(std::string Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
+  int Error = rd_kafka_subscribe(RdKafka, PartitionList);
+  KERR(RdKafka, Error);
+  if (Error) {
+    throw std::runtime_error("can not subscribe");
+  }
+}
+
+void Consumer::addTopicAtTimestamp(std::string const Topic,
+                                   std::chrono::milliseconds const StartTime) {
+  LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
+      Topic, StartTime.count());
 
   auto numberOfPartitions = queryNumberOfPartitions(Topic);
   rd_kafka_topic_partition_list_add_range(PartitionList, Topic.c_str(), 0,

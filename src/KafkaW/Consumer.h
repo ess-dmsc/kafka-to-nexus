@@ -13,8 +13,10 @@ class ConsumerInterface {
 public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
-  virtual void addTopic(std::string Topic,
-                        const std::chrono::milliseconds &StartTime) = 0;
+  virtual void addTopic(std::string const Topic) = 0;
+  virtual void
+  addTopicAtTimestamp(std::string const Topic,
+                      std::chrono::milliseconds const StartTime) = 0;
   virtual PollStatus poll() = 0;
   virtual void dumpCurrentSubscription() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
@@ -28,8 +30,9 @@ public:
   Consumer(Consumer const &) = delete;
   ~Consumer() override;
   void init();
-  void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
-                                       std::chrono::milliseconds{0}) override;
+  void addTopic(std::string const Topic) override;
+  void addTopicAtTimestamp(std::string const Topic,
+                           std::chrono::milliseconds const StartTime) override;
   void dumpCurrentSubscription() override;
   bool topicPresent(const std::string &Topic) override;
   int32_t queryNumberOfPartitions(const std::string &TopicName) override;
