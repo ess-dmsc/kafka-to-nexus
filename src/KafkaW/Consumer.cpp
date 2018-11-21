@@ -187,18 +187,23 @@ void Consumer::commitOffsets() const {
 }
 
 int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
-  const rd_kafka_metadata_t *Metadata{nullptr};
-  auto err = rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
-
+  const rd_kafka_metadata_t *Metadata = nullptr;
+  int QueryAllTopicsInCluster = 1;
+  int TimeoutMS = 2000;
+  auto err = rd_kafka_metadata(RdKafka, QueryAllTopicsInCluster, nullptr,
+                               &Metadata, TimeoutMS);
   if (err != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error("Error in queryNumberOfPartitions");
   } else {
-    for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
-      if (Metadata->topics[topic].topic == TopicName) {
-        return Metadata->topics[topic].partition_cnt;
+    for (int I = 0; I < Metadata->topic_cnt; ++I) {
+      if (TopicName == Metadata->topics[I].topic) {
+        auto Count = Metadata->topics[I].partition_cnt;
+        rd_kafka_metadata_destroy(Metadata);
+        return Count;
       }
     }
   }
+  rd_kafka_metadata_destroy(Metadata);
   throw std::runtime_error(
       fmt::format("Topic {} not found by queryNumberOfPartitions", TopicName));
 }
