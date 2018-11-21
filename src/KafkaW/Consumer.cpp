@@ -150,13 +150,11 @@ void Consumer::init() {
 
 void Consumer::addTopic(std::string Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
-  auto PartitionList = rd_kafka_topic_partition_list_new(16);
   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(),
                                     RD_KAFKA_PARTITION_UA);
   int Error = rd_kafka_subscribe(RdKafka, PartitionList);
-  rd_kafka_topic_partition_list_destroy(PartitionList);
   KERR(RdKafka, Error);
-  if (Error) {
+  if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error("can not subscribe");
   }
 }
