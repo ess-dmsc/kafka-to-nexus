@@ -221,13 +221,13 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
+  int const TimeoutMS = 10000;
   const rd_kafka_metadata_t *Metadata{nullptr};
-  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, 1000);
+  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, TimeoutMS);
 
   bool IsPresent = false;
   if (!Metadata) {
-    LOG(Sev::Error, "could not create metadata");
-    return IsPresent;
+    throw std::runtime_error("could not create metadata");
   }
 
   for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
