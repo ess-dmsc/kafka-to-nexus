@@ -390,7 +390,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   auto Now = std::chrono::system_clock::now();
   auto Then = std::chrono::duration_cast<std::chrono::milliseconds>(
                   Now.time_since_epoch()) +
-              std::chrono::milliseconds(5000);
+              std::chrono::milliseconds(12000);
   TestStreamer.Options.StopTimestamp = Then;
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
