@@ -58,7 +58,7 @@ TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   EXPECT_EQ(getDoubleValue("Mbytes", json["stream_master"]), 0.0);
   EXPECT_EQ(getDoubleValue("errors", json["stream_master"]), 0.0);
   EXPECT_EQ(getDoubleValue("messages", json["stream_master"]), 0.0);
-  EXPECT_EQ(getDoubleValue("runtime", json["stream_master"]), 0.0);
+  EXPECT_LT(getDoubleValue("runtime", json["stream_master"]), 10.0);
   EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
 }
 
