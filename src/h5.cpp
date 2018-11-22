@@ -14,7 +14,8 @@ void h5d::init_basics() {
   Type = Dataset.datatype();
   DSPTgt = Dataset.dataspace();
   ndims = DSPTgt.rank();
-  snow = {{0, 0}};
+  LOG(Sev::Debug, "h5d::init_basics");
+  snow = hdf5::Dimensions(ndims, 0);
   sext = DSPTgt.current_dimensions();
   smax = DSPTgt.maximum_dimensions();
   if (log_level >= 9) {
@@ -158,8 +159,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     uint32_t const MAX = BLOCK + 8;
     hdf5::Dimensions sext2;
     sext2 = sext;
-    sext2[0] = sext[0];
-    sext2[1] = sext[1];
+    LOG(Sev::Debug, "Before extending: {}  min target: {}", sext2.at(0),
+        snext + nlen_0);
     sext2[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
     if (sext2[0] - sext[0] > (1u << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
