@@ -52,17 +52,6 @@ protected:
   KafkaW::BrokerSettings Settings;
 };
 
-TEST_F(StreamerProcessTest, CreationNotYetDone) {
-  StreamerStandIn TestStreamer;
-  TestStreamer.ConsumerCreated = std::async(std::launch::async, []() {
-    std::this_thread::sleep_for(std::chrono::milliseconds(2500));
-    return std::pair<Status::StreamerStatus, ConsumerPtr>{
-        Status::StreamerStatus::OK, nullptr};
-  });
-  DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
-}
-
 TEST_F(StreamerProcessTest, InvalidFuture) {
   StreamerStandIn TestStreamer;
   TestStreamer.ConsumerCreated =
