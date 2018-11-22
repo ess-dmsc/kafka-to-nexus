@@ -25,11 +25,11 @@ RUN cd kafka_to_nexus && conan install --build=outdated ../kafka_to_nexus_src/co
 COPY ./src ../kafka_to_nexus_src/src
 COPY ./cmake ../kafka_to_nexus_src/cmake
 COPY ./Doxygen.conf ./CMakeLists.txt ../kafka_to_nexus_src/
+COPY docker_launch.sh /
 
 RUN cd kafka_to_nexus && \
     cmake -DCONAN="MANUAL" -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
     make -j8 && mkdir /output-files && conan remove "*" -s -f && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake tzdata && rm -rf ../../kafka_to_nexus_src/* && rm -rf /tmp/* /var/tmp/*
 
-COPY docker_launch.sh /
 
 CMD ["./docker_launch.sh"]
