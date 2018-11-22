@@ -6,9 +6,11 @@ ARG http_proxy
 
 ARG https_proxy
 
-# Install packages
+ENV BUILD_PACKAGES "build-essential git python python-pip cmake python-setuptools autoconf libtool automake"
+
+# Install packages - We don't want to purge kafkacat and tzdata after building
 RUN apt-get update -y && \
-    apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools kafkacat autoconf libtool automake tzdata && \
+    apt-get --no-install-recommends -y install $BUILD_PACKAGES kafkacat tzdata && \
     apt-get -y autoremove && \
     apt-get clean all && \
     rm -rf /var/lib/apt/lists/* && \
@@ -29,6 +31,6 @@ COPY docker_launch.sh /
 
 RUN cd kafka_to_nexus && \
     cmake -DCONAN="MANUAL" -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
-    make -j8 && mkdir /output-files && conan remove "*" -s -f && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake && rm -rf ../../kafka_to_nexus_src/* && rm -rf /tmp/* /var/tmp/*
+    make -j8 && mkdir /output-files && conan remove "*" -s -f && apt purge -y $BUILD_PACKAGES && rm -rf ../../kafka_to_nexus_src/* && rm -rf /tmp/* /var/tmp/*
 
 CMD ["./docker_launch.sh"]
