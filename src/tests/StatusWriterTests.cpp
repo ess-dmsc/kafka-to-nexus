@@ -155,8 +155,6 @@ TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
 
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
-  std::cout << json.dump(4) << "\n";
-
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("streamer"));
   ASSERT_NO_THROW(json["streamer"].at(Topic));
