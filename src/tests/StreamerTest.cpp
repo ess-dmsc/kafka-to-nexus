@@ -52,6 +52,30 @@ protected:
   KafkaW::BrokerSettings Settings;
 };
 
+class ConsumerEmptyStandIn : public KafkaW::Consumer {
+public:
+  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
+      : KafkaW::Consumer(Settings){};
+  MAKE_MOCK0(poll, KafkaW::PollStatus(), override);
+};
+
+TEST_F(StreamerProcessTest, CreationNotYetDone) {
+  StreamerStandIn TestStreamer;
+  ConsumerEmptyStandIn *EmptyPollerConsumer =
+      new ConsumerEmptyStandIn(Settings);
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(KafkaW::PollStatus::Empty())
+      .TIMES(1);
+  TestStreamer.ConsumerCreated =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2500));
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+}
+
 TEST_F(StreamerProcessTest, InvalidFuture) {
   StreamerStandIn TestStreamer;
   TestStreamer.ConsumerCreated =
@@ -69,13 +93,6 @@ TEST_F(StreamerProcessTest, BadConsumerCreation) {
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_THROW(TestStreamer.pollAndProcess(Demuxer), std::runtime_error);
 }
-
-class ConsumerEmptyStandIn : public KafkaW::Consumer {
-public:
-  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
-      : KafkaW::Consumer(Settings){};
-  MAKE_MOCK0(poll, KafkaW::PollStatus(), override);
-};
 
 TEST_F(StreamerProcessTest, EmptyPoll) {
   StreamerStandIn TestStreamer;
