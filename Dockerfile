@@ -29,7 +29,8 @@ COPY docker_launch.sh /
 
 RUN cd kafka_to_nexus && \
     cmake -DCONAN="MANUAL" -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
-    make -j8 && mkdir /output-files && conan remove "*" -s -f && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake tzdata && rm -rf ../../kafka_to_nexus_src/* && rm -rf /tmp/* /var/tmp/*
+    make -j8 && mkdir /output-files && conan remove "*" -s -f && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake && rm -rf ../../kafka_to_nexus_src/* && rm -rf /tmp/* /var/tmp/*
+
 
 
 CMD ["./docker_launch.sh"]
