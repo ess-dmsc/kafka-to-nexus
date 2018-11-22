@@ -63,9 +63,8 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(KafkaW::PollStatus::Empty())
-      .TIMES(1);
+  REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
+  TestStreamer.ConsumerCreated.get();
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
