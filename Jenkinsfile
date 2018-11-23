@@ -280,6 +280,7 @@ def get_system_tests_pipeline() {
             scl enable rh-python35 -- python -m pip install --user -r system-tests/requirements.txt
             """
           }  // stage
+          timeout(time: 30, activity: true)
           stage("System tests: Run") {
             // Stop and remove any containers that may have been from the job before,
             // i.e. if a Jenkins job has been aborted.
@@ -287,10 +288,12 @@ def get_system_tests_pipeline() {
             sh """cd system-tests/
             scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
             """
-            junit "system-tests/SystemTestsOutput.xml"
-            archiveArtifacts "system-tests/logs/*.log"
           }  // stage
         } finally {
+          stage("System tests: Archive") {
+            junit "system-tests/SystemTestsOutput.xml"
+            archiveArtifacts "system-tests/logs/*.log"
+          }
           stage ("System tests: Clean Up") {
             // The statements below return true because the build should pass
             // even if there are no docker containers or output files to be
