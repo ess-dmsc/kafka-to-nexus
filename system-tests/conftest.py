@@ -123,3 +123,15 @@ def docker_compose(request):
     options = common_options
     options["--file"] = ["docker-compose.yml"]
     return build_and_run(options, request)
+
+@pytest.fixture(scope="module")
+def docker_compose_multiple_instances(request):
+    """
+    :type request: _pytest.python.FixtureRequest
+    """
+    print("Started preparing test environment...", flush=True)
+
+    # Options must be given as long form
+    options = common_options
+    options["--file"] = ["docker-compose-multiple-instances.yml"]
+    return build_and_run(options, request)
