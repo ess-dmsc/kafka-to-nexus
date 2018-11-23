@@ -280,8 +280,8 @@ def get_system_tests_pipeline() {
             scl enable rh-python35 -- python -m pip install --user -r system-tests/requirements.txt
             """
           }  // stage
+          timeout(time: 30, activity: true)
           stage("System tests: Run") {
-            timeout(time: 30, activity: true)
             // Stop and remove any containers that may have been from the job before,
             // i.e. if a Jenkins job has been aborted.
             sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
