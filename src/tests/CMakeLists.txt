@@ -30,6 +30,7 @@ set(UnitTests_SRC
     MainOpt.cpp
     EventHistogramWriterTests.cpp
     FileWriterTaskTests.cpp
+    SourceTests.cpp
 )
 set(UnitTests_INC
     HDFFileTestHelper.h
