@@ -3,6 +3,7 @@
 #include <Source.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
+#include <schemas/ev42/ev42_rw.h>
 #include <trompeloeil.hpp>
 
 namespace ev42 {
@@ -12,6 +13,18 @@ namespace ev42 {
 using FileWriter::Source;
 using FileWriter::HDFWriterModule;
 using FileWriter::FlatbufferMessage;
+using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+
+class SourceTests : public ::testing::Test {
+public:
+  void SetUp() override {
+    auto &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
+    Readers.clear();
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FileWriter::Schemas::ev42::FlatbufferReader>
+        RegisterIt("ev42");
+  };
+};
 
 class WriterModuleDummy : public HDFWriterModule {
 public:
@@ -38,7 +51,7 @@ public:
   MAKE_MOCK1(write, WriteResult(FlatbufferMessage const &), override);
 };
 
-TEST(Source, ConstructorSetsMembers) {
+TEST_F(SourceTests, ConstructorSetsMembers) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
@@ -49,7 +62,7 @@ TEST(Source, ConstructorSetsMembers) {
   ASSERT_EQ(TestSource.sourcename(), SourceName);
 }
 
-TEST(Source, MovedSourceHasCorrectState) {
+TEST_F(SourceTests, MovedSourceHasCorrectState) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
@@ -61,7 +74,7 @@ TEST(Source, MovedSourceHasCorrectState) {
   ASSERT_EQ(TestSource2.sourcename(), SourceName);
 }
 
-TEST(Source, ProcessMessagePassesMessageToWriterModule) {
+TEST_F(SourceTests, ProcessMessagePassesMessageToWriterModule) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("ev42");
@@ -79,7 +92,7 @@ TEST(Source, ProcessMessagePassesMessageToWriterModule) {
             TestSource.process_message(Message));
 }
 
-TEST(Source, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
+TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("ev42");
@@ -97,7 +110,7 @@ TEST(Source, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
             TestSource.process_message(Message));
 }
 
-TEST(Source, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
+TEST_F(SourceTests, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
@@ -113,7 +126,7 @@ TEST(Source, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
             TestSource.process_message(Message));
 }
 
-TEST(Source, ProcessMessageWithoutWriterModuleReturnsError) {
+TEST_F(SourceTests, ProcessMessageWithoutWriterModuleReturnsError) {
   std::string SourceName("TestSourceName");
   std::string ModuleName("ev42");
   Source TestSource(SourceName, ModuleName, {nullptr});
