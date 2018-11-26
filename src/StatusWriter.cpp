@@ -13,34 +13,27 @@ nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
   return Value;
 }
 
-nlohmann::json
-StreamerToJson(MessageInfo &Information,
-               const std::chrono::milliseconds &SinceLastMessage) {
+nlohmann::json StreamerToJson(MessageInfo &Information) {
   std::pair<double, double> Size = messageSize(Information);
-  double Frequency =
-      FileWriter::Status::messageFrequency(Information, SinceLastMessage);
-  double Throughput =
-      FileWriter::Status::messageThroughput(Information, SinceLastMessage);
 
-  nlohmann::json Status = {"status",
-                           {{"messages", Information.getMessages().first},
-                            {"Mbytes", Information.getMbytes().first},
-                            {"errors", Information.getErrors()}}};
+  nlohmann::json Status = {
+      "rates",
+      {
+          {"messages", Information.getMessages().first},
+          {"Mbytes", Information.getMbytes().first},
+          {"errors", Information.getErrors()},
+          {"size",
+           {{"average", Size.first}, {"stdandard_deviation", Size.second}}},
+      }};
 
-  nlohmann::json Statistics = {
-      "statistics",
-      {{"size",
-        {{"average", Size.first}, {"stdandard_deviation", Size.second}}},
-       {"frequency", Frequency},
-       {"throughput", Throughput}}};
-
-  return nlohmann::json{Status, Statistics};
+  return nlohmann::json{Status};
 }
 
 StatusWriter::StatusWriter() {
   json = {{"type", "stream_master_status"},
           {"next_message_eta_ms", 0},
-          {"job_id", 0}};
+          {"job_id", 0},
+          {"timestamp", 0}};
 }
 
 void StatusWriter::setJobId(const std::string &JobId) {
@@ -50,11 +43,13 @@ void StatusWriter::setJobId(const std::string &JobId) {
 void StatusWriter::write(StreamMasterInfo &Information) {
   json["next_message_eta_ms"] = Information.getTimeToNextMessage().count();
   json["stream_master"] = StreamMasterToJson(Information);
+  json["timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::steady_clock::now().time_since_epoch())
+                          .count();
 }
 
-void StatusWriter::write(MessageInfo &Information, const std::string &Topic,
-                         const std::chrono::milliseconds &SinceLastMessage) {
-  json["streamer"][Topic] = StreamerToJson(Information, SinceLastMessage);
+void StatusWriter::write(MessageInfo &Information, const std::string &Topic) {
+  json["streamer"][Topic] = StreamerToJson(Information);
 }
 
 std::string StatusWriter::getJson() {
