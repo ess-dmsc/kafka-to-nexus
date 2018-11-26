@@ -166,6 +166,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     try {
       StreamSettingsList.push_back(
           extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
+      StreamSettingsList.back().InitializedOk = true;
     } catch (json::parse_error const &E) {
       LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
@@ -174,6 +175,8 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
           "Exception while initializing writer module  what: {}  json: {}",
           E.what(), StreamHDFInfo.ConfigStream);
       continue;
+    } catch (...) {
+      LOG(Sev::Error, "Unknown error catched");
     }
   }
   return StreamSettingsList;
