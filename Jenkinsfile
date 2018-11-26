@@ -289,10 +289,6 @@ def get_system_tests_pipeline() {
             """
           }  // stage
         } finally {
-          stage("System tests: Archive") {
-            junit "system-tests/SystemTestsOutput.xml"
-            archiveArtifacts "system-tests/logs/*.log"
-          }
           stage ("System tests: Clean Up") {
             // The statements below return true because the build should pass
             // even if there are no docker containers or output files to be
@@ -301,6 +297,10 @@ def get_system_tests_pipeline() {
             docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
             """
           }  // stage
+          stage("System tests: Archive") {
+            junit "system-tests/SystemTestsOutput.xml"
+            archiveArtifacts "system-tests/logs/*.log"
+          }
         }  // try/finally
       } // dir
     }  // node
