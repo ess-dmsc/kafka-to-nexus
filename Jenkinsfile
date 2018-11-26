@@ -287,8 +287,6 @@ def get_system_tests_pipeline() {
             sh """cd system-tests/
             scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
             """
-            junit "system-tests/SystemTestsOutput.xml"
-            archiveArtifacts "system-tests/logs/*.log"
           }  // stage
         } finally {
           stage ("System tests: Clean Up") {
@@ -299,6 +297,10 @@ def get_system_tests_pipeline() {
             docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
             """
           }  // stage
+          stage("System tests: Archive") {
+            junit "system-tests/SystemTestsOutput.xml"
+            archiveArtifacts "system-tests/logs/*.log"
+          }
         }  // try/finally
       } // dir
     }  // node
