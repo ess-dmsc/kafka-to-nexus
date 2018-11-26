@@ -163,7 +163,7 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
 }
 
-class StreamerTestDummyReader : public FileWriter::FlatbufferReader {
+class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
 public:
   bool verify(FlatbufferMessage const &Message) const override { return true; }
   std::string source_name(FlatbufferMessage const &Message) const override {
@@ -171,6 +171,17 @@ public:
   }
   std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
     return 0;
+  }
+};
+
+class StreamerTestDummyReader : public FileWriter::FlatbufferReader {
+public:
+  bool verify(FlatbufferMessage const &Message) const override { return true; }
+  std::string source_name(FlatbufferMessage const &Message) const override {
+    return std::string("SomeRandomSourceName");
+  }
+  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+    return 1;
   }
 };
 
@@ -227,6 +238,37 @@ protected:
   KafkaW::BrokerSettings Settings;
   StreamerStandIn TestStreamer;
 };
+
+TEST_F(StreamerProcessTimingTest, MessageHasNoTimestamp) {
+  FlatbufferReaderRegistry::Registrar<StreamerNoTimestampTestDummyReader>
+      RegisterIt(ReaderKey);
+  TestStreamer.Options.StartTimestamp = std::chrono::milliseconds{1};
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  std::unordered_map<std::string, Source> SourceList;
+  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  SourceList.insert(std::move(TempPair));
+  TestStreamer.setSources(SourceList);
+  ConsumerEmptyStandIn *EmptyPollerConsumer =
+      new ConsumerEmptyStandIn(Settings);
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(KafkaW::PollStatus::newWithMsg(
+          std::unique_ptr<KafkaW::Msg>(generateKafkaMsg(
+              reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
+              DataBuffer.size()))))
+      .TIMES(1);
+  TestStreamer.ConsumerCreated =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
+}
 
 TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
