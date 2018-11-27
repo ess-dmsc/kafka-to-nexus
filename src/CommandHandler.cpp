@@ -253,9 +253,9 @@ void CommandHandler::handleNew(std::string const &Command) {
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
-  if (auto ThrowOnUninitialzedStreamMaybe =
+  if (auto ThrowOnUninitializedStreamMaybe =
           find<bool>("throw_on_uninitialized_stream", Doc)) {
-    if (ThrowOnUninitialzedStreamMaybe.inner()) {
+    if (ThrowOnUninitializedStreamMaybe.inner()) {
       for (auto const &Item : StreamHDFInfoList) {
         if (Item.InitializedOk == false) {
           throw std::runtime_error(fmt::format("Could not initialize {}  {}",
