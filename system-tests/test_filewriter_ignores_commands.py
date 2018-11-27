@@ -12,8 +12,7 @@ def test_ignores_commands_with_incorrect_id(docker_compose_multiple_instances):
     for i in range(15):
         containers = check_output('docker ps', shell=True)
         if b"filewriter1" in containers and b"filewriter2" not in containers:
-            assert True
-            break
+            return True
         else:
             sleep(1)
-    assert False
+    return False
