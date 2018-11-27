@@ -135,13 +135,15 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       ds_event_index.reset();
       ds_cue_index.reset();
       ds_cue_timestamp_zero.reset();
+      throw std::runtime_error("Dataset init failed");
     }
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     HDFFile::writeAttributes(HDFGroup, &AttributesJson);
-  } catch (std::exception &e) {
-    auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "ev42 could not init hdf_parent: {}  trace: {}",
-        static_cast<std::string>(HDFGroup.link().path()), message);
+  } catch (std::exception const &E) {
+    auto message = hdf5::error::print_nested(E);
+    throw std::runtime_error(
+        fmt::format("ev42 could not init hdf_parent: {}  trace: {}",
+                    static_cast<std::string>(HDFGroup.link().path()), message));
   }
   return HDFWriterModule::InitResult::OK();
 }
@@ -178,6 +180,9 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
     ds_event_index.reset();
     ds_cue_index.reset();
     ds_cue_timestamp_zero.reset();
+    throw std::runtime_error(
+        fmt::format("ev42 could not init hdf_parent: {}",
+                    static_cast<std::string>(HDFGroup.link().path())));
   }
   return HDFWriterModule::InitResult::OK();
 }
