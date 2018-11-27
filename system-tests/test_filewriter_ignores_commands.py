@@ -6,10 +6,10 @@ from subprocess import check_output
 # Exit command tested, shouldn't matter if the file-writing has started or not.
 
 def test_ignores_commands_with_incorrect_id(docker_compose_multiple_instances):
-    sleep(10)
     producer = create_producer()
-    send_writer_command("commands/writer-exit-single.json", producer, "TEST_writerCommandMultiple")
     sleep(10)
+    send_writer_command("commands/writer-exit-single.json", producer, "TEST_writerCommandMultiple")
+    sleep(15)
     containers = check_output('docker ps', shell=True)
     assert b"filewriter1" in containers
     assert b"filewriter2" not in containers
