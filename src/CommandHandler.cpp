@@ -315,7 +315,7 @@ void CommandHandler::addStreamSourceToWriterModule(
     std::unique_ptr<FileWriterTask> &Task) {
   bool UseParallelWriter = false;
 
-  for (auto &StreamSettings : StreamSettingsList) {
+  for (auto const &StreamSettings : StreamSettingsList) {
     if (!UseParallelWriter || !StreamSettings.RunParallel) {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
       HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
@@ -366,7 +366,6 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
     }
-    StreamSettings.ReopenedOk = true;
   }
 }
 

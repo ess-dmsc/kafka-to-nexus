@@ -18,7 +18,6 @@ struct StreamSettings {
   std::string Source;
   bool RunParallel = false;
   std::string ConfigStreamJson;
-  bool ReopenedOk = false;
 };
 
 /// \brief If fails to parse the `Command`, adds error info and throws
