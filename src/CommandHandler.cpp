@@ -166,7 +166,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
     try {
       StreamSettingsList.push_back(
           extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
-      StreamHDFInfo.InitializedOk = true;
+      StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
       LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
@@ -253,12 +253,12 @@ void CommandHandler::handleNew(std::string const &Command) {
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
-  if (auto ThrowOnUninitializedStreamMaybe =
-          find<bool>("throw_on_uninitialized_stream", Doc)) {
-    if (ThrowOnUninitializedStreamMaybe.inner()) {
+  if (auto ThrowOnUninitialisedStreamMaybe =
+          find<bool>("abort_on_uninitialised_stream", Doc)) {
+    if (ThrowOnUninitialisedStreamMaybe.inner()) {
       for (auto const &Item : StreamHDFInfoList) {
-        if (Item.InitializedOk == false) {
-          throw std::runtime_error(fmt::format("Could not initialize {}  {}",
+        if (Item.InitialisedOk == false) {
+          throw std::runtime_error(fmt::format("Could not initialise {}  {}",
                                                Item.HDFParentName,
                                                Item.ConfigStream));
         }

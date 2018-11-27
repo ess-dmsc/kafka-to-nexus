@@ -537,7 +537,7 @@ TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
   )"");
   Command["file_attributes"]["file_name"] = Filename;
   Command["job_id"] = Filename;
-  Command["throw_on_uninitialized_stream"] = true;
+  Command["abort_on_uninitialised_stream"] = true;
   auto CommandString = Command.dump();
   ASSERT_THROW(CommandHandler.handle(CommandString), std::runtime_error);
 

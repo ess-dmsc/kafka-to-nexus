@@ -262,15 +262,15 @@ example:
 ```
 
 
-### Abort writing when stream fails to initialize
+### Abort writing when stream fails to initialise
 
 By default, the filewriter will continue to write a file even when a stream
-fails to initialize.  In order to abort writing of that file instead, set in the
+fails to initialise.  In order to abort writing of that file instead, set in the
 `FileWriter_new` command:
 
 ```json
 {
-  "throw_on_uninitialized_stream": true
+  "abort_on_uninitialised_stream": true
 }
 ```
 
