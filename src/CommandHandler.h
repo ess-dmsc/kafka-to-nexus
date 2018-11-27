@@ -90,9 +90,9 @@ public:
   getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
-  void addStreamSourceToWriterModule(
-      std::vector<StreamSettings> &stream_settings_list,
-      std::unique_ptr<FileWriterTask> &fwt);
+  void
+  addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
+                                std::unique_ptr<FileWriterTask> &Task);
 
   std::vector<StreamHDFInfo>
   initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
