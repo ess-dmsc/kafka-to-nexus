@@ -151,6 +151,13 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK;
   }
 
+  if (Message->getTimestamp() == 0) {
+    LOG(Sev::Error,
+        "Message from topic \"{}\", source \"{}\" has no timestamp, ignoring",
+        MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::ERR;
+  }
+
   // Timestamp of message is before the "start" timestamp
   if (static_cast<std::int64_t>(Message->getTimestamp()) <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
