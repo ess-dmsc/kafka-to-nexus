@@ -472,3 +472,69 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
   }
   unlink(Filename.c_str());
 }
+
+TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
+  using FileWriter::CommandHandler;
+  using FileWriter::FlatbufferMessage;
+  std::string Filename("Test.Schema_f142.UninitializedStreamOptionallyThrows");
+  unlink(Filename.c_str());
+  MainOpt MainOpt;
+  CommandHandler CommandHandler(MainOpt, nullptr);
+  auto Command = json::parse(R""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "tmp-dummy-hdf"
+  },
+  "job_id": "dummy",
+  "broker": "//localhost:202020",
+  "nexus_structure": {
+    "children": [
+      {
+        "name": "some_nxlog",
+        "type": "group",
+        "children": [
+          {
+            "nname": "dummy_f142",
+            "type": "stream",
+            "stream": {
+              "writer_module": "f142",
+              "topic": "dummy_topic",
+              "source": "dummy_source_1",
+              "type": "double",
+              "array_size": 3
+            }
+          },
+          {
+            "nname": "dummy_f142",
+            "type": "stream",
+            "stream": {
+              "writer_module": "f142",
+              "topic": "dummy_topic",
+              "source": "dummy_source_2",
+              "type": "double",
+              "array_size": 3
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+  )"");
+  Command["file_attributes"]["file_name"] = Filename;
+  Command["job_id"] = Filename;
+  Command["throw_on_uninitialized_stream"] = true;
+  auto CommandString = Command.dump();
+  ASSERT_THROW(CommandHandler.handle(CommandString), std::runtime_error);
+
+  auto CommandStop = json::parse(R""(
+{
+  "cmd": "file_writer_tasks_clear_all",
+  "recv_type": "FileWriter"
+}
+  )"");
+  CommandString = CommandStop.dump();
+  CommandHandler.handle(CommandString);
+  unlink(Filename.c_str());
+}

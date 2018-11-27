@@ -18,7 +18,7 @@ struct StreamSettings {
   std::string Source;
   bool RunParallel = false;
   std::string ConfigStreamJson;
-  bool InitializedOk = false;
+  bool ReopenedOk = false;
 };
 
 /// \brief If fails to parse the `Command`, adds error info and throws
@@ -91,7 +91,7 @@ public:
 
 private:
   void addStreamSourceToWriterModule(
-      const std::vector<StreamSettings> &stream_settings_list,
+      std::vector<StreamSettings> &stream_settings_list,
       std::unique_ptr<FileWriterTask> &fwt);
 
   std::vector<StreamHDFInfo>

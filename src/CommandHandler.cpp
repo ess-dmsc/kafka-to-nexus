@@ -159,14 +159,14 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 /// Helper to extract information about the provided streams.
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
-    std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
+    std::vector<StreamHDFInfo> &StreamHDFInfoList) {
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
-  for (auto const &StreamHDFInfo : StreamHDFInfoList) {
+  for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
       StreamSettingsList.push_back(
           extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
-      StreamSettingsList.back().InitializedOk = true;
+      StreamHDFInfo.InitializedOk = true;
     } catch (json::parse_error const &E) {
       LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
@@ -253,6 +253,19 @@ void CommandHandler::handleNew(std::string const &Command) {
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
+  if (auto ThrowOnUninitialzedStreamMaybe =
+          find<bool>("throw_on_uninitialized_stream", Doc)) {
+    if (ThrowOnUninitialzedStreamMaybe.inner()) {
+      for (auto const &Item : StreamHDFInfoList) {
+        if (Item.InitializedOk == false) {
+          throw std::runtime_error(fmt::format("Could not initialize {}  {}",
+                                               Item.HDFParentName,
+                                               Item.ConfigStream));
+        }
+      }
+    }
+  }
+
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   // Must be done before StreamMaster instantiation
@@ -296,11 +309,11 @@ void CommandHandler::handleNew(std::string const &Command) {
 /// \param StreamSettingsList The settings for the stream.
 /// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
-    const std::vector<StreamSettings> &StreamSettingsList,
+    std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   bool UseParallelWriter = false;
 
-  for (auto const &StreamSettings : StreamSettingsList) {
+  for (auto &StreamSettings : StreamSettingsList) {
     if (UseParallelWriter && StreamSettings.RunParallel) {
     } else {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
@@ -352,6 +365,7 @@ void CommandHandler::addStreamSourceToWriterModule(
         continue;
       }
     }
+    StreamSettings.ReopenedOk = true;
   }
 }
 
