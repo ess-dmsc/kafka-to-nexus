@@ -171,12 +171,14 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
       LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
     } catch (std::runtime_error const &E) {
-      LOG(Sev::Warning,
-          "Exception while initializing writer module  what: {}  json: {}",
-          E.what(), StreamHDFInfo.ConfigStream);
+      LOG(Sev::Warning, "Exception while initialising writer module  what: {}  "
+                        "parent: {}  json: {}",
+          E.what(), StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
       continue;
     } catch (...) {
-      LOG(Sev::Error, "Unknown error caught");
+      LOG(Sev::Error, "Unknown error caught while trying to initialise stream  "
+                      "parent: {}  json: {}",
+          StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
     }
   }
   return StreamSettingsList;
