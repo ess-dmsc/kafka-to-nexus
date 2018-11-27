@@ -394,7 +394,6 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
         "type": "group",
         "children": [
           {
-            "nname": "dummy_f142",
             "type": "stream",
             "stream": {
               "writer_module": "f142",
@@ -405,7 +404,6 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
             }
           },
           {
-            "nname": "dummy_f142",
             "type": "stream",
             "stream": {
               "writer_module": "f142",
@@ -495,7 +493,6 @@ TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
         "type": "group",
         "children": [
           {
-            "nname": "dummy_f142",
             "type": "stream",
             "stream": {
               "writer_module": "f142",
@@ -506,7 +503,6 @@ TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
             }
           },
           {
-            "nname": "dummy_f142",
             "type": "stream",
             "stream": {
               "writer_module": "f142",
