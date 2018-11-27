@@ -199,34 +199,3 @@ TEST(StatFunctions, messageSize) {
   EXPECT_DOUBLE_EQ(MessageSize.first, 0.050688);
   EXPECT_DOUBLE_EQ(MessageSize.second, 0.0297077677833032);
 }
-
-TEST(StatFunctions, messageFrequency) {
-  std::chrono::milliseconds TimeBetweenMessages{1500};
-  const size_t NumMessages = 100;
-  const size_t MessageBytes = 1024;
-  MessageInfo Message;
-  for (size_t i = 0; i < NumMessages; ++i) {
-    Message.newMessage(MessageBytes * i);
-  }
-
-  double Frequency =
-      FileWriter::Status::messageFrequency(Message, TimeBetweenMessages);
-  EXPECT_DOUBLE_EQ(Frequency,
-                   NumMessages / (1e-3 * TimeBetweenMessages.count()));
-}
-
-TEST(StatFunctions, messageThroughput) {
-  std::chrono::milliseconds TimeBetweenMessages{1500};
-  const size_t NumMessages = 100;
-  const size_t MessageBytes = 1024;
-  MessageInfo Message;
-  for (size_t i = 0; i < NumMessages; ++i) {
-    Message.newMessage(MessageBytes * i);
-  }
-
-  double Throughput =
-      FileWriter::Status::messageThroughput(Message, TimeBetweenMessages);
-  EXPECT_DOUBLE_EQ(Throughput,
-                   ((NumMessages - 1) * NumMessages / 2 * MessageBytes * 1e-6) /
-                       (1e-3 * TimeBetweenMessages.count()));
-}

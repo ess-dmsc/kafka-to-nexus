@@ -6,8 +6,8 @@ namespace Status {
 
 nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
   nlohmann::json Value = {{"state", Err2Str(Information.StreamMasterStatus)},
-                          {"messages", Information.getMessages().first},
-                          {"Mbytes", Information.getMbytes().first},
+                          {"messages", Information.getMessages()},
+                          {"Mbytes", Information.getMbytes()},
                           {"errors", Information.getErrors()},
                           {"runtime", Information.runTime().count()}};
   return Value;
@@ -19,8 +19,8 @@ nlohmann::json StreamerToJson(MessageInfo &Information) {
   nlohmann::json Status = {
       "rates",
       {
-          {"messages", Information.getMessages().first},
-          {"Mbytes", Information.getMbytes().first},
+          {"messages", Information.getMessages()},
+          {"Mbytes", Information.getMbytes()},
           {"errors", Information.getErrors()},
           {"size",
            {{"average", Size.first}, {"stdandard_deviation", Size.second}}},

@@ -11,7 +11,7 @@ set(UnitTests_SRC
     helper.cpp
     json.cpp
     uri.cpp
-    status_test.cpp
+    StatusTest.cpp
     StatusWriterTests.cpp
     CommandHandlerTests.cpp
     stream_master.cpp
