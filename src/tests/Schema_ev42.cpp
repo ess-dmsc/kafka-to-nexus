@@ -15,7 +15,23 @@
 
 using nlohmann::json;
 
-class Schema_ev42 : public testing::Test {};
+class Schema_ev42 : public ::testing::Test {
+public:
+  void SetUp() override {
+    try {
+      FileWriter::FlatbufferReaderRegistry::Registrar<
+          FileWriter::Schemas::ev42::FlatbufferReader>
+          RegisterIt("ev42");
+    } catch (...) {
+    }
+    try {
+      FileWriter::HDFWriterModuleRegistry::Registrar<
+          FileWriter::Schemas::ev42::HDFWriterModule>
+          RegisterIt("ev42");
+    } catch (...) {
+    }
+  }
+};
 
 TEST_F(Schema_ev42, UninitializedStreamOptionallyThrows) {
   using FileWriter::CommandHandler;

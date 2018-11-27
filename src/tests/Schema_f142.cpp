@@ -8,6 +8,7 @@
 #include "Msg.h"
 #include "helper.h"
 #include "json.h"
+#include "schemas/f142/FlatbufferReader.h"
 #include "schemas/f142/f142_rw.h"
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
@@ -15,7 +16,23 @@
 
 using nlohmann::json;
 
-class Schema_f142 : public testing::Test {};
+class Schema_f142 : public ::testing::Test {
+public:
+  void SetUp() override {
+    try {
+      FileWriter::FlatbufferReaderRegistry::Registrar<
+          FileWriter::Schemas::f142::FlatbufferReader>
+          RegisterIt("f142");
+    } catch (...) {
+    }
+    try {
+      FileWriter::HDFWriterModuleRegistry::Registrar<
+          FileWriter::Schemas::f142::HDFWriterModule>
+          RegisterIt("f142");
+    } catch (...) {
+    }
+  }
+};
 
 hdf5::file::File createInMemoryTestFile(std::string const &Filename,
                                         bool OnDisk = false) {
