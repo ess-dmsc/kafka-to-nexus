@@ -314,8 +314,7 @@ void CommandHandler::addStreamSourceToWriterModule(
   bool UseParallelWriter = false;
 
   for (auto &StreamSettings : StreamSettingsList) {
-    if (UseParallelWriter && StreamSettings.RunParallel) {
-    } else {
+    if (!UseParallelWriter || !StreamSettings.RunParallel) {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
       HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
 
