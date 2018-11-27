@@ -176,7 +176,7 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
           E.what(), StreamHDFInfo.ConfigStream);
       continue;
     } catch (...) {
-      LOG(Sev::Error, "Unknown error catched");
+      LOG(Sev::Error, "Unknown error caught");
     }
   }
   return StreamSettingsList;
