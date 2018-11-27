@@ -264,8 +264,9 @@ example:
 
 ### Abort writing when stream fails to initialize
 
-By default, the filewriter will continue to write a fil even when a stream fails to initialize.  In order to
-instead abort writing of that file, set in the `FileWriter_new` command:
+By default, the filewriter will continue to write a file even when a stream
+fails to initialize.  In order to abort writing of that file instead, set in the
+`FileWriter_new` command:
 
 ```json
 {
