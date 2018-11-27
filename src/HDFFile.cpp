@@ -898,7 +898,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
 
     writeStringAttribute(RootGroup, "HDF5_Version", h5VersionStringLinked());
     writeStringAttribute(RootGroup, "file_name",
-                         H5File.id().file_name().stem().string());
+                         H5File.id().file_name().string());
     writeStringAttribute(
         RootGroup, "creator",
         fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
