@@ -22,7 +22,7 @@ nlohmann::json StreamerToJson(MessageInfo &Information) {
           {"messages", Information.getMessages()},
           {"Mbytes", Information.getMbytes()},
           {"errors", Information.getErrors()},
-          {"size",
+          {"message_size",
            {{"average", Size.first}, {"stdandard_deviation", Size.second}}},
       }};
 

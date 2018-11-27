@@ -153,10 +153,11 @@ TEST(StatusWriter, addStreamEmptyMessageInfo) {
   ASSERT_NO_THROW(json["streamer"].at(Topic));
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
 
-  EXPECT_EQ(getDoubleValue("average", json["streamer"][Topic]["rates"]["size"]),
+  EXPECT_EQ(getDoubleValue("average",
+                           json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
   EXPECT_EQ(getDoubleValue("stdandard_deviation",
-                           json["streamer"][Topic]["rates"]["size"]),
+                           json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
   EXPECT_EQ(getDoubleValue("Mbytes", json["streamer"][Topic]["rates"]), 0.0);
   EXPECT_EQ(getIntegerValue("errors", json["streamer"][Topic]["rates"]), 0);
@@ -180,10 +181,10 @@ TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   ASSERT_NO_THROW(json["streamer"].at(Topic));
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
 
-  EXPECT_EQ(getDoubleValue("average", json["streamer"][Topic]["rates"]["size"]),
+  EXPECT_EQ(getDoubleValue("average", json["streamer"][Topic]["rates"]["message_size"]),
             MessageSizeBytes / NumMessages * 1e-6);
   EXPECT_EQ(getDoubleValue("stdandard_deviation",
-                           json["streamer"][Topic]["rates"]["size"]),
+                           json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
 }
 
