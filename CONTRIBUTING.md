@@ -8,7 +8,7 @@ Please refer to [LLVM documentation](https://llvm.org/docs/CodingStandards.html)
 
 ## Issues 
 
-For issues that may require adding breaking changes or changes in the functionality of the code (ie not tiny bits of refactoring) create a ticket on the ESS Jira board with the label `FW&FW`
+For issues that require changes in the functionality of the code (i.e. not tiny bits of refactoring) create a ticket on the [ESS JIRA board](https://jira.esss.lu.se/secure/RapidBoard.jspa?rapidView=167&view=detail&quickFilter=2154) with the label `FW&FW`
 
 ## Branching
 
