@@ -239,7 +239,8 @@ protected:
   StreamerStandIn TestStreamer;
 };
 
-TEST_F(StreamerProcessTimingTest, MessageHasNoTimestamp) {
+TEST_F(StreamerProcessTimingTest,
+       pollAndProcessReturnsErrIfMessageHasNoTimestamp) {
   FlatbufferReaderRegistry::Registrar<StreamerNoTimestampTestDummyReader>
       RegisterIt(ReaderKey);
   TestStreamer.Options.StartTimestamp = std::chrono::milliseconds{1};

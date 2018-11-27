@@ -151,7 +151,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK;
   }
 
-  if (static_cast<std::int64_t>(Message->getTimestamp()) == 0) {
+  if (Message->getTimestamp() == 0) {
     LOG(Sev::Error,
         "Message from topic \"{}\", source \"{}\" has no timestamp, ignoring",
         MessageProcessor.topic(), Message->getSourceName());
