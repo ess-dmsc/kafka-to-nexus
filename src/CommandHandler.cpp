@@ -259,7 +259,7 @@ void CommandHandler::handleNew(std::string const &Command) {
           find<bool>("abort_on_uninitialised_stream", Doc)) {
     if (ThrowOnUninitialisedStreamMaybe.inner()) {
       for (auto const &Item : StreamHDFInfoList) {
-        if (Item.InitialisedOk == false) {
+        if (!Item.InitialisedOk) {
           throw std::runtime_error(fmt::format("Could not initialise {}  {}",
                                                Item.HDFParentName,
                                                Item.ConfigStream));
