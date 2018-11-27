@@ -9,7 +9,11 @@ def test_ignores_commands_with_incorrect_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(10)
     send_writer_command("commands/writer-exit-single.json", producer, "TEST_writerCommandMultiple")
-    sleep(15)
-    containers = check_output('docker ps', shell=True)
-    assert b"filewriter1" in containers
-    assert b"filewriter2" not in containers
+    for i in range(15):
+        containers = check_output('docker ps', shell=True)
+        if b"filewriter1" in containers and b"filewriter2" not in containers:
+            assert True
+            break
+        else:
+            sleep(1)
+    assert False
