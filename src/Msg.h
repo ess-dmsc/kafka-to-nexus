@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KafkaW/Msg.h"
+#include "KafkaW/ConsumerMessage.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>
@@ -67,7 +67,7 @@ public:
     return msg;
   }
 
-  static Msg fromKafkaW(std::unique_ptr<KafkaW::Msg> &&KafkaWMsg) {
+  static Msg fromKafkaW(std::unique_ptr<KafkaW::ConsumerMessage> &&KafkaWMsg) {
     Msg msg;
     msg.type = MsgType::KafkaW;
     msg.var.kafkaw_msg = KafkaWMsg.release();
@@ -132,7 +132,7 @@ public:
   MsgType type = MsgType::Invalid;
   union Var {
     RdKafka::Message *rdkafka_msg;
-    KafkaW::Msg *kafkaw_msg;
+    KafkaW::ConsumerMessage *kafkaw_msg;
     char const *owned;
     char const *shared;
     char const *cheap;

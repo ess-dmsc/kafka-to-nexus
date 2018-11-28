@@ -122,7 +122,7 @@ set(kafka_to_nexus_INC
   KafkaW/BrokerSettings.h
   KafkaW/TopicSettings.h
   KafkaW/KafkaW.h
-  KafkaW/Msg.h
+  KafkaW/ConsumerMessage.h
   KafkaW/Consumer.h
   KafkaW/Producer.h
   KafkaW/ProducerTopic.h
@@ -130,7 +130,7 @@ set(kafka_to_nexus_INC
   logger.h
   MainOpt.h
   Master.h
-  MasterI.h
+        MasterInterface.h
   Msg.h
   NeXusDataset.h
   ProcessMessageResult.h

@@ -6,9 +6,9 @@
 using trompeloeil::_;
 
 namespace FileWriter {
-std::unique_ptr<KafkaW::Msg> generateKafkaMsg(unsigned char const *DataPtr,
+std::unique_ptr<KafkaW::ConsumerMessage> generateKafkaMsg(unsigned char const *DataPtr,
                                               size_t const Size) {
-  return std::make_unique<KafkaW::Msg>(DataPtr, Size, std::function<void()>());
+  return std::make_unique<KafkaW::ConsumerMessage>(DataPtr, Size, std::function<void()>());
 }
 class StreamerInitTest : public ::testing::Test {
 public:
@@ -56,7 +56,7 @@ class ConsumerEmptyStandIn : public KafkaW::Consumer {
 public:
   ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
       : KafkaW::Consumer(Settings){};
-  MAKE_MOCK0(poll, std::unique_ptr<KafkaW::Msg>(), override);
+  MAKE_MOCK0(poll, std::unique_ptr<KafkaW::ConsumerMessage>(), override);
 };
 
 TEST_F(StreamerProcessTest, CreationNotYetDone) {
@@ -98,7 +98,7 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::Empty))
+      .RETURN(std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::Empty))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -114,7 +114,7 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP))
+      .RETURN(std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -130,7 +130,7 @@ TEST_F(StreamerProcessTest, PollingError) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::Err))
+      .RETURN(std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::Err))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -198,7 +198,7 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::unique_ptr<KafkaW::Msg>(
+      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(
           generateKafkaMsg(DataBuffer, sizeof(DataBuffer))))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
@@ -256,7 +256,7 @@ TEST_F(StreamerProcessTimingTest,
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::unique_ptr<KafkaW::Msg>(generateKafkaMsg(
+      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
           DataBuffer.size())))
       .TIMES(1);
@@ -368,10 +368,10 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   auto PollResult = [this, &CallCounter]() {
     CallCounter++;
     if (CallCounter == 1) {
-      std::make_unique<KafkaW::Msg>(generateKafkaMsg(
+      std::make_unique<KafkaW::ConsumerMessage>(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(this->DataBuffer.c_str()),
           this->DataBuffer.size()));
-      return std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP);
+      return std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP);
     }
   };
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(PollResult()).TIMES(2);
@@ -408,7 +408,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP))
+      .RETURN(std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
       .TIMES(1);
 
   TestStreamer.ConsumerCreated =
@@ -442,7 +442,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP))
+      .RETURN(std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
       .TIMES(1);
 
   TestStreamer.ConsumerCreated =
@@ -482,7 +482,7 @@ TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP))
+      .RETURN(std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
       .TIMES(1);
 
   TestStreamer.ConsumerCreated =
