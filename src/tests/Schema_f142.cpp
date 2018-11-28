@@ -450,22 +450,20 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
   auto &Demux =
       CommandHandler.getFileWriterTaskByJobID(Filename)->demuxers().at(0);
   uint64_t Timestamp = 42;
-  auto Flatbuffer = makeArrayDouble("dummy_source_2", Timestamp, {1, 2, 3});
-  Demux.process_message(FlatbufferMessage(
-      reinterpret_cast<char const *>(Flatbuffer->GetBufferPointer()),
-      Flatbuffer->GetSize()));
-  Flatbuffer = makeArrayDouble("dummy_source_1", Timestamp, {4, 5, 6});
-  Demux.process_message(FlatbufferMessage(
-      reinterpret_cast<char const *>(Flatbuffer->GetBufferPointer()),
-      Flatbuffer->GetSize()));
-  Flatbuffer = makeArrayDouble("dummy_source_2", Timestamp, {7, 8, 9});
-  Demux.process_message(FlatbufferMessage(
-      reinterpret_cast<char const *>(Flatbuffer->GetBufferPointer()),
-      Flatbuffer->GetSize()));
-  Flatbuffer = makeArrayDouble("dummy_source_1", Timestamp, {10, 11, 12});
-  Demux.process_message(FlatbufferMessage(
-      reinterpret_cast<char const *>(Flatbuffer->GetBufferPointer()),
-      Flatbuffer->GetSize()));
+  auto toMessage =
+      [](std::unique_ptr<flatbuffers::FlatBufferBuilder> const &Builder) {
+        return FlatbufferMessage(
+            reinterpret_cast<char const *>(Builder->GetBufferPointer()),
+            Builder->GetSize());
+      };
+  Demux.process_message(
+      toMessage(makeArrayDouble("dummy_source_2", Timestamp, {1, 2, 3})));
+  Demux.process_message(
+      toMessage(makeArrayDouble("dummy_source_1", Timestamp, {4, 5, 6})));
+  Demux.process_message(
+      toMessage(makeArrayDouble("dummy_source_2", Timestamp, {7, 8, 9})));
+  Demux.process_message(
+      toMessage(makeArrayDouble("dummy_source_1", Timestamp, {10, 11, 12})));
 
   auto CommandStop = json::parse(R""(
 {
