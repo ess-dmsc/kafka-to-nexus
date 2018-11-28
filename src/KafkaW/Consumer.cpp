@@ -193,6 +193,11 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
 void Consumer::commitOffsets() const {
   auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
   KERR(RdKafka, CommitErr);
+  if (CommitErr == RD_KAFKA_RESP_ERR__NO_OFFSET) {
+    LOG(Sev::Warning, "Could not commit offsets in Consumer, possibly already "
+                      "at the correct offset");
+    return;
+  }
   if (CommitErr != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error("Could not commit offsets in Consumer");
   }
