@@ -6,6 +6,10 @@ The `.clang-format` is just a `-dump-config` of the default LLVM style from
 
 Please refer to [LLVM documentation](https://llvm.org/docs/CodingStandards.html).
 
+## Issues 
+
+For issues that require changes in the functionality of the code (i.e. not tiny bits of refactoring) create a ticket on the [ESS JIRA board](https://jira.esss.lu.se/secure/RapidBoard.jspa?rapidView=167&view=detail&quickFilter=2154) with the label `FW&FW`
+
 ## Branching
 
 - Branch your feature off from 'master'

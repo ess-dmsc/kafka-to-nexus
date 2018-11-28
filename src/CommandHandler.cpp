@@ -159,21 +159,26 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 /// Helper to extract information about the provided streams.
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
-    std::vector<StreamHDFInfo> const &StreamHDFInfoList) {
+    std::vector<StreamHDFInfo> &StreamHDFInfoList) {
   LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
-  for (auto const &StreamHDFInfo : StreamHDFInfoList) {
+  for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
       StreamSettingsList.push_back(
           extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
+      StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
       LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
     } catch (std::runtime_error const &E) {
-      LOG(Sev::Warning,
-          "Exception while initializing writer module  what: {}  json: {}",
-          E.what(), StreamHDFInfo.ConfigStream);
+      LOG(Sev::Warning, "Exception while initialising writer module  what: {}  "
+                        "parent: {}  json: {}",
+          E.what(), StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
       continue;
+    } catch (...) {
+      LOG(Sev::Error, "Unknown error caught while trying to initialise stream  "
+                      "parent: {}  json: {}",
+          StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
     }
   }
   return StreamSettingsList;
@@ -250,6 +255,19 @@ void CommandHandler::handleNew(std::string const &Command) {
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList);
 
+  if (auto ThrowOnUninitialisedStreamMaybe =
+          find<bool>("abort_on_uninitialised_stream", Doc)) {
+    if (ThrowOnUninitialisedStreamMaybe.inner()) {
+      for (auto const &Item : StreamHDFInfoList) {
+        if (!Item.InitialisedOk) {
+          throw std::runtime_error(fmt::format("Could not initialise {}  {}",
+                                               Item.HDFParentName,
+                                               Item.ConfigStream));
+        }
+      }
+    }
+  }
+
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
   // Must be done before StreamMaster instantiation
@@ -293,13 +311,12 @@ void CommandHandler::handleNew(std::string const &Command) {
 /// \param StreamSettingsList The settings for the stream.
 /// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
-    const std::vector<StreamSettings> &StreamSettingsList,
+    std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : StreamSettingsList) {
-    if (UseParallelWriter && StreamSettings.RunParallel) {
-    } else {
+    if (!UseParallelWriter || !StreamSettings.RunParallel) {
       LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
       HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
 

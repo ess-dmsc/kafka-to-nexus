@@ -25,11 +25,13 @@ set(UnitTests_SRC
     StreamerTest.cpp
     AddReader.cpp
     Schema_f142.cpp
+    Schema_ev42.cpp
     AreaDetectorTest.cpp
     EventLogger.cpp
     MainOpt.cpp
     EventHistogramWriterTests.cpp
     FileWriterTaskTests.cpp
+    SourceTests.cpp
 )
 set(UnitTests_INC
     HDFFileTestHelper.h

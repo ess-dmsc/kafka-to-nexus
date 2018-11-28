@@ -17,6 +17,7 @@ namespace FileWriter {
 struct StreamHDFInfo {
   std::string HDFParentName;
   std::string ConfigStream;
+  bool InitialisedOk = false;
 };
 
 class HDFFile final {

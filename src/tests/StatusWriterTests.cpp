@@ -58,7 +58,7 @@ TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   EXPECT_EQ(getDoubleValue("Mbytes", json["stream_master"]), 0.0);
   EXPECT_EQ(getDoubleValue("errors", json["stream_master"]), 0.0);
   EXPECT_EQ(getDoubleValue("messages", json["stream_master"]), 0.0);
-  EXPECT_EQ(getDoubleValue("runtime", json["stream_master"]), 0.0);
+  EXPECT_LT(getDoubleValue("runtime", json["stream_master"]), 10.0);
   EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
 }
 
@@ -154,8 +154,6 @@ TEST(StatusWriter, addValidMessageUpdatesStreamerInfo) {
   Writer.write(Message, Topic, SinceLastMessage);
 
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
-
-  std::cout << json.dump(4) << "\n";
 
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("streamer"));

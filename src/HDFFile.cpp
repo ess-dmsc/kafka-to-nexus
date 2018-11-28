@@ -1,25 +1,24 @@
 #include "HDFFile.h"
-#include "date/date.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
 #include <array>
 #include <chrono>
 #include <ctime>
+#include <date/date.h>
+#include <date/tz.h>
 #include <deque>
 #include <flatbuffers/flatbuffers.h>
 #include <hdf5.h>
 #include <stack>
 #include <unistd.h>
-#define HAS_REMOTE_API 0
-#include "date/tz.h"
 
 namespace FileWriter {
 
+using nlohmann::json;
 using std::array;
 using std::string;
 using std::vector;
-using nlohmann::json;
 using json_out_of_range = nlohmann::detail::out_of_range;
 
 /// As a safeguard, limit the maximum dimensions of multi dimensional arrays
@@ -899,7 +898,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
 
     writeStringAttribute(RootGroup, "HDF5_Version", h5VersionStringLinked());
     writeStringAttribute(RootGroup, "file_name",
-                         H5File.id().file_name().stem().string());
+                         H5File.id().file_name().string());
     writeStringAttribute(
         RootGroup, "creator",
         fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));

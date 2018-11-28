@@ -19,13 +19,13 @@ class Msg {
 public:
   Msg() = default;
   Msg(std::uint8_t const *Pointer, size_t Size,
-      std::function<void()> DataDeleter, PollStatus Status)
-      : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)),
-        Status(Status) {}
+      std::function<void()> DataDeleter)
+      : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)) {
+  }
   Msg(std::uint8_t const *Pointer, size_t Size,
-      std::function<void()> DataDeleter, PollStatus Status, std::int64_t Offset)
+      std::function<void()> DataDeleter, std::int64_t Offset)
       : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)),
-        Status(Status), MessageOffset(Offset) {}
+        MessageOffset(Offset) {}
 
   explicit Msg(PollStatus Status) : Status(Status) {}
   ~Msg() {
@@ -42,7 +42,7 @@ private:
   unsigned char const *DataPointer{nullptr};
   size_t DataSize{0};
   std::function<void()> OnDelete;
-  PollStatus Status{PollStatus::Empty};
+  PollStatus Status{PollStatus::Msg};
   std::int64_t MessageOffset{0};
 };
 } // namespace KafkaW

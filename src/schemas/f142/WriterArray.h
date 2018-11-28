@@ -39,17 +39,15 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
                                  CollectiveQueue *cq)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   if (ColumnCount <= 0) {
-    LOG(Sev::Error, "can not handle number of columns ColumnCount == {}",
-        ColumnCount);
-    return;
+    throw std::runtime_error(fmt::format(
+        "Can not handle number of columns ColumnCount == {}", ColumnCount));
   }
   LOG(Sev::Debug, "f142 init_impl  ColumnCount: {}", ColumnCount);
   ChunkedDataset = h5::h5d_chunked_2d<DT>::create(HdfGroup, SourceName,
                                                   ColumnCount, 64 * 1024, cq);
   if (ChunkedDataset == nullptr) {
-    LOG(Sev::Error,
-        "could not create hdf dataset  SourceName: {}  number of columns: {}",
-        SourceName, ColumnCount);
+    throw std::runtime_error(fmt::format(
+        "Could not create hdf dataset  SourceName: {}", SourceName));
   }
 }
 
@@ -65,19 +63,16 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
                                  CollectiveQueue *cq, HDFIDStore *hdf_store)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   if (ColumnCount <= 0) {
-    LOG(Sev::Error, "can not handle number of columns ColumnCount == {}",
-        ColumnCount);
-    return;
+    throw std::runtime_error(fmt::format(
+        "Can not handle number of columns ColumnCount == {}", ColumnCount));
   }
   LOG(Sev::Debug, "f142 writer_typed_array reopen  ColumnCount: {}",
       ColumnCount);
   ChunkedDataset = h5::h5d_chunked_2d<DT>::open(HdfGroup, SourceName,
                                                 ColumnCount, cq, hdf_store);
   if (ChunkedDataset == nullptr) {
-    LOG(Sev::Error,
-        "could not create hdf dataset  SourceName: {}  number of columns: {}",
-        SourceName, ColumnCount);
-    return;
+    throw std::runtime_error(
+        fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
   }
   ChunkedDataset->buffer_init(ChunkSize, 0);
 }

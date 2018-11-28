@@ -17,6 +17,7 @@ find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe63
 find_package(GraylogLogger)
 find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
+find_package(Date REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -36,6 +37,7 @@ set(compile_defs_common "")
 
 set(path_include_common
   ${RDKAFKA_INCLUDE_DIR}
+  ${DATE_INCLUDE_DIR}
   ${HDF5_INCLUDE_DIRS}
   ${FLATBUFFERS_INCLUDE_DIR}
   ${H5CPP_INCLUDE_DIR}
@@ -51,6 +53,7 @@ set(libraries_common
   ${H5CPP_LIBRARIES}
   ${CURL_LIBRARIES}
   ${Boost_LIBRARIES}
+  ${DATE_LIBRARY}
   pthread
   z
 )
@@ -92,8 +95,6 @@ set(kafka_to_nexus_SRC
   uri.cpp
   h5.cpp
   FlatbufferMessage.cpp
-  date/tz.cpp
-  date/tzblobs.cpp
   MainOpt.cpp
   ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
   CLIOptions.cpp
@@ -135,11 +136,6 @@ set(kafka_to_nexus_INC
   StreamerOptions.h
   StreamMaster.h
   uri.h
-  date/date.h
-  date/ios.h
-  date/tz_private.h
-  date/tz.h
-  date/tzblobs.h
   CLIOptions.h
   NeXusDataset.h
 )
@@ -164,7 +160,8 @@ add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
+target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
+         )
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 

@@ -13,18 +13,6 @@ Source::Source(std::string const &Name, std::string const &ID,
 
 Source::~Source() { close_writer_module(); }
 
-Source::Source(Source &&x) noexcept { swap(*this, x); }
-
-void swap(Source &x, Source &y) {
-  std::swap(x.Topic_, y.Topic_);
-  std::swap(x.SourceName, y.SourceName);
-  std::swap(x.SchemaID, y.SchemaID);
-  std::swap(x.WriterModule, y.WriterModule);
-  std::swap(x._processed_messages_count, y._processed_messages_count);
-  std::swap(x._cnt_msg_written, y._cnt_msg_written);
-  std::swap(x.is_parallel, y.is_parallel);
-}
-
 std::string const &Source::topic() const { return Topic_; }
 
 std::string const &Source::sourcename() const { return SourceName; }

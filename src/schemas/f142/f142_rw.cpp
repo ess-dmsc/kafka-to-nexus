@@ -261,10 +261,11 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         Info.Ptr->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
       }
     }
-  } catch (std::exception &e) {
-    auto message = hdf5::error::print_nested(e);
-    LOG(Sev::Error, "f142 could not init HDFGroup: {}  trace: {}",
-        static_cast<std::string>(HDFGroup.link().path()), message);
+  } catch (std::exception const &E) {
+    auto message = hdf5::error::print_nested(E);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "f142 could not init HDFGroup: {}  trace: {}",
+        static_cast<std::string>(HDFGroup.link().path()), message)));
   }
   return HDFWriterModule::InitResult::OK();
 }

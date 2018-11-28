@@ -51,8 +51,8 @@ FileWriter::createConsumer(std::string const TopicName,
     FileWriter::ConsumerPtr Consumer =
         std::make_unique<KafkaW::Consumer>(Options.Settings);
     if (Options.StartTimestamp.count() != 0) {
-      Consumer->addTopic(TopicName,
-                         Options.StartTimestamp - Options.BeforeStartTime);
+      Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
+                                                   Options.BeforeStartTime);
     } else {
       Consumer->addTopic(TopicName);
     }
@@ -149,6 +149,13 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
                       "(\"{}\"), ignoring.",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
+  }
+
+  if (Message->getTimestamp() == 0) {
+    LOG(Sev::Error,
+        "Message from topic \"{}\", source \"{}\" has no timestamp, ignoring",
+        MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::ERR;
   }
 
   // Timestamp of message is before the "start" timestamp

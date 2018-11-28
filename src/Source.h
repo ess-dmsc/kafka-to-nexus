@@ -18,7 +18,7 @@ class Source final {
 public:
   Source(std::string const &Name, std::string const &ID,
          HDFWriterModule::ptr Writer);
-  Source(Source &&) noexcept;
+  Source(Source &&) = default;
   ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
@@ -35,7 +35,6 @@ private:
   std::unique_ptr<HDFWriterModule> WriterModule;
   uint64_t _processed_messages_count = 0;
   uint64_t _cnt_msg_written = 0;
-  friend void swap(Source &x, Source &y);
 };
 
 } // namespace FileWriter

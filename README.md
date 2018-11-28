@@ -262,6 +262,19 @@ example:
 ```
 
 
+### Abort writing when stream fails to initialise
+
+By default, the filewriter will continue to write a file even when a stream
+fails to initialise.  In order to abort writing of that file instead, set in the
+`FileWriter_new` command:
+
+```json
+{
+  "abort_on_uninitialised_stream": true
+}
+```
+
+
 ### Options for the f142 writer module
 
 - `type`: The data type contained in the flat buffer. Can be `int8` to `int64`,

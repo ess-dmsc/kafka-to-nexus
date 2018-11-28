@@ -281,11 +281,14 @@ def get_system_tests_pipeline() {
             """
           }  // stage
           stage("System tests: Run") {
-            sh """cd system-tests/
-            scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
-            """
-            junit "system-tests/SystemTestsOutput.xml"
-            archiveArtifacts "system-tests/logs/*.log"
+            // Stop and remove any containers that may have been from the job before,
+            // i.e. if a Jenkins job has been aborted.
+            sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
+            timeout(time: 30, activity: true){
+              sh """cd system-tests/
+              scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
+              """
+            }
           }  // stage
         } finally {
           stage ("System tests: Clean Up") {
@@ -293,10 +296,13 @@ def get_system_tests_pipeline() {
             // even if there are no docker containers or output files to be
             // removed.
             sh """rm -rf system-tests/output-files/* || true
-            docker stop \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
-            docker rm \$(\$(docker ps -aq) | grep -E 'kafka|event-producer|zookeeper|filewriter|forwarder') || true
+            docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true
             """
           }  // stage
+          stage("System tests: Archive") {
+            junit "system-tests/SystemTestsOutput.xml"
+            archiveArtifacts "system-tests/logs/*.log"
+          }
         }  // try/finally
       } // dir
     }  // node
