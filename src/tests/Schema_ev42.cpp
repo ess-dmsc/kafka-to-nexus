@@ -33,6 +33,11 @@ public:
   }
 };
 
+// Nexus structure defines two colliding sources.  The latter will fail to
+// initialize.  By default, the file writer will try to continue with the
+// remaining streams.  We can change that default using
+// 'abort_on_uninitialised_stream'.  This test verifies that the CommandHandler
+// throws in that case.
 TEST_F(Schema_ev42, UninitializedStreamOptionallyThrows) {
   using FileWriter::CommandHandler;
   using FileWriter::FlatbufferMessage;
