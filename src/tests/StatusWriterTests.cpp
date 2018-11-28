@@ -139,13 +139,16 @@ TEST(StatusWriter, addErrorUpdatesStreamMaster) {
               1000);
 }
 
+nlohmann::json getDummyJson() {
+  return "{\"a1\" : 1.2, \"a2\": \"qwerty\"}"_json;
+}
+
 TEST(StatusWriter, addStreamEmptyMessageInfo) {
   MessageInfo Message;
   std::string Topic{"no-topic"};
+
   FileWriter::Status::StatusWriter Writer;
-
   Writer.write(Message, Topic);
-
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   // make sure that json structure is correct
@@ -169,11 +172,10 @@ TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   const int NumMessages = 1;
   MessageInfo Message;
   Message.newMessage(MessageSizeBytes);
-
   std::string Topic{"no-topic"};
+
   FileWriter::Status::StatusWriter Writer;
   Writer.write(Message, Topic);
-
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
   // make sure that json structure is correct

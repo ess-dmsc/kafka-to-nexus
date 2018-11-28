@@ -16,18 +16,16 @@ nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
 nlohmann::json StreamerToJson(MessageInfo &Information) {
   std::pair<double, double> Size = messageSize(Information);
 
-  nlohmann::json Status = {
-      "rates",
-      {
-          {"messages", Information.getMessages()},
-          {"Mbytes", Information.getMbytes()},
-          {"errors", Information.getErrors()},
-          {"message_size",
-           {{"average", Size.first}, {"stdandard_deviation", Size.second}}},
-      }};
+  nlohmann::json Status;
+  Status["rates"] = {
+      {"messages", Information.getMessages()},
+      {"Mbytes", Information.getMbytes()},
+      {"errors", Information.getErrors()},
+      {"message_size",
+       {{"average", Size.first}, {"stdandard_deviation", Size.second}}}};
 
-  return nlohmann::json{Status};
-}
+  return Status;
+} // namespace Status
 
 StatusWriter::StatusWriter() {
   json = {{"type", "stream_master_status"},
