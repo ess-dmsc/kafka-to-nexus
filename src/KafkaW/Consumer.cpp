@@ -252,22 +252,22 @@ void Consumer::dumpCurrentSubscription() {
   }
 }
 
-std::unique_ptr<Msg> Consumer::poll() {
+std::unique_ptr<ConsumerMessage> Consumer::poll() {
 
   auto msg =
       rd_kafka_consumer_poll(RdKafka, ConsumerBrokerSettings.PollTimeoutMS);
 
   if (msg == nullptr) {
-    return std::make_unique<Msg>(PollStatus::Empty);
+    return std::make_unique<ConsumerMessage>(PollStatus::Empty);
   }
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    return std::make_unique<Msg>((std::uint8_t *)msg->payload, msg->len,
-                                 [msg]() { rd_kafka_message_destroy(msg); },
-                                 msg->offset);
+    return std::make_unique<ConsumerMessage>(
+        (std::uint8_t *)msg->payload, msg->len,
+        [msg]() { rd_kafka_message_destroy(msg); }, msg->offset);
   } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-    return std::make_unique<Msg>(PollStatus::EOP);
+    return std::make_unique<ConsumerMessage>(PollStatus::EOP);
   } else if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
     LOG(Sev::Error, "RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN");
   } else if (msg->err == RD_KAFKA_RESP_ERR__BAD_MSG) {
@@ -279,7 +279,7 @@ std::unique_ptr<Msg> Consumer::poll() {
     LOG(Sev::Error, "unhandled msg error: {} {}", rd_kafka_err2name(msg->err),
         rd_kafka_err2str(msg->err));
   }
-  return std::make_unique<Msg>(PollStatus::Err);
+  return std::make_unique<ConsumerMessage>(PollStatus::Err);
 }
 
 } // namespace KafkaW

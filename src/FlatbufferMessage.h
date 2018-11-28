@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KafkaW/Msg.h"
+#include "KafkaW/ConsumerMessage.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>

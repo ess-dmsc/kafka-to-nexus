@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BrokerSettings.h"
-#include "Msg.h"
+#include "ConsumerMessage.h"
 #include <atomic>
 #include <functional>
 #include <librdkafka/rdkafka.h>

@@ -3,7 +3,7 @@
 #include "FileWriterTask.h"
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "MasterI.h"
+#include "MasterInterface.h"
 #include "Msg.h"
 #include "json.h"
 #include <memory>
@@ -42,7 +42,7 @@ public:
   /// \param Config Configuration of the file writer.
   /// \param MasterPtr Optional `Master` which can continue to watch over newly
   /// created jobs. Not used for example in some tests.
-  CommandHandler(MainOpt &config, MasterI *master);
+  CommandHandler(MainOpt &config, MasterInterface *master);
 
   /// \brief Given a JSON string, create a new file writer task.
   ///
@@ -97,7 +97,7 @@ private:
   initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
                 bool UseSwmr) const;
   MainOpt &Config;
-  MasterI *MasterPtr = nullptr;
+  MasterInterface *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
 };
 } // namespace FileWriter

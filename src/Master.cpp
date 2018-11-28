@@ -28,7 +28,8 @@ Master::Master(MainOpt &MainOpt_)
   LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
-void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
+void Master::handle_command_message(
+    std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
   command_handler.tryToHandle(
       Msg::owned((char const *)msg->getData(), msg->getSize()));

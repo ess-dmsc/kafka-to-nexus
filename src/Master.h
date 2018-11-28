@@ -3,7 +3,7 @@
 #include "CommandListener.h"
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "MasterI.h"
+#include "MasterInterface.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
 #include <atomic>
@@ -18,7 +18,7 @@ namespace FileWriter {
 ///
 /// On a new file writing request, creates new nexusWriter instance.
 /// Reacts also to stop, and possibly other future commands.
-class Master : public MasterI {
+class Master : public MasterInterface {
 public:
   Master(MainOpt &config);
 
@@ -29,7 +29,8 @@ public:
 
   /// Stop running.
   void stop() override;
-  void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) override;
+  void handle_command_message(
+      std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override;
   void handle_command(std::string const &command) override;
   void statistics() override;
   void addStreamMaster(

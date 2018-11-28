@@ -15,7 +15,7 @@ class Streamer;
 ///
 /// On a new file writing request, creates new nexusWriter instance.
 /// Reacts also to stop, and possibly other future commands.
-class MasterI {
+class MasterInterface {
 public:
   /// \brief Sets up command listener and handles any commands received.
   ///
@@ -23,7 +23,8 @@ public:
   virtual void run() = 0;
 
   virtual void stop() = 0;
-  virtual void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) = 0;
+  virtual void
+  handle_command_message(std::unique_ptr<KafkaW::ConsumerMessage> &&msg) = 0;
   virtual void handle_command(std::string const &command) = 0;
   virtual void statistics() = 0;
 

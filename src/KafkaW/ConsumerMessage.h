@@ -15,20 +15,20 @@ enum class PollStatus {
   Empty,
 };
 
-class Msg {
+class ConsumerMessage {
 public:
-  Msg() = default;
-  Msg(std::uint8_t const *Pointer, size_t Size,
-      std::function<void()> DataDeleter)
+  ConsumerMessage() = default;
+  ConsumerMessage(std::uint8_t const *Pointer, size_t Size,
+                  std::function<void()> DataDeleter)
       : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)) {
   }
-  Msg(std::uint8_t const *Pointer, size_t Size,
-      std::function<void()> DataDeleter, std::int64_t Offset)
+  ConsumerMessage(std::uint8_t const *Pointer, size_t Size,
+                  std::function<void()> DataDeleter, std::int64_t Offset)
       : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)),
         MessageOffset(Offset) {}
 
-  explicit Msg(PollStatus Status) : Status(Status) {}
-  ~Msg() {
+  explicit ConsumerMessage(PollStatus Status) : Status(Status) {}
+  ~ConsumerMessage() {
     if (OnDelete) {
       OnDelete();
     }

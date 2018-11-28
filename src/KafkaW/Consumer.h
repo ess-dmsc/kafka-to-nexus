@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BrokerSettings.h"
-#include "Msg.h"
+#include "ConsumerMessage.h"
 #include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
@@ -17,7 +17,7 @@ public:
   virtual void
   addTopicAtTimestamp(std::string const Topic,
                       std::chrono::milliseconds const StartTime) = 0;
-  virtual std::unique_ptr<Msg> poll() = 0;
+  virtual std::unique_ptr<ConsumerMessage> poll() = 0;
   virtual void dumpCurrentSubscription() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
@@ -36,7 +36,7 @@ public:
   void dumpCurrentSubscription() override;
   bool topicPresent(const std::string &Topic) override;
   int32_t queryNumberOfPartitions(const std::string &TopicName) override;
-  std::unique_ptr<Msg> poll() override;
+  std::unique_ptr<ConsumerMessage> poll() override;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
