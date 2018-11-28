@@ -70,51 +70,55 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
-  Status.cpp
-  StatusWriter.cpp
-  Errors.cpp
-  Streamer.cpp
-  Master.cpp
-  CommandListener.cpp
+  ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+  CLIOptions.cpp
   CommandHandler.cpp
-  FileWriterTask.cpp
-  Source.cpp
+  CommandListener.cpp
   DemuxTopic.cpp
+  Errors.cpp
   EventLogger.cpp
+  FileWriterTask.cpp
+  FlatbufferMessage.cpp
   FlatbufferReader.cpp
+  h5.cpp
   HDFFile.cpp
   HDFWriterModule.cpp
+  helper.cpp
   KafkaW/BrokerSettings.cpp
   KafkaW/TopicSettings.cpp
   KafkaW/KafkaW.cpp
   KafkaW/Consumer.cpp
   KafkaW/Producer.cpp
   KafkaW/ProducerTopic.cpp
-  helper.cpp
+  kafka-to-nexus.cpp
   logger.cpp
-  uri.cpp
-  h5.cpp
-  FlatbufferMessage.cpp
   MainOpt.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
-  CLIOptions.cpp
+  Master.cpp
   NeXusDataset.cpp
+  send-command.cpp
+  Source.cpp
+  Status.cpp
+  StatusWriter.cpp
+  Streamer.cpp
+  uri.cpp
 )
 
 set(kafka_to_nexus_INC
+  CLIOptions.h
+  CollectiveQueue.h
   CommandHandler.h
   CommandListener.h
   DemuxTopic.h
   Errors.h
   EventLogger.h
   FileWriterTask.h
+  FlatbufferMessage.h
   FlatbufferReader.h
   h5.h
   HDFFile.h
   HDFWriterModule.h
   helper.h
   json.h
-  kafka-to-nexus.h
   KafkaW/BrokerSettings.h
   KafkaW/TopicSettings.h
   KafkaW/KafkaW.h
@@ -122,11 +126,13 @@ set(kafka_to_nexus_INC
   KafkaW/Consumer.h
   KafkaW/Producer.h
   KafkaW/ProducerTopic.h
+  kafka-to-nexus.h
   logger.h
   MainOpt.h
   Master.h
+  MasterI.h
   Msg.h
-  FlatbufferMessage.h
+  NeXusDataset.h
   ProcessMessageResult.h
   Report.h
   Source.h
@@ -136,8 +142,6 @@ set(kafka_to_nexus_INC
   StreamerOptions.h
   StreamMaster.h
   uri.h
-  CLIOptions.h
-  NeXusDataset.h
 )
 
 set(tgt "kafka_to_nexus__objects")
