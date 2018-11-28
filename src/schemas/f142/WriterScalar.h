@@ -40,7 +40,8 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
   ChunkedDataset =
       h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, ChunkSize, cq);
   if (ChunkedDataset == nullptr) {
-    LOG(Sev::Error, "could not create hdf dataset  SourceName: {}", SourceName);
+    throw std::runtime_error(fmt::format(
+        "Could not create hdf dataset  SourceName: {}", SourceName));
   }
 }
 
@@ -58,7 +59,8 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
   ChunkedDataset =
       h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName, cq, hdf_store);
   if (ChunkedDataset == nullptr) {
-    LOG(Sev::Error, "could not create hdf dataset  SourceName: {}", SourceName);
+    throw std::runtime_error(
+        fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
   }
   ChunkedDataset->buffer_init(ChunkSize, 0);
 }
