@@ -368,11 +368,11 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   auto PollResult = [this, &CallCounter]() {
     CallCounter++;
     if (CallCounter == 1) {
-      std::make_unique<KafkaW::Msg>(generateKafkaMsg(
-          reinterpret_cast<const unsigned char *>(this->DataBuffer.c_str()),
-          this->DataBuffer.size()));
-      return std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP);
+      return generateKafkaMsg(
+          reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
+          DataBuffer.size());
     }
+    return std::make_unique<KafkaW::Msg>(KafkaW::PollStatus::EOP);
   };
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(PollResult()).TIMES(2);
 
