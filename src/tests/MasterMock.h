@@ -4,7 +4,7 @@
 #include "StreamMaster.h"
 #include "Streamer.h"
 
-class MockMasterI : public FileWriter::MasterI {
+class MockMasterI : public FileWriter::MasterInterface {
 
 public:
   void run() {}
