@@ -36,27 +36,27 @@ set(compile_defs_common "")
 
 
 set(path_include_common
-  ${RDKAFKA_INCLUDE_DIR}
-  ${DATE_INCLUDE_DIR}
-  ${HDF5_INCLUDE_DIRS}
-  ${FLATBUFFERS_INCLUDE_DIR}
-  ${H5CPP_INCLUDE_DIR}
-  ${Boost_INCLUDE_DIRS}
-  ${CURL_INCLUDE_DIRS}
-  ${PROJECT_SOURCE_DIR}/src
-  ${PROJECT_BINARY_DIR}/src
-)
+        ${RDKAFKA_INCLUDE_DIR}
+        ${DATE_INCLUDE_DIR}
+        ${HDF5_INCLUDE_DIRS}
+        ${FLATBUFFERS_INCLUDE_DIR}
+        ${H5CPP_INCLUDE_DIR}
+        ${Boost_INCLUDE_DIRS}
+        ${CURL_INCLUDE_DIRS}
+        ${PROJECT_SOURCE_DIR}/src
+        ${PROJECT_BINARY_DIR}/src
+        )
 
 set(libraries_common
-  ${RDKAFKA_LIBRARIES}
-  ${HDF5_C_LIBRARIES}
-  ${H5CPP_LIBRARIES}
-  ${CURL_LIBRARIES}
-  ${Boost_LIBRARIES}
-  ${DATE_LIBRARY}
-  pthread
-  z
-)
+        ${RDKAFKA_LIBRARIES}
+        ${HDF5_C_LIBRARIES}
+        ${H5CPP_LIBRARIES}
+        ${CURL_LIBRARIES}
+        ${Boost_LIBRARIES}
+        ${DATE_LIBRARY}
+        pthread
+        z
+        )
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
@@ -70,84 +70,81 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
-  Status.cpp
-  StatusWriter.cpp
-  Errors.cpp
-  Streamer.cpp
-  Master.cpp
-  CommandListener.cpp
-  CommandHandler.cpp
-  FileWriterTask.cpp
-  Source.cpp
-  DemuxTopic.cpp
-  EventLogger.cpp
-  FlatbufferReader.cpp
-  HDFFile.cpp
-  HDFWriterModule.cpp
-  KafkaW/BrokerSettings.cpp
-  KafkaW/TopicSettings.cpp
-  KafkaW/KafkaW.cpp
-  KafkaW/Msg.cpp
-  KafkaW/PollStatus.cpp
-  KafkaW/Consumer.cpp
-  KafkaW/Producer.cpp
-  KafkaW/ProducerTopic.cpp
-  helper.cpp
-  logger.cpp
-  uri.cpp
-  h5.cpp
-  FlatbufferMessage.cpp
-  MainOpt.cpp
-  ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
-  CLIOptions.cpp
-  NeXusDataset.cpp
-)
+        Status.cpp
+        StatusWriter.cpp
+        Errors.cpp
+        Streamer.cpp
+        Master.cpp
+        CommandListener.cpp
+        CommandHandler.cpp
+        FileWriterTask.cpp
+        Source.cpp
+        DemuxTopic.cpp
+        EventLogger.cpp
+        FlatbufferReader.cpp
+        HDFFile.cpp
+        HDFWriterModule.cpp
+        KafkaW/BrokerSettings.cpp
+        KafkaW/TopicSettings.cpp
+        KafkaW/KafkaW.cpp
+        KafkaW/Consumer.cpp
+        KafkaW/Producer.cpp
+        KafkaW/ProducerTopic.cpp
+        helper.cpp
+        logger.cpp
+        uri.cpp
+        h5.cpp
+        FlatbufferMessage.cpp
+        MainOpt.cpp
+        ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
+        CLIOptions.cpp
+        NeXusDataset.cpp
+        )
 
 set(kafka_to_nexus_INC
-  CommandHandler.h
-  CommandListener.h
-  DemuxTopic.h
-  Errors.h
-  EventLogger.h
-  FileWriterTask.h
-  FlatbufferReader.h
-  h5.h
-  HDFFile.h
-  HDFWriterModule.h
-  helper.h
-  json.h
-  kafka-to-nexus.h
-  KafkaW/BrokerSettings.h
-  KafkaW/TopicSettings.h
-  KafkaW/KafkaW.h
-  KafkaW/Msg.h
-  KafkaW/PollStatus.h
-  KafkaW/Consumer.h
-  KafkaW/Producer.h
-  KafkaW/ProducerTopic.h
-  logger.h
-  MainOpt.h
-  Master.h
-  Msg.h
-  FlatbufferMessage.h
-  ProcessMessageResult.h
-  Report.h
-  Source.h
-  Status.h
-  StatusWriter.h
-  Streamer.h
-  StreamerOptions.h
-  StreamMaster.h
-  uri.h
-  CLIOptions.h
-  NeXusDataset.h
-)
+        CommandHandler.h
+        CommandListener.h
+        DemuxTopic.h
+        Errors.h
+        EventLogger.h
+        FileWriterTask.h
+        FlatbufferReader.h
+        h5.h
+        HDFFile.h
+        HDFWriterModule.h
+        helper.h
+        json.h
+        kafka-to-nexus.h
+        KafkaW/BrokerSettings.h
+        KafkaW/TopicSettings.h
+        KafkaW/KafkaW.h
+        KafkaW/ConsumerMessage.h
+        KafkaW/Consumer.h
+        KafkaW/Producer.h
+        KafkaW/ProducerTopic.h
+        logger.h
+        MainOpt.h
+        Master.h
+        Msg.h
+        FlatbufferMessage.h
+        ProcessMessageResult.h
+        Report.h
+        Source.h
+        Status.h
+        StatusWriter.h
+        Streamer.h
+        StreamerOptions.h
+        StreamMaster.h
+        uri.h
+        CLIOptions.h
+        NeXusDataset.h
+        )
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
-  ${kafka_to_nexus_SRC}
-  ${kafka_to_nexus_INC}
-)
+        ${kafka_to_nexus_SRC}
+        ${kafka_to_nexus_INC}
+        )
 
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
@@ -156,15 +153,15 @@ target_include_directories(${tgt} PRIVATE ${path_include_common})
 
 set(tgt "send-command")
 set(sources
-  send-command.cpp
-  $<TARGET_OBJECTS:kafka_to_nexus__objects>
-)
+        send-command.cpp
+        $<TARGET_OBJECTS:kafka_to_nexus__objects>
+        )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
-         )
+        )
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 
@@ -172,10 +169,10 @@ add_subdirectory(schemas)
 
 set(tgt "kafka-to-nexus")
 set(sources
-  kafka-to-nexus.cpp
-  $<TARGET_OBJECTS:kafka_to_nexus__objects>
-  ${WRITER_MODULES}
-)
+        kafka-to-nexus.cpp
+        $<TARGET_OBJECTS:kafka_to_nexus__objects>
+        ${WRITER_MODULES}
+        )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)

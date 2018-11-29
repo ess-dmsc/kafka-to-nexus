@@ -37,7 +37,7 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-CommandHandler::CommandHandler(MainOpt &Config_, MasterI *MasterPtr_)
+CommandHandler::CommandHandler(MainOpt &Config_, MasterInterface *MasterPtr_)
     : Config(Config_), MasterPtr(MasterPtr_) {}
 
 /// \brief Parse the given `NexusStructureString`

@@ -28,10 +28,11 @@ Master::Master(MainOpt &MainOpt_)
   LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
-void Master::handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) {
+void Master::handle_command_message(
+    std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
   command_handler.tryToHandle(
-      Msg::owned((char const *)msg->data(), msg->size()));
+      Msg::owned((char const *)msg->getData(), msg->getSize()));
 }
 
 void Master::handle_command(std::string const &command) {
@@ -90,10 +91,10 @@ void Master::run() {
   auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
-    auto p = command_listener.poll();
-    if (auto msg = p.isMsg()) {
+    auto PollResult = command_listener.poll();
+    if (PollResult->getStatus() == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
-      this->handle_command_message(std::move(msg));
+      this->handle_command_message(std::move(PollResult));
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >
