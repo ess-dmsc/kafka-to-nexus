@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MasterI.h"
+#include "MasterInterface.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
 
