@@ -106,8 +106,7 @@ public:
     MockMasterI MMaster;
 
     FileWriter::CommandHandler ch(main_opt, &MMaster);
-    ch.handle(
-        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+    ch.handle(CommandString);
   }
 
   static void new_04() {
