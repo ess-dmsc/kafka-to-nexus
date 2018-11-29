@@ -8,6 +8,7 @@
 #include "../schemas/f142/f142_synth.h"
 #include "AddReader.h"
 #include "HDFFileTestHelper.h"
+#include "MasterMock.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -102,7 +103,9 @@ public:
     std::string fname = Command["file_attributes"]["file_name"];
     unlink(fname.c_str());
     MainOpt main_opt;
-    FileWriter::CommandHandler ch(main_opt, nullptr);
+    MockMasterI MMaster;
+
+    FileWriter::CommandHandler ch(main_opt, &MMaster);
     ch.handle(CommandString);
   }
 

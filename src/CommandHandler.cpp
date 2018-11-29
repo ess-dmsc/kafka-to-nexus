@@ -201,6 +201,14 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (JobID.empty()) {
       throwMissingKey("job_id", Doc.dump());
     }
+
+    if (MasterPtr) { // workaround to prevent seg fault in tests
+      if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
+        LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
+        return;
+      }
+    }
+
     Task->setJobId(JobID);
   } else {
     throwMissingKey("job_id", Doc.dump());
@@ -403,22 +411,25 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   if (auto x = find<uint64_t>("stop_time", Doc)) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
-  if (MasterPtr != nullptr) {
-    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
-    if (StreamMaster) {
-      if (StopTime.count() != 0) {
-        LOG(Sev::Info,
-            "Received request to gracefully stop file with id : {} at {} ms",
-            JobID, StopTime.count());
-        StreamMaster->setStopTime(StopTime);
-      } else {
-        LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
-            JobID);
-        StreamMaster->stop();
-      }
+
+  if (!MasterPtr) { // workaround to prevent seg fault in tests
+    return;
+  }
+
+  auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+  if (StreamMaster) {
+    if (StopTime.count() != 0) {
+      LOG(Sev::Info,
+          "Received request to gracefully stop file with id : {} at {} ms",
+          JobID, StopTime.count());
+      StreamMaster->setStopTime(StopTime);
     } else {
-      LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
+      LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
+          JobID);
+      StreamMaster->stop();
     }
+  } else {
+    LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
   }
 }
 

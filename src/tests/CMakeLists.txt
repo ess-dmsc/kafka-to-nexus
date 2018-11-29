@@ -34,6 +34,7 @@ set(UnitTests_SRC
     SourceTests.cpp
 )
 set(UnitTests_INC
+    MasterMock.h
     HDFFileTestHelper.h
     AddReader.h
 )
