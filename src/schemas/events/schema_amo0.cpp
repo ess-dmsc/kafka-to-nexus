@@ -73,7 +73,7 @@ std::string reader::sourcename_impl(Msg msg) {
   auto fbuf = get_fbuf(msg.data);
   auto v = fbuf->source_name();
   if (!v) {
-    LOG(4, "WARNING message has no source name");
+    LOG(Sev::Warning, "Message has no source name");
     return "";
   }
   return v->str();
@@ -83,7 +83,7 @@ writer::~writer() {}
 
 void writer::init_impl(std::string const &sourcename, hid_t hdf_group,
                        Msg msg) {
-  LOG(7, "amo0::init_impl");
+  LOG(Sev::Debug, "amo0::init_impl");
 
   if (config_file) {
     if (auto x = get_int(config_file, "nexus.indices.index_every_kb")) {
@@ -116,7 +116,7 @@ WriteResult writer::write_impl(Msg msg) {
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),
                                                  fbuf->detector_id()->size());
   if (w1ret.ix0 != w2ret.ix0) {
-    LOG(3, "written data lengths differ");
+    LOG(Sev::Error, "written data lengths differ");
   }
   auto pulse_time = fbuf->pulse_time();
   this->ds_event_time_zero->append_data_1d(&pulse_time, 1);
@@ -133,7 +133,7 @@ WriteResult writer::write_impl(Msg msg) {
     auto file = hdf_file->h5file_detail().h5file();
     auto err = H5Fflush(file, H5F_SCOPE_LOCAL);
     if (err < 0) {
-      LOG(4, "ERROR while flushing");
+      LOG(Sev::Warning, "Flushing failed");
     }
   }
   return {ts};

@@ -26,7 +26,9 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGrup) override {
     return InitResult::OK();
   }
-  WriteResult write(Msg const &msg) override { return WriteResult::OK(); }
+  WriteResult write(FlatbufferMessage const &Message) override {
+    return WriteResult::OK();
+  }
   std::int32_t flush() override { return 0; }
 
   std::int32_t close() override { return 0; }
@@ -77,6 +79,6 @@ TEST_F(WriterRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
   { HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey); }
   std::string FailKey("trump");
-  EXPECT_EQ(HDFWriterModuleRegistry::find(FailKey), nullptr);
+  EXPECT_THROW(HDFWriterModuleRegistry::find(FailKey), std::out_of_range);
 }
 } // namespace FileWriter

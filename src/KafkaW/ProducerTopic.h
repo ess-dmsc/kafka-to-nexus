@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Msg.h"
+#include "ConsumerMessage.h"
 #include "Producer.h"
 #include "TopicSettings.h"
 #include "logger.h"

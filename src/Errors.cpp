@@ -1,7 +1,5 @@
 #include "Errors.h"
 
-//------------------------------------------------------------------------------
-// StreamMastererError
 using StreamMasterError = FileWriter::Status::StreamMasterError;
 
 StreamMasterError StreamMasterError::OK() {
@@ -58,60 +56,23 @@ StreamMasterError StreamMasterError::STREAMMASTER_ERROR() {
   return Err;
 }
 
-//------------------------------------------------------------------------------
-// StreamerError
-using StreamerError = FileWriter::Status::StreamerError;
+using StreamerStatus = FileWriter::Status::StreamerStatus;
 
-StreamerError StreamerError::OK() {
-  StreamerError Err;
-  Err.Value = 1000;
-  return Err;
-}
-StreamerError StreamerError::WRITING() {
-  StreamerError Err;
-  Err.Value = 1;
-  return Err;
-}
-StreamerError StreamerError::HAS_FINISHED() {
-  StreamerError Err;
-  Err.Value = 0;
-  return Err;
-}
-StreamerError StreamerError::NOT_INITIALIZED() {
-  StreamerError Err;
-  Err.Value = -1000;
-  return Err;
-}
-StreamerError StreamerError::CONFIGURATION_ERROR() {
-  StreamerError Err;
-  Err.Value = -1;
-  return Err;
-}
-StreamerError StreamerError::TOPIC_PARTITION_ERROR() {
-  StreamerError Err;
-  Err.Value = -2;
-  return Err;
-}
-StreamerError StreamerError::UNKNOWN_ERROR() {
-  StreamerError Err;
-  Err.Value = -1001;
-  return Err;
-}
-
-//------------------------------------------------------------------------------
 // Utilities
 
-const std::string FileWriter::Status::Err2Str(const StreamerError &Error) {
-  switch (Error.Value) {
-  case 1:
+const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
+  switch (Error) {
+  case StreamerStatus::OK:
+    return "No error.";
+  case StreamerStatus::WRITING:
     return "Writing";
-  case 0:
+  case StreamerStatus::HAS_FINISHED:
     return "Has Finished";
-  case -1:
+  case StreamerStatus::CONFIGURATION_ERROR:
     return "Configuration Error";
-  case -2:
+  case StreamerStatus::TOPIC_PARTITION_ERROR:
     return "Topic Partition Error";
-  case -1000:
+  case StreamerStatus::NOT_INITIALIZED:
     return "Not Initialized";
   default:
     return "Unknown error code";

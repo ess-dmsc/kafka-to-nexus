@@ -1,9 +1,7 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Implement classes required to implement the ADC file writing module.
- */
+/// \file
+/// \brief Implement classes required to implement the ADC file writing module.
 
 #include "../../helper.h"
 
@@ -24,22 +22,23 @@ static FileWriter::HDFWriterModuleRegistry::Registrar<
     FastSampleEnvironmentWriter>
     RegisterSenvWriter("senv");
 
-bool SampleEnvironmentDataGuard::verify(KafkaMessage const &Message) const {
+bool SampleEnvironmentDataGuard::verify(
+    FlatbufferMessage const &Message) const {
   auto Verifier =
       flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
   return VerifySampleEnvironmentDataBuffer(Verifier);
 }
 
 uint64_t
-SampleEnvironmentDataGuard::timestamp(KafkaMessage const &Message) const {
+SampleEnvironmentDataGuard::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   /// \todo This timestamp is currently EPICS epoch. This will have to be sorted
   /// out.
   return FbPointer->PacketTimestamp();
 }
 
-std::string
-SampleEnvironmentDataGuard::source_name(const KafkaMessage &Message) const {
+std::string SampleEnvironmentDataGuard::source_name(
+    const FileWriter::FlatbufferMessage &Message) const {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   return FbPointer->Name()->str();
 }
@@ -65,8 +64,11 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
                            DefaultChunkSize);
     NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
                                    DefaultChunkSize);
+    auto ClassAttribute =
+        CurrentGroup.attributes.create<std::string>("NX_class");
+    ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
+    FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
     LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
                     "HDF file with error message: \"{}\"",
@@ -105,8 +107,8 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
-FileWriterBase::WriteResult
-FastSampleEnvironmentWriter::write(const KafkaMessage &Message) {
+FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
+    const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();

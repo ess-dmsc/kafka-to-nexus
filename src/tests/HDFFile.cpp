@@ -6,6 +6,7 @@
 #include "../json.h"
 #include "../schemas/ev42/ev42_synth.h"
 #include "../schemas/f142/f142_synth.h"
+#include "AddReader.h"
 #include "HDFFileTestHelper.h"
 #include "MasterMock.h"
 #include <array>
@@ -32,7 +33,7 @@ MainOpt getTestOptions() {
 }
 
 void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
-  main_opt.ConfigJSON.merge_patch(json::parse(JSONString));
+  main_opt.CommandsJson.merge_patch(json::parse(JSONString));
 }
 
 json basic_command(string filename) {
@@ -75,7 +76,7 @@ void send_stop(FileWriter::CommandHandler &ch, json const &CommandJSON) {
   })"");
   Command["job_id"] = CommandJSON["job_id"];
   auto CommandString = Command.dump();
-  ch.handle(FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  ch.handle(CommandString);
 }
 
 // Verify
@@ -92,8 +93,10 @@ TEST(HDFFile, Create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    auto CommandString =
+    auto CommandData =
         gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
+    std::string CommandString(CommandData.data(),
+                              CommandData.data() + CommandData.size());
     LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
         CommandString.size());
     auto Command = json::parse(CommandString);
@@ -105,6 +108,21 @@ public:
     FileWriter::CommandHandler ch(main_opt, &MMaster);
     ch.handle(
         FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  }
+
+  static void new_04() {
+    auto CommandData =
+        gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-04.json");
+    std::string CommandString(CommandData.data(),
+                              CommandData.data() + CommandData.size());
+    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
+        CommandString.size());
+    auto Command = json::parse(CommandString);
+    std::string fname = Command["file_attributes"]["file_name"];
+    unlink(fname.c_str());
+    MainOpt main_opt;
+    FileWriter::CommandHandler ch(main_opt, nullptr);
+    ch.handle(CommandString);
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -143,12 +161,12 @@ public:
     auto json_command = basic_command(hdf_output_filename);
     command_add_static_dataset_1d(json_command);
 
-    auto cmd = json_command.dump();
+    auto Command = json_command.dump();
     std::string fname = json_command["file_attributes"]["file_name"];
     ASSERT_GT(fname.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(FileWriter::Msg::owned(cmd.data(), cmd.size()));
+    ch.handle(Command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, json_command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
@@ -243,17 +261,6 @@ public:
                   ["string_1_2_0", "string_1_2_1"]
                 ]
               ]
-            },
-            {
-              "NOTE": "Disabled because h5cpp seems unhappy about fixed length strings currently.",
-              "type": "DISABLED_dataset",
-              "name": "string_fixed_1d",
-              "dataset": {
-                "type":"string",
-                "string_size": 32,
-                "size": ["unlimited"]
-              },
-              "values": ["the-scalar-string", "another-one"]
             }
           ]
         })"");
@@ -290,8 +297,7 @@ public:
     ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(
-        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+    ch.handle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
@@ -326,8 +332,7 @@ public:
     ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(
-        FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+    ch.handle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
@@ -354,7 +359,7 @@ public:
       ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::STRING);
       std::string val;
       attr.read(val, attr.datatype());
-      ASSERT_EQ(FileWriter::HDFFile::h5_version_string_linked(), val);
+      ASSERT_EQ(FileWriter::HDFFile::h5VersionStringLinked(), val);
     }
     {
       auto attr = root_group.attributes["file_time"];
@@ -362,7 +367,8 @@ public:
     }
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile
+  /// \brief Can supply pre-generated test data for a source on a topic to
+  /// profile
   /// the writing.
   class SourceDataGen {
   public:
@@ -376,7 +382,8 @@ public:
     size_t n_fed = 0;
     bool run_parallel = false;
     int n_events_per_message = 0;
-    /// Generates n test messages which we can later feed from memory into the
+    /// \brief Generates n test messages which can be later fed from memory into
+    /// the
     /// file writer.
     void pregenerate(int n, int n_events_per_message_) {
       n_events_per_message = n_events_per_message_;
@@ -422,6 +429,7 @@ public:
   }
 
   static void data_ev42() {
+    AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
     // Defaults such that the test has a chance to succeed
@@ -462,7 +470,7 @@ public:
     bool do_verification = true;
     try {
       do_verification =
-          main_opt.ConfigJSON["unit_test"]["hdf"]["do_verification"]
+          main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<int64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
     } catch (...) {
@@ -471,14 +479,16 @@ public:
     size_t n_msgs_per_source = 1;
     try {
       n_msgs_per_source =
-          main_opt.ConfigJSON["unit_test"]["n_msgs_per_source"].get<int64_t>();
+          main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
+              .get<int64_t>();
       LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
     size_t n_sources = 1;
     try {
-      n_sources = main_opt.ConfigJSON["unit_test"]["n_sources"].get<int64_t>();
+      n_sources =
+          main_opt.CommandsJson["unit_test"]["n_sources"].get<int64_t>();
       LOG(Sev::Debug, "unit_test.n_sources: {}", n_sources);
     } catch (...) {
     }
@@ -486,7 +496,7 @@ public:
     size_t n_events_per_message = 1;
     try {
       n_events_per_message =
-          main_opt.ConfigJSON["unit_test"]["n_events_per_message"]
+          main_opt.CommandsJson["unit_test"]["n_events_per_message"]
               .get<int64_t>();
       LOG(Sev::Debug, "unit_test.n_events_per_message: {}",
           n_events_per_message);
@@ -496,7 +506,7 @@ public:
     size_t feed_msgs_times = 1;
     try {
       feed_msgs_times =
-          main_opt.ConfigJSON["unit_test"]["feed_msgs_times"].get<int64_t>();
+          main_opt.CommandsJson["unit_test"]["feed_msgs_times"].get<int64_t>();
       LOG(Sev::Debug, "unit_test.feed_msgs_times: {}", feed_msgs_times);
     } catch (...) {
     }
@@ -504,7 +514,8 @@ public:
     int feed_msgs_seconds = 1;
     try {
       feed_msgs_seconds =
-          main_opt.ConfigJSON["unit_test"]["feed_msgs_seconds"].get<int64_t>();
+          main_opt.CommandsJson["unit_test"]["feed_msgs_seconds"]
+              .get<int64_t>();
       LOG(Sev::Debug, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
     } catch (...) {
     }
@@ -512,7 +523,7 @@ public:
     string filename = "tmp-ev42.h5";
     try {
       filename =
-          main_opt.ConfigJSON["unit_test"]["filename"].get<std::string>();
+          main_opt.CommandsJson["unit_test"]["filename"].get<std::string>();
       LOG(Sev::Debug, "unit_test.filename: {}", filename);
     } catch (...) {
     }
@@ -585,7 +596,7 @@ public:
             }
           })"");
           auto Stream = json::object();
-          if (auto x = find<json>("nexus", main_opt.ConfigJSON)) {
+          if (auto x = find<json>("nexus", main_opt.CommandsJson)) {
             Stream["nexus"] = x.inner();
           }
           Stream["topic"] = Topic;
@@ -593,7 +604,8 @@ public:
           Stream["writer_module"] = Module;
           Stream["type"] = "uint32";
           Stream["n_mpi_workers"] =
-              main_opt.ConfigJSON["unit_test"]["n_mpi_workers"].get<uint64_t>();
+              main_opt.CommandsJson["unit_test"]["n_mpi_workers"]
+                  .get<uint64_t>();
           Stream["run_parallel"] = run_parallel;
           Dataset["stream"] = Stream;
           Children.push_back(Dataset);
@@ -629,8 +641,7 @@ public:
       unlink(string(fname).c_str());
 
       auto CommandString = CommandJSON.dump();
-      ch.handle(
-          FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+      ch.handle(CommandString);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
       auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
@@ -660,19 +671,21 @@ public:
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            auto res = fwt->demuxers().at(0).process_message(
-                FileWriter::Msg::cheap(msg));
-            if (res.is_ERR()) {
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            auto res =
+                fwt->demuxers().at(0).process_message(std::move(TempMessage));
+            if (res == FileWriter::ProcessMessageResult::ERR) {
               LOG(Sev::Error, "is_ERR");
               do_run = false;
               break;
             }
-            if (res.is_ALL_SOURCES_FULL()) {
+            if (res == FileWriter::ProcessMessageResult::ALL_SOURCES_FULL) {
               LOG(Sev::Error, "is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
-            if (res.is_STOP()) {
+            if (res == FileWriter::ProcessMessageResult::STOP) {
               LOG(Sev::Error, "is_STOP");
               do_run = false;
               break;
@@ -781,7 +794,8 @@ public:
     LOG(Sev::Debug, "data_ev42 verification done");
   }
 
-  /// Can supply pre-generated test data for a source on a topic to profile
+  /// \brief Can supply pre-generated test data for a source on a topic to
+  /// profile
   /// the writing.
   class SourceDataGen_f142 {
   public:
@@ -793,7 +807,8 @@ public:
     vector<FileWriter::Msg> msgs;
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;
-    /// Generates n test messages which we can later feed from memory into the
+    /// \brief Generates n test messages which we can later feed from memory
+    /// into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
       LOG(Sev::Debug, "generating {} {}...", topic, source);
@@ -817,8 +832,8 @@ public:
   };
 
   static void data_f142() {
+    AddF142Reader();
     MainOpt main_opt = getTestOptions();
-
     // Defaults such that the test has a chance to succeed
     merge_config_into_main_opt(main_opt, R""({
       "nexus": {
@@ -836,7 +851,7 @@ public:
     bool do_verification = true;
     try {
       do_verification =
-          main_opt.ConfigJSON["unit_test"]["hdf"]["do_verification"]
+          main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<uint64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
     } catch (...) {
@@ -845,14 +860,16 @@ public:
     int n_msgs_per_source = 1;
     try {
       n_msgs_per_source =
-          main_opt.ConfigJSON["unit_test"]["n_msgs_per_source"].get<uint64_t>();
+          main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
+              .get<uint64_t>();
       LOG(Sev::Debug, "n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
     int n_sources = 1;
     try {
-      n_sources = main_opt.ConfigJSON["unit_test"]["n_sources"].get<uint64_t>();
+      n_sources =
+          main_opt.CommandsJson["unit_test"]["n_sources"].get<uint64_t>();
       LOG(Sev::Debug, "n_sources: {}", n_sources);
     } catch (...) {
     }
@@ -860,7 +877,7 @@ public:
     size_t array_size = 0;
     try {
       array_size =
-          main_opt.ConfigJSON["unit_test"]["array_size"].get<uint64_t>();
+          main_opt.CommandsJson["unit_test"]["array_size"].get<uint64_t>();
       LOG(Sev::Debug, "array_size: {}", array_size);
     } catch (...) {
     }
@@ -976,8 +993,7 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(Filename.c_str());
 
-      ch.handle(FileWriter::Msg::owned((char const *)CommandString.data(),
-                                       CommandString.size()));
+      ch.handle(CommandString);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
       auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
@@ -995,7 +1011,9 @@ public:
               auto v = binary_to_hex(msg.data(), msg.size());
               LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
             }
-            fwt->demuxers().at(0).process_message(FileWriter::Msg::cheap(msg));
+            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
+                                                      msg.size());
+            fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }
         }
@@ -1014,7 +1032,8 @@ public:
     }
   }
 
-  /// Read a string from the given dataset at the given position.
+  /// \brief Read a string from the given dataset at the given position.
+  ///
   /// Helper for other unit tests.
   /// So far only for 1d datasets.
   static std::string read_string(const hdf5::node::Dataset &dataset,
@@ -1050,7 +1069,7 @@ public:
     })"");
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     File.init(NexusStructure, stream_hdf_info);
-    auto ds = hdf5::node::get_dataset(File.root_group, "string_fixed_1d_fixed");
+    auto ds = hdf5::node::get_dataset(File.RootGroup, "string_fixed_1d_fixed");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
@@ -1076,7 +1095,7 @@ public:
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     File.init(NexusStructure, stream_hdf_info);
     auto ds =
-        hdf5::node::get_dataset(File.root_group, "string_fixed_1d_variable");
+        hdf5::node::get_dataset(File.RootGroup, "string_fixed_1d_variable");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
@@ -1086,6 +1105,8 @@ public:
 };
 
 TEST_F(T_CommandHandler, New03) { T_CommandHandler::new_03(); }
+
+TEST_F(T_CommandHandler, New04) { EXPECT_NO_THROW(T_CommandHandler::new_04()); }
 
 TEST_F(T_CommandHandler, CreateStaticFileWithHdfOutputPrefix) {
   T_CommandHandler::create_static_file_with_hdf_output_prefix();
@@ -1116,7 +1137,7 @@ template <typename T>
 void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
                            const std::pair<std::string, T> NameAndValue) {
   auto Dataset =
-      hdf5::node::get_dataset(TestFile.root_group, "/" + NameAndValue.first);
+      hdf5::node::get_dataset(TestFile.RootGroup, "/" + NameAndValue.first);
   auto OutputValue = NameAndValue.second;
   Dataset.read(OutputValue);
   ASSERT_EQ(OutputValue, NameAndValue.second);
@@ -1150,4 +1171,164 @@ TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
   verifyWrittenDatatype(TestFile, TestUint64);
   verifyWrittenDatatype(TestFile, TestInt32);
   verifyWrittenDatatype(TestFile, TestInt64);
+}
+
+TEST(HDFFile, createStaticDatasetsStrings) {
+  std::string const hdf_output_filename =
+      "Test.HDFFile.createStaticDatasetsStrings";
+  unlink(hdf_output_filename.c_str());
+  auto CommandJSON = json::parse(R""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "some_group",
+        "attributes": {
+          "NX_class": "NXinstrument"
+        },
+        "children": [
+          {
+            "type": "dataset",
+            "name": "string_var_0d",
+            "dataset": {
+              "type": "string"
+            },
+            "values": "the-scalar-string"
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_0d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32
+            },
+            "values": "string_scalar"
+          },
+          {
+            "type": "dataset",
+            "name": "string_var_1d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one", "a-third"]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_1d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32,
+              "size": ["unlimited"]
+            },
+            "values": ["the-scalar-string", "another-one", "a-third"]
+          },
+          {
+            "type": "dataset",
+            "name": "string_var_2d",
+            "dataset": {
+              "type": "string",
+              "size": ["unlimited", 4]
+            },
+            "values": [
+              ["string_0_0", "string_0_1", "string_0_2", "string_0_3"],
+              ["string_1_0", "string_1_1", "string_1_2", "string_1_3"],
+              ["string_2_0", "string_2_1", "string_2_2", "string_2_3"],
+              ["string_3_0", "string_3_1", "string_3_2", "string_3_3"]
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "string_fix_2d",
+            "dataset": {
+              "type": "string",
+              "string_size": 32,
+              "size": ["unlimited", 4]
+            },
+            "values": [
+              ["string_0_0", "string_0_1", "string_0_2", "string_0_3"],
+              ["string_1_0", "string_1_1", "string_1_2", "string_1_3"],
+              ["string_2_0", "string_2_1", "string_2_2", "string_2_3"],
+              ["string_3_0", "string_3_1", "string_3_2", "string_3_3"]
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}
+  )"");
+  CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
+  auto CommandString = CommandJSON.dump();
+  std::string Filename = CommandJSON["file_attributes"]["file_name"];
+  ASSERT_GT(Filename.size(), 8u);
+  std::vector<FileWriter::StreamHDFInfo> NoStreams;
+  {
+    FileWriter::HDFFile File;
+    File.init(Filename, CommandJSON["nexus_structure"], json::object(),
+              NoStreams, false);
+  }
+  {
+    auto File = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
+    auto StringVar = hdf5::datatype::String::variable();
+    StringVar.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    StringVar.padding(hdf5::datatype::StringPad::NULLTERM);
+    auto StringFix = hdf5::datatype::String::fixed(32);
+    StringFix.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+    StringFix.padding(hdf5::datatype::StringPad::NULLTERM);
+    hdf5::node::Dataset Dataset;
+    hdf5::dataspace::Simple SpaceFile;
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_0d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_0d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_1d");
+    ASSERT_EQ(Dataset.datatype(), StringVar);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_fix_1d");
+    ASSERT_EQ(Dataset.datatype(), StringFix);
+    ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+    {
+      auto Dataset =
+          hdf5::node::get_dataset(File.root(), "/some_group/string_fix_2d");
+      ASSERT_EQ(Dataset.datatype(), StringFix);
+      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({2, 1}, {1, 3}));
+      std::vector<char> Buffer(3 * 32);
+      // Dataset.read(*Buffer.data(), StringFix, hdf5::dataspace::Simple({2}),
+      // SpaceFile);
+      hdf5::dataspace::Simple SpaceMem({3});
+      if (0 >
+          H5Dread(static_cast<hid_t>(Dataset), static_cast<hid_t>(StringFix),
+                  static_cast<hid_t>(SpaceMem), static_cast<hid_t>(SpaceFile),
+                  H5P_DEFAULT, Buffer.data())) {
+        ASSERT_TRUE(false);
+      }
+      ASSERT_EQ(std::string(Buffer.data() + 0 * 32), "string_2_1");
+      ASSERT_EQ(std::string(Buffer.data() + 1 * 32), "string_2_2");
+      ASSERT_EQ(std::string(Buffer.data() + 2 * 32), "string_2_3");
+    }
+    {
+      auto Dataset =
+          hdf5::node::get_dataset(File.root(), "/some_group/string_var_2d");
+      ASSERT_EQ(Dataset.datatype(), StringVar);
+      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({2, 1}, {1, 2}));
+      std::vector<std::string> Buffer;
+      Buffer.resize(2);
+      Dataset.read(Buffer, StringVar, hdf5::dataspace::Simple({2}), SpaceFile);
+      ASSERT_EQ(Buffer.at(0), "string_2_1");
+      ASSERT_EQ(Buffer.at(1), "string_2_2");
+    }
+  }
 }

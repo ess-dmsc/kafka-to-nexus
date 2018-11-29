@@ -16,11 +16,13 @@ public:
 
 class DummyReader : public FileWriter::FlatbufferReader {
 public:
-  bool verify(Msg const &msg) const override { return true; }
-  std::string source_name(Msg const &msg) const override {
+  bool verify(FlatbufferMessage const &Message) const override { return true; }
+  std::string source_name(FlatbufferMessage const &Message) const override {
     return std::string();
   }
-  std::uint64_t timestamp(Msg const &msg) const override { return 0; }
+  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+    return 0;
+  }
 };
 
 TEST_F(ReaderRegistrationTest, SimpleRegistration) {
@@ -65,29 +67,6 @@ TEST_F(ReaderRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
   { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
   std::string FailKey("trump");
-  EXPECT_EQ(FlatbufferReaderRegistry::find(FailKey).get(), nullptr);
-}
-
-TEST_F(ReaderRegistrationTest, MsgKeyFound) {
-  std::string TestKey("t3mp");
-  std::string TestData("dumy" + TestKey + "data");
-  { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
-  Msg TestMessage = Msg::owned(TestData.data(), TestData.size());
-  EXPECT_NE(FlatbufferReaderRegistry::find(TestMessage).get(), nullptr);
-}
-
-TEST_F(ReaderRegistrationTest, MsgKeyNotFound) {
-  std::string TestKey("t3mp");
-  std::string FailKey("fail");
-  std::string TestData("dumy" + FailKey + "data");
-  { FlatbufferReaderRegistry::Registrar<DummyReader> RegisterIt(TestKey); }
-  Msg TestMessage = Msg::owned(TestData.data(), TestData.size());
-  EXPECT_EQ(FlatbufferReaderRegistry::find(TestMessage).get(), nullptr);
-}
-
-TEST_F(ReaderRegistrationTest, MsgShort) {
-  std::string TestData("dumy");
-  Msg TestMessage = Msg::owned(TestData.data(), TestData.size());
-  EXPECT_EQ(FlatbufferReaderRegistry::find(TestMessage).get(), nullptr);
+  EXPECT_THROW(FlatbufferReaderRegistry::find(FailKey), std::nested_exception);
 }
 } // namespace FileWriter

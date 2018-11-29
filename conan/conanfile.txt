@@ -7,9 +7,11 @@ h5cpp/0.0.7@ess-dmsc/stable
 librdkafka/0.11.4@ess-dmsc/stable
 jsonformoderncpp/3.1.0@vthiery/stable
 graylog-logger/1.0.5-dm1@ess-dmsc/stable
-streaming-data-types/d429d55@ess-dmsc/stable
+streaming-data-types/2246f84@ess-dmsc/stable
 cli11/1.5.3@bincrafters/stable
 cmake_installer/3.10.0@conan/stable
+trompeloeil/v31@ess-dmsc/stable
+date/4b46deb@ess-dmsc/stable
 
 [generators]
 cmake
@@ -21,9 +23,12 @@ FlatBuffers:shared=True
 gtest:shared=True
 hdf5:shared=True
 librdkafka:shared=True
+date:disable_string_view=True
 
 [imports]
-lib, *.dylib* -> ./lib
-lib, *.so* -> ./lib
-lib64, *.so* -> ./lib
+., *.dylib* -> ./lib @ keep_path=False
+., *.so* -> ./lib @ keep_path=False
 ., LICENSE* -> ./licenses @ folder=True, ignore_case=True
+., *.dll -> ./bin @ keep_path=False
+., *.a* -> ./lib @ keep_path=False
+., *.lib -> -> ./bin @ keep_path=False

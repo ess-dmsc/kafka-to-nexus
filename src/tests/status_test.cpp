@@ -28,7 +28,7 @@ TEST(MessageInfo, everythingIsZeroAtInitialisation) {
 TEST(MessageInfo, addOneMessage) {
   MessageInfo MsgInfo;
   const double NewMessageBytes{1024};
-  MsgInfo.message(NewMessageBytes);
+  MsgInfo.newMessage(NewMessageBytes);
 
   EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, 1.0);
   EXPECT_DOUBLE_EQ(MsgInfo.getMessages().second, 1.0);
@@ -57,7 +57,7 @@ TEST(MessageInfo, addMessages) {
     auto new_message_bytes = std::fabs(RandomGaussian());
     accum += new_message_bytes;
     accum2 += new_message_bytes * new_message_bytes;
-    MsgInfo.message(new_message_bytes);
+    MsgInfo.newMessage(new_message_bytes);
   }
 
   EXPECT_DOUBLE_EQ(MsgInfo.getMessages().first, NumMessages);
@@ -83,7 +83,7 @@ TEST(StreamMasterInfo, addOneInfo) {
   const double MessageBytes{1000};
 
   for (int i = 0; i < NumMessages; ++i) {
-    MsgInfo.message(MessageBytes);
+    MsgInfo.newMessage(MessageBytes);
   }
   for (int i = 0; i < NumErrors; ++i) {
     MsgInfo.error();
@@ -112,7 +112,7 @@ TEST(StreamMasterInfo, accumulateInfos) {
     MessageInfo MsgInfo;
     for (int i = 0; i < NumMessages; ++i) {
       auto MessageSize = std::fabs(RandomGaussian());
-      MsgInfo.message(MessageSize);
+      MsgInfo.newMessage(MessageSize);
 
       TotalMessages += 1.0;
       TotalMessages2 += 1.0;
@@ -137,7 +137,7 @@ TEST(MessageInfo, computeDerivedQuantities) {
   MessageInfo MsgInfo;
 
   for (auto &m : MessagesSize) {
-    MsgInfo.message(m * 1e6);
+    MsgInfo.newMessage(m * 1e6);
   }
   std::chrono::milliseconds Duration(1000);
 
@@ -159,7 +159,7 @@ TEST(MessageInfo, derivedQuantitiesAreZeroIfFactorIsNull) {
   MessageInfo MsgInfo;
 
   for (auto &m : MessagesSize) {
-    MsgInfo.message(m * 1e6);
+    MsgInfo.newMessage(m * 1e6);
   }
   std::chrono::milliseconds Duration(0);
 

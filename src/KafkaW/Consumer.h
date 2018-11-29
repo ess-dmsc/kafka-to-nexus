@@ -1,29 +1,42 @@
 #pragma once
 
 #include "BrokerSettings.h"
-#include "Msg.h"
-#include "PollStatus.h"
+#include "ConsumerMessage.h"
 #include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
+#include <memory>
 
 namespace KafkaW {
 
-class Inspect;
-
-class Consumer {
+class ConsumerInterface {
 public:
-  Consumer(BrokerSettings opt);
+  ConsumerInterface() = default;
+  virtual ~ConsumerInterface() = default;
+  virtual void addTopic(std::string const Topic) = 0;
+  virtual void
+  addTopicAtTimestamp(std::string const Topic,
+                      std::chrono::milliseconds const StartTime) = 0;
+  virtual std::unique_ptr<ConsumerMessage> poll() = 0;
+  virtual void dumpCurrentSubscription() = 0;
+  virtual bool topicPresent(const std::string &Topic) = 0;
+  virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
+};
+
+class Consumer : public ConsumerInterface {
+public:
+  explicit Consumer(BrokerSettings opt);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
-  ~Consumer();
+  ~Consumer() override;
   void init();
-  void addTopic(std::string Topic, const std::chrono::milliseconds &StartTime =
-                                       std::chrono::milliseconds{0});
-  void dumpCurrentSubscription();
-  bool topicPresent(const std::string &Topic);
-  int32_t queryNumberOfPartitions(const std::string &TopicName);
-  PollStatus poll();
+  void addTopic(std::string const Topic) override;
+  void addTopicAtTimestamp(std::string const Topic,
+                           std::chrono::milliseconds const StartTime) override;
+  void dumpCurrentSubscription() override;
+  bool topicPresent(const std::string &Topic) override;
+  int32_t queryNumberOfPartitions(const std::string &TopicName) override;
+  std::unique_ptr<ConsumerMessage> poll() override;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>

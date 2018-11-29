@@ -3,7 +3,7 @@
 namespace TemplateWriter {
 
 // Instantiates a ReaderClass used for extracting source names, timestamps and
-// verifying a flatbuffers
+// verifying a flatbuffers.
 static FileWriter::FlatbufferReaderRegistry::Registrar<ReaderClass>
     RegisterReader("test");
 

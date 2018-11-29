@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.1.0)
 project("kafka-to-nexus")
 
+set(CMAKE_CXX_STANDARD 14)
+
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Werror")
@@ -30,7 +32,8 @@ if(${CONAN} MATCHES "AUTO")
 elseif(${CONAN} MATCHES "MANUAL")
   if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    conan_basic_setup(${OUTPUT_DIRS} SKIP_RPATH)
+    conan_basic_setup(${OUTPUT_DIRS} SKIP_RPATH
+            )
   else()
     MESSAGE(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
   endif()

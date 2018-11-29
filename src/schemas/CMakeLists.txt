@@ -1,0 +1,7 @@
+include(ModuleFunction.cmake)
+add_subdirectory(f142)
+add_subdirectory(ev42)
+add_subdirectory(senv)
+add_subdirectory(NDAr)
+add_subdirectory(template)
+add_subdirectory(hs00)

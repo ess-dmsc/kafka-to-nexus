@@ -8,9 +8,9 @@ namespace ev42 {
 template <typename T> using uptr = std::unique_ptr<T>;
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
-  bool verify(Msg const &msg) const override;
-  std::string source_name(Msg const &msg) const override;
-  uint64_t timestamp(Msg const &msg) const override;
+  bool verify(FlatbufferMessage const &Message) const override;
+  std::string source_name(FlatbufferMessage const &Message) const override;
+  uint64_t timestamp(FlatbufferMessage const &Message) const override;
   // add in others
 };
 
@@ -22,7 +22,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
-  WriteResult write(Msg const &msg) override;
+  WriteResult write(FlatbufferMessage const &Message) override;
   int32_t flush() override;
   int32_t close() override;
   void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,

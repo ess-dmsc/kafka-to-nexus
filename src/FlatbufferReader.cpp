@@ -1,5 +1,6 @@
 #include "FlatbufferReader.h"
 #include <flatbuffers/flatbuffers.h>
+#include <stdexcept>
 
 namespace FileWriter {
 
@@ -11,25 +12,13 @@ std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &getReaders() {
 }
 
 FlatbufferReaderRegistry::ReaderPtr &find(std::string const &key) {
-  static FlatbufferReaderRegistry::ReaderPtr empty;
   auto &_items = getReaders();
-  auto f = _items.find(key);
-  if (f == _items.end()) {
-    return empty;
+  try {
+    return _items.at(key);
+  } catch (std::out_of_range &E) {
+    auto s = fmt::format("No such Reader in registry: \"{}\"", E.what());
+    std::throw_with_nested(std::out_of_range(s));
   }
-  return f->second;
-}
-
-FlatbufferReader::ptr &find(Msg const &msg) {
-  static_assert(FLATBUFFERS_LITTLEENDIAN, "Requires currently little endian");
-  if (msg.size() < 8) {
-    LOG(Sev::Warning, "flatbuffer message is too small: {} expect at least 8",
-        msg.size());
-    static FlatbufferReader::ptr empty;
-    return empty;
-  }
-  std::string key(msg.data() + 4, 4);
-  return find(key);
 }
 
 void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item) {

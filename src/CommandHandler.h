@@ -3,22 +3,50 @@
 #include "FileWriterTask.h"
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "MasterI.h"
+#include "MasterInterface.h"
 #include "Msg.h"
+#include "json.h"
 #include <memory>
 
 namespace FileWriter {
 
-struct StreamSettings;
+/// \brief Holder for the stream settings.
+struct StreamSettings {
+  StreamHDFInfo StreamHDFInfoObj;
+  std::string Topic;
+  std::string Module;
+  std::string Source;
+  bool RunParallel = false;
+  std::string ConfigStreamJson;
+};
 
-/// Interprets and execute commands received.
+/// \brief If fails to parse the `Command`, adds error info and throws
+/// exception.
+///
+/// \param  Command Command passed to the program.
+///
+/// \return If parsing successful returns `nlohmann::json`, otherwise throws an
+/// exception.
+nlohmann::json parseOrThrow(std::string const &Command);
+
+std::string format_nested_exception(std::exception const &E);
+
+std::string format_nested_exception(std::exception const &E,
+                                    std::stringstream &StrS, int Level);
+
+/// Interpret and execute received commands.
 class CommandHandler {
 public:
-  CommandHandler(MainOpt &config, MasterI *master);
-
-  /// Given a JSON string, create a new file writer task.
+  /// \brief Initialize a new `CommandHandler`.
   ///
-  /// \param Command The command for configuring the new task.
+  /// \param Config Configuration of the file writer.
+  /// \param MasterPtr Optional `Master` which can continue to watch over newly
+  /// created jobs. Not used for example in some tests.
+  CommandHandler(MainOpt &config, MasterInterface *master);
+
+  /// \brief Given a JSON string, create a new file writer task.
+  ///
+  /// \param Command Command for configuring the new task.
   void handleNew(std::string const &Command);
 
   /// Stop the whole file writer application.
@@ -27,48 +55,49 @@ public:
   /// Stop and remove all ongoing file writer jobs.
   void handleFileWriterTaskClearAll();
 
-  /// Stops a given job.
+  /// \brief Stop a given job.
+
   ///
-  /// \param Command The command for defining which job to stop.
+  /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
 
-  /// Passes content of the message to the command handler.
+  /// \brief Pass content of the message to the command handler.
   ///
   /// \param Msg The message.
-  void handle(Msg const &msg);
+  void tryToHandle(Msg const &msg);
 
-  /// Parses the given command and passes it on to a more specific handler.
+  /// \brief Parse the given command and pass it on to a more specific
+  /// handler.
   ///
   /// \param Command The command to parse.
   void handle(std::string const &command);
+
+  /// Try to handle command and catch exceptions
   void tryToHandle(std::string const &Command);
 
+  /// \brief Get number of active writer tasks.
+  ///
+  /// \return  Number of active writer tasks.
   size_t getNumberOfFileWriterTasks() const;
-  std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
+
+  /// \brief Find a writer task given its `JobID`.
+  ///
+  /// \param JobID The job id to find.
+  ///
+  /// \return The writer task.
+  std::unique_ptr<FileWriterTask> &
+  getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
-  /// Configure the HDF writer modules for writing.
-  ///
-  /// \param StreamSettingsList The settings for the stream.
-  /// \param Task The task to configure.
-  void addStreamSourceToWriterModule(
-      const std::vector<StreamSettings> &stream_settings_list,
-      std::unique_ptr<FileWriterTask> &fwt);
+  void
+  addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
+                                std::unique_ptr<FileWriterTask> &Task);
 
-  /// Given a task and the `nexus_structure` as json string, set up the
-  /// basic HDF file structure.
-  ///
-  /// \param Task The task which will write the HDF file.
-  /// \param NexusStructureString The structure of the NeXus file.
-  /// \return The related stream settings.
   std::vector<StreamHDFInfo>
-  initializeHDF(FileWriterTask &Task,
-                std::string const &NexusStructureString) const;
+  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
+                bool UseSwmr) const;
   MainOpt &Config;
-  MasterI *MasterPtr = nullptr;
+  MasterInterface *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
 };
-
-std::string findBroker(std::string const &);
-
 } // namespace FileWriter
