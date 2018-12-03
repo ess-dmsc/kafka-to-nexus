@@ -11,7 +11,7 @@ using uri::URI;
 // While the cause of this problem is not discovered and fixed, use the
 // following init function.
 void MainOpt::init() {
-  service_id = fmt::format("kafka-to-nexus--Host:{}--pid:{}",
+  service_id = fmt::format("kafka-to-nexus--host:{}--pid:{}",
                            gethostname_wrapper(), getpid_wrapper());
 }
 
