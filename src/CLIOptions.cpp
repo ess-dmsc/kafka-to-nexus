@@ -1,6 +1,6 @@
 #include "CLIOptions.h"
 #include "MainOpt.h"
-#include "uri.h"
+#include "URI.h"
 #include <CLI/CLI.hpp>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
@@ -89,16 +89,16 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       ->check(CLI::ExistingFile);
 
   addOption(App, "--command-uri", MainOptions.command_broker_uri,
-            "<//host[:port][/topic]> Kafka broker/topic to listen for commands")
+            "<//Host[:Port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
   addOption(App, "--status-uri", MainOptions.kafka_status_uri,
             MainOptions.do_kafka_status,
-            "<//host[:port][/topic]> Kafka broker/topic to publish status "
+            "<//Host[:Port][/topic]> Kafka broker/topic to publish status "
             "updates on");
   App.add_option("--kafka-gelf", MainOptions.kafka_gelf,
-                 "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
+                 "<//Host[:Port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
-                 "<host:port> Log to Graylog via graylog_logger library");
+                 "<Host:Port> Log to Graylog via graylog_logger library");
   App.add_option(
          "-v,--verbosity", log_level,
          "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)

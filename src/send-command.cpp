@@ -1,8 +1,8 @@
 #include "CLIOptions.h"
 #include "KafkaW/KafkaW.h"
+#include "URI.h"
 #include "helper.h"
 #include "json.h"
-#include "uri.h"
 #include <CLI/CLI.hpp>
 #include <cstdio>
 #include <cstdlib>
@@ -93,15 +93,15 @@ int main(int argc, char **argv) {
       "(optional): stop:<jobid>[:<timestamp>]\n"
       "                              Terminate the filewriter process: exit");
   addOption(App, "--broker", opt.broker,
-            "<//host[:port]/topic>\n"
-            "                              Host, port, topic where the "
+            "<//Host[:Port]/topic>\n"
+            "                              Host, Port, topic where the "
             "command should be sent to.",
             false);
   CLI11_PARSE(App, argc, argv);
 
-  opt.BrokerSettings.Address = opt.broker.host_port;
+  opt.BrokerSettings.Address = opt.broker.HostPort;
   auto producer = std::make_shared<KafkaW::Producer>(opt.BrokerSettings);
-  KafkaW::Producer::Topic pt(producer, opt.broker.topic);
+  KafkaW::Producer::Topic pt(producer, opt.broker.Topic);
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.BrokerSettings.Address, opt.teamid);
     LOG(Sev::Debug, "sending {}", m1);

@@ -30,7 +30,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   }
 
   Options.Settings.KafkaConfiguration["group.id"] =
-      fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
+      fmt::format("filewriter--streamer--Host:{}--pid:{}--topic:{}--time:{}",
                   gethostname_wrapper(), getpid_wrapper(), TopicName,
                   std::chrono::duration_cast<std::chrono::milliseconds>(
                       std::chrono::steady_clock::now().time_since_epoch())

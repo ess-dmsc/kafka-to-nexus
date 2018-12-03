@@ -226,7 +226,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       BrokerString = std::string("//") + BrokerString;
     }
     Broker.parse(BrokerString);
-    LOG(Sev::Debug, "Use main broker: {}", Broker.host_port);
+    LOG(Sev::Debug, "Use main broker: {}", Broker.HostPort);
   }
 
   if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
@@ -298,7 +298,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->jobID());
     auto s = std::make_unique<StreamMaster<Streamer>>(
-        Broker.host_port, std::move(Task), Config,
+        Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});

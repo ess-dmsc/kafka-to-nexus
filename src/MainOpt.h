@@ -1,9 +1,9 @@
 #pragma once
 
 #include "StreamerOptions.h"
+#include "URI.h"
 #include "json.h"
 #include "logger.h"
-#include "uri.h"
 
 #include <atomic>
 #include <chrono>
