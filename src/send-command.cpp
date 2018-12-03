@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
       "                              Terminate the filewriter process: exit");
   addOption(App, "--broker", opt.broker,
             "<//host[:port]/topic>\n"
-            "                              host, port, topic where the "
+            "                              Host, port, topic where the "
             "command should be sent to.",
             false);
   CLI11_PARSE(App, argc, argv);
