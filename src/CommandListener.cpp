@@ -16,7 +16,7 @@ void CommandListener::start() {
   BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.command_broker_uri.HostPort;
   BrokerSettings.KafkaConfiguration["group.id"] = fmt::format(
-      "filewriter--commandhandler--Host:{}--pid:{}--topic:{}--time:{}",
+      "filewriter--commandhandler--host:{}--pid:{}--topic:{}--time:{}",
       gethostname_wrapper(), getpid_wrapper(), config.command_broker_uri.Topic,
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
