@@ -6,9 +6,6 @@
 
 namespace uri {
 
-using std::array;
-using std::vector;
-
 /// \brief Thin parser for URIs.
 class URI {
 public:

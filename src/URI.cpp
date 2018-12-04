@@ -5,9 +5,6 @@
 
 namespace uri {
 
-using std::array;
-using std::move;
-
 static std::string findTopicFromPath(std::string URIString) {
   auto Path = URIString.find("/");
   if (Path == 0) {
