@@ -55,6 +55,17 @@ TEST(URI, host_port_topic) {
   ASSERT_EQ(TestURI.Topic, "the-topic");
 }
 
+TEST(URI, scheme_double_colon_ignored) {
+  URI TestURI("http:://my.Host");
+  ASSERT_EQ(TestURI.Host, "my.Host");
+}
+
+TEST(URI, port_double_colon_ignored) {
+  URI TestURI("//my.Host::789");
+  ASSERT_EQ(TestURI.Host, "my.Host");
+  ASSERT_EQ(TestURI.Port, (uint32_t)0);
+}
+
 TEST(URI, trim) {
   URI TestURI("  //some:123     ");
   ASSERT_EQ(TestURI.Host, "some");
