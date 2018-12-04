@@ -5,20 +5,14 @@
 
 namespace uri {
 
-static std::string findTopicFromPath(std::string URIString) {
-  auto Path = URIString.find("/");
-  if (Path == 0) {
-    URIString = URIString.substr(1);
-  }
-  Path = URIString.find("/");
+static std::string findTopicFromPath(std::string PathString) {
+  auto Path = PathString.find_last_of('/');
   if (Path == std::string::npos) {
-    return URIString;
+    return PathString;
+  } else if (Path == 0) {
+    return PathString.substr(1);
   } else {
-    if (Path == 0) {
-      return URIString.substr(1);
-    } else {
-      return std::string();
-    }
+    return PathString.substr(Path + 1, PathString.npos);
   }
 }
 

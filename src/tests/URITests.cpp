@@ -34,11 +34,18 @@ TEST(URI, ip_port) {
 }
 
 TEST(URI, scheme_ignored_host_port_path_parsed) {
-  URI TestURI("kafka://my_host.com:8080/some/longer");
+  URI TestURI("kafka://my_host.com:8080/maybe");
   ASSERT_EQ(TestURI.Host, "my_host.com");
   ASSERT_EQ(TestURI.Port, (uint32_t)8080);
+  ASSERT_EQ(TestURI.Path, "/maybe");
+}
+
+TEST(URI, topic_after_path_parsed) {
+  URI TestURI("//my.Host:99/some/longer");
+  ASSERT_EQ(TestURI.Host, "my.Host");
+  ASSERT_EQ(TestURI.Port, (uint32_t)99);
   ASSERT_EQ(TestURI.Path, "/some/longer");
-  ASSERT_EQ(TestURI.Topic, "");
+  ASSERT_EQ(TestURI.Topic, "longer");
 }
 
 TEST(URI, host_topic) {
