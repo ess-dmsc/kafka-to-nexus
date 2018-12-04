@@ -22,9 +22,6 @@ public:
   /// Parses the given `uri`
   void parse(std::string URIString);
 
-  /// Given a `http://www.example.com` scheme will contain `http`.
-  std::string Scheme;
-
   /// Parsed hostname.
   std::string Host;
 
@@ -41,12 +38,6 @@ public:
 
   /// If the path can be a valid Kafka topic name, then it is non-empty.
   std::string Topic;
-
-  /// \brief Whether we require two slashes before the hostname, as required by
-  /// the standard.
-  ///
-  /// Otherwise ambiguous because `host/path` could also be a `path/path`.
-  bool RequireHostSlashes = true;
 
   /// The URI string //<host>:<port>/<topic>
   std::string getURIString() { return "//" + HostPort + "/" + Topic; }
