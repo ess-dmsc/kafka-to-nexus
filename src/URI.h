@@ -30,9 +30,6 @@ public:
   /// not specified.
   uint32_t Port = 0;
 
-  /// The path of the URL.
-  std::string Path;
-
   /// If the path can be a valid Kafka topic name, then it is non-empty.
   std::string Topic;
 
@@ -40,6 +37,6 @@ public:
   std::string getURIString() { return "//" + HostPort + "/" + Topic; }
 
 private:
-  void updateHostPortAndTopic();
+  void UpdateHostPort();
 };
 } // namespace uri

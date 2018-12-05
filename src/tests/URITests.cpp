@@ -38,15 +38,10 @@ TEST(URI, scheme_ignored_host_port_path_parsed) {
   URI TestURI("kafka://my_host.com:8080/maybe");
   ASSERT_EQ(TestURI.Host, "my_host.com");
   ASSERT_EQ(TestURI.Port, (uint32_t)8080);
-  ASSERT_EQ(TestURI.Path, "/maybe");
 }
 
-TEST(URI, topic_after_path_not_parsed) {
-  URI TestURI("//my.Host:99/some/longer");
-  ASSERT_EQ(TestURI.Host, "my.Host");
-  ASSERT_EQ(TestURI.Port, (uint32_t)99);
-  ASSERT_EQ(TestURI.Path, "/some/longer");
-  ASSERT_EQ(TestURI.Topic, "");
+TEST(URI, path_after_topic_throws_runtime_error) {
+  ASSERT_THROW(URI("//my.Host:99/some/longer"), std::runtime_error);
 }
 
 TEST(URI, host_topic) {
@@ -71,10 +66,8 @@ TEST(URI, no_host_given_throws_runtime_error) {
   ASSERT_THROW(URI("//:9092"), std::runtime_error);
 }
 
-TEST(URI, port_double_colon_ignored) {
-  URI TestURI("//my.Host::789");
-  ASSERT_EQ(TestURI.Host, "my.Host");
-  ASSERT_EQ(TestURI.Port, (uint32_t)0);
+TEST(URI, port_double_colon_throws_runtime_error) {
+  ASSERT_THROW(URI("//my.Host::789"), std::runtime_error);
 }
 
 TEST(URI, trim) {
@@ -89,6 +82,5 @@ TEST(URI, topic_picked_up_when_after_port) {
   ASSERT_EQ(TestURI.HostPort, "localhost:9092");
   ASSERT_EQ(TestURI.Port, 9092u);
   ASSERT_EQ(TestURI.Topic, "TEST_writerCommand");
-  ASSERT_EQ(TestURI.Path, "/TEST_writerCommand");
   ASSERT_EQ(TestURI.getURIString(), "//localhost:9092/TEST_writerCommand");
 }
