@@ -31,6 +31,7 @@ TEST(URI, ip_port) {
   URI TestURI("//127.0.0.1:345");
   ASSERT_EQ(TestURI.Host, "127.0.0.1");
   ASSERT_EQ(TestURI.Port, (uint32_t)345);
+  ASSERT_EQ(TestURI.HostPort, "127.0.0.1:345");
 }
 
 TEST(URI, scheme_ignored_host_port_path_parsed) {
@@ -40,12 +41,12 @@ TEST(URI, scheme_ignored_host_port_path_parsed) {
   ASSERT_EQ(TestURI.Path, "/maybe");
 }
 
-TEST(URI, topic_after_path_parsed) {
+TEST(URI, topic_after_path_not_parsed) {
   URI TestURI("//my.Host:99/some/longer");
   ASSERT_EQ(TestURI.Host, "my.Host");
   ASSERT_EQ(TestURI.Port, (uint32_t)99);
   ASSERT_EQ(TestURI.Path, "/some/longer");
-  ASSERT_EQ(TestURI.Topic, "longer");
+  ASSERT_EQ(TestURI.Topic, "");
 }
 
 TEST(URI, host_topic) {
@@ -63,8 +64,11 @@ TEST(URI, host_port_topic) {
 }
 
 TEST(URI, scheme_double_colon_ignored) {
-  URI TestURI("http:://my.Host");
-  ASSERT_EQ(TestURI.Host, "my.Host");
+  ASSERT_THROW(URI("http:://my.Host"), std::runtime_error);
+}
+
+TEST(URI, no_host_given_throws_runtime_error) {
+  ASSERT_THROW(URI("//:9092"), std::runtime_error);
 }
 
 TEST(URI, port_double_colon_ignored) {
@@ -77,4 +81,14 @@ TEST(URI, trim) {
   URI TestURI("  //some:123     ");
   ASSERT_EQ(TestURI.Host, "some");
   ASSERT_EQ(TestURI.Port, 123u);
+}
+
+TEST(URI, topic_picked_up_when_after_port) {
+  URI TestURI("//localhost:9092/TEST_writerCommand");
+  ASSERT_EQ(TestURI.Host, "localhost");
+  ASSERT_EQ(TestURI.HostPort, "localhost:9092");
+  ASSERT_EQ(TestURI.Port, 9092u);
+  ASSERT_EQ(TestURI.Topic, "TEST_writerCommand");
+  ASSERT_EQ(TestURI.Path, "/TEST_writerCommand");
+  ASSERT_EQ(TestURI.getURIString(), "//localhost:9092/TEST_writerCommand");
 }

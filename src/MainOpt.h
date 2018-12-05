@@ -57,7 +57,7 @@ struct MainOpt {
   int parseJsonCommands();
 
   /// Kafka broker and topic where file writer commands are published.
-  uri::URI command_broker_uri{"kafka://localhost:9092/kafka-to-nexus.command"};
+  uri::URI command_broker_uri{"//localhost:9092/kafka-to-nexus.command"};
 
   /// \brief Path for HDF output.
   ///
@@ -72,7 +72,7 @@ struct MainOpt {
   bool do_kafka_status = false;
 
   /// Kafka topic where status updates are to be published.
-  uri::URI kafka_status_uri{"kafka://localhost:9092/kafka-to-nexus.status"};
+  uri::URI kafka_status_uri{"//localhost:9092/kafka-to-nexus.status"};
 
   /// \brief std::chrono::milliseconds interval to publish status of `Master`
   /// (e.g.
