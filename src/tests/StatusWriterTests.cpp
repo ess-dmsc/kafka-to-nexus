@@ -196,8 +196,7 @@ TEST(StatFunctions, messageSize) {
   for (size_t i = 0; i < NumMessages; ++i) {
     Message.newMessage(MessageBytes * i);
   }
-  std::pair<double, double> MessageSize =
-      FileWriter::Status::messageSize(Message);
+  std::pair<double, double> MessageSize = Message.messageSize();
   EXPECT_DOUBLE_EQ(MessageSize.first, 0.050688);
   EXPECT_DOUBLE_EQ(MessageSize.second, 0.0297077677833032);
 }

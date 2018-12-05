@@ -31,7 +31,6 @@ namespace Status {
 /// would be present there can be a mixing of updated and non-updated
 /// information, which the mutex allows to avoid.
 class MessageInfo {
-  friend std::pair<double, double> messageSize(const MessageInfo &Information);
 
 public:
   MessageInfo() = default;
@@ -48,6 +47,14 @@ public:
 
   ///  Reset the counters
   void reset();
+
+  /// \brief Return the average size and relative standard deviation of the
+  /// number of messages between two reports.
+  ///
+  /// \param[in] Information The MessageInfo object that stores the data.
+  ///
+  /// \return A pair containing {average size, standard deviation}.
+  std::pair<double, double> messageSize();
 
   /// \brief Returns the number of megabytes processed.
   ///
@@ -146,7 +153,7 @@ private:
 /// \param[in] Information The MessageInfo object that stores the data.
 ///
 /// \return A pair containing {average size, standard deviation}.
-std::pair<double, double> messageSize(const MessageInfo &Information);
+// std::pair<double, double> messageSize(const MessageInfo &Information);
 
 } // namespace Status
 } // namespace FileWriter

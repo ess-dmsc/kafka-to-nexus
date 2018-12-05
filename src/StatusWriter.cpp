@@ -14,7 +14,7 @@ nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
 }
 
 nlohmann::json StreamerToJson(MessageInfo &Information) {
-  std::pair<double, double> Size = messageSize(Information);
+  std::pair<double, double> Size = Information.messageSize();
 
   nlohmann::json Status;
   Status["rates"] = {

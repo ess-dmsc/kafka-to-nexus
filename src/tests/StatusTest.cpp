@@ -26,7 +26,7 @@ TEST(MessageInfo, addOneMessage) {
   MessageInfo MsgInfo;
   const double NewMessageBytes{1024};
   MsgInfo.newMessage(NewMessageBytes);
-  auto Size = FileWriter::Status::messageSize(MsgInfo);
+  auto Size = MsgInfo.messageSize();
 
   EXPECT_EQ(MsgInfo.getMessages(), 1u);
   EXPECT_DOUBLE_EQ(MsgInfo.getMbytes(), NewMessageBytes * 1e-6);
@@ -54,7 +54,7 @@ TEST(MessageInfo, addManyMessages) {
     TotalMBSquare += MessageBytes * MessageBytes * 1e-12;
     MsgInfo.newMessage(MessageBytes);
   }
-  auto Size = FileWriter::Status::messageSize(MsgInfo);
+  auto Size = MsgInfo.messageSize();
 
   EXPECT_EQ(MsgInfo.getMessages(), NumMessages);
   EXPECT_NEAR(Size.first, TotalMB / NumMessages, 1e-6);
@@ -123,7 +123,7 @@ TEST(MessageInfo, computeDerivedQuantities) {
   }
   std::chrono::milliseconds Duration(1000);
 
-  auto Size = FileWriter::Status::messageSize(MsgInfo);
+  auto Size = MsgInfo.messageSize();
   EXPECT_DOUBLE_EQ(Size.first, 3.0);
   EXPECT_NEAR(Size.second, 1.5811388300841898, 10e-3);
 }
