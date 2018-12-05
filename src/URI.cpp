@@ -9,9 +9,9 @@ void URI::UpdateHostPort() {
   HostPort = Port != 0 ? fmt::format("{}:{}", Host, Port) : Host;
 }
 
-URI::URI(std::string URIString) { parse(URIString); }
+URI::URI(const std::string &URIString) { parse(URIString); }
 
-void URI::parse(std::string URIString) {
+void URI::parse(const std::string &URIString) {
   std::smatch Matches;
   std::regex Regex(
       R"(\s*(([^:/?#]+):)?(//([^/?#:]+))(:(\d+))?/?([a-zA-Z0-9._-]+)?\s*)");

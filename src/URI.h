@@ -14,10 +14,10 @@ public:
   URI() = default;
 
   /// Creates and parses the given URI
-  explicit URI(std::string URIString);
+  explicit URI(const std::string &URIString);
 
   /// Parses the given `uri`
-  void parse(std::string URIString);
+  void parse(const std::string &URIString);
 
   /// Parsed hostname.
   std::string Host;
