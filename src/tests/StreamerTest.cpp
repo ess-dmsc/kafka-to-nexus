@@ -44,6 +44,8 @@ TEST_F(StreamerInitTest, NoTopic) {
 class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn() : Streamer("SomeBroker", "SomeTopic", StreamerOptions()) {}
+  StreamerStandIn(StreamerOptions Opts)
+      : Streamer("SomeBroker", "SomeTopic", Opts) {}
   using Streamer::ConsumerCreated;
   using Streamer::Options;
 };
@@ -232,16 +234,22 @@ public:
 class StreamerProcessTimingTest : public ::testing::Test {
 protected:
   void SetUp() override {
-    Settings.Address = "127.0.0.1:1";
+    BrokerSettings.Address = "127.0.0.1:1";
     std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
         FlatbufferReaderRegistry::getReaders();
     Readers.clear();
+    Options.ConsumerSettings.OffsetsForTimesTimeoutMS = 10;
+    Options.ConsumerSettings.MetadataTimeoutMS = 10;
+    pTestStreamer = std::make_unique<StreamerStandIn>(Options);
   }
   std::string ReaderKey{"test"};
   std::string DataBuffer{"0000test"};
   std::string SourceName{"SomeRandomSourceName"};
-  KafkaW::BrokerSettings Settings;
+  KafkaW::BrokerSettings BrokerSettings;
+  KafkaW::ConsumerSettings ConsumerSettings;
+  StreamerOptions Options;
   StreamerStandIn TestStreamer;
+  std::unique_ptr<StreamerStandIn> pTestStreamer;
 };
 
 TEST_F(StreamerProcessTimingTest,
@@ -260,7 +268,7 @@ TEST_F(StreamerProcessTimingTest,
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
@@ -290,7 +298,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
@@ -332,7 +340,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
@@ -369,7 +377,7 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings);
   int CallCounter{0};
   auto PollResult = [this, &CallCounter]() {
     CallCounter++;
@@ -412,7 +420,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
@@ -447,7 +455,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
@@ -474,8 +482,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   namespace c = std::chrono;
   auto Now = c::duration_cast<c::milliseconds>(
       c::system_clock::now().time_since_epoch());
-  TestStreamer.Options.StopTimestamp = Now;
-  TestStreamer.Options.AfterStopTime = c::milliseconds(5000);
+  pTestStreamer->Options.StopTimestamp = Now;
+  pTestStreamer->Options.AfterStopTime = c::milliseconds(1000);
   std::this_thread::sleep_for(c::milliseconds(5));
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
@@ -486,21 +494,24 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
-  TestStreamer.setSources(SourceList);
+  pTestStreamer->setSources(SourceList);
+
+  ConsumerSettings.OffsetsForTimesTimeoutMS = 10;
+  ConsumerSettings.MetadataTimeoutMS = 10;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(Settings);
+      new ConsumerEmptyStandIn(BrokerSettings, ConsumerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
       .TIMES(1);
 
-  TestStreamer.ConsumerCreated =
+  pTestStreamer->ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  EXPECT_EQ(pTestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 } // namespace FileWriter
