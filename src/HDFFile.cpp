@@ -1039,8 +1039,10 @@ static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
       LOG(Sev::Warning,
           "can not create link name: {}  in group: {}  to target: {}", LinkName,
           std::string(Group.link().path()), Target);
+      H5Oclose(TargetID);
       continue;
     }
+    H5Oclose(TargetID);
   }
 }
 
