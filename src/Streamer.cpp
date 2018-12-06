@@ -29,13 +29,13 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
     throw std::runtime_error("Missing broker or topic");
   }
 
-  Options.Settings.KafkaConfiguration["group.id"] =
+  Options.BrokerSettings.KafkaConfiguration["group.id"] =
       fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
                   gethostname_wrapper(), getpid_wrapper(), TopicName,
                   std::chrono::duration_cast<std::chrono::milliseconds>(
                       std::chrono::steady_clock::now().time_since_epoch())
                       .count());
-  Options.Settings.Address = Broker;
+  Options.BrokerSettings.Address = Broker;
 
   ConsumerCreated = std::async(std::launch::async, &FileWriter::createConsumer,
                                TopicName, Options);
@@ -49,7 +49,7 @@ FileWriter::createConsumer(std::string const TopicName,
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(
-        Options.Settings, Options.ConsumerSettings);
+        Options.BrokerSettings, Options.ConsumerSettings);
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
                                                    Options.BeforeStartTime);
