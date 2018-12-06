@@ -2,6 +2,7 @@
 
 #include "BrokerSettings.h"
 #include "ConsumerMessage.h"
+#include "ConsumerSettings.h"
 #include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
@@ -45,6 +46,7 @@ public:
 
 private:
   BrokerSettings ConsumerBrokerSettings;
+  ConsumerSettings Settings;
   static void cb_log(rd_kafka_t const *rk, int level, char const *fac,
                      char const *buf);
   static int cb_stats(rd_kafka_t *rk, char *json, size_t json_size,

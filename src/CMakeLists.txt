@@ -116,6 +116,7 @@ set(kafka_to_nexus_INC
         json.h
         kafka-to-nexus.h
         KafkaW/BrokerSettings.h
+        KafkaW/ConsumerSettings.h
         KafkaW/TopicSettings.h
         KafkaW/KafkaW.h
         KafkaW/ConsumerMessage.h
