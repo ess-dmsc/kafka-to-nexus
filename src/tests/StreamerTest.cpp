@@ -17,15 +17,21 @@ public:
 
 // make sure that a topic exists/not exists
 TEST_F(StreamerInitTest, Success) {
-  EXPECT_NO_THROW(Streamer("broker", "topic", StreamerOptions()));
+  StreamerOptions Options;
+  Options.ConsumerSettings.MetadataTimeoutMS = 10;
+  EXPECT_NO_THROW(Streamer("broker", "topic", Options));
 }
 
 TEST_F(StreamerInitTest, NoBroker) {
-  EXPECT_THROW(Streamer("", "topic", StreamerOptions()), std::runtime_error);
+  StreamerOptions Options;
+  Options.ConsumerSettings.MetadataTimeoutMS = 10;
+  EXPECT_THROW(Streamer("", "topic", Options), std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, NoTopic) {
-  EXPECT_THROW(Streamer("broker", "", StreamerOptions()), std::runtime_error);
+  StreamerOptions Options;
+  Options.ConsumerSettings.MetadataTimeoutMS = 10;
+  EXPECT_THROW(Streamer("broker", "", Options), std::runtime_error);
 }
 
 // Disabled for now as there is a problem with the Consumer that requires a
@@ -88,7 +94,10 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
 }
 
 TEST_F(StreamerProcessTest, InvalidFuture) {
-  StreamerStandIn TestStreamer;
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerCreated =
       std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>();
   DemuxTopic Demuxer("SomeTopicName");
@@ -96,7 +105,10 @@ TEST_F(StreamerProcessTest, InvalidFuture) {
 }
 
 TEST_F(StreamerProcessTest, BadConsumerCreation) {
-  StreamerStandIn TestStreamer;
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerCreated = std::async(std::launch::async, []() {
     return std::pair<Status::StreamerStatus, ConsumerPtr>{
         Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
@@ -106,7 +118,10 @@ TEST_F(StreamerProcessTest, BadConsumerCreation) {
 }
 
 TEST_F(StreamerProcessTest, EmptyPoll) {
-  StreamerStandIn TestStreamer;
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -123,7 +138,10 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
 }
 
 TEST_F(StreamerProcessTest, EndOfPartition) {
-  StreamerStandIn TestStreamer;
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -140,7 +158,10 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
 }
 
 TEST_F(StreamerProcessTest, PollingError) {
-  StreamerStandIn TestStreamer;
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -162,7 +183,11 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
   Readers.clear();
   unsigned char DataBuffer[]{"0000test"};
   std::string ReaderKey{"test"};
-  StreamerStandIn TestStreamer;
+
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -209,7 +234,10 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
       ReaderKey);
   unsigned char DataBuffer[]{"0000test"};
 
-  StreamerStandIn TestStreamer;
+  StreamerOptions Options;
+  Options.ConsumerSettings = ConsumerSettings;
+  Options.BrokerSettings = BrokerSettings;
+  StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
