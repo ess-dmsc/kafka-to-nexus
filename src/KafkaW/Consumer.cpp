@@ -13,8 +13,8 @@ static std::atomic<int> g_kafka_consumer_instance_count;
         rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
   }
 
-Consumer::Consumer(BrokerSettings BrokerSettings)
-    : ConsumerBrokerSettings(BrokerSettings) {
+Consumer::Consumer(BrokerSettings BrokerSettings, ConsumerSettings CSettings)
+    : ConsumerBrokerSettings(BrokerSettings), Settings(CSettings) {
   init();
   id = g_kafka_consumer_instance_count++;
 }

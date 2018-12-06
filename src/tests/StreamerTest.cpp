@@ -55,8 +55,10 @@ protected:
 
 class ConsumerEmptyStandIn : public KafkaW::Consumer {
 public:
-  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
-      : KafkaW::Consumer(Settings){};
+  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &BrokerSettings,
+                       KafkaW::ConsumerSettings const &ConsumerSettings =
+                           KafkaW::ConsumerSettings())
+      : KafkaW::Consumer(BrokerSettings, ConsumerSettings){};
   MAKE_MOCK0(poll, std::unique_ptr<KafkaW::ConsumerMessage>(), override);
 };
 
