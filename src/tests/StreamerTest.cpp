@@ -465,7 +465,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
 // be
 // revisited.
 // See issue #360
-TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
+TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
 
       ReaderKey);

@@ -206,7 +206,7 @@ void Consumer::commitOffsets() const {
 int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
   const rd_kafka_metadata_t *Metadata = nullptr;
   int QueryAllTopicsInCluster = 1;
-  int TimeoutMS = 2000;
+  int TimeoutMS = 1000;
   auto Error = rd_kafka_metadata(RdKafka, QueryAllTopicsInCluster, nullptr,
                                  &Metadata, TimeoutMS);
   if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
@@ -226,7 +226,7 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
-  int const TimeoutMS = 10000;
+  int const TimeoutMS = 1000;
   const rd_kafka_metadata_t *Metadata{nullptr};
   rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, TimeoutMS);
 
