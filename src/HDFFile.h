@@ -58,6 +58,8 @@ public:
 
   hdf5::file::File H5File;
 
+  hdf5::node::Group getRootGroup();
+
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;

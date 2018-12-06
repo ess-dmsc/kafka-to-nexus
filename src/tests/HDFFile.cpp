@@ -1068,7 +1068,8 @@ public:
     })"");
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     File.init(NexusStructure, stream_hdf_info);
-    auto ds = hdf5::node::get_dataset(File.RootGroup, "string_fixed_1d_fixed");
+    auto ds =
+        hdf5::node::get_dataset(File.getRootGroup(), "string_fixed_1d_fixed");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
@@ -1093,8 +1094,8 @@ public:
     })"");
     std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
     File.init(NexusStructure, stream_hdf_info);
-    auto ds =
-        hdf5::node::get_dataset(File.RootGroup, "string_fixed_1d_variable");
+    auto ds = hdf5::node::get_dataset(File.getRootGroup(),
+                                      "string_fixed_1d_variable");
     auto datatype = hdf5::datatype::String(ds.datatype());
     ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
@@ -1135,8 +1136,8 @@ TEST_F(T_CommandHandler, DatasetStatic1DStringVariable) {
 template <typename T>
 void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
                            const std::pair<std::string, T> NameAndValue) {
-  auto Dataset =
-      hdf5::node::get_dataset(TestFile.RootGroup, "/" + NameAndValue.first);
+  auto Dataset = hdf5::node::get_dataset(TestFile.getRootGroup(),
+                                         "/" + NameAndValue.first);
   auto OutputValue = NameAndValue.second;
   Dataset.read(OutputValue);
   ASSERT_EQ(OutputValue, NameAndValue.second);

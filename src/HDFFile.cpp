@@ -1080,4 +1080,6 @@ void HDFFile::SWMRFlush() {
 
 bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
 
+hdf5::node::Group HDFFile::getRootGroup() { return H5File.root(); }
+
 } // namespace FileWriter
