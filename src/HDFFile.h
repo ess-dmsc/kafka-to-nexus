@@ -57,7 +57,6 @@ public:
   bool isSWMREnabled() const;
 
   hdf5::file::File H5File;
-  hdf5::node::Group RootGroup;
 
 private:
   friend class ::T_HDFFile;

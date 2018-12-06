@@ -880,7 +880,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
     auto var_string = hdf5::datatype::String::variable();
     var_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
 
-    RootGroup = H5File.root();
+    auto RootGroup = H5File.root();
 
     std::deque<std::string> path;
     if (NexusStructure.is_object()) {
