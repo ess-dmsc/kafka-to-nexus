@@ -288,10 +288,21 @@ fails to initialise.  In order to abort writing of that file instead, set in the
 
 The filewriter can use HDF's Single Writer Multiple Reader feature (SWMR).
 
+SWMR-mode writing is enabled by default.
+
+To disable SWMR, add to the `FileWriter_new` command:
+
+```json
+{
+  "use_hdf_swmr": false
+}
+```
+
 To write, as well as to read HDF files which use the SWMR feature requires at
-least HDF version 1.10.  This means that also tools like HDFView are required
+least HDF5 version 1.10.  This means that also tools like HDFView are required
 to link against at least HDF 1.10 in order to open HDF files which were written
-in SWMR mode.
+in SWMR mode.  One can also use the HDF5 tool `h5repack` to convert the file
+into a HDF5 1.8 compatible version.
 
 Please note, the HDF documentation itself warns:
 
@@ -302,14 +313,6 @@ Also:
 
 "The writer is not allowed to modify or append to any data items containing
 variable-size datatypes (including string and region references datatypes)."
-
-To enable SWMR when writing a file, add to the `FileWriter_new` command:
-
-```json
-{
-  "use_hdf_swmr": true
-}
-```
 
 
 
