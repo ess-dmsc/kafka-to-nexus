@@ -26,8 +26,8 @@ services:
       - kafka
     network_mode: "host"
     environment:
-      CONFIG_FILE: "/file_writer_config.ini"
+      CONFIG_FILE: "/file_writer_config_static_data.ini"
     volumes:
-      - ./config-files/file_writer_config.ini:/file_writer_config_static_data.ini
+      - ./config-files/file_writer_config_static_data.ini:/file_writer_config_static_data.ini
       - ./output-files/:/output-files/
       - ./logs/:/filewriter_logs/
