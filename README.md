@@ -301,8 +301,9 @@ To disable SWMR, add to the `FileWriter_new` command:
 To write, as well as to read HDF files which use the SWMR feature requires at
 least HDF5 version 1.10.  This means that also tools like HDFView are required
 to link against at least HDF 1.10 in order to open HDF files which were written
-in SWMR mode.  One can also use the HDF5 tool `h5repack` to convert the file
-into a HDF5 1.8 compatible version.
+in SWMR mode.  One can also use the HDF5 tool `h5repack` with the `--high`
+option to convert the file into a HDF5 1.8 compatible version.  Please refer to
+`h5repack --help` for more information.
 
 Please note, the HDF documentation itself warns:
 
