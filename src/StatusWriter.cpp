@@ -22,7 +22,7 @@ nlohmann::json StreamerToJson(MessageInfo &Information) {
       {"Mbytes", Information.getMbytes()},
       {"errors", Information.getErrors()},
       {"message_size",
-       {{"average", Size.first}, {"stdandard_deviation", Size.second}}}};
+       {{"average", Size.first}, {"standard_deviation", Size.second}}}};
 
   return Status;
 } // namespace Status
