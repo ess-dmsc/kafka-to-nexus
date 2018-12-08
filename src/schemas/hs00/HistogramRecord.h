@@ -19,7 +19,6 @@ public:
 
 private:
   size_t HDFIndex = !0;
-  uint64_t Timestamp = 0;
   std::vector<Slice> Slices;
   size_t ItemsWritten = 0;
   size_t TotalItems = 0;
