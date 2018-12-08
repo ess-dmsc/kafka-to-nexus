@@ -102,8 +102,8 @@ public:
   std::string StoreLatestInto;
 
   // Helper for experiments on my other branch
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
+  void enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
+                 int MPIRank) override;
   CollectiveQueue *cq = nullptr;
 
   // Reduce LOG rate in some cases

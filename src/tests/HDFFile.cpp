@@ -634,7 +634,6 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     using DT = uint32_t;
-    std::mt19937 rnd_nn;
 
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(string(fname).c_str());
@@ -847,9 +846,8 @@ public:
       }
     })"");
 
-    bool do_verification = true;
     try {
-      do_verification =
+      auto do_verification =
           main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<uint64_t>();
       LOG(Sev::Debug, "do_verification: {}", do_verification);
@@ -982,12 +980,6 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
 
     int const feed_msgs_times = 1;
-    std::mt19937 rnd_nn;
-
-    if (feed_msgs_times > 1) {
-      LOG(Sev::Error, "Sorry, can feed messages currently only once");
-      exit(1);
-    }
 
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(Filename.c_str());

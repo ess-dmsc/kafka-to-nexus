@@ -177,8 +177,8 @@ WriterTyped<DataType, EdgeType, ErrorType>::createFromJson(json const &Json) {
   }
   auto TheWriterTypedPtr =
       std::make_unique<WriterTyped<DataType, EdgeType, ErrorType>>();
-  auto &TheWriterTyped = *TheWriterTypedPtr;
   try {
+    auto &TheWriterTyped = *TheWriterTypedPtr;
     TheWriterTyped.TheShape = Shape<EdgeType>::createFromJson(Json.at("shape"));
     try {
       TheWriterTyped.DoConvertEdgeTypeToFloat =
