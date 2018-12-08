@@ -44,8 +44,8 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const TopicName,
-                           FileWriter::StreamerOptions const Options) {
+FileWriter::createConsumer(std::string const &TopicName,
+                           FileWriter::StreamerOptions const &Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer =

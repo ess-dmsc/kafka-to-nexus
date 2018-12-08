@@ -36,13 +36,13 @@ public:
   /// Indicates if status is okay.
   ///
   /// \return True if okay.
-  inline bool is_OK() { return v == 0; }
+  inline bool is_OK() const { return v == 0; }
 
   /// Indicates if any error has occurred. More specific query function will
   /// come as need arises.
   ///
   /// \return True if any error has occurred
-  inline bool is_ERR() { return v < 0; }
+  inline bool is_ERR() const { return v < 0; }
 
   /// Used for status reports.
   ///
@@ -72,7 +72,7 @@ public:
   /// \return The error result.
   static inline WriteResult ERROR_IO() { return WriteResult(-1); }
 
-  static inline WriteResult ERROR_WITH_MESSAGE(std::string Message) {
+  static inline WriteResult ERROR_WITH_MESSAGE(std::string const &Message) {
     return WriteResult(Message);
   }
 
@@ -105,13 +105,13 @@ public:
   static inline WriteResult ERROR_DATA_TYPE_MISMATCH() {
     return WriteResult(-4);
   }
-  inline bool is_OK() { return v == 0; }
-  inline bool is_OK_WITH_TIMESTAMP() { return v == 1; }
+  inline bool is_OK() const { return v == 0; }
+  inline bool is_OK_WITH_TIMESTAMP() const { return v == 1; }
 
   /// \brief Indicates if any error has occurred.
   ///
   /// \return True if any error has occurred.
-  inline bool is_ERR() { return v < 0; }
+  inline bool is_ERR() const { return v < 0; }
 
   /// \brief Gets status reports.
   ///
@@ -121,7 +121,7 @@ public:
 
 private:
   explicit inline WriteResult(int8_t v) : v(v) {}
-  explicit inline WriteResult(std::string Message) : v(-5), Message(Message) {}
+  explicit inline WriteResult(std::string Message) : v(-5), Message(std::move(Message)) {}
   int8_t v = -1;
   uint64_t timestamp_ = 0;
   std::string Message;
@@ -224,7 +224,7 @@ std::map<std::string, ModuleFactory> &getFactories();
 ///
 /// \param key
 /// \param value
-void addWriterModule(std::string key, ModuleFactory value);
+void addWriterModule(std::string const &Key, ModuleFactory Value);
 
 /// \brief Get `ModuleFactory for a given `key`.
 ///
@@ -240,7 +240,7 @@ public:
   /// identifier `FlatbufferID`.
   ///
   /// \param FlatbufferID The unique identifier for this writer module.
-  explicit Registrar(std::string FlatbufferID) {
+  explicit Registrar(std::string const &FlatbufferID) {
     auto FactoryFunction = []() {
       return std::unique_ptr<HDFWriterModule>(new Module());
     };

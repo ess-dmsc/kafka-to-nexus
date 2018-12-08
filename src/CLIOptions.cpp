@@ -15,8 +15,8 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return Opt;
 }
 
-CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
-                       std::string Description = "", bool Defaulted = false) {
+CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
+                       std::string const &Description = "", bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
     URIArg.parse(Results[0]);
     return true;

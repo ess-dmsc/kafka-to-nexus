@@ -43,9 +43,9 @@ class Producer : public ProducerInterface {
 public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
-  Producer(BrokerSettings ProducerBrokerSettings_);
-  Producer(Producer const &) = delete;
-  Producer(Producer &&x);
+  explicit Producer(BrokerSettings ProducerBrokerSettings_);
+  explicit Producer(Producer const &) = delete;
+  explicit Producer(Producer &&x);
   ~Producer() override;
 
   void poll() override;

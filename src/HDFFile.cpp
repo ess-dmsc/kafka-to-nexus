@@ -62,10 +62,10 @@ static void appendValue(nlohmann::json const &Value, std::vector<DT> &Buffer) {
 
 class StackItem {
 public:
-  StackItem(nlohmann::json const &Value) : Value(Value), Size(Value.size()) {}
+  explicit StackItem(nlohmann::json const &Value) : Value(Value), Size(Value.size()) {}
   void inc() { ++Index; }
   nlohmann::json const &value() { return Value.at(Index); }
-  bool exhausted() { return !(Index < Size); }
+  bool exhausted() const { return !(Index < Size); }
 
 private:
   nlohmann::json const &Value;
@@ -115,7 +115,7 @@ populateBlob(nlohmann::json const &Value, size_t const GoalSize,
   std::vector<DataType> Buffer;
   if (Value.is_array()) {
     std::stack<StackItem> Stack;
-    Stack.push({Value});
+    Stack.emplace(Value);
     while (!Stack.empty()) {
       if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
         break;
@@ -127,7 +127,7 @@ populateBlob(nlohmann::json const &Value, size_t const GoalSize,
       auto const &Value = Stack.top().value();
       if (Value.is_array()) {
         Stack.top().inc();
-        Stack.push({Value});
+        Stack.emplace(Value);
       } else {
         Stack.top().inc();
         DataHandler::append(Buffer, Value, ItemLength);

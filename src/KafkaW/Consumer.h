@@ -13,9 +13,9 @@ class ConsumerInterface {
 public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
-  virtual void addTopic(std::string const Topic) = 0;
+  virtual void addTopic(std::string const &Topic) = 0;
   virtual void
-  addTopicAtTimestamp(std::string const Topic,
+  addTopicAtTimestamp(std::string const &Topic,
                       std::chrono::milliseconds const StartTime) = 0;
   virtual std::unique_ptr<ConsumerMessage> poll() = 0;
   virtual void dumpCurrentSubscription() = 0;
@@ -25,13 +25,13 @@ public:
 
 class Consumer : public ConsumerInterface {
 public:
-  explicit Consumer(BrokerSettings opt);
-  Consumer(Consumer &&) = delete;
-  Consumer(Consumer const &) = delete;
+  explicit Consumer(BrokerSettings Opt);
+  explicit Consumer(Consumer &&) = delete;
+  explicit Consumer(Consumer const &) = delete;
   ~Consumer() override;
   void init();
-  void addTopic(std::string const Topic) override;
-  void addTopicAtTimestamp(std::string const Topic,
+  void addTopic(std::string const &Topic) override;
+  void addTopicAtTimestamp(std::string const &Topic,
                            std::chrono::milliseconds const StartTime) override;
   void dumpCurrentSubscription() override;
   bool topicPresent(const std::string &Topic) override;
@@ -49,7 +49,7 @@ private:
                      char const *buf);
   static int cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
                       void *opaque);
-  static void cb_error(rd_kafka_t *rk, int err_i, char const *reason,
+  static void cb_error(rd_kafka_t *rk, int err_i, char const *msg,
                        void *opaque);
   static void cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
                            rd_kafka_topic_partition_list_t *plist,

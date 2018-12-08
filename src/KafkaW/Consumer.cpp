@@ -13,8 +13,8 @@ static std::atomic<int> g_kafka_consumer_instance_count;
         rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
   }
 
-Consumer::Consumer(BrokerSettings BrokerSettings)
-    : ConsumerBrokerSettings(BrokerSettings) {
+Consumer::Consumer(BrokerSettings Opt)
+    : ConsumerBrokerSettings(Opt) {
   init();
   id = g_kafka_consumer_instance_count++;
 }
@@ -148,7 +148,7 @@ void Consumer::init() {
   PartitionList = rd_kafka_topic_partition_list_new(16);
 }
 
-void Consumer::addTopic(std::string Topic) {
+void Consumer::addTopic(std::string const &Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(),
                                     RD_KAFKA_PARTITION_UA);
@@ -159,7 +159,7 @@ void Consumer::addTopic(std::string Topic) {
   }
 }
 
-void Consumer::addTopicAtTimestamp(std::string const Topic,
+void Consumer::addTopicAtTimestamp(std::string const &Topic,
                                    std::chrono::milliseconds const StartTime) {
   LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
       Topic, StartTime.count());
@@ -225,7 +225,7 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
       fmt::format("Topic {} not found by queryNumberOfPartitions", TopicName));
 }
 
-bool Consumer::topicPresent(const std::string &TopicName) {
+bool Consumer::topicPresent(const std::string &Topic) {
   int const TimeoutMS = 10000;
   const rd_kafka_metadata_t *Metadata{nullptr};
   rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, TimeoutMS);
@@ -235,8 +235,8 @@ bool Consumer::topicPresent(const std::string &TopicName) {
     throw std::runtime_error("could not create metadata");
   }
 
-  for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
-    if (Metadata->topics[topic].topic == TopicName) {
+  for (int TopicNr = 0; TopicNr < Metadata->topic_cnt; ++TopicNr) {
+    if (Metadata->topics[TopicNr].topic == Topic) {
       IsPresent = true;
       break;
     }

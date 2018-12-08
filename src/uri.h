@@ -18,7 +18,7 @@ public:
   URI();
 
   /// Creates and parses the given URI
-  URI(string uri);
+  explicit URI(string uri);
 
   /// Parses the given `uri`
   void parse(string uri);
@@ -50,7 +50,7 @@ public:
   bool require_host_slashes = true;
 
   /// The URI string //<host>:<port>/<topic>
-  std::string getURIString() { return "//" + host_port + "/" + topic; }
+  std::string getURIString() const { return "//" + host_port + "/" + topic; }
 
 private:
   void update_deps();

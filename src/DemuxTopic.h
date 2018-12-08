@@ -16,10 +16,10 @@ namespace FileWriter {
 class DemuxTopic {
 public:
   /// Initialize with the given \p TopicName.
-  DemuxTopic(std::string TopicName);
+  explicit DemuxTopic(std::string TopicName);
 
   /// Move constructor.
-  DemuxTopic(DemuxTopic &&x);
+  explicit DemuxTopic(DemuxTopic &&x);
 
   virtual ~DemuxTopic();
 
