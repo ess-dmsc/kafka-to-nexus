@@ -121,7 +121,8 @@ public:
 
 private:
   explicit inline WriteResult(int8_t v) : v(v) {}
-  explicit inline WriteResult(std::string Message) : v(-5), Message(std::move(Message)) {}
+  explicit inline WriteResult(std::string Message)
+      : v(-5), Message(std::move(Message)) {}
   int8_t v = -1;
   uint64_t timestamp_ = 0;
   std::string Message;

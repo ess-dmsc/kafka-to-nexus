@@ -62,7 +62,8 @@ static void appendValue(nlohmann::json const &Value, std::vector<DT> &Buffer) {
 
 class StackItem {
 public:
-  explicit StackItem(nlohmann::json const &Value) : Value(Value), Size(Value.size()) {}
+  explicit StackItem(nlohmann::json const &Value)
+      : Value(Value), Size(Value.size()) {}
   void inc() { ++Index; }
   nlohmann::json const &value() { return Value.at(Index); }
   bool exhausted() const { return !(Index < Size); }

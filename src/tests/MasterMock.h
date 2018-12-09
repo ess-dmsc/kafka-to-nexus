@@ -9,16 +9,20 @@ class MockMasterI : public FileWriter::MasterInterface {
 public:
   void run() override {}
   void stop() override {}
-  void handle_command_message(std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override {}
+  void handle_command_message(
+      std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override {}
   void handle_command(std::string const &command) override {}
-  void statistics() override {};
+  void statistics() override{};
   std::string file_writer_process_id() const override { return ProcessId; }
-  bool RunLoopExited() override  { return false; }
+  bool RunLoopExited() override { return false; }
   MainOpt &getMainOpt() override { return MainOptInst; }
-  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override { return nullptr; }
+  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override {
+    return nullptr;
+  }
 
   void addStreamMaster(
-      std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>>) override {}
+      std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>>)
+      override {}
   void stopStreamMasters() override {}
   std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>> &
   getStreamMasterForJobID(std::string JobID_) override {
