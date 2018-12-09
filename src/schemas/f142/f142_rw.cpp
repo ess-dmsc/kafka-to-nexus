@@ -93,7 +93,7 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
 DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
                          size_t BufferPacketMaxSize,
                          uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr)
-  : Name(std::move(Name)), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
+    : Name(std::move(Name)), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
       BufferPacketMaxSize(BufferPacketMaxSize), Ptr(Ptr) {}
 
 /// \brief Instantiate a new writer.
