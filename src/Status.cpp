@@ -21,33 +21,33 @@ double standardDeviation(const double &Sum, const double &SumSquared,
 }
 
 std::pair<double, double>
-FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Value) {
-  if (Value.getMessages().first == 0) { // nan causes failure in JSON
+FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Information) {
+  if (Information.getMessages().first == 0) { // nan causes failure in JSON
     return std::pair<double, double>{};
   }
   std::pair<double, double> result(
-      average(Value.getMbytes().first, Value.getMessages().first),
-      standardDeviation(Value.getMbytes().first, Value.getMbytes().second,
-                        Value.getMessages().first));
+      average(Information.getMbytes().first, Information.getMessages().first),
+      standardDeviation(Information.getMbytes().first, Information.getMbytes().second,
+                        Information.getMessages().first));
   return result;
 }
 
 double FileWriter::Status::messageFrequency(
-    const FileWriter::Status::MessageInfo &Value,
-    const std::chrono::milliseconds &TimeDifference) {
-  if (TimeDifference.count() < 1e-10) {
+    const FileWriter::Status::MessageInfo &Information,
+    const std::chrono::milliseconds &Duration) {
+  if (Duration.count() < 1e-10) {
     return 0.0;
   }
-  return 1e3 * average(Value.getMessages().first, TimeDifference.count());
+  return 1e3 * average(Information.getMessages().first, Duration.count());
 }
 
 double FileWriter::Status::messageThroughput(
-    const FileWriter::Status::MessageInfo &Value,
-    const std::chrono::milliseconds &TimeDifference) {
-  if (TimeDifference.count() < 1e-10) {
+    const FileWriter::Status::MessageInfo &Information,
+    const std::chrono::milliseconds &Duration) {
+  if (Duration.count() < 1e-10) {
     return 0.0;
   }
-  return 1e3 * average(Value.getMbytes().first, TimeDifference.count());
+  return 1e3 * average(Information.getMbytes().first, Duration.count());
 }
 
 void FileWriter::Status::MessageInfo::newMessage(const double &MessageSize) {
@@ -100,7 +100,7 @@ void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
   MillisecondsToNextMessage = ToNextMessage;
 }
 const std::chrono::milliseconds
-FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() {
+FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() const {
   return MillisecondsToNextMessage;
 }
 const std::chrono::milliseconds

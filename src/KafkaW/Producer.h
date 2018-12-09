@@ -28,7 +28,7 @@ struct ProducerStats {
   std::atomic<uint64_t> produced_bytes{0};
   std::atomic<uint32_t> out_queue{0};
   ProducerStats() = default;
-  ProducerStats(ProducerStats const &);
+  ProducerStats(ProducerStats const &) = default;
 };
 
 class ProducerInterface {
@@ -43,7 +43,7 @@ class Producer : public ProducerInterface {
 public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
-  explicit Producer(BrokerSettings ProducerBrokerSettings_);
+  explicit Producer(BrokerSettings Settings);
   explicit Producer(Producer const &) = delete;
   explicit Producer(Producer &&x);
   ~Producer() override;

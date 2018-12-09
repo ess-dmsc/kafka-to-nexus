@@ -40,7 +40,7 @@ public:
   addStreamMaster(std::unique_ptr<StreamMaster<Streamer>> StreamMaster) = 0;
   virtual void stopStreamMasters() = 0;
   virtual std::unique_ptr<StreamMaster<Streamer>> &
-  getStreamMasterForJobID(std::string JobID) = 0;
+  getStreamMasterForJobID(std::string const &JobID) = 0;
 };
 
 } // namespace FileWriter

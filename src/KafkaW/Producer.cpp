@@ -106,8 +106,8 @@ Producer::~Producer() {
   }
 }
 
-Producer::Producer(BrokerSettings ProducerBrokerSettings)
-    : ProducerBrokerSettings(ProducerBrokerSettings) {
+Producer::Producer(BrokerSettings Settings)
+    : ProducerBrokerSettings(Settings) {
   id = g_kafka_producer_instance_count++;
 
   // librdkafka API sometimes wants to write errors into a buffer:
@@ -168,16 +168,5 @@ void Producer::poll() {
 rd_kafka_t *Producer::getRdKafkaPtr() const { return RdKafkaPtr; }
 
 uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(RdKafkaPtr); }
-
-ProducerStats::ProducerStats(ProducerStats const &x) {
-  produced = x.produced.load();
-  produce_fail = x.produce_fail.load();
-  local_queue_full = x.local_queue_full.load();
-  produce_cb = x.produce_cb.load();
-  produce_cb_fail = x.produce_cb_fail.load();
-  poll_served = x.poll_served.load();
-  msg_too_large = x.msg_too_large.load();
-  produced_bytes = x.produced_bytes.load();
-  out_queue = x.out_queue.load();
-}
+  
 }

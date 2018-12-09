@@ -25,7 +25,7 @@ public:
 
 class Consumer : public ConsumerInterface {
 public:
-  explicit Consumer(BrokerSettings Opt);
+  explicit Consumer(BrokerSettings const &Opt);
   explicit Consumer(Consumer &&) = delete;
   explicit Consumer(Consumer const &) = delete;
   ~Consumer() override;
