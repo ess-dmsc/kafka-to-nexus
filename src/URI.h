@@ -7,20 +7,12 @@
 namespace uri {
 
 /// \brief Thin parser for URIs.
-class URI {
-public:
-  /// \brief Creates a default URI with all members empty. You can (should) run
-  /// URI::parse to fill it
-  URI() = default;
-
+struct URI {
   /// Creates and parses the given URI
   explicit URI(const std::string &URIString);
 
   /// Parses the given `uri`
   void parse(const std::string &URIString);
-
-  /// Parsed hostname.
-  std::string Host;
 
   /// \brief If port was specified (or already non-zero before `URI::parse`) it
   /// contains `host:port`.
@@ -35,8 +27,5 @@ public:
 
   /// The URI string //<host>:<port>/<topic>
   std::string getURIString() { return "//" + HostPort + "/" + Topic; }
-
-private:
-  void UpdateHostPort();
 };
 } // namespace uri
