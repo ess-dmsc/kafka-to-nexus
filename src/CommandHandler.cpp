@@ -225,7 +225,12 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (BrokerString.substr(0, 2) != "//") {
       BrokerString = std::string("//") + BrokerString;
     }
-    Broker.parse(BrokerString);
+    try {
+      Broker.parse(BrokerString);
+    } catch (std::runtime_error &e) {
+      LOG(Sev::Warning,
+          "Broker parsing error, using default broker (localhost:9092)")
+    }
     LOG(Sev::Debug, "Use main broker: {}", Broker.HostPort);
   }
 
