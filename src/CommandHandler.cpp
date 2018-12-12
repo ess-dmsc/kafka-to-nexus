@@ -228,8 +228,8 @@ void CommandHandler::handleNew(std::string const &Command) {
     try {
       Broker.parse(BrokerString);
     } catch (std::runtime_error &e) {
-      LOG(Sev::Warning,
-          "Broker parsing error, using default broker (localhost:9092)")
+      LOG(Sev::Warning, "Unable to parse broker in command message, using "
+                        "default broker (localhost:9092)")
     }
     LOG(Sev::Debug, "Use main broker: {}", Broker.HostPort);
   }
