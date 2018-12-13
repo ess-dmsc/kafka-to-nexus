@@ -2,6 +2,7 @@
 
 #include <map>
 #include <string>
+#include <librdkafka/rdkafkacpp.h>
 
 struct rd_kafka_conf_s;
 typedef struct rd_kafka_conf_s rd_kafka_conf_t;
@@ -13,6 +14,7 @@ class BrokerSettings {
 public:
   BrokerSettings() = default;
   void apply(rd_kafka_conf_t *RdKafkaConfiguration);
+  void apply(RdKafka::Conf *RdKafkaConfiguration);
   std::string Address;
   int PollTimeoutMS = 100;
   std::map<std::string, std::string> KafkaConfiguration = {

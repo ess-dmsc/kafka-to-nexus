@@ -5,7 +5,10 @@
 #include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
+#include <librdkafka/rdkafkacpp.h>
 #include <memory>
+#include "ConsumerEventCb.h"
+#include "ConsumerRebalanceCb.h"
 
 namespace KafkaW {
 
@@ -25,11 +28,10 @@ public:
 
 class Consumer : public ConsumerInterface {
 public:
-  explicit Consumer(BrokerSettings opt);
+  explicit Consumer(const BrokerSettings& opt);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
   ~Consumer() override;
-  void init();
   void addTopic(std::string const Topic) override;
   void addTopicAtTimestamp(std::string const Topic,
                            std::chrono::milliseconds const StartTime) override;
@@ -45,18 +47,13 @@ public:
 
 private:
   BrokerSettings ConsumerBrokerSettings;
-  static void cb_log(rd_kafka_t const *rk, int level, char const *fac,
-                     char const *buf);
-  static int cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
-                      void *opaque);
-  static void cb_error(rd_kafka_t *rk, int err_i, char const *reason,
-                       void *opaque);
-  static void cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
-                           rd_kafka_topic_partition_list_t *plist,
-                           void *opaque);
+
+  std::shared_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
+
   rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
-
+    ConsumerEventCb EventCallback;
+    ConsumerRebalanceCb RebalanceCallback;
   void commitOffsets() const;
 };
 } // namespace KafkaW
