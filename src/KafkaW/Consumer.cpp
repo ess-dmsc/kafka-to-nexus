@@ -70,7 +70,7 @@ Consumer::Consumer(const BrokerSettings &BrokerSettings)
   //  PartitionList = rd_kafka_topic_partition_list_new(16);
   id = g_kafka_consumer_instance_count++;
 }
-
+////C++ READY
 Consumer::~Consumer() {
   LOG(Sev::Debug, "~Consumer()");
   if (KafkaConsumer) {
@@ -79,7 +79,7 @@ Consumer::~Consumer() {
     RdKafka::wait_destroyed(5000);
   }
 }
-
+////C++ READY
 void Consumer::addTopic(const std::string Topic) {
   auto ErrCode = KafkaConsumer->subscribe({Topic});
   if (ErrCode != RdKafka::ErrorCode::ERR_NO_ERROR) {
@@ -164,6 +164,7 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
 //  }
 //}
 
+////C++ READY
 std::vector<int32_t>
 Consumer::queryTopicPartitions(const std::string &TopicName) {
   auto TopicMetadata = getTopicMetadata(TopicName);
@@ -177,6 +178,7 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
   return TopicPartitionNumbers;
 }
 
+////C++ READY
 const RdKafka::TopicMetadata *
 Consumer::getTopicMetadata(const std::string &Topic) {
   auto Metadata = queryMetadata();
@@ -191,6 +193,7 @@ Consumer::getTopicMetadata(const std::string &Topic) {
   return MatchedTopic;
 }
 
+////C++ READY
 bool Consumer::topicPresent(const std::string &TopicName) {
 
   auto Metadata = queryMetadata();
@@ -199,37 +202,21 @@ bool Consumer::topicPresent(const std::string &TopicName) {
     if (Topic->topic() == TopicName)
       return true;
   return false;
-  //    int const TimeoutMS = 10000;
-  //  const rd_kafka_metadata_t *Metadata{nullptr};
-  //  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, TimeoutMS);
-  //
-  //  bool IsPresent = false;
-  //  if (!Metadata) {
-  //    throw std::runtime_error("could not create metadata");
-  //  }
-  //
-  //  for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
-  //    if (Metadata->topics[topic].topic == TopicName) {
-  //      IsPresent = true;
-  //      break;
-  //    }
-  //  }
-  //  rd_kafka_metadata_destroy(Metadata);
-  //  return IsPresent;
 }
 
+////C++ READY
 void Consumer::dumpCurrentSubscription() {
-  rd_kafka_topic_partition_list_t *List = nullptr;
-  rd_kafka_subscription(RdKafka, &List);
-  if (List) {
-    for (int i = 0; i < List->cnt; ++i) {
-      LOG(Sev::Info, "subscribed topics: {}  {}  off {}", List->elems[i].topic,
-          rd_kafka_err2str(List->elems[i].err), List->elems[i].offset);
+  std::vector<std::string> TopicList;
+  KafkaConsumer->subscription(TopicList);
+  if (!TopicList.empty()) {
+    LOG(Sev::Info, "Subscribed topics: ")
+    for (auto Topic : TopicList) {
+      LOG(Sev::Info, "{}", Topic);
     }
-    rd_kafka_topic_partition_list_destroy(List);
   }
 }
 
+////C++ READY
 std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
   RdKafka::Metadata *metadataRawPtr(nullptr);
   KafkaConsumer->metadata(true, nullptr, &metadataRawPtr, 1000);
