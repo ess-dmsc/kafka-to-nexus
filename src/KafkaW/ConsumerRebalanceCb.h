@@ -1,5 +1,7 @@
+#pragma once
 #include <exception>
 #include <librdkafka/rdkafkacpp.h>
+#include <fmt/format.h>
 
 class ConsumerRebalanceCb : public RdKafka::RebalanceCb {
 public:

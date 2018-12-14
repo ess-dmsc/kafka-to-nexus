@@ -58,5 +58,4 @@ private:
   std::string file_writer_process_id_;
   MainOpt &MainOpt_;
 };
-
 } // namespace FileWriter

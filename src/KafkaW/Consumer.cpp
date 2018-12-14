@@ -231,34 +231,24 @@ std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
   return metadata;
 }
 
+////C++ READY
 std::unique_ptr<ConsumerMessage> Consumer::poll() {
-
-  auto msg =
-      rd_kafka_consumer_poll(RdKafka, ConsumerBrokerSettings.PollTimeoutMS);
-
-  if (msg == nullptr) {
-    return std::make_unique<ConsumerMessage>(PollStatus::Empty);
+  using std::make_unique;
+  auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
+      KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
+  switch (KafkaMsg->err()) {
+  case RdKafka::ERR_NO_ERROR:
+    if (KafkaMsg->len() > 0) {
+      return make_unique<ConsumerMessage>((std::uint8_t *)KafkaMsg->payload(),
+                                          KafkaMsg->len(), PollStatus::Msg);
+    } else {
+      return make_unique<ConsumerMessage>(PollStatus::Empty);
+    }
+  case RdKafka::ERR__PARTITION_EOF:
+    return make_unique<ConsumerMessage>(PollStatus::EOP);
+  default:
+    return make_unique<ConsumerMessage>(PollStatus::Err);
   }
-
-  static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
-  if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    return std::make_unique<ConsumerMessage>(
-        (std::uint8_t *)msg->payload, msg->len,
-        [msg]() { rd_kafka_message_destroy(msg); }, msg->offset);
-  } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
-    return std::make_unique<ConsumerMessage>(PollStatus::EOP);
-  } else if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
-    LOG(Sev::Error, "RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN");
-  } else if (msg->err == RD_KAFKA_RESP_ERR__BAD_MSG) {
-    LOG(Sev::Error, "RD_KAFKA_RESP_ERR__BAD_MSG");
-  } else if (msg->err == RD_KAFKA_RESP_ERR__DESTROY) {
-    LOG(Sev::Error, "RD_KAFKA_RESP_ERR__DESTROY");
-    // Broker will go away soon
-  } else {
-    LOG(Sev::Error, "unhandled msg error: {} {}", rd_kafka_err2name(msg->err),
-        rd_kafka_err2str(msg->err));
-  }
-  return std::make_unique<ConsumerMessage>(PollStatus::Err);
 }
 
 } // namespace KafkaW

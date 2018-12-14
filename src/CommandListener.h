@@ -22,6 +22,6 @@ public:
 
 private:
   MainOpt &config;
-  std::unique_ptr<KafkaW::Consumer> consumer;
+  std::unique_ptr<KafkaW::ConsumerInterface> consumer;
 };
 } // namespace FileWriter
