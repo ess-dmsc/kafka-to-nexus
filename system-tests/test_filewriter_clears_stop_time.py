@@ -10,10 +10,10 @@ def test_filewriter_clears_stop_time(docker_compose_stop_command_does_not_persis
     topic = "TEST_writerCommand"
     send_writer_command("commands/commandwithstoptime.json", producer, topic=topic, stop_time=str(int(unix_time_milliseconds(datetime.utcnow()))))
 
-    sleep(30)
+    sleep(5)
     send_writer_command("commands/commandwithnostoptime.json", producer, topic=topic)
 
-    sleep(15)
+    sleep(5)
     msgs = poll_everything("TEST_writerStatus")
 
     stopped = False
