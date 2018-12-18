@@ -48,7 +48,8 @@ public:
   rd_kafka_t *RdKafka = nullptr;
 
 private:
-  const RdKafka::TopicMetadata *getTopicMetadata(const std::string &Topic);
+  //    const RdKafka::TopicMetadata::PartitionMetadataVector *
+  //    getTopicPartitionsVector(const std::string &Topic);
   BrokerSettings ConsumerBrokerSettings;
   std::unique_ptr<RdKafka::Metadata> queryMetadata();
   std::shared_ptr<RdKafka::KafkaConsumer> KafkaConsumer;

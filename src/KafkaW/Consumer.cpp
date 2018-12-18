@@ -81,12 +81,28 @@ Consumer::~Consumer() {
 }
 ////C++ READY
 void Consumer::addTopic(const std::string Topic) {
-  auto ErrCode = KafkaConsumer->subscribe({Topic});
-  if (ErrCode != RdKafka::ErrorCode::ERR_NO_ERROR) {
-    LOG(Sev::Warning, "Unable to subscribe to topic {} - {}", Topic,
-        RdKafka::err2str(ErrCode));
-    return;
-  };
+  LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
+  std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets;
+  auto PartitionIDs = queryTopicPartitions(Topic);
+  for (unsigned long i = 0; i < PartitionIDs.size(); i++) {
+    auto TopicPartition =
+        RdKafka::TopicPartition::create(Topic, PartitionIDs[i]);
+    int64_t Low, High;
+    KafkaConsumer->query_watermark_offsets(Topic, PartitionIDs[i], &Low, &High,
+                                           100);
+    TopicPartition->set_offset(Low);
+    TopicPartitionsWithOffsets.push_back(TopicPartition);
+  }
+  RdKafka::ErrorCode ERR = KafkaConsumer->assign(TopicPartitionsWithOffsets);
+  if (ERR != 0) {
+    LOG(Sev::Error, "Could not subscribe to {}", Topic);
+    throw std::runtime_error(fmt::format("Could not subscribe to {}", Topic));
+  }
+  std::for_each(TopicPartitionsWithOffsets.cbegin(),
+                TopicPartitionsWithOffsets.cend(),
+                [](RdKafka::TopicPartition *Partition) { delete Partition; });
+
+  dumpCurrentSubscription();
 }
 
 void Consumer::addTopicAtTimestamp(std::string const Topic,
@@ -167,30 +183,23 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
 ////C++ READY
 std::vector<int32_t>
 Consumer::queryTopicPartitions(const std::string &TopicName) {
-  auto TopicMetadata = getTopicMetadata(TopicName);
-  std::vector<int32_t> TopicPartitionNumbers;
-  auto PartitionMetadata = TopicMetadata->partitions();
+  auto Metadata = queryMetadata();
+  auto Topics = Metadata->topics();
+  auto Iterator = std::find_if(Topics->cbegin(), Topics->cend(),
+                               [TopicName](const RdKafka::TopicMetadata *tpc) {
+                                 return tpc->topic() == TopicName;
+                               });
+  auto MatchedTopic = *Iterator;
+  if (MatchedTopic == nullptr)
+    throw MetadataException(fmt::format("No such topic: {}", TopicName));
   // save needed partition metadata here
-  for (auto &Partition : *PartitionMetadata) {
+  std::vector<int32_t> TopicPartitionNumbers;
+
+  for (auto &Partition : *MatchedTopic->partitions()) {
     TopicPartitionNumbers.push_back(Partition->id());
   }
   sort(TopicPartitionNumbers.begin(), TopicPartitionNumbers.end());
   return TopicPartitionNumbers;
-}
-
-////C++ READY
-const RdKafka::TopicMetadata *
-Consumer::getTopicMetadata(const std::string &Topic) {
-  auto Metadata = queryMetadata();
-  auto Topics = Metadata->topics();
-  auto Iterator = std::find_if(Topics->cbegin(), Topics->cend(),
-                               [Topic](const RdKafka::TopicMetadata *tpc) {
-                                 return tpc->topic() == Topic;
-                               });
-  auto MatchedTopic = *Iterator;
-  if (MatchedTopic == nullptr)
-    throw MetadataException(fmt::format("No such topic: {}", Topic));
-  return MatchedTopic;
 }
 
 ////C++ READY
@@ -207,13 +216,15 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 ////C++ READY
 void Consumer::dumpCurrentSubscription() {
   std::vector<std::string> TopicList;
-  KafkaConsumer->subscription(TopicList);
-  if (!TopicList.empty()) {
+  auto ErrorString = KafkaConsumer->subscription(TopicList);
+  if (ErrorString == 0) {
     LOG(Sev::Info, "Subscribed topics: ")
     for (auto Topic : TopicList) {
       LOG(Sev::Info, "{}", Topic);
+      std::cout << Topic << std::endl;
     }
-  }
+  } else
+    std::cout << ErrorString << std::endl;
 }
 
 ////C++ READY

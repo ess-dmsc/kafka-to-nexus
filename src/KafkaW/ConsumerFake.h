@@ -14,7 +14,8 @@
 namespace KafkaW {
 class ConsumerFake : public ConsumerInterface {
 public:
-  explicit ConsumerFake(const BrokerSettings &opt):ConsumerBrokerSettings(opt){};
+  explicit ConsumerFake(const BrokerSettings &opt)
+      : ConsumerBrokerSettings(opt){};
   ~ConsumerFake() override;
   void addTopic(std::string const Topic) override;
   void addTopicAtTimestamp(std::string const Topic,
