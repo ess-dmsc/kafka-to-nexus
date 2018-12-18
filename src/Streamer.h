@@ -16,7 +16,7 @@
 #include <future>
 
 namespace FileWriter {
-using ConsumerPtr = std::unique_ptr<KafkaW::Consumer>;
+using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
 
 /// \brief Connect to kafka topics eventually at a given point in time
 /// and consume messages.
