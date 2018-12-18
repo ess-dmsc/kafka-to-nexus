@@ -11,10 +11,12 @@ def test_ignores_commands_with_incorrect_id(docker_compose_multiple_instances):
     # Command only filewriter2 to exit
     send_writer_command("commands/writer-exit-single.json", producer, "TEST_writerCommandMultiple")
     # Wait for filewriter2 to exit
+    found = False
     for i in range(60):
         containers = check_output('docker ps', shell=True)
         if b"filewriter1" in containers and b"filewriter2" not in containers:
-            return True
+            found = True
+            break
         else:
             sleep(1)
-    return False
+    assert found
