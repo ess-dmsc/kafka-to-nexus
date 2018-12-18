@@ -221,12 +221,8 @@ std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
   RdKafka::Metadata *metadataRawPtr(nullptr);
   KafkaConsumer->metadata(true, nullptr, &metadataRawPtr, 1000);
   std::unique_ptr<RdKafka::Metadata> metadata(metadataRawPtr);
-  try {
-    if (!metadata) {
-      throw MetadataException("Failed to query metadata from broker");
-    }
-  } catch (std::exception &E) {
-    LOG(4, "{}", E.what());
+  if (metadata == nullptr) {
+    throw MetadataException("Failed to query metadata from broker!");
   }
   return metadata;
 }
