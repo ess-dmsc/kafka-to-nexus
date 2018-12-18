@@ -18,8 +18,8 @@ enum class PollStatus {
 class ConsumerMessage {
 public:
   ConsumerMessage() = default;
-    ConsumerMessage(std::uint8_t const *Pointer, size_t Size, PollStatus Status)
-    : DataPointer(Pointer), DataSize(Size), Status(Status) {}
+  ConsumerMessage(std::uint8_t const *Pointer, size_t Size, PollStatus Status)
+      : DataPointer(Pointer), DataSize(Size), Status(Status) {}
   ConsumerMessage(std::uint8_t const *Pointer, size_t Size,
                   std::function<void()> DataDeleter)
       : DataPointer(Pointer), DataSize(Size), OnDelete(std::move(DataDeleter)) {

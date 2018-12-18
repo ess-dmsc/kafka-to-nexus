@@ -45,7 +45,7 @@ public:
       on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_start;
-   rd_kafka_t *RdKafka = nullptr;
+  rd_kafka_t *RdKafka = nullptr;
 
 private:
   const RdKafka::TopicMetadata *getTopicMetadata(const std::string &Topic);
@@ -57,6 +57,6 @@ private:
   int id = 0;
   ConsumerEventCb EventCallback;
   ConsumerRebalanceCb RebalanceCallback;
-//  void commitOffsets() const;
+  //  void commitOffsets() const;
 };
 } // namespace KafkaW

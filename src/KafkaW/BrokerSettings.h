@@ -1,8 +1,8 @@
 #pragma once
 
+#include <librdkafka/rdkafkacpp.h>
 #include <map>
 #include <string>
-#include <librdkafka/rdkafkacpp.h>
 
 struct rd_kafka_conf_s;
 typedef struct rd_kafka_conf_s rd_kafka_conf_t;
