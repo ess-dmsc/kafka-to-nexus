@@ -24,7 +24,7 @@ public:
   bool topicPresent(const std::string &Topic) override;
   std::vector<int32_t>
   queryTopicPartitions(const std::string &TopicName) override;
-  std::unique_ptr<ConsumerMessage> poll() override;
+  void poll(PollStatus &Status, FileWriter::Msg &Message) override;
 
 private:
   BrokerSettings ConsumerBrokerSettings;

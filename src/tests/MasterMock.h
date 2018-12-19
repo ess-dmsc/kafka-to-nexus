@@ -9,7 +9,7 @@ class MockMasterI : public FileWriter::MasterInterface {
 public:
   void run() {}
   void stop() {}
-  void handle_command_message(std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {}
+  void handle_command_message(FileWriter::Msg &msg) {}
   void handle_command(std::string const &command) {}
   void statistics(){};
   std::string file_writer_process_id() const { return ProcessId; }

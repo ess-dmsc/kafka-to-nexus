@@ -29,8 +29,7 @@ public:
 
   /// Stop running.
   void stop() override;
-  void handle_command_message(
-      std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override;
+  void handle_command_message(FileWriter::Msg &msg) override;
   void handle_command(std::string const &command) override;
   void statistics() override;
   void addStreamMaster(

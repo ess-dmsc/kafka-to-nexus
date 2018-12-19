@@ -112,9 +112,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Consume message and exit if we are beyond a message timeout
-  auto KafkaMessage = Consumer->poll();
-  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Empty ||
-      KafkaMessage->getStatus() == KafkaW::PollStatus::EOP) {
+  Msg KafkaMessage = FileWriter::Msg();
+  KafkaW::PollStatus Status;
+  Consumer->poll(Status, KafkaMessage);
+  if (Status == KafkaW::PollStatus::Empty ||
+      Status == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
@@ -126,20 +128,19 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     }
     return ProcessMessageResult::OK;
   }
-  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Err) {
+  if (Status == KafkaW::PollStatus::Err) {
     return ProcessMessageResult::ERR;
   }
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message = std::make_unique<FlatbufferMessage>(
-        reinterpret_cast<const char *>(KafkaMessage->getData()),
-        KafkaMessage->getSize());
+    Message = std::make_unique<FlatbufferMessage>(KafkaMessage.data(),
+                                                  KafkaMessage.size());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
-        KafkaMessage->getMessageOffset(), Error.what());
+        KafkaMessage.offset(), Error.what());
     return ProcessMessageResult::ERR;
   }
 

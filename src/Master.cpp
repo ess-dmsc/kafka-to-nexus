@@ -28,11 +28,9 @@ Master::Master(MainOpt &MainOpt_)
   LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
-void Master::handle_command_message(
-    std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
+void Master::handle_command_message(FileWriter::Msg &msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(
-      Msg::owned((char const *)msg->getData(), msg->getSize()));
+  command_handler.tryToHandle(Msg::owned(msg.data(), msg.size()));
 }
 
 void Master::handle_command(std::string const &command) {
@@ -91,10 +89,14 @@ void Master::run() {
   auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
-    auto PollResult = command_listener.poll();
-    if (PollResult->getStatus() == KafkaW::PollStatus::Msg) {
+    Msg KafkaMessage = FileWriter::Msg();
+    KafkaW::PollStatus Status;
+    command_listener.poll(Status, KafkaMessage);
+    //    std::string msgstr(KafkaMessage.data());
+    //    std::cout <<"dbdbdbdbdbdd "<< msgstr << '\n';
+    if (Status == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
-      this->handle_command_message(std::move(PollResult));
+      this->handle_command_message(KafkaMessage);
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >

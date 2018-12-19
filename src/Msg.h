@@ -75,7 +75,7 @@ public:
     return msg;
   }
 
-  inline Msg(Msg &&x) {
+  Msg(Msg &&x) {
     using std::swap;
     swap(type, x.type);
     swap(var, x.var);
@@ -83,6 +83,17 @@ public:
   }
 
   inline void swap(Msg &y) {
+    auto &x = *this;
+    if (x.type != MsgType::Invalid && x.type != y.type) {
+      LOG(Sev::Critical, "sorry, can not swap that");
+    }
+    using std::swap;
+    swap(x.type, y.type);
+    swap(x.var, y.var);
+    swap(x._size, y._size);
+  }
+
+  inline void swap(Msg y) {
     auto &x = *this;
     if (x.type != MsgType::Invalid && x.type != y.type) {
       LOG(Sev::Critical, "sorry, can not swap that");
@@ -117,6 +128,24 @@ public:
       return var.rdkafka_msg->len();
     case MsgType::KafkaW:
       return var.kafkaw_msg->getSize();
+    case MsgType::Owned:
+      return _size;
+    case MsgType::Shared:
+      return _size;
+    case MsgType::Cheap:
+      return _size;
+    default:
+      LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
+    }
+    return 0;
+  }
+
+  inline int64_t offset() const {
+    switch (type) {
+    case MsgType::RdKafka:
+      return var.rdkafka_msg->offset();
+    case MsgType::KafkaW:
+      return var.kafkaw_msg->getMessageOffset();
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:

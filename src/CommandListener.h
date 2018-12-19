@@ -18,7 +18,7 @@ public:
   void stop();
 
   /// Check for new command packets and return one if there is.
-  std::unique_ptr<KafkaW::ConsumerMessage> poll();
+  void poll(KafkaW::PollStatus &Status, Msg &Message);
 
 private:
   MainOpt &config;

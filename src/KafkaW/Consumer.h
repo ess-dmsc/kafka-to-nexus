@@ -10,6 +10,10 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 
+namespace FileWriter {
+class Msg;
+}
+
 namespace KafkaW {
 
 class ConsumerInterface {
@@ -20,7 +24,7 @@ public:
   virtual void
   addTopicAtTimestamp(std::string const Topic,
                       std::chrono::milliseconds const StartTime) = 0;
-  virtual std::unique_ptr<ConsumerMessage> poll() = 0;
+  virtual void poll(PollStatus &Status, FileWriter::Msg &Message) = 0;
   virtual void dumpCurrentSubscription() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual std::vector<int32_t>
@@ -40,7 +44,7 @@ public:
   bool topicPresent(const std::string &Topic) override;
   std::vector<int32_t>
   queryTopicPartitions(const std::string &TopicName) override;
-  std::unique_ptr<ConsumerMessage> poll() override;
+  void poll(PollStatus &Status, FileWriter::Msg &Message) override;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>
       on_rebalance_assign;
   std::function<void(rd_kafka_topic_partition_list_t *plist)>

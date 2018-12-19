@@ -1,5 +1,6 @@
 #include "Consumer.h"
 #include "MetadataException.h"
+#include "Msg.h"
 #include "logger.h"
 #include <atomic>
 #include <iostream>
@@ -79,7 +80,7 @@ Consumer::~Consumer() {
     RdKafka::wait_destroyed(5000);
   }
 }
-////C++ READY
+
 void Consumer::addTopic(const std::string Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets;
@@ -90,7 +91,7 @@ void Consumer::addTopic(const std::string Topic) {
     int64_t Low, High;
     KafkaConsumer->query_watermark_offsets(Topic, PartitionIDs[i], &Low, &High,
                                            100);
-    TopicPartition->set_offset(Low);
+    TopicPartition->set_offset(High);
     TopicPartitionsWithOffsets.push_back(TopicPartition);
   }
   RdKafka::ErrorCode ERR = KafkaConsumer->assign(TopicPartitionsWithOffsets);
@@ -101,8 +102,6 @@ void Consumer::addTopic(const std::string Topic) {
   std::for_each(TopicPartitionsWithOffsets.cbegin(),
                 TopicPartitionsWithOffsets.cend(),
                 [](RdKafka::TopicPartition *Partition) { delete Partition; });
-
-  dumpCurrentSubscription();
 }
 
 void Consumer::addTopicAtTimestamp(std::string const Topic,
@@ -139,33 +138,9 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
         "Kafka error while subscribing to offsets from timestamp: {}",
         ErrorCode));
   }
-
-  //  rd_kafka_topic_partition_list_add_range(PartitionList, Topic.c_str(), 0,
-  //                                          numberOfPartitions - 1);
-  //  // Set all the timestamps before doing a *single* call to
-  //  // rd_kafka_offsets_for_times
-  //  for (int I = 0; I < PartitionList->cnt; ++I) {
-  //    PartitionList->elems[I].offset = StartTime.count();
-  //  }
-  //  int Timeout = 1000;
-  //  auto Error = rd_kafka_offsets_for_times(RdKafka, PartitionList, Timeout);
-  //  if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
-  //    throw std::runtime_error(
-  //        fmt::format("Error from rd_kafka_offsets_for_times {}", Error));
-  //  }
-  //  for (int I = 0; I < PartitionList->cnt; ++I) {
-  //    LOG(Sev::Debug, "Topic: {}, Partition: {}, Offset: {}", Topic,
-  //        PartitionList->elems[I].partition, PartitionList->elems[I].offset);
-  //  }
-  //  commitOffsets();
-  //  Error = rd_kafka_subscribe(RdKafka, PartitionList);
-  //  KERR(RdKafka, Error);
-  //  if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
-  //    throw std::runtime_error(
-  //        fmt::format("Error from rd_kafka_subscribe {}", Error));
-  //  }
 }
 
+//// OLD C METHOD
 // void Consumer::commitOffsets() const {
 //  auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
 //  KERR(RdKafka, CommitErr);
@@ -215,16 +190,16 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 
 ////C++ READY
 void Consumer::dumpCurrentSubscription() {
-  std::vector<std::string> TopicList;
-  auto ErrorString = KafkaConsumer->subscription(TopicList);
+  std::vector<RdKafka::TopicPartition *> Partitions;
+  auto ErrorString = KafkaConsumer->assignment(Partitions);
   if (ErrorString == 0) {
-    LOG(Sev::Info, "Subscribed topics: ")
-    for (auto Topic : TopicList) {
-      LOG(Sev::Info, "{}", Topic);
-      std::cout << Topic << std::endl;
+    LOG(Sev::Info, "Assigned partitions and offsets:")
+    for (auto TopicPartition : Partitions) {
+      LOG(Sev::Info, "{}: {}, {}", TopicPartition->topic(),
+          TopicPartition->partition(), TopicPartition->offset());
     }
   } else
-    std::cout << ErrorString << std::endl;
+    LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
 }
 
 ////C++ READY
@@ -239,22 +214,28 @@ std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
 }
 
 ////C++ READY
-std::unique_ptr<ConsumerMessage> Consumer::poll() {
+void Consumer::poll(PollStatus &Status, FileWriter::Msg &Message) {
   using std::make_unique;
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      return make_unique<ConsumerMessage>((std::uint8_t *)KafkaMsg->payload(),
-                                          KafkaMsg->len(), PollStatus::Msg);
+      Status = PollStatus::Msg;
+      Message.swap(FileWriter::Msg::owned(
+          reinterpret_cast<const char *>(KafkaMsg->payload()),
+          KafkaMsg->len()));
+      Message.type = FileWriter::MsgType::Owned;
+      break;
     } else {
-      return make_unique<ConsumerMessage>(PollStatus::Empty);
+      Status = PollStatus::Empty;
+      break;
     }
   case RdKafka::ERR__PARTITION_EOF:
-    return make_unique<ConsumerMessage>(PollStatus::EOP);
+    Status = PollStatus::EOP;
+    break;
   default:
-    return make_unique<ConsumerMessage>(PollStatus::Err);
+    Status = PollStatus::Err;
   }
 }
 

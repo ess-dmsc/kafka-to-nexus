@@ -57,7 +57,9 @@ class ConsumerEmptyStandIn
     : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
 public:
   ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings){};
-  MAKE_MOCK0(poll, std::unique_ptr<KafkaW::ConsumerMessage>(), override);
+
+  MAKE_MOCK2(poll, void(KafkaW::PollStatus &Status, FileWriter::Msg &Message),
+             override);
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
   IMPLEMENT_MOCK0(dumpCurrentSubscription);
@@ -70,12 +72,8 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  //  ALLOW_CALL(*EmptyPollerConsumer, addTopic(_));
-  // ALLOW_CALL(*EmptyPollerConsumer,addTopicAtTimestamp(_,_)).RETURN(true);
-  // ALLOW_CALL(*EmptyPollerConsumer,dumpCurrentSubscription()).RETURN(true);
-  //  ALLOW_CALL(*EmptyPollerConsumer, topicPresent(_)).RETURN(true);
-  //  ALLOW_CALL(*EmptyPollerConsumer,queryTopicPartitions(_)).RETURN(true);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
+  // TODO mock new version of consumer::poll method
+  REQUIRE_CALL(*EmptyPollerConsumer, poll(_,_)).TIMES(0);
   TestStreamer.ConsumerCreated.get();
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
