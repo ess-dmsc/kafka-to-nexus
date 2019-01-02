@@ -92,7 +92,8 @@ def build_and_run(options, request):
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
         try:
-            # Used for when there are multiple filewriter instances -  the service is not called "filewriter"
+            # Used for when there are multiple filewriter instances
+            # as the service is not called "filewriter"
             multiple_log_options = dict(options)
             multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
             cmd.logs(multiple_log_options)
