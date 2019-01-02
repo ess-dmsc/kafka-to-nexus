@@ -37,8 +37,7 @@ StreamerToJson(MessageInfo &Information,
   return nlohmann::json{Status, Statistics};
 }
 
-  StatusWriter::StatusWriter() {
-}
+StatusWriter::StatusWriter() {}
 
 void StatusWriter::setJobId(const std::string &JobId) {
   json["job_id"] = JobId;

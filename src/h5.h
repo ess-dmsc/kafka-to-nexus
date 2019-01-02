@@ -41,8 +41,8 @@ public:
                     CollectiveQueue *cq);
   static ptr open_single(hdf5::node::Group Node, std::string const &Name,
                          CollectiveQueue *cq, HDFIDStore *hdf_store);
-  static ptr open(hdf5::node::Group Node, std::string const &Name, CollectiveQueue *cq,
-                  HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group Node, std::string const &Name,
+                  CollectiveQueue *cq, HDFIDStore *hdf_store);
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);

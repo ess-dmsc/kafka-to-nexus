@@ -60,7 +60,8 @@ void Logger::use_log_file(std::string fname) {
   log_file = f1;
 }
 
-void Logger::log_kafka_gelf_start(std::string const &Address, std::string TopicName) {
+void Logger::log_kafka_gelf_start(std::string const &Address,
+                                  std::string TopicName) {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = Address;
   producer.reset(new KafkaW::Producer(BrokerSettings));

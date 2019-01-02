@@ -143,7 +143,7 @@ public:
   ///
   /// \return StreamMasterError status.
   const StreamMasterError status() {
-    
+
     for (auto &s : Streamers) {
       if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
         return StreamMasterError::STREAMER_ERROR();

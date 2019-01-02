@@ -32,8 +32,8 @@ public:
 
 private:
   nlohmann::json json{{"type", "stream_master_status"},
-    {"next_message_eta_ms", 0},
-    {"job_id", 0}};
+                      {"next_message_eta_ms", 0},
+                      {"job_id", 0}};
 };
 
 } // namespace Status

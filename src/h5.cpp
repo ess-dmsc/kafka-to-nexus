@@ -69,8 +69,8 @@ h5d::ptr h5d::open_single(hdf5::node::Group Node, std::string const &Name,
   return ret;
 }
 
-h5d::ptr h5d::open(hdf5::node::Group Node, std::string const &Name, CollectiveQueue *cq,
-                   HDFIDStore *hdf_store) {
+h5d::ptr h5d::open(hdf5::node::Group Node, std::string const &Name,
+                   CollectiveQueue *cq, HDFIDStore *hdf_store) {
   return open_single(Node, Name, cq, hdf_store);
 }
 
