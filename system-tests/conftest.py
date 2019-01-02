@@ -97,10 +97,9 @@ def build_and_run(options, request):
             multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
             cmd.logs(multiple_log_options)
         except:
-            pass
-        log_options = dict(options)
-        log_options["SERVICE"] = ["filewriter"]
-        cmd.logs(log_options)
+            log_options = dict(options)
+            log_options["SERVICE"] = ["filewriter"]
+            cmd.logs(log_options)
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
