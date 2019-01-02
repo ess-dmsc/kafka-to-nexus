@@ -229,10 +229,10 @@ HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const *HDFAttributes,
                           CreateWriterTypedBaseMethod CreateMethod) {
-  // Keep these for now, experimenting with those on another branch.
-  CollectiveQueue *cq = nullptr;
-  HDFIDStore *HDFStore = nullptr;
   try {
+    HDFIDStore *HDFStore =
+        nullptr; // These two lines should probably be deleted.
+    CollectiveQueue *cq = nullptr;
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
                                         cq, HDFStore, CreateMethod);
     if (!ValueWriter) {

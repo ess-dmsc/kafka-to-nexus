@@ -111,9 +111,9 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
-  // Keep these for now, experimenting with those on another branch.
-  CollectiveQueue *cq = nullptr;
+
   try {
+    CollectiveQueue *cq = nullptr;
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
         HDFGroup, "event_time_offset", chunk_bytes, cq);
     this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(

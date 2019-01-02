@@ -1123,7 +1123,7 @@ TEST_F(T_CommandHandler, DatasetStatic1DStringVariable) {
 
 template <typename T>
 void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
-                           const std::pair<std::string, T> NameAndValue) {
+                           const std::pair<std::string, T> &NameAndValue) {
   auto Dataset =
       hdf5::node::get_dataset(TestFile.RootGroup, "/" + NameAndValue.first);
   auto OutputValue = NameAndValue.second;

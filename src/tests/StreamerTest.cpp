@@ -55,7 +55,7 @@ protected:
 
 class ConsumerEmptyStandIn : public KafkaW::Consumer {
 public:
-  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
+  explicit ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
       : KafkaW::Consumer(Settings){};
   MAKE_MOCK0(poll, std::unique_ptr<KafkaW::ConsumerMessage>(), override);
 };
@@ -346,7 +346,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
 
 class DemuxerStandIn : public DemuxTopic {
 public:
-  DemuxerStandIn(std::string Topic) : DemuxTopic(Topic) {}
+  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
   MAKE_MOCK1(process_message, ProcessMessageResult(FlatbufferMessage const &),
              override);
 };
