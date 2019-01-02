@@ -104,10 +104,6 @@ void swap(h5d &x, h5d &y) {
   swap(x.mpi_rank, y.mpi_rank);
 }
 
-void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
-  LOG(Sev::Debug, "using cq: {}", (void *)cq);
-}
-
 template <typename T>
 append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using CLK = std::chrono::steady_clock;

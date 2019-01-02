@@ -97,8 +97,6 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
       throw std::runtime_error(
           "Failed to set-up process for creating consumer.");
     }
-  } catch (std::runtime_error &Error) {
-    throw Error;
   } catch (std::exception &Error) {
     LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
         Error.what());

@@ -13,7 +13,7 @@ namespace h5 {
 
 class RuntimeError : public std::runtime_error {
 public:
-  RuntimeError(std::string const &x) : std::runtime_error(x) {}
+  explicit RuntimeError(std::string const &x) : std::runtime_error(x) {}
 };
 
 void swap(hsize_t &, hsize_t &);
@@ -46,7 +46,6 @@ public:
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);
-  void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
 

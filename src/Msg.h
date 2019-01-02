@@ -23,7 +23,7 @@ enum class MsgType : int {
 
 class Msg {
 public:
-  Msg() { type = MsgType::Invalid; }
+  Msg() : type(MsgType::Invalid) {}
 
   static Msg owned(char const *data, size_t len) {
     Msg msg;

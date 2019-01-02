@@ -183,12 +183,6 @@ HDFFile::HDFFile() {
 #endif
 }
 
-herr_t visitor_show_name(hid_t oid, const char *name, const H5O_info_t *oi,
-                         void *op_data) {
-  LOG(Sev::Error, "obj refs: {:2}  name: {}", oi->rc, name);
-  return 0;
-}
-
 HDFFile::~HDFFile() {
   try {
     finalize();

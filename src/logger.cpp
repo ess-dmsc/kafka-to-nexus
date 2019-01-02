@@ -28,11 +28,10 @@ public:
   ~Logger();
   void use_log_file(std::string fname);
   void log_kafka_gelf_start(std::string broker, std::string topic);
-  void log_kafka_gelf_stop();
   FILE *log_file = stdout;
   void dwlog_inner(int level, char const *file, int line, char const *func,
                    std::string const &s1);
-  int prefix_len();
+  static int prefix_len();
   void fwd_graylog_logger_enable(std::string address);
 
 private:
@@ -76,13 +75,6 @@ void Logger::log_kafka_gelf_start(std::string Address, std::string topicname) {
   do_run_kafka = true;
 }
 
-void Logger::log_kafka_gelf_stop() {
-  do_run_kafka = false;
-  // Wait a bit with the cleanup...
-  // auto t = topic.exchange(nullptr);
-  // auto p = producer.exchange(nullptr);
-}
-
 void Logger::fwd_graylog_logger_enable(std::string address) {
   auto addr = address;
   int port = 12201;
@@ -106,7 +98,7 @@ void Logger::fwd_graylog_logger_enable(std::string address) {
 
 void Logger::dwlog_inner(int level, char const *file, int line,
                          char const *func, std::string const &s1) {
-  int npre = prefix_len();
+  int npre = Logger::prefix_len();
   int const n2 = strlen(file);
   if (npre > n2) {
     // fmt::print(log_file, "ERROR in logging API: npre > n2\n");
@@ -158,8 +150,6 @@ void dwlog_inner(int level, char const *file, int line, char const *func,
 void log_kafka_gelf_start(std::string broker, std::string topic) {
   DW::g__logger.log_kafka_gelf_start(broker, topic);
 }
-
-void log_kafka_gelf_stop() {}
 
 void fwd_graylog_logger_enable(std::string address) {
   DW::g__logger.fwd_graylog_logger_enable(address);
