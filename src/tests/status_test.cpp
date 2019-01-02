@@ -110,7 +110,7 @@ TEST(StreamMasterInfo, accumulateInfos) {
 
   for (size_t i = 0; i < NumStreamers; ++i) {
     MessageInfo MsgInfo;
-    for (int i = 0; i < NumMessages; ++i) {
+    for (int j = 0; j < NumMessages; ++j) {
       auto MessageSize = std::fabs(RandomGaussian());
       MsgInfo.newMessage(MessageSize);
 
@@ -119,7 +119,7 @@ TEST(StreamMasterInfo, accumulateInfos) {
       TotalSize += MessageSize * 1e-6;
       TotalSize2 += MessageSize * MessageSize * 1e-12;
     }
-    for (int i = 0; i < NumErrors; ++i) {
+    for (int k = 0; k < NumErrors; ++k) {
       MsgInfo.error();
       TotalErrors += 1.0;
     }

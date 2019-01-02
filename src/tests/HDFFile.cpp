@@ -1269,7 +1269,6 @@ TEST(HDFFile, createStaticDatasetsStrings) {
     StringFix.encoding(hdf5::datatype::CharacterEncoding::UTF8);
     StringFix.padding(hdf5::datatype::StringPad::NULLTERM);
     hdf5::node::Dataset Dataset;
-    hdf5::dataspace::Simple SpaceFile;
     Dataset = hdf5::node::get_dataset(File.root(), "/some_group/string_var_0d");
     ASSERT_EQ(Dataset.datatype(), StringVar);
     ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SCALAR);
@@ -1283,21 +1282,23 @@ TEST(HDFFile, createStaticDatasetsStrings) {
     ASSERT_EQ(Dataset.datatype(), StringFix);
     ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
     {
-      auto Dataset =
+      auto NewDataset =
           hdf5::node::get_dataset(File.root(), "/some_group/string_fix_2d");
-      ASSERT_EQ(Dataset.datatype(), StringFix);
-      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
-      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
-      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
-                          hdf5::dataspace::Hyperslab({2, 1}, {1, 3}));
+      ASSERT_EQ(NewDataset.datatype(), StringFix);
+      ASSERT_EQ(NewDataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple NewSpaceFile = NewDataset.dataspace();
+      NewSpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                             hdf5::dataspace::Hyperslab({2, 1}, {1, 3}));
       std::vector<char> Buffer(3 * 32);
-      // Dataset.read(*Buffer.data(), StringFix, hdf5::dataspace::Simple({2}),
-      // SpaceFile);
+      // NewDataset.read(*Buffer.data(), StringFix,
+      // hdf5::dataspace::Simple({2}),
+      // NewSpaceFile);
       hdf5::dataspace::Simple SpaceMem({3});
-      if (0 >
-          H5Dread(static_cast<hid_t>(Dataset), static_cast<hid_t>(StringFix),
-                  static_cast<hid_t>(SpaceMem), static_cast<hid_t>(SpaceFile),
-                  H5P_DEFAULT, Buffer.data())) {
+      if (0 > H5Dread(static_cast<hid_t>(NewDataset),
+                      static_cast<hid_t>(StringFix),
+                      static_cast<hid_t>(SpaceMem),
+                      static_cast<hid_t>(NewSpaceFile), H5P_DEFAULT,
+                      Buffer.data())) {
         ASSERT_TRUE(false);
       }
       ASSERT_EQ(std::string(Buffer.data() + 0 * 32), "string_2_1");
@@ -1305,16 +1306,17 @@ TEST(HDFFile, createStaticDatasetsStrings) {
       ASSERT_EQ(std::string(Buffer.data() + 2 * 32), "string_2_3");
     }
     {
-      auto Dataset =
+      auto OtherDataset =
           hdf5::node::get_dataset(File.root(), "/some_group/string_var_2d");
-      ASSERT_EQ(Dataset.datatype(), StringVar);
-      ASSERT_EQ(Dataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
-      hdf5::dataspace::Simple SpaceFile = Dataset.dataspace();
-      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
-                          hdf5::dataspace::Hyperslab({2, 1}, {1, 2}));
+      ASSERT_EQ(OtherDataset.datatype(), StringVar);
+      ASSERT_EQ(OtherDataset.dataspace().type(), hdf5::dataspace::Type::SIMPLE);
+      hdf5::dataspace::Simple OtherSpaceFile = OtherDataset.dataspace();
+      OtherSpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                               hdf5::dataspace::Hyperslab({2, 1}, {1, 2}));
       std::vector<std::string> Buffer;
       Buffer.resize(2);
-      Dataset.read(Buffer, StringVar, hdf5::dataspace::Simple({2}), SpaceFile);
+      OtherDataset.read(Buffer, StringVar, hdf5::dataspace::Simple({2}),
+                        OtherSpaceFile);
       ASSERT_EQ(Buffer.at(0), "string_2_1");
       ASSERT_EQ(Buffer.at(1), "string_2_2");
     }
