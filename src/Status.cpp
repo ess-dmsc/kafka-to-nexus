@@ -20,14 +20,15 @@ double standardDeviation(const double &Sum, const double &SumSquared,
   }
 }
 
-std::pair<double, double>
-FileWriter::Status::messageSize(const FileWriter::Status::MessageInfo &Information) {
+std::pair<double, double> FileWriter::Status::messageSize(
+    const FileWriter::Status::MessageInfo &Information) {
   if (Information.getMessages().first == 0) { // nan causes failure in JSON
     return std::pair<double, double>{};
   }
   std::pair<double, double> result(
       average(Information.getMbytes().first, Information.getMessages().first),
-      standardDeviation(Information.getMbytes().first, Information.getMbytes().second,
+      standardDeviation(Information.getMbytes().first,
+                        Information.getMbytes().second,
                         Information.getMessages().first));
   return result;
 }

@@ -12,8 +12,7 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config)
-    : command_listener(Config), MainConfig(Config) {
+Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
