@@ -83,14 +83,13 @@ public:
   }
 
   inline void swap(Msg &y) {
-    auto &x = *this;
-    if (x.type != MsgType::Invalid && x.type != y.type) {
+    if (type != MsgType::Invalid && type != y.type) {
       LOG(Sev::Critical, "sorry, can not swap that");
     }
     using std::swap;
-    swap(x.type, y.type);
-    swap(x.var, y.var);
-    swap(x._size, y._size);
+    swap(type, y.type);
+    swap(var, y.var);
+    swap(_size, y._size);
   }
 
   inline char const *data() const {
