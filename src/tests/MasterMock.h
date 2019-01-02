@@ -25,9 +25,7 @@ public:
       override {}
   void stopStreamMasters() override {}
   std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>> &
-  getStreamMasterForJobID(std::string JobID_) override {
-    // if (JobID == JobID_) {
-    // }
+  getStreamMasterForJobID(std::string const &) override {
     static std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>>
         NotFound;
     return NotFound;
