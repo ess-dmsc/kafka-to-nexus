@@ -131,9 +131,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                        MainOptions.StreamerConfiguration.StartTimestamp,
                        "Streamer option - start timestamp (milliseconds)",
                        true);
-  addMillisecondOption(App, "--streamer-stop-time",
-                       MainOptions.StreamerConfiguration.StopTimestamp,
-                       "Streamer option - stop timestamp (milliseconds)", true);
+  addMillisecondOption(App, "--streamer-stop-time", MainOptions.StreamerConfiguration.StopTimestamp, "Streamer option - stop timestamp (milliseconds)", true);
   addMillisecondOption(
       App, "--stream-master-topic-write-interval",
       MainOptions.topic_write_duration,
