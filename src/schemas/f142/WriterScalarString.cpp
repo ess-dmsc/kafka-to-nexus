@@ -45,7 +45,8 @@ h5::append_ret WriterScalarString::write(LogData const *fbuf) {
   if (ChunkedDataset == nullptr) {
     return {h5::AppendResult::ERROR, 0, 0};
   }
-  return ChunkedDataset->append(static_cast<String const *>(fbuf->value())->value()->str());
+  return ChunkedDataset->append(
+      static_cast<String const *>(fbuf->value())->value()->str());
 }
 }
 }

@@ -16,7 +16,8 @@ class synth_impl {
   uint64_t c1 = 0;
 };
 
-  synth::synth(std::string SynthName, uint64_t seed) : Name(std::move(SynthName)) {
+synth::synth(std::string SynthName, uint64_t seed)
+    : Name(std::move(SynthName)) {
   impl.reset(new synth_impl);
   impl->rnd.seed(seed);
 }

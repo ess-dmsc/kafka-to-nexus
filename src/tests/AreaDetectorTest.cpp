@@ -26,7 +26,7 @@ public:
         RegisterIt("NDAr");
   };
 
-  virtual void TearDown() override {};
+  virtual void TearDown() override{};
   std::unique_ptr<NDAr::AreaDetectorDataGuard> Reader;
   static std::unique_ptr<char[]> RawData;
   static size_t FileSize;

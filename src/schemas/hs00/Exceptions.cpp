@@ -2,8 +2,6 @@
 
 namespace FileWriter {
 namespace Schemas {
-namespace hs00 {
-  
-}
+namespace hs00 {}
 }
 }

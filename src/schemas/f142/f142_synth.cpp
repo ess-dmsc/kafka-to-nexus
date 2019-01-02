@@ -12,7 +12,7 @@ class synth_impl {
   Value type;
 };
 
-  synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
+synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   impl.reset(new synth_impl);
   impl->type = Type;
 }

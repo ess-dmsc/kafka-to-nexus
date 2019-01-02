@@ -168,5 +168,4 @@ void Producer::poll() {
 rd_kafka_t *Producer::getRdKafkaPtr() const { return RdKafkaPtr; }
 
 uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(RdKafkaPtr); }
-  
 }

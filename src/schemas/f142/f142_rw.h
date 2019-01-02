@@ -100,7 +100,7 @@ public:
   uint64_t TimestampMax = 0;
   size_t ArraySize = 0;
   std::string StoreLatestInto;
-  
+
   CollectiveQueue *cq = nullptr;
 
   // Reduce LOG rate in some cases
