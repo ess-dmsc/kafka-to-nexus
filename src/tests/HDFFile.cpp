@@ -409,12 +409,6 @@ public:
     }
   };
 
-  static void recreate_file(json const &CommandJSON) {
-    // now try to recreate the file for testing:
-    std::string Filename = CommandJSON["file_attributes"]["file_name"];
-    auto file = hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE);
-  }
-
   /// Used by `data_ev42` test to verify attributes attached to the group.
   static void verify_attribute_data_ev42(hdf5::node::Group &node) {
 
@@ -1042,31 +1036,32 @@ public:
     return result[pos[0]].c_str();
   }
 
-  static void dataset_static_1d_string_fixed() {
-    auto File = HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
-    auto NexusStructure = json::parse(R""({
-      "children": [
-        {
-          "type": "dataset",
-          "name": "string_fixed_1d_fixed",
-          "dataset": {
-            "type":"string",
-            "string_size": 71,
-            "size": ["unlimited"]
-          },
-          "values": ["the-scalar-string", "another-one", "yet-another"]
-        }
-      ]
-    })"");
-    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-    File.init(NexusStructure, stream_hdf_info);
-    auto ds = hdf5::node::get_dataset(File.RootGroup, "string_fixed_1d_fixed");
-    auto datatype = hdf5::datatype::String(ds.datatype());
-    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
-    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
-    ASSERT_FALSE(datatype.is_variable_length());
-    ASSERT_EQ(read_string(ds, {1}), std::string("another-one"));
-  }
+  /// \note: Commented out due to disabled test
+//  static void dataset_static_1d_string_fixed() {
+//    auto File = HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
+//    auto NexusStructure = json::parse(R""({
+//      "children": [
+//        {
+//          "type": "dataset",
+//          "name": "string_fixed_1d_fixed",
+//          "dataset": {
+//            "type":"string",
+//            "string_size": 71,
+//            "size": ["unlimited"]
+//          },
+//          "values": ["the-scalar-string", "another-one", "yet-another"]
+//        }
+//      ]
+//    })"");
+//    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
+//    File.init(NexusStructure, stream_hdf_info);
+//    auto ds = hdf5::node::get_dataset(File.RootGroup, "string_fixed_1d_fixed");
+//    auto datatype = hdf5::datatype::String(ds.datatype());
+//    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+//    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
+//    ASSERT_FALSE(datatype.is_variable_length());
+//    ASSERT_EQ(read_string(ds, {1}), std::string("another-one"));
+//  }
 
   static void dataset_static_1d_string_variable() {
     auto File = HDFFileTestHelper::createInMemoryTestFile("tmp-varlen.h5");

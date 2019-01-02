@@ -364,7 +364,7 @@ public:
   Time() = default;
   /// \brief Create the time dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  Time(hdf5::node::Group parent, Mode CMode, int ChunkSize = 1024);
+  Time(hdf5::node::Group Parent, Mode CMode, int ChunkSize = 1024);
 };
 
 class CueIndex : public ExtensibleDataset<std::uint32_t> {
@@ -372,7 +372,7 @@ public:
   CueIndex() = default;
   /// \brief Create the cue_index dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  CueIndex(hdf5::node::Group parent, Mode CMode, int ChunkSize = 1024);
+  CueIndex(hdf5::node::Group Parent, Mode CMode, int ChunkSize = 1024);
 };
 
 class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
@@ -380,7 +380,7 @@ public:
   CueTimestampZero() = default;
   /// \brief Create the cue_timestamp_zero dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  CueTimestampZero(hdf5::node::Group parent, Mode CMode, int ChunkSize = 1024);
+  CueTimestampZero(hdf5::node::Group Parent, Mode CMode, int ChunkSize = 1024);
 };
 
 } // namespace NexUsDataset

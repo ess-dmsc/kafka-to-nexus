@@ -203,9 +203,6 @@ public:
   ///
   /// \return Error code.
   virtual int32_t close() = 0;
-
-  virtual void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                         int mpi_rank) = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.

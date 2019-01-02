@@ -43,7 +43,7 @@ class Producer : public ProducerInterface {
 public:
   typedef ProducerTopic Topic;
   typedef ProducerMsg Msg;
-  explicit Producer(BrokerSettings Settings);
+  explicit Producer(BrokerSettings const &Settings);
   explicit Producer(Producer const &) = delete;
   explicit Producer(Producer &&x);
   ~Producer() override;

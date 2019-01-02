@@ -323,18 +323,6 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
   return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
 }
 
-// Experimental usage on the parallel writer branch.
-void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
-                                int MPIRank) {
-  this->cq = cq;
-  for (auto const &Info : DatasetInfoList) {
-    auto &Dataset = Info.Ptr->ds;
-    Dataset.cq = cq;
-    Dataset.hdf_store = HDFStore;
-    Dataset.mpi_rank = MPIRank;
-  }
-}
-
 /// Implement HDFWriterModule interface, just flushing.
 int32_t HDFWriterModule::flush() {
   for (auto const &Info : DatasetInfoList) {

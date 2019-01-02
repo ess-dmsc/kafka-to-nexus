@@ -6,22 +6,15 @@ namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
 
-Slice Slice::fromOffsetsSizes(std::vector<uint32_t> Offsets_,
-                              std::vector<uint32_t> Sizes_) {
+Slice Slice::fromOffsetsSizes(std::vector<uint32_t> const &SliceOffsets,
+                              std::vector<uint32_t> const &SliceSizes) {
   Slice TheSlice;
-  TheSlice.Offsets = Offsets_;
-  TheSlice.Sizes = Sizes_;
+  TheSlice.Offsets = SliceOffsets;
+  TheSlice.Sizes = SliceSizes;
   return TheSlice;
 }
 
-void Slice::printOverlap(Slice const &This, Slice const &Other) {
-  for (size_t i = 0; i < This.Offsets.size(); ++i) {
-    printf("%ld:  %d  %d  vs %d  %d\n", i, This.Offsets.at(i), This.Sizes.at(i),
-           Other.Offsets.at(i), Other.Sizes.at(i));
-  }
-}
-
-bool Slice::doesOverlap(Slice const &Other) {
+bool Slice::doesOverlap(Slice const &Other) const {
   auto &This = *this;
   if (Offsets.size() != Sizes.size()) {
     throw std::runtime_error("Incompatible Slice shape");

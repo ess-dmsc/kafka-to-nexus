@@ -35,13 +35,13 @@ struct append_ret {
 class h5d {
 public:
   typedef std::unique_ptr<h5d> ptr;
-  static ptr create(hdf5::node::Group loc, std::string name,
+  static ptr create(hdf5::node::Group Node, std::string const &Name,
                     hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
                     hdf5::property::DatasetCreationList dcpl,
                     CollectiveQueue *cq);
-  static ptr open_single(hdf5::node::Group loc, std::string name,
+  static ptr open_single(hdf5::node::Group Node, std::string const &Name,
                          CollectiveQueue *cq, HDFIDStore *hdf_store);
-  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
+  static ptr open(hdf5::node::Group Node, std::string const &Name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   h5d(h5d &&x);
   ~h5d();
@@ -53,7 +53,7 @@ public:
   ///
   /// Writes the given string to the dataset if the dataset can contain strings.
   append_ret append(std::string const &String);
-  std::string name;
+  std::string Name;
   hdf5::node::Dataset Dataset;
   hdf5::datatype::Datatype Type;
   hdf5::property::DatasetTransferList PLTransfer;
@@ -110,9 +110,9 @@ private:
 class Chunked1DString {
 public:
   typedef std::unique_ptr<Chunked1DString> ptr;
-  static ptr create(hdf5::node::Group loc, std::string name,
-                    hsize_t chunk_bytes, CollectiveQueue *cq);
-  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
+  static ptr create(hdf5::node::Group Node, std::string Name,
+                    hsize_t ChunkBytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group Node, std::string Name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   append_ret append(std::string const &String);
   h5d ds;

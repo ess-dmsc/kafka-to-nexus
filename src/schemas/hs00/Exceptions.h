@@ -12,7 +12,6 @@ public:
   UnexpectedJsonInput() : std::runtime_error("UnexpectedJsonInput") {}
 };
 
-std::runtime_error unimplemented();
 }
 }
 }

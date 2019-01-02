@@ -27,12 +27,12 @@ public:
   Logger();
   ~Logger();
   void use_log_file(std::string fname);
-  void log_kafka_gelf_start(std::string broker, std::string topic);
+  void log_kafka_gelf_start(std::string const &Address, std::string TopicName);
   FILE *log_file = stdout;
   void dwlog_inner(int level, char const *file, int line, char const *func,
                    std::string const &s1);
   static int prefix_len();
-  void fwd_graylog_logger_enable(std::string address);
+  void fwd_graylog_logger_enable(std::string const &Address);
 
 private:
   std::atomic<bool> do_run_kafka{false};
@@ -60,11 +60,11 @@ void Logger::use_log_file(std::string fname) {
   log_file = f1;
 }
 
-void Logger::log_kafka_gelf_start(std::string Address, std::string topicname) {
+void Logger::log_kafka_gelf_start(std::string const &Address, std::string TopicName) {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = Address;
   producer.reset(new KafkaW::Producer(BrokerSettings));
-  topic.reset(new KafkaW::Producer::Topic(producer, topicname));
+  topic.reset(new KafkaW::Producer::Topic(producer, TopicName));
   topic->enableCopy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {
@@ -75,13 +75,13 @@ void Logger::log_kafka_gelf_start(std::string Address, std::string topicname) {
   do_run_kafka = true;
 }
 
-void Logger::fwd_graylog_logger_enable(std::string address) {
-  auto addr = address;
+void Logger::fwd_graylog_logger_enable(std::string const &Address) {
+  auto addr = Address;
   int port = 12201;
-  auto col = address.find(":");
+  auto col = Address.find(":");
   if (col != std::string::npos) {
-    addr = address.substr(0, col);
-    port = strtol(address.c_str() + col + 1, nullptr, 10);
+    addr = Address.substr(0, col);
+    port = strtol(Address.c_str() + col + 1, nullptr, 10);
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   Log::RemoveAllHandlers();
@@ -147,10 +147,10 @@ void dwlog_inner(int level, char const *file, int line, char const *func,
   DW::g__logger.dwlog_inner(level, file, line, func, s1);
 }
 
-void log_kafka_gelf_start(std::string broker, std::string topic) {
-  DW::g__logger.log_kafka_gelf_start(broker, topic);
+void log_kafka_gelf_start(std::string const &Address, std::string TopicName) {
+  DW::g__logger.log_kafka_gelf_start(Address, TopicName);
 }
 
-void fwd_graylog_logger_enable(std::string address) {
-  DW::g__logger.fwd_graylog_logger_enable(address);
+void fwd_graylog_logger_enable(std::string const &Address) {
+  DW::g__logger.fwd_graylog_logger_enable(Address);
 }

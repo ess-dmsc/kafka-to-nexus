@@ -226,34 +226,6 @@ int32_t HDFWriterModule::close() {
   return 0;
 }
 
-void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                                int mpi_rank) {
-  this->cq = cq;
-  ds_event_time_offset->ds.cq = cq;
-  ds_event_time_offset->ds.hdf_store = hdf_store;
-  ds_event_time_offset->ds.mpi_rank = mpi_rank;
-
-  ds_event_id->ds.cq = cq;
-  ds_event_id->ds.hdf_store = hdf_store;
-  ds_event_id->ds.mpi_rank = mpi_rank;
-
-  ds_event_time_zero->ds.cq = cq;
-  ds_event_time_zero->ds.hdf_store = hdf_store;
-  ds_event_time_zero->ds.mpi_rank = mpi_rank;
-
-  ds_event_index->ds.cq = cq;
-  ds_event_index->ds.hdf_store = hdf_store;
-  ds_event_index->ds.mpi_rank = mpi_rank;
-
-  ds_cue_index->ds.cq = cq;
-  ds_cue_index->ds.hdf_store = hdf_store;
-  ds_cue_index->ds.mpi_rank = mpi_rank;
-
-  ds_cue_timestamp_zero->ds.cq = cq;
-  ds_cue_timestamp_zero->ds.hdf_store = hdf_store;
-  ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
-}
-
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
     RegisterWriter("ev42");
 

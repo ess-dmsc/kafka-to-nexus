@@ -100,10 +100,7 @@ public:
   uint64_t TimestampMax = 0;
   size_t ArraySize = 0;
   std::string StoreLatestInto;
-
-  // Helper for experiments on my other branch
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
-                 int MPIRank) override;
+  
   CollectiveQueue *cq = nullptr;
 
   // Reduce LOG rate in some cases

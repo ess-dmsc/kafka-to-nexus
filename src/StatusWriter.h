@@ -31,7 +31,9 @@ public:
   std::string getJson();
 
 private:
-  nlohmann::json json;
+  nlohmann::json json{{"type", "stream_master_status"},
+    {"next_message_eta_ms", 0},
+    {"job_id", 0}};
 };
 
 } // namespace Status

@@ -37,10 +37,7 @@ StreamerToJson(MessageInfo &Information,
   return nlohmann::json{Status, Statistics};
 }
 
-StatusWriter::StatusWriter() {
-  json = {{"type", "stream_master_status"},
-          {"next_message_eta_ms", 0},
-          {"job_id", 0}};
+  StatusWriter::StatusWriter() {
 }
 
 void StatusWriter::setJobId(const std::string &JobId) {

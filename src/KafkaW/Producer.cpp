@@ -106,7 +106,7 @@ Producer::~Producer() {
   }
 }
 
-Producer::Producer(BrokerSettings Settings)
+Producer::Producer(BrokerSettings const &Settings)
     : ProducerBrokerSettings(Settings) {
   id = g_kafka_producer_instance_count++;
 

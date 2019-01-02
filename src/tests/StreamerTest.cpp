@@ -224,7 +224,6 @@ public:
   MAKE_MOCK1(write, WriteResult(FlatbufferMessage const &), override);
   MAKE_MOCK0(flush, int32_t(), override);
   MAKE_MOCK0(close, int32_t(), override);
-  MAKE_MOCK3(enable_cq, void(CollectiveQueue *, HDFIDStore *, int), override);
 };
 
 class StreamerProcessTimingTest : public ::testing::Test {

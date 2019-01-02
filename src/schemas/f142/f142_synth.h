@@ -23,11 +23,11 @@ class synth_impl;
 /// Simple test data generator for the f142 schema.
 class synth {
 public:
-  synth(std::string name, Value type);
+  synth(std::string SynthName, Value Type);
   ~synth();
   fb next(uint64_t seq, size_t nele);
   std::unique_ptr<synth_impl> impl;
-  std::string name;
+  std::string Name;
 };
 
 } // namespace f142
