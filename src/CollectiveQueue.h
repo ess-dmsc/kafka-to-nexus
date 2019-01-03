@@ -2,4 +2,3 @@
 
 class CollectiveQueue;
 class HDFIDStore;
-
