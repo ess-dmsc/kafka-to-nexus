@@ -161,7 +161,7 @@ builders = pipeline_builder.createBuilders { container ->
                git config user.name 'cow-bot'
                git status -s
                git add -u
-               git commit -m \"GO FORMAT YOURSELF\"
+               git commit -m 'GO FORMAT YOURSELF'
                """
             withCredentials([
                       usernamePassword(
