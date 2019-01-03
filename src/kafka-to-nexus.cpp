@@ -18,7 +18,8 @@ static std::atomic_int SignalId{0};
 
 void signal_handler(int Signal) {
   GotSignal = true;
-  SignalId = Signal;}
+  SignalId = Signal;
+}
 
 int main(int argc, char **argv) {
   CLI::App App{fmt::format(
