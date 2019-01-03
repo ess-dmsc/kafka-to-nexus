@@ -144,13 +144,9 @@ builders = pipeline_builder.createBuilders { container ->
     }
   }  // stage
 
-  if (container.key == clangformat_os) {
-    pipeline_builder.stage("${container.key}: Formatting") {
-    if (!env.CHANGE_ID) {
-            // Ignore non-PRs
-            return
-        }
-
+  
+  pipeline_builder.stage("${container.key}: Formatting") {
+    if (container.key == clangformat_os && !env.CHANGE_ID) {
         try {
             def custom_sh = images[image_key]['sh']
             def script = """
@@ -190,7 +186,8 @@ builders = pipeline_builder.createBuilders { container ->
             } catch (e) {
                 // Can ignore exception
             }
-    }
+        }
+      }
     }  // stage
 
     pipeline_builder.stage("${container.key}: Cppcheck") {
