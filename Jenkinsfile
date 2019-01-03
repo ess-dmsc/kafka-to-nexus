@@ -171,7 +171,7 @@ builders = pipeline_builder.createBuilders { container ->
                       )
                     ]) {
                       container.sh """
-                         cd ${project}-test
+                         cd ${project}
                          git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
                          """
             } // withCredentials
