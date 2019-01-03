@@ -146,23 +146,17 @@ builders = pipeline_builder.createBuilders { container ->
 
   if (container.key == clangformat_os) {
     pipeline_builder.stage("${container.key}: Formatting") {
-    if (!env.CHANGE_ID) {
+        if (!env.CHANGE_ID) {
             // Ignore non-PRs
             return
         }
 
         try {
-            def custom_sh = images[image_key]['sh']
-            def script = """
-                         clang-format -version
-                         cd ${project}
-                         find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
-                           -exec clang-format -i {} +
-                         """
             container.sh """
-               docker exec ${container_name(image_key)} ${custom_sh} -c \"${script}\"
-               docker cp -a ${container_name(image_key)}:/home/jenkins/${project} ${project}-test
-               cd ${project}-test
+               clang-format -version
+               cd ${project}
+               find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
+               -exec clang-format -i {} +
                git config user.email 'dm-jenkins-integration@esss.se'
                git config user.name 'cow-bot'
                git status -s
@@ -176,7 +170,7 @@ builders = pipeline_builder.createBuilders { container ->
                         passwordVariable: 'PASSWORD'
                       )
                     ]) {
-                      sh """
+                      container.sh """
                          cd ${project}-test
                          git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
                          """
@@ -185,12 +179,7 @@ builders = pipeline_builder.createBuilders { container ->
             // Okay to fail as there could be no badly formatted files to commit
         } finally {
             // Clean up
-            try {
-                container.sh "rm -rf ${project}-test"
-            } catch (e) {
-                // Can ignore exception
-            }
-    }
+        }
     }  // stage
 
     pipeline_builder.stage("${container.key}: Cppcheck") {
