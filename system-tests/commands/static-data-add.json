@@ -1,0 +1,274 @@
+{
+  "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
+  "job_id": "f3c1ad52-f8b2-11e8-8eb2-f2801f1b9fd1",
+  "use_hdf_swmr": false,
+  "start_time": STARTTIME,
+  "file_attributes": {
+    "file_name": "output_file_static.nxs"
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "entry",
+        "children": [
+          {
+            "type": "dataset",
+            "name": "duration",
+            "dataset": {
+              "type": "float",
+              "size": [
+                1
+              ]
+            },
+            "values": [
+              1817.0
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "end_time",
+            "dataset": {
+              "type": "string",
+              "size": [
+                1
+              ]
+            },
+            "values": [
+              "2016-04-12T03:29:11"
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "features",
+            "dataset": {
+              "type": "uint64",
+              "size": [
+                1
+              ]
+            },
+            "values": [
+              10138143369737381149
+            ]
+          },
+          {
+            "type": "group",
+            "name": "instrument",
+            "children": [
+              {
+                "type": "group",
+                "name": "monitor1",
+                "children": [
+                  {
+                    "type": "dataset",
+                    "name": "depends_on",
+                    "dataset": {
+                      "type": "string"
+                    },
+                    "values": "/entry/instrument/monitor1/transformations/location"
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "detector_id",
+                    "dataset": {
+                      "type": "int64"
+                    },
+                    "values": 1
+                  },
+                  {
+                    "type": "group",
+                    "name": "transformations",
+                    "children": [
+                      {
+                        "type": "dataset",
+                        "name": "location",
+                        "dataset": {
+                          "type": "double"
+                        },
+                        "values": 12.064,
+                        "attributes": [
+                          {
+                            "name": "units",
+                            "values": "m"
+                          },
+                          {
+                            "name": "transformation_type",
+                            "values": "translation"
+                          },
+                          {
+                            "name": "vector",
+                            "values": [
+                              0.0,
+                              0.0,
+                              -1.0
+                            ],
+                            "type": "double"
+                          },
+                          {
+                            "name": "depends_on",
+                            "values": "."
+                          },
+                          {
+                            "name": "NX_class",
+                            "values": "NXtransformation"
+                          }
+                        ]
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXtransformation"
+                      }
+                    ]
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "values": "NXmonitor"
+                  }
+                ]
+              },
+              {
+                "type": "dataset",
+                "name": "name",
+                "dataset": {
+                  "type": "string"
+                },
+                "values": "SANS2D",
+                "attributes": [
+                  {
+                    "name": "short_name",
+                    "values": "SAN"
+                  }
+                ]
+              },
+              {
+                "type": "group",
+                "name": "source",
+                "children": [
+                  {
+                    "type": "dataset",
+                    "name": "depends_on",
+                    "dataset": {
+                      "type": "string"
+                    },
+                    "values": "/entry/instrument/source/transformations/location"
+                  },
+                  {
+                    "type": "dataset",
+                    "name": "name",
+                    "dataset": {
+                      "type": "string"
+                    },
+                    "values": "source"
+                  },
+                  {
+                    "type": "group",
+                    "name": "transformations",
+                    "children": [
+                      {
+                        "type": "dataset",
+                        "name": "location",
+                        "dataset": {
+                          "type": "double"
+                        },
+                        "values": 0.0,
+                        "attributes": [
+                          {
+                            "name": "units",
+                            "values": "m"
+                          },
+                          {
+                            "name": "transformation_type",
+                            "values": "translation"
+                          },
+                          {
+                            "name": "vector",
+                            "values": [
+                              0.0,
+                              0.0,
+                              0.0
+                            ],
+                            "type": "double"
+                          },
+                          {
+                            "name": "depends_on",
+                            "values": "."
+                          },
+                          {
+                            "name": "NX_class",
+                            "values": "NXtransformation"
+                          }
+                        ]
+                      }
+                    ],
+                    "attributes": [
+                      {
+                        "name": "NX_class",
+                        "values": "NXtransformations"
+                      }
+                    ]
+                  }
+                ],
+                "attributes": [
+                  {
+                    "name": "NX_class",
+                    "values": "NXsource"
+                  }
+                ]
+              }
+            ],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXinstrument"
+              }
+            ]
+          },
+          {
+            "type": "dataset",
+            "name": "start_time",
+            "dataset": {
+              "type": "string",
+              "size": [
+                1
+              ]
+            },
+            "values": [
+              "2016-04-12T02:58:52"
+            ]
+          },
+          {
+            "type": "group",
+            "name": "user_1",
+            "children": [
+              {
+                "type": "dataset",
+                "name": "affiliation",
+                "dataset": {
+                  "type": "string"
+                },
+                "values": "ISIS, STFC"
+              }
+              ],
+            "attributes": [
+              {
+                "name": "NX_class",
+                "values": "NXuser"
+              }
+            ]
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXentry"
+          }
+        ]
+      }
+    ]
+  }
+}

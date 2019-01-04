@@ -75,13 +75,6 @@ def run_containers(cmd, options):
 
 
 def build_and_run(options, request):
-    try:
-        print("Removing previous NeXus file", flush=True)
-        os.remove(os.path.join(os.path.join(os.getcwd(), "output-files"), "output_file.nxs"))
-        print("Removed previous NeXus file", flush=True)
-    except OSError:
-        print("No previous NeXus file found, continuing..")
-
     build_filewriter_image()
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
@@ -91,6 +84,16 @@ def build_and_run(options, request):
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
+        try:
+            # Used for when there are multiple filewriter instances
+            # as the service is not called "filewriter"
+            multiple_log_options = dict(options)
+            multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
+            cmd.logs(multiple_log_options)
+        except:
+            log_options = dict(options)
+            log_options["SERVICE"] = ["filewriter"]
+            cmd.logs(log_options)
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
@@ -102,15 +105,24 @@ def build_and_run(options, request):
     # from to get all data which was published
     return start_time
 
+
 @pytest.fixture(scope="session", autouse=True)
 def remove_logs_from_previous_run(request):
+    print("Removing previous NeXus files", flush=True)
+    output_dir_name = os.path.join(os.getcwd(), "output-files")
+    output_dirlist = os.listdir(output_dir_name)
+    for filename in output_dirlist:
+        if filename.endswith(".nxs"):
+            os.remove(os.path.join(output_dir_name, filename))
+    print("Removed previous NeXus files", flush=True)
     print("Removing previous log files", flush=True)
-    dir_name = os.path.join(os.getcwd(), "logs")
-    dirlist = os.listdir(dir_name)
+    log_dir_name = os.path.join(os.getcwd(), "logs")
+    dirlist = os.listdir(log_dir_name)
     for filename in dirlist:
         if filename.endswith(".log"):
-            os.remove(os.path.join(dir_name, filename))
+            os.remove(os.path.join(log_dir_name, filename))
     print("Removed previous log files", flush=True)
+
 
 @pytest.fixture(scope="module")
 def docker_compose(request):
@@ -124,6 +136,7 @@ def docker_compose(request):
     options["--file"] = ["docker-compose.yml"]
     return build_and_run(options, request)
 
+
 @pytest.fixture(scope="module")
 def docker_compose_multiple_instances(request):
     """
@@ -134,4 +147,17 @@ def docker_compose_multiple_instances(request):
     # Options must be given as long form
     options = common_options
     options["--file"] = ["docker-compose-multiple-instances.yml"]
+    return build_and_run(options, request)
+
+
+@pytest.fixture(scope="module")
+def docker_compose_static_data(request):
+    """
+    :type request: _pytest.python.FixtureRequest
+    """
+    print("Started preparing test environment...", flush=True)
+
+    # Options must be given as long form
+    options = common_options
+    options["--file"] = ["docker-compose-static-data.yml"]
     return build_and_run(options, request)
