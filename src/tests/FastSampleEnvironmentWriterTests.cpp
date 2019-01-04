@@ -1,7 +1,9 @@
 #include "schemas/senv/FastSampleEnvironmentWriter.h"
+#include "senv_data_generated.h"
 #include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
+
 
 std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
