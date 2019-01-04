@@ -4,8 +4,8 @@
 #include "HDFWriterModule.h"
 #include "MainOpt.h"
 #include "Master.h"
+#include "URI.h"
 #include "logger.h"
-#include "uri.h"
 #include <CLI/CLI.hpp>
 #include <csignal>
 #include <cstdio>
