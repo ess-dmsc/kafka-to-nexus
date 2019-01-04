@@ -26,6 +26,6 @@ struct URI {
   std::string Topic;
 
   /// The URI string //<host>:<port>/<topic>
-  std::string getURIString() { return "//" + HostPort + "/" + Topic; }
+  std::string getURIString() const { return "//" + HostPort + "/" + Topic; }
 };
 } // namespace uri
