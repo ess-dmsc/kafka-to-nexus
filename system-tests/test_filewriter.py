@@ -29,11 +29,11 @@ def test_data_reaches_file(docker_compose):
 
     # Static checks
     assert not file.swmr_mode
-    assert file["entry/start_time"].value == '2016-04-12T02:58:52'
-    assert file["entry/end_time"].value == '2016-04-12T03:29:11'
-    assert file["entry/duration"].value == 1817.0
+    assert file["entry/start_time"][...] == '2016-04-12T02:58:52'
+    assert file["entry/end_time"][...] == '2016-04-12T03:29:11'
+    assert file["entry/duration"][...] == 1817.0
     assert file["entry/features"][0] == 10138143369737381149
-    assert file["entry/user_1/affiliation"].value == 'ISIS, STFC'
+    assert file["entry/user_1/affiliation"][...] == 'ISIS, STFC'
     assert np.allclose(file["entry/instrument/monitor1/transformations/location"].attrs["vector"], np.array([0.0, 0.0, -1.0]))
     assert file["entry/instrument/monitor1/transformations/location"].attrs["transformation_type"] == "translation"
 
