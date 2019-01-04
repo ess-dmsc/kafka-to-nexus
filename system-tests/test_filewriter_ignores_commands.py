@@ -21,13 +21,17 @@ def test_ignores_commands_with_incorrect_id(docker_compose_multiple_instances):
     for i in range(30):
         msg = consumer.poll()
         if b"\"files\":{}" in msg.value():
+            # filewriter2 is not currently writing a file - stop command has been processed.
             stopped = True
             break
         sleep(1)
 
     assert stopped
 
+    sleep(5)
     consumer.unsubscribe()
     consumer.subscribe(["TEST_writerStatus1"])
     writer1msg = consumer.poll()
+
+    # Check filewriter1's job queue is not empty
     assert b"\"files\":{}" not in writer1msg.value()
