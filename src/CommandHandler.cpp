@@ -277,6 +277,10 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
+  Config.StreamerConfiguration.StartTimestamp =
+      std::chrono::milliseconds::zero();
+  Config.StreamerConfiguration.StopTimestamp =
+      std::chrono::milliseconds::zero();
 
   // Must be done before StreamMaster instantiation
   if (auto x = find<uint64_t>("start_time", Doc)) {

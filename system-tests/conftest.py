@@ -4,10 +4,8 @@ from compose.cli.main import TopLevelCommand, project_from_options
 from confluent_kafka import Producer
 import docker
 from datetime import datetime
+from helpers.timehelpers import unix_time_milliseconds
 
-def unix_time_milliseconds(dt):
-    epoch = datetime.utcfromtimestamp(0)
-    return (dt - epoch).total_seconds() * 1000.0
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
     print('Waiting for Kafka broker to be ready for system tests...')
@@ -151,12 +149,22 @@ def docker_compose_multiple_instances(request):
 
 
 @pytest.fixture(scope="module")
+def docker_compose_stop_command_does_not_persist(request):
+    """
+    :type request: _pytest.python.FixtureRequest
+    """
+    print("Started preparing test environment...", flush=True)
+    options = common_options
+    options["--file"] = ["docker-compose-stop-command.yml"]
+    return build_and_run(options, request)
+
+
+@pytest.fixture(scope="module")
 def docker_compose_static_data(request):
     """
     :type request: _pytest.python.FixtureRequest
     """
     print("Started preparing test environment...", flush=True)
-
     # Options must be given as long form
     options = common_options
     options["--file"] = ["docker-compose-static-data.yml"]

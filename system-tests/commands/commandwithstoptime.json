@@ -1,0 +1,551 @@
+{
+  "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
+  "job_id": "e094c12a-cd4b-11e8-93f1-484d7e9b68dc",
+  "use_hdf_swmr": false,
+  "stop_time": STOPTIME,
+  "file_attributes": {
+    "file_name": "output_file_with_stop_time.nxs"
+  },
+  "nexus_structure": {
+      "children": [
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "attributes": {
+                    "offset": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "vector": [
+                      0.0,
+                      0.0,
+                      1.0
+                    ],
+                    "NX_class": "NXtransformations",
+                    "transformation_type": "translation",
+                    "depends_on": ".",
+                    "units": "m"
+                  },
+                  "name": "Translate",
+                  "dataset": {
+                    "size": [
+                      1
+                    ],
+                    "type": "float"
+                  },
+                  "values": 2.0,
+                  "type": "dataset"
+                },
+                {
+                  "attributes": {
+                    "offset": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "vector": [
+                      0,
+                      0,
+                      1
+                    ],
+                    "NX_class": "NXtransformations",
+                    "transformation_type": "rotation",
+                    "depends_on": "Translate",
+                    "units": [
+                      "degrees"
+                    ]
+                  },
+                  "name": "Rotate",
+                  "dataset": {
+                    "size": [
+                      1
+                    ],
+                    "type": "float"
+                  },
+                  "values": 45.0,
+                  "type": "dataset"
+                },
+                {
+                  "children": [
+                    {
+                      "name": "vertices",
+                      "dataset": {
+                        "size": [
+                          8,
+                          3
+                        ],
+                        "type": "float"
+                      },
+                      "values": [
+                        [
+                          -0.5,
+                          -0.5,
+                          0.5
+                        ],
+                        [
+                          0.5,
+                          -0.5,
+                          0.5
+                        ],
+                        [
+                          -0.5,
+                          0.5,
+                          0.5
+                        ],
+                        [
+                          0.5,
+                          0.5,
+                          0.5
+                        ],
+                        [
+                          -0.5,
+                          0.5,
+                          -0.5
+                        ],
+                        [
+                          0.5,
+                          0.5,
+                          -0.5
+                        ],
+                        [
+                          -0.5,
+                          -0.5,
+                          -0.5
+                        ],
+                        [
+                          0.5,
+                          -0.5,
+                          -0.5
+                        ]
+                      ],
+                      "type": "dataset"
+                    },
+                    {
+                      "name": "winding_order",
+                      "dataset": {
+                        "size": [
+                          24
+                        ],
+                        "type": "int64"
+                      },
+                      "values": [
+                        0,
+                        1,
+                        3,
+                        2,
+                        2,
+                        3,
+                        5,
+                        4,
+                        4,
+                        5,
+                        7,
+                        6,
+                        6,
+                        7,
+                        1,
+                        0,
+                        1,
+                        7,
+                        5,
+                        3,
+                        6,
+                        0,
+                        2,
+                        4
+                      ],
+                      "type": "dataset"
+                    },
+                    {
+                      "name": "faces",
+                      "dataset": {
+                        "size": [
+                          6
+                        ],
+                        "type": "int64"
+                      },
+                      "values": [
+                        0,
+                        4,
+                        8,
+                        12,
+                        16,
+                        20
+                      ],
+                      "type": "dataset"
+                    },
+                    {
+                      "name": "detector_faces",
+                      "dataset": {
+                        "size": [
+                          2,
+                          2
+                        ],
+                        "type": "int64"
+                      },
+                      "values": [
+                        [
+                          1,
+                          12
+                        ],
+                        [
+                          3,
+                          13
+                        ]
+                      ],
+                      "type": "dataset"
+                    }
+                  ],
+                  "attributes": {
+                    "NX_class": "NXoff_geometry"
+                  },
+                  "name": "geometry",
+                  "type": "group"
+                }
+              ],
+              "attributes": {
+                "NX_class": "NXdetector",
+                "depends_on": "Rotate",
+                "description": ""
+              },
+              "name": "Detector",
+              "type": "group"
+            },
+            {
+              "children": [
+                {
+                  "attributes": {
+                    "offset": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "vector": [
+                      -0.7071067811865475,
+                      0.0,
+                      0.7071067811865475
+                    ],
+                    "NX_class": "NXtransformations",
+                    "transformation_type": "translation",
+                    "depends_on": "/entry/instrument/Detector/Translate",
+                    "units": "m"
+                  },
+                  "name": "Translate",
+                  "dataset": {
+                    "size": [
+                      1
+                    ],
+                    "type": "float"
+                  },
+                  "values": 1.4142135623730951,
+                  "type": "dataset"
+                },
+                {
+                  "name": "detector_id",
+                  "dataset": {
+                    "size": [
+                      1
+                    ],
+                    "type": "int64"
+                  },
+                  "values": 0,
+                  "type": "dataset"
+                },
+                {
+                  "children": [
+                    {
+                      "name": "vertices",
+                      "dataset": {
+                        "size": [
+                          3,
+                          3
+                        ],
+                        "type": "float"
+                      },
+                      "values": [
+                        [
+                          0,
+                          0,
+                          0
+                        ],
+                        [
+                          0.0,
+                          0.0,
+                          -0.10000000149011612
+                        ],
+                        [
+                          2.0,
+                          0.0,
+                          0.0
+                        ]
+                      ],
+                      "type": "dataset"
+                    },
+                    {
+                      "name": "cylinders",
+                      "dataset": {
+                        "size": [
+                          1,
+                          3
+                        ],
+                        "type": "int64"
+                      },
+                      "values": [
+                        [
+                          0,
+                          1,
+                          2
+                        ]
+                      ],
+                      "type": "dataset"
+                    }
+                  ],
+                  "attributes": {
+                    "NX_class": "NXcylindrical_geometry"
+                  },
+                  "name": "geometry",
+                  "type": "group"
+                }
+              ],
+              "attributes": {
+                "NX_class": "NXmonitor",
+                "depends_on": "Translate",
+                "description": ""
+              },
+              "name": "Monitor",
+              "type": "group"
+            },
+            {
+              "children": [
+                {
+                  "attributes": {
+                    "offset": [
+                      0.0,
+                      0.0,
+                      0.0
+                    ],
+                    "vector": [
+                      0.0,
+                      0.0,
+                      -1.0
+                    ],
+                    "NX_class": "NXtransformations",
+                    "transformation_type": "translation",
+                    "depends_on": ".",
+                    "units": "m"
+                  },
+                  "name": "Translate",
+                  "dataset": {
+                    "size": [
+                      1
+                    ],
+                    "type": "float"
+                  },
+                  "values": 7.0,
+                  "type": "dataset"
+                },
+                {
+                  "children": [
+                    {
+                      "name": "vertices",
+                      "dataset": {
+                        "size": [
+                          3,
+                          3
+                        ],
+                        "type": "float"
+                      },
+                      "values": [
+                        [
+                          0,
+                          0,
+                          0
+                        ],
+                        [
+                          2.0,
+                          0.0,
+                          0.0
+                        ],
+                        [
+                          0.0,
+                          0.0,
+                          0.1
+                        ]
+                      ],
+                      "type": "dataset"
+                    },
+                    {
+                      "name": "cylinders",
+                      "dataset": {
+                        "size": [
+                          1,
+                          3
+                        ],
+                        "type": "int64"
+                      },
+                      "values": [
+                        [
+                          0,
+                          1,
+                          2
+                        ]
+                      ],
+                      "type": "dataset"
+                    }
+                  ],
+                  "attributes": {
+                    "NX_class": "NXcylindrical_geometry"
+                  },
+                  "name": "geometry",
+                  "type": "group"
+                }
+              ],
+              "attributes": {
+                "NX_class": "NXdisk_chopper",
+                "depends_on": "Translate",
+                "description": ""
+              },
+              "name": "Disk Chopper",
+              "type": "group"
+            }
+          ],
+          "attributes": {
+            "NX_class": "NXinstrument"
+          },
+          "name": "instrument",
+          "type": "group"
+        },
+        {
+          "children": [
+            {
+              "children": [
+                {
+                  "name": "vertices",
+                  "dataset": {
+                    "size": [
+                      8,
+                      3
+                    ],
+                    "type": "float"
+                  },
+                  "values": [
+                    [
+                      -0.5,
+                      -0.5,
+                      0.5
+                    ],
+                    [
+                      0.5,
+                      -0.5,
+                      0.5
+                    ],
+                    [
+                      -0.5,
+                      0.5,
+                      0.5
+                    ],
+                    [
+                      0.5,
+                      0.5,
+                      0.5
+                    ],
+                    [
+                      -0.5,
+                      0.5,
+                      -0.5
+                    ],
+                    [
+                      0.5,
+                      0.5,
+                      -0.5
+                    ],
+                    [
+                      -0.5,
+                      -0.5,
+                      -0.5
+                    ],
+                    [
+                      0.5,
+                      -0.5,
+                      -0.5
+                    ]
+                  ],
+                  "type": "dataset"
+                },
+                {
+                  "name": "winding_order",
+                  "dataset": {
+                    "size": [
+                      24
+                    ],
+                    "type": "int64"
+                  },
+                  "values": [
+                    0,
+                    1,
+                    3,
+                    2,
+                    2,
+                    3,
+                    5,
+                    4,
+                    4,
+                    5,
+                    7,
+                    6,
+                    6,
+                    7,
+                    1,
+                    0,
+                    1,
+                    7,
+                    5,
+                    3,
+                    6,
+                    0,
+                    2,
+                    4
+                  ],
+                  "type": "dataset"
+                },
+                {
+                  "name": "faces",
+                  "dataset": {
+                    "size": [
+                      6
+                    ],
+                    "type": "int64"
+                  },
+                  "values": [
+                    0,
+                    4,
+                    8,
+                    12,
+                    16,
+                    20
+                  ],
+                  "type": "dataset"
+                }
+              ],
+              "attributes": {
+                "NX_class": "NXoff_geometry"
+              },
+              "name": "geometry",
+              "type": "group"
+            }
+          ],
+          "attributes": {
+            "NX_class": "NXsample",
+            "depends_on": ".",
+            "description": ""
+          },
+          "name": "Sample",
+          "type": "group"
+        }
+      ]
+    }
+}
