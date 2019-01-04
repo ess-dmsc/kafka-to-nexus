@@ -7,6 +7,7 @@
 
 #include "AreaDetectorWriter.h"
 #include "HDFFile.h"
+#include "NDAr_NDArray_schema_generated.h"
 
 namespace NDAr {
 

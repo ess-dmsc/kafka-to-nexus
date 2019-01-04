@@ -7,7 +7,7 @@
 namespace FlatBufs {
 namespace f142 {
 
-#include "schemas/f142_logdata_generated.h"
+#include "f142_logdata_generated.h"
 
 /// \brief Wrapper around the flatbuffer builder to facilitate the interface of
 /// `synth`.

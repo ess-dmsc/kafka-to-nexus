@@ -2,7 +2,7 @@
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
-#include "schemas/ev42_events_generated.h"
+#include "ev42_events_generated.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -14,7 +14,8 @@ struct append_ret {
   int status;
   uint64_t written_bytes;
   uint64_t ix0;
-  operator bool() const { return status == 0; }
+
+  explicit operator bool() const { return status == 0; }
 };
 
 static EventMessage const *get_fbuf(char const *data) {

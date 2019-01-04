@@ -35,10 +35,7 @@ bool Slice::doesOverlap(Slice const &Other) const {
       ++OverlappingDims;
     }
   }
-  if (OverlappingDims == Offsets.size()) {
-    return true;
-  }
-  return false;
+  return OverlappingDims == Offsets.size();
 }
 }
 }

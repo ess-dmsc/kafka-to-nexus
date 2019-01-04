@@ -10,7 +10,6 @@
 #include "../../HDFWriterModule.h"
 #include "../../Msg.h"
 #include "NeXusDataset.h"
-#include "schemas/senv_data_generated.h"
 
 namespace senv {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
@@ -34,7 +33,7 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
 class FastSampleEnvironmentWriter : public FileWriterBase {
 public:
   FastSampleEnvironmentWriter() = default;
-  ~FastSampleEnvironmentWriter() = default;
+  ~FastSampleEnvironmentWriter() override = default;
 
   void parse_config(std::string const &ConfigurationStream,
                     std::string const &ConfigurationModule) override;

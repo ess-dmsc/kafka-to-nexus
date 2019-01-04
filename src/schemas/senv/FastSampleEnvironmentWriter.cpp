@@ -7,6 +7,7 @@
 
 #include "FastSampleEnvironmentWriter.h"
 #include "HDFFile.h"
+#include "senv_data_generated.h"
 #include <iostream>
 #include <limits>
 

@@ -1,5 +1,5 @@
 #pragma once
-#include "schemas/ev42_events_generated.h"
+#include "ev42_events_generated.h"
 #include <memory>
 #include <string>
 
