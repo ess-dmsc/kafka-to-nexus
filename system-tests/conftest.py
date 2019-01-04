@@ -82,7 +82,16 @@ def build_and_run(options, request):
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
-        # cmd.logs(options)  # uncomment for debugging
+        try:
+            # Used for when there are multiple filewriter instances
+            # as the service is not called "filewriter"
+            multiple_log_options = dict(options)
+            multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
+            cmd.logs(multiple_log_options)
+        except:
+            log_options = dict(options)
+            log_options["SERVICE"] = ["filewriter"]
+            cmd.logs(log_options)
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
@@ -93,6 +102,7 @@ def build_and_run(options, request):
     # Return the start time so the filewriter knows when to start consuming data
     # from to get all data which was published
     return start_time
+
 
 @pytest.fixture(scope="session", autouse=True)
 def remove_logs_from_previous_run(request):
@@ -111,6 +121,7 @@ def remove_logs_from_previous_run(request):
             os.remove(os.path.join(log_dir_name, filename))
     print("Removed previous log files", flush=True)
 
+
 @pytest.fixture(scope="module")
 def docker_compose(request):
     """
@@ -122,6 +133,7 @@ def docker_compose(request):
     options = common_options
     options["--file"] = ["docker-compose.yml"]
     return build_and_run(options, request)
+
 
 @pytest.fixture(scope="module")
 def docker_compose_multiple_instances(request):
@@ -135,13 +147,25 @@ def docker_compose_multiple_instances(request):
     options["--file"] = ["docker-compose-multiple-instances.yml"]
     return build_and_run(options, request)
 
+
 @pytest.fixture(scope="module")
 def docker_compose_stop_command_does_not_persist(request):
     """
     :type request: _pytest.python.FixtureRequest
     """
     print("Started preparing test environment...", flush=True)
-
     options = common_options
     options["--file"] = ["docker-compose-stop-command.yml"]
+    return build_and_run(options, request)
+
+
+@pytest.fixture(scope="module")
+def docker_compose_static_data(request):
+    """
+    :type request: _pytest.python.FixtureRequest
+    """
+    print("Started preparing test environment...", flush=True)
+    # Options must be given as long form
+    options = common_options
+    options["--file"] = ["docker-compose-static-data.yml"]
     return build_and_run(options, request)

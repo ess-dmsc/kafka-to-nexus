@@ -24,7 +24,33 @@
 ## Usage
 
 ```
-./kafka-to-nexus --help
+  -h,--help                   Print this help message and exit
+  --commands-json TEXT        Specify a json file to set config
+  --command-uri URI (REQUIRED)
+                              <//host[:port][/topic]> Kafka broker/topic to listen for commands
+  --status-uri URI            <//host[:port][/topic]> Kafka broker/topic to publish status updates on
+  --kafka-gelf TEXT           <//host[:port]/topic> Log to Graylog via Kafka GELF adapter
+  --graylog-logger-address TEXT
+                              <host:port> Log to Graylog via graylog_logger library
+  -v,--verbosity INT=3        Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)
+  --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
+  --logpid-sleep              
+  --use-signal-handler        
+  --log-file TEXT             Specify file to log to
+  --teamid UINT               
+  --service-id TEXT           Identifier string for this filewriter instance. Otherwise by default a string containing hostname and process id.
+  --status-master-interval UINT=2000
+                              Interval in milliseconds for status updates
+  --list_modules              List registered read and writer parts of file-writing modules and then exit.
+  --streamer-ms-before-start  Streamer option - milliseconds before start time
+  --streamer-ms-after-stop    Streamer option - milliseconds after stop time
+  --streamer-start-time       Streamer option - start timestamp (milliseconds)
+  --streamer-stop-time        Streamer option - stop timestamp (milliseconds)
+  --stream-master-topic-write-interval
+                              Stream-master option - topic write interval (milliseconds)
+  -S,--kafka-config KEY VALUE ...
+                              LibRDKafka options
+  -c,--config-file TEXT       Read configuration from an ini file
 ```
 
 ### Configuration Files
