@@ -86,7 +86,7 @@ public:
           }));
     } else if (Mode::Open == CMode) {
       Dataset::operator=(Parent.get_dataset(Name));
-      NrOfElements = dataspace().size();
+      NrOfElements = static_cast<size_t>(dataspace().size());
     } else {
       throw std::runtime_error(
           "ExtensibleDataset::ExtensibleDataset(): Unknown mode.");
@@ -127,7 +127,7 @@ public:
   /// \param[in] CMode Should the dataset be opened or created.
   /// \throw std::runtime_error if dataset can not opened or the constructor is
   /// called with the input NeXusDataset::Mode::Create.
-  MultiDimDatasetBase(hdf5::node::Group Parent, Mode CMode)
+  MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
       throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
@@ -204,7 +204,7 @@ public:
     if (Mode::Create == CMode) {
       Shape.insert(Shape.begin(), 0);
       hdf5::Dimensions MaxSize(Shape.size(),
-                               int(hdf5::dataspace::Simple::UNLIMITED));
+                               hdf5::dataspace::Simple::UNLIMITED);
       std::vector<hsize_t> VectorChunkSize;
       if (ChunkSize.empty()) {
         LOG(Sev::Warning, "No chunk size given. Using the default value 1024.");
