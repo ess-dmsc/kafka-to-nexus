@@ -4,7 +4,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-
 std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
   std::vector<std::uint16_t> TestValues{0, 1, 2, 3, 4, 5};
