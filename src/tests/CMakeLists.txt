@@ -10,7 +10,7 @@ set(UnitTests_SRC
     HDFFileTestHelper.cpp
     helper.cpp
     json.cpp
-    uri.cpp
+    URITests.cpp
     status_test.cpp
     StatusWriterTests.cpp
     CommandHandlerTests.cpp

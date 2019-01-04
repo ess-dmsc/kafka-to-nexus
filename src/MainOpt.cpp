@@ -1,7 +1,7 @@
 #include "MainOpt.h"
+#include "URI.h"
 #include "helper.h"
 #include "json.h"
-#include "uri.h"
 #include <iostream>
 
 using uri::URI;
@@ -43,8 +43,8 @@ void setupLoggerFromOptions(MainOpt const &opt) {
   g_ServiceID = opt.service_id;
   if (!opt.kafka_gelf.empty()) {
     URI uri(opt.kafka_gelf);
-    log_kafka_gelf_start(uri.host, uri.topic);
-    LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.host, uri.topic);
+    log_kafka_gelf_start(uri.HostPort, uri.Topic);
+    LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.HostPort, uri.Topic);
   }
 
   if (!opt.graylog_logger_address.empty()) {

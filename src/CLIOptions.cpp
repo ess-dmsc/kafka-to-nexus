@@ -1,6 +1,6 @@
 #include "CLIOptions.h"
 #include "MainOpt.h"
-#include "uri.h"
+#include "URI.h"
 #include <CLI/CLI.hpp>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,

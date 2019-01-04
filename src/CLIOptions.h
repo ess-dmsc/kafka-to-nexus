@@ -8,7 +8,7 @@ class App;
 class Option;
 }
 namespace uri {
-class URI;
+struct URI;
 }
 struct MainOpt;
 
