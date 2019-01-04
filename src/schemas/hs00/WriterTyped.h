@@ -15,7 +15,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
 
-#include "schemas/hs00_event_histogram_generated.h"
+#include "hs00_event_histogram_generated.h"
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 class WriterTyped : public WriterUntyped {
@@ -151,8 +151,8 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     if (Dims.at(0) > 0) {
       std::vector<DataType> Buffer;
       size_t N = 1;
-      for (size_t I = 0; I < DimsMem.size(); ++I) {
-        N *= DimsMem.at(I);
+      for (size_t I : DimsMem) {
+        N *= I;
       }
       Buffer.resize(N);
       Dataset.read(Buffer, Type, SpaceMem, SpaceIn);
@@ -313,8 +313,8 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
     return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("invalid dataset");
   }
   auto Dims = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
-  if (Dims.size() < 1) {
-    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Dims.size() < 1");
+  if (Dims.empty()) {
+    return HDFWriterModule::WriteResult::ERROR_WITH_MESSAGE("Dims is empty");
   }
   auto EvMsg = GetEventHistogram(Message.data());
   uint64_t Timestamp = EvMsg->timestamp();
