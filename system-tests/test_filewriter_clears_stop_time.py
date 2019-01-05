@@ -8,7 +8,8 @@ def test_filewriter_clears_stop_time(docker_compose_stop_command_does_not_persis
     producer = create_producer()
     sleep(10)
     topic = "TEST_writerCommand"
-    send_writer_command("commands/commandwithstoptime.json", producer, topic=topic, stop_time=str(int(unix_time_milliseconds(datetime.utcnow()))))
+    send_writer_command("commands/commandwithstoptime.json", producer, topic=topic,
+                        stop_time=str(int(unix_time_milliseconds(datetime.utcnow()))))
 
     sleep(10)
     send_writer_command("commands/commandwithnostoptime.json", producer, topic=topic)
@@ -20,9 +21,11 @@ def test_filewriter_clears_stop_time(docker_compose_stop_command_does_not_persis
     started = False
     for message in msgs:
         message = str(message.value(), encoding='utf-8')
-        if "\"code\":\"START\"" in message and "\"job_id\":\"a8e31c99-8df9-4123-8060-2e009d84a0df\"" in message:
+        if "\"code\":\"START\"" in message and\
+                "\"job_id\":\"a8e31c99-8df9-4123-8060-2e009d84a0df\"" in message:
             started = True
-        if "\"code\":\"CLOSE\"" in message and "\"job_id\":\"a8e31c99-8df9-4123-8060-2e009d84a0df\"" in message:
+        if "\"code\":\"CLOSE\"" in message and\
+                "\"job_id\":\"a8e31c99-8df9-4123-8060-2e009d84a0df\"" in message:
             stopped = True
 
     assert started
