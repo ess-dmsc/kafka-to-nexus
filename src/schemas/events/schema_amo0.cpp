@@ -10,7 +10,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace amo0 {
 
-#include "schemas/amo0_psi_sinq_generated.h"
+#include "amo0_psi_sinq_generated.h"
 
 using std::array;
 using std::vector;

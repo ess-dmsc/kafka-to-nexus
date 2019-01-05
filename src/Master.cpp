@@ -67,14 +67,14 @@ void Master::run() {
   // Set up connection to the Kafka status topic if desired.
   if (getMainOpt().do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
-        getMainOpt().kafka_status_uri.host_port,
-        getMainOpt().kafka_status_uri.topic);
+        getMainOpt().kafka_status_uri.HostPort,
+        getMainOpt().kafka_status_uri.Topic);
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().kafka_status_uri.host_port;
+    BrokerSettings.Address = getMainOpt().kafka_status_uri.HostPort;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
       status_producer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().kafka_status_uri.topic);
+          producer, getMainOpt().kafka_status_uri.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }

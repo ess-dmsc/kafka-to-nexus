@@ -24,7 +24,33 @@
 ## Usage
 
 ```
-./kafka-to-nexus --help
+  -h,--help                   Print this help message and exit
+  --commands-json TEXT        Specify a json file to set config
+  --command-uri URI (REQUIRED)
+                              <//host[:port][/topic]> Kafka broker/topic to listen for commands
+  --status-uri URI            <//host[:port][/topic]> Kafka broker/topic to publish status updates on
+  --kafka-gelf TEXT           <//host[:port]/topic> Log to Graylog via Kafka GELF adapter
+  --graylog-logger-address TEXT
+                              <host:port> Log to Graylog via graylog_logger library
+  -v,--verbosity INT=3        Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)
+  --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
+  --logpid-sleep              
+  --use-signal-handler        
+  --log-file TEXT             Specify file to log to
+  --teamid UINT               
+  --service-id TEXT           Identifier string for this filewriter instance. Otherwise by default a string containing hostname and process id.
+  --status-master-interval UINT=2000
+                              Interval in milliseconds for status updates
+  --list_modules              List registered read and writer parts of file-writing modules and then exit.
+  --streamer-ms-before-start  Streamer option - milliseconds before start time
+  --streamer-ms-after-stop    Streamer option - milliseconds after stop time
+  --streamer-start-time       Streamer option - start timestamp (milliseconds)
+  --streamer-stop-time        Streamer option - stop timestamp (milliseconds)
+  --stream-master-topic-write-interval
+                              Stream-master option - topic write interval (milliseconds)
+  -S,--kafka-config KEY VALUE ...
+                              LibRDKafka options
+  -c,--config-file TEXT       Read configuration from an ini file
 ```
 
 ### Configuration Files
@@ -288,10 +314,22 @@ fails to initialise.  In order to abort writing of that file instead, set in the
 
 The filewriter can use HDF's Single Writer Multiple Reader feature (SWMR).
 
+SWMR-mode writing is enabled by default.
+
+To disable SWMR, add to the `FileWriter_new` command:
+
+```json
+{
+  "use_hdf_swmr": false
+}
+```
+
 To write, as well as to read HDF files which use the SWMR feature requires at
-least HDF version 1.10.  This means that also tools like HDFView are required
+least HDF5 version 1.10.  This means that also tools like HDFView are required
 to link against at least HDF 1.10 in order to open HDF files which were written
-in SWMR mode.
+in SWMR mode.  One can also use the HDF5 tool `h5repack` with the `--high`
+option to convert the file into a HDF5 1.8 compatible version.  Please refer to
+`h5repack --help` for more information.
 
 Please note, the HDF documentation itself warns:
 
@@ -302,14 +340,6 @@ Also:
 
 "The writer is not allowed to modify or append to any data items containing
 variable-size datatypes (including string and region references datatypes)."
-
-To enable SWMR when writing a file, add to the `FileWriter_new` command:
-
-```json
-{
-  "use_hdf_swmr": true
-}
-```
 
 
 
