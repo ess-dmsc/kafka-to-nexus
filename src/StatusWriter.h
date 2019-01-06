@@ -26,8 +26,7 @@ public:
   StatusWriter();
   void setJobId(const std::string &JobId);
   void write(StreamMasterInfo &Information);
-  void write(MessageInfo &Information, const std::string &Topic,
-             const std::chrono::milliseconds &SinceLastMessage);
+  void write(MessageInfo &Information, const std::string &Topic);
   std::string getJson();
 
 private:

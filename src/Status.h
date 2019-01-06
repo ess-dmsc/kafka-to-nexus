@@ -48,28 +48,35 @@ public:
   ///  Reset the counters
   void reset();
 
+  /// \brief Return the average size and relative standard deviation of the
+  /// number of messages between two reports.
+  ///
+  /// \param[in] Information The MessageInfo object that stores the data.
+  ///
+  /// \return A pair containing {average size, standard deviation}.
+  std::pair<double, double> messageSize();
+
   /// \brief Returns the number of megabytes processed.
   ///
   /// \return A pair {MB received, \f$\rm{MB received}^2\f$}
-  std::pair<double, double> getMbytes() const;
+  double getMbytes() const;
 
   /// \brief Returns the number of messages that have been processed
   /// correctly
   ///
   /// \return A pair {number of messages, number of messages\f$\ 2\f$}.
-  std::pair<double, double> getMessages() const;
+  uint64_t getMessages() const;
 
   /// \brief Returns the number of messages recognised as error
   ///
   /// \return The number of messages.
-  double getErrors() const;
+  uint64_t getErrors() const;
 
 private:
-  double Messages{0};
-  double MessagesSquare{0};
+  uint64_t Messages{0};
+  uint64_t Errors{0};
   double Mbytes{0};
   double MbytesSquare{0};
-  double Errors{0};
   std::mutex Mutex;
 };
 
@@ -113,18 +120,18 @@ public:
   /// current file.
   ///
   /// \return The pair {MB received, \f$\rm{MB received}^2\f$}.
-  std::pair<double, double> getMbytes() const;
+  double getMbytes() const;
 
   /// \brief Return the number of messages whose information has been stored.
   ///
   /// \return The pair {number of messages, number of messages\f$\ 2\f$}.
-  std::pair<double, double> getMessages() const;
+  uint64_t getMessages() const;
 
   /// \brief  Returns the total number of error in the messages processed
   /// for the current file.
   ///
   /// \return  The number of errors.
-  double getErrors() const;
+  uint64_t getErrors() const;
 
   /// \brief Returns the error status of the StreamMaster associated with the
   /// file.
@@ -133,9 +140,9 @@ public:
   StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED()};
 
 private:
-  std::pair<double, double> Mbytes{0, 0};
-  std::pair<double, double> Messages{0, 0};
-  double Errors{0};
+  double Mbytes{0};
+  uint64_t Messages{0};
+  uint64_t Errors{0};
   std::chrono::system_clock::time_point StartTime;
   std::chrono::milliseconds MillisecondsToNextMessage{0};
 };
@@ -146,28 +153,7 @@ private:
 /// \param[in] Information The MessageInfo object that stores the data.
 ///
 /// \return A pair containing {average size, standard deviation}.
-std::pair<double, double> messageSize(const MessageInfo &Information);
-
-/// \brief Return the frequency of the messages that are consumed.
-///
-/// \param[in]  Information The MessageInfo object that stores the data.
-/// \param[in]  Duration The amount of time between two report.
-///
-/// \return The number of messages consumed per second if the amount of time
-/// is large enough, 0 otherwise.
-double messageFrequency(const MessageInfo &Information,
-                        const std::chrono::milliseconds &Duration);
-
-/// \brief Return the throughput of the writer, assuming that each message
-/// consumed correctly is written.
-///
-/// \param[in]  Information The MessageInfo object that stores the data
-/// \param[in]  Duration The amount of time between two report
-///
-/// \return The throughput if the amount of time is large enough, 0
-/// otherwise
-double messageThroughput(const MessageInfo &Information,
-                         const std::chrono::milliseconds &Duration);
+// std::pair<double, double> messageSize(const MessageInfo &Information);
 
 } // namespace Status
 } // namespace FileWriter
