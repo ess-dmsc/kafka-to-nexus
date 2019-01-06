@@ -156,7 +156,7 @@ TEST(StatusWriter, addStreamEmptyMessageInfo) {
   EXPECT_EQ(getDoubleValue("average",
                            json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
-  EXPECT_EQ(getDoubleValue("stdandard_deviation",
+  EXPECT_EQ(getDoubleValue("standard_deviation",
                            json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
   EXPECT_EQ(getDoubleValue("Mbytes", json["streamer"][Topic]["rates"]), 0.0);
@@ -184,7 +184,7 @@ TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   EXPECT_EQ(getDoubleValue("average",
                            json["streamer"][Topic]["rates"]["message_size"]),
             MessageSizeBytes / NumMessages * 1e-6);
-  EXPECT_EQ(getDoubleValue("stdandard_deviation",
+  EXPECT_EQ(getDoubleValue("standard_deviation",
                            json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
 }
