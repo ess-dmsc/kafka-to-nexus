@@ -57,13 +57,6 @@ uint64_t FileWriter::Status::MessageInfo::getMessages() const {
 
 uint64_t FileWriter::Status::MessageInfo::getErrors() const { return Errors; }
 
-std::pair<double, double> &operator+=(std::pair<double, double> &First,
-                                      const std::pair<double, double> &Second) {
-  First.first += Second.first;
-  First.second += Second.second;
-  return First;
-}
-
 void FileWriter::Status::StreamMasterInfo::add(
     FileWriter::Status::MessageInfo &Info) {
   Mbytes += Info.getMbytes();
