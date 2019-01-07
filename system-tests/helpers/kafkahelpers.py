@@ -18,6 +18,10 @@ def send_writer_command(filepath, producer, topic="TEST_writerCommand", start_ti
     producer.produce(topic, data)
 
 
+def create_consumer():
+    return Consumer({"bootstrap.servers": "localhost:9092", "group.id": uuid.uuid4(), 'default.topic.config': {'auto.offset.reset': 'latest'}})
+
+
 def poll_everything(topic):
     consumer = Consumer({'bootstrap.servers': 'localhost:9092', 'group.id': uuid.uuid4()})
     topicpart = TopicPartition(topic, 0, 0)
