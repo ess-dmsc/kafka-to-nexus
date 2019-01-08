@@ -566,8 +566,8 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 
 
-void CommandHandler::handle(Msg const &Message,
-                            const int64_t MsgTimestampMilliseconds) {
+void CommandHandler::tryToHandle(Msg const &Message,
+                                 int64_t MsgTimestampMilliseconds) {
   tryToHandle({(char *)Message.data(), Message.size()}, MsgTimestampMilliseconds);
 }
 

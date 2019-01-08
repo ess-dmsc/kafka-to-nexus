@@ -60,20 +60,13 @@ public:
   /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
 
-  /// \brief Pass content of the message to the command handler.
+  /// \brief Try to handle the message.
   ///
   /// \param Msg The message.
   /// \param MsgTimestamp The rd_kafka_message_timestamp when available
-  void handle(Msg const &Message, int64_t MsgTimestampMilliseconds = -1);
+  void tryToHandle(Msg const &Message, int64_t MsgTimestampMilliseconds = -1);
 
-  /// \brief Parse the given command and pass it on to a more specific
-  /// handler.
-  ///
-  /// \param Command The command to parse.
-  /// \param MsgTimestamp The rd_kafka_message_timestamp when available.
-  void handle(std::string const &command, std::chrono::milliseconds MsgTimestamp);
-
-  /// \brief Try to handle command and catch exceptions.
+  /// \brief Try to handle the command.
   ///
   /// \param Command The command to parse.
   /// \param MsgTimestamp The rd_kafka_message_timestamp when available.
@@ -92,6 +85,13 @@ public:
   getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
+  /// \brief Parse the given command and pass it on to a more specific
+  /// handler.
+  ///
+  /// \param Command The command to parse.
+  /// \param MsgTimestamp The rd_kafka_message_timestamp when available.
+  void handle(std::string const &command, std::chrono::milliseconds MsgTimestamp);
+
   static void
   addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
                                 std::unique_ptr<FileWriterTask> &Task);

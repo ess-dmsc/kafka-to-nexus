@@ -33,7 +33,7 @@ TEST_F(CommandHandler_Testing, MissingStratTimeMeanStartNow) {
 
   MainOpt MainOpt;
   CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.handle(
+  CommandHandler.tryToHandle(
       FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
 
   std::chrono::milliseconds Now =
@@ -61,7 +61,7 @@ TEST_F(CommandHandler_Testing, MissingStopTimeMeanNeverStop) {
 
   MainOpt MainOpt;
   CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.handle(
+  CommandHandler.tryToHandle(
       FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
 
   EXPECT_FALSE(MainOpt.StreamerConfiguration.StopTimestamp.count() > 0);
@@ -85,7 +85,7 @@ TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
 
   MainOpt MainOpt;
   CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.handle(
+  CommandHandler.tryToHandle(
       FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
   EXPECT_EQ(MainOpt.StreamerConfiguration.StartTimestamp.count(), 123456789);
   EXPECT_EQ(MainOpt.StreamerConfiguration.StopTimestamp.count(), 123456790);
@@ -136,7 +136,7 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
     ]
   }
 })""");
-  CommandHandler.handle(
+  CommandHandler.tryToHandle(
       FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
   // Assert that this command was not accepted by the command handler:
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
@@ -162,7 +162,7 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   auto Command = nlohmann::json::parse(CommandString);
   Command["use_hdf_swmr"] = UseSWMR;
   CommandString = Command.dump();
-  CommandHandler.handle(
+  CommandHandler.tryToHandle(
       FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
   ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
             static_cast<size_t>(1));

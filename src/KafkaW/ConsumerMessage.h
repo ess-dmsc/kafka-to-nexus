@@ -38,7 +38,7 @@ public:
   size_t getSize() const { return DataSize; };
   std::int64_t getMessageOffset() const { return MessageOffset; };
   PollStatus getStatus() const { return Status; };
-  std::pair<rd_kafka_timestamp_type_t, int64_t> timestamp() {
+  std::pair<rd_kafka_timestamp_type_t, int64_t> getTimestamp() {
     std::pair<rd_kafka_timestamp_type_t, int64_t> TS;
     TS.second =
         rd_kafka_message_timestamp((rd_kafka_message_t *)DataPointer, &TS.first);

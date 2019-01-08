@@ -441,7 +441,7 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
   Command["file_attributes"]["file_name"] = Filename;
   Command["job_id"] = Filename;
   auto CommandString = Command.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
 
   // We write to both sources, but afterwards verify that only the data to the
   // first source has been written
@@ -474,7 +474,7 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
 }
   )"");
   CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   {
     auto File = hdf5::file::open(Filename);
     File.root().get_group("some_nxlog").get_dataset("value");
@@ -544,7 +544,7 @@ TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
   Command["job_id"] = Filename;
   Command["abort_on_uninitialised_stream"] = true;
   auto CommandString = Command.dump();
-  ASSERT_THROW(CommandHandler.handle(CommandString), std::runtime_error);
+  ASSERT_THROW(CommandHandler.tryToHandle(CommandString), std::runtime_error);
 
   auto CommandStop = json::parse(R""(
 {
@@ -553,6 +553,6 @@ TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
 }
   )"");
   CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   unlink(Filename.c_str());
 }

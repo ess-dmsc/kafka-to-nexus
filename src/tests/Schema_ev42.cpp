@@ -85,7 +85,7 @@ TEST_F(Schema_ev42, UninitializedStreamOptionallyThrows) {
   Command["job_id"] = Filename;
   Command["abort_on_uninitialised_stream"] = true;
   auto CommandString = Command.dump();
-  ASSERT_THROW(CommandHandler.handle(CommandString), std::runtime_error);
+  ASSERT_THROW(CommandHandler.tryToHandle(CommandString), std::runtime_error);
 
   auto CommandStop = json::parse(R""(
 {
@@ -94,6 +94,6 @@ TEST_F(Schema_ev42, UninitializedStreamOptionallyThrows) {
 }
   )"");
   CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   unlink(Filename.c_str());
 }
