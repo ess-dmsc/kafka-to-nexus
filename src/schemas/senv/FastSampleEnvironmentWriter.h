@@ -35,8 +35,8 @@ public:
   FastSampleEnvironmentWriter() = default;
   ~FastSampleEnvironmentWriter() override = default;
 
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override;
+  void parse_config(std::string const &,
+                    std::string const &) override;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;

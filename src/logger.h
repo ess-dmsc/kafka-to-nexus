@@ -11,7 +11,7 @@
 #else
 
 #define LOG(level, fmt, args...)                                               \
-  { dwlog(level, fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, ##args); }
+  { dwlog(level, static_cast<const char*>(fmt), static_cast<const char*>(__FILE__), __LINE__, static_cast<const char*>(__PRETTY_FUNCTION__), ##args); }
 
 #endif
 
