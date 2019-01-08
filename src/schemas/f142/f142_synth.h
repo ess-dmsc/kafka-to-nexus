@@ -17,14 +17,14 @@ public:
   LogData const *root();
 };
 
-/// Forward-declare the implementation.
-struct synth_impl;
+struct synth_impl {
+  Value type;
+};
 
 /// Simple test data generator for the f142 schema.
 class synth {
 public:
   synth(std::string SynthName, Value Type);
-  ~synth() = default;
   FlatBufferWrapper next(uint64_t TestValue, size_t NrOfElements);
   std::unique_ptr<synth_impl> impl;
   std::string Name;

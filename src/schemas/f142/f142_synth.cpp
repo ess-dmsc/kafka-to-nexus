@@ -8,10 +8,6 @@ LogData const *FlatBufferWrapper::root() {
   return GetLogData(builder->GetBufferPointer());
 }
 
-struct synth_impl {
-  Value type;
-};
-
 synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   impl = std::make_unique<synth_impl>();
   impl->type = Type;
