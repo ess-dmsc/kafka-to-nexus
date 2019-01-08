@@ -1,6 +1,7 @@
 #include "CLIOptions.h"
 #include "MainOpt.h"
 #include "URI.h"
+#include "logger.h"
 #include <CLI/CLI.hpp>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
@@ -83,6 +84,32 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
+bool parseLogLevel(std::vector<std::string> LogLevelString, Sev &LogLevelResult){
+  std::map<std::string, Sev> LevelMap{
+      {"Critical", Sev::Critical}, {"Error", Sev::Error},
+      {"Warning", Sev::Warning},   {"Notice", Sev::Notice},
+      {"Info", Sev::Info},         {"Debug", Sev::Debug}};
+  if (LogLevelString.size() != 1) {
+    return false;
+  }
+  try {
+    LogLevelResult = LevelMap.at(LogLevelString.at(0));
+    return true;
+  } catch (std::out_of_range &e) {
+    // Do nothing
+  }
+  try {
+    int TempLogMessageLevel = std::stoi(LogLevelString.at(0));
+    if (TempLogMessageLevel < 1 or TempLogMessageLevel > 7) {
+      return false;
+    }
+    LogLevelResult = Sev(TempLogMessageLevel);
+  } catch (std::invalid_argument &e) {
+    return false;
+  }
+  return true;
+}
+
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   // and add option for json config file instead
   App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
@@ -100,10 +127,14 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
                  "<host:port> Log to Graylog via graylog_logger library");
-  App.add_option(
-         "-v,--verbosity", log_level,
-         "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)
-      ->check(CLI::Range(1, 7));
+  std::string LogLevelInfoStr = R"*(Set log message level. Set to 1 - 7 or one of
+  `Critical`, `Error`, `Warning`, `Notice`, `Info`,
+  or `Debug`. Ex: "-l Notice")*";
+  App.add_option("-v,--verbosity", [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+            return parseLogLevel(Input, MainOptions.LoggingLevel);
+          },
+          LogLevelInfoStr)
+      ->set_default_val("Error");
   App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
@@ -113,7 +144,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option("--teamid", MainOptions.teamid);
-  App.add_option("--service-id", MainOptions.service_id,
+  App.add_option("--service-id", MainOptions.ServiceID,
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
   App.add_option("--status-master-interval", MainOptions.status_master_interval,

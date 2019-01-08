@@ -11,7 +11,7 @@ using uri::URI;
 // While the cause of this problem is not discovered and fixed, use the
 // following init function.
 void MainOpt::init() {
-  service_id = fmt::format("kafka-to-nexus--host:{}--pid:{}",
+  ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
                            gethostname_wrapper(), getpid_wrapper());
 }
 
@@ -40,7 +40,7 @@ void MainOpt::findAndAddCommands() {
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  g_ServiceID = opt.service_id;
+  g_ServiceID = opt.ServiceID;
   if (!opt.kafka_gelf.empty()) {
     URI uri(opt.kafka_gelf);
     log_kafka_gelf_start(uri.HostPort, uri.Topic);

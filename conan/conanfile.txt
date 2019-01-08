@@ -12,6 +12,7 @@ cli11/1.5.3@bincrafters/stable
 cmake_installer/3.10.0@conan/stable
 trompeloeil/v31@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
+spdlog/1.2.1@bincrafters/stable
 
 [generators]
 cmake

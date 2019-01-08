@@ -26,11 +26,13 @@ struct MainOpt {
   /// This `service_id` is announced in the status updates.
   /// It is by default a combination of hostname and process id.
   /// Can be set via command line or configuration file.
-  std::string service_id;
+  std::string ServiceID;
 
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamMaster.
   FileWriter::StreamerOptions StreamerConfiguration;
+
+  Sev LoggingLevel;
 
   /// Can optionally log in Graylog GELF format to a Kafka topic.
   std::string kafka_gelf;

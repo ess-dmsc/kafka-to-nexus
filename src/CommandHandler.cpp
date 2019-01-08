@@ -195,7 +195,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     StatusProducer = MasterPtr->getStatusProducer();
   }
   auto Task =
-      std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
+      std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -216,7 +216,7 @@ void CommandHandler::handleNew(std::string const &Command) {
 
   if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
-             Config.service_id, Task->jobID(), "Start job");
+             Config.ServiceID, Task->jobID(), "Start job");
   }
 
   uri::URI Broker("//localhost:9092");
@@ -454,7 +454,7 @@ void CommandHandler::handle(std::string const &Command) {
   }
 
   if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
-    if (ServiceIDMaybe.inner() != Config.service_id) {
+    if (ServiceIDMaybe.inner() != Config.ServiceID) {
       LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
           ServiceIDMaybe.inner());
       return;
@@ -543,7 +543,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
           convertStatusCodeToString(StatusCode::Fail), Message);
       if (MasterPtr != nullptr) {
         logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
-                 Config.service_id, JobID, Message);
+                 Config.ServiceID, JobID, Message);
       }
     }
   }
