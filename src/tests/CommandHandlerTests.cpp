@@ -7,11 +7,10 @@
 #include <sstream>
 
 using nlohmann::json;
-using namespace FileWriter;
 
 class CommandHandler_Testing : public testing::Test {
 protected:
-  static size_t FileWriterTasksSize(CommandHandler const &CommandHandler) {
+  static size_t FileWriterTasksSize(FileWriter::CommandHandler const &CommandHandler) {
     return CommandHandler.getNumberOfFileWriterTasks();
   }
 };
@@ -21,7 +20,7 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
   ofs.open("tmp-dummy-hdf");
   ofs.close();
   MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
   std::string CommandString(R"""(
 {
   "cmd": "FileWriter_new",
@@ -57,7 +56,7 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
 void createFileWithOptionalSWMR(bool UseSWMR) {
   unlink("tmp_swmr_enable.h5");
   MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
   std::string CommandString = R"""(
 {
   "cmd": "FileWriter_new",
@@ -98,19 +97,19 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
     }
   } catch (std::exception const &E) {
     ASSERT_EQ(std::string("1st_level\n  2nd_level"),
-              format_nested_exception(E));
+              FileWriter::format_nested_exception(E));
   }
 }
 
 TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
-  ASSERT_THROW(parseOrThrow("{ this is not json }"), std::runtime_error);
+  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }"), std::runtime_error);
 }
 
 TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   std::string Filename("Test.CommandHandler_Testing.CreateHDFLinks");
   unlink(Filename.c_str());
   MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
   auto Command = json::parse(R""(
 {
   "cmd": "FileWriter_new",

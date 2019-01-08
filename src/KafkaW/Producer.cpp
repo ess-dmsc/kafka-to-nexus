@@ -9,12 +9,12 @@ static std::atomic<int> g_kafka_producer_instance_count;
 void Producer::cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
                             void *Opaque) {
   auto Self = reinterpret_cast<Producer *>(Opaque);
-  if (!Message) {
+  if (Message == nullptr) {
     LOG(Sev::Error, "IID: {} msg should never be null", Self->id);
     ++Self->Stats.produce_cb_fail;
     return;
   }
-  if (Message->err) {
+  if (Message->err != 0) {
     LOG(Sev::Error, "IID: {} failure on delivery, {}, topic {}, {} [{}] {}",
         Self->id, rd_kafka_name(RK), rd_kafka_topic_name(Message->rkt),
         rd_kafka_err2name(Message->err), Message->err,
@@ -41,8 +41,9 @@ void Producer::cb_error(rd_kafka_t *, int ErrorCode, char const *ErrorMessage,
   if (Error == RD_KAFKA_RESP_ERR__TRANSPORT) {
     Level = Sev::Error;
   } else {
-    if (Self->on_error)
+    if (Self->on_error) {
       Self->on_error(Self, Error);
+    }
   }
   LOG(Level, "Kafka cb_error id: {}  broker: {}  errno: {}  errorname: {}  "
              "errorstring: {}  message: {}",
@@ -76,7 +77,7 @@ void Producer::cb_throttle(rd_kafka_t *, char const *BrokerName,
 
 Producer::~Producer() {
   LOG(Sev::Debug, "~Producer");
-  if (RdKafkaPtr) {
+  if (RdKafkaPtr != nullptr) {
     int Timeout_ms = 1;
     int OutputQueueLength = 0;
     while (true) {
@@ -114,7 +115,7 @@ Producer::Producer(BrokerSettings const &Settings)
   std::vector<char> Errors;
   Errors.resize(512);
 
-  rd_kafka_conf_t *Configuration = 0;
+  rd_kafka_conf_t *Configuration{nullptr};
   Configuration = rd_kafka_conf_new();
   rd_kafka_conf_set_dr_msg_cb(Configuration, Producer::cb_delivered);
   rd_kafka_conf_set_error_cb(Configuration, Producer::cb_error);
@@ -129,7 +130,7 @@ Producer::Producer(BrokerSettings const &Settings)
 
   RdKafkaPtr = rd_kafka_new(RD_KAFKA_PRODUCER, Configuration, Errors.data(),
                             Errors.size());
-  if (!RdKafkaPtr) {
+  if (RdKafkaPtr == nullptr) {
     LOG(Sev::Error, "can not create kafka handle: {}", Errors.data());
     throw std::runtime_error("can not create Kafka handle");
   }
@@ -170,4 +171,4 @@ rd_kafka_t *Producer::getRdKafkaPtr() const { return RdKafkaPtr; }
 uint64_t Producer::outputQueueLength() {
   return static_cast<uint64_t>(rd_kafka_outq_len(RdKafkaPtr));
 }
-}
+} // namespace KafkaW

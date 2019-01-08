@@ -13,8 +13,8 @@ class ProducerTopic;
 class ProducerMsg {
 public:
   virtual ~ProducerMsg() = default;
-  uchar *data;
-  uint32_t size;
+  uchar *data{nullptr};
+  uint32_t size{0};
 };
 
 struct ProducerStats {
@@ -67,11 +67,11 @@ public:
   std::function<void(Producer *, rd_kafka_resp_err_t)> on_error;
   // Currently it's nice to have access to these two for statistics:
   BrokerSettings ProducerBrokerSettings;
-  rd_kafka_t *RdKafkaPtr = nullptr;
+  rd_kafka_t *RdKafkaPtr{nullptr};
   std::atomic<uint64_t> TotalMessagesProduced{0};
   ProducerStats Stats;
 
 private:
-  int id = 0;
+  int id{0};
 };
-}
+} // namespace KafkaW

@@ -217,7 +217,6 @@ private:
   /// processed anymore) the StreamMaster state changes to
   /// StreamMasterError::has_finished.
   void run() {
-    using namespace std::chrono;
     RunStatus = StreamMasterError::RUNNING();
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
 

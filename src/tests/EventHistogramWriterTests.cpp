@@ -268,21 +268,21 @@ uint64_t getValueAtFlatIndex(uint32_t HistogramID, size_t Index,
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createTestMessage(size_t HistogramID, size_t PacketID,
                   std::vector<uint32_t> const &DimLengths) {
-  using namespace FileWriter::Schemas::hs00;
+  namespace hs00 = FileWriter::Schemas::hs00;
   auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
       new flatbuffers::FlatBufferBuilder);
   auto &Builder = *BuilderPtr;
   flatbuffers::Offset<void> BinBoundaries;
   {
     auto Vec = Builder.CreateVector(std::vector<double>({1, 2, 3, 4}));
-    ArrayDoubleBuilder ArrayBuilder(Builder);
+    hs00::ArrayDoubleBuilder ArrayBuilder(Builder);
     ArrayBuilder.add_value(Vec);
     BinBoundaries = ArrayBuilder.Finish().Union();
   }
 
-  std::vector<flatbuffers::Offset<DimensionMetaData>> DMDs;
+  std::vector<flatbuffers::Offset<hs00::DimensionMetaData>> DMDs;
   for (auto Length : DimLengths) {
-    DimensionMetaDataBuilder DMDBuilder(Builder);
+    hs00::DimensionMetaDataBuilder DMDBuilder(Builder);
     DMDBuilder.add_length(Length);
     DMDBuilder.add_bin_boundaries(BinBoundaries);
     DMDs.push_back(DMDBuilder.Finish());
@@ -326,7 +326,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
       }
     }
     auto Vec = Builder.CreateVector(Data);
-    ArrayULongBuilder ArrayBuilder(Builder);
+    hs00::ArrayULongBuilder ArrayBuilder(Builder);
     ArrayBuilder.add_value(Vec);
     DataValue = ArrayBuilder.Finish().Union();
   }
@@ -342,7 +342,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
       Data.at(i) = i * 1e-5;
     }
     auto Vec = Builder.CreateVector(Data);
-    ArrayDoubleBuilder ArrayBuilder(Builder);
+    hs00::ArrayDoubleBuilder ArrayBuilder(Builder);
     ArrayBuilder.add_value(Vec);
     ErrorValue = ArrayBuilder.Finish().Union();
   }
@@ -352,14 +352,14 @@ createTestMessage(size_t HistogramID, size_t PacketID,
     Info = Builder.CreateString("Some optional info string.");
   }
 
-  EventHistogramBuilder EHBuilder(Builder);
+  hs00::EventHistogramBuilder EHBuilder(Builder);
   EHBuilder.add_timestamp(Timestamp);
   EHBuilder.add_dim_metadata(DMDA);
   EHBuilder.add_current_shape(ThisLengthsVector);
   EHBuilder.add_offset(ThisOffsetsVector);
-  EHBuilder.add_data_type(Array::ArrayULong);
+  EHBuilder.add_data_type(hs00::Array::ArrayULong);
   EHBuilder.add_data(DataValue);
-  EHBuilder.add_errors_type(Array::ArrayDouble);
+  EHBuilder.add_errors_type(hs00::Array::ArrayDouble);
   EHBuilder.add_errors(ErrorValue);
   if (!Info.IsNull()) {
     EHBuilder.add_info(Info);

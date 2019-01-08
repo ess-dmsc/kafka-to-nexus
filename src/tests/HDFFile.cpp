@@ -83,9 +83,8 @@ void send_stop(FileWriter::CommandHandler &ch, json const &CommandJSON) {
 TEST(HDFFile, Create) {
   auto fname = "tmp-test.h5";
   unlink(fname);
-  using namespace FileWriter;
-  HDFFile f1;
-  std::vector<StreamHDFInfo> stream_hdf_info;
+  FileWriter::HDFFile f1;
+  std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
   f1.init("tmp-test.h5", nlohmann::json::object(), nlohmann::json::object(),
           stream_hdf_info, true);
 }
@@ -1099,7 +1098,6 @@ void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
 }
 
 TEST_F(T_CommandHandler, createStaticDatasetOfEachIntType) {
-  using namespace hdf5;
   using HDFFileTestHelper::createCommandForDataset;
 
   auto TestFile =

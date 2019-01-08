@@ -20,7 +20,7 @@ Consumer::Consumer(BrokerSettings const &Opt) : ConsumerBrokerSettings(Opt) {
 
 Consumer::~Consumer() {
   LOG(Sev::Debug, "~Consumer()");
-  if (RdKafka) {
+  if (RdKafka != nullptr) {
     LOG(Sev::Debug, "rd_kafka_consumer_close");
     rd_kafka_consumer_close(RdKafka);
     LOG(Sev::Debug, "rd_kafka_destroy");
@@ -125,7 +125,7 @@ void Consumer::init() {
   rd_kafka_conf_set_opaque(conf, this);
 
   RdKafka = rd_kafka_new(RD_KAFKA_CONSUMER, conf, errstr, errstr_N);
-  if (!RdKafka) {
+  if (RdKafka == nullptr) {
     LOG(Sev::Error, "can not create kafka handle: {}", errstr);
     throw std::runtime_error("can not create Kafka handle");
   }
@@ -229,7 +229,7 @@ bool Consumer::topicPresent(const std::string &Topic) {
   rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, TimeoutMS);
 
   bool IsPresent = false;
-  if (!Metadata) {
+  if (Metadata == nullptr) {
     throw std::runtime_error("could not create metadata");
   }
 

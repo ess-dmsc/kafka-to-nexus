@@ -212,26 +212,22 @@ void HDFFile::writeStringAttribute(hdf5::node::Node const &Node,
 template <typename T>
 static void writeHDFISO8601Attribute(hdf5::node::Node const &Node,
                                      const std::string &Name, T &TimeStamp) {
-  using namespace date;
-  using namespace std::chrono;
   auto s2 = format("%Y-%m-%dT%H:%M:%S%z", TimeStamp);
   HDFFile::writeStringAttribute(Node, Name, s2);
 }
 
 void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                                   std::string const &Name) {
-  using namespace date;
-  using namespace std::chrono;
-  const time_zone *CurrentTimeZone;
+  const date::time_zone *CurrentTimeZone;
   try {
-    CurrentTimeZone = current_zone();
+    CurrentTimeZone = date::current_zone();
   } catch (const std::runtime_error &e) {
     LOG(Sev::Warning, "Failed to detect time zone for use in ISO8601 "
                       "timestamp in HDF file")
-    CurrentTimeZone = locate_zone("UTC");
+    CurrentTimeZone = date::locate_zone("UTC");
   }
-  auto now = make_zoned(CurrentTimeZone,
-                        floor<std::chrono::milliseconds>(system_clock::now()));
+  auto now = date::make_zoned(CurrentTimeZone,
+                        date::floor<std::chrono::milliseconds>(std::chrono::system_clock::now()));
   writeHDFISO8601Attribute(Node, Name, now);
 }
 
