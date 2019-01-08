@@ -37,13 +37,20 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
+std::chrono::milliseconds findTime(nlohmann::json const &Document,
+                                   std::string const &Key) {
+  if (auto x = find<uint64_t>(Key, Document)) {
+    std::chrono::milliseconds Time(x.inner());
+    if (Time.count() != 0) {
+      return Time;
+    }
+  }
+  return std::chrono::milliseconds{-1};
+}
+
 CommandHandler::CommandHandler(MainOpt &Settings, MasterInterface *Master)
     : Config(Settings), MasterPtr(Master) {}
 
-/// \brief Parse the given `NexusStructureString`
-///
-/// Parse the given `NexusStructureString` and call the initialization of the
-/// HDF structures.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
@@ -184,10 +191,10 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-void CommandHandler::handleNew(std::string const &Command) {
+void CommandHandler::handleNew(std::string const &Command,
+                               const std::chrono::milliseconds StartTime) {
+  using nlohmann::detail::out_of_range;
   using nlohmann::json;
-  using std::move;
-  using std::string;
   json Doc = parseOrThrow(Command);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
@@ -288,20 +295,20 @@ void CommandHandler::handleNew(std::string const &Command) {
   Config.StreamerConfiguration.StopTimestamp =
       std::chrono::milliseconds::zero();
 
-  // Must be done before StreamMaster instantiation
-  if (auto x = find<uint64_t>("start_time", Doc)) {
-    std::chrono::milliseconds StartTime(x.inner());
-    if (StartTime.count() != 0) {
-      LOG(Sev::Info, "StartTime: {}", StartTime.count());
-      Config.StreamerConfiguration.StartTimestamp = StartTime;
-    }
+  // If start time not specified use command message timestamp
+  std::chrono::milliseconds Time = findTime(Doc, "start_time");
+  if (Time.count() > 0) {
+    Config.StreamerConfiguration.StartTimestamp = Time;
+  } else {
+    Config.StreamerConfiguration.StartTimestamp = StartTime;
   }
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    std::chrono::milliseconds StopTime(x.inner());
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info, "StopTime: {}", StopTime.count());
-      Config.StreamerConfiguration.StopTimestamp = StopTime;
-    }
+  LOG(Sev::Info, "Start time: {}ms",
+      Config.StreamerConfiguration.StartTimestamp.count());
+  Time = findTime(Doc, "stop_time");
+  if (Time.count() > 0) {
+    Config.StreamerConfiguration.StopTimestamp = Time;
+    LOG(Sev::Info, "Stop time: {}ms",
+        Config.StreamerConfiguration.StopTimestamp.count());
   }
 
   if (MasterPtr != nullptr) {
@@ -324,10 +331,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 }
 
-/// \brief Configure the HDF writer modules for writing.
-///
-/// \param StreamSettingsList The settings for the stream.
-/// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
@@ -417,140 +420,155 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   } else {
     throwMissingKey("job_id", Doc.dump());
   }
-  std::chrono::milliseconds StopTime(0);
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
-  }
 
-  if (!MasterPtr) { // workaround to prevent seg fault in tests
-    return;
-  }
-
-  auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
-  if (StreamMaster) {
-    if (StopTime.count() != 0) {
-      LOG(Sev::Info,
-          "Received request to gracefully stop file with id : {} at {} ms",
-          JobID, StopTime.count());
-      StreamMaster->setStopTime(StopTime);
-    } else {
-      LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
-          JobID);
-      StreamMaster->stop();
-    }
-  } else {
-    LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
-  }
-}
-
-void CommandHandler::handle(std::string const &Command) {
-  using nlohmann::json;
-  json Doc;
-  try {
-    Doc = json::parse(Command);
-  } catch (...) {
-    std::throw_with_nested(
-        std::runtime_error(fmt::format("Can not parse command: {}", Command)));
-  }
-
-  if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
-    if (ServiceIDMaybe.inner() != Config.service_id) {
-      LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
-          ServiceIDMaybe.inner());
-      return;
-    }
-  }
-
-  uint64_t TeamId = 0;
-  uint64_t CommandTeamId = 0;
-  if (auto x = find<uint64_t>("teamid", Doc)) {
-    CommandTeamId = x.inner();
-  }
-  if (CommandTeamId != TeamId) {
-    LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
-        CommandTeamId, TeamId);
-    return;
-  }
-
-  if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
-    std::string CommandMain = CmdMaybe.inner();
-    if (CommandMain == "FileWriter_new") {
-      handleNew(Command);
-      return;
-    }
-    if (CommandMain == "FileWriter_exit") {
-      handleExit();
-      return;
-    }
-    if (CommandMain == "FileWriter_stop") {
-      handleStreamMasterStop(Command);
-      return;
-    }
-    if (CommandMain == "file_writer_tasks_clear_all") {
-      if (auto y = find<std::string>("recv_type", Doc)) {
-        std::string ReceiverType = y.inner();
-        if (ReceiverType == "FileWriter") {
-          handleFileWriterTaskClearAll();
-          return;
-        }
+  std::chrono::milliseconds StopTime = findTime(Doc, "stop_time");
+  if (MasterPtr) {
+    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+    if (StreamMaster) {
+      if (StopTime.count() > 0) {
+        LOG(Sev::Info,
+            "Received request to gracefully stop file with id : {} at {} ms",
+            JobID, StopTime.count());
+        StreamMaster->setStopTime(StopTime);
       } else {
-        throwMissingKey("recv_type", Doc.dump());
+        LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
+            JobID);
+        StreamMaster->stop();
       }
+    } else {
+      LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
     }
-  } else {
-    LOG(Sev::Warning, "Can not extract 'cmd' from command {}", Command);
   }
-  LOG(Sev::Warning, "Could not understand this command: {}", Command);
 }
 
-std::string format_nested_exception(std::exception const &E,
-                                    std::stringstream &StrS, int Level) {
-  if (Level > 0) {
-    StrS << '\n';
-  }
-  StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
-  try {
-    std::rethrow_if_nested(E);
-  } catch (std::exception const &E) {
-    format_nested_exception(E, StrS, Level + 1);
-  } catch (...) {
-  }
-  return StrS.str();
-}
-
-std::string format_nested_exception(std::exception const &E) {
-  std::stringstream StrS;
-  return format_nested_exception(E, StrS, 0);
-}
-
-void CommandHandler::tryToHandle(std::string const &Command) {
-  try {
-    handle(Command);
-  } catch (...) {
-    std::string JobID;
+  void CommandHandler::handle(std::string const &Command,
+                              const std::chrono::milliseconds StartTime) {
+    using nlohmann::json;
+    json Doc;
     try {
-      JobID = nlohmann::json::parse(Command)["job_id"];
+      Doc = json::parse(Command);
     } catch (...) {
-    }
-    try {
       std::throw_with_nested(
-          std::runtime_error("Error in CommandHandler::tryToHandle"));
+          std::runtime_error(fmt::format("Can not parse command: {}", Command)));
+    }
+
+    if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
+      if (ServiceIDMaybe.inner() != Config.service_id) {
+        LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
+            ServiceIDMaybe.inner());
+        return;
+      }
+    }
+
+    uint64_t TeamId = 0;
+    uint64_t CommandTeamId = 0;
+    if (auto x = find<uint64_t>("teamid", Doc)) {
+      CommandTeamId = x.inner();
+    }
+    if (CommandTeamId != TeamId) {
+      LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
+          CommandTeamId, TeamId);
+      return;
+    }
+
+    if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
+      std::string CommandMain = CmdMaybe.inner();
+      if (CommandMain == "FileWriter_new") {
+        handleNew(Command, StartTime);
+        return;
+      }
+      if (CommandMain == "FileWriter_exit") {
+        handleExit();
+        return;
+      }
+      if (CommandMain == "FileWriter_stop") {
+        handleStreamMasterStop(Command);
+        return;
+      }
+      if (CommandMain == "file_writer_tasks_clear_all") {
+        if (auto y = find<std::string>("recv_type", Doc)) {
+          std::string ReceiverType = y.inner();
+          if (ReceiverType == "FileWriter") {
+            handleFileWriterTaskClearAll();
+            return;
+          }
+        } else {
+          throwMissingKey("recv_type", Doc.dump());
+        }
+      }
+    } else {
+      LOG(Sev::Warning, "Can not extract 'cmd' from command {}", Command);
+    }
+    LOG(Sev::Warning, "Could not understand this command: {}", Command);
+  }
+
+  void CommandHandler::tryToHandle(std::string const &Command,
+                                   const int64_t MsgTimestampMilliseconds) {
+    try {
+      if (MsgTimestampMilliseconds > 0) {
+        handle(Command, std::chrono::milliseconds{MsgTimestampMilliseconds});
+        LOG(Sev::Info, "Kafka command message timestamp : {}",
+            MsgTimestampMilliseconds);
+      } else {
+        handle(Command, std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch()));
+        LOG(Sev::Info,
+            "Kafka command doesn't contain timestamp. Current time : {}",
+            std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::system_clock::now().time_since_epoch())
+                .count());
+      }
+
+    } catch (json::parse_error const &E) {
+      LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
+    } catch (json::out_of_range const &E) {
+      LOG(Sev::Error, "out_of_range: {}  Command: ", E.what(), Command);
+    } catch (json::type_error const &E) {
+      LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
     } catch (std::runtime_error const &E) {
-      auto Message = fmt::format(
-          "Unexpected std::exception while handling command:\n{}\n{}", Command,
-          format_nested_exception(E));
-      LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
-          convertStatusCodeToString(StatusCode::Fail), Message);
-      if (MasterPtr != nullptr) {
-        logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
-                 Config.service_id, JobID, Message);
+      if (std::string(E.what()).find(
+          "Cannot obtain ObjectId from an invalid file instance!") == 0) {
+        LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
+                          "output file already exists.  command: {}",
+            Command);
+      } else {
+        LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
+            E.what(), Command);
+      }
+    } catch (std::exception const &E) {
+      LOG(Sev::Error, "Unexpected std::exception while handling command: {}",
+          Command);
+      std::throw_with_nested(std::runtime_error(
+          fmt::format("Unexpected std::exception while handling command  what: "
+                      "{}  Command: {}",
+                      E.what(), Command)));
+    } catch (...) {
+      std::string JobID;
+      try {
+        JobID = nlohmann::json::parse(Command)["job_id"];
+      } catch (...) {
+      }
+      try {
+        std::throw_with_nested(
+            std::runtime_error("Error in CommandHandler::tryToHandle"));
+      } catch (std::runtime_error const &E) {
+        auto Message = fmt::format(
+            "Unexpected std::exception while handling command:\n{}\n{}", Command,
+            format_nested_exception(E));
+        LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
+            convertStatusCodeToString(StatusCode::Fail), Message);
+        if (MasterPtr != nullptr) {
+          logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
+                   Config.service_id, JobID, Message);
+        }
       }
     }
   }
-}
 
-void CommandHandler::tryToHandle(Msg const &Message) {
-  tryToHandle({(char *)Message.data(), Message.size()});
+
+void CommandHandler::handle(Msg const &Message,
+                            const int64_t MsgTimestampMilliseconds) {
+  tryToHandle({(char *)Message.data(), Message.size()}, MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {
