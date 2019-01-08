@@ -29,16 +29,16 @@ static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
 static size_t const MAX_ALLOWED_STRING_LENGTH = 4 * 1024 * 1024;
 
 template <typename T>
-static void writeAttribute(hdf5::node::Node const &Node, const std::string &Name,
-                           T Value) {
+static void writeAttribute(hdf5::node::Node const &Node,
+                           const std::string &Name, T Value) {
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
   Node.attributes.create<T>(Name, acpl).write(Value);
 }
 
 template <typename T>
-static void writeAttribute(hdf5::node::Node const &Node, const std::string &Name,
-                           std::vector<T> Values) {
+static void writeAttribute(hdf5::node::Node const &Node,
+                           const std::string &Name, std::vector<T> Values) {
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
   Node.attributes.create<T>(Name, {Values.size()}, acpl).write(Values);
@@ -146,7 +146,8 @@ populateBlob(nlohmann::json const &Value, size_t const GoalSize,
 }
 
 template <typename T>
-static void writeAttrNumeric(hdf5::node::Node const &Node, std::string const &Name,
+static void writeAttrNumeric(hdf5::node::Node const &Node,
+                             std::string const &Name,
                              nlohmann::json const &Value) {
   size_t Length = 1;
   if (Value.is_array()) {
@@ -313,8 +314,9 @@ void writeAttrStringVariableLength(hdf5::node::Node const &Node,
   }
 }
 
-void writeAttrStringFixedLength(hdf5::node::Node const &Node, std::string const &Name,
-                                json const &Values, size_t StringSize,
+void writeAttrStringFixedLength(hdf5::node::Node const &Node,
+                                std::string const &Name, json const &Values,
+                                size_t StringSize,
                                 hdf5::datatype::CharacterEncoding Encoding) {
   hdf5::dataspace::Dataspace SpaceMem;
   if (Values.is_array()) {
@@ -373,9 +375,9 @@ void writeAttrString(hdf5::node::Node const &Node, std::string const &Name,
 /// \param Name     name of the attribute.
 /// \param Values   the attribute values.
 void HDFFile::writeAttrOfSpecifiedType(
-    std::string const &DType, hdf5::node::Node const &Node, std::string const &Name,
-    uint32_t StringSize, hdf5::datatype::CharacterEncoding Encoding,
-    nlohmann::json const &Values) {
+    std::string const &DType, hdf5::node::Node const &Node,
+    std::string const &Name, uint32_t StringSize,
+    hdf5::datatype::CharacterEncoding Encoding, nlohmann::json const &Values) {
   try {
     if (DType == "uint8") {
       writeAttrNumeric<uint8_t>(Node, Name, Values);

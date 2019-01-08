@@ -93,8 +93,8 @@ TEST(HDFFile, Create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
-    auto CommandData =
-        readFileIntoVector(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
+    auto CommandData = readFileIntoVector(std::string(TEST_DATA_PATH) +
+                                          "/msg-cmd-new-03.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
     LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
@@ -110,8 +110,8 @@ public:
   }
 
   static void new_04() {
-    auto CommandData =
-        readFileIntoVector(std::string(TEST_DATA_PATH) + "/msg-cmd-new-04.json");
+    auto CommandData = readFileIntoVector(std::string(TEST_DATA_PATH) +
+                                          "/msg-cmd-new-04.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
     LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),

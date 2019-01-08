@@ -34,4 +34,4 @@ void FlatbufferMessage::extractPacketInfo() {
   }
   Valid = true;
 }
-} //namespace FileWriter
+} // namespace FileWriter

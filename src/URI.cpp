@@ -22,7 +22,7 @@ void URI::parse(const std::string &URIString) {
   if (Matches[7].matched) {
     Port = static_cast<uint32_t>(std::stoi(Matches.str(7)));
   }
-  if (Matches[8].matched){
+  if (Matches[8].matched) {
     Topic = Matches.str(8);
   }
 }

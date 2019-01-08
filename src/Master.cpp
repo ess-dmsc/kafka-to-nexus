@@ -24,14 +24,15 @@ Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   std::string hostname(buffer.data());
   FileWriterProcessId =
       fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
-  LOG(Sev::Info, "getFileWriterProcessId: {}", Master::getFileWriterProcessId());
+  LOG(Sev::Info, "getFileWriterProcessId: {}",
+      Master::getFileWriterProcessId());
 }
 
 void Master::handle_command_message(
     std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(
-      Msg::owned(reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
+  command_handler.tryToHandle(Msg::owned(
+      reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
 }
 
 void Master::handle_command(std::string const &command) {
@@ -56,7 +57,8 @@ void Master::addStreamMaster(
 }
 
 struct OnScopeExit {
-  explicit OnScopeExit(std::function<void()> Action) : ExitAction(std::move(Action)){};
+  explicit OnScopeExit(std::function<void()> Action)
+      : ExitAction(std::move(Action)){};
   ~OnScopeExit() {
     try {
       ExitAction();
@@ -143,7 +145,8 @@ void Master::statistics() {
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
-  status_producer->produce(reinterpret_cast<const KafkaW::uchar*>(Buffer.data()), Buffer.size());
+  status_producer->produce(
+      reinterpret_cast<const KafkaW::uchar *>(Buffer.data()), Buffer.size());
 }
 
 void Master::stop() { do_run = false; }

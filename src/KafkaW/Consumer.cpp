@@ -254,7 +254,8 @@ std::unique_ptr<ConsumerMessage> Consumer::poll() {
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    return std::make_unique<ConsumerMessage>(reinterpret_cast<std::uint8_t*>(msg->payload), msg->len,
+    return std::make_unique<ConsumerMessage>(
+        reinterpret_cast<std::uint8_t *>(msg->payload), msg->len,
         [msg]() { rd_kafka_message_destroy(msg); }, msg->offset);
   }
   if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {

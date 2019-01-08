@@ -36,7 +36,8 @@ std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
 uint64_t createId(int ExtraValue) {
   namespace chrono = std::chrono;
   return (static_cast<uint64_t>(
-                                chrono::duration_cast<chrono::nanoseconds>(chrono::system_clock::now().time_since_epoch())
+              chrono::duration_cast<chrono::nanoseconds>(
+                  chrono::system_clock::now().time_since_epoch())
                   .count())
           << 16) +
          (ExtraValue & 0xffff);
