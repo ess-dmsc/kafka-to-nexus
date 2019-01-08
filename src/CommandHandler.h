@@ -73,15 +73,14 @@ private:
 };
 
 std::string findBroker(std::string const &);
-//------------------------------------------------------------------------------
-/// @brief      Extract the time in milliseconds associated with the key Key in
+  
+/// \brief Extract the time in milliseconds associated with the key Key in
 /// the document.
 ///
-/// @param      Doc   The JSON document
-/// @param      Key   The time identifier keyword
+/// \param Doc The JSON document.
+/// \param Key The time identifier keyword.
 ///
-/// @return     The value, in milliseconds
-///
+/// \return The value in milliseconds.
 std::chrono::milliseconds findTime(nlohmann::json const &Doc,
                                    std::string const &Key);
 
