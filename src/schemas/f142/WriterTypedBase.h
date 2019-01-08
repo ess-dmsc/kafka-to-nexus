@@ -14,6 +14,6 @@ public:
   virtual h5::append_ret write(FBUF const *fbuf) = 0;
   virtual void storeLatestInto(std::string const &StoreLatestInto) {}
 };
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter

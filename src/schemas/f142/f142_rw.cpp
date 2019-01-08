@@ -63,7 +63,7 @@ struct InitTypeMap {
 
 /// \brief  Instantiate the typemap.
 InitTypeMap TriggerInitTypeMap;
-}
+} // namespace
 
 ///  Helper struct to make branching on a found map entry more concise.
 template <typename T> struct FoundInMap {
@@ -107,8 +107,8 @@ DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
 /// \param Method Either CREATE or OPEN, will either create the HDF dataset, or
 /// open the dataset again.
 std::unique_ptr<WriterTypedBase>
-createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
-                      std::string TypeName, std::string DatasetName,
+createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
+                      std::string const &TypeName, std::string const &DatasetName,
                       CollectiveQueue *cq, HDFIDStore *HDFStore,
                       CreateWriterTypedBaseMethod Method) {
   Rank TheRank = Rank::SCALAR;
@@ -274,7 +274,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 /// content to datasets.
 HDFWriterModule::WriteResult
 HDFWriterModule::write(FlatbufferMessage const &Message) {
-  auto fbuf = get_fbuf(Message.data());
+  auto FlatBuffer = get_fbuf(Message.data());
   if (!ValueWriter) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
@@ -284,7 +284,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     }
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto wret = ValueWriter->write(fbuf);
+  auto wret = ValueWriter->write(FlatBuffer);
   if (!wret) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
@@ -293,34 +293,34 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     }
   }
   WrittenBytesTotal += wret.written_bytes;
-  TimestampMax = std::max(fbuf->timestamp(), TimestampMax);
+  TimestampMax = std::max(FlatBuffer->timestamp(), TimestampMax);
   if (WrittenBytesTotal > IndexAtBytes + IndexEveryBytes) {
     this->DatasetCueTimestampZero->append_data_1d(&TimestampMax, 1);
     this->DatasetCueIndex->append_data_1d(&wret.ix0, 1);
     IndexAtBytes = WrittenBytesTotal;
   }
   {
-    auto x = fbuf->timestamp();
+    auto x = FlatBuffer->timestamp();
     this->DatasetTimestamp->append_data_1d(&x, 1);
   }
   if (DoWriteForwarderInternalDebugInfo) {
-    if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
-      auto fi = (fwdinfo_1_t *)fbuf->fwdinfo();
+    if (FlatBuffer->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
+      auto ForwarderInfo = reinterpret_cast<const fwdinfo_1_t*>(FlatBuffer->fwdinfo());
       {
-        auto x = fi->seq_data();
+        auto x = ForwarderInfo->seq_data();
         this->DatasetSeqData->append_data_1d(&x, 1);
       }
       {
-        auto x = fi->seq_fwd();
+        auto x = ForwarderInfo->seq_fwd();
         this->DatasetSeqFwd->append_data_1d(&x, 1);
       }
       {
-        auto x = fi->ts_data();
+        auto x = ForwarderInfo->ts_data();
         this->DatasetTsData->append_data_1d(&x, 1);
       }
     }
   }
-  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
+  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(FlatBuffer->timestamp());
 }
 
 /// Implement HDFWriterModule interface, just flushing.

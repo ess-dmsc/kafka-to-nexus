@@ -146,6 +146,6 @@ void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
   Dataset.read(Buffer, Type, SpaceMem, SpaceSrc);
   Latest.write(Buffer, Type, SpaceMem, SpaceMem);
 }
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter

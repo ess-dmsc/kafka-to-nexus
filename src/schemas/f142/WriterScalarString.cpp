@@ -5,7 +5,7 @@ namespace Schemas {
 namespace f142 {
 
 /// \brief  Create a new dataset for scalar strings.
-WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
+WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
                                        std::string const &SourceName, Value,
                                        CollectiveQueue *cq) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
@@ -18,7 +18,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
 }
 
 /// \brief  Open a dataset for scalar strings.
-WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
+WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
                                        std::string const &SourceName, Value,
                                        CollectiveQueue *cq,
                                        HDFIDStore *hdf_store) {
@@ -46,6 +46,6 @@ h5::append_ret WriterScalarString::write(LogData const *fbuf) {
   return ChunkedDataset->append(
       static_cast<String const *>(fbuf->value())->value()->str());
 }
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter
