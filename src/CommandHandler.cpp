@@ -502,6 +502,26 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     LOG(Sev::Warning, "Could not understand this command: {}", Command);
   }
 
+  std::string format_nested_exception(std::exception const &E,
+                                      std::stringstream &StrS, int Level) {
+    if (Level > 0) {
+      StrS << '\n';
+    }
+    StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
+    try {
+      std::rethrow_if_nested(E);
+    } catch (std::exception const &E) {
+      format_nested_exception(E, StrS, Level + 1);
+    } catch (...) {
+    }
+    return StrS.str();
+  }
+
+  std::string format_nested_exception(std::exception const &E) {
+    std::stringstream StrS;
+    return format_nested_exception(E, StrS, 0);
+  }
+
   void CommandHandler::tryToHandle(std::string const &Command,
                                    const int64_t MsgTimestampMilliseconds) {
     try {
