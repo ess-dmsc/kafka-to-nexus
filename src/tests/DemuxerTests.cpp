@@ -101,7 +101,7 @@ TEST_F(DemuxerTest, Success) {
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
-  ProcessMessageResult Result;
+  ProcessMessageResult Result{ProcessMessageResult::ERR};
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   Source DummySource(SourceName, TestKey, std::move(Writer));
@@ -126,7 +126,7 @@ TEST_F(DemuxerTest, WrongFlatbufferID) {
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
-  ProcessMessageResult Result;
+  ProcessMessageResult Result{ProcessMessageResult::OK};
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   std::string AltKey("temi");
@@ -152,7 +152,7 @@ TEST_F(DemuxerTest, WrongSourceName) {
   char *TestData = new char[8];
   std::memcpy(TestData + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
-  ProcessMessageResult Result;
+  ProcessMessageResult Result{ProcessMessageResult::OK};
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   Source DummySource(SourceName, TestKey, std::move(Writer));

@@ -531,29 +531,12 @@ public:
       s.run_parallel = true;
       s.pregenerate(n_msgs_per_source, n_events_per_message);
     }
-    if (false) {
-      vector<std::thread> threads_pregen;
-      for (size_t i1 = 0; i1 < n_sources; ++i1) {
-        auto &s = sources.back();
-        LOG(Sev::Debug, "push pregen {}", i1);
-        threads_pregen.push_back(
-            std::thread([&s, n_msgs_per_source, n_events_per_message] {
-              s.pregenerate(n_msgs_per_source, n_events_per_message);
-            }));
-      }
-      for (auto &x : threads_pregen) {
-        LOG(Sev::Debug, "join pregen");
-        x.join();
-      }
-    }
 
-    if (true) {
-      sources.emplace_back();
-      auto &s = sources.back();
-      s.topic = "topic.with.multiple.sources";
-      s.source = fmt::format("stream_for_main_thread_{:04}", 0);
-      s.pregenerate(17, 71);
-    }
+    sources.emplace_back();
+    auto &s = sources.back();
+    s.topic = "topic.with.multiple.sources";
+    s.source = fmt::format("stream_for_main_thread_{:04}", 0);
+    s.pregenerate(17, 71);
 
     auto CommandJSON = json::object();
     {
@@ -579,7 +562,7 @@ public:
         auto Attr = json::object();
         Attr["NX_class"] = "NXinstrument";
         Group["attributes"] = Attr;
-        auto Children = json::array();
+        auto InnerChildren = json::array();
         {
           auto Dataset = json::parse(R""({
             "type": "stream",
@@ -601,9 +584,9 @@ public:
                   .get<uint64_t>();
           Stream["run_parallel"] = run_parallel;
           Dataset["stream"] = Stream;
-          Children.push_back(Dataset);
+          InnerChildren.push_back(Dataset);
         }
-        Group["children"] = Children;
+        Group["children"] = InnerChildren;
         return Group;
       };
 
@@ -655,16 +638,11 @@ public:
             LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
           }
           for (auto &msg : source.msgs) {
-            if (false) {
-              auto v = binary_to_hex(msg.data(), msg.size());
-              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
-            }
             if (msg.size() < 8) {
               LOG(Sev::Error, "error");
               do_run = false;
             }
-            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
-                                                      msg.size());
+            FileWriter::FlatbufferMessage TempMessage(msg.data(), msg.size());
             auto res =
                 fwt->demuxers().at(0).process_message(std::move(TempMessage));
             if (res == FileWriter::ProcessMessageResult::ERR) {
@@ -770,12 +748,6 @@ public:
 
       ASSERT_GT(event_time_zero.size(), 0u);
       ASSERT_EQ(event_time_zero.size(), event_index.size());
-
-      for (hsize_t i1 = 0; false && i1 < cue_timestamp_zero.size(); ++i1) {
-        auto ok = check_cue(event_time_zero, event_index,
-                            cue_timestamp_zero[i1], cue_index[i1]);
-        ASSERT_TRUE(ok);
-      }
 
       ++i_source;
 
@@ -992,12 +964,7 @@ public:
         for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
           LOG(Sev::Info, "feed {}", i_feed);
           for (auto &msg : source.msgs) {
-            if (false) {
-              auto v = binary_to_hex(msg.data(), msg.size());
-              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
-            }
-            FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
-                                                      msg.size());
+            FileWriter::FlatbufferMessage TempMessage(msg.data(), msg.size());
             fwt->demuxers().at(0).process_message(std::move(TempMessage));
             source.n_fed++;
           }

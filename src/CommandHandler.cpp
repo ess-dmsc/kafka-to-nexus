@@ -69,13 +69,13 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamHDFInfo) {
+    StreamHDFInfo const &StreamInfo) {
   using nlohmann::json;
   StreamSettings StreamSettings;
-  StreamSettings.StreamHDFInfoObj = StreamHDFInfo;
+  StreamSettings.StreamHDFInfoObj = StreamInfo;
 
   json ConfigStream;
-  ConfigStream = json::parse(StreamHDFInfo.ConfigStream);
+  ConfigStream = json::parse(StreamInfo.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -148,8 +148,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   if (auto x = find<json>("attributes", ConfigStream)) {
     Attributes = x.inner();
   }
-  auto StreamGroup =
-      hdf5::node::get_group(RootGroup, StreamHDFInfo.HDFParentName);
+  auto StreamGroup = hdf5::node::get_group(RootGroup, StreamInfo.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
   HDFWriterModule->close();
   HDFWriterModule.reset();

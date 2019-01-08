@@ -316,12 +316,6 @@ createTestMessage(size_t HistogramID, size_t PacketID,
           size_t O0 = ThisOffsets.at(0);
           size_t O1 = ThisOffsets.at(1);
           size_t O2 = ThisOffsets.at(2);
-          if (false) {
-            size_t K0 = 1 + I0 + O0;
-            size_t K1 = 1 + I1 + O1;
-            size_t K2 = 1 + I2 + O2;
-            Data.at(N) = Timestamp + 10000 * K0 + 100 * K1 + K2;
-          }
           Data.at(N) = 0;
           size_t Flat =
               (O2 + I2) +

@@ -39,7 +39,7 @@ void Consumer::cb_log(rd_kafka_t const *rk, int level, char const *fac,
   LOG(Sev(level), "IID: {}  {}  fac: {}", self->id, buf, fac);
 }
 
-void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
+void Consumer::cb_error(rd_kafka_t *, int err_i, char const *msg,
                         void *opaque) {
   auto self = reinterpret_cast<Consumer *>(opaque);
   auto err = static_cast<rd_kafka_resp_err_t>(err_i);
@@ -54,8 +54,7 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
       rd_kafka_err2name(err), rd_kafka_err2str(err), msg);
 }
 
-int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
-                       void *opaque) {
+int Consumer::cb_stats(rd_kafka_t *, char *json, size_t json_size, void *) {
   LOG(Sev::Debug, "INFO stats_cb {}  {:.{}}", json_size, json, json_size);
   // What does Kafka want us to return from this callback?
   return 0;

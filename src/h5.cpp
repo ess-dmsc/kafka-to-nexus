@@ -36,7 +36,7 @@ void h5d::init_basics() {
 h5d::ptr h5d::create(hdf5::node::Group Node, std::string const &Name,
                      hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
                      hdf5::property::DatasetCreationList dcpl,
-                     CollectiveQueue *cq) {
+                     CollectiveQueue *) {
   try {
     // Creation is done in single process mode.
     // Can do set_extent here.
@@ -59,7 +59,7 @@ h5d::ptr h5d::create(hdf5::node::Group Node, std::string const &Name,
 }
 
 h5d::ptr h5d::open_single(hdf5::node::Group Node, std::string const &Name,
-                          CollectiveQueue *cq, HDFIDStore *hdf_store) {
+                          CollectiveQueue *, HDFIDStore *) {
   // Open in single-process mode
   auto ret = ptr(new h5d);
   auto &o = *ret;
@@ -348,8 +348,7 @@ h5d_chunked_1d<T>::open(hdf5::node::Group loc, std::string name,
 }
 
 template <typename T>
-h5d_chunked_1d<T>::h5d_chunked_1d(std::string name, h5d ds_)
-    : ds(std::move(ds_)) {
+h5d_chunked_1d<T>::h5d_chunked_1d(std::string, h5d ds_) : ds(std::move(ds_)) {
   if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");
     throw std::runtime_error("Not a dataset");
@@ -523,7 +522,7 @@ h5d_chunked_2d<T>::open(hdf5::node::Group loc, std::string name, hsize_t ncols,
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(std::string name, h5d ds_, hsize_t ncols)
+h5d_chunked_2d<T>::h5d_chunked_2d(std::string, h5d ds_, hsize_t ncols)
     : ds(std::move(ds_)), ncols(ncols) {
   if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");

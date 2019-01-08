@@ -55,7 +55,7 @@ struct Msg_ : public Producer::Msg {
   }
 };
 
-int ProducerTopic::produce(uchar *MsgData, size_t MsgSize, bool PrintError) {
+int ProducerTopic::produce(uchar *MsgData, size_t MsgSize, bool) {
   auto MsgPtr = new Msg_;
   std::copy(MsgData, MsgData + MsgSize, std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();

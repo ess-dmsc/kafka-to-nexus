@@ -11,6 +11,6 @@ class UnexpectedJsonInput : public std::runtime_error {
 public:
   UnexpectedJsonInput() : std::runtime_error("UnexpectedJsonInput") {}
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

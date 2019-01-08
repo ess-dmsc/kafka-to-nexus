@@ -7,7 +7,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-uint64_t getpid_wrapper() { return getpid(); }
+int getpid_wrapper() { return getpid(); }
 
 // Wrapper, because it may need some Windows implementation in the future.
 std::string gethostname_wrapper() {
@@ -64,7 +64,7 @@ std::vector<std::string> split(std::string const &input, std::string token) {
   using std::string;
   using std::vector;
   vector<string> ret;
-  if (token.size() == 0)
+  if (token.empty())
     return {input};
   string::size_type i1 = 0;
   while (true) {

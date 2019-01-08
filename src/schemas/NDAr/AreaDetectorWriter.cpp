@@ -40,7 +40,7 @@ AreaDetectorDataGuard::timestamp(FlatbufferMessage const &Message) const {
 }
 
 std::string AreaDetectorDataGuard::source_name(
-    const FileWriter::FlatbufferMessage &Message) const {
+    const FileWriter::FlatbufferMessage &) const {
   // The source name was left out of the relevant EPICS areaDetector plugin.
   // There is currently a pull request for adding this variable to the FB
   // schema. When the variable has been addded, this function will be updated.
@@ -51,7 +51,7 @@ std::string AreaDetectorDataGuard::source_name(
 ///
 /// The default is to use double as the element type.
 void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
-                                      std::string const &ConfigurationModule) {
+                                      std::string const &) {
   auto Config = nlohmann::json::parse(ConfigurationStream);
   try {
     CueInterval = Config["cue_interval"].get<uint64_t>();
@@ -107,12 +107,18 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
   try {
     auto &CurrentGroup = HDFGroup;
     initValueDataset(CurrentGroup);
-    NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Create,
-                       DefaultChunkSize);
-    NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Create,
-                           DefaultChunkSize);
-    NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
-                                   DefaultChunkSize);
+    NeXusDataset::Time(
+        CurrentGroup,
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueIndex(
+        CurrentGroup,
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueTimestampZero(
+        CurrentGroup,
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     auto ClassAttribute =
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
@@ -163,7 +169,7 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
   FB_Tables::DType Type = NDAr->dataType();
   auto DataPtr = NDAr->pData()->Data();
   auto NrOfElements = std::accumulate(
-      std::begin(DataShape), std::end(DataShape), 1, std::multiplies<double>());
+      std::begin(DataShape), std::end(DataShape), 1, std::multiplies<>());
 
   switch (Type) {
   case FB_Tables::DType::Int8:
@@ -212,7 +218,7 @@ std::int32_t AreaDetectorWriter::close() { return 0; }
 
 template <typename Type>
 std::unique_ptr<NeXusDataset::MultiDimDatasetBase>
-makeIt(hdf5::node::Group &Parent, hdf5::Dimensions &Shape,
+makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
        hdf5::Dimensions const &ChunkSize) {
   return std::make_unique<NeXusDataset::MultiDimDataset<Type>>(
       Parent, NeXusDataset::Mode::Create, Shape, ChunkSize);

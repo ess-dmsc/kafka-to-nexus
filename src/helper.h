@@ -7,7 +7,7 @@
 #include <utility>
 #include <vector>
 
-uint64_t getpid_wrapper();
+int getpid_wrapper();
 
 std::string gethostname_wrapper();
 

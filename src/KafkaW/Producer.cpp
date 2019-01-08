@@ -33,7 +33,7 @@ void Producer::cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
   }
 }
 
-void Producer::cb_error(rd_kafka_t *RK, int ErrorCode, char const *ErrorMessage,
+void Producer::cb_error(rd_kafka_t *, int ErrorCode, char const *ErrorMessage,
                         void *Opaque) {
   auto Self = reinterpret_cast<Producer *>(Opaque);
   auto Error = static_cast<rd_kafka_resp_err_t>(ErrorCode);
@@ -59,13 +59,13 @@ int Producer::cb_stats(rd_kafka_t *RK, char *JSON, size_t JSONLength,
   return 0;
 }
 
-void Producer::cb_log(rd_kafka_t const *RK, int Level, char const *Fac,
+void Producer::cb_log(rd_kafka_t const *RK, int, char const *Fac,
                       char const *Buf) {
   auto Self = reinterpret_cast<Producer *>(rd_kafka_opaque(RK));
   LOG(Sev::Debug, "IID: {}  {}  Fac: {}", Self->id, Buf, Fac);
 }
 
-void Producer::cb_throttle(rd_kafka_t *RK, char const *BrokerName,
+void Producer::cb_throttle(rd_kafka_t *, char const *BrokerName,
                            int32_t BrokerID, int ThrottleTime_ms,
                            void *Opaque) {
   auto Time = reinterpret_cast<Producer *>(Opaque);
@@ -78,7 +78,7 @@ Producer::~Producer() {
   LOG(Sev::Debug, "~Producer");
   if (RdKafkaPtr) {
     int Timeout_ms = 1;
-    uint32_t OutputQueueLength = 0;
+    int OutputQueueLength = 0;
     while (true) {
       OutputQueueLength = rd_kafka_outq_len(RdKafkaPtr);
       if (OutputQueueLength == 0) {
@@ -167,5 +167,7 @@ void Producer::poll() {
 
 rd_kafka_t *Producer::getRdKafkaPtr() const { return RdKafkaPtr; }
 
-uint64_t Producer::outputQueueLength() { return rd_kafka_outq_len(RdKafkaPtr); }
+uint64_t Producer::outputQueueLength() {
+  return static_cast<uint64_t>(rd_kafka_outq_len(RdKafkaPtr));
+}
 }

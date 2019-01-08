@@ -28,13 +28,13 @@ public:
 
   void init(const std::string &Filename, nlohmann::json const &NexusStructure,
             nlohmann::json const &ConfigFile,
-            std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR);
+            std::vector<StreamHDFInfo> &StreamInfo, bool UseHDFSWMR);
 
   void init(const std::string &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamHDFInfo);
+            std::vector<StreamHDFInfo> &StreamInfo);
 
   void init(const nlohmann::json &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamHDFInfo);
+            std::vector<StreamHDFInfo> &StreamInfo);
 
   void reopen(std::string const &Filename);
 

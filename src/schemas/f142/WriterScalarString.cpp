@@ -6,8 +6,7 @@ namespace f142 {
 
 /// \brief  Create a new dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
-                                       std::string const &SourceName,
-                                       Value FlatbuffersValueTypeId,
+                                       std::string const &SourceName, Value,
                                        CollectiveQueue *cq) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
   ChunkedDataset =
@@ -20,8 +19,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
 
 /// \brief  Open a dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
-                                       std::string const &SourceName,
-                                       Value FlatbuffersValueTypeId,
+                                       std::string const &SourceName, Value,
                                        CollectiveQueue *cq,
                                        HDFIDStore *hdf_store) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
