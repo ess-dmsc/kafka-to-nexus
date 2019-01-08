@@ -18,14 +18,15 @@ synth::synth(std::string SynthName, uint64_t seed)
 FlatBufferWrapper synth::next(uint32_t size) {
   using DT = uint32_t;
   FlatBufferWrapper ret;
-  ret.builder = std::make_unique<flatbuffers::FlatBufferBuilder>(size * 4 * 2 + 1024);
+  ret.builder =
+      std::make_unique<flatbuffers::FlatBufferBuilder>(size * 4 * 2 + 1024);
   auto n = ret.builder->CreateString(Name);
   DT *BufferPtr1 = nullptr;
-  auto v1 =
-      ret.builder->CreateUninitializedVector(size, sizeof(DT), reinterpret_cast<uint8_t **>(&BufferPtr1));
+  auto v1 = ret.builder->CreateUninitializedVector(
+      size, sizeof(DT), reinterpret_cast<uint8_t **>(&BufferPtr1));
   DT *BufferPtr2 = nullptr;
-  auto v2 =
-      ret.builder->CreateUninitializedVector(size, sizeof(DT), reinterpret_cast<uint8_t **>(&BufferPtr2));
+  auto v2 = ret.builder->CreateUninitializedVector(
+      size, sizeof(DT), reinterpret_cast<uint8_t **>(&BufferPtr2));
 
   if ((BufferPtr1 == nullptr) or (BufferPtr2 == nullptr)) {
     LOG(Sev::Debug, "Failed to create test data");

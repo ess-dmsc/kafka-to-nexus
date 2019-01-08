@@ -23,7 +23,8 @@ static EventMessage const *get_fbuf(char const *data) {
 }
 
 bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
-  flatbuffers::Verifier VerifierInstance(reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
+  flatbuffers::Verifier VerifierInstance(
+      reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
   return VerifyEventMessageBuffer(VerifierInstance);
 }
 

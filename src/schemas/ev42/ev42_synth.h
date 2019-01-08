@@ -1,8 +1,8 @@
 #pragma once
 #include "ev42_events_generated.h"
 #include <memory>
-#include <string>
 #include <random>
+#include <string>
 
 namespace FlatBufs {
 namespace ev42 {
