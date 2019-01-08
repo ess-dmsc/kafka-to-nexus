@@ -10,9 +10,11 @@ namespace f142 {
 /// Implementation for scalar strings.
 class WriterScalarString : public WriterTypedBase {
 public:
-  WriterScalarString(hdf5::node::Group const &HdfGroup, std::string const &SourceName,
+  WriterScalarString(hdf5::node::Group const &HdfGroup,
+                     std::string const &SourceName,
                      Value FlatbuffersValueTypeId, CollectiveQueue *cq);
-  WriterScalarString(hdf5::node::Group const &HdfGroup, std::string const &SourceName,
+  WriterScalarString(hdf5::node::Group const &HdfGroup,
+                     std::string const &SourceName,
                      Value FlatbuffersValueTypeId, CollectiveQueue *cq,
                      HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;

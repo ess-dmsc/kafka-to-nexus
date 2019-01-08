@@ -108,8 +108,9 @@ DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
 /// open the dataset again.
 std::unique_ptr<WriterTypedBase>
 createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
-                      std::string const &TypeName, std::string const &DatasetName,
-                      CollectiveQueue *cq, HDFIDStore *HDFStore,
+                      std::string const &TypeName,
+                      std::string const &DatasetName, CollectiveQueue *cq,
+                      HDFIDStore *HDFStore,
                       CreateWriterTypedBaseMethod Method) {
   Rank TheRank = Rank::SCALAR;
   if (ArraySize > 0) {
@@ -305,7 +306,8 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
   }
   if (DoWriteForwarderInternalDebugInfo) {
     if (FlatBuffer->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
-      auto ForwarderInfo = reinterpret_cast<const fwdinfo_1_t*>(FlatBuffer->fwdinfo());
+      auto ForwarderInfo =
+          reinterpret_cast<const fwdinfo_1_t *>(FlatBuffer->fwdinfo());
       {
         auto x = ForwarderInfo->seq_data();
         this->DatasetSeqData->append_data_1d(&x, 1);
@@ -320,7 +322,8 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
       }
     }
   }
-  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(FlatBuffer->timestamp());
+  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(
+      FlatBuffer->timestamp());
 }
 
 /// Implement HDFWriterModule interface, just flushing.

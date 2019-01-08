@@ -4,7 +4,9 @@
 namespace FlatBufs {
 namespace f142 {
 
-LogData const *FlatBufferWrapper::root() { return GetLogData(builder->GetBufferPointer()); }
+LogData const *FlatBufferWrapper::root() {
+  return GetLogData(builder->GetBufferPointer());
+}
 
 struct synth_impl {
   Value type;
@@ -15,9 +17,10 @@ synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   impl->type = Type;
 }
 
-  FlatBufferWrapper synth::next(uint64_t const TestValue, size_t const NrOfElements) {
+FlatBufferWrapper synth::next(uint64_t const TestValue,
+                              size_t const NrOfElements) {
   FlatBufferWrapper ret;
-    ret.builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
+  ret.builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
   // NOTE
   // synth does not add fwdinfo because that's, well, for the forwarder to add.
   // we do add timeStamp though, because that's meant to come from the Epics
@@ -30,8 +33,8 @@ synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   case Value::ArrayInt: {
     using T = int32_t;
     T *BufferPtr = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(NrOfElements, sizeof(T),
-                                                     reinterpret_cast<uint8_t **>(&BufferPtr));
+    auto d1 = ret.builder->CreateUninitializedVector(
+        NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
     for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
       BufferPtr[i1] = TestValue;
     }
@@ -43,8 +46,8 @@ synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   case Value::ArrayDouble: {
     using T = double;
     T *BufferPtr = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(NrOfElements, sizeof(T),
-                                                     reinterpret_cast<uint8_t **>(&BufferPtr));
+    auto d1 = ret.builder->CreateUninitializedVector(
+        NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
     for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
       BufferPtr[i1] = TestValue;
     }
@@ -56,8 +59,8 @@ synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   case Value::ArrayFloat: {
     using T = float;
     T *BufferPtr = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(NrOfElements, sizeof(T),
-                                                     reinterpret_cast<uint8_t **>(&BufferPtr));
+    auto d1 = ret.builder->CreateUninitializedVector(
+        NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
     for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
       BufferPtr[i1] = TestValue;
     }
