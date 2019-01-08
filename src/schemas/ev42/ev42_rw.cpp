@@ -23,19 +23,19 @@ static EventMessage const *get_fbuf(char const *data) {
 }
 
 bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
-  flatbuffers::Verifier veri((uint8_t *)Message.data(), Message.size());
-  return VerifyEventMessageBuffer(veri);
+  flatbuffers::Verifier VerifierInstance(reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
+  return VerifyEventMessageBuffer(VerifierInstance);
 }
 
 std::string
 FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
-  auto s1 = fbuf->source_name();
-  if (!s1) {
+  auto NamePtr = fbuf->source_name();
+  if (NamePtr == nullptr) {
     LOG(Sev::Notice, "message has no source_name");
     return "";
   }
-  return s1->str();
+  return NamePtr->str();
 }
 
 uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
@@ -47,7 +47,7 @@ static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("ev42");
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
-                                   std::string const &ConfigurationModule) {
+                                   std::string const &) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
   try {
     index_every_bytes =
