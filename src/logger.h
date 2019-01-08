@@ -52,7 +52,6 @@ void dwlog(Sev level, char const *fmt, char const *file, int line,
 
 void use_log_file(std::string fname);
 
-void log_kafka_gelf_start(std::string broker, std::string topic);
-void log_kafka_gelf_stop();
+void log_kafka_gelf_start(std::string const &Address, std::string TopicName);
 
-void fwd_graylog_logger_enable(std::string address);
+void fwd_graylog_logger_enable(std::string const &Address);

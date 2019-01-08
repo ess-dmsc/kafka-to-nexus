@@ -143,10 +143,4 @@ std::int32_t FastSampleEnvironmentWriter::flush() { return 0; }
 
 std::int32_t FastSampleEnvironmentWriter::close() { return 0; }
 
-void FastSampleEnvironmentWriter::enable_cq(CollectiveQueue *cq,
-                                            HDFIDStore *hdf_store,
-                                            int mpi_rank) {
-  LOG(Sev::Error, "Collective queue not implemented.");
-}
-
 } // namespace senv

@@ -14,7 +14,6 @@ set(UnitTests_SRC
     URITests.cpp
     StatusWriterTests.cpp
     CommandHandlerTests.cpp
-    stream_master.cpp
     FastSampleEnvironmentWriterTests.cpp
     NeXusDatasets.cpp
     ReaderRegistration.cpp

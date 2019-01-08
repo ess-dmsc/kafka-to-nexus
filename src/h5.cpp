@@ -20,7 +20,7 @@ void h5d::init_basics() {
   smax = DSPTgt.maximum_dimensions();
   if (log_level >= 9) {
     for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", name, i1,
+      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", Name, i1,
           sext.at(i1), smax.at(i1));
     }
   }
@@ -33,7 +33,7 @@ void h5d::init_basics() {
   PLTransfer = hdf5::property::DatasetTransferList();
 }
 
-h5d::ptr h5d::create(hdf5::node::Group loc, std::string name,
+h5d::ptr h5d::create(hdf5::node::Group Node, std::string const &Name,
                      hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
                      hdf5::property::DatasetCreationList dcpl,
                      CollectiveQueue *cq) {
@@ -43,14 +43,14 @@ h5d::ptr h5d::create(hdf5::node::Group loc, std::string name,
     auto ret = ptr(new h5d);
     auto &o = *ret;
     o.Type = Type;
-    o.name = name;
+    o.Name = Name;
     {
       // Use NULL as fill value.
       // Looks weird because we work around the current h5cpp API.
       int *fillptr = nullptr;
       dcpl.fill_value(*fillptr, Type);
     }
-    o.Dataset = loc.create_dataset(name, o.Type, dsp, dcpl);
+    o.Dataset = Node.create_dataset(Name, o.Type, dsp, dcpl);
     o.init_basics();
     return ret;
   } catch (...) {
@@ -58,20 +58,20 @@ h5d::ptr h5d::create(hdf5::node::Group loc, std::string name,
   }
 }
 
-h5d::ptr h5d::open_single(hdf5::node::Group loc, std::string name,
+h5d::ptr h5d::open_single(hdf5::node::Group Node, std::string const &Name,
                           CollectiveQueue *cq, HDFIDStore *hdf_store) {
   // Open in single-process mode
   auto ret = ptr(new h5d);
   auto &o = *ret;
-  o.name = name;
-  o.Dataset = loc.get_dataset(name);
+  o.Name = Name;
+  o.Dataset = Node.get_dataset(Name);
   o.init_basics();
   return ret;
 }
 
-h5d::ptr h5d::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
-                   HDFIDStore *hdf_store) {
-  return open_single(loc, name, cq, hdf_store);
+h5d::ptr h5d::open(hdf5::node::Group Node, std::string const &Name,
+                   CollectiveQueue *cq, HDFIDStore *hdf_store) {
+  return open_single(Node, Name, cq, hdf_store);
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
@@ -89,7 +89,7 @@ h5d::h5d() {}
 
 void swap(h5d &x, h5d &y) {
   using std::swap;
-  swap(x.name, y.name);
+  swap(x.Name, y.Name);
   swap(x.Type, y.Type);
   swap(x.PLTransfer, y.PLTransfer);
   swap(x.Dataset, y.Dataset);
@@ -102,10 +102,6 @@ void swap(h5d &x, h5d &y) {
   swap(x.cq, y.cq);
   swap(x.hdf_store, y.hdf_store);
   swap(x.mpi_rank, y.mpi_rank);
-}
-
-void h5d::lookup_cqsnowix(char const *ds_name, size_t &cqsnowix) {
-  LOG(Sev::Debug, "using cq: {}", (void *)cq);
 }
 
 template <typename T>
@@ -139,7 +135,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
 
   if (snext + nlen_0 > sext[0]) {
-    auto t1 = CLK::now();
+    t1 = CLK::now();
     // TODO
     // Make these configurable, and the default much smaller than it is right
     // now.
@@ -205,7 +201,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     auto sext = DSPTgt.current_dimensions();
     auto smax = DSPTgt.maximum_dimensions();
     for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", name, i1,
+      LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", Name, i1,
           sext.at(i1), smax.at(i1));
     }
   }

@@ -101,9 +101,6 @@ public:
   size_t ArraySize = 0;
   std::string StoreLatestInto;
 
-  // Helper for experiments on my other branch
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
   CollectiveQueue *cq = nullptr;
 
   // Reduce LOG rate in some cases

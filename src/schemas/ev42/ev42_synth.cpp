@@ -16,7 +16,8 @@ class synth_impl {
   uint64_t c1 = 0;
 };
 
-synth::synth(std::string name, uint64_t seed) : name(name) {
+synth::synth(std::string SynthName, uint64_t seed)
+    : Name(std::move(SynthName)) {
   impl.reset(new synth_impl);
   impl->rnd.seed(seed);
 }
@@ -27,7 +28,7 @@ fb synth::next(uint32_t size) {
   using DT = uint32_t;
   fb ret;
   ret.builder.reset(new flatbuffers::FlatBufferBuilder(size * 4 * 2 + 1024));
-  auto n = ret.builder->CreateString(name);
+  auto n = ret.builder->CreateString(Name);
   DT *a1 = nullptr;
   auto v1 =
       ret.builder->CreateUninitializedVector(size, sizeof(DT), (uint8_t **)&a1);

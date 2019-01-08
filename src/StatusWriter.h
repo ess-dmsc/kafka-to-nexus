@@ -23,14 +23,16 @@ namespace Status {
 
 class StatusWriter {
 public:
-  StatusWriter();
+  StatusWriter() = default;
   void setJobId(const std::string &JobId);
   void write(StreamMasterInfo &Information);
   void write(MessageInfo &Information, const std::string &Topic);
   std::string getJson();
 
 private:
-  nlohmann::json json;
+  nlohmann::json json{{"type", "stream_master_status"},
+                      {"next_message_eta_ms", 0},
+                      {"job_id", 0}};
 };
 
 } // namespace Status

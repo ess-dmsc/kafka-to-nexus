@@ -19,8 +19,8 @@ public:
 };
 
 TEST_F(DatasetCreation, NDArrOpen) {
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::MultiDimDataset<int> ADValues(
         RootGroup, NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
   }
@@ -43,7 +43,7 @@ TEST_F(DatasetCreation, NDArrOpenAlt3) {
 }
 
 TEST_F(DatasetCreation, NDArrOpenAlt) {
-  size_t ChunkSize = 256;
+  size_t ChunkSize{256};
   {
     NeXusDataset::MultiDimDataset<int> ADValues(
         RootGroup, NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
@@ -66,8 +66,8 @@ TEST_F(DatasetCreation, NDArrConstructorFail) {
 
 TEST_F(DatasetCreation, NDArrCreationMaxSize) {
   hdf5::Dimensions DatasetDimensions{10, 10};
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::MultiDimDataset<int> ADValues(
         RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
   }
@@ -86,8 +86,8 @@ TEST_F(DatasetCreation, NDArrCreationMaxSize) {
 TEST_F(DatasetCreation, NDArrCreationArrSize) {
   using namespace hdf5;
   Dimensions DatasetDimensions{10, 10};
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::MultiDimDataset<int> ADValues(
         RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
   }
@@ -102,7 +102,7 @@ TEST_F(DatasetCreation, NDArrCreationArrSize) {
 
 TEST_F(DatasetCreation, NDArrCreationChunkSize1) {
   hdf5::Dimensions DatasetDimensions{10, 10};
-  size_t ChunkSize = 256;
+  size_t ChunkSize{256};
   {
     NeXusDataset::MultiDimDataset<int> ADValues(
         RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {ChunkSize});
@@ -299,8 +299,8 @@ TEST_F(DatasetCreation, RawValueConstructorFail) {
 }
 
 TEST_F(DatasetCreation, RawValueReOpen) {
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::RawValue ADCValues(RootGroup, NeXusDataset::Mode::Create,
                                      ChunkSize);
   }
@@ -355,8 +355,8 @@ TEST_F(DatasetCreation, TimeDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, TimeReOpen) {
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::Time Timestamps(RootGroup, NeXusDataset::Mode::Create,
                                   ChunkSize);
   }
@@ -393,8 +393,8 @@ TEST_F(DatasetCreation, CueIndexDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, CueIndexReOpen) {
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::CueIndex Cue(RootGroup, NeXusDataset::Mode::Create,
                                ChunkSize);
   }
@@ -449,8 +449,8 @@ TEST_F(DatasetCreation, CueTimestampZeroDefaultCreation) {
 }
 
 TEST_F(DatasetCreation, CueTimestampZeroReOpen) {
-  size_t ChunkSize = 256;
   {
+    size_t ChunkSize{256};
     NeXusDataset::CueTimestampZero Cue(RootGroup, NeXusDataset::Mode::Create,
                                        ChunkSize);
   }

@@ -37,8 +37,8 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-CommandHandler::CommandHandler(MainOpt &Config_, MasterInterface *MasterPtr_)
-    : Config(Config_), MasterPtr(MasterPtr_) {}
+CommandHandler::CommandHandler(MainOpt &Settings, MasterInterface *Master)
+    : Config(Settings), MasterPtr(Master) {}
 
 /// \brief Parse the given `NexusStructureString`
 ///
@@ -47,7 +47,7 @@ CommandHandler::CommandHandler(MainOpt &Config_, MasterInterface *MasterPtr_)
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
-                              bool UseSwmr) const {
+                              bool UseSwmr) {
   using nlohmann::json;
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
@@ -549,8 +549,8 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::tryToHandle(Msg const &Msg) {
-  tryToHandle({(char *)Msg.data(), Msg.size()});
+void CommandHandler::tryToHandle(Msg const &Message) {
+  tryToHandle({(char *)Message.data(), Message.size()});
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

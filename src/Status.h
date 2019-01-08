@@ -96,7 +96,7 @@ public:
   /// \brief Adds the information collected for a stream.
   ///
   /// \param info  The MessageInfo object containing all the information.
-  void add(MessageInfo &info);
+  void add(MessageInfo &Info);
 
   /// \brief Sets the estimate time to next message.
   ///
@@ -109,7 +109,7 @@ public:
   /// \brief Get the time difference between two consecutive status messages.
   ///
   /// \return std::chrono::milliseconds from the last message to the next.
-  const std::chrono::milliseconds getTimeToNextMessage();
+  const std::chrono::milliseconds getTimeToNextMessage() const;
 
   /// \brief Returns the total execution time.
   ///

@@ -49,9 +49,6 @@ public:
 
   int32_t close() override;
 
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
-
 protected:
   NeXusDataset::RawValue Value;
   NeXusDataset::Time Timestamp;

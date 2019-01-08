@@ -3,7 +3,6 @@ set(hs00_module_SRC
   Writer.cpp
   WriterUntyped.cpp
   WriterTyped.cpp
-  Exceptions.cpp
   Shape.cpp
   Dimension.cpp
   Slice.cpp

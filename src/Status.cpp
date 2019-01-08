@@ -70,7 +70,7 @@ void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
   MillisecondsToNextMessage = ToNextMessage;
 }
 const std::chrono::milliseconds
-FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() {
+FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() const {
   return MillisecondsToNextMessage;
 }
 const std::chrono::milliseconds

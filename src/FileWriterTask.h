@@ -26,10 +26,10 @@ class FileWriterTask final {
 public:
   /// Constructor
   ///
-  /// \param ServiceID The service ID.
+  /// \param TaskID The service ID.
   /// \param StatusProducer_ The status producer.
-  FileWriterTask(std::string ServiceID,
-                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_);
+  FileWriterTask(std::string TaskID,
+                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr);
 
   /// Destructor.
   ~FileWriterTask();

@@ -12,8 +12,7 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &MainOpt_)
-    : command_listener(MainOpt_), MainOpt_(MainOpt_) {
+Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -41,7 +40,7 @@ void Master::handle_command(std::string const &command) {
 }
 
 std::unique_ptr<StreamMaster<Streamer>> &
-Master::getStreamMasterForJobID(std::string JobID) {
+Master::getStreamMasterForJobID(std::string const &JobID) {
   for (auto &StreamMaster : StreamMasters) {
     if (StreamMaster->getJobId() == JobID) {
       return StreamMaster;
@@ -57,7 +56,7 @@ void Master::addStreamMaster(
 }
 
 struct OnScopeExit {
-  OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
+  explicit OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
   ~OnScopeExit() { ExitAction(); };
   std::function<void()> ExitAction;
 };
@@ -147,7 +146,7 @@ std::string Master::file_writer_process_id() const {
   return file_writer_process_id_;
 }
 
-MainOpt &Master::getMainOpt() { return MainOpt_; }
+MainOpt &Master::getMainOpt() { return MainConfig; }
 
 std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
   return status_producer;
