@@ -538,30 +538,6 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
                 std::chrono::system_clock::now().time_since_epoch())
                 .count());
       }
-
-    } catch (json::parse_error const &E) {
-      LOG(Sev::Error, "parse_error: {}  Command: {}", E.what(), Command);
-    } catch (json::out_of_range const &E) {
-      LOG(Sev::Error, "out_of_range: {}  Command: ", E.what(), Command);
-    } catch (json::type_error const &E) {
-      LOG(Sev::Error, "type_error: {}  Command: ", E.what(), Command);
-    } catch (std::runtime_error const &E) {
-      if (std::string(E.what()).find(
-          "Cannot obtain ObjectId from an invalid file instance!") == 0) {
-        LOG(Sev::Warning, "Exception while creating HDF output file, maybe "
-                          "output file already exists.  command: {}",
-            Command);
-      } else {
-        LOG(Sev::Error, "Unexpected std::runtime_error.  what: {}  command: {}",
-            E.what(), Command);
-      }
-    } catch (std::exception const &E) {
-      LOG(Sev::Error, "Unexpected std::exception while handling command: {}",
-          Command);
-      std::throw_with_nested(std::runtime_error(
-          fmt::format("Unexpected std::exception while handling command  what: "
-                      "{}  Command: {}",
-                      E.what(), Command)));
     } catch (...) {
       std::string JobID;
       try {
