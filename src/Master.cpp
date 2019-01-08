@@ -22,16 +22,16 @@ Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
     LOG(Sev::Info, "Hostname got truncated: {}", buffer.data());
   }
   std::string hostname(buffer.data());
-  file_writer_process_id_ =
+  FileWriterProcessId =
       fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
-  LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
+  LOG(Sev::Info, "getFileWriterProcessId: {}", Master::getFileWriterProcessId());
 }
 
 void Master::handle_command_message(
     std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
   command_handler.tryToHandle(
-      Msg::owned((char const *)msg->getData(), msg->getSize()));
+      Msg::owned(reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
 }
 
 void Master::handle_command(std::string const &command) {
@@ -56,8 +56,14 @@ void Master::addStreamMaster(
 }
 
 struct OnScopeExit {
-  explicit OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
-  ~OnScopeExit() { ExitAction(); };
+  explicit OnScopeExit(std::function<void()> Action) : ExitAction(std::move(Action)){};
+  ~OnScopeExit() {
+    try {
+      ExitAction();
+    } catch (std::bad_function_call &Error) {
+      LOG(Sev::Warning, "OnScopeExit::~OnScopeExit(): Failure to call.");
+    }
+  };
   std::function<void()> ExitAction;
 };
 
@@ -137,13 +143,13 @@ void Master::statistics() {
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
-  status_producer->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
+  status_producer->produce(reinterpret_cast<const KafkaW::uchar*>(Buffer.data()), Buffer.size());
 }
 
 void Master::stop() { do_run = false; }
 
-std::string Master::file_writer_process_id() const {
-  return file_writer_process_id_;
+std::string Master::getFileWriterProcessId() const {
+  return FileWriterProcessId;
 }
 
 MainOpt &Master::getMainOpt() { return MainConfig; }

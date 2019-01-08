@@ -65,7 +65,7 @@ void Logger::log_kafka_gelf_start(std::string const &Address,
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = Address;
   producer.reset(new KafkaW::Producer(BrokerSettings));
-  topic.reset(new KafkaW::Producer::Topic(producer, TopicName));
+  topic = std::make_unique<KafkaW::Producer::Topic>(producer, std::move(TopicName));
   topic->enableCopy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {
@@ -149,7 +149,7 @@ void dwlog_inner(int level, char const *file, int line, char const *func,
 }
 
 void log_kafka_gelf_start(std::string const &Address, std::string TopicName) {
-  DW::g__logger.log_kafka_gelf_start(Address, TopicName);
+  DW::g__logger.log_kafka_gelf_start(Address, std::move(TopicName));
 }
 
 void fwd_graylog_logger_enable(std::string const &Address) {

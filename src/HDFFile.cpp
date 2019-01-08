@@ -16,7 +16,6 @@
 namespace FileWriter {
 
 using nlohmann::json;
-using std::array;
 using std::string;
 using std::vector;
 using json_out_of_range = nlohmann::detail::out_of_range;
@@ -30,7 +29,7 @@ static size_t const MAX_DIMENSIONS_OF_ARRAY = 10;
 static size_t const MAX_ALLOWED_STRING_LENGTH = 4 * 1024 * 1024;
 
 template <typename T>
-static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
+static void writeAttribute(hdf5::node::Node const &Node, const std::string &Name,
                            T Value) {
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -38,7 +37,7 @@ static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
 }
 
 template <typename T>
-static void writeAttribute(hdf5::node::Node &Node, const std::string &Name,
+static void writeAttribute(hdf5::node::Node const &Node, const std::string &Name,
                            std::vector<T> Values) {
   hdf5::property::AttributeCreationList acpl;
   acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -78,7 +77,7 @@ template <typename _DataType> class NumericItemHandler {
 public:
   using DataType = _DataType;
   static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
-                     size_t const ItemLength = 0) {
+                     size_t const) {
     appendValue(Value.get<DataType>(), Buffer);
   }
 };
@@ -87,7 +86,7 @@ class StringItemHandler {
 public:
   using DataType = std::string;
   static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
-                     size_t const ItemLength = 0) {
+                     size_t const) {
     Buffer.push_back(Value);
   }
 };
@@ -147,7 +146,7 @@ populateBlob(nlohmann::json const &Value, size_t const GoalSize,
 }
 
 template <typename T>
-static void writeAttrNumeric(hdf5::node::Node &Node, std::string const &Name,
+static void writeAttrNumeric(hdf5::node::Node const &Node, std::string const &Name,
                              nlohmann::json const &Value) {
   size_t Length = 1;
   if (Value.is_array()) {
@@ -195,7 +194,7 @@ HDFFile::~HDFFile() {
   }
 }
 
-void HDFFile::writeStringAttribute(hdf5::node::Node &Node,
+void HDFFile::writeStringAttribute(hdf5::node::Node const &Node,
                                    const std::string &Name,
                                    const std::string &Value) {
   auto string_type = hdf5::datatype::String::variable();
@@ -210,7 +209,7 @@ void HDFFile::writeStringAttribute(hdf5::node::Node &Node,
 }
 
 template <typename T>
-static void writeHDFISO8601Attribute(hdf5::node::Node &Node,
+static void writeHDFISO8601Attribute(hdf5::node::Node const &Node,
                                      const std::string &Name, T &TimeStamp) {
   using namespace date;
   using namespace std::chrono;
@@ -218,7 +217,7 @@ static void writeHDFISO8601Attribute(hdf5::node::Node &Node,
   HDFFile::writeStringAttribute(Node, Name, s2);
 }
 
-void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
+void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                                   std::string const &Name) {
   using namespace date;
   using namespace std::chrono;
@@ -235,7 +234,7 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
   writeHDFISO8601Attribute(Node, Name, now);
 }
 
-void HDFFile::writeAttributes(hdf5::node::Node &Node,
+void HDFFile::writeAttributes(hdf5::node::Node const &Node,
                               nlohmann::json const *Value) {
   if (Value == nullptr) {
     return;
@@ -253,7 +252,7 @@ void HDFFile::writeAttributes(hdf5::node::Node &Node,
 ///
 /// \param Node         Nodeto write attributes on.
 /// \param JsonValue    json value array of attribute objects.
-void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
+void HDFFile::writeArrayOfAttributes(hdf5::node::Node const &Node,
                                      nlohmann::json const &Values) {
   if (!Values.is_array()) {
     return;
@@ -295,7 +294,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
   }
 }
 
-void writeAttrStringVariableLength(hdf5::node::Node &Node,
+void writeAttrStringVariableLength(hdf5::node::Node const &Node,
                                    std::string const &Name, json const &Values,
                                    hdf5::datatype::CharacterEncoding Encoding) {
   auto Type = hdf5::datatype::String::variable();
@@ -314,7 +313,7 @@ void writeAttrStringVariableLength(hdf5::node::Node &Node,
   }
 }
 
-void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
+void writeAttrStringFixedLength(hdf5::node::Node const &Node, std::string const &Name,
                                 json const &Values, size_t StringSize,
                                 hdf5::datatype::CharacterEncoding Encoding) {
   hdf5::dataspace::Dataspace SpaceMem;
@@ -357,7 +356,7 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
   }
 }
 
-void writeAttrString(hdf5::node::Node &Node, std::string const &Name,
+void writeAttrString(hdf5::node::Node const &Node, std::string const &Name,
                      nlohmann::json const &Values, size_t const StringSize,
                      hdf5::datatype::CharacterEncoding Encoding) {
   if (StringSize > 0) {
@@ -374,7 +373,7 @@ void writeAttrString(hdf5::node::Node &Node, std::string const &Name,
 /// \param Name     name of the attribute.
 /// \param Values   the attribute values.
 void HDFFile::writeAttrOfSpecifiedType(
-    std::string const &DType, hdf5::node::Node &Node, std::string const &Name,
+    std::string const &DType, hdf5::node::Node const &Node, std::string const &Name,
     uint32_t StringSize, hdf5::datatype::CharacterEncoding Encoding,
     nlohmann::json const &Values) {
   try {
@@ -424,7 +423,7 @@ void HDFFile::writeAttrOfSpecifiedType(
 ///
 /// \param node   Node to write attributes on.
 /// \param jsv    Json value object of attributes.
-void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
+void HDFFile::writeObjectOfAttributes(hdf5::node::Node const &Node,
                                       nlohmann::json const &Values) {
   for (auto It = Values.begin(); It != Values.end(); ++It) {
 
@@ -438,7 +437,7 @@ void HDFFile::writeObjectOfAttributes(hdf5::node::Node &Node,
 /// \param Node         Group or dataset to write attribute to
 /// \param Name         Name of the attribute
 /// \param AttrValue    Json value containing the attribute value
-void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
+void HDFFile::writeScalarAttribute(hdf5::node::Node const &Node,
                                    std::string const &Name,
                                    nlohmann::json const &Values) {
   if (Values.is_string()) {
@@ -452,7 +451,7 @@ void HDFFile::writeScalarAttribute(hdf5::node::Node &Node,
   }
 }
 
-void HDFFile::writeAttributesIfPresent(hdf5::node::Node &Node,
+void HDFFile::writeAttributesIfPresent(hdf5::node::Node const &Node,
                                        nlohmann::json const &Values) {
   if (auto AttributesMaybe = find<json>("attributes", Values)) {
     auto const Attributes = AttributesMaybe.inner();
@@ -633,10 +632,10 @@ void HDFFile::writeGenericDataset(const std::string &DataType,
     ss << Parent.link().path() << "/" << Name;
     ss << " type='" << DataType << "'";
     ss << " size(";
-    for (auto s : Sizes)
+    for (auto &s : Sizes)
       ss << s << " ";
     ss << ")  max(";
-    for (auto s : Max)
+    for (auto &s : Max)
       ss << s << " ";
     ss << ")  ";
     std::throw_with_nested(std::runtime_error(ss.str()));

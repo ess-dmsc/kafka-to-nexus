@@ -5,7 +5,7 @@ namespace FileWriter {
 
 FlatbufferMessage::FlatbufferMessage(char const *const BufferPtr,
                                      size_t const Size)
-    : DataPtr(BufferPtr), DataSize(Size), Valid(false) {
+    : DataPtr(BufferPtr), DataSize(Size) {
   extractPacketInfo();
 }
 
@@ -34,4 +34,4 @@ void FlatbufferMessage::extractPacketInfo() {
   }
   Valid = true;
 }
-}
+} //namespace FileWriter

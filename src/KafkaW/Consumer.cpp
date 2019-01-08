@@ -27,7 +27,7 @@ Consumer::~Consumer() {
     rd_kafka_destroy(RdKafka);
     RdKafka = nullptr;
   }
-  if (PartitionList) {
+  if (PartitionList != nullptr) {
     rd_kafka_topic_partition_list_destroy(PartitionList);
     PartitionList = nullptr;
   }
@@ -254,12 +254,13 @@ std::unique_ptr<ConsumerMessage> Consumer::poll() {
 
   static_assert(sizeof(char) == 1, "Failed: sizeof(char) == 1");
   if (msg->err == RD_KAFKA_RESP_ERR_NO_ERROR) {
-    return std::make_unique<ConsumerMessage>(
-        (std::uint8_t *)msg->payload, msg->len,
+    return std::make_unique<ConsumerMessage>(reinterpret_cast<std::uint8_t*>(msg->payload), msg->len,
         [msg]() { rd_kafka_message_destroy(msg); }, msg->offset);
-  } else if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
+  }
+  if (msg->err == RD_KAFKA_RESP_ERR__PARTITION_EOF) {
     return std::make_unique<ConsumerMessage>(PollStatus::EOP);
-  } else if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
+  }
+  if (msg->err == RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN) {
     LOG(Sev::Error, "RD_KAFKA_RESP_ERR__ALL_BROKERS_DOWN");
   } else if (msg->err == RD_KAFKA_RESP_ERR__BAD_MSG) {
     LOG(Sev::Error, "RD_KAFKA_RESP_ERR__BAD_MSG");

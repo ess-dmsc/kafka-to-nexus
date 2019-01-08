@@ -16,7 +16,7 @@ namespace FileWriter {
 /// which are exclusively used for only one sourcename.
 class Source final {
 public:
-  Source(std::string const &Name, std::string const &ID,
+  Source(std::string Name, std::string ID,
          HDFWriterModule::ptr Writer);
   Source(Source &&) = default;
   ~Source();
@@ -29,7 +29,7 @@ public:
   void setTopic(std::string const &Name);
 
 private:
-  std::string Topic_;
+  std::string TopicName;
   std::string SourceName;
   std::string SchemaID;
   std::unique_ptr<HDFWriterModule> WriterModule;

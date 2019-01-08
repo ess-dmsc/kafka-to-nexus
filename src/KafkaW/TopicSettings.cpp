@@ -3,8 +3,6 @@
 
 namespace KafkaW {
 
-TopicSettings::TopicSettings() {}
-
 void TopicSettings::applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf) {
   std::vector<char> ErrorString(1024);
   for (auto &c : ConfigurationIntegers) {
@@ -28,4 +26,4 @@ void TopicSettings::applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf) {
     }
   }
 }
-}
+} // namespace KafkaW

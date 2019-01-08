@@ -5,15 +5,13 @@ namespace KafkaW {
 
 using std::unique_ptr;
 using std::shared_ptr;
-using std::array;
 using std::vector;
 using std::string;
-using std::atomic;
 using std::move;
 
 ProducerTopic::~ProducerTopic() {
   LOG(Sev::Debug, "~ProducerTopic {}", TopicName);
-  if (RdKafkaTopic) {
+  if (RdKafkaTopic != nullptr) {
     LOG(Sev::Debug, "rd_kafka_topic_destroy");
     rd_kafka_topic_destroy(RdKafkaTopic);
     RdKafkaTopic = nullptr;
@@ -22,7 +20,7 @@ ProducerTopic::~ProducerTopic() {
 
 ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Pointer,
                              std::string Topic)
-    : ProducerPtr(Pointer), TopicName(std::move(Topic)) {
+    : ProducerPtr(std::move(Pointer)), TopicName(std::move(Topic)) {
   TopicSettings TopicSettings;
   rd_kafka_topic_conf_t *topic_conf = rd_kafka_topic_conf_new();
   TopicSettings.applySettingsToRdKafkaConf(topic_conf);
@@ -40,7 +38,7 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Pointer,
       rd_kafka_name(ProducerPtr->getRdKafkaPtr()));
 }
 
-ProducerTopic::ProducerTopic(ProducerTopic &&x) {
+ProducerTopic::ProducerTopic(ProducerTopic &&x) noexcept {
   std::swap(ProducerPtr, x.ProducerPtr);
   std::swap(RdKafkaTopic, x.RdKafkaTopic);
   std::swap(TopicName, x.TopicName);
@@ -55,7 +53,7 @@ struct Msg_ : public Producer::Msg {
   }
 };
 
-int ProducerTopic::produce(uchar *MsgData, size_t MsgSize, bool) {
+int ProducerTopic::produce(const uchar *MsgData, size_t MsgSize, bool) {
   auto MsgPtr = new Msg_;
   std::copy(MsgData, MsgData + MsgSize, std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
@@ -64,7 +62,7 @@ int ProducerTopic::produce(uchar *MsgData, size_t MsgSize, bool) {
 }
 
 int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
-  if (not RdKafkaTopic) {
+  if (RdKafkaTopic == nullptr) {
     // Should never happen
     return RDKAFKATOPIC_NOT_INITIALIZED;
   }
@@ -94,7 +92,7 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
     }
   } else {
     ++s.produced;
-    s.produced_bytes += (uint64_t)Msg->size;
+    s.produced_bytes += static_cast<uint64_t>(Msg->size);
     ++ProducerPtr->TotalMessagesProduced;
     if (log_level >= 8) {
       LOG(Sev::Debug, "sent to topic {} partition {}",
@@ -107,4 +105,4 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
 }
 
 void ProducerTopic::enableCopy() { DoCopyMsg = true; }
-}
+} // namespace KafkaW

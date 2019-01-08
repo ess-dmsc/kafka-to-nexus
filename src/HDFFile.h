@@ -43,10 +43,10 @@ public:
   void finalize();
 
   static std::string h5VersionStringLinked();
-  static void writeAttributes(hdf5::node::Node &Node,
+  static void writeAttributes(hdf5::node::Node const &Node,
                               nlohmann::json const *Value);
 
-  static void writeStringAttribute(hdf5::node::Node &Node,
+  static void writeStringAttribute(hdf5::node::Node const &Node,
                                    std::string const &Name,
                                    std::string const &Value);
 
@@ -72,10 +72,10 @@ private:
       hdf5::datatype::String FixedStringHDFType,
       std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
 
-  static void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
+  static void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                                   const std::string &Name);
 
-  static void writeAttributesIfPresent(hdf5::node::Node &Node,
+  static void writeAttributesIfPresent(hdf5::node::Node const &Node,
                                        nlohmann::json const &Values);
 
   static std::vector<std::string> populateStrings(const nlohmann::json *Values,
@@ -108,18 +108,18 @@ private:
   setCommonProps(hdf5::property::FileCreationList &FileCreationPropertyList,
                  hdf5::property::FileAccessList &FileAccessPropertyList) {}
 
-  static void writeObjectOfAttributes(hdf5::node::Node &Node,
+  static void writeObjectOfAttributes(hdf5::node::Node const &Node,
                                       const nlohmann::json &Values);
 
-  static void writeArrayOfAttributes(hdf5::node::Node &Node,
+  static void writeArrayOfAttributes(hdf5::node::Node const &Node,
                                      const nlohmann::json &Values);
 
-  static void writeScalarAttribute(hdf5::node::Node &Node,
+  static void writeScalarAttribute(hdf5::node::Node const &Node,
                                    const std::string &Name,
                                    const nlohmann::json &Values);
 
   static void
-  writeAttrOfSpecifiedType(std::string const &DType, hdf5::node::Node &Node,
+  writeAttrOfSpecifiedType(std::string const &DType, hdf5::node::Node const &Node,
                            std::string const &Name, uint32_t StringSize,
                            hdf5::datatype::CharacterEncoding Encoding,
                            nlohmann::json const &Values);

@@ -41,8 +41,8 @@ public:
 
 class Producer : public ProducerInterface {
 public:
-  typedef ProducerTopic Topic;
-  typedef ProducerMsg Msg;
+  using Topic = ProducerTopic;
+  using Msg = ProducerMsg;
   explicit Producer(BrokerSettings const &Settings);
   explicit Producer(Producer const &) = delete;
   explicit Producer(Producer &&x);

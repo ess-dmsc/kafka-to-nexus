@@ -9,9 +9,9 @@ namespace KafkaW {
 
 class TopicSettings {
 public:
-  TopicSettings();
+  TopicSettings() = default;
   void applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf);
   std::map<std::string, int> ConfigurationIntegers;
   std::map<std::string, std::string> ConfigurationStrings;
 };
-}
+} // namespace KafkaW
