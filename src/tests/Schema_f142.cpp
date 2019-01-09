@@ -363,17 +363,19 @@ TEST_F(Schema_f142, writeArrayFloatWithLatest) {
   ASSERT_TRUE(File.root().has_dataset("cue_index"));
   ASSERT_TRUE(File.root().has_dataset("the_latest_value"));
 
-  auto Dataset = hdf5::node::get_dataset(File.root(), "value");
   size_t const N = Expected.at(0).size();
   ASSERT_EQ(5u, N);
   std::vector<DT> Data(N);
-  for (size_t I = 0; I < Expected.size(); ++I) {
-    hdf5::dataspace::Simple SpaceMem({1, N});
-    hdf5::dataspace::Simple SpaceFile(Dataset.dataspace());
-    SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
-                        hdf5::dataspace::Hyperslab({I, 0}, {1, N}));
-    Dataset.read(Data, Dataset.datatype(), SpaceMem, SpaceFile);
-    ASSERT_EQ(Data, Expected.at(I));
+  {
+    auto Dataset = hdf5::node::get_dataset(File.root(), "value");
+    for (size_t I = 0; I < Expected.size(); ++I) {
+      hdf5::dataspace::Simple SpaceMem({1, N});
+      hdf5::dataspace::Simple SpaceFile(Dataset.dataspace());
+      SpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
+                          hdf5::dataspace::Hyperslab({I, 0}, {1, N}));
+      Dataset.read(Data, Dataset.datatype(), SpaceMem, SpaceFile);
+      ASSERT_EQ(Data, Expected.at(I));
+    }
   }
 
   {

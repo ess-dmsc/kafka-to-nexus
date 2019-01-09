@@ -12,30 +12,28 @@ generateKafkaMsg(unsigned char const *DataPtr, size_t const Size) {
                                                    std::function<void()>());
 }
 class StreamerInitTest : public ::testing::Test {
-public:
+protected:
+  void SetUp() override {
+    Options.ConsumerSettings.MetadataTimeoutMS = 10;
+  }
+  StreamerOptions Options;
 };
 
 // make sure that a topic exists/not exists
 TEST_F(StreamerInitTest, Success) {
-  StreamerOptions Options;
-  Options.ConsumerSettings.MetadataTimeoutMS = 10;
   EXPECT_NO_THROW(Streamer("broker", "topic", Options));
 }
 
-TEST_F(StreamerInitTest, NoBroker) {
-  StreamerOptions Options;
-  Options.ConsumerSettings.MetadataTimeoutMS = 10;
+TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
   EXPECT_THROW(Streamer("", "topic", Options), std::runtime_error);
 }
 
-TEST_F(StreamerInitTest, NoTopic) {
-  StreamerOptions Options;
-  Options.ConsumerSettings.MetadataTimeoutMS = 10;
+TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
   EXPECT_THROW(Streamer("broker", "", Options), std::runtime_error);
 }
 
 // Disabled for now as there is a problem with the Consumer that requires a
-// re-writer of it
+// rewrite of it
 //  TEST_F(StreamerTest, CreateConsumerSuccess) {
 //    StreamerOptions SomeOptions;
 //    SomeOptions.BrokerSettings.Address = "127.0.0.1:9999";
@@ -55,14 +53,18 @@ public:
   using Streamer::ConsumerCreated;
   using Streamer::Options;
 };
+
 class StreamerProcessTest : public ::testing::Test {
 protected:
   void SetUp() override {
     BrokerSettings.Address = "127.0.0.1:1";
     ConsumerSettings.MetadataTimeoutMS = 10;
+    Options.ConsumerSettings = ConsumerSettings;
+    Options.BrokerSettings = BrokerSettings;
   }
   KafkaW::BrokerSettings BrokerSettings;
   KafkaW::ConsumerSettings ConsumerSettings;
+  StreamerOptions Options;
 };
 
 class ConsumerEmptyStandIn : public KafkaW::Consumer {
@@ -75,9 +77,6 @@ public:
 };
 
 TEST_F(StreamerProcessTest, CreationNotYetDone) {
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings, ConsumerSettings);
@@ -94,9 +93,6 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
 }
 
 TEST_F(StreamerProcessTest, InvalidFuture) {
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerCreated =
       std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>();
@@ -105,9 +101,6 @@ TEST_F(StreamerProcessTest, InvalidFuture) {
 }
 
 TEST_F(StreamerProcessTest, BadConsumerCreation) {
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerCreated = std::async(std::launch::async, []() {
     return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -118,9 +111,6 @@ TEST_F(StreamerProcessTest, BadConsumerCreation) {
 }
 
 TEST_F(StreamerProcessTest, EmptyPoll) {
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
@@ -138,9 +128,6 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
 }
 
 TEST_F(StreamerProcessTest, EndOfPartition) {
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
@@ -158,9 +145,6 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
 }
 
 TEST_F(StreamerProcessTest, PollingError) {
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
@@ -184,9 +168,6 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
   unsigned char DataBuffer[]{"0000test"};
   std::string ReaderKey{"test"};
 
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
@@ -234,9 +215,6 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
       ReaderKey);
   unsigned char DataBuffer[]{"0000test"};
 
-  StreamerOptions Options;
-  Options.ConsumerSettings = ConsumerSettings;
-  Options.BrokerSettings = BrokerSettings;
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
@@ -263,7 +241,6 @@ public:
   MAKE_MOCK1(write, WriteResult(FlatbufferMessage const &), override);
   MAKE_MOCK0(flush, int32_t(), override);
   MAKE_MOCK0(close, int32_t(), override);
-  MAKE_MOCK3(enable_cq, void(CollectiveQueue *, HDFIDStore *, int), override);
 };
 
 class StreamerProcessTimingTest : public ::testing::Test {
@@ -391,7 +368,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
 
 class DemuxerStandIn : public DemuxTopic {
 public:
-  DemuxerStandIn(std::string Topic) : DemuxTopic(Topic) {}
+  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
   MAKE_MOCK1(process_message, ProcessMessageResult(FlatbufferMessage const &),
              override);
 };

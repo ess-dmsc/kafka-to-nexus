@@ -42,7 +42,7 @@ public:
   /// \param Config Configuration of the file writer.
   /// \param MasterPtr Optional `Master` which can continue to watch over newly
   /// created jobs. Not used for example in some tests.
-  CommandHandler(MainOpt &config, MasterInterface *master);
+  CommandHandler(MainOpt &Settings, MasterInterface *Master);
 
   /// \brief Given a JSON string, create a new file writer task.
   ///
@@ -64,13 +64,13 @@ public:
   /// \brief Pass content of the message to the command handler.
   ///
   /// \param Msg The message.
-  void tryToHandle(Msg const &msg);
+  void tryToHandle(Msg const &Message);
 
   /// \brief Parse the given command and pass it on to a more specific
   /// handler.
   ///
   /// \param Command The command to parse.
-  void handle(std::string const &command);
+  void handle(std::string const &Command);
 
   /// Try to handle command and catch exceptions
   void tryToHandle(std::string const &Command);
@@ -89,13 +89,13 @@ public:
   getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
-  void
+  static void
   addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
                                 std::unique_ptr<FileWriterTask> &Task);
 
-  std::vector<StreamHDFInfo>
+  static std::vector<StreamHDFInfo>
   initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
-                bool UseSwmr) const;
+                bool UseSwmr);
   MainOpt &Config;
   MasterInterface *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;

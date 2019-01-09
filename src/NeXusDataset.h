@@ -26,106 +26,6 @@ private:
 
 namespace hdf5 {
 namespace datatype {
-/// Required for h5cpp to write const data types.
-template <> class TypeTrait<std::int8_t const> {
-public:
-  using Type = std::int8_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT8)));
-  }
-};
-
-template <> class TypeTrait<std::uint8_t const> {
-public:
-  using Type = std::uint8_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT8)));
-  }
-};
-
-template <> class TypeTrait<std::int16_t const> {
-public:
-  using Type = std::int16_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT16)));
-  }
-};
-
-template <> class TypeTrait<std::uint16_t const> {
-public:
-  using Type = std::uint16_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT16)));
-  }
-};
-
-template <> class TypeTrait<std::int32_t const> {
-public:
-  using Type = std::int32_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT32)));
-  }
-};
-
-template <> class TypeTrait<std::uint32_t const> {
-public:
-  using Type = std::uint32_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT32)));
-  }
-};
-
-template <> class TypeTrait<float const> {
-public:
-  using Type = float;
-  using TypeClass = Float;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_FLOAT)));
-  }
-};
-
-template <> class TypeTrait<double const> {
-public:
-  using Type = double;
-  using TypeClass = Float;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_DOUBLE)));
-  }
-};
-
-template <> class TypeTrait<char const> {
-public:
-  using Type = char;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_CHAR)));
-  }
-};
-
-template <> class TypeTrait<std::int64_t const> {
-public:
-  using Type = std::int64_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_INT64)));
-  }
-};
-
-template <> class TypeTrait<std::uint64_t const> {
-public:
-  using Type = std::uint64_t;
-  using TypeClass = Integer;
-  static TypeClass create(const Type & = Type()) {
-    return TypeClass(ObjectHandle(H5Tcopy(H5T_NATIVE_UINT64)));
-  }
-};
-
 /// Required for h5cpp to write data provided using ArrayAdapter.
 template <typename T> class TypeTrait<ArrayAdapter<T>> {
 public:
@@ -186,7 +86,7 @@ public:
           }));
     } else if (Mode::Open == CMode) {
       Dataset::operator=(Parent.get_dataset(Name));
-      NrOfElements = dataspace().size();
+      NrOfElements = static_cast<size_t>(dataspace().size());
     } else {
       throw std::runtime_error(
           "ExtensibleDataset::ExtensibleDataset(): Unknown mode.");
@@ -227,7 +127,7 @@ public:
   /// \param[in] CMode Should the dataset be opened or created.
   /// \throw std::runtime_error if dataset can not opened or the constructor is
   /// called with the input NeXusDataset::Mode::Create.
-  MultiDimDatasetBase(hdf5::node::Group Parent, Mode CMode)
+  MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
       throw std::runtime_error("MultiDimDatasetBase::MultiDimDatasetBase(): "
@@ -304,7 +204,7 @@ public:
     if (Mode::Create == CMode) {
       Shape.insert(Shape.begin(), 0);
       hdf5::Dimensions MaxSize(Shape.size(),
-                               int(hdf5::dataspace::Simple::UNLIMITED));
+                               hdf5::dataspace::Simple::UNLIMITED);
       std::vector<hsize_t> VectorChunkSize;
       if (ChunkSize.empty()) {
         LOG(Sev::Warning, "No chunk size given. Using the default value 1024.");
@@ -364,7 +264,7 @@ public:
   Time() = default;
   /// \brief Create the time dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  Time(hdf5::node::Group parent, Mode CMode, int ChunkSize = 1024);
+  Time(hdf5::node::Group Parent, Mode CMode, int ChunkSize = 1024);
 };
 
 class CueIndex : public ExtensibleDataset<std::uint32_t> {
@@ -372,7 +272,7 @@ public:
   CueIndex() = default;
   /// \brief Create the cue_index dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  CueIndex(hdf5::node::Group parent, Mode CMode, int ChunkSize = 1024);
+  CueIndex(hdf5::node::Group Parent, Mode CMode, int ChunkSize = 1024);
 };
 
 class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
@@ -380,7 +280,7 @@ public:
   CueTimestampZero() = default;
   /// \brief Create the cue_timestamp_zero dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  CueTimestampZero(hdf5::node::Group parent, Mode CMode, int ChunkSize = 1024);
+  CueTimestampZero(hdf5::node::Group Parent, Mode CMode, int ChunkSize = 1024);
 };
 
 } // namespace NexUsDataset

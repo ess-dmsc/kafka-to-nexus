@@ -310,13 +310,5 @@ public:
     std::cout << "WriterClass::close()\n";
     return 0;
   }
-
-  /// \brief Provides no functionality and is never called.
-  ///
-  /// This member function is never called by the main application but because
-  /// FileWriter::HDFWriterModule defines it as a pure virtual, it must be
-  /// implemented in classes deriving from it.
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override {}
 };
 } // namespace TemplateWriter

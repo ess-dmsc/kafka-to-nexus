@@ -20,7 +20,7 @@ namespace FileWriter {
 /// Reacts also to stop, and possibly other future commands.
 class Master : public MasterInterface {
 public:
-  Master(MainOpt &config);
+  explicit Master(MainOpt &Config);
 
   /// \brief Sets up command listener and handles any commands received.
   ///
@@ -37,7 +37,7 @@ public:
       std::unique_ptr<StreamMaster<Streamer>> StreamMaster) override;
   void stopStreamMasters() override;
   std::unique_ptr<StreamMaster<Streamer>> &
-  getStreamMasterForJobID(std::string JobID) override;
+  getStreamMasterForJobID(std::string const &JobID) override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
@@ -56,7 +56,7 @@ private:
   std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
   std::string file_writer_process_id_;
-  MainOpt &MainOpt_;
+  MainOpt &MainConfig;
 };
 
 } // namespace FileWriter

@@ -1,4 +1,5 @@
 #include "schemas/senv/FastSampleEnvironmentWriter.h"
+#include "senv_data_generated.h"
 #include <fstream>
 #include <gtest/gtest.h>
 #include <memory>

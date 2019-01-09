@@ -37,8 +37,8 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-CommandHandler::CommandHandler(MainOpt &Config_, MasterInterface *MasterPtr_)
-    : Config(Config_), MasterPtr(MasterPtr_) {}
+CommandHandler::CommandHandler(MainOpt &Settings, MasterInterface *Master)
+    : Config(Settings), MasterPtr(Master) {}
 
 /// \brief Parse the given `NexusStructureString`
 ///
@@ -47,7 +47,7 @@ CommandHandler::CommandHandler(MainOpt &Config_, MasterInterface *MasterPtr_)
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
-                              bool UseSwmr) const {
+                              bool UseSwmr) {
   using nlohmann::json;
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
@@ -225,8 +225,14 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (BrokerString.substr(0, 2) != "//") {
       BrokerString = std::string("//") + BrokerString;
     }
-    Broker.parse(BrokerString);
-    LOG(Sev::Debug, "Use main broker: {}", Broker.host_port);
+    try {
+      Broker.parse(BrokerString);
+    } catch (std::runtime_error &e) {
+      LOG(Sev::Warning, "Unable to parse broker {} in command message, using "
+                        "default broker (localhost:9092)",
+          BrokerString)
+    }
+    LOG(Sev::Debug, "Use main broker: {}", Broker.HostPort);
   }
 
   if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
@@ -277,6 +283,10 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
+  Config.StreamerConfiguration.StartTimestamp =
+      std::chrono::milliseconds::zero();
+  Config.StreamerConfiguration.StopTimestamp =
+      std::chrono::milliseconds::zero();
 
   // Must be done before StreamMaster instantiation
   if (auto x = find<uint64_t>("start_time", Doc)) {
@@ -298,7 +308,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     // Register the task with master.
     LOG(Sev::Info, "Write file with job_id: {}", Task->jobID());
     auto s = std::make_unique<StreamMaster<Streamer>>(
-        Broker.host_port, std::move(Task), Config,
+        Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
@@ -539,8 +549,8 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::tryToHandle(Msg const &Msg) {
-  tryToHandle({(char *)Msg.data(), Msg.size()});
+void CommandHandler::tryToHandle(Msg const &Message) {
+  tryToHandle({(char *)Message.data(), Message.size()});
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

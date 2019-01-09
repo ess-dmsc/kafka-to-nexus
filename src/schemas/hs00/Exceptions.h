@@ -11,8 +11,6 @@ class UnexpectedJsonInput : public std::runtime_error {
 public:
   UnexpectedJsonInput() : std::runtime_error("UnexpectedJsonInput") {}
 };
-
-std::runtime_error unimplemented();
 }
 }
 }

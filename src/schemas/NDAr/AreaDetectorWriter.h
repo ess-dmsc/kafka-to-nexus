@@ -10,7 +10,6 @@
 #include "../../HDFWriterModule.h"
 #include "../../Msg.h"
 #include "NeXusDataset.h"
-#include "schemas/NDAr_NDArray_schema_generated.h"
 
 namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
@@ -32,7 +31,7 @@ std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
 class AreaDetectorWriter : public FileWriterBase {
 public:
   AreaDetectorWriter() = default;
-  ~AreaDetectorWriter() = default;
+  ~AreaDetectorWriter() override = default;
 
   void parse_config(std::string const &ConfigurationStream,
                     std::string const &ConfigurationModule) override;
@@ -47,9 +46,6 @@ public:
   int32_t flush() override;
 
   int32_t close() override;
-
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
 
 protected:
   void initValueDataset(hdf5::node::Group &Parent);

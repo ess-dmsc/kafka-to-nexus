@@ -13,7 +13,7 @@ namespace h5 {
 
 class RuntimeError : public std::runtime_error {
 public:
-  RuntimeError(std::string const &x) : std::runtime_error(x) {}
+  explicit RuntimeError(std::string const &x) : std::runtime_error(x) {}
 };
 
 void swap(hsize_t &, hsize_t &);
@@ -35,18 +35,17 @@ struct append_ret {
 class h5d {
 public:
   typedef std::unique_ptr<h5d> ptr;
-  static ptr create(hdf5::node::Group loc, std::string name,
+  static ptr create(hdf5::node::Group Node, std::string const &Name,
                     hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
                     hdf5::property::DatasetCreationList dcpl,
                     CollectiveQueue *cq);
-  static ptr open_single(hdf5::node::Group loc, std::string name,
+  static ptr open_single(hdf5::node::Group Node, std::string const &Name,
                          CollectiveQueue *cq, HDFIDStore *hdf_store);
-  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
-                  HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group Node, std::string const &Name,
+                  CollectiveQueue *cq, HDFIDStore *hdf_store);
   h5d(h5d &&x);
   ~h5d();
   friend void swap(h5d &x, h5d &y);
-  void lookup_cqsnowix(char const *ds_name, size_t &cqsnowix);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
   template <typename T> append_ret append_data_2d(T const *data, hsize_t nlen);
 
@@ -54,7 +53,7 @@ public:
   ///
   /// Writes the given string to the dataset if the dataset can contain strings.
   append_ret append(std::string const &String);
-  std::string name;
+  std::string Name;
   hdf5::node::Dataset Dataset;
   hdf5::datatype::Datatype Type;
   hdf5::property::DatasetTransferList PLTransfer;
@@ -111,15 +110,15 @@ private:
 class Chunked1DString {
 public:
   typedef std::unique_ptr<Chunked1DString> ptr;
-  static ptr create(hdf5::node::Group loc, std::string name,
-                    hsize_t chunk_bytes, CollectiveQueue *cq);
-  static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
+  static ptr create(hdf5::node::Group Node, std::string Name,
+                    hsize_t ChunkBytes, CollectiveQueue *cq);
+  static ptr open(hdf5::node::Group Node, std::string Name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
   append_ret append(std::string const &String);
   h5d ds;
 
 private:
-  Chunked1DString(h5d ds);
+  explicit Chunked1DString(h5d ds);
 };
 
 template <typename T> class h5d_chunked_2d;

@@ -10,11 +10,10 @@ set(UnitTests_SRC
     HDFFileTestHelper.cpp
     helper.cpp
     json.cpp
-    uri.cpp
-    status_test.cpp
+    StatusTest.cpp
+    URITests.cpp
     StatusWriterTests.cpp
     CommandHandlerTests.cpp
-    stream_master.cpp
     FastSampleEnvironmentWriterTests.cpp
     NeXusDatasets.cpp
     ReaderRegistration.cpp

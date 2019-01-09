@@ -44,8 +44,8 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const TopicName,
-                           FileWriter::StreamerOptions const Options) {
+FileWriter::createConsumer(std::string const &TopicName,
+                           FileWriter::StreamerOptions const &Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(
@@ -98,11 +98,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
           "Failed to set-up process for creating consumer.");
     }
   } catch (std::runtime_error &Error) {
-    throw Error;
+    throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
   } catch (std::exception &Error) {
     LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
         Error.what());
-    throw Error;
+    throw; // "throw;" rethrows
   }
 
   // make sure that the connection is ok

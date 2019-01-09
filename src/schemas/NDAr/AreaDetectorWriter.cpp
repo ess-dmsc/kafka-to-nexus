@@ -7,6 +7,7 @@
 
 #include "AreaDetectorWriter.h"
 #include "HDFFile.h"
+#include "NDAr_NDArray_schema_generated.h"
 
 namespace NDAr {
 
@@ -209,10 +210,6 @@ std::int32_t AreaDetectorWriter::flush() { return 0; }
 
 std::int32_t AreaDetectorWriter::close() { return 0; }
 
-void AreaDetectorWriter::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                                   int mpi_rank) {
-  LOG(Sev::Error, "Collective queue not implemented.");
-}
 template <typename Type>
 std::unique_ptr<NeXusDataset::MultiDimDatasetBase>
 makeIt(hdf5::node::Group &Parent, hdf5::Dimensions &Shape,

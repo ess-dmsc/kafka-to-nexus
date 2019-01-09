@@ -25,8 +25,6 @@ public:
   WriteResult write(FlatbufferMessage const &Message) override;
   int32_t flush() override;
   int32_t close() override;
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override;
 
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_id;

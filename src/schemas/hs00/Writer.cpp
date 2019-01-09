@@ -61,8 +61,6 @@ int32_t Writer::close() {
   return TheWriterUntyped->close();
 }
 
-void Writer::enable_cq(CollectiveQueue *, HDFIDStore *, int) {}
-
 FileWriter::HDFWriterModule::ptr Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new Writer);
 }
