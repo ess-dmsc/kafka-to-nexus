@@ -64,13 +64,16 @@ public:
   ///
   /// \param Msg The message.
   /// \param MsgTimestamp The rd_kafka_message_timestamp when available
-  void tryToHandle(Msg const &Message, std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});
+  void tryToHandle(Msg const &Message, std::chrono::milliseconds MsgTimestamp =
+                                           std::chrono::milliseconds{-1});
 
   /// \brief Try to handle the command.
   ///
   /// \param Command The command to parse.
   /// \param MsgTimestamp The rd_kafka_message_timestamp when available.
-  void tryToHandle(std::string const &Command, std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});
+  void tryToHandle(
+      std::string const &Command,
+      std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});
 
   /// \brief Get number of active writer tasks.
   ///
@@ -90,7 +93,8 @@ private:
   ///
   /// \param Command The command to parse.
   /// \param MsgTimestamp The message timestamp.
-  void handle(std::string const &command, std::chrono::milliseconds MsgTimestamp);
+  void handle(std::string const &command,
+              std::chrono::milliseconds MsgTimestamp);
 
   static void
   addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,

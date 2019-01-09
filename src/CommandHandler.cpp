@@ -441,130 +441,132 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 }
 
-  void CommandHandler::handle(std::string const &Command,
-                              const std::chrono::milliseconds StartTime) {
-    using nlohmann::json;
-    json Doc;
-    try {
-      Doc = json::parse(Command);
-    } catch (...) {
-      std::throw_with_nested(
-          std::runtime_error(fmt::format("Can not parse command: {}", Command)));
-    }
+void CommandHandler::handle(std::string const &Command,
+                            const std::chrono::milliseconds StartTime) {
+  using nlohmann::json;
+  json Doc;
+  try {
+    Doc = json::parse(Command);
+  } catch (...) {
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("Can not parse command: {}", Command)));
+  }
 
-    if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
-      if (ServiceIDMaybe.inner() != Config.service_id) {
-        LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
-            ServiceIDMaybe.inner());
-        return;
-      }
-    }
-
-    uint64_t TeamId = 0;
-    uint64_t CommandTeamId = 0;
-    if (auto x = find<uint64_t>("teamid", Doc)) {
-      CommandTeamId = x.inner();
-    }
-    if (CommandTeamId != TeamId) {
-      LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
-          CommandTeamId, TeamId);
+  if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
+    if (ServiceIDMaybe.inner() != Config.service_id) {
+      LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
+          ServiceIDMaybe.inner());
       return;
     }
+  }
 
-    if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
-      std::string CommandMain = CmdMaybe.inner();
-      if (CommandMain == "FileWriter_new") {
-        handleNew(Command, StartTime);
-        return;
-      }
-      if (CommandMain == "FileWriter_exit") {
-        handleExit();
-        return;
-      }
-      if (CommandMain == "FileWriter_stop") {
-        handleStreamMasterStop(Command);
-        return;
-      }
-      if (CommandMain == "file_writer_tasks_clear_all") {
-        if (auto y = find<std::string>("recv_type", Doc)) {
-          std::string ReceiverType = y.inner();
-          if (ReceiverType == "FileWriter") {
-            handleFileWriterTaskClearAll();
-            return;
-          }
-        } else {
-          throwMissingKey("recv_type", Doc.dump());
+  uint64_t TeamId = 0;
+  uint64_t CommandTeamId = 0;
+  if (auto x = find<uint64_t>("teamid", Doc)) {
+    CommandTeamId = x.inner();
+  }
+  if (CommandTeamId != TeamId) {
+    LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
+        CommandTeamId, TeamId);
+    return;
+  }
+
+  if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
+    std::string CommandMain = CmdMaybe.inner();
+    if (CommandMain == "FileWriter_new") {
+      handleNew(Command, StartTime);
+      return;
+    }
+    if (CommandMain == "FileWriter_exit") {
+      handleExit();
+      return;
+    }
+    if (CommandMain == "FileWriter_stop") {
+      handleStreamMasterStop(Command);
+      return;
+    }
+    if (CommandMain == "file_writer_tasks_clear_all") {
+      if (auto y = find<std::string>("recv_type", Doc)) {
+        std::string ReceiverType = y.inner();
+        if (ReceiverType == "FileWriter") {
+          handleFileWriterTaskClearAll();
+          return;
         }
+      } else {
+        throwMissingKey("recv_type", Doc.dump());
       }
-    } else {
-      LOG(Sev::Warning, "Can not extract 'cmd' from command {}", Command);
     }
-    LOG(Sev::Warning, "Could not understand this command: {}", Command);
+  } else {
+    LOG(Sev::Warning, "Can not extract 'cmd' from command {}", Command);
   }
+  LOG(Sev::Warning, "Could not understand this command: {}", Command);
+}
 
-  std::string format_nested_exception(std::exception const &E,
-                                      std::stringstream &StrS, int Level) {
-    if (Level > 0) {
-      StrS << '\n';
-    }
-    StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
+std::string format_nested_exception(std::exception const &E,
+                                    std::stringstream &StrS, int Level) {
+  if (Level > 0) {
+    StrS << '\n';
+  }
+  StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
+  try {
+    std::rethrow_if_nested(E);
+  } catch (std::exception const &E) {
+    format_nested_exception(E, StrS, Level + 1);
+  } catch (...) {
+  }
+  return StrS.str();
+}
+
+std::string format_nested_exception(std::exception const &E) {
+  std::stringstream StrS;
+  return format_nested_exception(E, StrS, 0);
+}
+
+void CommandHandler::tryToHandle(
+    std::string const &Command,
+    std::chrono::milliseconds MsgTimestampMilliseconds) {
+
+  if (MsgTimestampMilliseconds.count() < 0) {
+    MsgTimestampMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
+    LOG(Sev::Info,
+        "Kafka command doesn't contain timestamp, so using current time.");
+  }
+  LOG(Sev::Info, "Kafka command message timestamp : {}",
+      MsgTimestampMilliseconds.count());
+
+  try {
+    handle(Command, MsgTimestampMilliseconds);
+  } catch (...) {
+    std::string JobID = "unknown";
     try {
-      std::rethrow_if_nested(E);
-    } catch (std::exception const &E) {
-      format_nested_exception(E, StrS, Level + 1);
+      JobID = nlohmann::json::parse(Command)["job_id"];
     } catch (...) {
+      // Okay to ignore as original exception will give the reason.
     }
-    return StrS.str();
-  }
-
-  std::string format_nested_exception(std::exception const &E) {
-    std::stringstream StrS;
-    return format_nested_exception(E, StrS, 0);
-  }
-
-  void CommandHandler::tryToHandle(std::string const &Command,
-                                   std::chrono::milliseconds MsgTimestampMilliseconds) {
-
-    if (MsgTimestampMilliseconds.count() < 0) {
-      MsgTimestampMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::system_clock::now().time_since_epoch());
-      LOG(Sev::Info,
-          "Kafka command doesn't contain timestamp, so using current time.");
-    }
-    LOG(Sev::Info, "Kafka command message timestamp : {}",
-        MsgTimestampMilliseconds.count());
 
     try {
-      handle(Command, MsgTimestampMilliseconds);
-    } catch (...) {
-      std::string JobID = "unknown";
-      try {
-        JobID = nlohmann::json::parse(Command)["job_id"];
-      } catch (...) {
-        // Okay to ignore as original exception will give the reason.
-      }
-
-      try {
-        std::throw_with_nested(
-            std::runtime_error("Error in CommandHandler::tryToHandle"));
-      } catch (std::runtime_error const &E) {
-        auto Message = fmt::format(
-            "Unexpected std::exception while handling command:\n{}\n{}", Command,
-            format_nested_exception(E));
-        LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
-            convertStatusCodeToString(StatusCode::Fail), Message);
-        if (MasterPtr != nullptr) {
-          logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
-                   Config.service_id, JobID, Message);
-        }
+      std::throw_with_nested(
+          std::runtime_error("Error in CommandHandler::tryToHandle"));
+    } catch (std::runtime_error const &E) {
+      auto Message = fmt::format(
+          "Unexpected std::exception while handling command:\n{}\n{}", Command,
+          format_nested_exception(E));
+      LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
+          convertStatusCodeToString(StatusCode::Fail), Message);
+      if (MasterPtr != nullptr) {
+        logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
+                 Config.service_id, JobID, Message);
       }
     }
   }
+}
 
-
-void CommandHandler::tryToHandle(Msg const &Message,
-                                 std::chrono::milliseconds MsgTimestampMilliseconds) {
-  tryToHandle({(char *)Message.data(), Message.size()}, MsgTimestampMilliseconds);
+void CommandHandler::tryToHandle(
+    Msg const &Message, std::chrono::milliseconds MsgTimestampMilliseconds) {
+  tryToHandle({(char *)Message.data(), Message.size()},
+              MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {
