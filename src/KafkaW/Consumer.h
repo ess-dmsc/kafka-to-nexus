@@ -15,9 +15,8 @@ public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
   virtual void addTopic(std::string const &Topic) = 0;
-  virtual void
-  addTopicAtTimestamp(std::string const &Topic,
-                      std::chrono::milliseconds StartTime) = 0;
+  virtual void addTopicAtTimestamp(std::string const &Topic,
+                                   std::chrono::milliseconds StartTime) = 0;
   virtual std::unique_ptr<ConsumerMessage> poll() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;

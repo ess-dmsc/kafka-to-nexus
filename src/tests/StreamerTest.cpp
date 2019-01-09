@@ -13,9 +13,7 @@ generateKafkaMsg(unsigned char const *DataPtr, size_t const Size) {
 }
 class StreamerInitTest : public ::testing::Test {
 protected:
-  void SetUp() override {
-    Options.ConsumerSettings.MetadataTimeoutMS = 10;
-  }
+  void SetUp() override { Options.ConsumerSettings.MetadataTimeoutMS = 10; }
   StreamerOptions Options;
 };
 
