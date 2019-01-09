@@ -480,10 +480,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
-// According to Michele, that functionality is currently broken and needs to
-// be
-// revisited.
-// See issue #360
 TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
 
