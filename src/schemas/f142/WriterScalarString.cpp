@@ -4,30 +4,24 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-/// \brief  Create a new dataset for scalar strings.
+/// \brief  Open or create a new dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
-                                       std::string const &SourceName, Value,
-                                       CollectiveQueue *cq) {
+                                       std::string const &SourceName, Value, Mode OpenMode) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
-  ChunkedDataset =
-      h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024, cq);
-  if (ChunkedDataset == nullptr) {
-    throw std::runtime_error(fmt::format(
-        "Could not create hdf dataset  SourceName: {}", SourceName));
-  }
-}
-
-/// \brief  Open a dataset for scalar strings.
-WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
-                                       std::string const &SourceName, Value,
-                                       CollectiveQueue *cq,
-                                       HDFIDStore *hdf_store) {
-  LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
-  ChunkedDataset =
-      h5::Chunked1DString::open(HdfGroup, SourceName, cq, hdf_store);
-  if (ChunkedDataset == nullptr) {
-    throw std::runtime_error(
-        fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
+  if (OpenMode == Mode::Open) {
+    ChunkedDataset =
+    h5::Chunked1DString::open(HdfGroup, SourceName);
+    if (ChunkedDataset == nullptr) {
+      throw std::runtime_error(
+                               fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
+    }
+  } else if (OpenMode == Mode::Create) {
+    ChunkedDataset =
+    h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024);
+    if (ChunkedDataset == nullptr) {
+      throw std::runtime_error(fmt::format(
+                                           "Could not create hdf dataset  SourceName: {}", SourceName));
+    }
   }
 }
 

@@ -28,13 +28,13 @@ public:
 
   void init(const std::string &Filename, nlohmann::json const &NexusStructure,
             nlohmann::json const &ConfigFile,
-            std::vector<StreamHDFInfo> &StreamInfo, bool UseHDFSWMR);
+            std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR);
 
   void init(const std::string &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamInfo);
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
   void init(const nlohmann::json &NexusStructure,
-            std::vector<StreamHDFInfo> &StreamInfo);
+            std::vector<StreamHDFInfo> &StreamHDFInfo);
 
   void reopen(std::string const &Filename);
 
@@ -67,9 +67,9 @@ private:
   static std::string H5VersionStringHeadersCompileTime();
 
   static void createHDFStructures(
-      const nlohmann::json *Value, hdf5::node::Group &Parent, uint16_t Level,
-      hdf5::property::LinkCreationList LinkCreationPropertyList,
-      hdf5::datatype::String FixedStringHDFType,
+      const nlohmann::json *Value, hdf5::node::Group const &Parent, uint16_t Level,
+      hdf5::property::LinkCreationList const &LinkCreationPropertyList,
+      hdf5::datatype::String const &FixedStringHDFType,
       std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);
 
   static void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
@@ -82,26 +82,26 @@ private:
                                                   hssize_t GoalSize);
 
   static void
-  writeStringDataset(hdf5::node::Group &Parent, const std::string &Name,
+  writeStringDataset(hdf5::node::Group const &Parent, const std::string &Name,
                      hdf5::property::DatasetCreationList &DatasetCreationList,
                      hdf5::dataspace::Dataspace &Dataspace,
                      nlohmann::json const &Values);
 
   static void writeFixedSizeStringDataset(
-      hdf5::node::Group &Parent, const std::string &Name,
+      hdf5::node::Group const &Parent, const std::string &Name,
       hdf5::property::DatasetCreationList &DatasetCreationList,
       hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
       const nlohmann::json *Values);
 
   static void writeGenericDataset(const std::string &DataType,
-                                  hdf5::node::Group &Parent,
+                                  hdf5::node::Group const &Parent,
                                   const std::string &Name,
                                   const std::vector<hsize_t> &Sizes,
                                   const std::vector<hsize_t> &Max,
                                   hsize_t ElementSize,
                                   const nlohmann::json *Values);
 
-  static void writeDataset(hdf5::node::Group &Parent,
+  static void writeDataset(hdf5::node::Group const &Parent,
                            const nlohmann::json *Values);
 
   static void

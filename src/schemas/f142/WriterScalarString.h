@@ -12,11 +12,7 @@ class WriterScalarString : public WriterTypedBase {
 public:
   WriterScalarString(hdf5::node::Group const &HdfGroup,
                      std::string const &SourceName,
-                     Value FlatbuffersValueTypeId, CollectiveQueue *cq);
-  WriterScalarString(hdf5::node::Group const &HdfGroup,
-                     std::string const &SourceName,
-                     Value FlatbuffersValueTypeId, CollectiveQueue *cq,
-                     HDFIDStore *hdf_store);
+                     Value FlatbuffersValueTypeId, Mode OpenMode);
   h5::append_ret write(FBUF const *fbuf) override;
   h5::Chunked1DString::ptr ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::String;

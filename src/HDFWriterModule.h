@@ -1,6 +1,5 @@
 #pragma once
 
-#include "CollectiveQueue.h"
 #include "FlatbufferMessage.h"
 #include <fmt/format.h>
 #include <functional>

@@ -15,4 +15,4 @@ std::vector<char> readFileIntoVector(std::string const &FileName);
 
 std::vector<char> binaryToHex(char const *data, uint32_t len);
 
-std::vector<std::string> split(std::string const &input, std::string token);
+std::vector<std::string> split(std::string const &input, std::string const &token);

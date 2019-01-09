@@ -15,13 +15,13 @@ void h5d::init_basics() {
   DSPTgt = Dataset.dataspace();
   ndims = DSPTgt.rank();
   LOG(Sev::Debug, "h5d::init_basics");
-  snow = hdf5::Dimensions(ndims, 0);
+  ShapeNow = hdf5::Dimensions(ndims, 0);
   sext = DSPTgt.current_dimensions();
-  smax = DSPTgt.maximum_dimensions();
+  ShapeMax = DSPTgt.maximum_dimensions();
   if (log_level >= 9) {
     for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  smax: {:21}", Name, i1,
-          sext.at(i1), smax.at(i1));
+      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name, i1,
+          sext.at(i1), ShapeMax.at(i1));
     }
   }
   try {
@@ -35,8 +35,7 @@ void h5d::init_basics() {
 
 h5d::ptr h5d::create(hdf5::node::Group Node, std::string const &Name,
                      hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
-                     hdf5::property::DatasetCreationList dcpl,
-                     CollectiveQueue *) {
+                     hdf5::property::DatasetCreationList dcpl) {
   try {
     // Creation is done in single process mode.
     // Can do set_extent here.
@@ -58,8 +57,7 @@ h5d::ptr h5d::create(hdf5::node::Group Node, std::string const &Name,
   }
 }
 
-h5d::ptr h5d::open_single(hdf5::node::Group Node, std::string const &Name,
-                          CollectiveQueue *, HDFIDStore *) {
+h5d::ptr h5d::open_single(hdf5::node::Group Node, std::string const &Name) {
   // Open in single-process mode
   auto ret = ptr(new h5d);
   auto &o = *ret;
@@ -69,9 +67,8 @@ h5d::ptr h5d::open_single(hdf5::node::Group Node, std::string const &Name,
   return ret;
 }
 
-h5d::ptr h5d::open(hdf5::node::Group Node, std::string const &Name,
-                   CollectiveQueue *cq, HDFIDStore *hdf_store) {
-  return open_single(Node, Name, cq, hdf_store);
+h5d::ptr h5d::open(hdf5::node::Group Node, std::string const &Name) {
+  return open_single(Node, Name);
 }
 
 h5d::h5d(h5d &&x) { swap(*this, x); }
@@ -79,9 +76,7 @@ h5d::h5d(h5d &&x) { swap(*this, x); }
 h5d::~h5d() {
   LOG(Sev::Debug, "~h5d ds");
   if (Dataset.is_valid()) {
-    if (!cq) {
-      Dataset.extent(snow);
-    }
+    Dataset.extent(ShapeNow);
   }
 }
 
@@ -96,11 +91,9 @@ void swap(h5d &x, h5d &y) {
   swap(x.ndims, y.ndims);
   swap(x.DSPMem, y.DSPMem);
   swap(x.DSPTgt, y.DSPTgt);
-  swap(x.snow, y.snow);
-  swap(x.smax, y.smax);
+  swap(x.ShapeNow, y.ShapeNow);
+  swap(x.ShapeMax, y.ShapeMax);
   swap(x.sext, y.sext);
-  swap(x.cq, y.cq);
-  swap(x.hdf_store, y.hdf_store);
   swap(x.mpi_rank, y.mpi_rank);
 }
 
@@ -116,7 +109,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
 
   for (size_t i = 1; i < sext.size(); ++i) {
-    sext[i] = smax[i];
+    sext[i] = ShapeMax[i];
   }
 
   hsize_t nlen_0 = nlen;
@@ -129,10 +122,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   }
 
   size_t snext = -1;
-  if (not cq) {
-    snext = snow[0];
-  } else {
-  }
+  snext = ShapeNow[0];
 
   if (snext + nlen_0 > sext[0]) {
     t1 = CLK::now();
@@ -176,7 +166,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
 
     auto t2 = CLK::now();
-    if (!cq) {
+
       try {
         Dataset.extent(sext2);
       } catch (...) {
@@ -185,8 +175,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       }
       DSPTgt = Dataset.dataspace();
       sext = DSPTgt.current_dimensions();
-      smax = DSPTgt.maximum_dimensions();
-    }
+      ShapeMax = DSPTgt.maximum_dimensions();
+
     for (size_t i = 1; i < sext.size(); ++i) {
       sext.at(i) = sext2.at(i);
     }
@@ -267,9 +257,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     }
     return {AppendResult::ERROR};
   }
-  snow[0] = snext + nlen_0;
-  for (size_t i = 1; i < snow.size(); ++i) {
-    snow[i] = sext[i];
+  ShapeNow[0] = snext + nlen_0;
+  for (size_t i = 1; i < ShapeNow.size(); ++i) {
+    ShapeNow[i] = sext[i];
   }
   auto t3 = CLK::now();
   auto dt1 = std::chrono::duration_cast<MS>(t2 - t1).count();
@@ -305,7 +295,7 @@ append_ret h5d::append(std::string const &String) {
         {SpaceTarget.current_dimensions().at(0) - 1}, {1}, {1}, {1});
     SpaceTarget.selection(hdf5::dataspace::SelectionOperation::SET, TargetSlab);
     Dataset.write(String, Dataset.datatype(), SpaceMemory, SpaceTarget);
-    snow = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
+    ShapeNow = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
     return {AppendResult::OK, String.size(), 0};
   } catch (std::runtime_error const &e) {
     LOG(Sev::Error, "exception while writing: {}", e.what());
@@ -321,13 +311,13 @@ append_ret h5d::append_data_2d(T const *data, hsize_t nlen) {
 template <typename T>
 typename h5d_chunked_1d<T>::ptr
 h5d_chunked_1d<T>::create(hdf5::node::Group loc, std::string name,
-                          hsize_t chunk_bytes, CollectiveQueue *cq) {
+                          hsize_t chunk_bytes) {
   hdf5::dataspace::Simple dsp({0}, {H5S_UNLIMITED});
   hdf5::property::DatasetCreationList dcpl;
   auto Type = hdf5::datatype::create<T>().native_type();
   hsize_t MimimumChunkSize = 1024;
   dcpl.chunk({std::max<hsize_t>(MimimumChunkSize, chunk_bytes / Type.size())});
-  auto ds = h5d::create(loc, name, Type, dsp, dcpl, cq);
+  auto ds = h5d::create(loc, name, Type, dsp, dcpl);
   if (!ds) {
     return nullptr;
   }
@@ -338,9 +328,8 @@ h5d_chunked_1d<T>::create(hdf5::node::Group loc, std::string name,
 
 template <typename T>
 typename h5d_chunked_1d<T>::ptr
-h5d_chunked_1d<T>::open(hdf5::node::Group loc, std::string name,
-                        CollectiveQueue *cq, HDFIDStore *hdf_store) {
-  auto ds = h5d::open(loc, name, cq, hdf_store);
+h5d_chunked_1d<T>::open(hdf5::node::Group loc, std::string name) {
+  auto ds = h5d::open(loc, name);
   if (!ds) {
     return ptr();
   }
@@ -454,22 +443,21 @@ template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
 }
 
 template <typename T> size_t h5d_chunked_1d<T>::size() const {
-  return ds.snow.at(0);
+  return ds.ShapeNow.at(0);
 }
 
 Chunked1DString::Chunked1DString(h5d ds) : ds(std::move(ds)) {}
 
 Chunked1DString::ptr Chunked1DString::create(hdf5::node::Group Node,
                                              std::string Name,
-                                             hsize_t ChunkBytes,
-                                             CollectiveQueue *cq) {
+                                             hsize_t ChunkBytes) {
   hdf5::dataspace::Simple Space({0}, {H5S_UNLIMITED});
   hdf5::property::DatasetCreationList dcpl;
   auto Type = hdf5::datatype::String::variable();
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   hsize_t MimimumChunkSize = 1024;
   dcpl.chunk({std::max<hsize_t>(MimimumChunkSize, ChunkBytes)});
-  auto ds = h5d::create(Node, Name, Type, Space, dcpl, cq);
+  auto ds = h5d::create(Node, Name, Type, Space, dcpl);
   if (!ds) {
     return nullptr;
   }
@@ -478,10 +466,8 @@ Chunked1DString::ptr Chunked1DString::create(hdf5::node::Group Node,
 }
 
 Chunked1DString::ptr Chunked1DString::open(hdf5::node::Group Node,
-                                           std::string Name,
-                                           CollectiveQueue *cq,
-                                           HDFIDStore *hdf_store) {
-  auto ds = h5d::open(Node, Name, cq, hdf_store);
+                                           std::string Name) {
+  auto ds = h5d::open(Node, Name);
   if (!ds) {
     LOG(Sev::Error, "Could not open dataset: {}", Name);
     return ptr();
@@ -496,13 +482,12 @@ append_ret Chunked1DString::append(std::string const &String) {
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
 h5d_chunked_2d<T>::create(hdf5::node::Group loc, std::string name,
-                          hsize_t ncols, hsize_t chunk_bytes,
-                          CollectiveQueue *cq) {
+                          hsize_t ncols, hsize_t chunk_bytes) {
   hdf5::dataspace::Simple dsp({0, ncols}, {H5S_UNLIMITED, ncols});
   hdf5::property::DatasetCreationList dcpl;
   auto Type = hdf5::datatype::create<T>().native_type();
   dcpl.chunk({std::max<hsize_t>(1, chunk_bytes / ncols / Type.size()), ncols});
-  auto ds = h5d::create(loc, name, Type, dsp, dcpl, cq);
+  auto ds = h5d::create(loc, name, Type, dsp, dcpl);
   if (!ds) {
     return nullptr;
   }
@@ -512,9 +497,8 @@ h5d_chunked_2d<T>::create(hdf5::node::Group loc, std::string name,
 
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
-h5d_chunked_2d<T>::open(hdf5::node::Group loc, std::string name, hsize_t ncols,
-                        CollectiveQueue *cq, HDFIDStore *hdf_store) {
-  auto ds = h5d::open(loc, name, cq, hdf_store);
+h5d_chunked_2d<T>::open(hdf5::node::Group loc, std::string name, hsize_t ncols) {
+  auto ds = h5d::open(loc, name);
   if (!ds) {
     return ptr();
   }
@@ -618,7 +602,7 @@ template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
 }
 
 template <typename T> size_t h5d_chunked_2d<T>::size() const {
-  return ds.snow.at(0);
+  return ds.ShapeNow.at(0);
 }
 
 // clang-format off
@@ -632,27 +616,27 @@ template append_ret h5d::append_data_1d(int16_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(int32_t const *data, hsize_t nlen);
 template append_ret h5d::append_data_1d(int64_t const *data, hsize_t nlen);
 
-template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
+template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::create(hdf5::node::Group loc, std::string name, hsize_t chunk_bytes);
 
-template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_1d< uint8_t>::ptr h5d_chunked_1d< uint8_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d<uint16_t>::ptr h5d_chunked_1d<uint16_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d<uint32_t>::ptr h5d_chunked_1d<uint32_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d<uint64_t>::ptr h5d_chunked_1d<uint64_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d<  int8_t>::ptr h5d_chunked_1d<  int8_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d< int16_t>::ptr h5d_chunked_1d< int16_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d< int32_t>::ptr h5d_chunked_1d< int32_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d< int64_t>::ptr h5d_chunked_1d< int64_t>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d<   float>::ptr h5d_chunked_1d<   float>::open(hdf5::node::Group loc, std::string name);
+template h5d_chunked_1d<  double>::ptr h5d_chunked_1d<  double>::open(hdf5::node::Group loc, std::string name);
 
 template h5d_chunked_1d< uint8_t>::h5d_chunked_1d(std::string name, h5d ds);
 template h5d_chunked_1d<uint16_t>::h5d_chunked_1d(std::string name, h5d ds);
@@ -742,28 +726,28 @@ template size_t h5d_chunked_1d< int64_t>::h5d_chunked_1d::size() const;
 template size_t h5d_chunked_1d<   float>::h5d_chunked_1d::size() const;
 template size_t h5d_chunked_1d<  double>::h5d_chunked_1d::size() const;
 
-template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
-template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes, CollectiveQueue *cq);
+template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
+template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::create(hdf5::node::Group loc, std::string name, hsize_t ncols, hsize_t chunk_bytes);
 
 
-template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
-template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::open(hdf5::node::Group loc, std::string name, hsize_t ncols, CollectiveQueue *cq, HDFIDStore *hdf_store);
+template h5d_chunked_2d< uint8_t>::ptr h5d_chunked_2d< uint8_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d<uint16_t>::ptr h5d_chunked_2d<uint16_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d<uint32_t>::ptr h5d_chunked_2d<uint32_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d<uint64_t>::ptr h5d_chunked_2d<uint64_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d<  int8_t>::ptr h5d_chunked_2d<  int8_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d< int16_t>::ptr h5d_chunked_2d< int16_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d< int32_t>::ptr h5d_chunked_2d< int32_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d< int64_t>::ptr h5d_chunked_2d< int64_t>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::open(hdf5::node::Group loc, std::string name, hsize_t ncols);
 
 
 template h5d_chunked_2d< uint8_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);

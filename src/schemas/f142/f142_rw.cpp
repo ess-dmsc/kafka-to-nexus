@@ -1,5 +1,4 @@
 #include "f142_rw.h"
-#include "../../CollectiveQueue.h"
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
@@ -109,8 +108,7 @@ DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
 std::unique_ptr<WriterTypedBase>
 createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
                       std::string const &TypeName,
-                      std::string const &DatasetName, CollectiveQueue *cq,
-                      HDFIDStore *HDFStore,
+                      std::string const &DatasetName,
                       CreateWriterTypedBaseMethod Method) {
   Rank TheRank = Rank::SCALAR;
   if (ArraySize > 0) {
@@ -128,11 +126,10 @@ createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
   auto const &ValueTraits = ValueTraitsMaybe.value();
   if (Method == CreateWriterTypedBaseMethod::OPEN) {
     return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
-                                     ValueTraits->getValueUnionID(), cq,
-                                     HDFStore);
+                                     ValueTraits->getValueUnionID(), Mode::Open);
   }
   return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
-                                   ValueTraits->getValueUnionID(), cq);
+                                   ValueTraits->getValueUnionID(), Mode::Create);
 }
 
 /// Parse the configuration for this stream.
@@ -231,11 +228,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const *HDFAttributes,
                           CreateWriterTypedBaseMethod CreateMethod) {
   try {
-    HDFIDStore *HDFStore =
-        nullptr; // These two lines should probably be deleted.
-    CollectiveQueue *cq = nullptr;
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
-                                        cq, HDFStore, CreateMethod);
+                                        CreateMethod);
     if (!ValueWriter) {
       LOG(Sev::Error,
           "Could not create a writer implementation for value_type {}",
@@ -245,7 +239,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
-                                                        Info.ChunkBytes, cq);
+                                                        Info.ChunkBytes);
         if (Info.Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
@@ -254,8 +248,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       HDFFile::writeAttributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
-        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
-                                                      HDFStore);
+        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name);
         if (Info.Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }

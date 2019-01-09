@@ -7,6 +7,11 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+enum class Mode {
+  Create,
+  Open
+};
+
 /// Interface for the writers of the different types.
 class WriterTypedBase {
 public:

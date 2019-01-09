@@ -15,10 +15,7 @@ template <typename DT, typename FV>
 class WriterScalar : public WriterTypedBase {
 public:
   WriterScalar(hdf5::node::Group HdfGroup, std::string const &SourceName,
-               Value FlatbuffersValueTypeId, CollectiveQueue *cq);
-  WriterScalar(hdf5::node::Group HdfGroup, std::string const &SourceName,
-               Value FlatbuffersValueTypeId, CollectiveQueue *cq,
-               HDFIDStore *hdf_store);
+               Value FlatbuffersValueTypeId, Mode OpenMode);
   h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;
   uptr<h5::h5d_chunked_1d<DT>> ChunkedDataset;
@@ -26,43 +23,32 @@ public:
   size_t ChunkSize = 64 * 1024;
 };
 
-/// \brief  Create a new dataset for scalar numeric types.
+/// \brief  Open or create a new dataset for scalar numeric types.
 ///
 /// \tparam  DT  The C datatype for this dataset.
 /// \tparam  FV  The Flatbuffers datatype for this dataset.
 template <typename DT, typename FV>
 WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    std::string const &SourceName,
-                                   Value FlatbuffersValueTypeId,
-                                   CollectiveQueue *cq)
+                                   Value FlatbuffersValueTypeId, Mode OpenMode)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
-  ChunkedDataset =
-      h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, ChunkSize, cq);
-  if (ChunkedDataset == nullptr) {
-    throw std::runtime_error(fmt::format(
-        "Could not create hdf dataset  SourceName: {}", SourceName));
-  }
-}
-
-/// \brief  Open a dataset for scalar numeric types.
-///
-/// \tparam  DT  The C datatype for this dataset.
-/// \tparam  FV  The Flatbuffers datatype for this dataset.
-template <typename DT, typename FV>
-WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
-                                   std::string const &SourceName,
-                                   Value FlatbuffersValueTypeId,
-                                   CollectiveQueue *cq, HDFIDStore *hdf_store)
-    : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
-  LOG(Sev::Debug, "f142 WriterScalar ctor");
-  ChunkedDataset =
-      h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName, cq, hdf_store);
-  if (ChunkedDataset == nullptr) {
-    throw std::runtime_error(
-        fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
-  }
-  ChunkedDataset->buffer_init(ChunkSize, 0);
+      if (OpenMode == Mode::Open) {
+        ChunkedDataset =
+        h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName);
+        if (ChunkedDataset == nullptr) {
+          throw std::runtime_error(
+                                   fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
+        }
+        ChunkedDataset->buffer_init(ChunkSize, 0);
+      } else if (OpenMode == Mode::Create) {
+        ChunkedDataset =
+        h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, ChunkSize);
+        if (ChunkedDataset == nullptr) {
+          throw std::runtime_error(fmt::format(
+                                               "Could not create hdf dataset  SourceName: {}", SourceName));
+        }
+      }
 }
 
 /// \brief  Write to a numeric scalar dataset

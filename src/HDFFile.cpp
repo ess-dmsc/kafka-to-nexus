@@ -459,7 +459,7 @@ void HDFFile::writeAttributesIfPresent(hdf5::node::Node const &Node,
 
 template <typename DT>
 static void writeNumericDataset(
-    hdf5::node::Group &Node, const std::string &Name,
+    hdf5::node::Group const &Node, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationPropertyList,
     hdf5::dataspace::Dataspace &Dataspace, const nlohmann::json *Values) {
 
@@ -489,7 +489,7 @@ static void writeNumericDataset(
 }
 
 void HDFFile::writeStringDataset(
-    hdf5::node::Group &Parent, const std::string &Name,
+    hdf5::node::Group const &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, nlohmann::json const &Values) {
 
@@ -512,7 +512,7 @@ void HDFFile::writeStringDataset(
 }
 
 void HDFFile::writeFixedSizeStringDataset(
-    hdf5::node::Group &Parent, const std::string &Name,
+    hdf5::node::Group const &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
     const nlohmann::json *Values) {
@@ -558,7 +558,7 @@ void HDFFile::writeFixedSizeStringDataset(
 }
 
 void HDFFile::writeGenericDataset(const std::string &DataType,
-                                  hdf5::node::Group &Parent,
+                                  hdf5::node::Group const &Parent,
                                   const std::string &Name,
                                   const std::vector<hsize_t> &Sizes,
                                   const std::vector<hsize_t> &Max,
@@ -630,17 +630,19 @@ void HDFFile::writeGenericDataset(const std::string &DataType,
     ss << Parent.link().path() << "/" << Name;
     ss << " type='" << DataType << "'";
     ss << " size(";
-    for (auto &s : Sizes)
+    for (auto &s : Sizes) {
       ss << s << " ";
+    }
     ss << ")  max(";
-    for (auto &s : Max)
+    for (auto &s : Max) {
       ss << s << " ";
+    }
     ss << ")  ";
     std::throw_with_nested(std::runtime_error(ss.str()));
   }
 }
 
-void HDFFile::writeDataset(hdf5::node::Group &Parent,
+void HDFFile::writeDataset(hdf5::node::Group const &Parent,
                            const nlohmann::json *Values) {
   std::string Name;
   if (auto NameMaybe = find<std::string>("name", *Values)) {
@@ -721,9 +723,9 @@ void HDFFile::writeDataset(hdf5::node::Group &Parent,
 }
 
 void HDFFile::createHDFStructures(
-    const nlohmann::json *Value, hdf5::node::Group &Parent, uint16_t Level,
-    hdf5::property::LinkCreationList LinkCreationPropertyList,
-    hdf5::datatype::String FixedStringHDFType,
+    const nlohmann::json *Value, hdf5::node::Group const &Parent, uint16_t Level,
+    hdf5::property::LinkCreationList const &LinkCreationPropertyList,
+    hdf5::datatype::String const &FixedStringHDFType,
     std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
 
   try {
@@ -818,7 +820,7 @@ extern "C" char const GIT_COMMIT[];
 
 void HDFFile::init(std::string const &Filename,
                    nlohmann::json const &NexusStructure,
-                   nlohmann::json const &ConfigFile,
+                   nlohmann::json const &,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
   if (std::ifstream(Filename).good()) {
     // File exists already
@@ -933,7 +935,7 @@ void HDFFile::reopen(std::string const &Filename) {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     setCommonProps(fcpl, fapl);
-    hdf5::file::AccessFlagsBase FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+    auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
     if (SWMREnabled) {
       FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
@@ -1049,7 +1051,7 @@ void HDFFile::finalize() {
     hdf5::property::FileCreationList FCPL;
     hdf5::property::FileAccessList FAPL;
     setCommonProps(FCPL, FAPL);
-    hdf5::file::AccessFlagsBase FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+    auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
     H5File = hdf5::file::open(Filename, FAFL, FAPL);
     auto Group = H5File.root();

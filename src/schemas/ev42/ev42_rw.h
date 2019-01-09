@@ -39,7 +39,6 @@ public:
   uint64_t ts_max = 0;
   size_t buffer_size = 0;
   size_t buffer_packet_max = 0;
-  CollectiveQueue *cq = nullptr;
 };
 } // namespace ev42
 } // namespace Schemas

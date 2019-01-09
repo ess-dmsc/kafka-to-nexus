@@ -41,14 +41,14 @@ std::vector<char> binaryToHex(char const *data, uint32_t len) {
   std::vector<char> ret;
   ret.reserve(len * (64 + 5) / 32 + 32);
   for (uint32_t i1 = 0; i1 < len; ++i1) {
-    uint8_t c = ((uint8_t)data[i1]) >> 4;
+    uint8_t c = static_cast<uint8_t>(data[i1]) >> 4;
     if (c < 10) {
       c += 48;
     } else {
       c += 97 - 10;
     }
     ret.emplace_back(c);
-    c = 0x0f & (uint8_t)data[i1];
+    c = 0x0f & static_cast<uint8_t>(data[i1]);
     if (c < 10) {
       c += 48;
     } else {
@@ -57,14 +57,15 @@ std::vector<char> binaryToHex(char const *data, uint32_t len) {
     ret.emplace_back(c);
     if ((0x07 & i1) == 0x7) {
       ret.push_back(' ');
-      if ((0x1f & i1) == 0x1f)
+      if ((0x1f & i1) == 0x1f) {
         ret.push_back('\n');
+      }
     }
   }
   return ret;
 }
 
-std::vector<std::string> split(std::string const &input, std::string token) {
+std::vector<std::string> split(std::string const &input, std::string const &token) {
   using std::string;
   using std::vector;
   vector<string> ret;
