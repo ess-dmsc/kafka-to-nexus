@@ -393,7 +393,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "fail buffer");
       exit(1);
     }
-    auto p1 = (char *)data;
+    auto p1 =  reinterpret_cast<const char*>(data);
     auto p2 = buf.data() + buf_n;
     for (size_t i1 = 0; i1 < nbytes; ++i1) {
       p2[i1] = p1[i1];
@@ -433,7 +433,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
 }
 
 template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
-  auto wr = ds.append_data_1d((T *)buf.data(), buf_n / sizeof(T));
+  auto wr = ds.append_data_1d(reinterpret_cast<T*>(buf.data()), buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
     LOG(Sev::Debug, "FLUSH NOT OK");
     return wr.status;
@@ -526,7 +526,7 @@ h5d_chunked_2d<T>::h5d_chunked_2d(std::string, h5d ds_, hsize_t ncols)
 
 template <typename T>
 h5d_chunked_2d<T>::h5d_chunked_2d(h5d_chunked_2d &&x)
-    : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
+    noexcept : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_2d<T>::~h5d_chunked_2d() { flush_buf(); }
 
@@ -553,7 +553,7 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "fail buffer");
       exit(1);
     }
-    auto p1 = (char *)data;
+    auto p1 =  reinterpret_cast<const char*>(data);
     auto p2 = buf.data() + buf_n;
     for (size_t i1 = 0; i1 < nbytes; ++i1) {
       p2[i1] = p1[i1];
@@ -593,7 +593,7 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
 }
 
 template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
-  auto wr = ds.append_data_2d((T *)buf.data(), buf_n / sizeof(T));
+  auto wr = ds.append_data_2d(reinterpret_cast<T*>(buf.data()), buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
     return wr.status;
   }

@@ -34,28 +34,28 @@ struct InitTypeMap {
     auto &Scalar = RankAndTypenameToValueTraits[Rank::SCALAR];
     auto &Array = RankAndTypenameToValueTraits[Rank::ARRAY];
     // clang-format off
-    Scalar[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< uint8_t, UByte>);
-    Scalar["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint16_t, UShort>);
-    Scalar["uint32"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint32_t, UInt>);
-    Scalar["uint64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint64_t, ULong>);
-    Scalar[  "int8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  int8_t, Byte>);
-    Scalar[ "int16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int16_t, Short>);
-    Scalar[ "int32"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int32_t, Int>);
-    Scalar[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int64_t, Long>);
-    Scalar[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<   float, Float>);
-    Scalar["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  double, Double>);
-    Scalar["string"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalarString);
+    Scalar[ "uint8"] = std::make_unique<WriterFactoryScalar< uint8_t, UByte>>();
+    Scalar["uint16"] = std::make_unique<WriterFactoryScalar<uint16_t, UShort>>();
+    Scalar["uint32"] = std::make_unique<WriterFactoryScalar<uint32_t, UInt>>();
+    Scalar["uint64"] = std::make_unique<WriterFactoryScalar<uint64_t, ULong>>();
+    Scalar[  "int8"] = std::make_unique<WriterFactoryScalar<  int8_t, Byte>>();
+    Scalar[ "int16"] = std::make_unique<WriterFactoryScalar< int16_t, Short>>();
+    Scalar[ "int32"] = std::make_unique<WriterFactoryScalar< int32_t, Int>>();
+    Scalar[ "int64"] = std::make_unique<WriterFactoryScalar< int64_t, Long>>();
+    Scalar[ "float"] = std::make_unique<WriterFactoryScalar<   float, Float>>();
+    Scalar["double"] = std::make_unique<WriterFactoryScalar<  double, Double>>();
+    Scalar["string"] = std::make_unique<WriterFactoryScalarString>();
 
-    Array[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< uint8_t, ArrayUByte>);
-    Array["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint16_t, ArrayUShort>);
-    Array["uint32"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint32_t, ArrayUInt>);
-    Array["uint64"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint64_t, ArrayULong>);
-    Array[  "int8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<  int8_t, ArrayByte>);
-    Array[ "int16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int16_t, ArrayShort>);
-    Array[ "int32"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int32_t, ArrayInt>);
-    Array[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int64_t, ArrayLong>);
-    Array[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<   float, ArrayFloat>);
-    Array["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<  double, ArrayDouble>);
+    Array[ "uint8"] = std::make_unique<WriterFactoryArray< uint8_t, ArrayUByte>>();
+    Array["uint16"] = std::make_unique<WriterFactoryArray<uint16_t, ArrayUShort>>();
+    Array["uint32"] = std::make_unique<WriterFactoryArray<uint32_t, ArrayUInt>>();
+    Array["uint64"] = std::make_unique<WriterFactoryArray<uint64_t, ArrayULong>>();
+    Array[  "int8"] = std::make_unique<WriterFactoryArray<  int8_t, ArrayByte>>();
+    Array[ "int16"] = std::make_unique<WriterFactoryArray< int16_t, ArrayShort>>();
+    Array[ "int32"] = std::make_unique<WriterFactoryArray< int32_t, ArrayInt>>();
+    Array[ "int64"] = std::make_unique<WriterFactoryArray< int64_t, ArrayLong>>();
+    Array[ "float"] = std::make_unique<WriterFactoryArray<   float, ArrayFloat>>();
+    Array["double"] = std::make_unique<WriterFactoryArray<  double, ArrayDouble>>();
     // clang-format on
   }
 };

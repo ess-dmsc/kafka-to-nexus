@@ -123,7 +123,7 @@ public:
                     hsize_t chunk_bytes);
   static ptr open(hdf5::node::Group loc, std::string name, hsize_t ncols);
   h5d ds;
-  h5d_chunked_2d(h5d_chunked_2d &&x);
+  h5d_chunked_2d(h5d_chunked_2d &&x) noexcept;
   ~h5d_chunked_2d();
   friend void swap<>(h5d_chunked_2d &x, h5d_chunked_2d &y);
   append_ret append_data_2d(T const *data, hsize_t nlen);
@@ -134,7 +134,7 @@ public:
 private:
   h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
   hdf5::dataspace::Simple dsp_wr;
-  hsize_t ncols;
+  hsize_t ncols{0};
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
   size_t buf_n = 0;
