@@ -17,7 +17,7 @@ protected:
   }
 };
 
-TEST_F(CommandHandler_Testing, MissingStratTimeMeanStartNow) {
+TEST_F(CommandHandler_Testing, MissingStartTimeMeanStartNow) {
 
   unlink("a-dummy-name-00.h5");
   std::string CommandString(R"""(
