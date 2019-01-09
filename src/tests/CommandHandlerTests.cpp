@@ -260,7 +260,7 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   )"");
   Command["file_attributes"]["file_name"] = Filename;
   auto CommandString = Command.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(1));
   auto CommandStop = json::parse(R""(
@@ -270,7 +270,7 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
 }
   )"");
   CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
   auto File = hdf5::file::open(Filename);
