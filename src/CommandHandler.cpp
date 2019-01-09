@@ -502,34 +502,61 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     LOG(Sev::Warning, "Could not understand this command: {}", Command);
   }
 
+  std::string format_nested_exception(std::exception const &E,
+                                      std::stringstream &StrS, int Level) {
+    if (Level > 0) {
+      StrS << '\n';
+    }
+    StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
+    try {
+      std::rethrow_if_nested(E);
+    } catch (std::exception const &E) {
+      format_nested_exception(E, StrS, Level + 1);
+    } catch (...) {
+    }
+    return StrS.str();
+  }
+
+  std::string format_nested_exception(std::exception const &E) {
+    std::stringstream StrS;
+    return format_nested_exception(E, StrS, 0);
+  }
+
   void CommandHandler::tryToHandle(std::string const &Command,
                                    std::chrono::milliseconds MsgTimestampMilliseconds) {
+
+    if (MsgTimestampMilliseconds.count() < 0) {
+      MsgTimestampMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::chrono::system_clock::now().time_since_epoch());
+      LOG(Sev::Info,
+          "Kafka command doesn't contain timestamp, so using current time.");
+    }
+    LOG(Sev::Info, "Kafka command message timestamp : {}",
+        MsgTimestampMilliseconds.count());
+
     try {
-      if (MsgTimestampMilliseconds.count() < 0) {
-        MsgTimestampMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch());
-        LOG(Sev::Info,
-            "Kafka command doesn't contain timestamp, so using current time.");
-      }
-
-      LOG(Sev::Info, "Kafka command message timestamp : {}",
-          MsgTimestampMilliseconds.count());
-
       handle(Command, MsgTimestampMilliseconds);
-
     } catch (...) {
-      std::string JobID{"Unknown"};
+      std::string JobID = "unknown";
       try {
         JobID = nlohmann::json::parse(Command)["job_id"];
       } catch (...) {
+        // Okay to ignore as original exception will give the reason.
       }
-      auto Message = fmt::format(
-          "Unexpected std::exception while handling command: {}", Command);
-      LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
-          convertStatusCodeToString(StatusCode::Fail), Message);
-      if (MasterPtr != nullptr) {
-        logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
-                 Config.service_id, JobID, Message);
+
+      try {
+        std::throw_with_nested(
+            std::runtime_error("Error in CommandHandler::tryToHandle"));
+      } catch (std::runtime_error const &E) {
+        auto Message = fmt::format(
+            "Unexpected std::exception while handling command:\n{}\n{}", Command,
+            format_nested_exception(E));
+        LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
+            convertStatusCodeToString(StatusCode::Fail), Message);
+        if (MasterPtr != nullptr) {
+          logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
+                   Config.service_id, JobID, Message);
+        }
       }
     }
   }
