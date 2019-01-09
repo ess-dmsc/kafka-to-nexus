@@ -3,6 +3,7 @@
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
+#include <chrono>
 #include <librdkafka/rdkafka.h>
 
 namespace KafkaW {
@@ -38,10 +39,11 @@ public:
   size_t getSize() const { return DataSize; };
   std::int64_t getMessageOffset() const { return MessageOffset; };
   PollStatus getStatus() const { return Status; };
-  std::pair<rd_kafka_timestamp_type_t, int64_t> getTimestamp() {
-    std::pair<rd_kafka_timestamp_type_t, int64_t> TS;
-    TS.second =
+  std::pair<rd_kafka_timestamp_type_t, std::chrono::milliseconds> getTimestamp() {
+    std::pair<rd_kafka_timestamp_type_t, std::chrono::milliseconds> TS;
+    auto RawTime =
         rd_kafka_message_timestamp((rd_kafka_message_t *)DataPointer, &TS.first);
+    TS.second = std::chrono::milliseconds{RawTime};
     return TS;
   }
 

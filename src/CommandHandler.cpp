@@ -523,21 +523,20 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 
   void CommandHandler::tryToHandle(std::string const &Command,
-                                   const int64_t MsgTimestampMilliseconds) {
+                                   std::chrono::milliseconds MsgTimestampMilliseconds) {
     try {
-      if (MsgTimestampMilliseconds > 0) {
-        handle(Command, std::chrono::milliseconds{MsgTimestampMilliseconds});
-        LOG(Sev::Info, "Kafka command message timestamp : {}",
-            MsgTimestampMilliseconds);
-      } else {
-        handle(Command, std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch()));
+      if (MsgTimestampMilliseconds.count() < 0) {
+        MsgTimestampMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
         LOG(Sev::Info,
-            "Kafka command doesn't contain timestamp. Current time : {}",
-            std::chrono::duration_cast<std::chrono::milliseconds>(
-                std::chrono::system_clock::now().time_since_epoch())
-                .count());
+            "Kafka command doesn't contain timestamp, so using current time.");
       }
+
+      LOG(Sev::Info, "Kafka command message timestamp : {}",
+          MsgTimestampMilliseconds.count());
+
+      handle(Command, MsgTimestampMilliseconds);
+
     } catch (...) {
       std::string JobID;
       try {
@@ -563,7 +562,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
 
 
 void CommandHandler::tryToHandle(Msg const &Message,
-                                 int64_t MsgTimestampMilliseconds) {
+                                 std::chrono::milliseconds MsgTimestampMilliseconds) {
   tryToHandle({(char *)Message.data(), Message.size()}, MsgTimestampMilliseconds);
 }
 
