@@ -118,7 +118,7 @@ From the build directory:
 
 ### System tests
 
-The system tests run a series of higher level tests interacting with a containerised instance of Kakfa and a data producer.
+The system tests consist of a series of automated tests for this repository that test it in ways similar to how it would be used in production.
 
 See [System Tests page](system-tests/README.md) for more information.
 
