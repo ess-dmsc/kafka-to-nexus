@@ -129,7 +129,9 @@ TEST_F(Schema_f142, writeScalarFloat) {
     WriterModule.init_hdf(Group, "{}");
     for (auto const &Value : Expected) {
       auto Builder = makeValueFloat(Value);
-      auto Msg = FileWriter::FlatbufferMessage(reinterpret_cast<char*>(Builder->GetBufferPointer()), Builder->GetSize());
+      auto Msg = FileWriter::FlatbufferMessage(
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -173,7 +175,8 @@ TEST_F(Schema_f142, writeArrayFloat) {
     for (auto const &Value : Expected) {
       auto Builder = makeValue(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          reinterpret_cast<char*>(Builder->GetBufferPointer()), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -212,7 +215,8 @@ TEST_F(Schema_f142, writeScalarString) {
     for (auto const &Value : Expected) {
       auto Builder = makeValueString(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          reinterpret_cast<char*>(Builder->GetBufferPointer()), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }

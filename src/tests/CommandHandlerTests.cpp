@@ -10,7 +10,8 @@ using nlohmann::json;
 
 class CommandHandler_Testing : public testing::Test {
 protected:
-  static size_t FileWriterTasksSize(FileWriter::CommandHandler const &CommandHandler) {
+  static size_t
+  FileWriterTasksSize(FileWriter::CommandHandler const &CommandHandler) {
     return CommandHandler.getNumberOfFileWriterTasks();
   }
 };
@@ -102,7 +103,8 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
 }
 
 TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
-  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }"), std::runtime_error);
+  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }"),
+               std::runtime_error);
 }
 
 TEST_F(CommandHandler_Testing, CreateHDFLinks) {

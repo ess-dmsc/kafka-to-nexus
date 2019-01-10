@@ -226,8 +226,9 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                       "timestamp in HDF file")
     CurrentTimeZone = date::locate_zone("UTC");
   }
-  auto now = date::make_zoned(CurrentTimeZone,
-                        date::floor<std::chrono::milliseconds>(std::chrono::system_clock::now()));
+  auto now = date::make_zoned(
+      CurrentTimeZone,
+      date::floor<std::chrono::milliseconds>(std::chrono::system_clock::now()));
   writeHDFISO8601Attribute(Node, Name, now);
 }
 
@@ -723,7 +724,8 @@ void HDFFile::writeDataset(hdf5::node::Group const &Parent,
 }
 
 void HDFFile::createHDFStructures(
-    const nlohmann::json *Value, hdf5::node::Group const &Parent, uint16_t Level,
+    const nlohmann::json *Value, hdf5::node::Group const &Parent,
+    uint16_t Level,
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
     std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path) {
@@ -819,8 +821,7 @@ void HDFFile::checkHDFVersion() {
 extern "C" char const GIT_COMMIT[];
 
 void HDFFile::init(std::string const &Filename,
-                   nlohmann::json const &NexusStructure,
-                   nlohmann::json const &,
+                   nlohmann::json const &NexusStructure, nlohmann::json const &,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
   if (std::ifstream(Filename).good()) {
     // File exists already
@@ -967,7 +968,8 @@ void HDFFile::flush() {
   }
 }
 
-static void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json) {
+static void addLinks(hdf5::node::Group const &Group,
+                     nlohmann::json const &Json) {
   if (!Json.is_object()) {
     throw std::runtime_error(fmt::format(
         "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));

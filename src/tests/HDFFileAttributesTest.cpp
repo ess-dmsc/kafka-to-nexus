@@ -127,8 +127,9 @@ TEST(HDFFileAttributesTest,
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
 
-  auto IntAttr = hdf5::node::get_group(TestFile.RootGroup, "group_with_typed_attrs")
-                     .attributes["uint32_attribute"];
+  auto IntAttr =
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_typed_attrs")
+          .attributes["uint32_attribute"];
   uint32_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42u);
@@ -162,8 +163,9 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
-  auto ArrayAttr = hdf5::node::get_group(TestFile.RootGroup, "group_with_array_attrs")
-                       .attributes["array_attribute"];
+  auto ArrayAttr =
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_attrs")
+          .attributes["array_attribute"];
   std::vector<int> ArrayAttrValues(3);
   ArrayAttr.read(ArrayAttrValues);
   ASSERT_EQ(ArrayAttrValues[0], 1);
@@ -375,9 +377,9 @@ TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
   TestFile.init(Command, EmptyStreamHDFInfo);
 
   {
-    auto StringAttr =
-        hdf5::node::get_group(TestFile.RootGroup, "group_with_object_of_attributes")
-            .attributes["some_attribute"];
+    auto StringAttr = hdf5::node::get_group(TestFile.RootGroup,
+                                            "group_with_object_of_attributes")
+                          .attributes["some_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
     ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);

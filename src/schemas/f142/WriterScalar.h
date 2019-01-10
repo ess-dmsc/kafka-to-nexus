@@ -33,22 +33,21 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    Value FlatbuffersValueTypeId, Mode OpenMode)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
   LOG(Sev::Debug, "f142 WriterScalar ctor");
-      if (OpenMode == Mode::Open) {
-        ChunkedDataset =
-        h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName);
-        if (ChunkedDataset == nullptr) {
-          throw std::runtime_error(
-                                   fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
-        }
-        ChunkedDataset->buffer_init(ChunkSize, 0);
-      } else if (OpenMode == Mode::Create) {
-        ChunkedDataset =
+  if (OpenMode == Mode::Open) {
+    ChunkedDataset = h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName);
+    if (ChunkedDataset == nullptr) {
+      throw std::runtime_error(fmt::format(
+          "Could not open hdf dataset  SourceName: {}", SourceName));
+    }
+    ChunkedDataset->buffer_init(ChunkSize, 0);
+  } else if (OpenMode == Mode::Create) {
+    ChunkedDataset =
         h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, ChunkSize);
-        if (ChunkedDataset == nullptr) {
-          throw std::runtime_error(fmt::format(
-                                               "Could not create hdf dataset  SourceName: {}", SourceName));
-        }
-      }
+    if (ChunkedDataset == nullptr) {
+      throw std::runtime_error(fmt::format(
+          "Could not create hdf dataset  SourceName: {}", SourceName));
+    }
+  }
 }
 
 /// \brief  Write to a numeric scalar dataset
@@ -64,7 +63,7 @@ h5::append_ret WriterScalar<DT, FV>::write(LogData const *Buffer) {
         "ValueType == Value::NONE || ValueType != FlatbuffersValueTypeId");
     return Result;
   }
-  auto ValueMember = reinterpret_cast<FV const*>(Buffer->value());
+  auto ValueMember = reinterpret_cast<FV const *>(Buffer->value());
   if (!ValueMember) {
     Result.ErrorString = fmt::format("value() in flatbuffer is nullptr");
     return Result;

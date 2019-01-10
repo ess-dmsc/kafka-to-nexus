@@ -28,8 +28,7 @@ TEST(H5, writeStringToDataset) {
   auto Type = hdf5::datatype::String::variable();
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
-  auto ds =
-      h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL);
+  auto ds = h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL);
   ASSERT_NE(ds, nullptr);
   std::string ExpectedValue("Some string value");
   ds->append(ExpectedValue);
@@ -82,7 +81,8 @@ TEST(H5, writeScalarString) {
   std::string SourceName("value");
   using FileWriter::Schemas::f142::Mode;
   FileWriter::Schemas::f142::WriterScalarString Writer(
-                                                       Group, SourceName, FileWriter::Schemas::f142::Value::String, Mode::Create);
+      Group, SourceName, FileWriter::Schemas::f142::Value::String,
+      Mode::Create);
   ASSERT_TRUE(Group.get_dataset("value").datatype() ==
               hdf5::datatype::String::variable().native_type());
 }

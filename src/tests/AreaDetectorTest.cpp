@@ -1,9 +1,9 @@
 #include "schemas/NDAr/AreaDetectorWriter.h"
 #include "schemas/NDAr_NDArray_schema_generated.h"
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
-#include <algorithm>
 
 class AreaDetectorReader : public ::testing::Test {
 public:
@@ -54,8 +54,9 @@ TEST_F(AreaDetectorReader, ValidateTestFail) {
                                          FB_Tables::DType::Uint8, someData);
   builder.Finish(tmpPkg); // Finish without file identifier will fail verify
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage(reinterpret_cast<char*>(builder.GetBufferPointer()),
-                                             builder.GetSize()),
+  EXPECT_THROW(FileWriter::FlatbufferMessage(
+                   reinterpret_cast<char *>(builder.GetBufferPointer()),
+                   builder.GetSize()),
                std::runtime_error);
 }
 
@@ -354,16 +355,17 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
 
-  std::vector<double> TestData(10*10*10);
+  std::vector<double> TestData(10 * 10 * 10);
   std::iota(TestData.begin(), TestData.end(), 0);
 
   for (int i = 0; i < 5; i++) {
     flatbuffers::FlatBufferBuilder builder;
-    GenerateFlatbuffer(builder, reinterpret_cast<uint8_t*>(&TestData[0]),
+    GenerateFlatbuffer(builder, reinterpret_cast<uint8_t *>(&TestData[0]),
                        1000 * (sizeof(TestData[0])), FB_Tables::DType::Float64);
 
-    FileWriter::FlatbufferMessage Message(reinterpret_cast<char*>(builder.GetBufferPointer()),
-                                          builder.GetSize());
+    FileWriter::FlatbufferMessage Message(
+        reinterpret_cast<char *>(builder.GetBufferPointer()),
+        builder.GetSize());
     EXPECT_TRUE(Writer.write(Message).is_OK());
   }
   std::vector<std::uint64_t> CueIndexValues(
@@ -523,15 +525,15 @@ void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder,
 
 template <class Type>
 bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
-  std::vector<Type> testData(10*10*10);
+  std::vector<Type> testData(10 * 10 * 10);
   std::iota(testData.begin(), testData.end(), 0);
-  
+
   flatbuffers::FlatBufferBuilder builder;
-  GenerateFlatbuffer(builder, reinterpret_cast<uint8_t*>(&testData[0]),
+  GenerateFlatbuffer(builder, reinterpret_cast<uint8_t *>(&testData[0]),
                      1000 * (sizeof(testData[0])), FBType);
 
-  FileWriter::FlatbufferMessage Message(reinterpret_cast<char*>(builder.GetBufferPointer()),
-                                        builder.GetSize());
+  FileWriter::FlatbufferMessage Message(
+      reinterpret_cast<char *>(builder.GetBufferPointer()), builder.GetSize());
   ADWriterStandIn Writer;
   auto JsonConfig = nlohmann::json::parse(R""({
     "array_size": [10,10,10]

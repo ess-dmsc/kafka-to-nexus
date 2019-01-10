@@ -48,11 +48,11 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
   } else if (OpenMode == Mode::Open) {
     LOG(Sev::Debug, "f142 writer_typed_array reopen  ColumnCount: {}",
         ColumnCount);
-    ChunkedDataset = h5::h5d_chunked_2d<DT>::open(HdfGroup, SourceName,
-                                                  ColumnCount);
+    ChunkedDataset =
+        h5::h5d_chunked_2d<DT>::open(HdfGroup, SourceName, ColumnCount);
     if (ChunkedDataset == nullptr) {
-      throw std::runtime_error(
-          fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
+      throw std::runtime_error(fmt::format(
+          "Could not open hdf dataset  SourceName: {}", SourceName));
     }
     ChunkedDataset->buffer_init(ChunkSize, 0);
   }

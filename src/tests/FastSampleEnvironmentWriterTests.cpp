@@ -54,33 +54,33 @@ std::unique_ptr<std::int8_t[]> FastSampleEnvironmentReader::RawBuffer{nullptr};
 size_t FastSampleEnvironmentReader::BufferSize{0};
 
 TEST_F(FastSampleEnvironmentReader, GetSourceName) {
-  FileWriter::FlatbufferMessage TestMessage(reinterpret_cast<const char*>(RawBuffer.get()),
-                                            BufferSize);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
 }
 
 TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
-  FileWriter::FlatbufferMessage TestMessage(reinterpret_cast<const char*>(RawBuffer.get()),
-                                            BufferSize);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
   EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
 }
 
 TEST_F(FastSampleEnvironmentReader, Verify) {
-  FileWriter::FlatbufferMessage TestMessage(reinterpret_cast<const char*>(RawBuffer.get()),
-                                            BufferSize);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
 
 TEST_F(FastSampleEnvironmentReader, VerifyFail) {
   auto TempData = std::make_unique<char[]>(BufferSize);
   std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
-  FileWriter::FlatbufferMessage TestMessage1(reinterpret_cast<const char*>(TempData.get()),
-                                             BufferSize);
+  FileWriter::FlatbufferMessage TestMessage1(
+      reinterpret_cast<const char *>(TempData.get()), BufferSize);
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
   TempData[3] = 'h';
-  EXPECT_THROW(
-      FileWriter::FlatbufferMessage(reinterpret_cast<const char*>(TempData.get()), BufferSize),
-      FileWriter::NotValidFlatbuffer);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(
+                   reinterpret_cast<const char *>(TempData.get()), BufferSize),
+               FileWriter::NotValidFlatbuffer);
 }
 
 class FastSampleEnvironmentWriter : public ::testing::Test {

@@ -124,7 +124,8 @@ void Consumer::init() {
   rd_kafka_conf_set_consume_cb(conf, nullptr);
   rd_kafka_conf_set_opaque(conf, this);
 
-  RdKafka = rd_kafka_new(RD_KAFKA_CONSUMER, conf, static_cast<char*>(errstr), errstr_N);
+  RdKafka = rd_kafka_new(RD_KAFKA_CONSUMER, conf, static_cast<char *>(errstr),
+                         errstr_N);
   if (RdKafka == nullptr) {
     LOG(Sev::Error, "can not create kafka handle: {}", errstr);
     throw std::runtime_error("can not create Kafka handle");
@@ -210,13 +211,13 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
   if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error("Error in queryNumberOfPartitions");
   }
-    for (int I = 0; I < Metadata->topic_cnt; ++I) {
-      if (TopicName == Metadata->topics[I].topic) {
-        auto Count = Metadata->topics[I].partition_cnt;
-        rd_kafka_metadata_destroy(Metadata);
-        return Count;
-      }
+  for (int I = 0; I < Metadata->topic_cnt; ++I) {
+    if (TopicName == Metadata->topics[I].topic) {
+      auto Count = Metadata->topics[I].partition_cnt;
+      rd_kafka_metadata_destroy(Metadata);
+      return Count;
     }
+  }
   rd_kafka_metadata_destroy(Metadata);
   throw std::runtime_error(
       fmt::format("Topic {} not found by queryNumberOfPartitions", TopicName));

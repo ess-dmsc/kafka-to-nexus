@@ -68,7 +68,8 @@ TEST_F(MessageTimeExtractionTest, WrongFlatbufferID) {
   auto TestData = std::make_unique<char[]>(8);
   std::memcpy(TestData.get() + 4, MessageKey.c_str(), 4);
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 8), UnknownFlatbufferID);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 8),
+               UnknownFlatbufferID);
 }
 
 TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
@@ -79,7 +80,8 @@ TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
   }
   auto TestData = std::make_unique<char[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
-  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 7), BufferTooSmallError);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 7),
+               BufferTooSmallError);
 }
 
 class DemuxerTest : public ::testing::Test {

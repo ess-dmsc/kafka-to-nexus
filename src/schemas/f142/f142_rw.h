@@ -118,7 +118,8 @@ struct WriterFactory {
   virtual ~WriterFactory() = default;
   virtual std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID, Mode OpenMode) = 0;
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               Mode OpenMode) = 0;
   virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
 };
 
@@ -130,11 +131,13 @@ struct WriterFactoryScalar : public WriterFactory {
 
   std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID, Mode OpenMode) override {
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
-                                            new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID, OpenMode));
+        new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID,
+                                                OpenMode));
   }
-  
+
   FileWriter::Schemas::f142::Value getValueUnionID() override {
     return ValueUnionID;
   }
@@ -148,7 +151,8 @@ struct WriterFactoryArray : public WriterFactory {
 
   std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID, Mode OpenMode) override {
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns,
                                                ValueUnionID, OpenMode));
@@ -166,9 +170,10 @@ struct WriterFactoryScalarString : public WriterFactory {
 
   std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID, Mode OpenMode) override {
+               FileWriter::Schemas::f142::Value ValueUnionID,
+               Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
-                                            new WriterScalarString(Group, Name, ValueUnionID, Mode::Create));
+        new WriterScalarString(Group, Name, ValueUnionID, Mode::Create));
   }
 
   FileWriter::Schemas::f142::Value getValueUnionID() override {

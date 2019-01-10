@@ -67,7 +67,8 @@ private:
   static std::string H5VersionStringHeadersCompileTime();
 
   static void createHDFStructures(
-      const nlohmann::json *Value, hdf5::node::Group const &Parent, uint16_t Level,
+      const nlohmann::json *Value, hdf5::node::Group const &Parent,
+      uint16_t Level,
       hdf5::property::LinkCreationList const &LinkCreationPropertyList,
       hdf5::datatype::String const &FixedStringHDFType,
       std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path);

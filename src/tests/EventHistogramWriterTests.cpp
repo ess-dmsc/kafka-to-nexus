@@ -46,7 +46,8 @@ public:
       FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
     } catch (...) {
     }
-    FlatbufferReaders["hs00"] = std::make_unique<FileWriter::Schemas::hs00::Reader>();
+    FlatbufferReaders["hs00"] =
+        std::make_unique<FileWriter::Schemas::hs00::Reader>();
   }
 };
 

@@ -65,7 +65,8 @@ std::vector<char> binaryToHex(char const *data, uint32_t len) {
   return ret;
 }
 
-std::vector<std::string> split(std::string const &input, std::string const &token) {
+std::vector<std::string> split(std::string const &input,
+                               std::string const &token) {
   using std::string;
   using std::vector;
   vector<string> ret;

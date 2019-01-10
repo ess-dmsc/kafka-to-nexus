@@ -20,10 +20,10 @@ enum class MsgType : int {
 struct Msg {
   static Msg owned(char const *Data, size_t Bytes) {
     auto DataPtr = std::make_unique<char[]>(Bytes);
-    std::memcpy(reinterpret_cast<void*>(DataPtr.get()), Data, Bytes);
+    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
     return {MsgType::Owned, std::move(DataPtr), Bytes};
   }
-  
+
   /// \todo Delete this function when the last clang-tidy PR is merged.
   static Msg shared(char const *Data, size_t Bytes) {
     return Msg::owned(Data, Bytes);

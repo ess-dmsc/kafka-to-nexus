@@ -44,8 +44,7 @@ void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&item);
 template <typename T> class Registrar {
 public:
   explicit Registrar(std::string FlatbufferID) {
-    FlatbufferReaderRegistry::addReader(FlatbufferID,
-                                        std::make_unique<T>());
+    FlatbufferReaderRegistry::addReader(FlatbufferID, std::make_unique<T>());
   }
 };
 } // namespace FlatbufferReaderRegistry

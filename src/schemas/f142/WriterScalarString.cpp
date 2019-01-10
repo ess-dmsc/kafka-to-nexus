@@ -6,21 +6,21 @@ namespace f142 {
 
 /// \brief  Open or create a new dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
-                                       std::string const &SourceName, Value, Mode OpenMode) {
+                                       std::string const &SourceName, Value,
+                                       Mode OpenMode) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
   if (OpenMode == Mode::Open) {
-    ChunkedDataset =
-    h5::Chunked1DString::open(HdfGroup, SourceName);
+    ChunkedDataset = h5::Chunked1DString::open(HdfGroup, SourceName);
     if (ChunkedDataset == nullptr) {
-      throw std::runtime_error(
-                               fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
+      throw std::runtime_error(fmt::format(
+          "Could not open hdf dataset  SourceName: {}", SourceName));
     }
   } else if (OpenMode == Mode::Create) {
     ChunkedDataset =
-    h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024);
+        h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024);
     if (ChunkedDataset == nullptr) {
       throw std::runtime_error(fmt::format(
-                                           "Could not create hdf dataset  SourceName: {}", SourceName));
+          "Could not create hdf dataset  SourceName: {}", SourceName));
     }
   }
 }

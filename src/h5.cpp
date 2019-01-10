@@ -34,7 +34,8 @@ void h5d::init_basics() {
 }
 
 h5d::ptr h5d::create(hdf5::node::Group const &Node, std::string const &Name,
-                     hdf5::datatype::Datatype const &Type, hdf5::dataspace::Simple const &dsp,
+                     hdf5::datatype::Datatype const &Type,
+                     hdf5::dataspace::Simple const &dsp,
                      hdf5::property::DatasetCreationList const &dcpl) {
   try {
     // Creation is done in single process mode.
@@ -57,7 +58,8 @@ h5d::ptr h5d::create(hdf5::node::Group const &Node, std::string const &Name,
   }
 }
 
-h5d::ptr h5d::open_single(hdf5::node::Group const &Node, std::string const &Name) {
+h5d::ptr h5d::open_single(hdf5::node::Group const &Node,
+                          std::string const &Name) {
   // Open in single-process mode
   auto ret = std::unique_ptr<h5d>(new h5d);
   auto &o = *ret;
@@ -165,15 +167,15 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 
     auto t2 = CLK::now();
 
-      try {
-        Dataset.extent(sext2);
-      } catch (...) {
-        LOG(Sev::Error, "Dataset.extent()");
-        return {AppendResult::ERROR};
-      }
-      DSPTgt = Dataset.dataspace();
-      sext = DSPTgt.current_dimensions();
-      ShapeMax = DSPTgt.maximum_dimensions();
+    try {
+      Dataset.extent(sext2);
+    } catch (...) {
+      LOG(Sev::Error, "Dataset.extent()");
+      return {AppendResult::ERROR};
+    }
+    DSPTgt = Dataset.dataspace();
+    sext = DSPTgt.current_dimensions();
+    ShapeMax = DSPTgt.maximum_dimensions();
 
     for (size_t i = 1; i < sext.size(); ++i) {
       sext.at(i) = sext2.at(i);
@@ -275,7 +277,8 @@ append_ret h5d::append(std::string const &String) {
     {
       auto Type = Dataset.datatype();
       auto TypeHid = static_cast<hid_t>(Type);
-      if (H5Tget_class(TypeHid) != H5T_STRING or H5Tis_variable_str(TypeHid) == 0) {
+      if (H5Tget_class(TypeHid) != H5T_STRING or
+          H5Tis_variable_str(TypeHid) == 0) {
         LOG(Sev::Error, "Unexpected datatype");
         return {AppendResult::ERROR};
       }
@@ -293,7 +296,8 @@ append_ret h5d::append(std::string const &String) {
         {SpaceTarget.current_dimensions().at(0) - 1}, {1}, {1}, {1});
     SpaceTarget.selection(hdf5::dataspace::SelectionOperation::SET, TargetSlab);
     Dataset.write(String, Dataset.datatype(), SpaceMemory, SpaceTarget);
-    ShapeNow = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
+    ShapeNow =
+        hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
     return {AppendResult::OK, String.size(), 0};
   } catch (std::runtime_error const &e) {
     LOG(Sev::Error, "exception while writing: {}", e.what());
@@ -335,7 +339,8 @@ h5d_chunked_1d<T>::open(hdf5::node::Group const &loc, std::string name) {
 }
 
 template <typename T>
-h5d_chunked_1d<T>::h5d_chunked_1d(std::string const&, h5d ds_) : ds(std::move(ds_)) {
+h5d_chunked_1d<T>::h5d_chunked_1d(std::string const &, h5d ds_)
+    : ds(std::move(ds_)) {
   if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");
     throw std::runtime_error("Not a dataset");
@@ -391,7 +396,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "fail buffer");
       exit(1);
     }
-    auto p1 =  reinterpret_cast<const char*>(data);
+    auto p1 = reinterpret_cast<const char *>(data);
     auto p2 = buf.data() + buf_n;
     for (size_t i1 = 0; i1 < nbytes; ++i1) {
       p2[i1] = p1[i1];
@@ -431,7 +436,8 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
 }
 
 template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
-  auto wr = ds.append_data_1d(reinterpret_cast<T*>(buf.data()), buf_n / sizeof(T));
+  auto wr =
+      ds.append_data_1d(reinterpret_cast<T *>(buf.data()), buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
     LOG(Sev::Debug, "FLUSH NOT OK");
     return wr.status;
@@ -495,7 +501,8 @@ h5d_chunked_2d<T>::create(hdf5::node::Group const &loc, std::string const &name,
 
 template <typename T>
 typename h5d_chunked_2d<T>::ptr
-h5d_chunked_2d<T>::open(hdf5::node::Group const &loc, std::string const &name, hsize_t ncols) {
+h5d_chunked_2d<T>::open(hdf5::node::Group const &loc, std::string const &name,
+                        hsize_t ncols) {
   auto ds = h5d::open(loc, name);
   if (!ds) {
     return ptr();
@@ -504,7 +511,7 @@ h5d_chunked_2d<T>::open(hdf5::node::Group const &loc, std::string const &name, h
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(std::string const&, h5d ds_, hsize_t ncols)
+h5d_chunked_2d<T>::h5d_chunked_2d(std::string const &, h5d ds_, hsize_t ncols)
     : ds(std::move(ds_)), ncols(ncols) {
   if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");
@@ -523,8 +530,8 @@ h5d_chunked_2d<T>::h5d_chunked_2d(std::string const&, h5d ds_, hsize_t ncols)
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(h5d_chunked_2d &&x)
-    noexcept : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
+h5d_chunked_2d<T>::h5d_chunked_2d(h5d_chunked_2d &&x) noexcept
+    : ds(std::move(x.ds)), dsp_wr(std::move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_2d<T>::~h5d_chunked_2d() { flush_buf(); }
 
@@ -551,7 +558,7 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
       LOG(Sev::Error, "fail buffer");
       exit(1);
     }
-    auto p1 =  reinterpret_cast<const char*>(data);
+    auto p1 = reinterpret_cast<const char *>(data);
     auto p2 = buf.data() + buf_n;
     for (size_t i1 = 0; i1 < nbytes; ++i1) {
       p2[i1] = p1[i1];
@@ -591,7 +598,8 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
 }
 
 template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
-  auto wr = ds.append_data_2d(reinterpret_cast<T*>(buf.data()), buf_n / sizeof(T));
+  auto wr =
+      ds.append_data_2d(reinterpret_cast<T *>(buf.data()), buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
     return wr.status;
   }

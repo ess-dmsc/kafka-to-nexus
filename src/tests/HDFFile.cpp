@@ -397,7 +397,7 @@ public:
 
         // Allocate memory on JM AND CHECK IT!
         msgs.push_back(FileWriter::Msg::owned(
-            reinterpret_cast<const char*>(fb.builder->GetBufferPointer()),
+            reinterpret_cast<const char *>(fb.builder->GetBufferPointer()),
             fb.builder->GetSize()));
         if (msgs.back().size() < 8) {
           LOG(Sev::Error, "error");
@@ -787,7 +787,7 @@ public:
         fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
         msgs.push_back(FileWriter::Msg::owned(
-            reinterpret_cast<const char*>(fb.builder->GetBufferPointer()),
+            reinterpret_cast<const char *>(fb.builder->GetBufferPointer()),
             fb.builder->GetSize()));
       }
     }

@@ -117,8 +117,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
   try {
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
         HDFGroup, "event_time_offset", chunk_bytes);
-    this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-        HDFGroup, "event_id", chunk_bytes);
+    this->ds_event_id =
+        h5::h5d_chunked_1d<uint32_t>::create(HDFGroup, "event_id", chunk_bytes);
     this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
         HDFGroup, "event_time_zero", chunk_bytes);
     this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
@@ -152,18 +152,17 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   // Keep these for now, experimenting with those on another branch.
-  this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
-      HDFGroup, "event_time_offset");
-  this->ds_event_id =
-      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
-  this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      HDFGroup, "event_time_zero");
-  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::open(
-      HDFGroup, "event_index");
+  this->ds_event_time_offset =
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_time_offset");
+  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
+  this->ds_event_time_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "event_time_zero");
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_index");
   this->ds_cue_index =
       h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index");
-  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      HDFGroup, "cue_timestamp_zero");
+  this->ds_cue_timestamp_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_timestamp_zero");
 
   ds_event_time_offset->buffer_init(buffer_size, buffer_packet_max);
   ds_event_id->buffer_init(buffer_size, buffer_packet_max);

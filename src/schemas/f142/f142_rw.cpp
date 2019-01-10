@@ -126,10 +126,12 @@ createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
   auto const &ValueTraits = ValueTraitsMaybe.value();
   if (Method == CreateWriterTypedBaseMethod::OPEN) {
     return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
-                                     ValueTraits->getValueUnionID(), Mode::Open);
+                                     ValueTraits->getValueUnionID(),
+                                     Mode::Open);
   }
   return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
-                                   ValueTraits->getValueUnionID(), Mode::Create);
+                                   ValueTraits->getValueUnionID(),
+                                   Mode::Create);
 }
 
 /// Parse the configuration for this stream.

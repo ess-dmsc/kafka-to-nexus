@@ -103,7 +103,7 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-          Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
@@ -196,8 +196,8 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   StreamerStandIn TestStreamer;
   auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(
-          generateKafkaMsg(static_cast<const unsigned char*>(DataBuffer), sizeof(DataBuffer))))
+      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(generateKafkaMsg(
+          static_cast<const unsigned char *>(DataBuffer), sizeof(DataBuffer))))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {

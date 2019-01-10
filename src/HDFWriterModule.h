@@ -238,9 +238,7 @@ public:
   ///
   /// \param FlatbufferID The unique identifier for this writer module.
   explicit Registrar(std::string const &FlatbufferID) {
-    auto FactoryFunction = []() {
-      return std::make_unique<Module>();
-    };
+    auto FactoryFunction = []() { return std::make_unique<Module>(); };
     addWriterModule(FlatbufferID, FactoryFunction);
   };
 };

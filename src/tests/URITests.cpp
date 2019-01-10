@@ -6,19 +6,19 @@ namespace uri {
 TEST(URI, host_only_gives_hostport_plus_default_port) {
   URI TestURI("//myhost");
   ASSERT_EQ(TestURI.HostPort, "myhost");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 0);
+  ASSERT_EQ(TestURI.Port, (uint32_t)0);
 }
 
 TEST(URI, ip_only_gives_hostport_plus_default_port) {
   URI TestURI("//127.0.0.1");
   ASSERT_EQ(TestURI.HostPort, "127.0.0.1");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 0);
+  ASSERT_EQ(TestURI.Port, (uint32_t)0);
 }
 
 TEST(URI, host_with_port_gives_hostport_and_port) {
   URI TestURI("//myhost:345");
   ASSERT_EQ(TestURI.HostPort, "myhost:345");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 345);
+  ASSERT_EQ(TestURI.Port, (uint32_t)345);
 }
 
 TEST(URI, getURIString_host_with_port_and_topic_gives_hostport_and_topic) {
@@ -30,13 +30,13 @@ TEST(URI, getURIString_host_with_port_and_topic_gives_hostport_and_topic) {
 TEST(URI, ip_with_port_gives_hostport_with_port) {
   URI TestURI("//127.0.0.1:345");
   ASSERT_EQ(TestURI.HostPort, "127.0.0.1:345");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 345);
+  ASSERT_EQ(TestURI.Port, (uint32_t)345);
 }
 
 TEST(URI, scheme_ignored_host_port_path_parsed) {
   URI TestURI("kafka://my_host.com:8080/maybe");
   ASSERT_EQ(TestURI.HostPort, "my_host.com:8080");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 8080);
+  ASSERT_EQ(TestURI.Port, (uint32_t)8080);
   ASSERT_EQ(TestURI.Topic, "maybe");
 }
 
@@ -47,14 +47,14 @@ TEST(URI, path_after_topic_throws_runtime_error) {
 TEST(URI, host_with_topic_no_port_gives_hostport_topic_and_default_port) {
   URI TestURI("//my.Host/the-topic");
   ASSERT_EQ(TestURI.HostPort, "my.Host");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 0);
+  ASSERT_EQ(TestURI.Port, (uint32_t)0);
   ASSERT_EQ(TestURI.Topic, "the-topic");
 }
 
 TEST(URI, host_with_topic_and_port_gives_hostport_topic_and_port) {
   URI TestURI("//my.Host:789/the-topic");
   ASSERT_EQ(TestURI.HostPort, "my.Host:789");
-  ASSERT_EQ(TestURI.Port, (uint32_t) 789);
+  ASSERT_EQ(TestURI.Port, (uint32_t)789);
   ASSERT_EQ(TestURI.Topic, "the-topic");
 }
 
