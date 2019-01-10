@@ -34,12 +34,12 @@ struct append_ret {
 class h5d {
 public:
   using ptr = std::unique_ptr<h5d>;
-  static ptr create(hdf5::node::Group Node, std::string const &Name,
-                    hdf5::datatype::Datatype Type, hdf5::dataspace::Simple dsp,
-                    hdf5::property::DatasetCreationList dcpl);
-  static ptr open_single(hdf5::node::Group Node, std::string const &Name);
-  static ptr open(hdf5::node::Group Node, std::string const &Name);
-  h5d(h5d &&x);
+  static ptr create(hdf5::node::Group const &Node, std::string const &Name,
+                    hdf5::datatype::Datatype const &Type, hdf5::dataspace::Simple const &dsp,
+                    hdf5::property::DatasetCreationList const &dcpl);
+  static ptr open_single(hdf5::node::Group const &Node, std::string const &Name);
+  static ptr open(hdf5::node::Group const &Node, std::string const &Name);
+  h5d(h5d &&x) noexcept;
   ~h5d();
   friend void swap(h5d &x, h5d &y);
   template <typename T> append_ret append_data_1d(T const *data, hsize_t nlen);
@@ -62,7 +62,7 @@ public:
   int mpi_rank = -1;
 
 private:
-  h5d();
+  h5d() = default;
   void init_basics();
   uint64_t TotalNanosecondsSpent = 0;
 };
@@ -73,11 +73,11 @@ template <typename T> void swap(h5d_chunked_1d<T> &x, h5d_chunked_1d<T> &y);
 template <typename T> class h5d_chunked_1d {
 public:
   using ptr = std::unique_ptr<h5d_chunked_1d<T>>;
-  static ptr create(hdf5::node::Group loc, std::string name,
+  static ptr create(hdf5::node::Group const &loc, std::string name,
                     hsize_t chunk_bytes);
-  static ptr open(hdf5::node::Group loc, std::string name);
+  static ptr open(hdf5::node::Group const &loc, std::string name);
   h5d ds;
-  h5d_chunked_1d(h5d_chunked_1d &&x);
+  h5d_chunked_1d(h5d_chunked_1d &&x) noexcept;
   ~h5d_chunked_1d();
   friend void swap<>(h5d_chunked_1d &x, h5d_chunked_1d &y);
   append_ret append_data_1d(T const *data, hsize_t nlen);
@@ -86,7 +86,7 @@ public:
   size_t size() const;
 
 private:
-  h5d_chunked_1d(std::string name, h5d ds);
+  h5d_chunked_1d(std::string const &name, h5d ds);
   hdf5::dataspace::Simple dsp_wr;
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
@@ -103,9 +103,9 @@ private:
 class Chunked1DString {
 public:
   using ptr = std::unique_ptr<Chunked1DString>;
-  static ptr create(hdf5::node::Group Node, std::string Name,
+  static ptr create(hdf5::node::Group const &Node, std::string const &Name,
                     hsize_t ChunkBytes);
-  static ptr open(hdf5::node::Group Node, std::string Name);
+  static ptr open(hdf5::node::Group const &Node, std::string const &Name);
   append_ret append(std::string const &String);
   h5d ds;
 
@@ -119,9 +119,9 @@ template <typename T> void swap(h5d_chunked_2d<T> &x, h5d_chunked_2d<T> &y);
 template <typename T> class h5d_chunked_2d {
 public:
   using ptr = std::unique_ptr<h5d_chunked_2d<T>>;
-  static ptr create(hdf5::node::Group loc, std::string name, hsize_t ncols,
+  static ptr create(hdf5::node::Group const &loc, std::string const &name, hsize_t ncols,
                     hsize_t chunk_bytes);
-  static ptr open(hdf5::node::Group loc, std::string name, hsize_t ncols);
+  static ptr open(hdf5::node::Group const &loc, std::string const &name, hsize_t ncols);
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x) noexcept;
   ~h5d_chunked_2d();

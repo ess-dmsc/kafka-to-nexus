@@ -461,7 +461,7 @@ template <typename DT>
 static void writeNumericDataset(
     hdf5::node::Group const &Node, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationPropertyList,
-    hdf5::dataspace::Dataspace &Dataspace, const nlohmann::json *Values) {
+    hdf5::dataspace::Dataspace const &Dataspace, const nlohmann::json *Values) {
 
   try {
     auto Dataset = Node.create_dataset(Name, hdf5::datatype::create<DT>(),
@@ -967,7 +967,7 @@ void HDFFile::flush() {
   }
 }
 
-static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
+static void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json) {
   if (!Json.is_object()) {
     throw std::runtime_error(fmt::format(
         "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));
