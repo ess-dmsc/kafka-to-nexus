@@ -8,7 +8,6 @@ set(UnitTests_SRC
     HDFFile.cpp
     HDFFileAttributesTest.cpp
     HDFFileTestHelper.cpp
-    helper.cpp
     json.cpp
     StatusTest.cpp
     URITests.cpp
