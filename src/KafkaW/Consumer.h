@@ -2,6 +2,7 @@
 
 #include "BrokerSettings.h"
 #include "ConsumerMessage.h"
+#include "ConsumerSettings.h"
 #include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
@@ -14,9 +15,8 @@ public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
   virtual void addTopic(std::string const &Topic) = 0;
-  virtual void
-  addTopicAtTimestamp(std::string const &Topic,
-                      std::chrono::milliseconds const StartTime) = 0;
+  virtual void addTopicAtTimestamp(std::string const &Topic,
+                                   std::chrono::milliseconds StartTime) = 0;
   virtual std::unique_ptr<ConsumerMessage> poll() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual int32_t queryNumberOfPartitions(const std::string &TopicName) = 0;
@@ -24,14 +24,15 @@ public:
 
 class Consumer : public ConsumerInterface {
 public:
-  explicit Consumer(BrokerSettings const &Opt);
+  explicit Consumer(BrokerSettings BrokerOpt,
+                    ConsumerSettings ConsumerOpt = ConsumerSettings());
   explicit Consumer(Consumer &&) = delete;
   explicit Consumer(Consumer const &) = delete;
   ~Consumer() override;
   void init();
   void addTopic(std::string const &Topic) override;
   void addTopicAtTimestamp(std::string const &Topic,
-                           std::chrono::milliseconds const StartTime) override;
+                           std::chrono::milliseconds StartTime) override;
   bool topicPresent(const std::string &Topic) override;
   int32_t queryNumberOfPartitions(const std::string &TopicName) override;
   std::unique_ptr<ConsumerMessage> poll() override;
@@ -43,6 +44,7 @@ public:
 
 private:
   BrokerSettings ConsumerBrokerSettings;
+  ConsumerSettings Settings;
   static void cb_log(rd_kafka_t const *rk, int level, char const *fac,
                      char const *buf);
   static int cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
