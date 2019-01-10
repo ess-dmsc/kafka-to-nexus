@@ -66,7 +66,7 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
   TestStreamer.ConsumerCreated.get();
   TestStreamer.ConsumerCreated =
-  std::async(std::launch::async, [EmptyPollerConsumer]() {
+      std::async(std::launch::async, [EmptyPollerConsumer]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
