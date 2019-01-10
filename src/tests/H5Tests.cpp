@@ -29,7 +29,8 @@ TEST(H5, writeStringToDataset) {
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
   /// \todo Remove nullptr when clang-tidy merge is done.
-  auto ds = h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL, nullptr);
+  auto ds =
+      h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL, nullptr);
   ASSERT_NE(ds, nullptr);
   std::string ExpectedValue("Some string value");
   ds->append(ExpectedValue);
@@ -81,13 +82,14 @@ TEST(H5, writeScalarString) {
   auto File = createInMemoryFile();
   auto Group = File.root();
   std::string SourceName("value");
-  
+
   /// \todo Switch code when clang-tidy merge is done.
-  FileWriter::Schemas::f142::WriterScalarString Writer(Group, SourceName, FileWriter::Schemas::f142::Value::String, nullptr);
-//  using FileWriter::Schemas::f142::Mode;
-//  FileWriter::Schemas::f142::WriterScalarString Writer(
-//      Group, SourceName, FileWriter::Schemas::f142::Value::String,
-//      Mode::Create);
+  FileWriter::Schemas::f142::WriterScalarString Writer(
+      Group, SourceName, FileWriter::Schemas::f142::Value::String, nullptr);
+  //  using FileWriter::Schemas::f142::Mode;
+  //  FileWriter::Schemas::f142::WriterScalarString Writer(
+  //      Group, SourceName, FileWriter::Schemas::f142::Value::String,
+  //      Mode::Create);
   ASSERT_TRUE(Group.get_dataset("value").datatype() ==
               hdf5::datatype::String::variable().native_type());
 }
