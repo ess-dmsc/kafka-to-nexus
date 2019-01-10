@@ -62,14 +62,14 @@ public:
 
 TEST_F(StreamerProcessTest, CreationNotYetDone) {
   StreamerStandIn TestStreamer;
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
   TestStreamer.ConsumerCreated.get();
   TestStreamer.ConsumerCreated =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+  std::async(std::launch::async, [EmptyPollerConsumer]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
@@ -95,7 +95,7 @@ TEST_F(StreamerProcessTest, BadConsumerCreation) {
 
 TEST_F(StreamerProcessTest, EmptyPoll) {
   StreamerStandIn TestStreamer;
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::Empty))
@@ -103,7 +103,7 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
@@ -111,7 +111,7 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
 
 TEST_F(StreamerProcessTest, EndOfPartition) {
   StreamerStandIn TestStreamer;
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
@@ -119,7 +119,7 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
@@ -127,7 +127,7 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
 
 TEST_F(StreamerProcessTest, PollingError) {
   StreamerStandIn TestStreamer;
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::Err))
@@ -135,7 +135,7 @@ TEST_F(StreamerProcessTest, PollingError) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
@@ -148,14 +148,14 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
   unsigned char DataBuffer[]{"0000test"};
   std::string ReaderKey{"test"};
   StreamerStandIn TestStreamer;
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(DataBuffer, sizeof(DataBuffer)))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
@@ -194,7 +194,7 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   unsigned char DataBuffer[]{"0000test"};
 
   StreamerStandIn TestStreamer;
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(generateKafkaMsg(
           static_cast<const unsigned char *>(DataBuffer), sizeof(DataBuffer))))
@@ -202,7 +202,7 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
@@ -250,7 +250,7 @@ TEST_F(StreamerProcessTimingTest,
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
@@ -259,7 +259,7 @@ TEST_F(StreamerProcessTimingTest,
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
@@ -279,7 +279,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
@@ -288,7 +288,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
@@ -320,7 +320,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
@@ -329,7 +329,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::STOP);
@@ -356,7 +356,7 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   int CallCounter{0};
   auto PollResult = [this, &CallCounter]() {
     CallCounter++;
@@ -372,7 +372,7 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_))
@@ -398,7 +398,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
@@ -407,7 +407,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
@@ -432,7 +432,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
@@ -441,7 +441,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
@@ -472,7 +472,7 @@ TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer.setSources(SourceList);
-  auto EmptyPollerConsumer = std::make_unique<ConsumerEmptyStandIn>(Settings);
+  auto EmptyPollerConsumer = new ConsumerEmptyStandIn(Settings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP))
@@ -481,7 +481,7 @@ TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, std::move(EmptyPollerConsumer)};
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
