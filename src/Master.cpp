@@ -34,11 +34,12 @@ void Master::handle_command_message(
   auto MessageTimestamp = msg->getTimestamp();
   if (MessageTimestamp.first != RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
     command_handler.tryToHandle(
-        Msg::owned(reinterpret_cast<char const *>(msg->getData()), msg->getSize()),
+        Msg::owned(reinterpret_cast<char const *>(msg->getData()),
+                   msg->getSize()),
         MessageTimestamp.second);
   } else {
-    command_handler.tryToHandle(
-        Msg::owned(reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
+    command_handler.tryToHandle(Msg::owned(
+        reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
   }
 }
 

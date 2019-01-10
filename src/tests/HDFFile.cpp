@@ -296,7 +296,7 @@ public:
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.tryToHandle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
-    
+
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
     // Verification
