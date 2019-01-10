@@ -1,8 +1,16 @@
 #include "Streamer.h"
+#include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafka.h>
 #include <trompeloeil.hpp>
+namespace FileWriter {
+namespace Schemas {
+namespace f142 {
 
+#include "schemas/f142_logdata_generated.h"
+}
+}
+}
 using trompeloeil::_;
 
 namespace FileWriter {
@@ -14,6 +22,22 @@ generateKafkaMsg(unsigned char const *DataPtr, size_t const Size) {
 class StreamerInitTest : public ::testing::Test {
 public:
 };
+
+static std::unique_ptr<flatbuffers::FlatBufferBuilder>
+getFlatbufferBuilder(std::vector<float> Value) {
+  auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
+  auto &Builder = *BuilderPtr;
+  auto ValueOffset = Builder.CreateVector(Value);
+  FileWriter::Schemas::f142::ArrayFloatBuilder ValueBuilder(Builder);
+  ValueBuilder.add_value(ValueOffset);
+  auto UnionOffset = ValueBuilder.Finish().Union();
+  FileWriter::Schemas::f142::LogDataBuilder LogDataBuilder(Builder);
+  LogDataBuilder.add_value(UnionOffset);
+  LogDataBuilder.add_value_type(FileWriter::Schemas::f142::Value::ArrayFloat);
+  FileWriter::Schemas::f142::FinishLogDataBuffer(Builder,
+                                                 LogDataBuilder.Finish());
+  return BuilderPtr;
+}
 
 // make sure that a topic exists/not exists
 TEST_F(StreamerInitTest, Success) {
@@ -233,8 +257,9 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  //  FileWriter::Msg MyMessage=FileWriter::Msg();
-  //  FileWriter::Msg & Reference=MyMessage;
+  // TODO: pass correct message as a reference to second argument. get to
+  // Streamer.cpp:152
+  FileWriter::Msg MyMessage = FileWriter::Msg();
   REQUIRE_CALL(*EmptyPollerConsumer,
                poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
       .TIMES(1)
@@ -293,10 +318,14 @@ TEST_F(StreamerProcessTimingTest,
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
+  FileWriter::Msg MyMessage = FileWriter::Msg();
+  /// TODO: pass correct message as a reference to second argument. get to
+  // Streamer.cpp:159
+  MyMessage.owned("TestMessage", 11);
   REQUIRE_CALL(*EmptyPollerConsumer,
                poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
-
-      .TIMES(1);
+      .TIMES(1)
+      .SIDE_EFFECT(_1 = KafkaW::PollStatus::Msg);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -322,9 +351,15 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
+  /// TODO: pass correct message as a reference to second argument. get to
+  // Streamer.cpp:167
+  std::vector<float> Value = {1.1, 1.2, 1.3};
+  auto FlatbuffersBuilderPointer = FileWriter::getFlatbufferBuilder(Value);
   REQUIRE_CALL(*EmptyPollerConsumer,
                poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
-      .TIMES(1);
+      .TIMES(1)
+      .SIDE_EFFECT(_1 = KafkaW::PollStatus::Msg)
+      .SIDE_EFFECT(_2.owned("TestMessage", 11));
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -364,7 +399,10 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
       new ConsumerEmptyStandIn(Settings);
   FileWriter::Msg MyMessage = FileWriter::Msg();
   //      FileWriter::Msg &MessagePtr = MyMessage;
+  // TODO pass correct message as a reference to second argument. get to
+  // Streamer.cpp:174
   MyMessage.owned("TestMessage", 11);
+
   REQUIRE_CALL(*EmptyPollerConsumer,
                poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
       .TIMES(1)
@@ -523,4 +561,5 @@ TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
+
 } // namespace FileWriter
