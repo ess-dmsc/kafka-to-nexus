@@ -3,7 +3,7 @@
 [![DOI](https://zenodo.org/badge/81435658.svg)](https://zenodo.org/badge/latestdoi/81435658)
 
 
-# Kafka to Nexus file writing
+# Kafka to Nexus Filewriter
 
 - [Usage](#usage)
 - [Installation](#installation)
