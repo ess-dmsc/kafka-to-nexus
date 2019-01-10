@@ -75,7 +75,7 @@ void send_stop(FileWriter::CommandHandler &ch, json const &CommandJSON) {
   })"");
   Command["job_id"] = CommandJSON["job_id"];
   auto CommandString = Command.dump();
-  ch.handle(CommandString);
+  ch.tryToHandle(CommandString);
 }
 
 // Verify
@@ -104,7 +104,7 @@ public:
     MockMasterI MMaster;
 
     FileWriter::CommandHandler ch(main_opt, &MMaster);
-    ch.handle(CommandString);
+    ch.tryToHandle(CommandString);
   }
 
   static void new_04() {
@@ -119,7 +119,7 @@ public:
     unlink(fname.c_str());
     MainOpt main_opt;
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(CommandString);
+    ch.tryToHandle(CommandString);
   }
 
   static bool check_cue(std::vector<uint64_t> const &event_time_zero,
@@ -163,7 +163,7 @@ public:
     ASSERT_GT(fname.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(Command);
+    ch.tryToHandle(Command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
     send_stop(ch, json_command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
@@ -294,11 +294,11 @@ public:
     ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(CommandString);
+    ch.tryToHandle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
+    
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
-
     // Verification
     auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
     auto ds = hdf5::node::get_dataset(file.root(), "/some_group/value");
@@ -329,7 +329,7 @@ public:
     ASSERT_GT(Filename.size(), 8u);
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
-    ch.handle(CommandString);
+    ch.tryToHandle(CommandString);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
     send_stop(ch, CommandJSON);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
@@ -614,7 +614,7 @@ public:
       unlink(string(fname).c_str());
 
       auto CommandString = CommandJSON.dump();
-      ch.handle(CommandString);
+      ch.tryToHandle(CommandString);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
       auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
@@ -948,9 +948,8 @@ public:
     for (int file_i = 0; file_i < 1; ++file_i) {
       unlink(Filename.c_str());
 
-      ch.handle(CommandString);
+      ch.tryToHandle(CommandString);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
-
       auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
       ASSERT_EQ(fwt->demuxers().size(), static_cast<size_t>(1));
 

@@ -31,8 +31,15 @@ Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
 void Master::handle_command_message(
     std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(Msg::owned(
-      reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
+  auto MessageTimestamp = msg->getTimestamp();
+  if (MessageTimestamp.first != RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
+    command_handler.tryToHandle(
+        Msg::owned(reinterpret_cast<char const *>(msg->getData()), msg->getSize()),
+        MessageTimestamp.second);
+  } else {
+    command_handler.tryToHandle(
+        Msg::owned(reinterpret_cast<char const *>(msg->getData()), msg->getSize()));
+  }
 }
 
 void Master::handle_command(std::string const &command) {
