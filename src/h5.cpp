@@ -504,7 +504,7 @@ h5d_chunked_2d<T>::open(hdf5::node::Group const &loc, std::string const &name, h
 }
 
 template <typename T>
-h5d_chunked_2d<T>::h5d_chunked_2d(std::string, h5d ds_, hsize_t ncols)
+h5d_chunked_2d<T>::h5d_chunked_2d(std::string const&, h5d ds_, hsize_t ncols)
     : ds(std::move(ds_)), ncols(ncols) {
   if (!ds.Dataset.is_valid()) {
     LOG(Sev::Critical, "not a dataset");
@@ -748,16 +748,16 @@ template h5d_chunked_2d<   float>::ptr h5d_chunked_2d<   float>::open(hdf5::node
 template h5d_chunked_2d<  double>::ptr h5d_chunked_2d<  double>::open(hdf5::node::Group const &loc, std::string const &name, hsize_t ncols);
 
 
-template h5d_chunked_2d< uint8_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<uint16_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<uint32_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<uint64_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<  int8_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d< int16_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d< int32_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d< int64_t>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<   float>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
-template h5d_chunked_2d<  double>::h5d_chunked_2d(std::string name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< uint8_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<uint16_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<uint32_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<uint64_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<  int8_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< int16_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< int32_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d< int64_t>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<   float>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+template h5d_chunked_2d<  double>::h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
 
 
 template h5d_chunked_2d< uint8_t>::~h5d_chunked_2d();

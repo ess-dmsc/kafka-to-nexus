@@ -3,10 +3,10 @@
 #include "NeXusDataset.h"
 
 namespace NeXusDataset {
-RawValue::RawValue(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize)
+RawValue::RawValue(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::uint16_t>(Parent, "raw_value", CMode, ChunkSize) {}
 
-Time::Time(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize)
+Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "time", CMode, ChunkSize) {
   if (Mode::Create == CMode) {
     auto StartAttr = ExtensibleDataset::attributes.create<std::string>("start");
@@ -16,10 +16,10 @@ Time::Time(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize)
   }
 }
 
-CueIndex::CueIndex(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize)
+CueIndex::CueIndex(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::uint32_t>(Parent, "cue_index", CMode, ChunkSize) {}
 
-CueTimestampZero::CueTimestampZero(hdf5::node::Group Parent, Mode CMode,
+CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                                    size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "cue_timestamp_zero", CMode,
                                        ChunkSize) {

@@ -460,7 +460,7 @@ void HDFFile::writeAttributesIfPresent(hdf5::node::Node const &Node,
 template <typename DT>
 static void writeNumericDataset(
     hdf5::node::Group const &Node, const std::string &Name,
-    hdf5::property::DatasetCreationList &DatasetCreationPropertyList,
+    hdf5::property::DatasetCreationList const &DatasetCreationPropertyList,
     hdf5::dataspace::Dataspace const &Dataspace, const nlohmann::json *Values) {
 
   try {

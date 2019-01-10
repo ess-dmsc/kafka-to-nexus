@@ -74,7 +74,7 @@ public:
   /// ignored if the dataset
   /// is opened.
   /// \throw std::runtime_error if dataset can not be created/opened.
-  ExtensibleDataset(hdf5::node::Group Parent, std::string Name, Mode CMode,
+  ExtensibleDataset(hdf5::node::Group const &Parent, std::string Name, Mode CMode,
                     size_t ChunkSize)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
@@ -198,7 +198,7 @@ public:
   /// Shape.
   ///
   /// \throw std::runtime_error if dataset can not be created/opened.
-  MultiDimDataset(hdf5::node::Group Parent, Mode CMode, hdf5::Dimensions Shape,
+  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode, hdf5::Dimensions Shape,
                   hdf5::Dimensions ChunkSize)
       : MultiDimDatasetBase() {
     if (Mode::Create == CMode) {
@@ -246,7 +246,7 @@ public:
   ///
   /// \throw std::runtime_error if dataset can not opened or the constructor is
   /// called with the input NeXusDataset::Mode::Create.
-  MultiDimDataset(hdf5::node::Group Parent, Mode CMode)
+  MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode)
       : MultiDimDatasetBase(Parent, CMode) {}
 };
 
@@ -256,7 +256,7 @@ public:
   RawValue() = default;
   /// \brief Create the raw_value dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  RawValue(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize = 1024);
+  RawValue(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
 class Time : public ExtensibleDataset<std::uint64_t> {
@@ -264,7 +264,7 @@ public:
   Time() = default;
   /// \brief Create the time dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  Time(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize = 1024);
+  Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
 class CueIndex : public ExtensibleDataset<std::uint32_t> {
@@ -272,7 +272,7 @@ public:
   CueIndex() = default;
   /// \brief Create the cue_index dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  CueIndex(hdf5::node::Group Parent, Mode CMode, size_t ChunkSize = 1024);
+  CueIndex(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024);
 };
 
 class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
@@ -280,7 +280,7 @@ public:
   CueTimestampZero() = default;
   /// \brief Create the cue_timestamp_zero dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  CueTimestampZero(hdf5::node::Group Parent, Mode CMode,
+  CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize = 1024);
 };
 
