@@ -10,9 +10,9 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 #include "schemas/f142_logdata_generated.h"
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter
 
 hdf5::file::File createInMemoryFile() {
   hdf5::property::FileAccessList fapl;

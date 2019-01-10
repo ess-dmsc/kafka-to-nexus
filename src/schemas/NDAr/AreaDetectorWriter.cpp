@@ -107,16 +107,16 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
   try {
     auto &CurrentGroup = HDFGroup;
     initValueDataset(CurrentGroup);
-    NeXusDataset::Time(
-        CurrentGroup,
+    NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    NeXusDataset::CueIndex(
-        CurrentGroup,
+    NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
-    NeXusDataset::CueTimestampZero(
-        CurrentGroup,
+    NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     auto ClassAttribute =
