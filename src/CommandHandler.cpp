@@ -13,7 +13,6 @@
 #include <future>
 #include <sstream>
 
-using std::array;
 using std::vector;
 
 namespace FileWriter {
@@ -201,7 +200,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       throwMissingKey("job_id", Doc.dump());
     }
 
-    if (MasterPtr) { // workaround to prevent seg fault in tests
+    if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
         LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
         return;
@@ -312,7 +311,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
-    if (Config.topic_write_duration.count()) {
+    if (Config.topic_write_duration.count() != 0) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
@@ -421,7 +420,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     StopTime = std::chrono::milliseconds(x.inner());
   }
 
-  if (!MasterPtr) { // workaround to prevent seg fault in tests
+  if (MasterPtr == nullptr) { // workaround to prevent seg fault in tests
     return;
   }
 
@@ -549,7 +548,7 @@ void CommandHandler::tryToHandle(std::string const &Command) {
 }
 
 void CommandHandler::tryToHandle(Msg const &Message) {
-  tryToHandle({(char *)Message.data(), Message.size()});
+  tryToHandle({reinterpret_cast<const char *>(Message.data()), Message.size()});
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

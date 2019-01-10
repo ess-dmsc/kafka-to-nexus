@@ -3,6 +3,7 @@
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
+#include <algorithm>
 
 class AreaDetectorReader : public ::testing::Test {
 public:
@@ -11,12 +12,12 @@ public:
                          std::ifstream::in | std::ifstream::binary);
     InFile.seekg(0, InFile.end);
     FileSize = InFile.tellg();
-    RawData.reset(new char[FileSize]);
+    RawData = std::make_unique<char[]>(FileSize);
     InFile.seekg(0, InFile.beg);
     InFile.read(RawData.get(), FileSize);
   };
 
-  virtual void SetUp() override {
+  void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<NDAr::AreaDetectorDataGuard>();
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
@@ -26,7 +27,7 @@ public:
         RegisterIt("NDAr");
   };
 
-  virtual void TearDown() override{};
+  void TearDown() override{};
   std::unique_ptr<NDAr::AreaDetectorDataGuard> Reader;
   static std::unique_ptr<char[]> RawData;
   static size_t FileSize;
@@ -53,7 +54,7 @@ TEST_F(AreaDetectorReader, ValidateTestFail) {
                                          FB_Tables::DType::Uint8, someData);
   builder.Finish(tmpPkg); // Finish without file identifier will fail verify
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage((char *)builder.GetBufferPointer(),
+  EXPECT_THROW(FileWriter::FlatbufferMessage(reinterpret_cast<char*>(builder.GetBufferPointer()),
                                              builder.GetSize()),
                std::runtime_error);
 }
@@ -98,7 +99,7 @@ public:
                          std::ifstream::in | std::ifstream::binary);
     InFile.seekg(0, InFile.end);
     FileSize = InFile.tellg();
-    RawData.reset(new char[FileSize]);
+    RawData = std::make_unique<char[]>(FileSize);
     InFile.seekg(0, InFile.beg);
     InFile.read(RawData.get(), FileSize);
   };
@@ -106,7 +107,7 @@ public:
   static std::unique_ptr<char[]> RawData;
   static size_t FileSize;
 
-  virtual void SetUp() override {
+  void SetUp() override {
     File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
     RootGroup = File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
@@ -353,17 +354,15 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
 
-  std::vector<double> TestData;
-  for (int j = 0; j < 10 * 10 * 10; j++) {
-    TestData.push_back(j);
-  }
+  std::vector<double> TestData(10*10*10);
+  std::iota(TestData.begin(), TestData.end(), 0);
 
   for (int i = 0; i < 5; i++) {
     flatbuffers::FlatBufferBuilder builder;
-    GenerateFlatbuffer(builder, (std::uint8_t *)&TestData[0],
+    GenerateFlatbuffer(builder, reinterpret_cast<uint8_t*>(&TestData[0]),
                        1000 * (sizeof(TestData[0])), FB_Tables::DType::Float64);
 
-    FileWriter::FlatbufferMessage Message((char *)builder.GetBufferPointer(),
+    FileWriter::FlatbufferMessage Message(reinterpret_cast<char*>(builder.GetBufferPointer()),
                                           builder.GetSize());
     EXPECT_TRUE(Writer.write(Message).is_OK());
   }
@@ -399,7 +398,7 @@ TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
   auto compTs = NDAr::epicsTimeToNsec(tempNDArr->epicsTS()->secPastEpoch(),
                                       tempNDArr->epicsTS()->nsec());
   Writer.write(Message);
-  std::uint64_t storedTs;
+  std::uint64_t storedTs{11111};
   Writer.Timestamp.read(storedTs);
   EXPECT_EQ(compTs, storedTs);
 }
@@ -524,15 +523,14 @@ void GenerateFlatbuffer(flatbuffers::FlatBufferBuilder &Builder,
 
 template <class Type>
 bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
-  std::vector<Type> testData;
-  for (int j = 0; j < 10 * 10 * 10; j++) {
-    testData.push_back(j);
-  }
+  std::vector<Type> testData(10*10*10);
+  std::iota(testData.begin(), testData.end(), 0);
+  
   flatbuffers::FlatBufferBuilder builder;
-  GenerateFlatbuffer(builder, (std::uint8_t *)&testData[0],
+  GenerateFlatbuffer(builder, reinterpret_cast<uint8_t*>(&testData[0]),
                      1000 * (sizeof(testData[0])), FBType);
 
-  FileWriter::FlatbufferMessage Message((char *)builder.GetBufferPointer(),
+  FileWriter::FlatbufferMessage Message(reinterpret_cast<char*>(builder.GetBufferPointer()),
                                         builder.GetSize());
   ADWriterStandIn Writer;
   auto JsonConfig = nlohmann::json::parse(R""({

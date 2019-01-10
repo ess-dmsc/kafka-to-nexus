@@ -46,8 +46,7 @@ public:
       FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
     } catch (...) {
     }
-    FlatbufferReaders["hs00"] = std::unique_ptr<FileWriter::FlatbufferReader>(
-        new FileWriter::Schemas::hs00::Reader);
+    FlatbufferReaders["hs00"] = std::make_unique<FileWriter::Schemas::hs00::Reader>();
   }
 };
 
@@ -269,8 +268,7 @@ std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createTestMessage(size_t HistogramID, size_t PacketID,
                   std::vector<uint32_t> const &DimLengths) {
   namespace hs00 = FileWriter::Schemas::hs00;
-  auto BuilderPtr = std::unique_ptr<flatbuffers::FlatBufferBuilder>(
-      new flatbuffers::FlatBufferBuilder);
+  auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   flatbuffers::Offset<void> BinBoundaries;
   {
@@ -298,7 +296,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
       (uint32_t(PacketID) / 2) * ThisLengths.at(0),
       (uint32_t(PacketID) % 2) * ThisLengths.at(1), 0};
 
-  uint64_t Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000000);
+  auto Timestamp = static_cast<uint64_t>((1 + HistogramID) * 1000000);
   auto ThisLengthsVector = Builder.CreateVector(ThisLengths);
   auto ThisOffsetsVector = Builder.CreateVector(ThisOffsets);
 

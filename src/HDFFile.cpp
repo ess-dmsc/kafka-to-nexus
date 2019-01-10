@@ -262,7 +262,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node const &Node,
       } else {
         continue;
       }
-      if (auto ValuesMaybe = find<json>("values", Attribute)) {
+      if (auto const &ValuesMaybe = find<json>("values", Attribute)) {
         std::string DType;
         auto const &Values = ValuesMaybe.inner();
         uint32_t StringSize = 0;

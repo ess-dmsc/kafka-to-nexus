@@ -64,7 +64,7 @@ h5::append_ret WriterScalar<DT, FV>::write(LogData const *Buffer) {
         "ValueType == Value::NONE || ValueType != FlatbuffersValueTypeId");
     return Result;
   }
-  auto ValueMember = (FV const *)Buffer->value();
+  auto ValueMember = reinterpret_cast<FV const*>(Buffer->value());
   if (!ValueMember) {
     Result.ErrorString = fmt::format("value() in flatbuffer is nullptr");
     return Result;

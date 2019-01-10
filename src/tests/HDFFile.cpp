@@ -18,7 +18,6 @@
 #include <unistd.h>
 #include <vector>
 
-using std::array;
 using std::string;
 using std::vector;
 using std::chrono::duration_cast;
@@ -165,9 +164,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(Command);
-    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
     send_stop(ch, json_command);
-    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
     main_opt.hdf_output_prefix = "";
 
     // Verification
@@ -296,9 +295,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(CommandString);
-    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
     send_stop(ch, CommandJSON);
-    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
 
     // Verification
     auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
@@ -331,9 +330,9 @@ public:
 
     FileWriter::CommandHandler ch(main_opt, nullptr);
     ch.handle(CommandString);
-    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
     send_stop(ch, CommandJSON);
-    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
+    ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
 
     // Verification
     auto file = hdf5::file::open(Filename, hdf5::file::AccessFlags::READONLY);
@@ -397,8 +396,8 @@ public:
         auto &fb = fbs.back();
 
         // Allocate memory on JM AND CHECK IT!
-        msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(),
+        msgs.push_back(FileWriter::Msg::owned(
+            reinterpret_cast<const char*>(fb.builder->GetBufferPointer()),
             fb.builder->GetSize()));
         if (msgs.back().size() < 8) {
           LOG(Sev::Error, "error");
@@ -415,7 +414,7 @@ public:
     auto dt = a1.datatype();
     ASSERT_EQ(dt.get_class(), hdf5::datatype::Class::FLOAT);
     ASSERT_EQ(dt.size(), sizeof(double));
-    double v;
+    double v{0};
     a1.read(v);
     ASSERT_EQ(v, 0.125);
   }
@@ -619,7 +618,7 @@ public:
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
 
       auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
-      ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
+      ASSERT_EQ(fwt->demuxers().size(), static_cast<size_t>(1));
 
       LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
@@ -674,7 +673,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, CommandJSON);
-      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -694,7 +693,7 @@ public:
 
     size_t i_source = 0;
     for (auto &source : sources) {
-      vector<DT> data((size_t)(source.n_events_per_message));
+      vector<DT> data(static_cast<size_t>(source.n_events_per_message));
       string group_path = "/" + source.source;
 
       auto ds = hdf5::node::get_dataset(root_group, group_path + "/event_id");
@@ -787,8 +786,8 @@ public:
         // Currently fixed, have to adapt verification code first.
         fbs.push_back(synth.next(i1, array_size));
         auto &fb = fbs.back();
-        msgs.push_back(FileWriter::Msg::shared(
-            (char const *)fb.builder->GetBufferPointer(),
+        msgs.push_back(FileWriter::Msg::owned(
+            reinterpret_cast<const char*>(fb.builder->GetBufferPointer()),
             fb.builder->GetSize()));
       }
     }
@@ -950,10 +949,10 @@ public:
       unlink(Filename.c_str());
 
       ch.handle(CommandString);
-      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)1);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
 
       auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
-      ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
+      ASSERT_EQ(fwt->demuxers().size(), static_cast<size_t>(1));
 
       LOG(Sev::Debug, "processing...");
       using CLK = std::chrono::steady_clock;
@@ -974,7 +973,7 @@ public:
           duration_cast<MS>(t2 - t1).count());
       LOG(Sev::Debug, "finishing...");
       send_stop(ch, CommandJSON);
-      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
+      ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
       auto t3 = CLK::now();
       LOG(Sev::Debug, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
@@ -999,7 +998,7 @@ public:
                  hdf5::property::DatasetTransferList());
 
     // trim padding
-    return result[pos[0]].c_str();
+    return result[pos[0]];
   }
 
   /// \note: Commented out due to disabled test

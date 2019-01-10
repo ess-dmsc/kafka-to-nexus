@@ -26,7 +26,7 @@ TEST(HDFFileAttributesTest,
   auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
                                       "/dataset_with_numerical_attr")
                   .attributes["the_answer_is"];
-  int AttrValue;
+  int AttrValue{0};
   Attr.read(AttrValue);
   ASSERT_EQ(AttrValue, 42);
 }
@@ -91,7 +91,7 @@ TEST(HDFFileAttributesTest,
   auto IntAttr =
       hdf5::node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
           .attributes["integer_attribute"];
-  int64_t IntValue;
+  int64_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42);
 
@@ -129,7 +129,7 @@ TEST(HDFFileAttributesTest,
 
   auto IntAttr = hdf5::node::get_group(TestFile.RootGroup, "group_with_typed_attrs")
                      .attributes["uint32_attribute"];
-  uint32_t IntValue;
+  uint32_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42u);
 }
