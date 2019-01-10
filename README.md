@@ -62,7 +62,7 @@ Note: the Kafka options are key-value pairs and the file-writer can be given mul
 
 Beyond the configuration options given at start-up, the file-writer can be sent commands via Kafka to control the actual file writing.
 
-See the [commands](docs/commands.md) for more information.
+See the [commands](documentation/commands.md) for more information.
 
 ## Installation
 
@@ -124,7 +124,7 @@ See [System Tests page](system-tests/README.md) for more information.
 
 ## Documentation
 
-See the `docs` directory.
+See the `documentation` directory.
 
 ## Contributing
 
