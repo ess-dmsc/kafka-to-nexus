@@ -127,10 +127,11 @@ TEST_F(Schema_f142, writeScalarFloat) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValueFloat(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          (char *)Builder->GetBufferPointer(), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -171,10 +172,11 @@ TEST_F(Schema_f142, writeArrayFloat) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValue(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          (char *)Builder->GetBufferPointer(), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -210,10 +212,11 @@ TEST_F(Schema_f142, writeScalarString) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValueString(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          (char *)Builder->GetBufferPointer(), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -300,7 +303,7 @@ TEST_F(Schema_f142, writeScalarFloatWithLatest) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValueFloat(Value);
       auto Msg = FileWriter::FlatbufferMessage(
           reinterpret_cast<char const *>(Builder->GetBufferPointer()),
@@ -347,7 +350,7 @@ TEST_F(Schema_f142, writeArrayFloatWithLatest) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValue(Value);
       auto Msg = FileWriter::FlatbufferMessage(
           reinterpret_cast<char const *>(Builder->GetBufferPointer()),

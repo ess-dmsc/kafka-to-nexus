@@ -81,7 +81,7 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
   TestStreamer.ConsumerCreated.get();
   TestStreamer.ConsumerCreated =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+      std::async(std::launch::async, [EmptyPollerConsumer]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -217,8 +217,8 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(
-          generateKafkaMsg(DataBuffer, sizeof(DataBuffer))))
+      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(generateKafkaMsg(
+          static_cast<const unsigned char *>(DataBuffer), sizeof(DataBuffer))))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -275,13 +275,14 @@ TEST_F(StreamerProcessTimingTest,
   std::unordered_map<std::string, Source> SourceList;
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
+
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(std::unique_ptr<KafkaW::ConsumerMessage>(generateKafkaMsg(
+      .RETURN(generateKafkaMsg(
           reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
-          DataBuffer.size())))
+          DataBuffer.size()))
       .TIMES(1);
   TestStreamer->ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {

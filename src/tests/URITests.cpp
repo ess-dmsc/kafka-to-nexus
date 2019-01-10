@@ -1,7 +1,7 @@
 #include "URI.h"
 #include <gtest/gtest.h>
 
-using namespace uri;
+namespace uri {
 
 TEST(URI, host_only_gives_hostport_plus_default_port) {
   URI TestURI("//myhost");
@@ -83,3 +83,4 @@ TEST(URI, topic_picked_up_when_after_port) {
   ASSERT_EQ(TestURI.Topic, "TEST_writerCommand");
   ASSERT_EQ(TestURI.getURIString(), "//localhost:9092/TEST_writerCommand");
 }
+} // namespace uri

@@ -11,7 +11,7 @@ FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename);
 template <typename T>
 std::string
 createCommandForDataset(const std::pair<std::string, T> NameAndValue) {
-  using namespace fmt::literals;
+  using fmt::literals::operator""_a;
 
   std::string Command = R"(  <
     "name": "{name}",

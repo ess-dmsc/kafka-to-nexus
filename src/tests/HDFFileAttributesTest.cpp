@@ -5,8 +5,6 @@
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsNumericalAttributeItIsWrittenToFile) {
-  using namespace hdf5;
-
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-numerical-attribute.nxs");
 
@@ -28,14 +26,13 @@ TEST(HDFFileAttributesTest,
   auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
                                       "/dataset_with_numerical_attr")
                   .attributes["the_answer_is"];
-  int AttrValue;
+  int AttrValue{0};
   Attr.read(AttrValue);
   ASSERT_EQ(AttrValue, 42);
 }
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
-  using namespace hdf5;
 
   auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
       "test-scalar-string-attribute.nxs");
@@ -65,7 +62,6 @@ TEST(HDFFileAttributesTest,
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
-  using namespace hdf5;
 
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-array-of-attributes.nxs");
@@ -93,14 +89,14 @@ TEST(HDFFileAttributesTest,
   TestFile.init(CommandWithArrayOfAttrs, EmptyStreamHDFInfo);
 
   auto IntAttr =
-      node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
           .attributes["integer_attribute"];
-  int64_t IntValue;
+  int64_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42);
 
   auto StringAttr =
-      node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_of_attrs")
           .attributes["string_attribute"];
   std::string StringValue;
   StringAttr.read(StringValue, StringAttr.datatype());
@@ -109,8 +105,6 @@ TEST(HDFFileAttributesTest,
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
-  using namespace hdf5;
-
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-typed-attribute.nxs");
 
@@ -133,16 +127,15 @@ TEST(HDFFileAttributesTest,
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithTypedAttrs, EmptyStreamHDFInfo);
 
-  auto IntAttr = node::get_group(TestFile.RootGroup, "group_with_typed_attrs")
-                     .attributes["uint32_attribute"];
-  uint32_t IntValue;
+  auto IntAttr =
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_typed_attrs")
+          .attributes["uint32_attribute"];
+  uint32_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42u);
 }
 
 TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
-  using namespace hdf5;
-
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-array-attribute.nxs");
 
@@ -170,8 +163,9 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
   TestFile.init(CommandWithArrayAttr, EmptyStreamHDFInfo);
 
-  auto ArrayAttr = node::get_group(TestFile.RootGroup, "group_with_array_attrs")
-                       .attributes["array_attribute"];
+  auto ArrayAttr =
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_attrs")
+          .attributes["array_attribute"];
   std::vector<int> ArrayAttrValues(3);
   ArrayAttr.read(ArrayAttrValues);
   ASSERT_EQ(ArrayAttrValues[0], 1);
@@ -179,7 +173,7 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
   ASSERT_EQ(ArrayAttrValues[2], 3);
 
   auto ArrayStringAttr =
-      node::get_group(TestFile.RootGroup, "group_with_array_attrs")
+      hdf5::node::get_group(TestFile.RootGroup, "group_with_array_attrs")
           .attributes["array_string_attribute"];
   std::vector<std::string> ArrayStringAttrValues(2);
   ArrayStringAttr.read(ArrayStringAttrValues);
@@ -189,8 +183,6 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
 
 TEST(HDFFileAttributesTest,
      ArrayOfAttributesWithFixedLengthStringItIsWrittenAsFixedLengthStrings) {
-  using namespace hdf5;
-
   auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
       "test-array-of-attributes-fixed-length.nxs");
 
@@ -258,7 +250,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_variable_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -270,7 +262,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_variable_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -282,7 +274,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_fixed_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -296,7 +288,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_fixed_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -312,7 +304,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_variable_ascii_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -324,7 +316,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_variable_ascii_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
@@ -336,7 +328,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_fixed_ascii_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -350,7 +342,7 @@ TEST(HDFFileAttributesTest,
 
   {
     auto StringArrayAttr =
-        node::get_group(TestFile.RootGroup, "group_with_attributes")
+        hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_fixed_ascii_array_attribute"];
     auto Type = hdf5::datatype::String(StringArrayAttr.datatype());
     ASSERT_FALSE(Type.is_variable_length());
@@ -366,8 +358,6 @@ TEST(HDFFileAttributesTest,
 }
 
 TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
-  using namespace hdf5;
-
   auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
       "test-object-of-attributes-with-strings.nxs");
 
@@ -387,9 +377,9 @@ TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
   TestFile.init(Command, EmptyStreamHDFInfo);
 
   {
-    auto StringAttr =
-        node::get_group(TestFile.RootGroup, "group_with_object_of_attributes")
-            .attributes["some_attribute"];
+    auto StringAttr = hdf5::node::get_group(TestFile.RootGroup,
+                                            "group_with_object_of_attributes")
+                          .attributes["some_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
     ASSERT_TRUE(Type.is_variable_length());
     ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);

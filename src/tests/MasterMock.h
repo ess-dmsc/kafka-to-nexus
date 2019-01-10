@@ -13,7 +13,10 @@ public:
       std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override {}
   void handle_command(std::string const &command) override {}
   void statistics() override{};
+  /// \todo Switch out code when clang-tidy merge is done
   std::string file_writer_process_id() const override { return ProcessId; }
+  std::string getFileWriterProcessId() const { return ProcessId; }
+//  std::string getFileWriterProcessId() const override { return ProcessId; }
   bool RunLoopExited() override { return false; }
   MainOpt &getMainOpt() override { return MainOptInst; }
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override {
