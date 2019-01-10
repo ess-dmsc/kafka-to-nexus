@@ -1,6 +1,6 @@
 ## System tests
 
-The system tests consist of a number of automated tests for this repository that test it in a way similar to how it would be used in production.
+The system tests consist of a series of automated tests for this repository that test it in a way similar to how it would be used in production.
 
 It uses Docker containers to create containerised instances of Kafka and other components.
 
