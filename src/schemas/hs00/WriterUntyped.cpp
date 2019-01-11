@@ -14,7 +14,7 @@ WriterUntyped::ptr WriterUntyped::createFromJson(json const &Json) {
     return WriterUntyped::createFromJsonL1<uint64_t>(Json);
   } else if (Json.at("data_type") == "double") {
     return WriterUntyped::createFromJsonL1<double>(Json);
-  }else if (Json.at("data_type") == "float") {
+  } else if (Json.at("data_type") == "float") {
     return WriterUntyped::createFromJsonL1<float>(Json);
   }
   throw std::runtime_error(fmt::format(
