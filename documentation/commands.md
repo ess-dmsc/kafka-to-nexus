@@ -2,7 +2,7 @@
 
 Commands in the form of JSON messages are used to start and stop file writing.
 
-Commands are generally send through Kafka via the broker and topic specified by the
+Commands are generally sent through Kafka via the broker and topic specified by the
 `--command-uri` option; however, commands can also be given in the [configuration
 file](Commands via the configuration file).
 
