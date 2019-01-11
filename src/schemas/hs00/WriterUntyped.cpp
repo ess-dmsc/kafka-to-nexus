@@ -10,14 +10,11 @@ namespace hs00 {
 WriterUntyped::ptr WriterUntyped::createFromJson(json const &Json) {
   if (Json.at("data_type") == "uint32") {
     return WriterUntyped::createFromJsonL1<uint32_t>(Json);
-  }
-  if (Json.at("data_type") == "uint64") {
+  } else if (Json.at("data_type") == "uint64") {
     return WriterUntyped::createFromJsonL1<uint64_t>(Json);
-  }
-  if (Json.at("data_type") == "double") {
+  } else if (Json.at("data_type") == "double") {
     return WriterUntyped::createFromJsonL1<double>(Json);
-  }
-  if (Json.at("data_type") == "float") {
+  }else if (Json.at("data_type") == "float") {
     return WriterUntyped::createFromJsonL1<float>(Json);
   }
   throw std::runtime_error(fmt::format(
@@ -28,14 +25,11 @@ template <typename DataType>
 WriterUntyped::ptr WriterUntyped::createFromJsonL1(json const &Json) {
   if (Json.at("edge_type") == "uint32") {
     return WriterUntyped::createFromJsonL2<DataType, uint32_t>(Json);
-  }
-  if (Json.at("edge_type") == "uint64") {
+  } else if (Json.at("edge_type") == "uint64") {
     return WriterUntyped::createFromJsonL2<DataType, uint64_t>(Json);
-  }
-  if (Json.at("edge_type") == "double") {
+  } else if (Json.at("edge_type") == "double") {
     return WriterUntyped::createFromJsonL2<DataType, double>(Json);
-  }
-  if (Json.at("edge_type") == "float") {
+  } else if (Json.at("edge_type") == "float") {
     return WriterUntyped::createFromJsonL2<DataType, float>(Json);
   }
   throw std::runtime_error(fmt::format(
@@ -46,14 +40,11 @@ template <typename DataType, typename EdgeType>
 WriterUntyped::ptr WriterUntyped::createFromJsonL2(json const &Json) {
   if (Json.at("error_type") == "uint32") {
     return WriterTyped<DataType, EdgeType, uint32_t>::createFromJson(Json);
-  }
-  if (Json.at("error_type") == "uint64") {
+  } else if (Json.at("error_type") == "uint64") {
     return WriterTyped<DataType, EdgeType, uint64_t>::createFromJson(Json);
-  }
-  if (Json.at("error_type") == "double") {
+  } else if (Json.at("error_type") == "double") {
     return WriterTyped<DataType, EdgeType, double>::createFromJson(Json);
-  }
-  if (Json.at("error_type") == "float") {
+  } else if (Json.at("error_type") == "float") {
     return WriterTyped<DataType, EdgeType, float>::createFromJson(Json);
   }
   throw std::runtime_error(
@@ -68,14 +59,11 @@ WriterUntyped::ptr WriterUntyped::createFromHDF(hdf5::node::Group &Group) {
   auto Json = json::parse(JsonString);
   if (Json.at("data_type") == "uint32") {
     return WriterUntyped::createFromHDFWithDataType<uint32_t>(Group, Json);
-  }
-  if (Json.at("data_type") == "uint64") {
+  } else if (Json.at("data_type") == "uint64") {
     return WriterUntyped::createFromHDFWithDataType<uint64_t>(Group, Json);
-  }
-  if (Json.at("data_type") == "double") {
+  } else if (Json.at("data_type") == "double") {
     return WriterUntyped::createFromHDFWithDataType<double>(Group, Json);
-  }
-  if (Json.at("data_type") == "float") {
+  } else if (Json.at("data_type") == "float") {
     return WriterUntyped::createFromHDFWithDataType<float>(Group, Json);
   }
   throw std::runtime_error(fmt::format(
@@ -89,14 +77,11 @@ WriterUntyped::createFromHDFWithDataType(hdf5::node::Group &Group,
   // clang-format off
   if (Json.at("edge_type") == "uint32") {
     return WriterUntyped::createFromHDFWithDataTypeAndEdgeType<DataType, uint32_t>(Group, Json);
-  }
-  if (Json.at("edge_type") == "uint64") {
+  } else if (Json.at("edge_type") == "uint64") {
     return WriterUntyped::createFromHDFWithDataTypeAndEdgeType<DataType, uint64_t>(Group, Json);
-  }
-  if (Json.at("edge_type") == "double") {
+  } else if (Json.at("edge_type") == "double") {
     return WriterUntyped::createFromHDFWithDataTypeAndEdgeType<DataType,   double>(Group, Json);
-  }
-  if (Json.at("edge_type") == "float") {
+  } else if (Json.at("edge_type") == "float") {
     return WriterUntyped::createFromHDFWithDataTypeAndEdgeType<DataType,    float>(Group, Json);
   }
   throw std::runtime_error(fmt::format(
@@ -110,14 +95,11 @@ WriterUntyped::createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group,
                                                     json const &Json) {
   if (Json.at("error_type") == "uint32") {
     return WriterTyped<DataType, EdgeType, uint32_t>::createFromHDF(Group);
-  }
-  if (Json.at("error_type") == "uint64") {
+  } else if (Json.at("error_type") == "uint64") {
     return WriterTyped<DataType, EdgeType, uint64_t>::createFromHDF(Group);
-  }
-  if (Json.at("error_type") == "double") {
+  } else if (Json.at("error_type") == "double") {
     return WriterTyped<DataType, EdgeType, double>::createFromHDF(Group);
-  }
-  if (Json.at("error_type") == "float") {
+  } else if (Json.at("error_type") == "float") {
     return WriterTyped<DataType, EdgeType, float>::createFromHDF(Group);
   }
 
