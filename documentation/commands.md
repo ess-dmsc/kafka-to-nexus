@@ -14,7 +14,7 @@ These are:
 - cmd: The command name, must be `FileWriter_new`.
 - job_id: A unique identifier for the request, a UUID for example.
 - broker: The Kafka broker to use for data.
-- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. Optional, if not supplied then the Kafka message time is used.
+- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. Optional, if not supplied then the timestamp of the Kafka message containing the start command is used.
 - stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. Optional, if not supplied then file writing continues until a stop command is received
 - service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
 - abort_on_uninitialised_stream: Whether to abort if the stream cannot be initialised. Optional, default is not to abort but carry on.
