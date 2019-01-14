@@ -257,7 +257,7 @@ variable-size datatypes (including string and region references datatypes)."
 Attributes are used to define metadata about the data object.
 NeXus also uses them to define NeXus classes for groups.
 
-Attributes are defined using key-value pairs, for example:
+Attributes are defined as key-value pairs, for example:
 
 ```json
 "attributes": {
