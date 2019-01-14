@@ -267,7 +267,10 @@ Attributes are defined as key-value pairs, for example:
 ```
 Where possible the file-writer will try to infer the type of the data, in this example: a float.
 
-For strings and arrays it is necessary to specify the type, for example:
+For strings and arrays it is necessary to specify the `type`.
+Strings also require the `string_size` and if not utf8 an `encoding` to be defined.
+
+For example:
 
 ```json
 "attributes": [
@@ -275,7 +278,7 @@ For strings and arrays it is necessary to specify the type, for example:
     "name": "some_string_attribute",
     "values": "some_string_value",
     "type": "string",
-    "encoding": "utf8",
+    "encoding": "ascii",
     "string_size": 17
   },
   {
