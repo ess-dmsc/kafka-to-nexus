@@ -43,10 +43,10 @@ uint64_t createId(int ExtraValue) {
 }
 
 FileWriterTask::FileWriterTask(
-    std::string ServiceID_,
-    std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_)
-    : ServiceId(std::move(ServiceID_)),
-      StatusProducer(std::move(StatusProducer_)) {
+    std::string TaskID,
+    std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
+    : ServiceId(std::move(TaskID)),
+      StatusProducer(std::move(StatusProducerPtr)) {
   Id = createId(++n_FileWriterTask_created);
 }
 

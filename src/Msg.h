@@ -23,7 +23,7 @@ enum class MsgType : int {
 
 class Msg {
 public:
-  Msg() { type = MsgType::Invalid; }
+  Msg() : type(MsgType::Invalid) {}
 
   static Msg owned(char const *data, size_t len) {
     Msg msg;
@@ -67,11 +67,16 @@ public:
     return msg;
   }
 
-  static Msg fromKafkaW(std::unique_ptr<KafkaW::ConsumerMessage> &&KafkaWMsg) {
+  static Msg
+  fromKafkaW(char const *data, size_t len,
+             std::pair<RdKafka::MessageTimestamp::MessageTimestampType, int64_t>
+                 Timestamp) {
     Msg msg;
-    msg.type = MsgType::KafkaW;
-    msg.var.kafkaw_msg = KafkaWMsg.release();
-    msg._size = 0;
+    msg.type = MsgType::Owned;
+    msg.var.owned = new char[len];
+    std::memcpy((void *)msg.var.owned, data, len);
+    msg._size = len;
+    msg.Timestamp = Timestamp;
     return msg;
   }
 
@@ -83,14 +88,13 @@ public:
   }
 
   inline void swap(Msg &y) {
-    auto &x = *this;
-    if (x.type != MsgType::Invalid && x.type != y.type) {
+    if (type != MsgType::Invalid && type != y.type) {
       LOG(Sev::Critical, "sorry, can not swap that");
     }
     using std::swap;
-    swap(x.type, y.type);
-    swap(x.var, y.var);
-    swap(x._size, y._size);
+    swap(type, y.type);
+    swap(var, y.var);
+    swap(_size, y._size);
   }
 
   inline void swap(Msg y) {
@@ -167,7 +171,7 @@ public:
     char const *cheap;
   } var;
   size_t _size = 0;
-
+  std::pair<RdKafka::MessageTimestamp::MessageTimestampType, int64_t> Timestamp;
   /// TODO: Is this the correct usage of delete?
   inline ~Msg() {
     switch (type) {

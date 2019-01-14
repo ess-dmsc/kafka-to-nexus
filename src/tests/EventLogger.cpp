@@ -27,7 +27,6 @@ TEST(EventLogger, produceMultipleLogs) {
   std::shared_ptr<StringProducer> Producer{std::make_shared<StringProducer>()};
   logEvent(Producer, FileWriter::StatusCode::Start, "service-id-00",
            "job-id-01", "generic-start-message");
-  std::string First = Producer->Message;
 
   logEvent(Producer, FileWriter::StatusCode::Start, "service-id-01",
            "job-id-02", "next-start-message");

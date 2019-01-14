@@ -15,9 +15,9 @@ template <typename DT, typename FV>
 class WriterScalar : public WriterTypedBase {
 public:
   WriterScalar(hdf5::node::Group HdfGroup, std::string const &SourceName,
-               Value fb_value_type_id, CollectiveQueue *cq);
+               Value FlatbuffersValueTypeId, CollectiveQueue *cq);
   WriterScalar(hdf5::node::Group HdfGroup, std::string const &SourceName,
-               Value fb_value_type_id, CollectiveQueue *cq,
+               Value FlatbuffersValueTypeId, CollectiveQueue *cq,
                HDFIDStore *hdf_store);
   h5::append_ret write(FBUF const *fbuf) override;
   void storeLatestInto(std::string const &StoreLatestInto) override;

@@ -7,7 +7,7 @@ namespace f142 {
 /// \brief  Create a new dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
                                        std::string const &SourceName,
-                                       Value fb_value_type_id,
+                                       Value FlatbuffersValueTypeId,
                                        CollectiveQueue *cq) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
   ChunkedDataset =
@@ -21,7 +21,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
 /// \brief  Open a dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
                                        std::string const &SourceName,
-                                       Value fb_value_type_id,
+                                       Value FlatbuffersValueTypeId,
                                        CollectiveQueue *cq,
                                        HDFIDStore *hdf_store) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
@@ -39,15 +39,14 @@ h5::append_ret WriterScalarString::write(LogData const *fbuf) {
   if (vt != Value::String) {
     return {h5::AppendResult::ERROR, 0, 0};
   }
-  auto v1 = static_cast<String const *>(fbuf->value());
-  if (!v1) {
+  if (not flatbuffers::IsFieldPresent(fbuf, LogData::VT_VALUE)) {
     return {h5::AppendResult::ERROR, 0, 0};
   }
-  auto v2 = v1->value();
   if (ChunkedDataset == nullptr) {
     return {h5::AppendResult::ERROR, 0, 0};
   }
-  return ChunkedDataset->append(v2->str());
+  return ChunkedDataset->append(
+      static_cast<String const *>(fbuf->value())->value()->str());
 }
 }
 }

@@ -61,7 +61,7 @@ private:
     Reporter.setJobId(JobId);
     for (auto &Element : Streamers) {
       // Writes Streamer information in JSON format
-      Reporter.write(Element.second.messageInfo(), Element.first, ReportMs);
+      Reporter.write(Element.second.messageInfo(), Element.first);
       // Compute cumulative stats
       Information.add(Element.second.messageInfo());
     }

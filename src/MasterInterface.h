@@ -23,7 +23,8 @@ public:
   virtual void run() = 0;
 
   virtual void stop() = 0;
-  virtual void handle_command_message(FileWriter::Msg &msg) = 0;
+  virtual void
+  handle_command_message(std::unique_ptr<Msg> msg) = 0;
   virtual void handle_command(std::string const &command) = 0;
   virtual void statistics() = 0;
 
@@ -39,7 +40,7 @@ public:
   addStreamMaster(std::unique_ptr<StreamMaster<Streamer>> StreamMaster) = 0;
   virtual void stopStreamMasters() = 0;
   virtual std::unique_ptr<StreamMaster<Streamer>> &
-  getStreamMasterForJobID(std::string JobID) = 0;
+  getStreamMasterForJobID(std::string const &JobID) = 0;
 };
 
 } // namespace FileWriter

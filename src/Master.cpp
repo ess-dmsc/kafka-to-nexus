@@ -12,8 +12,7 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &MainOpt_)
-    : command_listener(MainOpt_), MainOpt_(MainOpt_) {
+Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -28,9 +27,16 @@ Master::Master(MainOpt &MainOpt_)
   LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
-void Master::handle_command_message(FileWriter::Msg &msg) {
+void Master::handle_command_message(std::unique_ptr<Msg> msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(Msg::owned(msg.data(), msg.size()));
+  auto MessageTimestamp = msg->Timestamp;
+  if (MessageTimestamp.first !=
+      RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
+    command_handler.tryToHandle(std::move(msg), MessageTimestamp.second);
+  } else {
+    command_handler.tryToHandle(
+        msg->data(), msg->size());
+  }
 }
 
 void Master::handle_command(std::string const &command) {
@@ -39,7 +45,7 @@ void Master::handle_command(std::string const &command) {
 }
 
 std::unique_ptr<StreamMaster<Streamer>> &
-Master::getStreamMasterForJobID(std::string JobID) {
+Master::getStreamMasterForJobID(std::string const &JobID) {
   for (auto &StreamMaster : StreamMasters) {
     if (StreamMaster->getJobId() == JobID) {
       return StreamMaster;
@@ -65,14 +71,14 @@ void Master::run() {
   // Set up connection to the Kafka status topic if desired.
   if (getMainOpt().do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
-        getMainOpt().kafka_status_uri.host_port,
-        getMainOpt().kafka_status_uri.topic);
+        getMainOpt().kafka_status_uri.HostPort,
+        getMainOpt().kafka_status_uri.Topic);
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().kafka_status_uri.host_port;
+    BrokerSettings.Address = getMainOpt().kafka_status_uri.HostPort;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
       status_producer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().kafka_status_uri.topic);
+          producer, getMainOpt().kafka_status_uri.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }
@@ -89,14 +95,16 @@ void Master::run() {
   auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
-    Msg KafkaMessage = FileWriter::Msg();
+   // Msg KafkaMessage = FileWriter::Msg();
+    std::unique_ptr<FileWriter::Msg> KafkaMessage= std::make_unique<FileWriter::Msg>();
     KafkaW::PollStatus Status;
-    command_listener.poll(Status, KafkaMessage);
+    command_listener.poll(Status, std::move(KafkaMessage));
     //    std::string msgstr(KafkaMessage.data());
     //    std::cout <<"dbdbdbdbdbdd "<< msgstr << '\n';
     if (Status == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
-      this->handle_command_message(KafkaMessage);
+      this->handle_command_message(
+          std::move(KafkaMessage));
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >
@@ -149,7 +157,7 @@ std::string Master::file_writer_process_id() const {
   return file_writer_process_id_;
 }
 
-MainOpt &Master::getMainOpt() { return MainOpt_; }
+MainOpt &Master::getMainOpt() { return MainConfig; }
 
 std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
   return status_producer;

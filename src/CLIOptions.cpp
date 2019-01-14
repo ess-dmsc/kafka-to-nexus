@@ -1,6 +1,6 @@
 #include "CLIOptions.h"
 #include "MainOpt.h"
-#include "uri.h"
+#include "URI.h"
 #include <CLI/CLI.hpp>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
@@ -15,8 +15,9 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return Opt;
 }
 
-CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
-                       std::string Description = "", bool Defaulted = false) {
+CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
+                       std::string const &Description = "",
+                       bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
     URIArg.parse(Results[0]);
     return true;
@@ -138,8 +139,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       App, "--stream-master-topic-write-interval",
       MainOptions.topic_write_duration,
       "Stream-master option - topic write interval (milliseconds)");
-  addKafkaOption(App, "-S,--kafka-config",
-                 MainOptions.StreamerConfiguration.Settings.KafkaConfiguration,
-                 "LibRDKafka options");
+  addKafkaOption(
+      App, "-S,--kafka-config",
+      MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
+      "LibRDKafka options");
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }

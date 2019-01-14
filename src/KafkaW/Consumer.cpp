@@ -214,18 +214,31 @@ std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
 }
 
 ////C++ READY
-void Consumer::poll(PollStatus &Status, FileWriter::Msg &Message) {
+void Consumer::poll(PollStatus &Status,
+                    std::unique_ptr<FileWriter::Msg> Message) {
   using std::make_unique;
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
+        //extract data
       Status = PollStatus::Msg;
-      Message.swap(FileWriter::Msg::owned(
-          reinterpret_cast<const char *>(KafkaMsg->payload()),
-          KafkaMsg->len()));
-      Message.type = FileWriter::MsgType::Owned;
+      auto Timestamp =
+          std::make_pair<RdKafka::MessageTimestamp::MessageTimestampType,
+                         int64_t>(KafkaMsg->timestamp().type,
+                                  KafkaMsg->timestamp().timestamp);
+      //construct object to return
+      FileWriter::Msg KafkaMessage = FileWriter::Msg();
+//      KafkaMessage.swap(FileWriter::Msg::fromKafkaW(
+//          reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
+//          Timestamp));
+
+      //assign object to unique pointer to return it
+      auto KafkaMessagePointer =
+          std::make_unique<FileWriter::Msg>(FileWriter::Msg::fromKafkaW(
+                  reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
+                  Timestamp));
       break;
     } else {
       Status = PollStatus::Empty;

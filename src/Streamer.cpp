@@ -29,13 +29,13 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
     throw std::runtime_error("Missing broker or topic");
   }
 
-  Options.Settings.KafkaConfiguration["group.id"] =
+  Options.BrokerSettings.KafkaConfiguration["group.id"] =
       fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
                   gethostname_wrapper(), getpid_wrapper(), TopicName,
                   std::chrono::duration_cast<std::chrono::milliseconds>(
                       std::chrono::steady_clock::now().time_since_epoch())
                       .count());
-  Options.Settings.Address = Broker;
+  Options.BrokerSettings.Address = Broker;
 
   ConsumerCreated = std::async(std::launch::async, &FileWriter::createConsumer,
                                TopicName, Options);
@@ -44,12 +44,12 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const TopicName,
-                           FileWriter::StreamerOptions const Options) {
+FileWriter::createConsumer(std::string const &TopicName,
+                           FileWriter::StreamerOptions const &Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer =
-        std::make_unique<KafkaW::Consumer>(Options.Settings);
+    FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(
+        Options.BrokerSettings);
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
                                                    Options.BeforeStartTime);
@@ -98,11 +98,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
           "Failed to set-up process for creating consumer.");
     }
   } catch (std::runtime_error &Error) {
-    throw Error;
+    throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
   } catch (std::exception &Error) {
     LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
         Error.what());
-    throw Error;
+    throw; // "throw;" rethrows
   }
 
   // make sure that the connection is ok
@@ -112,9 +112,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Consume message and exit if we are beyond a message timeout
-  Msg KafkaMessage = FileWriter::Msg();
+    std::unique_ptr<FileWriter::Msg> KafkaMessage= std::make_unique<FileWriter::Msg>();
   KafkaW::PollStatus Status;
-  Consumer->poll(Status, KafkaMessage);
+  Consumer->poll(Status, std::move(KafkaMessage));
   if (Status == KafkaW::PollStatus::Empty ||
       Status == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
@@ -135,12 +135,12 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message = std::make_unique<FlatbufferMessage>(KafkaMessage.data(),
-                                                  KafkaMessage.size());
+    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->data(),
+                                                  KafkaMessage->size());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
-        KafkaMessage.offset(), Error.what());
+        KafkaMessage->offset(), Error.what());
     return ProcessMessageResult::ERR;
   }
 

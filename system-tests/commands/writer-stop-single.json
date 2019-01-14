@@ -1,4 +1,4 @@
 {
-  "cmd": "FileWriter_exit",
+  "cmd": "FileWriter_stop",
   "service_id": "filewriter2"
 }

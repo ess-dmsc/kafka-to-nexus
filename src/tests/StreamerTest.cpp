@@ -1,16 +1,8 @@
 #include "Streamer.h"
-#include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafka.h>
 #include <trompeloeil.hpp>
-namespace FileWriter {
-namespace Schemas {
-namespace f142 {
 
-#include "schemas/f142_logdata_generated.h"
-}
-}
-}
 using trompeloeil::_;
 
 namespace FileWriter {
@@ -22,22 +14,6 @@ generateKafkaMsg(unsigned char const *DataPtr, size_t const Size) {
 class StreamerInitTest : public ::testing::Test {
 public:
 };
-
-static std::unique_ptr<flatbuffers::FlatBufferBuilder>
-getFlatbufferBuilder(std::vector<float> Value) {
-  auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
-  auto &Builder = *BuilderPtr;
-  auto ValueOffset = Builder.CreateVector(Value);
-  FileWriter::Schemas::f142::ArrayFloatBuilder ValueBuilder(Builder);
-  ValueBuilder.add_value(ValueOffset);
-  auto UnionOffset = ValueBuilder.Finish().Union();
-  FileWriter::Schemas::f142::LogDataBuilder LogDataBuilder(Builder);
-  LogDataBuilder.add_value(UnionOffset);
-  LogDataBuilder.add_value_type(FileWriter::Schemas::f142::Value::ArrayFloat);
-  FileWriter::Schemas::f142::FinishLogDataBuffer(Builder,
-                                                 LogDataBuilder.Finish());
-  return BuilderPtr;
-}
 
 // make sure that a topic exists/not exists
 TEST_F(StreamerInitTest, Success) {
@@ -77,48 +53,22 @@ protected:
   KafkaW::BrokerSettings Settings;
 };
 
-class ConsumerEmptyStandIn
-    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
+class ConsumerEmptyStandIn : public KafkaW::Consumer {
 public:
-  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings){};
-
-  IMPLEMENT_MOCK1(addTopic);
-  IMPLEMENT_MOCK2(addTopicAtTimestamp);
-  IMPLEMENT_MOCK0(dumpCurrentSubscription);
-  IMPLEMENT_MOCK1(topicPresent);
-  IMPLEMENT_MOCK1(queryTopicPartitions);
-  IMPLEMENT_MOCK2(poll);
-  //  MAKE_MOCK1(addTopic, void(std::string const Topic), override);
-  //  MAKE_MOCK2(addTopicAtTimestamp,
-  //             void(std::string const Topic,
-  //                  std::chrono::milliseconds const StartTime),
-  //             override);
-  //  MAKE_MOCK0(dumpCurrentSubscription, void(), override);
-  //  MAKE_MOCK1(topicPresent, bool(const std::string &Topic), override);
-  //  MAKE_MOCK1(queryTopicPartitions,
-  //             std::vector<int32_t>(const std::string &TopicName), override);
-  //
-  ////  void poll(KafkaW::PollStatus &Status, FileWriter::Msg &Message)
-  /// override{};
-  //  MAKE_MOCK2(poll, void(KafkaW::PollStatus&, FileWriter::Msg&),
-  //             override);
+  ConsumerEmptyStandIn(KafkaW::BrokerSettings const &Settings)
+      : KafkaW::Consumer::Consumer(Settings){};
+  MAKE_MOCK2(poll, void(KafkaW::PollStatus &, std::unique_ptr<FileWriter::Msg>),
+             override);
 };
 
 TEST_F(StreamerProcessTest, CreationNotYetDone) {
-
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  // TODO mock new version of consumer::poll method
-  //  FileWriter::Msg MyMessage = FileWriter::Msg();
-  //    FileWriter::Msg &MessagePtr = MyMessage;
-  //  KafkaW::PollStatus Status = KafkaW::PollStatus();
-  //  KafkaW::PollStatus &StatusPtr = Status;
-  //    REQUIRE_CALL(*EmptyPollerConsumer, poll(Status, MyMessage)).TIMES(0);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(0);
-
   TestStreamer.ConsumerCreated.get();
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -152,10 +102,9 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  //  FileWriter::Msg MyMessage = FileWriter::Msg();
-  //  FileWriter::Msg &MessagePtr = MyMessage;
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT((_1 = KafkaW::PollStatus::Empty));
   //      .SIDE_EFFECT((_2 = FileWriter::Msg()));
@@ -172,8 +121,9 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT((_1 = KafkaW::PollStatus::EOP));
   TestStreamer.ConsumerCreated =
@@ -189,8 +139,9 @@ TEST_F(StreamerProcessTest, PollingError) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -210,8 +161,9 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -257,11 +209,9 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
   StreamerStandIn TestStreamer;
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  // TODO: pass correct message as a reference to second argument. get to
-  // Streamer.cpp:152
-  FileWriter::Msg MyMessage = FileWriter::Msg();
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT((_1 = KafkaW::PollStatus::Msg));
   TestStreamer.ConsumerCreated =
@@ -283,7 +233,8 @@ public:
   MAKE_MOCK1(write, WriteResult(FlatbufferMessage const &), override);
   MAKE_MOCK0(flush, int32_t(), override);
   MAKE_MOCK0(close, int32_t(), override);
-  MAKE_MOCK3(enable_cq, void(CollectiveQueue *, HDFIDStore *, int), override);
+  //  MAKE_MOCK3(enable_cq, void(CollectiveQueue *, HDFIDStore *, int),
+  //  override);
 };
 
 class StreamerProcessTimingTest : public ::testing::Test {
@@ -318,12 +269,9 @@ TEST_F(StreamerProcessTimingTest,
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  FileWriter::Msg MyMessage = FileWriter::Msg();
-  /// TODO: pass correct message as a reference to second argument. get to
-  // Streamer.cpp:159
-  MyMessage.owned("TestMessage", 11);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT(_1 = KafkaW::PollStatus::Msg);
   TestStreamer.ConsumerCreated =
@@ -351,15 +299,12 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  /// TODO: pass correct message as a reference to second argument. get to
-  // Streamer.cpp:167
-  std::vector<float> Value = {1.1, 1.2, 1.3};
-  auto FlatbuffersBuilderPointer = FileWriter::getFlatbufferBuilder(Value);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT(_1 = KafkaW::PollStatus::Msg)
-      .SIDE_EFFECT(_2.owned("TestMessage", 11));
+      .SIDE_EFFECT(_2->owned("TestMessage", 11));
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -397,14 +342,9 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  FileWriter::Msg MyMessage = FileWriter::Msg();
-  //      FileWriter::Msg &MessagePtr = MyMessage;
-  // TODO pass correct message as a reference to second argument. get to
-  // Streamer.cpp:174
-  MyMessage.owned("TestMessage", 11);
-
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT(_1 = KafkaW::PollStatus::Msg);
   TestStreamer.ConsumerCreated =
@@ -439,9 +379,20 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  //  int CallCounter{0};
+  //  auto PollResult = [this, &CallCounter]() {
+  //    CallCounter++;
+  //    if (CallCounter == 1) {
+  //      return generateKafkaMsg(
+  //          reinterpret_cast<const unsigned char *>(DataBuffer.c_str()),
+  //          DataBuffer.size());
+  //    }
+  //    return
+  //    std::make_unique<KafkaW::ConsumerMessage>(KafkaW::PollStatus::EOP);
+  //  };
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT(_1 = KafkaW::PollStatus::EOP);
 
@@ -451,6 +402,11 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  REQUIRE_CALL(Demuxer, process_message(_))
+      .RETURN(ProcessMessageResult::OK)
+      .TIMES(1);
+  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
 
@@ -471,8 +427,9 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT((_1 = KafkaW::PollStatus::Empty));
 
@@ -506,8 +463,9 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
       .TIMES(1)
       .SIDE_EFFECT((_1 = KafkaW::PollStatus::Empty));
 
@@ -547,10 +505,11 @@ TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
   TestStreamer.setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(Settings);
-  REQUIRE_CALL(*EmptyPollerConsumer,
-               poll(ANY(KafkaW::PollStatus &), ANY(FileWriter::Msg &)))
-
-      .TIMES(1);
+  REQUIRE_CALL(
+      *EmptyPollerConsumer,
+      poll(ANY(KafkaW::PollStatus &), ANY(std::unique_ptr<FileWriter::Msg>)))
+      .SIDE_EFFECT((_1 = KafkaW::PollStatus::EOP))
+  .TIMES(1);
 
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -561,5 +520,4 @@ TEST_F(StreamerProcessTimingTest, DISABLED_EmptyMessageSlightlyAfterStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
-
 } // namespace FileWriter

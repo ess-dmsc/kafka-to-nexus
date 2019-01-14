@@ -16,9 +16,7 @@ public:
     InFile.read(RawData.get(), FileSize);
   };
 
-  static void TearDownTestCase(){};
-
-  virtual void SetUp() {
+  virtual void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<NDAr::AreaDetectorDataGuard>();
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
@@ -28,7 +26,7 @@ public:
         RegisterIt("NDAr");
   };
 
-  virtual void TearDown(){};
+  virtual void TearDown() override{};
   std::unique_ptr<NDAr::AreaDetectorDataGuard> Reader;
   static std::unique_ptr<char[]> RawData;
   static size_t FileSize;

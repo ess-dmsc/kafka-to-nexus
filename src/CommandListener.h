@@ -2,7 +2,7 @@
 
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "uri.h"
+#include "URI.h"
 #include <thread>
 
 namespace FileWriter {
@@ -18,7 +18,7 @@ public:
   void stop();
 
   /// Check for new command packets and return one if there is.
-  void poll(KafkaW::PollStatus &Status, Msg &Message);
+  void poll(KafkaW::PollStatus &Status, std::unique_ptr<Msg> Message);
 
 private:
   MainOpt &config;

@@ -1,29 +1,26 @@
 # Contributing
 
-We use `clang-format` v3.9 LLVM default style.
-The `.clang-format` is just a `-dump-config` of the default LLVM style from
-`clang-format` v3.9.
+## The project
+See [here](https://confluence.esss.lu.se/display/ECDC/Data+Aggregation+and+Streaming) for more details on how the project works.
 
-Please refer to [LLVM documentation](https://llvm.org/docs/CodingStandards.html).
+To summarise:
+- For issues that require changes in the functionality of the code (i.e. not documentation changes or typos) create a ticket on the [ESS JIRA board](https://jira.esss.lu.se/secure/RapidBoard.jspa?rapidView=167&view=detail&quickFilter=2154) with the label `FW&FW`.
 
-## Issues 
-
-For issues that require changes in the functionality of the code (i.e. not tiny bits of refactoring) create a ticket on the [ESS JIRA board](https://jira.esss.lu.se/secure/RapidBoard.jspa?rapidView=167&view=detail&quickFilter=2154) with the label `FW&FW`
+- These tickets need to be approved by the steering committee before work is started.
 
 ## Branching
 
-- Branch your feature off from 'master'
-
-- Before creating pull requests, rebase your feature branch
-  - Reorder and squash small successive commits which may have occurred
-    during iterative development to improve readability of the feature
-    branch.
+- Branch your feature off 'master'
 
 - Create pull requests against 'master'.
 
-## Naming conventions
+## Branch naming
+The names should start with the ticket number and contain a brief description. For example:
 
-- Branch: `issuenumber_issue_decription`, e.g. `314_throw_error_if_branch_name_invalid`
+`DM-1014_byebye_dead_code`
 
-- Commits: `re #issuenumber commit message`, e.g. `re #42 remove dead code`
+## Code
+We use `clang-format` v3.9 LLVM default style.
+We also follow the LLVM coding standards for naming conventions etc. and use Doxygen for documentation.
 
+Please refer to [LLVM documentation](https://llvm.org/docs/CodingStandards.html).
