@@ -6,6 +6,8 @@ Commands are generally sent through Kafka via the broker and topic specified by 
 `--command-uri` option; however, commands can also be given in the [configuration
 file](Commands via the configuration file).
 
+Note: some example commands can be found in the system tests.
+
 ## Command to start writing
 
 The start command consists of a number of parameters which are defined as key-value pairs in the JSON.
@@ -257,7 +259,7 @@ variable-size datatypes (including string and region references datatypes)."
 Attributes are used to define metadata about the data object.
 NeXus also uses them to define NeXus classes for groups.
 
-Attributes are defined as key-value pairs, for example:
+Simple attributes are defined as key-value pairs, for example:
 
 ```json
 "attributes": {
@@ -267,8 +269,9 @@ Attributes are defined as key-value pairs, for example:
 ```
 Where possible the file-writer will try to infer the type of the data, in this example: a float.
 
-For strings and arrays it is necessary to specify the `type`.
-Strings also require the `string_size` and if not utf8 an `encoding` to be defined.
+For strings and arrays it is necessary to specify additional supporting information, thus these attributes are defined using a dictionary of key-value pairs.
+
+Both strings and arrays need a `type` to be defined. Strings also require the `string_size` and, optionally, `encoding` to be defined. If no encoding is defined then UTF-8 is assumed.
 
 For example:
 
@@ -288,3 +291,5 @@ For example:
   }
 ]
 ```
+
+Note: The two methods for defining attributes (key-value pairs and dictionaries) can not be mixed in the same set of attributes.
