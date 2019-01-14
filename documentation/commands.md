@@ -50,7 +50,7 @@ The `nexus_structure` represents the HDF root object of the file to be written.
 For more detailed information on all aspects of HDF5 see the [official HDF5 documentation](https://portal.hdfgroup.org/display/HDF5/HDF5).
 For more information about NeXus see the [NeXus website](https://www.nexusformat.org/).
 
-Groups are the container mechanism by which HDF5 files are organised; they can be thought of as analogous to directories in a file system. In the file-writer, they can contain datasets, streams, links or, even, other groups in their array of `children`. They can also have attributes defined which are used to provide metadata about the group.
+Groups are the container mechanism by which HDF5 files are organised; they can be thought of as analogous to directories in a file system. In the file-writer, they can contain datasets, streams, links or, even, other groups in their array of `children`. They can also have attributes defined which are used to provide metadata about the group; see [below](Attributes) for more information on attributes.
 
 NeXus classes are defined using a group with an attribute named `NX_class` which contains the relevant class name.
 Other NeXus-related information can also defined using attributes. See the [NeXus website](https://www.nexusformat.org/) for more information.
@@ -95,7 +95,7 @@ The parameters for the stream definition are:
 - source: The name of the data source. For example, the EPICS PV name.
 - topic: The Kafka topic where the data can be found.
 
-Note: streams are automatically assigned a NeXus class based on the `writer_module`. [NEEDS TO BE CHECKED]
+Note: some streams are automatically assigned a NeXus class based on the `writer_module` while some need a NeXus class declaring.
 
 In the following example a dataset is defined:
 
@@ -251,3 +251,37 @@ Also:
 
 "The writer is not allowed to modify or append to any data items containing
 variable-size datatypes (including string and region references datatypes)."
+
+## Attributes
+
+Attributes are used to define metadata about the data object.
+NeXus also uses them to define NeXus classes for groups.
+
+Attributes are defined using key-value pairs, for example:
+
+```json
+"attributes": {
+  "units": "Kelvin",
+  "error": 0.02
+}
+```
+Where possible the file-writer will try to infer the type of the data, in this example: a float.
+
+For strings and arrays it is necessary to specify the type, for example:
+
+```json
+"attributes": [
+  {
+    "name": "some_string_attribute",
+    "values": "some_string_value",
+    "type": "string",
+    "encoding": "utf8",
+    "string_size": 17
+  },
+  {
+    "name": "array_attribute",
+    "values": [1, 2, 3],
+    "type": "uint32"
+  }
+]
+```
