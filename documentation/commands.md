@@ -1,212 +1,184 @@
+# Commands
+
 Commands in the form of JSON messages are used to start and stop file writing.
-Commands can be send through Kafka via the broker and topic specified by the
-`--command-uri` option.  Commands can also be given in the configuration
-file specified by `--config-file <file.json>` (see [commands in config file](#commands-can-be-given-in-the-configuration-file-as-well)).
 
-In the command, the `nexus_structure` defines the HDF hierarchy.
-The `nexus_structure` represents the HDF root object.  The following example
-shows how the HDF tree can be constructed using `children`.
-A child of type `stream` is a marker that a `HDFWriterModule` will insert
-the data into from a Kafka stream at that point in the hierarchy.  The options under
-the key `stream` specify the stream details containing, at least, the topic, the source name and
-the `HDFWriterModule` which should be used for writing.
-Depending on the `HDFWriterModule`, there will be more options specific to the
-`HDFWriterModule`.
+Commands are generally sent through Kafka via the broker and topic specified by the
+`--command-uri` option; however, commands can also be given in the [configuration
+file](Commands via the configuration file).
 
-#### Command to start writing a file
+Note: some example commands can be found in the system tests.
 
-Further documentation:
+## Command to start writing
 
-- [Groups](docs/groups.md)
-- [~~Datasets~~ documentation not yet written]()
-- [Attributes](docs/attributes.md)
-- [~~File Attributes~~ documentation not yet written]()
-- [~~Streams~~ documentation not yet written]()
+The start command consists of a number of parameters which are defined as key-value pairs in the JSON.
+These are:
 
-Example command to start streaming:
+- cmd: The command name, must be `FileWriter_new`.
+- job_id: A unique identifier for the request, a UUID for example.
+- broker: The Kafka broker to use for data.
+- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. Optional, if not supplied then the timestamp of the Kafka message containing the start command is used.
+- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. Optional, if not supplied then file writing continues until a stop command is received
+- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
+- abort_on_uninitialised_stream: Whether to abort if the stream cannot be initialised. Optional, default is not to abort but carry on.
+- use_hdf_swmr: Whether to use HDF5's Single Writer Multiple Reader (SWMR) capabilities. Optional, default is true. For more on SWMR see [below](Single Writer Multiple Reader).
+- file_attributes: Dictionary specifying the details of the file to be written:
+    * file_name: The file name
+- nexus_structure: Defines the structure of the NeXus file to be written.
+
+An example command with the `nexus_structure` skipped for brevity:
 
 ```json
 {
+  "cmd": "FileWriter_new",
+  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
+  "broker": "localhost:9092",
+  "start_time": 1547198055,
+  "stop_time": 1547200800,
+  "service_id": "filewriter1",
+  "abort_on_uninitialised_stream": false,
+  "use_hdf_swmr": true,
+  "file_attributes": {
+    "file_name": "my_nexus_file.h5"
+  } ,
   "nexus_structure": {
+    # Skipped for brevity
+  }
+}
+```
+
+### Defining a NeXus structure
+
+The `nexus_structure` represents the HDF root object of the file to be written.
+For more detailed information on all aspects of HDF5 see the [official HDF5 documentation](https://portal.hdfgroup.org/display/HDF5/HDF5).
+For more information about NeXus see the [NeXus website](https://www.nexusformat.org/).
+
+Groups are the container mechanism by which HDF5 files are organised; they can be thought of as analogous to directories in a file system. In the file-writer, they can contain datasets, streams, links or, even, other groups in their array of `children`. They can also have attributes defined which are used to provide metadata about the group; see [below](Attributes) for more information on attributes.
+
+NeXus classes are defined using a group with an attribute named `NX_class` which contains the relevant class name.
+Other NeXus-related information can also defined using attributes. See the [NeXus website](https://www.nexusformat.org/) for more information.
+
+The following shows an example of adding a group to a structure:
+
+```JSON
+"nexus_structure": {
     "children": [
       {
         "type": "group",
-        "name": "for_example_motor_0000",
-        "attributes": {
-          "NX_class": "NXinstrument"
-        },
+        "name": "my_test_group",
         "children": [
           {
             "type": "stream",
-            "attributes": {
-              "this_will_be_a_double": 0.123,
-              "this_will_be_a_int64": 123
-            },
             "stream": {
-              "topic": "topic.with.multiple.sources",
-              "source": "for_example_motor",
+              "type": "double",
               "writer_module": "f142",
-              "type": "float",
-              "array_size": 4
+              "source": "my_test_pv",
+              "topic": "my_test_topic"
             }
-          },
+          }
+        ],
+        "attributes": [
           {
-            "type": "dataset",
-            "name": "some_static_dataset",
-            "values": 42.24,
-            "attributes": {
-              "units": "Kelvin"
-            }
-          },
-          {
-            "type": "dataset",
-            "name": "some_more_explicit_static_dataset",
-            "dataset": {
-              "space": "simple",
-              "type": "uint64",
-              "size": ["unlimited", 5, 6]
-            },
-            "values": [[[0, 1, 2, 3, 4, 5], ["…"], "…"], ["…"], "…"]
-          },
-          {
-            "type": "dataset",
-            "name": "string_scalar",
-            "dataset": {
-              "type": "string"
-            },
-            "values": "the-scalar-string"
-          },
-          {
-            "type": "dataset",
-            "name": "string_3d",
-            "dataset": {
-              "type": "string",
-              "size": ["unlimited", 3, 2]
-            },
-            "values": [
-              [
-                ["string_0_0_0", "string_0_0_1"],
-                ["string_0_1_0", "string_0_1_1"],
-                ["string_0_2_0", "string_0_2_1"]
-              ],
-              [
-                ["string_1_0_0", "string_1_0_1"],
-                ["string_1_1_0", "string_1_1_1"],
-                ["string_1_2_0", "string_1_2_1"]
-              ]
-            ]
-          },
-          {
-            "type": "dataset",
-            "name": "string_fixed_length_1d",
-            "dataset": {
-              "type":"string",
-              "string_size": 32,
-              "size": ["unlimited"]
-            },
-            "values": ["the-scalar-string", "another-one"],
-            "attributes": [
-            {
-              "name": "scalar_attribute",
-              "values": 42
-            },
-            {
-              "name": "vector_attribute",
-              "values": [1, 2, 3],
-              "type": "uint32"
-            }
-            ]
+            "name": "units",
+            "values": "ms"
           }
         ]
       }
     ]
-  },
-  "file_attributes": {
-    "file_name": "some.h5"
-  },
-  "cmd": "FileWriter_new",
-  "job_id": "unique-identifier",
-  "broker": "localhost:9092",
-  "start_time": "[OPTIONAL] timestamp (int) in milliseconds",
-  "stop_time": "[OPTIONAL] timestamp (int) in milliseconds",
-  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command",
-  "abort_on_uninitialised_stream": false,
-  "use_hdf_swmr": true
-}
-```
-By default, the file-writer will continue to write a file even when a stream fails to initialise.
-In order to abort writing instead `set abort_on_uninitialised_stream` to `true`.
-
-#### Command to exit the file-writer
-
-```json
-{
-  "cmd": "FileWriter_exit",
-  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
-}
-```
-
-#### Command to stop a file being written
-
-```json
-{
-  "cmd": "FileWriter_stop",
-  "job_id": "job-unique-identifier",
-  "stop_time" : "[OPTIONAL] timestamp (int) in milliseconds",
-  "service_id": "[OPTIONAL] the_name_of_the_instance_which_should_interpret_this_command"
-}
-```
-
-#### Commands can be given in the configuration file as well
-
-```json
-{
-  "commands": [
-    { "some command": "as discussed above" }
-  ]
 }
 ```
 
 
-### Links within the HDF File
+In the example above, a group called my_test_group is defined which in turn has a stream and an attribute defined.
+The stream definition instructs the file-writer that there is data available which should be written to the containing group.
+The parameters for the stream definition are:
 
-HDF links are created by placing a child of type `link` in the list of children
-of a group.  Links are created as hard links at the end of file writing.  For
-example:
+- writer_module: The FlatBuffers schema in the [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types) repository that was used to serialise the data.
+- type: The type of the data. The possible types are defined in the schema declared in the `writer_module`.
+- source: The name of the data source. For example, the EPICS PV name.
+- topic: The Kafka topic where the data can be found.
 
+Note: some streams are automatically assigned a NeXus class based on the `writer_module` while some need a NeXus class declaring.
+
+In the following example a dataset is defined:
+
+```JSON
+"nexus_structure": {
+    "children": [
+      {
+        "name": "some_static_data",
+        "type": "dataset",
+        "dataset": {
+          "size": [
+            5
+          ],
+          "type": "int64"
+        },
+        "values": [
+          0,
+          1,
+          3,
+          2,
+          2
+        ],
+        "attributes": {
+          "NX_class": "NXlog"
+        }
+      }
+    ]
+}
 ```
+
+In the above example a dataset is defined which contains some values in a 1-D array.
+The parameters for the dataset definition are:
+
+- dataset: Defines information about the dataset:
+  * size: The shape of the data. Can be scalar, 1-D, 2-D, and so on.
+- values: Contains the actual data.
+
+The attributes are used to define the NeXus class as log data.
+
+In HDF5 links are used to link a group to objects in other groups in a manner similar to links on a filesystem.
+The links are created as hard links when the file is closed. A link is defined in the `children` of a group.
+
+For example:
+
+```JSON
 "nexus_structure": {
   "children": [
     {
       "type": "group",
-      "name": "extra_group",
+      "name": "group_with_a_link",
       "children": [
         {
           "type": "link",
           "name": "some_link_to_value",
-          "target": "../a_group/a_subgroup/value"
+          "target": "../group_with_dataset/some_static_data/values"
         },
-        {
-          "type": "link",
-          "name": "some_absolute_link_to_value",
-          "target": "/a_group/a_subgroup/value"
-        }
       ]
     },
     {
       "type": "group",
-      "name": "a_group",
+      "name": "group_with_dataset",
       "children": [
         {
-          "type": "group",
-          "name": "a_subgroup",
-          "children": [
-            {
-              "type": "dataset",
-              "name": "value",
-              "values": 42.24
-            }
-          ]
+          "name": "some_static_data",
+          "type": "dataset",
+          "dataset": {
+            "size": [
+              5
+            ],
+            "type": "int64"
+          },
+          "values": [
+            0,
+            1,
+            3,
+            2,
+            2
+          ],
+          "attributes": {
+            "NX_class": "NXlog"
+          }
         }
       ]
     }
@@ -214,20 +186,60 @@ example:
 }
 ```
 
-### Options for the f142 writer module
+## Command to stop writing
 
-- `type`: The data type contained in the FlatBuffer. Can be `int8` to `int64`, `uint8`, `float` or `double`.
-- `array_size`: The size of the array. Scalar if not specified or `0`.
-- `store_latest_into`: (optional) Name of the dataset into which the latest
-  received value should be stored on file-writer close.
+The stop command consists of a number of parameters which are defined as key-value pairs in the JSON.
+These are:
 
+- cmd: The command name, must be `FileWriter_stop`.
+- job_id: A unique identifier for the request, a UUID for example. Should be the same as used in the start command.
+- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. Optional, if not supplied then the Kafka message time is used.
+- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
 
-### Single Writer, Multiple Reader support
+For example:
 
-The file-writer can use HDF's Single Writer Multiple Reader feature (SWMR).
-SWMR-mode writing is enabled by default.
+```json
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
+  "stop_time": 1547200800,
+  "service_id": "filewriter1",
+}
+```
 
-To disable SWMR, set `use_hdf_swmr` to false in the `FileWriter_new` command:
+## Command to exit the file-writer
+
+The file-writer can be requested to exit.
+The parameters for the command are:
+
+- cmd: The command name, must be `FileWriter_stop`.
+- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
+
+For example:
+
+```json
+{
+  "cmd": "FileWriter_exit",
+  "service_id": "filewriter1",
+}
+```
+
+### Commands via the configuration file
+
+When running the file-writer is is possible to use a configuration file by specifying `--config-file <file.json>`.
+This file can also contain commands, for example: it could be configured to start file-writing immediately.
+
+The syntax for including commands is:
+
+```json
+"commands": [
+  { "some command": "as discussed above" }
+]
+```
+
+## Single Writer Multiple Reader
+
+The file-writer can use HDF5's Single Writer Multiple Reader feature (SWMR) which is enable by default.
 
 To read and write HDF files which use the SWMR feature requires HDF5 version 1.10 or higher.
 One can also use the HDF5 tool `h5repack` with the `--high` option to convert the file into a HDF5 1.8 compatible version.  Please refer to see the `h5repack` documentation for more information.
@@ -241,3 +253,43 @@ Also:
 
 "The writer is not allowed to modify or append to any data items containing
 variable-size datatypes (including string and region references datatypes)."
+
+## Attributes
+
+Attributes are used to define metadata about the data object.
+NeXus also uses them to define NeXus classes for groups.
+
+Simple attributes are defined as key-value pairs, for example:
+
+```json
+"attributes": {
+  "units": "Kelvin",
+  "error": 0.02
+}
+```
+Where possible the file-writer will try to infer the type of the data, in this example: a float.
+
+For strings and arrays it is necessary to specify additional supporting information, thus these attributes are defined using a dictionary of key-value pairs.
+
+Both strings and arrays need a `type` to be defined. Strings also require the `string_size` and, optionally, `encoding` to be defined. If no encoding is defined then UTF-8 is assumed.
+
+For example:
+
+```json
+"attributes": [
+  {
+    "name": "some_string_attribute",
+    "values": "some_string_value",
+    "type": "string",
+    "encoding": "ascii",
+    "string_size": 17
+  },
+  {
+    "name": "array_attribute",
+    "values": [1, 2, 3],
+    "type": "uint32"
+  }
+]
+```
+
+Note: The two methods for defining attributes (key-value pairs and dictionaries) can not be mixed in the same set of attributes.
