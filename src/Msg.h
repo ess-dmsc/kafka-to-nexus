@@ -12,16 +12,11 @@
 
 namespace FileWriter {
 
-enum class MsgType : int {
-  Invalid = -1,
-  Owned = 0,
-};
-
 struct Msg {
   static Msg owned(char const *Data, size_t Bytes) {
     auto DataPtr = std::make_unique<char[]>(Bytes);
     std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
-    return {MsgType::Owned, std::move(DataPtr), Bytes};
+    return {std::move(DataPtr), Bytes};
   }
 
   /// \todo Delete this function when the last clang-tidy PR is merged.
@@ -30,27 +25,20 @@ struct Msg {
   }
 
   char const *data() const {
-    switch (Type) {
-    case MsgType::Owned:
-      return DataPtr.get();
-    default:
-      LOG(Sev::Error, "error at type: {}", static_cast<int>(Type));
+    if (DataPtr == nullptr) {
+      LOG(Sev::Error, "error at type: {}", -1);
     }
-    return nullptr;
+    return DataPtr.get();
   }
 
   size_t size() const {
-    switch (Type) {
-    case MsgType::Owned:
-      return Size;
-    default:
-      LOG(Sev::Error, "error at type: {}", static_cast<int>(Type));
+    if (DataPtr == nullptr) {
+      LOG(Sev::Error, "error at type: {}", -1);
     }
-    return 0;
+    return Size;
   }
 
-  MsgType Type{MsgType::Invalid};
-  std::unique_ptr<char[]> DataPtr;
+  std::unique_ptr<char[]> DataPtr{nullptr};
   size_t Size{0};
 };
 
