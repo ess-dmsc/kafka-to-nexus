@@ -114,6 +114,7 @@ HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
 
+  /// \todo Remove nullptr when clang-tidy merge is done.
   try {
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
         HDFGroup, "event_time_offset", chunk_bytes, nullptr);
@@ -151,7 +152,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
-  // Keep these for now, experimenting with those on another branch.
+  /// \todo Remove nullptr when clang-tidy merge is done.
   this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
       HDFGroup, "event_time_offset", nullptr, nullptr);
   this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id",
