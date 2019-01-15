@@ -22,7 +22,9 @@ bool HistogramRecord::hasEmptySlice(Slice const &Slice) {
   return true;
 }
 
-void HistogramRecord::addSlice(Slice Slice) { Slices.push_back(Slice); }
+void HistogramRecord::addSlice(Slice const &Slice) {
+  Slices.emplace_back(Slice);
+}
 
 size_t HistogramRecord::getHDFIndex() const { return HDFIndex; }
 
@@ -31,6 +33,6 @@ void HistogramRecord::addToItemsWritten(size_t Written) {
 }
 
 bool HistogramRecord::isFull() const { return ItemsWritten == TotalItems; }
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

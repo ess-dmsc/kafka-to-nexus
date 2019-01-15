@@ -6,14 +6,13 @@ namespace Schemas {
 namespace hs00 {
 
 void Writer::parse_config(std::string const &ConfigurationStream,
-                          std::string const &ConfigurationModule) {
+                          std::string const &) {
   TheWriterUntyped = WriterUntyped::createFromJson(
       WriterUntyped::json::parse(ConfigurationStream));
 }
 
 FileWriter::HDFWriterModule::InitResult
-Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                 std::string const &HDFAttributes) {
+Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
@@ -66,6 +65,6 @@ FileWriter::HDFWriterModule::ptr Writer::create() {
 }
 
 HDFWriterModuleRegistry::Registrar<Writer> RegisterWriter("hs00");
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter
