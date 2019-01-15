@@ -84,8 +84,7 @@ TEST_F(DatasetCreation, NDArrCreationMaxSize) {
 }
 
 TEST_F(DatasetCreation, NDArrCreationArrSize) {
-  using namespace hdf5;
-  Dimensions DatasetDimensions{10, 10};
+  hdf5::Dimensions DatasetDimensions{10, 10};
   {
     size_t ChunkSize{256};
     NeXusDataset::MultiDimDataset<int> ADValues(

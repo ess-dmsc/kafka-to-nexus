@@ -4,8 +4,7 @@
 
 class StringProducer {
 public:
-  void produce(unsigned char *MsgData, size_t MsgSize,
-               bool PrintError = false) {
+  void produce(unsigned char *MsgData, size_t MsgSize) {
     Message = std::string(reinterpret_cast<char *>(MsgData));
   }
   std::string Message;
