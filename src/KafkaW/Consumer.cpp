@@ -214,41 +214,53 @@ std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
 }
 
 ////C++ READY
-void Consumer::poll(PollStatus &Status,
-                    std::unique_ptr<FileWriter::Msg> Message) {
+std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
   using std::make_unique;
+
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
+
+  KafkaW::PollStatus Status;
+  FileWriter::Msg KafkaMessage;
+
+  //construct unique ptr to return
+  std::pair<KafkaW::PollStatus, FileWriter::Msg> NewPair(
+      Status, std::move(KafkaMessage));
+  std::unique_ptr<std::pair<KafkaW::PollStatus, FileWriter::Msg>> DataToReturn;
+  DataToReturn =
+      std::make_unique<std::pair<KafkaW::PollStatus, FileWriter::Msg>>(std::move(NewPair));
+
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-        //extract data
-      Status = PollStatus::Msg;
+      DataToReturn.get()->first = KafkaW::PollStatus::Msg;
+      // extract data
       auto Timestamp =
           std::make_pair<RdKafka::MessageTimestamp::MessageTimestampType,
                          int64_t>(KafkaMsg->timestamp().type,
                                   KafkaMsg->timestamp().timestamp);
-      //construct object to return
-      FileWriter::Msg KafkaMessage = FileWriter::Msg();
-//      KafkaMessage.swap(FileWriter::Msg::fromKafkaW(
-//          reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
-//          Timestamp));
+      // construct message object to return
+      //      FileWriter::Msg MessageFromKafka = FileWriter::Msg::fromKafkaW(
+      //          reinterpret_cast<const char *>(KafkaMsg->payload()),
+      //          KafkaMsg->len(),
+      //          Timestamp);
+      FileWriter::Msg MessageFromKafka = FileWriter::Msg::fromKafkaW(
+              reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
+              Timestamp);
 
-      //assign object to unique pointer to return it
-      auto KafkaMessagePointer =
-          std::make_unique<FileWriter::Msg>(FileWriter::Msg::fromKafkaW(
-                  reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
-                  Timestamp));
-      break;
+      DataToReturn.get()->second.swap(MessageFromKafka);
+
+      return DataToReturn;
     } else {
-      Status = PollStatus::Empty;
-      break;
+      DataToReturn.get()->first = PollStatus::Empty;
+      return DataToReturn;
     }
   case RdKafka::ERR__PARTITION_EOF:
-    Status = PollStatus::EOP;
-    break;
+    DataToReturn.get()->first = PollStatus::EOP;
+    return DataToReturn;
   default:
-    Status = PollStatus::Err;
+    DataToReturn.get()->first = PollStatus::Err;
+    return DataToReturn;
   }
 }
 

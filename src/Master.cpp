@@ -34,8 +34,7 @@ void Master::handle_command_message(std::unique_ptr<Msg> msg) {
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
     command_handler.tryToHandle(std::move(msg), MessageTimestamp.second);
   } else {
-    command_handler.tryToHandle(
-        msg->data(), msg->size());
+    command_handler.tryToHandle(msg->data(), msg->size());
   }
 }
 
@@ -95,16 +94,18 @@ void Master::run() {
   auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
-   // Msg KafkaMessage = FileWriter::Msg();
-    std::unique_ptr<FileWriter::Msg> KafkaMessage= std::make_unique<FileWriter::Msg>();
-    KafkaW::PollStatus Status;
-    command_listener.poll(Status, std::move(KafkaMessage));
+    // Msg KafkaMessage = FileWriter::Msg();
+
+    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
+        command_listener.poll();
     //    std::string msgstr(KafkaMessage.data());
     //    std::cout <<"dbdbdbdbdbdd "<< msgstr << '\n';
-    if (Status == KafkaW::PollStatus::Msg) {
+    if (KafkaMessage.get()->first == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
+      FileWriter::Msg KafkaMsg;
+      KafkaMsg.swap(KafkaMessage.get()->second);
       this->handle_command_message(
-          std::move(KafkaMessage));
+          std::make_unique<FileWriter::Msg>(std::move(KafkaMsg)));
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >

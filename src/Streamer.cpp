@@ -48,8 +48,8 @@ FileWriter::createConsumer(std::string const &TopicName,
                            FileWriter::StreamerOptions const &Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(
-        Options.BrokerSettings);
+    FileWriter::ConsumerPtr Consumer =
+        std::make_unique<KafkaW::Consumer>(Options.BrokerSettings);
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
                                                    Options.BeforeStartTime);
@@ -112,11 +112,10 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Consume message and exit if we are beyond a message timeout
-    std::unique_ptr<FileWriter::Msg> KafkaMessage= std::make_unique<FileWriter::Msg>();
-  KafkaW::PollStatus Status;
-  Consumer->poll(Status, std::move(KafkaMessage));
-  if (Status == KafkaW::PollStatus::Empty ||
-      Status == KafkaW::PollStatus::EOP) {
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
+      Consumer->poll();
+  if (KafkaMessage.get()->first == KafkaW::PollStatus::Empty ||
+      KafkaMessage.get()->first == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
@@ -128,19 +127,19 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     }
     return ProcessMessageResult::OK;
   }
-  if (Status == KafkaW::PollStatus::Err) {
+  if (KafkaMessage.get()->first == KafkaW::PollStatus::Err) {
     return ProcessMessageResult::ERR;
   }
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->data(),
-                                                  KafkaMessage->size());
+    Message = std::make_unique<FlatbufferMessage>(
+        KafkaMessage.get()->second.data(), KafkaMessage.get()->second.size());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
-        KafkaMessage->offset(), Error.what());
+        KafkaMessage.get()->second.offset(), Error.what());
     return ProcessMessageResult::ERR;
   }
 

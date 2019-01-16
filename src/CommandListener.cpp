@@ -28,8 +28,8 @@ void CommandListener::start() {
   consumer->addTopic(config.command_broker_uri.Topic);
 }
 
-void CommandListener::poll(KafkaW::PollStatus &Status, std::unique_ptr<Msg> Message) {
-  consumer->poll(Status, std::move(Message));
+std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> CommandListener::poll() {
+  return consumer->poll();
 }
 
 } // namespace FileWriter
