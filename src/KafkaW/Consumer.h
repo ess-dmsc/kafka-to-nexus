@@ -57,8 +57,6 @@ private:
   BrokerSettings ConsumerBrokerSettings;
   std::unique_ptr<RdKafka::Metadata> queryMetadata();
   std::shared_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
-
-  rd_kafka_topic_partition_list_t *PartitionList = nullptr;
   int id = 0;
   ConsumerEventCb EventCallback;
   ConsumerRebalanceCb RebalanceCallback;
