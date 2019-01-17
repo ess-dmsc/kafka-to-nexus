@@ -11,8 +11,7 @@ namespace f142 {
 class WriterScalarString : public WriterTypedBase {
 public:
   WriterScalarString(hdf5::node::Group const &HdfGroup,
-                     std::string const &SourceName,
-                     Value FlatbuffersValueTypeId, Mode OpenMode);
+                     std::string const &SourceName, Mode OpenMode);
   h5::append_ret write(FBUF const *fbuf) override;
   h5::Chunked1DString::ptr ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::String;

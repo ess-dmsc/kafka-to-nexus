@@ -6,7 +6,7 @@ namespace f142 {
 
 /// \brief  Open or create a new dataset for scalar strings.
 WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
-                                       std::string const &SourceName, Value,
+                                       std::string const &SourceName,
                                        Mode OpenMode) {
   LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
   if (OpenMode == Mode::Open) {

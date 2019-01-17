@@ -173,7 +173,7 @@ struct WriterFactoryScalarString : public WriterFactory {
                FileWriter::Schemas::f142::Value ValueUnionID,
                Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
-        new WriterScalarString(Group, Name, ValueUnionID, Mode::Create));
+        new WriterScalarString(Group, Name, Mode::Create));
   }
 
   FileWriter::Schemas::f142::Value getValueUnionID() override {

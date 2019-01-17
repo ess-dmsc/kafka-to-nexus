@@ -81,7 +81,7 @@ TEST(H5, writeScalarString) {
   std::string SourceName("value");
   using FileWriter::Schemas::f142::Mode;
   FileWriter::Schemas::f142::WriterScalarString Writer(
-      Group, SourceName, FileWriter::Schemas::f142::Value::String,
+      Group, SourceName,
       Mode::Create);
   ASSERT_TRUE(Group.get_dataset("value").datatype() ==
               hdf5::datatype::String::variable().native_type());
