@@ -117,8 +117,9 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
     TopicPartitionsWithTimestamp.push_back(TopicPartition);
   }
 
-  auto ErrorCode =
-      KafkaConsumer->offsetsForTimes(TopicPartitionsWithTimestamp, 1000);
+  auto ErrorCode = KafkaConsumer->offsetsForTimes(
+      TopicPartitionsWithTimestamp,
+      ConsumerBrokerSettings.OffsetsForTimesTimeoutMS);
   if (ErrorCode != RdKafka::ErrorCode::ERR_NO_ERROR) {
     LOG(Sev::Error, "Kafka error while getting offsets for timestamp: {}",
         ErrorCode);
@@ -205,7 +206,8 @@ void Consumer::dumpCurrentSubscription() {
 ////C++ READY
 std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
   RdKafka::Metadata *metadataRawPtr(nullptr);
-  KafkaConsumer->metadata(true, nullptr, &metadataRawPtr, 1000);
+  KafkaConsumer->metadata(true, nullptr, &metadataRawPtr,
+                          ConsumerBrokerSettings.MetadataTimeoutMS);
   std::unique_ptr<RdKafka::Metadata> metadata(metadataRawPtr);
   if (metadata == nullptr) {
     throw MetadataException("Failed to query metadata from broker!");
@@ -223,12 +225,13 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
   KafkaW::PollStatus Status;
   FileWriter::Msg KafkaMessage;
 
-  //construct unique ptr to return
+  // construct unique ptr to return
   std::pair<KafkaW::PollStatus, FileWriter::Msg> NewPair(
       Status, std::move(KafkaMessage));
   std::unique_ptr<std::pair<KafkaW::PollStatus, FileWriter::Msg>> DataToReturn;
   DataToReturn =
-      std::make_unique<std::pair<KafkaW::PollStatus, FileWriter::Msg>>(std::move(NewPair));
+      std::make_unique<std::pair<KafkaW::PollStatus, FileWriter::Msg>>(
+          std::move(NewPair));
 
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
@@ -245,8 +248,8 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
       //          KafkaMsg->len(),
       //          Timestamp);
       FileWriter::Msg MessageFromKafka = FileWriter::Msg::fromKafkaW(
-              reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
-              Timestamp);
+          reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
+          Timestamp);
 
       DataToReturn.get()->second.swap(MessageFromKafka);
 
