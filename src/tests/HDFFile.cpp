@@ -97,7 +97,7 @@ public:
         gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-03.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
-    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
+    LOG(spdlog::level::trace, "CommandString: {:.{}}", CommandString.data(),
         CommandString.size());
     auto Command = json::parse(CommandString);
     std::string fname = Command["file_attributes"]["file_name"];
@@ -114,7 +114,7 @@ public:
         gulp(std::string(TEST_DATA_PATH) + "/msg-cmd-new-04.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
-    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
+    LOG(spdlog::level::trace, "CommandString: {:.{}}", CommandString.data(),
         CommandString.size());
     auto Command = json::parse(CommandString);
     std::string fname = Command["file_attributes"]["file_name"];
@@ -386,7 +386,7 @@ public:
     /// file writer.
     void pregenerate(int n, int n_events_per_message_) {
       n_events_per_message = n_events_per_message_;
-      LOG(Sev::Debug, "generating {} {}...", topic, source);
+      LOG(spdlog::level::trace, "generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
@@ -402,7 +402,7 @@ public:
             (char const *)fb.builder->GetBufferPointer(),
             fb.builder->GetSize()));
         if (msgs.back().size() < 8) {
-          LOG(Sev::Error, "error");
+          LOG(spdlog::level::err, "error");
           exit(1);
         }
       }
@@ -465,7 +465,7 @@ public:
       do_verification =
           main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<int64_t>();
-      LOG(Sev::Debug, "do_verification: {}", do_verification);
+      LOG(spdlog::level::trace, "do_verification: {}", do_verification);
     } catch (...) {
     }
 
@@ -474,7 +474,7 @@ public:
       n_msgs_per_source =
           main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
               .get<int64_t>();
-      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
+      LOG(spdlog::level::trace, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
@@ -482,7 +482,7 @@ public:
     try {
       n_sources =
           main_opt.CommandsJson["unit_test"]["n_sources"].get<int64_t>();
-      LOG(Sev::Debug, "unit_test.n_sources: {}", n_sources);
+      LOG(spdlog::level::trace, "unit_test.n_sources: {}", n_sources);
     } catch (...) {
     }
 
@@ -491,7 +491,7 @@ public:
       n_events_per_message =
           main_opt.CommandsJson["unit_test"]["n_events_per_message"]
               .get<int64_t>();
-      LOG(Sev::Debug, "unit_test.n_events_per_message: {}",
+      LOG(spdlog::level::trace, "unit_test.n_events_per_message: {}",
           n_events_per_message);
     } catch (...) {
     }
@@ -500,7 +500,7 @@ public:
     try {
       feed_msgs_times =
           main_opt.CommandsJson["unit_test"]["feed_msgs_times"].get<int64_t>();
-      LOG(Sev::Debug, "unit_test.feed_msgs_times: {}", feed_msgs_times);
+      LOG(spdlog::level::trace, "unit_test.feed_msgs_times: {}", feed_msgs_times);
     } catch (...) {
     }
 
@@ -509,7 +509,7 @@ public:
       feed_msgs_seconds =
           main_opt.CommandsJson["unit_test"]["feed_msgs_seconds"]
               .get<int64_t>();
-      LOG(Sev::Debug, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
+      LOG(spdlog::level::trace, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
     } catch (...) {
     }
 
@@ -517,7 +517,7 @@ public:
     try {
       filename =
           main_opt.CommandsJson["unit_test"]["filename"].get<std::string>();
-      LOG(Sev::Debug, "unit_test.filename: {}", filename);
+      LOG(spdlog::level::trace, "unit_test.filename: {}", filename);
     } catch (...) {
     }
 
@@ -535,14 +535,14 @@ public:
       vector<std::thread> threads_pregen;
       for (size_t i1 = 0; i1 < n_sources; ++i1) {
         auto &s = sources.back();
-        LOG(Sev::Debug, "push pregen {}", i1);
+        LOG(spdlog::level::trace, "push pregen {}", i1);
         threads_pregen.push_back(
             std::thread([&s, n_msgs_per_source, n_events_per_message] {
               s.pregenerate(n_msgs_per_source, n_events_per_message);
             }));
       }
       for (auto &x : threads_pregen) {
-        LOG(Sev::Debug, "join pregen");
+        LOG(spdlog::level::trace, "join pregen");
         x.join();
       }
     }
@@ -620,7 +620,7 @@ public:
       CommandJSON["job_id"] = "test-ev42";
     }
 
-    LOG(Sev::Debug, "CommandJSON: {}", CommandJSON.dump());
+    LOG(spdlog::level::trace, "CommandJSON: {}", CommandJSON.dump());
 
     auto fname = CommandJSON["file_attributes"]["file_name"].get<std::string>();
     ASSERT_GT(fname.size(), size_t(8));
@@ -639,7 +639,7 @@ public:
       auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      LOG(Sev::Debug, "processing...");
+      LOG(spdlog::level::trace, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       bool do_run = true;
@@ -652,15 +652,15 @@ public:
             break;
           }
           if (i_feed % 100 == 0) {
-            LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
+            LOG(spdlog::level::trace, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
           }
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());
-              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
+              LOG(spdlog::level::trace, "msg:\n{:.{}}", v.data(), v.size());
             }
             if (msg.size() < 8) {
-              LOG(Sev::Error, "error");
+              LOG(spdlog::level::err, "error");
               do_run = false;
             }
             FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
@@ -668,17 +668,17 @@ public:
             auto res =
                 fwt->demuxers().at(0).process_message(std::move(TempMessage));
             if (res == FileWriter::ProcessMessageResult::ERR) {
-              LOG(Sev::Error, "is_ERR");
+              LOG(spdlog::level::err, "is_ERR");
               do_run = false;
               break;
             }
             if (res == FileWriter::ProcessMessageResult::ALL_SOURCES_FULL) {
-              LOG(Sev::Error, "is_ALL_SOURCES_FULL");
+              LOG(spdlog::level::err, "is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
             if (res == FileWriter::ProcessMessageResult::STOP) {
-              LOG(Sev::Error, "is_STOP");
+              LOG(spdlog::level::err, "is_STOP");
               do_run = false;
               break;
             }
@@ -693,15 +693,15 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(Sev::Debug, "processing done in {} ms",
+      LOG(spdlog::level::trace, "processing done in {} ms",
           duration_cast<MS>(t2 - t1).count());
-      LOG(Sev::Debug, "finishing...");
+      LOG(spdlog::level::trace, "finishing...");
       send_stop(ch, CommandJSON);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
       auto t3 = CLK::now();
-      LOG(Sev::Debug, "finishing done in {} ms",
+      LOG(spdlog::level::trace, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
-      LOG(Sev::Debug, "done in total {} ms",
+      LOG(spdlog::level::trace, "done in total {} ms",
           duration_cast<MS>(t3 - t1).count());
     }
 
@@ -783,7 +783,7 @@ public:
       verify_attribute_data_ev42(attr_node);
     }
 
-    LOG(Sev::Debug, "data_ev42 verification done");
+    LOG(spdlog::level::trace, "data_ev42 verification done");
   }
 
   /// \brief Can supply pre-generated test data for a source on a topic to
@@ -803,7 +803,7 @@ public:
     /// into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
-      LOG(Sev::Debug, "generating {} {}...", topic, source);
+      LOG(spdlog::level::trace, "generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
@@ -844,7 +844,7 @@ public:
       auto do_verification =
           main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<uint64_t>();
-      LOG(Sev::Debug, "do_verification: {}", do_verification);
+      LOG(spdlog::level::trace, "do_verification: {}", do_verification);
     } catch (...) {
     }
 
@@ -853,7 +853,7 @@ public:
       n_msgs_per_source =
           main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
               .get<uint64_t>();
-      LOG(Sev::Debug, "n_msgs_per_source: {}", n_msgs_per_source);
+      LOG(spdlog::level::trace, "n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
@@ -861,7 +861,7 @@ public:
     try {
       n_sources =
           main_opt.CommandsJson["unit_test"]["n_sources"].get<uint64_t>();
-      LOG(Sev::Debug, "n_sources: {}", n_sources);
+      LOG(spdlog::level::trace, "n_sources: {}", n_sources);
     } catch (...) {
     }
 
@@ -869,7 +869,7 @@ public:
     try {
       array_size =
           main_opt.CommandsJson["unit_test"]["array_size"].get<uint64_t>();
-      LOG(Sev::Debug, "array_size: {}", array_size);
+      LOG(spdlog::level::trace, "array_size: {}", array_size);
     } catch (...) {
     }
 
@@ -984,17 +984,17 @@ public:
       auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
       ASSERT_EQ(fwt->demuxers().size(), (size_t)1);
 
-      LOG(Sev::Debug, "processing...");
+      LOG(spdlog::level::trace, "processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
       for (auto &source : sources) {
         for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
-          LOG(Sev::Info, "feed {}", i_feed);
+          LOG(spdlog::level::info, "feed {}", i_feed);
           for (auto &msg : source.msgs) {
             if (false) {
               auto v = binary_to_hex(msg.data(), msg.size());
-              LOG(Sev::Debug, "msg:\n{:.{}}", v.data(), v.size());
+              LOG(spdlog::level::trace, "msg:\n{:.{}}", v.data(), v.size());
             }
             FileWriter::FlatbufferMessage TempMessage((const char *)msg.data(),
                                                       msg.size());
@@ -1004,15 +1004,15 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(Sev::Debug, "processing done in {} ms",
+      LOG(spdlog::level::trace, "processing done in {} ms",
           duration_cast<MS>(t2 - t1).count());
-      LOG(Sev::Debug, "finishing...");
+      LOG(spdlog::level::trace, "finishing...");
       send_stop(ch, CommandJSON);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), (size_t)0);
       auto t3 = CLK::now();
-      LOG(Sev::Debug, "finishing done in {} ms",
+      LOG(spdlog::level::trace, "finishing done in {} ms",
           duration_cast<MS>(t3 - t2).count());
-      LOG(Sev::Debug, "done in total {} ms",
+      LOG(spdlog::level::trace, "done in total {} ms",
           duration_cast<MS>(t3 - t1).count());
     }
   }

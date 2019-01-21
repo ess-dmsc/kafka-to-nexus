@@ -61,10 +61,10 @@ std::string make_command_stop(
 std::string make_command_from_file(const std::string &filename) {
   std::ifstream ifs(filename);
   if (!ifs.good()) {
-    LOG(Sev::Warning, "can not open file {}", filename);
+    LOG(spdlog::level::warn, "can not open file {}", filename);
     return "";
   }
-  LOG(Sev::Debug, "make_command_from_file {}", filename);
+  LOG(spdlog::level::trace, "make_command_from_file {}", filename);
   auto buf1 = gulp(filename);
   return {buf1.data(), buf1.size()};
 }
@@ -104,15 +104,15 @@ int main(int argc, char **argv) {
   KafkaW::Producer::Topic pt(producer, opt.broker.Topic);
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.BrokerSettings.Address, opt.teamid);
-    LOG(Sev::Debug, "sending {}", m1);
+    LOG(spdlog::level::trace, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.BrokerSettings.Address, opt.teamid);
-    LOG(Sev::Debug, "sending {}", m1);
+    LOG(spdlog::level::trace, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "file:") {
     auto m1 = make_command_from_file(opt.cmd.substr(5));
-    LOG(Sev::Debug, "sending:\n{}", m1);
+    LOG(spdlog::level::trace, "sending:\n{}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
@@ -129,7 +129,7 @@ int main(int argc, char **argv) {
     } else {
       m1 = make_command_stop(opt.BrokerSettings.Address, input);
     }
-    LOG(Sev::Debug, "sending {}", m1);
+    LOG(spdlog::level::trace, "sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size(), true);
   }
   return 0;
