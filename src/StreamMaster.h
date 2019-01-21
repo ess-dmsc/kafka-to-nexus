@@ -35,7 +35,7 @@ public:
                const MainOpt &Options,
                std::unique_ptr<IStreamerFactory> StreamerFactory);
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = default;
+  StreamMaster(StreamMaster &&) = delete;
 
   ~StreamMaster();
 

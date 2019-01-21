@@ -38,9 +38,9 @@ public:
   Streamer(const std::string &Broker, const std::string &TopicName,
            const FileWriter::StreamerOptions &Opts);
   Streamer(const Streamer &) = delete;
-  Streamer(Streamer &&other) = default;
+  Streamer(Streamer &&other) = delete;
 
-  virtual ~Streamer() = default;
+  ~Streamer() override = default;
 
   /// \brief Method that process a message.
   ///
