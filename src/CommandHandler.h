@@ -3,26 +3,51 @@
 #include "FileWriterTask.h"
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "MasterI.h"
+#include "MasterInterface.h"
 #include "Msg.h"
 #include "json.h"
 #include <memory>
 
 namespace FileWriter {
 
-struct StreamSettings;
+/// \brief Holder for the stream settings.
+struct StreamSettings {
+  StreamHDFInfo StreamHDFInfoObj;
+  std::string Topic;
+  std::string Module;
+  std::string Source;
+  bool RunParallel = false;
+  std::string ConfigStreamJson;
+};
 
+/// \brief If fails to parse the `Command`, adds error info and throws
+/// exception.
+///
+/// \param  Command Command passed to the program.
+/// \return If parsing successful returns `nlohmann::json`, otherwise throws an
+/// exception.
 nlohmann::json parseOrThrow(std::string const &Command);
 
-/// Interprets and execute commands received.
+std::string format_nested_exception(std::exception const &E);
+
+std::string format_nested_exception(std::exception const &E,
+                                    std::stringstream &StrS, int Level);
+
+/// Interpret and execute received commands.
 class CommandHandler {
 public:
-  CommandHandler(MainOpt &config, MasterI *master);
-
-  /// Given a JSON string, create a new file writer task.
+  /// \brief Initialize a new `CommandHandler`.
   ///
-  /// \param Command The command for configuring the new task.
-  void handleNew(std::string const &Command);
+  /// \param Config Configuration of the file writer.
+  /// \param MasterPtr Optional `Master` which can continue to watch over newly
+  /// created jobs. Not used for example in some tests.
+  CommandHandler(MainOpt &Settings, MasterInterface *Master);
+
+  /// \brief Given a JSON string, create a new file writer task.
+  ///
+  /// \param Command Command for configuring the new task.
+  void handleNew(std::string const &Command,
+                 std::chrono::milliseconds MsgTimestamp);
 
   /// Stop the whole file writer application.
   void handleExit();
@@ -30,50 +55,64 @@ public:
   /// Stop and remove all ongoing file writer jobs.
   void handleFileWriterTaskClearAll();
 
-  /// Stops a given job.
+  /// \brief Stop a given job.
   ///
-  /// \param Command The command for defining which job to stop.
+  /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(std::string const &Command);
 
-  /// Passes content of the message to the command handler.
+  /// \brief Try to handle the message.
   ///
   /// \param Msg The message.
-  void tryToHandle(Msg const &msg);
+  /// \param MsgTimestamp The rd_kafka_message_timestamp when available
+  void tryToHandle(Msg const &Message, std::chrono::milliseconds MsgTimestamp =
+                                           std::chrono::milliseconds{-1});
 
-  /// Parses the given command and passes it on to a more specific handler.
+  /// \brief Try to handle the command.
   ///
   /// \param Command The command to parse.
-  void handle(std::string const &command);
-  void tryToHandle(std::string const &Command);
+  /// \param MsgTimestamp The rd_kafka_message_timestamp when available.
+  void tryToHandle(
+      std::string const &Command,
+      std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});
 
+  /// \brief Get number of active writer tasks.
+  ///
+  /// \return  Number of active writer tasks.
   size_t getNumberOfFileWriterTasks() const;
-  std::unique_ptr<FileWriterTask> &getFileWriterTaskByJobID(std::string JobID);
+
+  /// \brief Find a writer task given its `JobID`.
+  ///
+  /// \param JobID The job id to find.
+  /// \return The writer task.
+  std::unique_ptr<FileWriterTask> &
+  getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
-  /// Configure the HDF writer modules for writing.
+  /// \brief Parse the given command and pass it on to a more specific
+  /// handler.
   ///
-  /// \param StreamSettingsList The settings for the stream.
-  /// \param Task The task to configure.
-  void addStreamSourceToWriterModule(
-      const std::vector<StreamSettings> &stream_settings_list,
-      std::unique_ptr<FileWriterTask> &fwt);
+  /// \param Command The command to parse.
+  /// \param MsgTimestamp The message timestamp.
+  void handle(std::string const &command,
+              std::chrono::milliseconds MsgTimestamp);
 
-  /// Given a task and the `nexus_structure` as json string, set up the
-  /// basic HDF file structure.
-  ///
-  /// \param Task The task which will write the HDF file.
-  /// \param NexusStructureString The structure of the NeXus file.
-  /// \return The related stream settings.
-  std::vector<StreamHDFInfo>
-  initializeHDF(FileWriterTask &Task,
-                std::string const &NexusStructureString) const;
+  static void
+  addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
+                                std::unique_ptr<FileWriterTask> &Task);
+
+  static std::vector<StreamHDFInfo>
+  initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
+                bool UseSwmr);
   MainOpt &Config;
-  MasterI *MasterPtr = nullptr;
+  MasterInterface *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
 };
 
-std::string findBroker(std::string const &);
-
-std::string format_nested_exception(std::exception const &E);
-
+/// \brief Extract the time in milliseconds from the JSON.
+///
+/// \param Document The JSON document.
+/// \param Key The time identifier keyword.
+/// \return The value in milliseconds.
+std::chrono::milliseconds findTime(nlohmann::json const &Document,
+                                   std::string const &Key);
 } // namespace FileWriter

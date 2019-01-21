@@ -1,7 +1,5 @@
 #include "Errors.h"
 
-//------------------------------------------------------------------------------
-// StreamMastererError
 using StreamMasterError = FileWriter::Status::StreamMasterError;
 
 StreamMasterError StreamMasterError::OK() {
@@ -58,11 +56,8 @@ StreamMasterError StreamMasterError::STREAMMASTER_ERROR() {
   return Err;
 }
 
-//------------------------------------------------------------------------------
-// StreamerError
 using StreamerStatus = FileWriter::Status::StreamerStatus;
 
-//------------------------------------------------------------------------------
 // Utilities
 
 const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {

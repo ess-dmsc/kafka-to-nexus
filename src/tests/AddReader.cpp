@@ -1,4 +1,5 @@
-/// Used to get around a namespace collision problem in HDFFile.cpp
+/// \file
+/// \brief Used to get around a namespace collision problem in HDFFile.cpp
 
 #include "AddReader.h"
 #include "../schemas/ev42/ev42_rw.h"

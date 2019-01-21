@@ -1,19 +1,7 @@
-//===-- src/StreamerOptions.h - Streamer consumer options class definition --*-
-// C++ -*-===//
-//
-//
-//===----------------------------------------------------------------------===//
-///
-/// \file This file contains the declaration of the StreamerOptions struct,
-/// which
-/// is used to configure the Streamer and the RdKafka configuration used int the
-/// Streamer. Implementation is in Streamer.cpp
-///
-//===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include "KafkaW/BrokerSettings.h"
+#include "KafkaW/ConsumerSettings.h"
 #include "json.h"
 #include <chrono>
 
@@ -21,7 +9,8 @@ namespace FileWriter {
 
 /// Contains configuration parameters for the Streamer
 struct StreamerOptions {
-  KafkaW::BrokerSettings Settings;
+  KafkaW::BrokerSettings BrokerSettings;
+  KafkaW::ConsumerSettings ConsumerSettings;
   std::chrono::milliseconds StartTimestamp{0};
   std::chrono::milliseconds StopTimestamp{0};
   std::chrono::milliseconds BeforeStartTime{1000};

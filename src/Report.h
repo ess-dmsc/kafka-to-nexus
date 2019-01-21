@@ -13,7 +13,7 @@ namespace FileWriter {
 
 class Report {
   using StreamMasterError = Status::StreamMasterError;
-  using ReportType = FileWriter::Status::NLJSONStreamWriter;
+  using ReportType = FileWriter::Status::StatusWriter;
 
 public:
   Report() : ReportMs{std::chrono::milliseconds{1000}} {}
@@ -62,14 +62,14 @@ private:
     Reporter.setJobId(JobId);
     for (auto &Element : Streamers) {
       // Writes in JSON format Streamer summary
-      Reporter.write(Element.second->messageInfo(), Element.first, ReportMs);
+      Reporter.write(Element.second->messageInfo(), Element.first);
       // Compute cumulative stats
       Summary.add(Element.second->messageInfo());
     }
     Summary.setTimeToNextMessage(ReportMs);
     Summary.StreamMasterStatus = StreamMasterStatus;
     Reporter.write(Summary);
-    ReportType::ReturnType Value = Reporter.get();
+    std::string Value = Reporter.getJson();
     Producer->produce(reinterpret_cast<unsigned char *>(&Value[0]),
                       Value.size());
 

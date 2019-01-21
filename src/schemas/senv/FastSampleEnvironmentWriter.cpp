@@ -1,14 +1,13 @@
 /** Copyright (C) 2018 European Spallation Source ERIC */
 
-/** \file
- *
- *  \brief Implement classes required to implement the ADC file writing module.
- */
+/// \file
+/// \brief Implement classes required to implement the ADC file writing module.
 
 #include "../../helper.h"
 
 #include "FastSampleEnvironmentWriter.h"
 #include "HDFFile.h"
+#include "senv_data_generated.h"
 #include <iostream>
 #include <limits>
 
@@ -66,8 +65,11 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
                            DefaultChunkSize);
     NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
                                    DefaultChunkSize);
+    auto ClassAttribute =
+        CurrentGroup.attributes.create<std::string>("NX_class");
+    ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::HDFFile::write_attributes(HDFGroup, &AttributesJson);
+    FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
     LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
                     "HDF file with error message: \"{}\"",
@@ -140,11 +142,5 @@ FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
 std::int32_t FastSampleEnvironmentWriter::flush() { return 0; }
 
 std::int32_t FastSampleEnvironmentWriter::close() { return 0; }
-
-void FastSampleEnvironmentWriter::enable_cq(CollectiveQueue *cq,
-                                            HDFIDStore *hdf_store,
-                                            int mpi_rank) {
-  LOG(Sev::Error, "Collective queue not implemented.");
-}
 
 } // namespace senv

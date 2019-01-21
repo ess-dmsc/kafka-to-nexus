@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KafkaW/Msg.h"
+#include "KafkaW/ConsumerMessage.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>
@@ -23,7 +23,7 @@ enum class MsgType : int {
 
 class Msg {
 public:
-  Msg() { type = MsgType::Invalid; }
+  Msg() : type(MsgType::Invalid) {}
 
   static Msg owned(char const *data, size_t len) {
     Msg msg;
@@ -57,7 +57,7 @@ public:
     return ret;
   }
 
-  /// Can be removed when we use the KafkaW wrapper everywhere.
+  // Can be removed when we use the KafkaW wrapper everywhere.
 
   static Msg rdkafka(std::unique_ptr<RdKafka::Message> &&rdkafka_msg) {
     Msg msg;
@@ -67,7 +67,7 @@ public:
     return msg;
   }
 
-  static Msg fromKafkaW(std::unique_ptr<KafkaW::Msg> &&KafkaWMsg) {
+  static Msg fromKafkaW(std::unique_ptr<KafkaW::ConsumerMessage> &&KafkaWMsg) {
     Msg msg;
     msg.type = MsgType::KafkaW;
     msg.var.kafkaw_msg = KafkaWMsg.release();
@@ -83,14 +83,13 @@ public:
   }
 
   inline void swap(Msg &y) {
-    auto &x = *this;
-    if (x.type != MsgType::Invalid && x.type != y.type) {
+    if (type != MsgType::Invalid && type != y.type) {
       LOG(Sev::Critical, "sorry, can not swap that");
     }
     using std::swap;
-    swap(x.type, y.type);
-    swap(x.var, y.var);
-    swap(x._size, y._size);
+    swap(type, y.type);
+    swap(var, y.var);
+    swap(_size, y._size);
   }
 
   inline char const *data() const {
@@ -98,7 +97,7 @@ public:
     case MsgType::RdKafka:
       return static_cast<char const *>(var.rdkafka_msg->payload());
     case MsgType::KafkaW:
-      return reinterpret_cast<char const *>(var.kafkaw_msg->data());
+      return reinterpret_cast<char const *>(var.kafkaw_msg->getData());
     case MsgType::Owned:
       return var.owned;
     case MsgType::Shared:
@@ -116,7 +115,7 @@ public:
     case MsgType::RdKafka:
       return var.rdkafka_msg->len();
     case MsgType::KafkaW:
-      return var.kafkaw_msg->size();
+      return var.kafkaw_msg->getSize();
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:
@@ -132,7 +131,7 @@ public:
   MsgType type = MsgType::Invalid;
   union Var {
     RdKafka::Message *rdkafka_msg;
-    KafkaW::Msg *kafkaw_msg;
+    KafkaW::ConsumerMessage *kafkaw_msg;
     char const *owned;
     char const *shared;
     char const *cheap;

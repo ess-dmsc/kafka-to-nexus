@@ -3,7 +3,7 @@
 #include "CommandListener.h"
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "MasterI.h"
+#include "MasterInterface.h"
 #include "StreamMaster.h"
 #include <atomic>
 #include <functional>
@@ -13,32 +13,33 @@
 
 namespace FileWriter {
 
-/// Listens to the Kafka configuration topic and handles any requests.
+/// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
 /// On a new file writing request, creates new nexusWriter instance.
 /// Reacts also to stop, and possibly other future commands.
-class Master : public MasterI {
+class Master : public MasterInterface {
 public:
-  Master(MainOpt &config);
+  explicit Master(MainOpt &Config);
 
-  /// Sets up command listener and handles any commands received.
+  /// \brief Sets up command listener and handles any commands received.
   ///
   /// Continues running until stop requested.
   void run() override;
 
   /// Stop running.
   void stop() override;
-  void handle_command_message(std::unique_ptr<KafkaW::Msg> &&msg) override;
+  void handle_command_message(
+      std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override;
   void handle_command(std::string const &command) override;
   void statistics() override;
   void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) override;
   void stopStreamMasters() override;
   std::unique_ptr<StreamMaster> &
-  getStreamMasterForJobID(std::string JobID) override;
+  getStreamMasterForJobID(std::string const &JobID) override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
-  /// The unique identifier for this file writer on the network.
+  /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
   std::string file_writer_process_id() const override;
@@ -53,7 +54,7 @@ private:
   std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster>> StreamMasters;
   std::string file_writer_process_id_;
-  MainOpt &MainOpt_;
+  MainOpt &MainConfig;
 };
 
 } // namespace FileWriter

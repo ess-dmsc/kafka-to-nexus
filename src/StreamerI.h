@@ -47,14 +47,14 @@ class IStreamer {
   using StreamerStatus = Status::StreamerStatus;
 
 public:
+  virtual ~IStreamer() = default;
+
   virtual std::string getName() const { return "IStreamer"; }
-  // StreamerI(const std::string &Broker, const std::string &TopicName,
-  //           const FileWriter::StreamerOptions &Opts){};
 
   virtual ProcessMessageResult
   pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) = 0;
 
-  /// Disconnect the kafka consumer and destroy the TopicPartition vector. Make
+  /// \brief Disconnect the kafka consumer and destroy the TopicPartition vector. Make
   /// sure that the Streamer status is StreamerErrorCode::has_finished
   StreamerStatus closeStream() {
     Sources.clear();
@@ -62,38 +62,32 @@ public:
     return StreamerStatus::HAS_FINISHED;
   };
 
-  //----------------------------------------------------------------------------
-  /// @brief      Return the number of different sources whose last message is
-  /// not older than the stop time
+  /// \brief Return the number of different sources whose last message is
+  /// not older than the stop time.
   ///
-  /// @return     The number of sources
-  ///
+  /// \return The number of sources.
   const size_t numSources() { return 0; }
   void setSources(std::unordered_map<std::string, Source> &SourceList) {
     for (auto &Src : SourceList) {
       Sources.addSource(Src.first);
     }
   }
-  //----------------------------------------------------------------------------
-  /// @brief      Removes the source from the sources list.
+
+  /// \brief Removes the source from the sources list.
   ///
-  /// @param[in]  SourceName  The name of the source to be removed
-  ///
-  /// @return     True if success, else false (e.g. the source is not in the
-  /// list)
-  ///
+  /// \param SourceName The name of the source to be removed.
+  /// \return True if success, else false (e.g. the source is not in the
+  /// list).
   bool removeSource(const std::string &Source) {
     return Sources.removeSource(Source);
   }
 
-  //----------------------------------------------------------------------------
-  /// @brief      Returns the status of the Streamer. See "Error.h"
+  /// \brief Returns the status of the Streamer. See "Error.h".
   ///
-  /// @return     The current status
-  ///
+  /// \return The current status.
   StreamerStatus &runStatus() { return RunStatus; }
 
-  /// Return all the informations about the messages consumed
+  /// Return all the informations about the messages consumed.
   Status::MessageInfo &messageInfo() { return MessageInfo; }
 
 protected:

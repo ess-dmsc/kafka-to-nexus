@@ -1,6 +1,6 @@
 #include "CLIOptions.h"
 #include "MainOpt.h"
-#include "uri.h"
+#include "URI.h"
 #include <CLI/CLI.hpp>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
@@ -15,9 +15,9 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return Opt;
 }
 
-/// Use for adding a URI option
-CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
-                       std::string Description = "", bool Defaulted = false) {
+CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
+                       std::string const &Description = "",
+                       bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
     URIArg.parse(Results[0]);
     return true;
@@ -26,8 +26,17 @@ CLI::Option *addOption(CLI::App &App, std::string Name, uri::URI &URIArg,
   return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
 }
 
-/// Use for adding a URI option, if the URI is given then TrueIfOptionGiven is
-/// set to true
+/// \brief Adding a URI option.
+///
+/// If the URI is given then TrueIfOptionGiven is set to true
+///
+/// \param App
+/// \param Name
+/// \param URIArg
+/// \param TrueIfOptionGiven
+/// \param Description
+/// \param Defaulted
+/// \return
 CLI::Option *addOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
                        bool &TrueIfOptionGiven,
                        const std::string &Description = "",
@@ -74,24 +83,6 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
-CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
-                            std::map<std::string, int> &ConfigMap,
-                            std::string const &Description,
-                            bool Defaulted = false) {
-  CLI::callback_t Fun = [&ConfigMap](CLI::results_t Results) {
-    for (size_t i = 0; i < Results.size() / 2; i++) {
-      try {
-        ConfigMap[Results.at(i * 2)] = std::stol(Results.at(i * 2 + 1));
-      } catch (std::invalid_argument &e) {
-        throw std::runtime_error(
-            fmt::format("Argument {} is not an int", Results.at(i * 2)));
-      }
-    }
-    return true;
-  };
-  return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
-}
-
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   // and add option for json config file instead
   App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
@@ -119,8 +110,10 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "commands");
   App.add_flag("--logpid-sleep", MainOptions.logpid_sleep);
   App.add_flag("--use-signal-handler", MainOptions.use_signal_handler);
+  App.add_option("--log-file", MainOptions.LogFilename,
+                 "Specify file to log to");
   App.add_option("--teamid", MainOptions.teamid);
-  App.add_option("--service_id", MainOptions.service_id,
+  App.add_option("--service-id", MainOptions.service_id,
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
   App.add_option("--status-master-interval", MainOptions.status_master_interval,
@@ -147,12 +140,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       MainOptions.topic_write_duration,
       "Stream-master option - topic write interval (milliseconds)");
   addKafkaOption(
-      App, "-S,--kafka-config-strings",
-      MainOptions.StreamerConfiguration.Settings.ConfigurationStrings,
-      "LibRDKafka option (String value)");
-  addKafkaOption(
-      App, "-I,--kafka-config-ints",
-      MainOptions.StreamerConfiguration.Settings.ConfigurationIntegers,
-      "LibRDKafka option (Integer value)");
+      App, "-S,--kafka-config",
+      MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
+      "LibRDKafka options");
   App.set_config("-c,--config-file", "", "Read configuration from an ini file");
 }

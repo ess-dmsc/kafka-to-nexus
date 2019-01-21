@@ -1,0 +1,35 @@
+{
+  "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
+  "job_id" : "neverends",
+  "service_id": "filewriter1",
+  "use_hdf_swmr": false,
+  "file_attributes": {
+    "file_name": "output_file_ignores_stop_1.nxs"
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name": "Det_Temp_RRB",
+        "children": [
+          {
+            "type": "stream",
+            "stream": {
+              "type": "double",
+              "writer_module": "f142",
+              "source": "Det_Temp_RRB",
+              "topic": "waitUntilUp"
+            }
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXgroup"
+          }
+        ]
+      }
+    ]
+  }
+}

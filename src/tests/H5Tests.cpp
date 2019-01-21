@@ -10,9 +10,9 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 #include "schemas/f142_logdata_generated.h"
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter
 
 hdf5::file::File createInMemoryFile() {
   hdf5::property::FileAccessList fapl;
@@ -28,6 +28,7 @@ TEST(H5, writeStringToDataset) {
   auto Type = hdf5::datatype::String::variable();
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
+  /// \todo Remove nullptr when clang-tidy merge is done.
   auto ds =
       h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL, nullptr);
   ASSERT_NE(ds, nullptr);
@@ -57,6 +58,7 @@ TEST(H5, writeUsingChunked1DString) {
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
   std::string ExpectedValue("Some string value");
+  /// \todo Remove nullptr when clang-tidy merge is done.
   auto ChunkedDataset =
       h5::Chunked1DString::create(File.root(), "DummyDataset", 64, nullptr);
   ChunkedDataset->append(ExpectedValue);
@@ -80,8 +82,14 @@ TEST(H5, writeScalarString) {
   auto File = createInMemoryFile();
   auto Group = File.root();
   std::string SourceName("value");
+
+  /// \todo Switch code when clang-tidy merge is done.
   FileWriter::Schemas::f142::WriterScalarString Writer(
       Group, SourceName, FileWriter::Schemas::f142::Value::String, nullptr);
+  //  using FileWriter::Schemas::f142::Mode;
+  //  FileWriter::Schemas::f142::WriterScalarString Writer(
+  //      Group, SourceName, FileWriter::Schemas::f142::Value::String,
+  //      Mode::Create);
   ASSERT_TRUE(Group.get_dataset("value").datatype() ==
               hdf5::datatype::String::variable().native_type());
 }

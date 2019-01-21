@@ -1,13 +1,5 @@
-//===-- src/StreamMaster.h - Streamers manager class definition -------*- C++
-//-*-===//
-//
-//
-//===----------------------------------------------------------------------===//
-///
 /// \file Header only implementation of the StreamMaster, that
 /// coordinates the execution of the Streamers
-///
-//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -23,12 +15,13 @@
 
 namespace FileWriter {
 
-/// The StreamMaster task is coordinate the different Streamers. When
-/// constructed creates a unique Streamer per topic and waits for a
+/// \brief The StreamMaster task is coordinate the different Streamers.
+///
+/// When constructed creates a unique Streamer per topic and waits for a
 /// start command. When this command is issued the StreamMaster calls
 /// the write command sequentially on each Streamer. When the stop
 /// command is issued, or when the Steamer reaches a predetermined
-/// point in time the Streamer is stopped and removed.  The
+/// point in time the Streamer is stopped and removed. The
 /// StreamMaster can regularly send report on the status of the Streamers,
 /// the amount of data written and other information as Kafka messages on
 /// the ``status`` topic.
@@ -41,7 +34,6 @@ public:
                std::unique_ptr<FileWriterTask> FileWriterTask,
                const MainOpt &Options,
                std::unique_ptr<IStreamerFactory> StreamerFactory);
-
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = default;
 
@@ -49,12 +41,14 @@ public:
 
   StreamMaster &operator=(const StreamMaster &) = delete;
 
-  /// Set the timepoint (in std::chrono::milliseconds) that triggers the
-  /// termination of the run. When the timestamp of a Source in the
+  /// \brief Set the point in time (in std::chrono::milliseconds) that triggers
+  /// the termination of the run.
+  ///
+  /// When the timestamp of a Source in the
   /// Streamer reaches this time the source is removed. When all the
   /// Sources in a Streamer are removed the Streamer connection is
-  /// closed and the Streamer marked as
-  /// StreamerErrorCode::has_finished
+  /// closed and the Streamer marked as StreamerErrorCode::has_finished
+  ///
   /// \param StopTime timestamp of the
   /// last message to be written in nanoseconds
   bool setStopTime(const std::chrono::milliseconds &StopTime);
@@ -67,28 +61,30 @@ public:
   /// of failure.
   bool stop();
 
-  /// Return a reference to the FileWriterTask associated with the
-  /// current file
+  /// \brief Get FileWriterTask associated with the
+  /// current file.
+  ///
+  /// \return Pointer to FileWriterTask.
   FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
 
-  /// Returns the current StreamMaster state, or
+  /// \brief Get the current StreamMaster state, or
   /// StreamMasterError::streamer_error if any
   /// stream is in any error state
   const StreamMasterError status();
 
-  /// Return the unique job id associated with the streamer (and hence
-  /// with the NeXus file)
-  std::string getJobId() const { return WriterTask->job_id(); }
+  /// \brief Get the unique job id associated with the streamer (and hence
+  /// with the NeXus file).
+  /// \return Job id as a string.
+  std::string getJobId() const { return WriterTask->jobID(); }
 
 private:
-  //------------------------------------------------------------------------------
-  /// @brief      Process the messages in Stream for at most TopicWriteDuration
+  /// \brief Process the messages in Stream for at most TopicWriteDuration
   /// std::chrono::milliseconds.
   ///
-  /// @param      Stream  A reference to the Streamer that will consume messages
-  /// @param      Demux   The demux associated with the topic
+  /// \param Stream   A reference to the Streamer that will consume messages.
+  /// \param Demux    The demux associated with the topic.
   ///
-  /// @return     The status of the consumption. If there are still working
+  /// \return The status of the consumption. If there are still working
   /// streams returns ``running``, if all the streams are terminated return
   /// ``has_finished``, if some error occur..
   StreamMasterError processStreamResult(DemuxTopic &Demux);

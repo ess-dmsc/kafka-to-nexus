@@ -32,9 +32,6 @@ public:
   std::int32_t flush() override { return 0; }
 
   std::int32_t close() override { return 0; }
-
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override {}
 };
 
 TEST_F(WriterRegistrationTest, SimpleRegistration) {
@@ -79,6 +76,6 @@ TEST_F(WriterRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
   { HDFWriterModuleRegistry::Registrar<DummyWriter> RegisterIt(TestKey); }
   std::string FailKey("trump");
-  EXPECT_EQ(HDFWriterModuleRegistry::find(FailKey), nullptr);
+  EXPECT_THROW(HDFWriterModuleRegistry::find(FailKey), std::out_of_range);
 }
 } // namespace FileWriter

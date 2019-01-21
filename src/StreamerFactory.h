@@ -11,6 +11,7 @@ public:
   virtual std::unique_ptr<IStreamer> create(const std::string &Broker,
                                             DemuxTopic &Demux,
                                             const StreamerOptions &Opts) = 0;
+  virtual ~IStreamerFactory() = default;
 };
 
 class KafkaStreamerFactory : public IStreamerFactory {

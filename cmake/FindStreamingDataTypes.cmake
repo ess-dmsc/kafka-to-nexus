@@ -7,8 +7,7 @@
 # find_package(streaming_data_types COMPONENTS <minimum-git-commit>)
 # you must then make your target depend on 'check_streaming_data_types'
 # so that it can abort compilation if streaming data types does not suffice.
-# Usage of this package requires of course the git suite to be available.
-# Contact: Dominik Werder
+# Usage of this package requires the git suite to be available.
 
 set(schemas_subdir "schemas")
 set(head_out_dir "${CMAKE_CURRENT_BINARY_DIR}/${schemas_subdir}")

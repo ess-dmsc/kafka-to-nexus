@@ -29,13 +29,13 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
     throw std::runtime_error("Missing broker or topic");
   }
 
-  Options.Settings.ConfigurationStrings["group.id"] =
+  Options.BrokerSettings.KafkaConfiguration["group.id"] =
       fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
                   gethostname_wrapper(), getpid_wrapper(), TopicName,
                   std::chrono::duration_cast<std::chrono::milliseconds>(
                       std::chrono::steady_clock::now().time_since_epoch())
                       .count());
-  Options.Settings.Address = Broker;
+  Options.BrokerSettings.Address = Broker;
 
   ConsumerCreated = std::async(std::launch::async, &FileWriter::createConsumer,
                                TopicName, Options);
@@ -44,15 +44,15 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const TopicName,
-                           FileWriter::StreamerOptions const Options) {
+FileWriter::createConsumer(std::string const &TopicName,
+                           FileWriter::StreamerOptions const &Options) {
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer =
-        std::make_unique<KafkaW::Consumer>(Options.Settings);
+    FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(
+        Options.BrokerSettings, Options.ConsumerSettings);
     if (Options.StartTimestamp.count() != 0) {
-      Consumer->addTopic(TopicName,
-                         Options.StartTimestamp - Options.BeforeStartTime);
+      Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
+                                                   Options.BeforeStartTime);
     } else {
       Consumer->addTopic(TopicName);
     }
@@ -92,11 +92,11 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
           "Failed to set-up process for creating consumer.");
     }
   } catch (std::runtime_error &Error) {
-    throw Error;
+    throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
   } catch (std::exception &Error) {
     LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
         Error.what());
-    throw Error;
+    throw; // "throw;" rethrows
   }
 
   // make sure that the connection is ok
@@ -106,8 +106,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Consume message and exit if we are beyond a message timeout
-  KafkaW::PollStatus Poll = Consumer->poll();
-  if (Poll.isEmpty() || Poll.isEOP()) {
+  auto KafkaMessage = Consumer->poll();
+  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Empty ||
+      KafkaMessage->getStatus() == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
@@ -119,17 +120,16 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     }
     return ProcessMessageResult::OK;
   }
-  if (Poll.isErr()) {
+  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Err) {
     return ProcessMessageResult::ERR;
   }
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
-  auto KafkaMessage = Poll.isMsg();
   std::unique_ptr<FlatbufferMessage> Message;
   try {
     Message = std::make_unique<FlatbufferMessage>(
-        reinterpret_cast<const char *>(KafkaMessage->data()),
-        KafkaMessage->size());
+        reinterpret_cast<const char *>(KafkaMessage->getData()),
+        KafkaMessage->getSize());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
@@ -144,6 +144,13 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK;
   }
 
+  if (Message->getTimestamp() == 0) {
+    LOG(Sev::Error,
+        "Message from topic \"{}\", source \"{}\" has no timestamp, ignoring",
+        MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::ERR;
+  }
+
   // Timestamp of message is before the "start" timestamp
   if (static_cast<std::int64_t>(Message->getTimestamp()) <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -152,7 +159,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::OK;
   }
 
-  // Check if there is a stop stime configured and the message timestamp is
+  // Check if there is a stoptime configured and the message timestamp is
   // greater than it
   if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp)) {
     if (removeSource(Message->getSourceName())) {

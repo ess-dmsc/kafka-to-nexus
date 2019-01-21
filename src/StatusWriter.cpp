@@ -6,57 +6,47 @@ namespace Status {
 
 nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
   nlohmann::json Value = {{"state", Err2Str(Information.StreamMasterStatus)},
-                          {"messages", Information.getMessages().first},
-                          {"Mbytes", Information.getMbytes().first},
+                          {"messages", Information.getMessages()},
+                          {"Mbytes", Information.getMbytes()},
                           {"errors", Information.getErrors()},
                           {"runtime", Information.runTime().count()}};
   return Value;
 }
 
-nlohmann::json
-StreamerToJson(MessageInfo &Information,
-               const std::chrono::milliseconds &SinceLastMessage) {
-  std::pair<double, double> Size = messageSize(Information);
-  double Frequency =
-      FileWriter::Status::messageFrequency(Information, SinceLastMessage);
-  double Throughput =
-      FileWriter::Status::messageThroughput(Information, SinceLastMessage);
+nlohmann::json StreamerToJson(MessageInfo &Information) {
+  std::pair<double, double> Size = Information.messageSize();
 
-  nlohmann::json Status = {"status",
-                           {{"messages", Information.getMessages().first},
-                            {"Mbytes", Information.getMbytes().first},
-                            {"errors", Information.getErrors()}}};
+  nlohmann::json Status;
+  Status["rates"] = {
+      {"messages", Information.getMessages()},
+      {"Mbytes", Information.getMbytes()},
+      {"errors", Information.getErrors()},
+      {"message_size",
+       {{"average", Size.first}, {"standard_deviation", Size.second}}}};
 
-  nlohmann::json Statistics = {
-      "statistics",
-      {{"size",
-        {{"average", Size.first}, {"stdandard_deviation", Size.second}}},
-       {"frequency", Frequency},
-       {"throughput", Throughput}}};
+  return Status;
+} // namespace Status
 
-  return nlohmann::json{Status, Statistics};
-}
-
-NLWriterBase::NLWriterBase() {
-  json = {{"type", "stream_master_status"},
-          {"next_message_eta_ms", 0},
-          {"job_id", 0}};
-}
-
-void NLWriterBase::setJobId(const std::string &JobId) {
+void StatusWriter::setJobId(const std::string &JobId) {
   json["job_id"] = JobId;
 }
 
-void NLWriterBase::write(StreamMasterInfo &Information) {
+void StatusWriter::write(StreamMasterInfo &Information) {
   json["next_message_eta_ms"] = Information.getTimeToNextMessage().count();
   json["stream_master"] = StreamMasterToJson(Information);
+  json["timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::steady_clock::now().time_since_epoch())
+                          .count();
 }
 
-void NLWriterBase::write(MessageInfo &Information, const std::string &Topic,
-                         const std::chrono::milliseconds &SinceLastMessage) {
-  json["streamer"][Topic] = StreamerToJson(Information, SinceLastMessage);
+void StatusWriter::write(MessageInfo &Information, const std::string &Topic) {
+  json["streamer"][Topic] = StreamerToJson(Information);
+}
+
+std::string StatusWriter::getJson() {
+  // Indent using 4 spaces
+  return json.dump(4);
 }
 
 } // namespace Status
-
 } // namespace FileWriter

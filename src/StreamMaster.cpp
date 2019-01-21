@@ -20,7 +20,7 @@ FileWriter::StreamMaster::StreamMaster(
       RunStatus = StreamMasterError::STREAMER_ERROR();
       LOG(Sev::Critical, "{}", E.what());
       logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-               WriterTask->job_id(), E.what());
+               WriterTask->jobID(), E.what());
     }
   }
   NumStreamers = Streamers.size();
@@ -109,7 +109,7 @@ FileWriter::StreamMaster::processStreamResult(DemuxTopic &Demux) {
     } catch (std::exception &E) {
       LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
       logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-               WriterTask->job_id(), E.what());
+               WriterTask->jobID(), E.what());
       closeStream(Demux.topic());
       return StreamMasterError::STREAMER_ERROR();
     }
@@ -189,7 +189,7 @@ void FileWriter::StreamMaster::runReport(
   if (NumStreamers != 0) {
     if (!ReportThread.joinable()) {
       ReportPtr.reset(
-          new Report(ProducerTopic, WriterTask->job_id(), ReportMs));
+          new Report(ProducerTopic, WriterTask->jobID(), ReportMs));
       ReportThread =
           std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
     } else {

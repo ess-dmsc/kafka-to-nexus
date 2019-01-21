@@ -12,8 +12,6 @@ namespace FileWriter {
 
 namespace {
 
-using std::string;
-using std::vector;
 using nlohmann::json;
 
 json hdf_parse(std::string const &Structure) {
@@ -25,123 +23,143 @@ json hdf_parse(std::string const &Structure) {
     throw FileWriter::ParseError(Structure);
   }
 }
-}
+} // namespace
 
 std::atomic<uint32_t> n_FileWriterTask_created{0};
 
-std::vector<DemuxTopic> &FileWriterTask::demuxers() { return _demuxers; }
+std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
+
+/// Helper function for creating an ID.
+///
+/// \param ExtraValue Used to help make a unique ID.
+/// \return A "unique" id.
+uint64_t createId(int ExtraValue) {
+  using namespace std::chrono;
+  return (static_cast<uint64_t>(
+              duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
+                  .count())
+          << 16) +
+         (ExtraValue & 0xffff);
+}
 
 FileWriterTask::FileWriterTask(
-    std::string ServiceID_,
-    std::shared_ptr<KafkaW::ProducerTopic> StatusProducer_)
-    : ServiceID(ServiceID_), StatusProducer(StatusProducer_) {
-  using namespace std::chrono;
-  _id = static_cast<uint64_t>(
-      duration_cast<nanoseconds>(system_clock::now().time_since_epoch())
-          .count());
-  _id = (_id & uint64_t(-1) << 16) | (n_FileWriterTask_created & 0xffff);
-  ++n_FileWriterTask_created;
+    std::string TaskID,
+    std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
+    : ServiceId(std::move(TaskID)),
+      StatusProducer(std::move(StatusProducerPtr)) {
+  Id = createId(++n_FileWriterTask_created);
 }
 
 FileWriterTask::~FileWriterTask() {
   LOG(Sev::Debug, "~FileWriterTask");
-  _demuxers.clear();
+  Demuxers.clear();
   try {
-    hdf_file.close();
+    File.close();
     if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Close, ServiceID, JobID,
+      logEvent(StatusProducer, StatusCode::Close, ServiceId, JobId,
                "File closed");
     }
   } catch (std::exception const &E) {
     if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Fail, ServiceID, JobID,
+      logEvent(StatusProducer, StatusCode::Fail, ServiceId, JobId,
                fmt::format("Exception while finishing FileWriterTask: {}",
                            E.what()));
     }
   }
 }
 
-FileWriterTask &FileWriterTask::set_hdf_filename(std::string hdf_output_prefix,
-                                                 std::string hdf_filename) {
-  this->hdf_output_prefix = hdf_output_prefix;
-  this->hdf_filename = hdf_filename;
-  return *this;
+void FileWriterTask::setFilename(std::string const &Prefix,
+                                 std::string const &Name) {
+  if (Prefix.empty()) {
+    Filename = Name;
+  } else {
+    Filename = Prefix + "/" + Name;
+  }
 }
 
-void FileWriterTask::add_source(Source &&source) {
-  if (UseHDFSWMR) {
-    source.HDFFileForSWMR = &hdf_file;
+void FileWriterTask::addSource(Source &&Source) {
+  if (swmrEnabled()) {
+    Source.HDFFileForSWMR = &File;
   }
-  bool found = false;
-  for (auto &d : _demuxers) {
-    if (d.topic() == source.topic()) {
-      d.add_source(std::move(source));
-      found = true;
+
+  // If source already exists then replace
+  for (auto &Demux : Demuxers) {
+    if (Demux.topic() == Source.topic()) {
+      Demux.add_source(std::move(Source));
+      return;
     }
   }
-  if (!found) {
-    _demuxers.emplace_back(source.topic());
-    auto &d = _demuxers.back();
-    d.add_source(std::move(source));
-  }
+
+  // Add new source
+  Demuxers.emplace_back(Source.topic());
+  auto &Demux = Demuxers.back();
+  Demux.add_source(std::move(Source));
 }
 
-void FileWriterTask::hdf_init(std::string const &NexusStructure,
-                              std::string const &ConfigFile,
-                              std::vector<StreamHDFInfo> &stream_hdf_info) {
-  filename_full = hdf_filename;
-  if (!hdf_output_prefix.empty()) {
-    filename_full = hdf_output_prefix + "/" + filename_full;
-  }
-
+void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
+                                   std::string const &ConfigFile,
+                                   std::vector<StreamHDFInfo> &HdfInfo,
+                                   bool UseSwmr) {
   auto NexusStructureJson = hdf_parse(NexusStructure);
   auto ConfigFileJson = hdf_parse(ConfigFile);
 
   try {
-    hdf_file.init(filename_full, NexusStructureJson, ConfigFileJson,
-                  stream_hdf_info, UseHDFSWMR);
-  } catch (...) {
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "can not initialize hdf file  hdf_output_prefix: {}  hdf_filename: {}",
-        hdf_output_prefix, hdf_filename)));
+    LOG(Sev::Info, "Creating HDF file {}", Filename);
+    File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo, UseSwmr);
+    // The HDF file is closed and re-opened to (optionally) support SWMR and
+    // parallel writing.
+    closeFile();
+    reopenFile();
+
+  } catch (std::exception const &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("can not initialize hdf file {}", Filename)));
   }
 }
 
-void FileWriterTask::hdf_close_before_reopen() { hdf_file.close(); }
+void FileWriterTask::closeFile() { File.close(); }
 
-int FileWriterTask::hdf_reopen() {
+void FileWriterTask::reopenFile() {
   try {
-    hdf_file.reopen(filename_full, json::object());
+    File.reopen(Filename);
   } catch (std::exception const &E) {
     LOG(Sev::Error, "Exception: {}", E.what());
     if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Error, ServiceID, JobID,
+      logEvent(StatusProducer, StatusCode::Error, ServiceId, JobId,
                fmt::format("Exception: {}", E.what()));
     }
-    return -1;
+    throw;
   }
-  return 0;
 }
 
-uint64_t FileWriterTask::id() const { return _id; }
-std::string FileWriterTask::job_id() const { return JobID; }
+uint64_t FileWriterTask::id() const { return Id; }
 
-void FileWriterTask::job_id_init(std::string const &JobID_) { JobID = JobID_; }
+std::string FileWriterTask::jobID() const { return JobId; }
+
+hdf5::node::Group FileWriterTask::hdfGroup() { return File.H5File.root(); }
+
+bool FileWriterTask::swmrEnabled() const { return File.isSWMREnabled(); }
+
+void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 json FileWriterTask::stats() const {
   auto Topics = json::object();
-  for (auto &d : _demuxers) {
-    auto Demux = json::object();
-    Demux["messages_processed"] = d.messages_processed.load();
-    Demux["error_message_too_small"] = d.error_message_too_small.load();
-    Demux["error_no_flatbuffer_reader"] = d.error_no_flatbuffer_reader.load();
-    Demux["error_no_source_instance"] = d.error_no_source_instance.load();
-    Topics[d.topic()] = Demux;
+  for (auto &Demux : Demuxers) {
+    auto DemuxStats = json::object();
+    DemuxStats["messages_processed"] = Demux.messages_processed.load();
+    DemuxStats["error_message_too_small"] =
+        Demux.error_message_too_small.load();
+    DemuxStats["error_no_flatbuffer_reader"] =
+        Demux.error_no_flatbuffer_reader.load();
+    DemuxStats["error_no_source_instance"] =
+        Demux.error_no_source_instance.load();
+    Topics[Demux.topic()] = DemuxStats;
   }
   auto FWT = json::object();
-  FWT["filename"] = hdf_filename;
+  FWT["filename"] = Filename;
   FWT["topics"] = Topics;
   return FWT;
 }
+std::string FileWriterTask::filename() const { return Filename; }
 
 } // namespace FileWriter

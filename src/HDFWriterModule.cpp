@@ -10,29 +10,25 @@ std::map<std::string, HDFWriterModuleRegistry::ModuleFactory> &getFactories() {
 }
 
 HDFWriterModuleRegistry::ModuleFactory &find(std::string const &key) {
-  static HDFWriterModuleRegistry::ModuleFactory empty;
   auto &_items = getFactories();
-  auto f = _items.find(key);
-  if (f == _items.end()) {
-    return empty;
-  }
-  return f->second;
+  return _items.at(key);
 }
 
-void addWriterModule(std::string key, ModuleFactory value) {
+void addWriterModule(std::string const &Key, ModuleFactory Value) {
   auto &m = getFactories();
-  if (key.size() != 4) {
+  if (Key.size() != 4) {
     throw std::runtime_error(
         "The number of characters in the Flatbuffer id string must be 4.");
   }
-  if (m.find(key) != m.end()) {
-    auto s = fmt::format("ERROR entry for key [{}] exists already", key);
+  if (m.find(Key) != m.end()) {
+    auto s = fmt::format("ERROR entry for key [{}] exists already", Key);
     throw std::runtime_error(s);
   }
-  m[key] = std::move(value);
+  m[Key] = std::move(Value);
 }
 } // namespace HDFWriterModuleRegistry
 
+// Implementation details for `HDFWriterModule`
 namespace HDFWriterModule_detail {
 
 static std::map<int8_t, std::string> const g_InitResult_strings{
@@ -54,6 +50,7 @@ static std::map<int8_t, std::string> const g_WriteResult_strings{
     {-2, "ERROR_BAD_FLATBUFFER"},
     {-3, "ERROR_DATA_STRUCTURE_MISMATCH"},
     {-4, "ERROR_DATA_TYPE_MISMATCH"},
+    {-5, "ERROR_WITH_MESSAGE"},
 };
 
 std::string WriteResult::to_str() const {
@@ -61,6 +58,9 @@ std::string WriteResult::to_str() const {
   auto const it = m.find(v);
   if (it == m.end()) {
     return "ERROR_UNKNOWN_VALUE";
+  }
+  if (v == -5) {
+    return std::string(it->second) + ": " + Message;
   }
   return it->second;
 }

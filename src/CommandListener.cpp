@@ -14,16 +14,16 @@ CommandListener::~CommandListener() {}
 void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
-  BrokerSettings.Address = config.command_broker_uri.host_port;
-  BrokerSettings.ConfigurationStrings["group.id"] = fmt::format(
+  BrokerSettings.Address = config.command_broker_uri.HostPort;
+  BrokerSettings.KafkaConfiguration["group.id"] = fmt::format(
       "filewriter--commandhandler--host:{}--pid:{}--topic:{}--time:{}",
-      gethostname_wrapper(), getpid_wrapper(), config.command_broker_uri.topic,
+      gethostname_wrapper(), getpid_wrapper(), config.command_broker_uri.Topic,
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count());
   consumer.reset(new KafkaW::Consumer(BrokerSettings));
   consumer->on_rebalance_assign = config.on_rebalance_assign;
-  consumer->addTopic(config.command_broker_uri.topic);
+  consumer->addTopic(config.command_broker_uri.Topic);
   if (config.start_at_command_offset >= 0) {
     int n1 = config.start_at_command_offset;
     consumer->on_rebalance_start =
@@ -35,6 +35,8 @@ void CommandListener::start() {
   }
 }
 
-KafkaW::PollStatus CommandListener::poll() { return consumer->poll(); }
+std::unique_ptr<KafkaW::ConsumerMessage> CommandListener::poll() {
+  return consumer->poll();
+}
 
 } // namespace FileWriter

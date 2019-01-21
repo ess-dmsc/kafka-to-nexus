@@ -1,17 +1,9 @@
-//===-- src/StatusWriter.h - StatusWriter class definition -------*- C++
-//-*-===//
-//
-//
-//===----------------------------------------------------------------------===//
-///
 /// \file This file contains the declaration of the StatusWriter
 /// class, which reads the information on the current status of a
 /// StreamMaster, such as number of received messages, number of
 /// errors and execution time and about each Streamer managed by the
 /// StreamMaster such as message frequency and throughput. These
 /// information are then serialized as a JSON message.
-///
-//===----------------------------------------------------------------------===//
 
 #pragma once
 
@@ -29,62 +21,18 @@ class MessageInfo;
 namespace FileWriter {
 namespace Status {
 
-class NLWriterBase {
-  friend class NLJSONWriter;
-  friend class NLJSONStreamWriter;
-
-private:
-  NLWriterBase();
-  NLWriterBase(const NLWriterBase &) = default;
-  NLWriterBase(NLWriterBase &&) = default;
-  ~NLWriterBase() = default;
-
-  NLWriterBase &operator=(const NLWriterBase &) = default;
-  NLWriterBase &operator=(NLWriterBase &&) = default;
-
+class StatusWriter {
+public:
+  StatusWriter() = default;
   void setJobId(const std::string &JobId);
   void write(StreamMasterInfo &Information);
-  void write(MessageInfo &Information, const std::string &Topic,
-             const std::chrono::milliseconds &SinceLastMessage);
-
-  nlohmann::json json;
-};
-
-/// Helper class that give access to the JSON message
-class NLJSONWriter {
-public:
-  using ReturnType = nlohmann::json;
-
-  void setJobId(const std::string &JobId) { Base.setJobId(JobId); }
-  void write(StreamMasterInfo &Information) { Base.write(Information); }
-  void write(MessageInfo &Information, const std::string &Topic,
-             const std::chrono::milliseconds &SinceLastMessage) {
-    Base.write(Information, Topic, SinceLastMessage);
-  }
-  ReturnType get() { return Base.json; }
+  void write(MessageInfo &Information, const std::string &Topic);
+  std::string getJson();
 
 private:
-  /// The main object responsible of serialization
-  NLWriterBase Base;
-};
-
-/// Helper class that give access to the JSON message
-class NLJSONStreamWriter {
-public:
-  using ReturnType = std::string;
-
-  void setJobId(const std::string &JobId) { Base.setJobId(JobId); }
-  void write(StreamMasterInfo &Information) { Base.write(Information); }
-  void write(MessageInfo &Information, const std::string &Topic,
-             const std::chrono::milliseconds &SinceLastMessage) {
-    Base.write(Information, Topic, SinceLastMessage);
-  }
-
-  ReturnType get() { return Base.json.dump(4); }
-
-private:
-  /// The main object responsible of serialization
-  NLWriterBase Base;
+  nlohmann::json json{{"type", "stream_master_status"},
+                      {"next_message_eta_ms", 0},
+                      {"job_id", 0}};
 };
 
 } // namespace Status
