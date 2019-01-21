@@ -138,7 +138,7 @@ set(kafka_to_nexus_INC
         URI.h
         CLIOptions.h
         NeXusDataset.h
-        KafkaW/ConsumerFake.h KafkaW/ConsumerFake.cpp KafkaW/PollStatus.h)
+        KafkaW/PollStatus.h KafkaW/ProducerStats.h KafkaW/ProducerMessage.h KafkaW/KafkaEventCb.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

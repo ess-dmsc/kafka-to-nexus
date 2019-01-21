@@ -64,7 +64,7 @@ void Logger::log_kafka_gelf_start(std::string const &Address,
                                   std::string TopicName) {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = Address;
-  producer.reset(new KafkaW::Producer(BrokerSettings));
+  //  producer.reset(new KafkaW::Producer(BrokerSettings));
   topic.reset(new KafkaW::Producer::Topic(producer, TopicName));
   topic->enableCopy();
   thread_poll = std::thread([this] {
@@ -122,7 +122,7 @@ void Logger::dwlog_inner(int level, char const *file, int line,
       Doc["ServiceID"] = g_ServiceID;
     }
     auto Buffer = Doc.dump();
-    topic->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
+    topic->produce((unsigned char *)Buffer.data(), Buffer.size());
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {

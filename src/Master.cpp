@@ -146,7 +146,7 @@ void Master::statistics() {
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
-  status_producer->produce((KafkaW::uchar *)Buffer.data(), Buffer.size());
+  status_producer->produce((unsigned char *)Buffer.data(), Buffer.size());
 }
 
 void Master::stop() { do_run = false; }

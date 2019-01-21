@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Producer.h"
-#include "TopicSettings.h"
+#include "ProducerMessage.h"
 #include "logger.h"
 #include <memory>
 #include <string>
@@ -13,24 +13,28 @@ public:
   TopicCreationError() : std::runtime_error("Can not create Kafka topic") {}
 };
 
-enum ProducerTopicError {
-  RDKAFKATOPIC_NOT_INITIALIZED,
-};
-
 class ProducerTopic {
 public:
-  ProducerTopic(ProducerTopic &&);
-  ProducerTopic(std::shared_ptr<Producer> Pointer, std::string Topic);
-  ~ProducerTopic();
-  int produce(unsigned char *MsgData, size_t MsgSize, bool PrintError = false);
-  int produce(std::unique_ptr<Producer::Msg> &Msg);
+  ProducerTopic(ProducerTopic &&) noexcept;
+
+  ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
+
+  ~ProducerTopic() = default;
+
+  int produce(unsigned char *MsgData, size_t MsgSize);
+
+  int produce(std::unique_ptr<KafkaW::ProducerMessage> &Msg);
+
   // Currently it's nice to have access to these for statistics:
-  std::shared_ptr<Producer> ProducerPtr;
-  rd_kafka_topic_t *RdKafkaTopic = nullptr;
+  std::shared_ptr<Producer> KafkaProducer;
+  RdKafka::Topic *RdKafkaTopic = nullptr;
+
   void enableCopy();
 
+  std::string name() const;
+
 private:
-  std::string TopicName;
+  std::string Name;
   bool DoCopyMsg{false};
 };
 }

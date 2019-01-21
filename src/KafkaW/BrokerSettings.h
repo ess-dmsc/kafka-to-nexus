@@ -4,16 +4,12 @@
 #include <map>
 #include <string>
 
-struct rd_kafka_conf_s;
-typedef struct rd_kafka_conf_s rd_kafka_conf_t;
-
 namespace KafkaW {
 
 /// Collect options used to connect to the broker.
 class BrokerSettings {
 public:
   BrokerSettings() = default;
-  void apply(rd_kafka_conf_t *RdKafkaConfiguration);
   void apply(RdKafka::Conf *RdKafkaConfiguration);
   std::string Address;
   int PollTimeoutMS = 100;
