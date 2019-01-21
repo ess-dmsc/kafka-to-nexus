@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KafkaW/ConsumerMessage.h"
+#include "KafkaW/PollStatus.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>
@@ -97,23 +97,10 @@ public:
     swap(_size, y._size);
   }
 
-//  inline void swap(Msg y) {
-//    auto &x = *this;
-//    if (x.type != MsgType::Invalid && x.type != y.type) {
-//      LOG(Sev::Critical, "sorry, can not swap that");
-//    }
-//    using std::swap;
-//    swap(x.type, y.type);
-//    swap(x.var, y.var);
-//    swap(x._size, y._size);
-//  }
-
   inline char const *data() const {
     switch (type) {
     case MsgType::RdKafka:
       return static_cast<char const *>(var.rdkafka_msg->payload());
-    case MsgType::KafkaW:
-      return reinterpret_cast<char const *>(var.kafkaw_msg->getData());
     case MsgType::Owned:
       return var.owned;
     case MsgType::Shared:
@@ -130,8 +117,6 @@ public:
     switch (type) {
     case MsgType::RdKafka:
       return var.rdkafka_msg->len();
-    case MsgType::KafkaW:
-      return var.kafkaw_msg->getSize();
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:
@@ -148,8 +133,6 @@ public:
     switch (type) {
     case MsgType::RdKafka:
       return var.rdkafka_msg->offset();
-    case MsgType::KafkaW:
-      return var.kafkaw_msg->getMessageOffset();
     case MsgType::Owned:
       return _size;
     case MsgType::Shared:
@@ -165,7 +148,6 @@ public:
   MsgType type = MsgType::Invalid;
   union Var {
     RdKafka::Message *rdkafka_msg;
-    KafkaW::ConsumerMessage *kafkaw_msg;
     char const *owned;
     char const *shared;
     char const *cheap;
@@ -177,9 +159,6 @@ public:
     switch (type) {
     case MsgType::RdKafka:
       delete var.rdkafka_msg;
-      break;
-    case MsgType::KafkaW:
-      delete var.kafkaw_msg;
       break;
     case MsgType::Owned:
       delete[] var.owned;

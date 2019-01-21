@@ -1,13 +1,12 @@
 #pragma once
 
 #include "BrokerSettings.h"
-#include "ConsumerMessage.h"
 #include <atomic>
 #include <functional>
 #include <librdkafka/rdkafka.h>
 
 namespace KafkaW {
-
+using uchar = unsigned char;
 class ProducerTopic;
 
 class ProducerMsg {

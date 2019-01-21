@@ -1,5 +1,5 @@
 #include "CommandListener.h"
-#include "KafkaW/ConsumerMessage.h"
+#include "KafkaW/PollStatus.h"
 #include "Msg.h"
 #include "helper.h"
 #include "logger.h"
@@ -25,7 +25,16 @@ void CommandListener::start() {
           std::chrono::steady_clock::now().time_since_epoch())
           .count());
   consumer.reset(new KafkaW::Consumer(BrokerSettings));
-  consumer->addTopic(config.command_broker_uri.Topic);
+  if (consumer->topicPresent(config.command_broker_uri.Topic))
+    consumer->addTopic(config.command_broker_uri.Topic);
+  else {
+    LOG(Sev::Error,
+        "Topic {} not in broker. Could not start listener for topic {}.",
+        config.command_broker_uri.Topic, config.command_broker_uri.Topic);
+    throw std::runtime_error(fmt::format(
+        "Topic {} not in broker. Could not start listener for topic {}.",
+        config.command_broker_uri.Topic, config.command_broker_uri.Topic));
+  }
 }
 
 std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> CommandListener::poll() {

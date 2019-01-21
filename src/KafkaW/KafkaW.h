@@ -2,6 +2,6 @@
 
 #include "BrokerSettings.h"
 #include "Consumer.h"
-#include "ConsumerMessage.h"
+#include "PollStatus.h"
 #include "Producer.h"
 #include "ProducerTopic.h"

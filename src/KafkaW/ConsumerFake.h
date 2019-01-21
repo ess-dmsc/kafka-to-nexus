@@ -2,7 +2,6 @@
 
 #include "BrokerSettings.h"
 #include "ConsumerEventCb.h"
-#include "ConsumerMessage.h"
 #include "ConsumerRebalanceCb.h"
 #include "KafkaW.h"
 #include <chrono>

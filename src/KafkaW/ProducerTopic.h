@@ -1,6 +1,5 @@
 #pragma once
 
-#include "ConsumerMessage.h"
 #include "Producer.h"
 #include "TopicSettings.h"
 #include "logger.h"
@@ -23,7 +22,7 @@ public:
   ProducerTopic(ProducerTopic &&);
   ProducerTopic(std::shared_ptr<Producer> Pointer, std::string Topic);
   ~ProducerTopic();
-  int produce(uchar *MsgData, size_t MsgSize, bool PrintError = false);
+  int produce(unsigned char *MsgData, size_t MsgSize, bool PrintError = false);
   int produce(std::unique_ptr<Producer::Msg> &Msg);
   // Currently it's nice to have access to these for statistics:
   std::shared_ptr<Producer> ProducerPtr;

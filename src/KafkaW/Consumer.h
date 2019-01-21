@@ -2,8 +2,8 @@
 
 #include "BrokerSettings.h"
 #include "ConsumerEventCb.h"
-#include "ConsumerMessage.h"
 #include "ConsumerRebalanceCb.h"
+#include "PollStatus.h"
 #include <chrono>
 #include <functional>
 #include <librdkafka/rdkafka.h>
@@ -45,15 +45,8 @@ public:
   std::vector<int32_t>
   queryTopicPartitions(const std::string &TopicName) override;
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() override;
-  std::function<void(rd_kafka_topic_partition_list_t *plist)>
-      on_rebalance_assign;
-  std::function<void(rd_kafka_topic_partition_list_t *plist)>
-      on_rebalance_start;
-  rd_kafka_t *RdKafka = nullptr;
 
 private:
-  //    const RdKafka::TopicMetadata::PartitionMetadataVector *
-  //    getTopicPartitionsVector(const std::string &Topic);
   BrokerSettings ConsumerBrokerSettings;
   std::unique_ptr<RdKafka::Metadata> queryMetadata();
   std::shared_ptr<RdKafka::KafkaConsumer> KafkaConsumer;

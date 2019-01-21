@@ -1,4 +1,5 @@
 #include "Streamer.h"
+#include "KafkaW/PollStatus.h"
 #include "helper.h"
 #include <ciso646>
 
