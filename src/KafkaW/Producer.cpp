@@ -10,12 +10,12 @@ void Producer::cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
                             void *Opaque) {
   auto Self = reinterpret_cast<Producer *>(Opaque);
   if (!Message) {
-    LOG(Sev::Error, "IID: {} msg should never be null", Self->id);
+    LOG(spdlog::level::err, "IID: {} msg should never be null", Self->id);
     ++Self->Stats.produce_cb_fail;
     return;
   }
   if (Message->err) {
-    LOG(Sev::Error, "IID: {} failure on delivery, {}, topic {}, {} [{}] {}",
+    LOG(spdlog::level::err, "IID: {} failure on delivery, {}, topic {}, {} [{}] {}",
         Self->id, rd_kafka_name(RK), rd_kafka_topic_name(Message->rkt),
         rd_kafka_err2name(Message->err), Message->err,
         rd_kafka_err2str(Message->err));
@@ -37,9 +37,9 @@ void Producer::cb_error(rd_kafka_t *RK, int ErrorCode, char const *ErrorMessage,
                         void *Opaque) {
   auto Self = reinterpret_cast<Producer *>(Opaque);
   auto Error = static_cast<rd_kafka_resp_err_t>(ErrorCode);
-  Sev Level = Sev::Warning;
+  auto Level = spdlog::level::warn;
   if (Error == RD_KAFKA_RESP_ERR__TRANSPORT) {
-    Level = Sev::Error;
+    Level = spdlog::level::err;
   } else {
     if (Self->on_error)
       Self->on_error(Self, Error);
@@ -53,7 +53,7 @@ void Producer::cb_error(rd_kafka_t *RK, int ErrorCode, char const *ErrorMessage,
 int Producer::cb_stats(rd_kafka_t *RK, char *JSON, size_t JSONLength,
                        void *Opaque) {
   auto Self = reinterpret_cast<Producer *>(Opaque);
-  LOG(Sev::Debug, "IID: {}  INFO cb_stats {} length {}   {:.{}}", Self->id,
+  LOG(spdlog::level::trace, "IID: {}  INFO cb_stats {} length {}   {:.{}}", Self->id,
       rd_kafka_name(RK), JSONLength, JSON, JSONLength);
   // What does librdkafka want us to return from this callback?
   return 0;
@@ -62,20 +62,20 @@ int Producer::cb_stats(rd_kafka_t *RK, char *JSON, size_t JSONLength,
 void Producer::cb_log(rd_kafka_t const *RK, int Level, char const *Fac,
                       char const *Buf) {
   auto Self = reinterpret_cast<Producer *>(rd_kafka_opaque(RK));
-  LOG(Sev::Debug, "IID: {}  {}  Fac: {}", Self->id, Buf, Fac);
+  LOG(spdlog::level::trace, "IID: {}  {}  Fac: {}", Self->id, Buf, Fac);
 }
 
 void Producer::cb_throttle(rd_kafka_t *RK, char const *BrokerName,
                            int32_t BrokerID, int ThrottleTime_ms,
                            void *Opaque) {
   auto Time = reinterpret_cast<Producer *>(Opaque);
-  LOG(Sev::Debug, "IID: {}  INFO cb_throttle  BrokerID: {}  broker_name: {}  "
+  LOG(spdlog::level::trace, "IID: {}  INFO cb_throttle  BrokerID: {}  broker_name: {}  "
                   "throttle_time_ms: {}",
       Time->id, BrokerID, BrokerName, ThrottleTime_ms);
 }
 
 Producer::~Producer() {
-  LOG(Sev::Debug, "~Producer");
+  LOG(spdlog::level::trace, "~Producer");
   if (RdKafkaPtr) {
     int Timeout_ms = 1;
     uint32_t OutputQueueLength = 0;
@@ -86,7 +86,7 @@ Producer::~Producer() {
       }
       auto EventsHandled = rd_kafka_poll(RdKafkaPtr, Timeout_ms);
       if (EventsHandled > 0) {
-        LOG(Sev::Debug,
+        LOG(spdlog::level::trace,
             "rd_kafka_poll handled: {}  outq before: {}  timeout: {}",
             EventsHandled, OutputQueueLength, Timeout_ms);
       }
@@ -96,11 +96,11 @@ Producer::~Producer() {
       }
     }
     if (OutputQueueLength > 0) {
-      LOG(Sev::Notice,
+      LOG(spdlog::level::debug,
           "Kafka out queue still not empty: {}  destroy producer anyway.",
           OutputQueueLength);
     }
-    LOG(Sev::Debug, "rd_kafka_destroy");
+    LOG(spdlog::level::trace, "rd_kafka_destroy");
     rd_kafka_destroy(RdKafkaPtr);
     RdKafkaPtr = nullptr;
   }
@@ -123,24 +123,24 @@ Producer::Producer(BrokerSettings const &Settings)
   rd_kafka_conf_set_throttle_cb(Configuration, Producer::cb_throttle);
 
   rd_kafka_conf_set_opaque(Configuration, this);
-  LOG(Sev::Debug, "Producer opaque: {}", (void *)this);
+  LOG(spdlog::level::trace, "Producer opaque: {}", (void *)this);
 
   ProducerBrokerSettings.apply(Configuration);
 
   RdKafkaPtr = rd_kafka_new(RD_KAFKA_PRODUCER, Configuration, Errors.data(),
                             Errors.size());
   if (!RdKafkaPtr) {
-    LOG(Sev::Error, "can not create kafka handle: {}", Errors.data());
+    LOG(spdlog::level::err, "can not create kafka handle: {}", Errors.data());
     throw std::runtime_error("can not create Kafka handle");
   }
 
   rd_kafka_set_log_level(RdKafkaPtr, 4);
 
-  LOG(Sev::Info, "New Kafka {} with brokers: {}", rd_kafka_name(RdKafkaPtr),
+  LOG(spdlog::level::info, "New Kafka {} with brokers: {}", rd_kafka_name(RdKafkaPtr),
       ProducerBrokerSettings.Address.c_str());
   if (rd_kafka_brokers_add(RdKafkaPtr,
                            ProducerBrokerSettings.Address.c_str()) == 0) {
-    LOG(Sev::Error, "could not add brokers");
+    LOG(spdlog::level::err, "could not add brokers");
     throw std::runtime_error("could not add brokers");
   }
 }
@@ -158,7 +158,7 @@ Producer::Producer(Producer &&x) {
 void Producer::poll() {
   int EventsHandled =
       rd_kafka_poll(RdKafkaPtr, ProducerBrokerSettings.PollTimeoutMS);
-  LOG(Sev::Debug,
+  LOG(spdlog::level::trace,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}", id,
       ProducerBrokerSettings.Address, EventsHandled, outputQueueLength());
   Stats.poll_served += EventsHandled;

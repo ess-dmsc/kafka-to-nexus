@@ -8,7 +8,7 @@ namespace FileWriter {
 
 DemuxTopic::DemuxTopic(std::string TopicName) : Topic(std::move(TopicName)) {}
 
-DemuxTopic::~DemuxTopic() { LOG(Sev::Debug, "dtor"); }
+DemuxTopic::~DemuxTopic() { LOG(spdlog::level::trace, "dtor"); }
 
 DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
 
@@ -21,14 +21,14 @@ std::string const &DemuxTopic::topic() const { return Topic; }
 
 ProcessMessageResult
 DemuxTopic::process_message(FlatbufferMessage const &Message) {
-  LOG(Sev::Debug, "Message received from: {}", Message.getSourceName());
+  LOG(spdlog::level::trace, "Message received from: {}", Message.getSourceName());
   try {
     auto &CurrentSource = TopicSources.at(Message.getSourceName());
     auto ProcessingResult = CurrentSource.process_message(Message);
     ++messages_processed;
     return ProcessingResult;
   } catch (std::out_of_range &e) {
-    LOG(Sev::Debug, "Source with name \"{}\" is not in list.",
+    LOG(spdlog::level::trace, "Source with name \"{}\" is not in list.",
         Message.getSourceName());
     ++error_no_source_instance;
   }

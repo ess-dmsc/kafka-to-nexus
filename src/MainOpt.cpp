@@ -18,7 +18,7 @@ void MainOpt::init() {
 
 int MainOpt::parseJsonCommands() {
   if (CommandsJsonFilename.empty()) {
-    LOG(Sev::Notice, "given config filename is empty");
+    LOG(spdlog::level::warn, "given config filename is empty");
     return -1;
   }
   auto jsontxt = gulp(CommandsJsonFilename);

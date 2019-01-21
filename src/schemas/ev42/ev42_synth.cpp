@@ -37,7 +37,7 @@ fb synth::next(uint32_t size) {
       ret.builder->CreateUninitializedVector(size, sizeof(DT), (uint8_t **)&a2);
 
   if ((!a1) || (!a2)) {
-    LOG(Sev::Debug, "Failed to create test data");
+    LOG(spdlog::level::trace, "Failed to create test data");
   } else {
     for (size_t i1 = 0; i1 < size; ++i1) {
       auto eid = impl->rnd();

@@ -10,8 +10,8 @@ std::chrono::milliseconds systemTime() {
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime) {
-  LOG(Sev::Debug, "\t\tStoptime:         {}", Stoptime.count());
-  LOG(Sev::Debug, "\t\tMessageTimestamp: {}",
+  LOG(spdlog::level::trace, "\t\tStoptime:         {}", Stoptime.count());
+  LOG(spdlog::level::trace, "\t\tMessageTimestamp: {}",
       static_cast<std::int64_t>(MessageTimestamp));
   return (Stoptime.count() > 0 and
           static_cast<std::int64_t>(MessageTimestamp) >
@@ -46,7 +46,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 FileWriter::createConsumer(std::string const &TopicName,
                            FileWriter::StreamerOptions const &Options) {
-  LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
+  LOG(spdlog::level::trace, "Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer =
         std::make_unique<KafkaW::Consumer>(Options.Settings);
@@ -58,14 +58,14 @@ FileWriter::createConsumer(std::string const &TopicName,
     }
     // Error if the topic cannot be found in the metadata
     if (!Consumer->topicPresent(TopicName)) {
-      LOG(Sev::Error, "Topic \"{}\" not in broker, remove corresponding stream",
+      LOG(spdlog::level::err, "Topic \"{}\" not in broker, remove corresponding stream",
           TopicName);
       return {FileWriter::Status::StreamerStatus::TOPIC_PARTITION_ERROR,
               nullptr};
     }
     return {FileWriter::Status::StreamerStatus::WRITING, std::move(Consumer)};
   } catch (std::exception &Error) {
-    LOG(Sev::Error, "{}", Error.what());
+    LOG(spdlog::level::err, "{}", Error.what());
     return {FileWriter::Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
   }
 }
@@ -86,7 +86,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     } else if (ConsumerCreated.valid()) {
       if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
           std::future_status::ready) {
-        LOG(Sev::Warning,
+        LOG(spdlog::level::warn,
             "Not yet done setting up consumer. Defering consumption.");
         return ProcessMessageResult::OK;
       }
@@ -100,7 +100,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   } catch (std::runtime_error &Error) {
     throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
   } catch (std::exception &Error) {
-    LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
+    LOG(spdlog::level::critical, "Got an exception when waiting for connection: {}",
         Error.what());
     throw; // "throw;" rethrows
   }
@@ -117,7 +117,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
       KafkaMessage->getStatus() == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
-      LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
+      LOG(spdlog::level::info, "Stop stream timeout for topic \"{}\" reached. {} ms "
                      "passed since stop time.",
           MessageProcessor.topic(),
           (systemTime() - Options.StopTimestamp).count());
@@ -137,7 +137,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
         reinterpret_cast<const char *>(KafkaMessage->getData()),
         KafkaMessage->getSize());
   } catch (std::runtime_error &Error) {
-    LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
+    LOG(spdlog::level::warn, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
         KafkaMessage->getMessageOffset(), Error.what());
     return ProcessMessageResult::ERR;
@@ -145,14 +145,14 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
-    LOG(Sev::Warning, "Message from topic \"{}\" has an unknown source name "
+    LOG(spdlog::level::warn, "Message from topic \"{}\" has an unknown source name "
                       "(\"{}\"), ignoring.",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
 
   if (Message->getTimestamp() == 0) {
-    LOG(Sev::Error,
+    LOG(spdlog::level::err,
         "Message from topic \"{}\", source \"{}\" has no timestamp, ignoring",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::ERR;
@@ -180,7 +180,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   // Write the message. Log any error and return the result of processing
   ProcessMessageResult result = MessageProcessor.process_message(*Message);
-  LOG(Sev::Debug, "Processed: {}::{}", MessageProcessor.topic(),
+  LOG(spdlog::level::trace, "Processed: {}::{}", MessageProcessor.topic(),
       Message->getSourceName());
   if (ProcessMessageResult::OK != result) {
     MessageInfo.error();
@@ -191,7 +191,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 void FileWriter::Streamer::setSources(
     std::unordered_map<std::string, Source> &SourceList) {
   for (auto &Src : SourceList) {
-    LOG(Sev::Info, "Add {} to source list", Src.first);
+    LOG(spdlog::level::info, "Add {} to source list", Src.first);
     Sources.push_back(Src.first);
   }
 }
@@ -200,11 +200,11 @@ bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
   auto Iter(std::find<std::vector<std::string>::iterator>(
       Sources.begin(), Sources.end(), SourceName));
   if (Iter == Sources.end()) {
-    LOG(Sev::Warning, "Can't remove source {}, not in the source list",
+    LOG(spdlog::level::warn, "Can't remove source {}, not in the source list",
         SourceName);
     return false;
   }
   Sources.erase(Iter);
-  LOG(Sev::Info, "Remove source {}", SourceName);
+  LOG(spdlog::level::info, "Remove source {}", SourceName);
   return true;
 }

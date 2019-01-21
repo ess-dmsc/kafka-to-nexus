@@ -43,18 +43,18 @@ Writer::write(FlatbufferMessage const &Message) {
   }
   auto Result = TheWriterUntyped->write(Message, DoFlushEachWrite);
   if (!Result.is_OK()) {
-    LOG(Sev::Error, "hs00 write error: {}", Result.to_str());
+    LOG(spdlog::level::err, "hs00 write error: {}", Result.to_str());
   }
   return Result;
 }
 
 int32_t Writer::flush() {
-  LOG(Sev::Debug, "flush");
+  LOG(spdlog::level::trace, "flush");
   return 0;
 }
 
 int32_t Writer::close() {
-  LOG(Sev::Debug, "close");
+  LOG(spdlog::level::trace, "close");
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized.");
   }

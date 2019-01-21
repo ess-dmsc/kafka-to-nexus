@@ -36,7 +36,7 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    Value FlatbuffersValueTypeId,
                                    CollectiveQueue *cq)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
-  LOG(Sev::Debug, "f142 WriterScalar ctor");
+  LOG(spdlog::level::trace, "f142 WriterScalar ctor");
   ChunkedDataset =
       h5::h5d_chunked_1d<DT>::create(HdfGroup, SourceName, ChunkSize, cq);
   if (ChunkedDataset == nullptr) {
@@ -55,7 +55,7 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    Value FlatbuffersValueTypeId,
                                    CollectiveQueue *cq, HDFIDStore *hdf_store)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
-  LOG(Sev::Debug, "f142 WriterScalar ctor");
+  LOG(spdlog::level::trace, "f142 WriterScalar ctor");
   ChunkedDataset =
       h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName, cq, hdf_store);
   if (ChunkedDataset == nullptr) {

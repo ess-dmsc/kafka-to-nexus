@@ -46,7 +46,7 @@ public:
         Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR();
-        LOG(Sev::Critical, "{}", E.what());
+        LOG(spdlog::level::critical, "{}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
       }
@@ -65,7 +65,7 @@ public:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
-    LOG(Sev::Info,
+    LOG(spdlog::level::info,
         "Stop StreamMaster for file with id : {}, ready to be removed",
         getJobId());
   }
@@ -98,7 +98,7 @@ public:
       stopImplemented();
       return WriteThread.joinable();
     }
-    LOG(Sev::Info, "StreamMaster: start");
+    LOG(spdlog::level::info, "StreamMaster: start");
     Stop = false;
 
     if (!WriteThread.joinable()) {
@@ -112,7 +112,7 @@ public:
   ///
   /// \return True if successful, False otherwise.
   bool stop() {
-    LOG(Sev::Info, "StreamMaster: stop");
+    LOG(spdlog::level::info, "StreamMaster: stop");
     Stop = true;
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
@@ -126,7 +126,7 @@ public:
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
-        LOG(Sev::Debug, "Status report already started, nothing to do");
+        LOG(spdlog::level::trace, "Status report already started, nothing to do");
       }
     }
   }
@@ -182,7 +182,7 @@ private:
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
-        LOG(Sev::Error, "Stream closed due to stream error: {}", E.what());
+        LOG(spdlog::level::err, "Stream closed due to stream error: {}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
         closeStream(Stream, Demux.topic());
@@ -198,7 +198,7 @@ private:
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {
-        LOG(Sev::Error, "Error in topic \"{}\" : {}", Demux.topic(),
+        LOG(spdlog::level::err, "Error in topic \"{}\" : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR();
       }
@@ -245,7 +245,7 @@ private:
   /// otherwise set Stop TRUE and return StreamMasterError::has_finished.
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
-    LOG(Sev::Debug, "All sources in Stream have expired, close connection");
+    LOG(spdlog::level::trace, "All sources in Stream have expired, close connection");
     Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
@@ -264,18 +264,18 @@ private:
       ReportThread.join();
     }
     for (auto &s : Streamers) {
-      LOG(Sev::Info, "Shut down {}", s.first);
+      LOG(spdlog::level::info, "Shut down {}", s.first);
       auto v = s.second.closeStream();
       if (v == StreamerStatus::HAS_FINISHED) {
-        LOG(Sev::Warning, "Error while stopping {} : {}", s.first,
+        LOG(spdlog::level::info, "Error while stopping {} : {}", s.first,
             Status::Err2Str(v));
       } else {
-        LOG(Sev::Info, "\t...done");
+        LOG(spdlog::level::info, "\t...done");
       }
     }
     Streamers.clear();
     RunStatus = StreamMasterError::IS_REMOVABLE();
-    LOG(Sev::Info, "RunStatus:  {}", Err2Str(RunStatus));
+    LOG(spdlog::level::info, "RunStatus:  {}", Err2Str(RunStatus));
   }
 
   std::map<std::string, Streamer> Streamers;

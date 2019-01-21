@@ -19,12 +19,12 @@ Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   if (buffer.back() != 0) {
     // likely an error
     buffer.back() = 0;
-    LOG(Sev::Info, "Hostname got truncated: {}", buffer.data());
+    LOG(spdlog::level::info, "Hostname got truncated: {}", buffer.data());
   }
   std::string hostname(buffer.data());
   file_writer_process_id_ =
       fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
-  LOG(Sev::Info, "file_writer_process_id: {}", file_writer_process_id());
+  LOG(spdlog::level::info, "file_writer_process_id: {}", file_writer_process_id());
 }
 
 void Master::handle_command_message(
@@ -65,7 +65,7 @@ void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
   // Set up connection to the Kafka status topic if desired.
   if (getMainOpt().do_kafka_status) {
-    LOG(Sev::Info, "Publishing status to kafka://{}/{}",
+    LOG(spdlog::level::info, "Publishing status to kafka://{}/{}",
         getMainOpt().kafka_status_uri.HostPort,
         getMainOpt().kafka_status_uri.Topic);
     KafkaW::BrokerSettings BrokerSettings;
@@ -75,7 +75,7 @@ void Master::run() {
       status_producer = std::make_shared<KafkaW::ProducerTopic>(
           producer, getMainOpt().kafka_status_uri.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
-      LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
+      LOG(spdlog::level::err, "Can not create Kafka status producer: {}", e.what());
     }
   }
 
@@ -89,10 +89,10 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-    LOG(Sev::Debug, "Master poll");
+    LOG(spdlog::level::trace, "Master poll");
     auto PollResult = command_listener.poll();
     if (PollResult->getStatus() == KafkaW::PollStatus::Msg) {
-      LOG(Sev::Debug, "Handle a command");
+      LOG(spdlog::level::trace, "Handle a command");
       this->handle_command_message(std::move(PollResult));
     }
     if (getMainOpt().do_kafka_status &&
@@ -110,9 +110,9 @@ void Master::run() {
                        }),
         StreamMasters.end());
   }
-  LOG(Sev::Info, "calling stop on all stream_masters");
+  LOG(spdlog::level::info, "calling stop on all stream_masters");
   stopStreamMasters();
-  LOG(Sev::Info, "called stop on all stream_masters");
+  LOG(spdlog::level::info, "called stop on all stream_masters");
 }
 
 void Master::stopStreamMasters() {

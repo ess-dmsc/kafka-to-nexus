@@ -52,7 +52,7 @@ private:
                 std::atomic<StreamMasterError> &StreamMasterStatus) {
     std::this_thread::sleep_for(ReportMs);
     if (!Producer) {
-      LOG(Sev::Error,
+      LOG(spdlog::level::err,
           "ProucerTopic error: can't produce StreamMaster status report");
       return StreamMasterError::REPORT_ERROR();
     }

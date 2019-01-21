@@ -19,7 +19,7 @@ json hdf_parse(std::string const &Structure) {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
   } catch (...) {
-    LOG(Sev::Error, "Parse Error: ", Structure)
+    LOG(spdlog::level::err, "Parse Error: ", Structure)
     throw FileWriter::ParseError(Structure);
   }
 }
@@ -51,7 +51,7 @@ FileWriterTask::FileWriterTask(
 }
 
 FileWriterTask::~FileWriterTask() {
-  LOG(Sev::Debug, "~FileWriterTask");
+  LOG(spdlog::level::trace, "~FileWriterTask");
   Demuxers.clear();
   try {
     File.close();
@@ -104,7 +104,7 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
   auto ConfigFileJson = hdf_parse(ConfigFile);
 
   try {
-    LOG(Sev::Info, "Creating HDF file {}", Filename);
+    LOG(spdlog::level::info, "Creating HDF file {}", Filename);
     File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo, UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
@@ -123,7 +123,7 @@ void FileWriterTask::reopenFile() {
   try {
     File.reopen(Filename);
   } catch (std::exception const &E) {
-    LOG(Sev::Error, "Exception: {}", E.what());
+    LOG(spdlog::level::err, "Exception: {}", E.what());
     if (StatusProducer) {
       logEvent(StatusProducer, StatusCode::Error, ServiceId, JobId,
                fmt::format("Exception: {}", E.what()));

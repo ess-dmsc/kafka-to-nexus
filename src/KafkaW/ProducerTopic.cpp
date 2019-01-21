@@ -12,9 +12,9 @@ using std::atomic;
 using std::move;
 
 ProducerTopic::~ProducerTopic() {
-  LOG(Sev::Debug, "~ProducerTopic {}", TopicName);
+  LOG(spdlog::level::trace, "~ProducerTopic {}", TopicName);
   if (RdKafkaTopic) {
-    LOG(Sev::Debug, "rd_kafka_topic_destroy");
+    LOG(spdlog::level::trace, "rd_kafka_topic_destroy");
     rd_kafka_topic_destroy(RdKafkaTopic);
     RdKafkaTopic = nullptr;
   }
@@ -32,10 +32,10 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Pointer,
   if (RdKafkaTopic == nullptr) {
     // Seems like Kafka uses the system error code?
     auto errstr = rd_kafka_err2str(rd_kafka_last_error());
-    LOG(Sev::Error, "could not create Kafka topic: {}", errstr);
+    LOG(spdlog::level::err, "could not create Kafka topic: {}", errstr);
     throw TopicCreationError();
   }
-  LOG(Sev::Debug, "ctor topic: {}  producer: {}",
+  LOG(spdlog::level::trace, "ctor topic: {}  producer: {}",
       rd_kafka_topic_name(RdKafkaTopic),
       rd_kafka_name(ProducerPtr->getRdKafkaPtr()));
 }
@@ -81,14 +81,14 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
     auto err = rd_kafka_last_error();
     if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
       ++s.local_queue_full;
-      LOG(Sev::Warning, "QUEUE_FULL  outq: {}",
+      LOG(spdlog::level::warn, "QUEUE_FULL  outq: {}",
           rd_kafka_outq_len(ProducerPtr->getRdKafkaPtr()));
     } else if (err == RD_KAFKA_RESP_ERR_MSG_SIZE_TOO_LARGE) {
       ++s.msg_too_large;
-      LOG(Sev::Error, "TOO_LARGE  size: {}", Msg->size);
+      LOG(spdlog::level::err, "TOO_LARGE  size: {}", Msg->size);
     } else {
       ++s.produce_fail;
-      LOG(Sev::Debug, "produce topic {}  partition {}   error: {}  {}",
+      LOG(spdlog::level::trace, "produce topic {}  partition {}   error: {}  {}",
           rd_kafka_topic_name(RdKafkaTopic), partition, x,
           rd_kafka_err2str(err));
     }
@@ -96,10 +96,8 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
     ++s.produced;
     s.produced_bytes += (uint64_t)Msg->size;
     ++ProducerPtr->TotalMessagesProduced;
-    if (log_level >= 8) {
-      LOG(Sev::Debug, "sent to topic {} partition {}",
+      LOG(spdlog::level::trace, "sent to topic {} partition {}",
           rd_kafka_topic_name(RdKafkaTopic), partition);
-    }
     Msg.release();
   }
 

@@ -20,7 +20,7 @@ FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
   auto s1 = fbuf->source_name();
   if (!s1) {
-    LOG(Sev::Warning, "message has no source name");
+    LOG(spdlog::level::warn, "message has no source name");
     return "";
   }
   return s1->str();

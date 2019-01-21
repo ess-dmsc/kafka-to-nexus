@@ -9,7 +9,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
                                        std::string const &SourceName,
                                        Value FlatbuffersValueTypeId,
                                        CollectiveQueue *cq) {
-  LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
+  LOG(spdlog::level::trace, "f142 init_impl  WriterScalarString");
   ChunkedDataset =
       h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024, cq);
   if (ChunkedDataset == nullptr) {
@@ -24,7 +24,7 @@ WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
                                        Value FlatbuffersValueTypeId,
                                        CollectiveQueue *cq,
                                        HDFIDStore *hdf_store) {
-  LOG(Sev::Debug, "f142 init_impl  WriterScalarString");
+  LOG(spdlog::level::trace, "f142 init_impl  WriterScalarString");
   ChunkedDataset =
       h5::Chunked1DString::open(HdfGroup, SourceName, cq, hdf_store);
   if (ChunkedDataset == nullptr) {

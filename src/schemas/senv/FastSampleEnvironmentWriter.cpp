@@ -47,7 +47,7 @@ std::string SampleEnvironmentDataGuard::source_name(
 void FastSampleEnvironmentWriter::parse_config(
     std::string const &ConfigurationStream,
     std::string const &ConfigurationModule) {
-  LOG(Sev::Debug, "There are currently no runtime configurable options in the "
+  LOG(spdlog::level::trace, "There are currently no runtime configurable options in the "
                   "FastSampleEnvironmentWriter class.");
 }
 
@@ -71,7 +71,7 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
-    LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
+    LOG(spdlog::level::err, "Unable to initialise fast sample environment data tree in "
                     "HDF file with error message: \"{}\"",
         E.what());
     return HDFWriterModule::InitResult::ERROR_IO();
@@ -90,7 +90,7 @@ FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG(Sev::Error,
+    LOG(spdlog::level::err,
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return HDFWriterModule::InitResult::ERROR_IO();
@@ -114,7 +114,7 @@ FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();
   if (TempDataSize == 0) {
-    LOG(Sev::Warning,
+    LOG(spdlog::level::warn,
         "Received a flatbuffer with zero (0) data elements in it.");
     return FileWriterBase::WriteResult::OK();
   }

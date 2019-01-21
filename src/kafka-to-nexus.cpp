@@ -63,16 +63,16 @@ int main(int argc, char **argv) {
     try {
       Master.run();
     } catch (std::system_error const &e) {
-      LOG(Sev::Critical,
+      LOG(spdlog::level::critical,
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
           e.code().value(), e.code().category().name(), e.code().message(),
           e.what());
       throw;
     } catch (std::runtime_error const &e) {
-      LOG(Sev::Critical, "std::runtime_error  what: {}", e.what());
+      LOG(spdlog::level::critical, "std::runtime_error  what: {}", e.what());
       throw;
     } catch (std::exception const &e) {
-      LOG(Sev::Critical, "std::exception  what: {}", e.what());
+      LOG(spdlog::level::critical, "std::exception  what: {}", e.what());
       throw;
     }
   });
@@ -80,7 +80,7 @@ int main(int argc, char **argv) {
   while (not Master.RunLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
-      LOG(Sev::Notice, "SIGNAL {}", SignalId);
+      LOG(spdlog::level::debug, "SIGNAL {}", SignalId);
       Master.stop();
       GotSignal = false;
       break;

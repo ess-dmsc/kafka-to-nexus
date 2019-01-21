@@ -33,9 +33,9 @@ enum class Sev : int {
 
 std::shared_ptr<spdlog::logger> LoggerInstance;
 
-void setUpLogging(spdlog::level::level_enum &LoggingLevel,
-                  std::string &ServiceID, std::string &LogFile,
-                  std::string &Address, std::string &GraylogURI) {
+void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
+                  const std::string &ServiceID, const std::string &LogFile,
+                  const std::string &GraylogURI) {
   spdlog::set_level(LoggingLevel);
   if (not LogFile.empty()) {
     LoggerInstance = spdlog::basic_logger_mt("basic_logger", LogFile);

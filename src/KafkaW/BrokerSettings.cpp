@@ -8,13 +8,13 @@ namespace KafkaW {
 void BrokerSettings::apply(rd_kafka_conf_t *RdKafkaConfiguration) const {
   std::vector<char> ErrorString(256);
   for (const auto &ConfigurationItem : KafkaConfiguration) {
-    LOG(Sev::Debug, "set config: {} = {}", ConfigurationItem.first,
+    LOG(spdlog::level::trace, "set config: {} = {}", ConfigurationItem.first,
         ConfigurationItem.second);
     if (RD_KAFKA_CONF_OK !=
         rd_kafka_conf_set(RdKafkaConfiguration, ConfigurationItem.first.c_str(),
                           ConfigurationItem.second.c_str(), ErrorString.data(),
                           ErrorString.size())) {
-      LOG(Sev::Warning, "Failure setting config: {} = {}",
+      LOG(spdlog::level::warn, "Failure setting config: {} = {}",
           ConfigurationItem.first, ConfigurationItem.second);
     }
   }

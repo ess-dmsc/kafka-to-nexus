@@ -190,7 +190,7 @@ HDFFile::~HDFFile() {
   }
   // we do this to prevent destructor from throwing
   catch (std::exception &e) {
-    LOG(Sev::Error, "HDFFile failed to close, stack:\n{}",
+    LOG(spdlog::level::err, "HDFFile failed to close, stack:\n{}",
         hdf5::error::print_nested(e));
   }
 }
@@ -226,7 +226,7 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node &Node,
   try {
     CurrentTimeZone = current_zone();
   } catch (const std::runtime_error &e) {
-    LOG(Sev::Warning, "Failed to detect time zone for use in ISO8601 "
+    LOG(spdlog::level::warn, "Failed to detect time zone for use in ISO8601 "
                       "timestamp in HDF file")
     CurrentTimeZone = locate_zone("UTC");
   }
@@ -285,7 +285,7 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node &Node,
                                    Values);
         } else {
           if (Values.is_array()) {
-            LOG(Sev::Warning, "Attributes with array values must specify type")
+            LOG(spdlog::level::warn, "Attributes with array values must specify type")
             continue;
           }
           writeScalarAttribute(Node, Name, Values);
@@ -332,19 +332,19 @@ void writeAttrStringFixedLength(hdf5::node::Node &Node, std::string const &Name,
     try {
       auto S = hdf5::dataspace::Simple(SpaceFile);
       auto D = S.current_dimensions();
-      LOG(Sev::Debug, "Simple {}  {}", D.size(), D.at(0));
+      LOG(spdlog::level::trace, "Simple {}  {}", D.size(), D.at(0));
     } catch (...) {
       try {
         auto S = hdf5::dataspace::Scalar(SpaceFile);
-        LOG(Sev::Debug, "Scalar");
+        LOG(spdlog::level::trace, "Scalar");
       } catch (...) {
-        LOG(Sev::Error, "Unknown dataspace requested for fixed length "
+        LOG(spdlog::level::err, "Unknown dataspace requested for fixed length "
                         "string dataset {}",
             Name);
       }
     }
     auto Data = populateBlob<FixedStringItemHandler>(Values, 0, StringSize);
-    LOG(Sev::Debug, "StringSize: {}  Data.size(): {}", StringSize, Data.size());
+    LOG(spdlog::level::trace, "StringSize: {}  Data.size(): {}", StringSize, Data.size());
     // Fixed string support seems broken in h5cpp
     if (0 > H5Awrite(static_cast<hid_t>(Attribute), static_cast<hid_t>(Type),
                      Data.data())) {
@@ -527,13 +527,13 @@ void HDFFile::writeFixedSizeStringDataset(
     try {
       auto Space = hdf5::dataspace::Simple(Dataspace);
       auto Dimensions = Space.current_dimensions();
-      LOG(Sev::Debug, "Simple {}  {}", Dimensions.size(), Dimensions.at(0));
+      LOG(spdlog::level::trace, "Simple {}  {}", Dimensions.size(), Dimensions.at(0));
     } catch (...) {
       try {
         auto Space = hdf5::dataspace::Scalar(Dataspace);
-        LOG(Sev::Debug, "Scalar");
+        LOG(spdlog::level::trace, "Scalar");
       } catch (...) {
-        LOG(Sev::Error,
+        LOG(spdlog::level::err,
             "Unknown dataspace requested for fixed length string dataset {}",
             Name);
       }
@@ -660,7 +660,7 @@ void HDFFile::writeDataset(hdf5::node::Group &Parent,
     auto DatasetInnerObject = DatasetJSONObject.inner();
     if (auto DataSpaceObject = find<std::string>("space", DatasetInnerObject)) {
       if (DataSpaceObject.inner() != "simple") {
-        LOG(Sev::Warning, "sorry, can only handle simple data spaces");
+        LOG(spdlog::level::warn, "sorry, can only handle simple data spaces");
         return;
       }
     }
@@ -742,7 +742,7 @@ void HDFFile::createHDFStructures(
             hdf_this = Parent.create_group(Name, LinkCreationPropertyList);
             Path.push_back(Name);
           } catch (...) {
-            LOG(Sev::Critical, "failed to create group  Name: {}", Name);
+            LOG(spdlog::level::critical, "failed to create group  Name: {}", Name);
           }
         }
       }
@@ -777,7 +777,7 @@ void HDFFile::createHDFStructures(
     }
   } catch (const std::exception &e) {
     // Don't throw here as the file should continue writing
-    LOG(Sev::Error, "Failed to create structure  parent={} level={}",
+    LOG(spdlog::level::err, "Failed to create structure  parent={} level={}",
         std::string(Parent.link().path()), Level)
   }
 }
@@ -802,17 +802,17 @@ void HDFFile::checkHDFVersion() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
-    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+    LOG(spdlog::level::err, "HDF5 version mismatch.  compile time: {}  runtime: {}",
         H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
     exit(1);
   }
   if (h5_vers_minor != H5_VERS_MINOR) {
-    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+    LOG(spdlog::level::err, "HDF5 version mismatch.  compile time: {}  runtime: {}",
         H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
     exit(1);
   }
   if (h5_vers_release != H5_VERS_RELEASE) {
-    LOG(Sev::Error, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+    LOG(spdlog::level::err, "HDF5 version mismatch.  compile time: {}  runtime: {}",
         H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
   }
 }
@@ -845,7 +845,7 @@ void HDFFile::init(std::string const &Filename,
     this->Filename = Filename;
     init(NexusStructure, StreamHDFInfo);
   } catch (std::exception const &E) {
-    LOG(Sev::Error,
+    LOG(spdlog::level::err,
         "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
         boost::filesystem::current_path().string(), Filename,
         hdf5::error::print_nested(E));
@@ -900,7 +900,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time");
     writeAttributesIfPresent(RootGroup, NexusStructure);
   } catch (std::exception const &E) {
-    LOG(Sev::Critical, "Failed to initialize  file={}  trace:\n{}",
+    LOG(spdlog::level::critical, "Failed to initialize  file={}  trace:\n{}",
         H5File.id().file_name().string(), hdf5::error::print_nested(E));
     std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
   }
@@ -909,20 +909,20 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
 void HDFFile::close() {
   try {
     if (H5File.is_valid()) {
-      LOG(Sev::Debug, "flushing");
+      LOG(spdlog::level::trace, "flushing");
       flush();
-      LOG(Sev::Debug, "closing");
+      LOG(spdlog::level::trace, "closing");
       H5File.close();
-      LOG(Sev::Debug, "closed");
+      LOG(spdlog::level::trace, "closed");
       // Make sure that h5file.is_valid() == false from now on:
       H5File = hdf5::file::File();
     } else {
       // This occurs in unit tests
-      LOG(Sev::Debug, "File is not valid, skipping flush and close.");
+      LOG(spdlog::level::err, "File is not valid, skipping flush and close.");
     }
   } catch (const std::exception &E) {
     auto Trace = hdf5::error::print_nested(E);
-    LOG(Sev::Error, "ERROR could not close  file={}  trace:\n{}",
+    LOG(spdlog::level::err, "ERROR could not close  file={}  trace:\n{}",
         H5File.id().file_name().string(), Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
@@ -945,7 +945,7 @@ void HDFFile::reopen(std::string const &Filename) {
     H5File = hdf5::file::open(Filename, FAFL, fapl);
   } catch (std::exception const &E) {
     auto Trace = hdf5::error::print_nested(E);
-    LOG(Sev::Error,
+    LOG(spdlog::level::err,
         "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
         boost::filesystem::current_path().string(), Filename, Trace);
     std::throw_with_nested(std::runtime_error(fmt::format(
@@ -1024,14 +1024,14 @@ static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
     auto TargetID =
         H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
     if (TargetID < 0) {
-      LOG(Sev::Warning,
+      LOG(spdlog::level::warn,
           "Can not find target object for link target: {}  in group: {}",
           Target, std::string(Group.link().path()));
       continue;
     }
     if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), LinkName.c_str(),
                     H5P_DEFAULT, H5P_DEFAULT)) {
-      LOG(Sev::Warning,
+      LOG(spdlog::level::warn,
           "can not create link name: {}  in group: {}  to target: {}", LinkName,
           std::string(Group.link().path()), Target);
       continue;
@@ -1040,9 +1040,9 @@ static void addLinks(hdf5::node::Group &Group, nlohmann::json const &Json) {
 }
 
 void HDFFile::finalize() {
-  LOG(Sev::Debug, "HDFFile::finalize");
+  LOG(spdlog::level::trace, "HDFFile::finalize");
   if (Filename.empty()) {
-    LOG(Sev::Debug, "HDFFile was never open, skip finalize.");
+    LOG(spdlog::level::trace, "HDFFile was never open, skip finalize.");
     return;
   }
   try {

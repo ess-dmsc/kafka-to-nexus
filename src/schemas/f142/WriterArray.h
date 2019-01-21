@@ -42,7 +42,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
     throw std::runtime_error(fmt::format(
         "Can not handle number of columns ColumnCount == {}", ColumnCount));
   }
-  LOG(Sev::Debug, "f142 init_impl  ColumnCount: {}", ColumnCount);
+  LOG(spdlog::level::debug, "f142 init_impl  ColumnCount: {}", ColumnCount);
   ChunkedDataset = h5::h5d_chunked_2d<DT>::create(HdfGroup, SourceName,
                                                   ColumnCount, 64 * 1024, cq);
   if (ChunkedDataset == nullptr) {
@@ -66,7 +66,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
     throw std::runtime_error(fmt::format(
         "Can not handle number of columns ColumnCount == {}", ColumnCount));
   }
-  LOG(Sev::Debug, "f142 writer_typed_array reopen  ColumnCount: {}",
+  LOG(spdlog::level::debug, "f142 writer_typed_array reopen  ColumnCount: {}",
       ColumnCount);
   ChunkedDataset = h5::h5d_chunked_2d<DT>::open(HdfGroup, SourceName,
                                                 ColumnCount, cq, hdf_store);
