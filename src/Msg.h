@@ -9,6 +9,7 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <vector>
+#include <spdlog/spdlog.h>
 
 namespace FileWriter {
 
@@ -48,7 +49,7 @@ public:
   static Msg cheap(Msg const &msg) {
     Msg ret;
     if (msg.type != MsgType::Shared) {
-      LOG(Sev::Critical, "msg.type != MsgType::Shared");
+      LOG(spdlog::level::critical, "msg.type != MsgType::Shared");
       return ret;
     }
     ret.type = MsgType::Cheap;
@@ -84,7 +85,7 @@ public:
 
   inline void swap(Msg &y) {
     if (type != MsgType::Invalid && type != y.type) {
-      LOG(Sev::Critical, "sorry, can not swap that");
+      LOG(spdlog::level::critical, "sorry, can not swap that");
     }
     using std::swap;
     swap(type, y.type);
@@ -105,7 +106,7 @@ public:
     case MsgType::Cheap:
       return var.cheap;
     default:
-      LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
+      LOG(spdlog::level::err, "error at type: {}", std::to_string(static_cast<int>(type)));
     }
     return "";
   }
@@ -123,7 +124,7 @@ public:
     case MsgType::Cheap:
       return _size;
     default:
-      LOG(Sev::Error, "error at type: {}", static_cast<int>(type));
+      LOG(spdlog::level::err, "error at type: {}", static_cast<int>(type));
     }
     return 0;
   }
@@ -158,7 +159,7 @@ public:
     case MsgType::Invalid:
       break;
     default:
-      LOG(Sev::Error, "unhandled type: {}", static_cast<int>(type));
+      LOG(spdlog::level::err, "unhandled type: {}", static_cast<int>(type));
     }
   }
 };

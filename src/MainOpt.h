@@ -32,7 +32,7 @@ struct MainOpt {
   /// on to the StreamMaster.
   FileWriter::StreamerOptions StreamerConfiguration;
 
-  Sev LoggingLevel;
+  spdlog::level::level_enum LoggingLevel;
 
   /// Can optionally log in Graylog GELF format to a Kafka topic.
   std::string kafka_gelf;

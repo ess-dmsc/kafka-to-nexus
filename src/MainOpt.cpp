@@ -3,6 +3,7 @@
 #include "helper.h"
 #include "json.h"
 #include <iostream>
+#include "logger.h"
 
 using uri::URI;
 
@@ -40,18 +41,5 @@ void MainOpt::findAndAddCommands() {
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  g_ServiceID = opt.ServiceID;
-  if (!opt.kafka_gelf.empty()) {
-    URI uri(opt.kafka_gelf);
-    log_kafka_gelf_start(uri.HostPort, uri.Topic);
-    LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.HostPort, uri.Topic);
-  }
-
-  if (!opt.graylog_logger_address.empty()) {
-    fwd_graylog_logger_enable(opt.graylog_logger_address);
-  }
-
-  if (!opt.LogFilename.empty()) {
-    use_log_file(opt.LogFilename);
-  }
+  setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename, opt.graylog_logger_address);
 }

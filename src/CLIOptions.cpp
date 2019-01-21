@@ -3,6 +3,7 @@
 #include "URI.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
+#include <spdlog/common.h>
 
 CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
                        CLI::callback_t Fun, const std::string &Description,
@@ -84,11 +85,16 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
-bool parseLogLevel(std::vector<std::string> LogLevelString, Sev &LogLevelResult){
-  std::map<std::string, Sev> LevelMap{
-      {"Critical", Sev::Critical}, {"Error", Sev::Error},
-      {"Warning", Sev::Warning},   {"Notice", Sev::Notice},
-      {"Info", Sev::Info},         {"Debug", Sev::Debug}};
+bool parseLogLevel(std::vector<std::string> LogLevelString,
+                   spdlog::level::level_enum &LogLevelResult) {
+  std::map<std::string, spdlog::level::level_enum> LevelMap{
+      {"Critical", spdlog::level::critical},
+      {"Error", spdlog::level::err},
+      {"Warning", spdlog::level::warn},
+      {"Info", spdlog::level::info},
+      {"Debug", spdlog::level::debug},
+      {"Trace", spdlog::level::trace}};
+
   if (LogLevelString.size() != 1) {
     return false;
   }
@@ -103,7 +109,7 @@ bool parseLogLevel(std::vector<std::string> LogLevelString, Sev &LogLevelResult)
     if (TempLogMessageLevel < 1 or TempLogMessageLevel > 7) {
       return false;
     }
-    LogLevelResult = Sev(TempLogMessageLevel);
+    LogLevelResult = spdlog::level::level_enum(TempLogMessageLevel);
   } catch (std::invalid_argument &e) {
     return false;
   }
@@ -127,13 +133,16 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
                  "<host:port> Log to Graylog via graylog_logger library");
-  std::string LogLevelInfoStr = R"*(Set log message level. Set to 1 - 7 or one of
+  std::string LogLevelInfoStr =
+      R"*(Set log message level. Set to 1 - 7 or one of
   `Critical`, `Error`, `Warning`, `Notice`, `Info`,
   or `Debug`. Ex: "-l Notice")*";
-  App.add_option("-v,--verbosity", [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
-            return parseLogLevel(Input, MainOptions.LoggingLevel);
-          },
-          LogLevelInfoStr)
+  App.add_option(
+         "-v,--verbosity",
+         [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+           return parseLogLevel(Input, MainOptions.LoggingLevel);
+         },
+         LogLevelInfoStr)
       ->set_default_val("Error");
   App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
                  "<absolute/or/relative/directory> Directory which gets "

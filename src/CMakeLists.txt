@@ -18,6 +18,7 @@ find_package(GraylogLogger)
 find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(Date REQUIRED)
+find_package(spdlog REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -54,6 +55,7 @@ set(libraries_common
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
+        spdlog::spdlog
         pthread
         z
         )
@@ -91,7 +93,6 @@ set(kafka_to_nexus_SRC
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
         helper.cpp
-        logger.cpp
         URI.cpp
         h5.cpp
         FlatbufferMessage.cpp

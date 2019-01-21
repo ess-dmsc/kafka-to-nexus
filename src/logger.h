@@ -1,23 +1,19 @@
 #pragma once
 
+#include "URI.h"
 #include <fmt/format.h>
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+#include <spdlog/spdlog.h>
 #include <string>
-
+//#include <spdlog/sinks/graylog_sink.h>
 #ifdef _MSC_VER
-
 #define LOG(level, fmt, ...)                                                   \
-  { dwlog(level, fmt, __FILE__, __LINE__, __FUNCSIG__, __VA_ARGS__); }
-
+  { LoggerInstance->log(level, fmt, __VA_ARGS__); }
 #else
-
 #define LOG(level, fmt, args...)                                               \
-  { dwlog(level, fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, ##args); }
-
+  { LoggerInstance->log(level, fmt, ##args); }
 #endif
-
-extern int log_level;
-
-extern std::string g_ServiceID;
 
 // These severity level correspond to the RFC3164 (syslog) severity levels
 enum class Sev : int {
@@ -33,25 +29,22 @@ enum class Sev : int {
   Debug = 7, // Debug, give me a flood of information
 };
 
-void dwlog_inner(int level, char const *file, int line, char const *func,
-                 std::string const &s1);
 
-template <typename... TT>
-void dwlog(Sev level, char const *fmt, char const *file, int line,
-           char const *func, TT const &... args) {
-  if (static_cast<int>(level) > log_level)
-    return;
-  try {
-    dwlog_inner(static_cast<int>(level), file, line, func,
-                fmt::format(fmt, args...));
-  } catch (fmt::format_error &e) {
-    dwlog_inner(static_cast<int>(level), file, line, func,
-                fmt::format("ERROR in format: {}: {}", e.what(), fmt));
+
+std::shared_ptr<spdlog::logger> LoggerInstance;
+
+void setUpLogging(spdlog::level::level_enum &LoggingLevel,
+                  std::string &ServiceID, std::string &LogFile,
+                  std::string &Address, std::string &GraylogURI) {
+  spdlog::set_level(LoggingLevel);
+  if (not LogFile.empty()) {
+    LoggerInstance = spdlog::basic_logger_mt("basic_logger", LogFile);
   }
+  if (not GraylogURI.empty()) {
+    uri::URI TempURI(GraylogURI);
+    // Set up URI interface here
+    // auto grayloginterface = spdlog::graylog_sink(TempURI.HostPort,
+    // TempURI.Topic);
+  }
+  LoggerInstance = spdlog::stdout_color_mt("console");
 }
-
-void use_log_file(std::string fname);
-
-void log_kafka_gelf_start(std::string const &Address, std::string TopicName);
-
-void fwd_graylog_logger_enable(std::string const &Address);

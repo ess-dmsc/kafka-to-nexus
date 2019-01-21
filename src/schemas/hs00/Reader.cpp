@@ -1,5 +1,6 @@
 #include "Reader.h"
 #include <flatbuffers/flatbuffers.h>
+#include <spdlog/spdlog.h>
 
 namespace FileWriter {
 namespace Schemas {
@@ -20,7 +21,7 @@ std::string Reader::source_name(FlatbufferMessage const &Message) const {
   auto Buffer = getRoot(Message.data());
   auto Source = Buffer->source();
   if (!Source) {
-    LOG(Sev::Notice, "message has no source_name");
+    LOG(spdlog::level::info, "message has no source_name");
     return "";
   }
   return Source->str();
