@@ -105,15 +105,15 @@ int main(int argc, char **argv) {
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.BrokerSettings.Address, opt.teamid);
     LOG(Sev::Debug, "sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   } else if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.BrokerSettings.Address, opt.teamid);
     LOG(Sev::Debug, "sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   } else if (opt.cmd.substr(0, 5) == "file:") {
     auto m1 = make_command_from_file(opt.cmd.substr(5));
     LOG(Sev::Debug, "sending:\n{}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
     std::chrono::milliseconds stop_time{0};
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
       m1 = make_command_stop(opt.BrokerSettings.Address, input);
     }
     LOG(Sev::Debug, "sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   }
   return 0;
 }
