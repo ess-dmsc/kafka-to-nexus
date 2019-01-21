@@ -94,12 +94,9 @@ void Master::run() {
   auto t_last_statistics = Clock::now();
   while (do_run) {
     LOG(Sev::Debug, "Master poll");
-    // Msg KafkaMessage = FileWriter::Msg();
 
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
         command_listener.poll();
-    //    std::string msgstr(KafkaMessage.data());
-    //    std::cout <<"dbdbdbdbdbdd "<< msgstr << '\n';
     if (KafkaMessage.get()->first == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
       FileWriter::Msg KafkaMsg;
