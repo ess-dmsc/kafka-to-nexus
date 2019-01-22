@@ -12,12 +12,12 @@
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
+#include <h5cpp/hdf5.hpp>
 #include <hdf5.h>
 #include <random>
 #include <string>
 #include <unistd.h>
 #include <vector>
-#include <h5cpp/hdf5.hpp>
 
 using std::string;
 using std::vector;
@@ -1065,8 +1065,8 @@ TEST_F(T_CommandHandler, DatasetStatic1DStringVariable) {
 template <typename T>
 void verifyWrittenDatatype(FileWriter::HDFFile &TestFile,
                            const std::pair<std::string, T> &NameAndValue) {
-  auto Dataset =
-      hdf5::node::get_dataset(TestFile.getRootGroup(), "/" + NameAndValue.first);
+  auto Dataset = hdf5::node::get_dataset(TestFile.getRootGroup(),
+                                         "/" + NameAndValue.first);
   auto OutputValue = NameAndValue.second;
   Dataset.read(OutputValue);
   ASSERT_EQ(OutputValue, NameAndValue.second);
