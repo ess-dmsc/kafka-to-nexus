@@ -9,7 +9,7 @@ LogData const *FlatBufferWrapper::root() {
 }
 
 synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
-  impl = std::make_unique<synth_impl>();
+  impl = std::make_unique<SynthImpl>();
   impl->type = Type;
 }
 
