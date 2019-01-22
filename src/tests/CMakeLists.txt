@@ -8,7 +8,6 @@ set(UnitTests_SRC
         HDFFile.cpp
         HDFFileAttributesTest.cpp
         HDFFileTestHelper.cpp
-        helper.cpp
         json.cpp
         StatusTest.cpp
         URITests.cpp
@@ -31,6 +30,7 @@ set(UnitTests_SRC
         FileWriterTaskTests.cpp
         SourceTests.cpp
         )
+
 set(UnitTests_INC
         MasterMock.h
         HDFFileTestHelper.h

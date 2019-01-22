@@ -296,7 +296,7 @@ def get_macos_pipeline() {
 
 def get_system_tests_pipeline() {
   return {
-    node('integration-test') {
+    node('system-test') {
       cleanWs()
       dir("${project}") {
         try {

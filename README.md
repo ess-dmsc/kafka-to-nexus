@@ -62,11 +62,11 @@ Note: the Kafka options are key-value pairs and the file-writer can be given mul
 
 Beyond the configuration options given at start-up, the file-writer can be sent commands via Kafka to control the actual file writing.
 
-See the [commands](documentation/commands.md) for more information.
+See [commands](documentation/commands.md) for more information.
 
 ## Installation
 
-The supported method for Installation is via Conan.
+The supported method for installation is via Conan.
 
 ### Prerequisites
 

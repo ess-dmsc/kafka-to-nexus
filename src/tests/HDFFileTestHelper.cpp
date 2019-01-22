@@ -13,4 +13,4 @@ FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename) {
 
   return TestFile;
 }
-}
+} // namespace HDFFileTestHelper
