@@ -19,7 +19,7 @@ std::string
 FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
   auto s1 = fbuf->source_name();
-  if (!s1) {
+  if (s1 == nullptr) {
     LOG(Sev::Warning, "message has no source name");
     return "";
   }
@@ -35,6 +35,6 @@ uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
 /// Register the Reader with the application's registry
 static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("f142");
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter
