@@ -25,7 +25,7 @@ public:
 class Producer : public ProducerInterface {
 public:
   typedef ProducerTopic Topic;
-  typedef ProducerMessage Msg;
+  using Msg =  ProducerMessage;
   explicit Producer(BrokerSettings ProducerBrokerSettings_);
   ~Producer() override;
   void poll() override;
