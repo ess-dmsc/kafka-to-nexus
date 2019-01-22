@@ -6,14 +6,15 @@ namespace f142 {
 
 LogData const *fb::root() { return GetLogData(builder->GetBufferPointer()); }
 
-class synth_impl {
+/// \brief Used for generating test data.
+class SynthImpl {
   friend class synth;
   std::mt19937 rnd;
   Value type;
 };
 
 synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
-  impl.reset(new synth_impl);
+  impl.reset(new SynthImpl);
   impl->type = Type;
 }
 
