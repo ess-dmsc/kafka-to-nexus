@@ -14,6 +14,7 @@ class StreamMasterError {
 
 public:
   StreamMasterError() = default;
+  StreamMasterError(int ErrorValue) : Value(ErrorValue) {}
   static StreamMasterError OK();
   static StreamMasterError NOT_STARTED();
   static StreamMasterError RUNNING();
@@ -22,7 +23,6 @@ public:
   static StreamMasterError IS_REMOVABLE();
   static StreamMasterError STREAMER_ERROR();
   static StreamMasterError REPORT_ERROR();
-  static StreamMasterError STREAMMASTER_ERROR();
 
   /// \brief Determines if the streams and the report are closed.
   ///
