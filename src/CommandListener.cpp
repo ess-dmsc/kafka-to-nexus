@@ -13,9 +13,7 @@ using std::vector;
 
 CommandListener::CommandListener(MainOpt &config) : config(config) {}
 
-CommandListener::~CommandListener() {}
-
-void CommandListener::start() {
+    void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.command_broker_uri.HostPort;

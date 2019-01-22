@@ -11,7 +11,7 @@ namespace FileWriter {
 class CommandListener {
 public:
   explicit CommandListener(MainOpt &config);
-  ~CommandListener();
+  ~CommandListener() = default;
 
   /// Start listening to command messages.
   void start();
