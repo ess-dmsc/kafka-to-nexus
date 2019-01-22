@@ -17,6 +17,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include <h5cpp/hdf5.hpp>
 
 using std::string;
 using std::vector;
@@ -24,6 +25,7 @@ using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
 using nlohmann::json;
+using namespace hdf5;
 
 MainOpt getTestOptions() {
   MainOpt TestOptions;

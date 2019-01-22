@@ -3,6 +3,8 @@
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 
+using namespace hdf5;
+
 TEST(HDFFileAttributesTest,
      whenCommandContainsNumericalAttributeItIsWrittenToFile) {
   auto TestFile =
