@@ -58,9 +58,8 @@ TEST(H5, writeUsingChunked1DString) {
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
   std::string ExpectedValue("Some string value");
-  /// \todo Remove nullptr when clang-tidy merge is done.
   auto ChunkedDataset =
-      h5::Chunked1DString::create(File.root(), "DummyDataset", 64, nullptr);
+      h5::Chunked1DString::create(File.root(), "DummyDataset", 64);
   ChunkedDataset->append(ExpectedValue);
 
   // Read back

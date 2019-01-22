@@ -2,37 +2,21 @@
 
 using StreamMasterError = FileWriter::Status::StreamMasterError;
 
-StreamMasterError StreamMasterError::OK() {
-  return {1000};
-}
+StreamMasterError StreamMasterError::OK() { return {1000}; }
 
-StreamMasterError StreamMasterError::NOT_STARTED() {
-  return {0};
-}
+StreamMasterError StreamMasterError::NOT_STARTED() { return {0}; }
 
-StreamMasterError StreamMasterError::RUNNING() {
-  return {1};
-}
+StreamMasterError StreamMasterError::RUNNING() { return {1}; }
 
-StreamMasterError StreamMasterError::HAS_FINISHED() {
-  return {2};
-}
+StreamMasterError StreamMasterError::HAS_FINISHED() { return {2}; }
 
-StreamMasterError StreamMasterError::EMPTY_STREAMER() {
-  return {3};
-}
+StreamMasterError StreamMasterError::EMPTY_STREAMER() { return {3}; }
 
-StreamMasterError StreamMasterError::IS_REMOVABLE() {
-  return {4};
-}
+StreamMasterError StreamMasterError::IS_REMOVABLE() { return {4}; }
 
-StreamMasterError StreamMasterError::STREAMER_ERROR() {
-  return {-1};
-}
+StreamMasterError StreamMasterError::STREAMER_ERROR() { return {-1}; }
 
-StreamMasterError StreamMasterError::REPORT_ERROR() {
-  return {-2};
-}
+StreamMasterError StreamMasterError::REPORT_ERROR() { return {-2}; }
 
 using StreamerStatus = FileWriter::Status::StreamerStatus;
 
