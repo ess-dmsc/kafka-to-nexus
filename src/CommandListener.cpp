@@ -1,9 +1,10 @@
+#include <memory>
+
 #include "CommandListener.h"
 #include "KafkaW/PollStatus.h"
 #include "Msg.h"
 #include "helper.h"
 #include "logger.h"
-#include <iostream>
 
 namespace FileWriter {
 
@@ -24,7 +25,7 @@ void CommandListener::start() {
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count());
-  consumer.reset(new KafkaW::Consumer(BrokerSettings));
+  consumer = std::make_unique<KafkaW::Consumer>(BrokerSettings);
   if (consumer->topicPresent(config.command_broker_uri.Topic))
     consumer->addTopic(config.command_broker_uri.Topic);
   else {
