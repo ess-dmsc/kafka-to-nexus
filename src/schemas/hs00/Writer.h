@@ -28,6 +28,6 @@ public:
   bool DoFlushEachWrite = true;
   uint64_t TotalWrittenBytes = 0;
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

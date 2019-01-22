@@ -18,6 +18,6 @@ private:
   std::vector<uint32_t> Offsets;
   std::vector<uint32_t> Sizes;
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

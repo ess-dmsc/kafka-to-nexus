@@ -27,6 +27,6 @@ private:
   std::vector<EdgeType> Edges;
   std::string DatasetName;
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter
