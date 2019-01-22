@@ -42,9 +42,6 @@ public:
   std::int32_t flush() override { return 0; }
 
   std::int32_t close() override { return 0; }
-
-  void enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                 int mpi_rank) override {}
 };
 
 TEST_F(MessageTimeExtractionTest, Success) {
@@ -53,9 +50,9 @@ TEST_F(MessageTimeExtractionTest, Success) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  char *TestData = new char[8];
-  std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
+  auto TestData = std::make_unique<char[]>(8);
+  std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   EXPECT_TRUE(CurrentMessage.isValid());
   EXPECT_EQ(CurrentMessage.getSourceName(), "SomeSourceName");
   EXPECT_EQ(CurrentMessage.getTimestamp(), 42ul);
@@ -68,10 +65,11 @@ TEST_F(MessageTimeExtractionTest, WrongFlatbufferID) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  char *TestData = new char[8];
-  std::memcpy(TestData + 4, MessageKey.c_str(), 4);
+  auto TestData = std::make_unique<char[]>(8);
+  std::memcpy(TestData.get() + 4, MessageKey.c_str(), 4);
 
-  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData, 8), UnknownFlatbufferID);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 8),
+               UnknownFlatbufferID);
 }
 
 TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
@@ -80,9 +78,10 @@ TEST_F(MessageTimeExtractionTest, WrongMsgSize) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  char *TestData = new char[8];
-  std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData, 7), BufferTooSmallError);
+  auto TestData = std::make_unique<char[]>(8);
+  std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
+  EXPECT_THROW(FileWriter::FlatbufferMessage(TestData.get(), 7),
+               BufferTooSmallError);
 }
 
 class DemuxerTest : public ::testing::Test {
@@ -101,10 +100,10 @@ TEST_F(DemuxerTest, Success) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  char *TestData = new char[8];
-  std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
-  ProcessMessageResult Result;
+  auto TestData = std::make_unique<char[]>(8);
+  std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
+  ProcessMessageResult Result{ProcessMessageResult::ERR};
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   Source DummySource(SourceName, TestKey, std::move(Writer));
@@ -126,10 +125,10 @@ TEST_F(DemuxerTest, WrongFlatbufferID) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  char *TestData = new char[8];
-  std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
-  ProcessMessageResult Result;
+  auto TestData = std::make_unique<char[]>(8);
+  std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
+  ProcessMessageResult Result{ProcessMessageResult::OK};
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   std::string AltKey("temi");
@@ -152,10 +151,10 @@ TEST_F(DemuxerTest, WrongSourceName) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  char *TestData = new char[8];
-  std::memcpy(TestData + 4, TestKey.c_str(), 4);
-  FileWriter::FlatbufferMessage CurrentMessage(TestData, 8);
-  ProcessMessageResult Result;
+  auto TestData = std::make_unique<char[]>(8);
+  std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
+  FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
+  ProcessMessageResult Result{ProcessMessageResult::OK};
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   Source DummySource(SourceName, TestKey, std::move(Writer));

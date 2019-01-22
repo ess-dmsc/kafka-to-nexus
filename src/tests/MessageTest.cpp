@@ -13,7 +13,10 @@ public:
     std::map<std::string, ReaderPtr> &Readers =
         FlatbufferReaderRegistry::getReaders();
     Readers.clear();
+    TestData = std::make_unique<char[]>(8);
   }
+  const std::string TestKey{"temp"};
+  std::unique_ptr<char[]> TestData{nullptr};
 };
 
 class MsgDummyReader1 : public FlatbufferReader {
@@ -39,9 +42,7 @@ public:
 };
 
 TEST_F(MessageClassTest, Success) {
-  std::string TestKey("temp");
   { FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(TestKey); }
-  std::unique_ptr<char[]> TestData(new char[8]);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   auto CurrentMessage = FlatbufferMessage(TestData.get(), 8);
   EXPECT_TRUE(CurrentMessage.isValid());
@@ -51,29 +52,23 @@ TEST_F(MessageClassTest, Success) {
 }
 
 TEST_F(MessageClassTest, WrongFlatbufferID) {
-  std::string TestKey("temp");
   std::string AltTestKey("temo");
   {
     FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(AltTestKey);
   }
-  std::unique_ptr<char[]> TestData(new char[8]);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 8), UnknownFlatbufferID);
 }
 
 TEST_F(MessageClassTest, SizeTooSmall) {
-  std::string TestKey("temp");
   { FlatbufferReaderRegistry::Registrar<MsgDummyReader1> RegisterIt(TestKey); }
-  std::unique_ptr<char[]> TestData(new char[8]);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 7),
                FileWriter::BufferTooSmallError);
 }
 
 TEST_F(MessageClassTest, InvalidFlatbuffer) {
-  std::string TestKey("temp");
   { FlatbufferReaderRegistry::Registrar<InvalidReader> RegisterIt(TestKey); }
-  std::unique_ptr<char[]> TestData(new char[8]);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 8),
                FileWriter::NotValidFlatbuffer);

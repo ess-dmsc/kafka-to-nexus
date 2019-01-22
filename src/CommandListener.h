@@ -2,7 +2,7 @@
 
 #include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
-#include "uri.h"
+#include "URI.h"
 #include <thread>
 
 namespace FileWriter {

@@ -12,8 +12,7 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &MainOpt_)
-    : command_listener(MainOpt_), MainOpt_(MainOpt_) {
+Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -31,8 +30,15 @@ Master::Master(MainOpt &MainOpt_)
 void Master::handle_command_message(
     std::unique_ptr<KafkaW::ConsumerMessage> &&msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(
-      Msg::owned((char const *)msg->getData(), msg->getSize()));
+  auto MessageTimestamp = msg->getTimestamp();
+  if (MessageTimestamp.first != RD_KAFKA_TIMESTAMP_NOT_AVAILABLE) {
+    command_handler.tryToHandle(
+        Msg::owned((char const *)msg->getData(), msg->getSize()),
+        MessageTimestamp.second);
+  } else {
+    command_handler.tryToHandle(
+        Msg::owned((char const *)msg->getData(), msg->getSize()));
+  }
 }
 
 void Master::handle_command(std::string const &command) {
@@ -41,7 +47,7 @@ void Master::handle_command(std::string const &command) {
 }
 
 std::unique_ptr<StreamMaster<Streamer>> &
-Master::getStreamMasterForJobID(std::string JobID) {
+Master::getStreamMasterForJobID(std::string const &JobID) {
   for (auto &StreamMaster : StreamMasters) {
     if (StreamMaster->getJobId() == JobID) {
       return StreamMaster;
@@ -57,7 +63,7 @@ void Master::addStreamMaster(
 }
 
 struct OnScopeExit {
-  OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
+  explicit OnScopeExit(std::function<void()> Action) : ExitAction(Action){};
   ~OnScopeExit() { ExitAction(); };
   std::function<void()> ExitAction;
 };
@@ -67,14 +73,14 @@ void Master::run() {
   // Set up connection to the Kafka status topic if desired.
   if (getMainOpt().do_kafka_status) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
-        getMainOpt().kafka_status_uri.host_port,
-        getMainOpt().kafka_status_uri.topic);
+        getMainOpt().kafka_status_uri.HostPort,
+        getMainOpt().kafka_status_uri.Topic);
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().kafka_status_uri.host_port;
+    BrokerSettings.Address = getMainOpt().kafka_status_uri.HostPort;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
       status_producer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().kafka_status_uri.topic);
+          producer, getMainOpt().kafka_status_uri.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }
@@ -147,7 +153,7 @@ std::string Master::file_writer_process_id() const {
   return file_writer_process_id_;
 }
 
-MainOpt &Master::getMainOpt() { return MainOpt_; }
+MainOpt &Master::getMainOpt() { return MainConfig; }
 
 std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
   return status_producer;

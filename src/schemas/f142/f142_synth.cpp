@@ -12,9 +12,9 @@ class synth_impl {
   Value type;
 };
 
-synth::synth(std::string name, Value type) : name(name) {
+synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
   impl.reset(new synth_impl);
-  impl->type = type;
+  impl->type = Type;
 }
 
 synth::~synth() {}
@@ -27,7 +27,7 @@ fb synth::next(uint64_t seq, size_t nele) {
   // synth does not add fwdinfo because that's, well, for the forwarder to add.
   // we do add timeStamp though, because that's meant to come from the Epics
   // IOC.
-  auto n = ret.builder->CreateString(name);
+  auto n = ret.builder->CreateString(Name);
   flatbuffers::Offset<void> value;
   Value value_type = Value::NONE;
   // TODO make general..

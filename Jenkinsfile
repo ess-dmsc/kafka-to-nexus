@@ -11,7 +11,7 @@ release_os = "centos7-release"
 container_build_nodes = [
   'centos7': new ContainerBuildNode('essdmscdm/centos7-build-node:3.2.0', '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'),
   'centos7-release': new ContainerBuildNode('essdmscdm/centos7-build-node:3.2.0', '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'),
-  'debian9': new ContainerBuildNode('essdmscdm/debian9-build-node:2.2.0', 'bash -e'),
+  'debian9': new ContainerBuildNode('essdmscdm/debian9-build-node:2.5.2', 'bash -e'),
   'ubuntu1804': new ContainerBuildNode('essdmscdm/ubuntu18.04-build-node:1.2.0', 'bash -e')
 ]
 
@@ -34,7 +34,7 @@ properties([[
     artifactDaysToKeepStr: '',
     artifactNumToKeepStr: num_artifacts_to_keep,
     daysToKeepStr: '',
-    numToKeepStr: ''
+    numToKeepStr: num_artifacts_to_keep
   ]
 ]]);
 
@@ -146,12 +146,40 @@ builders = pipeline_builder.createBuilders { container ->
 
   if (container.key == clangformat_os) {
     pipeline_builder.stage("${container.key}: Formatting") {
-      container.sh """
-        clang-format -version
-        cd ${pipeline_builder.project}
-        find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
-          -exec clangformatdiff.sh {} +
-      """
+        if (!env.CHANGE_ID) {
+            // Ignore non-PRs
+            return
+        }
+
+        try {
+            container.sh """
+               clang-format -version
+               cd ${project}
+               find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
+               -exec clang-format -i {} +
+               git config user.email 'dm-jenkins-integration@esss.se'
+               git config user.name 'cow-bot'
+               git status -s
+               git add -u
+               git commit -m 'GO FORMAT YOURSELF'
+               """
+            withCredentials([
+                      usernamePassword(
+                        credentialsId: 'cow-bot-username',
+                        usernameVariable: 'USERNAME',
+                        passwordVariable: 'PASSWORD'
+                      )
+                    ]) {
+                      container.sh """
+                         cd ${project}
+                         git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
+                         """
+            } // withCredentials
+        } catch (e) {
+            // Okay to fail as there could be no badly formatted files to commit
+        } finally {
+            // Clean up
+        }
     }  // stage
 
     pipeline_builder.stage("${container.key}: Cppcheck") {
@@ -268,7 +296,7 @@ def get_macos_pipeline() {
 
 def get_system_tests_pipeline() {
   return {
-    node('integration-test') {
+    node('system-test') {
       cleanWs()
       dir("${project}") {
         try {

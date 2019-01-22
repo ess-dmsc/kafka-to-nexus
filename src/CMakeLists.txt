@@ -92,7 +92,7 @@ set(kafka_to_nexus_SRC
         KafkaW/ProducerTopic.cpp
         helper.cpp
         logger.cpp
-        uri.cpp
+        URI.cpp
         h5.cpp
         FlatbufferMessage.cpp
         MainOpt.cpp
@@ -116,6 +116,7 @@ set(kafka_to_nexus_INC
         json.h
         kafka-to-nexus.h
         KafkaW/BrokerSettings.h
+        KafkaW/ConsumerSettings.h
         KafkaW/TopicSettings.h
         KafkaW/KafkaW.h
         KafkaW/ConsumerMessage.h
@@ -135,7 +136,7 @@ set(kafka_to_nexus_INC
         Streamer.h
         StreamerOptions.h
         StreamMaster.h
-        uri.h
+        URI.h
         CLIOptions.h
         NeXusDataset.h
         )

@@ -13,6 +13,7 @@ class StreamMasterError {
   friend const std::string Err2Str(const StreamMasterError &);
 
 public:
+  StreamMasterError() = default;
   static StreamMasterError OK();
   static StreamMasterError NOT_STARTED();
   static StreamMasterError RUNNING();
@@ -44,7 +45,7 @@ public:
   /// \param  Other  `StreamMasterStatus` to compare with.
   ///
   /// \return True if the status is the same, False otherwise.
-  bool operator==(const StreamMasterError &Other) {
+  bool operator==(const StreamMasterError &Other) const {
     return Value == Other.Value;
   }
 
@@ -53,7 +54,7 @@ public:
   /// \param[in]  Other  `StreamMasterStatus` to compare with.
   ///
   /// \return True if the status is different, False otherwise.
-  bool operator!=(const StreamMasterError &Other) {
+  bool operator!=(const StreamMasterError &Other) const {
     return Value == Other.Value;
   }
 

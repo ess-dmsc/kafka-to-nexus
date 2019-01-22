@@ -8,13 +8,11 @@ set(UnitTests_SRC
     HDFFile.cpp
     HDFFileAttributesTest.cpp
     HDFFileTestHelper.cpp
-    helper.cpp
     json.cpp
-    uri.cpp
-    status_test.cpp
+    StatusTest.cpp
+    URITests.cpp
     StatusWriterTests.cpp
     CommandHandlerTests.cpp
-    stream_master.cpp
     FastSampleEnvironmentWriterTests.cpp
     NeXusDatasets.cpp
     ReaderRegistration.cpp
@@ -25,7 +23,6 @@ set(UnitTests_SRC
     StreamerTest.cpp
     AddReader.cpp
     Schema_f142.cpp
-    Schema_ev42.cpp
     AreaDetectorTest.cpp
     EventLogger.cpp
     MainOpt.cpp

@@ -21,17 +21,17 @@ enum ProducerTopicError {
 class ProducerTopic {
 public:
   ProducerTopic(ProducerTopic &&);
-  ProducerTopic(std::shared_ptr<Producer> Producer_, std::string Name_);
+  ProducerTopic(std::shared_ptr<Producer> Pointer, std::string Topic);
   ~ProducerTopic();
   int produce(uchar *MsgData, size_t MsgSize, bool PrintError = false);
   int produce(std::unique_ptr<Producer::Msg> &Msg);
   // Currently it's nice to have access to these for statistics:
-  std::shared_ptr<Producer> Producer_;
+  std::shared_ptr<Producer> ProducerPtr;
   rd_kafka_topic_t *RdKafkaTopic = nullptr;
   void enableCopy();
 
 private:
-  std::string Name;
+  std::string TopicName;
   bool DoCopyMsg{false};
 };
 }

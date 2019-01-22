@@ -1,6 +1,7 @@
 #pragma once
 
 #include "KafkaW/BrokerSettings.h"
+#include "KafkaW/ConsumerSettings.h"
 #include "json.h"
 #include <chrono>
 
@@ -8,7 +9,8 @@ namespace FileWriter {
 
 /// Contains configuration parameters for the Streamer
 struct StreamerOptions {
-  KafkaW::BrokerSettings Settings;
+  KafkaW::BrokerSettings BrokerSettings;
+  KafkaW::ConsumerSettings ConsumerSettings;
   std::chrono::milliseconds StartTimestamp{0};
   std::chrono::milliseconds StopTimestamp{0};
   std::chrono::milliseconds BeforeStartTime{1000};

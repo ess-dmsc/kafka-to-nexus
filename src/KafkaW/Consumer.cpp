@@ -13,8 +13,8 @@ static std::atomic<int> g_kafka_consumer_instance_count;
         rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
   }
 
-Consumer::Consumer(BrokerSettings BrokerSettings)
-    : ConsumerBrokerSettings(BrokerSettings) {
+Consumer::Consumer(BrokerSettings BrokerSettings, ConsumerSettings CSettings)
+    : ConsumerBrokerSettings(BrokerSettings), Settings(CSettings) {
   init();
   id = g_kafka_consumer_instance_count++;
 }
@@ -148,7 +148,7 @@ void Consumer::init() {
   PartitionList = rd_kafka_topic_partition_list_new(16);
 }
 
-void Consumer::addTopic(std::string Topic) {
+void Consumer::addTopic(std::string const &Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   rd_kafka_topic_partition_list_add(PartitionList, Topic.c_str(),
                                     RD_KAFKA_PARTITION_UA);
@@ -159,7 +159,7 @@ void Consumer::addTopic(std::string Topic) {
   }
 }
 
-void Consumer::addTopicAtTimestamp(std::string const Topic,
+void Consumer::addTopicAtTimestamp(std::string const &Topic,
                                    std::chrono::milliseconds const StartTime) {
   LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
       Topic, StartTime.count());
@@ -171,8 +171,8 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
   for (int I = 0; I < PartitionList->cnt; ++I) {
     PartitionList->elems[I].offset = StartTime.count();
   }
-  int Timeout = 1000;
-  auto Error = rd_kafka_offsets_for_times(RdKafka, PartitionList, Timeout);
+  auto Error = rd_kafka_offsets_for_times(RdKafka, PartitionList,
+                                          Settings.OffsetsForTimesTimeoutMS);
   if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error(
         fmt::format("Error from rd_kafka_offsets_for_times {}", Error));
@@ -206,9 +206,8 @@ void Consumer::commitOffsets() const {
 int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
   const rd_kafka_metadata_t *Metadata = nullptr;
   int QueryAllTopicsInCluster = 1;
-  int TimeoutMS = 2000;
   auto Error = rd_kafka_metadata(RdKafka, QueryAllTopicsInCluster, nullptr,
-                                 &Metadata, TimeoutMS);
+                                 &Metadata, Settings.MetadataTimeoutMS);
   if (Error != RD_KAFKA_RESP_ERR_NO_ERROR) {
     throw std::runtime_error("Error in queryNumberOfPartitions");
   } else {
@@ -225,36 +224,23 @@ int32_t Consumer::queryNumberOfPartitions(const std::string &TopicName) {
       fmt::format("Topic {} not found by queryNumberOfPartitions", TopicName));
 }
 
-bool Consumer::topicPresent(const std::string &TopicName) {
-  int const TimeoutMS = 10000;
+bool Consumer::topicPresent(const std::string &Topic) {
   const rd_kafka_metadata_t *Metadata{nullptr};
-  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, TimeoutMS);
+  rd_kafka_metadata(RdKafka, 1, nullptr, &Metadata, Settings.MetadataTimeoutMS);
 
   bool IsPresent = false;
   if (!Metadata) {
     throw std::runtime_error("could not create metadata");
   }
 
-  for (int topic = 0; topic < Metadata->topic_cnt; ++topic) {
-    if (Metadata->topics[topic].topic == TopicName) {
+  for (int TopicNr = 0; TopicNr < Metadata->topic_cnt; ++TopicNr) {
+    if (Metadata->topics[TopicNr].topic == Topic) {
       IsPresent = true;
       break;
     }
   }
   rd_kafka_metadata_destroy(Metadata);
   return IsPresent;
-}
-
-void Consumer::dumpCurrentSubscription() {
-  rd_kafka_topic_partition_list_t *List = nullptr;
-  rd_kafka_subscription(RdKafka, &List);
-  if (List) {
-    for (int i = 0; i < List->cnt; ++i) {
-      LOG(Sev::Info, "subscribed topics: {}  {}  off {}", List->elems[i].topic,
-          rd_kafka_err2str(List->elems[i].err), List->elems[i].offset);
-    }
-    rd_kafka_topic_partition_list_destroy(List);
-  }
 }
 
 std::unique_ptr<ConsumerMessage> Consumer::poll() {

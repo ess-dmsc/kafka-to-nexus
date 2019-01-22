@@ -93,7 +93,7 @@ FoundInMap<typename T::mapped_type> findInMap(T const &Map, K const &Key) {
 DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
                          size_t BufferPacketMaxSize,
                          uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr)
-    : Name(Name), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
+    : Name(std::move(Name)), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
       BufferPacketMaxSize(BufferPacketMaxSize), Ptr(Ptr) {}
 
 /// \brief Instantiate a new writer.
@@ -227,12 +227,12 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
-                          std::string const *HDFAttributesPtr,
+                          std::string const *HDFAttributes,
                           CreateWriterTypedBaseMethod CreateMethod) {
-  // Keep these for now, experimenting with those on another branch.
-  CollectiveQueue *cq = nullptr;
-  HDFIDStore *HDFStore = nullptr;
   try {
+    HDFIDStore *HDFStore =
+        nullptr; // These two lines should probably be deleted.
+    CollectiveQueue *cq = nullptr;
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
                                         cq, HDFStore, CreateMethod);
     if (!ValueWriter) {
@@ -249,7 +249,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
           return HDFWriterModule::InitResult::ERROR_IO();
         }
       }
-      auto AttributesJson = nlohmann::json::parse(*HDFAttributesPtr);
+      auto AttributesJson = nlohmann::json::parse(*HDFAttributes);
       HDFFile::writeAttributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
@@ -321,18 +321,6 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     }
   }
   return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
-}
-
-// Experimental usage on the parallel writer branch.
-void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *HDFStore,
-                                int MPIRank) {
-  this->cq = cq;
-  for (auto const &Info : DatasetInfoList) {
-    auto &Dataset = Info.Ptr->ds;
-    Dataset.cq = cq;
-    Dataset.hdf_store = HDFStore;
-    Dataset.mpi_rank = MPIRank;
-  }
 }
 
 /// Implement HDFWriterModule interface, just flushing.

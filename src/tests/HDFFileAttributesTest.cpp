@@ -5,8 +5,6 @@
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsNumericalAttributeItIsWrittenToFile) {
-  using namespace hdf5;
-
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-numerical-attribute.nxs");
 
@@ -28,14 +26,13 @@ TEST(HDFFileAttributesTest,
   auto Attr = hdf5::node::get_dataset(TestFile.getRootGroup(),
                                       "/dataset_with_numerical_attr")
                   .attributes["the_answer_is"];
-  int AttrValue;
+  int AttrValue{0};
   Attr.read(AttrValue);
   ASSERT_EQ(AttrValue, 42);
 }
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsScalarStringAttributeItIsWrittenToFile) {
-  using namespace hdf5;
 
   auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
       "test-scalar-string-attribute.nxs");
@@ -65,7 +62,6 @@ TEST(HDFFileAttributesTest,
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsArrayOfAttributesTheyAreWrittenToFile) {
-  using namespace hdf5;
 
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-array-of-attributes.nxs");
@@ -95,7 +91,7 @@ TEST(HDFFileAttributesTest,
   auto IntAttr =
       node::get_group(TestFile.getRootGroup(), "group_with_array_of_attrs")
           .attributes["integer_attribute"];
-  int64_t IntValue;
+  int64_t IntValue{0};
   IntAttr.read(IntValue);
   ASSERT_EQ(IntValue, 42);
 
@@ -109,8 +105,6 @@ TEST(HDFFileAttributesTest,
 
 TEST(HDFFileAttributesTest,
      whenCommandContainsAttrOfSpecifiedTypeItIsWrittenToFile) {
-  using namespace hdf5;
-
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-typed-attribute.nxs");
 
@@ -142,8 +136,6 @@ TEST(HDFFileAttributesTest,
 }
 
 TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
-  using namespace hdf5;
-
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("test-array-attribute.nxs");
 
@@ -191,8 +183,6 @@ TEST(HDFFileAttributesTest, whenCommandContainsArrayAttrItIsWrittenToFile) {
 
 TEST(HDFFileAttributesTest,
      ArrayOfAttributesWithFixedLengthStringItIsWrittenAsFixedLengthStrings) {
-  using namespace hdf5;
-
   auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
       "test-array-of-attributes-fixed-length.nxs");
 
@@ -368,8 +358,6 @@ TEST(HDFFileAttributesTest,
 }
 
 TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
-  using namespace hdf5;
-
   auto TestFile = HDFFileTestHelper::createInMemoryTestFile(
       "test-object-of-attributes-with-strings.nxs");
 

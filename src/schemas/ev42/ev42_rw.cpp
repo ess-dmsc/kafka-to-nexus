@@ -2,7 +2,7 @@
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
-#include "schemas/ev42_events_generated.h"
+#include "ev42_events_generated.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -14,7 +14,8 @@ struct append_ret {
   int status;
   uint64_t written_bytes;
   uint64_t ix0;
-  operator bool() const { return status == 0; }
+
+  explicit operator bool() const { return status == 0; }
 };
 
 static EventMessage const *get_fbuf(char const *data) {
@@ -111,9 +112,9 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
-  // Keep these for now, experimenting with those on another branch.
-  CollectiveQueue *cq = nullptr;
+
   try {
+    CollectiveQueue *cq = nullptr;
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
         HDFGroup, "event_time_offset", chunk_bytes, cq);
     this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
@@ -224,34 +225,6 @@ int32_t HDFWriterModule::close() {
   ds_cue_index.reset();
   ds_cue_timestamp_zero.reset();
   return 0;
-}
-
-void HDFWriterModule::enable_cq(CollectiveQueue *cq, HDFIDStore *hdf_store,
-                                int mpi_rank) {
-  this->cq = cq;
-  ds_event_time_offset->ds.cq = cq;
-  ds_event_time_offset->ds.hdf_store = hdf_store;
-  ds_event_time_offset->ds.mpi_rank = mpi_rank;
-
-  ds_event_id->ds.cq = cq;
-  ds_event_id->ds.hdf_store = hdf_store;
-  ds_event_id->ds.mpi_rank = mpi_rank;
-
-  ds_event_time_zero->ds.cq = cq;
-  ds_event_time_zero->ds.hdf_store = hdf_store;
-  ds_event_time_zero->ds.mpi_rank = mpi_rank;
-
-  ds_event_index->ds.cq = cq;
-  ds_event_index->ds.hdf_store = hdf_store;
-  ds_event_index->ds.mpi_rank = mpi_rank;
-
-  ds_cue_index->ds.cq = cq;
-  ds_cue_index->ds.hdf_store = hdf_store;
-  ds_cue_index->ds.mpi_rank = mpi_rank;
-
-  ds_cue_timestamp_zero->ds.cq = cq;
-  ds_cue_timestamp_zero->ds.hdf_store = hdf_store;
-  ds_cue_timestamp_zero->ds.mpi_rank = mpi_rank;
 }
 
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
