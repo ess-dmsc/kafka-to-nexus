@@ -5,6 +5,7 @@
 #include <librdkafka/rdkafka.h>
 #include <schemas/f142/FlatbufferReader.h>
 #include <trompeloeil.hpp>
+#include <chrono>
 
 namespace FileWriter {
 namespace Schemas {
@@ -19,10 +20,10 @@ namespace FileWriter {
 std::unique_ptr<std::pair<PollStatus, Msg>>
 generateKafkaMsg(char const *DataPtr, size_t const Size) {
   auto Timestamp =
-      std::make_pair<RdKafka::MessageTimestamp::MessageTimestampType, int64_t>(
+      std::make_pair<RdKafka::MessageTimestamp::MessageTimestampType, std::chrono::milliseconds>(
           RdKafka::MessageTimestamp::MessageTimestampType::
               MSG_TIMESTAMP_CREATE_TIME,
-          0);
+          std::chrono::milliseconds{0});
   FileWriter::Msg Message =
       FileWriter::Msg::fromKafkaW(DataPtr, Size, Timestamp);
   std::pair<PollStatus, FileWriter::Msg> NewPair(PollStatus::Msg,

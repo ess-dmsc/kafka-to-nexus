@@ -4,6 +4,7 @@
 #include "logger.h"
 #include <atomic>
 #include <iostream>
+#include <chrono>
 
 namespace KafkaW {
 
@@ -239,8 +240,8 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
       // extract data
       auto Timestamp =
           std::make_pair<RdKafka::MessageTimestamp::MessageTimestampType,
-                         int64_t>(KafkaMsg->timestamp().type,
-                                  KafkaMsg->timestamp().timestamp);
+                         std::chrono::milliseconds>(KafkaMsg->timestamp().type,
+                                  std::chrono::milliseconds{KafkaMsg->timestamp().timestamp});
       FileWriter::Msg MessageFromKafka = FileWriter::Msg::fromKafkaW(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
           Timestamp);

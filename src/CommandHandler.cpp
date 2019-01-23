@@ -524,20 +524,19 @@ std::string format_nested_exception(std::exception const &E) {
 
 void CommandHandler::tryToHandle(
     std::string const &Command,
-    int64_t Timestamp) {
-auto MsgTimestampMilliseconds = std::chrono::milliseconds(Timestamp);
-  if (MsgTimestampMilliseconds.count() < 0) {
-    MsgTimestampMilliseconds =
+    std::chrono::milliseconds MsgTimestamp) {
+  if (MsgTimestamp.count() < 0) {
+    MsgTimestamp =
         std::chrono::duration_cast<std::chrono::milliseconds>(
             std::chrono::system_clock::now().time_since_epoch());
     LOG(Sev::Info,
         "Kafka command doesn't contain timestamp, so using current time.");
   }
   LOG(Sev::Info, "Kafka command message timestamp : {}",
-      MsgTimestampMilliseconds.count());
+      MsgTimestamp.count());
 
   try {
-    handle(Command, MsgTimestampMilliseconds);
+    handle(Command, MsgTimestamp);
   } catch (...) {
     std::string JobID = "unknown";
     try {
@@ -564,9 +563,9 @@ auto MsgTimestampMilliseconds = std::chrono::milliseconds(Timestamp);
 }
 
 void CommandHandler::tryToHandle(
-        std::unique_ptr<Msg> Message, int64_t MsgTimestampMilliseconds) {
+        std::unique_ptr<Msg> Message, std::chrono::milliseconds MsgTimestamp) {
   tryToHandle({(char *)Message->data(), Message->size()},
-              MsgTimestampMilliseconds);
+              MsgTimestamp);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

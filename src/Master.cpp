@@ -34,7 +34,7 @@ void Master::handle_command_message(std::unique_ptr<Msg> msg) {
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
     command_handler.tryToHandle(std::move(msg), MessageTimestamp.second);
   } else {
-    command_handler.tryToHandle(msg->data(), msg->size());
+    command_handler.tryToHandle(std::move(msg));
   }
 }
 

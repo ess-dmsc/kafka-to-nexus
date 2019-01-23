@@ -9,6 +9,7 @@
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <vector>
+#include <chrono>
 
 namespace FileWriter {
 
@@ -69,7 +70,7 @@ public:
 
   static Msg
   fromKafkaW(char const *data, size_t len,
-             std::pair<RdKafka::MessageTimestamp::MessageTimestampType, int64_t>
+             std::pair<RdKafka::MessageTimestamp::MessageTimestampType, std::chrono::milliseconds>
                  Timestamp) {
     Msg msg;
     msg.type = MsgType::Owned;
@@ -153,7 +154,7 @@ public:
     char const *cheap;
   } var;
   size_t _size = 0;
-  std::pair<RdKafka::MessageTimestamp::MessageTimestampType, int64_t> Timestamp;
+  std::pair<RdKafka::MessageTimestamp::MessageTimestampType, std::chrono::milliseconds> Timestamp;
   /// TODO: Is this the correct usage of delete?
   inline ~Msg() {
     switch (type) {
