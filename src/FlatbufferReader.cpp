@@ -21,7 +21,7 @@ FlatbufferReaderRegistry::ReaderPtr &find(std::string const &Key) {
   }
 }
 
-void addReader(std::string FlatbufferID, FlatbufferReader::ptr &&item) {
+void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&item) {
   auto &m = getReaders();
   if (FlatbufferID.size() != 4) {
     throw std::runtime_error(

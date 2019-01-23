@@ -13,7 +13,6 @@
 #include <future>
 #include <sstream>
 
-using std::array;
 using std::vector;
 
 namespace FileWriter {
@@ -76,13 +75,13 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamHDFInfo) {
+    StreamHDFInfo const &StreamInfo) {
   using nlohmann::json;
   StreamSettings StreamSettings;
-  StreamSettings.StreamHDFInfoObj = StreamHDFInfo;
+  StreamSettings.StreamHDFInfoObj = StreamInfo;
 
   json ConfigStream;
-  ConfigStream = json::parse(StreamHDFInfo.ConfigStream);
+  ConfigStream = json::parse(StreamInfo.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -155,8 +154,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   if (auto x = find<json>("attributes", ConfigStream)) {
     Attributes = x.inner();
   }
-  auto StreamGroup =
-      hdf5::node::get_group(RootGroup, StreamHDFInfo.HDFParentName);
+  auto StreamGroup = hdf5::node::get_group(RootGroup, StreamInfo.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
   HDFWriterModule->close();
   HDFWriterModule.reset();
@@ -209,7 +207,7 @@ void CommandHandler::handleNew(std::string const &Command,
       throwMissingKey("job_id", Doc.dump());
     }
 
-    if (MasterPtr) { // workaround to prevent seg fault in tests
+    if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
         LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
         return;
@@ -320,7 +318,7 @@ void CommandHandler::handleNew(std::string const &Command,
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
-    if (Config.topic_write_duration.count()) {
+    if (Config.topic_write_duration.count() != 0) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
@@ -422,9 +420,9 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 
   std::chrono::milliseconds StopTime = findTime(Doc, "stop_time");
-  if (MasterPtr) {
+  if (MasterPtr == nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
-    if (StreamMaster) {
+    if (StreamMaster != nullptr) {
       if (StopTime.count() > 0) {
         LOG(Sev::Info,
             "Received request to gracefully stop file with id : {} at {} ms",
@@ -565,7 +563,7 @@ void CommandHandler::tryToHandle(
 
 void CommandHandler::tryToHandle(
     Msg const &Message, std::chrono::milliseconds MsgTimestampMilliseconds) {
-  tryToHandle({(char *)Message.data(), Message.size()},
+  tryToHandle({reinterpret_cast<const char *>(Message.data()), Message.size()},
               MsgTimestampMilliseconds);
 }
 
