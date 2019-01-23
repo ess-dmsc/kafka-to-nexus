@@ -28,8 +28,7 @@ TEST(H5, writeStringToDataset) {
   auto Type = hdf5::datatype::String::variable();
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
-  auto ds =
-      h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL);
+  auto ds = h5::h5d::create(File.root(), "DummyDataset", Type, Space, DCPL);
   ASSERT_NE(ds, nullptr);
   std::string ExpectedValue("Some string value");
   ds->append(ExpectedValue);
