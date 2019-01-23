@@ -2,22 +2,6 @@
 
 using StreamMasterError = FileWriter::Status::StreamMasterError;
 
-StreamMasterError StreamMasterError::OK() { return {1000}; }
-
-StreamMasterError StreamMasterError::NOT_STARTED() { return {0}; }
-
-StreamMasterError StreamMasterError::RUNNING() { return {1}; }
-
-StreamMasterError StreamMasterError::HAS_FINISHED() { return {2}; }
-
-StreamMasterError StreamMasterError::EMPTY_STREAMER() { return {3}; }
-
-StreamMasterError StreamMasterError::IS_REMOVABLE() { return {4}; }
-
-StreamMasterError StreamMasterError::STREAMER_ERROR() { return {-1}; }
-
-StreamMasterError StreamMasterError::REPORT_ERROR() { return {-2}; }
-
 using StreamerStatus = FileWriter::Status::StreamerStatus;
 
 // Utilities
@@ -42,25 +26,23 @@ const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
 }
 
 const std::string FileWriter::Status::Err2Str(const StreamMasterError &Error) {
-  switch (Error.Value) {
-  case 1000:
+  switch (Error) {
+  case StreamMasterError::OK:
     return "No Error";
-  case 4:
-    return "Stream Can Be Removed";
-  case 3:
-    return "Streamers Empty";
-  case 2:
+  case StreamMasterError::HAS_FINISHED:
     return "Has Finished";
-  case 1:
+  case StreamMasterError::RUNNING:
     return "Running";
-  case 0:
+  case StreamMasterError::NOT_STARTED:
     return "Not Started";
-  case -1:
+  case StreamMasterError::STREAMER_ERROR:
     return "Streamer Error";
-  case -2:
+  case StreamMasterError::REPORT_ERROR:
     return "Report Error";
-  case -1000:
-    return "Generic Error";
+  case StreamMasterError::IS_REMOVABLE:
+    return "Is removable";
+  case StreamMasterError::EMPTY_STREAMER:
+    return "Empty streamer";
   default:
     return "Unknown error code";
   }

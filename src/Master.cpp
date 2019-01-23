@@ -1,5 +1,6 @@
 #include "Master.h"
 #include "CommandHandler.h"
+#include "Errors.h"
 #include "Msg.h"
 #include "helper.h"
 #include "json.h"
@@ -113,7 +114,8 @@ void Master::run() {
     StreamMasters.erase(
         std::remove_if(StreamMasters.begin(), StreamMasters.end(),
                        [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
-                         return Iter->status().isRemovable();
+                         return Iter->status() ==
+                                Status::StreamMasterError::IS_REMOVABLE;
                        }),
         StreamMasters.end());
   }
