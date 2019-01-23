@@ -19,11 +19,6 @@ struct Msg {
     return {std::move(DataPtr), Bytes};
   }
 
-  /// \todo Delete this function when the last clang-tidy PR is merged.
-  static Msg shared(char const *Data, size_t Bytes) {
-    return Msg::owned(Data, Bytes);
-  }
-
   char const *data() const {
     if (DataPtr == nullptr) {
       LOG(Sev::Error, "error at type: {}", -1);

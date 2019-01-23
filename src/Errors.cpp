@@ -2,60 +2,6 @@
 
 using StreamMasterError = FileWriter::Status::StreamMasterError;
 
-StreamMasterError StreamMasterError::OK() {
-  StreamMasterError Err;
-  Err.Value = 1000;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::NOT_STARTED() {
-  StreamMasterError Err;
-  Err.Value = 0;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::RUNNING() {
-  StreamMasterError Err;
-  Err.Value = 1;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::HAS_FINISHED() {
-  StreamMasterError Err;
-  Err.Value = 2;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::EMPTY_STREAMER() {
-  StreamMasterError Err;
-  Err.Value = 3;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::IS_REMOVABLE() {
-  StreamMasterError Err;
-  Err.Value = 4;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::STREAMER_ERROR() {
-  StreamMasterError Err;
-  Err.Value = -1;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::REPORT_ERROR() {
-  StreamMasterError Err;
-  Err.Value = -2;
-  return Err;
-}
-
-StreamMasterError StreamMasterError::STREAMMASTER_ERROR() {
-  StreamMasterError Err;
-  Err.Value = -1000;
-  return Err;
-}
-
 using StreamerStatus = FileWriter::Status::StreamerStatus;
 
 // Utilities
@@ -80,25 +26,23 @@ const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
 }
 
 const std::string FileWriter::Status::Err2Str(const StreamMasterError &Error) {
-  switch (Error.Value) {
-  case 1000:
+  switch (Error) {
+  case StreamMasterError::OK:
     return "No Error";
-  case 4:
-    return "Stream Can Be Removed";
-  case 3:
-    return "Streamers Empty";
-  case 2:
+  case StreamMasterError::HAS_FINISHED:
     return "Has Finished";
-  case 1:
+  case StreamMasterError::RUNNING:
     return "Running";
-  case 0:
+  case StreamMasterError::NOT_STARTED:
     return "Not Started";
-  case -1:
+  case StreamMasterError::STREAMER_ERROR:
     return "Streamer Error";
-  case -2:
+  case StreamMasterError::REPORT_ERROR:
     return "Report Error";
-  case -1000:
-    return "Generic Error";
+  case StreamMasterError::IS_REMOVABLE:
+    return "Is removable";
+  case StreamMasterError::EMPTY_STREAMER:
+    return "Empty streamer";
   default:
     return "Unknown error code";
   }

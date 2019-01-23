@@ -20,7 +20,7 @@ int MainOpt::parseJsonCommands() {
     LOG(Sev::Notice, "given config filename is empty");
     return -1;
   }
-  auto jsontxt = gulp(CommandsJsonFilename);
+  auto jsontxt = readFileIntoVector(CommandsJsonFilename);
   using nlohmann::json;
   try {
     CommandsJson = json::parse(jsontxt);

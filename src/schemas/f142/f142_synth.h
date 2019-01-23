@@ -11,21 +11,22 @@ namespace f142 {
 
 /// \brief Wrapper around the flatbuffer builder to facilitate the interface of
 /// `synth`.
-class fb {
+class FlatBufferWrapper {
 public:
   std::unique_ptr<flatbuffers::FlatBufferBuilder> builder;
   LogData const *root();
 };
 
-/// Forward-declare the implementation.
-class SynthImpl;
+/// \brief Used to generate test data.
+struct SynthImpl {
+  Value type;
+};
 
 /// Simple test data generator for the f142 schema.
 class synth {
 public:
   synth(std::string SynthName, Value Type);
-  ~synth();
-  fb next(uint64_t seq, size_t nele);
+  FlatBufferWrapper next(uint64_t TestValue, size_t NrOfElements);
   std::unique_ptr<SynthImpl> impl;
   std::string Name;
 };
