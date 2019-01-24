@@ -130,7 +130,6 @@ builders = pipeline_builder.createBuilders { container ->
       }  // withCredentials
     } else {
       def test_dir
-      // if (container.key == release_os) {}
       test_dir = 'bin'
 
       container.sh """
