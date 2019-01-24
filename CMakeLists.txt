@@ -24,11 +24,12 @@ if(${CONAN} MATCHES "AUTO")
           PROFILE ${CONAN_PROFILE}
           BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"
-          BUILD outdated)
+          BUILD outdated
+          KEEP_RPATHS)
 elseif(${CONAN} MATCHES "MANUAL")
   if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    conan_basic_setup(${OUTPUT_DIRS})
+    conan_basic_setup(${OUTPUT_DIRS} KEEP_RPATHS)
   else()
     MESSAGE(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
   endif()
