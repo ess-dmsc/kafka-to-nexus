@@ -7,6 +7,8 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
+enum class Mode { Create, Open };
+
 /// Interface for the writers of the different types.
 class WriterTypedBase {
 public:
@@ -14,6 +16,6 @@ public:
   virtual h5::append_ret write(FBUF const *fbuf) = 0;
   virtual void storeLatestInto(std::string const &StoreLatestInto) {}
 };
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter

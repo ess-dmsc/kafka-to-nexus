@@ -81,8 +81,15 @@ public:
   typedef std::unique_ptr<h5d_chunked_1d<T>> ptr;
   static ptr create(hdf5::node::Group loc, std::string name,
                     hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr create(hdf5::node::Group loc, std::string name,
+                    hsize_t chunk_bytes) {
+    return h5d_chunked_1d::create(loc, name, chunk_bytes, nullptr);
+  };
   static ptr open(hdf5::node::Group loc, std::string name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group loc, std::string name) {
+    return h5d_chunked_1d::open(loc, name, nullptr, nullptr);
+  }
   h5d ds;
   h5d_chunked_1d(h5d_chunked_1d &&x);
   ~h5d_chunked_1d();
@@ -112,8 +119,15 @@ public:
   typedef std::unique_ptr<Chunked1DString> ptr;
   static ptr create(hdf5::node::Group Node, std::string Name,
                     hsize_t ChunkBytes, CollectiveQueue *cq);
+  static ptr create(hdf5::node::Group Node, std::string Name,
+                    hsize_t ChunkBytes) {
+    return Chunked1DString::create(Node, Name, ChunkBytes, nullptr);
+  }
   static ptr open(hdf5::node::Group Node, std::string Name, CollectiveQueue *cq,
                   HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group Node, std::string Name) {
+    return Chunked1DString::open(Node, Name, nullptr, nullptr);
+  }
   append_ret append(std::string const &String);
   h5d ds;
 
@@ -129,8 +143,15 @@ public:
   typedef std::unique_ptr<h5d_chunked_2d<T>> ptr;
   static ptr create(hdf5::node::Group loc, std::string name, hsize_t ncols,
                     hsize_t chunk_bytes, CollectiveQueue *cq);
+  static ptr create(hdf5::node::Group loc, std::string name, hsize_t ncols,
+                    hsize_t chunk_bytes) {
+    return h5d_chunked_2d::create(loc, name, ncols, chunk_bytes, nullptr);
+  }
   static ptr open(hdf5::node::Group loc, std::string name, hsize_t ncols,
                   CollectiveQueue *cq, HDFIDStore *hdf_store);
+  static ptr open(hdf5::node::Group loc, std::string name, hsize_t ncols) {
+    return h5d_chunked_2d::open(loc, name, ncols, nullptr, nullptr);
+  }
   h5d ds;
   h5d_chunked_2d(h5d_chunked_2d &&x);
   ~h5d_chunked_2d();

@@ -765,9 +765,7 @@ public:
     string source;
     uint64_t seed = 0;
     std::mt19937 rnd;
-    /// \todo Switch out code when clang-tidy merge is done.
-    vector<FlatBufs::f142::fb> fbs;
-    //    vector<FlatBufs::f142::FlatBufferWrapper> fbs;
+    vector<FlatBufs::f142::FlatBufferWrapper> fbs;
     vector<FileWriter::Msg> msgs;
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;

@@ -4,26 +4,19 @@
 namespace FlatBufs {
 namespace f142 {
 
-LogData const *fb::root() { return GetLogData(builder->GetBufferPointer()); }
-
-/// \brief Used for generating test data.
-class SynthImpl {
-  friend class synth;
-  std::mt19937 rnd;
-  Value type;
-};
+LogData const *FlatBufferWrapper::root() {
+  return GetLogData(builder->GetBufferPointer());
+}
 
 synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
-  impl.reset(new SynthImpl);
+  impl = std::make_unique<SynthImpl>();
   impl->type = Type;
 }
 
-synth::~synth() {}
-
-fb synth::next(uint64_t seq, size_t nele) {
-  impl->rnd.seed(seq);
-  fb ret;
-  ret.builder.reset(new flatbuffers::FlatBufferBuilder);
+FlatBufferWrapper synth::next(uint64_t const TestValue,
+                              size_t const NrOfElements) {
+  FlatBufferWrapper ret;
+  ret.builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
   // NOTE
   // synth does not add fwdinfo because that's, well, for the forwarder to add.
   // we do add timeStamp though, because that's meant to come from the Epics
@@ -35,12 +28,11 @@ fb synth::next(uint64_t seq, size_t nele) {
   switch (impl->type) {
   case Value::ArrayInt: {
     using T = int32_t;
-    T *a1 = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
-                                                     (uint8_t **)&a1);
-    for (size_t i1 = 0; i1 < nele; ++i1) {
-      // a1[i1] = impl->rnd() >> 25;
-      a1[i1] = seq;
+    T *BufferPtr = nullptr;
+    auto d1 = ret.builder->CreateUninitializedVector(
+        NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
+    for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
+      BufferPtr[i1] = TestValue;
     }
     ArrayIntBuilder b2(*ret.builder);
     b2.add_value(d1);
@@ -49,12 +41,11 @@ fb synth::next(uint64_t seq, size_t nele) {
   } break;
   case Value::ArrayDouble: {
     using T = double;
-    T *a1 = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
-                                                     (uint8_t **)&a1);
-    for (size_t i1 = 0; i1 < nele; ++i1) {
-      // a1[i1] = impl->rnd() >> 25;
-      a1[i1] = seq;
+    T *BufferPtr = nullptr;
+    auto d1 = ret.builder->CreateUninitializedVector(
+        NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
+    for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
+      BufferPtr[i1] = TestValue;
     }
     ArrayDoubleBuilder b2(*ret.builder);
     b2.add_value(d1);
@@ -63,12 +54,11 @@ fb synth::next(uint64_t seq, size_t nele) {
   } break;
   case Value::ArrayFloat: {
     using T = float;
-    T *a1 = nullptr;
-    auto d1 = ret.builder->CreateUninitializedVector(nele, sizeof(T),
-                                                     (uint8_t **)&a1);
-    for (size_t i1 = 0; i1 < nele; ++i1) {
-      // a1[i1] = impl->rnd() >> 25;
-      a1[i1] = seq;
+    T *BufferPtr = nullptr;
+    auto d1 = ret.builder->CreateUninitializedVector(
+        NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
+    for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
+      BufferPtr[i1] = TestValue;
     }
     ArrayFloatBuilder b2(*ret.builder);
     b2.add_value(d1);
@@ -77,7 +67,7 @@ fb synth::next(uint64_t seq, size_t nele) {
   } break;
   case Value::Double: {
     DoubleBuilder b2(*ret.builder);
-    b2.add_value(seq);
+    b2.add_value(TestValue);
     value_type = impl->type;
     value = b2.Finish().Union();
   } break;

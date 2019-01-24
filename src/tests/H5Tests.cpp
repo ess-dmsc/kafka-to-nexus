@@ -58,9 +58,8 @@ TEST(H5, writeUsingChunked1DString) {
   Type.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   DCPL.chunk({1});
   std::string ExpectedValue("Some string value");
-  /// \todo Remove nullptr when clang-tidy merge is done.
   auto ChunkedDataset =
-      h5::Chunked1DString::create(File.root(), "DummyDataset", 64, nullptr);
+      h5::Chunked1DString::create(File.root(), "DummyDataset", 64);
   ChunkedDataset->append(ExpectedValue);
 
   // Read back
@@ -83,13 +82,9 @@ TEST(H5, writeScalarString) {
   auto Group = File.root();
   std::string SourceName("value");
 
-  /// \todo Switch code when clang-tidy merge is done.
-  FileWriter::Schemas::f142::WriterScalarString Writer(
-      Group, SourceName, FileWriter::Schemas::f142::Value::String, nullptr);
-  //  using FileWriter::Schemas::f142::Mode;
-  //  FileWriter::Schemas::f142::WriterScalarString Writer(
-  //      Group, SourceName, FileWriter::Schemas::f142::Value::String,
-  //      Mode::Create);
+  using FileWriter::Schemas::f142::Mode;
+  FileWriter::Schemas::f142::WriterScalarString Writer(Group, SourceName,
+                                                       Mode::Create);
   ASSERT_TRUE(Group.get_dataset("value").datatype() ==
               hdf5::datatype::String::variable().native_type());
 }
