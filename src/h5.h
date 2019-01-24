@@ -78,7 +78,7 @@ public:
   static ptr create(hdf5::node::Group const &loc, std::string name,
                     hsize_t chunk_bytes);
   static ptr open(hdf5::node::Group const &loc, std::string name);
-  h5d ds;
+  h5d DataSet;
   h5d_chunked_1d(h5d_chunked_1d &&x) noexcept;
   ~h5d_chunked_1d();
   friend void swap<>(h5d_chunked_1d &x, h5d_chunked_1d &y);
@@ -109,7 +109,7 @@ public:
                     hsize_t ChunkBytes);
   static ptr open(hdf5::node::Group const &Node, std::string const &Name);
   append_ret append(std::string const &String);
-  h5d ds;
+  h5d DataSet;
 
 private:
   explicit Chunked1DString(h5d ds);
@@ -122,10 +122,10 @@ template <typename T> class h5d_chunked_2d {
 public:
   using ptr = std::unique_ptr<h5d_chunked_2d<T>>;
   static ptr create(hdf5::node::Group const &loc, std::string const &name,
-                    hsize_t ncols, hsize_t chunk_bytes);
+                    hsize_t NrOfColumns, hsize_t chunk_bytes);
   static ptr open(hdf5::node::Group const &loc, std::string const &name,
-                  hsize_t ncols);
-  h5d ds;
+                  hsize_t NrOfColumns);
+  h5d DataSet;
   h5d_chunked_2d(h5d_chunked_2d &&x) noexcept;
   ~h5d_chunked_2d();
   friend void swap<>(h5d_chunked_2d &x, h5d_chunked_2d &y);
@@ -135,9 +135,9 @@ public:
   size_t size() const;
 
 private:
-  h5d_chunked_2d(std::string const &name, h5d ds, hsize_t ncols);
+  h5d_chunked_2d(std::string const &name, h5d LinkedDataSet, hsize_t NrOfColumns);
   hdf5::dataspace::Simple dsp_wr;
-  hsize_t ncols{0};
+  hsize_t NrOfColumns_{0};
   size_t buf_size = 0;
   size_t buf_packet_max = 0;
   size_t buf_n = 0;

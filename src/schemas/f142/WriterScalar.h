@@ -78,7 +78,7 @@ h5::append_ret WriterScalar<DT, FV>::write(LogData const *Buffer) {
 
 template <typename DT, typename FV>
 void WriterScalar<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
-  auto &Dataset = ChunkedDataset->ds.Dataset;
+  auto &Dataset = ChunkedDataset->DataSet.Dataset;
   auto Type = Dataset.datatype();
   auto SpaceSrc = hdf5::dataspace::Simple(Dataset.dataspace());
   auto DimSrc = SpaceSrc.current_dimensions();
