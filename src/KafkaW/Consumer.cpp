@@ -3,7 +3,6 @@
 #include "Msg.h"
 #include "logger.h"
 #include <atomic>
-#include <iostream>
 #include <chrono>
 
 namespace KafkaW {
@@ -238,14 +237,12 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
     if (KafkaMsg->len() > 0) {
       DataToReturn.get()->first = PollStatus::Msg;
       // extract data
-      auto Timestamp =
-          std::make_pair<RdKafka::MessageTimestamp::MessageTimestampType,
-                         std::chrono::milliseconds>(KafkaMsg->timestamp().type,
-                                  std::chrono::milliseconds{KafkaMsg->timestamp().timestamp});
-      FileWriter::Msg MessageFromKafka = FileWriter::Msg::fromKafkaW(
-          reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len(),
-          Timestamp);
-      DataToReturn.get()->second.swap(MessageFromKafka);
+      DataToReturn.get()->second = FileWriter::Msg::owned(
+          reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
+      DataToReturn.get()->second.MetaData = FileWriter::MessageMetaData{
+          KafkaMsg->timestamp().type,
+          std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
+          KafkaMsg->offset()};
 
       return DataToReturn;
     } else {

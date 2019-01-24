@@ -29,10 +29,9 @@ Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
 
 void Master::handle_command_message(std::unique_ptr<Msg> msg) {
   CommandHandler command_handler(getMainOpt(), this);
-  auto MessageTimestamp = msg->Timestamp;
-  if (MessageTimestamp.first !=
+  if (msg->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
-    command_handler.tryToHandle(std::move(msg), MessageTimestamp.second);
+    command_handler.tryToHandle(std::move(msg), msg->MetaData.Timestamp);
   } else {
     command_handler.tryToHandle(std::move(msg));
   }
@@ -99,10 +98,8 @@ void Master::run() {
         command_listener.poll();
     if (KafkaMessage.get()->first == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
-      FileWriter::Msg KafkaMsg;
-      KafkaMsg.swap(KafkaMessage.get()->second);
       this->handle_command_message(
-          std::make_unique<FileWriter::Msg>(std::move(KafkaMsg)));
+          std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
     if (getMainOpt().do_kafka_status &&
         Clock::now() - t_last_statistics >

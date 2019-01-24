@@ -11,7 +11,7 @@
 #include <memory>
 
 namespace FileWriter {
-class Msg;
+struct Msg;
 }
 
 namespace KafkaW {
