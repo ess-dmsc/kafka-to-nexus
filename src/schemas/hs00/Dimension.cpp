@@ -85,6 +85,6 @@ template std::string Dimension<uint32_t>::getDatasetName() const;
 template std::string Dimension<uint64_t>::getDatasetName() const;
 template std::string Dimension<double>::getDatasetName() const;
 template std::string Dimension<float>::getDatasetName() const;
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

@@ -37,6 +37,6 @@ bool Slice::doesOverlap(Slice const &Other) const {
   }
   return OverlappingDims == Offsets.size();
 }
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

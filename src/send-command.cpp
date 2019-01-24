@@ -65,7 +65,7 @@ std::string make_command_from_file(const std::string &filename) {
     return "";
   }
   LOG(Sev::Debug, "make_command_from_file {}", filename);
-  auto buf1 = gulp(filename);
+  auto buf1 = readFileIntoVector(filename);
   return {buf1.data(), buf1.size()};
 }
 

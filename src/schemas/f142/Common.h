@@ -12,6 +12,6 @@ template <typename T> using uptr = std::unique_ptr<T>;
 #include "f142_logdata_generated.h"
 
 using FBUF = LogData;
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter

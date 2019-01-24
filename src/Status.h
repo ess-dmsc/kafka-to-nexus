@@ -137,7 +137,7 @@ public:
   /// file.
   ///
   /// \return The StreamMaster status.
-  StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED()};
+  StreamMasterError StreamMasterStatus{StreamMasterError::NOT_STARTED};
 
 private:
   double Mbytes{0};

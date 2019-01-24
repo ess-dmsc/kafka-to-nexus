@@ -23,19 +23,20 @@ static EventMessage const *get_fbuf(char const *data) {
 }
 
 bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
-  flatbuffers::Verifier veri((uint8_t *)Message.data(), Message.size());
-  return VerifyEventMessageBuffer(veri);
+  flatbuffers::Verifier VerifierInstance(
+      reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
+  return VerifyEventMessageBuffer(VerifierInstance);
 }
 
 std::string
 FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
-  auto s1 = fbuf->source_name();
-  if (!s1) {
+  auto NamePtr = fbuf->source_name();
+  if (NamePtr == nullptr) {
     LOG(Sev::Notice, "message has no source_name");
     return "";
   }
-  return s1->str();
+  return NamePtr->str();
 }
 
 uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
@@ -47,7 +48,7 @@ static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("ev42");
 
 void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
-                                   std::string const &ConfigurationModule) {
+                                   std::string const &) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
   try {
     index_every_bytes =
@@ -114,19 +115,18 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
 
   try {
-    CollectiveQueue *cq = nullptr;
     this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
-        HDFGroup, "event_time_offset", chunk_bytes, cq);
-    this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::create(
-        HDFGroup, "event_id", chunk_bytes, cq);
+        HDFGroup, "event_time_offset", chunk_bytes);
+    this->ds_event_id =
+        h5::h5d_chunked_1d<uint32_t>::create(HDFGroup, "event_id", chunk_bytes);
     this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        HDFGroup, "event_time_zero", chunk_bytes, cq);
+        HDFGroup, "event_time_zero", chunk_bytes);
     this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
-        HDFGroup, "event_index", chunk_bytes, cq);
+        HDFGroup, "event_index", chunk_bytes);
     this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
-        HDFGroup, "cue_index", chunk_bytes, cq);
+        HDFGroup, "cue_index", chunk_bytes);
     this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
-        HDFGroup, "cue_timestamp_zero", chunk_bytes, cq);
+        HDFGroup, "cue_timestamp_zero", chunk_bytes);
 
     if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
         !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
@@ -152,19 +152,17 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   // Keep these for now, experimenting with those on another branch.
-  HDFIDStore *hdf_store = nullptr;
-  this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::open(
-      HDFGroup, "event_time_offset", cq, hdf_store);
-  this->ds_event_id =
-      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id", cq, hdf_store);
-  this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      HDFGroup, "event_time_zero", cq, hdf_store);
-  this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::open(
-      HDFGroup, "event_index", cq, hdf_store);
+  this->ds_event_time_offset =
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_time_offset");
+  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
+  this->ds_event_time_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "event_time_zero");
+  this->ds_event_index =
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_index");
   this->ds_cue_index =
-      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index", cq, hdf_store);
-  this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::open(
-      HDFGroup, "cue_timestamp_zero", cq, hdf_store);
+      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index");
+  this->ds_cue_timestamp_zero =
+      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_timestamp_zero");
 
   ds_event_time_offset->buffer_init(buffer_size, buffer_packet_max);
   ds_event_id->buffer_init(buffer_size, buffer_packet_max);

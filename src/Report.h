@@ -33,14 +33,14 @@ public:
 
     while (!Stop.load()) {
       StreamMasterError error = produceReport(Streamers, StreamMasterStatus);
-      if (error == StreamMasterError::REPORT_ERROR()) {
+      if (error == StreamMasterError::REPORT_ERROR) {
         StreamMasterStatus = error;
         return;
       }
     }
     // produce termination message
     StreamMasterError error = produceReport(Streamers, StreamMasterStatus);
-    if (error != StreamMasterError::REPORT_ERROR()) {
+    if (error != StreamMasterError::REPORT_ERROR) {
       StreamMasterStatus = error;
     }
   }
@@ -54,7 +54,7 @@ private:
     if (!Producer) {
       LOG(Sev::Error,
           "ProucerTopic error: can't produce StreamMaster status report");
-      return StreamMasterError::REPORT_ERROR();
+      return StreamMasterError::REPORT_ERROR;
     }
 
     ReportType Reporter;
@@ -72,7 +72,7 @@ private:
     Producer->produce(reinterpret_cast<unsigned char *>(&Value[0]),
                       Value.size());
 
-    return StreamMasterError::OK();
+    return StreamMasterError::OK;
   }
   Status::StreamMasterInfo Information;
   std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
