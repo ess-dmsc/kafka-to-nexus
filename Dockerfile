@@ -35,7 +35,7 @@ COPY ./Doxygen.conf ./CMakeLists.txt ../kafka_to_nexus_src/
 COPY docker_launch.sh /
 
 RUN cd kafka_to_nexus && \
-    cmake -DCONAN="MANUAL" -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
+    cmake -DCONAN="MANUAL" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src && \
     make -j8 && mkdir /output-files && conan remove "*" -s -f && apt purge -y $BUILD_PACKAGES && rm -rf ../../kafka_to_nexus_src/* && rm -rf /tmp/* /var/tmp/*
 
 CMD ["./docker_launch.sh"]
