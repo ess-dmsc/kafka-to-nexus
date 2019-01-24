@@ -10,7 +10,7 @@ DemuxTopic::DemuxTopic(std::string TopicName) : Topic(std::move(TopicName)) {}
 
 DemuxTopic::~DemuxTopic() { LOG(Sev::Debug, "dtor"); }
 
-DemuxTopic::DemuxTopic(DemuxTopic &&x) { swap(*this, x); }
+DemuxTopic::DemuxTopic(DemuxTopic &&x) noexcept { swap(*this, x); }
 
 void swap(DemuxTopic &x, DemuxTopic &y) {
   std::swap(x.Topic, y.Topic);

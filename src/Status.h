@@ -40,7 +40,7 @@ public:
   /// processed by one unit and the number of processed megabytes accordingly.
   ///
   /// \param[in]  MessageSize  The message size in bytes
-  void newMessage(const double &MessageSize);
+  void newMessage(const double &MessageBytes);
 
   ///  Increments the error count by one unit
   void error();
@@ -54,7 +54,7 @@ public:
   /// \param[in] Information The MessageInfo object that stores the data.
   ///
   /// \return A pair containing {average size, standard deviation}.
-  std::pair<double, double> messageSize();
+  std::pair<double, double> messageSize() const;
 
   /// \brief Returns the number of megabytes processed.
   ///
@@ -114,7 +114,7 @@ public:
   /// \brief Returns the total execution time.
   ///
   /// \return Milliseconds since the write command has been issued.
-  const std::chrono::milliseconds runTime();
+  const std::chrono::milliseconds runTime() const;
 
   /// \brief Returns the total number of megabytes processed for the
   /// current file.

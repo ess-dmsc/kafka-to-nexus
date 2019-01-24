@@ -5,11 +5,8 @@
 namespace FileWriter {
 
 using std::string;
-using std::vector;
 
 CommandListener::CommandListener(MainOpt &config) : config(config) {}
-
-CommandListener::~CommandListener() {}
 
 void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings;
@@ -21,7 +18,7 @@ void CommandListener::start() {
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count());
-  consumer.reset(new KafkaW::Consumer(BrokerSettings));
+  consumer = std::make_unique<KafkaW::Consumer>(BrokerSettings);
   consumer->on_rebalance_assign = config.on_rebalance_assign;
   consumer->addTopic(config.command_broker_uri.Topic);
   if (config.start_at_command_offset >= 0) {

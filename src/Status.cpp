@@ -15,12 +15,11 @@ double standardDeviation(const double &Sum, const double &SumSquared,
   double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
   if (Variance > 0) { // can be caused by numerical instabilities
     return std::sqrt(Variance);
-  } else {
-    return 0.0;
   }
+  return 0.0;
 }
 
-std::pair<double, double> FileWriter::Status::MessageInfo::messageSize() {
+std::pair<double, double> FileWriter::Status::MessageInfo::messageSize() const {
   if (Mbytes == 0) { // nan causes failure in JSON
     return std::pair<double, double>{};
   }
@@ -74,7 +73,7 @@ FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() const {
   return MillisecondsToNextMessage;
 }
 const std::chrono::milliseconds
-FileWriter::Status::StreamMasterInfo::runTime() {
+FileWriter::Status::StreamMasterInfo::runTime() const {
   auto result = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now() - StartTime);
   return result;
