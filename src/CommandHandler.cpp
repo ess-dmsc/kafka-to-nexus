@@ -420,7 +420,7 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   }
 
   std::chrono::milliseconds StopTime = findTime(Doc, "stop_time");
-  if (MasterPtr == nullptr) {
+  if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster != nullptr) {
       if (StopTime.count() > 0) {
