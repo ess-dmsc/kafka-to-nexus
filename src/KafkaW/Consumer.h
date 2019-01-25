@@ -53,6 +53,5 @@ private:
   int id = 0;
   ConsumerEventCb EventCallback;
   ConsumerRebalanceCb RebalanceCallback;
-  //  void commitOffsets() const;
 };
 } // namespace KafkaW
