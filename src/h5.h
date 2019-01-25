@@ -135,7 +135,8 @@ public:
   size_t size() const;
 
 private:
-  h5d_chunked_2d(std::string const &name, h5d LinkedDataSet, hsize_t NrOfColumns);
+  h5d_chunked_2d(std::string const &name, h5d LinkedDataSet,
+                 hsize_t NrOfColumns);
   hdf5::dataspace::Simple dsp_wr;
   hsize_t NrOfColumns_{0};
   size_t buf_size = 0;
