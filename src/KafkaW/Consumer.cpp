@@ -63,9 +63,9 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
                                    std::chrono::milliseconds const StartTime) {
   LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
       Topic, StartTime.count());
-  auto numberOfPartitions = queryTopicPartitions(Topic).size();
+  auto NumberOfPartitions = queryTopicPartitions(Topic).size();
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
-  for (unsigned int i = 0; i < numberOfPartitions; i++) {
+  for (unsigned int i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
 
     TopicPartition->set_offset(StartTime.count());
@@ -140,14 +140,14 @@ void Consumer::dumpCurrentSubscription() {
 }
 
 std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
-  RdKafka::Metadata *metadataRawPtr(nullptr);
-  KafkaConsumer->metadata(true, nullptr, &metadataRawPtr,
+  RdKafka::Metadata *MetadataRawPtr(nullptr);
+  KafkaConsumer->metadata(true, nullptr, &MetadataRawPtr,
                           ConsumerBrokerSettings.MetadataTimeoutMS);
-  std::unique_ptr<RdKafka::Metadata> metadata(metadataRawPtr);
-  if (metadata == nullptr) {
+  std::unique_ptr<RdKafka::Metadata> Metadata(MetadataRawPtr);
+  if (Metadata == nullptr) {
     throw MetadataException("Failed to query metadata from broker!");
   }
-  return metadata;
+  return Metadata;
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
@@ -159,7 +159,6 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
   PollStatus Status;
   FileWriter::Msg KafkaMessage;
 
-  // construct unique ptr to return
   std::pair<PollStatus, FileWriter::Msg> NewPair(Status,
                                                  std::move(KafkaMessage));
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> DataToReturn;
