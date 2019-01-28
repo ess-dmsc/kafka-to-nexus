@@ -3,7 +3,6 @@
 #include <chrono>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
-#include <librdkafka/rdkafka.h>
 #include <schemas/f142/FlatbufferReader.h>
 #include <trompeloeil.hpp>
 
