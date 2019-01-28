@@ -7,71 +7,26 @@
 
 namespace KafkaW {
 
-static std::atomic<int> g_kafka_consumer_instance_count;
-
-#define KERR(rk, err)                                                          \
-  if (err != 0) {                                                              \
-    LOG(Sev::Error, "Kafka {}  error: {}, {}, {}", rd_kafka_name(rk), err,     \
-        rd_kafka_err2name((rd_kafka_resp_err_t)err),                           \
-        rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
-  }
+static std::atomic<int> ConsumerInstanceCount;
 
 Consumer::Consumer(const BrokerSettings &BrokerSettings)
     : ConsumerBrokerSettings(std::move(BrokerSettings)) {
-  ////C++
   std::string ErrorString;
-  auto conf = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
-  conf->set("rebalance_cb", &RebalanceCallback, ErrorString);
-  conf->set("event_cb", &EventCallback, ErrorString);
-  conf->set("metadata.broker.list", ConsumerBrokerSettings.Address,
-            ErrorString);
-  ConsumerBrokerSettings.apply(conf);
+  auto Configuration = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
+  Configuration->set("rebalance_cb", &RebalanceCallback, ErrorString);
+  Configuration->set("event_cb", &EventCallback, ErrorString);
+  Configuration->set("metadata.broker.list", ConsumerBrokerSettings.Address,
+                     ErrorString);
+  ConsumerBrokerSettings.apply(Configuration);
   this->KafkaConsumer = std::shared_ptr<RdKafka::KafkaConsumer>(
-      RdKafka::KafkaConsumer::create(conf, ErrorString));
+      RdKafka::KafkaConsumer::create(Configuration, ErrorString));
   if (!this->KafkaConsumer) {
     LOG(Sev::Error, "can not create kafka consumer: {}", ErrorString);
     throw std::runtime_error("can not create Kafka consumer");
   }
-  ////C++__
-
-  //  // librdkafka API sometimes wants to write errors into a buffer:
-  //  int const errstr_N = 512;
-  //  char errstr[errstr_N];
-  //
-  //  auto conf = rd_kafka_conf_new();
-  //  ConsumerBrokerSettings.apply(conf);
-  //
-  //  rd_kafka_conf_set_log_cb(conf, Consumer::cb_log);
-  //  rd_kafka_conf_set_error_cb(conf, Consumer::cb_error);
-  //  rd_kafka_conf_set_stats_cb(conf, Consumer::cb_stats);
-  //  rd_kafka_conf_set_rebalance_cb(conf, Consumer::cb_rebalance);
-  //  rd_kafka_conf_set_consume_cb(conf, nullptr);
-  //  rd_kafka_conf_set_opaque(conf, this);
-  //
-  //  RdKafka = rd_kafka_new(RD_KAFKA_CONSUMER, conf, errstr, errstr_N);
-  //  if (!RdKafka) {
-  //    LOG(Sev::Error, "can not create kafka handle: {}", errstr);
-  //    throw std::runtime_error("can not create Kafka handle");
-  //  }
-  //
-  //  rd_kafka_set_log_level(RdKafka, 4);
-  //
-  //  LOG(Sev::Info, "New Kafka consumer {} with brokers: {}",
-  //      rd_kafka_name(RdKafka), ConsumerBrokerSettings.Address.c_str());
-  //  if (rd_kafka_brokers_add(RdKafka, ConsumerBrokerSettings.Address.c_str())
-  //  ==
-  //      0) {
-  //    LOG(Sev::Error, "could not add brokers");
-  //    throw std::runtime_error("could not add brokers");
-  //  }
-  //
-  //  rd_kafka_poll_set_consumer(RdKafka);
-  //
-  //  // Allocate some default size.  This is not a limit.
-  //  PartitionList = rd_kafka_topic_partition_list_new(16);
-  id = g_kafka_consumer_instance_count++;
+  id = ConsumerInstanceCount++;
 }
-////C++ READY
+
 Consumer::~Consumer() {
   LOG(Sev::Debug, "~Consumer()");
   if (KafkaConsumer) {
@@ -108,9 +63,9 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
                                    std::chrono::milliseconds const StartTime) {
   LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
       Topic, StartTime.count());
-  auto numberOfPartitions = queryTopicPartitions(Topic).size();
+  auto NumberOfPartitions = queryTopicPartitions(Topic).size();
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
-  for (unsigned int i = 0; i < numberOfPartitions; i++) {
+  for (unsigned int i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
 
     TopicPartition->set_offset(StartTime.count());
@@ -141,22 +96,6 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
   }
 }
 
-//// OLD C METHOD
-// void Consumer::commitOffsets() const {
-//  auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
-//  KERR(RdKafka, CommitErr);
-//  if (CommitErr == RD_KAFKA_RESP_ERR__NO_OFFSET) {
-//    LOG(Sev::Warning, "Could not commit offsets in Consumer, possibly already
-//    "
-//                      "at the correct offset");
-//    return;
-//  }
-//  if (CommitErr != RD_KAFKA_RESP_ERR_NO_ERROR) {
-//    throw std::runtime_error("Could not commit offsets in Consumer");
-//  }
-//}
-
-////C++ READY
 std::vector<int32_t>
 Consumer::queryTopicPartitions(const std::string &TopicName) {
   auto Metadata = queryMetadata();
@@ -168,7 +107,6 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
   auto MatchedTopic = *Iterator;
   if (MatchedTopic == nullptr)
     throw MetadataException(fmt::format("No such topic: {}", TopicName));
-  // save needed partition metadata here
   std::vector<int32_t> TopicPartitionNumbers;
 
   for (auto &Partition : *MatchedTopic->partitions()) {
@@ -178,7 +116,6 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
   return TopicPartitionNumbers;
 }
 
-////C++ READY
 bool Consumer::topicPresent(const std::string &TopicName) {
 
   auto Metadata = queryMetadata();
@@ -189,7 +126,6 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   return false;
 }
 
-////C++ READY
 void Consumer::dumpCurrentSubscription() {
   std::vector<RdKafka::TopicPartition *> Partitions;
   auto ErrorString = KafkaConsumer->assignment(Partitions);
@@ -203,19 +139,17 @@ void Consumer::dumpCurrentSubscription() {
     LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
 }
 
-////C++ READY
 std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
-  RdKafka::Metadata *metadataRawPtr(nullptr);
-  KafkaConsumer->metadata(true, nullptr, &metadataRawPtr,
+  RdKafka::Metadata *MetadataRawPtr(nullptr);
+  KafkaConsumer->metadata(true, nullptr, &MetadataRawPtr,
                           ConsumerBrokerSettings.MetadataTimeoutMS);
-  std::unique_ptr<RdKafka::Metadata> metadata(metadataRawPtr);
-  if (metadata == nullptr) {
+  std::unique_ptr<RdKafka::Metadata> Metadata(MetadataRawPtr);
+  if (Metadata == nullptr) {
     throw MetadataException("Failed to query metadata from broker!");
   }
-  return metadata;
+  return Metadata;
 }
 
-////C++ READY
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
   using std::make_unique;
 
@@ -225,7 +159,6 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
   PollStatus Status;
   FileWriter::Msg KafkaMessage;
 
-  // construct unique ptr to return
   std::pair<PollStatus, FileWriter::Msg> NewPair(Status,
                                                  std::move(KafkaMessage));
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> DataToReturn;
@@ -257,5 +190,4 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
     return DataToReturn;
   }
 }
-
 } // namespace KafkaW
