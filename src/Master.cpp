@@ -97,7 +97,7 @@ void Master::run() {
 
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
         command_listener.poll();
-    if (KafkaMessage.get()->first == KafkaW::PollStatus::Msg) {
+    if (KafkaMessage.get()->first == KafkaW::PollStatus::Message) {
       LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));

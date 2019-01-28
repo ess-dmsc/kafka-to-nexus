@@ -35,7 +35,7 @@ set(UnitTests_INC
         MasterMock.h
         HDFFileTestHelper.h
         AddReader.h
-        )
+        ConsumerTests.cpp KafkaWMocks.h)
 
 add_executable(UnitTests EXCLUDE_FROM_ALL
         ${UnitTests_SRC}
