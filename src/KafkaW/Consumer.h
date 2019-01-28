@@ -1,7 +1,7 @@
 #pragma once
 
 #include "BrokerSettings.h"
-#include "ConsumerEventCb.h"
+#include "KafkaEventCb.h"
 #include "ConsumerRebalanceCb.h"
 #include "PollStatus.h"
 #include <chrono>
@@ -51,7 +51,7 @@ private:
   std::unique_ptr<RdKafka::Metadata> queryMetadata();
   std::shared_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
   int id = 0;
-  ConsumerEventCb EventCallback;
+  KafkaEventCb EventCallback;
   ConsumerRebalanceCb RebalanceCallback;
   //  void commitOffsets() const;
 };

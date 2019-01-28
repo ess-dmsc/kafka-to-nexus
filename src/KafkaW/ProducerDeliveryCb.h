@@ -25,11 +25,10 @@ public:
     // When produce was called, we gave RdKafka a pointer to our message object
     // This is returned to us here via Message.msg_opaque() so that we can now
     // clean it up
-    auto MessageToBeCleanedUp = std::unique_ptr<ProducerMessage>(
-        reinterpret_cast<ProducerMessage *>(Message.msg_opaque()));
+    delete reinterpret_cast<ProducerMessage *>(Message.msg_opaque());
   }
 
 private:
-  ProducerStats Stats;
+  ProducerStats &Stats;
 };
 }
