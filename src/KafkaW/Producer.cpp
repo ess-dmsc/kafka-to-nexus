@@ -12,7 +12,7 @@ Producer::~Producer() {
     int NumberOfIterations = 80;
     for (int i = 0; i < NumberOfIterations; i++) {
       if (outputQueueLength() == 0) {
-        break;
+        return;
       }
       ProducerPtr->poll(TimeoutMS);
     }

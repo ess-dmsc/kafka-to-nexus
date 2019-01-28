@@ -1,12 +1,11 @@
 #pragma once
 
 #include "BrokerSettings.h"
-#include "KafkaEventCb.h"
 #include "ConsumerRebalanceCb.h"
+#include "KafkaEventCb.h"
 #include "PollStatus.h"
 #include <chrono>
 #include <functional>
-#include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 
