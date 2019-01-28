@@ -97,8 +97,9 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
 
 std::vector<int32_t>
 Consumer::queryTopicPartitions(const std::string &TopicName) {
-  auto Metadata = queryMetadata();
-  auto Topics = Metadata->topics();
+  queryMetadata();
+  auto Topics = std::unique_ptr<const RdKafka::Metadata::TopicMetadataVector>(
+      KafkaMetadata->topics());
   auto Iterator = std::find_if(Topics->cbegin(), Topics->cend(),
                                [TopicName](const RdKafka::TopicMetadata *tpc) {
                                  return tpc->topic() == TopicName;
@@ -116,9 +117,9 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
-
-  auto Metadata = queryMetadata();
-  auto Topics = Metadata->topics();
+  queryMetadata();
+  auto Topics = std::unique_ptr<const RdKafka::Metadata::TopicMetadataVector>(
+      KafkaMetadata->topics());
   for (auto Topic : *Topics)
     if (Topic->topic() == TopicName)
       return true;
@@ -138,15 +139,14 @@ void Consumer::dumpCurrentSubscription() {
     LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
 }
 
-std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
+void Consumer::queryMetadata() {
   RdKafka::Metadata *MetadataRawPtr(nullptr);
   KafkaConsumer->metadata(true, nullptr, &MetadataRawPtr,
                           ConsumerBrokerSettings.MetadataTimeoutMS);
-  std::unique_ptr<RdKafka::Metadata> Metadata(MetadataRawPtr);
-  if (Metadata == nullptr) {
+  KafkaMetadata = std::unique_ptr<RdKafka::Metadata>(MetadataRawPtr);
+  if (KafkaMetadata == nullptr) {
     throw MetadataException("Failed to query metadata from broker!");
   }
-  return Metadata;
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {

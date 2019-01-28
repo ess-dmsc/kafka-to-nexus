@@ -47,7 +47,8 @@ public:
 
 private:
   BrokerSettings ConsumerBrokerSettings;
-  std::unique_ptr<RdKafka::Metadata> queryMetadata();
+  void queryMetadata();
+  std::unique_ptr<RdKafka::Metadata> KafkaMetadata;
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
   int id = 0;
   KafkaEventCb EventCallback;
