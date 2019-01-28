@@ -560,8 +560,7 @@ void CommandHandler::tryToHandle(std::string const &Command,
 void CommandHandler::tryToHandle(
     std::unique_ptr<Msg> Message,
     std::chrono::milliseconds MsgTimestampMilliseconds) {
-  tryToHandle({reinterpret_cast<const char *>(Message->data()), Message->size()},
-              MsgTimestampMilliseconds);
+  tryToHandle({(Message->data()), Message->size()}, MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {
