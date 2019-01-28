@@ -19,9 +19,9 @@ class ConsumerInterface {
 public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
-  virtual void addTopic(std::string const Topic) = 0;
+  virtual void addTopic(std::string const &Topic) = 0;
   virtual void
-  addTopicAtTimestamp(std::string const Topic,
+  addTopicAtTimestamp(std::string const &Topic,
                       std::chrono::milliseconds const StartTime) = 0;
   virtual std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() = 0;
   virtual void dumpCurrentSubscription() = 0;
@@ -36,8 +36,8 @@ public:
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
   ~Consumer() override;
-  void addTopic(std::string const Topic) override;
-  void addTopicAtTimestamp(std::string const Topic,
+  void addTopic(std::string const &Topic) override;
+  void addTopicAtTimestamp(std::string const &Topic,
                            std::chrono::milliseconds const StartTime) override;
   void dumpCurrentSubscription() override;
   bool topicPresent(const std::string &Topic) override;
@@ -48,7 +48,7 @@ public:
 private:
   BrokerSettings ConsumerBrokerSettings;
   std::unique_ptr<RdKafka::Metadata> queryMetadata();
-  std::shared_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
+  std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
   int id = 0;
   KafkaEventCb EventCallback;
   ConsumerRebalanceCb RebalanceCallback;
