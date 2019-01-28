@@ -11,8 +11,8 @@ public:
   void stop() override {}
   void handle_command_message(std::unique_ptr<FileWriter::Msg> msg) override {}
   void handle_command(std::string const &command) override {}
-  void statistics() override {};
-  std::string file_writer_process_id() const override { return ProcessId; }
+  void statistics() override{};
+  std::string getFileWriterProcessId() const override { return ProcessId; }
   bool RunLoopExited() override { return false; }
   MainOpt &getMainOpt() override { return MainOptInst; }
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override { return nullptr; }

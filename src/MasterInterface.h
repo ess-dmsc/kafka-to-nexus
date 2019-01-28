@@ -31,7 +31,7 @@ public:
   /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
-  virtual std::string file_writer_process_id() const = 0;
+  virtual std::string getFileWriterProcessId() const = 0;
 
   virtual bool RunLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;

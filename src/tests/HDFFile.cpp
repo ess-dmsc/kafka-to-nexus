@@ -1020,13 +1020,13 @@ public:
   //    })"");
   //    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
   //    File.init(NexusStructure, stream_hdf_info);
-  //    auto ds = hdf5::node::get_dataset(File.RootGroup,
+  //    auto DataSet = hdf5::node::get_dataset(File.RootGroup,
   //    "string_fixed_1d_fixed");
-  //    auto datatype = hdf5::datatype::String(ds.datatype());
+  //    auto datatype = hdf5::datatype::String(DataSet.datatype());
   //    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
   //    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
   //    ASSERT_FALSE(datatype.is_variable_length());
-  //    ASSERT_EQ(read_string(ds, {1}), std::string("another-one"));
+  //    ASSERT_EQ(read_string(DataSet, {1}), std::string("another-one"));
   //  }
 
   static void dataset_static_1d_string_variable() {

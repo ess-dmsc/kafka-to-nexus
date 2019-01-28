@@ -64,7 +64,7 @@ public:
   ///
   /// \param Msg The message.
   /// \param MsgTimestamp The rd_kafka_message_timestamp.
-  void tryToHandle(std::unique_ptr<Msg> Message, std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});
+  void tryToHandle(std::unique_ptr<Msg> Message, std::chrono::milliseconds MsgTimestampMilliseconds = std::chrono::milliseconds{-1});
 
   /// \brief Try to handle the command.
   ///

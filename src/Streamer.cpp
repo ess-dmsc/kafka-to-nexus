@@ -23,8 +23,8 @@ bool stopTimeElapsed(std::uint64_t MessageTimestamp,
 
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
-                               const FileWriter::StreamerOptions &Opts)
-    : Options(Opts) {
+                               FileWriter::StreamerOptions Opts)
+    : Options(std::move(Opts)) {
 
   if (TopicName.empty() || Broker.empty()) {
     throw std::runtime_error("Missing broker or topic");
