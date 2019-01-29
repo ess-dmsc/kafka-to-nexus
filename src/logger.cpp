@@ -1,5 +1,6 @@
+#include <memory>
+
 #include "logger.h"
-#include "KafkaW/KafkaW.h"
 #include "json.h"
 #include <atomic>
 #include <cstdarg>
@@ -9,6 +10,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include "KafkaW/KafkaW.h"
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>
 #include <graylog_logger/Log.hpp>
@@ -37,8 +39,8 @@ public:
 private:
   std::atomic<bool> do_run_kafka{false};
   std::atomic<bool> do_use_graylog_logger{false};
-  std::shared_ptr<KafkaW::Producer> producer;
-  std::unique_ptr<KafkaW::ProducerTopic> topic;
+  std::shared_ptr<KafkaW::Producer> Producer;
+  std::unique_ptr<KafkaW::ProducerTopic> Topic;
   std::thread thread_poll;
 };
 
@@ -65,11 +67,11 @@ void Logger::log_kafka_gelf_start(std::string const &Address,
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = Address;
   //  producer.reset(new KafkaW::Producer(BrokerSettings));
-  topic.reset(new KafkaW::ProducerTopic(producer, TopicName));
-  topic->enableCopy();
+  Topic = std::make_unique<KafkaW::ProducerTopic>(Producer, TopicName);
+  Topic->enableCopy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {
-      producer->poll();
+      Producer->poll();
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
   });
@@ -122,11 +124,11 @@ void Logger::dwlog_inner(int level, char const *file, int line,
       Doc["ServiceID"] = g_ServiceID;
     }
     auto Buffer = Doc.dump();
-    topic->produce((unsigned char *)Buffer.data(), Buffer.size());
+    Topic->produce((unsigned char *)Buffer.data(), Buffer.size());
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {
-    Log::Message(level, lmsg);
+    Log::Msg(level, lmsg);
   }
 #endif
   // fflush(log_file);
