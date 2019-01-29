@@ -4,10 +4,7 @@
 #include <gtest/gtest.h>
 
 using namespace KafkaW;
-using ::testing::Exactly;
-using ::testing::Return;
-using ::testing::_;
-using ::testing::SetArgPointee;
+using trompeloeil::_;
 
 class ConsumerStandIn : public Consumer {
 public:
@@ -40,21 +37,20 @@ protected:
 };
 
 TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
-  MockMessage *Message = new MockMessage;
-  EXPECT_CALL(*Message, len()).Times(Exactly(1)).WillOnce(Return(1));
-  EXPECT_CALL(*Message, err())
-      .Times(Exactly(1))
-      .WillOnce(Return(RdKafka::ErrorCode::ERR_NO_ERROR));
-  std::string Payload{"test"};
-  EXPECT_CALL(*Message, payload())
-      .Times(Exactly(1))
-      .WillOnce(Return(reinterpret_cast<void *>(&Payload)));
+  auto *Message = new MockMessage;
+  REQUIRE_CALL(*Message, len()).TIMES(1).RETURN(1);
+  REQUIRE_CALL(*Message, err())
+      .TIMES(1)
+      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
+  REQUIRE_CALL(*Message, payload()).TIMES(1).RETURN(nullptr);
 
-  EXPECT_CALL(*Consumer, consume(_))
-      .Times(Exactly(1))
-      .WillOnce(Return(Message));
-  EXPECT_CALL(*Consumer, close()).Times(Exactly(1));
-
-  auto ConsumedMessage = StandIn.poll();
-  ASSERT_EQ(ConsumedMessage->first, PollStatus::Message);
+  REQUIRE_CALL(*Consumer, consume(_)).TIMES(1).RETURN(Message);
+  REQUIRE_CALL(*Consumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
+  // Put this in scope to call standin destructor
+  {
+    ConsumerStandIn Cons{Settings};
+    Cons.KafkaConsumer.reset(Consumer);
+    auto ConsumedMessage = Cons.poll();
+    ASSERT_EQ(ConsumedMessage->first, PollStatus::Message);
+  }
 }
