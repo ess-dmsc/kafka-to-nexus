@@ -524,7 +524,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   auto Now = c::duration_cast<c::milliseconds>(
       c::system_clock::now().time_since_epoch());
   TestStreamer->Options.StopTimestamp = Now;
-  TestStreamer->Options.AfterStopTime = c::milliseconds(2000);
+  TestStreamer->Options.AfterStopTime = c::milliseconds(20000);
   std::this_thread::sleep_for(c::milliseconds(5));
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
@@ -554,38 +554,4 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
-//
-//    TEST_F(StreamerProcessTimingTest,
-//           topicNotPresent) {
-//      FlatbufferReaderRegistry::Registrar<StreamerNoTimestampTestDummyReader>
-//              RegisterIt(ReaderKey);
-//      TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
-//      HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-//      ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-//      .RETURN(0);
-//      ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-//      .RETURN(0);
-//      FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-//      std::unordered_map<std::string, Source> SourceList;
-//      std::pair<std::string, Source> TempPair{SourceName,
-//      std::move(TestSource)};
-//      SourceList.insert(std::move(TempPair));
-//
-//      TestStreamer->setSources(SourceList);
-//      ConsumerEmptyStandIn *EmptyPollerConsumer =
-//              new ConsumerEmptyStandIn(BrokerSettings);
-//
-//      REQUIRE_CALL(*EmptyPollerConsumer, topicPresent(_))
-//              .RETURN(false)
-//              .TIMES(1);
-//      TestStreamer->ConsumerCreated =
-//              std::async(std::launch::async, [&EmptyPollerConsumer]() {
-//                  return std::pair<Status::StreamerStatus, ConsumerPtr>{
-//                          Status::StreamerStatus::OK, EmptyPollerConsumer};
-//              });
-//      DemuxTopic Demuxer("SomeTopicName");
-//      EXPECT_EQ(TestStreamer->createConsumer("SampleTopic",Options),
-//      FileWriter::Status::StreamerStatus::TOPIC_PARTITION_ERROR);
-//    }
-
 } // namespace FileWriter
