@@ -126,7 +126,7 @@ void Logger::dwlog_inner(int level, char const *file, int line,
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {
-    Log::Msg(level, lmsg);
+    Log::Message(level, lmsg);
   }
 #endif
   // fflush(log_file);

@@ -181,8 +181,9 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
-find_package(GTest)
+# use custom find module as cmake module doesn#t support gmock
+find_package(Googletest)
 
-if (${GTEST_FOUND})
+if (${have_gtest})
   add_subdirectory(tests)
 endif()

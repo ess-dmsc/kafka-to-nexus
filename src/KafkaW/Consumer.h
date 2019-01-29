@@ -45,11 +45,13 @@ public:
   queryTopicPartitions(const std::string &TopicName) override;
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() override;
 
+protected:
+  std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
+
 private:
   BrokerSettings ConsumerBrokerSettings;
   void queryMetadata();
   std::unique_ptr<RdKafka::Metadata> KafkaMetadata;
-  std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
   int id = 0;
   KafkaEventCb EventCallback;
   ConsumerRebalanceCb RebalanceCallback;

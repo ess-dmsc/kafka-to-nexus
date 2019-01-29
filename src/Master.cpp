@@ -34,8 +34,7 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
     auto TempTimeStamp = CommandMessage->MetaData.Timestamp;
-    command_handler.tryToHandle(std::move(CommandMessage),
-                                TempTimeStamp);
+    command_handler.tryToHandle(std::move(CommandMessage), TempTimeStamp);
   } else {
     command_handler.tryToHandle(std::move(CommandMessage));
   }
@@ -84,10 +83,10 @@ void Master::run() {
         getMainOpt().KafkaStatusURI.Topic);
     KafkaW::BrokerSettings BrokerSettings;
     BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
-    auto Producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
+    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
       StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
-          Producer, getMainOpt().KafkaStatusURI.Topic);
+          producer, getMainOpt().KafkaStatusURI.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }
@@ -95,8 +94,8 @@ void Master::run() {
 
   // Interpret commands given directly in the configuration file, useful
   // for testing.
-  for (auto const &Command : getMainOpt().CommandsFromJson) {
-    this->handle_command(Command);
+  for (auto const &cmd : getMainOpt().CommandsFromJson) {
+    this->handle_command(cmd);
   }
 
   Listener.start();
@@ -107,7 +106,7 @@ void Master::run() {
 
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
         Listener.poll();
-    if (KafkaMessage->first == KafkaW::PollStatus::Msg) {
+    if (KafkaMessage->first == KafkaW::PollStatus::Message) {
       LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
@@ -134,8 +133,8 @@ void Master::run() {
 }
 
 void Master::stopStreamMasters() {
-  for (auto &StreamMaster : StreamMasters) {
-    StreamMaster->stop();
+  for (auto &x : StreamMasters) {
+    x->stop();
   }
 }
 

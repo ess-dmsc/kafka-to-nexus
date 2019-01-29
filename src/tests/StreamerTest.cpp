@@ -23,7 +23,7 @@ generateKafkaMsg(char const *DataPtr, size_t const Size) {
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_CREATE_TIME,
       std::chrono::milliseconds(0), 0};
-  std::pair<PollStatus, FileWriter::Msg> NewPair(PollStatus::Msg,
+  std::pair<PollStatus, FileWriter::Msg> NewPair(PollStatus::Message,
                                                  std::move(Message));
   return std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
       std::move(NewPair));
@@ -155,7 +155,7 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EOP))
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -171,7 +171,7 @@ TEST_F(StreamerProcessTest, PollingError) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::Err))
+      .RETURN(generateEmptyKafkaMsg(PollStatus::Error))
       .TIMES(1);
   TestStreamer.ConsumerCreated =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -421,7 +421,7 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
           reinterpret_cast<const char *>(DataBuffer.c_str()),
           DataBuffer.size());
     }
-    return generateEmptyKafkaMsg(PollStatus::EOP);
+    return generateEmptyKafkaMsg(PollStatus::EndOfPartition);
   };
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(PollResult()).TIMES(2);
 
@@ -457,7 +457,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EOP))
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
   TestStreamer->ConsumerCreated =
@@ -491,7 +491,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EOP))
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
   TestStreamer->ConsumerCreated =
@@ -542,7 +542,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EOP))
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
   TestStreamer->ConsumerCreated =

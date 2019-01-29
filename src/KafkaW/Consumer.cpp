@@ -156,7 +156,7 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      DataToReturn->first = PollStatus::Msg;
+      DataToReturn->first = PollStatus::Message;
       // extract data
       DataToReturn->second = FileWriter::Msg::owned(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
@@ -171,10 +171,10 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
       return DataToReturn;
     }
   case RdKafka::ERR__PARTITION_EOF:
-    DataToReturn->first = PollStatus::EOP;
+    DataToReturn->first = PollStatus::EndOfPartition;
     return DataToReturn;
   default:
-    DataToReturn->first = PollStatus::Err;
+    DataToReturn->first = PollStatus::Error;
     return DataToReturn;
   }
 }

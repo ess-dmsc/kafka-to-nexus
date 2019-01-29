@@ -113,9 +113,10 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   // Consume message and exit if we are beyond a message timeout
-  auto KafkaMessage = Consumer->poll();
-  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
-      KafkaMessage->first == KafkaW::PollStatus::EOP) {
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
+      Consumer->poll();
+  if (KafkaMessage.get()->first == KafkaW::PollStatus::Empty ||
+      KafkaMessage.get()->first == KafkaW::PollStatus::EndOfPartition) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
       LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
@@ -127,7 +128,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     }
     return ProcessMessageResult::OK;
   }
-  if (KafkaMessage->first == KafkaW::PollStatus::Err) {
+  if (KafkaMessage.get()->first == KafkaW::PollStatus::Error) {
     return ProcessMessageResult::ERR;
   }
 
