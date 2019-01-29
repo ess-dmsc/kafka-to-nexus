@@ -13,12 +13,15 @@ public:
   void handle_command(std::string const &command) override {}
   void statistics() override{};
   std::string getFileWriterProcessId() const override { return ProcessId; }
-  bool RunLoopExited() override { return false; }
+  bool runLoopExited() override { return false; }
   MainOpt &getMainOpt() override { return MainOptInst; }
-  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override { return nullptr; }
+  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override {
+    return nullptr;
+  }
 
   void addStreamMaster(
-      std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>>) override {}
+      std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>>)
+      override {}
   void stopStreamMasters() override {}
   std::unique_ptr<FileWriter::StreamMaster<FileWriter::Streamer>> &
   getStreamMasterForJobID(std::string const &JobID_) override {

@@ -26,7 +26,7 @@ struct MainOpt {
   /// This `service_id` is announced in the status updates.
   /// It is by default a combination of hostname and process id.
   /// Can be set via command line or configuration file.
-  std::string service_id;
+  std::string ServiceID;
 
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamMaster.
@@ -36,7 +36,7 @@ struct MainOpt {
   std::string kafka_gelf;
 
   /// Can optionally use the `graylog_logger` library to log to this address.
-  std::string graylog_logger_address;
+  std::string GraylogLoggerAddress;
 
   /// Used for logging to file
   std::string LogFilename;
@@ -57,13 +57,13 @@ struct MainOpt {
   int parseJsonCommands();
 
   /// Kafka broker and topic where file writer commands are published.
-  uri::URI command_broker_uri{"//localhost:9092/kafka-to-nexus.command"};
+  uri::URI CommandBrokerURI{"//localhost:9092/kafka-to-nexus.command"};
 
   /// \brief Path for HDF output.
   ///
   /// This gets prepended to the HDF output filename given in the write
   /// commands.
-  std::string hdf_output_prefix;
+  std::string HDFOutputPrefix;
 
   /// Used for command line argument.
   bool ListWriterModules = false;
@@ -77,7 +77,7 @@ struct MainOpt {
   /// \brief std::chrono::milliseconds interval to publish status of `Master`
   /// (e.g.
   /// list of current file writings).
-  uint32_t status_master_interval = 2000;
+  uint32_t StatusMasterIntervalMS = 2000;
 
   // For testing.
   std::function<void(rd_kafka_topic_partition_list_s *)> on_rebalance_assign;

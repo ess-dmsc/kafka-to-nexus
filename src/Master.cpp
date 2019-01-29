@@ -33,8 +33,9 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
   CommandHandler command_handler(getMainOpt(), this);
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
+    auto TempTimeStamp = CommandMessage->MetaData.Timestamp;
     command_handler.tryToHandle(std::move(CommandMessage),
-                                CommandMessage->MetaData.Timestamp);
+                                TempTimeStamp);
   } else {
     command_handler.tryToHandle(std::move(CommandMessage));
   }
@@ -113,7 +114,7 @@ void Master::run() {
     }
     if (getMainOpt().ReportStatus &&
         Clock::now() - t_last_statistics >
-            std::chrono::milliseconds(getMainOpt().status_master_interval)) {
+            std::chrono::milliseconds(getMainOpt().StatusMasterIntervalMS)) {
       t_last_statistics = Clock::now();
       statistics();
     }
@@ -145,7 +146,7 @@ void Master::statistics() {
   using nlohmann::json;
   auto Status = json::object();
   Status["type"] = "filewriter_status_master";
-  Status["service_id"] = getMainOpt().service_id;
+  Status["service_id"] = getMainOpt().ServiceID;
   Status["files"] = json::object();
   for (auto &StreamMaster : StreamMasters) {
     auto FilewriterTaskID =

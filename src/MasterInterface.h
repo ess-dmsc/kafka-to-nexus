@@ -23,8 +23,7 @@ public:
   virtual void run() = 0;
 
   virtual void stop() = 0;
-  virtual void
-  handle_command_message(std::unique_ptr<Msg> msg) = 0;
+  virtual void handle_command_message(std::unique_ptr<Msg> msg) = 0;
   virtual void handle_command(std::string const &command) = 0;
   virtual void statistics() = 0;
 
@@ -33,7 +32,7 @@ public:
   /// \return The unique id.
   virtual std::string getFileWriterProcessId() const = 0;
 
-  virtual bool RunLoopExited() = 0;
+  virtual bool runLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;
   virtual std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() = 0;
   virtual void

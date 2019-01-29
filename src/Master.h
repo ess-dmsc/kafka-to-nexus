@@ -45,7 +45,7 @@ public:
   /// \return The unique id.
   std::string getFileWriterProcessId() const override;
 
-  bool RunLoopExited() override { return HasExitedRunLoop; };
+  bool runLoopExited() override { return HasExitedRunLoop; };
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
 
 private:

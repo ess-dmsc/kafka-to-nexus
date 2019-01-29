@@ -89,7 +89,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 
-  addOption(App, "--command-uri", MainOptions.command_broker_uri,
+  addOption(App, "--command-uri", MainOptions.CommandBrokerURI,
             "<//host[:port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
   addOption(App, "--status-uri", MainOptions.KafkaStatusURI,
@@ -98,13 +98,13 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
             "updates on");
   App.add_option("--kafka-gelf", MainOptions.kafka_gelf,
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
-  App.add_option("--graylog-logger-address", MainOptions.graylog_logger_address,
+  App.add_option("--graylog-logger-address", MainOptions.GraylogLoggerAddress,
                  "<host:port> Log to Graylog via graylog_logger library");
   App.add_option(
          "-v,--verbosity", log_level,
          "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)
       ->check(CLI::Range(1, 7));
-  App.add_option("--hdf-output-prefix", MainOptions.hdf_output_prefix,
+  App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
                  "commands");
@@ -113,10 +113,10 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   App.add_option("--teamid", MainOptions.teamid);
-  App.add_option("--service-id", MainOptions.service_id,
+  App.add_option("--service-id", MainOptions.ServiceID,
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
-  App.add_option("--status-master-interval", MainOptions.status_master_interval,
+  App.add_option("--status-master-interval", MainOptions.StatusMasterIntervalMS,
                  "Interval in milliseconds for status updates", true);
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"

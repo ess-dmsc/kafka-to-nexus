@@ -118,9 +118,7 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
 
 bool Consumer::topicPresent(const std::string &TopicName) {
   queryMetadata();
-  auto Topics = std::unique_ptr<const RdKafka::Metadata::TopicMetadataVector>(
-      KafkaMetadata->topics());
-  for (auto Topic : *Topics)
+  for (auto Topic : *KafkaMetadata->topics())
     if (Topic->topic() == TopicName)
       return true;
   return false;
