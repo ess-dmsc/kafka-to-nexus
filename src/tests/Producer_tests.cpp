@@ -1,65 +1,75 @@
-#include <memory>
-
 #include "../KafkaW/Producer.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
+#include <memory>
 #include <trompeloeil.hpp>
 
+// using namespace KafkaW;
 using trompeloeil::_;
-using namespace KafkaW;
 
 class ProducerTests : public ::testing::Test {
 protected:
   void SetUp() override {}
 };
 
-class ProducerStandIn : public Producer {
+class ProducerStandIn : public KafkaW::Producer {
 public:
-  explicit ProducerStandIn(const BrokerSettings &Settings)
-      : Producer(Settings) {}
+  explicit ProducerStandIn(const KafkaW::BrokerSettings &Settings)
+      : Producer(Settings){};
+  int outputQueueLength() override { return 0; }
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };
 
 class MockProducer : public RdKafka::Producer {
 public:
-  MAKE_CONST_MOCK0(name, const std::string());
-  MAKE_CONST_MOCK0(memberid, const std::string());
-  MAKE_MOCK1(poll, int(int));
-  MAKE_MOCK0(outq_len, int());
+  MAKE_CONST_MOCK0(name, const std::string(), override);
+  MAKE_CONST_MOCK0(memberid, const std::string(), override);
+  MAKE_MOCK1(poll, int(int), override);
+  MAKE_MOCK0(outq_len, int(), override);
   MAKE_MOCK4(metadata, RdKafka::ErrorCode(bool, const RdKafka::Topic *,
-                                          RdKafka::Metadata **, int));
+                                          RdKafka::Metadata **, int),
+             override);
   MAKE_MOCK1(pause,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
   MAKE_MOCK1(resume,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
   MAKE_MOCK5(query_watermark_offsets,
              RdKafka::ErrorCode(const std::string &, int32_t, int64_t *,
-                                int64_t *, int));
+                                int64_t *, int),
+             override);
   MAKE_MOCK4(get_watermark_offsets,
              RdKafka::ErrorCode(const std::string &, int32_t, int64_t *,
-                                int64_t *));
+                                int64_t *),
+             override);
   MAKE_MOCK2(offsetsForTimes,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int),
+             override);
   MAKE_MOCK1(get_partition_queue,
-             RdKafka::Queue *(const RdKafka::TopicPartition *));
-  MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *));
-  MAKE_MOCK0(yield, void());
-  MAKE_MOCK1(clusterid, const std::string(int));
-  MAKE_MOCK0(c_ptr, rd_kafka_s *());
+             RdKafka::Queue *(const RdKafka::TopicPartition *), override);
+  MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *), override);
+  MAKE_MOCK0(yield, void(), override);
+  MAKE_MOCK1(clusterid, const std::string(int), override);
+  MAKE_MOCK0(c_ptr, rd_kafka_s *(), override);
   MAKE_MOCK2(create, RdKafka::Producer *(RdKafka::Conf *, std::string));
   MAKE_MOCK7(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *,
-                                         size_t, const std::string *, void *));
+                                         size_t, const std::string *, void *),
+             override);
   MAKE_MOCK8(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *,
-                                         size_t, const void *, size_t, void *));
+                                         size_t, const void *, size_t, void *),
+             override);
   MAKE_MOCK9(produce,
              RdKafka::ErrorCode(const std::string, int32_t, int, void *, size_t,
-                                const void *, size_t, int64_t, void *));
+                                const void *, size_t, int64_t, void *),
+             override);
   MAKE_MOCK5(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t,
                                          const std::vector<char> *,
-                                         const std::vector<char> *, void *));
-  MAKE_MOCK1(flush, RdKafka::ErrorCode(int));
-  MAKE_MOCK1(controllerid, int32_t(int));
+                                         const std::vector<char> *, void *),
+             override);
+  MAKE_MOCK1(flush, RdKafka::ErrorCode(int), override);
+  MAKE_MOCK1(controllerid, int32_t(int), override);
 };
 
 class FakeTopic : public RdKafka::Topic {
@@ -77,31 +87,30 @@ public:
 };
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
-  BrokerSettings Settings{};
+  KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
   ProducerStandIn Producer2(Settings);
   ASSERT_EQ(-1, Producer1.ProducerID - Producer2.ProducerID);
 }
 
 TEST_F(ProducerTests, callPollTest) {
-  BrokerSettings Settings{};
+  KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
   Producer1.ProducerPtr = std::make_unique<MockProducer>();
   REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
                poll(_))
-      .TIMES(AT_LEAST(1))
-      .RETURN(_);
+      .TIMES(1)
+      .RETURN(0);
 
-  REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
-               outq_len())
-      .TIMES(AT_LEAST(1))
-      .RETURN(_);
+  ALLOW_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
+             outq_len())
+      .RETURN(0);
 
   Producer1.poll();
 }
 
 TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
-  BrokerSettings Settings{};
+  KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
   Producer1.ProducerPtr = std::make_unique<MockProducer>();
   REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
@@ -114,7 +123,7 @@ TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
 }
 
 TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
-  BrokerSettings Settings{};
+  KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
   Producer1.ProducerPtr = std::make_unique<MockProducer>();
   REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
