@@ -48,10 +48,10 @@ add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
 target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
 target_link_libraries(UnitTests
-        ${GTEST_BOTH_LIBRARIES}
         ${libraries_common}
         fmt::fmt
         )
+add_gtest_to_target(UnitTests)
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
