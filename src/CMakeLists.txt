@@ -88,6 +88,7 @@ set(kafka_to_nexus_SRC
         KafkaW/Consumer.cpp
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
+        KafkaW/ConsumerFactory.cpp
         helper.cpp
         logger.cpp
         URI.cpp
@@ -123,6 +124,7 @@ set(kafka_to_nexus_INC
         KafkaW/ProducerMessage.h
         KafkaW/KafkaEventCb.h
         KafkaW/MetadataException.h
+        KafkaW/ConsumerFactory.h
         logger.h
         MainOpt.h
         Master.h

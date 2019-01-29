@@ -32,7 +32,9 @@ public:
 
 class Consumer : public ConsumerInterface {
 public:
-  explicit Consumer(const BrokerSettings &opt);
+  Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
+           std::unique_ptr<RdKafka::Conf> RdConf,
+           std::unique_ptr<KafkaEventCb> EventCb);
   Consumer(Consumer &&) = delete;
   Consumer(Consumer const &) = delete;
   ~Consumer() override;
@@ -55,7 +57,6 @@ private:
   void updateMetadata();
   std::unique_ptr<RdKafka::Metadata> KafkaMetadata;
   int id = 0;
-  KafkaEventCb EventCallback;
-  ConsumerRebalanceCb RebalanceCallback;
+  std::unique_ptr<KafkaEventCb> EventCallback;
 };
 } // namespace KafkaW

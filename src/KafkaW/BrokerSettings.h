@@ -9,7 +9,7 @@ namespace KafkaW {
 /// Collect options used to connect to the broker.
 struct BrokerSettings {
   BrokerSettings() = default;
-  void apply(RdKafka::Conf *RdKafkaConfiguration);
+  void apply(RdKafka::Conf *RdKafkaConfiguration) const;
   std::string Address;
   int PollTimeoutMS = 100;
   int MetadataTimeoutMS = 1000;

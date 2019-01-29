@@ -1,3 +1,4 @@
+#include <KafkaW/ConsumerFactory.h>
 #include <memory>
 
 #include "CommandListener.h"
@@ -22,7 +23,7 @@ void CommandListener::start() {
       std::chrono::duration_cast<std::chrono::milliseconds>(
           std::chrono::steady_clock::now().time_since_epoch())
           .count());
-  consumer = std::make_unique<KafkaW::Consumer>(BrokerSettings);
+  consumer = KafkaW::createConsumer(BrokerSettings);
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
     consumer->addTopic(config.CommandBrokerURI.Topic);
   else {

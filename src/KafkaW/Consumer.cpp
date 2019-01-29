@@ -9,22 +9,11 @@ namespace KafkaW {
 
 static std::atomic<int> ConsumerInstanceCount;
 
-Consumer::Consumer(const BrokerSettings &BrokerSettings)
-    : ConsumerBrokerSettings(BrokerSettings) {
-  std::string ErrorString;
-  Conf = std::unique_ptr<RdKafka::Conf>(
-      RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
-  Conf->set("rebalance_cb", &RebalanceCallback, ErrorString);
-  Conf->set("event_cb", &EventCallback, ErrorString);
-  Conf->set("metadata.broker.list", ConsumerBrokerSettings.Address,
-            ErrorString);
-  ConsumerBrokerSettings.apply(Conf.get());
-  KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(
-      RdKafka::KafkaConsumer::create(Conf.get(), ErrorString));
-  if (KafkaConsumer == nullptr) {
-    LOG(Sev::Error, "can not create kafka consumer: {}", ErrorString);
-    throw std::runtime_error("can not create Kafka consumer");
-  }
+Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
+                   std::unique_ptr<RdKafka::Conf> RdConf,
+                   std::unique_ptr<KafkaEventCb> EventCb)
+    : KafkaConsumer(std::move(RdConsumer)), Conf(std::move(RdConf)),
+      EventCallback(std::move(EventCb)) {
   id = ConsumerInstanceCount++;
 }
 
@@ -51,8 +40,8 @@ void Consumer::addTopic(const std::string &Topic) {
   }
   RdKafka::ErrorCode ERR = KafkaConsumer->assign(TopicPartitionsWithOffsets);
   if (ERR != 0) {
-    LOG(Sev::Error, "Could not subscribe to {}", Topic);
-    throw std::runtime_error(fmt::format("Could not subscribe to {}", Topic));
+    LOG(Sev::Error, "Could not assign to {}", Topic);
+    throw std::runtime_error(fmt::format("Could not assign to {}", Topic));
   }
   std::for_each(TopicPartitionsWithOffsets.cbegin(),
                 TopicPartitionsWithOffsets.cend(),

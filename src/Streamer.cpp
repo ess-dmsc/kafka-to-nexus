@@ -1,4 +1,5 @@
 #include "Streamer.h"
+#include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/PollStatus.h"
 #include "helper.h"
 #include <ciso646>
@@ -50,7 +51,7 @@ FileWriter::createConsumer(std::string const &TopicName,
   LOG(Sev::Debug, "Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer =
-        std::make_unique<KafkaW::Consumer>(Options.BrokerSettings);
+        KafkaW::createConsumer(Options.BrokerSettings);
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
                                                    Options.BeforeStartTime);
