@@ -12,33 +12,23 @@ namespace KafkaW {
 
 class ProducerTopic;
 
-class ProducerInterface {
-public:
-  ProducerInterface() = default;
-  virtual ~ProducerInterface() = default;
-  virtual void poll() = 0;
-  virtual int outputQueueLength() = 0;
-  virtual RdKafka::Producer *getRdKafkaPtr() const = 0;
-  ProducerStats Stats;
-};
-
-class Producer : public ProducerInterface {
+class Producer {
 public:
   /// The constructor.
   ///
   /// \param Settings_ The BrokerSettings.
   explicit Producer(BrokerSettings Settings);
-  ~Producer() override;
+  ~Producer();
 
   /// Polls Kafka for events.
-  void poll() override;
+  void poll();
 
   /// Gets the number of messages not send.
   ///
   /// \return The number of messages.
-  int outputQueueLength() override;
+  int outputQueueLength();
 
-  RdKafka::Producer *getRdKafkaPtr() const override;
+  RdKafka::Producer *getRdKafkaPtr() const;
 
   /// Send a message to Kafka.
   ///
@@ -57,6 +47,7 @@ public:
                              size_t KeySize, void *OpaqueMessage);
   BrokerSettings ProducerBrokerSettings;
   std::atomic<uint64_t> TotalMessagesProduced{0};
+  ProducerStats Stats;
 
 protected:
   int ProducerID = 0;
