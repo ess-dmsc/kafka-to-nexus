@@ -96,21 +96,27 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
   }
 }
 
+const RdKafka::TopicMetadata *Consumer::findTopic(const std::string &Topic) {
+  updateMetadata();
+  auto Topics = KafkaMetadata->topics();
+  auto Iterator =
+      std::find_if(Topics->cbegin(), Topics->cend(),
+                   [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
+                     return TopicMetadata->topic() == Topic;
+                   });
+  if (Iterator == Topics->end()) {
+    throw std::runtime_error("Config topic does not exist");
+  }
+  return *Iterator;
+}
+
 std::vector<int32_t>
 Consumer::queryTopicPartitions(const std::string &TopicName) {
-  queryMetadata();
-  auto Topics = std::unique_ptr<const RdKafka::Metadata::TopicMetadataVector>(
-      KafkaMetadata->topics());
-  auto Iterator = std::find_if(Topics->cbegin(), Topics->cend(),
-                               [TopicName](const RdKafka::TopicMetadata *tpc) {
-                                 return tpc->topic() == TopicName;
-                               });
-  auto MatchedTopic = *Iterator;
-  if (MatchedTopic == nullptr)
-    throw MetadataException(fmt::format("No such topic: {}", TopicName));
+  auto matchedTopic = findTopic(TopicName);
   std::vector<int32_t> TopicPartitionNumbers;
-
-  for (auto &Partition : *MatchedTopic->partitions()) {
+  const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
+      matchedTopic->partitions();
+  for (const auto &Partition : *PartitionMetadata) {
     TopicPartitionNumbers.push_back(Partition->id());
   }
   sort(TopicPartitionNumbers.begin(), TopicPartitionNumbers.end());
@@ -118,7 +124,7 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
-  queryMetadata();
+  updateMetadata();
   for (auto Topic : *KafkaMetadata->topics())
     if (Topic->topic() == TopicName)
       return true;
@@ -138,14 +144,14 @@ void Consumer::dumpCurrentSubscription() {
     LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
 }
 
-void Consumer::queryMetadata() {
-  RdKafka::Metadata *MetadataRawPtr(nullptr);
-  KafkaConsumer->metadata(true, nullptr, &MetadataRawPtr,
-                          ConsumerBrokerSettings.MetadataTimeoutMS);
-  KafkaMetadata = std::unique_ptr<RdKafka::Metadata>(MetadataRawPtr);
-  if (KafkaMetadata == nullptr) {
-    throw MetadataException("Failed to query metadata from broker!");
+void Consumer::updateMetadata() {
+  RdKafka::Metadata *MetadataPtr = nullptr;
+  auto RetCode = KafkaConsumer->metadata(true, nullptr, &MetadataPtr, 5000);
+  if (RetCode != RdKafka::ERR_NO_ERROR) {
+    throw MetadataException(
+        "Consumer::updateMetadata() - error while retrieving metadata.");
   }
+  KafkaMetadata = std::unique_ptr<RdKafka::Metadata>(MetadataPtr);
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {

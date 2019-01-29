@@ -49,9 +49,10 @@ protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 
 private:
+  const RdKafka::TopicMetadata *findTopic(const std::string &Topic);
   std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings ConsumerBrokerSettings;
-  void queryMetadata();
+  void updateMetadata();
   std::unique_ptr<RdKafka::Metadata> KafkaMetadata;
   int id = 0;
   KafkaEventCb EventCallback;
