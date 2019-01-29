@@ -14,10 +14,9 @@ public:
   explicit ProducerDeliveryCb(ProducerStats &Stats) : Stats(Stats){};
 
   void dr_cb(RdKafka::Message &Message) override {
-    if (Message.err()) {
-      LOG(Sev::Error, "ERROR on delivery, topic {}, {} [{}] {}",
-          Message.topic_name(), Message.err(), Message.errstr(),
-          RdKafka::err2str(Message.err()));
+    if (Message.err() != RdKafka::ERR_NO_ERROR) {
+      LOG(Sev::Error, "ERROR on delivery, topic {}, {} [{}]",
+          Message.topic_name(), Message.err(), Message.errstr());
       ++Stats.produce_cb_fail;
     } else {
       ++Stats.produce_cb;

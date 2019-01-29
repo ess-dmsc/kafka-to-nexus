@@ -50,8 +50,10 @@ TEST_F(ProducerDeliveryCbTests,
   MockMessage Message;
   auto *TempPtr = reinterpret_cast<RdKafka::Message *>(&Message);
   REQUIRE_CALL(Message, err())
-      .TIMES(1)
+      .TIMES(2)
       .RETURN(RdKafka::ErrorCode::ERR__BAD_MSG);
+  REQUIRE_CALL(Message, topic_name()).TIMES(1).RETURN("");
+  REQUIRE_CALL(Message, errstr()).TIMES(1).RETURN("");
   REQUIRE_CALL(Message, msg_opaque())
       .TIMES(1)
       .RETURN(reinterpret_cast<void *>(FakeMessage));
