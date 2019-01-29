@@ -16,7 +16,9 @@ class ProducerStandIn : public KafkaW::Producer {
 public:
   explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
       : Producer(Settings){};
-  int outputQueueLength() override { return KafkaW::Producer::outputQueueLength(); }
+  int outputQueueLength() override {
+    return KafkaW::Producer::outputQueueLength();
+  }
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };
@@ -98,41 +100,56 @@ TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
 TEST_F(ProducerTests, callPollTest) {
   KafkaW::BrokerSettings Settings{};
   auto TempProducerPtr = std::make_unique<MockProducer>();
-  REQUIRE_CALL(*TempProducerPtr,
-               poll(_))
-      .TIMES(1).RETURN(0);
-  
-  REQUIRE_CALL(*TempProducerPtr,
-             outq_len()).TIMES(2).RETURN(0);
+  REQUIRE_CALL(*TempProducerPtr, poll(_)).TIMES(1).RETURN(0);
+
+  REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(2).RETURN(0);
+  // Needs to be put in a scope here so we can check that outq_len is called on
+  // destruction
   {
-  ProducerStandIn Producer1(Settings);
-  Producer1.ProducerPtr = std::move(TempProducerPtr);
-  Producer1.poll();
+    ProducerStandIn Producer1(Settings);
+    Producer1.ProducerPtr = std::move(TempProducerPtr);
+    Producer1.poll();
   }
 }
 
 TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
   KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
-  Producer1.ProducerPtr = std::make_unique<MockProducer>();
-  REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
-               produce(_, _, _, _, _, _, _, _))
+  auto TempProducerPtr = std::make_unique<MockProducer>();
+  REQUIRE_CALL(*TempProducerPtr, produce(_, _, _, _, _, _, _, _))
       .TIMES(1)
       .RETURN(RdKafka::ERR_NO_ERROR);
-  ASSERT_EQ(
-      Producer1.produce(new FakeTopic, 0, 0, nullptr, 0, nullptr, 0, nullptr),
-      RdKafka::ErrorCode::ERR_NO_ERROR);
+
+  REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(1).RETURN(0);
+
+  // Needs to be put in a scope here so we can check that outq_len is called on
+  // destruction
+  {
+    ProducerStandIn Producer1(Settings);
+    Producer1.ProducerPtr = std::move(TempProducerPtr);
+    ASSERT_EQ(
+        Producer1.produce(new FakeTopic, 0, 0, nullptr, 0, nullptr, 0, nullptr),
+        RdKafka::ErrorCode::ERR_NO_ERROR);
+  }
 }
 
 TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
   KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
-  Producer1.ProducerPtr = std::make_unique<MockProducer>();
-  REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
-               produce(_, _, _, _, _, _, _, _))
+  auto TempProducerPtr = std::make_unique<MockProducer>();
+  REQUIRE_CALL(*TempProducerPtr, produce(_, _, _, _, _, _, _, _))
       .TIMES(1)
       .RETURN(RdKafka::ERR__BAD_MSG);
-  ASSERT_EQ(
-      Producer1.produce(new FakeTopic, 0, 0, nullptr, 0, nullptr, 0, nullptr),
-      RdKafka::ErrorCode::ERR__BAD_MSG);
+
+  REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(1).RETURN(0);
+
+  // Needs to be put in a scope here so we can check that outq_len is called on
+  // destruction
+  {
+    ProducerStandIn Producer1(Settings);
+    Producer1.ProducerPtr = std::move(TempProducerPtr);
+    ASSERT_EQ(
+        Producer1.produce(new FakeTopic, 0, 0, nullptr, 0, nullptr, 0, nullptr),
+        RdKafka::ErrorCode::ERR__BAD_MSG);
+  }
 }
