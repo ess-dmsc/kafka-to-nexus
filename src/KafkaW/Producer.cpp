@@ -24,8 +24,8 @@ Producer::~Producer() {
   }
 }
 
-Producer::Producer(BrokerSettings Settings)
-    : ProducerBrokerSettings(std::move(Settings)) {
+Producer::Producer(BrokerSettings &Settings)
+    : ProducerBrokerSettings(Settings) {
   ProducerID = ProducerInstanceCount++;
 
   std::string ErrorString;
@@ -44,7 +44,7 @@ Producer::Producer(BrokerSettings Settings)
   Conf->set("metadata.broker.list", ProducerBrokerSettings.Address,
             ErrorString);
   ProducerPtr.reset(RdKafka::Producer::create(Conf.get(), ErrorString));
-  if (!ProducerPtr) {
+  if (ProducerPtr == nullptr) {
     LOG(Sev::Error, "can not create kafka handle: {}", ErrorString);
     throw std::runtime_error("can not create Kafka handle");
   }
@@ -55,12 +55,13 @@ Producer::Producer(BrokerSettings Settings)
 
 void Producer::poll() {
   auto EventsHandled = ProducerPtr->poll(ProducerBrokerSettings.PollTimeoutMS);
+  auto OutputQueueLength = outputQueueLength();
   LOG(Sev::Debug,
       "IID: {}  broker: {}  rd_kafka_poll()  served: {}  outq_len: {}",
       ProducerID, ProducerBrokerSettings.Address, EventsHandled,
-      outputQueueLength());
+      OutputQueueLength);
   Stats.poll_served += EventsHandled;
-  Stats.out_queue = outputQueueLength();
+  Stats.out_queue = OutputQueueLength;
 }
 
 RdKafka::Producer *Producer::getRdKafkaPtr() const {

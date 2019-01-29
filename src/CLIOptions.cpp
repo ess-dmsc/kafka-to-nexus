@@ -92,8 +92,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   addOption(App, "--command-uri", MainOptions.command_broker_uri,
             "<//host[:port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
-  addOption(App, "--status-uri", MainOptions.kafka_status_uri,
-            MainOptions.do_kafka_status,
+  addOption(App, "--status-uri", MainOptions.KafkaStatusURI,
+            MainOptions.ReportStatus,
             "<//host[:port][/topic]> Kafka broker/topic to publish status "
             "updates on");
   App.add_option("--kafka-gelf", MainOptions.kafka_gelf,

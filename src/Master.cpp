@@ -13,7 +13,7 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
+Master::Master(MainOpt &Config) : Listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -76,16 +76,16 @@ struct OnScopeExit {
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
   // Set up connection to the Kafka status topic if desired.
-  if (getMainOpt().do_kafka_status) {
+  if (getMainOpt().ReportStatus) {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
-        getMainOpt().kafka_status_uri.HostPort,
-        getMainOpt().kafka_status_uri.Topic);
+        getMainOpt().KafkaStatusURI.HostPort,
+        getMainOpt().KafkaStatusURI.Topic);
     KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().kafka_status_uri.HostPort;
+    BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
-      status_producer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().kafka_status_uri.Topic);
+      StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
+          producer, getMainOpt().KafkaStatusURI.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
       LOG(Sev::Error, "Can not create Kafka status producer: {}", e.what());
     }
@@ -97,20 +97,20 @@ void Master::run() {
     this->handle_command(cmd);
   }
 
-  command_listener.start();
+    Listener.start();
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
-  while (do_run) {
+  while (Running) {
     LOG(Sev::Debug, "Master poll");
 
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
-        command_listener.poll();
-    if (KafkaMessage.get()->first == KafkaW::PollStatus::Message) {
+      Listener.poll();
+    if (KafkaMessage->first == KafkaW::PollStatus::Message) {
       LOG(Sev::Debug, "Handle a command");
       this->handle_command_message(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
-    if (getMainOpt().do_kafka_status &&
+    if (getMainOpt().ReportStatus &&
         Clock::now() - t_last_statistics >
             std::chrono::milliseconds(getMainOpt().status_master_interval)) {
       t_last_statistics = Clock::now();
@@ -138,7 +138,7 @@ void Master::stopStreamMasters() {
 }
 
 void Master::statistics() {
-  if (!status_producer) {
+  if (!StatusProducer) {
     return;
   }
   using nlohmann::json;
@@ -153,10 +153,10 @@ void Master::statistics() {
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
-  status_producer->produce((unsigned char *)Buffer.data(), Buffer.size());
+    StatusProducer->produce((unsigned char *)Buffer.data(), Buffer.size());
 }
 
-void Master::stop() { do_run = false; }
+void Master::stop() { Running = false; }
 
 std::string Master::getFileWriterProcessId() const {
   return FileWriterProcessId;
@@ -165,7 +165,7 @@ std::string Master::getFileWriterProcessId() const {
 MainOpt &Master::getMainOpt() { return MainConfig; }
 
 std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
-  return status_producer;
+  return StatusProducer;
 }
 
 } // namespace FileWriter

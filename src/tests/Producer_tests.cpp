@@ -14,7 +14,7 @@ protected:
 
 class ProducerStandIn : public KafkaW::Producer {
 public:
-  explicit ProducerStandIn(const KafkaW::BrokerSettings &Settings)
+  explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
       : Producer(Settings){};
   using Producer::ProducerID;
   using Producer::ProducerPtr;
@@ -71,6 +71,8 @@ public:
   MAKE_MOCK1(controllerid, int32_t(int), override);
 };
 
+// Don't really care if anything gets called with this as it's RdKafka's
+// responsibility
 class FakeTopic : public RdKafka::Topic {
 public:
   FakeTopic() = default;
@@ -106,7 +108,7 @@ TEST_F(ProducerTests, callPollTest) {
       .RETURN(0);
 
   Producer1.poll();
-  ASSERT_EQ(Producer1.Stats.poll_served.load(), uint64_t(1));
+  ASSERT_EQ(Producer1.Stats.poll_served, uint64_t(1));
 }
 
 TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
