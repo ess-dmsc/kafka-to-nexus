@@ -49,6 +49,7 @@ protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 
 private:
+  std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings ConsumerBrokerSettings;
   void queryMetadata();
   std::unique_ptr<RdKafka::Metadata> KafkaMetadata;
