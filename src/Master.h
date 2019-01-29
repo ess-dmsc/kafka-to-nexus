@@ -43,7 +43,7 @@ public:
   /// \brief The unique identifier for this file writer on the network.
   ///
   /// \return The unique id.
-  std::string file_writer_process_id() const override;
+  std::string getFileWriterProcessId() const override;
 
   bool RunLoopExited() override { return HasExitedRunLoop; };
   // std::function<void(void)> cb_on_filewriter_new;
@@ -54,7 +54,7 @@ private:
   std::atomic<bool> do_run{true};
   std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
-  std::string file_writer_process_id_;
+  std::string FileWriterProcessId;
   MainOpt &MainConfig;
 };
 } // namespace FileWriter

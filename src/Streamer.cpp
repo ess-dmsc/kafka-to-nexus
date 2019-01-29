@@ -23,8 +23,8 @@ bool stopTimeElapsed(std::uint64_t MessageTimestamp,
 
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
-                               const FileWriter::StreamerOptions &Opts)
-    : Options(Opts) {
+                               FileWriter::StreamerOptions Opts)
+    : Options(std::move(Opts)) {
 
   if (TopicName.empty() || Broker.empty()) {
     throw std::runtime_error("Missing broker or topic");
@@ -135,12 +135,12 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message = std::make_unique<FlatbufferMessage>(
-        KafkaMessage.get()->second.data(), KafkaMessage.get()->second.size());
+    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
+                                                  KafkaMessage->second.size());
   } catch (std::runtime_error &Error) {
     LOG(Sev::Warning, "Message that is not a valid flatbuffer encountered "
                       "(msg. offset: {}). The error was: {}",
-        KafkaMessage.get()->second.MetaData.Offset, Error.what());
+        KafkaMessage->second.MetaData.Offset, Error.what());
     return ProcessMessageResult::ERR;
   }
 

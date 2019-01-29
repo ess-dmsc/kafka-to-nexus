@@ -3,7 +3,6 @@
 #include <chrono>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
-#include <librdkafka/rdkafka.h>
 #include <schemas/f142/FlatbufferReader.h>
 #include <trompeloeil.hpp>
 
@@ -40,7 +39,7 @@ generateEmptyKafkaMsg(PollStatus Status) {
 
 class StreamerInitTest : public ::testing::Test {
 protected:
-  void SetUp() override { Options.ConsumerSettings.MetadataTimeoutMS = 10; }
+  void SetUp() override { Options.BrokerSettings.MetadataTimeoutMS = 10; }
   StreamerOptions Options;
 };
 
@@ -275,8 +274,8 @@ protected:
     std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
         FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    Options.ConsumerSettings.OffsetsForTimesTimeoutMS = 10;
-    Options.ConsumerSettings.MetadataTimeoutMS = 10;
+    Options.BrokerSettings.OffsetsForTimesTimeoutMS = 10;
+    Options.BrokerSettings.MetadataTimeoutMS = 10;
     TestStreamer = std::make_unique<StreamerStandIn>(Options);
   }
   std::string ReaderKey{"test"};

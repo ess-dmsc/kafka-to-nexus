@@ -38,7 +38,7 @@ private:
   std::atomic<bool> do_run_kafka{false};
   std::atomic<bool> do_use_graylog_logger{false};
   std::shared_ptr<KafkaW::Producer> producer;
-  std::unique_ptr<KafkaW::Producer::Topic> topic;
+  std::unique_ptr<KafkaW::ProducerTopic> topic;
   std::thread thread_poll;
 };
 
@@ -65,7 +65,7 @@ void Logger::log_kafka_gelf_start(std::string const &Address,
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = Address;
   //  producer.reset(new KafkaW::Producer(BrokerSettings));
-  topic.reset(new KafkaW::Producer::Topic(producer, TopicName));
+  topic.reset(new KafkaW::ProducerTopic(producer, TopicName));
   topic->enableCopy();
   thread_poll = std::thread([this] {
     while (do_run_kafka.load()) {

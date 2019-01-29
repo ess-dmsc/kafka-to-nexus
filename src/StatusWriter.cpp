@@ -4,7 +4,7 @@
 namespace FileWriter {
 namespace Status {
 
-nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
+nlohmann::json StreamMasterToJson(StreamMasterInfo const &Information) {
   nlohmann::json Value = {{"state", Err2Str(Information.StreamMasterStatus)},
                           {"messages", Information.getMessages()},
                           {"Mbytes", Information.getMbytes()},
@@ -13,7 +13,7 @@ nlohmann::json StreamMasterToJson(StreamMasterInfo &Information) {
   return Value;
 }
 
-nlohmann::json StreamerToJson(MessageInfo &Information) {
+nlohmann::json StreamerToJson(MessageInfo const &Information) {
   std::pair<double, double> Size = Information.messageSize();
 
   nlohmann::json Status;

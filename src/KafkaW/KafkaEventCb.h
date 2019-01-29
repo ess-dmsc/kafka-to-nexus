@@ -5,28 +5,28 @@
 namespace KafkaW {
 class KafkaEventCb : public RdKafka::EventCb {
 public:
-  void event_cb(RdKafka::Event &Event) override {
-    switch (Event.type()) {
+  void event_cb(RdKafka::Event &event) override {
+    switch (event.type()) {
     case RdKafka::Event::EVENT_ERROR:
-      LOG(Event.severity(),
+      LOG(event.severity(),
           "Kafka EVENT_ERROR id: {}  broker: {}  errno: {}  errorname: {}  "
           "errorstring: {}",
-          Event.broker_id(), Event.broker_name(), Event.type(),
-          RdKafka::err2str(Event.err()), Event.str());
+          event.broker_id(), event.broker_name(), event.type(),
+          RdKafka::err2str(event.err()), event.str());
       break;
     case RdKafka::Event::EVENT_STATS:
-      LOG(Event.severity(), "Kafka Stats id: {} broker: {} message: {}",
-          Event.broker_id(), Event.broker_name(), Event.str());
+      LOG(event.severity(), "Kafka Stats id: {} broker: {} message: {}",
+          event.broker_id(), event.broker_name(), event.str());
       break;
     case RdKafka::Event::EVENT_LOG:
-      LOG(Event.severity(),
+      LOG(event.severity(),
           "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
-          Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
-          Event.str());
+          event.broker_id(), event.broker_name(), event.severity(), event.fac(),
+          event.str());
       break;
     default:
-      LOG(Event.severity(), "Kafka Event {} ({}): {}", Event.type(),
-          RdKafka::err2str(Event.err()), Event.str());
+      LOG(event.severity(), "Kafka Event {} ({}): {}", event.type(),
+          RdKafka::err2str(event.err()), event.str());
       break;
     }
   };

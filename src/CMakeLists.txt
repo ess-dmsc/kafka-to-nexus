@@ -85,8 +85,6 @@ set(kafka_to_nexus_SRC
         HDFFile.cpp
         HDFWriterModule.cpp
         KafkaW/BrokerSettings.cpp
-        KafkaW/TopicSettings.cpp
-        KafkaW/KafkaW.cpp
         KafkaW/Consumer.cpp
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
@@ -116,12 +114,15 @@ set(kafka_to_nexus_INC
         json.h
         kafka-to-nexus.h
         KafkaW/BrokerSettings.h
-        KafkaW/ConsumerSettings.h
-        KafkaW/TopicSettings.h
         KafkaW/KafkaW.h
         KafkaW/Consumer.h
         KafkaW/Producer.h
         KafkaW/ProducerTopic.h
+        KafkaW/PollStatus.h
+        KafkaW/ProducerStats.h
+        KafkaW/ProducerMessage.h
+        KafkaW/KafkaEventCb.h
+        KafkaW/MetadataException.h
         logger.h
         MainOpt.h
         Master.h
@@ -138,7 +139,7 @@ set(kafka_to_nexus_INC
         URI.h
         CLIOptions.h
         NeXusDataset.h
-        KafkaW/PollStatus.h KafkaW/ProducerStats.h KafkaW/ProducerMessage.h KafkaW/KafkaEventCb.h)
+        )
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

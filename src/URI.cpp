@@ -19,9 +19,11 @@ void URI::parse(const std::string &URIString) {
     throw std::runtime_error("Host not found when trying to parse URI");
   }
   HostPort = Matches.str(3);
-  if (Matches[7].matched)
+  if (Matches[7].matched) {
     Port = static_cast<uint32_t>(std::stoi(Matches.str(7)));
-  if (Matches[8].matched)
+  }
+  if (Matches[8].matched) {
     Topic = Matches.str(8);
+  }
 }
 } // namespace uri

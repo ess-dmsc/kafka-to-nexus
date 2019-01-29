@@ -29,6 +29,8 @@ set(UnitTests_SRC
         EventHistogramWriterTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
+        Producer_tests.cpp
+        ProducerDeliveryCb_tests.cpp
         )
 
 set(UnitTests_INC

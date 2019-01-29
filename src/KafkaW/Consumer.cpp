@@ -10,7 +10,7 @@ namespace KafkaW {
 static std::atomic<int> ConsumerInstanceCount;
 
 Consumer::Consumer(const BrokerSettings &BrokerSettings)
-    : ConsumerBrokerSettings(std::move(BrokerSettings)) {
+    : ConsumerBrokerSettings(BrokerSettings) {
   std::string ErrorString;
   auto Configuration = RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL);
   Configuration->set("rebalance_cb", &RebalanceCallback, ErrorString);
@@ -18,9 +18,9 @@ Consumer::Consumer(const BrokerSettings &BrokerSettings)
   Configuration->set("metadata.broker.list", ConsumerBrokerSettings.Address,
                      ErrorString);
   ConsumerBrokerSettings.apply(Configuration);
-  this->KafkaConsumer = std::shared_ptr<RdKafka::KafkaConsumer>(
+  KafkaConsumer = std::unique_ptr<RdKafka::KafkaConsumer>(
       RdKafka::KafkaConsumer::create(Configuration, ErrorString));
-  if (!this->KafkaConsumer) {
+  if (KafkaConsumer == nullptr) {
     LOG(Sev::Error, "can not create kafka consumer: {}", ErrorString);
     throw std::runtime_error("can not create Kafka consumer");
   }
@@ -29,22 +29,21 @@ Consumer::Consumer(const BrokerSettings &BrokerSettings)
 
 Consumer::~Consumer() {
   LOG(Sev::Debug, "~Consumer()");
-  if (KafkaConsumer) {
+  if (KafkaConsumer != nullptr) {
     LOG(Sev::Debug, "Close the consumer");
-    this->KafkaConsumer->close();
+    KafkaConsumer->close();
     RdKafka::wait_destroyed(5000);
   }
 }
 
-void Consumer::addTopic(const std::string Topic) {
+void Consumer::addTopic(const std::string &Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets;
   auto PartitionIDs = queryTopicPartitions(Topic);
-  for (unsigned long i = 0; i < PartitionIDs.size(); i++) {
-    auto TopicPartition =
-        RdKafka::TopicPartition::create(Topic, PartitionIDs[i]);
+  for (int PartitionID : PartitionIDs) {
+    auto TopicPartition = RdKafka::TopicPartition::create(Topic, PartitionID);
     int64_t Low, High;
-    KafkaConsumer->query_watermark_offsets(Topic, PartitionIDs[i], &Low, &High,
+    KafkaConsumer->query_watermark_offsets(Topic, PartitionID, &Low, &High,
                                            100);
     TopicPartition->set_offset(High);
     TopicPartitionsWithOffsets.push_back(TopicPartition);
@@ -59,7 +58,7 @@ void Consumer::addTopic(const std::string Topic) {
                 [](RdKafka::TopicPartition *Partition) { delete Partition; });
 }
 
-void Consumer::addTopicAtTimestamp(std::string const Topic,
+void Consumer::addTopicAtTimestamp(std::string const &Topic,
                                    std::chrono::milliseconds const StartTime) {
   LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
       Topic, StartTime.count());
@@ -98,8 +97,9 @@ void Consumer::addTopicAtTimestamp(std::string const Topic,
 
 std::vector<int32_t>
 Consumer::queryTopicPartitions(const std::string &TopicName) {
-  auto Metadata = queryMetadata();
-  auto Topics = Metadata->topics();
+  queryMetadata();
+  auto Topics = std::unique_ptr<const RdKafka::Metadata::TopicMetadataVector>(
+      KafkaMetadata->topics());
   auto Iterator = std::find_if(Topics->cbegin(), Topics->cend(),
                                [TopicName](const RdKafka::TopicMetadata *tpc) {
                                  return tpc->topic() == TopicName;
@@ -117,9 +117,9 @@ Consumer::queryTopicPartitions(const std::string &TopicName) {
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
-
-  auto Metadata = queryMetadata();
-  auto Topics = Metadata->topics();
+  queryMetadata();
+  auto Topics = std::unique_ptr<const RdKafka::Metadata::TopicMetadataVector>(
+      KafkaMetadata->topics());
   for (auto Topic : *Topics)
     if (Topic->topic() == TopicName)
       return true;
@@ -139,54 +139,44 @@ void Consumer::dumpCurrentSubscription() {
     LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
 }
 
-std::unique_ptr<RdKafka::Metadata> Consumer::queryMetadata() {
+void Consumer::queryMetadata() {
   RdKafka::Metadata *MetadataRawPtr(nullptr);
   KafkaConsumer->metadata(true, nullptr, &MetadataRawPtr,
                           ConsumerBrokerSettings.MetadataTimeoutMS);
-  std::unique_ptr<RdKafka::Metadata> Metadata(MetadataRawPtr);
-  if (Metadata == nullptr) {
+  KafkaMetadata = std::unique_ptr<RdKafka::Metadata>(MetadataRawPtr);
+  if (KafkaMetadata == nullptr) {
     throw MetadataException("Failed to query metadata from broker!");
   }
-  return Metadata;
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
-  using std::make_unique;
-
   auto KafkaMsg = std::unique_ptr<RdKafka::Message>(
       KafkaConsumer->consume(ConsumerBrokerSettings.PollTimeoutMS));
-
-  PollStatus Status;
-  FileWriter::Msg KafkaMessage;
-
-  std::pair<PollStatus, FileWriter::Msg> NewPair(Status,
-                                                 std::move(KafkaMessage));
-  std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> DataToReturn;
-  DataToReturn = std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
-      std::move(NewPair));
+  auto DataToReturn =
+      std::make_unique<std::pair<PollStatus, FileWriter::Msg>>();
 
   switch (KafkaMsg->err()) {
   case RdKafka::ERR_NO_ERROR:
     if (KafkaMsg->len() > 0) {
-      DataToReturn.get()->first = PollStatus::Message;
+      DataToReturn->first = PollStatus::Message;
       // extract data
-      DataToReturn.get()->second = FileWriter::Msg::owned(
+      DataToReturn->second = FileWriter::Msg::owned(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
-      DataToReturn.get()->second.MetaData = FileWriter::MessageMetaData{
+      DataToReturn->second.MetaData = FileWriter::MessageMetaData{
           KafkaMsg->timestamp().type,
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
           KafkaMsg->offset()};
 
       return DataToReturn;
     } else {
-      DataToReturn.get()->first = PollStatus::Empty;
+      DataToReturn->first = PollStatus::Empty;
       return DataToReturn;
     }
   case RdKafka::ERR__PARTITION_EOF:
-    DataToReturn.get()->first = PollStatus::EndOfPartition;
+    DataToReturn->first = PollStatus::EndOfPartition;
     return DataToReturn;
   default:
-    DataToReturn.get()->first = PollStatus::Error;
+    DataToReturn->first = PollStatus::Error;
     return DataToReturn;
   }
 }

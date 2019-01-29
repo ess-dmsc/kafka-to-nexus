@@ -37,7 +37,7 @@ public:
   ///
   /// \throws     std::runtime_error if failed.
   Streamer(const std::string &Broker, const std::string &TopicName,
-           const FileWriter::StreamerOptions &Opts);
+           FileWriter::StreamerOptions Opts);
   Streamer(const Streamer &) = delete;
   Streamer(Streamer &&other) = default;
 

@@ -1,4 +1,5 @@
 #include "ProducerTopic.h"
+#include <helper.h>
 #include <vector>
 
 namespace KafkaW {
@@ -9,8 +10,8 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
 
   std::string ErrStr;
   auto Config = RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC);
-  RdKafkaTopic = RdKafka::Topic::create(KafkaProducer->getRdKafkaPtr(), Name,
-                                        Config, ErrStr);
+  RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
+      KafkaProducer->getRdKafkaPtr(), Name, Config, ErrStr));
   if (RdKafkaTopic == nullptr) {
     LOG(Sev::Error, "could not create Kafka topic: {}", ErrStr);
     throw TopicCreationError();
@@ -57,21 +58,21 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
   int MsgFlags = 0;
   auto &ProducerStats = KafkaProducer->Stats;
 
-  switch (KafkaProducer->getRdKafkaPtr()->produce(
-      RdKafkaTopic, RdKafka::Topic::PARTITION_UA, MsgFlags, Msg->data,
+  switch (KafkaProducer->produce(
+      RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags, Msg->data,
       Msg->size, key, key_len, Msg.get())) {
   case RdKafka::ERR_NO_ERROR:
     ++ProducerStats.produced;
     ProducerStats.produced_bytes += static_cast<uint64_t>(Msg->size);
     ++KafkaProducer->TotalMessagesProduced;
     Msg.release(); // we clean up the message after it has been sent, see
-    // comment by MsgFlags declaration
+                   // comment by MsgFlags declaration
     return 0;
 
   case RdKafka::ERR__QUEUE_FULL:
     ++ProducerStats.local_queue_full;
     LOG(Sev::Warning, "Producer queue full, outq: {}",
-        KafkaProducer->getRdKafkaPtr()->outq_len());
+        KafkaProducer->outputQueueLength());
     break;
 
   case RdKafka::ERR_MSG_SIZE_TOO_LARGE:
@@ -91,4 +92,8 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
 void ProducerTopic::enableCopy() { DoCopyMsg = true; }
 
 std::string ProducerTopic::name() const { return Name; }
+
+std::string ProducerTopic::brokerAddress() const {
+  return KafkaProducer->ProducerBrokerSettings.Address;
+}
 }

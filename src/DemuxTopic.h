@@ -19,7 +19,7 @@ public:
   explicit DemuxTopic(std::string TopicName);
 
   /// Move constructor.
-  explicit DemuxTopic(DemuxTopic &&x);
+  explicit DemuxTopic(DemuxTopic &&x) noexcept;
 
   virtual ~DemuxTopic();
 
