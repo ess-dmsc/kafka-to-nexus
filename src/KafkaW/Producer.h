@@ -18,7 +18,7 @@ public:
   ///
   /// \param Settings_ The BrokerSettings.
   explicit Producer(BrokerSettings &Settings);
-  ~Producer();
+  virtual ~Producer();
 
   /// Polls Kafka for events.
   void poll();
@@ -26,7 +26,7 @@ public:
   /// Gets the number of messages not send.
   ///
   /// \return The number of messages.
-  int outputQueueLength();
+  virtual int outputQueueLength();
 
   RdKafka::Producer *getRdKafkaPtr() const;
 

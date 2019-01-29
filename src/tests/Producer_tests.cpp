@@ -16,6 +16,7 @@ class ProducerStandIn : public KafkaW::Producer {
 public:
   explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
       : Producer(Settings){};
+  int outputQueueLength() override { return KafkaW::Producer::outputQueueLength(); }
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };
@@ -96,19 +97,18 @@ TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
 
 TEST_F(ProducerTests, callPollTest) {
   KafkaW::BrokerSettings Settings{};
-  ProducerStandIn Producer1(Settings);
-  Producer1.ProducerPtr = std::make_unique<MockProducer>();
-  REQUIRE_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
+  auto TempProducerPtr = std::make_unique<MockProducer>();
+  REQUIRE_CALL(*TempProducerPtr,
                poll(_))
-      .TIMES(1)
-      .RETURN(1);
-
-  ALLOW_CALL(*dynamic_cast<MockProducer *>(Producer1.ProducerPtr.get()),
-             outq_len())
-      .RETURN(0);
-
+      .TIMES(1).RETURN(0);
+  
+  REQUIRE_CALL(*TempProducerPtr,
+             outq_len()).TIMES(2).RETURN(0);
+  {
+  ProducerStandIn Producer1(Settings);
+  Producer1.ProducerPtr = std::move(TempProducerPtr);
   Producer1.poll();
-  ASSERT_EQ(Producer1.Stats.poll_served, uint64_t(1));
+  }
 }
 
 TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
