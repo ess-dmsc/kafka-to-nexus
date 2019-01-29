@@ -15,14 +15,12 @@ public:
 
 class ProducerTopic {
 public:
-  ProducerTopic(ProducerTopic &&) noexcept;
   ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
   ~ProducerTopic() = default;
   int produce(unsigned char *MsgData, size_t MsgSize);
   int produce(std::unique_ptr<KafkaW::ProducerMessage> &Msg);
   void enableCopy();
   std::string name() const;
-  std::string brokerAddress() const;
 
 private:
   std::shared_ptr<Producer> KafkaProducer;

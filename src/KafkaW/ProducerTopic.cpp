@@ -19,13 +19,6 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
   LOG(Sev::Debug, "ctor topic: {}", RdKafkaTopic->name());
 }
 
-ProducerTopic::ProducerTopic(ProducerTopic &&x) noexcept {
-  std::swap(KafkaProducer, x.KafkaProducer);
-  std::swap(RdKafkaTopic, x.RdKafkaTopic);
-  std::swap(Name, x.Name);
-  std::swap(DoCopyMsg, x.DoCopyMsg);
-}
-
 struct Msg_ : public ProducerMessage {
   std::vector<unsigned char> v;
   void finalize() {
@@ -92,8 +85,4 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
 void ProducerTopic::enableCopy() { DoCopyMsg = true; }
 
 std::string ProducerTopic::name() const { return Name; }
-
-std::string ProducerTopic::brokerAddress() const {
-  return KafkaProducer->ProducerBrokerSettings.Address;
-}
 }

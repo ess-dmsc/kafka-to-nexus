@@ -17,7 +17,7 @@ public:
   /// The constructor.
   ///
   /// \param Settings_ The BrokerSettings.
-  explicit Producer(BrokerSettings Settings);
+  explicit Producer(BrokerSettings &Settings);
   ~Producer();
 
   /// Polls Kafka for events.
@@ -45,13 +45,13 @@ public:
                              int MessageFlags, void *Payload,
                              size_t PayloadSize, const void *Key,
                              size_t KeySize, void *OpaqueMessage);
-  BrokerSettings ProducerBrokerSettings;
+  BrokerSettings& ProducerBrokerSettings;
   std::atomic<uint64_t> TotalMessagesProduced{0};
   ProducerStats Stats;
 
 protected:
   int ProducerID = 0;
-  std::unique_ptr<RdKafka::Handle> ProducerPtr = nullptr;
+  std::unique_ptr<RdKafka::Producer> ProducerPtr = nullptr;
 
 private:
   std::unique_ptr<RdKafka::Conf> Conf;
