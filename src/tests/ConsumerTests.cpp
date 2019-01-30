@@ -128,83 +128,80 @@ TEST_F(ConsumerTests,
   }
 }
 
-// class FakeMetadata : public RdKafka::Metadata {
-//  FakeMetadata(RdKafka::ErrorCode ErrorToBeReturned) :
-//  Error(ErrorToBeReturned) {}
-//  RdKafka::ErrorCode Error;
-//
-//  metadata() override { return Error; }
-//};
-
 TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicsEmpty) {
-  //  auto Metadata = new MockMetadata;
-  auto Metadata = std::make_shared<MockMetadata>();
-  //  auto MetadataPtrPtr* = Metadata;
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
   auto TopicVector = RdKafka::Metadata::TopicMetadataVector{};
-  REQUIRE_CALL(*RdConsumer, metadata(_, _, _, _))
-      .TIMES(1)
-      .LR_SIDE_EFFECT(*_3 = (Metadata.get()))
-      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
-  REQUIRE_CALL(*Metadata.get(), topics()).TIMES(1).RETURN(&TopicVector);
 
-  REQUIRE_CALL(*RdConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
+  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+
+  REQUIRE_CALL(*MockConsumer, close()).TIMES(1).RETURN(RdKafka::ERR_NO_ERROR);
 
   {
     auto Consumer = std::make_unique<KafkaW::Consumer>(
-        std::move(RdConsumer),
+        std::move(MockConsumer),
         std::unique_ptr<RdKafka::Conf>(
             RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
         std::make_unique<KafkaW::KafkaEventCb>());
     EXPECT_THROW(Consumer->addTopic("something"), std::runtime_error);
   }
 }
-//
-// TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicDoesntExist)
-// {
-//  MockMetadata *Metadata = new MockMetadata;
-//  auto TopicMetadata = std::unique_ptr<MockTopicMetadata>(
-//      new MockTopicMetadata("not_something"));
-//  auto TopicVector =
-//      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-//  EXPECT_CALL(*Consumer, metadata(_, _, _, _))
-//      .TIMES((1))
-//      .WillOnce(DoAll(SetArgPointee<2>(Metadata),
-//                      Return(RdKafka::ErrorCode::ERR_NO_ERROR)));
-//  EXPECT_CALL(*Metadata, topics())
-//      .TIMES((1))
-//      .WillOnce(Return(&TopicVector));
-//  EXPECT_CALL(*Consumer, close()).TIMES((1));
-//  EXPECT_THROW(StandIn.addTopic("something"), std::runtime_error);
-//}
-//
-// TEST_F(ConsumerTests,
-//       getTopicPartitionNumbersReturnsPartitionNumbersIfTopicDoesExist) {
-//  MockMetadata *Metadata = new MockMetadata;
-//  auto TopicMetadata =
-//      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
-//  auto TopicVector =
-//      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-//  auto PartitionMetadata =
-//      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
-//  auto PartitionMetadataVector =
-//      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
-//  EXPECT_CALL(*Consumer, metadata(_, _, _, _))
-//      .TIMES((1))
-//      .WillOnce(DoAll(SetArgPointee<2>(Metadata),
-//                      Return(RdKafka::ErrorCode::ERR_NO_ERROR)));
-//  EXPECT_CALL(*Consumer, query_watermark_offsets(_, _, _, _, _))
-//      .TIMES((1))
-//      .WillOnce(Return(RdKafka::ErrorCode::ERR_NO_ERROR));
-//  EXPECT_CALL(*Metadata, topics())
-//      .TIMES((1))
-//      .WillOnce(Return(&TopicVector));
-//  EXPECT_CALL(*TopicMetadata, partitions())
-//      .TIMES((1))
-//      .WillOnce(Return(&PartitionMetadataVector));
-//  EXPECT_CALL(*PartitionMetadata, id()).TIMES((1)).WillOnce(Return(1));
-//  EXPECT_CALL(*Consumer, close()).TIMES((1));
-//  EXPECT_CALL(*Consumer, assign(_))
-//      .TIMES((1))
-//      .WillOnce(Return(RdKafka::ERR_NO_ERROR));
-//  ASSERT_NO_THROW(StandIn.addTopic("something"));
-//}
+
+TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicDoesntExist) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+
+  auto TopicMetadata = std::unique_ptr<MockTopicMetadata>(
+      new MockTopicMetadata("not_something"));
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+  REQUIRE_CALL(*Metadata, topics()).TIMES((1)).RETURN(&TopicVector);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    EXPECT_THROW(Consumer->addTopic("something"), std::runtime_error);
+  }
+}
+
+TEST_F(ConsumerTests,
+       getTopicPartitionNumbersReturnsPartitionNumbersIfTopicDoesExist) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+
+  auto TopicMetadata =
+      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+  auto PartitionMetadata =
+      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadataVector =
+      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
+
+  REQUIRE_CALL(*MockConsumer, query_watermark_offsets(_, _, _, _, _))
+      .TIMES((1))
+      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
+  REQUIRE_CALL(*Metadata, topics()).TIMES((1)).RETURN(&TopicVector);
+  REQUIRE_CALL(*TopicMetadata, partitions())
+      .TIMES((1))
+      .RETURN(&PartitionMetadataVector);
+  REQUIRE_CALL(*PartitionMetadata, id()).TIMES((1)).RETURN(1);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+  REQUIRE_CALL(*MockConsumer, assign(_))
+      .TIMES((1))
+      .RETURN(RdKafka::ERR_NO_ERROR);
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    ASSERT_NO_THROW(Consumer->addTopic("something"));
+  }
+}

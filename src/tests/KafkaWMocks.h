@@ -20,7 +20,7 @@ public:
 
   const std::string topic() const override { return Name; }
 
-  MAKE_CONST_MOCK0(partitions, PartitionMetadataVector *());
+  MAKE_CONST_MOCK0(partitions, const PartitionMetadataVector *());
   MAKE_CONST_MOCK0(err, RdKafka::ErrorCode());
 };
 
@@ -35,12 +35,25 @@ public:
 
 class MockKafkaConsumer : public RdKafka::KafkaConsumer {
 public:
+  MockKafkaConsumer(){};
+  MockKafkaConsumer(RdKafka::ErrorCode ErrorCode, RdKafka::Metadata *Metadata)
+      : ErrorCode(ErrorCode), MetadataPtr(Metadata) {}
+  RdKafka::ErrorCode ErrorCode;
+  RdKafka::Metadata *MetadataPtr;
+
+  RdKafka::ErrorCode metadata(bool, const RdKafka::Topic *,
+                              RdKafka::Metadata **Metadata, int) override {
+
+    *Metadata = MetadataPtr;
+    return ErrorCode;
+  }
+
   MAKE_CONST_MOCK0(name, const std::string());
   MAKE_CONST_MOCK0(memberid, const std::string());
   MAKE_MOCK1(poll, int(int));
   MAKE_MOCK0(outq_len, int());
-  MAKE_MOCK4(metadata, RdKafka::ErrorCode(bool, const RdKafka::Topic *,
-                                          RdKafka::Metadata **, int));
+  //  MAKE_MOCK4(metadata, RdKafka::ErrorCode(bool, const RdKafka::Topic *,
+  //                                          RdKafka::Metadata **, int));
   MAKE_MOCK1(pause,
              RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
   MAKE_MOCK1(resume,
