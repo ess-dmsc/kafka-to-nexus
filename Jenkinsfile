@@ -94,7 +94,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
       cd build
       . ./activate_run.sh
-      make all UnitTests VERBOSE=1
+      make -j4 all UnitTests VERBOSE=1
     """
   }  // stage
 
@@ -105,7 +105,7 @@ builders = pipeline_builder.createBuilders { container ->
       container.sh """
         cd build
         . ./activate_run.sh
-        ./tests/UnitTests -- --gtest_output=xml:${test_output}
+        ./bin/UnitTests -- --gtest_output=xml:${test_output}
         make coverage
         lcov --directory . --capture --output-file coverage.info
         lcov --remove coverage.info '*_generated.h' '*/src/date/*' '*/.conan/data/*' '*/usr/*' --output-file coverage.info
@@ -130,11 +130,7 @@ builders = pipeline_builder.createBuilders { container ->
       }  // withCredentials
     } else {
       def test_dir
-      if (container.key == release_os) {
-        test_dir = 'bin'
-      } else {
-        test_dir = 'tests'
-      }
+      test_dir = 'bin'
 
       container.sh """
         cd build
@@ -281,8 +277,8 @@ def get_macos_pipeline() {
           }
 
           try {
-            sh "make all UnitTests VERBOSE=1"
-            sh ". ./activate_run.sh && ./tests/UnitTests"
+            sh "make -j4 all UnitTests VERBOSE=1"
+            sh ". ./activate_run.sh && ./bin/UnitTests"
           } catch (e) {
             failure_function(e, 'MacOSX / build+test failed')
           }

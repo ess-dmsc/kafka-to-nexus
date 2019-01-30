@@ -1,5 +1,3 @@
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
-
 find_package(Trompeloeil REQUIRED)
 
 set(UnitTests_SRC
