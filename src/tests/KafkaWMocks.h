@@ -20,8 +20,8 @@ public:
 
   const std::string topic() const override { return Name; }
 
-  MAKE_CONST_MOCK0(partitions, const PartitionMetadataVector *());
-  MAKE_CONST_MOCK0(err, RdKafka::ErrorCode());
+  MAKE_CONST_MOCK0(partitions, const PartitionMetadataVector *(), override);
+  MAKE_CONST_MOCK0(err, RdKafka::ErrorCode(), override);
 };
 
 class MockPartitionMetadata : public RdKafka::PartitionMetadata {
@@ -48,60 +48,75 @@ public:
     return ErrorCode;
   }
 
-  MAKE_CONST_MOCK0(name, const std::string());
-  MAKE_CONST_MOCK0(memberid, const std::string());
-  MAKE_MOCK1(poll, int(int));
-  MAKE_MOCK0(outq_len, int());
-  //  MAKE_MOCK4(metadata, RdKafka::ErrorCode(bool, const RdKafka::Topic *,
-  //                                          RdKafka::Metadata **, int));
+  MAKE_CONST_MOCK0(name, const std::string(), override);
+  MAKE_CONST_MOCK0(memberid, const std::string(), override);
+  MAKE_MOCK1(poll, int(int), override);
+  MAKE_MOCK0(outq_len, int(), override);
   MAKE_MOCK1(pause,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
   MAKE_MOCK1(resume,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
   MAKE_MOCK5(query_watermark_offsets,
              RdKafka::ErrorCode(const std::string &, int32_t, int64_t *,
-                                int64_t *, int));
+                                int64_t *, int),
+             override);
   MAKE_MOCK4(get_watermark_offsets,
              RdKafka::ErrorCode(const std::string &, int32_t, int64_t *,
-                                int64_t *));
+                                int64_t *),
+             override);
   MAKE_MOCK2(offsetsForTimes,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int),
+             override);
   MAKE_MOCK1(get_partition_queue,
-             RdKafka::Queue *(const RdKafka::TopicPartition *));
-  MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *));
-  MAKE_MOCK0(yield, void());
-  MAKE_MOCK1(clusterid, const std::string(int));
-  MAKE_MOCK0(c_ptr, rd_kafka_s *());
-  MAKE_MOCK1(subscribe, RdKafka::ErrorCode(const std::vector<std::string> &));
-  MAKE_MOCK0(unsubscribe, RdKafka::ErrorCode());
-  MAKE_MOCK1(assign, RdKafka::ErrorCode(
-                         const std::vector<RdKafka::TopicPartition *> &));
-  MAKE_MOCK0(unassign, RdKafka::ErrorCode());
-  MAKE_MOCK1(consume, RdKafka::Message *(int));
-  MAKE_MOCK0(commitSync, RdKafka::ErrorCode());
-  MAKE_MOCK0(commitAsync, RdKafka::ErrorCode());
-  MAKE_MOCK1(commitSync, RdKafka::ErrorCode(RdKafka::Message *));
-  MAKE_MOCK1(commitAsync, RdKafka::ErrorCode(RdKafka::Message *));
+             RdKafka::Queue *(const RdKafka::TopicPartition *), override);
+  MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *), override);
+  MAKE_MOCK0(yield, void(), override);
+  MAKE_MOCK1(clusterid, const std::string(int), override);
+  MAKE_MOCK0(c_ptr, rd_kafka_s *(), override);
+  MAKE_MOCK1(subscribe, RdKafka::ErrorCode(const std::vector<std::string> &),
+             override);
+  MAKE_MOCK0(unsubscribe, RdKafka::ErrorCode(), override);
+  MAKE_MOCK1(assign,
+             RdKafka::ErrorCode(const std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK0(unassign, RdKafka::ErrorCode(), override);
+  MAKE_MOCK1(consume, RdKafka::Message *(int), override);
+  MAKE_MOCK0(commitSync, RdKafka::ErrorCode(), override);
+  MAKE_MOCK0(commitAsync, RdKafka::ErrorCode(), override);
+  MAKE_MOCK1(commitSync, RdKafka::ErrorCode(RdKafka::Message *), override);
+  MAKE_MOCK1(commitAsync, RdKafka::ErrorCode(RdKafka::Message *), override);
   MAKE_MOCK1(commitSync,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
-  MAKE_MOCK1(commitAsync, RdKafka::ErrorCode(
-                              const std::vector<RdKafka::TopicPartition *> &));
-  MAKE_MOCK1(commitSync, RdKafka::ErrorCode(RdKafka::OffsetCommitCb *));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK1(commitAsync,
+             RdKafka::ErrorCode(const std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK1(commitSync, RdKafka::ErrorCode(RdKafka::OffsetCommitCb *),
+             override);
   MAKE_MOCK2(commitSync,
              RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &,
-                                RdKafka::OffsetCommitCb *));
+                                RdKafka::OffsetCommitCb *),
+             override);
   MAKE_MOCK2(committed,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int),
+             override);
   MAKE_MOCK1(position,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
-  MAKE_MOCK0(close, RdKafka::ErrorCode());
-  MAKE_MOCK2(seek, RdKafka::ErrorCode(const RdKafka::TopicPartition &, int));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK0(close, RdKafka::ErrorCode(), override);
+  MAKE_MOCK2(seek, RdKafka::ErrorCode(const RdKafka::TopicPartition &, int),
+             override);
   MAKE_MOCK1(offsets_store,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
   MAKE_MOCK1(assignment,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &));
-  MAKE_MOCK1(subscription, RdKafka::ErrorCode(std::vector<std::string> &));
-  MAKE_MOCK1(controllerid, int32_t(int));
+             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
+             override);
+  MAKE_MOCK1(subscription, RdKafka::ErrorCode(std::vector<std::string> &),
+             override);
+  MAKE_MOCK1(controllerid, int32_t(int), override);
 };
 
 class MockMessage : public RdKafka::Message {
