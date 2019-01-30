@@ -1,7 +1,8 @@
 #include <memory>
 
-#include "logger.h"
+#include "KafkaW/KafkaW.h"
 #include "json.h"
+#include "logger.h"
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
@@ -10,7 +11,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include "KafkaW/KafkaW.h"
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>
 #include <graylog_logger/Log.hpp>

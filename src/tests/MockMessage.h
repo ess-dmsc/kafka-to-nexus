@@ -1,6 +1,6 @@
 #pragma once
-#include <trompeloeil.hpp>
 #include <librdkafka/rdkafkacpp.h>
+#include <trompeloeil.hpp>
 
 class MockMessage : public RdKafka::Message {
 public:

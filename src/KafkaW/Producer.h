@@ -45,7 +45,7 @@ public:
                              int MessageFlags, void *Payload,
                              size_t PayloadSize, const void *Key,
                              size_t KeySize, void *OpaqueMessage);
-  BrokerSettings& ProducerBrokerSettings;
+  BrokerSettings &ProducerBrokerSettings;
   std::atomic<uint64_t> TotalMessagesProduced{0};
   ProducerStats Stats;
 

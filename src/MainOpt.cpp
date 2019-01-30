@@ -12,7 +12,7 @@ using uri::URI;
 // following init function.
 void MainOpt::init() {
   ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                           gethostname_wrapper(), getpid_wrapper());
+                          gethostname_wrapper(), getpid_wrapper());
 }
 
 int MainOpt::parseJsonCommands() {
