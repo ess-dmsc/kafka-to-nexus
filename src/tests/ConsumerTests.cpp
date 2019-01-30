@@ -205,3 +205,48 @@ TEST_F(ConsumerTests,
     ASSERT_NO_THROW(Consumer->addTopic("something"));
   }
 }
+
+TEST_F(ConsumerTests,
+       testTopicPresentReturnsFalseIfTopicDoesntExistInMetadata) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+  auto TopicMetadata =
+      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+
+  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    ASSERT_TRUE(Consumer->topicPresent("something"));
+  }
+}
+
+TEST_F(ConsumerTests, testTopicPresentReturnsTrueIfTopicDoesExistInMetadata) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+  auto TopicMetadata =
+      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+
+  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    ASSERT_FALSE(Consumer->topicPresent("somethingelse"));
+  }
+}
