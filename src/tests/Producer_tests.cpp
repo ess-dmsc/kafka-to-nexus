@@ -153,3 +153,18 @@ TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
         RdKafka::ErrorCode::ERR__BAD_MSG);
   }
 }
+
+TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
+  KafkaW::BrokerSettings Settings{};
+  auto TempProducerPtr = std::make_unique<MockProducer>();
+
+  REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(82).RETURN(1);
+  REQUIRE_CALL(*TempProducerPtr, poll(_)).TIMES(80).RETURN(1);
+
+  // Needs to be put in a scope here so we can check that outq_len is called on
+  // destruction
+  {
+    ProducerStandIn Producer1(Settings);
+    ASSERT_NO_THROW(Producer1.ProducerPtr = std::move(TempProducerPtr));
+  }
+}
