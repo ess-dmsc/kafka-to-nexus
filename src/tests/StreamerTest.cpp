@@ -20,9 +20,10 @@ std::unique_ptr<std::pair<PollStatus, Msg>>
 generateKafkaMsg(char const *DataPtr, size_t const Size) {
   FileWriter::Msg Message = FileWriter::Msg::owned(DataPtr, Size);
   Message.MetaData = FileWriter::MessageMetaData{
+      std::chrono::milliseconds(0),
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_CREATE_TIME,
-      std::chrono::milliseconds(0), 0};
+      0};
   std::pair<PollStatus, FileWriter::Msg> NewPair(PollStatus::Message,
                                                  std::move(Message));
   return std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(

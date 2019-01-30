@@ -135,12 +135,13 @@ void Consumer::dumpCurrentSubscription() {
 
 void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
-  auto RetCode = KafkaConsumer->metadata(true, nullptr, &MetadataPtr, 5000);
+  auto RetCode = KafkaConsumer->metadata(
+      true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
   if (RetCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(
         "Consumer::updateMetadata() - error while retrieving metadata.");
   }
-  KafkaMetadata = std::unique_ptr<RdKafka::Metadata>(MetadataPtr);
+  KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
@@ -157,9 +158,8 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
       DataToReturn->second = FileWriter::Msg::owned(
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
       DataToReturn->second.MetaData = FileWriter::MessageMetaData{
-          KafkaMsg->timestamp().type,
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
-          KafkaMsg->offset()};
+          KafkaMsg->timestamp().type, KafkaMsg->offset()};
 
       return DataToReturn;
     } else {
