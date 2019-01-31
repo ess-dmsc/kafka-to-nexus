@@ -77,6 +77,7 @@ set(kafka_to_nexus_SRC
         Errors.cpp
         Streamer.cpp
         Master.cpp
+        logger.cpp
         CommandListener.cpp
         CommandHandler.cpp
         FileWriterTask.cpp

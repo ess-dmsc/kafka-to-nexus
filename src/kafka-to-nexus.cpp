@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
   setCLIOptions(App, *Options);
 
   CLI11_PARSE(App, argc, argv);
+  setupLoggerFromOptions(*Options);
+
   Options->parseJsonCommands();
 
   if (Options->ListWriterModules) {
@@ -55,8 +57,6 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
   }
-
-  setupLoggerFromOptions(*Options);
 
   FileWriter::Master Master(*Options);
   std::thread MasterThread([&Master] {
