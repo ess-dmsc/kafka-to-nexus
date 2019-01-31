@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FileWriterTask.h"
-#include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
 #include "Msg.h"

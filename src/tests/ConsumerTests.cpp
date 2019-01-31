@@ -1,4 +1,5 @@
 #include "KafkaWMocks.h"
+#include "KafkaW/Consumer.h"
 
 #include <Msg.h>
 #include <gtest/gtest.h>

@@ -1,6 +1,6 @@
 #include <memory>
 
-#include "KafkaW/KafkaW.h"
+#include "KafkaW/ProducerTopic.h"
 #include "json.h"
 #include "logger.h"
 #include <atomic>

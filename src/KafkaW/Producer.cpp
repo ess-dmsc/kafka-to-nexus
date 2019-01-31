@@ -43,7 +43,7 @@ Producer::Producer(BrokerSettings &Settings)
   Conf->set("event_cb", &EventCb, ErrorString);
   Conf->set("metadata.broker.list", ProducerBrokerSettings.Address,
             ErrorString);
-  ProducerPtr.reset(RdKafka::Producer::create(Conf.get(), ErrorString));
+  ProducerPtr = std::unique_ptr<RdKafka::Producer>(RdKafka::Producer::create(Conf.get(), ErrorString));
   if (ProducerPtr == nullptr) {
     LOG(Sev::Error, "can not create kafka handle: {}", ErrorString);
     throw std::runtime_error("can not create Kafka handle");

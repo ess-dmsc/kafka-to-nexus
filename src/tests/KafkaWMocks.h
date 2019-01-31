@@ -1,5 +1,4 @@
 #pragma once
-#include "KafkaW/KafkaW.h"
 #include <librdkafka/rdkafkacpp.h>
 #include <trompeloeil.hpp>
 

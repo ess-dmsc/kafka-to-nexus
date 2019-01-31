@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CommandListener.h"
-#include "KafkaW/KafkaW.h"
+#include "KafkaW/ProducerTopic.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
 #include "StreamMaster.h"

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KafkaW/KafkaW.h"
+#include "KafkaW/Consumer.h"
 #include "MainOpt.h"
 #include "URI.h"
 #include <thread>

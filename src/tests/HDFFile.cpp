@@ -1,6 +1,6 @@
 #include "../HDFFile.h"
 #include "../CommandHandler.h"
-#include "../KafkaW/KafkaW.h"
+#include "../KafkaW/Consumer.h"
 #include "../MainOpt.h"
 #include "../helper.h"
 #include "../json.h"

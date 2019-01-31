@@ -6,12 +6,10 @@
 
 #include "DemuxTopic.h"
 #include "EventLogger.h"
+#include "KafkaW/Consumer.h"
 #include "Status.h"
 #include "StreamerOptions.h"
 #include "logger.h"
-
-#include "KafkaW/KafkaW.h"
-
 #include <chrono>
 #include <future>
 
