@@ -16,6 +16,6 @@ template <> Array getMatchingFlatbufferType(double *) {
 template <> Array getMatchingFlatbufferType(float *) {
   return Array::ArrayFloat;
 }
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

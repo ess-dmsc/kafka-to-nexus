@@ -121,7 +121,6 @@ TEST(MessageInfo, computeDerivedQuantities) {
   for (auto &MessageSize : MessagesSize) {
     MsgInfo.newMessage(MessageSize * 1e6);
   }
-  std::chrono::milliseconds Duration(1000);
 
   auto Size = MsgInfo.messageSize();
   EXPECT_DOUBLE_EQ(Size.first, 3.0);

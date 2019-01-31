@@ -1,5 +1,4 @@
 #include "f142_rw.h"
-#include "../../CollectiveQueue.h"
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
@@ -35,35 +34,35 @@ struct InitTypeMap {
     auto &Scalar = RankAndTypenameToValueTraits[Rank::SCALAR];
     auto &Array = RankAndTypenameToValueTraits[Rank::ARRAY];
     // clang-format off
-    Scalar[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< uint8_t, UByte>);
-    Scalar["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint16_t, UShort>);
-    Scalar["uint32"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint32_t, UInt>);
-    Scalar["uint64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<uint64_t, ULong>);
-    Scalar[  "int8"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  int8_t, Byte>);
-    Scalar[ "int16"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int16_t, Short>);
-    Scalar[ "int32"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int32_t, Int>);
-    Scalar[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar< int64_t, Long>);
-    Scalar[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<   float, Float>);
-    Scalar["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalar<  double, Double>);
-    Scalar["string"] = std::unique_ptr<WriterFactory>(new WriterFactoryScalarString);
+    Scalar[ "uint8"] = std::make_unique<WriterFactoryScalar< uint8_t, UByte>>();
+    Scalar["uint16"] = std::make_unique<WriterFactoryScalar<uint16_t, UShort>>();
+    Scalar["uint32"] = std::make_unique<WriterFactoryScalar<uint32_t, UInt>>();
+    Scalar["uint64"] = std::make_unique<WriterFactoryScalar<uint64_t, ULong>>();
+    Scalar[  "int8"] = std::make_unique<WriterFactoryScalar<  int8_t, Byte>>();
+    Scalar[ "int16"] = std::make_unique<WriterFactoryScalar< int16_t, Short>>();
+    Scalar[ "int32"] = std::make_unique<WriterFactoryScalar< int32_t, Int>>();
+    Scalar[ "int64"] = std::make_unique<WriterFactoryScalar< int64_t, Long>>();
+    Scalar[ "float"] = std::make_unique<WriterFactoryScalar<   float, Float>>();
+    Scalar["double"] = std::make_unique<WriterFactoryScalar<  double, Double>>();
+    Scalar["string"] = std::make_unique<WriterFactoryScalarString>();
 
-    Array[ "uint8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< uint8_t, ArrayUByte>);
-    Array["uint16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint16_t, ArrayUShort>);
-    Array["uint32"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint32_t, ArrayUInt>);
-    Array["uint64"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<uint64_t, ArrayULong>);
-    Array[  "int8"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<  int8_t, ArrayByte>);
-    Array[ "int16"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int16_t, ArrayShort>);
-    Array[ "int32"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int32_t, ArrayInt>);
-    Array[ "int64"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray< int64_t, ArrayLong>);
-    Array[ "float"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<   float, ArrayFloat>);
-    Array["double"] = std::unique_ptr<WriterFactory>(new WriterFactoryArray<  double, ArrayDouble>);
+    Array[ "uint8"] = std::make_unique<WriterFactoryArray< uint8_t, ArrayUByte>>();
+    Array["uint16"] = std::make_unique<WriterFactoryArray<uint16_t, ArrayUShort>>();
+    Array["uint32"] = std::make_unique<WriterFactoryArray<uint32_t, ArrayUInt>>();
+    Array["uint64"] = std::make_unique<WriterFactoryArray<uint64_t, ArrayULong>>();
+    Array[  "int8"] = std::make_unique<WriterFactoryArray<  int8_t, ArrayByte>>();
+    Array[ "int16"] = std::make_unique<WriterFactoryArray< int16_t, ArrayShort>>();
+    Array[ "int32"] = std::make_unique<WriterFactoryArray< int32_t, ArrayInt>>();
+    Array[ "int64"] = std::make_unique<WriterFactoryArray< int64_t, ArrayLong>>();
+    Array[ "float"] = std::make_unique<WriterFactoryArray<   float, ArrayFloat>>();
+    Array["double"] = std::make_unique<WriterFactoryArray<  double, ArrayDouble>>();
     // clang-format on
   }
 };
 
 /// \brief  Instantiate the typemap.
 InitTypeMap TriggerInitTypeMap;
-}
+} // namespace
 
 ///  Helper struct to make branching on a found map entry more concise.
 template <typename T> struct FoundInMap {
@@ -107,9 +106,9 @@ DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
 /// \param Method Either CREATE or OPEN, will either create the HDF dataset, or
 /// open the dataset again.
 std::unique_ptr<WriterTypedBase>
-createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
-                      std::string TypeName, std::string DatasetName,
-                      CollectiveQueue *cq, HDFIDStore *HDFStore,
+createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
+                      std::string const &TypeName,
+                      std::string const &DatasetName,
                       CreateWriterTypedBaseMethod Method) {
   Rank TheRank = Rank::SCALAR;
   if (ArraySize > 0) {
@@ -127,11 +126,12 @@ createWriterTypedBase(hdf5::node::Group HDFGroup, size_t ArraySize,
   auto const &ValueTraits = ValueTraitsMaybe.value();
   if (Method == CreateWriterTypedBaseMethod::OPEN) {
     return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
-                                     ValueTraits->getValueUnionID(), cq,
-                                     HDFStore);
+                                     ValueTraits->getValueUnionID(),
+                                     Mode::Open);
   }
   return ValueTraits->createWriter(HDFGroup, DatasetName, ArraySize,
-                                   ValueTraits->getValueUnionID(), cq);
+                                   ValueTraits->getValueUnionID(),
+                                   Mode::Create);
 }
 
 /// Parse the configuration for this stream.
@@ -230,11 +230,8 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const *HDFAttributes,
                           CreateWriterTypedBaseMethod CreateMethod) {
   try {
-    HDFIDStore *HDFStore =
-        nullptr; // These two lines should probably be deleted.
-    CollectiveQueue *cq = nullptr;
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
-                                        cq, HDFStore, CreateMethod);
+                                        CreateMethod);
     if (!ValueWriter) {
       LOG(spdlog::level::err,
           "Could not create a writer implementation for value_type {}",
@@ -244,7 +241,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
-                                                        Info.ChunkBytes, cq);
+                                                        Info.ChunkBytes);
         if (Info.Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
@@ -253,8 +250,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       HDFFile::writeAttributes(HDFGroup, &AttributesJson);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
-        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name, cq,
-                                                      HDFStore);
+        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name);
         if (Info.Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR_IO();
         }
@@ -274,7 +270,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 /// content to datasets.
 HDFWriterModule::WriteResult
 HDFWriterModule::write(FlatbufferMessage const &Message) {
-  auto fbuf = get_fbuf(Message.data());
+  auto FlatBuffer = get_fbuf(Message.data());
   if (!ValueWriter) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
@@ -284,7 +280,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     }
     return HDFWriterModule::WriteResult::ERROR_IO();
   }
-  auto wret = ValueWriter->write(fbuf);
+  auto wret = ValueWriter->write(FlatBuffer);
   if (!wret) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
@@ -293,34 +289,36 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     }
   }
   WrittenBytesTotal += wret.written_bytes;
-  TimestampMax = std::max(fbuf->timestamp(), TimestampMax);
+  TimestampMax = std::max(FlatBuffer->timestamp(), TimestampMax);
   if (WrittenBytesTotal > IndexAtBytes + IndexEveryBytes) {
     this->DatasetCueTimestampZero->append_data_1d(&TimestampMax, 1);
     this->DatasetCueIndex->append_data_1d(&wret.ix0, 1);
     IndexAtBytes = WrittenBytesTotal;
   }
   {
-    auto x = fbuf->timestamp();
+    auto x = FlatBuffer->timestamp();
     this->DatasetTimestamp->append_data_1d(&x, 1);
   }
   if (DoWriteForwarderInternalDebugInfo) {
-    if (fbuf->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
-      auto fi = (fwdinfo_1_t *)fbuf->fwdinfo();
+    if (FlatBuffer->fwdinfo_type() == forwarder_internal::fwdinfo_1_t) {
+      auto ForwarderInfo =
+          reinterpret_cast<const fwdinfo_1_t *>(FlatBuffer->fwdinfo());
       {
-        auto x = fi->seq_data();
+        auto x = ForwarderInfo->seq_data();
         this->DatasetSeqData->append_data_1d(&x, 1);
       }
       {
-        auto x = fi->seq_fwd();
+        auto x = ForwarderInfo->seq_fwd();
         this->DatasetSeqFwd->append_data_1d(&x, 1);
       }
       {
-        auto x = fi->ts_data();
+        auto x = ForwarderInfo->ts_data();
         this->DatasetTsData->append_data_1d(&x, 1);
       }
     }
   }
-  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->timestamp());
+  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(
+      FlatBuffer->timestamp());
 }
 
 /// Implement HDFWriterModule interface, just flushing.

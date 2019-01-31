@@ -61,7 +61,7 @@ TEST(StatusWriter, emptyWriterHasDefaultFields) {
   EXPECT_EQ(getUnsignedInteger64Value("timestamp", json), 0u);
 }
 
-uint64_t getTimestampMs() {
+int64_t getTimestampMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
              std::chrono::steady_clock::now().time_since_epoch())
       .count();

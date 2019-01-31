@@ -7,21 +7,111 @@
 #include <sstream>
 
 using nlohmann::json;
-using namespace FileWriter;
+using CLK = std::chrono::system_clock;
 
 class CommandHandler_Testing : public testing::Test {
 protected:
-  static size_t FileWriterTasksSize(CommandHandler const &CommandHandler) {
+  static size_t
+  FileWriterTasksSize(FileWriter::CommandHandler const &CommandHandler) {
     return CommandHandler.getNumberOfFileWriterTasks();
   }
 };
+
+TEST_F(CommandHandler_Testing, MissingStartTimeMeanStartNow) {
+
+  unlink("a-dummy-name-00.h5");
+  std::string CommandString(R"""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "a-dummy-name-00.h5"
+  },
+  "job_id": "qw3rty",
+  "broker": "localhost:202020",
+  "nexus_structure": { }
+})""");
+
+  MainOpt MainOpt;
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  CommandHandler.tryToHandle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+
+  std::chrono::milliseconds Now =
+      std::chrono::duration_cast<std::chrono::milliseconds>(
+          CLK::now().time_since_epoch());
+  // Allow 100ms tolerance
+  EXPECT_NEAR(MainOpt.StreamerConfiguration.StartTimestamp.count(), Now.count(),
+              100);
+  unlink("a-dummy-name-00.h5");
+}
+
+TEST_F(CommandHandler_Testing, MissingStopTimeMeanNeverStop) {
+
+  unlink("a-dummy-name-00.h5");
+  std::string CommandString(R"""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "a-dummy-name-00.h5"
+  },
+  "job_id": "qw3rty",
+  "broker": "localhost:202020",
+  "nexus_structure": { }
+})""");
+
+  MainOpt MainOpt;
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  CommandHandler.tryToHandle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+
+  EXPECT_FALSE(MainOpt.StreamerConfiguration.StopTimestamp.count() > 0);
+  unlink("a-dummy-name-00.h5");
+}
+
+TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
+  unlink("a-dummy-name-01.h5");
+  std::string CommandString(R"""(
+{
+  "cmd": "FileWriter_new",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "job_id": "qw3rty",
+  "broker": "localhost:202020",
+  "start_time" : 123456789,
+  "stop_time" : 123456790,
+  "nexus_structure": { }
+})""");
+
+  MainOpt MainOpt;
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  CommandHandler.tryToHandle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  EXPECT_EQ(MainOpt.StreamerConfiguration.StartTimestamp.count(), 123456789);
+  EXPECT_EQ(MainOpt.StreamerConfiguration.StopTimestamp.count(), 123456790);
+  unlink("a-dummy-name-01.h5");
+}
+
+TEST_F(CommandHandler_Testing, MissingTimeHandleStopCommand) {
+  std::string CommandString(
+      R"""({"cmd":"FileWriter_stop","job_id": "xyzwt"})""");
+  nlohmann::json Command = nlohmann::json::parse(CommandString);
+  EXPECT_EQ(FileWriter::findTime(Command, "stop_time").count(), -1);
+}
+
+TEST_F(CommandHandler_Testing, FindTimeHandleStopCommand) {
+  std::string CommandString(
+      R"""({"cmd":"FileWriter_stop","job_id": "xyzwt","stop_time":987654321})""");
+  nlohmann::json Command = nlohmann::json::parse(CommandString);
+  EXPECT_EQ(FileWriter::findTime(Command, "stop_time").count(), 987654321);
+}
 
 TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
   std::ofstream ofs;
   ofs.open("tmp-dummy-hdf");
   ofs.close();
   MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
   std::string CommandString(R"""(
 {
   "cmd": "FileWriter_new",
@@ -46,8 +136,8 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
     ]
   }
 })""");
-  // Make sure that using 'tryToHandle' does not let the exception escape
-  CommandHandler.tryToHandle(CommandString);
+  CommandHandler.tryToHandle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
   // Assert that this command was not accepted by the command handler:
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
@@ -57,14 +147,14 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
 void createFileWithOptionalSWMR(bool UseSWMR) {
   unlink("tmp_swmr_enable.h5");
   MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
   std::string CommandString = R"""(
 {
   "cmd": "FileWriter_new",
   "file_attributes": {
     "file_name": "tmp_swmr_enable.h5"
   },
-  "use_hdf_swmr": false,
+  "use_hdf_swmr": true,
   "job_id": "tmp_swmr_enable",
   "broker": "//localhost:202020",
   "nexus_structure": { "children": [] }
@@ -72,12 +162,12 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   auto Command = nlohmann::json::parse(CommandString);
   Command["use_hdf_swmr"] = UseSWMR;
   CommandString = Command.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
   ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
             static_cast<size_t>(1));
   auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");
   ASSERT_EQ(Task->swmrEnabled(), UseSWMR);
-  CommandHandler.handleFileWriterTaskClearAll();
   unlink("tmp_swmr_enable.h5");
 }
 
@@ -98,19 +188,20 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
     }
   } catch (std::exception const &E) {
     ASSERT_EQ(std::string("1st_level\n  2nd_level"),
-              format_nested_exception(E));
+              FileWriter::format_nested_exception(E));
   }
 }
 
 TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
-  ASSERT_THROW(parseOrThrow("{ this is not json }"), std::runtime_error);
+  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }"),
+               std::runtime_error);
 }
 
 TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   std::string Filename("Test.CommandHandler_Testing.CreateHDFLinks");
   unlink(Filename.c_str());
   MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
   auto Command = json::parse(R""(
 {
   "cmd": "FileWriter_new",
@@ -170,7 +261,7 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   )"");
   Command["file_attributes"]["file_name"] = Filename;
   auto CommandString = Command.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(1));
   auto CommandStop = json::parse(R""(
@@ -180,7 +271,7 @@ TEST_F(CommandHandler_Testing, CreateHDFLinks) {
 }
   )"");
   CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
   auto File = hdf5::file::open(Filename);

@@ -1,8 +1,10 @@
 #pragma once
 
+#include <chrono>
 #include <cstdint>
 #include <cstdlib>
 #include <functional>
+#include <librdkafka/rdkafka.h>
 
 namespace KafkaW {
 // Want to expose this typedef also for users of this namespace
@@ -37,6 +39,14 @@ public:
   size_t getSize() const { return DataSize; };
   std::int64_t getMessageOffset() const { return MessageOffset; };
   PollStatus getStatus() const { return Status; };
+  std::pair<rd_kafka_timestamp_type_t, std::chrono::milliseconds>
+  getTimestamp() {
+    std::pair<rd_kafka_timestamp_type_t, std::chrono::milliseconds> TS;
+    auto RawTime = rd_kafka_message_timestamp((rd_kafka_message_t *)DataPointer,
+                                              &TS.first);
+    TS.second = std::chrono::milliseconds{RawTime};
+    return TS;
+  }
 
 private:
   unsigned char const *DataPointer{nullptr};

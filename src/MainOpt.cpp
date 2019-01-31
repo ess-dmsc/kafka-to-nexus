@@ -21,7 +21,7 @@ int MainOpt::parseJsonCommands() {
     LOG(spdlog::level::warn, "given config filename is empty");
     return -1;
   }
-  auto jsontxt = gulp(CommandsJsonFilename);
+  auto jsontxt = readFileIntoVector(CommandsJsonFilename);
   using nlohmann::json;
   try {
     CommandsJson = json::parse(jsontxt);

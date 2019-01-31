@@ -13,6 +13,6 @@ class Reader : public FileWriter::FlatbufferReader {
   std::string source_name(FlatbufferMessage const &Message) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

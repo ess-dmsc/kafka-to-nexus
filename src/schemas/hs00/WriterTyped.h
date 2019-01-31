@@ -505,6 +505,6 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
   LOG(spdlog::level::trace, "hs00 -------------------------------   DONE");
   return HDFWriterModule::WriteResult::OK();
 }
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

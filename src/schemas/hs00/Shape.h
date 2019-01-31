@@ -21,6 +21,6 @@ public:
 private:
   std::vector<Dimension<EdgeType>> Dimensions;
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

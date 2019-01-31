@@ -1,10 +1,6 @@
-# Relative to build root
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR})
-
 if (NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Debug)
+  set(CMAKE_BUILD_TYPE "Debug")
+  message(STATUS "CMAKE_BUILD_TYPE was not specified")
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
@@ -118,6 +114,7 @@ set(kafka_to_nexus_INC
         json.h
         kafka-to-nexus.h
         KafkaW/BrokerSettings.h
+        KafkaW/ConsumerSettings.h
         KafkaW/TopicSettings.h
         KafkaW/KafkaW.h
         KafkaW/ConsumerMessage.h

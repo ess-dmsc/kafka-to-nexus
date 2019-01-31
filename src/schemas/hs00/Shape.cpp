@@ -28,7 +28,7 @@ std::vector<Dimension<EdgeType>> const &Shape<EdgeType>::getDimensions() const {
 }
 
 template <typename EdgeType> size_t Shape<EdgeType>::getTotalItems() const {
-  if (Dimensions.size() == 0) {
+  if (Dimensions.empty()) {
     return 0;
   }
   size_t N = 1;
@@ -61,6 +61,6 @@ template size_t Shape<uint32_t>::getTotalItems() const;
 template size_t Shape<uint64_t>::getTotalItems() const;
 template size_t Shape<double>::getTotalItems() const;
 template size_t Shape<float>::getTotalItems() const;
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter

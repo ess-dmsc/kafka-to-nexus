@@ -4,32 +4,24 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-/// \brief  Create a new dataset for scalar strings.
-WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
+/// \brief  Open or create a new dataset for scalar strings.
+WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
                                        std::string const &SourceName,
-                                       Value FlatbuffersValueTypeId,
-                                       CollectiveQueue *cq) {
+                                       Mode OpenMode) {
   LOG(spdlog::level::trace, "f142 init_impl  WriterScalarString");
-  ChunkedDataset =
-      h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024, cq);
-  if (ChunkedDataset == nullptr) {
-    throw std::runtime_error(fmt::format(
-        "Could not create hdf dataset  SourceName: {}", SourceName));
-  }
-}
-
-/// \brief  Open a dataset for scalar strings.
-WriterScalarString::WriterScalarString(hdf5::node::Group HdfGroup,
-                                       std::string const &SourceName,
-                                       Value FlatbuffersValueTypeId,
-                                       CollectiveQueue *cq,
-                                       HDFIDStore *hdf_store) {
-  LOG(spdlog::level::trace, "f142 init_impl  WriterScalarString");
-  ChunkedDataset =
-      h5::Chunked1DString::open(HdfGroup, SourceName, cq, hdf_store);
-  if (ChunkedDataset == nullptr) {
-    throw std::runtime_error(
-        fmt::format("Could not open hdf dataset  SourceName: {}", SourceName));
+  if (OpenMode == Mode::Open) {
+    ChunkedDataset = h5::Chunked1DString::open(HdfGroup, SourceName);
+    if (ChunkedDataset == nullptr) {
+      throw std::runtime_error(fmt::format(
+          "Could not open hdf dataset  SourceName: {}", SourceName));
+    }
+  } else if (OpenMode == Mode::Create) {
+    ChunkedDataset =
+        h5::Chunked1DString::create(HdfGroup, SourceName, 64 * 1024);
+    if (ChunkedDataset == nullptr) {
+      throw std::runtime_error(fmt::format(
+          "Could not create hdf dataset  SourceName: {}", SourceName));
+    }
   }
 }
 
@@ -48,6 +40,6 @@ h5::append_ret WriterScalarString::write(LogData const *fbuf) {
   return ChunkedDataset->append(
       static_cast<String const *>(fbuf->value())->value()->str());
 }
-}
-}
-}
+} // namespace f142
+} // namespace Schemas
+} // namespace FileWriter

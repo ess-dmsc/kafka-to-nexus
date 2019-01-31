@@ -127,10 +127,11 @@ TEST_F(Schema_f142, writeScalarFloat) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValueFloat(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          (char *)Builder->GetBufferPointer(), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -171,10 +172,11 @@ TEST_F(Schema_f142, writeArrayFloat) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValue(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          (char *)Builder->GetBufferPointer(), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -210,10 +212,11 @@ TEST_F(Schema_f142, writeScalarString) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValueString(Value);
       auto Msg = FileWriter::FlatbufferMessage(
-          (char *)Builder->GetBufferPointer(), Builder->GetSize());
+          reinterpret_cast<char *>(Builder->GetBufferPointer()),
+          Builder->GetSize());
       WriterModule.write(Msg);
     }
   }
@@ -300,7 +303,7 @@ TEST_F(Schema_f142, writeScalarFloatWithLatest) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValueFloat(Value);
       auto Msg = FileWriter::FlatbufferMessage(
           reinterpret_cast<char const *>(Builder->GetBufferPointer()),
@@ -347,7 +350,7 @@ TEST_F(Schema_f142, writeArrayFloatWithLatest) {
     WriterModule.parse_config(StreamJson.dump(), "{}");
     auto Group = File.root();
     WriterModule.init_hdf(Group, "{}");
-    for (auto Value : Expected) {
+    for (auto const &Value : Expected) {
       auto Builder = makeValue(Value);
       auto Msg = FileWriter::FlatbufferMessage(
           reinterpret_cast<char const *>(Builder->GetBufferPointer()),
@@ -441,7 +444,7 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
   Command["file_attributes"]["file_name"] = Filename;
   Command["job_id"] = Filename;
   auto CommandString = Command.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
 
   // We write to both sources, but afterwards verify that only the data to the
   // first source has been written
@@ -474,7 +477,7 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
 }
   )"");
   CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
+  CommandHandler.tryToHandle(CommandString);
   {
     auto File = hdf5::file::open(Filename);
     File.root().get_group("some_nxlog").get_dataset("value");
@@ -485,74 +488,5 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
         .read(Buffer, hdf5::property::DatasetTransferList());
     ASSERT_EQ(Buffer, std::vector<double>({4, 5, 6, 10, 11, 12}));
   }
-  unlink(Filename.c_str());
-}
-
-// Nexus structure defines two colliding sources.  The latter will fail to
-// initialize.  By default, the file writer will try to continue with the
-// remaining streams.  We can change that default using
-// 'abort_on_uninitialised_stream'.  This test verifies that the CommandHandler
-// throws in that case.
-TEST_F(Schema_f142, UninitializedStreamOptionallyThrows) {
-  using FileWriter::CommandHandler;
-  using FileWriter::FlatbufferMessage;
-  std::string Filename("Test.Schema_f142.UninitializedStreamOptionallyThrows");
-  unlink(Filename.c_str());
-  MainOpt MainOpt;
-  CommandHandler CommandHandler(MainOpt, nullptr);
-  auto Command = json::parse(R""(
-{
-  "cmd": "FileWriter_new",
-  "file_attributes": {
-    "file_name": "tmp-dummy-hdf"
-  },
-  "job_id": "dummy",
-  "broker": "//localhost:202020",
-  "nexus_structure": {
-    "children": [
-      {
-        "name": "some_nxlog",
-        "type": "group",
-        "children": [
-          {
-            "type": "stream",
-            "stream": {
-              "writer_module": "f142",
-              "topic": "dummy_topic",
-              "source": "dummy_source_1",
-              "type": "double",
-              "array_size": 3
-            }
-          },
-          {
-            "type": "stream",
-            "stream": {
-              "writer_module": "f142",
-              "topic": "dummy_topic",
-              "source": "dummy_source_2",
-              "type": "double",
-              "array_size": 3
-            }
-          }
-        ]
-      }
-    ]
-  }
-}
-  )"");
-  Command["file_attributes"]["file_name"] = Filename;
-  Command["job_id"] = Filename;
-  Command["abort_on_uninitialised_stream"] = true;
-  auto CommandString = Command.dump();
-  ASSERT_THROW(CommandHandler.handle(CommandString), std::runtime_error);
-
-  auto CommandStop = json::parse(R""(
-{
-  "cmd": "file_writer_tasks_clear_all",
-  "recv_type": "FileWriter"
-}
-  )"");
-  CommandString = CommandStop.dump();
-  CommandHandler.handle(CommandString);
   unlink(Filename.c_str());
 }

@@ -7,13 +7,13 @@
 
 namespace FileWriter {
 
-Source::Source(std::string const &Name, std::string const &ID,
-               HDFWriterModule::ptr Writer)
-    : SourceName(Name), SchemaID(ID), WriterModule(std::move(Writer)) {}
+Source::Source(std::string Name, std::string ID, HDFWriterModule::ptr Writer)
+    : SourceName(std::move(Name)), SchemaID(std::move(ID)),
+      WriterModule(std::move(Writer)) {}
 
 Source::~Source() { close_writer_module(); }
 
-std::string const &Source::topic() const { return Topic_; }
+std::string const &Source::topic() const { return TopicName; }
 
 std::string const &Source::sourcename() const { return SourceName; }
 
@@ -36,7 +36,7 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
         LOG(spdlog::level::trace, "Failure while writing message: {}", ret.to_str());
       return ProcessMessageResult::ERR;
     }
-    if (HDFFileForSWMR) {
+    if (HDFFileForSWMR != nullptr) {
       HDFFileForSWMR->SWMRFlush();
     }
     return ProcessMessageResult::OK;
@@ -56,6 +56,6 @@ void Source::close_writer_module() {
   }
 }
 
-void Source::setTopic(std::string const &Name) { Topic_ = Name; }
+void Source::setTopic(std::string const &Name) { TopicName = Name; }
 
 } // namespace FileWriter

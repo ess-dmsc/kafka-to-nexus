@@ -25,8 +25,8 @@ static FileWriter::HDFWriterModuleRegistry::Registrar<
 
 bool SampleEnvironmentDataGuard::verify(
     FlatbufferMessage const &Message) const {
-  auto Verifier =
-      flatbuffers::Verifier((uint8_t *)Message.data(), Message.size());
+  auto Verifier = flatbuffers::Verifier(
+      reinterpret_cast<const std::uint8_t *>(Message.data()), Message.size());
   return VerifySampleEnvironmentDataBuffer(Verifier);
 }
 
@@ -44,9 +44,8 @@ std::string SampleEnvironmentDataGuard::source_name(
   return FbPointer->Name()->str();
 }
 
-void FastSampleEnvironmentWriter::parse_config(
-    std::string const &ConfigurationStream,
-    std::string const &ConfigurationModule) {
+void FastSampleEnvironmentWriter::parse_config(std::string const &,
+                                               std::string const &) {
   LOG(spdlog::level::trace, "There are currently no runtime configurable options in the "
                   "FastSampleEnvironmentWriter class.");
 }
@@ -57,14 +56,22 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::RawValue(CurrentGroup, NeXusDataset::Mode::Create,
-                           DefaultChunkSize);
-    NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Create,
-                       DefaultChunkSize);
-    NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Create,
-                           DefaultChunkSize);
-    NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Create,
-                                   DefaultChunkSize);
+    NeXusDataset::RawValue(         // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+    NeXusDataset::Time(             // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueIndex(         // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
+        CurrentGroup,               // NOLINT(bugprone-unused-raii)
+        NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+        DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
     auto ClassAttribute =
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");

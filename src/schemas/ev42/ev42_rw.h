@@ -16,7 +16,6 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
 
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
-  static FileWriter::HDFWriterModule::ptr create();
   void parse_config(std::string const &ConfigurationStream,
                     std::string const &ConfigurationModule) override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
@@ -33,15 +32,13 @@ public:
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
   uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
   hsize_t chunk_bytes = 1 << 16;
-  bool do_flush_always = false;
   uint64_t total_written_bytes = 0;
   uint64_t index_at_bytes = 0;
   uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
   uint64_t ts_max = 0;
   size_t buffer_size = 0;
   size_t buffer_packet_max = 0;
-  CollectiveQueue *cq = nullptr;
 };
-}
-}
-}
+} // namespace ev42
+} // namespace Schemas
+} // namespace FileWriter

@@ -13,7 +13,6 @@
 #include <future>
 #include <sstream>
 
-using std::array;
 using std::vector;
 
 namespace FileWriter {
@@ -37,13 +36,20 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
+std::chrono::milliseconds findTime(nlohmann::json const &Document,
+                                   std::string const &Key) {
+  if (auto x = find<uint64_t>(Key, Document)) {
+    std::chrono::milliseconds Time(x.inner());
+    if (Time.count() != 0) {
+      return Time;
+    }
+  }
+  return std::chrono::milliseconds{-1};
+}
+
 CommandHandler::CommandHandler(MainOpt &Settings, MasterInterface *Master)
     : Config(Settings), MasterPtr(Master) {}
 
-/// \brief Parse the given `NexusStructureString`
-///
-/// Parse the given `NexusStructureString` and call the initialization of the
-/// HDF structures.
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
@@ -69,13 +75,13 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamHDFInfo) {
+    StreamHDFInfo const &StreamInfo) {
   using nlohmann::json;
   StreamSettings StreamSettings;
-  StreamSettings.StreamHDFInfoObj = StreamHDFInfo;
+  StreamSettings.StreamHDFInfoObj = StreamInfo;
 
   json ConfigStream;
-  ConfigStream = json::parse(StreamHDFInfo.ConfigStream);
+  ConfigStream = json::parse(StreamInfo.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -148,8 +154,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   if (auto x = find<json>("attributes", ConfigStream)) {
     Attributes = x.inner();
   }
-  auto StreamGroup =
-      hdf5::node::get_group(RootGroup, StreamHDFInfo.HDFParentName);
+  auto StreamGroup = hdf5::node::get_group(RootGroup, StreamInfo.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
   HDFWriterModule->close();
   HDFWriterModule.reset();
@@ -184,10 +189,10 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
   return StreamSettingsList;
 }
 
-void CommandHandler::handleNew(std::string const &Command) {
+void CommandHandler::handleNew(std::string const &Command,
+                               const std::chrono::milliseconds StartTime) {
+  using nlohmann::detail::out_of_range;
   using nlohmann::json;
-  using std::move;
-  using std::string;
   json Doc = parseOrThrow(Command);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
@@ -202,7 +207,7 @@ void CommandHandler::handleNew(std::string const &Command) {
       throwMissingKey("job_id", Doc.dump());
     }
 
-    if (MasterPtr) { // workaround to prevent seg fault in tests
+    if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
         LOG(spdlog::level::err, "job_id {} already in use, ignore command", JobID);
         return;
@@ -288,20 +293,20 @@ void CommandHandler::handleNew(std::string const &Command) {
   Config.StreamerConfiguration.StopTimestamp =
       std::chrono::milliseconds::zero();
 
-  // Must be done before StreamMaster instantiation
-  if (auto x = find<uint64_t>("start_time", Doc)) {
-    std::chrono::milliseconds StartTime(x.inner());
-    if (StartTime.count() != 0) {
-      LOG(spdlog::level::info, "StartTime: {}", StartTime.count());
-      Config.StreamerConfiguration.StartTimestamp = StartTime;
-    }
+  // If start time not specified use command message timestamp
+  std::chrono::milliseconds Time = findTime(Doc, "start_time");
+  if (Time.count() > 0) {
+    Config.StreamerConfiguration.StartTimestamp = Time;
+  } else {
+    Config.StreamerConfiguration.StartTimestamp = StartTime;
   }
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    std::chrono::milliseconds StopTime(x.inner());
-    if (StopTime.count() != 0) {
-      LOG(spdlog::level::info, "StopTime: {}", StopTime.count());
-      Config.StreamerConfiguration.StopTimestamp = StopTime;
-    }
+  LOG(spdlog::level::info, "Start time: {}ms",
+      Config.StreamerConfiguration.StartTimestamp.count());
+  Time = findTime(Doc, "stop_time");
+  if (Time.count() > 0) {
+    Config.StreamerConfiguration.StopTimestamp = Time;
+    LOG(spdlog::level::info, "Stop time: {}ms",
+        Config.StreamerConfiguration.StopTimestamp.count());
   }
 
   if (MasterPtr != nullptr) {
@@ -313,7 +318,7 @@ void CommandHandler::handleNew(std::string const &Command) {
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.status_master_interval});
     }
-    if (Config.topic_write_duration.count()) {
+    if (Config.topic_write_duration.count() != 0) {
       s->TopicWriteDuration = Config.topic_write_duration;
     }
     s->start();
@@ -324,10 +329,6 @@ void CommandHandler::handleNew(std::string const &Command) {
   }
 }
 
-/// \brief Configure the HDF writer modules for writing.
-///
-/// \param StreamSettingsList The settings for the stream.
-/// \param Task The task to configure.
 void CommandHandler::addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
@@ -417,33 +418,29 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   } else {
     throwMissingKey("job_id", Doc.dump());
   }
-  std::chrono::milliseconds StopTime(0);
-  if (auto x = find<uint64_t>("stop_time", Doc)) {
-    StopTime = std::chrono::milliseconds(x.inner());
-  }
 
-  if (!MasterPtr) { // workaround to prevent seg fault in tests
-    return;
-  }
-
-  auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
-  if (StreamMaster) {
-    if (StopTime.count() != 0) {
-      LOG(spdlog::level::info,
-          "Received request to gracefully stop file with id : {} at {} ms",
-          JobID, StopTime.count());
-      StreamMaster->setStopTime(StopTime);
+  std::chrono::milliseconds StopTime = findTime(Doc, "stop_time");
+  if (MasterPtr != nullptr) {
+    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+    if (StreamMaster != nullptr) {
+      if (StopTime.count() > 0) {
+        LOG(spdlog::level::info,
+            "Received request to gracefully stop file with id : {} at {} ms",
+            JobID, StopTime.count());
+        StreamMaster->setStopTime(StopTime);
+      } else {
+        LOG(spdlog::level::info, "Received request to gracefully stop file with id : {}",
+            JobID);
+        StreamMaster->stop();
+      }
     } else {
-      LOG(spdlog::level::info, "Received request to gracefully stop file with id : {}",
-          JobID);
-      StreamMaster->stop();
+      LOG(spdlog::level::warn, "Can not find StreamMaster for JobID: {}", JobID);
     }
-  } else {
-    LOG(spdlog::level::warn, "Can not find StreamMaster for JobID: {}", JobID);
   }
 }
 
-void CommandHandler::handle(std::string const &Command) {
+void CommandHandler::handle(std::string const &Command,
+                            const std::chrono::milliseconds StartTime) {
   using nlohmann::json;
   json Doc;
   try {
@@ -475,7 +472,7 @@ void CommandHandler::handle(std::string const &Command) {
   if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
     std::string CommandMain = CmdMaybe.inner();
     if (CommandMain == "FileWriter_new") {
-      handleNew(Command);
+      handleNew(Command, StartTime);
       return;
     }
     if (CommandMain == "FileWriter_exit") {
@@ -523,15 +520,30 @@ std::string format_nested_exception(std::exception const &E) {
   return format_nested_exception(E, StrS, 0);
 }
 
-void CommandHandler::tryToHandle(std::string const &Command) {
+void CommandHandler::tryToHandle(
+    std::string const &Command,
+    std::chrono::milliseconds MsgTimestampMilliseconds) {
+
+  if (MsgTimestampMilliseconds.count() < 0) {
+    MsgTimestampMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
+    LOG(spdlog::level::info,
+        "Kafka command doesn't contain timestamp, so using current time.");
+  }
+  LOG(spdlog::level::info, "Kafka command message timestamp : {}",
+      MsgTimestampMilliseconds.count());
+
   try {
-    handle(Command);
+    handle(Command, MsgTimestampMilliseconds);
   } catch (...) {
-    std::string JobID;
+    std::string JobID = "unknown";
     try {
       JobID = nlohmann::json::parse(Command)["job_id"];
     } catch (...) {
+      // Okay to ignore as original exception will give the reason.
     }
+
     try {
       std::throw_with_nested(
           std::runtime_error("Error in CommandHandler::tryToHandle"));
@@ -549,8 +561,10 @@ void CommandHandler::tryToHandle(std::string const &Command) {
   }
 }
 
-void CommandHandler::tryToHandle(Msg const &Message) {
-  tryToHandle({(char *)Message.data(), Message.size()});
+void CommandHandler::tryToHandle(
+    Msg const &Message, std::chrono::milliseconds MsgTimestampMilliseconds) {
+  tryToHandle({reinterpret_cast<const char *>(Message.data()), Message.size()},
+              MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

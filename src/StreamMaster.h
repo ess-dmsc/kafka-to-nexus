@@ -45,7 +45,7 @@ public:
                                                 Options.StreamerConfiguration));
         Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
-        RunStatus = StreamMasterError::STREAMER_ERROR();
+        RunStatus = StreamMasterError::STREAMER_ERROR;
         LOG(spdlog::level::critical, "{}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
@@ -146,7 +146,7 @@ public:
 
     for (auto &s : Streamers) {
       if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
-        return StreamMasterError::STREAMER_ERROR();
+        return StreamMasterError::STREAMER_ERROR;
       }
     }
     return RunStatus.load();
@@ -175,7 +175,7 @@ private:
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
            TopicWriteDuration) {
       if (Stop) {
-        return StreamMasterError::HAS_FINISHED();
+        return StreamMasterError::HAS_FINISHED;
       }
 
       // if Streamer throws the stream is closed, but the writing continues
@@ -186,7 +186,7 @@ private:
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
         closeStream(Stream, Demux.topic());
-        return StreamMasterError::STREAMER_ERROR();
+        return StreamMasterError::STREAMER_ERROR;
       }
       // decreases the count of sources in the stream, eventually closes the
       // stream
@@ -194,16 +194,16 @@ private:
         if (Stream.numSources() == 0) {
           return closeStream(Stream, Demux.topic());
         }
-        return StreamMasterError::RUNNING();
+        return StreamMasterError::RUNNING;
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {
         LOG(spdlog::level::err, "Error in topic \"{}\" : {}", Demux.topic(),
             Err2Str(Stream.runStatus()));
-        return StreamMasterError::STREAMER_ERROR();
+        return StreamMasterError::STREAMER_ERROR;
       }
     }
-    return StreamMasterError::RUNNING();
+    return StreamMasterError::RUNNING;
   }
 
   /// \brief Main loop that handles the writer process for each stream.
@@ -218,7 +218,7 @@ private:
   /// StreamMasterError::has_finished.
   void run() {
     using namespace std::chrono;
-    RunStatus = StreamMasterError::RUNNING();
+    RunStatus = StreamMasterError::RUNNING;
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
 
       for (auto &Demux : Demuxers) {
@@ -226,15 +226,15 @@ private:
 
         // If the stream is active process the messages
         StreamMasterError ProcessResult = processStreamResult(s, Demux);
-        if (ProcessResult == StreamMasterError::HAS_FINISHED()) {
+        if (ProcessResult == StreamMasterError::HAS_FINISHED) {
           continue;
         }
-        if (ProcessResult == StreamMasterError::STREAMER_ERROR()) {
+        if (ProcessResult == StreamMasterError::STREAMER_ERROR) {
           continue;
         }
       }
     }
-    RunStatus = StreamMasterError::HAS_FINISHED();
+    RunStatus = StreamMasterError::HAS_FINISHED;
     stopImplemented();
   }
 
@@ -250,10 +250,10 @@ private:
     Stream.closeStream();
     NumStreamers--;
     if (NumStreamers != 0) {
-      return StreamMasterError::RUNNING();
+      return StreamMasterError::RUNNING;
     }
     Stop = true;
-    return StreamMasterError::HAS_FINISHED();
+    return StreamMasterError::HAS_FINISHED;
   }
 
   //   Implementation of the stop command. Make sure that the Streamers
@@ -274,7 +274,7 @@ private:
       }
     }
     Streamers.clear();
-    RunStatus = StreamMasterError::IS_REMOVABLE();
+    RunStatus = StreamMasterError::IS_REMOVABLE;
     LOG(spdlog::level::info, "RunStatus:  {}", Err2Str(RunStatus));
   }
 

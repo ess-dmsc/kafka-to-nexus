@@ -1,5 +1,3 @@
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ../../tests)
-
 find_package(Trompeloeil REQUIRED)
 
 set(UnitTests_SRC
@@ -8,7 +6,6 @@ set(UnitTests_SRC
     HDFFile.cpp
     HDFFileAttributesTest.cpp
     HDFFileTestHelper.cpp
-    helper.cpp
     json.cpp
     StatusTest.cpp
     URITests.cpp
@@ -24,7 +21,6 @@ set(UnitTests_SRC
     StreamerTest.cpp
     AddReader.cpp
     Schema_f142.cpp
-    Schema_ev42.cpp
     AreaDetectorTest.cpp
     EventLogger.cpp
     MainOpt.cpp

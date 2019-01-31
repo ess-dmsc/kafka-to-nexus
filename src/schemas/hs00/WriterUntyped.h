@@ -48,6 +48,6 @@ private:
   createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group,
                                        json const &Json);
 };
-}
-}
-}
+} // namespace hs00
+} // namespace Schemas
+} // namespace FileWriter
