@@ -84,7 +84,7 @@ public:
   StreamerOptions &getOptions() { return Options; }
 
 protected:
-  ConsumerPtr Consumer;
+  ConsumerPtr Consumer {nullptr};
   KafkaW::BrokerSettings Settings;
 
   StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
@@ -94,6 +94,9 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
+private:
+  bool ifConsumerIsReadyThenAssignIt();
+  bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
 };
 
 /// \brief Create a consumer with options specified in the class

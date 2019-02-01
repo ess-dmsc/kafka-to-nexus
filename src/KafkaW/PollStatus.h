@@ -5,5 +5,6 @@ enum class PollStatus {
   Error,
   EndOfPartition,
   Empty,
+  TimedOut
 };
 }

@@ -78,59 +78,61 @@ FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
   return (RunStatus = StreamerStatus::HAS_FINISHED);
 }
 
+bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
+  if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
+      std::future_status::ready) {
+    LOG(Sev::Warning,
+        "Not yet done setting up consumer. Deferring consumption.");
+    return false;
+  }
+  auto Temp = ConsumerCreated.get();
+  RunStatus = Temp.first;
+  Consumer = std::move(Temp.second);
+  return true;
+}
+
+bool FileWriter::Streamer::stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor) {
+  if ((Options.StopTimestamp.count() > 0) and
+      (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
+    LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
+                   "passed since stop time.",
+        MessageProcessor.topic(),
+        (systemTime() - Options.StopTimestamp).count());
+    Sources.clear();
+    return true;
+  }
+  return false;
+}
+
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
-
-  try {
-    // wait for connect() to finish
-    if (RunStatus > StreamerStatus::IS_CONNECTED) {
-      // Do nothing
-    } else if (ConsumerCreated.valid()) {
-      if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
-          std::future_status::ready) {
-        LOG(Sev::Warning,
-            "Not yet done setting up consumer. Defering consumption.");
-        return ProcessMessageResult::OK;
-      }
-      auto Temp = ConsumerCreated.get();
-      RunStatus = Temp.first;
-      Consumer = std::move(Temp.second);
-    } else {
-      throw std::runtime_error(
-          "Failed to set-up process for creating consumer.");
+  if (Consumer == nullptr && ConsumerCreated.valid()) {
+    auto ready = ifConsumerIsReadyThenAssignIt();
+    if (!ready) {
+      // Not ready, so try again on next poll
+      return ProcessMessageResult::OK;
     }
-  } catch (std::runtime_error &Error) {
-    throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
-  } catch (std::exception &Error) {
-    LOG(Sev::Critical, "Got an exception when waiting for connection: {}",
-        Error.what());
-    throw; // "throw;" rethrows
   }
 
-  // make sure that the connection is ok
-  // attention: connect() handles exceptions
   if (RunStatus < StreamerStatus::IS_CONNECTED) {
     throw std::runtime_error(Err2Str(RunStatus));
   }
 
-  // Consume message and exit if we are beyond a message timeout
+  // Consume message
   std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
       Consumer->poll();
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
+    return ProcessMessageResult::ERR;
+  }
+
   if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
-      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition) {
-    if ((Options.StopTimestamp.count() > 0) and
-        (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
-      LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
-                     "passed since stop time.",
-          MessageProcessor.topic(),
-          (systemTime() - Options.StopTimestamp).count());
-      Sources.clear();
+      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
+      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
+    if (stopTimeExceeded(MessageProcessor)) {
       return ProcessMessageResult::STOP;
     }
     return ProcessMessageResult::OK;
-  }
-  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
-    return ProcessMessageResult::ERR;
   }
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer

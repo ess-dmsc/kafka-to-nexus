@@ -166,10 +166,15 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
       DataToReturn->first = PollStatus::Empty;
       return DataToReturn;
     }
+  case RdKafka::ERR__TIMED_OUT:
+    // No message or event within time out - this is usually normal (see librdkafka docs)
+    DataToReturn->first = PollStatus::TimedOut;
+    return DataToReturn;
   case RdKafka::ERR__PARTITION_EOF:
     DataToReturn->first = PollStatus::EndOfPartition;
     return DataToReturn;
   default:
+    // Everything else is an error
     DataToReturn->first = PollStatus::Error;
     return DataToReturn;
   }
