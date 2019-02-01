@@ -167,7 +167,8 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
       return DataToReturn;
     }
   case RdKafka::ERR__TIMED_OUT:
-    // No message or event within time out - this is usually normal (see librdkafka docs)
+    // No message or event within time out - this is usually normal (see
+    // librdkafka docs)
     DataToReturn->first = PollStatus::TimedOut;
     return DataToReturn;
   case RdKafka::ERR__PARTITION_EOF:

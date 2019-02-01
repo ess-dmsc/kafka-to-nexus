@@ -91,7 +91,8 @@ bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
   return true;
 }
 
-bool FileWriter::Streamer::stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor) {
+bool FileWriter::Streamer::stopTimeExceeded(
+    FileWriter::DemuxTopic &MessageProcessor) {
   if ((Options.StopTimestamp.count() > 0) and
       (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
     LOG(Sev::Info, "Stop stream timeout for topic \"{}\" reached. {} ms "
