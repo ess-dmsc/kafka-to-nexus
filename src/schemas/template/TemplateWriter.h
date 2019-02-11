@@ -218,7 +218,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override {
     std::cout << "WriterClass::init_hdf()\n";
-    return InitResult::OK();
+    return InitResult::OK;
   }
 
   /// \brief Re-open datasets that have been created when calling
@@ -251,7 +251,7 @@ public:
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   InitResult reopen(hdf5::node::Group &HDFGroup) override {
     std::cout << "WriterClass::reopen()\n";
-    return InitResult::OK();
+    return InitResult::OK;
   }
 
   /// \brief Implements the data writing functionality of the file writing

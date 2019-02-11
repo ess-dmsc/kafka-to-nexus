@@ -128,9 +128,9 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
     LOG(Sev::Error, "Unable to initialise areaDetector data tree in "
                     "HDF file with error message: \"{}\"",
         E.what());
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR_IO;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 
 FileWriterBase::InitResult
@@ -148,9 +148,9 @@ AreaDetectorWriter::reopen(hdf5::node::Group &HDFGroup) {
     LOG(Sev::Error,
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR_IO;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 template <typename DataType, class DatasetType>
 void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
@@ -201,7 +201,6 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     break;
   default:
     return FileWriterBase::WriteResult::ERROR_BAD_FLATBUFFER();
-    break;
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {

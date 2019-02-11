@@ -146,7 +146,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         fmt::format("ev42 could not init hdf_parent: {}  trace: {}",
                     static_cast<std::string>(HDFGroup.link().path()), message));
   }
-  return HDFWriterModule::InitResult::OK();
+  return HDFWriterModule::InitResult::OK;
 }
 
 HDFWriterModule::InitResult
@@ -183,7 +183,7 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
         fmt::format("ev42 could not init hdf_parent: {}",
                     static_cast<std::string>(HDFGroup.link().path())));
   }
-  return HDFWriterModule::InitResult::OK();
+  return HDFWriterModule::InitResult::OK;
 }
 
 HDFWriterModule::WriteResult

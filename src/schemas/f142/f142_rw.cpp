@@ -236,14 +236,14 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       LOG(Sev::Error,
           "Could not create a writer implementation for value_type {}",
           TypeName);
-      return HDFWriterModule::InitResult::ERROR_IO();
+      return HDFWriterModule::InitResult::ERROR_IO;
     }
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
                                                         Info.ChunkBytes);
         if (Info.Ptr.get() == nullptr) {
-          return HDFWriterModule::InitResult::ERROR_IO();
+          return HDFWriterModule::InitResult::ERROR_IO;
         }
       }
       auto AttributesJson = nlohmann::json::parse(*HDFAttributes);
@@ -252,7 +252,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name);
         if (Info.Ptr.get() == nullptr) {
-          return HDFWriterModule::InitResult::ERROR_IO();
+          return HDFWriterModule::InitResult::ERROR_IO;
         }
         Info.Ptr->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
       }
@@ -263,7 +263,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         "f142 could not init HDFGroup: {}  trace: {}",
         static_cast<std::string>(HDFGroup.link().path()), message)));
   }
-  return HDFWriterModule::InitResult::OK();
+  return HDFWriterModule::InitResult::OK;
 }
 
 /// \brief  Inspect the incoming FlatBuffer from the message and write the

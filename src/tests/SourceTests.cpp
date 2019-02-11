@@ -32,10 +32,10 @@ public:
                     std::string const &ConfigurationModule) override {}
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override {
-    return InitResult::OK();
+    return InitResult::OK;
   }
   InitResult reopen(hdf5::node::Group &HDFGrup) override {
-    return InitResult::OK();
+    return InitResult::OK;
   }
   WriteResult write(FlatbufferMessage const &Message) override {
     return WriteResult::OK();

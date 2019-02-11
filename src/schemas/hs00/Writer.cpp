@@ -18,7 +18,7 @@ Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
                              "that you call parse_config() before.");
   }
   TheWriterUntyped->createHDFStructure(HDFGroup, ChunkBytes);
-  return FileWriter::HDFWriterModule::InitResult::OK();
+  return FileWriter::HDFWriterModule::InitResult::OK;
 }
 
 FileWriter::HDFWriterModule::InitResult
@@ -29,9 +29,9 @@ Writer::reopen(hdf5::node::Group &HDFGroup) {
   }
   TheWriterUntyped = WriterUntyped::createFromHDF(HDFGroup);
   if (!TheWriterUntyped) {
-    return FileWriter::HDFWriterModule::InitResult::ERROR_IO();
+    return FileWriter::HDFWriterModule::InitResult::ERROR_IO;
   }
-  return FileWriter::HDFWriterModule::InitResult::OK();
+  return FileWriter::HDFWriterModule::InitResult::OK;
 }
 
 FileWriter::HDFWriterModule::WriteResult

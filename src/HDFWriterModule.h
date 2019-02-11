@@ -13,45 +13,7 @@ namespace FileWriter {
 namespace HDFWriterModule_detail {
 
 /// \brief Result type for the initialization of the writer module.
-class InitResult {
-public:
-  /// Everything was fine.
-  ///
-  /// \return The okay result.
-  static InitResult OK() { return InitResult(0); }
-
-  /// I/O error, for example if libhdf returned with a I/O error.
-  ///
-  /// \return The error result.
-  static inline InitResult ERROR_IO() { return InitResult(-1); }
-
-  /// The writer module needs more configuration that was is available.
-  ///
-  /// \return The incomplete configuration error result.
-  static inline InitResult ERROR_INCOMPLETE_CONFIGURATION() {
-    return InitResult(-2);
-  }
-
-  /// Indicates if status is okay.
-  ///
-  /// \return True if okay.
-  inline bool is_OK() const { return v == 0; }
-
-  /// Indicates if any error has occurred. More specific query function will
-  /// come as need arises.
-  ///
-  /// \return True if any error has occurred
-  inline bool is_ERR() const { return v < 0; }
-
-  /// Used for status reports.
-  ///
-  /// \return The status.
-  std::string to_str() const;
-
-private:
-  explicit inline InitResult(int8_t v) : v(v) {}
-  int8_t v = -1;
-};
+enum class InitResult { ERROR_IO = -1, OK = 0 };
 
 /// Result type for write operation on the writer module. Not an enum but a
 /// class because we have a message for the sad code path.

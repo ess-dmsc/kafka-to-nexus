@@ -81,9 +81,9 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
     LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
                     "HDF file with error message: \"{}\"",
         E.what());
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR_IO;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 
 FileWriterBase::InitResult
@@ -100,9 +100,9 @@ FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
     LOG(Sev::Error,
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR_IO;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 
 std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,

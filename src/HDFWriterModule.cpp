@@ -35,15 +35,6 @@ static std::map<int8_t, std::string> const InitResultStrings{
     {0, "OK"}, {-1, "ERROR_IO"}, {-2, "ERROR_INCOMPLETE_CONFIGURATION"},
 };
 
-std::string InitResult::to_str() const {
-  auto const &m = InitResultStrings;
-  auto const it = m.find(v);
-  if (it == m.end()) {
-    return "ERROR_UNKNOWN_VALUE";
-  }
-  return it->second;
-}
-
 static std::map<int8_t, std::string> const WriteResultStrings{
     {0, "OK"},
     {-1, "ERROR_IO"},

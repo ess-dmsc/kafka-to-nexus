@@ -152,12 +152,14 @@ TEST_F(AreaDetectorWriter, WriterInitTest) {
   EXPECT_TRUE(FoundAttribute);
 }
 
+using FileWriter::HDFWriterModule_detail::InitResult;
+
 TEST_F(AreaDetectorWriter, WriterAttributeExists) {
   auto ClassAttribute = UsedGroup.attributes.create<std::string>("NX_class");
   ClassAttribute.write("NXlog");
   {
     ADWriterStandIn Temp;
-    EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}").is_ERR());
+    EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}") != InitResult::OK);
   }
 }
 
@@ -167,12 +169,12 @@ TEST_F(AreaDetectorWriter, WriterInitFail) {
     Temp.init_hdf(UsedGroup, "{}");
   }
   ADWriterStandIn Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_ERR());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") != InitResult::OK);
 }
 
 TEST_F(AreaDetectorWriter, WriterReOpenFail) {
   ADWriterStandIn Writer;
-  EXPECT_TRUE(Writer.reopen(UsedGroup).is_ERR());
+  EXPECT_TRUE(Writer.reopen(UsedGroup) != InitResult::OK);
 }
 
 TEST_F(AreaDetectorWriter, WriterInitInt8) {
