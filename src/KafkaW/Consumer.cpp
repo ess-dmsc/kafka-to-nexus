@@ -137,7 +137,9 @@ void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
   auto RetCode = KafkaConsumer->metadata(
       true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
-  if (RetCode != RdKafka::ERR_NO_ERROR) {
+  if (RetCode == RdKafka::ERR__TRANSPORT)
+    throw MetadataException("Broker does not exist!");
+  else if (RetCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(
         "Consumer::updateMetadata() - error while retrieving metadata.");
   }
