@@ -312,13 +312,15 @@ TEST_F(AreaDetectorWriter, WriterDefaultValuesTest) {
   EXPECT_EQ(ChunkDims, (hdf5::Dimensions{64, 1, 1}));
 }
 
+using WriteResult = FileWriter::HDFWriterModule_detail::WriteResult;
+
 TEST_F(AreaDetectorWriter, WriterWriteTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   ADWriterStandIn Temp;
   Temp.init_hdf(UsedGroup, "{}");
   Temp.reopen(UsedGroup);
-  EXPECT_TRUE(Temp.write(Message).is_OK());
-  EXPECT_TRUE(Temp.write(Message).is_OK());
+  EXPECT_TRUE(Temp.write(Message) == WriteResult::OK);
+  EXPECT_TRUE(Temp.write(Message) == WriteResult::OK);
   EXPECT_EQ(2, Temp.Timestamp.dataspace().size());
 }
 
@@ -332,7 +334,7 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   for (int i = 0; i < 5; i++) {
-    EXPECT_TRUE(Writer.write(Message).is_OK());
+    EXPECT_TRUE(Writer.write(Message) == WriteResult::OK);
     if (i < 2) {
       EXPECT_EQ(0, Writer.CueTimestampIndex.dataspace().size());
       EXPECT_EQ(0, Writer.CueTimestamp.dataspace().size());
@@ -368,7 +370,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
     FileWriter::FlatbufferMessage Message(
         reinterpret_cast<char *>(builder.GetBufferPointer()),
         builder.GetSize());
-    EXPECT_TRUE(Writer.write(Message).is_OK());
+    EXPECT_TRUE(Writer.write(Message) == WriteResult::OK);
   }
   std::vector<std::uint64_t> CueIndexValues(
       Writer.CueTimestampIndex.dataspace().size());
@@ -388,7 +390,7 @@ TEST_F(AreaDetectorWriter, WriterDimensionsTest) {
   ADWriterStandIn Writer;
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
-  EXPECT_TRUE(Writer.write(Message).is_OK());
+  EXPECT_TRUE(Writer.write(Message) == WriteResult::OK);
   auto Dataspace = hdf5::dataspace::Simple(Writer.Values->dataspace());
   EXPECT_EQ((hdf5::Dimensions{1, 10, 12}), Dataspace.current_dimensions());
 }
@@ -543,7 +545,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
-  if (Writer.write(Message).is_ERR()) {
+  if (Writer.write(Message) != WriteResult::OK) {
     return false;
   }
   std::vector<Type> dataFromFile(testData.size());

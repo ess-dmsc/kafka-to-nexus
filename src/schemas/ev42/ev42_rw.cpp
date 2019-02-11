@@ -189,7 +189,7 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 HDFWriterModule::WriteResult
 HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
-    return HDFWriterModule::WriteResult::ERROR_IO();
+    return HDFWriterModule::WriteResult::ERROR_IO;
   }
   auto fbuf = get_fbuf(Message.data());
   auto w1ret = this->ds_event_time_offset->append_data_1d(
@@ -210,7 +210,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     this->ds_cue_index->append_data_1d(&event_index, 1);
     index_at_bytes = total_written_bytes;
   }
-  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->pulse_time());
+  return HDFWriterModule::WriteResult::OK;
 }
 
 int32_t HDFWriterModule::flush() { return 0; }

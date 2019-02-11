@@ -15,79 +15,9 @@ namespace HDFWriterModule_detail {
 /// \brief Result type for the initialization of the writer module.
 enum class InitResult { ERROR_IO = -1, OK = 0 };
 
-/// Result type for write operation on the writer module. Not an enum but a
-/// class because we have a message for the sad code path.
-class WriteResult {
-public:
-  /// Everything was fine.
-  ///
-  /// \return The okay result.
-  static WriteResult OK() { return WriteResult(0); }
-  static WriteResult OK_WITH_TIMESTAMP(uint64_t timestamp) {
-    WriteResult ret(1);
-    ret.timestamp_ = timestamp;
-    return ret;
-  }
-  /// I/O error, for example if libhdf returned with a I/O error.
-  ///
-  /// \return The error result.
-  static inline WriteResult ERROR_IO() { return WriteResult(-1); }
+/// Result type for write operation on the writer module.
+enum class WriteResult { ERROR_BAD_FLATBUFFER = -2, ERROR_IO = -1, OK = 0 };
 
-  static inline WriteResult ERROR_WITH_MESSAGE(std::string const &Message) {
-    return WriteResult(Message);
-  }
-
-  /// \brief Indicates that the flatbuffer contained semantically invalid data,
-  /// even
-  /// though the flatbuffer is technically valid.
-  ///
-  /// The case that the flatbuffer itself is invalid should not occur as that
-  /// is already checked for before passing the flatbuffer to the
-  /// `HDFWriterModule`.
-  ///
-  /// \return The bad flatbuffer result.
-  static inline WriteResult ERROR_BAD_FLATBUFFER() { return WriteResult(-2); }
-
-  /// \brief Indicates that the data is structurally invalid, for example if it
-  /// has the wrong array sizes.
-  ///
-  /// \return The data structure error result.
-  static inline WriteResult ERROR_DATA_STRUCTURE_MISMATCH() {
-    return WriteResult(-3);
-  }
-
-  /// \brief A special case of `ERROR_DATA_STRUCTURE_MISMATCH` to indicate that
-  /// the data type does not match.
-  ///
-  /// For example a float instead of the expected
-  /// double.
-  ///
-  /// \return The data type error result.
-  static inline WriteResult ERROR_DATA_TYPE_MISMATCH() {
-    return WriteResult(-4);
-  }
-  inline bool is_OK() const { return v == 0; }
-  inline bool is_OK_WITH_TIMESTAMP() const { return v == 1; }
-
-  /// \brief Indicates if any error has occurred.
-  ///
-  /// \return True if any error has occurred.
-  inline bool is_ERR() const { return v < 0; }
-
-  /// \brief Gets status reports.
-  ///
-  /// \return The status.
-  std::string to_str() const;
-  inline uint64_t timestamp() const { return timestamp_; }
-
-private:
-  explicit inline WriteResult(int8_t v) : v(v) {}
-  explicit inline WriteResult(std::string Message)
-      : v(-5), Message(std::move(Message)) {}
-  int8_t v = -1;
-  uint64_t timestamp_ = 0;
-  std::string Message;
-};
 } // namespace HDFWriterModule_detail
 
 /// \brief Writes a given flatbuffer to HDF.
@@ -204,5 +134,12 @@ public:
     addWriterModule(FlatbufferID, FactoryFunction);
   };
 };
+
+class WriterException : public std::runtime_error {
+public:
+  WriterException(const char *ErrorMessage)
+      : std::runtime_error(ErrorMessage) {}
+};
+
 } // namespace HDFWriterModuleRegistry
 } // namespace FileWriter

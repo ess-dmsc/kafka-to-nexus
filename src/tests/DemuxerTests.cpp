@@ -37,7 +37,7 @@ public:
     return InitResult::OK;
   }
   WriteResult write(FlatbufferMessage const &Message) override {
-    return WriteResult::OK();
+    return WriteResult::OK;
   }
   std::int32_t flush() override { return 0; }
 

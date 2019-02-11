@@ -278,7 +278,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
       LOG(Sev::Warning,
           "sorry, but we were unable to initialize for this kind of messages");
     }
-    return HDFWriterModule::WriteResult::ERROR_IO();
+    return HDFWriterModule::WriteResult::ERROR_IO;
   }
   auto wret = ValueWriter->write(FlatBuffer);
   if (!wret) {
@@ -317,8 +317,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
       }
     }
   }
-  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(
-      FlatBuffer->timestamp());
+  return HDFWriterModule::WriteResult::OK;
 }
 
 /// Implement HDFWriterModule interface, just flushing.

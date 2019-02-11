@@ -38,7 +38,7 @@ public:
     return InitResult::OK;
   }
   WriteResult write(FlatbufferMessage const &Message) override {
-    return WriteResult::OK();
+    return WriteResult::OK;
   }
   std::int32_t flush() override { return 0; }
   std::int32_t close() override { return 0; }
@@ -78,7 +78,7 @@ TEST_F(SourceTests, ProcessMessagePassesMessageToWriterModule) {
   std::string ModuleName("ev42");
   auto WriterModule = std::make_unique<WriterModuleMock>();
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
-      .RETURN(FileWriter::HDFWriterModule::WriteResult::OK());
+      .RETURN(FileWriter::HDFWriterModule::WriteResult::OK);
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
   flatbuffers::FlatBufferBuilder Builder;
@@ -96,7 +96,7 @@ TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
   std::string ModuleName("ev42");
   auto WriterModule = std::make_unique<WriterModuleMock>();
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
-      .RETURN(FileWriter::HDFWriterModule::WriteResult::ERROR_IO());
+      .RETURN(FileWriter::HDFWriterModule::WriteResult::ERROR_IO);
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
   flatbuffers::FlatBufferBuilder Builder;

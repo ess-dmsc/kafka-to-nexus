@@ -200,7 +200,7 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     appendData<const char>(Values, DataPtr, NrOfElements, DataShape);
     break;
   default:
-    return FileWriterBase::WriteResult::ERROR_BAD_FLATBUFFER();
+    return FileWriterBase::WriteResult::ERROR_BAD_FLATBUFFER;
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {
@@ -208,7 +208,7 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }
-  return FileWriterBase::WriteResult::OK();
+  return FileWriterBase::WriteResult::OK;
 }
 
 std::int32_t AreaDetectorWriter::flush() { return 0; }

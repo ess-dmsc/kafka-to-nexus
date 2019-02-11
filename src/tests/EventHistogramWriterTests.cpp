@@ -397,6 +397,8 @@ TEST_F(EventHistogramWriter, WriterReopen) {
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
 }
 
+using WriteResult = FileWriter::HDFWriterModule_detail::WriteResult;
+
 TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   auto File = createFile(
       "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages",
@@ -412,10 +414,10 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   for (size_t i = 0; i < 4; ++i) {
     auto M = createTestMessage(0, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
-    if (!X.is_OK()) {
-      throw std::runtime_error(X.to_str());
-    }
-    ASSERT_TRUE(X.is_OK());
+    //    if (X!=WriteResult::OK) {
+    //      throw std::runtime_error(X.to_str());
+    //    }
+    ASSERT_TRUE(X == WriteResult::OK);
   }
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
@@ -440,28 +442,28 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   for (size_t i = 0; i < 3; ++i) {
     auto M = createTestMessage(HistogramID, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
-    if (!X.is_OK()) {
-      throw std::runtime_error(X.to_str());
+    if (X != WriteResult::OK) {
+      throw std::runtime_error("Error");
     }
-    ASSERT_TRUE(X.is_OK());
+    ASSERT_TRUE(X == WriteResult::OK);
   }
   ++HistogramID;
   for (size_t i = 0; i < 4; ++i) {
     auto M = createTestMessage(HistogramID, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
-    if (!X.is_OK()) {
-      throw std::runtime_error(X.to_str());
+    if (X != WriteResult::OK) {
+      throw std::runtime_error("Error");
     }
-    ASSERT_TRUE(X.is_OK());
+    ASSERT_TRUE(X == WriteResult::OK);
   }
   ++HistogramID;
   for (size_t i = 1; i < 4; ++i) {
     auto M = createTestMessage(HistogramID, i, DimLengths);
     auto X = Writer->write(wrapBuilder(M));
-    if (!X.is_OK()) {
-      throw std::runtime_error(X.to_str());
+    if (X != WriteResult::OK) {
+      throw std::runtime_error("Error");
     }
-    ASSERT_TRUE(X.is_OK());
+    ASSERT_TRUE(X == WriteResult::OK);
   }
   Writer->close();
   auto Histograms = Group.get_dataset("histograms");
@@ -487,10 +489,10 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
     for (size_t i = 0; i < 4; ++i) {
       auto M = createTestMessage(HistogramID, i, DimLengths);
       auto X = Writer->write(wrapBuilder(M));
-      if (!X.is_OK()) {
-        throw std::runtime_error(X.to_str());
+      if (X != WriteResult::OK) {
+        throw std::runtime_error("Error");
       }
-      ASSERT_TRUE(X.is_OK());
+      ASSERT_TRUE(X == WriteResult::OK);
     }
   }
   Writer->close();
@@ -531,8 +533,8 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   auto M = FileWriter::FlatbufferMessage(
       reinterpret_cast<const char *>(V2.data()), V2.size());
   auto X = Writer->write(M);
-  if (!X.is_OK()) {
-    throw std::runtime_error(X.to_str());
+  if (X != WriteResult::OK) {
+    throw std::runtime_error("Error");
   }
-  ASSERT_TRUE(X.is_OK());
+  ASSERT_TRUE(X == WriteResult::OK);
 }

@@ -41,9 +41,6 @@ Writer::write(FlatbufferMessage const &Message) {
                              "that you call parse_config() before.");
   }
   auto Result = TheWriterUntyped->write(Message, DoFlushEachWrite);
-  if (!Result.is_OK()) {
-    LOG(Sev::Error, "hs00 write error: {}", Result.to_str());
-  }
   return Result;
 }
 

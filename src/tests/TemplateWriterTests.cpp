@@ -16,7 +16,8 @@ TEST(TemplateTests, WriterReturnValues) {
               FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(SomeGroup) ==
               FileWriter::HDFWriterModule_detail::InitResult::OK);
-  EXPECT_TRUE(SomeWriter.write(FileWriter::FlatbufferMessage()).is_OK());
+  EXPECT_TRUE(SomeWriter.write(FileWriter::FlatbufferMessage()) ==
+              FileWriter::HDFWriterModule_detail::WriteResult::OK);
   EXPECT_EQ(SomeWriter.flush(), 0);
   EXPECT_EQ(SomeWriter.close(), 0);
 }
