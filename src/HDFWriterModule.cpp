@@ -31,10 +31,6 @@ void addWriterModule(std::string const &Key, ModuleFactory Value) {
 // Implementation details for `HDFWriterModule`
 namespace HDFWriterModule_detail {
 
-static std::map<int8_t, std::string> const InitResultStrings{
-    {0, "OK"}, {-1, "ERROR_IO"}, {-2, "ERROR_INCOMPLETE_CONFIGURATION"},
-};
-
 static std::map<int8_t, std::string> const WriteResultStrings{
     {0, "OK"},
     {-1, "ERROR_IO"},
