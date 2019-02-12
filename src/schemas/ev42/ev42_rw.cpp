@@ -186,8 +186,7 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   return HDFWriterModule::InitResult::OK;
 }
 
-HDFWriterModule::WriteResult
-HDFWriterModule::write(FlatbufferMessage const &Message) {
+void HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
     throw FileWriter::HDFWriterModuleRegistry::WriterException(
         "Writer IO error.");
@@ -211,7 +210,6 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     this->ds_cue_index->append_data_1d(&event_index, 1);
     index_at_bytes = total_written_bytes;
   }
-  return HDFWriterModule::WriteResult::OK;
 }
 
 int32_t HDFWriterModule::flush() { return 0; }

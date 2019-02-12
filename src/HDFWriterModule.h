@@ -16,7 +16,7 @@ namespace HDFWriterModule_detail {
 enum class InitResult { ERROR_IO = -1, OK = 0 };
 
 /// Result type for write operation on the writer module.
-enum class WriteResult { ERROR_BAD_FLATBUFFER = -2, ERROR_IO = -1, OK = 0 };
+enum class WriteResult { OK = 0 };
 
 } // namespace HDFWriterModule_detail
 
@@ -80,7 +80,7 @@ public:
   /// \param msg The message to process
   ///
   /// \return The result.
-  virtual WriteResult write(FlatbufferMessage const &Message) = 0;
+  virtual void write(FlatbufferMessage const &Message) = 0;
 
   /// \brief Flush the internal buffer.
   ///

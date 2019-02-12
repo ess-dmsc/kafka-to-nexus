@@ -115,7 +115,7 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
-FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
+void FastSampleEnvironmentWriter::write(
     const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
@@ -123,7 +123,7 @@ FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
   if (TempDataSize == 0) {
     LOG(Sev::Warning,
         "Received a flatbuffer with zero (0) data elements in it.");
-    return FileWriterBase::WriteResult::OK;
+    return;
   }
   ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
   auto CueIndexValue = Value.dataspace().size();
@@ -143,7 +143,6 @@ FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
         FbPointer->PacketTimestamp(), FbPointer->TimeDelta(), TempDataSize));
     Timestamp.appendArray(TempTimeStamps);
   }
-  return FileWriterBase::WriteResult::OK;
 }
 
 std::int32_t FastSampleEnvironmentWriter::flush() { return 0; }

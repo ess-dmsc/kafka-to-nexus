@@ -41,8 +41,7 @@ public:
   /// \param ChunkBytes
   void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes) override;
 
-  HDFWriterModule::WriteResult write(FlatbufferMessage const &Message,
-                                     bool DoFlushEachWrite) override;
+  void write(FlatbufferMessage const &Message, bool DoFlushEachWrite) override;
 
   ~WriterTyped() override;
   int close() override;
@@ -304,7 +303,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
 template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 
 template <typename DataType, typename EdgeType, typename ErrorType>
-HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
+void WriterTyped<DataType, EdgeType, ErrorType>::write(
     FlatbufferMessage const &Message, bool DoFlushEachWrite) {
   using HDFWriterModuleRegistry::WriterException;
 
@@ -499,7 +498,6 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
     Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
   }
   LOG(Sev::Debug, "hs00 -------------------------------   DONE");
-  return HDFWriterModule::WriteResult::OK;
 }
 } // namespace hs00
 } // namespace Schemas

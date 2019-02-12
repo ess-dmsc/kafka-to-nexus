@@ -280,9 +280,8 @@ public:
   /// constructed using a set of static member functions defined in
   /// HDFWriterModule.h. In the current implementation, returning a write result
   /// with a timestamp only has an effect on the log messages being generated.
-  WriteResult write(FileWriter::FlatbufferMessage const &Message) override {
+  void write(FileWriter::FlatbufferMessage const &Message) override {
     std::cout << "WriterClass::write()\n";
-    return WriteResult::OK;
   }
 
   /// \brief Provides no functionality and is never called.

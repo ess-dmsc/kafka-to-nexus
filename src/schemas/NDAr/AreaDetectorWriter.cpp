@@ -160,8 +160,7 @@ void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
       Shape);
 }
 
-FileWriterBase::WriteResult
-AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
+void AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
   auto NDAr = FB_Tables::GetNDArray(Message.data());
   auto DataShape = hdf5::Dimensions(NDAr->dims()->begin(), NDAr->dims()->end());
   auto CurrentTimestamp =
@@ -209,7 +208,6 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }
-  return FileWriterBase::WriteResult::OK;
 }
 
 std::int32_t AreaDetectorWriter::flush() { return 0; }

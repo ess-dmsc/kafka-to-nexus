@@ -141,7 +141,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
-  EXPECT_TRUE(Writer.write(TestMsg) == WriteResult::OK);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -181,8 +181,8 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
-  EXPECT_TRUE(Writer.write(TestMsg) == WriteResult::OK);
-  EXPECT_TRUE(Writer.write(TestMsg) == WriteResult::OK);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
+  EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -225,7 +225,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
-  EXPECT_TRUE(Writer.write(TestMsg) == WriteResult::OK);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");
@@ -250,7 +250,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
-  EXPECT_TRUE(Writer.write(TestMsg) == WriteResult::OK);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
   auto RawValuesDataset = UsedGroup.get_dataset("raw_value");
   auto TimestampDataset = UsedGroup.get_dataset("time");
   auto CueIndexDataset = UsedGroup.get_dataset("cue_index");

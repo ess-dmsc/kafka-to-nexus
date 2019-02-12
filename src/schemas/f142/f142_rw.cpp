@@ -268,8 +268,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 
 /// \brief  Inspect the incoming FlatBuffer from the message and write the
 /// content to datasets.
-HDFWriterModule::WriteResult
-HDFWriterModule::write(FlatbufferMessage const &Message) {
+void HDFWriterModule::write(FlatbufferMessage const &Message) {
   auto FlatBuffer = get_fbuf(Message.data());
   if (!ValueWriter) {
     auto Now = CLOCK::now();
@@ -317,7 +316,6 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
       }
     }
   }
-  return HDFWriterModule::WriteResult::OK;
 }
 
 /// Implement HDFWriterModule interface, just flushing.

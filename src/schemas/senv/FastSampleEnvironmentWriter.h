@@ -42,7 +42,7 @@ public:
 
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
-  WriteResult write(FlatbufferMessage const &Message) override;
+  void write(FlatbufferMessage const &Message) override;
 
   int32_t flush() override;
 

@@ -31,14 +31,13 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
       return ProcessMessageResult::ERR;
     }
     try {
-      auto ErrorCode = WriterModule->write(Message);
+      WriterModule->write(Message);
       _cnt_msg_written += 1;
       _processed_messages_count += 1;
       if (HDFFileForSWMR != nullptr) {
         HDFFileForSWMR->SWMRFlush();
       }
-      if (ErrorCode == HDFWriterModule_detail::WriteResult::OK)
-        return ProcessMessageResult::OK;
+      return ProcessMessageResult::OK;
     } catch (const HDFWriterModuleRegistry::WriterException &E) {
       LOG(Sev::Debug, "Failure while writing message: {}", E.what());
       return ProcessMessageResult::ERR;
