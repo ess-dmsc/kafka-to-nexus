@@ -140,6 +140,5 @@ public:
   WriterException(const char *ErrorMessage)
       : std::runtime_error(ErrorMessage) {}
 };
-
 } // namespace HDFWriterModuleRegistry
 } // namespace FileWriter
