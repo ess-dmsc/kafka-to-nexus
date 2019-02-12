@@ -96,7 +96,7 @@ TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
   std::string ModuleName("ev42");
   auto WriterModule = std::make_unique<WriterModuleMock>();
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
-      .RETURN(FileWriter::HDFWriterModule::WriteResult::ERROR_IO);
+      .THROW(FileWriter::HDFWriterModuleRegistry::WriterException("IO Error"));
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
   flatbuffers::FlatBufferBuilder Builder;

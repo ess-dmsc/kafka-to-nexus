@@ -595,5 +595,6 @@ TEST_F(AreaDetectorWriter, WriterCharTest) {
 }
 
 TEST_F(AreaDetectorWriter, WriterWrongFBTypeTest) {
-  EXPECT_FALSE(WriteTest<char>(UsedGroup, FB_Tables::DType(9999)));
+  EXPECT_THROW(WriteTest<char>(UsedGroup, FB_Tables::DType(9999)),
+               FileWriter::HDFWriterModuleRegistry::WriterException);
 }

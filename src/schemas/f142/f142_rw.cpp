@@ -278,7 +278,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
       LOG(Sev::Warning,
           "sorry, but we were unable to initialize for this kind of messages");
     }
-    return HDFWriterModule::WriteResult::ERROR_IO;
+    throw HDFWriterModuleRegistry::WriterException("Writer IO error.");
   }
   auto wret = ValueWriter->write(FlatBuffer);
   if (!wret) {

@@ -200,7 +200,8 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     appendData<const char>(Values, DataPtr, NrOfElements, DataShape);
     break;
   default:
-    return FileWriterBase::WriteResult::ERROR_BAD_FLATBUFFER;
+    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+        "Error in flatbuffer.");
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {

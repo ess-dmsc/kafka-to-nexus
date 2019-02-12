@@ -189,7 +189,8 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 HDFWriterModule::WriteResult
 HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
-    return HDFWriterModule::WriteResult::ERROR_IO;
+    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+        "Writer IO error.");
   }
   auto fbuf = get_fbuf(Message.data());
   auto w1ret = this->ds_event_time_offset->append_data_1d(
