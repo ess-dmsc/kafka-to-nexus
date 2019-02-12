@@ -15,9 +15,6 @@ namespace HDFWriterModule_detail {
 /// \brief Result type for the initialization of the writer module.
 enum class InitResult { ERROR_IO = -1, OK = 0 };
 
-/// Result type for write operation on the writer module.
-enum class WriteResult { OK = 0 };
-
 } // namespace HDFWriterModule_detail
 
 /// \brief Writes a given flatbuffer to HDF.
@@ -34,8 +31,6 @@ class HDFWriterModule {
 public:
   using ptr = std::unique_ptr<HDFWriterModule>;
   using InitResult = HDFWriterModule_detail::InitResult;
-  using WriteResult = HDFWriterModule_detail::WriteResult;
-
   virtual ~HDFWriterModule() = default;
 
   /// \brief Parses the configuration of a stream.

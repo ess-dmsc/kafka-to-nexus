@@ -131,8 +131,6 @@ TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
-using WriteResult = FileWriter::HDFWriterModule_detail::WriteResult;
-
 TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);

@@ -312,8 +312,6 @@ TEST_F(AreaDetectorWriter, WriterDefaultValuesTest) {
   EXPECT_EQ(ChunkDims, (hdf5::Dimensions{64, 1, 1}));
 }
 
-using WriteResult = FileWriter::HDFWriterModule_detail::WriteResult;
-
 TEST_F(AreaDetectorWriter, WriterWriteTest) {
   FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
   ADWriterStandIn Temp;

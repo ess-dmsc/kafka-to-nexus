@@ -397,8 +397,6 @@ TEST_F(EventHistogramWriter, WriterReopen) {
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
 }
 
-using WriteResult = FileWriter::HDFWriterModule_detail::WriteResult;
-
 TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
   auto File = createFile(
       "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages",
