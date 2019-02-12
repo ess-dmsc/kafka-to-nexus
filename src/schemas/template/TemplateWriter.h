@@ -275,11 +275,6 @@ public:
   ///
   /// \param[in] Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
-  ///
-  /// \return An instance of WriteResult. Note that these instances can only be
-  /// constructed using a set of static member functions defined in
-  /// HDFWriterModule.h. In the current implementation, returning a write result
-  /// with a timestamp only has an effect on the log messages being generated.
   void write(FileWriter::FlatbufferMessage const &Message) override {
     std::cout << "WriterClass::write()\n";
   }

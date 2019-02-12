@@ -78,8 +78,6 @@ public:
   /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
-  ///
-  /// \return The result.
   virtual void write(FlatbufferMessage const &Message) = 0;
 
   /// \brief Flush the internal buffer.
