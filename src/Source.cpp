@@ -39,7 +39,7 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
       }
       return ProcessMessageResult::OK;
     } catch (const HDFWriterModuleRegistry::WriterException &E) {
-      LOG(Sev::Debug, "Failure while writing message: {}", E.what());
+      LOG(Sev::Error, "Failure while writing message: {}", E.what());
       return ProcessMessageResult::ERR;
     }
   }
