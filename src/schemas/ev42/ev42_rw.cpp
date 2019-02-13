@@ -189,7 +189,7 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
 void HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
     throw FileWriter::HDFWriterModuleRegistry::WriterException(
-        "Writer IO error.");
+        "Error, time of flight not present.");
   }
   auto fbuf = get_fbuf(Message.data());
   auto w1ret = this->ds_event_time_offset->append_data_1d(
