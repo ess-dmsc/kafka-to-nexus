@@ -233,9 +233,13 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
                                         CreateMethod);
     if (!ValueWriter) {
+      if (TypeName.empty()) {
+        LOG(Sev::Error,
+            "Could not create a writer implementation for empty TypeName");
+        return HDFWriterModule::InitResult::ERROR;
+      }
       LOG(Sev::Error,
-          "Could not create a writer implementation for value_type {}",
-          TypeName);
+          "Could not create a writer implementation for TypeName {}", TypeName);
       return HDFWriterModule::InitResult::ERROR;
     }
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
