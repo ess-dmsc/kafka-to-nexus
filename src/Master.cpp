@@ -106,7 +106,6 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-    LOG(Sev::Debug, "Master poll");
     auto PollResult = command_listener.poll();
     if (PollResult->getStatus() == KafkaW::PollStatus::Msg) {
       LOG(Sev::Debug, "Handle a command");
