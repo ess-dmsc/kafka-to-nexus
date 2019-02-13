@@ -13,7 +13,7 @@ namespace FileWriter {
 namespace HDFWriterModule_detail {
 
 /// \brief Result type for the initialization of the writer module.
-enum class InitResult { ERROR_IO = -1, OK = 0 };
+enum class InitResult { ERROR = -1, OK = 0 };
 
 } // namespace HDFWriterModule_detail
 
@@ -130,7 +130,7 @@ public:
 
 class WriterException : public std::runtime_error {
 public:
-  WriterException(const char *ErrorMessage)
+  WriterException(const std::string &ErrorMessage)
       : std::runtime_error(ErrorMessage) {}
 };
 } // namespace HDFWriterModuleRegistry

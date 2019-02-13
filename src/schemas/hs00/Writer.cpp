@@ -29,7 +29,7 @@ Writer::reopen(hdf5::node::Group &HDFGroup) {
   }
   TheWriterUntyped = WriterUntyped::createFromHDF(HDFGroup);
   if (!TheWriterUntyped) {
-    return FileWriter::HDFWriterModule::InitResult::ERROR_IO;
+    return FileWriter::HDFWriterModule::InitResult::ERROR;
   }
   return FileWriter::HDFWriterModule::InitResult::OK;
 }

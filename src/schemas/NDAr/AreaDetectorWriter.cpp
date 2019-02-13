@@ -128,7 +128,7 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
     LOG(Sev::Error, "Unable to initialise areaDetector data tree in "
                     "HDF file with error message: \"{}\"",
         E.what());
-    return HDFWriterModule::InitResult::ERROR_IO;
+    return HDFWriterModule::InitResult::ERROR;
   }
   return FileWriterBase::InitResult::OK;
 }
@@ -148,7 +148,7 @@ AreaDetectorWriter::reopen(hdf5::node::Group &HDFGroup) {
     LOG(Sev::Error,
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR_IO;
+    return HDFWriterModule::InitResult::ERROR;
   }
   return FileWriterBase::InitResult::OK;
 }

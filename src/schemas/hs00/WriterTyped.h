@@ -308,7 +308,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
   using HDFWriterModuleRegistry::WriterException;
 
   if (!Dataset.is_valid()) {
-    throw WriterException("invalid dataset");
+    throw WriterException("Invalid dataset");
   }
   auto Dims = hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
   if (Dims.empty()) {
@@ -376,8 +376,7 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
   if (Timestamp + 40l * 1000000000l < LargestTimestampSeen) {
     throw WriterException(
         fmt::format("Old histogram: Timestamp: {}  LargestTimestampSeen: {}",
-                    Timestamp, LargestTimestampSeen)
-            .c_str());
+                    Timestamp, LargestTimestampSeen));
   }
   if (LargestTimestampSeen < Timestamp) {
     LargestTimestampSeen = Timestamp;
