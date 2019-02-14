@@ -18,7 +18,7 @@
               "topic": "topic.with.multiple.sources",
               "source": "for_example_motor",
               "module": "f142",
-              "type": "float",
+              "dtype": "float",
               "array_size": 4
             }
           }

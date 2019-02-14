@@ -148,6 +148,10 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
 
   if (auto TypeNameMaybe = find<std::string>("type", ConfigurationStreamJson)) {
     TypeName = TypeNameMaybe.inner();
+    // handle python style dtype
+  } else if (auto TypeNameMaybe =
+                 find<std::string>("dtype", ConfigurationStreamJson)) {
+    TypeName = TypeNameMaybe.inner();
   } else {
     throw std::runtime_error(
         fmt::format("Missing key \"type\" in f142 writer configuration"));
