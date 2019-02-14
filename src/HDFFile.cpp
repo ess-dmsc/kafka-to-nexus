@@ -280,6 +280,10 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node const &Node,
           DType = AttrType.inner();
           writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
                                    Values);
+        } else if (auto AttrType = find<std::string>("dtype", Attribute)) {
+          DType = AttrType.inner();
+          writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
+                                   Values);
         } else {
           if (Values.is_array()) {
             LOG(Sev::Warning, "Attributes with array values must specify type")
@@ -668,6 +672,9 @@ void HDFFile::writeDataset(hdf5::node::Group const &Parent,
     if (auto DatasetTypeObject =
             find<std::string>("type", DatasetInnerObject)) {
       DataType = DatasetTypeObject.inner();
+    } else if (auto DatasetTypeObject =
+                   find<std::string>("dtype", DatasetInnerObject)) {
+      DataType = DatasetTypeObject.inner();
     }
 
     // optional, default to scalar
@@ -735,6 +742,30 @@ void HDFFile::createHDFStructures(
     // The HDF object that we will maybe create at the current level.
     hdf5::node::Group hdf_this;
     if (auto TypeMaybe = find<std::string>("type", *Value)) {
+      auto Type = TypeMaybe.inner();
+      if (Type == "group") {
+        if (auto NameMaybe = find<std::string>("name", *Value)) {
+          auto Name = NameMaybe.inner();
+          try {
+            hdf_this = Parent.create_group(Name, LinkCreationPropertyList);
+            Path.push_back(Name);
+          } catch (...) {
+            LOG(Sev::Critical, "failed to create group  Name: {}", Name);
+          }
+        }
+      }
+      if (Type == "stream") {
+        string pathstr;
+        for (auto &x : Path) {
+          pathstr += "/" + x;
+        }
+
+        HDFStreamInfo.push_back(StreamHDFInfo{pathstr, Value->dump()});
+      }
+      if (Type == "dataset") {
+        writeDataset(Parent, Value);
+      }
+    } else if (auto TypeMaybe = find<std::string>("dtype", *Value)) {
       auto Type = TypeMaybe.inner();
       if (Type == "group") {
         if (auto NameMaybe = find<std::string>("name", *Value)) {
