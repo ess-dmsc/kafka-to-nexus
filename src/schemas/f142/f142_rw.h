@@ -8,6 +8,7 @@
 #include <array>
 #include <chrono>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <vector>
 
 namespace FileWriter {
@@ -107,6 +108,10 @@ public:
   MS ErrorLogMinInterval{500};
   std::chrono::time_point<CLOCK> TimestampLastErrorLog{CLOCK::now() -
                                                        ErrorLogMinInterval};
+
+private:
+  static bool findType(const nlohmann::basic_json<> Attribute,
+                       std::string &DType);
 };
 
 /// \brief  Interface for creating and opening a dataset.

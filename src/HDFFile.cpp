@@ -276,12 +276,9 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node const &Node,
             Encoding = hdf5::datatype::CharacterEncoding::ASCII;
           }
         }
-        if (auto AttrType = find<std::string>("type", Attribute)) {
-          DType = AttrType.inner();
-          writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
-                                   Values);
-        } else if (auto AttrType = find<std::string>("dtype", Attribute)) {
-          DType = AttrType.inner();
+
+        // get type/dtype
+        if (findType(Attribute, DType)) {
           writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
                                    Values);
         } else {
@@ -294,6 +291,18 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node const &Node,
       }
     }
   }
+}
+
+bool HDFFile::findType(const nlohmann::basic_json<> Attribute,
+                       std::string &DType) {
+  if (auto AttrType = find<std::string>("type", Attribute)) {
+    DType = AttrType.inner();
+    return true;
+  } else if (auto AttrType = find<std::string>("dtype", Attribute)) {
+    DType = AttrType.inner();
+    return true;
+  } else
+    return false;
 }
 
 void writeAttrStringVariableLength(hdf5::node::Node const &Node,
@@ -668,15 +677,7 @@ void HDFFile::writeDataset(hdf5::node::Group const &Parent,
         return;
       }
     }
-
-    if (auto DatasetTypeObject =
-            find<std::string>("type", DatasetInnerObject)) {
-      DataType = DatasetTypeObject.inner();
-    } else if (auto DatasetTypeObject =
-                   find<std::string>("dtype", DatasetInnerObject)) {
-      DataType = DatasetTypeObject.inner();
-    }
-
+    findType(DatasetInnerObject, DataType);
     // optional, default to scalar
     if (auto DatasetSizeObject = find<json>("size", DatasetInnerObject)) {
       if (DatasetSizeObject.inner().is_array()) {
@@ -741,32 +742,8 @@ void HDFFile::createHDFStructures(
 
     // The HDF object that we will maybe create at the current level.
     hdf5::node::Group hdf_this;
-    if (auto TypeMaybe = find<std::string>("type", *Value)) {
-      auto Type = TypeMaybe.inner();
-      if (Type == "group") {
-        if (auto NameMaybe = find<std::string>("name", *Value)) {
-          auto Name = NameMaybe.inner();
-          try {
-            hdf_this = Parent.create_group(Name, LinkCreationPropertyList);
-            Path.push_back(Name);
-          } catch (...) {
-            LOG(Sev::Critical, "failed to create group  Name: {}", Name);
-          }
-        }
-      }
-      if (Type == "stream") {
-        string pathstr;
-        for (auto &x : Path) {
-          pathstr += "/" + x;
-        }
-
-        HDFStreamInfo.push_back(StreamHDFInfo{pathstr, Value->dump()});
-      }
-      if (Type == "dataset") {
-        writeDataset(Parent, Value);
-      }
-    } else if (auto TypeMaybe = find<std::string>("dtype", *Value)) {
-      auto Type = TypeMaybe.inner();
+    std::string Type;
+    if (findType(*Value, Type)) {
       if (Type == "group") {
         if (auto NameMaybe = find<std::string>("name", *Value)) {
           auto Name = NameMaybe.inner();
