@@ -102,8 +102,6 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (Running) {
-    LOG(Sev::Debug, "Master poll");
-
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
         Listener.poll();
     if (KafkaMessage->first == KafkaW::PollStatus::Message) {

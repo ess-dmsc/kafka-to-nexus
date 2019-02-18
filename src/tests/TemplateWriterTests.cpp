@@ -12,9 +12,11 @@ TEST(TemplateTests, ReaderReturnValues) {
 TEST(TemplateTests, WriterReturnValues) {
   TemplateWriter::WriterClass SomeWriter;
   hdf5::node::Group SomeGroup;
-  EXPECT_TRUE(SomeWriter.init_hdf(SomeGroup, "{}").is_OK());
-  EXPECT_TRUE(SomeWriter.reopen(SomeGroup).is_OK());
-  EXPECT_TRUE(SomeWriter.write(FileWriter::FlatbufferMessage()).is_OK());
+  EXPECT_TRUE(SomeWriter.init_hdf(SomeGroup, "{}") ==
+              FileWriter::HDFWriterModule_detail::InitResult::OK);
+  EXPECT_TRUE(SomeWriter.reopen(SomeGroup) ==
+              FileWriter::HDFWriterModule_detail::InitResult::OK);
+  EXPECT_NO_THROW(SomeWriter.write(FileWriter::FlatbufferMessage()));
   EXPECT_EQ(SomeWriter.flush(), 0);
   EXPECT_EQ(SomeWriter.close(), 0);
 }

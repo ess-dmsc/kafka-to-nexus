@@ -218,7 +218,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override {
     std::cout << "WriterClass::init_hdf()\n";
-    return InitResult::OK();
+    return InitResult::OK;
   }
 
   /// \brief Re-open datasets that have been created when calling
@@ -251,7 +251,7 @@ public:
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   InitResult reopen(hdf5::node::Group &HDFGroup) override {
     std::cout << "WriterClass::reopen()\n";
-    return InitResult::OK();
+    return InitResult::OK;
   }
 
   /// \brief Implements the data writing functionality of the file writing
@@ -275,14 +275,8 @@ public:
   ///
   /// \param[in] Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
-  ///
-  /// \return An instance of WriteResult. Note that these instances can only be
-  /// constructed using a set of static member functions defined in
-  /// HDFWriterModule.h. In the current implementation, returning a write result
-  /// with a timestamp only has an effect on the log messages being generated.
-  WriteResult write(FileWriter::FlatbufferMessage const &Message) override {
+  void write(FileWriter::FlatbufferMessage const &Message) override {
     std::cout << "WriterClass::write()\n";
-    return WriteResult::OK();
   }
 
   /// \brief Provides no functionality and is never called.

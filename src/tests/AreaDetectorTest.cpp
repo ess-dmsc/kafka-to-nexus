@@ -152,12 +152,14 @@ TEST_F(AreaDetectorWriter, WriterInitTest) {
   EXPECT_TRUE(FoundAttribute);
 }
 
+using FileWriter::HDFWriterModule_detail::InitResult;
+
 TEST_F(AreaDetectorWriter, WriterAttributeExists) {
   auto ClassAttribute = UsedGroup.attributes.create<std::string>("NX_class");
   ClassAttribute.write("NXlog");
   {
     ADWriterStandIn Temp;
-    EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}").is_ERR());
+    EXPECT_TRUE(Temp.init_hdf(UsedGroup, "{}") != InitResult::OK);
   }
 }
 
@@ -167,12 +169,12 @@ TEST_F(AreaDetectorWriter, WriterInitFail) {
     Temp.init_hdf(UsedGroup, "{}");
   }
   ADWriterStandIn Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}").is_ERR());
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") != InitResult::OK);
 }
 
 TEST_F(AreaDetectorWriter, WriterReOpenFail) {
   ADWriterStandIn Writer;
-  EXPECT_TRUE(Writer.reopen(UsedGroup).is_ERR());
+  EXPECT_TRUE(Writer.reopen(UsedGroup) != InitResult::OK);
 }
 
 TEST_F(AreaDetectorWriter, WriterInitInt8) {
@@ -315,8 +317,8 @@ TEST_F(AreaDetectorWriter, WriterWriteTest) {
   ADWriterStandIn Temp;
   Temp.init_hdf(UsedGroup, "{}");
   Temp.reopen(UsedGroup);
-  EXPECT_TRUE(Temp.write(Message).is_OK());
-  EXPECT_TRUE(Temp.write(Message).is_OK());
+  EXPECT_NO_THROW(Temp.write(Message));
+  EXPECT_NO_THROW(Temp.write(Message));
   EXPECT_EQ(2, Temp.Timestamp.dataspace().size());
 }
 
@@ -330,7 +332,7 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   for (int i = 0; i < 5; i++) {
-    EXPECT_TRUE(Writer.write(Message).is_OK());
+    EXPECT_NO_THROW(Writer.write(Message));
     if (i < 2) {
       EXPECT_EQ(0, Writer.CueTimestampIndex.dataspace().size());
       EXPECT_EQ(0, Writer.CueTimestamp.dataspace().size());
@@ -366,7 +368,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
     FileWriter::FlatbufferMessage Message(
         reinterpret_cast<char *>(builder.GetBufferPointer()),
         builder.GetSize());
-    EXPECT_TRUE(Writer.write(Message).is_OK());
+    EXPECT_NO_THROW(Writer.write(Message));
   }
   std::vector<std::uint64_t> CueIndexValues(
       Writer.CueTimestampIndex.dataspace().size());
@@ -386,7 +388,7 @@ TEST_F(AreaDetectorWriter, WriterDimensionsTest) {
   ADWriterStandIn Writer;
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
-  EXPECT_TRUE(Writer.write(Message).is_OK());
+  EXPECT_NO_THROW(Writer.write(Message));
   auto Dataspace = hdf5::dataspace::Simple(Writer.Values->dataspace());
   EXPECT_EQ((hdf5::Dimensions{1, 10, 12}), Dataspace.current_dimensions());
 }
@@ -541,7 +543,9 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   Writer.parse_config(JsonConfig.dump(), "");
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
-  if (Writer.write(Message).is_ERR()) {
+  try {
+    Writer.write(Message);
+  } catch (FileWriter::HDFWriterModuleRegistry::WriterException &Exception) {
     return false;
   }
   std::vector<Type> dataFromFile(testData.size());

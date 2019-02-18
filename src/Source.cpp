@@ -1,4 +1,5 @@
 #include "Source.h"
+#include "HDFWriterModule.h"
 #include "helper.h"
 #include "logger.h"
 #include <chrono>
@@ -29,19 +30,18 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
       LOG(Sev::Debug, "!_hdf_writer_module for {}", SourceName);
       return ProcessMessageResult::ERR;
     }
-    auto ret = WriterModule->write(Message);
-    _cnt_msg_written += 1;
-    _processed_messages_count += 1;
-    if (ret.is_ERR()) {
-      if (log_level >= static_cast<int>(Sev::Debug)) {
-        LOG(Sev::Debug, "Failure while writing message: {}", ret.to_str());
+    try {
+      WriterModule->write(Message);
+      _cnt_msg_written += 1;
+      _processed_messages_count += 1;
+      if (HDFFileForSWMR != nullptr) {
+        HDFFileForSWMR->SWMRFlush();
       }
+      return ProcessMessageResult::OK;
+    } catch (const HDFWriterModuleRegistry::WriterException &E) {
+      LOG(Sev::Error, "Failure while writing message: {}", E.what());
       return ProcessMessageResult::ERR;
     }
-    if (HDFFileForSWMR != nullptr) {
-      HDFFileForSWMR->SWMRFlush();
-    }
-    return ProcessMessageResult::OK;
   }
   return ProcessMessageResult::ERR;
 }

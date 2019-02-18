@@ -146,7 +146,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         fmt::format("ev42 could not init hdf_parent: {}  trace: {}",
                     static_cast<std::string>(HDFGroup.link().path()), message));
   }
-  return HDFWriterModule::InitResult::OK();
+  return HDFWriterModule::InitResult::OK;
 }
 
 HDFWriterModule::InitResult
@@ -183,13 +183,13 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
         fmt::format("ev42 could not init hdf_parent: {}",
                     static_cast<std::string>(HDFGroup.link().path())));
   }
-  return HDFWriterModule::InitResult::OK();
+  return HDFWriterModule::InitResult::OK;
 }
 
-HDFWriterModule::WriteResult
-HDFWriterModule::write(FlatbufferMessage const &Message) {
+void HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
-    return HDFWriterModule::WriteResult::ERROR_IO();
+    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+        "Error, time of flight not present.");
   }
   auto fbuf = get_fbuf(Message.data());
   auto w1ret = this->ds_event_time_offset->append_data_1d(
@@ -210,7 +210,6 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     this->ds_cue_index->append_data_1d(&event_index, 1);
     index_at_bytes = total_written_bytes;
   }
-  return HDFWriterModule::WriteResult::OK_WITH_TIMESTAMP(fbuf->pulse_time());
 }
 
 int32_t HDFWriterModule::flush() { return 0; }
