@@ -17,6 +17,11 @@ class ProducerTopic {
 public:
   ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
   ~ProducerTopic() = default;
+  /// NB this copies the provided data - so use only for low volume publishing
+  /// \param MsgData Pointer to the data to publish
+  /// \param MsgSize Size of the data to publish
+  /// \return 0 if message is successfully passed to RdKafka to be published, 1
+  /// otherwise
   int produce(unsigned char *MsgData, size_t MsgSize);
   int produce(std::unique_ptr<KafkaW::ProducerMessage> &Msg);
   void enableCopy();

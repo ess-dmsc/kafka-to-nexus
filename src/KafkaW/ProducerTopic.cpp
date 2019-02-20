@@ -28,11 +28,6 @@ struct Msg_ : public ProducerMessage {
   }
 };
 
-/// NB this copies the provided data - so use only for low volume publishing
-/// \param MsgData Pointer to the data to publish
-/// \param MsgSize Size of the data to publish
-/// \return 0 if message is successfully passed to RdKafka to be published, 1
-/// otherwise
 int ProducerTopic::produce(unsigned char *MsgData, size_t MsgSize) {
   auto MsgPtr = new Msg_;
   std::copy(MsgData, MsgData + MsgSize, std::back_inserter(MsgPtr->v));

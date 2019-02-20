@@ -22,30 +22,43 @@ Consumer::~Consumer() {
   if (KafkaConsumer != nullptr) {
     LOG(Sev::Debug, "Close the consumer");
     KafkaConsumer->close();
-    RdKafka::wait_destroyed(5000);
+    RdKafka::wait_destroyed(ConsumerBrokerSettings.ConsumerCloseTimeoutMS);
   }
 }
 
 void Consumer::addTopic(const std::string &Topic) {
   LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
+  std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets =
+      queryWatermarkOffsets(Topic);
+  assignToPartitions(Topic, TopicPartitionsWithOffsets);
+}
+std::vector<RdKafka::TopicPartition *>
+Consumer::queryWatermarkOffsets(const std::string &Topic) {
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets;
   auto PartitionIDs = queryTopicPartitions(Topic);
   for (int PartitionID : PartitionIDs) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, PartitionID);
     int64_t Low, High;
-    KafkaConsumer->query_watermark_offsets(Topic, PartitionID, &Low, &High,
-                                           100);
+    KafkaConsumer->query_watermark_offsets(
+        Topic, PartitionID, &Low, &High,
+        ConsumerBrokerSettings.MetadataTimeoutMS);
     TopicPartition->set_offset(High);
     TopicPartitionsWithOffsets.push_back(TopicPartition);
   }
-  RdKafka::ErrorCode ERR = KafkaConsumer->assign(TopicPartitionsWithOffsets);
-  if (ERR != 0) {
+  return TopicPartitionsWithOffsets;
+}
+void Consumer::assignToPartitions(const std::string &Topic,
+                                  const std::vector<RdKafka::TopicPartition *>
+                                      &TopicPartitionsWithOffsets) const {
+  RdKafka::ErrorCode ErrorCode =
+      KafkaConsumer->assign(TopicPartitionsWithOffsets);
+  for_each(TopicPartitionsWithOffsets.cbegin(),
+           TopicPartitionsWithOffsets.cend(),
+           [](RdKafka::TopicPartition *Partition) { delete Partition; });
+  if (ErrorCode != 0) {
     LOG(Sev::Error, "Could not assign to {}", Topic);
-    throw std::runtime_error(fmt::format("Could not assign to {}", Topic));
+    throw std::runtime_error(fmt::v5::format("Could not assign to {}", Topic));
   }
-  std::for_each(TopicPartitionsWithOffsets.cbegin(),
-                TopicPartitionsWithOffsets.cend(),
-                [](RdKafka::TopicPartition *Partition) { delete Partition; });
 }
 
 void Consumer::addTopicAtTimestamp(std::string const &Topic,
@@ -70,19 +83,7 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
     throw std::runtime_error(fmt::format(
         "Kafka error while getting offsets for timestamp: {}", ErrorCode));
   }
-
-  ErrorCode = KafkaConsumer->assign(TopicPartitionsWithTimestamp);
-  std::for_each(TopicPartitionsWithTimestamp.cbegin(),
-                TopicPartitionsWithTimestamp.cend(),
-                [](RdKafka::TopicPartition *Partition) { delete Partition; });
-  if (ErrorCode != RdKafka::ErrorCode::ERR_NO_ERROR) {
-    LOG(Sev::Error,
-        "Kafka error while subscribing to offsets from timestamp: {}",
-        ErrorCode);
-    throw std::runtime_error(fmt::format(
-        "Kafka error while subscribing to offsets from timestamp: {}",
-        ErrorCode));
-  }
+  assignToPartitions(Topic, TopicPartitionsWithTimestamp);
 }
 
 const RdKafka::TopicMetadata *Consumer::findTopic(const std::string &Topic) {
@@ -94,14 +95,13 @@ const RdKafka::TopicMetadata *Consumer::findTopic(const std::string &Topic) {
                      return TopicMetadata->topic() == Topic;
                    });
   if (Iterator == Topics->end()) {
-    throw std::runtime_error("Config topic does not exist");
+    throw std::runtime_error(fmt::format("Topic {} does not exist", Topic));
   }
   return *Iterator;
 }
 
-std::vector<int32_t>
-Consumer::queryTopicPartitions(const std::string &TopicName) {
-  auto matchedTopic = findTopic(TopicName);
+std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
+  auto matchedTopic = findTopic(Topic);
   std::vector<int32_t> TopicPartitionNumbers;
   const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
       matchedTopic->partitions();
@@ -129,17 +129,18 @@ void Consumer::dumpCurrentSubscription() {
       LOG(Sev::Info, "{}: {}, {}", TopicPartition->topic(),
           TopicPartition->partition(), TopicPartition->offset());
     }
-  } else
+  } else {
     LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
+  }
 }
 
 void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
-  auto RetCode = KafkaConsumer->metadata(
+  auto ErrorCode = KafkaConsumer->metadata(
       true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
-  if (RetCode == RdKafka::ERR__TRANSPORT)
-    throw MetadataException("Broker does not exist!");
-  else if (RetCode != RdKafka::ERR_NO_ERROR) {
+  if (ErrorCode == RdKafka::ERR__TRANSPORT)
+    throw MetadataException("Cannot contact broker");
+  else if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     throw MetadataException(
         "Consumer::updateMetadata() - error while retrieving metadata.");
   }
