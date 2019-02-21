@@ -55,7 +55,8 @@ public:
                            std::chrono::milliseconds const StartTime) override;
   void dumpCurrentSubscription() override;
   /// Checks if a topic is present on the broker.
-  ///
+  /// This is used to prevent passing around a pointer to an iterator of an
+  /// RdKafka::Topic outside of KafkaW and instead returns a bool.
   /// \param Topic Name of the topic to check.
   /// \return True or false depending on whether the topic exists or not.
   bool topicPresent(const std::string &Topic) override;
