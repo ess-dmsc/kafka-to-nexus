@@ -95,7 +95,6 @@ public:
   ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
-  IMPLEMENT_MOCK0(dumpCurrentSubscription);
   IMPLEMENT_MOCK1(topicPresent);
   IMPLEMENT_MOCK1(queryTopicPartitions);
   IMPLEMENT_MOCK0(poll);

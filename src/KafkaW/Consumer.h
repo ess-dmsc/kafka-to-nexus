@@ -24,7 +24,6 @@ public:
   addTopicAtTimestamp(std::string const &Topic,
                       std::chrono::milliseconds const StartTime) = 0;
   virtual std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() = 0;
-  virtual void dumpCurrentSubscription() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual std::vector<int32_t>
   queryTopicPartitions(const std::string &TopicName) = 0;
@@ -53,7 +52,6 @@ public:
   /// \param StartTime Start timestamp to consume from.
   void addTopicAtTimestamp(std::string const &Topic,
                            std::chrono::milliseconds const StartTime) override;
-  void dumpCurrentSubscription() override;
   /// Checks if a topic is present on the broker.
   /// This is used to prevent passing around a pointer to an iterator of an
   /// RdKafka::Topic outside of KafkaW and instead returns a bool.

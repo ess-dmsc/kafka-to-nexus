@@ -127,20 +127,6 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   return true;
 }
 
-void Consumer::dumpCurrentSubscription() {
-  std::vector<RdKafka::TopicPartition *> Partitions;
-  auto ErrorString = KafkaConsumer->assignment(Partitions);
-  if (ErrorString == 0) {
-    LOG(Sev::Info, "Assigned partitions and offsets:")
-    for (auto TopicPartition : Partitions) {
-      LOG(Sev::Info, "{}: {}, {}", TopicPartition->topic(),
-          TopicPartition->partition(), TopicPartition->offset());
-    }
-  } else {
-    LOG(Sev::Error, "Cannot display assigned partitions: {}", ErrorString);
-  }
-}
-
 void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
   auto ErrorCode = KafkaConsumer->metadata(
