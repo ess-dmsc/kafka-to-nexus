@@ -44,8 +44,8 @@ Consumer::queryWatermarkOffsets(const std::string &Topic) {
         ConsumerBrokerSettings.MetadataTimeoutMS);
     if (ErrorCode != RdKafka::ERR_NO_ERROR) {
       LOG(Sev::Error,
-          "Unable to query watermark offsets for topic {} with error {}", Topic,
-          RdKafka::err2str(ErrorCode));
+          "Unable to query watermark offsets for topic {} with error {} - {}",
+          Topic, ErrorCode, RdKafka::err2str(ErrorCode));
       return {};
     }
     TopicPartition->set_offset(High);
@@ -61,7 +61,7 @@ void Consumer::assignToPartitions(const std::string &Topic,
   for_each(TopicPartitionsWithOffsets.cbegin(),
            TopicPartitionsWithOffsets.cend(),
            [](RdKafka::TopicPartition *Partition) { delete Partition; });
-  if (ErrorCode != 0) {
+  if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     LOG(Sev::Error, "Could not assign to {}", Topic);
     throw std::runtime_error(fmt::v5::format("Could not assign to {}", Topic));
   }
