@@ -16,9 +16,6 @@ class ProducerStandIn : public KafkaW::Producer {
 public:
   explicit ProducerStandIn(KafkaW::BrokerSettings &Settings)
       : Producer(Settings){};
-  int outputQueueLength() override {
-    return KafkaW::Producer::outputQueueLength();
-  }
   using Producer::ProducerID;
   using Producer::ProducerPtr;
 };

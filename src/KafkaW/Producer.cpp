@@ -24,14 +24,7 @@ Producer::~Producer() {
   }
 }
 
-Producer::Producer(BrokerSettings &Settings)
-    : ProducerBrokerSettings(Settings) {
-  ProducerID = ProducerInstanceCount++;
-
-  std::string ErrorString;
-
-  Conf = std::unique_ptr<RdKafka::Conf>(
-      RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
+void Producer::setConf(std::string &ErrorString) {
   try {
     ProducerBrokerSettings.apply(Conf.get());
   } catch (std::runtime_error &e) {
@@ -43,6 +36,14 @@ Producer::Producer(BrokerSettings &Settings)
   Conf->set("event_cb", &EventCb, ErrorString);
   Conf->set("metadata.broker.list", ProducerBrokerSettings.Address,
             ErrorString);
+}
+
+Producer::Producer(BrokerSettings &Settings)
+    : ProducerBrokerSettings(Settings) {
+  ProducerID = ProducerInstanceCount++;
+
+  std::string ErrorString;
+  setConf(ErrorString);
   ProducerPtr = std::unique_ptr<RdKafka::Producer>(
       RdKafka::Producer::create(Conf.get(), ErrorString));
   if (ProducerPtr == nullptr) {
@@ -65,9 +66,7 @@ void Producer::poll() {
   Stats.out_queue = OutputQueueLength;
 }
 
-RdKafka::Producer *Producer::getRdKafkaPtr() const {
-  return dynamic_cast<RdKafka::Producer *>(ProducerPtr.get());
-}
+RdKafka::Producer *Producer::getRdKafkaPtr() const { return ProducerPtr.get(); }
 
 int Producer::outputQueueLength() { return ProducerPtr->outq_len(); }
 
@@ -75,8 +74,7 @@ RdKafka::ErrorCode Producer::produce(RdKafka::Topic *Topic, int32_t Partition,
                                      int MessageFlags, void *Payload,
                                      size_t PayloadSize, const void *Key,
                                      size_t KeySize, void *OpaqueMessage) {
-  return dynamic_cast<RdKafka::Producer *>(ProducerPtr.get())
-      ->produce(Topic, Partition, MessageFlags, Payload, PayloadSize, Key,
-                KeySize, OpaqueMessage);
+  return ProducerPtr->produce(Topic, Partition, MessageFlags, Payload,
+                              PayloadSize, Key, KeySize, OpaqueMessage);
 }
 } // namespace KafkaW

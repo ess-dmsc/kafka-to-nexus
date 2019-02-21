@@ -24,7 +24,6 @@ public:
   /// otherwise
   int produce(unsigned char *MsgData, size_t MsgSize);
   int produce(std::unique_ptr<KafkaW::ProducerMessage> &Msg);
-  void enableCopy();
   std::string name() const;
 
 private:
@@ -32,7 +31,5 @@ private:
   std::shared_ptr<Producer> KafkaProducer;
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
   std::string Name;
-
-  bool DoCopyMsg{false};
 };
 }

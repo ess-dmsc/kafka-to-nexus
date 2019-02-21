@@ -26,7 +26,7 @@ public:
   /// Gets the number of messages not send.
   ///
   /// \return The number of messages.
-  virtual int outputQueueLength();
+  int outputQueueLength();
 
   RdKafka::Producer *getRdKafkaPtr() const;
 
@@ -54,7 +54,9 @@ protected:
   std::unique_ptr<RdKafka::Producer> ProducerPtr = nullptr;
 
 private:
-  std::unique_ptr<RdKafka::Conf> Conf;
+  void setConf(std::string &ErrorString);
+  std::unique_ptr<RdKafka::Conf> Conf = std::unique_ptr<RdKafka::Conf>(
+      RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
   ProducerDeliveryCb DeliveryCb{Stats};
   KafkaEventCb EventCb;
 };
