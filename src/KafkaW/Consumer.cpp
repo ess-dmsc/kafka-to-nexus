@@ -39,9 +39,15 @@ Consumer::queryWatermarkOffsets(const std::string &Topic) {
   for (int PartitionID : PartitionIDs) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, PartitionID);
     int64_t Low, High;
-    KafkaConsumer->query_watermark_offsets(
+    auto ErrorCode = KafkaConsumer->query_watermark_offsets(
         Topic, PartitionID, &Low, &High,
         ConsumerBrokerSettings.MetadataTimeoutMS);
+    if (ErrorCode != RdKafka::ERR_NO_ERROR) {
+      LOG(Sev::Error,
+          "Unable to query watermark offsets for topic {} with error {}", Topic,
+          RdKafka::err2str(ErrorCode));
+      return {};
+    }
     TopicPartition->set_offset(High);
     TopicPartitionsWithOffsets.push_back(TopicPartition);
   }
@@ -113,11 +119,12 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
 }
 
 bool Consumer::topicPresent(const std::string &TopicName) {
-  updateMetadata();
-  for (auto Topic : *KafkaMetadata->topics())
-    if (Topic->topic() == TopicName)
-      return true;
-  return false;
+  try {
+    findTopic(TopicName);
+  } catch (std::runtime_error &e) {
+    return false;
+  };
+  return true;
 }
 
 void Consumer::dumpCurrentSubscription() {
