@@ -6,19 +6,19 @@
   "nexus_structure": {
     "children": [
       {
-        "type": "group",
+        "dtype": "group",
         "name": "for_example_motor_0000",
         "attributes": {
           "NX_class": "NXinstrument"
         },
         "children": [
           {
-            "type": "stream",
+            "dtype": "stream",
             "stream": {
               "topic": "topic.with.multiple.sources",
               "source": "for_example_motor",
               "module": "f142",
-              "type": "float",
+              "dtype": "float",
               "array_size": 4
             }
           }

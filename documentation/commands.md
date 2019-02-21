@@ -69,7 +69,7 @@ The following shows an example of adding a group to a structure:
           {
             "type": "stream",
             "stream": {
-              "type": "double",
+              "dtype": "double",
               "writer_module": "f142",
               "source": "my_test_pv",
               "topic": "my_test_topic"
@@ -93,7 +93,7 @@ The stream definition instructs the file-writer that there is data available whi
 The parameters for the stream definition are:
 
 - writer_module: The FlatBuffers schema in the [streaming-data-types](https://github.com/ess-dmsc/streaming-data-types) repository that was used to serialise the data.
-- type: The type of the data. The possible types are defined in the schema declared in the `writer_module`.
+- type/dtype: The type of the data. The possible types are defined in the schema declared in the `writer_module`. Program allows both `type` and `dtype` spellings for better python usability.
 - source: The name of the data source. For example, the EPICS PV name.
 - topic: The Kafka topic where the data can be found.
 

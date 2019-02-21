@@ -63,6 +63,9 @@ private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
 
+  static bool findType(const nlohmann::basic_json<> Attribute,
+                       std::string &DType);
+
   static void checkHDFVersion();
   static std::string H5VersionStringHeadersCompileTime();
 
