@@ -22,6 +22,8 @@ void signal_handler(int Signal) {
 }
 
 int main(int argc, char **argv) {
+  auto Logger = spdlog::stderr_color_mt("LOG");
+
   CLI::App App{fmt::format(
       "kafka-to-nexus {:.7} (ESS, BrightnESS)\n"
       "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
@@ -59,20 +61,20 @@ int main(int argc, char **argv) {
   }
 
   FileWriter::Master Master(*Options);
-  std::thread MasterThread([&Master] {
+  std::thread MasterThread([&Master, Logger] {
     try {
       Master.run();
     } catch (std::system_error const &e) {
-      LOG(spdlog::level::critical,
+      Logger->critical(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
           e.code().value(), e.code().category().name(), e.code().message(),
           e.what());
       throw;
     } catch (std::runtime_error const &e) {
-      LOG(spdlog::level::critical, "std::runtime_error  what: {}", e.what());
+      Logger->critical("std::runtime_error  what: {}", e.what());
       throw;
     } catch (std::exception const &e) {
-      LOG(spdlog::level::critical, "std::exception  what: {}", e.what());
+      Logger->critical("std::exception  what: {}", e.what());
       throw;
     }
   });
@@ -80,7 +82,7 @@ int main(int argc, char **argv) {
   while (not Master.RunLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
-      LOG(spdlog::level::debug, "SIGNAL {}", SignalId);
+      Logger->debug("SIGNAL {}", SignalId);
       Master.stop();
       GotSignal = false;
       break;
