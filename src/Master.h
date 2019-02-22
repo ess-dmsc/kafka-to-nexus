@@ -51,7 +51,6 @@ public:
   std::shared_ptr<KafkaW::ProducerTopic> status_producer;
 
 private:
-  std::shared_ptr<spdlog::logger> Logger;
   CommandListener command_listener;
   std::atomic<bool> do_run{true};
   std::atomic<bool> HasExitedRunLoop{false};

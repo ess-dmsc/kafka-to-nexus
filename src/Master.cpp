@@ -13,20 +13,20 @@
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config)
-    : Logger(spdlog::get("LOG")), command_listener(Config), MainConfig(Config) {
+Master::Master(MainOpt &Config) : command_listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
   if (buffer.back() != 0) {
     // likely an error
     buffer.back() = 0;
-    Logger->info("Hostname got truncated: {}", buffer.data());
+    LOG(spdlog::level::info, "Hostname got truncated: {}", buffer.data());
   }
   std::string hostname(buffer.data());
   FileWriterProcessId =
       fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
-  Logger->info("getFileWriterProcessId: {}", Master::getFileWriterProcessId());
+  LOG(spdlog::level::info, "getFileWriterProcessId: {}",
+      Master::getFileWriterProcessId());
 }
 
 void Master::handle_command_message(
@@ -67,25 +67,24 @@ void Master::addStreamMaster(
 
 struct OnScopeExit {
   explicit OnScopeExit(std::function<void()> Action)
-      : ExitAction(std::move(Action)), Logger(spdlog::get("LOG")){};
+      : ExitAction(std::move(Action)){};
   ~OnScopeExit() {
     try {
       ExitAction();
     } catch (std::bad_function_call &Error) {
-      Logger->warn("OnScopeExit::~OnScopeExit(): Failure to call.");
+      LOG(spdlog::level::warn, "OnScopeExit::~OnScopeExit(): Failure to call.");
     }
   };
   std::function<void()> ExitAction;
-  std::shared_ptr<spdlog::logger> Logger;
 };
 
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
   // Set up connection to the Kafka status topic if desired.
   if (getMainOpt().do_kafka_status) {
-    Logger->info("Publishing status to kafka://{}/{}",
-                 getMainOpt().kafka_status_uri.HostPort,
-                 getMainOpt().kafka_status_uri.Topic);
+    LOG(spdlog::level::info, "Publishing status to kafka://{}/{}",
+        getMainOpt().kafka_status_uri.HostPort,
+        getMainOpt().kafka_status_uri.Topic);
     KafkaW::BrokerSettings BrokerSettings;
     BrokerSettings.Address = getMainOpt().kafka_status_uri.HostPort;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
@@ -93,7 +92,8 @@ void Master::run() {
       status_producer = std::make_shared<KafkaW::ProducerTopic>(
           producer, getMainOpt().kafka_status_uri.Topic);
     } catch (KafkaW::TopicCreationError const &e) {
-      Logger->error("Can not create Kafka status producer: {}", e.what());
+      LOG(spdlog::level::err, "Can not create Kafka status producer: {}",
+          e.what());
     }
   }
 
@@ -107,10 +107,10 @@ void Master::run() {
   using Clock = std::chrono::steady_clock;
   auto t_last_statistics = Clock::now();
   while (do_run) {
-    Logger->trace("Master poll");
+    LOG(spdlog::level::trace, "Master poll");
     auto PollResult = command_listener.poll();
     if (PollResult->getStatus() == KafkaW::PollStatus::Msg) {
-      Logger->trace("Handle a command");
+      LOG(spdlog::level::trace, "Handle a command");
       this->handle_command_message(std::move(PollResult));
     }
     if (getMainOpt().do_kafka_status &&
@@ -129,9 +129,9 @@ void Master::run() {
                        }),
         StreamMasters.end());
   }
-  Logger->info("calling stop on all stream_masters");
+  LOG(spdlog::level::info, "calling stop on all stream_masters");
   stopStreamMasters();
-  Logger->info("called stop on all stream_masters");
+  LOG(spdlog::level::info, "called stop on all stream_masters");
 }
 
 void Master::stopStreamMasters() {
