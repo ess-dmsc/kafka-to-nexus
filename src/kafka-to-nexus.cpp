@@ -22,8 +22,6 @@ void signal_handler(int Signal) {
 }
 
 int main(int argc, char **argv) {
-  auto Logger = spdlog::stderr_color_mt("LOG");
-
   CLI::App App{fmt::format(
       "kafka-to-nexus {:.7} (ESS, BrightnESS)\n"
       "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
@@ -36,7 +34,7 @@ int main(int argc, char **argv) {
 
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
-
+  auto Logger = spdlog::get("filewriterlogger");
   Options->parseJsonCommands();
 
   if (Options->ListWriterModules) {

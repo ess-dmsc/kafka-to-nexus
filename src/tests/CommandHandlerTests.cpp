@@ -193,7 +193,8 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
 }
 
 TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
-  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }"),
+  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }",
+                                        spdlog::get("filewriterlogger")),
                std::runtime_error);
 }
 
