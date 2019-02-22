@@ -23,8 +23,8 @@ json parseOrThrow(std::string const &Command) {
   try {
     return json::parse(Command);
   } catch (json::parse_error const &E) {
-    LOG(spdlog::level::warn, "Can not parse command  what: {}  Command: {}", E.what(),
-        Command);
+    LOG(spdlog::level::warn, "Can not parse command  what: {}  Command: {}",
+        E.what(), Command);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "Can not parse command  what: {}  Command: {}", E.what(), Command)));
   }
@@ -91,7 +91,8 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   }
 
   StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
-  LOG(spdlog::level::info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
+  LOG(spdlog::level::info, "Adding stream: {}",
+      StreamSettings.ConfigStreamJson);
 
   if (auto TopicMaybe = find<json>("topic", ConfigStreamInner)) {
     StreamSettings.Topic = TopicMaybe.inner();
@@ -112,8 +113,9 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     // Allow the old key name as well:
     if (auto ModuleMaybe = find<std::string>("module", ConfigStreamInner)) {
       StreamSettings.Module = ModuleMaybe.inner();
-      LOG(spdlog::level::debug, "The key \"stream.module\" is deprecated, please use "
-                       "\"stream.writer_module\" instead.");
+      LOG(spdlog::level::debug,
+          "The key \"stream.module\" is deprecated, please use "
+          "\"stream.writer_module\" instead.");
     } else {
       throwMissingKey("writer_module", ConfigStreamInner.dump());
     }
@@ -123,7 +125,8 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     StreamSettings.RunParallel = RunParallelMaybe.inner();
   }
   if (StreamSettings.RunParallel) {
-    LOG(spdlog::level::info, "Run parallel for source: {}", StreamSettings.Source);
+    LOG(spdlog::level::info, "Run parallel for source: {}",
+        StreamSettings.Source);
   }
 
   HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
@@ -165,7 +168,8 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 static std::vector<StreamSettings> extractStreamInformationFromJson(
     std::unique_ptr<FileWriterTask> const &Task,
     std::vector<StreamHDFInfo> &StreamHDFInfoList) {
-  LOG(spdlog::level::info, "Command contains {} streams", StreamHDFInfoList.size());
+  LOG(spdlog::level::info, "Command contains {} streams",
+      StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
@@ -176,13 +180,15 @@ static std::vector<StreamSettings> extractStreamInformationFromJson(
       LOG(spdlog::level::warn, "Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
     } catch (std::runtime_error const &E) {
-      LOG(spdlog::level::warn, "Exception while initialising writer module  what: {}  "
-                        "parent: {}  json: {}",
+      LOG(spdlog::level::warn,
+          "Exception while initialising writer module  what: {}  "
+          "parent: {}  json: {}",
           E.what(), StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
       continue;
     } catch (...) {
-      LOG(spdlog::level::err, "Unknown error caught while trying to initialise stream  "
-                      "parent: {}  json: {}",
+      LOG(spdlog::level::err,
+          "Unknown error caught while trying to initialise stream  "
+          "parent: {}  json: {}",
           StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
     }
   }
@@ -209,7 +215,8 @@ void CommandHandler::handleNew(std::string const &Command,
 
     if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        LOG(spdlog::level::err, "job_id {} already in use, ignore command", JobID);
+        LOG(spdlog::level::err, "job_id {} already in use, ignore command",
+            JobID);
         return;
       }
     }
@@ -233,8 +240,9 @@ void CommandHandler::handleNew(std::string const &Command,
     try {
       Broker.parse(BrokerString);
     } catch (std::runtime_error &e) {
-      LOG(spdlog::level::warn, "Unable to parse broker {} in command message, using "
-                        "default broker (localhost:9092)",
+      LOG(spdlog::level::warn,
+          "Unable to parse broker {} in command message, using "
+          "default broker (localhost:9092)",
           BrokerString)
     }
     LOG(spdlog::level::trace, "Use main broker: {}", Broker.HostPort);
@@ -336,7 +344,8 @@ void CommandHandler::addStreamSourceToWriterModule(
 
   for (auto const &StreamSettings : StreamSettingsList) {
     if (!UseParallelWriter || !StreamSettings.RunParallel) {
-      LOG(spdlog::level::trace, "add Source as non-parallel: {}", StreamSettings.Topic);
+      LOG(spdlog::level::trace, "add Source as non-parallel: {}",
+          StreamSettings.Topic);
       HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
 
       try {
@@ -429,12 +438,13 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
             JobID, StopTime.count());
         StreamMaster->setStopTime(StopTime);
       } else {
-        LOG(spdlog::level::info, "Received request to gracefully stop file with id : {}",
-            JobID);
+        LOG(spdlog::level::info,
+            "Received request to gracefully stop file with id : {}", JobID);
         StreamMaster->stop();
       }
     } else {
-      LOG(spdlog::level::warn, "Can not find StreamMaster for JobID: {}", JobID);
+      LOG(spdlog::level::warn, "Can not find StreamMaster for JobID: {}",
+          JobID);
     }
   }
 }
@@ -464,8 +474,9 @@ void CommandHandler::handle(std::string const &Command,
     CommandTeamId = x.inner();
   }
   if (CommandTeamId != TeamId) {
-    LOG(spdlog::level::info, "INFO command is for teamid {:016x}, we are {:016x}",
-        CommandTeamId, TeamId);
+    LOG(spdlog::level::info,
+        "INFO command is for teamid {:016x}, we are {:016x}", CommandTeamId,
+        TeamId);
     return;
   }
 

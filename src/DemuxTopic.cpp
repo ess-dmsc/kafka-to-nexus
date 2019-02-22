@@ -21,7 +21,8 @@ std::string const &DemuxTopic::topic() const { return Topic; }
 
 ProcessMessageResult
 DemuxTopic::process_message(FlatbufferMessage const &Message) {
-  LOG(spdlog::level::trace, "Message received from: {}", Message.getSourceName());
+  LOG(spdlog::level::trace, "Message received from: {}",
+      Message.getSourceName());
   try {
     auto &CurrentSource = TopicSources.at(Message.getSourceName());
     auto ProcessingResult = CurrentSource.process_message(Message);

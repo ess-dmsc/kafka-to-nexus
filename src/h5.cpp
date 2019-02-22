@@ -19,8 +19,8 @@ void h5d::init_basics() {
   sext = DSPTgt.current_dimensions();
   ShapeMax = DSPTgt.maximum_dimensions();
   for (int i1 = 0; i1 < ndims; ++i1) {
-    LOG(spdlog::level::trace, "{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name, i1,
-        sext.at(i1), ShapeMax.at(i1));
+    LOG(spdlog::level::trace, "{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name,
+        i1, sext.at(i1), ShapeMax.at(i1));
     try {
       DSPMem = hdf5::dataspace::Simple({0, 0}, {H5S_UNLIMITED, H5S_UNLIMITED});
     } catch (std::runtime_error const &e) {
@@ -102,8 +102,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t1 = CLK::now();
   LOG(spdlog::level::trace, "append_data_{}d", ndims);
   auto ds_name = static_cast<std::string>(Dataset.link().path());
-    LOG(spdlog::level::trace, "append_data_1d {} for dataset {}", nlen, ds_name);
-
+  LOG(spdlog::level::trace, "append_data_1d {} for dataset {}", nlen, ds_name);
 
   for (size_t i = 1; i < sext.size(); ++i) {
     sext[i] = ShapeMax[i];
@@ -142,8 +141,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     uint32_t const MAX = BLOCK + 8;
     hdf5::Dimensions sext2;
     sext2 = sext;
-    LOG(spdlog::level::trace, "Before extending: {}  min target: {}", sext2.at(0),
-        snext + nlen_0);
+    LOG(spdlog::level::trace, "Before extending: {}  min target: {}",
+        sext2.at(0), snext + nlen_0);
     sext2[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
     if (sext2[0] - sext[0] > (1u << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
@@ -158,8 +157,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           "from: {:12}  to: {:12}",
           snext, sext.at(0), sext2.at(0), sext.at(1), sext2.at(1));
     } else {
-      LOG(spdlog::level::trace, "snext: {:12}  set_extent  d: {}   NOT SUPPORTED",
-          sext.size());
+      LOG(spdlog::level::trace,
+          "snext: {:12}  set_extent  d: {}   NOT SUPPORTED", sext.size());
     }
 
     auto t2 = CLK::now();
@@ -183,13 +182,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         std::chrono::duration_cast<MS>(t3 - t2).count());
   }
 
-    LOG(spdlog::level::trace, "try to get the dsp dims:");
-    auto sext = DSPTgt.current_dimensions();
-    auto smax = DSPTgt.maximum_dimensions();
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(spdlog::level::trace, "dimensions: {:20} {}: {:21} {:21}", Name, i1,
-          sext.at(i1), smax.at(i1));
-    }
+  LOG(spdlog::level::trace, "try to get the dsp dims:");
+  auto sext = DSPTgt.current_dimensions();
+  auto smax = DSPTgt.maximum_dimensions();
+  for (int i1 = 0; i1 < ndims; ++i1) {
+    LOG(spdlog::level::trace, "dimensions: {:20} {}: {:21} {:21}", Name, i1,
+        sext.at(i1), smax.at(i1));
+  }
 
   {
     hdf5::Dimensions offset(sext.size()), block(sext.size()),
@@ -227,10 +226,10 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     tgt_count[i] = sext[1];
     tgt_stride[i] = 1;
   }
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(spdlog::level::trace, "select tgt  i1: {}  start: {}  count: {}", i1,
-          tgt_offset.at(i1), tgt_count.at(i1));
-    }
+  for (int i1 = 0; i1 < ndims; ++i1) {
+    LOG(spdlog::level::trace, "select tgt  i1: {}  start: {}  count: {}", i1,
+        tgt_offset.at(i1), tgt_count.at(i1));
+  }
   DSPTgt.selection(
       hdf5::dataspace::SelectionOperation::SET,
       hdf5::dataspace::Hyperslab(tgt_offset, tgt_block, tgt_count, tgt_stride));
@@ -239,13 +238,13 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     Dataset.write(*data, Type, DSPMem, DSPTgt, PLTransfer);
   } catch (...) {
     LOG(spdlog::level::trace, "write failed  ds_name: {}", ds_name);
-      auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
-      auto sext = dsp.current_dimensions();
-      auto smax = dsp.current_dimensions();
-      for (int i1 = 0; i1 < ndims; ++i1) {
-        LOG(spdlog::level::trace, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
-            smax.at(i1));
-      }
+    auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
+    auto sext = dsp.current_dimensions();
+    auto smax = dsp.current_dimensions();
+    for (int i1 = 0; i1 < ndims; ++i1) {
+      LOG(spdlog::level::trace, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
+          smax.at(i1));
+    }
     return {AppendResult::ERROR};
   }
   ShapeNow[0] = snext + nlen_0;

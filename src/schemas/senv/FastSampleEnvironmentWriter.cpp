@@ -46,8 +46,9 @@ std::string SampleEnvironmentDataGuard::source_name(
 
 void FastSampleEnvironmentWriter::parse_config(std::string const &,
                                                std::string const &) {
-  LOG(spdlog::level::trace, "There are currently no runtime configurable options in the "
-                  "FastSampleEnvironmentWriter class.");
+  LOG(spdlog::level::trace,
+      "There are currently no runtime configurable options in the "
+      "FastSampleEnvironmentWriter class.");
 }
 
 FileWriterBase::InitResult
@@ -78,8 +79,9 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
-    LOG(spdlog::level::err, "Unable to initialise fast sample environment data tree in "
-                    "HDF file with error message: \"{}\"",
+    LOG(spdlog::level::err,
+        "Unable to initialise fast sample environment data tree in "
+        "HDF file with error message: \"{}\"",
         E.what());
     return HDFWriterModule::InitResult::ERROR_IO();
   }

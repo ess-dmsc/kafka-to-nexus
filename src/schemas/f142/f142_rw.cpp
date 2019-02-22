@@ -118,8 +118,9 @@ createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
       findInMap<std::map<std::string, std::unique_ptr<WriterFactory>>>(
           RankAndTypenameToValueTraits[TheRank], TypeName);
   if (!ValueTraitsMaybe.found()) {
-    LOG(spdlog::level::err, "Could not get ValueTraits for TypeName: {}  ArraySize: {} "
-                    " RankAndTypenameToValueTraits.size(): {}",
+    LOG(spdlog::level::err,
+        "Could not get ValueTraits for TypeName: {}  ArraySize: {} "
+        " RankAndTypenameToValueTraits.size(): {}",
         TypeName, ArraySize, RankAndTypenameToValueTraits[TheRank].size());
     return nullptr;
   }

@@ -89,7 +89,8 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
       LOG(spdlog::level::err, "TOO_LARGE  size: {}", Msg->size);
     } else {
       ++s.produce_fail;
-      LOG(spdlog::level::trace, "produce topic {}  partition {}   error: {}  {}",
+      LOG(spdlog::level::trace,
+          "produce topic {}  partition {}   error: {}  {}",
           rd_kafka_topic_name(RdKafkaTopic), partition, x,
           rd_kafka_err2str(err));
     }
@@ -97,8 +98,8 @@ int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
     ++s.produced;
     s.produced_bytes += (uint64_t)Msg->size;
     ++ProducerPtr->TotalMessagesProduced;
-      LOG(spdlog::level::trace, "sent to topic {} partition {}",
-          rd_kafka_topic_name(RdKafkaTopic), partition);
+    LOG(spdlog::level::trace, "sent to topic {} partition {}",
+        rd_kafka_topic_name(RdKafkaTopic), partition);
     Msg.release();
   }
 

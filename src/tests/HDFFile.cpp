@@ -472,7 +472,8 @@ public:
       n_msgs_per_source =
           main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
               .get<int64_t>();
-      LOG(spdlog::level::trace, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
+      LOG(spdlog::level::trace, "unit_test.n_msgs_per_source: {}",
+          n_msgs_per_source);
     } catch (...) {
     }
 
@@ -498,7 +499,8 @@ public:
     try {
       feed_msgs_times =
           main_opt.CommandsJson["unit_test"]["feed_msgs_times"].get<int64_t>();
-      LOG(spdlog::level::trace, "unit_test.feed_msgs_times: {}", feed_msgs_times);
+      LOG(spdlog::level::trace, "unit_test.feed_msgs_times: {}",
+          feed_msgs_times);
     } catch (...) {
     }
 
@@ -507,7 +509,8 @@ public:
       feed_msgs_seconds =
           main_opt.CommandsJson["unit_test"]["feed_msgs_seconds"]
               .get<int64_t>();
-      LOG(spdlog::level::trace, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
+      LOG(spdlog::level::trace, "unit_test.feed_msgs_seconds: {}",
+          feed_msgs_seconds);
     } catch (...) {
     }
 
@@ -633,7 +636,8 @@ public:
             break;
           }
           if (i_feed % 100 == 0) {
-            LOG(spdlog::level::trace, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
+            LOG(spdlog::level::trace, "i_feed: {:3}  i_source: {:2}", i_feed,
+                i_source);
           }
           for (auto &msg : source.msgs) {
             if (msg.size() < 8) {

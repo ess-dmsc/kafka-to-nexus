@@ -76,7 +76,7 @@ void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
     }
   } catch (nlohmann::json::exception &E) {
     LOG(spdlog::level::warn, "Unable to extract data type, using the default "
-                      "(double). Error was: {}",
+                             "(double). Error was: {}",
         E.what());
   }
 
@@ -94,8 +94,9 @@ void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
   } else if (JsonChunkSize.is_number_integer()) {
     ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
   } else {
-    LOG(spdlog::level::warn, "Unable to extract chunk size, using the default (64). "
-                      "This might be very inefficient.");
+    LOG(spdlog::level::warn,
+        "Unable to extract chunk size, using the default (64). "
+        "This might be very inefficient.");
   }
   LOG(spdlog::level::info, "Using a cue interval of {}.", CueInterval);
 }
@@ -126,7 +127,7 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
     FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
   } catch (std::exception &E) {
     LOG(spdlog::level::err, "Unable to initialise areaDetector data tree in "
-                    "HDF file with error message: \"{}\"",
+                            "HDF file with error message: \"{}\"",
         E.what());
     return HDFWriterModule::InitResult::ERROR_IO();
   }
