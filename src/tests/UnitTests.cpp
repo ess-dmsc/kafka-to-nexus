@@ -1,3 +1,4 @@
+#include "logger.h"
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
 
@@ -18,5 +19,7 @@ void reporter<specialized>::send(severity s, char const *file,
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
+  ::setUpLogging(spdlog::level::off, "", "", "");
+
   return RUN_ALL_TESTS();
 }
