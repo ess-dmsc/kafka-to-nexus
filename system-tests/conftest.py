@@ -52,6 +52,7 @@ common_options = {"--no-deps": False,
                   }
 
 
+@pytest.fixture(scope="session", autouse=True)
 def build_filewriter_image():
     client = docker.from_env()
     print("Building Filewriter image", flush=True)
@@ -75,7 +76,6 @@ def run_containers(cmd, options):
 
 
 def build_and_run(options, request):
-    build_filewriter_image()
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
