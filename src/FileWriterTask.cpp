@@ -3,7 +3,6 @@
 #include "HDFFile.h"
 #include "Source.h"
 #include "helper.h"
-#include "logger.h"
 #include <atomic>
 #include <chrono>
 #include <thread>
@@ -14,12 +13,13 @@ namespace {
 
 using nlohmann::json;
 
-json hdf_parse(std::string const &Structure) {
+json hdf_parse(std::string const &Structure,
+               std::shared_ptr<spdlog::logger> Logger) {
   try {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
   } catch (...) {
-    LOG(spdlog::level::err, "Parse Error: ", Structure)
+    Logger->error("Parse Error: ", Structure);
     throw FileWriter::ParseError(Structure);
   }
 }
@@ -47,12 +47,13 @@ FileWriterTask::FileWriterTask(
     std::string TaskID,
     std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
     : ServiceId(std::move(TaskID)),
-      StatusProducer(std::move(StatusProducerPtr)) {
+      StatusProducer(std::move(StatusProducerPtr)),
+      Logger(spdlog::get("filewriterlogger")) {
   Id = createId(++n_FileWriterTask_created);
 }
 
 FileWriterTask::~FileWriterTask() {
-  LOG(spdlog::level::trace, "~FileWriterTask");
+  Logger->trace("~FileWriterTask");
   Demuxers.clear();
   try {
     File.close();
@@ -101,11 +102,11 @@ void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
                                    std::string const &ConfigFile,
                                    std::vector<StreamHDFInfo> &HdfInfo,
                                    bool UseSwmr) {
-  auto NexusStructureJson = hdf_parse(NexusStructure);
-  auto ConfigFileJson = hdf_parse(ConfigFile);
+  auto NexusStructureJson = hdf_parse(NexusStructure, Logger);
+  auto ConfigFileJson = hdf_parse(ConfigFile, Logger);
 
   try {
-    LOG(spdlog::level::info, "Creating HDF file {}", Filename);
+    Logger->info("Creating HDF file {}", Filename);
     File.init(Filename, NexusStructureJson, ConfigFileJson, HdfInfo, UseSwmr);
     // The HDF file is closed and re-opened to (optionally) support SWMR and
     // parallel writing.
@@ -124,7 +125,7 @@ void FileWriterTask::reopenFile() {
   try {
     File.reopen(Filename);
   } catch (std::exception const &E) {
-    LOG(spdlog::level::err, "Exception: {}", E.what());
+    Logger->error("Exception: {}", E.what());
     if (StatusProducer) {
       logEvent(StatusProducer, StatusCode::Error, ServiceId, JobId,
                fmt::format("Exception: {}", E.what()));
