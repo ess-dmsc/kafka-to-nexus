@@ -239,8 +239,9 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     }
     DCPL.chunk(ChunkElements);
     if (0 > H5Pset_deflate(static_cast<hid_t>(DCPL), 7)) {
-      LOG(spdlog::level::critical, "can not use gzip filter on hdf5. Is hdf5 not built "
-                         "with gzip support?");
+      LOG(spdlog::level::critical,
+          "can not use gzip filter on hdf5. Is hdf5 not built "
+          "with gzip support?");
     }
     Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
     copyLatestToData(0);

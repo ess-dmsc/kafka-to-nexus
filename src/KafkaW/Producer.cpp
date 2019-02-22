@@ -15,8 +15,9 @@ void Producer::cb_delivered(rd_kafka_t *RK, rd_kafka_message_t const *Message,
     return;
   }
   if (Message->err) {
-    LOG(spdlog::level::err, "IID: {} failure on delivery, {}, topic {}, {} [{}] {}",
-        Self->id, rd_kafka_name(RK), rd_kafka_topic_name(Message->rkt),
+    LOG(spdlog::level::err,
+        "IID: {} failure on delivery, {}, topic {}, {} [{}] {}", Self->id,
+        rd_kafka_name(RK), rd_kafka_topic_name(Message->rkt),
         rd_kafka_err2name(Message->err), Message->err,
         rd_kafka_err2str(Message->err));
     if (Message->err == RD_KAFKA_RESP_ERR__MSG_TIMED_OUT) {
@@ -53,8 +54,8 @@ void Producer::cb_error(rd_kafka_t *RK, int ErrorCode, char const *ErrorMessage,
 int Producer::cb_stats(rd_kafka_t *RK, char *JSON, size_t JSONLength,
                        void *Opaque) {
   auto Self = reinterpret_cast<Producer *>(Opaque);
-  LOG(spdlog::level::trace, "IID: {}  INFO cb_stats {} length {}   {:.{}}", Self->id,
-      rd_kafka_name(RK), JSONLength, JSON, JSONLength);
+  LOG(spdlog::level::trace, "IID: {}  INFO cb_stats {} length {}   {:.{}}",
+      Self->id, rd_kafka_name(RK), JSONLength, JSON, JSONLength);
   // What does librdkafka want us to return from this callback?
   return 0;
 }
@@ -69,8 +70,9 @@ void Producer::cb_throttle(rd_kafka_t *RK, char const *BrokerName,
                            int32_t BrokerID, int ThrottleTime_ms,
                            void *Opaque) {
   auto Time = reinterpret_cast<Producer *>(Opaque);
-  LOG(spdlog::level::trace, "IID: {}  INFO cb_throttle  BrokerID: {}  broker_name: {}  "
-                  "throttle_time_ms: {}",
+  LOG(spdlog::level::trace,
+      "IID: {}  INFO cb_throttle  BrokerID: {}  broker_name: {}  "
+      "throttle_time_ms: {}",
       Time->id, BrokerID, BrokerName, ThrottleTime_ms);
 }
 
@@ -136,8 +138,8 @@ Producer::Producer(BrokerSettings const &Settings)
 
   rd_kafka_set_log_level(RdKafkaPtr, 4);
 
-  LOG(spdlog::level::info, "New Kafka {} with brokers: {}", rd_kafka_name(RdKafkaPtr),
-      ProducerBrokerSettings.Address.c_str());
+  LOG(spdlog::level::info, "New Kafka {} with brokers: {}",
+      rd_kafka_name(RdKafkaPtr), ProducerBrokerSettings.Address.c_str());
   if (rd_kafka_brokers_add(RdKafkaPtr,
                            ProducerBrokerSettings.Address.c_str()) == 0) {
     LOG(spdlog::level::err, "could not add brokers");

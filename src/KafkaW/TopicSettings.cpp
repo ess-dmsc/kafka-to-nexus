@@ -14,8 +14,8 @@ void TopicSettings::applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf) {
         rd_kafka_topic_conf_set(conf, c.first.c_str(), ConfigString.c_str(),
                                 ErrorString.data(), ErrorString.size());
     if (err != RD_KAFKA_CONF_OK) {
-      LOG(spdlog::level::warn, "Failed to set topic config: {} = {}.  {}", c.first,
-          ConfigString, ErrorString.data());
+      LOG(spdlog::level::warn, "Failed to set topic config: {} = {}.  {}",
+          c.first, ConfigString, ErrorString.data());
     }
   }
   for (auto &c : ConfigurationStrings) {
@@ -23,8 +23,8 @@ void TopicSettings::applySettingsToRdKafkaConf(rd_kafka_topic_conf_t *conf) {
     auto err = rd_kafka_topic_conf_set(conf, c.first.c_str(), c.second.c_str(),
                                        ErrorString.data(), ErrorString.size());
     if (err != RD_KAFKA_CONF_OK) {
-      LOG(spdlog::level::warn, "Failed to set topic config: {} = {}.  {}", c.first,
-          c.second, ErrorString.data());
+      LOG(spdlog::level::warn, "Failed to set topic config: {} = {}.  {}",
+          c.first, c.second, ErrorString.data());
     }
   }
 }

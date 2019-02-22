@@ -8,8 +8,8 @@ static std::atomic<int> g_kafka_consumer_instance_count;
 
 #define KERR(rk, err)                                                          \
   if (err != 0) {                                                              \
-    LOG(spdlog::level::level_enum(4), "Kafka {}  error: {}, {}, {}", rd_kafka_name(rk), err,     \
-        rd_kafka_err2name((rd_kafka_resp_err_t)err),                           \
+    LOG(spdlog::level::level_enum(4), "Kafka {}  error: {}, {}, {}",           \
+        rd_kafka_name(rk), err, rd_kafka_err2name((rd_kafka_resp_err_t)err),   \
         rd_kafka_err2str((rd_kafka_resp_err_t)err));                           \
   }
 
@@ -37,7 +37,8 @@ Consumer::~Consumer() {
 void Consumer::cb_log(rd_kafka_t const *rk, int level, char const *fac,
                       char const *buf) {
   auto self = reinterpret_cast<Consumer *>(rd_kafka_opaque(rk));
-  LOG(spdlog::level::level_enum(level), "IID: {}  {}  fac: {}", self->id, buf, fac);
+  LOG(spdlog::level::level_enum(level), "IID: {}  {}  fac: {}", self->id, buf,
+      fac);
 }
 
 void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
@@ -57,7 +58,8 @@ void Consumer::cb_error(rd_kafka_t *rk, int err_i, char const *msg,
 
 int Consumer::cb_stats(rd_kafka_t *rk, char *json, size_t json_size,
                        void *opaque) {
-  LOG(spdlog::level::trace, "INFO stats_cb {}  {:.{}}", json_size, json, json_size);
+  LOG(spdlog::level::trace, "INFO stats_cb {}  {:.{}}", json_size, json,
+      json_size);
   // What does Kafka want us to return from this callback?
   return 0;
 }
@@ -83,8 +85,8 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
     print_partition_list(plist);
     err2 = rd_kafka_assign(rk, plist);
     if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
-      LOG(spdlog::level::debug, "rebalance error: {}  {}", rd_kafka_err2name(err2),
-          rd_kafka_err2str(err2));
+      LOG(spdlog::level::debug, "rebalance error: {}  {}",
+          rd_kafka_err2name(err2), rd_kafka_err2str(err2));
     }
     if (auto &cb = self->on_rebalance_assign) {
       cb(plist);
@@ -95,8 +97,8 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
     print_partition_list(plist);
     err2 = rd_kafka_assign(rk, nullptr);
     if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
-      LOG(spdlog::level::warn, "rebalance error: {}  {}", rd_kafka_err2name(err2),
-          rd_kafka_err2str(err2));
+      LOG(spdlog::level::warn, "rebalance error: {}  {}",
+          rd_kafka_err2name(err2), rd_kafka_err2str(err2));
     }
     break;
   default:
@@ -104,8 +106,8 @@ void Consumer::cb_rebalance(rd_kafka_t *rk, rd_kafka_resp_err_t err,
         rd_kafka_err2str(err));
     err2 = rd_kafka_assign(rk, nullptr);
     if (err2 != RD_KAFKA_RESP_ERR_NO_ERROR) {
-      LOG(spdlog::level::warn, "rebalance error: {}  {}", rd_kafka_err2name(err2),
-          rd_kafka_err2str(err2));
+      LOG(spdlog::level::warn, "rebalance error: {}  {}",
+          rd_kafka_err2name(err2), rd_kafka_err2str(err2));
     }
     break;
   }
@@ -161,8 +163,9 @@ void Consumer::addTopic(std::string const &Topic) {
 
 void Consumer::addTopicAtTimestamp(std::string const &Topic,
                                    std::chrono::milliseconds const StartTime) {
-  LOG(spdlog::level::info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
-      Topic, StartTime.count());
+  LOG(spdlog::level::info,
+      "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}", Topic,
+      StartTime.count());
   auto numberOfPartitions = queryNumberOfPartitions(Topic);
   rd_kafka_topic_partition_list_add_range(PartitionList, Topic.c_str(), 0,
                                           numberOfPartitions - 1);
@@ -194,8 +197,9 @@ void Consumer::commitOffsets() const {
   auto CommitErr = rd_kafka_commit(RdKafka, PartitionList, false);
   KERR(RdKafka, CommitErr);
   if (CommitErr == RD_KAFKA_RESP_ERR__NO_OFFSET) {
-    LOG(spdlog::level::warn, "Could not commit offsets in Consumer, possibly already "
-                      "at the correct offset");
+    LOG(spdlog::level::warn,
+        "Could not commit offsets in Consumer, possibly already "
+        "at the correct offset");
     return;
   }
   if (CommitErr != RD_KAFKA_RESP_ERR_NO_ERROR) {
@@ -267,8 +271,8 @@ std::unique_ptr<ConsumerMessage> Consumer::poll() {
     LOG(spdlog::level::err, "RD_KAFKA_RESP_ERR__DESTROY");
     // Broker will go away soon
   } else {
-    LOG(spdlog::level::err, "unhandled msg error: {} {}", rd_kafka_err2name(msg->err),
-        rd_kafka_err2str(msg->err));
+    LOG(spdlog::level::err, "unhandled msg error: {} {}",
+        rd_kafka_err2name(msg->err), rd_kafka_err2str(msg->err));
   }
   return std::make_unique<ConsumerMessage>(PollStatus::Err);
 }

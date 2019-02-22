@@ -223,7 +223,7 @@ void HDFFile::writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
     CurrentTimeZone = date::current_zone();
   } catch (const std::runtime_error &e) {
     LOG(spdlog::level::warn, "Failed to detect time zone for use in ISO8601 "
-                      "timestamp in HDF file")
+                             "timestamp in HDF file")
     CurrentTimeZone = date::locate_zone("UTC");
   }
   auto now = date::make_zoned(
@@ -282,7 +282,8 @@ void HDFFile::writeArrayOfAttributes(hdf5::node::Node const &Node,
                                    Values);
         } else {
           if (Values.is_array()) {
-            LOG(spdlog::level::warn, "Attributes with array values must specify type")
+            LOG(spdlog::level::warn,
+                "Attributes with array values must specify type")
             continue;
           }
           writeScalarAttribute(Node, Name, Values);
@@ -337,12 +338,13 @@ void writeAttrStringFixedLength(hdf5::node::Node const &Node,
         LOG(spdlog::level::trace, "Scalar");
       } catch (...) {
         LOG(spdlog::level::err, "Unknown dataspace requested for fixed length "
-                        "string dataset {}",
+                                "string dataset {}",
             Name);
       }
     }
     auto Data = populateBlob<FixedStringItemHandler>(Values, 0, StringSize);
-    LOG(spdlog::level::trace, "StringSize: {}  Data.size(): {}", StringSize, Data.size());
+    LOG(spdlog::level::trace, "StringSize: {}  Data.size(): {}", StringSize,
+        Data.size());
     // Fixed string support seems broken in h5cpp
     if (0 > H5Awrite(static_cast<hid_t>(Attribute), static_cast<hid_t>(Type),
                      Data.data())) {
@@ -525,7 +527,8 @@ void HDFFile::writeFixedSizeStringDataset(
     try {
       auto Space = hdf5::dataspace::Simple(Dataspace);
       auto Dimensions = Space.current_dimensions();
-      LOG(spdlog::level::trace, "Simple {}  {}", Dimensions.size(), Dimensions.at(0));
+      LOG(spdlog::level::trace, "Simple {}  {}", Dimensions.size(),
+          Dimensions.at(0));
     } catch (...) {
       try {
         auto Space = hdf5::dataspace::Scalar(Dataspace);
@@ -743,7 +746,8 @@ void HDFFile::createHDFStructures(
             hdf_this = Parent.create_group(Name, LinkCreationPropertyList);
             Path.push_back(Name);
           } catch (...) {
-            LOG(spdlog::level::critical, "failed to create group  Name: {}", Name);
+            LOG(spdlog::level::critical, "failed to create group  Name: {}",
+                Name);
           }
         }
       }
@@ -803,17 +807,20 @@ void HDFFile::checkHDFVersion() {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
-    LOG(spdlog::level::err, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+    LOG(spdlog::level::err,
+        "HDF5 version mismatch.  compile time: {}  runtime: {}",
         H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
     exit(1);
   }
   if (h5_vers_minor != H5_VERS_MINOR) {
-    LOG(spdlog::level::err, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+    LOG(spdlog::level::err,
+        "HDF5 version mismatch.  compile time: {}  runtime: {}",
         H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
     exit(1);
   }
   if (h5_vers_release != H5_VERS_RELEASE) {
-    LOG(spdlog::level::err, "HDF5 version mismatch.  compile time: {}  runtime: {}",
+    LOG(spdlog::level::err,
+        "HDF5 version mismatch.  compile time: {}  runtime: {}",
         H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
   }
 }

@@ -88,12 +88,9 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    spdlog::level::level_enum &LogLevelResult) {
   std::map<std::string, spdlog::level::level_enum> LevelMap{
-      {"Critical", spdlog::level::critical},
-      {"Error", spdlog::level::err},
-      {"Warning", spdlog::level::warn},
-      {"Info", spdlog::level::info},
-      {"Debug", spdlog::level::debug},
-      {"Trace", spdlog::level::trace}};
+      {"Critical", spdlog::level::critical}, {"Error", spdlog::level::err},
+      {"Warning", spdlog::level::warn},      {"Info", spdlog::level::info},
+      {"Debug", spdlog::level::debug},       {"Trace", spdlog::level::trace}};
 
   if (LogLevelString.size() != 1) {
     return false;

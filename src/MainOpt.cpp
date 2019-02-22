@@ -2,8 +2,8 @@
 #include "URI.h"
 #include "helper.h"
 #include "json.h"
-#include <iostream>
 #include "logger.h"
+#include <iostream>
 
 using uri::URI;
 
@@ -13,7 +13,7 @@ using uri::URI;
 // following init function.
 void MainOpt::init() {
   ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                           gethostname_wrapper(), getpid_wrapper());
+                          gethostname_wrapper(), getpid_wrapper());
 }
 
 int MainOpt::parseJsonCommands() {
@@ -41,5 +41,6 @@ void MainOpt::findAndAddCommands() {
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename, opt.graylog_logger_address);
+  setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename,
+               opt.graylog_logger_address);
 }

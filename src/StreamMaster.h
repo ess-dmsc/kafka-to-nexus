@@ -126,7 +126,8 @@ public:
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
-        LOG(spdlog::level::trace, "Status report already started, nothing to do");
+        LOG(spdlog::level::trace,
+            "Status report already started, nothing to do");
       }
     }
   }
@@ -182,7 +183,8 @@ private:
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
-        LOG(spdlog::level::err, "Stream closed due to stream error: {}", E.what());
+        LOG(spdlog::level::err, "Stream closed due to stream error: {}",
+            E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
         closeStream(Stream, Demux.topic());
@@ -245,7 +247,8 @@ private:
   /// otherwise set Stop TRUE and return StreamMasterError::has_finished.
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
-    LOG(spdlog::level::trace, "All sources in Stream have expired, close connection");
+    LOG(spdlog::level::trace,
+        "All sources in Stream have expired, close connection");
     Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;

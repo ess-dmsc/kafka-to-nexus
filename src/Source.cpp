@@ -19,8 +19,8 @@ std::string const &Source::sourcename() const { return SourceName; }
 
 ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
   if (std::string(Message.data() + 4, Message.data() + 8) != SchemaID) {
-    LOG(spdlog::level::trace, "SchemaID: {} not accepted by source_name: {}", SchemaID,
-        SourceName);
+    LOG(spdlog::level::trace, "SchemaID: {} not accepted by source_name: {}",
+        SchemaID, SourceName);
     return ProcessMessageResult::ERR;
   }
 
@@ -33,7 +33,8 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     _cnt_msg_written += 1;
     _processed_messages_count += 1;
     if (ret.is_ERR()) {
-        LOG(spdlog::level::trace, "Failure while writing message: {}", ret.to_str());
+      LOG(spdlog::level::trace, "Failure while writing message: {}",
+          ret.to_str());
       return ProcessMessageResult::ERR;
     }
     if (HDFFileForSWMR != nullptr) {

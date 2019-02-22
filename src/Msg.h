@@ -8,11 +8,10 @@
 #include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
-#include <vector>
 #include <spdlog/spdlog.h>
+#include <vector>
 
 namespace FileWriter {
-
 
 struct Msg {
   static Msg owned(char const *Data, size_t Bytes) {

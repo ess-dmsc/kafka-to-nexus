@@ -58,8 +58,8 @@ FileWriter::createConsumer(std::string const &TopicName,
     }
     // Error if the topic cannot be found in the metadata
     if (!Consumer->topicPresent(TopicName)) {
-      LOG(spdlog::level::err, "Topic \"{}\" not in broker, remove corresponding stream",
-          TopicName);
+      LOG(spdlog::level::err,
+          "Topic \"{}\" not in broker, remove corresponding stream", TopicName);
       return {FileWriter::Status::StreamerStatus::TOPIC_PARTITION_ERROR,
               nullptr};
     }
@@ -100,8 +100,8 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   } catch (std::runtime_error &Error) {
     throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
   } catch (std::exception &Error) {
-    LOG(spdlog::level::critical, "Got an exception when waiting for connection: {}",
-        Error.what());
+    LOG(spdlog::level::critical,
+        "Got an exception when waiting for connection: {}", Error.what());
     throw; // "throw;" rethrows
   }
 
@@ -117,8 +117,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
       KafkaMessage->getStatus() == KafkaW::PollStatus::EOP) {
     if ((Options.StopTimestamp.count() > 0) and
         (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
-      LOG(spdlog::level::info, "Stop stream timeout for topic \"{}\" reached. {} ms "
-                     "passed since stop time.",
+      LOG(spdlog::level::info,
+          "Stop stream timeout for topic \"{}\" reached. {} ms "
+          "passed since stop time.",
           MessageProcessor.topic(),
           (systemTime() - Options.StopTimestamp).count());
       Sources.clear();
@@ -137,16 +138,18 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
         reinterpret_cast<const char *>(KafkaMessage->getData()),
         KafkaMessage->getSize());
   } catch (std::runtime_error &Error) {
-    LOG(spdlog::level::warn, "Message that is not a valid flatbuffer encountered "
-                      "(msg. offset: {}). The error was: {}",
+    LOG(spdlog::level::warn,
+        "Message that is not a valid flatbuffer encountered "
+        "(msg. offset: {}). The error was: {}",
         KafkaMessage->getMessageOffset(), Error.what());
     return ProcessMessageResult::ERR;
   }
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
-    LOG(spdlog::level::warn, "Message from topic \"{}\" has an unknown source name "
-                      "(\"{}\"), ignoring.",
+    LOG(spdlog::level::warn,
+        "Message from topic \"{}\" has an unknown source name "
+        "(\"{}\"), ignoring.",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
