@@ -71,19 +71,18 @@ void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
     try {
       ElementType = TypeMap.at(DataType);
     } catch (std::out_of_range &E) {
-      LOG(spdlog::level::err, "Unknown type ({}), using the default (double).",
-          DataType);
+      Logger->error("Unknown type ({}), using the default (double).", DataType);
     }
   } catch (nlohmann::json::exception &E) {
-    LOG(spdlog::level::warn, "Unable to extract data type, using the default "
-                             "(double). Error was: {}",
-        E.what());
+    Logger->warn("Unable to extract data type, using the default "
+                 "(double). Error was: {}",
+                 E.what());
   }
 
   try {
     ArrayShape = Config["array_size"].get<hdf5::Dimensions>();
   } catch (nlohmann::json::exception &E) {
-    LOG(spdlog::level::warn,
+    Logger->warn(
         "Unable to extract array size, using the default (1x1). Error was: {}",
         E.what());
   }
@@ -94,11 +93,10 @@ void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
   } else if (JsonChunkSize.is_number_integer()) {
     ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
   } else {
-    LOG(spdlog::level::warn,
-        "Unable to extract chunk size, using the default (64). "
-        "This might be very inefficient.");
+    Logger->warn("Unable to extract chunk size, using the default (64). "
+                 "This might be very inefficient.");
   }
-  LOG(spdlog::level::info, "Using a cue interval of {}.", CueInterval);
+  Logger->info("Using a cue interval of {}.", CueInterval);
 }
 
 FileWriterBase::InitResult
@@ -124,11 +122,11 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
+    FileWriter::writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception &E) {
-    LOG(spdlog::level::err, "Unable to initialise areaDetector data tree in "
-                            "HDF file with error message: \"{}\"",
-        E.what());
+    Logger->error("Unable to initialise areaDetector data tree in "
+                  "HDF file with error message: \"{}\"",
+                  E.what());
     return HDFWriterModule::InitResult::ERROR_IO();
   }
   return FileWriterBase::InitResult::OK();
@@ -146,7 +144,7 @@ AreaDetectorWriter::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG(spdlog::level::err,
+    Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return HDFWriterModule::InitResult::ERROR_IO();

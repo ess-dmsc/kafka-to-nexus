@@ -356,7 +356,7 @@ public:
       ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::STRING);
       std::string val;
       attr.read(val, attr.datatype());
-      ASSERT_EQ(FileWriter::HDFFile::h5VersionStringLinked(), val);
+      ASSERT_EQ(FileWriter::h5VersionStringLinked(), val);
     }
     {
       auto attr = root_group.attributes["file_time"];

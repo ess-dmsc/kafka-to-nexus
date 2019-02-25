@@ -118,10 +118,11 @@ createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
       findInMap<std::map<std::string, std::unique_ptr<WriterFactory>>>(
           RankAndTypenameToValueTraits[TheRank], TypeName);
   if (!ValueTraitsMaybe.found()) {
-    LOG(spdlog::level::err,
-        "Could not get ValueTraits for TypeName: {}  ArraySize: {} "
-        " RankAndTypenameToValueTraits.size(): {}",
-        TypeName, ArraySize, RankAndTypenameToValueTraits[TheRank].size());
+    spdlog::get("filewriterlogger")
+        ->error("Could not get ValueTraits for TypeName: {}  ArraySize: {} "
+                " RankAndTypenameToValueTraits.size(): {}",
+                TypeName, ArraySize,
+                RankAndTypenameToValueTraits[TheRank].size());
     return nullptr;
   }
   auto const &ValueTraits = ValueTraitsMaybe.value();
@@ -143,7 +144,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
           find<std::string>("source", ConfigurationStreamJson)) {
     SourceName = SourceNameMaybe.inner();
   } else {
-    LOG(spdlog::level::err, "Key \"source\" is not specified in json command");
+    Logger->error("Key \"source\" is not specified in json command");
     return;
   }
 
@@ -159,17 +160,16 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
     ArraySize = size_t(ArraySizeMaybe.inner());
   }
 
-  LOG(spdlog::level::trace,
-      "HDFWriterModule::parse_config f142 SourceName: {}  type: {}  "
-      "array_size: {}",
-      SourceName, TypeName, ArraySize);
+  Logger->trace("HDFWriterModule::parse_config f142 SourceName: {}  type: {}  "
+                "array_size: {}",
+                SourceName, TypeName, ArraySize);
 
   try {
     IndexEveryBytes =
         ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
             .get<uint64_t>() *
         1024;
-    LOG(spdlog::level::trace, "index_every_bytes: {}", IndexEveryBytes);
+    Logger->trace("index_every_bytes: {}", IndexEveryBytes);
   } catch (...) { /* it's ok if not found */
   }
   try {
@@ -177,18 +177,18 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
         ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
             .get<uint64_t>() *
         1024 * 1024;
-    LOG(spdlog::level::trace, "index_every_bytes: {}", IndexEveryBytes);
+    Logger->trace("index_every_bytes: {}", IndexEveryBytes);
   } catch (...) { /* it's ok if not found */
   }
   if (ConfigurationStreamJson.find("store_latest_into") !=
       ConfigurationStreamJson.end()) {
     StoreLatestInto = ConfigurationStreamJson["store_latest_into"];
-    LOG(spdlog::level::trace, "StoreLatestInto: {}", StoreLatestInto);
+    Logger->trace("StoreLatestInto: {}", StoreLatestInto);
   }
 }
 
 /// Initialize some parameters and the list of datasets to be created.
-HDFWriterModule::HDFWriterModule() {
+HDFWriterModule::HDFWriterModule() : Logger(spdlog::get("filewriterlogger")) {
   // Setup the parameters for our datasets
   size_t ChunkBytes = 64 * 1024;
   size_t BufferSize = 16 * 1024;
@@ -234,7 +234,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
                                         CreateMethod);
     if (!ValueWriter) {
-      LOG(spdlog::level::err,
+      Logger->error(
           "Could not create a writer implementation for value_type {}",
           TypeName);
       return HDFWriterModule::InitResult::ERROR_IO();
@@ -248,7 +248,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         }
       }
       auto AttributesJson = nlohmann::json::parse(*HDFAttributes);
-      HDFFile::writeAttributes(HDFGroup, &AttributesJson);
+      writeAttributes(HDFGroup, &AttributesJson, Logger);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
         Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name);
@@ -276,7 +276,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
       TimestampLastErrorLog = Now;
-      LOG(spdlog::level::warn,
+      Logger->warn(
           "sorry, but we were unable to initialize for this kind of messages");
     }
     return HDFWriterModule::WriteResult::ERROR_IO();
@@ -286,7 +286,7 @@ HDFWriterModule::write(FlatbufferMessage const &Message) {
     auto Now = CLOCK::now();
     if (Now > TimestampLastErrorLog + ErrorLogMinInterval) {
       TimestampLastErrorLog = Now;
-      LOG(spdlog::level::err, "write failed: {}", wret.ErrorString);
+      Logger->error("write failed: {}", wret.ErrorString);
     }
   }
   WrittenBytesTotal += wret.written_bytes;

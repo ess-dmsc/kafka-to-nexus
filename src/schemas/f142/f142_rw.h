@@ -107,6 +107,9 @@ public:
   MS ErrorLogMinInterval{500};
   std::chrono::time_point<CLOCK> TimestampLastErrorLog{CLOCK::now() -
                                                        ErrorLogMinInterval};
+
+private:
+  std::shared_ptr<spdlog::logger> Logger;
 };
 
 /// \brief  Interface for creating and opening a dataset.
