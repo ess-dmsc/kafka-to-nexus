@@ -154,7 +154,7 @@ public:
     ++CurrentExtent[0];
     Shape.insert(Shape.begin(), 1);
     if (Shape.size() != CurrentExtent.size()) {
-      LOG(spdlog::level::err,
+      Logger->error(
           "Data has {} dimension(s) and dataset has {} (+1) dimensions.",
           Shape.size() - 1, CurrentExtent.size() - 1);
       throw std::runtime_error(
@@ -162,22 +162,23 @@ public:
     }
     for (size_t i = 1; i < Shape.size(); i++) {
       if (Shape[i] > CurrentExtent[i]) {
-        LOG(spdlog::level::warn,
-            "Dimension {} of new data is larger than that of the "
-            "dataset. Extending dataset.",
-            i - 1);
+        Logger->warn("Dimension {} of new data is larger than that of the "
+                     "dataset. Extending dataset.",
+                     i - 1);
         CurrentExtent[i] = Shape[i];
       } else if (Shape[i] < CurrentExtent[i]) {
-        LOG(spdlog::level::warn,
-            "Dimension {} of new data is smaller than that of "
-            "the dataset. Using 0 as a filler.",
-            i - 1);
+        Logger->warn("Dimension {} of new data is smaller than that of "
+                     "the dataset. Using 0 as a filler.",
+                     i - 1);
       }
     }
     Dataset::extent(CurrentExtent);
     hdf5::dataspace::Hyperslab Selection{{Origin}, {Shape}};
     write(NewData, Selection);
   }
+
+protected:
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// h5cpp dataset class that implements methods for appending data.
@@ -209,8 +210,7 @@ public:
                                hdf5::dataspace::Simple::UNLIMITED);
       std::vector<hsize_t> VectorChunkSize;
       if (ChunkSize.empty()) {
-        LOG(spdlog::level::warn,
-            "No chunk size given. Using the default value 1024.");
+        Logger->warn("No chunk size given. Using the default value 1024.");
         ChunkSize.emplace_back(1024);
       }
       if (ChunkSize.size() == Shape.size()) {
@@ -219,11 +219,10 @@ public:
         VectorChunkSize = Shape;
         VectorChunkSize[0] = ChunkSize[0];
       } else {
-        LOG(spdlog::level::err,
-            "Unable to reconcile a data shape with {} dimensions "
-            "and chunk size with {} dimensions. Using default "
-            "values.",
-            Shape.size(), ChunkSize.size());
+        Logger->error("Unable to reconcile a data shape with {} dimensions "
+                      "and chunk size with {} dimensions. Using default "
+                      "values.",
+                      Shape.size(), ChunkSize.size());
         VectorChunkSize = Shape;
         VectorChunkSize[0] = 1024;
       }
