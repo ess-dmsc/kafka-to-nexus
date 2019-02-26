@@ -46,7 +46,7 @@ public:
         Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR;
-        LOG(spdlog::level::critical, "{}", E.what());
+        Logger->critical("{}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
       }
@@ -65,9 +65,8 @@ public:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
-    LOG(spdlog::level::info,
-        "Stop StreamMaster for file with id : {}, ready to be removed",
-        getJobId());
+    Logger->info("Stop StreamMaster for file with id : {}, ready to be removed",
+                 getJobId());
   }
 
   StreamMaster &operator=(const StreamMaster &) = delete;
@@ -98,7 +97,7 @@ public:
       stopImplemented();
       return WriteThread.joinable();
     }
-    LOG(spdlog::level::info, "StreamMaster: start");
+    Logger->info("StreamMaster: start");
     Stop = false;
 
     if (!WriteThread.joinable()) {
@@ -112,7 +111,7 @@ public:
   ///
   /// \return True if successful, False otherwise.
   bool stop() {
-    LOG(spdlog::level::info, "StreamMaster: stop");
+    Logger->info("StreamMaster: stop");
     Stop = true;
     return !(WriteThread.joinable() || ReportThread.joinable());
   }
@@ -126,8 +125,7 @@ public:
         ReportThread =
             std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
       } else {
-        LOG(spdlog::level::trace,
-            "Status report already started, nothing to do");
+        Logger->trace("Status report already started, nothing to do");
       }
     }
   }
@@ -183,8 +181,7 @@ private:
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
-        LOG(spdlog::level::err, "Stream closed due to stream error: {}",
-            E.what());
+        Logger->error("Stream closed due to stream error: {}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
         closeStream(Stream, Demux.topic());
@@ -200,8 +197,8 @@ private:
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {
-        LOG(spdlog::level::err, "Error in topic \"{}\" : {}", Demux.topic(),
-            Err2Str(Stream.runStatus()));
+        Logger->error("Error in topic \"{}\" : {}", Demux.topic(),
+                      Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR;
       }
     }
@@ -247,8 +244,7 @@ private:
   /// otherwise set Stop TRUE and return StreamMasterError::has_finished.
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
-    LOG(spdlog::level::trace,
-        "All sources in Stream have expired, close connection");
+    Logger->trace("All sources in Stream have expired, close connection");
     Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
@@ -267,18 +263,18 @@ private:
       ReportThread.join();
     }
     for (auto &s : Streamers) {
-      LOG(spdlog::level::info, "Shut down {}", s.first);
+      Logger->info("Shut down {}", s.first);
       auto v = s.second.closeStream();
       if (v == StreamerStatus::HAS_FINISHED) {
-        LOG(spdlog::level::info, "Error while stopping {} : {}", s.first,
-            Status::Err2Str(v));
+        Logger->info("Error while stopping {} : {}", s.first,
+                     Status::Err2Str(v));
       } else {
-        LOG(spdlog::level::info, "\t...done");
+        Logger->info("\t...done");
       }
     }
     Streamers.clear();
     RunStatus = StreamMasterError::IS_REMOVABLE;
-    LOG(spdlog::level::info, "RunStatus:  {}", Err2Str(RunStatus));
+    Logger->info("RunStatus:  {}", Err2Str(RunStatus));
   }
 
   std::map<std::string, Streamer> Streamers;
@@ -293,6 +289,7 @@ private:
   size_t NumStreamers{0};
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 } // namespace FileWriter
