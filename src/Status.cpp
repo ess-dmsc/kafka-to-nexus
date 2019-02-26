@@ -21,13 +21,12 @@ double standardDeviation(double Sum, double SumSquared,
   
   double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
   if (Variance > 0) {
-    // Can be caused by numerical instabilities
     return std::sqrt(Variance);
   }
   return 0.0;
 }
 
-std::pair<double, double> FileWriter::Status::MessageInfo::messageSize() const {
+std::pair<double, double> FileWriter::Status::MessageInfo::messageSizeStats() const {
   // Nan causes failure in JSON
   if (Mbytes == 0) {
     return std::pair<double, double>{};
@@ -51,7 +50,7 @@ void FileWriter::Status::MessageInfo::error() {
   Errors++;
 }
 
-void FileWriter::Status::MessageInfo::reset() {
+void FileWriter::Status::MessageInfo::resetStatistics() {
   Mbytes = MbytesSquare = 0.0;
   Messages = 0;
   Errors = 0;
@@ -59,7 +58,7 @@ void FileWriter::Status::MessageInfo::reset() {
 
 double FileWriter::Status::MessageInfo::getMbytes() const { return Mbytes; }
 
-uint64_t FileWriter::Status::MessageInfo::getMessages() const {
+uint64_t FileWriter::Status::MessageInfo::getNumberMessages() const {
   return Messages;
 }
 
@@ -68,9 +67,9 @@ uint64_t FileWriter::Status::MessageInfo::getErrors() const { return Errors; }
 void FileWriter::Status::StreamMasterInfo::add(
     FileWriter::Status::MessageInfo &Info) {
   Mbytes += Info.getMbytes();
-  Messages += Info.getMessages();
+  Messages += Info.getNumberMessages();
   Errors += Info.getErrors();
-  Info.reset();
+  Info.resetStatistics();
 }
 
 void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(

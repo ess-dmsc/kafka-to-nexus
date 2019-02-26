@@ -44,25 +44,25 @@ public:
   ///  Increments the error count by one unit.
   void error();
 
-  ///  Reset the counters.
-  void reset();
+  ///  Reset the message statistics counters.
+  void resetStatistics();
 
   /// \brief Return the average size and relative standard deviation of the
-  /// number of messages between two reports.
+  /// number of messages.
   ///
   /// \return A pair containing {average size, standard deviation}.
-  std::pair<double, double> messageSize() const;
+  std::pair<double, double> messageSizeStats() const;
 
   /// \brief Returns the number of megabytes processed.
   ///
-  /// \return The number of messages.
+  /// \return The number of megabytes.
   double getMbytes() const;
 
   /// \brief Returns the number of messages that have been processed
   /// correctly.
   ///
   /// \return The number of messages.
-  uint64_t getMessages() const;
+  uint64_t getNumberMessages() const;
 
   /// \brief Returns the number of messages recognised as error.
   ///
