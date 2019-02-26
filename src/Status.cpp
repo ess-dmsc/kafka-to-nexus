@@ -18,7 +18,7 @@ double standardDeviation(double Sum, double SumSquared,
   if (N <= 1.0) {
     return 0.0;
   }
-  
+
   double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
   if (Variance > 0) {
     return std::sqrt(Variance);
