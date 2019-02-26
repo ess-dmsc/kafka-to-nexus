@@ -10,13 +10,12 @@ double average(double Sum, double N) { return Sum / N; }
 
 /// Return the unbiased standard deviation computed as \f$\sigma =
 /// \sqrt{\frac{\langle x^2 \rangle - \langle x \rangle^2}{N(N-1)}}\f$
-double standardDeviation(double Sum, double SumSquared,
-                         double N) {
+double standardDeviation(double Sum, double SumSquared, double N) {
   // Avoid divide-by-zero error due to too few messages.
   if (N <= 1.0) {
     return 0.0;
   }
-  
+
   double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
   if (Variance > 0) { // can be caused by numerical instabilities
     return std::sqrt(Variance);
