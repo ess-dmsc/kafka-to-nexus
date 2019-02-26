@@ -3,29 +3,33 @@
 #include "Status.h"
 #include "logger.h"
 
-/// \brief Return the average given the sum of the elements and their number
-/// \param sum the sum of the elements
-/// \param N number of elements
-double average(double Sum, double N) { return Sum / N; }
+/// \brief Returns the average.
+///
+/// \param sum The sum of the elements.
+/// \param N Number of elements.
+/// \return The average.
+double average(double Sum, uint64_t N) { return Sum / N; }
 
 /// Return the unbiased standard deviation computed as \f$\sigma =
 /// \sqrt{\frac{\langle x^2 \rangle - \langle x \rangle^2}{N(N-1)}}\f$
 double standardDeviation(double Sum, double SumSquared,
-                         double N) {
+                         uint64_t N) {
   // Avoid divide-by-zero error due to too few messages.
   if (N <= 1.0) {
     return 0.0;
   }
   
   double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
-  if (Variance > 0) { // can be caused by numerical instabilities
+  if (Variance > 0) {
+    // Can be caused by numerical instabilities
     return std::sqrt(Variance);
   }
   return 0.0;
 }
 
 std::pair<double, double> FileWriter::Status::MessageInfo::messageSize() const {
-  if (Mbytes == 0) { // nan causes failure in JSON
+  // Nan causes failure in JSON
+  if (Mbytes == 0) {
     return std::pair<double, double>{};
   }
   std::pair<double, double> result(
@@ -34,7 +38,7 @@ std::pair<double, double> FileWriter::Status::MessageInfo::messageSize() const {
   return result;
 }
 
-void FileWriter::Status::MessageInfo::newMessage(const double &MessageBytes) {
+void FileWriter::Status::MessageInfo::newMessage(double MessageBytes) {
   std::lock_guard<std::mutex> Lock(Mutex);
   double Size = MessageBytes * 1e-6;
   Mbytes += Size;
