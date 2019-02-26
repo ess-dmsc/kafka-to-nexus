@@ -8,7 +8,7 @@ namespace f142 {
 WriterScalarString::WriterScalarString(hdf5::node::Group const &HdfGroup,
                                        std::string const &SourceName,
                                        Mode OpenMode) {
-  LOG(spdlog::level::trace, "f142 init_impl  WriterScalarString");
+  Logger->trace("f142 init_impl  WriterScalarString");
   if (OpenMode == Mode::Open) {
     ChunkedDataset = h5::Chunked1DString::open(HdfGroup, SourceName);
     if (ChunkedDataset == nullptr) {

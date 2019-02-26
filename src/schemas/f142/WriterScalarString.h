@@ -15,6 +15,7 @@ public:
   h5::append_ret write(FBUF const *fbuf) override;
   h5::Chunked1DString::ptr ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::String;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 } // namespace f142
 } // namespace Schemas

@@ -21,6 +21,7 @@ public:
   uptr<h5::h5d_chunked_1d<DT>> ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::NONE;
   size_t ChunkSize = 64 * 1024;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief  Open or create a new dataset for scalar numeric types.
@@ -32,7 +33,7 @@ WriterScalar<DT, FV>::WriterScalar(hdf5::node::Group HdfGroup,
                                    std::string const &SourceName,
                                    Value FlatbuffersValueTypeId, Mode OpenMode)
     : FlatbuffersValueTypeId(FlatbuffersValueTypeId) {
-  LOG(spdlog::level::trace, "f142 WriterScalar ctor");
+  Logger->trace("f142 WriterScalar ctor");
   if (OpenMode == Mode::Open) {
     ChunkedDataset = h5::h5d_chunked_1d<DT>::open(HdfGroup, SourceName);
     if (ChunkedDataset == nullptr) {

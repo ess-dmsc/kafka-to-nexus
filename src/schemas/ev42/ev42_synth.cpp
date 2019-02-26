@@ -29,7 +29,7 @@ FlatBufferWrapper synth::next(uint32_t size) {
       size, sizeof(DT), reinterpret_cast<uint8_t **>(&BufferPtr2));
 
   if ((BufferPtr1 == nullptr) or (BufferPtr2 == nullptr)) {
-    LOG(spdlog::level::trace, "Failed to create test data");
+    Logger->trace("Failed to create test data");
   } else {
     for (size_t i1 = 0; i1 < size; ++i1) {
       auto eid = impl->RandomNumberGen();

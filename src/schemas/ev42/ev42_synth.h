@@ -1,5 +1,6 @@
 #pragma once
 #include "ev42_events_generated.h"
+#include "logger.h"
 #include <memory>
 #include <random>
 #include <string>
@@ -28,6 +29,9 @@ public:
   FlatBufferWrapper next(uint32_t size);
   std::unique_ptr<SynthImpl> impl;
   std::string Name;
+
+private:
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 } // namespace ev42
