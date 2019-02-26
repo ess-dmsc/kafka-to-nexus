@@ -115,7 +115,7 @@ TEST(StreamMasterInfo, accumulateInfoFromManyStreamers) {
   EXPECT_DOUBLE_EQ(Info.getErrors(), TotalErrors);
 }
 
-TEST(MessageInfo, resettingTheStatisticsZeroes) {
+TEST(MessageInfo, resettingTheStatisticsZeroesValues) {
   MessageInfo MsgInfo;
 
   std::vector<double> MessageSizes = {600, 470, 170, 430, 300};
