@@ -20,6 +20,6 @@ void reporter<specialized>::send(severity s, char const *file,
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
   ::setUpLogging(spdlog::level::off, "", "", "");
-
+  spdlog::stdout_color_mt("testlogger");
   return RUN_ALL_TESTS();
 }
