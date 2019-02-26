@@ -81,11 +81,12 @@ private:
 
   uint64_t LargestTimestampSeen = 0;
   size_t MaxNumberHistoric = 4;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
-  LOG(spdlog::level::trace, "WriterTyped dtor");
+  Logger->trace("WriterTyped dtor");
 }
 
 template <typename DataType, typename EdgeType, typename ErrorType>
@@ -98,9 +99,9 @@ int WriterTyped<DataType, EdgeType, ErrorType>::close() {
 template <typename DataType, typename EdgeType, typename ErrorType>
 int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     size_t HDFIndex) {
-  LOG(spdlog::level::trace, "WriterTyped copyLatestToData");
+  Logger->trace("WriterTyped copyLatestToData");
   if (Dataset.is_valid()) {
-    LOG(spdlog::level::trace, "Found valid dataset");
+    Logger->trace("Found valid dataset");
     auto Type = hdf5::datatype::create<DataType>().native_type();
     auto SpaceIn = hdf5::dataspace::Simple(Dataset.dataspace());
     auto Dims = SpaceIn.current_dimensions();
@@ -132,20 +133,20 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     }
     bool found = false;
     try {
-      LOG(spdlog::level::trace, "Attempting to get latest dataset");
+      Logger->trace("Attempting to get latest dataset");
       Dataset.link().parent().get_dataset("data");
       found = true;
     } catch (...) {
-      LOG(spdlog::level::trace, "Failed to get latest dataset");
+      Logger->trace("Failed to get latest dataset");
     }
     if (!found) {
-      LOG(spdlog::level::trace, "Dataset \"data\" not yet present");
+      Logger->trace("Dataset \"data\" not yet present");
       for (size_t I = 0; I < DimsOut.size(); ++I) {
-        LOG(spdlog::level::trace, "I: {}: {}", I, DimsOut.at(I));
+        Logger->trace("I: {}: {}", I, DimsOut.at(I));
       }
       Dataset.link().parent().create_dataset("data", Type, SpaceOut, DCPL);
       Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
-      LOG(spdlog::level::trace, "Dataset \"data\" created");
+      Logger->trace("Dataset \"data\" created");
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {
@@ -160,10 +161,10 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
       for (size_t I = 0; I < Buffer.size(); ++I) {
         S += Buffer.at(I);
       }
-      LOG(spdlog::level::trace, "copy latest histogram.  sum: {}", S);
+      Logger->trace("copy latest histogram.  sum: {}", S);
       Latest.write(Buffer, Type, SpaceMem, SpaceOut);
     } else {
-      LOG(spdlog::level::trace, "No entries so far");
+      Logger->trace("No entries so far");
     }
   }
   return 0;
@@ -239,9 +240,8 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
     }
     DCPL.chunk(ChunkElements);
     if (0 > H5Pset_deflate(static_cast<hid_t>(DCPL), 7)) {
-      LOG(spdlog::level::critical,
-          "can not use gzip filter on hdf5. Is hdf5 not built "
-          "with gzip support?");
+      Logger->critical("can not use gzip filter on hdf5. Is hdf5 not built "
+                       "with gzip support?");
     }
     Dataset = Group.create_dataset("histograms", Type, Space, DCPL);
     copyLatestToData(0);
@@ -503,7 +503,7 @@ HDFWriterModule::WriteResult WriterTyped<DataType, EdgeType, ErrorType>::write(
   if (DoFlushEachWrite) {
     Dataset.link().file().flush(hdf5::file::Scope::GLOBAL);
   }
-  LOG(spdlog::level::trace, "hs00 -------------------------------   DONE");
+  Logger->trace("hs00 -------------------------------   DONE");
   return HDFWriterModule::WriteResult::OK();
 }
 } // namespace hs00
