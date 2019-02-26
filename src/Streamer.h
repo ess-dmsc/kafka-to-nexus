@@ -96,6 +96,7 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief Create a consumer with options specified in the class
@@ -106,8 +107,11 @@ protected:
 /// \return If the connection is successful returns ``SEC::writing``. If the
 /// consumer can't be created returns ``SEC::configuration_error``, if the topic
 /// is not in the partition ``SEC::topic_partition_error``;
-std::pair<Status::StreamerStatus, ConsumerPtr>
-createConsumer(std::string const &TopicName, StreamerOptions const &Options);
+std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
+createConsumer(std::string const &TopicName,
+               FileWriter::StreamerOptions const &Options,
+               std::shared_ptr<spdlog::logger> Logger);
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime);
+                     std::chrono::milliseconds Stoptime,
+                     std::shared_ptr<spdlog::logger> Logger);
 } // namespace FileWriter
