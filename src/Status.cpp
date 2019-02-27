@@ -15,7 +15,7 @@ double average(double Sum, uint64_t N) { return Sum / N; }
 double standardDeviation(double Sum, double SumSquared,
                          uint64_t N) {
   // Avoid divide-by-zero error due to too few messages.
-  if (N <= 1.0) {
+  if (N <= 1) {
     return 0.0;
   }
 
