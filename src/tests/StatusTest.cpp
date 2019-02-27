@@ -17,7 +17,7 @@ double RandomGaussian() {
 
 TEST(MessageInfo, everythingIsZeroAtInitialisation) {
   MessageInfo MsgInfo;
-  ASSERT_DOUBLE_EQ(MsgInfo.getMessages(), 0u);
+  ASSERT_DOUBLE_EQ(MsgInfo.getNumberMessages(), 0u);
   ASSERT_DOUBLE_EQ(MsgInfo.getMbytes(), 0.0);
   ASSERT_DOUBLE_EQ(MsgInfo.getErrors(), 0u);
 }
@@ -26,9 +26,9 @@ TEST(MessageInfo, addOneMessage) {
   MessageInfo MsgInfo;
   const double NewMessageBytes{1024};
   MsgInfo.newMessage(NewMessageBytes);
-  auto Size = MsgInfo.messageSize();
+  auto Size = MsgInfo.messageSizeStats();
 
-  EXPECT_EQ(MsgInfo.getMessages(), 1u);
+  EXPECT_EQ(MsgInfo.getNumberMessages(), 1u);
   EXPECT_DOUBLE_EQ(MsgInfo.getMbytes(), NewMessageBytes * 1e-6);
   EXPECT_DOUBLE_EQ(Size.first, NewMessageBytes * 1e-6);
   EXPECT_DOUBLE_EQ(Size.second, 0);
@@ -39,28 +39,28 @@ TEST(MessageInfo, addOneError) {
   MessageInfo MsgInfo;
   MsgInfo.error();
 
-  EXPECT_EQ(MsgInfo.getMessages(), 0u);
+  EXPECT_EQ(MsgInfo.getNumberMessages(), 0u);
   EXPECT_DOUBLE_EQ(MsgInfo.getMbytes(), 0.0);
   EXPECT_EQ(MsgInfo.getErrors(), 1u);
 }
 
-TEST(MessageInfo, addManyMessages) {
+TEST(MessageInfo, addMultipleMessages) {
   MessageInfo MsgInfo;
 
-  double TotalMB{0.0}, TotalMBSquare{0.0};
-  for (uint64_t i = 0; i < NumMessages; ++i) {
-    auto MessageBytes = std::fabs(RandomGaussian());
-    TotalMB += MessageBytes * 1e-6;
-    TotalMBSquare += MessageBytes * MessageBytes * 1e-12;
-    MsgInfo.newMessage(MessageBytes);
-  }
-  auto Size = MsgInfo.messageSize();
+  std::vector<double> MessageSizes = {600, 470, 170, 430, 300};
+  // Answers calculated manually.
+  double Average = 394;
+  double StdDev = 164;
 
-  EXPECT_EQ(MsgInfo.getMessages(), NumMessages);
-  EXPECT_NEAR(Size.first, TotalMB / NumMessages, 1e-6);
-  EXPECT_NEAR(Size.second, (TotalMBSquare - (TotalMB * TotalMB) / NumMessages) /
-                               (NumMessages - 1),
-              1e-6);
+  for (auto Msg : MessageSizes) {
+    MsgInfo.newMessage(Msg);
+  }
+
+  auto Size = MsgInfo.messageSizeStats();
+
+  EXPECT_EQ(MsgInfo.getNumberMessages(), MessageSizes.size());
+  EXPECT_NEAR(Size.first, Average * 1e-6, 1e-6);
+  EXPECT_NEAR(Size.second, StdDev * 1e-6, 1e-6);
   EXPECT_EQ(MsgInfo.getErrors(), 0u);
 }
 
@@ -72,6 +72,7 @@ TEST(StreamMasterInfo, addInfoFromOneStreamer) {
   for (uint64_t i = 0; i < NumMessages; ++i) {
     MsgInfo.newMessage(MessageBytes);
   }
+
   for (uint64_t i = 0; i < NumErrors; ++i) {
     MsgInfo.error();
   }
@@ -114,15 +115,19 @@ TEST(StreamMasterInfo, accumulateInfoFromManyStreamers) {
   EXPECT_DOUBLE_EQ(Info.getErrors(), TotalErrors);
 }
 
-TEST(MessageInfo, computeDerivedQuantities) {
-  const std::vector<double> MessagesSize{1.0, 2.0, 3.0, 4.0, 5.0};
+TEST(MessageInfo, resettingTheStatisticsZeroesValues) {
   MessageInfo MsgInfo;
 
-  for (auto &MessageSize : MessagesSize) {
-    MsgInfo.newMessage(MessageSize * 1e6);
+  std::vector<double> MessageSizes = {600, 470, 170, 430, 300};
+
+  for (auto Msg : MessageSizes) {
+    MsgInfo.newMessage(Msg);
   }
 
-  auto Size = MsgInfo.messageSize();
-  EXPECT_DOUBLE_EQ(Size.first, 3.0);
-  EXPECT_NEAR(Size.second, 1.5811388300841898, 10e-3);
+  MsgInfo.resetStatistics();
+  auto Size = MsgInfo.messageSizeStats();
+
+  EXPECT_DOUBLE_EQ(0, Size.first);
+  EXPECT_DOUBLE_EQ(0, Size.second);
+  EXPECT_EQ(0u, MsgInfo.getErrors());
 }
