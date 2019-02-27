@@ -14,11 +14,11 @@ nlohmann::json StreamMasterToJson(StreamMasterInfo const &Information) {
 }
 
 nlohmann::json StreamerToJson(MessageInfo const &Information) {
-  std::pair<double, double> Size = Information.messageSize();
+  std::pair<double, double> Size = Information.messageSizeStats();
 
   nlohmann::json Status;
   Status["rates"] = {
-      {"messages", Information.getMessages()},
+      {"messages", Information.getNumberMessages()},
       {"Mbytes", Information.getMbytes()},
       {"errors", Information.getErrors()},
       {"message_size",
