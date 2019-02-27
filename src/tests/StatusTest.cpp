@@ -53,7 +53,7 @@ TEST(MessageInfo, addMultipleMessages) {
   double StdDev = 164;
 
   for (auto Msg : MessageSizes) {
-      MsgInfo.newMessage(Msg);
+    MsgInfo.newMessage(Msg);
   }
 
   auto Size = MsgInfo.messageSizeStats();

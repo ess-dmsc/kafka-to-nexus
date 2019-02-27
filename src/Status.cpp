@@ -12,8 +12,7 @@ double average(double Sum, uint64_t N) { return Sum / N; }
 
 /// Return the unbiased standard deviation computed as \f$\sigma =
 /// \sqrt{\frac{\langle x^2 \rangle - \langle x \rangle^2}{N(N-1)}}\f$
-double standardDeviation(double Sum, double SumSquared,
-                         uint64_t N) {
+double standardDeviation(double Sum, double SumSquared, uint64_t N) {
   // Avoid divide-by-zero error due to too few messages.
   if (N <= 1) {
     return 0.0;
@@ -26,7 +25,8 @@ double standardDeviation(double Sum, double SumSquared,
   return 0.0;
 }
 
-std::pair<double, double> FileWriter::Status::MessageInfo::messageSizeStats() const {
+std::pair<double, double>
+FileWriter::Status::MessageInfo::messageSizeStats() const {
   // Nan causes failure in JSON
   if (Mbytes == 0) {
     return std::pair<double, double>{};
