@@ -124,8 +124,8 @@ builders = pipeline_builder.createBuilders { container ->
           cd ${pipeline_builder.project}
           export WORKSPACE='.'
           export JENKINS_URL=${JENKINS_URL}
-          pip install --user codecov
-          python -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.info
+          python3.6 -m pip install --user codecov
+          python3.6 -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.info
         """
       }  // withCredentials
     } else {
