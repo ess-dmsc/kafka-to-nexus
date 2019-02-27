@@ -9,8 +9,8 @@ test_and_coverage_os = "centos7"
 release_os = "centos7-release"
 
 container_build_nodes = [
-  'centos7': new ContainerBuildNode('essdmscdm/centos7-build-node:3.6.0', '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'),
-  'centos7-release': new ContainerBuildNode('essdmscdm/centos7-build-node:3.6.0', '/usr/bin/scl enable rh-python35 devtoolset-6 -- /bin/bash -e'),
+  'centos7': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/bin/bash -e'),
+  'centos7-release': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/bin/bash -e'),
   'debian9': new ContainerBuildNode('essdmscdm/debian9-build-node:2.6.0', 'bash -e'),
   'ubuntu1804': new ContainerBuildNode('essdmscdm/ubuntu18.04-build-node:1.4.0', 'bash -e')
 ]
@@ -299,8 +299,8 @@ def get_system_tests_pipeline() {
             checkout scm
           }  // stage
           stage("System tests: Install requirements") {
-            sh """scl enable rh-python35 -- python -m pip install --user --upgrade pip
-            scl enable rh-python35 -- python -m pip install --user -r system-tests/requirements.txt
+            sh """python3.6 -m pip install --user --upgrade pip
+           python3.6 -m pip install --user -r system-tests/requirements.txt
             """
           }  // stage
           stage("System tests: Run") {
@@ -309,7 +309,7 @@ def get_system_tests_pipeline() {
             sh "docker stop \$(docker ps -a -q) && docker rm \$(docker ps -a -q) || true"
             timeout(time: 30, activity: true){
               sh """cd system-tests/
-              scl enable rh-python35 -- python -m pytest -s --junitxml=./SystemTestsOutput.xml .
+              python3.6 -m pytest -s --junitxml=./SystemTestsOutput.xml .
               """
             }
           }  // stage
