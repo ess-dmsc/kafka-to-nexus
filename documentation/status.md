@@ -157,4 +157,4 @@ existing or malformed JSON.
 An ERROR message represents a more specific problem related to the act of file-writing, for example: a Kafka topic not 
 existing or not being able to reopen the NeXus file.
 
-Note: these messages can in theory arrive in any order and, also, be separated by other status messages.
+Note: these messages can in theory arrive in any order and, also, be separated by the regular status messages.
