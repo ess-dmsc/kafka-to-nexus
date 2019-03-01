@@ -2,6 +2,7 @@
 
 ## Status messages
 The file-writer will publish regular status messages to the Kafka topic defined for status messages.
+The time between message is defined by the `status-master-interval` configuration parameter.
 
 The message format is JSON and the whitespace formatting may vary from what is shown here.
 
