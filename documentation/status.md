@@ -92,7 +92,7 @@ Assuming the file-writer is happy with the command then it will respond with a m
 Then it will continue sending status messages as described above.
 
 If the file-writer is unhappy with the command then it will respond with three messages.
-Firstly, a START message to acknowledge the request, like so:
+A START message to acknowledge the request, like so:
 
 ```json
 {
@@ -105,7 +105,7 @@ Firstly, a START message to acknowledge the request, like so:
 }
 ```
 
-Followed by a CLOSE message to indicate it has stopped trying to write, for example:
+A CLOSE message to indicate it has stopped trying to write, for example:
 
 ```json
 {
@@ -118,7 +118,24 @@ Followed by a CLOSE message to indicate it has stopped trying to write, for exam
 }
 ```
 
-Finally, it will send a FAIL message describing the reason for not writing, like so:
+And either an ERROR message or a FAIL message describing the reason for not writing.
+ 
+An example ERROR message might be:
+
+```json
+{
+    "code":"ERROR",
+    "job_id":"8bacf956-02a3-11e9-af16-64006a47d649",
+    "message":"Configuration Error",
+    "service_id":"kafka-to-nexus--host:SERVERNAME--pid:10307",
+    "timestamp":1551344628813,
+    "type":"filewriter_event"
+}
+```
+
+In this case, the message indicates that there was an issue with the configuration supplied in the command.
+
+A example FAIL message might be:
 
 ```json
 {
@@ -133,3 +150,10 @@ Finally, it will send a FAIL message describing the reason for not writing, like
 
 The message is a bit verbose but it can be seen that the issue in this case is that a file with the requested name
 already exists.
+
+A FAIL message indicates a general problem related to the command sent to the file-writer, for example: a file already 
+existing or malformed JSON.
+An ERROR message represents a more specific problem related to the act of file-writing, for example: a Kafka topic not 
+existing or not being able to reopen the NeXus file.
+
+Note: these messages can in theory arrive in any order and, also, be separated by other status messages.
