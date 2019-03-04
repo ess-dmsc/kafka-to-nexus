@@ -1,7 +1,7 @@
 import pytest
 import docker
 from time import sleep
-from helpers.kafkahelpers import create_producer, send_writer_command
+from helpers.kafkahelpers import create_producer, send_writer_command, poll_everything
 import h5py
 from math import isclose
 import os
@@ -44,8 +44,8 @@ def test_long_run(docker_compose_long_running):
         sleep(3)
 
     send_writer_command("commands/stop-command-lr.json", producer, topic="TEST_writerCommandLR")
-    sleep(10)
     producer.flush()
+    sleep(30)
 
     # Allow time for the file writing to complete
     for i in range(100):
@@ -62,3 +62,8 @@ def test_long_run(docker_compose_long_running):
 
     # check that the last value is the same as the number of updates
     assert counter == pv_updates + 1
+
+    with open("logs/lr_status_messages.log", 'w+') as file:
+        status_messages = poll_everything("TEST_writerStatus")
+        for msg in status_messages:
+            file.write(str(msg.value(), encoding='utf-8') + "\n")
