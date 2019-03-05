@@ -1,0 +1,47 @@
+{
+  "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
+  "job_id": "253ce528-00cb-45c7-966c-131742a24834",
+  "use_hdf_swmr": false,
+  "start_time": STARTTIME,
+  "file_attributes": {
+    "file_name": "output_file_lr.nxs"
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name" : "entry",
+        "children": [
+          {
+        "type": "group",
+        "name": "cont_data",
+        "children": [
+          {
+            "type": "stream",
+            "stream": {
+              "type": "double",
+              "topic": "TEST_forwarderDataLR",
+              "source": "SIMPLE:DOUBLE",
+              "writer_module": "f142"
+            }
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXGroup"
+          }
+        ]
+      }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXentry"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "CommandListener.h"
-#include "KafkaW/KafkaW.h"
+#include "KafkaW/ProducerTopic.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
 #include "StreamMaster.h"
@@ -29,9 +29,8 @@ public:
 
   /// Stop running.
   void stop() override;
-  void handle_command_message(
-      std::unique_ptr<KafkaW::ConsumerMessage> &&msg) override;
-  void handle_command(std::string const &command) override;
+  void handle_command_message(std::unique_ptr<Msg> CommandMessage) override;
+  void handle_command(std::string const &Command) override;
   void statistics() override;
   void addStreamMaster(
       std::unique_ptr<StreamMaster<Streamer>> StreamMaster) override;
@@ -46,17 +45,15 @@ public:
   /// \return The unique id.
   std::string getFileWriterProcessId() const override;
 
-  bool RunLoopExited() override { return HasExitedRunLoop; };
-  // std::function<void(void)> cb_on_filewriter_new;
-  std::shared_ptr<KafkaW::ProducerTopic> status_producer;
+  bool runLoopExited() override { return HasExitedRunLoop; };
+  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
 
 private:
-  CommandListener command_listener;
-  std::atomic<bool> do_run{true};
+  CommandListener Listener;
+  std::atomic<bool> Running{true};
   std::atomic<bool> HasExitedRunLoop{false};
   std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
   std::string FileWriterProcessId;
   MainOpt &MainConfig;
 };
-
 } // namespace FileWriter

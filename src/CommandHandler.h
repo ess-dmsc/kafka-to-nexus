@@ -1,7 +1,6 @@
 #pragma once
 
 #include "FileWriterTask.h"
-#include "KafkaW/KafkaW.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
 #include "Msg.h"
@@ -63,14 +62,15 @@ public:
   /// \brief Try to handle the message.
   ///
   /// \param Msg The message.
-  /// \param MsgTimestamp The rd_kafka_message_timestamp when available
-  void tryToHandle(Msg const &Message, std::chrono::milliseconds MsgTimestamp =
-                                           std::chrono::milliseconds{-1});
+  /// \param MsgTimestamp The rd_kafka_message_timestamp.
+  void tryToHandle(std::unique_ptr<Msg> Message,
+                   std::chrono::milliseconds MsgTimestampMilliseconds =
+                       std::chrono::milliseconds{-1});
 
   /// \brief Try to handle the command.
   ///
   /// \param Command The command to parse.
-  /// \param MsgTimestamp The rd_kafka_message_timestamp when available.
+  /// \param MsgTimestamp The rd_kafka_message_timestamp.
   void tryToHandle(
       std::string const &Command,
       std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});

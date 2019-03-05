@@ -1,111 +1,82 @@
 #include "ProducerTopic.h"
+#include <helper.h>
 #include <vector>
 
 namespace KafkaW {
 
-using std::unique_ptr;
-using std::shared_ptr;
-using std::array;
-using std::vector;
-using std::string;
-using std::atomic;
-using std::move;
+ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
+                             std::string TopicName)
+    : KafkaProducer(ProducerPtr), Name(std::move(TopicName)) {
 
-ProducerTopic::~ProducerTopic() {
-  LOG(Sev::Debug, "~ProducerTopic {}", TopicName);
-  if (RdKafkaTopic) {
-    LOG(Sev::Debug, "rd_kafka_topic_destroy");
-    rd_kafka_topic_destroy(RdKafkaTopic);
-    RdKafkaTopic = nullptr;
-  }
-}
-
-ProducerTopic::ProducerTopic(std::shared_ptr<Producer> Pointer,
-                             std::string Topic)
-    : ProducerPtr(Pointer), TopicName(std::move(Topic)) {
-  TopicSettings TopicSettings;
-  rd_kafka_topic_conf_t *topic_conf = rd_kafka_topic_conf_new();
-  TopicSettings.applySettingsToRdKafkaConf(topic_conf);
-
-  RdKafkaTopic = rd_kafka_topic_new(ProducerPtr->getRdKafkaPtr(),
-                                    TopicName.c_str(), topic_conf);
+  std::string ErrStr;
+  Config = std::unique_ptr<RdKafka::Conf>(
+      RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC));
+  RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
+      KafkaProducer->getRdKafkaPtr(), Name, Config.get(), ErrStr));
   if (RdKafkaTopic == nullptr) {
-    // Seems like Kafka uses the system error code?
-    auto errstr = rd_kafka_err2str(rd_kafka_last_error());
-    LOG(Sev::Error, "could not create Kafka topic: {}", errstr);
+    LOG(Sev::Error, "could not create Kafka topic: {}", ErrStr);
     throw TopicCreationError();
   }
-  LOG(Sev::Debug, "ctor topic: {}  producer: {}",
-      rd_kafka_topic_name(RdKafkaTopic),
-      rd_kafka_name(ProducerPtr->getRdKafkaPtr()));
+  LOG(Sev::Debug, "ctor topic: {}", RdKafkaTopic->name());
 }
 
-ProducerTopic::ProducerTopic(ProducerTopic &&x) {
-  std::swap(ProducerPtr, x.ProducerPtr);
-  std::swap(RdKafkaTopic, x.RdKafkaTopic);
-  std::swap(TopicName, x.TopicName);
-  std::swap(DoCopyMsg, x.DoCopyMsg);
-}
-
-struct Msg_ : public Producer::Msg {
-  vector<uchar> v;
+struct Msg_ : public ProducerMessage {
+  std::vector<unsigned char> v;
   void finalize() {
     data = v.data();
     size = v.size();
   }
 };
 
-int ProducerTopic::produce(const uchar *MsgData, size_t MsgSize,
-                           bool PrintError) {
+int ProducerTopic::produce(unsigned char *MsgData, size_t MsgSize) {
   auto MsgPtr = new Msg_;
   std::copy(MsgData, MsgData + MsgSize, std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
-  unique_ptr<Producer::Msg> Msg(MsgPtr);
+  std::unique_ptr<ProducerMessage> Msg(MsgPtr);
   return produce(Msg);
 }
 
-int ProducerTopic::produce(unique_ptr<Producer::Msg> &Msg) {
-  if (not RdKafkaTopic) {
-    // Should never happen
-    return RDKAFKATOPIC_NOT_INITIALIZED;
-  }
-  int x;
-  int32_t partition = RD_KAFKA_PARTITION_UA;
+int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
   void const *key = nullptr;
   size_t key_len = 0;
-  int msgflags = 0; // 0, RD_KAFKA_MSG_F_COPY, RD_KAFKA_MSG_F_FREE
-  x = rd_kafka_produce(RdKafkaTopic, partition, msgflags, Msg->data, Msg->size,
-                       key, key_len, Msg.get());
+  // MsgFlags = 0 means that we are responsible for cleaning up the message
+  // after it has been sent
+  // We do this by providing a pointer to our message object in the produce
+  // call, this pointer is returned to us in the delivery callback, at which
+  // point we can free the memory
+  int MsgFlags = 0;
+  auto &ProducerStats = KafkaProducer->Stats;
 
-  auto &s = ProducerPtr->Stats;
-  if (x != 0) {
-    auto err = rd_kafka_last_error();
-    if (err == RD_KAFKA_RESP_ERR__QUEUE_FULL) {
-      ++s.local_queue_full;
-      LOG(Sev::Warning, "QUEUE_FULL  outq: {}",
-          rd_kafka_outq_len(ProducerPtr->getRdKafkaPtr()));
-    } else if (err == RD_KAFKA_RESP_ERR_MSG_SIZE_TOO_LARGE) {
-      ++s.msg_too_large;
-      LOG(Sev::Error, "TOO_LARGE  size: {}", Msg->size);
-    } else {
-      ++s.produce_fail;
-      LOG(Sev::Debug, "produce topic {}  partition {}   error: {}  {}",
-          rd_kafka_topic_name(RdKafkaTopic), partition, x,
-          rd_kafka_err2str(err));
-    }
-  } else {
-    ++s.produced;
-    s.produced_bytes += (uint64_t)Msg->size;
-    ++ProducerPtr->TotalMessagesProduced;
-    if (log_level >= 8) {
-      LOG(Sev::Debug, "sent to topic {} partition {}",
-          rd_kafka_topic_name(RdKafkaTopic), partition);
-    }
-    Msg.release();
+  switch (KafkaProducer->produce(
+      RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags, Msg->data,
+      Msg->size, key, key_len, Msg.get())) {
+  case RdKafka::ERR_NO_ERROR:
+    ++ProducerStats.produced;
+    ProducerStats.produced_bytes += static_cast<uint64_t>(Msg->size);
+    ++KafkaProducer->TotalMessagesProduced;
+    Msg.release(); // we clean up the message after it has been sent, see
+                   // comment by MsgFlags declaration
+    return 0;
+
+  case RdKafka::ERR__QUEUE_FULL:
+    ++ProducerStats.local_queue_full;
+    LOG(Sev::Warning, "Producer queue full, outq: {}",
+        KafkaProducer->outputQueueLength());
+    break;
+
+  case RdKafka::ERR_MSG_SIZE_TOO_LARGE:
+    ++ProducerStats.msg_too_large;
+    LOG(Sev::Error, "Message size too large to publish, size: {}", Msg->size);
+    break;
+
+  default:
+    ++ProducerStats.produce_fail;
+    LOG(Sev::Error, "Publishing message on topic \"{}\" failed",
+        RdKafkaTopic->name());
+    break;
   }
-
-  return x;
+  return 1;
 }
 
-void ProducerTopic::enableCopy() { DoCopyMsg = true; }
+std::string ProducerTopic::name() const { return Name; }
 }

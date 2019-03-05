@@ -200,7 +200,7 @@ void CommandHandler::handleNew(std::string const &Command,
     StatusProducer = MasterPtr->getStatusProducer();
   }
   auto Task =
-      std::make_unique<FileWriterTask>(Config.service_id, StatusProducer);
+      std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
   if (auto x = find<std::string>("job_id", Doc)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
@@ -221,7 +221,7 @@ void CommandHandler::handleNew(std::string const &Command,
 
   if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
-             Config.service_id, Task->jobID(), "Start job");
+             Config.ServiceID, Task->jobID(), "Start job");
   }
 
   uri::URI Broker("//localhost:9092");
@@ -243,7 +243,7 @@ void CommandHandler::handleNew(std::string const &Command,
   if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
     if (auto FileNameMaybe =
             find<std::string>("file_name", FileAttributesMaybe.inner())) {
-      Task->setFilename(Config.hdf_output_prefix, FileNameMaybe.inner());
+      Task->setFilename(Config.HDFOutputPrefix, FileNameMaybe.inner());
     } else {
       throwMissingKey("file_attributes.file_name", Doc.dump());
     }
@@ -316,7 +316,7 @@ void CommandHandler::handleNew(std::string const &Command,
         Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
-      s->report(std::chrono::milliseconds{Config.status_master_interval});
+      s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
     }
     if (Config.topic_write_duration.count() != 0) {
       s->TopicWriteDuration = Config.topic_write_duration;
@@ -451,7 +451,7 @@ void CommandHandler::handle(std::string const &Command,
   }
 
   if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
-    if (ServiceIDMaybe.inner() != Config.service_id) {
+    if (ServiceIDMaybe.inner() != Config.ServiceID) {
       LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
           ServiceIDMaybe.inner());
       return;
@@ -520,22 +520,18 @@ std::string format_nested_exception(std::exception const &E) {
   return format_nested_exception(E, StrS, 0);
 }
 
-void CommandHandler::tryToHandle(
-    std::string const &Command,
-    std::chrono::milliseconds MsgTimestampMilliseconds) {
-
-  if (MsgTimestampMilliseconds.count() < 0) {
-    MsgTimestampMilliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch());
+void CommandHandler::tryToHandle(std::string const &Command,
+                                 std::chrono::milliseconds MsgTimestamp) {
+  if (MsgTimestamp.count() < 0) {
+    MsgTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch());
     LOG(Sev::Info,
         "Kafka command doesn't contain timestamp, so using current time.");
   }
-  LOG(Sev::Info, "Kafka command message timestamp : {}",
-      MsgTimestampMilliseconds.count());
+  LOG(Sev::Info, "Kafka command message timestamp : {}", MsgTimestamp.count());
 
   try {
-    handle(Command, MsgTimestampMilliseconds);
+    handle(Command, MsgTimestamp);
   } catch (...) {
     std::string JobID = "unknown";
     try {
@@ -555,16 +551,16 @@ void CommandHandler::tryToHandle(
           convertStatusCodeToString(StatusCode::Fail), Message);
       if (MasterPtr != nullptr) {
         logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
-                 Config.service_id, JobID, Message);
+                 Config.ServiceID, JobID, Message);
       }
     }
   }
 }
 
 void CommandHandler::tryToHandle(
-    Msg const &Message, std::chrono::milliseconds MsgTimestampMilliseconds) {
-  tryToHandle({reinterpret_cast<const char *>(Message.data()), Message.size()},
-              MsgTimestampMilliseconds);
+    std::unique_ptr<Msg> Message,
+    std::chrono::milliseconds MsgTimestampMilliseconds) {
+  tryToHandle({(Message->data()), Message->size()}, MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {
