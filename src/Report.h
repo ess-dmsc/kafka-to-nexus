@@ -4,7 +4,6 @@
 #include <memory>
 #include <thread>
 
-#include "KafkaW/KafkaW.h"
 #include "Status.h"
 #include "StatusWriter.h"
 #include "logger.h"

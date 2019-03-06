@@ -1,6 +1,6 @@
 #include "../HDFFile.h"
 #include "../CommandHandler.h"
-#include "../KafkaW/KafkaW.h"
+#include "../KafkaW/Consumer.h"
 #include "../MainOpt.h"
 #include "../helper.h"
 #include "../json.h"
@@ -156,7 +156,7 @@ public:
       std::string jsontxt =
           fmt::format(R""({{"hdf-output-prefix": "{}"}})"", hdf_output_prefix);
       merge_config_into_main_opt(main_opt, jsontxt);
-      main_opt.hdf_output_prefix = hdf_output_prefix;
+      main_opt.HDFOutputPrefix = hdf_output_prefix;
     }
     auto json_command = basic_command(hdf_output_filename);
     command_add_static_dataset_1d(json_command);
@@ -170,7 +170,7 @@ public:
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(1));
     send_stop(ch, json_command);
     ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
-    main_opt.hdf_output_prefix = "";
+    main_opt.HDFOutputPrefix = "";
 
     // Verification
     auto file = hdf5::file::open(hdf_output_prefix + "/" + fname,

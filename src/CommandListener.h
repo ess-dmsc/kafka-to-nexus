@@ -1,6 +1,6 @@
 #pragma once
 
-#include "KafkaW/KafkaW.h"
+#include "KafkaW/Consumer.h"
 #include "MainOpt.h"
 #include "URI.h"
 #include <thread>
@@ -11,16 +11,18 @@ namespace FileWriter {
 class CommandListener {
 public:
   explicit CommandListener(MainOpt &config);
+  ~CommandListener() = default;
 
   /// Start listening to command messages.
   void start();
   void stop();
 
   /// Check for new command packets and return one if there is.
-  std::unique_ptr<KafkaW::ConsumerMessage> poll();
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
 
 private:
   MainOpt &config;
-  std::unique_ptr<KafkaW::Consumer> consumer;
+  std::unique_ptr<KafkaW::ConsumerInterface> consumer;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 } // namespace FileWriter

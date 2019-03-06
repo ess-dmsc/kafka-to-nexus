@@ -1,20 +1,21 @@
 #pragma once
 
+#include "logger.h"
+#include <librdkafka/rdkafkacpp.h>
 #include <map>
 #include <string>
-
-struct rd_kafka_conf_s;
-typedef struct rd_kafka_conf_s rd_kafka_conf_t;
 
 namespace KafkaW {
 
 /// Collect options used to connect to the broker.
-class BrokerSettings {
-public:
+struct BrokerSettings {
   BrokerSettings() = default;
-  void apply(rd_kafka_conf_t *RdKafkaConfiguration) const;
+  void apply(RdKafka::Conf *RdKafkaConfiguration) const;
   std::string Address;
   int PollTimeoutMS = 100;
+  int MetadataTimeoutMS = 1000;
+  int OffsetsForTimesTimeoutMS = 1000;
+  int ConsumerCloseTimeoutMS = 5000;
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs
       {"socket.timeout.ms", "2000"},
@@ -30,6 +31,6 @@ public:
       {"statistics.interval.ms", "600000"}, // 1 Min
       {"api.version.request", "true"},
   };
-  ;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 } // namespace KafkaW

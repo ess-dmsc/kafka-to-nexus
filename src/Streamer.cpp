@@ -1,4 +1,6 @@
 #include "Streamer.h"
+#include "KafkaW/ConsumerFactory.h"
+#include "KafkaW/PollStatus.h"
 #include "helper.h"
 #include <ciso646>
 
@@ -50,8 +52,8 @@ FileWriter::createConsumer(std::string const &TopicName,
                            std::shared_ptr<spdlog::logger> Logger) {
   Logger->trace("Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer = std::make_unique<KafkaW::Consumer>(
-        Options.BrokerSettings, Options.ConsumerSettings);
+    FileWriter::ConsumerPtr Consumer =
+        KafkaW::createConsumer(Options.BrokerSettings);
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
                                                    Options.BeforeStartTime);
@@ -78,69 +80,72 @@ FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
   return (RunStatus = StreamerStatus::HAS_FINISHED);
 }
 
+bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
+  if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
+      std::future_status::ready) {
+    Logger->warn("Not yet done setting up consumer. Deferring consumption.");
+    return false;
+  }
+  auto Temp = ConsumerCreated.get();
+  RunStatus = Temp.first;
+  Consumer = std::move(Temp.second);
+  return true;
+}
+
+bool FileWriter::Streamer::stopTimeExceeded(
+    FileWriter::DemuxTopic &MessageProcessor) {
+  if ((Options.StopTimestamp.count() > 0) and
+      (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
+    Logger->info("Stop stream timeout for topic \"{}\" reached. {} ms "
+                 "passed since stop time.",
+                 MessageProcessor.topic(),
+                 (systemTime() - Options.StopTimestamp).count());
+    Sources.clear();
+    return true;
+  }
+  return false;
+}
+
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
-
-  try {
-    // wait for connect() to finish
-    if (RunStatus > StreamerStatus::IS_CONNECTED) {
-      // Do nothing
-    } else if (ConsumerCreated.valid()) {
-      if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
-          std::future_status::ready) {
-        Logger->warn("Not yet done setting up consumer. Defering consumption.");
-        return ProcessMessageResult::OK;
-      }
-      auto Temp = ConsumerCreated.get();
-      RunStatus = Temp.first;
-      Consumer = std::move(Temp.second);
-    } else {
-      throw std::runtime_error(
-          "Failed to set-up process for creating consumer.");
+  if (Consumer == nullptr && ConsumerCreated.valid()) {
+    auto ready = ifConsumerIsReadyThenAssignIt();
+    if (!ready) {
+      // Not ready, so try again on next poll
+      return ProcessMessageResult::OK;
     }
-  } catch (std::runtime_error &Error) {
-    throw; // Do not treat runtime_error as std::exception, "throw;" rethrows
-  } catch (std::exception &Error) {
-    Logger->critical("Got an exception when waiting for connection: {}",
-                     Error.what());
-    throw; // "throw;" rethrows
   }
 
-  // make sure that the connection is ok
-  // attention: connect() handles exceptions
   if (RunStatus < StreamerStatus::IS_CONNECTED) {
     throw std::runtime_error(Err2Str(RunStatus));
   }
 
-  // Consume message and exit if we are beyond a message timeout
-  auto KafkaMessage = Consumer->poll();
-  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Empty ||
-      KafkaMessage->getStatus() == KafkaW::PollStatus::EOP) {
-    if ((Options.StopTimestamp.count() > 0) and
-        (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
-      Logger->info("Stop stream timeout for topic \"{}\" reached. {} ms "
-                   "passed since stop time.",
-                   MessageProcessor.topic(),
-                   (systemTime() - Options.StopTimestamp).count());
-      Sources.clear();
+  // Consume message
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
+      Consumer->poll();
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
+    return ProcessMessageResult::ERR;
+  }
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
+      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
+      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
+    if (stopTimeExceeded(MessageProcessor)) {
       return ProcessMessageResult::STOP;
     }
     return ProcessMessageResult::OK;
-  }
-  if (KafkaMessage->getStatus() == KafkaW::PollStatus::Err) {
-    return ProcessMessageResult::ERR;
   }
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   std::unique_ptr<FlatbufferMessage> Message;
   try {
-    Message = std::make_unique<FlatbufferMessage>(
-        reinterpret_cast<const char *>(KafkaMessage->getData()),
-        KafkaMessage->getSize());
+    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
+                                                  KafkaMessage->second.size());
   } catch (std::runtime_error &Error) {
     Logger->warn("Message that is not a valid flatbuffer encountered "
                  "(msg. offset: {}). The error was: {}",
-                 KafkaMessage->getMessageOffset(), Error.what());
+                 KafkaMessage->second.MetaData.Offset, Error.what());
     return ProcessMessageResult::ERR;
   }
 

@@ -42,5 +42,5 @@ void MainOpt::findAndAddCommands() {
 
 void setupLoggerFromOptions(MainOpt const &opt) {
   setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename,
-               opt.graylog_logger_address);
+               opt.GraylogLoggerAddress);
 }

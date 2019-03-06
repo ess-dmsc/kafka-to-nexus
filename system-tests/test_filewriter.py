@@ -17,6 +17,7 @@ def test_data_reaches_file(docker_compose):
     send_writer_command("commands/stop-command.json", producer)
     sleep(10)
     send_writer_command("commands/writer-exit.json", producer)
+    sleep(10)
     producer.flush()
 
     # Allow time for the file writing to complete

@@ -1,5 +1,5 @@
 #include "CLIOptions.h"
-#include "KafkaW/KafkaW.h"
+#include "KafkaW/ProducerTopic.h"
 #include "URI.h"
 #include "helper.h"
 #include "json.h"
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
   auto Logger = spdlog::get("filewriterlogger");
   opt.BrokerSettings.Address = opt.broker.HostPort;
   auto producer = std::make_shared<KafkaW::Producer>(opt.BrokerSettings);
-  KafkaW::Producer::Topic pt(producer, opt.broker.Topic);
+  KafkaW::ProducerTopic::Topic pt(producer, opt.broker.Topic);
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.BrokerSettings.Address, opt.teamid);
     Logger->trace("sending {}", m1);

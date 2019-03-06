@@ -1,17 +1,23 @@
 #pragma once
 
-#include "KafkaW/ConsumerMessage.h"
 #include "logger.h"
-#include <atomic>
-#include <cstddef>
+#include <chrono>
 #include <cstdint>
-#include <librdkafka/rdkafka.h>
+#include <cstring>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <spdlog/spdlog.h>
 #include <vector>
 
 namespace FileWriter {
+
+struct MessageMetaData {
+  std::chrono::milliseconds Timestamp{0};
+  RdKafka::MessageTimestamp::MessageTimestampType TimestampType{
+      RdKafka::MessageTimestamp::MessageTimestampType::
+          MSG_TIMESTAMP_NOT_AVAILABLE};
+  int64_t Offset{0};
+};
 
 struct Msg {
   static Msg owned(char const *Data, size_t Bytes) {
@@ -22,20 +28,21 @@ struct Msg {
 
   char const *data() const {
     if (DataPtr == nullptr) {
-      LOG(spdlog::level::err, "error at type: {}", -1);
+      spdlog::get("filewriterlogger")->error("error at type: {}", -1);
     }
     return DataPtr.get();
   }
 
   size_t size() const {
     if (DataPtr == nullptr) {
-      LOG(spdlog::level::err, "error at type: {}", -1);
+      spdlog::get("filewriterlogger")->error("error at type: {}", -1);
     }
     return Size;
   }
 
   std::unique_ptr<char[]> DataPtr{nullptr};
   size_t Size{0};
+  MessageMetaData MetaData;
 };
 
 } // namespace FileWriter

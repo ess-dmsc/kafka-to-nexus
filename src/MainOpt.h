@@ -38,7 +38,7 @@ struct MainOpt {
   std::string kafka_gelf;
 
   /// Can optionally use the `graylog_logger` library to log to this address.
-  std::string graylog_logger_address;
+  std::string GraylogLoggerAddress;
 
   /// Used for logging to file
   std::string LogFilename;
@@ -59,27 +59,27 @@ struct MainOpt {
   int parseJsonCommands();
 
   /// Kafka broker and topic where file writer commands are published.
-  uri::URI command_broker_uri{"//localhost:9092/kafka-to-nexus.command"};
+  uri::URI CommandBrokerURI{"//localhost:9092/kafka-to-nexus.command"};
 
   /// \brief Path for HDF output.
   ///
   /// This gets prepended to the HDF output filename given in the write
   /// commands.
-  std::string hdf_output_prefix;
+  std::string HDFOutputPrefix;
 
   /// Used for command line argument.
   bool ListWriterModules = false;
 
   /// Whether we want to publish status to Kafka.
-  bool do_kafka_status = false;
+  bool ReportStatus = false;
 
   /// Kafka topic where status updates are to be published.
-  uri::URI kafka_status_uri{"//localhost:9092/kafka-to-nexus.status"};
+  uri::URI KafkaStatusURI{"//localhost:9092/kafka-to-nexus.status"};
 
   /// \brief std::chrono::milliseconds interval to publish status of `Master`
   /// (e.g.
   /// list of current file writings).
-  uint32_t status_master_interval = 2000;
+  uint32_t StatusMasterIntervalMS = 2000;
 
   // For testing.
   std::function<void(rd_kafka_topic_partition_list_s *)> on_rebalance_assign;

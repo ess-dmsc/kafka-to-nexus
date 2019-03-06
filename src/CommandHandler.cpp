@@ -2,8 +2,16 @@
 
 #include "CommandHandler.h"
 #include "EventLogger.h"
+#include "FileWriterTask.h"
+#include "HDFWriterModule.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
+#include "helper.h"
+#include "json.h"
+#include <algorithm>
+#include <chrono>
+#include <future>
+#include <sstream>
 
 using std::vector;
 
@@ -238,7 +246,7 @@ void CommandHandler::handleNew(std::string const &Command,
   if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
     if (auto FileNameMaybe =
             find<std::string>("file_name", FileAttributesMaybe.inner())) {
-      Task->setFilename(Config.hdf_output_prefix, FileNameMaybe.inner());
+      Task->setFilename(Config.HDFOutputPrefix, FileNameMaybe.inner());
     } else {
       throwMissingKey("file_attributes.file_name", Doc.dump());
     }
@@ -311,7 +319,7 @@ void CommandHandler::handleNew(std::string const &Command,
         Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
-      s->report(std::chrono::milliseconds{Config.status_master_interval});
+      s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
     }
     if (Config.topic_write_duration.count() != 0) {
       s->TopicWriteDuration = Config.topic_write_duration;
@@ -557,9 +565,9 @@ void CommandHandler::tryToHandle(
 }
 
 void CommandHandler::tryToHandle(
-    Msg const &Message, std::chrono::milliseconds MsgTimestampMilliseconds) {
-  tryToHandle({reinterpret_cast<const char *>(Message.data()), Message.size()},
-              MsgTimestampMilliseconds);
+    std::unique_ptr<Msg> Message,
+    std::chrono::milliseconds MsgTimestampMilliseconds) {
+  tryToHandle({(Message->data()), Message->size()}, MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {
