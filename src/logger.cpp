@@ -4,7 +4,6 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
                   const std::string &GraylogURI) {
 
-  spdlog::set_level(LoggingLevel);
   std::vector<spdlog::sink_ptr> sinks;
   if (not LogFile.empty()) {
     sinks.push_back(
@@ -23,4 +22,5 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
   auto combined_logger = std::make_shared<spdlog::logger>(
       "filewriterlogger", begin(sinks), end(sinks));
   spdlog::register_logger(combined_logger);
+  combined_logger->set_level(LoggingLevel);
 }

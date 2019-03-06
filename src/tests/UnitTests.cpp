@@ -19,7 +19,11 @@ void reporter<specialized>::send(severity s, char const *file,
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);
+
+  // set level for filewriter logger
   ::setUpLogging(spdlog::level::off, "", "", "");
-  spdlog::stdout_color_mt("testlogger");
+
+  // set level for test logger
+  spdlog::stdout_color_mt("testlogger")->set_level(spdlog::level::trace);
   return RUN_ALL_TESTS();
 }
