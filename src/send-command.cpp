@@ -144,19 +144,19 @@ int main(int argc, char **argv) {
   auto Logger = spdlog::get("filewriterlogger");
   opt.BrokerSettings.Address = opt.broker.HostPort;
   auto producer = std::make_shared<KafkaW::Producer>(opt.BrokerSettings);
-  KafkaW::ProducerTopic::Topic pt(producer, opt.broker.Topic);
+  KafkaW::ProducerTopic pt(producer, opt.broker.Topic);
   if (opt.cmd == "new") {
     auto m1 = make_command(opt.BrokerSettings.Address, opt.teamid);
     Logger->trace("sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   } else if (opt.cmd == "exit") {
     auto m1 = make_command_exit(opt.BrokerSettings.Address, opt.teamid);
     Logger->trace("sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   } else if (opt.cmd.substr(0, 5) == "file:") {
     auto m1 = make_command_from_file(opt.cmd.substr(5));
     Logger->trace("sending:\n{}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   } else if (opt.cmd.substr(0, 5) == "stop:") {
     auto input = opt.cmd.substr(5);
     std::chrono::milliseconds stop_time{0};
@@ -173,7 +173,7 @@ int main(int argc, char **argv) {
       m1 = make_command_stop(opt.BrokerSettings.Address, input);
     }
     Logger->trace("sending {}", m1);
-    pt.produce((uint8_t *)m1.data(), m1.size(), true);
+    pt.produce((uint8_t *)m1.data(), m1.size());
   }
   return 0;
 }
