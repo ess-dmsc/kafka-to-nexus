@@ -10,7 +10,6 @@ find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10
 find_package(FlatBuffers REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
-find_package(GraylogLogger)
 find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(Date REQUIRED)
@@ -51,21 +50,11 @@ set(libraries_common
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
-        spdlog::spdlog
         pthread
         z
         )
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
-
-if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
-  message(STATUS "Using graylog_logger")
-  list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
-  list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})
-  list(APPEND libraries_common libgraylog_logger)
-elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
-  message(WARNING "graylog_logger requested but not found")
-endif()
 
 set(kafka_to_nexus_SRC
         Status.cpp

@@ -4,19 +4,23 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
                   const std::string &GraylogURI) {
 
-  //  std::shared_ptr<spdlog::logger> LoggerInstance;
-
   spdlog::set_level(LoggingLevel);
+  std::vector<spdlog::sink_ptr> sinks;
   if (not LogFile.empty()) {
-    spdlog::basic_logger_mt("filewriterlogger", LogFile);
+    sinks.push_back(
+        std::make_shared<spdlog::sinks::basic_file_sink_mt>(LogFile));
   }
   if (not GraylogURI.empty()) {
-    uri::URI TempURI(GraylogURI);
-    // Set up URI interface here
-    // auto grayloginterface = spdlog::graylog_sink(TempURI.HostPort,
-    // TempURI.Topic);
+    //      std::string host = "localhost";
+    //
+    //      uri::URI TempURI(GraylogURI);
+    //      sinks.push_back(
+    //              std::make_shared<spdlog::sinks::graylog_sink_mt>(host,
+    //              12201));
   } else {
-    spdlog::stdout_color_mt("filewriterlogger");
+    sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
   }
-  //  spdlog::register_logger(LoggerInstance);
+  auto combined_logger = std::make_shared<spdlog::logger>(
+      "filewriterlogger", begin(sinks), end(sinks));
+  spdlog::register_logger(combined_logger);
 }
