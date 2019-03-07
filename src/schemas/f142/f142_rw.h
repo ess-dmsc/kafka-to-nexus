@@ -56,7 +56,7 @@ public:
                       CreateWriterTypedBaseMethod CreateMethod);
 
   /// Write an incoming message which should contain a flatbuffer.
-  WriteResult write(FlatbufferMessage const &Message) override;
+  void write(FlatbufferMessage const &Message) override;
 
   /// Flush underlying buffers.
   int32_t flush() override;

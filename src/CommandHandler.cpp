@@ -366,7 +366,7 @@ void CommandHandler::addStreamSourceToWriterModule(
           auto StreamGroup = hdf5::node::get_group(
               RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
           auto Err = HDFWriterModule->reopen({StreamGroup});
-          if (Err.is_ERR()) {
+          if (Err != HDFWriterModule_detail::InitResult::OK) {
             Logger->error("can not reopen HDF file for stream {}",
                           StreamSettings.StreamHDFInfoObj.HDFParentName);
             continue;

@@ -29,17 +29,18 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
       Logger->trace("!_hdf_writer_module for {}", SourceName);
       return ProcessMessageResult::ERR;
     }
-    auto ret = WriterModule->write(Message);
-    _cnt_msg_written += 1;
-    _processed_messages_count += 1;
-    if (ret.is_ERR()) {
-      Logger->trace("Failure while writing message: {}", ret.to_str());
+    try {
+      WriterModule->write(Message);
+      _cnt_msg_written += 1;
+      _processed_messages_count += 1;
+      if (HDFFileForSWMR != nullptr) {
+        HDFFileForSWMR->SWMRFlush();
+      }
+      return ProcessMessageResult::OK;
+    } catch (const HDFWriterModuleRegistry::WriterException &E) {
+      Logger->error("Failure while writing message: {}", E.what());
       return ProcessMessageResult::ERR;
     }
-    if (HDFFileForSWMR != nullptr) {
-      HDFFileForSWMR->SWMRFlush();
-    }
-    return ProcessMessageResult::OK;
   }
   return ProcessMessageResult::ERR;
 }

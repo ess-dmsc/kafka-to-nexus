@@ -82,9 +82,9 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise fast sample environment data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 
 FileWriterBase::InitResult
@@ -101,9 +101,9 @@ FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 
 std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
@@ -116,14 +116,14 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
-FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
+void FastSampleEnvironmentWriter::write(
     const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();
   if (TempDataSize == 0) {
     Logger->warn("Received a flatbuffer with zero (0) data elements in it.");
-    return FileWriterBase::WriteResult::OK();
+    return;
   }
   ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
   auto CueIndexValue = Value.dataspace().size();
@@ -143,7 +143,6 @@ FileWriterBase::WriteResult FastSampleEnvironmentWriter::write(
         FbPointer->PacketTimestamp(), FbPointer->TimeDelta(), TempDataSize));
     Timestamp.appendArray(TempTimeStamps);
   }
-  return FileWriterBase::WriteResult::OK();
 }
 
 std::int32_t FastSampleEnvironmentWriter::flush() { return 0; }

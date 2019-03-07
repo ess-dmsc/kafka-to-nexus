@@ -262,7 +262,7 @@ public:
   MAKE_MOCK2(init_hdf, InitResult(hdf5::node::Group &, std::string const &),
              override);
   MAKE_MOCK1(reopen, InitResult(hdf5::node::Group &), override);
-  MAKE_MOCK1(write, WriteResult(FlatbufferMessage const &), override);
+    MAKE_MOCK1(write, void(FlatbufferMessage const &), override);
   MAKE_MOCK0(flush, int32_t(), override);
   MAKE_MOCK0(close, int32_t(), override);
 };

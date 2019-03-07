@@ -127,9 +127,9 @@ AreaDetectorWriter::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 
 FileWriterBase::InitResult
@@ -147,9 +147,9 @@ AreaDetectorWriter::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR_IO();
+    return HDFWriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK();
+  return FileWriterBase::InitResult::OK;
 }
 template <typename DataType, class DatasetType>
 void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
@@ -159,8 +159,7 @@ void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,
       Shape);
 }
 
-FileWriterBase::WriteResult
-AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
+void AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
   auto NDAr = FB_Tables::GetNDArray(Message.data());
   auto DataShape = hdf5::Dimensions(NDAr->dims()->begin(), NDAr->dims()->end());
   auto CurrentTimestamp =
@@ -199,8 +198,8 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     appendData<const char>(Values, DataPtr, NrOfElements, DataShape);
     break;
   default:
-    return FileWriterBase::WriteResult::ERROR_BAD_FLATBUFFER();
-    break;
+    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+        "Error in flatbuffer.");
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {
@@ -208,7 +207,6 @@ AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     CueTimestamp.appendElement(CurrentTimestamp);
     CueCounter = 0;
   }
-  return FileWriterBase::WriteResult::OK();
 }
 
 std::int32_t AreaDetectorWriter::flush() { return 0; }
