@@ -188,7 +188,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
 }
 
 /// Initialize some parameters and the list of datasets to be created.
-HDFWriterModule::HDFWriterModule() : Logger(spdlog::get("filewriterlogger")) {
+HDFWriterModule::HDFWriterModule() {
   // Setup the parameters for our datasets
   size_t ChunkBytes = 64 * 1024;
   size_t BufferSize = 16 * 1024;

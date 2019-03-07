@@ -109,7 +109,7 @@ public:
                                                        ErrorLogMinInterval};
 
 private:
-  std::shared_ptr<spdlog::logger> Logger;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief  Interface for creating and opening a dataset.
