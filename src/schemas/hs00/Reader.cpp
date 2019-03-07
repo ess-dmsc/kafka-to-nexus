@@ -1,6 +1,6 @@
 #include "Reader.h"
+#include "logger.h"
 #include <flatbuffers/flatbuffers.h>
-#include <spdlog/spdlog.h>
 
 namespace FileWriter {
 namespace Schemas {
