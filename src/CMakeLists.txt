@@ -14,6 +14,7 @@ find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(Date REQUIRED)
 find_package(spdlog REQUIRED)
+find_package(GraylogLogger REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -41,6 +42,7 @@ set(path_include_common
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src
+        ${GRAYLOGLOGGER_INCLUDE_DIR}
         )
 
 set(libraries_common
@@ -50,6 +52,7 @@ set(libraries_common
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
+        ${GRAYLOGLOGGER_LIBRARY}
         pthread
         z
         )
