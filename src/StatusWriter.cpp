@@ -35,7 +35,7 @@ void StatusWriter::write(StreamMasterInfo &Information) {
   json["next_message_eta_ms"] = Information.getTimeToNextMessage().count();
   json["stream_master"] = StreamMasterToJson(Information);
   json["timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::steady_clock::now().time_since_epoch())
+                          std::chrono::system_clock::now().time_since_epoch())
                           .count();
 }
 
