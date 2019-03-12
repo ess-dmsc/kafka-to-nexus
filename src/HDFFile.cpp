@@ -185,262 +185,6 @@ HDFFile::~HDFFile() {
   }
 }
 
-extern "C" char const GIT_COMMIT[];
-
-void HDFFile::init(std::string const &Filename,
-                   nlohmann::json const &NexusStructure, nlohmann::json const &,
-                   std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
-  if (std::ifstream(Filename).good()) {
-    // File exists already
-    throw std::runtime_error(
-        fmt::format("The file \"{}\" exists already.", Filename));
-  }
-  try {
-    hdf5::property::FileCreationList fcpl;
-    hdf5::property::FileAccessList fapl;
-    setCommonProps(fcpl, fapl);
-    if (UseHDFSWMR) {
-      H5File =
-          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
-                                           hdf5::file::AccessFlags::SWMR_WRITE,
-                             fcpl, fapl);
-      SWMREnabled = true;
-    } else {
-      H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
-                                  fcpl, fapl);
-    }
-    this->Filename = Filename;
-    init(NexusStructure, StreamHDFInfo);
-  } catch (std::exception const &E) {
-    Logger->error(
-        "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), Filename,
-        hdf5::error::print_nested(E));
-    std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
-  }
-  this->NexusStructure = NexusStructure;
-}
-
-void HDFFile::init(const std::string &NexusStructure,
-                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
-  auto Document = nlohmann::json::parse(NexusStructure);
-  init(Document, StreamHDFInfo);
-}
-
-void HDFFile::init(const nlohmann::json &NexusStructure,
-                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
-
-  try {
-    checkHDFVersion(Logger);
-
-    hdf5::property::AttributeCreationList acpl;
-    acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-
-    hdf5::property::LinkCreationList lcpl;
-    lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
-
-    auto var_string = hdf5::datatype::String::variable();
-    var_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-
-    RootGroup = H5File.root();
-
-    std::deque<std::string> path;
-    if (NexusStructure.is_object()) {
-      auto value = &NexusStructure;
-      if (auto ChildrenMaybe = find<json>("children", *value)) {
-        auto Children = ChildrenMaybe.inner();
-        if (Children.is_array()) {
-          for (auto &Child : Children) {
-            createHDFStructures(&Child, RootGroup, 0, lcpl, var_string,
-                                StreamHDFInfo, path, Logger);
-          }
-        }
-      }
-    }
-
-    writeStringAttribute(RootGroup, "HDF5_Version", h5VersionStringLinked());
-    writeStringAttribute(RootGroup, "file_name",
-                         H5File.id().file_name().string());
-    writeStringAttribute(
-        RootGroup, "creator",
-        fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
-    writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time", Logger);
-    writeAttributesIfPresent(RootGroup, NexusStructure, Logger);
-  } catch (std::exception const &E) {
-    Logger->critical("Failed to initialize  file={}  trace:\n{}",
-                     H5File.id().file_name().string(),
-                     hdf5::error::print_nested(E));
-    std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
-  }
-}
-
-void HDFFile::close() {
-  try {
-    if (H5File.is_valid()) {
-      Logger->trace("flushing");
-      flush();
-      Logger->trace("closing");
-      H5File.close();
-      Logger->trace("closed");
-      // Make sure that h5file.is_valid() == false from now on:
-      H5File = hdf5::file::File();
-    } else {
-      // This occurs in unit tests
-      Logger->error("File is not valid, skipping flush and close.");
-    }
-  } catch (const std::exception &E) {
-    auto Trace = hdf5::error::print_nested(E);
-    Logger->error("ERROR could not close  file={}  trace:\n{}",
-                  H5File.id().file_name().string(), Trace);
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
-        boost::filesystem::current_path().string(),
-        H5File.id().file_name().string(), Trace)));
-  }
-}
-
-void HDFFile::reopen(std::string const &Filename) {
-  try {
-    hdf5::property::FileCreationList fcpl;
-    hdf5::property::FileAccessList fapl;
-    setCommonProps(fcpl, fapl);
-    auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
-        hdf5::file::AccessFlags::READWRITE);
-    if (SWMREnabled) {
-      FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
-          hdf5::file::AccessFlags::SWMR_WRITE);
-    }
-    H5File = hdf5::file::open(Filename, FAFL, fapl);
-  } catch (std::exception const &E) {
-    auto Trace = hdf5::error::print_nested(E);
-    Logger->error(
-        "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
-        boost::filesystem::current_path().string(), Filename, Trace);
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "HDFFile failed to reopen.  Current Path: {}  Filename: {}  Trace:\n{}",
-        boost::filesystem::current_path().string(), Filename, Trace)));
-  }
-}
-
-void HDFFile::flush() {
-  try {
-    if (H5File.is_valid()) {
-      H5File.flush(hdf5::file::Scope::GLOBAL);
-    }
-  } catch (const std::runtime_error &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("HDFFile failed to flush  what: {}", E.what())));
-  } catch (...) {
-    std::throw_with_nested(
-        std::runtime_error("HDFFile failed to flush with unknown exception"));
-  }
-}
-
-static void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
-                     std::shared_ptr<spdlog::logger> Logger) {
-  if (!Json.is_object()) {
-    throw std::runtime_error(fmt::format(
-        "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));
-  }
-  auto ChildrenIter = Json.find("children");
-  if (ChildrenIter == Json.end()) {
-    return;
-  }
-  auto &Children = *ChildrenIter;
-  if (!Children.is_array()) {
-    throw std::runtime_error("HDFFile addLinks: \"children\" must be an array");
-  }
-  for (auto const &Child : Children) {
-    if (!Child.is_object()) {
-      continue;
-    }
-    if (Child.find("type") == Child.end()) {
-      continue;
-    }
-    if (Child.at("type") != "group") {
-      continue;
-    }
-    if (Child.find("name") == Child.end()) {
-      continue;
-    }
-    auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
-    addLinks(ChildGroup, Child, Logger);
-  }
-  for (auto const &Child : Children) {
-    if (!Child.is_object()) {
-      continue;
-    }
-    if (Child.find("type") == Child.end()) {
-      continue;
-    }
-    if (Child.at("type") != "link") {
-      continue;
-    }
-    if (Child.find("name") == Child.end()) {
-      continue;
-    }
-    if (Child.find("target") == Child.end()) {
-      continue;
-    }
-    auto LinkName = Child.at("name").get<std::string>();
-    auto Target = Child.at("target").get<std::string>();
-    auto GroupBase = Group;
-    auto TargetBase = Target;
-    while (TargetBase.find("../") == 0) {
-      TargetBase = TargetBase.substr(3);
-      GroupBase = GroupBase.link().parent();
-    }
-    auto TargetID =
-        H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
-    if (TargetID < 0) {
-      Logger->warn(
-          "Can not find target object for link target: {}  in group: {}",
-          Target, std::string(Group.link().path()));
-      continue;
-    }
-    if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), LinkName.c_str(),
-                    H5P_DEFAULT, H5P_DEFAULT)) {
-      Logger->warn("can not create link name: {}  in group: {}  to target: {}",
-                   LinkName, std::string(Group.link().path()), Target);
-      continue;
-    }
-  }
-}
-
-void HDFFile::finalize() {
-  Logger->trace("HDFFile::finalize");
-  if (Filename.empty()) {
-    Logger->trace("HDFFile was never open, skip finalize.");
-    return;
-  }
-  try {
-    if (H5File.is_valid()) {
-      close();
-    }
-    hdf5::property::FileCreationList FCPL;
-    hdf5::property::FileAccessList FAPL;
-    setCommonProps(FCPL, FAPL);
-    auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
-        hdf5::file::AccessFlags::READWRITE);
-    H5File = hdf5::file::open(Filename, FAFL, FAPL);
-    auto Group = H5File.root();
-    addLinks(Group, NexusStructure, Logger);
-  } catch (...) {
-    std::throw_with_nested(
-        std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
-  }
-}
-
-void HDFFile::SWMRFlush() {
-  auto Now = CLOCK::now();
-  if (Now - SWMRFlushLast > SWMRFlushInterval) {
-    flush();
-    SWMRFlushLast = Now;
-  }
-}
-
-bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
-
 void writeStringAttribute(hdf5::node::Node const &Node, const std::string &Name,
                           const std::string &Value) {
   auto string_type = hdf5::datatype::String::variable();
@@ -1070,4 +814,261 @@ void checkHDFVersion(std::shared_ptr<spdlog::logger> Logger) {
                   H5VersionStringHeadersCompileTime(), h5VersionStringLinked());
   }
 }
+
+extern "C" char const GIT_COMMIT[];
+
+void HDFFile::init(std::string const &Filename,
+                   nlohmann::json const &NexusStructure, nlohmann::json const &,
+                   std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
+  if (std::ifstream(Filename).good()) {
+    // File exists already
+    throw std::runtime_error(
+        fmt::format("The file \"{}\" exists already.", Filename));
+  }
+  try {
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+    setCommonProps(fcpl, fapl);
+    if (UseHDFSWMR) {
+      H5File =
+          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
+                                           hdf5::file::AccessFlags::SWMR_WRITE,
+                             fcpl, fapl);
+      SWMREnabled = true;
+    } else {
+      H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,
+                                  fcpl, fapl);
+    }
+    this->Filename = Filename;
+    init(NexusStructure, StreamHDFInfo);
+  } catch (std::exception const &E) {
+    Logger->error(
+        "ERROR could not create the HDF  path={}  file={}  trace:\n{}",
+        boost::filesystem::current_path().string(), Filename,
+        hdf5::error::print_nested(E));
+    std::throw_with_nested(std::runtime_error("HDFFile failed to open!"));
+  }
+  this->NexusStructure = NexusStructure;
+}
+
+void HDFFile::init(const std::string &NexusStructure,
+                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
+  auto Document = nlohmann::json::parse(NexusStructure);
+  init(Document, StreamHDFInfo);
+}
+
+void HDFFile::init(const nlohmann::json &NexusStructure,
+                   std::vector<StreamHDFInfo> &StreamHDFInfo) {
+
+  try {
+    checkHDFVersion(Logger);
+
+    hdf5::property::AttributeCreationList acpl;
+    acpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    hdf5::property::LinkCreationList lcpl;
+    lcpl.character_encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    auto var_string = hdf5::datatype::String::variable();
+    var_string.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+
+    RootGroup = H5File.root();
+
+    std::deque<std::string> path;
+    if (NexusStructure.is_object()) {
+      auto value = &NexusStructure;
+      if (auto ChildrenMaybe = find<json>("children", *value)) {
+        auto Children = ChildrenMaybe.inner();
+        if (Children.is_array()) {
+          for (auto &Child : Children) {
+            createHDFStructures(&Child, RootGroup, 0, lcpl, var_string,
+                                StreamHDFInfo, path, Logger);
+          }
+        }
+      }
+    }
+
+    writeStringAttribute(RootGroup, "HDF5_Version", h5VersionStringLinked());
+    writeStringAttribute(RootGroup, "file_name",
+                         H5File.id().file_name().string());
+    writeStringAttribute(
+        RootGroup, "creator",
+        fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
+    writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time", Logger);
+    writeAttributesIfPresent(RootGroup, NexusStructure, Logger);
+  } catch (std::exception const &E) {
+    Logger->critical("Failed to initialize  file={}  trace:\n{}",
+                     H5File.id().file_name().string(),
+                     hdf5::error::print_nested(E));
+    std::throw_with_nested(std::runtime_error("HDFFile failed to initialize!"));
+  }
+}
+
+void HDFFile::close() {
+  try {
+    if (H5File.is_valid()) {
+      Logger->trace("flushing");
+      flush();
+      Logger->trace("closing");
+      H5File.close();
+      Logger->trace("closed");
+      // Make sure that h5file.is_valid() == false from now on:
+      H5File = hdf5::file::File();
+    } else {
+      // This occurs in unit tests
+      Logger->error("File is not valid, skipping flush and close.");
+    }
+  } catch (const std::exception &E) {
+    auto Trace = hdf5::error::print_nested(E);
+    Logger->error("ERROR could not close  file={}  trace:\n{}",
+                  H5File.id().file_name().string(), Trace);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "HDFFile failed to close.  Current Path: {}  Filename: {}  Trace:\n{}",
+        boost::filesystem::current_path().string(),
+        H5File.id().file_name().string(), Trace)));
+  }
+}
+
+void HDFFile::reopen(std::string const &Filename) {
+  try {
+    hdf5::property::FileCreationList fcpl;
+    hdf5::property::FileAccessList fapl;
+    setCommonProps(fcpl, fapl);
+    auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+        hdf5::file::AccessFlags::READWRITE);
+    if (SWMREnabled) {
+      FAFL |= static_cast<hdf5::file::AccessFlagsBase>(
+          hdf5::file::AccessFlags::SWMR_WRITE);
+    }
+    H5File = hdf5::file::open(Filename, FAFL, fapl);
+  } catch (std::exception const &E) {
+    auto Trace = hdf5::error::print_nested(E);
+    Logger->error(
+        "ERROR could not reopen HDF file  path={}  file={}  trace:\n{}",
+        boost::filesystem::current_path().string(), Filename, Trace);
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "HDFFile failed to reopen.  Current Path: {}  Filename: {}  Trace:\n{}",
+        boost::filesystem::current_path().string(), Filename, Trace)));
+  }
+}
+
+void HDFFile::flush() {
+  try {
+    if (H5File.is_valid()) {
+      H5File.flush(hdf5::file::Scope::GLOBAL);
+    }
+  } catch (const std::runtime_error &E) {
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("HDFFile failed to flush  what: {}", E.what())));
+  } catch (...) {
+    std::throw_with_nested(
+        std::runtime_error("HDFFile failed to flush with unknown exception"));
+  }
+}
+
+static void addLinks(hdf5::node::Group const &Group, nlohmann::json const &Json,
+                     std::shared_ptr<spdlog::logger> Logger) {
+  if (!Json.is_object()) {
+    throw std::runtime_error(fmt::format(
+        "HDFFile addLinks: We expect a json object but got: {}", Json.dump()));
+  }
+  auto ChildrenIter = Json.find("children");
+  if (ChildrenIter == Json.end()) {
+    return;
+  }
+  auto &Children = *ChildrenIter;
+  if (!Children.is_array()) {
+    throw std::runtime_error("HDFFile addLinks: \"children\" must be an array");
+  }
+  for (auto const &Child : Children) {
+    if (!Child.is_object()) {
+      continue;
+    }
+    if (Child.find("type") == Child.end()) {
+      continue;
+    }
+    if (Child.at("type") != "group") {
+      continue;
+    }
+    if (Child.find("name") == Child.end()) {
+      continue;
+    }
+    auto ChildGroup = Group.get_group(Child.at("name").get<std::string>());
+    addLinks(ChildGroup, Child, Logger);
+  }
+  for (auto const &Child : Children) {
+    if (!Child.is_object()) {
+      continue;
+    }
+    if (Child.find("type") == Child.end()) {
+      continue;
+    }
+    if (Child.at("type") != "link") {
+      continue;
+    }
+    if (Child.find("name") == Child.end()) {
+      continue;
+    }
+    if (Child.find("target") == Child.end()) {
+      continue;
+    }
+    auto LinkName = Child.at("name").get<std::string>();
+    auto Target = Child.at("target").get<std::string>();
+    auto GroupBase = Group;
+    auto TargetBase = Target;
+    while (TargetBase.find("../") == 0) {
+      TargetBase = TargetBase.substr(3);
+      GroupBase = GroupBase.link().parent();
+    }
+    auto TargetID =
+        H5Oopen(static_cast<hid_t>(GroupBase), TargetBase.c_str(), H5P_DEFAULT);
+    if (TargetID < 0) {
+      Logger->warn(
+          "Can not find target object for link target: {}  in group: {}",
+          Target, std::string(Group.link().path()));
+      continue;
+    }
+    if (0 > H5Olink(TargetID, static_cast<hid_t>(Group), LinkName.c_str(),
+                    H5P_DEFAULT, H5P_DEFAULT)) {
+      Logger->warn("can not create link name: {}  in group: {}  to target: {}",
+                   LinkName, std::string(Group.link().path()), Target);
+      continue;
+    }
+  }
+}
+
+void HDFFile::finalize() {
+  Logger->trace("HDFFile::finalize");
+  if (Filename.empty()) {
+    Logger->trace("HDFFile was never open, skip finalize.");
+    return;
+  }
+  try {
+    if (H5File.is_valid()) {
+      close();
+    }
+    hdf5::property::FileCreationList FCPL;
+    hdf5::property::FileAccessList FAPL;
+    setCommonProps(FCPL, FAPL);
+    auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
+        hdf5::file::AccessFlags::READWRITE);
+    H5File = hdf5::file::open(Filename, FAFL, FAPL);
+    auto Group = H5File.root();
+    addLinks(Group, NexusStructure, Logger);
+  } catch (...) {
+    std::throw_with_nested(
+        std::runtime_error(fmt::format("Exception in HDFFile::finalize")));
+  }
+}
+
+void HDFFile::SWMRFlush() {
+  auto Now = CLOCK::now();
+  if (Now - SWMRFlushLast > SWMRFlushInterval) {
+    flush();
+    SWMRFlushLast = Now;
+  }
+}
+
+bool HDFFile::isSWMREnabled() const { return SWMREnabled; }
+
 } // namespace FileWriter
