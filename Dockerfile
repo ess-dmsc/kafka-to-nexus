@@ -12,13 +12,14 @@ ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/ma
 COPY ./conan ../kafka_to_nexus_src/conan
 
 # Install packages - We don't want to purge kafkacat and tzdata after building
+# boost_regex package fails to build with more recent versions of conan so we're using 1.12.1
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
     && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools autoconf libtool automake kafkacat tzdata \
     && apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install conan \
+    && pip install conan==1.12.1 \
     && mkdir kafka_to_nexus \
     && if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
     && cd kafka_to_nexus \
@@ -27,7 +28,7 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 COPY ./ ../kafka_to_nexus_src/
 
 RUN cd kafka_to_nexus \
-    && cmake -DCONAN="MANUAL" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True ../kafka_to_nexus_src \
+    && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN="FALSE" ../kafka_to_nexus_src \
     && make -j8 \
     && mkdir /output-files \
     && conan remove "*" -s -f \
