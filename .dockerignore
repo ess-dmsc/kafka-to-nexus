@@ -2,3 +2,13 @@
 .gitignore
 ansible
 /system-tests/output-files/
+/build-script/
+/documentation/
+/system-tests/
+.clang-format
+.gitignore
+codecov.yml
+*.md
+*.conf
+Jenkinsfile
+Dockerfile
