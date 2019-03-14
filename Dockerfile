@@ -35,6 +35,6 @@ RUN cd kafka_to_nexus \
     && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake \
     && mv ../../kafka_to_nexus_src/docker_launch.sh /docker_launch.sh \
     && rm -rf ../../kafka_to_nexus_src/* \
-    && rm -rf /tmp/* /var/tmp/*
+    && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 
 CMD ["/docker_launch.sh"]
