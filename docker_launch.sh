@@ -17,6 +17,7 @@ then
    echo "Kafka broker not accessible at file writer launch"
    exit 1
 fi
+export LD_LIBRARY_PATH=/kafka_to_nexus/lib/
 
 COMMAND_URI="${COMMAND_URI:=//localhost:9092/TEST_writerCommand}"
 STATUS_URI="${STATUS_URI:=//localhost:9092/TEST_writerStatus}"
