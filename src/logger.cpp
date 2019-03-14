@@ -89,6 +89,7 @@ void Logger::fwd_graylog_logger_enable(std::string const &Address) {
   Log::RemoveAllHandlers();
   LOG(Sev::Info, "Enable graylog_logger on {}:{}", addr, port);
   Log::AddLogHandler(new GraylogInterface(addr, port));
+  Log::SetMinimumSeverity(Severity(log_level));
   do_use_graylog_logger = true;
 #else
   LOG(Sev::Notice,
