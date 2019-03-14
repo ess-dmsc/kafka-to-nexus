@@ -83,6 +83,34 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
+bool parseLogLevel(std::vector<std::string> LogLevelString,
+                   spdlog::level::level_enum &LogLevelResult) {
+  std::map<std::string, spdlog::level::level_enum> LevelMap{
+      {"Critical", spdlog::level::critical}, {"Error", spdlog::level::err},
+      {"Warning", spdlog::level::warn},      {"Info", spdlog::level::info},
+      {"Debug", spdlog::level::debug},       {"Trace", spdlog::level::trace}};
+
+  if (LogLevelString.size() != 1) {
+    return false;
+  }
+  try {
+    LogLevelResult = LevelMap.at(LogLevelString.at(0));
+    return true;
+  } catch (std::out_of_range &e) {
+    // Do nothing
+  }
+  try {
+    int TempLogMessageLevel = std::stoi(LogLevelString.at(0));
+    if (TempLogMessageLevel < 1 or TempLogMessageLevel > 7) {
+      return false;
+    }
+    LogLevelResult = spdlog::level::level_enum(TempLogMessageLevel);
+  } catch (std::invalid_argument &e) {
+    return false;
+  }
+  return true;
+}
+
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   // and add option for json config file instead
   App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
@@ -100,10 +128,17 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.GraylogLoggerAddress,
                  "<host:port> Log to Graylog via graylog_logger library");
+  std::string LogLevelInfoStr =
+      R"*(Set log message level. Set to 1 - 7 or one of
+  `Critical`, `Error`, `Warning`, `Notice`, `Info`,
+  or `Debug`. Ex: "-l Notice")*";
   App.add_option(
-         "-v,--verbosity", log_level,
-         "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)
-      ->check(CLI::Range(1, 7));
+         "-v,--verbosity",
+         [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+           return parseLogLevel(Input, MainOptions.LoggingLevel);
+         },
+         LogLevelInfoStr)
+      ->set_default_val("Error");
   App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "

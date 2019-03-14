@@ -41,6 +41,7 @@ set(path_include_common
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src
+        ${GRAYLOGLOGGER_INCLUDE_DIR}
         )
 
 set(libraries_common
@@ -50,6 +51,7 @@ set(libraries_common
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
+        ${GRAYLOGLOGGER_LIBRARY}
         pthread
         z
         )
