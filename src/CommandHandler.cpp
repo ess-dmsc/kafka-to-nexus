@@ -19,12 +19,13 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-json parseOrThrow(std::string const &Command) {
+json parseOrThrow(std::string const &Command,
+                  std::shared_ptr<spdlog::logger> Logger) {
   try {
     return json::parse(Command);
   } catch (json::parse_error const &E) {
-    LOG(Sev::Warning, "Can not parse command  what: {}  Command: {}", E.what(),
-        Command);
+    Logger->warn("Can not parse command  what: {}  Command: {}", E.what(),
+                 Command);
     std::throw_with_nested(std::runtime_error(fmt::format(
         "Can not parse command  what: {}  Command: {}", E.what(), Command)));
   }
@@ -75,7 +76,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamInfo) {
+    StreamHDFInfo const &StreamInfo, std::shared_ptr<spdlog::logger> Logger) {
   using nlohmann::json;
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
@@ -91,7 +92,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   }
 
   StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
-  LOG(Sev::Info, "Adding stream: {}", StreamSettings.ConfigStreamJson);
+  Logger->info("Adding stream: {}", StreamSettings.ConfigStreamJson);
 
   if (auto TopicMaybe = find<json>("topic", ConfigStreamInner)) {
     StreamSettings.Topic = TopicMaybe.inner();
@@ -112,8 +113,8 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     // Allow the old key name as well:
     if (auto ModuleMaybe = find<std::string>("module", ConfigStreamInner)) {
       StreamSettings.Module = ModuleMaybe.inner();
-      LOG(Sev::Notice, "The key \"stream.module\" is deprecated, please use "
-                       "\"stream.writer_module\" instead.");
+      Logger->debug("The key \"stream.module\" is deprecated, please use "
+                    "\"stream.writer_module\" instead.");
     } else {
       throwMissingKey("writer_module", ConfigStreamInner.dump());
     }
@@ -123,7 +124,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     StreamSettings.RunParallel = RunParallelMaybe.inner();
   }
   if (StreamSettings.RunParallel) {
-    LOG(Sev::Info, "Run parallel for source: {}", StreamSettings.Source);
+    Logger->info("Run parallel for source: {}", StreamSettings.Source);
   }
 
   HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
@@ -162,28 +163,30 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 }
 
 /// Helper to extract information about the provided streams.
-static std::vector<StreamSettings> extractStreamInformationFromJson(
-    std::unique_ptr<FileWriterTask> const &Task,
-    std::vector<StreamHDFInfo> &StreamHDFInfoList) {
-  LOG(Sev::Info, "Command contains {} streams", StreamHDFInfoList.size());
+static vector<StreamSettings>
+extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
+                                 std::vector<StreamHDFInfo> &StreamHDFInfoList,
+                                 std::shared_ptr<spdlog::logger> Logger) {
+  Logger->info("Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      StreamSettingsList.push_back(
-          extractStreamInformationFromJsonForSource(Task, StreamHDFInfo));
+      StreamSettingsList.push_back(extractStreamInformationFromJsonForSource(
+          Task, StreamHDFInfo, Logger));
       StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
-      LOG(Sev::Warning, "Invalid json: {}", StreamHDFInfo.ConfigStream);
+      Logger->warn("Invalid json: {}", StreamHDFInfo.ConfigStream);
       continue;
     } catch (std::runtime_error const &E) {
-      LOG(Sev::Warning, "Exception while initialising writer module  what: {}  "
-                        "parent: {}  json: {}",
-          E.what(), StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
+      Logger->warn("Exception while initialising writer module  what: {}  "
+                   "parent: {}  json: {}",
+                   E.what(), StreamHDFInfo.HDFParentName,
+                   StreamHDFInfo.ConfigStream);
       continue;
     } catch (...) {
-      LOG(Sev::Error, "Unknown error caught while trying to initialise stream  "
-                      "parent: {}  json: {}",
-          StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
+      Logger->error("Unknown error caught while trying to initialise stream  "
+                    "parent: {}  json: {}",
+                    StreamHDFInfo.HDFParentName, StreamHDFInfo.ConfigStream);
     }
   }
   return StreamSettingsList;
@@ -193,7 +196,7 @@ void CommandHandler::handleNew(std::string const &Command,
                                const std::chrono::milliseconds StartTime) {
   using nlohmann::detail::out_of_range;
   using nlohmann::json;
-  json Doc = parseOrThrow(Command);
+  json Doc = parseOrThrow(Command, Logger);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   if (MasterPtr != nullptr) {
@@ -209,7 +212,7 @@ void CommandHandler::handleNew(std::string const &Command,
 
     if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        LOG(Sev::Error, "job_id {} already in use, ignore command", JobID);
+        Logger->error("job_id {} already in use, ignore command", JobID);
         return;
       }
     }
@@ -233,11 +236,11 @@ void CommandHandler::handleNew(std::string const &Command,
     try {
       Broker.parse(BrokerString);
     } catch (std::runtime_error &e) {
-      LOG(Sev::Warning, "Unable to parse broker {} in command message, using "
-                        "default broker (localhost:9092)",
-          BrokerString)
+      Logger->warn("Unable to parse broker {} in command message, using "
+                   "default broker (localhost:9092)",
+                   BrokerString);
     }
-    LOG(Sev::Debug, "Use main broker: {}", Broker.HostPort);
+    Logger->trace("Use main broker: {}", Broker.HostPort);
   }
 
   if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
@@ -272,7 +275,7 @@ void CommandHandler::handleNew(std::string const &Command,
   }
 
   std::vector<StreamSettings> StreamSettingsList =
-      extractStreamInformationFromJson(Task, StreamHDFInfoList);
+      extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
   if (auto ThrowOnUninitialisedStreamMaybe =
           find<bool>("abort_on_uninitialised_stream", Doc)) {
@@ -300,18 +303,18 @@ void CommandHandler::handleNew(std::string const &Command,
   } else {
     Config.StreamerConfiguration.StartTimestamp = StartTime;
   }
-  LOG(Sev::Info, "Start time: {}ms",
-      Config.StreamerConfiguration.StartTimestamp.count());
+  Logger->info("Start time: {}ms",
+               Config.StreamerConfiguration.StartTimestamp.count());
   Time = findTime(Doc, "stop_time");
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StopTimestamp = Time;
-    LOG(Sev::Info, "Stop time: {}ms",
-        Config.StreamerConfiguration.StopTimestamp.count());
+    Logger->info("Stop time: {}ms",
+                 Config.StreamerConfiguration.StopTimestamp.count());
   }
 
   if (MasterPtr != nullptr) {
     // Register the task with master.
-    LOG(Sev::Info, "Write file with job_id: {}", Task->jobID());
+    Logger->info("Write file with job_id: {}", Task->jobID());
     auto s = std::make_unique<StreamMaster<Streamer>>(
         Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
@@ -332,25 +335,26 @@ void CommandHandler::handleNew(std::string const &Command,
 void CommandHandler::addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
+  auto Logger = spdlog::get("filewriterlogger");
   bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : StreamSettingsList) {
     if (!UseParallelWriter || !StreamSettings.RunParallel) {
-      LOG(Sev::Debug, "add Source as non-parallel: {}", StreamSettings.Topic);
+      Logger->trace("add Source as non-parallel: {}", StreamSettings.Topic);
       HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
 
       try {
         ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
       } catch (std::exception const &E) {
-        LOG(Sev::Info, "Module '{}' is not available, error {}",
-            StreamSettings.Module, E.what());
+        Logger->info("Module '{}' is not available, error {}",
+                     StreamSettings.Module, E.what());
         continue;
       }
 
       auto HDFWriterModule = ModuleFactory();
       if (!HDFWriterModule) {
-        LOG(Sev::Info, "Can not create a HDFWriterModule for '{}'",
-            StreamSettings.Module);
+        Logger->info("Can not create a HDFWriterModule for '{}'",
+                     StreamSettings.Module);
         continue;
       }
 
@@ -363,13 +367,12 @@ void CommandHandler::addStreamSourceToWriterModule(
               RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
           auto Err = HDFWriterModule->reopen({StreamGroup});
           if (Err != HDFWriterModule_detail::InitResult::OK) {
-            LOG(Sev::Error, "can not reopen HDF file for stream {}",
-                StreamSettings.StreamHDFInfoObj.HDFParentName);
+            Logger->error("can not reopen HDF file for stream {}",
+                          StreamSettings.StreamHDFInfoObj.HDFParentName);
             continue;
           }
         } catch (std::runtime_error const &e) {
-          LOG(Sev::Error, "Exception on HDFWriterModule->reopen(): {}",
-              e.what());
+          Logger->error("Exception on HDFWriterModule->reopen(): {}", e.what());
           continue;
         }
 
@@ -379,7 +382,7 @@ void CommandHandler::addStreamSourceToWriterModule(
         ThisSource.setTopic(StreamSettings.Topic);
         Task->addSource(std::move(ThisSource));
       } catch (std::runtime_error const &E) {
-        LOG(Sev::Warning,
+        Logger->warn(
             "Exception while initializing writer module {} for source {}: {}",
             StreamSettings.Module, StreamSettings.Source, E.what());
         continue;
@@ -403,7 +406,7 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(std::string const &Command) {
   using std::string;
-  LOG(Sev::Debug, "{}", Command);
+  Logger->trace("{}", Command);
 
   nlohmann::json Doc;
   try {
@@ -424,17 +427,17 @@ void CommandHandler::handleStreamMasterStop(std::string const &Command) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster != nullptr) {
       if (StopTime.count() > 0) {
-        LOG(Sev::Info,
+        Logger->info(
             "Received request to gracefully stop file with id : {} at {} ms",
             JobID, StopTime.count());
         StreamMaster->setStopTime(StopTime);
       } else {
-        LOG(Sev::Info, "Received request to gracefully stop file with id : {}",
-            JobID);
+        Logger->info("Received request to gracefully stop file with id : {}",
+                     JobID);
         StreamMaster->stop();
       }
     } else {
-      LOG(Sev::Warning, "Can not find StreamMaster for JobID: {}", JobID);
+      Logger->warn("Can not find StreamMaster for JobID: {}", JobID);
     }
   }
 }
@@ -452,8 +455,8 @@ void CommandHandler::handle(std::string const &Command,
 
   if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
     if (ServiceIDMaybe.inner() != Config.ServiceID) {
-      LOG(Sev::Debug, "Ignoring command addressed to service_id: {}",
-          ServiceIDMaybe.inner());
+      Logger->trace("Ignoring command addressed to service_id: {}",
+                    ServiceIDMaybe.inner());
       return;
     }
   }
@@ -464,8 +467,8 @@ void CommandHandler::handle(std::string const &Command,
     CommandTeamId = x.inner();
   }
   if (CommandTeamId != TeamId) {
-    LOG(Sev::Info, "INFO command is for teamid {:016x}, we are {:016x}",
-        CommandTeamId, TeamId);
+    Logger->info("INFO command is for teamid {:016x}, we are {:016x}",
+                 CommandTeamId, TeamId);
     return;
   }
 
@@ -495,9 +498,9 @@ void CommandHandler::handle(std::string const &Command,
       }
     }
   } else {
-    LOG(Sev::Warning, "Can not extract 'cmd' from command {}", Command);
+    Logger->warn("Can not extract 'cmd' from command {}", Command);
   }
-  LOG(Sev::Warning, "Could not understand this command: {}", Command);
+  Logger->warn("Could not understand this command: {}", Command);
 }
 
 std::string format_nested_exception(std::exception const &E,
@@ -520,18 +523,22 @@ std::string format_nested_exception(std::exception const &E) {
   return format_nested_exception(E, StrS, 0);
 }
 
-void CommandHandler::tryToHandle(std::string const &Command,
-                                 std::chrono::milliseconds MsgTimestamp) {
-  if (MsgTimestamp.count() < 0) {
-    MsgTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch());
-    LOG(Sev::Info,
+void CommandHandler::tryToHandle(
+    std::string const &Command,
+    std::chrono::milliseconds MsgTimestampMilliseconds) {
+
+  if (MsgTimestampMilliseconds.count() < 0) {
+    MsgTimestampMilliseconds =
+        std::chrono::duration_cast<std::chrono::milliseconds>(
+            std::chrono::system_clock::now().time_since_epoch());
+    Logger->info(
         "Kafka command doesn't contain timestamp, so using current time.");
   }
-  LOG(Sev::Info, "Kafka command message timestamp : {}", MsgTimestamp.count());
+  Logger->info("Kafka command message timestamp : {}",
+               MsgTimestampMilliseconds.count());
 
   try {
-    handle(Command, MsgTimestamp);
+    handle(Command, MsgTimestampMilliseconds);
   } catch (...) {
     std::string JobID = "unknown";
     try {
@@ -547,8 +554,8 @@ void CommandHandler::tryToHandle(std::string const &Command,
       auto Message = fmt::format(
           "Unexpected std::exception while handling command:\n{}\n{}", Command,
           format_nested_exception(E));
-      LOG(Sev::Error, "JobID: {}  StatusCode: {}  Message: {}", JobID,
-          convertStatusCodeToString(StatusCode::Fail), Message);
+      Logger->error("JobID: {}  StatusCode: {}  Message: {}", JobID,
+                    convertStatusCodeToString(StatusCode::Fail), Message);
       if (MasterPtr != nullptr) {
         logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
                  Config.ServiceID, JobID, Message);

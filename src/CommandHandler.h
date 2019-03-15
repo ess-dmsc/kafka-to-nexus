@@ -25,7 +25,8 @@ struct StreamSettings {
 /// \param  Command Command passed to the program.
 /// \return If parsing successful returns `nlohmann::json`, otherwise throws an
 /// exception.
-nlohmann::json parseOrThrow(std::string const &Command);
+nlohmann::json parseOrThrow(std::string const &Command,
+                            std::shared_ptr<spdlog::logger> Logger);
 
 std::string format_nested_exception(std::exception const &E);
 
@@ -106,6 +107,7 @@ private:
   MainOpt &Config;
   MasterInterface *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief Extract the time in milliseconds from the JSON.

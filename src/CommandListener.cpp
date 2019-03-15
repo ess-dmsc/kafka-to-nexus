@@ -27,7 +27,7 @@ void CommandListener::start() {
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
     consumer->addTopic(config.CommandBrokerURI.Topic);
   else {
-    LOG(Sev::Error,
+    Logger->error(
         "Topic {} not in broker. Could not start listener for topic {}.",
         config.CommandBrokerURI.Topic, config.CommandBrokerURI.Topic);
     throw std::runtime_error(fmt::format(
