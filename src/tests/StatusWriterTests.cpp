@@ -6,59 +6,25 @@
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
 
-std::string getStringValue(const std::string &Key, nlohmann::json &Document) {
-  try {
-    if (auto x = find<std::string>(Key, Document)) {
-      return x.inner();
-    }
-  } catch (std::exception &e) {
-    std::cout << e.what() << '\n';
-  }
-  return "";
-}
+/// Helper method to extract values.
+template<typename T>
+T getValue(const std::string &Key, nlohmann::json &Document) {
 
-int getIntegerValue(const std::string &Key, nlohmann::json &Document) {
-  try {
-    if (auto x = find<int>(Key, Document)) {
+    if (auto x = find<T>(Key, Document)) {
       return x.inner();
     }
-  } catch (std::exception &e) {
-    std::cout << e.what() << '\n';
-  }
-  return -1;
-}
 
-double getDoubleValue(const std::string &Key, nlohmann::json &Document) {
-  try {
-    if (auto x = find<double>(Key, Document)) {
-      return x.inner();
-    }
-  } catch (std::exception &e) {
-    std::cout << e.what() << '\n';
-  }
-  return -1;
-}
-
-uint64_t getUnsignedInteger64Value(const std::string &Key,
-                                   nlohmann::json &Document) {
-  try {
-    if (auto x = find<uint64_t>(Key, Document)) {
-      return x.inner();
-    }
-  } catch (std::exception &e) {
-    std::cout << e.what() << '\n';
-  }
-  return 0u;
+    throw std::runtime_error("Could not get value");
 }
 
 TEST(StatusWriter, emptyWriterHasDefaultFields) {
   FileWriter::Status::StatusWriter Writer;
   StreamMasterInfo sm;
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
-  EXPECT_EQ(getStringValue("type", json), "stream_master_status");
-  EXPECT_EQ(getIntegerValue("next_message_eta_ms", json), 0);
-  EXPECT_EQ(getIntegerValue("job_id", json), 0);
-  EXPECT_EQ(getUnsignedInteger64Value("timestamp", json), 0u);
+  std::string temp = json.dump();
+  EXPECT_EQ(getValue<std::string>("type", json), "stream_master_status");
+  EXPECT_EQ(getValue<int>("next_message_eta_ms", json), 0);
+  EXPECT_EQ(getValue<int>("job_id", json), 0);
 }
 
 int64_t getTimestampMs() {
@@ -74,12 +40,12 @@ TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
   ASSERT_NO_THROW(json.at("stream_master"));
 
-  EXPECT_EQ(getDoubleValue("Mbytes", json["stream_master"]), 0.0);
-  EXPECT_EQ(getDoubleValue("errors", json["stream_master"]), 0.0);
-  EXPECT_EQ(getDoubleValue("messages", json["stream_master"]), 0.0);
-  EXPECT_LT(getDoubleValue("runtime", json["stream_master"]), 10.0);
-  EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
-  EXPECT_NEAR(getUnsignedInteger64Value("timestamp", json), getTimestampMs(),
+  EXPECT_EQ(getValue<double>("Mbytes", json["stream_master"]), 0.0);
+  EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 0.0);
+  EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 0.0);
+  EXPECT_LT(getValue<double>("runtime", json["stream_master"]), 10.0);
+  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]), "Not Started");
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(),
               1000);
 }
 
@@ -91,7 +57,7 @@ TEST(StatusWriter, showTimeToNextMessage) {
   Writer.write(sm);
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
 
-  EXPECT_EQ(getDoubleValue("next_message_eta_ms", json), 1000.0);
+  EXPECT_EQ(getValue<double>("next_message_eta_ms", json), 1000.0);
 }
 
 TEST(StatusWriter, addMessageUpdatesStreamMaster) {
@@ -109,12 +75,12 @@ TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("stream_master"));
 
-  EXPECT_EQ(getDoubleValue("Mbytes", json["stream_master"]),
+  EXPECT_EQ(getValue<double>("Mbytes", json["stream_master"]),
             MessageSizeBytes * 1e-6);
-  EXPECT_EQ(getDoubleValue("errors", json["stream_master"]), 0.0);
-  EXPECT_EQ(getDoubleValue("messages", json["stream_master"]), 1.0);
-  EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
-  EXPECT_NEAR(getUnsignedInteger64Value("timestamp", json), getTimestampMs(),
+  EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 0.0);
+  EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 1.0);
+  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]), "Not Started");
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(),
               1000);
 }
 
@@ -131,11 +97,11 @@ TEST(StatusWriter, addErrorUpdatesStreamMaster) {
   // make sure that json structure is correct
   ASSERT_NO_THROW(json.at("stream_master"));
 
-  EXPECT_EQ(getDoubleValue("Mbytes", json["stream_master"]), 0.0);
-  EXPECT_EQ(getDoubleValue("errors", json["stream_master"]), 1.0);
-  EXPECT_EQ(getDoubleValue("messages", json["stream_master"]), 0.0);
-  EXPECT_EQ(getStringValue("state", json["stream_master"]), "Not Started");
-  EXPECT_NEAR(getUnsignedInteger64Value("timestamp", json), getTimestampMs(),
+  EXPECT_EQ(getValue<double>("Mbytes", json["stream_master"]), 0.0);
+  EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 1.0);
+  EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 0.0);
+  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]), "Not Started");
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(),
               1000);
 }
 
@@ -153,15 +119,15 @@ TEST(StatusWriter, addStreamEmptyMessageInfo) {
   ASSERT_NO_THROW(json["streamer"].at(Topic));
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
 
-  EXPECT_EQ(getDoubleValue("average",
+  EXPECT_EQ(getValue<double>("average",
                            json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
-  EXPECT_EQ(getDoubleValue("standard_deviation",
+  EXPECT_EQ(getValue<double>("standard_deviation",
                            json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
-  EXPECT_EQ(getDoubleValue("Mbytes", json["streamer"][Topic]["rates"]), 0.0);
-  EXPECT_EQ(getIntegerValue("errors", json["streamer"][Topic]["rates"]), 0);
-  EXPECT_EQ(getIntegerValue("messages", json["streamer"][Topic]["rates"]), 0);
+  EXPECT_EQ(getValue<double>("Mbytes", json["streamer"][Topic]["rates"]), 0.0);
+  EXPECT_EQ(getValue<int>("errors", json["streamer"][Topic]["rates"]), 0);
+  EXPECT_EQ(getValue<int>("messages", json["streamer"][Topic]["rates"]), 0);
 }
 
 TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
@@ -181,10 +147,10 @@ TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   ASSERT_NO_THROW(json["streamer"].at(Topic));
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
 
-  EXPECT_EQ(getDoubleValue("average",
+  EXPECT_EQ(getValue<double>("average",
                            json["streamer"][Topic]["rates"]["message_size"]),
             MessageSizeBytes / NumMessages * 1e-6);
-  EXPECT_EQ(getDoubleValue("standard_deviation",
+  EXPECT_EQ(getValue<double>("standard_deviation",
                            json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
 }
