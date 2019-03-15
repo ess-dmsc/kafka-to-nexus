@@ -8,7 +8,6 @@
 #include <array>
 #include <chrono>
 #include <memory>
-#include <nlohmann/json.hpp>
 #include <vector>
 
 namespace FileWriter {
@@ -110,8 +109,7 @@ public:
                                                        ErrorLogMinInterval};
 
 private:
-  static bool findType(const nlohmann::basic_json<> Attribute,
-                       std::string &DType);
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief  Interface for creating and opening a dataset.

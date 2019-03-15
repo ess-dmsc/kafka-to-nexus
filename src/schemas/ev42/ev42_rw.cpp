@@ -33,7 +33,7 @@ FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto fbuf = get_fbuf(Message.data());
   auto NamePtr = fbuf->source_name();
   if (NamePtr == nullptr) {
-    LOG(Sev::Notice, "message has no source_name");
+    Logger->info("message has no source_name");
     return "";
   }
   return NamePtr->str();
@@ -55,7 +55,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
         ConfigurationStreamJson["nexus"]["indices"]["index_every_kb"]
             .get<uint64_t>() *
         1024;
-    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+    Logger->trace("index_every_bytes: {}", index_every_bytes);
   } catch (...) { /* it's ok if not found */
   }
   try {
@@ -63,41 +63,41 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
         ConfigurationStreamJson["nexus"]["indices"]["index_every_mb"]
             .get<uint64_t>() *
         1024 * 1024;
-    LOG(Sev::Debug, "index_every_bytes: {}", index_every_bytes);
+    Logger->trace("index_every_bytes: {}", index_every_bytes);
   } catch (...) { /* it's ok if not found */
   }
   try {
     ConfigurationStreamJson["nexus"]["chunk"]["chunk_n_elements"]
         .get<uint64_t>();
-    LOG(Sev::Error, "chunk_n_elements is no longer supported");
+    Logger->error("chunk_n_elements is no longer supported");
   } catch (...) { /* it's ok if not found */
   }
   try {
     chunk_bytes =
         ConfigurationStreamJson["nexus"]["chunk"]["chunk_kb"].get<uint64_t>() *
         1024;
-    LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
+    Logger->trace("chunk_bytes: {}", chunk_bytes);
   } catch (...) { /* it's ok if not found */
   }
   try {
     chunk_bytes =
         ConfigurationStreamJson["nexus"]["chunk"]["chunk_mb"].get<uint64_t>() *
         1024 * 1024;
-    LOG(Sev::Debug, "chunk_bytes: {}", chunk_bytes);
+    Logger->trace("chunk_bytes: {}", chunk_bytes);
   } catch (...) { /* it's ok if not found */
   }
   try {
     buffer_size =
         ConfigurationStreamJson["nexus"]["buffer"]["size_kb"].get<uint64_t>() *
         1024;
-    LOG(Sev::Debug, "buffer_size: {}", buffer_size);
+    Logger->trace("buffer_size: {}", buffer_size);
   } catch (...) { /* it's ok if not found */
   }
   try {
     buffer_size =
         ConfigurationStreamJson["nexus"]["buffer"]["size_mb"].get<uint64_t>() *
         1024 * 1024;
-    LOG(Sev::Debug, "buffer_size: {}", buffer_size);
+    Logger->trace("buffer_size: {}", buffer_size);
   } catch (...) { /* it's ok if not found */
   }
   try {
@@ -105,7 +105,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
         ConfigurationStreamJson["nexus"]["buffer"]["packet_max_kb"]
             .get<uint64_t>() *
         1024;
-    LOG(Sev::Debug, "buffer_packet_max: {}", buffer_packet_max);
+    Logger->trace("buffer_packet_max: {}", buffer_packet_max);
   } catch (...) { /* it's ok if not found */
   }
 }
@@ -139,7 +139,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       throw std::runtime_error("Dataset init failed");
     }
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    HDFFile::writeAttributes(HDFGroup, &AttributesJson);
+    writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
     throw std::runtime_error(
@@ -197,7 +197,7 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
   auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),
                                                  fbuf->detector_id()->size());
   if (w1ret.ix0 != w2ret.ix0) {
-    LOG(Sev::Warning, "written data lengths differ");
+    Logger->warn("written data lengths differ");
   }
   auto pulse_time = fbuf->pulse_time();
   this->ds_event_time_zero->append_data_1d(&pulse_time, 1);

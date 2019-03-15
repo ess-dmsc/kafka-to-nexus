@@ -46,8 +46,8 @@ std::string SampleEnvironmentDataGuard::source_name(
 
 void FastSampleEnvironmentWriter::parse_config(std::string const &,
                                                std::string const &) {
-  LOG(Sev::Debug, "There are currently no runtime configurable options in the "
-                  "FastSampleEnvironmentWriter class.");
+  Logger->trace("There are currently no runtime configurable options in the "
+                "FastSampleEnvironmentWriter class.");
 }
 
 FileWriterBase::InitResult
@@ -76,11 +76,12 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::HDFFile::writeAttributes(HDFGroup, &AttributesJson);
+    FileWriter::writeAttributes(HDFGroup, &AttributesJson,
+                                std::shared_ptr<spdlog::logger>());
   } catch (std::exception &E) {
-    LOG(Sev::Error, "Unable to initialise fast sample environment data tree in "
-                    "HDF file with error message: \"{}\"",
-        E.what());
+    Logger->error("Unable to initialise fast sample environment data tree in "
+                  "HDF file with error message: \"{}\"",
+                  E.what());
     return HDFWriterModule::InitResult::ERROR;
   }
   return FileWriterBase::InitResult::OK;
@@ -97,7 +98,7 @@ FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
     CueTimestamp =
         NeXusDataset::CueTimestampZero(CurrentGroup, NeXusDataset::Mode::Open);
   } catch (std::exception &E) {
-    LOG(Sev::Error,
+    Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
     return HDFWriterModule::InitResult::ERROR;
@@ -121,8 +122,7 @@ void FastSampleEnvironmentWriter::write(
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();
   if (TempDataSize == 0) {
-    LOG(Sev::Warning,
-        "Received a flatbuffer with zero (0) data elements in it.");
+    Logger->warn("Received a flatbuffer with zero (0) data elements in it.");
     return;
   }
   ArrayAdapter<const std::uint16_t> CArray(TempDataPtr, TempDataSize);
