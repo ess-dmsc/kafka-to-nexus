@@ -51,7 +51,7 @@ private:
                 std::atomic<StreamMasterError> &StreamMasterStatus) {
     std::this_thread::sleep_for(ReportMs);
     if (!Producer) {
-      LOG(Sev::Error,
+      Logger->error(
           "ProucerTopic error: can't produce StreamMaster status report");
       return StreamMasterError::REPORT_ERROR;
     }
@@ -77,5 +77,6 @@ private:
   std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
   std::string JobId;
   std::chrono::milliseconds ReportMs;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 } // namespace FileWriter

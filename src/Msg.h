@@ -26,14 +26,14 @@ struct Msg {
 
   char const *data() const {
     if (DataPtr == nullptr) {
-      LOG(Sev::Error, "error at type: {}", -1);
+      spdlog::get("filewriterlogger")->error("error at type: {}", -1);
     }
     return DataPtr.get();
   }
 
   size_t size() const {
     if (DataPtr == nullptr) {
-      LOG(Sev::Error, "error at type: {}", -1);
+      spdlog::get("filewriterlogger")->error("error at type: {}", -1);
     }
     return Size;
   }
