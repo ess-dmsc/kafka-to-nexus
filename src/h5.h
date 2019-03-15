@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logger.h"
 #include <array>
 #include <h5cpp/hdf5.hpp>
 #include <hdf5.h>
@@ -67,6 +68,7 @@ private:
   h5d() = default;
   void init_basics();
   uint64_t TotalNanosecondsSpent = 0;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 template <typename T> class h5d_chunked_1d;
@@ -99,6 +101,7 @@ private:
   uint64_t count_buffer_copy_bytes = 0;
   uint64_t count_append_calls = 0;
   uint64_t count_append_bytes = 0;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// Specialized chunked dataset for strings.
@@ -149,6 +152,7 @@ private:
   uint64_t count_buffer_copy_bytes = 0;
   uint64_t count_append_calls = 0;
   uint64_t count_append_bytes = 0;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 } // namespace h5
