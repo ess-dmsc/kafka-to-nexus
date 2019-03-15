@@ -21,7 +21,7 @@ std::string Reader::source_name(FlatbufferMessage const &Message) const {
   auto Buffer = getRoot(Message.data());
   auto Source = Buffer->source();
   if (Source == nullptr) {
-    LOG(Sev::Notice, "message has no source_name");
+    spdlog::get("filewriterlogger")->info("message has no source_name");
     return "";
   }
   return Source->str();

@@ -21,6 +21,7 @@ public:
   uptr<h5::h5d_chunked_2d<DT>> ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::NONE;
   size_t ChunkSize = 64 * 1024;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief  Open or create a new dataset for array numeric types
@@ -38,7 +39,7 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
         "Can not handle number of columns ColumnCount == {}", ColumnCount));
   }
   if (OpenMode == Mode::Create) {
-    LOG(Sev::Debug, "f142 init_impl  ColumnCount: {}", ColumnCount);
+    Logger->trace("f142 init_impl  ColumnCount: {}", ColumnCount);
     ChunkedDataset = h5::h5d_chunked_2d<DT>::create(HdfGroup, SourceName,
                                                     ColumnCount, 64 * 1024);
     if (ChunkedDataset == nullptr) {
@@ -46,8 +47,8 @@ WriterArray<DT, FV>::WriterArray(hdf5::node::Group HdfGroup,
           "Could not create hdf dataset  SourceName: {}", SourceName));
     }
   } else if (OpenMode == Mode::Open) {
-    LOG(Sev::Debug, "f142 writer_typed_array reopen  ColumnCount: {}",
-        ColumnCount);
+    Logger->trace("f142 writer_typed_array reopen  ColumnCount: {}",
+                  ColumnCount);
     ChunkedDataset =
         h5::h5d_chunked_2d<DT>::open(HdfGroup, SourceName, ColumnCount);
     if (ChunkedDataset == nullptr) {
