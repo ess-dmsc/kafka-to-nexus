@@ -231,7 +231,7 @@ node {
     }
   }
 
-  //builders['macOS'] = get_macos_pipeline()
+  builders['macOS'] = get_macos_pipeline()
 
   if ( env.CHANGE_ID ) {
       builders['system tests'] = get_system_tests_pipeline()
