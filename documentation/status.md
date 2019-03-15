@@ -75,7 +75,7 @@ It provides some useful metrics about the amount of data being processed.
 
 ## Command responses
 
-Upon receiving a command from a client (NICOS, cmd-line etc.) the file-writer will publish a response of the status
+Upon receiving a command from a client (NICOS, cmd-line etc.) the file-writer will publish a response in the status
 topic.
 
 Assuming the file-writer is happy with the command then it will respond with a message like:
