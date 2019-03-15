@@ -7,14 +7,14 @@ using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
 
 /// Helper method to extract values.
-template<typename T>
+template <typename T>
 T getValue(const std::string &Key, nlohmann::json &Document) {
 
-    if (auto x = find<T>(Key, Document)) {
-      return x.inner();
-    }
+  if (auto x = find<T>(Key, Document)) {
+    return x.inner();
+  }
 
-    throw std::runtime_error("Could not get value");
+  throw std::runtime_error("Could not get value");
 }
 
 TEST(StatusWriter, emptyWriterHasDefaultFields) {
@@ -44,9 +44,9 @@ TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 0.0);
   EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 0.0);
   EXPECT_LT(getValue<double>("runtime", json["stream_master"]), 10.0);
-  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]), "Not Started");
-  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(),
-              1000);
+  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
+            "Not Started");
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
 }
 
 TEST(StatusWriter, showTimeToNextMessage) {
@@ -79,9 +79,9 @@ TEST(StatusWriter, addMessageUpdatesStreamMaster) {
             MessageSizeBytes * 1e-6);
   EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 0.0);
   EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 1.0);
-  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]), "Not Started");
-  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(),
-              1000);
+  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
+            "Not Started");
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
 }
 
 TEST(StatusWriter, addErrorUpdatesStreamMaster) {
@@ -100,9 +100,9 @@ TEST(StatusWriter, addErrorUpdatesStreamMaster) {
   EXPECT_EQ(getValue<double>("Mbytes", json["stream_master"]), 0.0);
   EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 1.0);
   EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 0.0);
-  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]), "Not Started");
-  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(),
-              1000);
+  EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
+            "Not Started");
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
 }
 
 TEST(StatusWriter, addStreamEmptyMessageInfo) {
@@ -120,10 +120,10 @@ TEST(StatusWriter, addStreamEmptyMessageInfo) {
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
 
   EXPECT_EQ(getValue<double>("average",
-                           json["streamer"][Topic]["rates"]["message_size"]),
+                             json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
   EXPECT_EQ(getValue<double>("standard_deviation",
-                           json["streamer"][Topic]["rates"]["message_size"]),
+                             json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
   EXPECT_EQ(getValue<double>("Mbytes", json["streamer"][Topic]["rates"]), 0.0);
   EXPECT_EQ(getValue<int>("errors", json["streamer"][Topic]["rates"]), 0);
@@ -148,10 +148,10 @@ TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
 
   EXPECT_EQ(getValue<double>("average",
-                           json["streamer"][Topic]["rates"]["message_size"]),
+                             json["streamer"][Topic]["rates"]["message_size"]),
             MessageSizeBytes / NumMessages * 1e-6);
   EXPECT_EQ(getValue<double>("standard_deviation",
-                           json["streamer"][Topic]["rates"]["message_size"]),
+                             json["streamer"][Topic]["rates"]["message_size"]),
             0.0);
 }
 
