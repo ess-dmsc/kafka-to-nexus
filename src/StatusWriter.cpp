@@ -14,11 +14,11 @@ nlohmann::json StreamMasterToJson(StreamMasterInfo const &Information) {
 }
 
 nlohmann::json StreamerToJson(MessageInfo const &Information) {
-  std::pair<double, double> Size = Information.messageSize();
+  std::pair<double, double> Size = Information.messageSizeStats();
 
   nlohmann::json Status;
   Status["rates"] = {
-      {"messages", Information.getMessages()},
+      {"messages", Information.getNumberMessages()},
       {"Mbytes", Information.getMbytes()},
       {"errors", Information.getErrors()},
       {"message_size",
@@ -35,7 +35,7 @@ void StatusWriter::write(StreamMasterInfo &Information) {
   json["next_message_eta_ms"] = Information.getTimeToNextMessage().count();
   json["stream_master"] = StreamMasterToJson(Information);
   json["timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                          std::chrono::steady_clock::now().time_since_epoch())
+                          std::chrono::system_clock::now().time_since_epoch())
                           .count();
 }
 

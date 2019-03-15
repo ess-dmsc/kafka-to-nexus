@@ -29,7 +29,7 @@ TEST(StatusWriter, emptyWriterHasDefaultFields) {
 
 int64_t getTimestampMs() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
-             std::chrono::steady_clock::now().time_since_epoch())
+             std::chrono::system_clock::now().time_since_epoch())
       .count();
 };
 
@@ -162,7 +162,7 @@ TEST(StatFunctions, messageSize) {
   for (size_t i = 0; i < NumMessages; ++i) {
     Message.newMessage(MessageBytes * i);
   }
-  std::pair<double, double> MessageSize = Message.messageSize();
+  std::pair<double, double> MessageSize = Message.messageSizeStats();
   EXPECT_DOUBLE_EQ(MessageSize.first, 0.050688);
   EXPECT_DOUBLE_EQ(MessageSize.second, 0.0297077677833032);
 }

@@ -77,7 +77,7 @@ int main(int argc, char **argv) {
     }
   });
 
-  while (not Master.RunLoopExited()) {
+  while (not Master.runLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
       LOG(Sev::Notice, "SIGNAL {}", SignalId);

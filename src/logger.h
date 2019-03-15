@@ -11,7 +11,10 @@
 #else
 
 #define LOG(level, fmt, args...)                                               \
-  { dwlog(level, fmt, __FILE__, __LINE__, __PRETTY_FUNCTION__, ##args); }
+  {                                                                            \
+    dwlog(static_cast<int>(level), fmt, __FILE__, __LINE__,                    \
+          __PRETTY_FUNCTION__, ##args);                                        \
+  }
 
 #endif
 
@@ -37,15 +40,14 @@ void dwlog_inner(int level, char const *file, int line, char const *func,
                  std::string const &s1);
 
 template <typename... TT>
-void dwlog(Sev level, char const *fmt, char const *file, int line,
+void dwlog(int level, char const *fmt, char const *file, int line,
            char const *func, TT const &... args) {
-  if (static_cast<int>(level) > log_level)
+  if (level > log_level)
     return;
   try {
-    dwlog_inner(static_cast<int>(level), file, line, func,
-                fmt::format(fmt, args...));
+    dwlog_inner(level, file, line, func, fmt::format(fmt, args...));
   } catch (fmt::format_error &e) {
-    dwlog_inner(static_cast<int>(level), file, line, func,
+    dwlog_inner(level, file, line, func,
                 fmt::format("ERROR in format: {}: {}", e.what(), fmt));
   }
 }

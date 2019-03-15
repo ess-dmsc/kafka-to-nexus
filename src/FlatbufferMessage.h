@@ -1,11 +1,9 @@
 #pragma once
 
-#include "KafkaW/ConsumerMessage.h"
 #include "logger.h"
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
-#include <librdkafka/rdkafka.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 #include <vector>

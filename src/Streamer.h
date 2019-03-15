@@ -6,17 +6,15 @@
 
 #include "DemuxTopic.h"
 #include "EventLogger.h"
+#include "KafkaW/Consumer.h"
 #include "Status.h"
 #include "StreamerOptions.h"
 #include "logger.h"
-
-#include "KafkaW/KafkaW.h"
-
 #include <chrono>
 #include <future>
 
 namespace FileWriter {
-using ConsumerPtr = std::unique_ptr<KafkaW::Consumer>;
+using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
 
 /// \brief Connect to kafka topics eventually at a given point in time
 /// and consume messages.
@@ -86,7 +84,7 @@ public:
   StreamerOptions &getOptions() { return Options; }
 
 protected:
-  ConsumerPtr Consumer;
+  ConsumerPtr Consumer{nullptr};
   KafkaW::BrokerSettings Settings;
 
   StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
@@ -96,6 +94,10 @@ protected:
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>> ConsumerCreated;
+
+private:
+  bool ifConsumerIsReadyThenAssignIt();
+  bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
 };
 
 /// \brief Create a consumer with options specified in the class

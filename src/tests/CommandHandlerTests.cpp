@@ -33,8 +33,8 @@ TEST_F(CommandHandler_Testing, MissingStartTimeMeanStartNow) {
 
   MainOpt MainOpt;
   FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.tryToHandle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
 
   std::chrono::milliseconds Now =
       std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -61,8 +61,8 @@ TEST_F(CommandHandler_Testing, MissingStopTimeMeanNeverStop) {
 
   MainOpt MainOpt;
   FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.tryToHandle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
 
   EXPECT_FALSE(MainOpt.StreamerConfiguration.StopTimestamp.count() > 0);
   unlink("a-dummy-name-00.h5");
@@ -85,8 +85,8 @@ TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
 
   MainOpt MainOpt;
   FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.tryToHandle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
   EXPECT_EQ(MainOpt.StreamerConfiguration.StartTimestamp.count(), 123456789);
   EXPECT_EQ(MainOpt.StreamerConfiguration.StopTimestamp.count(), 123456790);
   unlink("a-dummy-name-01.h5");
@@ -136,8 +136,8 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
     ]
   }
 })""");
-  CommandHandler.tryToHandle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
   // Assert that this command was not accepted by the command handler:
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
@@ -162,8 +162,8 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   auto Command = nlohmann::json::parse(CommandString);
   Command["use_hdf_swmr"] = UseSWMR;
   CommandString = Command.dump();
-  CommandHandler.tryToHandle(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size()));
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
   ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
             static_cast<size_t>(1));
   auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");

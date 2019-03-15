@@ -81,11 +81,10 @@ set(kafka_to_nexus_SRC
         HDFFile.cpp
         HDFWriterModule.cpp
         KafkaW/BrokerSettings.cpp
-        KafkaW/TopicSettings.cpp
-        KafkaW/KafkaW.cpp
         KafkaW/Consumer.cpp
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
+        KafkaW/ConsumerFactory.cpp
         helper.cpp
         logger.cpp
         URI.cpp
@@ -112,13 +111,15 @@ set(kafka_to_nexus_INC
         json.h
         kafka-to-nexus.h
         KafkaW/BrokerSettings.h
-        KafkaW/ConsumerSettings.h
-        KafkaW/TopicSettings.h
-        KafkaW/KafkaW.h
-        KafkaW/ConsumerMessage.h
         KafkaW/Consumer.h
         KafkaW/Producer.h
         KafkaW/ProducerTopic.h
+        KafkaW/PollStatus.h
+        KafkaW/ProducerStats.h
+        KafkaW/ProducerMessage.h
+        KafkaW/KafkaEventCb.h
+        KafkaW/MetadataException.h
+        KafkaW/ConsumerFactory.h
         logger.h
         MainOpt.h
         Master.h
@@ -177,8 +178,9 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
-find_package(GTest)
+# use custom find module as cmake module doesn#t support gmock
+find_package(Googletest)
 
-if (${GTEST_FOUND})
+if (${have_gtest})
   add_subdirectory(tests)
 endif()
