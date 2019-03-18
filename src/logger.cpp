@@ -1,13 +1,12 @@
-#include <memory>
-
+#include "logger.h"
 #include "KafkaW/ProducerTopic.h"
 #include "json.h"
-#include "logger.h"
 #include <atomic>
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <memory>
 #include <memory>
 #include <string>
 #include <thread>
