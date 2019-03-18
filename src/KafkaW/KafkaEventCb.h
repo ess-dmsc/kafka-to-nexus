@@ -2,44 +2,34 @@
 #include "logger.h"
 #include <librdkafka/rdkafkacpp.h>
 
-#ifdef _MSC_VER
-
-// The levels used in the LOG macro are defined in the spdlog::level namespace
-// in spdlog.h
-#define LOG(level, fmt, ...)                                                   \
-  { spdlog::get("filewriterlogger")->log(level, fmt, __VA_ARGS__); }
-#else
-#define LOG(level, fmt, args...)                                               \
-  { spdlog::get("filewriterlogger")->log(level, fmt, ##args); }
-#endif
-
 namespace KafkaW {
 class KafkaEventCb : public RdKafka::EventCb {
 public:
   void event_cb(RdKafka::Event &Event) override {
     switch (Event.type()) {
     case RdKafka::Event::EVENT_ERROR:
-      LOG(spdlog::level::level_enum(LogLevels.at(Event.severity())),
-          "Kafka EVENT_ERROR id: {}  broker: {}  errorname: {}  "
-          "errorstring: {}",
-          Event.broker_id(), Event.broker_name().c_str(),
-          RdKafka::err2str(Event.err()), Event.str());
+      Logger->log(spdlog::level::level_enum(LogLevels.at(Event.severity())),
+                  "Kafka EVENT_ERROR id: {}  broker: {}  errorname: {}  "
+                  "errorstring: {}",
+                  Event.broker_id(), Event.broker_name().c_str(),
+                  RdKafka::err2str(Event.err()), Event.str());
       break;
     case RdKafka::Event::EVENT_STATS:
-      LOG(spdlog::level::level_enum(LogLevels.at(Event.severity())),
-          "Kafka Stats id: {} broker: {} message: {}", Event.broker_id(),
-          Event.broker_name(), Event.str());
+      Logger->log(spdlog::level::level_enum(LogLevels.at(Event.severity())),
+                  "Kafka Stats id: {} broker: {} message: {}",
+                  Event.broker_id(), Event.broker_name(), Event.str());
       break;
     case RdKafka::Event::EVENT_LOG:
-      LOG(spdlog::level::level_enum(LogLevels.at(Event.severity())),
+      Logger->log(
+          spdlog::level::level_enum(LogLevels.at(Event.severity())),
           "Kafka Log id: {} broker: {} severity: {}, facilitystr: {}:{}",
           Event.broker_id(), Event.broker_name(), Event.severity(), Event.fac(),
           Event.str());
       break;
     default:
-      LOG(spdlog::level::level_enum(LogLevels.at(Event.severity())),
-          "Kafka Event {} ({}): {}", Event.type(),
-          RdKafka::err2str(Event.err()), Event.str());
+      Logger->log(spdlog::level::level_enum(LogLevels.at(Event.severity())),
+                  "Kafka Event {} ({}): {}", Event.type(),
+                  RdKafka::err2str(Event.err()), Event.str());
       break;
     }
   };
@@ -55,5 +45,6 @@ private:
        SPDLOG_LEVEL_CRITICAL},
       {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT, SPDLOG_LEVEL_OFF},
       {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG, SPDLOG_LEVEL_OFF}};
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
-}
+} // KafkaW
