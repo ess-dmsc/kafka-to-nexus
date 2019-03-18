@@ -15,8 +15,8 @@ public:
 
   void dr_cb(RdKafka::Message &Message) override {
     if (Message.err() != RdKafka::ERR_NO_ERROR) {
-      LOG(Sev::Error, "ERROR on delivery, topic {}, {} [{}]",
-          Message.topic_name(), Message.err(), Message.errstr());
+      Logger->error("ERROR on delivery, topic {}, {} [{}]",
+                    Message.topic_name(), Message.err(), Message.errstr());
       ++Stats.produce_cb_fail;
     } else {
       ++Stats.produce_cb;
@@ -29,5 +29,6 @@ public:
 
 private:
   ProducerStats &Stats;
+  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 }
