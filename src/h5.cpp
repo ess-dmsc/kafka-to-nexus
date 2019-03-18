@@ -424,6 +424,9 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
 }
 
 template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
+  if (buf_n == 0) {
+    return AppendResult::OK;
+  }
   auto wr = DataSet.append_data_1d(reinterpret_cast<T *>(buf.data()),
                                    buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
@@ -588,6 +591,9 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
 }
 
 template <typename T> AppendResult h5d_chunked_2d<T>::flush_buf() {
+  if (buf_n == 0) {
+    return AppendResult::OK;
+  }
   auto wr = DataSet.append_data_2d(reinterpret_cast<T *>(buf.data()),
                                    buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {

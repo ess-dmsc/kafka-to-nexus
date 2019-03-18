@@ -56,7 +56,8 @@ streamer-ms-before-start=123456
 kafka-config=consumer.timeout.ms 501 fetch.message.max.bytes 1234 api.version.request true
 ```
 
-Note: the Kafka options are key-value pairs and the file-writer can be given multiple by appending the key-value pair to the end of the command line option.
+Note: the Kafka options are key-value pairs and the file-writer can be given multiple by appending the key-value pair to 
+the end of the command line option.
 
 ### Sending commands to the file-writer
 
@@ -116,9 +117,16 @@ From the build directory:
 ./tests/UnitTests
 ```
 
+### Running on OSX
+
+When using Conan on OSX, due to the way paths to dependencies are handled,
+the `activate_run.sh` file must be sourced before running the application. The
+`deactivate_run.sh` can be sourced to undo the changes afterwards.
+
 ### System tests
 
-The system tests consist of a series of automated tests for this repository that test it in ways similar to how it would be used in production.
+The system tests consist of a series of automated tests for this repository that test it in ways similar to how it would 
+be used in production.
 
 See [System Tests page](system-tests/README.md) for more information.
 
