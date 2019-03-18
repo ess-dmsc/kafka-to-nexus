@@ -13,7 +13,7 @@ find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe63
 find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(Date REQUIRED)
-find_package(GraylogLogger REQUIRED)
+find_package(GraylogLogger)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -41,7 +41,6 @@ set(path_include_common
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
         ${PROJECT_BINARY_DIR}/src
-        ${GRAYLOGLOGGER_INCLUDE_DIR}
         )
 
 set(libraries_common
@@ -51,12 +50,20 @@ set(libraries_common
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
-        ${GRAYLOGLOGGER_LIBRARY}
         pthread
         z
         )
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
+
+if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
+  message(STATUS "Using graylog_logger")
+  list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
+  list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})
+  list(APPEND libraries_common ${GRAYLOGLOGGER_LIBRARY})
+elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
+  message(WARNING "graylog_logger requested but not found")
+endif()
 
 set(kafka_to_nexus_SRC
         Status.cpp

@@ -13,6 +13,7 @@
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>
 #include <graylog_logger/Log.hpp>
+#include <spdlog/sinks/graylog_sink.h>
 #endif
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
@@ -26,8 +27,17 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
   }
   if (!GraylogURI.empty()) {
     uri::URI TempURI(GraylogURI);
+
+#ifdef HAVE_GRAYLOG_LOGGER
     sinks.push_back(std::make_shared<spdlog::sinks::graylog_sink_mt>(
         TempURI.HostPort.substr(0, TempURI.HostPort.find(":")), TempURI.Port));
+#else
+    spdlog::log(
+        spdlog::level::err,
+        "ERROR not compiled with support for graylog_logger. Would have used "
+        "{}",
+        TempURI.HostPort);
+#endif
   } else {
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
   }
