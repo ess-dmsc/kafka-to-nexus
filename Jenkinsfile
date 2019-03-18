@@ -7,10 +7,12 @@ project = "kafka-to-nexus"
 clangformat_os = "debian9"
 test_and_coverage_os = "centos7"
 release_os = "centos7-release"
+no_graylog = "centos7-noGraylog"
 
 container_build_nodes = [
   'centos7': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
   'centos7-release': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
+  'centos7-noGraylog': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
   'debian9': new ContainerBuildNode('essdmscdm/debian9-build-node:2.6.0', 'bash -e'),
   'ubuntu1804': new ContainerBuildNode('essdmscdm/ubuntu18.04-build-node:1.4.0', 'bash -e')
 ]
@@ -52,6 +54,16 @@ builders = pipeline_builder.createBuilders { container ->
 
   pipeline_builder.stage("${container.key}: Dependencies") {
     def conan_remote = "ess-dmsc-local"
+    if (container.key == no_graylog) {
+           container.sh """
+                mkdir build
+                cd build
+                conan remote add \
+                  --insert 0 \
+                  ${conan_remote} ${local_conan_server}
+                conan install --build=outdated ../${pipeline_builder.project}/conan/conanfileNoGraylog.txt
+              """
+    } else {
     container.sh """
       mkdir build
       cd build
@@ -60,6 +72,7 @@ builders = pipeline_builder.createBuilders { container ->
         ${conan_remote} ${local_conan_server}
       conan install --build=outdated ../${pipeline_builder.project}/conan
     """
+    }
   }  // stage
 
   pipeline_builder.stage("${container.key}: Configure") {
@@ -82,6 +95,7 @@ builders = pipeline_builder.createBuilders { container ->
         . ./activate_run.sh
         cmake \
           -DCMAKE_BUILD_TYPE=Release \
+          -DCONAN=MANUAL \
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \

@@ -1,0 +1,34 @@
+[requires]
+gtest/3121b20-dm3@ess-dmsc/stable
+fmt/5.2.0@bincrafters/stable
+FlatBuffers/1.9.0@ess-dmsc/stable
+hdf5/1.10.2-dm2@ess-dmsc/stable
+h5cpp/0.1.0-dm2@ess-dmsc/testing
+librdkafka/0.11.5@ess-dmsc/stable
+jsonformoderncpp/3.1.0@vthiery/stable
+streaming-data-types/2246f84@ess-dmsc/stable
+cli11/1.5.3@bincrafters/stable
+cmake_installer/3.10.0@conan/stable
+trompeloeil/v31@ess-dmsc/stable
+date/4b46deb@ess-dmsc/stable
+spdlog/1.3.1@bincrafters/stable
+
+[generators]
+cmake
+virtualbuildenv
+virtualrunenv
+
+[options]
+FlatBuffers:shared=True
+gtest:shared=True
+hdf5:shared=True
+librdkafka:shared=True
+date:disable_string_view=True
+
+[imports]
+., *.dylib* -> ./lib @ keep_path=False
+., *.so* -> ./lib @ keep_path=False
+., LICENSE* -> ./licenses @ folder=True, ignore_case=True
+., *.dll -> ./bin @ keep_path=False
+., *.a* -> ./lib @ keep_path=False
+., *.lib -> -> ./bin @ keep_path=False
