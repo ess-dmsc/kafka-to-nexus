@@ -10,8 +10,6 @@
 #include <memory>
 #include <string>
 #include <thread>
-#include <graylog_logger/Log.hpp>
-
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>
 #include <graylog_logger/Log.hpp>
@@ -29,7 +27,6 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
   }
   if (!GraylogURI.empty()) {
     uri::URI TempURI(GraylogURI);
-
 
 #ifdef HAVE_GRAYLOG_LOGGER
     sinks.push_back(std::make_shared<spdlog::sinks::graylog_sink_mt>(
