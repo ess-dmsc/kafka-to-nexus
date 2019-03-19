@@ -74,34 +74,6 @@ std::string make_command_from_file(const std::string &filename) {
 
 extern "C" char const GIT_COMMIT[];
 
-bool parseLogLevels(std::vector<std::string> LogLevelString,
-                    spdlog::level::level_enum &LogLevelResult) {
-  std::map<std::string, spdlog::level::level_enum> LevelMap{
-      {"Critical", spdlog::level::critical}, {"Error", spdlog::level::err},
-      {"Warning", spdlog::level::warn},      {"Info", spdlog::level::info},
-      {"Debug", spdlog::level::debug},       {"Trace", spdlog::level::trace}};
-
-  if (LogLevelString.size() != 1) {
-    return false;
-  }
-  try {
-    LogLevelResult = LevelMap.at(LogLevelString.at(0));
-    return true;
-  } catch (std::out_of_range &e) {
-    // Do nothing
-  }
-  try {
-    int TempLogMessageLevel = std::stoi(LogLevelString.at(0));
-    if (TempLogMessageLevel < 1 or TempLogMessageLevel > 7) {
-      return false;
-    }
-    LogLevelResult = spdlog::level::level_enum(TempLogMessageLevel);
-  } catch (std::invalid_argument &e) {
-    return false;
-  }
-  return true;
-}
-
 int main(int argc, char **argv) {
 
   MainOpt opt;
@@ -129,7 +101,7 @@ int main(int argc, char **argv) {
   or `Debug`. Ex: "-l Notice")*";
   App.add_option("-v,--verbosity",
                  [&opt, LogLevelInfoStr](std::vector<std::string> Input) {
-                   return parseLogLevels(Input, opt.LoggingLevel);
+                   return parseLogLevel(Input, opt.LoggingLevel);
                  },
                  LogLevelInfoStr)
       ->set_default_val("Error");

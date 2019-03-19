@@ -124,8 +124,6 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
             MainOptions.ReportStatus,
             "<//host[:port][/topic]> Kafka broker/topic to publish status "
             "updates on");
-  App.add_option("--kafka-gelf", MainOptions.kafka_gelf,
-                 "<//host[:port]/topic> Log to Graylog via Kafka GELF adapter");
   App.add_option("--graylog-logger-address", MainOptions.GraylogLoggerAddress,
                  "<host:port> Log to Graylog via graylog_logger library");
   std::string LogLevelInfoStr =

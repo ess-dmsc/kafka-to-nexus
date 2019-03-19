@@ -34,9 +34,6 @@ struct MainOpt {
 
   spdlog::level::level_enum LoggingLevel;
 
-  /// Can optionally log in Graylog GELF format to a Kafka topic.
-  std::string kafka_gelf;
-
   /// Can optionally use the `graylog_logger` library to log to this address.
   std::string GraylogLoggerAddress;
 
