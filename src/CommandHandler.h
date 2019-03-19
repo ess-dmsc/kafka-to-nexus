@@ -117,4 +117,6 @@ private:
 /// \return The value in milliseconds.
 std::chrono::milliseconds findTime(nlohmann::json const &Document,
                                    std::string const &Key);
+
+std::string TruncateCommand(std::string const &Command);
 } // namespace FileWriter

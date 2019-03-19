@@ -449,8 +449,8 @@ void CommandHandler::handle(std::string const &Command,
   try {
     Doc = json::parse(Command);
   } catch (...) {
-    std::throw_with_nested(
-        std::runtime_error(fmt::format("Can not parse command: {}", Command)));
+    std::throw_with_nested(std::runtime_error(
+        fmt::format("Can not parse command: {}", TruncateCommand(Command))));
   }
 
   if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
@@ -523,6 +523,16 @@ std::string format_nested_exception(std::exception const &E) {
   return format_nested_exception(E, StrS, 0);
 }
 
+std::string TruncateCommand(std::string const &Command) {
+  if (Command.size() > 500) {
+    auto TruncatedCommand = Command.substr(0, 1500);
+    TruncatedCommand.append("\n  [...]\n Command was truncated, displayed "
+                            "first 1500 characters.\n");
+    return TruncatedCommand;
+  }
+  return Command;
+}
+
 void CommandHandler::tryToHandle(
     std::string const &Command,
     std::chrono::milliseconds MsgTimestampMilliseconds) {
@@ -551,9 +561,10 @@ void CommandHandler::tryToHandle(
       std::throw_with_nested(
           std::runtime_error("Error in CommandHandler::tryToHandle"));
     } catch (std::runtime_error const &E) {
+      auto TruncatedCommand = TruncateCommand(Command);
       auto Message = fmt::format(
-          "Unexpected std::exception while handling command:\n{}\n{}", Command,
-          format_nested_exception(E));
+          "Unexpected std::exception while handling command:\n{}\n{}",
+          TruncatedCommand, format_nested_exception(E));
       Logger->error("JobID: {}  StatusCode: {}  Message: {}", JobID,
                     convertStatusCodeToString(StatusCode::Fail), Message);
       if (MasterPtr != nullptr) {
