@@ -4,6 +4,9 @@ import ecdcpipeline.PipelineBuilder
 
 project = "kafka-to-nexus"
 
+
+// 'no_graylog' builds code with plain spdlog conan package instead of ess-dmsc spdlog-graylog.
+// It fails to build in case graylog functionality was used without prior checking if graylog was available.
 clangformat_os = "debian9"
 test_and_coverage_os = "centos7"
 release_os = "centos7-release"
@@ -55,10 +58,6 @@ builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: Dependencies") {
     def conan_remote = "ess-dmsc-local"
     if (container.key == no_graylog) {
-          if (!env.CHANGE_ID) {
-          // Ignore non-PRs
-                return
-          }
            container.sh """
                 mkdir build
                 cd build
