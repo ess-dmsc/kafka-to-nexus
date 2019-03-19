@@ -147,5 +147,6 @@ int main(int argc, char **argv) {
     Logger->trace("sending {}", m1);
     pt.produce((uint8_t *)m1.data(), m1.size());
   }
+  Logger->flush();
   return 0;
 }

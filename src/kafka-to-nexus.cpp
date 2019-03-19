@@ -87,5 +87,6 @@ int main(int argc, char **argv) {
   }
 
   MasterThread.join();
+  Logger->flush();
   return 0;
 }
