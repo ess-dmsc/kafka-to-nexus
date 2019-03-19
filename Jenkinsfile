@@ -81,10 +81,6 @@ builders = pipeline_builder.createBuilders { container ->
 
   pipeline_builder.stage("${container.key}: Configure") {
     if (container.key != release_os && container.key != no_graylog) {
-      if (!env.CHANGE_ID) {
-      // Ignore non-PRs
-         return
-      }
       def coverage_on
       if (container.key == test_and_coverage_os) {
         coverage_on = '-DCOV=1'
