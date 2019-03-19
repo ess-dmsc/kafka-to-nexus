@@ -7,7 +7,7 @@ project = "kafka-to-nexus"
 clangformat_os = "debian9"
 test_and_coverage_os = "centos7"
 release_os = "centos7-release"
-no_graylog = "centos7-noGraylog"
+no_graylog = "centos7-no_graylog"
 
 container_build_nodes = [
   'centos7': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
