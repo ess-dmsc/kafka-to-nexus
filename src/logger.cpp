@@ -35,5 +35,5 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
       "filewriterlogger", begin(sinks), end(sinks));
   spdlog::register_logger(combined_logger);
   combined_logger->set_level(LoggingLevel);
-  combined_logger->flush_on(spdlog::level::err);
+  combined_logger->flush_on(spdlog::level::critical);
 }
