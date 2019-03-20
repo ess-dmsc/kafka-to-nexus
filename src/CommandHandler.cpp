@@ -594,7 +594,6 @@ CommandHandler::getFileWriterTaskByJobID(std::string const &JobID) {
   if (Task != FileWriterTasks.end()) {
     return *Task;
   }
-
   throw std::out_of_range("Unable to find task by Job ID");
 }
 

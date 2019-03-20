@@ -46,8 +46,6 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
 }
 
 void Source::close_writer_module() {
-  // TODO: should log here using Source::Logger field but it's been std::moved
-  // in CommandHandler::addStreamSourceToWriterModule() and would be NULL here
   if (WriterModule) {
     spdlog::get("filewriterlogger")
         ->trace("Closing writer module for {}", SourceName);

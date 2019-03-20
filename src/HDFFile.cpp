@@ -267,8 +267,9 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
             Encoding = hdf5::datatype::CharacterEncoding::ASCII;
           }
         }
-        if (auto AttrType = find<std::string>("type", Attribute)) {
-          DType = AttrType.inner();
+
+        // get type/dtype
+        if (findType(Attribute, DType)) {
           writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
                                    Values, Logger);
         } else {
@@ -281,6 +282,18 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
       }
     }
   }
+}
+
+bool HDFFile::findType(const nlohmann::basic_json<> Attribute,
+                       std::string &DType) {
+  if (auto AttrType = find<std::string>("type", Attribute)) {
+    DType = AttrType.inner();
+    return true;
+  } else if (auto AttrType = find<std::string>("dtype", Attribute)) {
+    DType = AttrType.inner();
+    return true;
+  } else
+    return false;
 }
 
 void writeAttrStringVariableLength(hdf5::node::Node const &Node,
@@ -660,12 +673,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
         return;
       }
     }
-
-    if (auto DatasetTypeObject =
-            find<std::string>("type", DatasetInnerObject)) {
-      DataType = DatasetTypeObject.inner();
-    }
-
+    findType(DatasetInnerObject, DataType);
     // optional, default to scalar
     if (auto DatasetSizeObject = find<json>("size", DatasetInnerObject)) {
       if (DatasetSizeObject.inner().is_array()) {
@@ -731,8 +739,8 @@ void createHDFStructures(
 
     // The HDF object that we will maybe create at the current level.
     hdf5::node::Group hdf_this;
-    if (auto TypeMaybe = find<std::string>("type", *Value)) {
-      auto Type = TypeMaybe.inner();
+    std::string Type;
+    if (findType(*Value, Type)) {
       if (Type == "group") {
         if (auto NameMaybe = find<std::string>("name", *Value)) {
           auto Name = NameMaybe.inner();

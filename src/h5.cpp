@@ -21,14 +21,14 @@ void h5d::init_basics() {
   for (int i1 = 0; i1 < ndims; ++i1) {
     Logger->trace("{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name, i1,
                   sext.at(i1), ShapeMax.at(i1));
-    try {
-      DSPMem = hdf5::dataspace::Simple({0, 0}, {H5S_UNLIMITED, H5S_UNLIMITED});
-    } catch (std::runtime_error const &e) {
-      std::throw_with_nested(
-          RuntimeError("hdf5::dataspace::Simple ctor failure"));
-    }
-    PLTransfer = hdf5::property::DatasetTransferList();
   }
+  try {
+    DSPMem = hdf5::dataspace::Simple({0, 0}, {H5S_UNLIMITED, H5S_UNLIMITED});
+  } catch (std::runtime_error const &e) {
+    std::throw_with_nested(
+        RuntimeError("hdf5::dataspace::Simple ctor failure"));
+  }
+  PLTransfer = hdf5::property::DatasetTransferList();
 }
 
 h5d::ptr h5d::create(hdf5::node::Group const &Node, std::string const &Name,

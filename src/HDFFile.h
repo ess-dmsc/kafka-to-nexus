@@ -54,7 +54,8 @@ public:
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
-
+  static bool findType(const nlohmann::basic_json<> Attribute,
+                       std::string &DType);
   void
   setCommonProps(hdf5::property::FileCreationList &FileCreationPropertyList,
                  hdf5::property::FileAccessList &FileAccessPropertyList) {}
