@@ -54,8 +54,7 @@ public:
 private:
   friend class ::T_HDFFile;
   friend class CommandHandler;
-  static bool findType(const nlohmann::basic_json<> Attribute,
-                       std::string &DType);
+
   void
   setCommonProps(hdf5::property::FileCreationList &FileCreationPropertyList,
                  hdf5::property::FileAccessList &FileAccessPropertyList) {}
@@ -70,6 +69,8 @@ private:
   std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
+bool findType(const nlohmann::basic_json<> Attribute,
+                     std::string &DType);
 std::string h5VersionStringLinked();
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
                      std::shared_ptr<spdlog::logger> Logger);

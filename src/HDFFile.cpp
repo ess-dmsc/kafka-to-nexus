@@ -284,8 +284,7 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
   }
 }
 
-bool HDFFile::findType(const nlohmann::basic_json<> Attribute,
-                       std::string &DType) {
+bool findType(const nlohmann::basic_json<> Attribute, std::string &DType) {
   if (auto AttrType = find<std::string>("type", Attribute)) {
     DType = AttrType.inner();
     return true;

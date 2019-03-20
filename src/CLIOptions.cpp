@@ -108,6 +108,7 @@ bool parseLogLevel(std::vector<std::string> LogLevelString,
   } catch (std::invalid_argument &e) {
     return false;
   }
+
   return true;
 }
 
