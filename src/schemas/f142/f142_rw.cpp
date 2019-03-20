@@ -148,9 +148,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
     return;
   }
 
-  if (auto TypeNameMaybe = find<std::string>("type", ConfigurationStreamJson)) {
-    TypeName = TypeNameMaybe.inner();
-  } else {
+  if (!findType(ConfigurationStreamJson, TypeName)) {
     throw std::runtime_error(
         fmt::format("Missing key \"type\" in f142 writer configuration"));
   }
@@ -339,6 +337,17 @@ int32_t HDFWriterModule::close() {
   return 0;
 }
 
+bool HDFWriterModule::findType(const nlohmann::basic_json<> Attribute,
+                               std::string &DType) {
+  if (auto AttrType = find<std::string>("type", Attribute)) {
+    DType = AttrType.inner();
+    return true;
+  } else if (auto AttrType = find<std::string>("dtype", Attribute)) {
+    DType = AttrType.inner();
+    return true;
+  } else
+    return false;
+}
 /// Register the writer module.
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
     RegisterWriter("f142");
