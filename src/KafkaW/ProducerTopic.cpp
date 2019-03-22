@@ -60,7 +60,8 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
 
   case RdKafka::ERR__QUEUE_FULL:
     ++ProducerStats.local_queue_full;
-    LOG(Sev::Warning, "Producer queue full, outq: {}",
+    LOG(Sev::Warning, "Producer queue full, outq (number of messages + number "
+                      "of unhandled events): {}",
         KafkaProducer->outputQueueLength());
     break;
 
