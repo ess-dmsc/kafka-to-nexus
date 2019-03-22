@@ -1,6 +1,8 @@
 #include "StatusWriter.h"
 #include "Status.h"
 
+#include <chrono>
+
 namespace FileWriter {
 namespace Status {
 
