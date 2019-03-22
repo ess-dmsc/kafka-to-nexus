@@ -28,9 +28,9 @@ struct Msg_ : public ProducerMessage {
   }
 };
 
-int ProducerTopic::produce(unsigned char *MsgData, size_t MsgSize) {
+int ProducerTopic::produce(const std::string &MsgData) {
   auto MsgPtr = new Msg_;
-  std::copy(MsgData, MsgData + MsgSize, std::back_inserter(MsgPtr->v));
+  std::copy(MsgData.begin(), MsgData.end(), std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
   std::unique_ptr<ProducerMessage> Msg(MsgPtr);
   return produce(Msg);

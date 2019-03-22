@@ -4,9 +4,7 @@
 
 class StringProducer {
 public:
-  void produce(unsigned char *MsgData, size_t MsgSize) {
-    Message = std::string(reinterpret_cast<char *>(MsgData));
-  }
+  void produce(const std::string &MsgData) { Message = MsgData; }
   std::string Message;
 };
 

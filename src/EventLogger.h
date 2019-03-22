@@ -63,7 +63,6 @@ void logEvent(std::shared_ptr<ProducerType> Producer, StatusCode Code,
   Event["message"] = Message;
 
   std::string EventMessage = Event.dump();
-  Producer->produce(reinterpret_cast<unsigned char *>(&EventMessage[0]),
-                    EventMessage.size());
+  Producer->produce(EventMessage);
 }
 }

@@ -15,11 +15,11 @@ class Report {
 
 public:
   Report() : ReportMs{std::chrono::milliseconds{1000}} {}
-  Report(std::shared_ptr<KafkaW::ProducerTopic> KafkaProducer,
-         std::string JID,
+  Report(std::shared_ptr<KafkaW::ProducerTopic> KafkaProducer, std::string JID,
          const std::chrono::milliseconds &MsBetweenReports =
              std::chrono::milliseconds{1000})
-      : Producer{KafkaProducer}, JobId(std::move(JID)), ReportMs{MsBetweenReports} {}
+      : Producer{KafkaProducer}, JobId(std::move(JID)),
+        ReportMs{MsBetweenReports} {}
   Report(const Report &) = delete;
   Report(Report &&) = default;
   Report &operator=(Report &&) = default;
@@ -67,8 +67,7 @@ private:
     Information.StreamMasterStatus = StreamMasterStatus;
     Reporter.write(Information);
     std::string Value = Reporter.getJson();
-    Producer->produce(reinterpret_cast<unsigned char *>(&Value[0]),
-                      Value.size());
+    Producer->produce(Value);
 
     return StreamMasterError::OK;
   }
