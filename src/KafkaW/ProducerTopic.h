@@ -22,7 +22,7 @@ public:
   /// \param MsgSize Size of the data to publish
   /// \return 0 if message is successfully passed to RdKafka to be published, 1
   /// otherwise
-  int produce(unsigned char *MsgData, size_t MsgSize);
+  int produce(const std::string &MsgData);
   int produce(std::unique_ptr<KafkaW::ProducerMessage> &Msg);
   std::string name() const;
 

@@ -1,19 +1,14 @@
 /// \file
-/// This file contains the declaration of the MessageInfo and StreamMasterInfo
-/// classes. MessageInfo collects information about number and the size of
-/// messages and the number of errors in a stream. StreamMasterInfo contains a
-/// collection of MessageInfo plus other information in order to provide global
-/// information about a StreamMaster instance.
+/// MessageInfo collects information about number and the size of
+/// messages and the number of errors in a stream.
+/// StreamMasterInfo contains a collection of MessageInfo plus other
+/// information in order to provide global information about a
+/// StreamMaster instance.
 
 #pragma once
 
-#include <atomic>
-#include <memory>
-#include <mutex>
-#include <vector>
-
 #include <chrono>
-#include <map>
+#include <mutex>
 
 #include "Errors.h"
 
@@ -32,9 +27,6 @@ namespace Status {
 class MessageInfo {
 
 public:
-  MessageInfo() = default;
-  ~MessageInfo() = default;
-
   /// \brief Increments the number of messages that have been correctly
   /// processed by one unit and the number of processed megabytes accordingly.
   ///

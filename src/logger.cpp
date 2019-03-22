@@ -122,8 +122,8 @@ void Logger::dwlog_inner(int level, char const *file, int line,
     if (!g_ServiceID.empty()) {
       Doc["ServiceID"] = g_ServiceID;
     }
-    auto Buffer = Doc.dump();
-    Topic->produce((unsigned char *)Buffer.data(), Buffer.size());
+    std::string Buffer = Doc.dump();
+    Topic->produce(Buffer);
   }
 #ifdef HAVE_GRAYLOG_LOGGER
   if (do_use_graylog_logger.load() and level < 7) {
