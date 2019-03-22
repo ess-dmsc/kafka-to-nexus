@@ -155,7 +155,7 @@ void Master::statistics() {
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
   auto Buffer = Status.dump();
-  StatusProducer->produce((unsigned char *)Buffer.data(), Buffer.size());
+  StatusProducer->produce(Buffer);
 }
 
 void Master::stop() { Running = false; }

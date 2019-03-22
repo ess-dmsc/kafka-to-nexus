@@ -2,6 +2,7 @@
 
 #include "Status.h"
 #include "StatusWriter.h"
+#include "json.h"
 
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;

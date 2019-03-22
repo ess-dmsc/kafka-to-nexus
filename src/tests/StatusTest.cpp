@@ -17,9 +17,9 @@ double RandomGaussian() {
 
 TEST(MessageInfo, everythingIsZeroAtInitialisation) {
   MessageInfo MsgInfo;
-  ASSERT_DOUBLE_EQ(MsgInfo.getNumberMessages(), 0u);
+  ASSERT_EQ(MsgInfo.getNumberMessages(), 0u);
   ASSERT_DOUBLE_EQ(MsgInfo.getMbytes(), 0.0);
-  ASSERT_DOUBLE_EQ(MsgInfo.getErrors(), 0u);
+  ASSERT_EQ(MsgInfo.getErrors(), 0u);
 }
 
 TEST(MessageInfo, addOneMessage) {
