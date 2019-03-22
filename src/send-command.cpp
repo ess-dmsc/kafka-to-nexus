@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     std::string::size_type n{input.find(':')};
     std::string m1;
     if (n != std::string::npos) {
-      auto result = strtoul(&input[n + 1], NULL, 0);
+      auto result = strtoul(&input[n + 1], nullptr, 0);
       if (result) {
         stop_time = std::chrono::milliseconds{result};
       }
