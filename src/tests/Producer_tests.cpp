@@ -118,6 +118,7 @@ TEST_F(ProducerTests, produceReturnsNoErrorCodeIfMessageProduced) {
       .RETURN(RdKafka::ERR_NO_ERROR);
 
   REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(1).RETURN(0);
+  ALLOW_CALL(*TempProducerPtr, poll(_)).RETURN(1);
 
   // Needs to be put in a scope here so we can check that outq_len is called on
   // destruction
@@ -139,6 +140,7 @@ TEST_F(ProducerTests, produceReturnsErrorCodeIfMessageNotProduced) {
       .RETURN(RdKafka::ERR__BAD_MSG);
 
   REQUIRE_CALL(*TempProducerPtr, outq_len()).TIMES(1).RETURN(0);
+  ALLOW_CALL(*TempProducerPtr, poll(_)).RETURN(1);
 
   // Needs to be put in a scope here so we can check that outq_len is called on
   // destruction
@@ -163,5 +165,37 @@ TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
   {
     ProducerStandIn Producer1(Settings);
     ASSERT_NO_THROW(Producer1.ProducerPtr = std::move(TempProducerPtr));
+  }
+}
+
+TEST_F(ProducerTests, produceAlsoCallsPollOnProducer) {
+  KafkaW::BrokerSettings Settings{};
+  ProducerStandIn Producer1(Settings);
+  auto TempProducerPtr = std::make_unique<MockProducer>();
+
+  // We'll call produce this many times and require the same number of calls to
+  // poll
+  const uint32_t NumberOfProduceCalls = 3;
+
+  REQUIRE_CALL(*TempProducerPtr, produce(_, _, _, _, _, _, _, _))
+      .TIMES(NumberOfProduceCalls)
+      .RETURN(RdKafka::ERR_NO_ERROR);
+
+  ALLOW_CALL(*TempProducerPtr, outq_len()).RETURN(0);
+
+  // This is what we are testing; that poll gets called once for each time that
+  // produce is called.
+  // This is really important as if we don't call poll we do not handle
+  // successful publish events and messages never get cleared from librdkafka's
+  // producer queue, eventually the queue fills up and we stop being able to
+  // publish messages
+  REQUIRE_CALL(*TempProducerPtr, poll(_)).TIMES(NumberOfProduceCalls).RETURN(1);
+
+  ProducerStandIn TestProducer(Settings);
+  TestProducer.ProducerPtr = std::move(TempProducerPtr);
+
+  for (uint32_t CallNumber = 0; CallNumber < NumberOfProduceCalls;
+       ++CallNumber) {
+    TestProducer.produce(new FakeTopic, 0, 0, nullptr, 0, nullptr, 0, nullptr);
   }
 }
