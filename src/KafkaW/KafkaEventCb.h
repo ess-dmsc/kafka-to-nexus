@@ -43,8 +43,8 @@ private:
       {RdKafka::Event::Severity::EVENT_SEVERITY_ERROR, SPDLOG_LEVEL_ERROR},
       {RdKafka::Event::Severity::EVENT_SEVERITY_CRITICAL,
        SPDLOG_LEVEL_CRITICAL},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT, SPDLOG_LEVEL_OFF},
-      {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG, SPDLOG_LEVEL_OFF}};
+      {RdKafka::Event::Severity::EVENT_SEVERITY_ALERT, SPDLOG_LEVEL_CRITICAL},
+      {RdKafka::Event::Severity::EVENT_SEVERITY_EMERG, SPDLOG_LEVEL_CRITICAL}};
   std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 } // KafkaW
