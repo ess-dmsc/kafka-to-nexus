@@ -1,6 +1,8 @@
 #include "StatusWriter.h"
 #include "Status.h"
 
+#include <chrono>
+
 namespace FileWriter {
 namespace Status {
 
@@ -25,7 +27,7 @@ nlohmann::json StreamerToJson(MessageInfo const &Information) {
        {{"average", Size.first}, {"standard_deviation", Size.second}}}};
 
   return Status;
-} // namespace Status
+}
 
 void StatusWriter::setJobId(const std::string &JobId) {
   json["job_id"] = JobId;

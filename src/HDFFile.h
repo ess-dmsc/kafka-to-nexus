@@ -69,8 +69,7 @@ private:
   std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
 };
 
-bool findType(const nlohmann::basic_json<> Attribute,
-                     std::string &DType);
+bool findType(const nlohmann::basic_json<> Attribute, std::string &DType);
 std::string h5VersionStringLinked();
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
                      std::shared_ptr<spdlog::logger> Logger);
