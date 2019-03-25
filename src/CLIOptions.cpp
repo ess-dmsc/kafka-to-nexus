@@ -129,8 +129,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "<host:port> Log to Graylog via graylog_logger library");
   std::string LogLevelInfoStr =
       R"*(Set log message level. Set to 1 - 7 or one of
-  `Critical`, `Error`, `Warning`, `Notice`, `Info`,
-  or `Debug`. Ex: "-l Notice")*";
+  `Critical`, `Error`, `Warning`, `Info`, `Debug`
+  or `Trace`. Ex: "-l Debug")*";
   App.add_option(
          "-v,--verbosity",
          [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
