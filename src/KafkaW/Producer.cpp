@@ -74,6 +74,13 @@ RdKafka::ErrorCode Producer::produce(RdKafka::Topic *Topic, int32_t Partition,
                                      int MessageFlags, void *Payload,
                                      size_t PayloadSize, const void *Key,
                                      size_t KeySize, void *OpaqueMessage) {
+  // Do a non-blocking poll of the local producer (note this is not polling
+  // anything across the network)
+  // NB, if we don't call poll then we haven't handled successful publishing of
+  // each message and the messages therefore never get removed from librdkafka's
+  // producer queue
+  ProducerPtr->poll(0);
+
   return ProducerPtr->produce(Topic, Partition, MessageFlags, Payload,
                               PayloadSize, Key, KeySize, OpaqueMessage);
 }
