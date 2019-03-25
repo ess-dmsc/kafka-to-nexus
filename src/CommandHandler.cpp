@@ -72,6 +72,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 ///
 /// \param Task The task which will write the HDF file.
 /// \param StreamHDFInfoList
+/// \param Logger Pointer to spdlog instance to be used for logging.
 ///
 /// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
@@ -163,6 +164,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 }
 
 /// Helper to extract information about the provided streams.
+/// \param Logger Pointer to spdlog instance to be used for logging.
 static vector<StreamSettings>
 extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
                                  std::vector<StreamHDFInfo> &StreamHDFInfoList,
