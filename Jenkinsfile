@@ -58,14 +58,14 @@ builders = pipeline_builder.createBuilders { container ->
   pipeline_builder.stage("${container.key}: Dependencies") {
     def conan_remote = "ess-dmsc-local"
     if (container.key == no_graylog) {
-           container.sh """
-                mkdir build
-                cd build
-                conan remote add \
-                  --insert 0 \
-                  ${conan_remote} ${local_conan_server}
-                conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile_no_graylog.txt
-              """
+      container.sh """
+        mkdir build
+          cd build
+          conan remote add \
+            --insert 0 \
+            ${conan_remote} ${local_conan_server}
+          conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile_no_graylog.txt
+        """
     } else {
     container.sh """
       mkdir build
@@ -159,40 +159,39 @@ builders = pipeline_builder.createBuilders { container ->
 
   if (container.key == clangformat_os) {
     pipeline_builder.stage("${container.key}: Formatting") {
-        if (!env.CHANGE_ID) {
-            // Ignore non-PRs
-            return
-        }
-
-        try {
-            container.sh """
-               clang-format -version
-               cd ${project}
-               find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
-               -exec clang-format -i {} +
-               git config user.email 'dm-jenkins-integration@esss.se'
-               git config user.name 'cow-bot'
-               git status -s
-               git add -u
-               git commit -m 'GO FORMAT YOURSELF'
-               """
-            withCredentials([
-                      usernamePassword(
-                        credentialsId: 'cow-bot-username',
-                        usernameVariable: 'USERNAME',
-                        passwordVariable: 'PASSWORD'
-                      )
-                    ]) {
-                      container.sh """
-                         cd ${project}
-                         git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
-                         """
-            } // withCredentials
-        } catch (e) {
-            // Okay to fail as there could be no badly formatted files to commit
-        } finally {
-            // Clean up
-        }
+      if (!env.CHANGE_ID) {
+        // Ignore non-PRs
+        return
+      }
+      try {
+        container.sh """
+          clang-format -version
+          cd ${project}
+          find . \\\\( -name '*.cpp' -or -name '*.cxx' -or -name '*.h' -or -name '*.hpp' \\\\) \\
+          -exec clang-format -i {} +
+          git config user.email 'dm-jenkins-integration@esss.se'
+          git config user.name 'cow-bot'
+          git status -s
+          git add -u
+          git commit -m 'GO FORMAT YOURSELF'
+        """
+        withCredentials([
+          usernamePassword(
+          credentialsId: 'cow-bot-username',
+          usernameVariable: 'USERNAME',
+          passwordVariable: 'PASSWORD'
+          )
+        ]) {
+          container.sh """
+            cd ${project}
+            git push https://${USERNAME}:${PASSWORD}@github.com/ess-dmsc/kafka-to-nexus.git HEAD:${CHANGE_BRANCH}
+          """
+        } // withCredentials
+      } catch (e) {
+       // Okay to fail as there could be no badly formatted files to commit
+      } finally {
+        // Clean up
+      }
     }  // stage
 
     pipeline_builder.stage("${container.key}: Cppcheck") {
@@ -201,7 +200,6 @@ builders = pipeline_builder.createBuilders { container ->
         cd ${pipeline_builder.project}
         cppcheck --enable=all --inconclusive --template="{file},{line},{severity},{id},{message}" src/ 2> ${test_output}
       """
-
       container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
       step([
         $class: 'WarningsPublisher',
