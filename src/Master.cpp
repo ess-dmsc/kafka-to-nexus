@@ -81,7 +81,8 @@ void Master::run() {
     LOG(Sev::Info, "Publishing status to kafka://{}/{}",
         getMainOpt().KafkaStatusURI.HostPort,
         getMainOpt().KafkaStatusURI.Topic);
-    KafkaW::BrokerSettings BrokerSettings;
+    KafkaW::BrokerSettings BrokerSettings =
+        getMainOpt().StreamerConfiguration.BrokerSettings;
     BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
     auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
     try {
