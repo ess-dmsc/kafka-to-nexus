@@ -16,7 +16,8 @@ void URI::parse(const std::string &URIString) {
       R"(\s*((([^:/?#]+)://)|(//)|())((([^/?#:]+)+)(:(\d+))?)/?([a-zA-Z0-9._-]+)?\s*)");
   std::regex_match(URIString, Matches, Regex);
   if (!Matches[6].matched) {
-    throw std::runtime_error("Unable to extract host from the URI: \"" + URIString + "\".");
+    throw std::runtime_error("Unable to extract host from the URI: \"" +
+                             URIString + "\".");
   }
   HostPort = Matches[6].str();
   if (Matches[10].matched) {

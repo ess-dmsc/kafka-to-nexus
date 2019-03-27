@@ -15,9 +15,9 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return Opt;
 }
 
-CLI::Option *addUriOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
-                       std::string const &Description = "",
-                       bool Defaulted = false) {
+CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
+                          uri::URI &URIArg, std::string const &Description = "",
+                          bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
     try {
       URIArg.parse(Results[0]);
@@ -41,10 +41,10 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name, uri::URI &URIA
 /// \param Description
 /// \param Defaulted
 /// \return
-CLI::Option *addUriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
-                       bool &TrueIfOptionGiven,
-                       const std::string &Description = "",
-                       bool Defaulted = false) {
+CLI::Option *addUriOption(CLI::App &App, const std::string &Name,
+                          uri::URI &URIArg, bool &TrueIfOptionGiven,
+                          const std::string &Description = "",
+                          bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg, &TrueIfOptionGiven](CLI::results_t Results) {
     TrueIfOptionGiven = true;
     try {
@@ -97,17 +97,19 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 
-  addUriOption(App, "--command-uri", MainOptions.CommandBrokerURI,
-            "<host[:port][/topic]> Kafka broker/topic to listen for commands")
+  addUriOption(
+      App, "--command-uri", MainOptions.CommandBrokerURI,
+      "<host[:port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
   addUriOption(App, "--status-uri", MainOptions.KafkaStatusURI,
-            MainOptions.ReportStatus,
-            "<host[:port][/topic]> Kafka broker/topic to publish status "
-            "updates on");
+               MainOptions.ReportStatus,
+               "<host[:port][/topic]> Kafka broker/topic to publish status "
+               "updates on");
   addUriOption(App, "--kafka-gelf", MainOptions.kafka_gelf,
-                 "<host[:port]/topic> Log to Graylog via Kafka GELF adapter");
-  addUriOption(App, "--graylog-logger-address", MainOptions.GraylogLoggerAddress,
-                 "<host:port> Log to Graylog via graylog_logger library");
+               "<host[:port]/topic> Log to Graylog via Kafka GELF adapter");
+  addUriOption(App, "--graylog-logger-address",
+               MainOptions.GraylogLoggerAddress,
+               "<host:port> Log to Graylog via graylog_logger library");
   App.add_option(
          "-v,--verbosity", log_level,
          "Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)", true)
