@@ -1,6 +1,5 @@
 #include "URI.h"
 #include "logger.h"
-#include <iostream>
 #include <regex>
 
 namespace uri {
