@@ -33,10 +33,10 @@ struct MainOpt {
   FileWriter::StreamerOptions StreamerConfiguration;
 
   /// Can optionally log in Graylog GELF format to a Kafka topic.
-  std::string kafka_gelf;
+  uri::URI kafka_gelf;
 
   /// Can optionally use the `graylog_logger` library to log to this address.
-  std::string GraylogLoggerAddress;
+  uri::URI GraylogLoggerAddress;
 
   /// Used for logging to file
   std::string LogFilename;
@@ -57,7 +57,7 @@ struct MainOpt {
   int parseJsonCommands();
 
   /// Kafka broker and topic where file writer commands are published.
-  uri::URI CommandBrokerURI{"//localhost:9092/kafka-to-nexus.command"};
+  uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 
   /// \brief Path for HDF output.
   ///
@@ -72,7 +72,7 @@ struct MainOpt {
   bool ReportStatus = false;
 
   /// Kafka topic where status updates are to be published.
-  uri::URI KafkaStatusURI{"//localhost:9092/kafka-to-nexus.status"};
+  uri::URI KafkaStatusURI{"localhost:9092/kafka-to-nexus.status"};
 
   /// \brief std::chrono::milliseconds interval to publish status of `Master`
   /// (e.g.
