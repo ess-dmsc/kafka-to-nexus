@@ -8,6 +8,7 @@ namespace uri {
 
 /// \brief Thin parser for URIs.
 struct URI {
+  URI() = default;
   /// Creates and parses the given URI
   explicit URI(const std::string &URIString);
 
@@ -25,7 +26,7 @@ struct URI {
   /// If the path can be a valid Kafka topic name, then it is non-empty.
   std::string Topic;
 
-  /// The URI string //<host>:<port>/<topic>
-  std::string getURIString() const { return "//" + HostPort + "/" + Topic; }
+  /// The URI string <host>:<port>/<topic>
+  std::string getURIString() const { return HostPort + "/" + Topic; }
 };
 } // namespace uri
