@@ -522,9 +522,15 @@ std::string format_nested_exception(std::exception const &E) {
   return format_nested_exception(E, StrS, 0);
 }
 
+/// Truncate logged command so that it doesn't saturate logs.
+///
+/// \param Command Original command that threw an error
+/// \return shorter version to be written in logs.
 std::string TruncateCommand(std::string const &Command) {
-  if (Command.size() > 500) {
-    auto TruncatedCommand = Command.substr(0, 1500);
+
+  unsigned int MaxCmdSize = 1500;
+  if (Command.size() > MaxCmdSize) {
+    auto TruncatedCommand = Command.substr(0, MaxCmdSize);
     TruncatedCommand.append("\n  [...]\n Command was truncated, displayed "
                             "first 1500 characters.\n");
     return TruncatedCommand;
