@@ -106,15 +106,16 @@ int main(int argc, char **argv) {
          },
          LogLevelInfoStr)
       ->set_default_val("Error");
-  addOption(App, "--broker", MainOptions.broker,
-            "<host[:port]/topic>\n"
-            "                              Host, port, topic where the "
-            "command should be sent to.",
-            false);
+  addUriOption(App, "--broker", MainOptions.broker,
+               "<host[:port]/topic>\n"
+               "                              Host, port, topic where the "
+               "command should be sent to.",
+               false);
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   CLI11_PARSE(App, argc, argv);
-  ::setUpLogging(MainOptions.LoggingLevel, "", MainOptions.LogFilename, "");
+  ::setUpLogging(MainOptions.LoggingLevel, "", MainOptions.LogFilename,
+                 URI(""));
   auto Logger = spdlog::get("filewriterlogger");
   MainOptions.BrokerSettings.Address = MainOptions.broker.HostPort;
   auto producer =
