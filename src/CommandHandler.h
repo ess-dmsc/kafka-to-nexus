@@ -27,8 +27,7 @@ struct StreamSettings {
 ///
 /// \return If parsing successful returns `nlohmann::json`, otherwise throws an
 /// exception.
-nlohmann::json parseOrThrow(std::string const &Command,
-                            SharedLogger Logger);
+nlohmann::json parseOrThrow(std::string const &Command, SharedLogger Logger);
 
 std::string format_nested_exception(std::exception const &E);
 

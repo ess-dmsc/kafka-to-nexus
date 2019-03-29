@@ -88,9 +88,9 @@ void createHDFStructures(
     std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path,
     SharedLogger Logger);
 
-void writeHDFISO8601AttributeCurrentTime(
-    hdf5::node::Node const &Node, const std::string &Name,
-    SharedLogger Logger);
+void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
+                                         const std::string &Name,
+                                         SharedLogger Logger);
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,
@@ -115,8 +115,7 @@ void writeGenericDataset(const std::string &DataType,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
                          const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values,
-                         SharedLogger Logger);
+                         const nlohmann::json *Values, SharedLogger Logger);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                   SharedLogger Logger);
@@ -125,8 +124,7 @@ void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              const nlohmann::json &Values);
 
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &Values,
-                            SharedLogger Logger);
+                            const nlohmann::json &Values, SharedLogger Logger);
 
 void writeScalarAttribute(hdf5::node::Node const &Node, const std::string &Name,
                           const nlohmann::json &Values);

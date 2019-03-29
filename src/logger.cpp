@@ -7,7 +7,7 @@
 #endif
 
 std::shared_ptr<spdlog::logger> getLogger() {
-    return spdlog::get("filewriterlogger");
+  return spdlog::get("filewriterlogger");
 }
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,

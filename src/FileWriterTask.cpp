@@ -14,8 +14,7 @@ namespace {
 
 using nlohmann::json;
 
-json hdf_parse(std::string const &Structure,
-               SharedLogger Logger) {
+json hdf_parse(std::string const &Structure, SharedLogger Logger) {
   try {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
@@ -48,8 +47,7 @@ FileWriterTask::FileWriterTask(
     std::string TaskID,
     std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
     : ServiceId(std::move(TaskID)),
-      StatusProducer(std::move(StatusProducerPtr)),
-      Logger(getLogger()) {
+      StatusProducer(std::move(StatusProducerPtr)), Logger(getLogger()) {
   Id = createId(++n_FileWriterTask_created);
 }
 

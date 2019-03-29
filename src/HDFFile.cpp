@@ -205,9 +205,9 @@ static void writeHDFISO8601Attribute(hdf5::node::Node const &Node,
   writeStringAttribute(Node, Name, s2);
 }
 
-void writeHDFISO8601AttributeCurrentTime(
-    hdf5::node::Node const &Node, const std::string &Name,
-    SharedLogger Logger) {
+void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
+                                         const std::string &Name,
+                                         SharedLogger Logger) {
   const date::time_zone *CurrentTimeZone;
   try {
     CurrentTimeZone = date::current_zone();
@@ -242,8 +242,7 @@ void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
 /// \param JsonValue    json value array of attribute objects.
 /// \param Logger Pointer to spdlog instance to be used for logging.
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &Values,
-                            SharedLogger Logger) {
+                            const nlohmann::json &Values, SharedLogger Logger) {
   if (!Values.is_array()) {
     return;
   }
@@ -573,8 +572,7 @@ void writeGenericDataset(const std::string &DataType,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
                          const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values,
-                         SharedLogger Logger) {
+                         const nlohmann::json *Values, SharedLogger Logger) {
   try {
 
     hdf5::property::DatasetCreationList DatasetCreationList;

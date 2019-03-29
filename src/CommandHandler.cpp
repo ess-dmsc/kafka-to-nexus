@@ -19,8 +19,7 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-json parseOrThrow(std::string const &Command,
-                  SharedLogger Logger) {
+json parseOrThrow(std::string const &Command, SharedLogger Logger) {
   try {
     return json::parse(Command);
   } catch (json::parse_error const &E) {

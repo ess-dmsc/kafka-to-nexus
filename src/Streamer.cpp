@@ -11,8 +11,7 @@ std::chrono::milliseconds systemTime() {
       now.time_since_epoch());
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime,
-                     SharedLogger Logger) {
+                     std::chrono::milliseconds Stoptime, SharedLogger Logger) {
   Logger->trace("\t\tStoptime:         {}", Stoptime.count());
   Logger->trace("\t\tMessageTimestamp: {}",
                 static_cast<std::int64_t>(MessageTimestamp));
