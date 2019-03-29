@@ -23,7 +23,7 @@ int main(int argc, char **argv) {
   // do not use filewriterlogger during tests
   std::string ServiceID = "";
   std::string LogFile = "";
-  std::string GraylogURI = "";
+  auto GraylogURI=uri::URI();
   ::setUpLogging(spdlog::level::off, ServiceID, LogFile, GraylogURI);
 
   // set level for test logger
