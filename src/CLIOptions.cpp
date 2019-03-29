@@ -15,11 +15,15 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   return Opt;
 }
 
-CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
-                       std::string const &Description = "",
-                       bool Defaulted = false) {
+CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
+                          uri::URI &URIArg, std::string const &Description = "",
+                          bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg](CLI::results_t Results) {
-    URIArg.parse(Results[0]);
+    try {
+      URIArg.parse(Results[0]);
+    } catch (std::runtime_error &E) {
+      return false;
+    }
     return true;
   };
 
@@ -37,13 +41,17 @@ CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
 /// \param Description
 /// \param Defaulted
 /// \return
-CLI::Option *addOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
-                       bool &TrueIfOptionGiven,
-                       const std::string &Description = "",
-                       bool Defaulted = false) {
+CLI::Option *addUriOption(CLI::App &App, const std::string &Name,
+                          uri::URI &URIArg, bool &TrueIfOptionGiven,
+                          const std::string &Description = "",
+                          bool Defaulted = false) {
   CLI::callback_t Fun = [&URIArg, &TrueIfOptionGiven](CLI::results_t Results) {
     TrueIfOptionGiven = true;
-    URIArg.parse(Results[0]);
+    try {
+      URIArg.parse(Results[0]);
+    } catch (std::runtime_error &E) {
+      return false;
+    }
     return true;
   };
 
@@ -118,8 +126,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                  "Specify a json file to set config")
       ->check(CLI::ExistingFile);
 
-  addOption(App, "--command-uri", MainOptions.CommandBrokerURI,
-            "<//host[:port][/topic]> Kafka broker/topic to listen for commands")
+  addUriOption(
+      App, "--command-uri", MainOptions.CommandBrokerURI,
+      "<host[:port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
   addOption(App, "--status-uri", MainOptions.KafkaStatusURI,
             MainOptions.ReportStatus,
