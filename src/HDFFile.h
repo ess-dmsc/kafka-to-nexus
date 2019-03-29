@@ -66,18 +66,18 @@ private:
   using CLOCK = std::chrono::steady_clock;
   std::chrono::milliseconds SWMRFlushInterval{10000};
   std::chrono::time_point<CLOCK> SWMRFlushLast = CLOCK::now();
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 bool findType(const nlohmann::basic_json<> Attribute, std::string &DType);
 std::string h5VersionStringLinked();
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
-                     std::shared_ptr<spdlog::logger> Logger);
+                     SharedLogger Logger);
 
 void writeStringAttribute(hdf5::node::Node const &Node, std::string const &Name,
                           std::string const &Value);
 
-void checkHDFVersion(std::shared_ptr<spdlog::logger> Logger);
+void checkHDFVersion(SharedLogger Logger);
 std::string H5VersionStringHeadersCompileTime();
 
 void createHDFStructures(
@@ -86,15 +86,15 @@ void createHDFStructures(
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
     std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path,
-    std::shared_ptr<spdlog::logger> Logger);
+    SharedLogger Logger);
 
 void writeHDFISO8601AttributeCurrentTime(
     hdf5::node::Node const &Node, const std::string &Name,
-    std::shared_ptr<spdlog::logger> Logger);
+    SharedLogger Logger);
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,
-                              std::shared_ptr<spdlog::logger> Logger);
+                              SharedLogger Logger);
 
 std::vector<std::string> populateStrings(const nlohmann::json *Values,
                                          hssize_t GoalSize);
@@ -108,7 +108,7 @@ void writeFixedSizeStringDataset(
     hdf5::node::Group const &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    const nlohmann::json *Values, std::shared_ptr<spdlog::logger> Logger);
+    const nlohmann::json *Values, SharedLogger Logger);
 
 void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
@@ -116,17 +116,17 @@ void writeGenericDataset(const std::string &DataType,
                          const std::vector<hsize_t> &Sizes,
                          const std::vector<hsize_t> &Max, hsize_t ElementSize,
                          const nlohmann::json *Values,
-                         std::shared_ptr<spdlog::logger> Logger);
+                         SharedLogger Logger);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
-                  std::shared_ptr<spdlog::logger> Logger);
+                  SharedLogger Logger);
 
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              const nlohmann::json &Values);
 
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
                             const nlohmann::json &Values,
-                            std::shared_ptr<spdlog::logger> Logger);
+                            SharedLogger Logger);
 
 void writeScalarAttribute(hdf5::node::Node const &Node, const std::string &Name,
                           const nlohmann::json &Values);
@@ -136,5 +136,5 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name, uint32_t StringSize,
                               hdf5::datatype::CharacterEncoding Encoding,
                               nlohmann::json const &Values,
-                              std::shared_ptr<spdlog::logger> Logger);
+                              SharedLogger Logger);
 } // namespace FileWriter

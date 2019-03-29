@@ -17,7 +17,7 @@ void MainOpt::init() {
 
 int MainOpt::parseJsonCommands() {
   if (CommandsJsonFilename.empty()) {
-    spdlog::get("filewriterlogger")->warn("given config filename is empty");
+    getLogger()->warn("given config filename is empty");
     return -1;
   }
   auto jsontxt = readFileIntoVector(CommandsJsonFilename);

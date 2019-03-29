@@ -20,7 +20,7 @@ namespace FileWriter {
 using nlohmann::json;
 
 json parseOrThrow(std::string const &Command,
-                  std::shared_ptr<spdlog::logger> Logger) {
+                  SharedLogger Logger) {
   try {
     return json::parse(Command);
   } catch (json::parse_error const &E) {
@@ -77,7 +77,7 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \return The stream information.
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamInfo, std::shared_ptr<spdlog::logger> Logger) {
+    StreamHDFInfo const &StreamInfo, SharedLogger Logger) {
   using nlohmann::json;
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
@@ -168,7 +168,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 static vector<StreamSettings>
 extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
                                  std::vector<StreamHDFInfo> &StreamHDFInfoList,
-                                 std::shared_ptr<spdlog::logger> Logger) {
+                                 SharedLogger Logger) {
   Logger->info("Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
@@ -334,7 +334,7 @@ void CommandHandler::handleNew(std::string const &Command,
 void CommandHandler::addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
-  auto Logger = spdlog::get("filewriterlogger");
+  auto Logger = getLogger();
   bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : StreamSettingsList) {

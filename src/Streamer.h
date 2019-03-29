@@ -98,7 +98,7 @@ protected:
 private:
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 /// \brief Create a consumer with options specified in the class
@@ -113,9 +113,9 @@ private:
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 createConsumer(std::string const &TopicName,
                FileWriter::StreamerOptions const &Options,
-               std::shared_ptr<spdlog::logger> Logger);
+               SharedLogger Logger);
 
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime,
-                     std::shared_ptr<spdlog::logger> Logger);
+                     SharedLogger Logger);
 } // namespace FileWriter

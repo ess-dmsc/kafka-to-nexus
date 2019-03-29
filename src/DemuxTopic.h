@@ -74,7 +74,7 @@ private:
   std::string Topic;
   std::unordered_map<std::string, Source> TopicSources;
   friend void swap(DemuxTopic &x, DemuxTopic &y);
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 } // namespace FileWriter

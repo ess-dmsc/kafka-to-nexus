@@ -47,15 +47,15 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
 
 void Source::close_writer_module() {
   if (WriterModule) {
-    spdlog::get("filewriterlogger")
+    getLogger()
         ->trace("Closing writer module for {}", SourceName);
     WriterModule->flush();
     WriterModule->close();
     WriterModule.reset();
-    spdlog::get("filewriterlogger")
+    getLogger()
         ->trace("Writer module closed for {}", SourceName);
   } else {
-    spdlog::get("filewriterlogger")
+    getLogger()
         ->trace("No writer module to close for {}", SourceName);
   }
 }

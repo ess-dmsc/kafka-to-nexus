@@ -61,7 +61,7 @@ std::string make_command_stop(
 }
 
 std::string make_command_from_file(const std::string &filename) {
-  auto Logger = spdlog::get("filewriterlogger");
+  auto Logger = getLogger();
   std::ifstream ifs(filename);
   if (!ifs.good()) {
     Logger->warn("can not open file {}", filename);
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
   CLI11_PARSE(App, argc, argv);
   ::setUpLogging(MainOptions.LoggingLevel, "", MainOptions.LogFilename,
                  URI(""));
-  auto Logger = spdlog::get("filewriterlogger");
+  auto Logger = getLogger();
   MainOptions.BrokerSettings.Address = MainOptions.broker.HostPort;
   auto producer =
       std::make_shared<KafkaW::Producer>(MainOptions.BrokerSettings);

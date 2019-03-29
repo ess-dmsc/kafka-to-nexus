@@ -289,7 +289,7 @@ private:
   size_t NumStreamers{0};
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 } // namespace FileWriter

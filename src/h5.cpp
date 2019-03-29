@@ -475,7 +475,7 @@ Chunked1DString::ptr Chunked1DString::open(hdf5::node::Group const &Node,
                                            std::string const &Name) {
   auto ds = h5d::open(Node, Name);
   if (!ds) {
-    spdlog::get("filewriterlogger")->error("Could not open dataset: {}", Name);
+    getLogger()->error("Could not open dataset: {}", Name);
     return ptr();
   }
   return ptr(new Chunked1DString(std::move(*ds)));

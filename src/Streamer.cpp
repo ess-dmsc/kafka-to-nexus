@@ -12,7 +12,7 @@ std::chrono::milliseconds systemTime() {
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime,
-                     std::shared_ptr<spdlog::logger> Logger) {
+                     SharedLogger Logger) {
   Logger->trace("\t\tStoptime:         {}", Stoptime.count());
   Logger->trace("\t\tMessageTimestamp: {}",
                 static_cast<std::int64_t>(MessageTimestamp));
@@ -49,7 +49,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 FileWriter::createConsumer(std::string const &TopicName,
                            FileWriter::StreamerOptions const &Options,
-                           std::shared_ptr<spdlog::logger> Logger) {
+                           SharedLogger Logger) {
   Logger->trace("Connecting to \"{}\"", TopicName);
   try {
     FileWriter::ConsumerPtr Consumer =

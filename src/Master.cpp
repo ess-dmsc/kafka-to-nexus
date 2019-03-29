@@ -14,7 +14,7 @@
 namespace FileWriter {
 
 Master::Master(MainOpt &Config)
-    : Logger(spdlog::get("filewriterlogger")), Listener(Config),
+    : Logger(getLogger()), Listener(Config),
       MainConfig(Config) {
   std::vector<char> buffer;
   buffer.resize(128);
@@ -65,7 +65,7 @@ void Master::addStreamMaster(
 struct OnScopeExit {
   explicit OnScopeExit(std::function<void()> Action)
       : ExitAction(std::move(Action)),
-        Logger(spdlog::get("filewriterlogger")){};
+        Logger(getLogger()){};
   ~OnScopeExit() {
     try {
       ExitAction();
@@ -74,7 +74,7 @@ struct OnScopeExit {
     }
   };
   std::function<void()> ExitAction;
-  std::shared_ptr<spdlog::logger> Logger;
+  SharedLogger Logger;
 };
 
 void Master::run() {

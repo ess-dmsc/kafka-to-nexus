@@ -178,7 +178,7 @@ public:
   }
 
 protected:
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 /// h5cpp dataset class that implements methods for appending data.

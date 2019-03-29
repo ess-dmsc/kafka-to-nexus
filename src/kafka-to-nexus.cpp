@@ -34,7 +34,7 @@ int main(int argc, char **argv) {
 
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
-  auto Logger = spdlog::get("filewriterlogger");
+  auto Logger = getLogger();
   Options->parseJsonCommands();
 
   if (Options->ListWriterModules) {

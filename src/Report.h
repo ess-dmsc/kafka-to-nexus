@@ -75,6 +75,6 @@ private:
   std::shared_ptr<KafkaW::ProducerTopic> Producer{nullptr};
   std::string JobId;
   std::chrono::milliseconds ReportMs;
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 } // namespace FileWriter

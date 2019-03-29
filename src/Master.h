@@ -49,7 +49,7 @@ public:
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
 
 private:
-  std::shared_ptr<spdlog::logger> Logger;
+  SharedLogger Logger;
   CommandListener Listener;
   std::atomic<bool> Running{true};
   std::atomic<bool> HasExitedRunLoop{false};
