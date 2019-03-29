@@ -240,6 +240,7 @@ void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
 ///
 /// \param Node         Nodeto write attributes on.
 /// \param JsonValue    json value array of attribute objects.
+/// \param Logger Pointer to spdlog instance to be used for logging.
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
                             const nlohmann::json &Values,
                             std::shared_ptr<spdlog::logger> Logger) {
@@ -377,6 +378,7 @@ void writeAttrString(hdf5::node::Node const &Node, std::string const &Name,
 /// \param Node     group or dataset to add attribute to.
 /// \param Name     name of the attribute.
 /// \param Values   the attribute values.
+/// \param Logger Pointer to spdlog instance to be used for logging.
 void writeAttrOfSpecifiedType(std::string const &DType,
                               hdf5::node::Node const &Node,
                               std::string const &Name, uint32_t StringSize,

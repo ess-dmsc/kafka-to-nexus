@@ -24,6 +24,7 @@ struct StreamSettings {
 ///
 /// \param  Command Command passed to the program.
 /// \param Logger Pointer to spdlog instance to be used for logging.
+///
 /// \return If parsing successful returns `nlohmann::json`, otherwise throws an
 /// exception.
 nlohmann::json parseOrThrow(std::string const &Command,
