@@ -130,10 +130,10 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       App, "--command-uri", MainOptions.CommandBrokerURI,
       "<host[:port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
-  addOption(App, "--status-uri", MainOptions.KafkaStatusURI,
-            MainOptions.ReportStatus,
-            "<//host[:port][/topic]> Kafka broker/topic to publish status "
-            "updates on");
+  addUriOption(App, "--status-uri", MainOptions.KafkaStatusURI,
+               MainOptions.ReportStatus,
+               "<//host[:port][/topic]> Kafka broker/topic to publish status "
+               "updates on");
   App.add_option("--graylog-logger-address", MainOptions.GraylogLoggerAddress,
                  "<host:port> Log to Graylog via graylog_logger library");
   std::string LogLevelInfoStr =

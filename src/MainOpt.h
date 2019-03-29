@@ -35,7 +35,7 @@ struct MainOpt {
   spdlog::level::level_enum LoggingLevel;
 
   /// Can optionally use the `graylog_logger` library to log to this address.
-  uri::URI GraylogLoggerAddress;
+  std::string GraylogLoggerAddress;
 
   /// Used for logging to file
   std::string LogFilename;
