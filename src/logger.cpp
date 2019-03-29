@@ -25,7 +25,7 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
         spdlog::level::err,
         "ERROR not compiled with support for graylog_logger. Would have used "
         "{}",
-        TempURI.HostPort);
+        GraylogURI.HostPort);
 #endif
   } else {
     sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
