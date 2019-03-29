@@ -16,9 +16,9 @@ struct MainOpt;
 
 void setCLIOptions(CLI::App &App, MainOpt &MainOptions);
 
-CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
-                       bool &TrueIfOptionGiven, std::string const &Description,
-                       bool Defaulted);
+CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
+                          uri::URI &URIArg, bool &TrueIfOptionGiven,
+                          std::string const &Description, bool Defaulted);
 
 /// Use for adding a URI option
 CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
@@ -31,3 +31,4 @@ CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
 /// \return bool signalizing successful parsing
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    spdlog::level::level_enum &LogLevelResult);
+

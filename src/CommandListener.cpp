@@ -14,7 +14,8 @@ using std::string;
 CommandListener::CommandListener(MainOpt &config) : config(config) {}
 
 void CommandListener::start() {
-  KafkaW::BrokerSettings BrokerSettings;
+  KafkaW::BrokerSettings BrokerSettings =
+      config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
   BrokerSettings.KafkaConfiguration["group.id"] = fmt::format(

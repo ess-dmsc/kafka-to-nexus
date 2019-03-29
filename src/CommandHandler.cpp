@@ -229,12 +229,9 @@ void CommandHandler::handleNew(std::string const &Command,
              Config.ServiceID, Task->jobID(), "Start job");
   }
 
-  uri::URI Broker("//localhost:9092");
+  uri::URI Broker("localhost:9092");
   if (auto BrokerStringMaybe = find<std::string>("broker", Doc)) {
     auto BrokerString = BrokerStringMaybe.inner();
-    if (BrokerString.substr(0, 2) != "//") {
-      BrokerString = std::string("//") + BrokerString;
-    }
     try {
       Broker.parse(BrokerString);
     } catch (std::runtime_error &e) {
