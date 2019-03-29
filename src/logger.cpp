@@ -8,19 +8,18 @@
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
-                  const std::string &GraylogURI) {
+                  const uri::URI GraylogURI) {
 
   std::vector<spdlog::sink_ptr> sinks;
   if (!LogFile.empty()) {
     sinks.push_back(
         std::make_shared<spdlog::sinks::basic_file_sink_mt>(LogFile));
   }
-  if (!GraylogURI.empty()) {
-    uri::URI TempURI(GraylogURI);
-
+  if (!GraylogURI.getURIString().empty()) {
 #ifdef HAVE_GRAYLOG_LOGGER
     sinks.push_back(std::make_shared<spdlog::sinks::graylog_sink_mt>(
-        TempURI.HostPort.substr(0, TempURI.HostPort.find(":")), TempURI.Port));
+        GraylogURI.HostPort.substr(0, GraylogURI.HostPort.find(":")),
+        GraylogURI.Port));
 #else
     spdlog::log(
         spdlog::level::err,

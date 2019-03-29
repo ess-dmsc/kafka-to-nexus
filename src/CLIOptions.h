@@ -2,7 +2,6 @@
 
 #include "logger.h"
 #include <string>
-#include <vector>
 
 // Forward declarations
 namespace CLI {
@@ -21,8 +20,9 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
                           std::string const &Description, bool Defaulted);
 
 /// Use for adding a URI option
-CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
-                       std::string const &Description, bool Defaulted);
+CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
+                          uri::URI &URIArg, std::string const &Description,
+                          bool Defaulted);
 
 /// \brief Parsing log level from user's input.
 /// Look for \p LogLevelString value in a map containing spdlog levels.
@@ -31,4 +31,3 @@ CLI::Option *addOption(CLI::App &App, std::string const &Name, uri::URI &URIArg,
 /// \return bool signalizing successful parsing
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    spdlog::level::level_enum &LogLevelResult);
-

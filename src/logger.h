@@ -13,4 +13,4 @@
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
-                  const std::string &GraylogURI);
+                  const uri::URI GraylogURI);

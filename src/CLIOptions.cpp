@@ -134,8 +134,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
                MainOptions.ReportStatus,
                "<//host[:port][/topic]> Kafka broker/topic to publish status "
                "updates on");
-  App.add_option("--graylog-logger-address", MainOptions.GraylogLoggerAddress,
-                 "<host:port> Log to Graylog via graylog_logger library");
+  addUriOption(App, "--graylog-logger-address",
+               MainOptions.GraylogLoggerAddress,
+               "<host:port> Log to Graylog via graylog_logger library");
   std::string LogLevelInfoStr =
       R"*(Set log message level. Set to 0 - 5 or one of
   `Trace`, `Debug`, `Info`, `Warning`, `Error`
