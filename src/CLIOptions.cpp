@@ -101,7 +101,7 @@ bool parseLogLevel(std::vector<std::string> LogLevelString,
   }
   try {
     int TempLogMessageLevel = std::stoi(LogLevelString.at(0));
-    if (TempLogMessageLevel < 1 or TempLogMessageLevel > 7) {
+    if (TempLogMessageLevel < 0 or TempLogMessageLevel > 5) {
       return false;
     }
     LogLevelResult = spdlog::level::level_enum(TempLogMessageLevel);
@@ -128,9 +128,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--graylog-logger-address", MainOptions.GraylogLoggerAddress,
                  "<host:port> Log to Graylog via graylog_logger library");
   std::string LogLevelInfoStr =
-      R"*(Set log message level. Set to 1 - 7 or one of
-  `Critical`, `Error`, `Warning`, `Info`, `Debug`
-  or `Trace`. Ex: "-l Debug")*";
+      R"*(Set log message level. Set to 0 - 5 or one of
+  `Trace`, `Debug`, `Info`, `Warning`, `Error`
+  or `Critical`. Ex: "-v Debug". Default: `Error`)*";
   App.add_option(
          "-v,--verbosity",
          [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
