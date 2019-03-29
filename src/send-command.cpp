@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
          LogLevelInfoStr)
       ->set_default_val("Error");
   addOption(App, "--broker", MainOptions.broker,
-            "<//host[:port]/topic>\n"
+            "<host[:port]/topic>\n"
             "                              Host, port, topic where the "
             "command should be sent to.",
             false);
