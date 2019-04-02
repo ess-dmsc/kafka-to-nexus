@@ -76,8 +76,7 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
         CurrentGroup.attributes.create<std::string>("NX_class");
     ClassAttribute.write("NXlog");
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
-    FileWriter::writeAttributes(HDFGroup, &AttributesJson,
-                                SharedLogger());
+    FileWriter::writeAttributes(HDFGroup, &AttributesJson, SharedLogger());
   } catch (std::exception &E) {
     Logger->error("Unable to initialise fast sample environment data tree in "
                   "HDF file with error message: \"{}\"",

@@ -91,7 +91,6 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
-
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    spdlog::level::level_enum &LogLevelResult) {
   std::map<std::string, spdlog::level::level_enum> LevelMap{
