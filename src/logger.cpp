@@ -6,9 +6,7 @@
 #include <spdlog/sinks/graylog_sink.h>
 #endif
 
-SharedLogger getLogger() {
-  return spdlog::get("filewriterlogger");
-}
+SharedLogger getLogger() { return spdlog::get("filewriterlogger"); }
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
