@@ -80,7 +80,7 @@ private:
 
   uint64_t LargestTimestampSeen = 0;
   size_t MaxNumberHistoric = 4;
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 
 template <typename DataType, typename EdgeType, typename ErrorType>

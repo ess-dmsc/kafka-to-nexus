@@ -13,7 +13,7 @@ class FlatbufferReader : public FileWriter::FlatbufferReader {
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 
 private:
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
   // add in others
 };
 
@@ -43,7 +43,7 @@ public:
   size_t buffer_packet_max = 0;
 
 private:
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace ev42
 } // namespace Schemas

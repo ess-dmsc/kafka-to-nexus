@@ -29,7 +29,7 @@ public:
   uint64_t TotalWrittenBytes = 0;
 
 private:
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace hs00
 } // namespace Schemas

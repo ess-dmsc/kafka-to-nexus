@@ -29,6 +29,6 @@ public:
 
 private:
   ProducerStats &Stats;
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 }

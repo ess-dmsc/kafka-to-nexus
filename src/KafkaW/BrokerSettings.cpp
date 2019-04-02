@@ -4,7 +4,7 @@
 
 namespace KafkaW {
 void BrokerSettings::apply(RdKafka::Conf *RdKafkaConfiguration) const {
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
   std::string ErrorString;
   for (const auto &ConfigurationItem : KafkaConfiguration) {
     Logger->debug("set config: {} = {}", ConfigurationItem.first,

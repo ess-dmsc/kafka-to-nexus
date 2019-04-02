@@ -72,6 +72,6 @@ protected:
   NeXusDataset::CueTimestampZero CueTimestamp;
 
 private:
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace NDAr

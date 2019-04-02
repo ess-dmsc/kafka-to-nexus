@@ -410,7 +410,7 @@ public:
     }
 
   private:
-    std::shared_ptr<spdlog::logger> Logger = spdlog::get("testlogger");
+    SharedLogger Logger = spdlog::get("testlogger");
   };
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
@@ -426,7 +426,7 @@ public:
   }
 
   static void data_ev42() {
-    std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+    SharedLogger Logger = spdlog::get("filewriterlogger");
     AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
@@ -799,11 +799,11 @@ public:
     }
 
   private:
-    std::shared_ptr<spdlog::logger> Logger = spdlog::get("testlogger");
+    SharedLogger Logger = spdlog::get("testlogger");
   };
 
   static void data_f142() {
-    std::shared_ptr<spdlog::logger> Logger = spdlog::get("testlogger");
+    SharedLogger Logger = spdlog::get("testlogger");
     AddF142Reader();
     MainOpt main_opt = getTestOptions();
     // Defaults such that the test has a chance to succeed

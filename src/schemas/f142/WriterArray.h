@@ -21,7 +21,7 @@ public:
   uptr<h5::h5d_chunked_2d<DT>> ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::NONE;
   size_t ChunkSize = 64 * 1024;
-  std::shared_ptr<spdlog::logger> Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 
 /// \brief  Open or create a new dataset for array numeric types
