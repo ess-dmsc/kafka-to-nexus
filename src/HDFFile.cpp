@@ -55,7 +55,7 @@ public:
       : Value(Value), Size(Value.size()) {}
   void inc() { ++Index; }
   nlohmann::json const &value() { return Value.at(Index); }
-  bool exhausted() const { return !(Index < Size); }
+  bool exhausted() const { return Index >= Size; }
 
 private:
   nlohmann::json const &Value;
