@@ -91,6 +91,7 @@ CLI::Option *addKafkaOption(CLI::App &App, std::string const &Name,
   return SetKeyValueOptions(App, Name, Description, Defaulted, Fun);
 }
 
+
 bool parseLogLevel(std::vector<std::string> LogLevelString,
                    spdlog::level::level_enum &LogLevelResult) {
   std::map<std::string, spdlog::level::level_enum> LevelMap{
@@ -132,7 +133,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       ->required();
   addUriOption(App, "--status-uri", MainOptions.KafkaStatusURI,
                MainOptions.ReportStatus,
-               "<//host[:port][/topic]> Kafka broker/topic to publish status "
+               "<host[:port][/topic]> Kafka broker/topic to publish status "
                "updates on");
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
