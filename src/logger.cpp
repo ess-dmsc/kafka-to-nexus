@@ -6,7 +6,7 @@
 #include <spdlog/sinks/graylog_sink.h>
 #endif
 
-std::shared_ptr<spdlog::logger> getLogger() {
+SharedLogger getLogger() {
   return spdlog::get("filewriterlogger");
 }
 

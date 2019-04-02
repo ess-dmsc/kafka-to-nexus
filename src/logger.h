@@ -11,9 +11,9 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 // clang-format on
 
-typedef std::shared_ptr<spdlog::logger> SharedLogger;
+using SharedLogger = std::shared_ptr<spdlog::logger>;
 
-std::shared_ptr<spdlog::logger> getLogger();
+SharedLogger getLogger();
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
