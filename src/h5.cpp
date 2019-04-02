@@ -185,14 +185,12 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
                   std::chrono::duration_cast<MS>(t3 - t2).count());
   }
 
-  if (Logger->should_log(spdlog::level::trace)) {
     Logger->trace("try to get the dsp dims:");
     auto sext = DSPTgt.current_dimensions();
     auto smax = DSPTgt.maximum_dimensions();
     for (int i1 = 0; i1 < ndims; ++i1) {
       Logger->trace("dimensions: {:20} {}: {:21} {:21}", Name, i1, sext.at(i1),
                     smax.at(i1));
-    }
   }
 
   {
