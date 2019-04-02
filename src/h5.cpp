@@ -104,9 +104,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto t1 = CLK::now();
   Logger->trace("append_data_{}d", ndims);
   auto ds_name = static_cast<std::string>(Dataset.link().path());
-  if (Logger->should_log(spdlog::level::trace)) {
-    Logger->trace("append_data_1d {} for dataset {}", nlen, ds_name);
-  }
+  Logger->trace("append_data_1d {} for dataset {}", nlen, ds_name);
 
   for (size_t i = 1; i < sext.size(); ++i) {
     sext[i] = ShapeMax[i];
