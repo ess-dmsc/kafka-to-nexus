@@ -3,13 +3,9 @@
 #include "URI.h"
 #include <fmt/format.h>
 #include <string>
-// spdlog.h has to be included before sink headers. Clang-format reverts the
-// order so it needs to be turned off.
-// clang-format off
-#include <spdlog/spdlog.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-// clang-format on
+#include <spdlog/spdlog.h>
 
 using SharedLogger = std::shared_ptr<spdlog::logger>;
 
