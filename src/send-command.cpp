@@ -20,6 +20,7 @@ struct MainOpt {
   std::string cmd;
   spdlog::level::level_enum LoggingLevel;
   std::string LogFilename;
+  uri::URI GraylogLoggerAddress;
 };
 
 std::string make_command(const std::string &broker, const uint64_t &teamid) {
@@ -111,11 +112,14 @@ int main(int argc, char **argv) {
                "                              Host, port, topic where the "
                "command should be sent to.",
                false);
+  addUriOption(App, "--graylog-logger-address",
+               MainOptions.GraylogLoggerAddress,
+               "<host:port> Log to Graylog via graylog_logger library", false);
   App.add_option("--log-file", MainOptions.LogFilename,
                  "Specify file to log to");
   CLI11_PARSE(App, argc, argv);
   ::setUpLogging(MainOptions.LoggingLevel, "", MainOptions.LogFilename,
-                 URI(""));
+                 MainOptions.GraylogLoggerAddress);
   auto Logger = getLogger();
   MainOptions.BrokerSettings.Address = MainOptions.broker.HostPort;
   auto producer =
