@@ -1,4 +1,4 @@
-from helpers.kafkahelpers import create_producer, send_writer_command, poll_everything
+from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything
 from helpers.timehelpers import unix_time_milliseconds
 from time import sleep
 from datetime import datetime
@@ -15,7 +15,7 @@ def test_filewriter_clears_stop_time(docker_compose_stop_command_does_not_persis
     send_writer_command("commands/commandwithnostoptime.json", producer, topic=topic)
 
     sleep(10)
-    msgs = poll_everything("TEST_writerStatus")
+    msgs = consume_everything("TEST_writerStatus")
 
     stopped = False
     started = False

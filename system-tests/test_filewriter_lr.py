@@ -1,7 +1,7 @@
 import pytest
 import docker
 from time import sleep
-from helpers.kafkahelpers import create_producer, send_writer_command, poll_everything
+from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything
 import h5py
 from math import isclose
 import os
@@ -64,6 +64,6 @@ def test_long_run(docker_compose_long_running):
     assert counter == pv_updates + 1
 
     with open("logs/lr_status_messages.log", 'w+') as file:
-        status_messages = poll_everything("TEST_writerStatus")
+        status_messages = consume_everything("TEST_writerStatus")
         for msg in status_messages:
             file.write(str(msg.value(), encoding='utf-8') + "\n")

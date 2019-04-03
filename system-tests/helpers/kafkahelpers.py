@@ -22,7 +22,7 @@ def create_consumer():
     return Consumer({"bootstrap.servers": "localhost:9092", "group.id": uuid.uuid4(), 'default.topic.config': {'auto.offset.reset': 'latest'}})
 
 
-def poll_everything(topic):
+def consume_everything(topic):
     consumer = Consumer({'bootstrap.servers': 'localhost:9092', 'group.id': uuid.uuid4()})
     topicpart = TopicPartition(topic, 0, 0)
     consumer.assign([topicpart])
