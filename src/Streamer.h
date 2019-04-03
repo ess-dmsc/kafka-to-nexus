@@ -98,18 +98,22 @@ protected:
 private:
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
+  SharedLogger Logger = getLogger();
 };
 
 /// \brief Create a consumer with options specified in the class
 /// constructor. Connects to the topic, eventually at the specified timestamp.
 ///
 /// \param[in] TopicName  The topic to consume.
+/// \param Logger Pointer to spdlog instance to be used for logging.
 ///
 /// \return If the connection is successful returns ``SEC::writing``. If the
 /// consumer can't be created returns ``SEC::configuration_error``, if the topic
 /// is not in the partition ``SEC::topic_partition_error``;
-std::pair<Status::StreamerStatus, ConsumerPtr>
-createConsumer(std::string const &TopicName, StreamerOptions const &Options);
+std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
+createConsumer(std::string const &TopicName,
+               FileWriter::StreamerOptions const &Options, SharedLogger Logger);
+
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime);
+                     std::chrono::milliseconds Stoptime, SharedLogger Logger);
 } // namespace FileWriter

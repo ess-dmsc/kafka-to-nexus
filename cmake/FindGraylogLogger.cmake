@@ -1,5 +1,5 @@
-# opt-in (as requested)
-set(USE_GRAYLOG_LOGGER FALSE CACHE BOOL "Try to use graylog_logger")
+# opt-out
+set(USE_GRAYLOG_LOGGER TRUE CACHE BOOL "Try to use graylog_logger")
 find_path(GRAYLOGLOGGER_INCLUDE_DIR NAMES graylog_logger/Log.hpp)
 find_library(GRAYLOGLOGGER_LIBRARY NAMES graylog_logger)
 

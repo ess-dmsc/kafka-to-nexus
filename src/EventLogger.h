@@ -47,7 +47,7 @@ void logEvent(std::shared_ptr<ProducerType> Producer, StatusCode Code,
               const std::string &Message) {
 
   if (!Producer) {
-    LOG(Sev::Warning, "Can't produce filewriter event log, invalid Producer");
+    getLogger()->error("Can't produce filewriter event log, invalid Producer");
     return;
   }
 

@@ -33,6 +33,8 @@ int main(int argc, char **argv) {
   setCLIOptions(App, *Options);
 
   CLI11_PARSE(App, argc, argv);
+  setupLoggerFromOptions(*Options);
+  auto Logger = getLogger();
   Options->parseJsonCommands();
 
   if (Options->ListWriterModules) {
@@ -55,24 +57,21 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
   }
-
-  setupLoggerFromOptions(*Options);
-
   FileWriter::Master Master(*Options);
-  std::thread MasterThread([&Master] {
+  std::thread MasterThread([&Master, Logger] {
     try {
       Master.run();
     } catch (std::system_error const &e) {
-      LOG(Sev::Critical,
+      Logger->critical(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
           e.code().value(), e.code().category().name(), e.code().message(),
           e.what());
       throw;
     } catch (std::runtime_error const &e) {
-      LOG(Sev::Critical, "std::runtime_error  what: {}", e.what());
+      Logger->critical("std::runtime_error  what: {}", e.what());
       throw;
     } catch (std::exception const &e) {
-      LOG(Sev::Critical, "std::exception  what: {}", e.what());
+      Logger->critical("std::exception  what: {}", e.what());
       throw;
     }
   });
@@ -80,7 +79,7 @@ int main(int argc, char **argv) {
   while (not Master.runLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
-      LOG(Sev::Notice, "SIGNAL {}", SignalId);
+      Logger->debug("SIGNAL {}", SignalId);
       Master.stop();
       GotSignal = false;
       break;
@@ -88,5 +87,6 @@ int main(int argc, char **argv) {
   }
 
   MasterThread.join();
+  Logger->flush();
   return 0;
 }

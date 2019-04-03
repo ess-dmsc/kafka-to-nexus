@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logger.h"
 #include <string>
 
 // Forward declarations
@@ -22,3 +23,11 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
 CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
                           uri::URI &URIArg, std::string const &Description,
                           bool Defaulted);
+
+/// \brief Parsing log level from user's input.
+/// Look for \p LogLevelString value in a map containing spdlog levels.
+/// \param LogLevelString User's input
+/// \param LogLevelResult Result of parsing returned through reference
+/// \return bool signalizing successful parsing
+bool parseLogLevel(std::vector<std::string> LogLevelString,
+                   spdlog::level::level_enum &LogLevelResult);

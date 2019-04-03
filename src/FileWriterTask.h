@@ -107,6 +107,7 @@ private:
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   HDFFile File;
+  SharedLogger Logger;
 };
 
 } // namespace FileWriter

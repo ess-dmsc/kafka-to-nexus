@@ -91,5 +91,6 @@ private:
                               &TopicPartitionsWithOffsets) const;
   std::vector<RdKafka::TopicPartition *>
   queryWatermarkOffsets(const std::string &Topic);
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace KafkaW

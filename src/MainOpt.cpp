@@ -17,7 +17,7 @@ void MainOpt::init() {
 
 int MainOpt::parseJsonCommands() {
   if (CommandsJsonFilename.empty()) {
-    LOG(Sev::Notice, "given config filename is empty");
+    getLogger()->warn("given config filename is empty");
     return -1;
   }
   auto jsontxt = readFileIntoVector(CommandsJsonFilename);
@@ -40,18 +40,6 @@ void MainOpt::findAndAddCommands() {
 }
 
 void setupLoggerFromOptions(MainOpt const &opt) {
-  g_ServiceID = opt.ServiceID;
-  if (!opt.kafka_gelf.HostPort.empty()) {
-    auto &uri = opt.kafka_gelf;
-    log_kafka_gelf_start(uri.HostPort, uri.Topic);
-    LOG(Sev::Debug, "Enabled kafka_gelf: //{}/{}", uri.HostPort, uri.Topic);
-  }
-
-  if (!opt.GraylogLoggerAddress.HostPort.empty()) {
-    fwd_graylog_logger_enable(opt.GraylogLoggerAddress.HostPort);
-  }
-
-  if (!opt.LogFilename.empty()) {
-    use_log_file(opt.LogFilename);
-  }
+  setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename,
+               opt.GraylogLoggerAddress);
 }

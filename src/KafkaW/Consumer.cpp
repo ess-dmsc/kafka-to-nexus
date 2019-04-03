@@ -18,16 +18,16 @@ Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
 }
 
 Consumer::~Consumer() {
-  LOG(Sev::Debug, "~Consumer()");
+  Logger->debug("~Consumer()");
   if (KafkaConsumer != nullptr) {
-    LOG(Sev::Debug, "Close the consumer");
+    Logger->debug("Close the consumer");
     KafkaConsumer->close();
     RdKafka::wait_destroyed(ConsumerBrokerSettings.ConsumerCloseTimeoutMS);
   }
 }
 
 void Consumer::addTopic(const std::string &Topic) {
-  LOG(Sev::Info, "Consumer::add_topic  {}", Topic);
+  Logger->info("Consumer::add_topic  {}", Topic);
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets =
       queryWatermarkOffsets(Topic);
   assignToPartitions(Topic, TopicPartitionsWithOffsets);
@@ -43,7 +43,7 @@ Consumer::queryWatermarkOffsets(const std::string &Topic) {
         Topic, PartitionID, &Low, &High,
         ConsumerBrokerSettings.MetadataTimeoutMS);
     if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-      LOG(Sev::Error,
+      Logger->error(
           "Unable to query watermark offsets for topic {} with error {} - {}",
           Topic, ErrorCode, RdKafka::err2str(ErrorCode));
       return {};
@@ -62,15 +62,15 @@ void Consumer::assignToPartitions(const std::string &Topic,
            TopicPartitionsWithOffsets.cend(),
            [](RdKafka::TopicPartition *Partition) { delete Partition; });
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    LOG(Sev::Error, "Could not assign to {}", Topic);
+    Logger->error("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::v5::format("Could not assign to {}", Topic));
   }
 }
 
 void Consumer::addTopicAtTimestamp(std::string const &Topic,
                                    std::chrono::milliseconds const StartTime) {
-  LOG(Sev::Info, "Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}",
-      Topic, StartTime.count());
+  Logger->info("Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}", Topic,
+               StartTime.count());
   auto NumberOfPartitions = queryTopicPartitions(Topic).size();
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
   for (unsigned int i = 0; i < NumberOfPartitions; i++) {
@@ -84,8 +84,8 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
       TopicPartitionsWithTimestamp,
       ConsumerBrokerSettings.OffsetsForTimesTimeoutMS);
   if (ErrorCode != RdKafka::ErrorCode::ERR_NO_ERROR) {
-    LOG(Sev::Error, "Kafka error while getting offsets for timestamp: {}",
-        ErrorCode);
+    Logger->error("Kafka error while getting offsets for timestamp: {}",
+                  ErrorCode);
     throw std::runtime_error(fmt::format(
         "Kafka error while getting offsets for timestamp: {}", ErrorCode));
   }

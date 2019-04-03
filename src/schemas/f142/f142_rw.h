@@ -110,6 +110,7 @@ public:
                                                        ErrorLogMinInterval};
 
 private:
+  SharedLogger Logger = spdlog::get("filewriterlogger");
   static bool findType(const nlohmann::basic_json<> Attribute,
                        std::string &DType);
 };

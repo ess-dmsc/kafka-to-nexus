@@ -23,9 +23,11 @@ struct StreamSettings {
 /// exception.
 ///
 /// \param  Command Command passed to the program.
+/// \param Logger Pointer to spdlog instance to be used for logging.
+///
 /// \return If parsing successful returns `nlohmann::json`, otherwise throws an
 /// exception.
-nlohmann::json parseOrThrow(std::string const &Command);
+nlohmann::json parseOrThrow(std::string const &Command, SharedLogger Logger);
 
 std::string format_nested_exception(std::exception const &E);
 
@@ -106,6 +108,7 @@ private:
   MainOpt &Config;
   MasterInterface *MasterPtr = nullptr;
   std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
+  SharedLogger Logger = getLogger();
 };
 
 /// \brief Extract the time in milliseconds from the JSON.
@@ -115,4 +118,6 @@ private:
 /// \return The value in milliseconds.
 std::chrono::milliseconds findTime(nlohmann::json const &Document,
                                    std::string const &Key);
+
+std::string TruncateCommand(std::string const &Command);
 } // namespace FileWriter

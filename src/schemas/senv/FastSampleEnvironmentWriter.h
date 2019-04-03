@@ -53,5 +53,6 @@ protected:
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace senv

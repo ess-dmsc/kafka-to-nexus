@@ -14,14 +14,14 @@ void h5d::init_basics() {
   Type = Dataset.datatype();
   DSPTgt = Dataset.dataspace();
   ndims = DSPTgt.rank();
-  LOG(Sev::Debug, "h5d::init_basics");
+  Logger->trace("h5d::init_basics");
   ShapeNow = hdf5::Dimensions(ndims, 0);
   sext = DSPTgt.current_dimensions();
   ShapeMax = DSPTgt.maximum_dimensions();
-  if (log_level >= 9) {
+  if (Logger->should_log(spdlog::level::trace)) {
     for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name, i1,
-          sext.at(i1), ShapeMax.at(i1));
+      Logger->trace("{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name, i1,
+                    sext.at(i1), ShapeMax.at(i1));
     }
   }
   try {
@@ -76,7 +76,7 @@ h5d::ptr h5d::open(hdf5::node::Group const &Node, std::string const &Name) {
 h5d::h5d(h5d &&x) noexcept { swap(*this, x); }
 
 h5d::~h5d() {
-  LOG(Sev::Debug, "~h5d ds");
+  Logger->trace("~h5d ds");
   if (Dataset.is_valid()) {
     Dataset.extent(ShapeNow);
   }
@@ -102,11 +102,9 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   using CLK = std::chrono::steady_clock;
   using MS = std::chrono::milliseconds;
   auto t1 = CLK::now();
-  LOG(Sev::Debug, "append_data_{}d", ndims);
+  Logger->trace("append_data_{}d", ndims);
   auto ds_name = static_cast<std::string>(Dataset.link().path());
-  if (log_level >= 9) {
-    LOG(Sev::Debug, "append_data_1d {} for dataset {}", nlen, ds_name);
-  }
+  Logger->trace("append_data_1d {} for dataset {}", nlen, ds_name);
 
   for (size_t i = 1; i < sext.size(); ++i) {
     sext[i] = ShapeMax[i];
@@ -115,7 +113,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   hsize_t nlen_0 = nlen;
   if (ndims == 2) {
     if (nlen % sext[1] != 0) {
-      LOG(Sev::Error, "dataset dimensions do not match");
+      Logger->error("dataset dimensions do not match");
       return {AppendResult::ERROR};
     }
     nlen_0 /= sext[1];
@@ -136,8 +134,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         snow_1_ln2 += 1;
       }
       if (snow_1_ln2 >= BLOCK) {
-        LOG(Sev::Error, "snow_1_ln2 >= BLOCK; {} >= {};  sext[1]: {}",
-            snow_1_ln2, BLOCK, sext[1]);
+        Logger->error("snow_1_ln2 >= BLOCK; {} >= {};  sext[1]: {}", snow_1_ln2,
+                      BLOCK, sext[1]);
         snow_1_ln2 = BLOCK - 1;
       }
       BLOCK -= snow_1_ln2;
@@ -145,24 +143,23 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     uint32_t const MAX = BLOCK + 8;
     hdf5::Dimensions sext2;
     sext2 = sext;
-    LOG(Sev::Debug, "Before extending: {}  min target: {}", sext2.at(0),
-        snext + nlen_0);
+    Logger->trace("Before extending: {}  min target: {}", sext2.at(0),
+                  snext + nlen_0);
     sext2[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
     if (sext2[0] - sext[0] > (1u << MAX)) {
       sext2[0] = sext[0] + (1 << MAX);
     }
     if (sext.size() == 1) {
-      LOG(Sev::Debug,
-          "snext: {:12}  set_extent  d: 1\n  from: {:12}  to: {:12}", snext,
-          sext.at(0), sext2.at(0));
+      Logger->trace("snext: {:12}  set_extent  d: 1\n  from: {:12}  to: {:12}",
+                    snext, sext.at(0), sext2.at(0));
     } else if (sext.size() == 2) {
-      LOG(Sev::Debug,
+      Logger->trace(
           "snext: {:12}  set_extent  d: 2\n  from: {:12}  to: {:12}\n  "
           "from: {:12}  to: {:12}",
           snext, sext.at(0), sext2.at(0), sext.at(1), sext2.at(1));
     } else {
-      LOG(Sev::Debug, "snext: {:12}  set_extent  d: {}   NOT SUPPORTED",
-          sext.size());
+      Logger->trace("snext: {:12}  set_extent  d: {}   NOT SUPPORTED",
+                    sext.size());
     }
 
     auto t2 = CLK::now();
@@ -170,7 +167,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     try {
       Dataset.extent(sext2);
     } catch (...) {
-      LOG(Sev::Error, "Dataset.extent()");
+      Logger->error("Dataset.extent()");
       return {AppendResult::ERROR};
     }
     DSPTgt = Dataset.dataspace();
@@ -181,19 +178,17 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       sext.at(i) = sext2.at(i);
     }
     auto t3 = CLK::now();
-    LOG(Sev::Debug, "h5d::append_data_1d set_extent: {} + {}",
-        std::chrono::duration_cast<MS>(t2 - t1).count(),
-        std::chrono::duration_cast<MS>(t3 - t2).count());
+    Logger->trace("h5d::append_data_1d set_extent: {} + {}",
+                  std::chrono::duration_cast<MS>(t2 - t1).count(),
+                  std::chrono::duration_cast<MS>(t3 - t2).count());
   }
 
-  if (log_level >= 9) {
-    LOG(Sev::Debug, "try to get the dsp dims:");
-    auto sext = DSPTgt.current_dimensions();
-    auto smax = DSPTgt.maximum_dimensions();
-    for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "dimensions: {:20} {}: {:21} {:21}", Name, i1,
-          sext.at(i1), smax.at(i1));
-    }
+  Logger->trace("try to get the dsp dims:");
+  auto sext = DSPTgt.current_dimensions();
+  auto smax = DSPTgt.maximum_dimensions();
+  for (int i1 = 0; i1 < ndims; ++i1) {
+    Logger->trace("dimensions: {:20} {}: {:21} {:21}", Name, i1, sext.at(i1),
+                  smax.at(i1));
   }
 
   {
@@ -215,7 +210,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
           hdf5::dataspace::SelectionOperation::SET,
           hdf5::dataspace::Hyperslab(offset, block, count, stride));
     } catch (...) {
-      LOG(Sev::Error, "can not select mem hyperslab");
+      Logger->error("can not select mem hyperslab");
       return {AppendResult::ERROR};
     }
   }
@@ -232,10 +227,10 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     tgt_count[i] = sext[1];
     tgt_stride[i] = 1;
   }
-  if (log_level >= 9) {
+  if (Logger->should_log(spdlog::level::trace)) {
     for (int i1 = 0; i1 < ndims; ++i1) {
-      LOG(Sev::Debug, "select tgt  i1: {}  start: {}  count: {}", i1,
-          tgt_offset.at(i1), tgt_count.at(i1));
+      Logger->trace("select tgt  i1: {}  start: {}  count: {}", i1,
+                    tgt_offset.at(i1), tgt_count.at(i1));
     }
   }
   DSPTgt.selection(
@@ -245,14 +240,14 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   try {
     Dataset.write(*data, Type, DSPMem, DSPTgt, PLTransfer);
   } catch (...) {
-    LOG(Sev::Error, "write failed  ds_name: {}", ds_name);
-    if (log_level >= 7) {
+    Logger->error("write failed  ds_name: {}", ds_name);
+    if (Logger->should_log(spdlog::level::trace)) {
       auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
       auto sext = dsp.current_dimensions();
       auto smax = dsp.current_dimensions();
       for (int i1 = 0; i1 < ndims; ++i1) {
-        LOG(Sev::Debug, "dimensions {}: {:12} {:12}", i1, sext.at(i1),
-            smax.at(i1));
+        Logger->trace("dimensions {}: {:12} {:12}", i1, sext.at(i1),
+                      smax.at(i1));
       }
     }
     return {AppendResult::ERROR};
@@ -271,7 +266,7 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
 append_ret h5d::append(std::string const &String) {
   try {
     if (!Dataset.is_valid()) {
-      LOG(Sev::Error, "Dataset is not valid");
+      Logger->error("Dataset is not valid");
       return {AppendResult::ERROR};
     }
     {
@@ -279,7 +274,7 @@ append_ret h5d::append(std::string const &String) {
       auto TypeHid = static_cast<hid_t>(Type);
       if (H5Tget_class(TypeHid) != H5T_STRING or
           H5Tis_variable_str(TypeHid) == 0) {
-        LOG(Sev::Error, "Unexpected datatype");
+        Logger->error("Unexpected datatype");
         return {AppendResult::ERROR};
       }
     }
@@ -300,7 +295,7 @@ append_ret h5d::append(std::string const &String) {
         hdf5::dataspace::Simple(Dataset.dataspace()).current_dimensions();
     return {AppendResult::OK, String.size(), 0};
   } catch (std::runtime_error const &e) {
-    LOG(Sev::Error, "exception while writing: {}", e.what());
+    Logger->error("exception while writing: {}", e.what());
     return {AppendResult::ERROR};
   }
 }
@@ -342,7 +337,7 @@ template <typename T>
 h5d_chunked_1d<T>::h5d_chunked_1d(std::string const &, h5d ds_)
     : DataSet(std::move(ds_)) {
   if (!DataSet.Dataset.is_valid()) {
-    LOG(Sev::Critical, "not a dataset");
+    Logger->critical("not a dataset");
     throw std::runtime_error("Not a dataset");
   }
   auto dsp = hdf5::dataspace::Simple(DataSet.Dataset.dataspace());
@@ -351,7 +346,7 @@ h5d_chunked_1d<T>::h5d_chunked_1d(std::string const &, h5d ds_)
     auto msg = fmt::format(
         "wrong dimension Dataset: {}  ndims: {}",
         static_cast<std::string>(DataSet.Dataset.link().path()), ndims);
-    LOG(Sev::Critical, "{}", msg);
+    Logger->critical("{}", msg);
     throw std::runtime_error(msg);
   }
   dsp_wr = hdf5::dataspace::Simple(dsp);
@@ -362,7 +357,7 @@ h5d_chunked_1d<T>::h5d_chunked_1d(h5d_chunked_1d &&x) noexcept
     : DataSet(std::move(x.DataSet)), dsp_wr(std::move(x.dsp_wr)) {}
 
 template <typename T> h5d_chunked_1d<T>::~h5d_chunked_1d() {
-  LOG(Sev::Debug,
+  Logger->trace(
       "~h5d_chunked_1d  count_append_calls: {}, count_append_bytes: {}, "
       "count_buffer_copy_calls: {}, count_buffer_copy_bytes: {}",
       count_append_calls, count_append_bytes, count_buffer_copy_calls,
@@ -393,7 +388,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
   bool do_buf = nbytes <= buf_packet_max;
   auto buffer_append = [this, &nbytes](T const *data) {
     if (buf_n + nbytes > buf_size) {
-      LOG(Sev::Error, "fail buffer");
+      Logger->error("fail buffer");
       exit(1);
     }
     auto p1 = reinterpret_cast<const char *>(data);
@@ -415,7 +410,7 @@ append_ret h5d_chunked_1d<T>::append_data_1d(T const *data, hsize_t nlen) {
     if (res == AppendResult::ERROR) {
       return {res};
     } else if (res != AppendResult::OK) {
-      LOG(Sev::Error, "unhandled error");
+      Logger->error("unhandled error");
       exit(1);
     }
   }
@@ -442,7 +437,7 @@ template <typename T> AppendResult h5d_chunked_1d<T>::flush_buf() {
   auto wr = DataSet.append_data_1d(reinterpret_cast<T *>(buf.data()),
                                    buf_n / sizeof(T));
   if (wr.status != AppendResult::OK) {
-    LOG(Sev::Debug, "FLUSH NOT OK");
+    Logger->trace("FLUSH NOT OK");
     return wr.status;
   }
   buf_n = 0;
@@ -476,7 +471,7 @@ Chunked1DString::ptr Chunked1DString::open(hdf5::node::Group const &Node,
                                            std::string const &Name) {
   auto ds = h5d::open(Node, Name);
   if (!ds) {
-    LOG(Sev::Error, "Could not open dataset: {}", Name);
+    getLogger()->error("Could not open dataset: {}", Name);
     return ptr();
   }
   return ptr(new Chunked1DString(std::move(*ds)));
@@ -519,7 +514,7 @@ h5d_chunked_2d<T>::h5d_chunked_2d(std::string const &, h5d LinkedDataSet,
                                   hsize_t NrOfColumns)
     : DataSet(std::move(LinkedDataSet)), NrOfColumns_(NrOfColumns) {
   if (!DataSet.Dataset.is_valid()) {
-    LOG(Sev::Critical, "not a dataset");
+    Logger->critical("not a dataset");
     throw std::runtime_error("Not a dataset");
   }
   auto dsp = hdf5::dataspace::Simple(DataSet.Dataset.dataspace());
@@ -528,7 +523,7 @@ h5d_chunked_2d<T>::h5d_chunked_2d(std::string const &, h5d LinkedDataSet,
     auto msg = fmt::format(
         "wrong dimension Dataset: {}  ndims: {}",
         static_cast<std::string>(DataSet.Dataset.link().path()), ndims);
-    LOG(Sev::Critical, "{}", msg);
+    Logger->critical("{}", msg);
     throw std::runtime_error(msg);
   }
   dsp_wr = hdf5::dataspace::Simple(dsp);
@@ -560,7 +555,7 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
   bool do_buf = nbytes <= buf_packet_max;
   auto buffer_append = [this, &nbytes](T const *data) {
     if (buf_n + nbytes > buf_size) {
-      LOG(Sev::Error, "fail buffer");
+      Logger->error("fail buffer");
       exit(1);
     }
     auto p1 = reinterpret_cast<const char *>(data);
@@ -582,7 +577,7 @@ append_ret h5d_chunked_2d<T>::append_data_2d(T const *data, hsize_t nlen) {
     if (res == AppendResult::ERROR) {
       return {res};
     } else if (res != AppendResult::OK) {
-      LOG(Sev::Error, "unhandled error");
+      Logger->error("unhandled error");
       exit(1);
     }
   }

@@ -59,5 +59,6 @@ private:
       RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL));
   ProducerDeliveryCb DeliveryCb{Stats};
   KafkaEventCb EventCb;
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace KafkaW

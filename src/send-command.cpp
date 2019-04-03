@@ -18,6 +18,9 @@ struct MainOpt {
   URI broker{"localhost:9092/commands"};
   KafkaW::BrokerSettings BrokerSettings;
   std::string cmd;
+  spdlog::level::level_enum LoggingLevel;
+  std::string LogFilename;
+  uri::URI GraylogLoggerAddress;
 };
 
 std::string make_command(const std::string &broker, const uint64_t &teamid) {
@@ -59,12 +62,13 @@ std::string make_command_stop(
 }
 
 std::string make_command_from_file(const std::string &filename) {
+  auto Logger = getLogger();
   std::ifstream ifs(filename);
   if (!ifs.good()) {
-    LOG(Sev::Warning, "can not open file {}", filename);
+    Logger->warn("can not open file {}", filename);
     return "";
   }
-  LOG(Sev::Debug, "make_command_from_file {}", filename);
+  Logger->trace("make_command_from_file {}", filename);
   auto buf1 = readFileIntoVector(filename);
   return {buf1.data(), buf1.size()};
 }
@@ -73,7 +77,7 @@ extern "C" char const GIT_COMMIT[];
 
 int main(int argc, char **argv) {
 
-  MainOpt opt;
+  MainOpt MainOptions;
 
   fmt::print("send-command {:.7} (ESS, BrightnESS)\n"
              "  Contact: dominik.werder@psi.ch\n\n",
@@ -84,39 +88,59 @@ int main(int argc, char **argv) {
       "Writer modules can be used to populate the file from Kafka topics.\n"};
 
   App.set_config(); // disable ini config file
-  App.add_option("--teamid", opt.teamid, "");
+  App.add_option("--teamid", MainOptions.teamid, "");
   App.add_option(
-      "--cmd", opt.cmd,
+      "--cmd", MainOptions.cmd,
       "<command>\n"
       "                              Use a command file: file:<filename>\n"
       "                              Stop writing file-with-id and timestamp "
       "(optional): stop:<jobid>[:<timestamp>]\n"
       "                              Terminate the filewriter process: exit");
-  addUriOption(App, "--broker", opt.broker,
+  std::string LogLevelInfoStr =
+      R"*(Set log message level. Set to 0 - 5 or one of
+  `Trace`, `Debug`, `Info`, `Warning`, `Error`
+  or `Critical`. Ex: "-v Debug". Default: `Error`)*";
+  App.add_option(
+         "-v,--verbosity",
+         [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+           return parseLogLevel(Input, MainOptions.LoggingLevel);
+         },
+         LogLevelInfoStr)
+      ->set_default_val("Error");
+  addUriOption(App, "--broker", MainOptions.broker,
                "<host[:port]/topic>\n"
                "                              Host, port, topic where the "
                "command should be sent to.",
                false);
+  addUriOption(App, "--graylog-logger-address",
+               MainOptions.GraylogLoggerAddress,
+               "<host:port> Log to Graylog via graylog_logger library", false);
+  App.add_option("--log-file", MainOptions.LogFilename,
+                 "Specify file to log to");
   CLI11_PARSE(App, argc, argv);
-
-  opt.BrokerSettings.Address = opt.broker.HostPort;
-  auto producer = std::make_shared<KafkaW::Producer>(opt.BrokerSettings);
-  KafkaW::ProducerTopic pt(producer, opt.broker.Topic);
-  if (opt.cmd == "new") {
-    auto NewCommandMsg = make_command(opt.BrokerSettings.Address, opt.teamid);
-    LOG(Sev::Debug, "sending {}", NewCommandMsg);
+  ::setUpLogging(MainOptions.LoggingLevel, "", MainOptions.LogFilename,
+                 MainOptions.GraylogLoggerAddress);
+  auto Logger = getLogger();
+  MainOptions.BrokerSettings.Address = MainOptions.broker.HostPort;
+  auto producer =
+      std::make_shared<KafkaW::Producer>(MainOptions.BrokerSettings);
+  KafkaW::ProducerTopic pt(producer, MainOptions.broker.Topic);
+  if (MainOptions.cmd == "new") {
+    auto NewCommandMsg =
+        make_command(MainOptions.BrokerSettings.Address, MainOptions.teamid);
+    Logger->trace("sending {}", NewCommandMsg);
     pt.produce(NewCommandMsg);
-  } else if (opt.cmd == "exit") {
-    auto ExitCommandMsg =
-        make_command_exit(opt.BrokerSettings.Address, opt.teamid);
-    LOG(Sev::Debug, "sending {}", ExitCommandMsg);
+  } else if (MainOptions.cmd == "exit") {
+    auto ExitCommandMsg = make_command_exit(MainOptions.BrokerSettings.Address,
+                                            MainOptions.teamid);
+    Logger->trace("sending {}", ExitCommandMsg);
     pt.produce(ExitCommandMsg);
-  } else if (opt.cmd.substr(0, 5) == "file:") {
-    auto CommandMsgFromFile = make_command_from_file(opt.cmd.substr(5));
-    LOG(Sev::Debug, "sending:\n{}", CommandMsgFromFile);
+  } else if (MainOptions.cmd.substr(0, 5) == "file:") {
+    auto CommandMsgFromFile = make_command_from_file(MainOptions.cmd.substr(5));
+    Logger->trace("sending:\n{}", CommandMsgFromFile);
     pt.produce(CommandMsgFromFile);
-  } else if (opt.cmd.substr(0, 5) == "stop:") {
-    auto input = opt.cmd.substr(5);
+  } else if (MainOptions.cmd.substr(0, 5) == "stop:") {
+    auto input = MainOptions.cmd.substr(5);
     std::chrono::milliseconds stop_time{0};
     std::string::size_type n{input.find(':')};
     std::string StopCommandMsg;
@@ -125,13 +149,15 @@ int main(int argc, char **argv) {
       if (result) {
         stop_time = std::chrono::milliseconds{result};
       }
-      StopCommandMsg = make_command_stop(opt.BrokerSettings.Address,
+      StopCommandMsg = make_command_stop(MainOptions.BrokerSettings.Address,
                                          input.substr(0, n), stop_time);
     } else {
-      StopCommandMsg = make_command_stop(opt.BrokerSettings.Address, input);
+      StopCommandMsg =
+          make_command_stop(MainOptions.BrokerSettings.Address, input);
     }
-    LOG(Sev::Debug, "sending {}", StopCommandMsg);
+    Logger->trace("sending {}", StopCommandMsg);
     pt.produce(StopCommandMsg);
   }
+  Logger->flush();
   return 0;
 }

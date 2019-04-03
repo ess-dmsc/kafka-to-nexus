@@ -16,7 +16,6 @@ Part of the ESS data streaming pipeline.
   --command-uri URI (REQUIRED)
                               <//host[:port][/topic]> Kafka broker/topic to listen for commands
   --status-uri URI            <//host[:port][/topic]> Kafka broker/topic to publish status updates on
-  --kafka-gelf TEXT           <//host[:port]/topic> Log to Graylog via Kafka GELF adapter
   --graylog-logger-address TEXT
                               <host:port> Log to Graylog via graylog_logger library
   -v,--verbosity INT=3        Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)

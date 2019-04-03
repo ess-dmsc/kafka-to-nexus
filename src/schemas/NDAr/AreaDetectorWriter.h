@@ -70,5 +70,8 @@ protected:
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
+
+private:
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace NDAr

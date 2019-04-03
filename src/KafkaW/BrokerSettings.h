@@ -1,5 +1,6 @@
 #pragma once
 
+#include "logger.h"
 #include <librdkafka/rdkafkacpp.h>
 #include <map>
 #include <string>
@@ -30,6 +31,5 @@ struct BrokerSettings {
       {"statistics.interval.ms", "600000"}, // 1 Min
       {"api.version.request", "true"},
   };
-  ;
 };
 } // namespace KafkaW

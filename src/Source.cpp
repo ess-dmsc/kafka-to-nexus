@@ -1,5 +1,4 @@
 #include "Source.h"
-#include "HDFWriterModule.h"
 #include "helper.h"
 #include "logger.h"
 #include <chrono>
@@ -20,14 +19,14 @@ std::string const &Source::sourcename() const { return SourceName; }
 
 ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
   if (std::string(Message.data() + 4, Message.data() + 8) != SchemaID) {
-    LOG(Sev::Debug, "SchemaID: {} not accepted by source_name: {}", SchemaID,
-        SourceName);
+    Logger->trace("SchemaID: {} not accepted by source_name: {}", SchemaID,
+                  SourceName);
     return ProcessMessageResult::ERR;
   }
 
   if (!is_parallel) {
     if (!WriterModule) {
-      LOG(Sev::Debug, "!_hdf_writer_module for {}", SourceName);
+      Logger->trace("!_hdf_writer_module for {}", SourceName);
       return ProcessMessageResult::ERR;
     }
     try {
@@ -39,7 +38,7 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
       }
       return ProcessMessageResult::OK;
     } catch (const HDFWriterModuleRegistry::WriterException &E) {
-      LOG(Sev::Error, "Failure while writing message: {}", E.what());
+      Logger->error("Failure while writing message: {}", E.what());
       return ProcessMessageResult::ERR;
     }
   }
@@ -48,13 +47,13 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
 
 void Source::close_writer_module() {
   if (WriterModule) {
-    LOG(Sev::Debug, "Closing writer module for {}", SourceName);
+    getLogger()->trace("Closing writer module for {}", SourceName);
     WriterModule->flush();
     WriterModule->close();
     WriterModule.reset();
-    LOG(Sev::Debug, "Writer module closed for {}", SourceName);
+    getLogger()->trace("Writer module closed for {}", SourceName);
   } else {
-    LOG(Sev::Debug, "No writer module to close for {}", SourceName);
+    getLogger()->trace("No writer module to close for {}", SourceName);
   }
 }
 

@@ -14,10 +14,10 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
   RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
       KafkaProducer->getRdKafkaPtr(), Name, Config.get(), ErrStr));
   if (RdKafkaTopic == nullptr) {
-    LOG(Sev::Error, "could not create Kafka topic: {}", ErrStr);
+    Logger->error("could not create Kafka topic: {}", ErrStr);
     throw TopicCreationError();
   }
-  LOG(Sev::Debug, "ctor topic: {}", RdKafkaTopic->name());
+  Logger->debug("Constructor producer topic: {}", RdKafkaTopic->name());
 }
 
 struct Msg_ : public ProducerMessage {
@@ -60,20 +60,19 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
 
   case RdKafka::ERR__QUEUE_FULL:
     ++ProducerStats.local_queue_full;
-    LOG(Sev::Warning, "Producer queue full, outq (number of messages + number "
-                      "of unhandled events): {}",
-        KafkaProducer->outputQueueLength());
+    Logger->warn("Producer queue full, outq: {}",
+                 KafkaProducer->outputQueueLength());
     break;
 
   case RdKafka::ERR_MSG_SIZE_TOO_LARGE:
     ++ProducerStats.msg_too_large;
-    LOG(Sev::Error, "Message size too large to publish, size: {}", Msg->size);
+    Logger->error("Message size too large to publish, size: {}", Msg->size);
     break;
 
   default:
     ++ProducerStats.produce_fail;
-    LOG(Sev::Error, "Publishing message on topic \"{}\" failed",
-        RdKafkaTopic->name());
+    Logger->error("Publishing message on topic \"{}\" failed",
+                  RdKafkaTopic->name());
     break;
   }
   return 1;

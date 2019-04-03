@@ -31,5 +31,6 @@ private:
   std::shared_ptr<Producer> KafkaProducer;
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
   std::string Name;
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 }

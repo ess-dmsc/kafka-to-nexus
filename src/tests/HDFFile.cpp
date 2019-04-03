@@ -91,12 +91,13 @@ TEST(HDFFile, Create) {
 class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
+    auto StaticLogger = spdlog::get("testlogger");
     auto CommandData = readFileIntoVector(std::string(TEST_DATA_PATH) +
                                           "/msg-cmd-new-03.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
-    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
-        CommandString.size());
+    StaticLogger->trace("CommandString: {:.{}}", CommandString.data(),
+                        CommandString.size());
     auto Command = json::parse(CommandString);
     std::string fname = Command["file_attributes"]["file_name"];
     unlink(fname.c_str());
@@ -108,12 +109,14 @@ public:
   }
 
   static void new_04() {
+    auto StaticLogger = spdlog::get("testlogger");
+
     auto CommandData = readFileIntoVector(std::string(TEST_DATA_PATH) +
                                           "/msg-cmd-new-04.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
-    LOG(Sev::Debug, "CommandString: {:.{}}", CommandString.data(),
-        CommandString.size());
+    StaticLogger->trace("CommandString: {:.{}}", CommandString.data(),
+                        CommandString.size());
     auto Command = json::parse(CommandString);
     std::string fname = Command["file_attributes"]["file_name"];
     unlink(fname.c_str());
@@ -356,7 +359,7 @@ public:
       ASSERT_EQ(attr.datatype().get_class(), hdf5::datatype::Class::STRING);
       std::string val;
       attr.read(val, attr.datatype());
-      ASSERT_EQ(FileWriter::HDFFile::h5VersionStringLinked(), val);
+      ASSERT_EQ(FileWriter::h5VersionStringLinked(), val);
     }
     {
       auto attr = root_group.attributes["file_time"];
@@ -384,7 +387,7 @@ public:
     /// file writer.
     void pregenerate(int n, int n_events_per_message_) {
       n_events_per_message = n_events_per_message_;
-      LOG(Sev::Debug, "generating {} {}...", topic, source);
+      Logger->trace("generating {} {}...", topic, source);
       FlatBufs::ev42::synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
@@ -400,11 +403,14 @@ public:
             reinterpret_cast<const char *>(fb.builder->GetBufferPointer()),
             fb.builder->GetSize()));
         if (msgs.back().size() < 8) {
-          LOG(Sev::Error, "error");
+          Logger->error("error");
           exit(1);
         }
       }
     }
+
+  private:
+    SharedLogger Logger = spdlog::get("testlogger");
   };
 
   /// Used by `data_ev42` test to verify attributes attached to the group.
@@ -420,6 +426,7 @@ public:
   }
 
   static void data_ev42() {
+    SharedLogger Logger = spdlog::get("filewriterlogger");
     AddEv42Reader();
     MainOpt main_opt = getTestOptions();
 
@@ -463,7 +470,7 @@ public:
       do_verification =
           main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<int64_t>();
-      LOG(Sev::Debug, "do_verification: {}", do_verification);
+      Logger->trace("do_verification: {}", do_verification);
     } catch (...) {
     }
 
@@ -472,7 +479,7 @@ public:
       n_msgs_per_source =
           main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
               .get<int64_t>();
-      LOG(Sev::Debug, "unit_test.n_msgs_per_source: {}", n_msgs_per_source);
+      Logger->trace("unit_test.n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
@@ -480,7 +487,7 @@ public:
     try {
       n_sources =
           main_opt.CommandsJson["unit_test"]["n_sources"].get<int64_t>();
-      LOG(Sev::Debug, "unit_test.n_sources: {}", n_sources);
+      Logger->trace("unit_test.n_sources: {}", n_sources);
     } catch (...) {
     }
 
@@ -489,8 +496,7 @@ public:
       n_events_per_message =
           main_opt.CommandsJson["unit_test"]["n_events_per_message"]
               .get<int64_t>();
-      LOG(Sev::Debug, "unit_test.n_events_per_message: {}",
-          n_events_per_message);
+      Logger->trace("unit_test.n_events_per_message: {}", n_events_per_message);
     } catch (...) {
     }
 
@@ -498,7 +504,7 @@ public:
     try {
       feed_msgs_times =
           main_opt.CommandsJson["unit_test"]["feed_msgs_times"].get<int64_t>();
-      LOG(Sev::Debug, "unit_test.feed_msgs_times: {}", feed_msgs_times);
+      Logger->trace("unit_test.feed_msgs_times: {}", feed_msgs_times);
     } catch (...) {
     }
 
@@ -507,7 +513,7 @@ public:
       feed_msgs_seconds =
           main_opt.CommandsJson["unit_test"]["feed_msgs_seconds"]
               .get<int64_t>();
-      LOG(Sev::Debug, "unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
+      Logger->trace("unit_test.feed_msgs_seconds: {}", feed_msgs_seconds);
     } catch (...) {
     }
 
@@ -515,7 +521,7 @@ public:
     try {
       filename =
           main_opt.CommandsJson["unit_test"]["filename"].get<std::string>();
-      LOG(Sev::Debug, "unit_test.filename: {}", filename);
+      Logger->trace("unit_test.filename: {}", filename);
     } catch (...) {
     }
 
@@ -601,7 +607,7 @@ public:
       CommandJSON["job_id"] = "test-ev42";
     }
 
-    LOG(Sev::Debug, "CommandJSON: {}", CommandJSON.dump());
+    Logger->trace("CommandJSON: {}", CommandJSON.dump());
 
     auto fname = CommandJSON["file_attributes"]["file_name"].get<std::string>();
     ASSERT_GT(fname.size(), size_t(8));
@@ -620,7 +626,7 @@ public:
       auto &fwt = ch.getFileWriterTaskByJobID("test-ev42");
       ASSERT_EQ(fwt->demuxers().size(), static_cast<size_t>(1));
 
-      LOG(Sev::Debug, "processing...");
+      Logger->trace("processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       bool do_run = true;
@@ -633,28 +639,28 @@ public:
             break;
           }
           if (i_feed % 100 == 0) {
-            LOG(Sev::Debug, "i_feed: {:3}  i_source: {:2}", i_feed, i_source);
+            Logger->trace("i_feed: {:3}  i_source: {:2}", i_feed, i_source);
           }
           for (auto &msg : source.msgs) {
             if (msg.size() < 8) {
-              LOG(Sev::Error, "error");
+              Logger->error("error");
               do_run = false;
             }
             FileWriter::FlatbufferMessage TempMessage(msg.data(), msg.size());
             auto res =
                 fwt->demuxers().at(0).process_message(std::move(TempMessage));
             if (res == FileWriter::ProcessMessageResult::ERR) {
-              LOG(Sev::Error, "is_ERR");
+              Logger->error("is_ERR");
               do_run = false;
               break;
             }
             if (res == FileWriter::ProcessMessageResult::ALL_SOURCES_FULL) {
-              LOG(Sev::Error, "is_ALL_SOURCES_FULL");
+              Logger->error("is_ALL_SOURCES_FULL");
               do_run = false;
               break;
             }
             if (res == FileWriter::ProcessMessageResult::STOP) {
-              LOG(Sev::Error, "is_STOP");
+              Logger->error("is_STOP");
               do_run = false;
               break;
             }
@@ -669,16 +675,15 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(Sev::Debug, "processing done in {} ms",
-          duration_cast<MS>(t2 - t1).count());
-      LOG(Sev::Debug, "finishing...");
+      Logger->trace("processing done in {} ms",
+                    duration_cast<MS>(t2 - t1).count());
+      Logger->trace("finishing...");
       send_stop(ch, CommandJSON);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
       auto t3 = CLK::now();
-      LOG(Sev::Debug, "finishing done in {} ms",
-          duration_cast<MS>(t3 - t2).count());
-      LOG(Sev::Debug, "done in total {} ms",
-          duration_cast<MS>(t3 - t1).count());
+      Logger->trace("finishing done in {} ms",
+                    duration_cast<MS>(t3 - t2).count());
+      Logger->trace("done in total {} ms", duration_cast<MS>(t3 - t1).count());
     }
 
     if (!do_verification) {
@@ -753,7 +758,7 @@ public:
       verify_attribute_data_ev42(attr_node);
     }
 
-    LOG(Sev::Debug, "data_ev42 verification done");
+    Logger->trace("data_ev42 verification done");
   }
 
   /// \brief Can supply pre-generated test data for a source on a topic to
@@ -761,6 +766,7 @@ public:
   /// the writing.
   class SourceDataGen_f142 {
   public:
+    SourceDataGen_f142() { auto Logger = spdlog::get("testlogger"); }
     string topic;
     string source;
     uint64_t seed = 0;
@@ -773,7 +779,7 @@ public:
     /// into the
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
-      LOG(Sev::Debug, "generating {} {}...", topic, source);
+      Logger->trace("generating {} {}...", topic, source);
       auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
@@ -791,9 +797,13 @@ public:
             fb.builder->GetSize()));
       }
     }
+
+  private:
+    SharedLogger Logger = spdlog::get("testlogger");
   };
 
   static void data_f142() {
+    SharedLogger Logger = spdlog::get("testlogger");
     AddF142Reader();
     MainOpt main_opt = getTestOptions();
     // Defaults such that the test has a chance to succeed
@@ -814,7 +824,7 @@ public:
       auto do_verification =
           main_opt.CommandsJson["unit_test"]["hdf"]["do_verification"]
               .get<uint64_t>();
-      LOG(Sev::Debug, "do_verification: {}", do_verification);
+      Logger->trace("do_verification: {}", do_verification);
     } catch (...) {
     }
 
@@ -823,7 +833,7 @@ public:
       n_msgs_per_source =
           main_opt.CommandsJson["unit_test"]["n_msgs_per_source"]
               .get<uint64_t>();
-      LOG(Sev::Debug, "n_msgs_per_source: {}", n_msgs_per_source);
+      Logger->trace("n_msgs_per_source: {}", n_msgs_per_source);
     } catch (...) {
     }
 
@@ -831,7 +841,7 @@ public:
     try {
       n_sources =
           main_opt.CommandsJson["unit_test"]["n_sources"].get<uint64_t>();
-      LOG(Sev::Debug, "n_sources: {}", n_sources);
+      Logger->trace("n_sources: {}", n_sources);
     } catch (...) {
     }
 
@@ -839,7 +849,7 @@ public:
     try {
       array_size =
           main_opt.CommandsJson["unit_test"]["array_size"].get<uint64_t>();
-      LOG(Sev::Debug, "array_size: {}", array_size);
+      Logger->trace("array_size: {}", array_size);
     } catch (...) {
     }
 
@@ -953,13 +963,13 @@ public:
       auto &fwt = ch.getFileWriterTaskByJobID("unit_test_job_data_f142");
       ASSERT_EQ(fwt->demuxers().size(), static_cast<size_t>(1));
 
-      LOG(Sev::Debug, "processing...");
+      Logger->trace("processing...");
       using CLK = std::chrono::steady_clock;
       using MS = std::chrono::milliseconds;
       auto t1 = CLK::now();
       for (auto &source : sources) {
         for (int i_feed = 0; i_feed < feed_msgs_times; ++i_feed) {
-          LOG(Sev::Info, "feed {}", i_feed);
+          Logger->info("feed {}", i_feed);
           for (auto &msg : source.msgs) {
             FileWriter::FlatbufferMessage TempMessage(msg.data(), msg.size());
             fwt->demuxers().at(0).process_message(std::move(TempMessage));
@@ -968,16 +978,15 @@ public:
         }
       }
       auto t2 = CLK::now();
-      LOG(Sev::Debug, "processing done in {} ms",
-          duration_cast<MS>(t2 - t1).count());
-      LOG(Sev::Debug, "finishing...");
+      Logger->trace("processing done in {} ms",
+                    duration_cast<MS>(t2 - t1).count());
+      Logger->trace("finishing...");
       send_stop(ch, CommandJSON);
       ASSERT_EQ(ch.getNumberOfFileWriterTasks(), static_cast<size_t>(0));
       auto t3 = CLK::now();
-      LOG(Sev::Debug, "finishing done in {} ms",
-          duration_cast<MS>(t3 - t2).count());
-      LOG(Sev::Debug, "done in total {} ms",
-          duration_cast<MS>(t3 - t1).count());
+      Logger->trace("finishing done in {} ms",
+                    duration_cast<MS>(t3 - t2).count());
+      Logger->trace("done in total {} ms", duration_cast<MS>(t3 - t1).count());
     }
   }
 
