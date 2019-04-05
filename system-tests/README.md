@@ -24,21 +24,21 @@ Note: these tests take some time to run.
 ### General Architecture
 The system tests use pytest for the test runner, and use separate fixtures for different configurations of the file-writer. 
 
-Firstly, the system tests attempt to build and tag the latest file-writer image. This can take a lot of time especially if something in conan has changed, as it has to reinstall all of the conan packages.
+Firstly, the system tests attempt to build and tag the latest file-writer image. This can take a lot of time especially if something in conan has changed, as it has to reinstall all of the conan packages. The image build is layer-cached with three main layers - pulling the base image, dependency gathering (from apt, pip and conan) and building the file-writer. This strikes a balance between time taken to rebuild the image when something changes, and the disk space used by the cached layers.
 
 The Kafka and Zookeeper containers are started with `docker-compose` and persist throughout all of the tests, and when finished will be stopped and removed.
 
-Each fixture starts the file-writer with an `ini` config file (found in `/config-files`), and in some cases use a JSON command at startup so nothing has to be sent over Kafka. Some fixtures start the file-writer multiple times and others use the NeXus-streamer image. 
+Each fixture starts the file-writer with an `ini` config file (found in `/config-files`). In some cases the fixtures use a JSON command at startup and in others the command is sent over Kafka as part of the test. Some fixtures start the file-writer multiple times or use the NeXus-streamer image as a source of streamed data.
 
 In some tests, command messages in `JSON` form are sent to Kafka to change the configuration of the file-writer during testing. 
 
-Most tests check the NeXus file created by the file-writer contains the correct static and streamed data, however, some tests also consume everything from the status topic to assert against. 
+Most tests check the NeXus file created by the file-writer contains the correct static and streamed data, however, some tests instead test that the status of the file writer matches expectation, by consuming status messages from Kafka.
 
-Log files are placed in the `logs` folder in `system-tests` providing that the `ini` file is using the `--log-file` flag and the docker-compose file is mounting the `logs` directory.
+Log files are placed in the `logs` folder in `system-tests` provided that the `ini` file is using the `--log-file` flag and the docker-compose file mounts the `logs` directory.
 
 ### Creating tests
 
 To create a new fixture, a new function should be added in `conftest.py` as well as a docker compose file in `compose/` and a startup `ini` config file. The test itself should be created in a file with the prefix `test_`, for example `test_idle_pv_updates`, so that file can be picked up by pytest. 
 
-The fixture name can be used as the first parameter to the test like so: 
+The fixture name must be used as the first parameter to the test like so:
 `def test_data_reaches_file(docker_compose):`
