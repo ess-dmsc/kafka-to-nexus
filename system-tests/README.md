@@ -22,21 +22,19 @@ Note: these tests take some time to run.
 
 
 ### General Architecture
-
-
 The system tests use pytest for the test runner, and use separate fixtures for different configurations of the file-writer. 
 
 Firstly, the system tests attempt to build and tag the latest file-writer image. This can take a lot of time especially if something in conan has changed, as it has to reinstall all of the conan packages.
 
 The Kafka and Zookeeper containers are started with `docker-compose` and persist throughout all of the tests, and when finished will be stopped and removed.
 
-Each fixture starts the file-writer with an `ini` config file (found in `/config-files`), and in some cases use a JSON command at startup so nothing has to be sent over kafka. Some fixtures start the filewriter multiple times and others use the NeXus-streamer image. 
+Each fixture starts the file-writer with an `ini` config file (found in `/config-files`), and in some cases use a JSON command at startup so nothing has to be sent over Kafka. Some fixtures start the file-writer multiple times and others use the NeXus-streamer image. 
 
-In some tests, command messages in `JSON` form are sent to kafka to change the configuration of the file-writer during testing. 
+In some tests, command messages in `JSON` form are sent to Kafka to change the configuration of the file-writer during testing. 
 
-Most tests check the NeXus file created by the file-writer contain the correct static and streamed data however some tests also consume everything from the status topic to assert against. 
+Most tests check the NeXus file created by the file-writer contains the correct static and streamed data, however, some tests also consume everything from the status topic to assert against. 
 
-log files are placed in the `logs` folder in `system-tests` providing that the `ini` file is using `--log-file` and the docker-compose file is mounting the `logs` directory.
+Log files are placed in the `logs` folder in `system-tests` providing that the `ini` file is using the `--log-file` flag and the docker-compose file is mounting the `logs` directory.
 
 ### Creating tests
 
@@ -44,10 +42,3 @@ To create a new fixture, a new function should be added in `conftest.py` as well
 
 The fixture name can be used as the first parameter to the test like so: 
 `def test_data_reaches_file(docker_compose):`
-
-#### Issues
-
-There are some issues that make the system tests not as robust as they could be that need to be solved in the future:
-- currently we use `sleep(ms)` statements to wait for configuration to be updated on the file-writer where we should use the status topic instead 
-- the docker image size is quite large and takes a while to run - to get around this we could use alpine based images. Work has already been done to reduce the images.
-
