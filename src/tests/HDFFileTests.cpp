@@ -125,24 +125,6 @@ public:
     ch.tryToHandle(CommandString);
   }
 
-  static bool check_cue(std::vector<uint64_t> const &event_time_zero,
-                        std::vector<uint32_t> const &event_index,
-                        uint64_t cue_timestamp_zero, uint32_t cue_index) {
-    bool found = false;
-    size_t i2 = 0;
-    for (auto &evt : event_time_zero) {
-      if (evt == cue_timestamp_zero) {
-        found = true;
-        break;
-      }
-      ++i2;
-    }
-    if (!found) {
-      return false;
-    }
-    return event_index[i2] == cue_index;
-  }
-
   static void create_static_file_with_hdf_output_prefix() {
     MainOpt main_opt = getTestOptions();
     std::string const hdf_output_prefix = "tmp-relative-output";
@@ -784,7 +766,7 @@ public:
       if (array_size > 0) {
         ty = FlatBufs::f142::Value::ArrayFloat;
       }
-      FlatBufs::f142::synth synth(source, ty);
+      FlatBufs::f142::Synth synth(source, ty);
       rnd.seed(seed);
       for (uint64_t i1 = 0; i1 < n; ++i1) {
         // Number of events per message:

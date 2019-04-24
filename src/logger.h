@@ -13,4 +13,4 @@ SharedLogger getLogger();
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
                   const std::string &ServiceID, const std::string &LogFile,
-                  const uri::URI GraylogURI);
+                  const uri::URI &GraylogURI);

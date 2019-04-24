@@ -3,32 +3,32 @@ find_package(Trompeloeil REQUIRED)
 set(UnitTests_SRC
         UnitTests.cpp
         H5Tests.cpp
-        HDFFile.cpp
-        HDFFileAttributesTest.cpp
+        HDFFileTests.cpp
+        HDFFileAttributesTests.cpp
         HDFFileTestHelper.cpp
-        json.cpp
-        StatusTest.cpp
+        JsonTests.cpp
+        StatusTests.cpp
         URITests.cpp
         StatusWriterTests.cpp
         CommandHandlerTests.cpp
         FastSampleEnvironmentWriterTests.cpp
-        NeXusDatasets.cpp
-        ReaderRegistration.cpp
-        WriterRegistration.cpp
+        NeXusDatasetTests.cpp
+        ReaderRegistrationTests.cpp
+        WriterRegistrationTests.cpp
         TemplateWriterTests.cpp
         DemuxerTests.cpp
-        MessageTest.cpp
-        StreamerTest.cpp
+        MessageTests.cpp
+        StreamerTests.cpp
         AddReader.cpp
-        Schema_f142.cpp
-        AreaDetectorTest.cpp
-        EventLogger.cpp
-        MainOpt.cpp
+        Schema_f142Tests.cpp
+        AreaDetectorTests.cpp
+        EventLoggerTests.cpp
+        MainOptTests.cpp
         EventHistogramWriterTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
-        Producer_tests.cpp
-        ProducerDeliveryCb_tests.cpp
+        ProducerTests.cpp
+        ProducerDeliveryTests.cpp
         ev42_synth.cpp
         f142_synth.cpp
         )

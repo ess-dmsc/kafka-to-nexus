@@ -1,7 +1,7 @@
 #include <FlatbufferReader.h>
 #include <gtest/gtest.h>
 
-namespace FileWriter {
+using namespace FileWriter;
 
 using ReaderPtr = FlatbufferReaderRegistry::ReaderPtr;
 
@@ -69,4 +69,3 @@ TEST_F(ReaderRegistrationTest, StrKeyNotFound) {
   std::string FailKey("trump");
   EXPECT_THROW(FlatbufferReaderRegistry::find(FailKey), std::nested_exception);
 }
-} // namespace FileWriter

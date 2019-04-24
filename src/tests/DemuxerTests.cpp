@@ -1,7 +1,7 @@
 #include <DemuxTopic.h>
 #include <gtest/gtest.h>
 
-namespace FileWriter {
+using namespace FileWriter;
 
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
@@ -164,5 +164,3 @@ TEST_F(DemuxerTest, WrongSourceName) {
   EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
   EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(1));
 }
-
-} // namespace FileWriter

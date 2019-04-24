@@ -8,12 +8,11 @@ LogData const *FlatBufferWrapper::root() {
   return GetLogData(builder->GetBufferPointer());
 }
 
-synth::synth(std::string SynthName, Value Type) : Name(std::move(SynthName)) {
-  impl = std::make_unique<SynthImpl>();
-  impl->type = Type;
+Synth::Synth(std::string SynthName, Value Type) : Name(std::move(SynthName)), Impl(std::make_unique<SynthImpl>()) {
+  Impl->Type = Type;
 }
 
-FlatBufferWrapper synth::next(uint64_t const TestValue,
+FlatBufferWrapper Synth::next(uint64_t const TestValue,
                               size_t const NrOfElements) {
   FlatBufferWrapper ret;
   ret.builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
@@ -25,7 +24,7 @@ FlatBufferWrapper synth::next(uint64_t const TestValue,
   flatbuffers::Offset<void> value;
   Value value_type = Value::NONE;
   // TODO make general..
-  switch (impl->type) {
+  switch (Impl->Type) {
   case Value::ArrayInt: {
     using T = int32_t;
     T *BufferPtr = nullptr;
@@ -68,7 +67,7 @@ FlatBufferWrapper synth::next(uint64_t const TestValue,
   case Value::Double: {
     DoubleBuilder b2(*ret.builder);
     b2.add_value(TestValue);
-    value_type = impl->type;
+    value_type = Impl->Type;
     value = b2.Finish().Union();
   } break;
   default:

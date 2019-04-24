@@ -4,7 +4,6 @@
 #include <memory>
 #include <trompeloeil.hpp>
 
-// using namespace KafkaW;
 using trompeloeil::_;
 
 class ProducerTests : public ::testing::Test {

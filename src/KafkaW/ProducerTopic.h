@@ -27,7 +27,8 @@ public:
   std::string name() const;
 
 private:
-  std::unique_ptr<RdKafka::Conf> Config;
+  std::unique_ptr<RdKafka::Conf> ConfigPtr{
+      RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC)};
   std::shared_ptr<Producer> KafkaProducer;
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
   std::string Name;
