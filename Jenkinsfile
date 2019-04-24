@@ -195,10 +195,13 @@ builders = pipeline_builder.createBuilders { container ->
     }  // stage
 
     pipeline_builder.stage("${container.key}: Cppcheck") {
-      docker_cppcheck(container.key)
-              recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
-      	sh "docker stop ${container_name(container.key)}"
-      sh "docker rm -f ${container_name(container.key)}"
+      def test_output = "cppcheck.xml"
+        container.sh """
+          cd ${pipeline_builder.project}
+          cppcheck --xml --inline-suppr --enable=all --inconclusive src/ 2> ${test_output}
+        """
+        container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
+        recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
     }  // stage
   }  // if
 
@@ -337,18 +340,3 @@ def get_system_tests_pipeline() {
     }  // node
   }  // return
 } // def
-
-def docker_cppcheck(image_key) {
-    try {
-        def custom_sh = images[image_key]['sh']
-        def test_output = "cppcheck.xml"
-        def cppcheck_script = """
-                        cd ${project}
-                        cppcheck --xml --inline-suppr --enable=all --inconclusive src/ 2> ${test_output}
-                    """
-        sh "docker exec ${container_name(image_key)} ${custom_sh} -c \"${cppcheck_script}\""
-        sh "docker cp ${container_name(image_key)}:/home/jenkins/${project}/${test_output} ."
-    } catch (e) {
-        failure_function(e, "Cppcheck step for (${container_name(image_key)}) failed")
-    }
-}
