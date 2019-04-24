@@ -3,7 +3,7 @@
 #include <gtest/gtest.h>
 #include <map>
 
-namespace FileWriter {
+using namespace FileWriter;
 
 using FlatbufferReaderRegistry::ReaderPtr;
 
@@ -73,4 +73,4 @@ TEST_F(MessageClassTest, InvalidFlatbuffer) {
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 8),
                FileWriter::NotValidFlatbuffer);
 }
-} // namespace FileWriter
+

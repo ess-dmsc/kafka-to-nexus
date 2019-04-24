@@ -99,21 +99,20 @@ From within the file-writer's top directory:
 mkdir _build
 cd _build
 conan install ../conan --build=missing
-cmake .. -DREQUIRE_GTEST=TRUE
+cmake ..
 make
 ```
 
-To, optionally, generate the Doxygen documentation run:
-```bash
-make docs
-```
+There are additional CMake flags for adjusting the build:
+* `-DRUN_DOXYGEN=TRUE` if Doxygen documentation is required. Also, requires `make docs` to be run afterwards
+* `-DBUILD_TESTS=FALSE` to skip building the unit tests
 
 ### Running the unit tests
 
 From the build directory:
 
 ```bash
-./tests/UnitTests
+./bin/UnitTests
 ```
 
 ### Running on OSX

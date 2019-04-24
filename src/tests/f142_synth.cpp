@@ -18,7 +18,7 @@ FlatBufferWrapper synth::next(uint64_t const TestValue,
   FlatBufferWrapper ret;
   ret.builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
   // NOTE
-  // synth does not add fwdinfo because that's, well, for the forwarder to add.
+  // Synth does not add fwdinfo because that's, well, for the forwarder to add.
   // we do add timeStamp though, because that's meant to come from the Epics
   // IOC.
   auto n = ret.builder->CreateString(Name);

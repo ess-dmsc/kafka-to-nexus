@@ -13,6 +13,7 @@ namespace f142 {
 }
 }
 }
+
 using trompeloeil::_;
 using KafkaW::PollStatus;
 namespace FileWriter {
@@ -44,8 +45,7 @@ protected:
   StreamerOptions Options;
 };
 
-// make sure that a topic exists/not exists
-TEST_F(StreamerInitTest, Success) {
+TEST_F(StreamerInitTest, CheckTopicExists) {
   EXPECT_NO_THROW(Streamer("broker", "topic", Options));
 }
 
@@ -56,19 +56,6 @@ TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
 TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
   EXPECT_THROW(Streamer("broker", "", Options), std::runtime_error);
 }
-
-// Disabled for now as there is a problem with the Consumer that requires a
-// rewrite of it
-//  TEST_F(StreamerTest, CreateConsumerSuccess) {
-//    StreamerOptions SomeOptions;
-//    SomeOptions.BrokerSettings.Address = "127.0.0.1:9999";
-//    SomeOptions.BrokerSettings.ConfigurationStrings["group.id"] = "TestGroup";
-//    std::string TopicName{"SomeName"};
-//    std::pair<Status::StreamerError,ConsumerPtr> Result =
-//    createConsumer(TopicName, SomeOptions);
-//    EXPECT_TRUE(Result.first.connectionOK());
-//    EXPECT_NE(Result.second.get(), nullptr);
-//  }
 
 class StreamerStandIn : public Streamer {
 public:

@@ -4,8 +4,8 @@
 #include "../MainOpt.h"
 #include "../helper.h"
 #include "../json.h"
-#include "../schemas/ev42/ev42_synth.h"
-#include "../schemas/f142/f142_synth.h"
+#include "ev42_synth.h"
+#include "f142_synth.h"
 #include "AddReader.h"
 #include "HDFFileTestHelper.h"
 #include "MasterMock.h"
@@ -388,7 +388,7 @@ public:
     void pregenerate(int n, int n_events_per_message_) {
       n_events_per_message = n_events_per_message_;
       Logger->trace("generating {} {}...", topic, source);
-      FlatBufs::ev42::synth synth(source, seed);
+      FlatBufs::ev42::Synth synth(source, seed);
       rnd.seed(seed);
       for (int i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
@@ -400,8 +400,8 @@ public:
 
         // Allocate memory on JM AND CHECK IT!
         msgs.push_back(FileWriter::Msg::owned(
-            reinterpret_cast<const char *>(fb.builder->GetBufferPointer()),
-            fb.builder->GetSize()));
+            reinterpret_cast<const char *>(fb.Builder->GetBufferPointer()),
+            fb.Builder->GetSize()));
         if (msgs.back().size() < 8) {
           Logger->error("error");
           exit(1);
@@ -1009,35 +1009,6 @@ public:
     return result[pos[0]];
   }
 
-  /// \note: Commented out due to disabled test
-  //  static void dataset_static_1d_string_fixed() {
-  //    auto File =
-  //    HDFFileTestHelper::createInMemoryTestFile("tmp-fixedlen.h5");
-  //    auto NexusStructure = json::parse(R""({
-  //      "children": [
-  //        {
-  //          "type": "dataset",
-  //          "name": "string_fixed_1d_fixed",
-  //          "dataset": {
-  //            "type":"string",
-  //            "string_size": 71,
-  //            "size": ["unlimited"]
-  //          },
-  //          "values": ["the-scalar-string", "another-one", "yet-another"]
-  //        }
-  //      ]
-  //    })"");
-  //    std::vector<FileWriter::StreamHDFInfo> stream_hdf_info;
-  //    File.init(NexusStructure, stream_hdf_info);
-  //    auto DataSet = hdf5::node::get_dataset(File.RootGroup,
-  //    "string_fixed_1d_fixed");
-  //    auto datatype = hdf5::datatype::String(DataSet.datatype());
-  //    ASSERT_EQ(datatype.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
-  //    ASSERT_EQ(datatype.padding(), hdf5::datatype::StringPad::NULLTERM);
-  //    ASSERT_FALSE(datatype.is_variable_length());
-  //    ASSERT_EQ(read_string(DataSet, {1}), std::string("another-one"));
-  //  }
-
   static void dataset_static_1d_string_variable() {
     auto File = HDFFileTestHelper::createInMemoryTestFile("tmp-varlen.h5");
     auto NexusStructure = json::parse(R""({
@@ -1084,11 +1055,6 @@ TEST_F(T_CommandHandler, WriteAttributesAtTopLevelOfTheFile) {
 TEST_F(T_CommandHandler, DataEv42) { T_CommandHandler::data_ev42(); }
 
 TEST_F(T_CommandHandler, DataF142) { T_CommandHandler::data_f142(); }
-
-// TODO Disabled because h5cpp seems unhappy about fixed length strings.
-// TEST_F(T_CommandHandler, dataset_static_1d_string_fixed) {
-//  T_CommandHandler::dataset_static_1d_string_fixed();
-//}
 
 TEST_F(T_CommandHandler, DatasetStatic1DStringVariable) {
   T_CommandHandler::dataset_static_1d_string_variable();
@@ -1262,9 +1228,7 @@ TEST(HDFFile, createStaticDatasetsStrings) {
       NewSpaceFile.selection(hdf5::dataspace::SelectionOperation::SET,
                              hdf5::dataspace::Hyperslab({2, 1}, {1, 3}));
       std::vector<char> Buffer(3 * 32);
-      // NewDataset.read(*Buffer.data(), StringFix,
-      // hdf5::dataspace::Simple({2}),
-      // NewSpaceFile);
+
       hdf5::dataspace::Simple SpaceMem({3});
       if (0 > H5Dread(static_cast<hid_t>(NewDataset),
                       static_cast<hid_t>(StringFix),

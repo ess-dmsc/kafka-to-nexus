@@ -29,15 +29,19 @@ set(UnitTests_SRC
         SourceTests.cpp
         Producer_tests.cpp
         ProducerDeliveryCb_tests.cpp
+        ev42_synth.cpp
+        f142_synth.cpp
         )
 
 set(UnitTests_INC
         MasterMock.h
         HDFFileTestHelper.h
         AddReader.h
+        ev42_synth.h
+        f142_synth.h
         ConsumerTests.cpp KafkaWMocks.h)
 
-add_executable(UnitTests EXCLUDE_FROM_ALL
+add_executable(UnitTests
         ${UnitTests_SRC}
         ${UnitTests_INC}
         $<TARGET_OBJECTS:kafka_to_nexus__objects>

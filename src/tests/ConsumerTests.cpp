@@ -11,13 +11,9 @@ class ConsumerTests : public ::testing::Test {
 protected:
   void SetUp() override {
     RdConsumer = std::make_unique<MockKafkaConsumer>();
-    //    Consumer = std::make_unique<KafkaW::Consumer>(
-    //        RdConsumer, std::make_unique<RdKafka::Conf>(),
-    //        std::make_unique<KafkaW::KafkaEventCb>());
   }
 
   std::unique_ptr<MockKafkaConsumer> RdConsumer;
-  //  std::unique_ptr<KafkaW::Consumer> Consumer;
 
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> validMessageToPoll() {
     PollStatus Status;
