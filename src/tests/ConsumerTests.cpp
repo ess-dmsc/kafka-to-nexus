@@ -14,18 +14,6 @@ protected:
   }
 
   std::unique_ptr<MockKafkaConsumer> RdConsumer;
-
-  std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> validMessageToPoll() {
-    PollStatus Status;
-    FileWriter::Msg KafkaMessage;
-
-    std::pair<PollStatus, FileWriter::Msg> NewPair(Status,
-                                                   std::move(KafkaMessage));
-    std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> DataToReturn;
-    DataToReturn = std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
-        std::move(NewPair));
-    return DataToReturn;
-  }
 };
 
 TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {

@@ -16,12 +16,12 @@ void h5d::init_basics() {
   ndims = DSPTgt.rank();
   Logger->trace("h5d::init_basics");
   ShapeNow = hdf5::Dimensions(ndims, 0);
-  sext = DSPTgt.current_dimensions();
+  ShapeCurrent = DSPTgt.current_dimensions();
   ShapeMax = DSPTgt.maximum_dimensions();
   if (Logger->should_log(spdlog::level::trace)) {
     for (int i1 = 0; i1 < ndims; ++i1) {
-      Logger->trace("{:20} i: {}  sext: {:21}  ShapeMax: {:21}", Name, i1,
-                    sext.at(i1), ShapeMax.at(i1));
+      Logger->trace("{:20} i: {}  ShapeCurrent: {:21}  ShapeMax: {:21}", Name, i1,
+                    ShapeCurrent.at(i1), ShapeMax.at(i1));
     }
   }
   try {
@@ -93,7 +93,7 @@ void swap(h5d &x, h5d &y) {
   swap(x.DSPTgt, y.DSPTgt);
   swap(x.ShapeNow, y.ShapeNow);
   swap(x.ShapeMax, y.ShapeMax);
-  swap(x.sext, y.sext);
+  swap(x.ShapeCurrent, y.ShapeCurrent);
   swap(x.mpi_rank, y.mpi_rank);
 }
 
@@ -106,23 +106,23 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
   auto ds_name = static_cast<std::string>(Dataset.link().path());
   Logger->trace("append_data_1d {} for dataset {}", nlen, ds_name);
 
-  for (size_t i = 1; i < sext.size(); ++i) {
-    sext[i] = ShapeMax[i];
+  for (size_t i = 1; i < ShapeCurrent.size(); ++i) {
+    ShapeCurrent[i] = ShapeMax[i];
   }
 
   hsize_t nlen_0 = nlen;
   if (ndims == 2) {
-    if (nlen % sext[1] != 0) {
+    if (nlen % ShapeCurrent[1] != 0) {
       Logger->error("dataset dimensions do not match");
       return {AppendResult::ERROR};
     }
-    nlen_0 /= sext[1];
+    nlen_0 /= ShapeCurrent[1];
   }
 
   size_t snext = -1;
   snext = ShapeNow[0];
 
-  if (snext + nlen_0 > sext[0]) {
+  if (snext + nlen_0 > ShapeCurrent[0]) {
     t1 = CLK::now();
     // TODO
     // Make these configurable, and the default much smaller than it is right
@@ -130,52 +130,51 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     uint32_t BLOCK = 22;
     if (ndims == 2) {
       size_t snow_1_ln2 = -1;
-      for (size_t x = sext[1]; x != 0; x = x >> 1) {
+      for (size_t x = ShapeCurrent[1]; x != 0; x = x >> 1u) {
         snow_1_ln2 += 1;
       }
       if (snow_1_ln2 >= BLOCK) {
-        Logger->error("snow_1_ln2 >= BLOCK; {} >= {};  sext[1]: {}", snow_1_ln2,
-                      BLOCK, sext[1]);
+        Logger->error("snow_1_ln2 >= BLOCK; {} >= {};  ShapeCurrent[1]: {}", snow_1_ln2,
+                      BLOCK, ShapeCurrent[1]);
         snow_1_ln2 = BLOCK - 1;
       }
       BLOCK -= snow_1_ln2;
     }
     uint32_t const MAX = BLOCK + 8;
-    hdf5::Dimensions sext2;
-    sext2 = sext;
-    Logger->trace("Before extending: {}  min target: {}", sext2.at(0),
+    hdf5::Dimensions NewShape = ShapeCurrent;
+    Logger->trace("Before extending: {}  min target: {}", NewShape.at(0),
                   snext + nlen_0);
-    sext2[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
-    if (sext2[0] - sext[0] > (1u << MAX)) {
-      sext2[0] = sext[0] + (1 << MAX);
+    NewShape[0] = (1 + (((snext + nlen_0) * 4 / 3) >> BLOCK)) << BLOCK;
+    if (NewShape[0] - ShapeCurrent[0] > (1u << MAX)) {
+      NewShape[0] = ShapeCurrent[0] + (1u << MAX);
     }
-    if (sext.size() == 1) {
+    if (ShapeCurrent.size() == 1) {
       Logger->trace("snext: {:12}  set_extent  d: 1\n  from: {:12}  to: {:12}",
-                    snext, sext.at(0), sext2.at(0));
-    } else if (sext.size() == 2) {
+                    snext, ShapeCurrent.at(0), NewShape.at(0));
+    } else if (ShapeCurrent.size() == 2) {
       Logger->trace(
           "snext: {:12}  set_extent  d: 2\n  from: {:12}  to: {:12}\n  "
           "from: {:12}  to: {:12}",
-          snext, sext.at(0), sext2.at(0), sext.at(1), sext2.at(1));
+          snext, ShapeCurrent.at(0), NewShape.at(0), ShapeCurrent.at(1), NewShape.at(1));
     } else {
       Logger->trace("snext: {:12}  set_extent  d: {}   NOT SUPPORTED",
-                    sext.size());
+                    ShapeCurrent.size());
     }
 
     auto t2 = CLK::now();
 
     try {
-      Dataset.extent(sext2);
+      Dataset.extent(NewShape);
     } catch (...) {
       Logger->error("Dataset.extent()");
       return {AppendResult::ERROR};
     }
     DSPTgt = Dataset.dataspace();
-    sext = DSPTgt.current_dimensions();
+    ShapeCurrent = DSPTgt.current_dimensions();
     ShapeMax = DSPTgt.maximum_dimensions();
 
-    for (size_t i = 1; i < sext.size(); ++i) {
-      sext.at(i) = sext2.at(i);
+    for (size_t i = 1; i < ShapeCurrent.size(); ++i) {
+      ShapeCurrent.at(i) = NewShape.at(i);
     }
     auto t3 = CLK::now();
     Logger->trace("h5d::append_data_1d set_extent: {} + {}",
@@ -243,11 +242,11 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
     Logger->error("write failed  ds_name: {}", ds_name);
     if (Logger->should_log(spdlog::level::trace)) {
       auto dsp = hdf5::dataspace::Simple(Dataset.dataspace());
-      auto sext = dsp.current_dimensions();
-      auto smax = dsp.current_dimensions();
+      auto CurrentDimensions = dsp.current_dimensions();
+      auto MaximumDimensions = dsp.maximum_dimensions();
       for (int i1 = 0; i1 < ndims; ++i1) {
-        Logger->trace("dimensions {}: {:12} {:12}", i1, sext.at(i1),
-                      smax.at(i1));
+        Logger->trace("dimensions {}: {:12} {:12}", i1, CurrentDimensions.at(i1),
+                      MaximumDimensions.at(i1));
       }
     }
     return {AppendResult::ERROR};

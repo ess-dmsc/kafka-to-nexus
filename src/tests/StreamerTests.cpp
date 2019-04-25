@@ -16,7 +16,8 @@ namespace f142 {
 
 using trompeloeil::_;
 using KafkaW::PollStatus;
-namespace FileWriter {
+using namespace FileWriter;
+
 std::unique_ptr<std::pair<PollStatus, Msg>>
 generateKafkaMsg(char const *DataPtr, size_t const Size) {
   FileWriter::Msg Message = FileWriter::Msg::owned(DataPtr, Size);
@@ -541,4 +542,3 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
-} // namespace FileWriter
