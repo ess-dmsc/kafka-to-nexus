@@ -35,7 +35,10 @@ int main(int argc, char **argv) {
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
   auto Logger = getLogger();
-  Options->parseJsonCommands();
+
+  if (not Options->CommandsJsonFilename.empty()) {
+    Options->parseJsonCommands();
+  }
 
   if (Options->ListWriterModules) {
     fmt::print("Registered writer/reader classes\n");
