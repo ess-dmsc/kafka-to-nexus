@@ -61,7 +61,7 @@ TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
 class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn() : Streamer("SomeBroker", "SomeTopic", StreamerOptions()) {}
-  StreamerStandIn(StreamerOptions Opts)
+  explicit StreamerStandIn(StreamerOptions Opts)
       : Streamer("SomeBroker", "SomeTopic", Opts) {}
   using Streamer::ConsumerCreated;
   using Streamer::Options;
@@ -80,7 +80,7 @@ protected:
 class ConsumerEmptyStandIn
     : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
 public:
-  ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
+  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
   IMPLEMENT_MOCK1(topicPresent);

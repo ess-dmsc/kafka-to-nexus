@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-class T_HDFFile;
-
 namespace FileWriter {
 
 // POD
@@ -52,13 +50,6 @@ public:
   hdf5::node::Group RootGroup;
 
 private:
-  friend class ::T_HDFFile;
-  friend class CommandHandler;
-
-  void
-  setCommonProps(hdf5::property::FileCreationList &FileCreationPropertyList,
-                 hdf5::property::FileAccessList &FileAccessPropertyList) {}
-
   bool SWMREnabled = false;
   std::string Filename;
   nlohmann::json NexusStructure;

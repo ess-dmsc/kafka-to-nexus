@@ -748,7 +748,7 @@ public:
   /// the writing.
   class SourceDataGen_f142 {
   public:
-    SourceDataGen_f142() { auto Logger = spdlog::get("testlogger"); }
+    SourceDataGen_f142() {}
     string topic;
     string source;
     uint64_t seed = 0;

@@ -48,6 +48,7 @@ h5d::ptr h5d::create(hdf5::node::Group const &Node, std::string const &Name,
       // Use NULL as fill value.
       // Looks weird because we work around the current h5cpp API.
       int *fillptr = nullptr;
+      // cppcheck-suppress nullPointer;
       dcpl.fill_value(*fillptr, Type);
     }
     o.Dataset = Node.create_dataset(Name, o.Type, dsp, dcpl);
@@ -269,8 +270,8 @@ append_ret h5d::append(std::string const &String) {
       return {AppendResult::ERROR};
     }
     {
-      auto Type = Dataset.datatype();
-      auto TypeHid = static_cast<hid_t>(Type);
+      auto DataType = Dataset.datatype();
+      auto TypeHid = static_cast<hid_t>(DataType);
       if (H5Tget_class(TypeHid) != H5T_STRING or
           H5Tis_variable_str(TypeHid) == 0) {
         Logger->error("Unexpected datatype");

@@ -835,7 +835,7 @@ void HDFFile::init(std::string const &Filename,
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    setCommonProps(fcpl, fapl);
+
     if (UseHDFSWMR) {
       H5File =
           hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
@@ -940,7 +940,7 @@ void HDFFile::reopen(std::string const &Filename) {
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    setCommonProps(fcpl, fapl);
+
     auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
     if (SWMREnabled) {
@@ -1056,7 +1056,7 @@ void HDFFile::finalize() {
     }
     hdf5::property::FileCreationList FCPL;
     hdf5::property::FileAccessList FAPL;
-    setCommonProps(FCPL, FAPL);
+
     auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
     H5File = hdf5::file::open(Filename, FAFL, FAPL);
