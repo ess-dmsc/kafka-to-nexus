@@ -73,4 +73,3 @@ TEST_F(MessageClassTest, InvalidFlatbuffer) {
   ASSERT_THROW(FlatbufferMessage(TestData.get(), 8),
                FileWriter::NotValidFlatbuffer);
 }
-

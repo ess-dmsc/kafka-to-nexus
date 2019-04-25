@@ -10,8 +10,7 @@ EventMessage const *FlatBufferWrapper::root() {
 }
 
 Synth::Synth(std::string SynthName, uint64_t Seed)
-    : Name(std::move(SynthName)),
-    Impl(std::make_unique<SynthImpl>()){
+    : Name(std::move(SynthName)), Impl(std::make_unique<SynthImpl>()) {
   Impl->RandomNumberGen.seed(Seed);
 }
 

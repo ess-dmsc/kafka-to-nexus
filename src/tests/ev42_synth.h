@@ -11,7 +11,9 @@ namespace ev42 {
 class FlatBufferWrapper {
 public:
   FlatBufferWrapper() = default;
-  FlatBufferWrapper(FlatBufferWrapper &&x) noexcept { std::swap(Builder, x.Builder); }
+  FlatBufferWrapper(FlatBufferWrapper &&x) noexcept {
+    std::swap(Builder, x.Builder);
+  }
   std::unique_ptr<flatbuffers::FlatBufferBuilder> Builder;
   EventMessage const *root();
 };

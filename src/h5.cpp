@@ -20,8 +20,8 @@ void h5d::init_basics() {
   ShapeMax = DSPTgt.maximum_dimensions();
   if (Logger->should_log(spdlog::level::trace)) {
     for (int i1 = 0; i1 < ndims; ++i1) {
-      Logger->trace("{:20} i: {}  ShapeCurrent: {:21}  ShapeMax: {:21}", Name, i1,
-                    ShapeCurrent.at(i1), ShapeMax.at(i1));
+      Logger->trace("{:20} i: {}  ShapeCurrent: {:21}  ShapeMax: {:21}", Name,
+                    i1, ShapeCurrent.at(i1), ShapeMax.at(i1));
     }
   }
   try {
@@ -135,8 +135,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
         snow_1_ln2 += 1;
       }
       if (snow_1_ln2 >= BLOCK) {
-        Logger->error("snow_1_ln2 >= BLOCK; {} >= {};  ShapeCurrent[1]: {}", snow_1_ln2,
-                      BLOCK, ShapeCurrent[1]);
+        Logger->error("snow_1_ln2 >= BLOCK; {} >= {};  ShapeCurrent[1]: {}",
+                      snow_1_ln2, BLOCK, ShapeCurrent[1]);
         snow_1_ln2 = BLOCK - 1;
       }
       BLOCK -= snow_1_ln2;
@@ -156,7 +156,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       Logger->trace(
           "snext: {:12}  set_extent  d: 2\n  from: {:12}  to: {:12}\n  "
           "from: {:12}  to: {:12}",
-          snext, ShapeCurrent.at(0), NewShape.at(0), ShapeCurrent.at(1), NewShape.at(1));
+          snext, ShapeCurrent.at(0), NewShape.at(0), ShapeCurrent.at(1),
+          NewShape.at(1));
     } else {
       Logger->trace("snext: {:12}  set_extent  d: {}   NOT SUPPORTED",
                     ShapeCurrent.size());
@@ -246,8 +247,8 @@ append_ret h5d::append_data_1d(T const *data, hsize_t nlen) {
       auto CurrentDimensions = dsp.current_dimensions();
       auto MaximumDimensions = dsp.maximum_dimensions();
       for (int i1 = 0; i1 < ndims; ++i1) {
-        Logger->trace("dimensions {}: {:12} {:12}", i1, CurrentDimensions.at(i1),
-                      MaximumDimensions.at(i1));
+        Logger->trace("dimensions {}: {:12} {:12}", i1,
+                      CurrentDimensions.at(i1), MaximumDimensions.at(i1));
       }
     }
     return {AppendResult::ERROR};
