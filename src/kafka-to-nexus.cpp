@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
   setupLoggerFromOptions(*Options);
   auto Logger = getLogger();
 
-  if (not Options->CommandsJsonFilename.empty()) {
+  if (!Options->CommandsJsonFilename.empty()) {
     Options->parseJsonCommands();
   }
 
@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
     }
   });
 
-  while (not Master.runLoopExited()) {
+  while (!Master.runLoopExited()) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
       Logger->debug("SIGNAL {}", SignalId);
