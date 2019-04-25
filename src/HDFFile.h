@@ -106,7 +106,8 @@ void writeGenericDataset(const std::string &DataType,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
                          const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values, SharedLogger const &Logger);
+                         const nlohmann::json *Values,
+                         SharedLogger const &Logger);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                   SharedLogger const &Logger);
@@ -115,7 +116,8 @@ void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              const nlohmann::json &Values);
 
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &Values, SharedLogger const &Logger);
+                            const nlohmann::json &Values,
+                            SharedLogger const &Logger);
 
 void writeScalarAttribute(hdf5::node::Node const &Node, const std::string &Name,
                           const nlohmann::json &Values);

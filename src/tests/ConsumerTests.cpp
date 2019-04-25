@@ -9,9 +9,7 @@ using trompeloeil::_;
 
 class ConsumerTests : public ::testing::Test {
 protected:
-  void SetUp() override {
-    RdConsumer = std::make_unique<MockKafkaConsumer>();
-  }
+  void SetUp() override { RdConsumer = std::make_unique<MockKafkaConsumer>(); }
 
   std::unique_ptr<MockKafkaConsumer> RdConsumer;
 };
