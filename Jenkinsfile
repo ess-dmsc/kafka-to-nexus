@@ -1,4 +1,5 @@
 @Library('ecdc-pipeline')
+@Library('ecdc-pipeline')
 import ecdcpipeline.ContainerBuildNode
 import ecdcpipeline.PipelineBuilder
 
@@ -201,7 +202,7 @@ builders = pipeline_builder.createBuilders { container ->
           cppcheck --xml --inline-suppr --enable=all --inconclusive src/ 2> ${test_output}
         """
         container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
-        recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+        recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 23, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
     }  // stage
   }  // if
 
