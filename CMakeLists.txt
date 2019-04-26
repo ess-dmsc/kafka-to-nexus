@@ -20,7 +20,7 @@ if(${CONAN} MATCHES "AUTO")
   include(${CMAKE_MODULE_PATH}/conan.cmake)
   conan_cmake_run(CONANFILE conan/conanfile.txt
           PROFILE ${CONAN_PROFILE}
-          BASIC_SETUP ${OUTPUT_DIRS}git
+          BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"
           BUILD outdated
           KEEP_RPATHS)
