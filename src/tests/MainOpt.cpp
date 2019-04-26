@@ -3,16 +3,11 @@
 #include <nlohmann/json.hpp>
 using nlohmann::json;
 
-TEST(MainOpt, MainOptTestParseJsonCommandsReturnsErrorIfNoCommandsJson) {
-  MainOpt Mainopt;
-  ASSERT_EQ(-1, Mainopt.parseJsonCommands());
-}
-
 TEST(MainOpt, findAndAddCommandsAddsNoCommandsIfJsonIsEmpty) {
   MainOpt Mainopt;
   Mainopt.CommandsJson = json::parse("{}");
   Mainopt.findAndAddCommands();
-  Mainopt.CommandsFromJson.empty();
+  ASSERT_TRUE(Mainopt.CommandsFromJson.empty());
 }
 
 TEST(MainOpt, findAndAddCommandsAddsCommands) {
