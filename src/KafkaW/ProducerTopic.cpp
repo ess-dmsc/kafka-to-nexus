@@ -9,10 +9,8 @@ ProducerTopic::ProducerTopic(std::shared_ptr<Producer> ProducerPtr,
     : KafkaProducer(ProducerPtr), Name(std::move(TopicName)) {
 
   std::string ErrStr;
-  Config = std::unique_ptr<RdKafka::Conf>(
-      RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC));
   RdKafkaTopic = std::unique_ptr<RdKafka::Topic>(RdKafka::Topic::create(
-      KafkaProducer->getRdKafkaPtr(), Name, Config.get(), ErrStr));
+      KafkaProducer->getRdKafkaPtr(), Name, ConfigPtr.get(), ErrStr));
   if (RdKafkaTopic == nullptr) {
     Logger->error("could not create Kafka topic: {}", ErrStr);
     throw TopicCreationError();

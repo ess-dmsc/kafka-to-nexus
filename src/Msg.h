@@ -19,9 +19,9 @@ struct MessageMetaData {
 
 struct Msg {
   static Msg owned(char const *Data, size_t Bytes) {
-    auto DataPtr = std::make_unique<char[]>(Bytes);
-    std::memcpy(reinterpret_cast<void *>(DataPtr.get()), Data, Bytes);
-    return {std::move(DataPtr), Bytes};
+    auto TempDataPtr = std::make_unique<char[]>(Bytes);
+    std::memcpy(reinterpret_cast<void *>(TempDataPtr.get()), Data, Bytes);
+    return {std::move(TempDataPtr), Bytes};
   }
 
   char const *data() const {

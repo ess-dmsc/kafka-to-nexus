@@ -25,8 +25,9 @@ namespace Status {
 /// mechanism would be present there can be a mixing of updated and
 /// non-updated information, which the mutex allows to avoid.
 class MessageInfo {
-
 public:
+  MessageInfo() = default;
+
   /// \brief Increments the number of messages that have been correctly
   /// processed by one unit and the number of processed megabytes accordingly.
   ///

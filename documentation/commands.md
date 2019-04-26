@@ -203,7 +203,7 @@ For example:
   "cmd": "FileWriter_stop",
   "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
   "stop_time": 1547200800,
-  "service_id": "filewriter1",
+  "service_id": "filewriter1"
 }
 ```
 
@@ -220,7 +220,7 @@ For example:
 ```json
 {
   "cmd": "FileWriter_exit",
-  "service_id": "filewriter1",
+  "service_id": "filewriter1"
 }
 ```
 

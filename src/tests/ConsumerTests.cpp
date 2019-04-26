@@ -9,27 +9,9 @@ using trompeloeil::_;
 
 class ConsumerTests : public ::testing::Test {
 protected:
-  void SetUp() override {
-    RdConsumer = std::make_unique<MockKafkaConsumer>();
-    //    Consumer = std::make_unique<KafkaW::Consumer>(
-    //        RdConsumer, std::make_unique<RdKafka::Conf>(),
-    //        std::make_unique<KafkaW::KafkaEventCb>());
-  }
+  void SetUp() override { RdConsumer = std::make_unique<MockKafkaConsumer>(); }
 
   std::unique_ptr<MockKafkaConsumer> RdConsumer;
-  //  std::unique_ptr<KafkaW::Consumer> Consumer;
-
-  std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> validMessageToPoll() {
-    PollStatus Status;
-    FileWriter::Msg KafkaMessage;
-
-    std::pair<PollStatus, FileWriter::Msg> NewPair(Status,
-                                                   std::move(KafkaMessage));
-    std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> DataToReturn;
-    DataToReturn = std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
-        std::move(NewPair));
-    return DataToReturn;
-  }
 };
 
 TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {

@@ -537,22 +537,19 @@ std::string TruncateCommand(std::string const &Command) {
   return Command;
 }
 
-void CommandHandler::tryToHandle(
-    std::string const &Command,
-    std::chrono::milliseconds MsgTimestampMilliseconds) {
+void CommandHandler::tryToHandle(std::string const &Command,
+                                 std::chrono::milliseconds MsgTimestamp) {
 
-  if (MsgTimestampMilliseconds.count() < 0) {
-    MsgTimestampMilliseconds =
-        std::chrono::duration_cast<std::chrono::milliseconds>(
-            std::chrono::system_clock::now().time_since_epoch());
+  if (MsgTimestamp.count() < 0) {
+    MsgTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch());
     Logger->info(
         "Kafka command doesn't contain timestamp, so using current time.");
   }
-  Logger->info("Kafka command message timestamp : {}",
-               MsgTimestampMilliseconds.count());
+  Logger->info("Kafka command message timestamp : {}", MsgTimestamp.count());
 
   try {
-    handle(Command, MsgTimestampMilliseconds);
+    handle(Command, MsgTimestamp);
   } catch (...) {
     std::string JobID = "unknown";
     try {

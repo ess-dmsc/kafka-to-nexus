@@ -19,16 +19,16 @@ public:
 
 /// \brief Used to generate test data.
 struct SynthImpl {
-  Value type;
+  Value Type;
 };
 
 /// Simple test data generator for the f142 schema.
-class synth {
+class Synth {
 public:
-  synth(std::string SynthName, Value Type);
+  Synth(std::string SynthName, Value Type);
   FlatBufferWrapper next(uint64_t TestValue, size_t NrOfElements);
-  std::unique_ptr<SynthImpl> impl;
   std::string Name;
+  std::unique_ptr<SynthImpl> Impl;
 };
 
 } // namespace f142

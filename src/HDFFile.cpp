@@ -207,7 +207,7 @@ static void writeHDFISO8601Attribute(hdf5::node::Node const &Node,
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name,
-                                         SharedLogger Logger) {
+                                         SharedLogger const &Logger) {
   const date::time_zone *CurrentTimeZone;
   try {
     CurrentTimeZone = date::current_zone();
@@ -223,7 +223,7 @@ void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
 }
 
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
-                     SharedLogger Logger) {
+                     SharedLogger const &Logger) {
   if (Value == nullptr) {
     return;
   }
@@ -242,7 +242,8 @@ void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
 /// \param JsonValue    json value array of attribute objects.
 /// \param Logger Pointer to spdlog instance to be used for logging.
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &Values, SharedLogger Logger) {
+                            const nlohmann::json &Values,
+                            SharedLogger const &Logger) {
   if (!Values.is_array()) {
     return;
   }
@@ -318,7 +319,7 @@ void writeAttrStringFixedLength(hdf5::node::Node const &Node,
                                 std::string const &Name, json const &Values,
                                 size_t StringSize,
                                 hdf5::datatype::CharacterEncoding Encoding,
-                                SharedLogger Logger) {
+                                SharedLogger const &Logger) {
   hdf5::dataspace::Dataspace SpaceMem;
   if (Values.is_array()) {
     SpaceMem = hdf5::dataspace::Simple({Values.size()});
@@ -362,7 +363,7 @@ void writeAttrStringFixedLength(hdf5::node::Node const &Node,
 void writeAttrString(hdf5::node::Node const &Node, std::string const &Name,
                      nlohmann::json const &Values, size_t const StringSize,
                      hdf5::datatype::CharacterEncoding Encoding,
-                     SharedLogger Logger) {
+                     SharedLogger const &Logger) {
   if (StringSize > 0) {
     writeAttrStringFixedLength(Node, Name, Values, StringSize, Encoding,
                                Logger);
@@ -383,7 +384,7 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name, uint32_t StringSize,
                               hdf5::datatype::CharacterEncoding Encoding,
                               nlohmann::json const &Values,
-                              SharedLogger Logger) {
+                              SharedLogger const &Logger) {
   try {
     if (DType == "uint8") {
       writeAttrNumeric<uint8_t>(Node, Name, Values);
@@ -460,7 +461,7 @@ void writeScalarAttribute(hdf5::node::Node const &Node, std::string const &Name,
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,
-                              SharedLogger Logger) {
+                              SharedLogger const &Logger) {
   if (auto AttributesMaybe = find<json>("attributes", Values)) {
     auto const Attributes = AttributesMaybe.inner();
     writeAttributes(Node, &Attributes, Logger);
@@ -525,7 +526,7 @@ void writeFixedSizeStringDataset(
     hdf5::node::Group const &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    const nlohmann::json *Values, SharedLogger Logger) {
+    const nlohmann::json *Values, SharedLogger const &Logger) {
   try {
     auto DataType = hdf5::datatype::String::fixed(ElementSize);
     DataType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -572,7 +573,8 @@ void writeGenericDataset(const std::string &DataType,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
                          const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values, SharedLogger Logger) {
+                         const nlohmann::json *Values,
+                         SharedLogger const &Logger) {
   try {
 
     hdf5::property::DatasetCreationList DatasetCreationList;
@@ -652,7 +654,7 @@ void writeGenericDataset(const std::string &DataType,
 }
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
-                  SharedLogger Logger) {
+                  SharedLogger const &Logger) {
   std::string Name;
   if (auto NameMaybe = find<std::string>("name", *Values)) {
     Name = NameMaybe.inner();
@@ -732,7 +734,7 @@ void createHDFStructures(
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
     std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path,
-    SharedLogger Logger) {
+    SharedLogger const &Logger) {
 
   try {
 
@@ -803,7 +805,7 @@ std::string h5VersionStringLinked() {
 /// compiled with against the version of the HDF5 libraries that the
 /// kafka-to-nexus is linked against at runtime. Currently, a mismatch in the
 /// release number is logged but does not cause panic.
-void checkHDFVersion(SharedLogger Logger) {
+void checkHDFVersion(SharedLogger const &Logger) {
   unsigned h5_vers_major, h5_vers_minor, h5_vers_release;
   H5get_libversion(&h5_vers_major, &h5_vers_minor, &h5_vers_release);
   if (h5_vers_major != H5_VERS_MAJOR) {
@@ -835,7 +837,7 @@ void HDFFile::init(std::string const &Filename,
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    setCommonProps(fcpl, fapl);
+
     if (UseHDFSWMR) {
       H5File =
           hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
@@ -940,7 +942,7 @@ void HDFFile::reopen(std::string const &Filename) {
   try {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    setCommonProps(fcpl, fapl);
+
     auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
     if (SWMREnabled) {
@@ -1056,7 +1058,7 @@ void HDFFile::finalize() {
     }
     hdf5::property::FileCreationList FCPL;
     hdf5::property::FileAccessList FAPL;
-    setCommonProps(FCPL, FAPL);
+
     auto FAFL = static_cast<hdf5::file::AccessFlagsBase>(
         hdf5::file::AccessFlags::READWRITE);
     H5File = hdf5::file::open(Filename, FAFL, FAPL);

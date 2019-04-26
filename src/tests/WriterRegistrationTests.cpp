@@ -2,7 +2,7 @@
 #include <HDFWriterModule.h>
 #include <gtest/gtest.h>
 
-namespace FileWriter {
+using namespace FileWriter;
 
 using ModuleFactory = HDFWriterModuleRegistry::ModuleFactory;
 
@@ -76,4 +76,3 @@ TEST_F(WriterRegistrationTest, StrKeyNotFound) {
   std::string FailKey("trump");
   EXPECT_THROW(HDFWriterModuleRegistry::find(FailKey), std::out_of_range);
 }
-} // namespace FileWriter

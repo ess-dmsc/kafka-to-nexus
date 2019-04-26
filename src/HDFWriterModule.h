@@ -130,7 +130,7 @@ public:
 
 class WriterException : public std::runtime_error {
 public:
-  WriterException(const std::string &ErrorMessage)
+  explicit WriterException(const std::string &ErrorMessage)
       : std::runtime_error(ErrorMessage) {}
 };
 } // namespace HDFWriterModuleRegistry

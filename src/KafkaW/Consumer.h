@@ -51,13 +51,13 @@ public:
   /// \param Topic The name of the topic to add.
   /// \param StartTime Start timestamp to consume from.
   void addTopicAtTimestamp(std::string const &Topic,
-                           std::chrono::milliseconds const StartTime) override;
+                           std::chrono::milliseconds StartTime) override;
   /// Checks if a topic is present on the broker.
   /// This is used to prevent passing around a pointer to an iterator of an
   /// RdKafka::Topic outside of KafkaW and instead returns a bool.
-  /// \param Topic Name of the topic to check.
+  /// \param TopicName Name of the topic to check.
   /// \return True or false depending on whether the topic exists or not.
-  bool topicPresent(const std::string &Topic) override;
+  bool topicPresent(const std::string &TopicName) override;
   /// Get a list of partition numbers in a topic.
   ///
   /// \param Topic The name of the topic to query.

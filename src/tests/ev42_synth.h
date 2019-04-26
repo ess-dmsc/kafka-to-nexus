@@ -10,9 +10,11 @@ namespace ev42 {
 
 class FlatBufferWrapper {
 public:
-  FlatBufferWrapper() {}
-  FlatBufferWrapper(FlatBufferWrapper &&x) { std::swap(builder, x.builder); }
-  std::unique_ptr<flatbuffers::FlatBufferBuilder> builder;
+  FlatBufferWrapper() = default;
+  FlatBufferWrapper(FlatBufferWrapper &&x) noexcept {
+    std::swap(Builder, x.Builder);
+  }
+  std::unique_ptr<flatbuffers::FlatBufferBuilder> Builder;
   EventMessage const *root();
 };
 
@@ -23,12 +25,12 @@ struct SynthImpl {
   uint64_t c1 = 0;
 };
 
-class synth {
+class Synth {
 public:
-  synth(std::string SynthName, uint64_t seed);
-  FlatBufferWrapper next(uint32_t size);
-  std::unique_ptr<SynthImpl> impl;
+  Synth(std::string SynthName, uint64_t Seed);
+  FlatBufferWrapper next(uint32_t Size);
   std::string Name;
+  std::unique_ptr<SynthImpl> Impl;
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");

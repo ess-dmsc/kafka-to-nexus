@@ -9,8 +9,6 @@
 #include <string>
 #include <vector>
 
-class T_HDFFile;
-
 namespace FileWriter {
 
 // POD
@@ -52,13 +50,6 @@ public:
   hdf5::node::Group RootGroup;
 
 private:
-  friend class ::T_HDFFile;
-  friend class CommandHandler;
-
-  void
-  setCommonProps(hdf5::property::FileCreationList &FileCreationPropertyList,
-                 hdf5::property::FileAccessList &FileAccessPropertyList) {}
-
   bool SWMREnabled = false;
   std::string Filename;
   nlohmann::json NexusStructure;
@@ -69,15 +60,15 @@ private:
   SharedLogger Logger = getLogger();
 };
 
-bool findType(const nlohmann::basic_json<> Attribute, std::string &DType);
+bool findType(nlohmann::basic_json<> Attribute, std::string &DType);
 std::string h5VersionStringLinked();
 void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
-                     SharedLogger Logger);
+                     SharedLogger const &Logger);
 
 void writeStringAttribute(hdf5::node::Node const &Node, std::string const &Name,
                           std::string const &Value);
 
-void checkHDFVersion(SharedLogger Logger);
+void checkHDFVersion(SharedLogger const &Logger);
 std::string H5VersionStringHeadersCompileTime();
 
 void createHDFStructures(
@@ -86,15 +77,15 @@ void createHDFStructures(
     hdf5::property::LinkCreationList const &LinkCreationPropertyList,
     hdf5::datatype::String const &FixedStringHDFType,
     std::vector<StreamHDFInfo> &HDFStreamInfo, std::deque<std::string> &Path,
-    SharedLogger Logger);
+    SharedLogger const &Logger);
 
 void writeHDFISO8601AttributeCurrentTime(hdf5::node::Node const &Node,
                                          const std::string &Name,
-                                         SharedLogger Logger);
+                                         SharedLogger const &Logger);
 
 void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,
-                              SharedLogger Logger);
+                              SharedLogger const &Logger);
 
 std::vector<std::string> populateStrings(const nlohmann::json *Values,
                                          hssize_t GoalSize);
@@ -108,23 +99,25 @@ void writeFixedSizeStringDataset(
     hdf5::node::Group const &Parent, const std::string &Name,
     hdf5::property::DatasetCreationList &DatasetCreationList,
     hdf5::dataspace::Dataspace &Dataspace, hsize_t ElementSize,
-    const nlohmann::json *Values, SharedLogger Logger);
+    const nlohmann::json *Values, SharedLogger const &Logger);
 
 void writeGenericDataset(const std::string &DataType,
                          hdf5::node::Group const &Parent,
                          const std::string &Name,
                          const std::vector<hsize_t> &Sizes,
                          const std::vector<hsize_t> &Max, hsize_t ElementSize,
-                         const nlohmann::json *Values, SharedLogger Logger);
+                         const nlohmann::json *Values,
+                         SharedLogger const &Logger);
 
 void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
-                  SharedLogger Logger);
+                  SharedLogger const &Logger);
 
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              const nlohmann::json &Values);
 
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &Values, SharedLogger Logger);
+                            const nlohmann::json &Values,
+                            SharedLogger const &Logger);
 
 void writeScalarAttribute(hdf5::node::Node const &Node, const std::string &Name,
                           const nlohmann::json &Values);
@@ -134,5 +127,5 @@ void writeAttrOfSpecifiedType(std::string const &DType,
                               std::string const &Name, uint32_t StringSize,
                               hdf5::datatype::CharacterEncoding Encoding,
                               nlohmann::json const &Values,
-                              SharedLogger Logger);
+                              SharedLogger const &Logger);
 } // namespace FileWriter

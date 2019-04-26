@@ -61,7 +61,7 @@ public:
   hdf5::dataspace::Simple DSPTgt;
   hdf5::Dimensions ShapeNow;
   hdf5::Dimensions ShapeMax;
-  hdf5::Dimensions sext;
+  hdf5::Dimensions ShapeCurrent;
   int mpi_rank = -1;
 
 private:

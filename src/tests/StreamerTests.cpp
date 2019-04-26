@@ -13,9 +13,11 @@ namespace f142 {
 }
 }
 }
+
 using trompeloeil::_;
 using KafkaW::PollStatus;
-namespace FileWriter {
+using namespace FileWriter;
+
 std::unique_ptr<std::pair<PollStatus, Msg>>
 generateKafkaMsg(char const *DataPtr, size_t const Size) {
   FileWriter::Msg Message = FileWriter::Msg::owned(DataPtr, Size);
@@ -44,8 +46,7 @@ protected:
   StreamerOptions Options;
 };
 
-// make sure that a topic exists/not exists
-TEST_F(StreamerInitTest, Success) {
+TEST_F(StreamerInitTest, CheckTopicExists) {
   EXPECT_NO_THROW(Streamer("broker", "topic", Options));
 }
 
@@ -57,23 +58,10 @@ TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
   EXPECT_THROW(Streamer("broker", "", Options), std::runtime_error);
 }
 
-// Disabled for now as there is a problem with the Consumer that requires a
-// rewrite of it
-//  TEST_F(StreamerTest, CreateConsumerSuccess) {
-//    StreamerOptions SomeOptions;
-//    SomeOptions.BrokerSettings.Address = "127.0.0.1:9999";
-//    SomeOptions.BrokerSettings.ConfigurationStrings["group.id"] = "TestGroup";
-//    std::string TopicName{"SomeName"};
-//    std::pair<Status::StreamerError,ConsumerPtr> Result =
-//    createConsumer(TopicName, SomeOptions);
-//    EXPECT_TRUE(Result.first.connectionOK());
-//    EXPECT_NE(Result.second.get(), nullptr);
-//  }
-
 class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn() : Streamer("SomeBroker", "SomeTopic", StreamerOptions()) {}
-  StreamerStandIn(StreamerOptions Opts)
+  explicit StreamerStandIn(StreamerOptions Opts)
       : Streamer("SomeBroker", "SomeTopic", Opts) {}
   using Streamer::ConsumerCreated;
   using Streamer::Options;
@@ -92,7 +80,7 @@ protected:
 class ConsumerEmptyStandIn
     : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
 public:
-  ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
+  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
   IMPLEMENT_MOCK1(topicPresent);
@@ -554,4 +542,3 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
-} // namespace FileWriter

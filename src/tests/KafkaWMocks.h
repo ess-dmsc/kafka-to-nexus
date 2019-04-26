@@ -37,12 +37,11 @@ public:
   MockKafkaConsumer(){};
   MockKafkaConsumer(RdKafka::ErrorCode ErrorCode, RdKafka::Metadata *Metadata)
       : ErrorCode(ErrorCode), MetadataPtr(Metadata) {}
-  RdKafka::ErrorCode ErrorCode;
-  RdKafka::Metadata *MetadataPtr;
+  RdKafka::ErrorCode ErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
+  RdKafka::Metadata *MetadataPtr = nullptr;
 
   RdKafka::ErrorCode metadata(bool, const RdKafka::Topic *,
                               RdKafka::Metadata **Metadata, int) override {
-
     *Metadata = MetadataPtr;
     return ErrorCode;
   }
