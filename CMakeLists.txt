@@ -20,7 +20,7 @@ if(${CONAN} MATCHES "AUTO")
   include(${CMAKE_MODULE_PATH}/conan.cmake)
   conan_cmake_run(CONANFILE conan/conanfile.txt
           PROFILE ${CONAN_PROFILE}
-          BASIC_SETUP ${OUTPUT_DIRS}
+          BASIC_SETUP ${OUTPUT_DIRS}git
           BUILD_TYPE "None"
           BUILD outdated
           KEEP_RPATHS)
@@ -35,9 +35,8 @@ elseif(NOT ${CONAN} MATCHES "DISABLE")
   MESSAGE(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
 endif()
 
-# Yes, there exists also FindGTest.
-# Yes, we do want to use this one instead:
-if(NOT GOOGLETEST_DISABLE)
+# Use custom find module as cmake module doesn't support gmock
+if(NOT BUILD_TESTS)
   find_package(Googletest)
 endif()
 
