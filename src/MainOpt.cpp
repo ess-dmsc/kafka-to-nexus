@@ -16,10 +16,6 @@ void MainOpt::init() {
 }
 
 int MainOpt::parseJsonCommands() {
-  if (CommandsJsonFilename.empty()) {
-    getLogger()->warn("JSON command filename is empty");
-    return -1;
-  }
   auto jsontxt = readFileIntoVector(CommandsJsonFilename);
   using nlohmann::json;
   try {
