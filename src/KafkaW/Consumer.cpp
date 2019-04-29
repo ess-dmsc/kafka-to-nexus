@@ -131,7 +131,7 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
   bool Connected = false;
-  short LoopRuns = 0;
+  short LoopCounter = 0;
   while (!Connected) {
     auto ErrorCode = KafkaConsumer->metadata(
         true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
@@ -141,12 +141,12 @@ void Consumer::updateMetadata() {
       Connected = true;
       break;
     case RdKafka::ERR__TRANSPORT:
-      if (LoopRuns == 7) {
+      if (LoopCounter == 7) {
         Logger->error("Cannot contact broker, retrying until connection is "
                       "established...");
-        LoopRuns = 0;
+        LoopCounter = 0;
       }
-      LoopRuns++;
+      LoopCounter++;
       std::this_thread::sleep_for(std::chrono::milliseconds(500));
       break;
     default:
