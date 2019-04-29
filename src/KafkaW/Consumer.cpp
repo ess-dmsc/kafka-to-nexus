@@ -4,6 +4,7 @@
 #include "logger.h"
 #include <atomic>
 #include <chrono>
+#include <thread>
 
 namespace KafkaW {
 
@@ -129,13 +130,30 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 
 void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
-  auto ErrorCode = KafkaConsumer->metadata(
-      true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
-  if (ErrorCode == RdKafka::ERR__TRANSPORT)
-    throw MetadataException("Cannot contact broker");
-  else if (ErrorCode != RdKafka::ERR_NO_ERROR) {
-    throw MetadataException(
-        "Consumer::updateMetadata() - error while retrieving metadata.");
+  // flag used to display
+  bool Connected = false;
+  short LoopRuns = 0;
+  while (!Connected) {
+    auto ErrorCode = KafkaConsumer->metadata(
+        true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
+    switch (ErrorCode) {
+    case RdKafka::ERR_NO_ERROR:
+      Logger->info("Connection with broker established.");
+      Connected = true;
+      break;
+    case RdKafka::ERR__TRANSPORT:
+      if (LoopRuns == 7) {
+        Logger->error("Cannot contact broker, retrying until connection is "
+                      "established...");
+        LoopRuns = 0;
+      }
+      LoopRuns++;
+      std::this_thread::sleep_for(std::chrono::milliseconds(500));
+      break;
+    default:
+      throw MetadataException(
+          "Consumer::updateMetadata() - error while retrieving metadata.");
+    }
   }
   KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
 }
