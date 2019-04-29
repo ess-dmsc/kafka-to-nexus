@@ -130,7 +130,6 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 
 void Consumer::updateMetadata() {
   RdKafka::Metadata *MetadataPtr = nullptr;
-  // flag used to display
   bool Connected = false;
   short LoopRuns = 0;
   while (!Connected) {
