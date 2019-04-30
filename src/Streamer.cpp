@@ -22,9 +22,9 @@ bool stopTimeElapsed(std::uint64_t MessageTimestamp,
 }
 } // namespace FileWriter
 
-FileWriter::Streamer::Streamer(const std::string &Broker,
-                               const std::string &TopicName,
-                               FileWriter::StreamerOptions Opts)
+FileWriter::Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
+                               FileWriter::StreamerOptions Opts,
+                               ConsumerPtr Consumer)
     : Options(std::move(Opts)) {
 
   if (TopicName.empty() || Broker.empty()) {
@@ -40,19 +40,16 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   Options.BrokerSettings.Address = Broker;
 
   ConsumerCreated = std::async(std::launch::async, &FileWriter::createConsumer,
-                               TopicName, Options, Logger);
+                               TopicName, Options, Logger, std::move(Consumer));
 }
 
 // pass the topic by value: this allow the constructor to go out of scope
 // without resulting in an error
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const &TopicName,
-                           FileWriter::StreamerOptions const &Options,
-                           SharedLogger Logger) {
+FileWriter::createConsumer(std::string const &TopicName, FileWriter::StreamerOptions const &Options,
+                           SharedLogger Logger, ConsumerPtr Consumer) {
   Logger->trace("Connecting to \"{}\"", TopicName);
   try {
-    FileWriter::ConsumerPtr Consumer =
-        KafkaW::createConsumer(Options.BrokerSettings);
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
                                                    Options.BeforeStartTime);

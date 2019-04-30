@@ -46,23 +46,47 @@ protected:
   StreamerOptions Options;
 };
 
+class ConsumerEmptyStandIn
+    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
+public:
+  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
+  IMPLEMENT_MOCK1(addTopic);
+  IMPLEMENT_MOCK2(addTopicAtTimestamp);
+  IMPLEMENT_MOCK1(topicPresent);
+  IMPLEMENT_MOCK1(queryTopicPartitions);
+  IMPLEMENT_MOCK0(poll);
+};
+
 TEST_F(StreamerInitTest, CheckTopicExists) {
-  EXPECT_NO_THROW(Streamer("broker", "topic", Options));
+  EXPECT_NO_THROW(Streamer("broker", "topic", Options,
+                           std::make_unique<ConsumerEmptyStandIn>(
+                               StreamerOptions().BrokerSettings)));
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
-  EXPECT_THROW(Streamer("", "topic", Options), std::runtime_error);
+  EXPECT_THROW(
+      Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                         StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
-  EXPECT_THROW(Streamer("broker", "", Options), std::runtime_error);
+  EXPECT_THROW(
+      Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                          StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 class StreamerStandIn : public Streamer {
 public:
-  StreamerStandIn() : Streamer("SomeBroker", "SomeTopic", StreamerOptions()) {}
+  StreamerStandIn()
+      : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
+                 std::make_unique<ConsumerEmptyStandIn>(
+                     StreamerOptions().BrokerSettings)) {}
   explicit StreamerStandIn(StreamerOptions Opts)
-      : Streamer("SomeBroker", "SomeTopic", Opts) {}
+      : Streamer("SomeBroker", "SomeTopic", Opts,
+                 std::make_unique<ConsumerEmptyStandIn>(
+                     StreamerOptions().BrokerSettings)) {}
   using Streamer::ConsumerCreated;
   using Streamer::Options;
 };
@@ -75,17 +99,6 @@ protected:
   }
   KafkaW::BrokerSettings BrokerSettings;
   StreamerOptions Options;
-};
-
-class ConsumerEmptyStandIn
-    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
-public:
-  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
-  IMPLEMENT_MOCK1(addTopic);
-  IMPLEMENT_MOCK2(addTopicAtTimestamp);
-  IMPLEMENT_MOCK1(topicPresent);
-  IMPLEMENT_MOCK1(queryTopicPartitions);
-  IMPLEMENT_MOCK0(poll);
 };
 
 TEST_F(StreamerProcessTest, CreationNotYetDone) {
