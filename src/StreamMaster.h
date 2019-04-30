@@ -8,9 +8,9 @@
 #include "MainOpt.h"
 #include "Report.h"
 
+#include <KafkaW/ConsumerFactory.h>
 #include <atomic>
 #include <condition_variable>
-#include <KafkaW/ConsumerFactory.h>
 
 namespace FileWriter {
 
@@ -41,11 +41,14 @@ public:
     for (auto &Demux : Demuxers) {
       try {
 
-        std::unique_ptr<KafkaW::ConsumerInterface> Consumer=KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings);
+        std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
+            KafkaW::createConsumer(
+                Options.StreamerConfiguration.BrokerSettings);
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(Demux.topic()),
                           std::forward_as_tuple(Broker, Demux.topic(),
-                                                Options.StreamerConfiguration, std::move(Consumer)));
+                                                Options.StreamerConfiguration,
+                                                std::move(Consumer)));
         Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR;
