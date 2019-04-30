@@ -72,16 +72,9 @@ protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 
 private:
-  /// Checks if a topic is present on the broker. Throws and logs if topic is
-  /// not found.
-  /// NB this is not put in a smart pointer as we don't want to take ownership.
-  /// \param Topic Name of the topic to check.
-  /// \return The topic metadata object.
   const RdKafka::TopicMetadata *findTopic(const std::string &Topic);
   std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings ConsumerBrokerSettings;
-  /// Updates the RdKafka Metadata pointer, used for checking topics on a broker
-  /// and partition numbers as it should be kept up to date.
   void updateMetadata();
   std::shared_ptr<RdKafka::Metadata> KafkaMetadata;
   int id = 0;
@@ -91,6 +84,7 @@ private:
                               &TopicPartitionsWithOffsets) const;
   std::vector<RdKafka::TopicPartition *>
   queryWatermarkOffsets(const std::string &Topic);
+  bool metadataCall();
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace KafkaW

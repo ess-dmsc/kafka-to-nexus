@@ -93,6 +93,11 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
   assignToPartitions(Topic, TopicPartitionsWithTimestamp);
 }
 
+/// Checks if a topic is present on the broker. Throws and logs if topic is
+/// not found.
+/// NB this is not put in a smart pointer as we don't want to take ownership.
+/// \param Topic Name of the topic to check.
+/// \return The topic metadata object.
 const RdKafka::TopicMetadata *Consumer::findTopic(const std::string &Topic) {
   updateMetadata();
   auto Topics = KafkaMetadata->topics();
@@ -128,33 +133,36 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   return true;
 }
 
+/// Updates the RdKafka Metadata pointer. If broker is unavailable, keeps trying
+/// to connect every 500ms, logging messages every few seconds.
 void Consumer::updateMetadata() {
-  RdKafka::Metadata *MetadataPtr = nullptr;
-  bool Connected = false;
   short LoopCounter = 0;
-  while (!Connected) {
-    auto ErrorCode = KafkaConsumer->metadata(
-        true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
-    switch (ErrorCode) {
-    case RdKafka::ERR_NO_ERROR:
-      Logger->info("Connection with broker established.");
-      Connected = true;
-      break;
-    case RdKafka::ERR__TRANSPORT:
-      if (LoopCounter == 7) {
-        Logger->error("Cannot contact broker, retrying until connection is "
-                      "established...");
-        LoopCounter = 0;
-      }
-      LoopCounter++;
-      std::this_thread::sleep_for(std::chrono::milliseconds(500));
-      break;
-    default:
-      throw MetadataException(
-          "Consumer::updateMetadata() - error while retrieving metadata.");
+  while (!metadataCall()) {
+    if (LoopCounter == 7) {
+      Logger->error("Cannot contact broker, retrying until connection is "
+                    "established...");
+      LoopCounter = 0;
     }
+    LoopCounter++;
   }
-  KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
+  Logger->info("Connection with broker established.");
+}
+
+bool Consumer::metadataCall() {
+  RdKafka::Metadata *MetadataPtr = nullptr;
+  auto ErrorCode = KafkaConsumer->metadata(
+      true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
+  switch (ErrorCode) {
+  case RdKafka::ERR_NO_ERROR:
+    KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
+    return true;
+  case RdKafka::ERR__TRANSPORT:
+    std::this_thread::sleep_for(std::chrono::milliseconds(500));
+    return false;
+  default:
+    throw MetadataException(
+        "Consumer::metadataCall() - error while retrieving metadata.");
+  }
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
