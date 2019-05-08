@@ -13,9 +13,9 @@ release_os = "centos7-release"
 no_graylog = "centos7-no_graylog"
 
 container_build_nodes = [
-  'centos7': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
-  'centos7-release': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
-  'centos7-no_graylog': new ContainerBuildNode('essdmscdm/centos7-build-node:4.0.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
+  'centos7': new ContainerBuildNode('screamingudder/centos7-build-node:4.4.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
+  'centos7-release': new ContainerBuildNode('screamingudder/centos7-build-node:4.4.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
+  'centos7-no_graylog': new ContainerBuildNode('screamingudder/centos7-build-node:4.4.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
   'debian9': new ContainerBuildNode('essdmscdm/debian9-build-node:2.6.0', 'bash -e'),
   'ubuntu1804': new ContainerBuildNode('essdmscdm/ubuntu18.04-build-node:1.4.0', 'bash -e')
 ]
