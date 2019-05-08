@@ -24,8 +24,7 @@ bool stopTimeElapsed(std::uint64_t MessageTimestamp,
 
 FileWriter::Streamer::Streamer(const std::string &Broker,
                                const std::string &TopicName,
-                               FileWriter::StreamerOptions Opts,
-                               ConsumerPtr Consumer)
+                               StreamerOptions Opts, ConsumerPtr Consumer)
     : Options(std::move(Opts)) {
 
   if (TopicName.empty() || Broker.empty()) {
