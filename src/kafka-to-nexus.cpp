@@ -6,6 +6,7 @@
 #include "Master.h"
 #include "URI.h"
 #include "logger.h"
+#include "Version.h"
 #include <CLI/CLI.hpp>
 #include <csignal>
 #include <cstdio>
@@ -32,6 +33,17 @@ int main(int argc, char **argv) {
   Options->init();
   setCLIOptions(App, *Options);
 
+  try {
+    App.parse(argc, argv);
+  } catch(const CLI::ParseError &e) {
+    // Do nothing, we only care about the version flag in this first pass.
+  }
+
+  if (Options->PrintVersion) {
+    fmt::print("{}\n", GetVersion());
+    return 0;
+  }
+  
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
   auto Logger = getLogger();
