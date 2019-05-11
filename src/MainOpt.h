@@ -31,7 +31,7 @@ struct MainOpt {
   /// \brief Streamer options are parsed from the configuration file and passed
   /// on to the StreamMaster.
   FileWriter::StreamerOptions StreamerConfiguration;
-  
+
   /// Command line argument to print application version and exit.
   bool PrintVersion = false;
 
