@@ -272,6 +272,8 @@ def get_macos_pipeline() {
 
         dir("${project}/code") {
           try {
+          // temporary conan remove until all projects move to new package version
+          sh "conan remove -f FlatBuffers/*"
             checkout scm
           } catch (e) {
             failure_function(e, 'MacOSX / Checkout failed')
