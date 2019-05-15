@@ -38,19 +38,19 @@ public:
       : Demuxers(FileWriterTask->demuxers()),
         WriterTask(std::move(FileWriterTask)), ServiceId{Options.ServiceID},
         ProducerTopic{Producer} {
-//
+    //
     for (auto &Demux : Demuxers) {
       try {
         auto lel = Options;
 
-//        lel.StreamerConfiguration.BrokerSettings
-//            .KafkaConfiguration["group.id"] = fmt::format(
-//            "filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
-//            gethostname_wrapper(), getpid_wrapper(), Demux.topic(),
-//            std::chrono::duration_cast<std::chrono::milliseconds>(
-//                std::chrono::steady_clock::now().time_since_epoch())
-//                .count());
-//        lel.StreamerConfiguration.BrokerSettings.Address = Broker;
+        //        lel.StreamerConfiguration.BrokerSettings
+        //            .KafkaConfiguration["group.id"] = fmt::format(
+        //            "filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
+        //            gethostname_wrapper(), getpid_wrapper(), Demux.topic(),
+        //            std::chrono::duration_cast<std::chrono::milliseconds>(
+        //                std::chrono::steady_clock::now().time_since_epoch())
+        //                .count());
+        //        lel.StreamerConfiguration.BrokerSettings.Address = Broker;
 
         std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
             KafkaW::createConsumer(lel.StreamerConfiguration.BrokerSettings);
