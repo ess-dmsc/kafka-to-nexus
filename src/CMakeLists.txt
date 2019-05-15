@@ -175,7 +175,7 @@ add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
 if (have_gtest)

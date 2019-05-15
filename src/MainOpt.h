@@ -32,6 +32,9 @@ struct MainOpt {
   /// on to the StreamMaster.
   FileWriter::StreamerOptions StreamerConfiguration;
 
+  /// Command line argument to print application version and exit.
+  bool PrintVersion = false;
+
   spdlog::level::level_enum LoggingLevel;
 
   /// Can optionally use the `graylog_logger` library to log to this address.
