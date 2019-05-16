@@ -42,7 +42,8 @@ public:
   /// \param Config Configuration of the file writer.
   /// \param MasterPtr Optional `Master` which can continue to watch over newly
   /// created jobs. Not used for example in some tests.
-  CommandHandler(MainOpt &Settings, MasterInterface *Master);
+  CommandHandler(MainOpt &Settings, MasterInterface *Master)
+      : Config(Settings), MasterPtr(Master){};
 
   /// \brief Given a JSON string, create a new file writer task.
   ///

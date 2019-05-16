@@ -6,7 +6,6 @@
 #include "../json.h"
 #include "AddReader.h"
 #include "HDFFileTestHelper.h"
-#include "MasterMock.h"
 #include "ev42_synth.h"
 #include "f142_synth.h"
 #include <array>
@@ -99,13 +98,12 @@ public:
     StaticLogger->trace("CommandString: {:.{}}", CommandString.data(),
                         CommandString.size());
     auto Command = json::parse(CommandString);
-    std::string fname = Command["file_attributes"]["file_name"];
-    unlink(fname.c_str());
-    MainOpt main_opt;
-    MockMasterI MMaster;
+    std::string Filename = Command["file_attributes"]["file_name"];
+    std::remove(Filename.c_str());
+    MainOpt MainOptions;
 
-    FileWriter::CommandHandler ch(main_opt, &MMaster);
-    ch.tryToHandle(CommandString);
+    FileWriter::CommandHandler CommandHandlerToTest(MainOptions, nullptr);
+    CommandHandlerToTest.tryToHandle(CommandString);
   }
 
   static void new_04() {

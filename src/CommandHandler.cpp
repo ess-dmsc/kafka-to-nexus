@@ -47,9 +47,6 @@ std::chrono::milliseconds findTime(nlohmann::json const &Document,
   return std::chrono::milliseconds{-1};
 }
 
-CommandHandler::CommandHandler(MainOpt &Settings, MasterInterface *Master)
-    : Config(Settings), MasterPtr(Master) {}
-
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,

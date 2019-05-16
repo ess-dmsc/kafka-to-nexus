@@ -31,15 +31,15 @@ set(UnitTests_SRC
         ProducerDeliveryTests.cpp
         ev42_synth.cpp
         f142_synth.cpp
+        ConsumerTests.cpp
         )
 
 set(UnitTests_INC
-        MasterMock.h
         HDFFileTestHelper.h
         AddReader.h
         ev42_synth.h
         f142_synth.h
-        ConsumerTests.cpp KafkaWMocks.h)
+        KafkaWMocks.h)
 
 add_executable(UnitTests
         ${UnitTests_SRC}
