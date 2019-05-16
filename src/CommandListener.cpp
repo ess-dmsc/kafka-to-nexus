@@ -18,13 +18,7 @@ void CommandListener::start() {
       config.StreamerConfiguration.BrokerSettings;
   BrokerSettings.PollTimeoutMS = 500;
   BrokerSettings.Address = config.CommandBrokerURI.HostPort;
-  BrokerSettings.KafkaConfiguration["group.id"] = fmt::format(
-      "filewriter--commandhandler--host:{}--pid:{}--topic:{}--time:{}",
-      gethostname_wrapper(), getpid_wrapper(), config.CommandBrokerURI.Topic,
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-          std::chrono::steady_clock::now().time_since_epoch())
-          .count());
-  consumer = KafkaW::createConsumer(BrokerSettings);
+  consumer = KafkaW::createConsumer(BrokerSettings, BrokerSettings.Address);
   if (consumer->topicPresent(config.CommandBrokerURI.Topic))
     consumer->addTopic(config.CommandBrokerURI.Topic);
   else {

@@ -39,16 +39,15 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
                       .count());
   Options.BrokerSettings.Address = Broker;
 
-  ConsumerCreated = std::async(std::launch::async, &FileWriter::createConsumer,
-                               TopicName, Options, Logger, std::move(Consumer));
+  ConsumerInitialised =
+      std::async(std::launch::async, &FileWriter::initTopics, TopicName,
+                 Options, Logger, std::move(Consumer));
 }
 
-// pass the topic by value: this allow the constructor to go out of scope
-// without resulting in an error
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::createConsumer(std::string const &TopicName,
-                           FileWriter::StreamerOptions const &Options,
-                           SharedLogger Logger, ConsumerPtr Consumer) {
+FileWriter::initTopics(std::string const &TopicName,
+                       FileWriter::StreamerOptions const &Options,
+                       SharedLogger Logger, ConsumerPtr Consumer) {
   Logger->trace("Connecting to \"{}\"", TopicName);
   try {
     if (Options.StartTimestamp.count() != 0) {
@@ -78,12 +77,12 @@ FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
 }
 
 bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
-  if (ConsumerCreated.wait_for(std::chrono::milliseconds(100)) !=
+  if (ConsumerInitialised.wait_for(std::chrono::milliseconds(100)) !=
       std::future_status::ready) {
     Logger->warn("Not yet done setting up consumer. Deferring consumption.");
     return false;
   }
-  auto Temp = ConsumerCreated.get();
+  auto Temp = ConsumerInitialised.get();
   RunStatus = Temp.first;
   Consumer = std::move(Temp.second);
   return true;
@@ -105,7 +104,7 @@ bool FileWriter::Streamer::stopTimeExceeded(
 
 FileWriter::ProcessMessageResult
 FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
-  if (Consumer == nullptr && ConsumerCreated.valid()) {
+  if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
       // Not ready, so try again on next poll
