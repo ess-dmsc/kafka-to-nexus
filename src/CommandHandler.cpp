@@ -317,7 +317,7 @@ void CommandHandler::handleNew(std::string const &Command,
       s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
     }
     if (Config.topic_write_duration.count() != 0) {
-      s->TopicWriteDuration = Config.topic_write_duration;
+      s->setTopicWriteDuration(Config.topic_write_duration);
     }
     s->start();
 

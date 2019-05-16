@@ -28,7 +28,6 @@ namespace FileWriter {
 template <typename Streamer> class StreamMaster {
   using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
-  friend class CommandHandler;
 
 public:
   StreamMaster(const std::string &Broker,
@@ -38,7 +37,6 @@ public:
       : Demuxers(FileWriterTask->demuxers()),
         WriterTask(std::move(FileWriterTask)), ServiceId{Options.ServiceID},
         ProducerTopic{Producer} {
-    //
     for (auto &Demux : Demuxers) {
       try {
         std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
@@ -61,7 +59,7 @@ public:
   }
 
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = default;
+  StreamMaster(StreamMaster &&) noexcept = default;
 
   ~StreamMaster() {
     Stop = true;
@@ -92,6 +90,10 @@ public:
       s.second.getOptions().StopTimestamp = StopTime;
     }
     return true;
+  }
+
+  void setTopicWriteDuration(std::chrono::milliseconds NewTopicWriteDuration) {
+    TopicWriteDuration = NewTopicWriteDuration;
   }
 
   /// Start writing the streams.
