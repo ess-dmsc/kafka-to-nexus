@@ -157,7 +157,6 @@ bool Consumer::metadataCall() {
     KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
     return true;
   case RdKafka::ERR__TRANSPORT:
-    std::this_thread::sleep_for(std::chrono::milliseconds(500));
     return false;
   default:
     throw MetadataException(
