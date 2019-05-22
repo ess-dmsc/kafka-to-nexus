@@ -1,3 +1,4 @@
+#include "../KafkaW/MetadataException.h"
 #include "KafkaW/Consumer.h"
 #include "KafkaWMocks.h"
 
@@ -341,5 +342,56 @@ TEST_F(ConsumerTests, testAddTopicAtTimestampSuccess) {
         std::make_unique<KafkaW::KafkaEventCb>());
     EXPECT_NO_THROW(Consumer->addTopicAtTimestamp(
         "something", std::chrono::milliseconds{1}));
+  }
+}
+
+TEST_F(ConsumerTests, testUpdatingMetadataMultipleTimes) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR__TRANSPORT, Metadata);
+  REQUIRE_CALL(*MockConsumer, close())
+      .TIMES((1))
+      .RETURN(RdKafka::ERR__TRANSPORT);
+  auto TopicMetadata =
+      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+  auto PartitionMetadata =
+      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadataVector =
+      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
+  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+  REQUIRE_CALL(*TopicMetadata, partitions())
+      .TIMES((1))
+      .RETURN(&PartitionMetadataVector);
+  REQUIRE_CALL(*PartitionMetadata, id()).TIMES((1)).RETURN(1);
+  REQUIRE_CALL(*MockConsumer, query_watermark_offsets(_, _, _, _, _))
+      .TIMES((1))
+      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
+  REQUIRE_CALL(*MockConsumer, assign(_))
+      .TIMES((1))
+      .RETURN(RdKafka::ERR_NO_ERROR);
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    EXPECT_NO_THROW(Consumer->addTopic("something"));
+  }
+}
+
+TEST_F(ConsumerTests, testMetadataCallThrowsAnError) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR__ALL_BROKERS_DOWN, Metadata);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    EXPECT_THROW(Consumer->addTopic("something"), MetadataException);
   }
 }
