@@ -1,4 +1,5 @@
 #pragma once
+#include "ConfigureKafka.h"
 #include "Consumer.h"
 #include <memory>
 

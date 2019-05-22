@@ -1,4 +1,5 @@
 #include "Producer.h"
+#include "ConfigureKafka.h"
 #include "logger.h"
 
 namespace KafkaW {
@@ -26,7 +27,7 @@ Producer::~Producer() {
 
 void Producer::setConf(std::string &ErrorString) {
   try {
-    ProducerBrokerSettings.apply(Conf.get());
+      configureKafka(Conf.get(), ProducerBrokerSettings);
   } catch (std::runtime_error &e) {
     throw std::runtime_error(
         "Cannot create kafka handle due to configuration error");
