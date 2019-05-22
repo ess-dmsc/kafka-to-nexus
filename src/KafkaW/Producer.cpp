@@ -27,7 +27,7 @@ Producer::~Producer() {
 
 void Producer::setConf(std::string &ErrorString) {
   try {
-      configureKafka(Conf.get(), ProducerBrokerSettings);
+    configureKafka(Conf.get(), ProducerBrokerSettings);
   } catch (std::runtime_error &e) {
     throw std::runtime_error(
         "Cannot create kafka handle due to configuration error");
