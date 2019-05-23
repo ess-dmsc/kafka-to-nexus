@@ -81,7 +81,6 @@ set(kafka_to_nexus_SRC
         FlatbufferReader.cpp
         HDFFile.cpp
         HDFWriterModule.cpp
-        KafkaW/BrokerSettings.cpp
         KafkaW/Consumer.cpp
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
@@ -136,7 +135,8 @@ set(kafka_to_nexus_INC
         URI.h
         CLIOptions.h
         NeXusDataset.h
-        )
+        KafkaW/ConfigureKafka.cpp
+        KafkaW/ConfigureKafka.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

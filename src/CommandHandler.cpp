@@ -47,9 +47,6 @@ std::chrono::milliseconds findTime(nlohmann::json const &Document,
   return std::chrono::milliseconds{-1};
 }
 
-CommandHandler::CommandHandler(MainOpt &Settings, MasterInterface *Master)
-    : Config(Settings), MasterPtr(Master) {}
-
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
@@ -320,7 +317,7 @@ void CommandHandler::handleNew(std::string const &Command,
       s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
     }
     if (Config.topic_write_duration.count() != 0) {
-      s->TopicWriteDuration = Config.topic_write_duration;
+      s->setTopicWriteDuration(Config.topic_write_duration);
     }
     s->start();
 

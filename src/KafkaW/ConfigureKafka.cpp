@@ -1,12 +1,12 @@
-#include "BrokerSettings.h"
-#include "logger.h"
-#include <vector>
+#include "ConfigureKafka.h"
+#include <logger.h>
 
 namespace KafkaW {
-void BrokerSettings::apply(RdKafka::Conf *RdKafkaConfiguration) const {
+void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
+                    KafkaW::BrokerSettings Settings) {
   SharedLogger Logger = spdlog::get("filewriterlogger");
   std::string ErrorString;
-  for (const auto &ConfigurationItem : KafkaConfiguration) {
+  for (const auto &ConfigurationItem : Settings.KafkaConfiguration) {
     Logger->debug("set config: {} = {}", ConfigurationItem.first,
                   ConfigurationItem.second);
     if (RdKafka::Conf::ConfResult::CONF_OK !=
@@ -17,5 +17,4 @@ void BrokerSettings::apply(RdKafka::Conf *RdKafkaConfiguration) const {
     }
   }
 }
-
-} // namespace KafkaW
+}

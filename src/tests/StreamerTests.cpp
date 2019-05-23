@@ -46,24 +46,48 @@ protected:
   StreamerOptions Options;
 };
 
+class ConsumerEmptyStandIn
+    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
+public:
+  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
+  IMPLEMENT_MOCK1(addTopic);
+  IMPLEMENT_MOCK2(addTopicAtTimestamp);
+  IMPLEMENT_MOCK1(topicPresent);
+  IMPLEMENT_MOCK1(queryTopicPartitions);
+  IMPLEMENT_MOCK0(poll);
+};
+
 TEST_F(StreamerInitTest, CheckTopicExists) {
-  EXPECT_NO_THROW(Streamer("broker", "topic", Options));
+  EXPECT_NO_THROW(Streamer("broker", "topic", Options,
+                           std::make_unique<ConsumerEmptyStandIn>(
+                               StreamerOptions().BrokerSettings)));
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
-  EXPECT_THROW(Streamer("", "topic", Options), std::runtime_error);
+  EXPECT_THROW(
+      Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                         StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
-  EXPECT_THROW(Streamer("broker", "", Options), std::runtime_error);
+  EXPECT_THROW(
+      Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                          StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 class StreamerStandIn : public Streamer {
 public:
-  StreamerStandIn() : Streamer("SomeBroker", "SomeTopic", StreamerOptions()) {}
+  StreamerStandIn()
+      : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
+                 std::make_unique<ConsumerEmptyStandIn>(
+                     StreamerOptions().BrokerSettings)) {}
   explicit StreamerStandIn(StreamerOptions Opts)
-      : Streamer("SomeBroker", "SomeTopic", Opts) {}
-  using Streamer::ConsumerCreated;
+      : Streamer("SomeBroker", "SomeTopic", Opts,
+                 std::make_unique<ConsumerEmptyStandIn>(
+                     StreamerOptions().BrokerSettings)) {}
+  using Streamer::ConsumerInitialised;
   using Streamer::Options;
 };
 
@@ -77,24 +101,13 @@ protected:
   StreamerOptions Options;
 };
 
-class ConsumerEmptyStandIn
-    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
-public:
-  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
-  IMPLEMENT_MOCK1(addTopic);
-  IMPLEMENT_MOCK2(addTopicAtTimestamp);
-  IMPLEMENT_MOCK1(topicPresent);
-  IMPLEMENT_MOCK1(queryTopicPartitions);
-  IMPLEMENT_MOCK0(poll);
-};
-
 TEST_F(StreamerProcessTest, CreationNotYetDone) {
   StreamerStandIn TestStreamer(Options);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).TIMES(0);
-  TestStreamer.ConsumerCreated.get();
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised.get();
+  TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [EmptyPollerConsumer]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -106,7 +119,7 @@ TEST_F(StreamerProcessTest, CreationNotYetDone) {
 
 TEST_F(StreamerProcessTest, InvalidFuture) {
   StreamerStandIn TestStreamer(Options);
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised =
       std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>();
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_THROW(TestStreamer.pollAndProcess(Demuxer), std::runtime_error);
@@ -114,7 +127,7 @@ TEST_F(StreamerProcessTest, InvalidFuture) {
 
 TEST_F(StreamerProcessTest, BadConsumerCreation) {
   StreamerStandIn TestStreamer(Options);
-  TestStreamer.ConsumerCreated = std::async(std::launch::async, []() {
+  TestStreamer.ConsumerInitialised = std::async(std::launch::async, []() {
     return std::pair<Status::StreamerStatus, ConsumerPtr>{
         Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
   });
@@ -129,7 +142,7 @@ TEST_F(StreamerProcessTest, EmptyPoll) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::Empty))
       .TIMES(1);
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -145,7 +158,7 @@ TEST_F(StreamerProcessTest, EndOfPartition) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -161,7 +174,7 @@ TEST_F(StreamerProcessTest, PollingError) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::Error))
       .TIMES(1);
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -183,7 +196,7 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsg(DataBuffer, sizeof(DataBuffer)))
       .TIMES(1);
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -233,7 +246,7 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
       .RETURN(generateKafkaMsg(static_cast<const char *>(DataBuffer),
                                sizeof(DataBuffer)))
       .TIMES(1);
-  TestStreamer.ConsumerCreated =
+  TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -297,7 +310,7 @@ TEST_F(StreamerProcessTimingTest,
           generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
                            DataBuffer.size()))
       .TIMES(1);
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -327,7 +340,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
           generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
                            DataBuffer.size()))
       .TIMES(1);
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -369,7 +382,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
           generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
                            DataBuffer.size()))
       .TIMES(1);
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -413,7 +426,7 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   };
   REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(PollResult()).TIMES(2);
 
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -448,7 +461,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -482,7 +495,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
@@ -533,7 +546,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
-  TestStreamer->ConsumerCreated =
+  TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};

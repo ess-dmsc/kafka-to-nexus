@@ -40,12 +40,21 @@ public:
   RdKafka::ErrorCode ErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
   RdKafka::Metadata *MetadataPtr = nullptr;
 
+  // KafkaW::Consumer may be calling this method multiple times in case
+  // RdKafka::ERR_TRANSPORT is returned. After few unsuccessful calls
+  // ERR_NO_ERROR is returned to simulate established connection.
   RdKafka::ErrorCode metadata(bool, const RdKafka::Topic *,
                               RdKafka::Metadata **Metadata, int) override {
     *Metadata = MetadataPtr;
-    return ErrorCode;
+    metadataCallCounter++;
+    if (metadataCallCounter < 10) {
+      return ErrorCode;
+    } else {
+      return RdKafka::ERR_NO_ERROR;
+    }
   }
 
+public:
   MAKE_CONST_MOCK0(name, const std::string(), override);
   MAKE_CONST_MOCK0(memberid, const std::string(), override);
   MAKE_MOCK1(poll, int(int), override);
@@ -115,6 +124,9 @@ public:
   MAKE_MOCK1(subscription, RdKafka::ErrorCode(std::vector<std::string> &),
              override);
   MAKE_MOCK1(controllerid, int32_t(int), override);
+
+private:
+  int metadataCallCounter = 0;
 };
 
 class MockMessage : public RdKafka::Message {

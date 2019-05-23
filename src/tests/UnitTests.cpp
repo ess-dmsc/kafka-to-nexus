@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
   std::string ServiceID = "";
   std::string LogFile = "";
   auto GraylogURI = uri::URI();
-  ::setUpLogging(spdlog::level::off, ServiceID, LogFile, GraylogURI);
+  ::setUpLogging(spdlog::level::err, ServiceID, LogFile, GraylogURI);
 
   // set level for test logger
   spdlog::stdout_color_mt("testlogger")->set_level(spdlog::level::trace);

@@ -7,7 +7,9 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "Report.h"
+#include "helper.h"
 
+#include <KafkaW/ConsumerFactory.h>
 #include <atomic>
 #include <condition_variable>
 
@@ -26,7 +28,6 @@ namespace FileWriter {
 template <typename Streamer> class StreamMaster {
   using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
-  friend class CommandHandler;
 
 public:
   StreamMaster(const std::string &Broker,
@@ -36,13 +37,16 @@ public:
       : Demuxers(FileWriterTask->demuxers()),
         WriterTask(std::move(FileWriterTask)), ServiceId{Options.ServiceID},
         ProducerTopic{Producer} {
-
     for (auto &Demux : Demuxers) {
       try {
+        std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
+            KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
+                                   Broker);
         Streamers.emplace(std::piecewise_construct,
                           std::forward_as_tuple(Demux.topic()),
                           std::forward_as_tuple(Broker, Demux.topic(),
-                                                Options.StreamerConfiguration));
+                                                Options.StreamerConfiguration,
+                                                std::move(Consumer)));
         Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         RunStatus = StreamMasterError::STREAMER_ERROR;
@@ -86,6 +90,10 @@ public:
       s.second.getOptions().StopTimestamp = StopTime;
     }
     return true;
+  }
+
+  void setTopicWriteDuration(std::chrono::milliseconds NewTopicWriteDuration) {
+    TopicWriteDuration = NewTopicWriteDuration;
   }
 
   /// Start writing the streams.

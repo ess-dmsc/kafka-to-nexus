@@ -4,6 +4,7 @@
 #include "logger.h"
 #include <atomic>
 #include <chrono>
+#include <thread>
 
 namespace KafkaW {
 
@@ -92,6 +93,11 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
   assignToPartitions(Topic, TopicPartitionsWithTimestamp);
 }
 
+/// Checks if a topic is present on the broker. Throws and logs if topic is
+/// not found.
+/// NB this is not put in a smart pointer as we don't want to take ownership.
+/// \param Topic Name of the topic to check.
+/// \return The topic metadata object.
 const RdKafka::TopicMetadata *Consumer::findTopic(const std::string &Topic) {
   updateMetadata();
   auto Topics = KafkaMetadata->topics();
@@ -127,17 +133,35 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   return true;
 }
 
+/// Updates the RdKafka Metadata pointer. If broker is unavailable, keeps trying
+/// to connect every 500ms, logging messages every few seconds.
 void Consumer::updateMetadata() {
+  short LoopCounter = 0;
+  while (!metadataCall()) {
+    if (LoopCounter == 7) {
+      Logger->error("Cannot contact broker, retrying until connection is "
+                    "established...");
+      LoopCounter = 0;
+    }
+    LoopCounter++;
+  }
+  Logger->info("Connection with broker established.");
+}
+
+bool Consumer::metadataCall() {
   RdKafka::Metadata *MetadataPtr = nullptr;
   auto ErrorCode = KafkaConsumer->metadata(
       true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
-  if (ErrorCode == RdKafka::ERR__TRANSPORT)
-    throw MetadataException("Cannot contact broker");
-  else if (ErrorCode != RdKafka::ERR_NO_ERROR) {
+  switch (ErrorCode) {
+  case RdKafka::ERR_NO_ERROR:
+    KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
+    return true;
+  case RdKafka::ERR__TRANSPORT:
+    return false;
+  default:
     throw MetadataException(
-        "Consumer::updateMetadata() - error while retrieving metadata.");
+        "Consumer::metadataCall() - error while retrieving metadata.");
   }
-  KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
 }
 
 std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
