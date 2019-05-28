@@ -152,13 +152,10 @@ TEST_F(EventHistogramWriter, SlicePartialOverlap) {
 }
 
 json createTestWriterTypedJson() {
-  // The option 'convert_edge_type_to_float' is a temporary special feature for
-  // AMOR.  Reminder to remove this again after next tests is in issue #304.
   auto Json = json::parse(R""({
     "data_type": "uint64",
     "error_type": "double",
     "edge_type": "float",
-    "convert_edge_type_to_float": false,
     "shape": [
       {
         "size": 1,
