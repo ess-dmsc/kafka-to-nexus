@@ -53,7 +53,7 @@ TEST_F(ChopperTimeStampGuard, GetSourceName) {
 TEST_F(ChopperTimeStampGuard, GetTimeStamp) {
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 11);
+  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 11u);
 }
 
 TEST_F(ChopperTimeStampGuard, Verify) {

@@ -106,7 +106,7 @@ int main(int argc, char **argv) {
            return parseLogLevel(Input, MainOptions.LoggingLevel);
          },
          LogLevelInfoStr)
-      ->set_default_str("Error");
+      ->default_str("Error");
   addUriOption(App, "--broker", MainOptions.broker,
                "<host[:port]/topic>\n"
                "                              Host, port, topic where the "
