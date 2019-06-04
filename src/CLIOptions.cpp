@@ -8,9 +8,10 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
                        bool Defaulted) {
 
   CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
-  Opt->set_custom_option("URI", 1);
+  Opt->type_name("URI");
+  Opt->type_size(1);
   if (Defaulted) {
-    Opt->set_default_str(URIArg.getURIString());
+    Opt->default_str(URIArg.getURIString());
   }
   return Opt;
 }
@@ -74,7 +75,8 @@ CLI::Option *SetKeyValueOptions(CLI::App &App, const std::string &Name,
                                 const CLI::callback_t &Fun) {
   CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
   const auto RequireEvenNumberOfPairs = -2;
-  Opt->set_custom_option("KEY VALUE", RequireEvenNumberOfPairs);
+  Opt->type_name("KEY VALUE");
+  Opt->type_size(RequireEvenNumberOfPairs);
   return Opt;
 }
 
@@ -151,7 +153,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
            return parseLogLevel(Input, MainOptions.LoggingLevel);
          },
          LogLevelInfoStr)
-      ->set_default_val("Error");
+      ->default_str("Error");
   App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "

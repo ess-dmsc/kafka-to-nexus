@@ -1,16 +1,17 @@
 [requires]
 gtest/3121b20-dm3@ess-dmsc/stable
-fmt/5.2.0@bincrafters/stable
+fmt/5.3.0@bincrafters/stable
 flatbuffers/1.10.0@google/stable
 hdf5/1.10.2-dm2@ess-dmsc/stable
 h5cpp/0.1.3@ess-dmsc/stable
 librdkafka/0.11.5@ess-dmsc/stable
-jsonformoderncpp/3.1.0@vthiery/stable
-streaming-data-types/c45d2ec@ess-dmsc/stable
-cli11/1.5.3@bincrafters/stable
+jsonformoderncpp/3.6.1@vthiery/stable
+streaming-data-types/fb4d847@ess-dmsc/stable
+CLI11/1.8.0@cliutils/stable
 trompeloeil/v31@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
 spdlog-graylog/1.2.1-dm8@ess-dmsc/testing
+asio/1.13.0@bincrafters/stable
 
 [generators]
 cmake
