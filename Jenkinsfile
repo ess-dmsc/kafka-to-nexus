@@ -13,11 +13,11 @@ release_os = "centos7-release"
 no_graylog = "centos7-no_graylog"
 
 container_build_nodes = [
-  'centos7': new ContainerBuildNode('screamingudder/centos7-build-node:4.5.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
-  'centos7-release': new ContainerBuildNode('screamingudder/centos7-build-node:4.5.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
-  'centos7-no_graylog': new ContainerBuildNode('screamingudder/centos7-build-node:4.5.0', '/usr/bin/scl enable devtoolset-6 -- /bin/bash -e'),
-  'debian9': new ContainerBuildNode('essdmscdm/debian9-build-node:2.6.0', 'bash -e'),
-  'ubuntu1804': new ContainerBuildNode('essdmscdm/ubuntu18.04-build-node:1.4.0', 'bash -e')
+  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
+  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
+  'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
+  'debian9': ContainerBuildNode.getDefaultContainerBuildNode('debian9'),
+  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804')
 ]
 
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
