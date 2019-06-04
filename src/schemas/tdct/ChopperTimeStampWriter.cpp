@@ -49,7 +49,7 @@ std::string ChopperTimeStampGuard::source_name(
 void ChopperTimeStampWriter::parse_config(std::string const &,
                                                std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
-                "FastSampleEnvironmentWriter class.");
+                "ChopperTimeStampWriter class.");
 }
 
 FileWriterBase::InitResult
