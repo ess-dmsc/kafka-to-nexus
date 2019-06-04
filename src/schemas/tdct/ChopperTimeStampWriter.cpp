@@ -13,17 +13,14 @@
 namespace tdct {
 
 // Register the timestamp and name extraction class for this module
-static FileWriter::FlatbufferReaderRegistry::Registrar<
-    ChopperTimeStampGuard>
+static FileWriter::FlatbufferReaderRegistry::Registrar<ChopperTimeStampGuard>
     RegisterSenvGuard("tdct");
 
 // Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<
-    ChopperTimeStampWriter>
+static FileWriter::HDFWriterModuleRegistry::Registrar<ChopperTimeStampWriter>
     RegisterSenvWriter("tdct");
 
-bool ChopperTimeStampGuard::verify(
-    FlatbufferMessage const &Message) const {
+bool ChopperTimeStampGuard::verify(FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(
       reinterpret_cast<const std::uint8_t *>(Message.data()), Message.size());
   return VerifytimestampBuffer(Verifier);
@@ -35,7 +32,8 @@ ChopperTimeStampGuard::timestamp(FlatbufferMessage const &Message) const {
   /// \todo This timestamp is currently EPICS epoch. This will have to be sorted
   /// out.
   if (FbPointer->timestamps()->size() == 0) {
-    throw std::runtime_error("Can not extract timestamp when timestamp array has zero elements.");
+    throw std::runtime_error(
+        "Can not extract timestamp when timestamp array has zero elements.");
   }
   return FbPointer->timestamps()->operator[](0);
 }
@@ -47,14 +45,14 @@ std::string ChopperTimeStampGuard::source_name(
 }
 
 void ChopperTimeStampWriter::parse_config(std::string const &,
-                                               std::string const &) {
+                                          std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
                 "ChopperTimeStampWriter class.");
 }
 
 FileWriterBase::InitResult
 ChopperTimeStampWriter::init_hdf(hdf5::node::Group &HDFGroup,
-                                      std::string const &HDFAttributes) {
+                                 std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
@@ -108,7 +106,8 @@ void ChopperTimeStampWriter::write(
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();
   if (TempTimeSize == 0) {
-    Logger->warn("Received a flatbuffer with zero (0) timestamps elements in it.");
+    Logger->warn(
+        "Received a flatbuffer with zero (0) timestamps elements in it.");
     return;
   }
   ArrayAdapter<const std::uint64_t> CArray(TempTimePtr, TempTimeSize);
