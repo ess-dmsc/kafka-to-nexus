@@ -32,6 +32,7 @@ set(UnitTests_SRC
         ev42_synth.cpp
         f142_synth.cpp
         ConsumerTests.cpp
+        ChopperTimeStampWriterTests.cpp
         )
 
 set(UnitTests_INC
