@@ -178,6 +178,7 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
-if (have_gtest)
+set(BUILD_TESTS CACHE BOOL TRUE "Enable building unit tests")
+if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()

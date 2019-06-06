@@ -54,8 +54,8 @@ target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloei
 target_link_libraries(UnitTests
         ${libraries_common}
         fmt::fmt
+        ${CONAN_LIBS_GTEST}
         )
-add_gtest_to_target(UnitTests)
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 target_compile_definitions(UnitTests PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")
