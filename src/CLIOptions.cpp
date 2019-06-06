@@ -145,11 +145,11 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   `Trace`, `Debug`, `Info`, `Warning`, `Error`
   or `Critical`. Ex: "-v Debug". Default: `Error`)*";
   App.add_option(
-         "-v,--verbosity",
-         [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
-           return parseLogLevel(Input, MainOptions.LoggingLevel);
-         },
-         LogLevelInfoStr, true);
+      "-v,--verbosity",
+      [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+        return parseLogLevel(Input, MainOptions.LoggingLevel);
+      },
+      LogLevelInfoStr, true);
   App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
