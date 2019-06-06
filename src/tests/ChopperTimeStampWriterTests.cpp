@@ -19,11 +19,13 @@ static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
 }
 
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+using FBMsg = FileWriter::FlatbufferMessage;
 
 class ChopperTimeStampGuard : public ::testing::Test {
 public:
   static void SetUpTestCase() {
     RawBuffer = GenerateFlatbufferData(BufferSize);
+    TestMessage = std::make_unique<FBMsg>(reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
   };
 
   void SetUp() override {
@@ -40,26 +42,22 @@ public:
   std::unique_ptr<tdct::ChopperTimeStampGuard> ReaderUnderTest;
   static std::unique_ptr<std::int8_t[]> RawBuffer;
   static size_t BufferSize;
+  static std::unique_ptr<FBMsg> TestMessage;
 };
 std::unique_ptr<std::int8_t[]> ChopperTimeStampGuard::RawBuffer{nullptr};
 size_t ChopperTimeStampGuard::BufferSize{0};
+std::unique_ptr<FBMsg> ChopperTimeStampGuard::TestMessage{nullptr};
 
 TEST_F(ChopperTimeStampGuard, GetSourceName) {
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
+  EXPECT_EQ(ReaderUnderTest->source_name(*TestMessage), "SomeTestString");
 }
 
 TEST_F(ChopperTimeStampGuard, GetTimeStamp) {
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 11u);
+  EXPECT_EQ(ReaderUnderTest->timestamp(*TestMessage), 11u);
 }
 
 TEST_F(ChopperTimeStampGuard, Verify) {
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
+  EXPECT_TRUE(ReaderUnderTest->verify(*TestMessage));
 }
 
 TEST_F(ChopperTimeStampGuard, VerifyFail) {

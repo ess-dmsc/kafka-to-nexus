@@ -6,9 +6,7 @@
 #pragma once
 
 #include "../../FlatbufferReader.h"
-#include "../../HDFFile.h"
 #include "../../HDFWriterModule.h"
-#include "../../Msg.h"
 #include "NeXusDataset.h"
 
 namespace tdct {

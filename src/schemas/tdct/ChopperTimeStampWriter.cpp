@@ -3,11 +3,10 @@
 /// \file
 /// \brief Implement classes required for writing chopper time stamps.
 
-#include "../../helper.h"
-
 #include "ChopperTimeStampWriter.h"
-#include "HDFFile.h"
 #include "tdct_timestamps_generated.h"
+#include <nlohmann/json.hpp>
+#include "HDFFile.h"
 #include <limits>
 
 namespace tdct {
@@ -32,8 +31,6 @@ bool ChopperTimeStampGuard::verify(
 uint64_t
 ChopperTimeStampGuard::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = Gettimestamp(Message.data());
-  /// \todo This timestamp is currently EPICS epoch. This will have to be sorted
-  /// out.
   if (FbPointer->timestamps()->size() == 0) {
     throw std::runtime_error("Can not extract timestamp when timestamp array has zero elements.");
   }
