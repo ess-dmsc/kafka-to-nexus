@@ -388,7 +388,7 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(const json &Command) {
   using std::string;
-  Logger->trace("{}", Command);
+  Logger->trace("{}", Command.dump());
   string JobID;
   if (auto x = find<std::string>("job_id", Command)) {
     JobID = x.inner();
