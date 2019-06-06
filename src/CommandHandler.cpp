@@ -472,13 +472,12 @@ void CommandHandler::handle(std::string const &Command,
 
     } else {
       throw std::runtime_error(
-          fmt::format("Could not understand \"cmd\" field of this command."));
+          fmt::format("Could not understand 'cmd' field of this command."));
     }
   } else {
     throw std::runtime_error(
         fmt::format("Can not extract 'cmd' from command."));
   }
-  throw std::runtime_error(fmt::format("Could not understand this command."));
 }
 
 std::string format_nested_exception(std::exception const &E,
