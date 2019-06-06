@@ -106,6 +106,30 @@ TEST_F(CommandHandler_Testing, FindTimeHandleStopCommand) {
   EXPECT_EQ(FileWriter::findTime(Command, "stop_time").count(), 987654321);
 }
 
+TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotFound) {
+  MainOpt MainOpt;
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  std::string CommandString(
+      R"""({"noCmd":"FileWriter_stop","job_id": "xyzwt","stop_time":987654321})""");
+  testing::internal::CaptureStdout();
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  EXPECT_TRUE(testing::internal::GetCapturedStdout().find(
+      "Can not extract 'cmd' from command."));
+}
+
+TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotUnderstood) {
+  MainOpt MainOpt;
+  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  std::string CommandString(
+      R"""({"cmd":"FileWriter_invalid_command","job_id": "xyzwt","stop_time":987654321})""");
+  testing::internal::CaptureStdout();
+  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
+      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  EXPECT_TRUE(testing::internal::GetCapturedStdout().find(
+      "Could not understand 'cmd' field of this command."));
+}
+
 TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
   std::ofstream ofs;
   ofs.open("tmp-dummy-hdf");
