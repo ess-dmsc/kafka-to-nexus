@@ -19,17 +19,6 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-json parseOrThrow(std::string const &Command, SharedLogger Logger) {
-  try {
-    return json::parse(Command);
-  } catch (json::parse_error const &E) {
-    Logger->warn("Can not parse command  what: {}  Command: {}", E.what(),
-                 Command);
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "Can not parse command  what: {}  Command: {}", E.what(), Command)));
-  }
-}
-
 /// Helper to throw a common error message type.
 static void throwMissingKey(std::string const &Key,
                             std::string const &Context) {
@@ -190,11 +179,9 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-void CommandHandler::handleNew(std::string const &Command,
-                               const std::chrono::milliseconds StartTime) {
+void CommandHandler::handleNew(const json &Doc,
+                               std::chrono::milliseconds MsgTimestamp) {
   using nlohmann::detail::out_of_range;
-  using nlohmann::json;
-  json Doc = parseOrThrow(Command, Logger);
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   if (MasterPtr != nullptr) {
@@ -296,7 +283,7 @@ void CommandHandler::handleNew(std::string const &Command,
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StartTimestamp = Time;
   } else {
-    Config.StreamerConfiguration.StartTimestamp = StartTime;
+    Config.StreamerConfiguration.StartTimestamp = MsgTimestamp;
   }
   Logger->info("Start time: {}ms",
                Config.StreamerConfiguration.StartTimestamp.count());
@@ -399,25 +386,17 @@ void CommandHandler::handleExit() {
   }
 }
 
-void CommandHandler::handleStreamMasterStop(std::string const &Command) {
+void CommandHandler::handleStreamMasterStop(const json &Command) {
   using std::string;
   Logger->trace("{}", Command);
-
-  nlohmann::json Doc;
-  try {
-    Doc = nlohmann::json::parse(Command);
-  } catch (...) {
-    std::throw_with_nested(
-        std::runtime_error(fmt::format("Can not parse command: {}", Command)));
-  }
   string JobID;
-  if (auto x = find<std::string>("job_id", Doc)) {
+  if (auto x = find<std::string>("job_id", Command)) {
     JobID = x.inner();
   } else {
-    throwMissingKey("job_id", Doc.dump());
+    throwMissingKey("job_id", Command.dump());
   }
 
-  std::chrono::milliseconds StopTime = findTime(Doc, "stop_time");
+  std::chrono::milliseconds StopTime = findTime(Command, "stop_time");
   if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
     if (StreamMaster != nullptr) {
@@ -472,7 +451,7 @@ void CommandHandler::handle(std::string const &Command,
     std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
                    ::tolower);
     if (CommandMain == "filewriter_new") {
-      handleNew(Command, StartTime);
+      handleNew(Doc, StartTime);
       return;
     } else if (CommandMain == "filewriter_exit") {
       handleExit();

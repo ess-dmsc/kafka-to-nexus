@@ -19,16 +19,6 @@ struct StreamSettings {
   std::string ConfigStreamJson;
 };
 
-/// \brief If fails to parse the `Command`, adds error info and throws
-/// exception.
-///
-/// \param  Command Command passed to the program.
-/// \param Logger Pointer to spdlog instance to be used for logging.
-///
-/// \return If parsing successful returns `nlohmann::json`, otherwise throws an
-/// exception.
-nlohmann::json parseOrThrow(std::string const &Command, SharedLogger Logger);
-
 std::string format_nested_exception(std::exception const &E);
 
 std::string format_nested_exception(std::exception const &E,
@@ -45,10 +35,10 @@ public:
   CommandHandler(MainOpt &Settings, MasterInterface *Master)
       : Config(Settings), MasterPtr(Master){};
 
-  /// \brief Given a JSON string, create a new file writer task.
+  /// \brief Given a nlohman::json, create a new file writer task.
   ///
-  /// \param Command Command for configuring the new task.
-  void handleNew(std::string const &Command,
+  /// \param Doc Command for configuring the new task.
+  void handleNew(const nlohmann::json &Doc,
                  std::chrono::milliseconds MsgTimestamp);
 
   /// Stop the whole file writer application.
@@ -60,7 +50,7 @@ public:
   /// \brief Stop a given job.
   ///
   /// \param Command The command defining which job to stop.
-  void handleStreamMasterStop(std::string const &Command);
+  void handleStreamMasterStop(const nlohmann::json &Command);
 
   /// \brief Try to handle the message.
   ///

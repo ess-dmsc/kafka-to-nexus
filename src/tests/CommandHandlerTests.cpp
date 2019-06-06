@@ -192,12 +192,6 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
   }
 }
 
-TEST_F(CommandHandler_Testing, faultyJsonLetsParserThrow) {
-  ASSERT_THROW(FileWriter::parseOrThrow("{ this is not json }",
-                                        spdlog::get("filewriterlogger")),
-               std::runtime_error);
-}
-
 TEST_F(CommandHandler_Testing, CreateHDFLinks) {
   std::string Filename("Test.CommandHandler_Testing.CreateHDFLinks");
   unlink(Filename.c_str());
