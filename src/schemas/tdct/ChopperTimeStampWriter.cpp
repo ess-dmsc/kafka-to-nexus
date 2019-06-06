@@ -4,10 +4,10 @@
 /// \brief Implement classes required for writing chopper time stamps.
 
 #include "ChopperTimeStampWriter.h"
-#include "tdct_timestamps_generated.h"
-#include <nlohmann/json.hpp>
 #include "HDFFile.h"
+#include "tdct_timestamps_generated.h"
 #include <limits>
+#include <nlohmann/json.hpp>
 
 namespace tdct {
 
