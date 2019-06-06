@@ -43,7 +43,7 @@ int main(int argc, char **argv) {
     fmt::print("{}\n", GetVersion());
     return 0;
   }
-  App.reset();
+  App.clear();
 
   CLI11_PARSE(App, argc, argv);
   setupLoggerFromOptions(*Options);
