@@ -43,12 +43,6 @@ elseif(NOT ${CONAN} MATCHES "DISABLE")
   message(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
 endif()
 
-# Use custom find module as cmake module doesn't support gmock
-set(BUILD_TESTS CACHE BOOL TRUE "Enable building unit tests")
-if(BUILD_TESTS)
-  find_package(Googletest)
-endif()
-
 add_subdirectory(src)
 
 option(RUN_DOXYGEN "Run doxygen" TRUE)

@@ -18,7 +18,7 @@ struct MainOpt {
   URI broker{"localhost:9092/commands"};
   KafkaW::BrokerSettings BrokerSettings;
   std::string cmd;
-  spdlog::level::level_enum LoggingLevel;
+  spdlog::level::level_enum LoggingLevel = spdlog::level::level_enum::err;
   std::string LogFilename;
   uri::URI GraylogLoggerAddress;
 };
@@ -101,12 +101,11 @@ int main(int argc, char **argv) {
   `Trace`, `Debug`, `Info`, `Warning`, `Error`
   or `Critical`. Ex: "-v Debug". Default: `Error`)*";
   App.add_option(
-         "-v,--verbosity",
-         [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
-           return parseLogLevel(Input, MainOptions.LoggingLevel);
-         },
-         LogLevelInfoStr)
-      ->default_str("Error");
+      "-v,--verbosity",
+      [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+        return parseLogLevel(Input, MainOptions.LoggingLevel);
+      },
+      LogLevelInfoStr);
   addUriOption(App, "--broker", MainOptions.broker,
                "<host[:port]/topic>\n"
                "                              Host, port, topic where the "

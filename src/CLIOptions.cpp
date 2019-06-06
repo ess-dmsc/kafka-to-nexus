@@ -10,9 +10,6 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
   CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
   Opt->type_name("URI");
   Opt->type_size(1);
-  if (Defaulted) {
-    Opt->default_str(URIArg.getURIString());
-  }
   return Opt;
 }
 
@@ -148,12 +145,11 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   `Trace`, `Debug`, `Info`, `Warning`, `Error`
   or `Critical`. Ex: "-v Debug". Default: `Error`)*";
   App.add_option(
-         "-v,--verbosity",
-         [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
-           return parseLogLevel(Input, MainOptions.LoggingLevel);
-         },
-         LogLevelInfoStr)
-      ->default_str("Error");
+      "-v,--verbosity",
+      [&MainOptions, LogLevelInfoStr](std::vector<std::string> Input) {
+        return parseLogLevel(Input, MainOptions.LoggingLevel);
+      },
+      LogLevelInfoStr, true);
   App.add_option("--hdf-output-prefix", MainOptions.HDFOutputPrefix,
                  "<absolute/or/relative/directory> Directory which gets "
                  "prepended to the HDF output filenames in the file write "
