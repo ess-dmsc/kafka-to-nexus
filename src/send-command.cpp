@@ -18,7 +18,7 @@ struct MainOpt {
   URI broker{"localhost:9092/commands"};
   KafkaW::BrokerSettings BrokerSettings;
   std::string cmd;
-  spdlog::level::level_enum LoggingLevel = spdlog::level::level_enum::debug;
+  spdlog::level::level_enum LoggingLevel = spdlog::level::level_enum::err;
   std::string LogFilename;
   uri::URI GraylogLoggerAddress;
 };
