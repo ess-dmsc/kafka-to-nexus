@@ -490,11 +490,16 @@ void CommandHandler::handle(std::string const &Command,
       } else {
         throwMissingKey("recv_type", Doc.dump());
       }
+
+    } else {
+      throw std::runtime_error(
+          fmt::format("Could not understand \"cmd\" field of this command."));
     }
   } else {
-    Logger->warn("Can not extract 'cmd' from command {}", Command);
+    throw std::runtime_error(
+        fmt::format("Can not extract 'cmd' from command."));
   }
-  Logger->warn("Could not understand this command: {}", Command);
+  throw std::runtime_error(fmt::format("Could not understand this command."));
 }
 
 std::string format_nested_exception(std::exception const &E,
@@ -561,7 +566,7 @@ void CommandHandler::tryToHandle(std::string const &Command,
       auto TruncatedCommand = TruncateCommand(Command);
       auto Message = fmt::format(
           "Unexpected std::exception while handling command:\n{}\n{}",
-          TruncatedCommand, format_nested_exception(E));
+          format_nested_exception(E), TruncatedCommand);
       Logger->error("JobID: {}  StatusCode: {}  Message: {}", JobID,
                     convertStatusCodeToString(StatusCode::Fail), Message);
       if (MasterPtr != nullptr) {
