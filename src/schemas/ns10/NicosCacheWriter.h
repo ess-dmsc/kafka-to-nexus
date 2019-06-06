@@ -27,7 +27,7 @@
 
 /// \brief A separate namespace for this specific file writing module. Use this
 /// to minimize the risk of name collisions.
-namespace TemplateWriter {
+namespace NicosCacheWriter {
 
 /// \brief This class is used to extract information from a flatbuffer which
 /// uses a specific four character file identifier.
@@ -66,10 +66,7 @@ public:
   /// buffer.
   ///
   /// \return `true` if the data was verified as "correct", `false` otherwise.
-  bool verify(FileWriter::FlatbufferMessage const &Message) const override {
-    std::cout << "ReaderClass::verify()\n";
-    return true;
-  }
+  bool verify(FileWriter::FlatbufferMessage const &Message) const override;
 
   /// \brief Extract the name of the data source from the flatbuffer.
   ///
@@ -93,10 +90,7 @@ public:
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
   std::string
-  source_name(FileWriter::FlatbufferMessage const &Message) const override {
-    std::cout << "ReaderClass::source_name()\n";
-    return "";
-  }
+  source_name(FileWriter::FlatbufferMessage const &Message) const override;
 
   /// \brief Extract the timestamp of a flatbuffer.
   ///
@@ -117,10 +111,7 @@ public:
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
   uint64_t
-  timestamp(FileWriter::FlatbufferMessage const &Message) const override {
-    std::cout << "ReaderClass::timestamp()\n";
-    return 0;
-  }
+  timestamp(FileWriter::FlatbufferMessage const &Message) const override;
 };
 
 /// \brief Implements the actual file writing code of this file writing module.
@@ -305,4 +296,4 @@ public:
     return 0;
   }
 };
-} // namespace TemplateWriter
+} // namespace NicosCacheWriter
