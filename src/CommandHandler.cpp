@@ -469,19 +469,18 @@ void CommandHandler::handle(std::string const &Command,
 
   if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
     std::string CommandMain = CmdMaybe.inner();
-    if (CommandMain == "FileWriter_new") {
+    std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
+                   ::tolower);
+    if (CommandMain == "filewriter_new") {
       handleNew(Command, StartTime);
       return;
-    }
-    if (CommandMain == "FileWriter_exit") {
+    } else if (CommandMain == "filewriter_exit") {
       handleExit();
       return;
-    }
-    if (CommandMain == "FileWriter_stop") {
+    } else if (CommandMain == "filewriter_stop") {
       handleStreamMasterStop(Command);
       return;
-    }
-    if (CommandMain == "file_writer_tasks_clear_all") {
+    } else if (CommandMain == "file_writer_tasks_clear_all") {
       if (auto y = find<std::string>("recv_type", Doc)) {
         std::string ReceiverType = y.inner();
         if (ReceiverType == "FileWriter") {
