@@ -34,8 +34,7 @@ public:
     std::map<std::string, ReaderPtr> &Readers =
         FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        tdct::ChopperTimeStampGuard>
+    FileWriter::FlatbufferReaderRegistry::Registrar<tdct::ChopperTimeStampGuard>
         RegisterIt("tdct");
   };
 
@@ -170,8 +169,8 @@ TEST_F(ChopperTimeStampWriter, WriteDataTwice) {
   std::vector<std::uint16_t> AppendedValues(DataspaceSize);
   TimestampDataset.read(AppendedValues);
   for (int i = 0; i < DataspaceSize; i++) {
-    ASSERT_EQ(AppendedValues.at(i),
-              FbPointer->timestamps()->operator[](i % FbPointer->timestamps()->size()));
+    ASSERT_EQ(AppendedValues.at(i), FbPointer->timestamps()->operator[](
+                                        i % FbPointer->timestamps()->size()));
   }
 
   std::vector<std::uint32_t> CueIndex(2);
@@ -198,5 +197,6 @@ TEST_F(ChopperTimeStampWriter, WriteNoElements) {
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<const char *>(Buffer.get()), BufferSize), std::runtime_error);
+                   reinterpret_cast<const char *>(Buffer.get()), BufferSize),
+               std::runtime_error);
 }
