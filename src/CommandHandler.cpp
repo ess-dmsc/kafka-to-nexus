@@ -25,7 +25,7 @@ static void throwMissingKey(std::string const &Key,
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
 }
 
-std::chrono::milliseconds findTime(nlohmann::json const &Document,
+std::chrono::milliseconds findTime(json const &Document,
                                    std::string const &Key) {
   if (auto x = find<uint64_t>(Key, Document)) {
     std::chrono::milliseconds Time(x.inner());
@@ -40,7 +40,6 @@ std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
                               bool UseSwmr) {
-  using nlohmann::json;
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
@@ -63,7 +62,6 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 static StreamSettings extractStreamInformationFromJsonForSource(
     std::unique_ptr<FileWriterTask> const &Task,
     StreamHDFInfo const &StreamInfo, SharedLogger Logger) {
-  using nlohmann::json;
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
@@ -225,7 +223,7 @@ void CommandHandler::handleNew(const json &Doc,
     Logger->trace("Use main broker: {}", Broker.HostPort);
   }
 
-  if (auto FileAttributesMaybe = find<nlohmann::json>("file_attributes", Doc)) {
+  if (auto FileAttributesMaybe = find<json>("file_attributes", Doc)) {
     if (auto FileNameMaybe =
             find<std::string>("file_name", FileAttributesMaybe.inner())) {
       Task->setFilename(Config.HDFOutputPrefix, FileNameMaybe.inner());
@@ -244,7 +242,7 @@ void CommandHandler::handleNew(const json &Doc,
   // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will
   // contain the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
-  if (auto NexusStructureMaybe = find<nlohmann::json>("nexus_structure", Doc)) {
+  if (auto NexusStructureMaybe = find<json>("nexus_structure", Doc)) {
     try {
       StreamHDFInfoList =
           initializeHDF(*Task, NexusStructureMaybe.inner().dump(), UseSwmr);
@@ -387,9 +385,8 @@ void CommandHandler::handleExit() {
 }
 
 void CommandHandler::handleStreamMasterStop(const json &Command) {
-  using std::string;
   Logger->trace("{}", Command.dump());
-  string JobID;
+  std::string JobID;
   if (auto x = find<std::string>("job_id", Command)) {
     JobID = x.inner();
   } else {
@@ -418,7 +415,6 @@ void CommandHandler::handleStreamMasterStop(const json &Command) {
 
 void CommandHandler::handle(std::string const &Command,
                             const std::chrono::milliseconds StartTime) {
-  using nlohmann::json;
   json Doc;
   try {
     Doc = json::parse(Command);
@@ -532,7 +528,7 @@ void CommandHandler::tryToHandle(std::string const &Command,
   } catch (...) {
     std::string JobID = "unknown";
     try {
-      JobID = nlohmann::json::parse(Command)["job_id"];
+      JobID = json::parse(Command)["job_id"];
     } catch (...) {
       // Okay to ignore as original exception will give the reason.
     }
