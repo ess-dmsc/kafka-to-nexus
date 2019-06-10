@@ -413,6 +413,11 @@ void CommandHandler::handleStreamMasterStop(const json &Command) {
   }
 }
 
+/// \brief Parse the given command and pass it on to a more specific
+/// handler.
+///
+/// \param Command The command to parse.
+/// \param MsgTimestamp The message timestamp.
 void CommandHandler::handle(std::string const &Command,
                             const std::chrono::milliseconds StartTime) {
   json JSONCommand;

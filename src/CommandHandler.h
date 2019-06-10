@@ -81,11 +81,6 @@ public:
   getFileWriterTaskByJobID(std::string const &JobID);
 
 private:
-  /// \brief Parse the given command and pass it on to a more specific
-  /// handler.
-  ///
-  /// \param Command The command to parse.
-  /// \param MsgTimestamp The message timestamp.
   void handle(std::string const &command,
               std::chrono::milliseconds MsgTimestamp);
 
