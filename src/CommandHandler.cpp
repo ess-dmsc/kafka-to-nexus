@@ -457,7 +457,7 @@ void CommandHandler::handle(std::string const &Command,
       handleExit();
       return;
     } else if (CommandMain == "filewriter_stop") {
-      handleStreamMasterStop(Command);
+      handleStreamMasterStop(Doc);
       return;
     } else if (CommandMain == "file_writer_tasks_clear_all") {
       if (auto y = find<std::string>("recv_type", Doc)) {
