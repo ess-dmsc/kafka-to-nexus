@@ -180,7 +180,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 }
 
 void CommandHandler::handleNew(const json &Doc,
-                               std::chrono::milliseconds MsgTimestamp) {
+                               std::chrono::milliseconds StartTime) {
   using nlohmann::detail::out_of_range;
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
@@ -283,7 +283,7 @@ void CommandHandler::handleNew(const json &Doc,
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StartTimestamp = Time;
   } else {
-    Config.StreamerConfiguration.StartTimestamp = MsgTimestamp;
+    Config.StreamerConfiguration.StartTimestamp = StartTime;
   }
   Logger->info("Start time: {}ms",
                Config.StreamerConfiguration.StartTimestamp.count());

@@ -39,7 +39,7 @@ public:
   ///
   /// \param Doc Command for configuring the new task.
   void handleNew(const nlohmann::json &Doc,
-                 std::chrono::milliseconds MsgTimestamp);
+                 std::chrono::milliseconds StartTime);
 
   /// Stop the whole file writer application.
   void handleExit();
