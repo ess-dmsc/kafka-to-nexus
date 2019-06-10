@@ -37,8 +37,8 @@ public:
 
   /// \brief Given a nlohman::json, create a new file writer task.
   ///
-  /// \param Doc Command for configuring the new task.
-  void handleNew(const nlohmann::json &Doc,
+  /// \param JSONCommand Command for configuring the new task.
+  void handleNew(const nlohmann::json &JSONCommand,
                  std::chrono::milliseconds StartTime);
 
   /// Stop the whole file writer application.

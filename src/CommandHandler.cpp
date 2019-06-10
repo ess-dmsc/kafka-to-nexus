@@ -177,7 +177,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-void CommandHandler::handleNew(const json &Doc,
+void CommandHandler::handleNew(const json &JSONCommand,
                                std::chrono::milliseconds StartTime) {
   using nlohmann::detail::out_of_range;
 
@@ -187,10 +187,10 @@ void CommandHandler::handleNew(const json &Doc,
   }
   auto Task =
       std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
-  if (auto x = find<std::string>("job_id", Doc)) {
+  if (auto x = find<std::string>("job_id", JSONCommand)) {
     std::string JobID = x.inner();
     if (JobID.empty()) {
-      throwMissingKey("job_id", Doc.dump());
+      throwMissingKey("job_id", JSONCommand.dump());
     }
 
     if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
@@ -202,7 +202,7 @@ void CommandHandler::handleNew(const json &Doc,
 
     Task->setJobId(JobID);
   } else {
-    throwMissingKey("job_id", Doc.dump());
+    throwMissingKey("job_id", JSONCommand.dump());
   }
 
   if (MasterPtr != nullptr) {
@@ -211,7 +211,7 @@ void CommandHandler::handleNew(const json &Doc,
   }
 
   uri::URI Broker("localhost:9092");
-  if (auto BrokerStringMaybe = find<std::string>("broker", Doc)) {
+  if (auto BrokerStringMaybe = find<std::string>("broker", JSONCommand)) {
     auto BrokerString = BrokerStringMaybe.inner();
     try {
       Broker.parse(BrokerString);
@@ -223,26 +223,26 @@ void CommandHandler::handleNew(const json &Doc,
     Logger->trace("Use main broker: {}", Broker.HostPort);
   }
 
-  if (auto FileAttributesMaybe = find<json>("file_attributes", Doc)) {
+  if (auto FileAttributesMaybe = find<json>("file_attributes", JSONCommand)) {
     if (auto FileNameMaybe =
             find<std::string>("file_name", FileAttributesMaybe.inner())) {
       Task->setFilename(Config.HDFOutputPrefix, FileNameMaybe.inner());
     } else {
-      throwMissingKey("file_attributes.file_name", Doc.dump());
+      throwMissingKey("file_attributes.file_name", JSONCommand.dump());
     }
   } else {
-    throwMissingKey("file_attributes", Doc.dump());
+    throwMissingKey("file_attributes", JSONCommand.dump());
   }
 
   bool UseSwmr = true;
-  if (auto UseHDFSWMRMaybe = find<bool>("use_hdf_swmr", Doc)) {
+  if (auto UseHDFSWMRMaybe = find<bool>("use_hdf_swmr", JSONCommand)) {
     UseSwmr = UseHDFSWMRMaybe.inner();
   }
 
   // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will
   // contain the list of streams which have been found in the `nexus_structure`.
   std::vector<StreamHDFInfo> StreamHDFInfoList;
-  if (auto NexusStructureMaybe = find<json>("nexus_structure", Doc)) {
+  if (auto NexusStructureMaybe = find<json>("nexus_structure", JSONCommand)) {
     try {
       StreamHDFInfoList =
           initializeHDF(*Task, NexusStructureMaybe.inner().dump(), UseSwmr);
@@ -251,14 +251,14 @@ void CommandHandler::handleNew(const json &Doc,
           fmt::format("Failed to initializeHDF: {}", E.what())));
     }
   } else {
-    throwMissingKey("nexus_structure", Doc.dump());
+    throwMissingKey("nexus_structure", JSONCommand.dump());
   }
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
   if (auto ThrowOnUninitialisedStreamMaybe =
-          find<bool>("abort_on_uninitialised_stream", Doc)) {
+          find<bool>("abort_on_uninitialised_stream", JSONCommand)) {
     if (ThrowOnUninitialisedStreamMaybe.inner()) {
       for (auto const &Item : StreamHDFInfoList) {
         if (!Item.InitialisedOk) {
@@ -277,7 +277,7 @@ void CommandHandler::handleNew(const json &Doc,
       std::chrono::milliseconds::zero();
 
   // If start time not specified use command message timestamp
-  std::chrono::milliseconds Time = findTime(Doc, "start_time");
+  std::chrono::milliseconds Time = findTime(JSONCommand, "start_time");
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StartTimestamp = Time;
   } else {
@@ -285,7 +285,7 @@ void CommandHandler::handleNew(const json &Doc,
   }
   Logger->info("Start time: {}ms",
                Config.StreamerConfiguration.StartTimestamp.count());
-  Time = findTime(Doc, "stop_time");
+  Time = findTime(JSONCommand, "stop_time");
   if (Time.count() > 0) {
     Config.StreamerConfiguration.StopTimestamp = Time;
     Logger->info("Stop time: {}ms",
@@ -415,15 +415,15 @@ void CommandHandler::handleStreamMasterStop(const json &Command) {
 
 void CommandHandler::handle(std::string const &Command,
                             const std::chrono::milliseconds StartTime) {
-  json Doc;
+  json JSONCommand;
   try {
-    Doc = json::parse(Command);
+    JSONCommand = json::parse(Command);
   } catch (...) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("Can not parse command: {}", TruncateCommand(Command))));
   }
 
-  if (auto ServiceIDMaybe = find<std::string>("service_id", Doc)) {
+  if (auto ServiceIDMaybe = find<std::string>("service_id", JSONCommand)) {
     if (ServiceIDMaybe.inner() != Config.ServiceID) {
       Logger->trace("Ignoring command addressed to service_id: {}",
                     ServiceIDMaybe.inner());
@@ -433,7 +433,7 @@ void CommandHandler::handle(std::string const &Command,
 
   uint64_t TeamId = 0;
   uint64_t CommandTeamId = 0;
-  if (auto x = find<uint64_t>("teamid", Doc)) {
+  if (auto x = find<uint64_t>("teamid", JSONCommand)) {
     CommandTeamId = x.inner();
   }
   if (CommandTeamId != TeamId) {
@@ -442,28 +442,28 @@ void CommandHandler::handle(std::string const &Command,
     return;
   }
 
-  if (auto CmdMaybe = find<std::string>("cmd", Doc)) {
+  if (auto CmdMaybe = find<std::string>("cmd", JSONCommand)) {
     std::string CommandMain = CmdMaybe.inner();
     std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
                    ::tolower);
     if (CommandMain == "filewriter_new") {
-      handleNew(Doc, StartTime);
+      handleNew(JSONCommand, StartTime);
       return;
     } else if (CommandMain == "filewriter_exit") {
       handleExit();
       return;
     } else if (CommandMain == "filewriter_stop") {
-      handleStreamMasterStop(Doc);
+      handleStreamMasterStop(JSONCommand);
       return;
     } else if (CommandMain == "file_writer_tasks_clear_all") {
-      if (auto y = find<std::string>("recv_type", Doc)) {
+      if (auto y = find<std::string>("recv_type", JSONCommand)) {
         std::string ReceiverType = y.inner();
         if (ReceiverType == "FileWriter") {
           handleFileWriterTaskClearAll();
           return;
         }
       } else {
-        throwMissingKey("recv_type", Doc.dump());
+        throwMissingKey("recv_type", JSONCommand.dump());
       }
 
     } else {
