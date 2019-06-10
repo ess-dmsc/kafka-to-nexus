@@ -59,7 +59,7 @@ public:
   }
 
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = default;
+  StreamMaster(StreamMaster &&) noexcept = default;
 
   ~StreamMaster() {
     Stop = true;
