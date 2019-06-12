@@ -1,5 +1,5 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
-from flatbufferhelpers import create_f142_message
+from .flatbufferhelpers import create_f142_message
 import uuid
 
 
