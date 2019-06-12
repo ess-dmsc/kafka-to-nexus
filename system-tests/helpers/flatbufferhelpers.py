@@ -1,7 +1,7 @@
 import flatbuffers
-from f142_logdata import LogData
-from f142_logdata.Value import Value
-from f142_logdata.Int import Int
+from .f142_logdata import LogData
+from .f142_logdata.Value import Value
+from .f142_logdata.Int import Int
 
 
 def _millseconds_to_nanoseconds(time_ms):
