@@ -1,7 +1,7 @@
 import flatbuffers
 from .f142_logdata import LogData
 from .f142_logdata.Value import Value
-from .f142_logdata.Int import Int
+from .f142_logdata.Int import IntStart, IntAddValue, IntEnd
 
 
 def _millseconds_to_nanoseconds(time_ms):
@@ -12,9 +12,9 @@ def create_f142_message(timestamp_unix_ms=None):
     file_identifier = b"f142"
     builder = flatbuffers.Builder(1024)
     source = builder.CreateString("fw-test-helpers")
-    Int.IntStart(builder)
-    Int.IntAddValue(builder, 42)
-    int_position = Int.IntEnd(builder)
+    IntStart(builder)
+    IntAddValue(builder, 42)
+    int_position = IntEnd(builder)
 
     # Build the actual buffer
     LogData.LogDataStart(builder)
