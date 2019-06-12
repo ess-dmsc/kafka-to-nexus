@@ -23,277 +23,69 @@
 #pragma once
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
+#include "NeXusDataset.h"
+
 #include <iostream>
 
-/// \brief A separate namespace for this specific file writing module. Use this
-/// to minimize the risk of name collisions.
 namespace NicosCacheWriter {
 
 /// \brief This class is used to extract information from a flatbuffer which
 /// uses a specific four character file identifier.
-///
-/// See TestWriter.cpp for code which is used to tie a file identifier to an
-/// instance of this class. Note that this class is only instantiated once in
-/// the entire run of the application.
-class ReaderClass : public FileWriter::FlatbufferReader {
+class CacheReader : public FileWriter::FlatbufferReader {
 public:
-  /// \brief Is used to verify the contents of a flatbuffer.
-  ///
-  /// The `Verify*Buffer()` function available for the flatbuffer schema that
-  /// you are using can be called here. This function check all offsets, sizes
-  /// of fields, and null termination of strings to ensure that when a buffer
-  /// is accessed, all reads will end up inside the buffer. Implementing
-  /// additional checks, e.g. determining if a value falls with in an expected
-  /// range, is also possible here.
-  ///
-  /// \note There are at least two good arguments for having this function not
-  /// actually implement any verification of the data and return true by
-  /// default: \li This member function is called on the data AFTER
-  /// FileWriter::FlatbufferReader::source_name(), thus somewhat defeating the
-  /// point of having it.
-  /// \li Verifying a flatbuffer can (for some flatbuffer schemas) be relatively
-  /// expensive and it is currently not possible to set the application to not
-  /// call this function.
-  ///
-  /// The alternative is to do verification in the file writing part of the code
-  /// i.e. FileWriter::HDFWriterModule::write().
-  ///
-  /// \note Try to avoid throwing any exceptions here as it (appears) to likely
-  /// either crash the application or leave it in an inconsistent state.
-  ///
-  /// \param[in] Message The structure containing a pointer to a buffer
-  /// containing data received from the Kafka broker and the size of the
-  /// buffer.
-  ///
-  /// \return `true` if the data was verified as "correct", `false` otherwise.
   bool verify(FileWriter::FlatbufferMessage const &Message) const override;
 
-  /// \brief Extract the name of the data source from the flatbuffer.
-  ///
-  /// When setting up the file writer, a point (group) is tied to a specific
-  /// module instance using the four character identifier of a file writing
-  /// module and the name of the source of the data. This function is used to
-  /// extract the name of a source given the relevant flatbuffer. Although the
-  /// name can be as simple as a string contained in a flatbuffer, it might be
-  /// appropriate in some cases to construct the name from (e.g.) a string and a
-  /// channel number.
-  ///
-  /// \note In the current implementation, this member function might be called
-  /// several times on the same flatbuffer.
-  /// \note Try to avoid throwing any exceptions here as it (appears) to likely
-  /// either crash the application or leave it in an inconsistent state.
-  ///
-  /// \param[in] Message The structure containing a pointer to a buffer
-  /// containing data received from the Kafka broker and the size of the
-  /// buffer.
-  ///
-  /// \return The name of the source of the data in the flatbuffer pointed to by
-  /// the Message parameter.
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override;
 
-  /// \brief Extract the timestamp of a flatbuffer.
-  ///
-  /// The file writer can be set to write data only in a specific "time window".
-  /// Thus function is in that case used to extract the time of a flatbuffer and
-  /// thus decide if its data should be written to file or not. Note that there
-  /// are currently no specification or documentation as to which epoch is to
-  /// be used nor unit of time and prefix. With that said, the current
-  /// implementations appears to try to use (when possible) Unix epoch and
-  /// nanoseconds.
-  ///
-  /// \note Try to avoid throwing any exceptions here as it (appears) to likely
-  /// either crash the application or leave it in an inconsistent state.
-  ///
-  /// \param[in] Message The structure containing a pointer to a buffer
-  /// containing data received from the Kafka broker and the size of the buffer.
-  ///
-  /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
-  /// (see above).
   uint64_t
   timestamp(FileWriter::FlatbufferMessage const &Message) const override;
+
+  std::string device_name(FileWriter::FlatbufferMessage const &Message) const;
+
+  std::string
+  parameter_name(FileWriter::FlatbufferMessage const &Message) const;
+
+private:
+  std::tuple<std::string, std::string, std::string>
+  parse_nicos_key(FileWriter::FlatbufferMessage const &Message) const;
 };
 
-/// \brief Implements the actual file writing code of this file writing module.
-///
-/// This class is instantiated twice for every new data source. First for
-/// initialising the hdf-file (creating datasets etc.). The second instantiation
-/// is used for writing the actual data. More information on this can be found
-/// in the documentation for the member functions below.
-class WriterClass : public FileWriter::HDFWriterModule {
+class CacheWriter : public FileWriter::HDFWriterModule {
 public:
-  /// \brief Constructor, initialise state here.
-  ///
-  /// \note Constructor is executed in a catch-all block (which re-throws)
-  /// relatively high up in call hierarchy. You should for this reason probably
-  /// try to avoid throwing exceptions here unless you encounter an
-  /// unrecoverable state as any exceptions will cause the thread to exit.
-  WriterClass() { std::cout << "WriterClass::WriterClass()\n"; }
+  // CacheWriter() override = default;
+  CacheWriter() = default;
+  ~CacheWriter() override = default;
 
-  /// \brief Use to close datasets and return any other claimed resources.
-  ///
-  /// Use the destructor to close any open datasets and deallocate buffers etc.
-  /// As mentioned previously, this class is instantiated twice for every data
-  /// source. FileWriter::HDFWriterModule::close() is called only on the first
-  /// instantiation. Thus if you have any resources that you allocate/claim in
-  /// the constructor, you should probable return those here (the destructor)
-  /// instead of in FileWriter::HDFWriterModule::close().
-  ~WriterClass() override { std::cout << "WriterClass::~WriterClass()\n"; }
-
-  /// \brief Used to pass configuration/settings to the current instance of this
-  /// file writing module.
-  ///
-  /// Settings/configurations are passed in JSON form, contained in a
-  /// std::string (one is unused, see the parameter documentation).  To extract
-  /// the information you want, you will need to implement JSON parsing code
-  /// here. As this prototype does not have a return value and exceptions
-  /// should not be thrown, the only way to inform the user of a non-fatal
-  /// error is to write a log message (see logger.h"). The configurations are
-  /// in the base of the JSON object and you should thus be able to extract
-  /// relevant settings without navigating a JSON tree, unless the settings are
-  /// by design in a tree structure. Examples of extracting settings from the
-  /// JSON structure can be found in the files ev42_rw.cpp and f142_rw.cpp.
-  ///
-  /// \note This call is executed in a catch-all block (which re-throws)
-  /// relatively high up in call hierarchy the first time it is called for a
-  /// data source. You should for this reason probably try to avoid throwing
-  /// exceptions here unless you encounter an unrecoverable state as any
-  /// exceptions will cause the thread to exit.
-  ///
-  /// \param[in] config_stream Contains information about configurations
-  /// relevant only to the current instance of this file writing module.
-  /// \param[in] config_module This parameter is currently unused and thus any
-  /// calls to this member function will have this parameter set to `nullptr`.
   void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override {
-    std::cout << "WriterClass::parse_config()\n";
-  }
+                    std::string const &ConfigurationModule) override;
 
-  /// \brief Initialise datasets and attributes in the HDF5 file.
-  ///
-  /// This member function is used to initialise HDF groups, datasets,
-  /// attributes etc. As SWMR (single writer, multiple reader) support in HDF5
-  /// only allows for writing data pre-existing datasets, this
-  /// function must implement the init functionality. A list of rules to follow
-  /// when using SWMR can be found here:
-  /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
-  /// When initialising the HDF5 file, the call order (relevant to this class)
-  /// is as follows:
-  /// \li FileWriter::HDFWriterModule::HDFWriterModule()
-  /// \li FileWriter::HDFWriterModule::parse_config()
-  /// \li FileWriter::HDFWriterModule::init_hdf()
-  /// \li FileWriter::HDFWriterModule::close()
-  /// \li FileWriter::HDFWriterModule::~HDFWriterModule()
-  ///
-  /// \note This call is executed in a catch-all block (which re-throws)
-  /// relatively high up in call hierarchy the first time it is called for a
-  /// data source. You should for this reason probably try to avoid throwing
-  /// exceptions here unless you encounter an unrecoverable state as any
-  /// exceptions will cause the thread to exit.
-  ///
-  /// \note The return value of this function is not checked in the current
-  /// implementation.
-  ///
-  /// \param[in] hdf_parent This is the HDF5 group where the relevant
-  /// datasets should be created.
-  /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
-  /// structure which the HDFWriterModule should write to the file. Because the
-  /// HDFWriterModule is free to create the structure and datasets according to
-  /// its needs, it must also take the reposnsibility to write these
-  /// attributes.
-  /// \return An instance of InitResult. Note that these instances can only be
-  /// constructed using the static methods InitResult::OK(),
-  /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
-  /// Note that the return value is not actually checked and thus returning an
-  /// error has no side effects.
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override {
-    std::cout << "WriterClass::init_hdf()\n";
-    return InitResult::OK;
-  }
+                      std::string const &HDFAttributes) override;
 
-  /// \brief Re-open datasets that have been created when calling
-  /// FileWriter::HDFWriterModule::init_hdf().
-  ///
-  /// This function should not modify attributes, create datasets or a number of
-  /// other things. See the following link for a list of things that you are not
-  /// allowed to do when a file has been opened in SWMR mode:
-  /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
-  /// This member function is called in the second instantiation of this class
-  /// (for a specific data source). The order in which methods (relevant to this
-  /// class) are called is as follows:
-  /// \li FileWriter::HDFWriterModule::HDFWriterModule()
-  /// \li FileWriter::HDFWriterModule::parse_config()
-  /// \li FileWriter::HDFWriterModule::reopen()
-  /// \li Multiple calls to FileWriter::HDFWriterModule::write()
-  /// \li FileWriter::HDFWriterModule::~HDFWriterModule()
-  ///
-  /// \note This call is executed in a catch-all block (which re-throws)
-  /// relatively high up in call hierarchy the first time it is called for a
-  /// data source. You should for this reason probably try to avoid throwing
-  /// exceptions here unless you encounter an unrecoverable state as any
-  /// exceptions will cause the thread to exit.
-  ///
-  /// \param[in] hdf_parent This is HDF5 group which has the datasets created
-  /// using the call to init_hdf().
-  ///
-  /// \return An instance of InitResult. Note that these instances can only be
-  /// constructed using the static methods InitResult::OK(),
-  /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   InitResult reopen(hdf5::node::Group &HDFGroup) override {
-    std::cout << "WriterClass::reopen()\n";
+    std::cout << "CacheWriter::reopen()\n";
     return InitResult::OK;
   }
 
-  /// \brief Implements the data writing functionality of the file writing
-  /// module.
-  ///
-  /// To properly support SWMR, only writes to datasets are allowed in this
-  /// member function. See the following link for limitations when using a file
-  /// in SWMR mode:
-  /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
-  /// This member function is called on the second instance of this class for a
-  /// specific data source. The order in which methods (relevant to this class)
-  /// are called is as follows:
-  /// \li FileWriter::HDFWriterModule::HDFWriterModule()
-  /// \li FileWriter::HDFWriterModule::parse_config()
-  /// \li FileWriter::HDFWriterModule::reopen()
-  /// \li Multiple calls to FileWriter::HDFWriterModule::write()
-  /// \li FileWriter::HDFWriterModule::~HDFWriterModule()
-  ///
-  /// \note Try to avoid throwing any exceptions here as it (appears) to likely
-  /// either crash the application or leave it in an inconsistent state.
-  ///
-  /// \param[in] Message The structure containing a pointer to a buffer
-  /// containing data received from the Kafka broker and the size of the buffer.
-  void write(FileWriter::FlatbufferMessage const &Message) override {
-    std::cout << "WriterClass::write()\n";
-  }
+  void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  /// \brief Provides no functionality and is never called.
-  ///
-  /// This member function is never called by the main application but because
-  /// FileWriter::HDFWriterModule defines it as a pure virtual, it must be
-  /// implemented in classes deriving from it.
   int32_t flush() override { return 0; }
 
-  /// \brief Should (probably) not implement any functionality.
-  ///
-  /// In the current implementation, this member function is called only after
-  /// FileWriter::HDFWriterModule::init_hdf() and nowhere else. Thus, this
-  /// member function should not be trusted to be called and any cleanup should
-  /// be done in the destructor instead (or as well).
-  ///
-  /// \note This call is executed in a catch-all block (which re-throws)
-  /// relatively high up in call hierarchy. You should for this reason probably
-  /// try to avoid throwing exceptions here unless you encounter an
-  /// unrecoverable state as any exceptions will cause the thread to exit.
-  ///
-  /// \return The return value is never checked. For parity with other file
-  /// writing modules, return 0.
-  int32_t close() override {
-    std::cout << "WriterClass::close()\n";
-    return 0;
-  }
+  int32_t close() override;
+
+protected:
+  // void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+
+  hdf5::Dimensions ChunkSize{64};
+  // std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
+  NeXusDataset::Time Timestamp;
+  int CueInterval{1000};
+  int CueCounter{0};
+  NeXusDataset::CueIndex CueTimestampIndex;
+  NeXusDataset::CueTimestampZero CueTimestamp;
+
+private:
+  SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace NicosCacheWriter
