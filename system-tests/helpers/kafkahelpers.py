@@ -42,4 +42,7 @@ def publish_f142_message(producer, topic, kafka_timestamp=None):
     """
     f142_message = create_f142_message(kafka_timestamp)
     producer.produce(topic, f142_message, timestamp=kafka_timestamp)
+    # Flush producer queue after each message, we don't want the messages to be batched in our tests
+    # for example in test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past
+    producer.flush()
     producer.poll(0)

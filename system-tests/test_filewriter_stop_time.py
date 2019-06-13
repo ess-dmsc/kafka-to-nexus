@@ -1,8 +1,8 @@
 from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything, publish_f142_message
 from helpers.timehelpers import unix_time_milliseconds
+from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from time import sleep
 from datetime import datetime
-import h5py
 
 
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
@@ -37,7 +37,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(dock
     producer = create_producer()
 
     sleep(5)
-    data_topic = "TEST_historicData"
+    data_topic = "TEST_historicalData"
 
     # Publish some data with timestamps in the past(these are from 2019 - 06 - 12)
     for time_in_ms_after_epoch in range(1560330000000, 1560330000200):
@@ -54,7 +54,9 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(dock
                         stop_time=str(stop_time))
 
     sleep(5)
-
-    file = h5py.File("output-files/output_file_of_historical_data.nxs", mode='r')
-    assert file["entry/historical_data/time"][...].size() == (stop_time - start_time), \
-        "Expected there to be one message per millisecond recorded between specified start and stop time"
+    send_writer_command("commands/writer-exit.json", producer)
+    filepath = "output-files/output_file_of_historical_data.nxs"
+    with OpenNexusFileWhenAvailable(filepath) as file:
+        # +1 because time range for file writer is inclusive
+        assert file["entry/historical_data/time"].len() == (stop_time - start_time + 1), \
+            "Expected there to be one message per millisecond recorded between specified start and stop time"
