@@ -1,6 +1,5 @@
-from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything, publish_f142_message
+from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything
 from helpers.timehelpers import unix_time_milliseconds
-from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from time import sleep
 from datetime import datetime
 
