@@ -102,18 +102,21 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
+          -DBUILD_TESTS=FALSE \
           ../${pipeline_builder.project}
       """
     }
   }  // stage
 
-  pipeline_builder.stage("${container.key}: Build") {
-    container.sh """
-      cd build
-      . ./activate_run.sh
-      make -j4 all UnitTests VERBOSE=1
-    """
-  }  // stage
+  if (container.key != release_os) {
+    pipeline_builder.stage("${container.key}: Build") {
+      container.sh """
+        cd build
+        . ./activate_run.sh
+        make -j4 all UnitTests VERBOSE=1
+      """
+    }  // stage
+  }
 
   pipeline_builder.stage("${container.key}: Test") {
     // env.CHANGE_ID is set for pull request builds.
@@ -145,7 +148,7 @@ builders = pipeline_builder.createBuilders { container ->
           python3.6 -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.info
         """
       }  // withCredentials
-    } else {
+    } else if (container.key != release_os) {
       def test_dir
       test_dir = 'bin'
 
