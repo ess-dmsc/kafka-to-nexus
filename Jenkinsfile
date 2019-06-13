@@ -108,15 +108,13 @@ builders = pipeline_builder.createBuilders { container ->
     }
   }  // stage
 
-  if (container.key != release_os) {
-    pipeline_builder.stage("${container.key}: Build") {
-      container.sh """
-        cd build
-        . ./activate_run.sh
-        make -j4 all UnitTests VERBOSE=1
-      """
-    }  // stage
-  }
+  pipeline_builder.stage("${container.key}: Build") {
+    container.sh """
+    cd build
+    . ./activate_run.sh
+    make -j4 all VERBOSE=1
+    """
+  }  // stage
 
   pipeline_builder.stage("${container.key}: Test") {
     // env.CHANGE_ID is set for pull request builds.
