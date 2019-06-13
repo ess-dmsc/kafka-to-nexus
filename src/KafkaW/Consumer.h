@@ -20,9 +20,8 @@ public:
   ConsumerInterface() = default;
   virtual ~ConsumerInterface() = default;
   virtual void addTopic(std::string const &Topic) = 0;
-  virtual void
-  addTopicAtTimestamp(std::string const &Topic,
-                      std::chrono::milliseconds StartTime) = 0;
+  virtual void addTopicAtTimestamp(std::string const &Topic,
+                                   std::chrono::milliseconds StartTime) = 0;
   virtual std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() = 0;
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual std::vector<int32_t>
