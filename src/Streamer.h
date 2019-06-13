@@ -40,10 +40,20 @@ public:
 
   ~Streamer() = default;
 
-  /// \brief Method that process a message.
+  /// \brief Polls for message and processes it if there is one
   ///
-  /// \param mp instance of the policy that describe how to process the message
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
   ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
+
+  /// \brief Processes received message
+  ///
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
+  /// \param KafkaMessage the received message
+  ProcessMessageResult processMessage(
+      FileWriter::DemuxTopic &MessageProcessor,
+      std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.

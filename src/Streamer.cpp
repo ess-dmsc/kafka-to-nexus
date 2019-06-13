@@ -103,23 +103,12 @@ bool FileWriter::Streamer::stopTimeExceeded(
   return false;
 }
 
-FileWriter::ProcessMessageResult
-FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
-  if (Consumer == nullptr && ConsumerInitialised.valid()) {
-    auto ready = ifConsumerIsReadyThenAssignIt();
-    if (!ready) {
-      // Not ready, so try again on next poll
-      return ProcessMessageResult::OK;
-    }
+FileWriter::ProcessMessageResult FileWriter::Streamer::processMessage(
+    FileWriter::DemuxTopic &MessageProcessor,
+    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
+  if (stopTimeExceeded(MessageProcessor)) {
+    return ProcessMessageResult::STOP;
   }
-
-  if (RunStatus < StreamerStatus::IS_CONNECTED) {
-    throw std::runtime_error(Err2Str(RunStatus));
-  }
-
-  // Consume message
-  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
-      Consumer->poll();
 
   if (KafkaMessage->first == KafkaW::PollStatus::Error) {
     return ProcessMessageResult::ERR;
@@ -128,9 +117,6 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
       KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
       KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
-    if (stopTimeExceeded(MessageProcessor)) {
-      return ProcessMessageResult::STOP;
-    }
     return ProcessMessageResult::OK;
   }
 
@@ -189,6 +175,27 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     MessageInfo.error();
   }
   return result;
+}
+
+FileWriter::ProcessMessageResult
+FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
+  if (Consumer == nullptr && ConsumerInitialised.valid()) {
+    auto ready = ifConsumerIsReadyThenAssignIt();
+    if (!ready) {
+      // Not ready, so try again on next poll
+      return ProcessMessageResult::OK;
+    }
+  }
+
+  if (RunStatus < StreamerStatus::IS_CONNECTED) {
+    throw std::runtime_error(Err2Str(RunStatus));
+  }
+
+  // Consume message
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
+      Consumer->poll();
+
+  return processMessage(MessageProcessor, KafkaMessage);
 }
 
 void FileWriter::Streamer::setSources(
