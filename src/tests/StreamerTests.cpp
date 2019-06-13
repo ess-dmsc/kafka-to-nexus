@@ -137,70 +137,47 @@ TEST_F(StreamerProcessTest,
   EXPECT_THROW(TestStreamer.pollAndProcess(Demuxer), std::runtime_error);
 }
 
-TEST_F(StreamerProcessTest, EmptyPoll) {
+TEST_F(StreamerProcessTest,
+       ProcessMessageReturnsOkResultIfMessageWithNoPayloadIsReceived) {
   StreamerStandIn TestStreamer(Options);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::Empty))
-      .TIMES(1);
-  TestStreamer.ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
   DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  auto EmptyMessage = generateEmptyKafkaMsg(PollStatus::Empty);
+  EXPECT_EQ(TestStreamer.processMessage(Demuxer, EmptyMessage),
+            ProcessMessageResult::OK);
 }
 
-TEST_F(StreamerProcessTest, EndOfPartition) {
+TEST_F(StreamerProcessTest,
+       ProcessMessageReturnsOkResultIfEndOfPartitionIsReached) {
   StreamerStandIn TestStreamer(Options);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
-      .TIMES(1);
-  TestStreamer.ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
   DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  auto TestMessage = generateEmptyKafkaMsg(PollStatus::EndOfPartition);
+  EXPECT_EQ(TestStreamer.processMessage(Demuxer, TestMessage),
+            ProcessMessageResult::OK);
 }
 
-TEST_F(StreamerProcessTest, PollingError) {
+TEST_F(StreamerProcessTest,
+       ProcessMessageReturnsErrorResultIfThereWasAnErrorPolling) {
   StreamerStandIn TestStreamer(Options);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::Error))
-      .TIMES(1);
-  TestStreamer.ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
   DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
+  auto TestMessage = generateEmptyKafkaMsg(PollStatus::Error);
+  EXPECT_EQ(TestStreamer.processMessage(Demuxer, TestMessage),
+            ProcessMessageResult::ERR);
 }
 
-TEST_F(StreamerProcessTest, InvalidMessage) {
+TEST_F(StreamerProcessTest, TryingToProcessInvalidMessageReturnsError) {
   std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
       FlatbufferReaderRegistry::getReaders();
   Readers.clear();
   char DataBuffer[]{"0000test"};
   std::string ReaderKey{"test"};
 
+  auto MessageNotContainingValidFlatbuffer =
+      generateKafkaMsg(DataBuffer, sizeof(DataBuffer));
   StreamerStandIn TestStreamer(Options);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateKafkaMsg(DataBuffer, sizeof(DataBuffer)))
-      .TIMES(1);
-  TestStreamer.ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
   DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::ERR);
+  EXPECT_EQ(
+      TestStreamer.processMessage(Demuxer, MessageNotContainingValidFlatbuffer),
+      ProcessMessageResult::ERR);
 }
 
 class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
