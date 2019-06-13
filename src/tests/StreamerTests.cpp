@@ -1,12 +1,13 @@
-#include <utility>
-
-#include "Streamer.h"
 #include <Msg.h>
 #include <chrono>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <schemas/f142/FlatbufferReader.h>
 #include <trompeloeil.hpp>
+#include <utility>
+
+#include "Streamer.h"
+#include "StreamerTestMocks.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -48,17 +49,6 @@ protected:
   StreamerOptions Options;
 };
 
-class ConsumerEmptyStandIn
-    : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
-public:
-  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
-  IMPLEMENT_MOCK1(addTopic);
-  IMPLEMENT_MOCK2(addTopicAtTimestamp);
-  IMPLEMENT_MOCK1(topicPresent);
-  IMPLEMENT_MOCK1(queryTopicPartitions);
-  IMPLEMENT_MOCK0(poll);
-};
-
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
   EXPECT_THROW(
       Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
@@ -78,20 +68,6 @@ TEST_F(StreamerInitTest, CanCreateAStreamerIfProvideABrokerAndATopic) {
                            std::make_unique<ConsumerEmptyStandIn>(
                                StreamerOptions().BrokerSettings)));
 }
-
-class StreamerStandIn : public Streamer {
-public:
-  StreamerStandIn()
-      : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
-                 std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings)) {}
-  explicit StreamerStandIn(StreamerOptions Opts)
-      : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
-                 std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings)) {}
-  using Streamer::ConsumerInitialised;
-  using Streamer::Options;
-};
 
 class StreamerProcessTest : public ::testing::Test {
 protected:
@@ -180,29 +156,8 @@ TEST_F(StreamerProcessTest, TryingToProcessInvalidMessageReturnsError) {
       ProcessMessageResult::ERR);
 }
 
-class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
-public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
-    return std::string("SomeRandomSourceName");
-  }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
-    return 0;
-  }
-};
-
-class StreamerTestDummyReader : public FileWriter::FlatbufferReader {
-public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
-    return std::string("SomeRandomSourceName");
-  }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
-    return 1;
-  }
-};
-
-TEST_F(StreamerProcessTest, UnknownSourceName) {
+TEST_F(StreamerProcessTest,
+       ProcessMessageReturnsOkIfMessageContainsUnknownSourceName) {
   std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
       FlatbufferReaderRegistry::getReaders();
   Readers.clear();
@@ -212,35 +167,13 @@ TEST_F(StreamerProcessTest, UnknownSourceName) {
       ReaderKey);
   char DataBuffer[]{"0000test"};
 
+  auto MessageWithUnknownSourceName = generateKafkaMsg(
+      static_cast<const char *>(DataBuffer), sizeof(DataBuffer));
   StreamerStandIn TestStreamer(Options);
-
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateKafkaMsg(static_cast<const char *>(DataBuffer),
-                               sizeof(DataBuffer)))
-      .TIMES(1);
-  TestStreamer.ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
-
   DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer.pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  EXPECT_EQ(TestStreamer.processMessage(Demuxer, MessageWithUnknownSourceName),
+            ProcessMessageResult::OK);
 }
-
-class WriterModuleStandIn : public HDFWriterModule {
-public:
-  MAKE_MOCK2(parse_config, void(std::string const &, std::string const &),
-             override);
-  MAKE_MOCK2(init_hdf, InitResult(hdf5::node::Group &, std::string const &),
-             override);
-  MAKE_MOCK1(reopen, InitResult(hdf5::node::Group &), override);
-  MAKE_MOCK1(write, void(FlatbufferMessage const &), override);
-  MAKE_MOCK0(flush, int32_t(), override);
-  MAKE_MOCK0(close, int32_t(), override);
-};
 
 class StreamerProcessTimingTest : public ::testing::Test {
 protected:
@@ -262,7 +195,7 @@ protected:
 };
 
 TEST_F(StreamerProcessTimingTest,
-       pollAndProcessReturnsErrIfMessageHasNoTimestamp) {
+       ProcessMessageReturnsErrIfMessageHasNoTimestamp) {
   FlatbufferReaderRegistry::Registrar<StreamerNoTimestampTestDummyReader>
       RegisterIt(ReaderKey);
   TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
@@ -276,20 +209,13 @@ TEST_F(StreamerProcessTimingTest,
   std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
 
+  auto MessageWithNoTimestamp = generateKafkaMsg(
+      reinterpret_cast<const char *>(DataBuffer.c_str()), DataBuffer.size());
+
   TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(
-          generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
-                           DataBuffer.size()))
-      .TIMES(1);
-  TestStreamer->ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
   DemuxTopic Demuxer("SomeTopicName");
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::ERR);
+  EXPECT_EQ(TestStreamer->processMessage(Demuxer, MessageWithNoTimestamp),
+            ProcessMessageResult::ERR);
 }
 
 TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
@@ -321,18 +247,6 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
-class StreamerHighTimestampTestDummyReader
-    : public FileWriter::FlatbufferReader {
-public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
-    return std::string("SomeRandomSourceName");
-  }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
-    return 5000000;
-  }
-};
-
 TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
       RegisterIt(ReaderKey);
@@ -361,13 +275,6 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   DemuxTopic Demuxer("SomeTopicName");
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
-
-class DemuxerStandIn : public DemuxTopic {
-public:
-  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
-  MAKE_MOCK1(process_message, ProcessMessageResult(FlatbufferMessage const &),
-             override);
-};
 
 TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
@@ -472,18 +379,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
-
-class StreamerMessageSlightlyAfterStopTestDummyReader
-    : public FileWriter::FlatbufferReader {
-public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
-    return std::string("SomeRandomSourceName");
-  }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
-    return 1;
-  }
-};
 
 TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   FlatbufferReaderRegistry::Registrar<

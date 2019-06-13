@@ -36,6 +36,7 @@ set(UnitTests_SRC
         )
 
 set(UnitTests_INC
+        StreamerTestMocks.h
         HDFFileTestHelper.h
         AddReader.h
         ev42_synth.h
