@@ -154,7 +154,7 @@ set(sources
         send-command.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         )
-add_executable(${tgt} ${sources})
+add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
 add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common})
@@ -178,7 +178,7 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
 
-set(BUILD_TESTS CACHE BOOL TRUE "Enable building unit tests")
+option(BUILD_TESTS "Build unit tests" ON)
 if (BUILD_TESTS)
   add_subdirectory(tests)
 endif()
