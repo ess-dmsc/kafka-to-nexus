@@ -59,24 +59,24 @@ public:
   IMPLEMENT_MOCK0(poll);
 };
 
-TEST_F(StreamerInitTest, CheckTopicExists) {
-  EXPECT_NO_THROW(Streamer("broker", "topic", Options,
-                           std::make_unique<ConsumerEmptyStandIn>(
-                               StreamerOptions().BrokerSettings)));
-}
-
-TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
+TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
   EXPECT_THROW(
       Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
                                          StreamerOptions().BrokerSettings)),
       std::runtime_error);
 }
 
-TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
+TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingATopic) {
   EXPECT_THROW(
       Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
                                           StreamerOptions().BrokerSettings)),
       std::runtime_error);
+}
+
+TEST_F(StreamerInitTest, CanCreateAStreamerIfProvideABrokerAndATopic) {
+  EXPECT_NO_THROW(Streamer("broker", "topic", Options,
+                           std::make_unique<ConsumerEmptyStandIn>(
+                               StreamerOptions().BrokerSettings)));
 }
 
 class StreamerStandIn : public Streamer {
@@ -506,19 +506,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
 
-  BrokerSettings.OffsetsForTimesTimeoutMS = 10;
-  BrokerSettings.MetadataTimeoutMS = 10;
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
-      .TIMES(1);
-
-  TestStreamer->ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
+  auto EmptyMessage = generateEmptyKafkaMsg(PollStatus::EndOfPartition);
   DemuxerStandIn Demuxer("SomeTopicName");
-  REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  EXPECT_EQ(TestStreamer->processMessage(Demuxer, EmptyMessage),
+            ProcessMessageResult::OK);
 }
