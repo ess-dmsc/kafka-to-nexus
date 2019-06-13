@@ -1,0 +1,42 @@
+{
+  "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
+  "job_id": "b294c12a-cd4b-11e8-93f1-484d7e3b68dc",
+  "use_hdf_swmr": false,
+  "start_time": STARTTIME,
+  "stop_time": STOPTIME,
+  "file_attributes": {
+    "file_name": "output_file_of_historical_data.nxs"
+  },
+  "nexus_structure": {
+    "children": [
+      {
+        "type": "group",
+        "name" : "entry",
+        "children": [
+          {
+            "type": "group",
+            "name": "historical_data",
+            "children": [
+              {
+                "type": "stream",
+                "stream": {
+                  "type": "int32",
+                  "topic": "TEST_historicalData",
+                  "source": "fw-test-helpers",
+                  "writer_module": "f142"
+                }
+              }
+            ]
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXentry"
+          }
+        ]
+      }
+    ]
+  }
+}

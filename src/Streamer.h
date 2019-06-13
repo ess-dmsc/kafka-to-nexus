@@ -112,9 +112,10 @@ private:
 /// is not in the partition ``SEC::topic_partition_error``;
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 initTopics(std::string const &TopicName,
-           FileWriter::StreamerOptions const &Options, SharedLogger Logger,
-           ConsumerPtr Consumer);
+           FileWriter::StreamerOptions const &Options,
+           SharedLogger const &Logger, ConsumerPtr Consumer);
 
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime, SharedLogger Logger);
+                     std::chrono::milliseconds Stoptime,
+                     SharedLogger const &Logger);
 } // namespace FileWriter

@@ -2,9 +2,8 @@ import pytest
 import docker
 from time import sleep
 from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything
-import h5py
+from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from math import isclose
-import os
 
 
 def change_pv_value(pvname, value):
@@ -47,18 +46,13 @@ def test_long_run(docker_compose_long_running):
     producer.flush()
     sleep(30)
 
-    # Allow time for the file writing to complete
-    for i in range(100):
-        if os.path.isfile("output-files/output_file_lr.nxs"):
-            break
-        sleep(1)
-
-    file = h5py.File("output-files/output_file_lr.nxs", mode='r')
-    counter = 1
-    # check values are contiguous
-    for value in file["entry/cont_data/value"]:
-        assert isclose(value, counter)
-        counter += 1
+    filepath = "output-files/output_file_lr.nxs"
+    with OpenNexusFileWhenAvailable(filepath) as file:
+        counter = 1
+        # check values are contiguous
+        for value in file["entry/cont_data/value"]:
+            assert isclose(value, counter)
+            counter += 1
 
     # check that the last value is the same as the number of updates
     assert counter == pv_updates + 1

@@ -11,7 +11,8 @@ std::chrono::milliseconds systemTime() {
       now.time_since_epoch());
 }
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime, SharedLogger Logger) {
+                     std::chrono::milliseconds Stoptime,
+                     SharedLogger const &Logger) {
   Logger->trace("\t\tStoptime:         {}", Stoptime.count());
   Logger->trace("\t\tMessageTimestamp: {}",
                 static_cast<std::int64_t>(MessageTimestamp));
@@ -47,7 +48,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 FileWriter::initTopics(std::string const &TopicName,
                        FileWriter::StreamerOptions const &Options,
-                       SharedLogger Logger, ConsumerPtr Consumer) {
+                       SharedLogger const &Logger, ConsumerPtr Consumer) {
   Logger->trace("Connecting to \"{}\"", TopicName);
   try {
     if (Options.StartTimestamp.count() != 0) {
@@ -155,7 +156,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 
   if (Message->getTimestamp() == 0) {
     Logger->error(
-        "Message from topic \"{}\", source \"{}\" has no timestamp, ignoring",
+        R"(Message from topic "{}", source "{}" has no timestamp, ignoring)",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::ERR;
   }

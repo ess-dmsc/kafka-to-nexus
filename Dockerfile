@@ -1,9 +1,7 @@
 FROM ubuntu:18.04
 
 ARG http_proxy
-
 ARG https_proxy
-
 ARG local_conan_server
 
 # Replace the default profile and remotes with the ones from our Ubuntu build node
@@ -24,15 +22,17 @@ RUN export DEBIAN_FRONTEND=noninteractive \
     && cd kafka_to_nexus \
     && conan install --build=outdated ../kafka_to_nexus_src/conan/conanfile.txt
 
-COPY ./ ../kafka_to_nexus_src/
+COPY ./cmake ../kafka_to_nexus_src/cmake
+COPY ./src ../kafka_to_nexus_src/src
+COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
+COPY ./docker_launch.sh ../docker_launch.sh
 
 RUN cd kafka_to_nexus \
-    && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN="FALSE" ../kafka_to_nexus_src \
-    && make -j8 \
+    && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
+    && make -j8 kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
     && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake \
-    && mv ../../kafka_to_nexus_src/docker_launch.sh /docker_launch.sh \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 

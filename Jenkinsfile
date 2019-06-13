@@ -102,6 +102,7 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
+          -DBUILD_TESTS=FALSE \
           ../${pipeline_builder.project}
       """
     }
@@ -109,9 +110,9 @@ builders = pipeline_builder.createBuilders { container ->
 
   pipeline_builder.stage("${container.key}: Build") {
     container.sh """
-      cd build
-      . ./activate_run.sh
-      make -j4 all UnitTests VERBOSE=1
+    cd build
+    . ./activate_run.sh
+    make -j4 all VERBOSE=1
     """
   }  // stage
 
@@ -145,7 +146,7 @@ builders = pipeline_builder.createBuilders { container ->
           python3.6 -m codecov -t ${TOKEN} --commit ${scm_vars.GIT_COMMIT} -f ../build/coverage.info
         """
       }  // withCredentials
-    } else {
+    } else if (container.key != release_os && container.key != no_graylog) {
       def test_dir
       test_dir = 'bin'
 
@@ -212,7 +213,7 @@ builders = pipeline_builder.createBuilders { container ->
         cd build
         rm -rf ${pipeline_builder.project}; mkdir ${pipeline_builder.project}
         mkdir ${pipeline_builder.project}/bin
-        cp ./bin/{kafka-to-nexus,send-command} ${pipeline_builder.project}/bin/
+        cp ./bin/kafka-to-nexus ${pipeline_builder.project}/bin/
         cp -r ./lib ${pipeline_builder.project}/
         cp -r ./licenses ${pipeline_builder.project}/
         tar czf ${archive_output} ${pipeline_builder.project}

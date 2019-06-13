@@ -15,7 +15,7 @@
 
 namespace FileWriter {
 
-/// \brief The StreamMaster task is coordinate the different Streamers.
+/// \brief The StreamMaster's task is to coordinate the different Streamers.
 ///
 /// When constructed creates a unique Streamer per topic and waits for a
 /// start command. When this command is issued the StreamMaster calls

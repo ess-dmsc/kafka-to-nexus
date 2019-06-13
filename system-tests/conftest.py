@@ -192,7 +192,7 @@ def docker_compose_multiple_instances(request):
 
 
 @pytest.fixture(scope="module")
-def docker_compose_stop_command_does_not_persist(request):
+def docker_compose_stop_command(request):
     """
     :type request: _pytest.python.FixtureRequest
     """

@@ -4,7 +4,7 @@ from time import sleep
 from datetime import datetime
 
 
-def test_filewriter_clears_stop_time(docker_compose_stop_command_does_not_persist):
+def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
     sleep(10)
     topic = "TEST_writerCommand"
@@ -21,10 +21,10 @@ def test_filewriter_clears_stop_time(docker_compose_stop_command_does_not_persis
     started = False
     for message in msgs:
         message = str(message.value(), encoding='utf-8')
-        if "\"code\":\"START\"" in message and\
+        if "\"code\":\"START\"" in message and \
                 "\"job_id\":\"a8e31c99-8df9-4123-8060-2e009d84a0df\"" in message:
             started = True
-        if "\"code\":\"CLOSE\"" in message and\
+        if "\"code\":\"CLOSE\"" in message and \
                 "\"job_id\":\"a8e31c99-8df9-4123-8060-2e009d84a0df\"" in message:
             stopped = True
 
