@@ -5,7 +5,7 @@ from .f142_logdata.Int import IntStart, IntAddValue, IntEnd
 
 
 def _millseconds_to_nanoseconds(time_ms):
-    return time_ms * 1e6
+    return int(time_ms * 1000000)
 
 
 def create_f142_message(timestamp_unix_ms=None):
@@ -28,4 +28,4 @@ def create_f142_message(timestamp_unix_ms=None):
     # Generate the output and replace the file_identifier
     buff = builder.Output()
     buff[4:8] = file_identifier
-    return buff
+    return bytes(buff)

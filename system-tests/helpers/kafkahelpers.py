@@ -42,4 +42,4 @@ def publish_f142_message(producer, topic, kafka_timestamp=None):
     """
     f142_message = create_f142_message(kafka_timestamp)
     producer.produce(topic, f142_message, timestamp=kafka_timestamp)
-    producer.poll()
+    producer.poll(0)
