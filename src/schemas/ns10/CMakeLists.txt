@@ -1,5 +1,6 @@
 set(ns10_module_SRC
-  NicosCacheWriter.cpp
+  Reader.cpp
+  Writer.cpp
 )
 
 set(ns10_module_INC

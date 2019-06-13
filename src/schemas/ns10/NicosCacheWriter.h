@@ -53,7 +53,6 @@ private:
 
 class CacheWriter : public FileWriter::HDFWriterModule {
 public:
-  // CacheWriter() override = default;
   CacheWriter() = default;
   ~CacheWriter() override = default;
 
