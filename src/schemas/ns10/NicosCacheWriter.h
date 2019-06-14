@@ -29,6 +29,15 @@
 
 namespace NicosCacheWriter {
 
+class StringValue : public NeXusDataset::ExtensibleDataset<std::string> {
+public:
+  StringValue() = default;
+  /// \brief Create the string_value dataset of NXLog.
+  /// \throw std::runtime_error if dataset already exists.
+  StringValue(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+              size_t ChunkSize = 1024);
+};
+
 /// \brief This class is used to extract information from a flatbuffer which
 /// uses a specific four character file identifier.
 class CacheReader : public FileWriter::FlatbufferReader {
@@ -41,14 +50,7 @@ public:
   uint64_t
   timestamp(FileWriter::FlatbufferMessage const &Message) const override;
 
-  std::string device_name(FileWriter::FlatbufferMessage const &Message) const;
-
-  std::string
-  parameter_name(FileWriter::FlatbufferMessage const &Message) const;
-
 private:
-  std::tuple<std::string, std::string, std::string>
-  parse_nicos_key(FileWriter::FlatbufferMessage const &Message) const;
 };
 
 class CacheWriter : public FileWriter::HDFWriterModule {
@@ -62,10 +64,7 @@ public:
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
 
-  InitResult reopen(hdf5::node::Group &HDFGroup) override {
-    std::cout << "CacheWriter::reopen()\n";
-    return InitResult::OK;
-  }
+  InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
@@ -75,14 +74,32 @@ public:
 
 protected:
   // void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
+  void initValueDataset(hdf5::node::Group &Parent);
 
   hdf5::Dimensions ChunkSize{64};
+  StringValue sValues;
   // std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
   int CueInterval{1000};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
+
+  enum class Type {
+    int8,
+    uint8,
+    int16,
+    uint16,
+    int32,
+    uint32,
+    int64,
+    uint64,
+    float32,
+    float64,
+    c_string,
+  } ElementType{Type::float64};
+  hdf5::Dimensions ArrayShape{1, 1};
+  std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
