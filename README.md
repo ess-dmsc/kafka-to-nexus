@@ -82,14 +82,7 @@ Conan will install all the other required packages.
 
 ### Add the Conan remote repositories
 
-Add the required remote repositories like so:
-
-```bash
-conan remote add conancommunity https://api.bintray.com/conan/conan-community/conan
-conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan
-conan remote add conan-transit https://api.bintray.com/conan/conan/conan-transit
-conan remote add ess-dmsc https://api.bintray.com/conan/ess-dmsc/conan
-```
+Follow the README [here](https://github.com/ess-dmsc/conan-configuration)
 
 ### Build
 
