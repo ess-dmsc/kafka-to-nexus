@@ -68,16 +68,15 @@ void Consumer::assignToPartitions(const std::string &Topic,
   }
 }
 
-void Consumer::addTopicAtTimestamp(std::string const &Topic,
-                                   std::chrono::milliseconds const StartTime) {
-  Logger->info("Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}", Topic,
-               StartTime.count());
+std::vector<RdKafka::TopicPartition *>
+Consumer::offsetsForTimesForTopic(std::string const &Topic,
+                                  std::chrono::milliseconds const Time) {
   auto NumberOfPartitions = queryTopicPartitions(Topic).size();
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
   for (unsigned int i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
 
-    TopicPartition->set_offset(StartTime.count());
+    TopicPartition->set_offset(Time.count());
     TopicPartitionsWithTimestamp.push_back(TopicPartition);
   }
 
@@ -90,6 +89,26 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
     throw std::runtime_error(fmt::format(
         "Kafka error while getting offsets for timestamp: {}", ErrorCode));
   }
+  return TopicPartitionsWithTimestamp;
+}
+
+std::vector<int64_t>
+Consumer::offsetsForTimesAllPartitions(std::string const &Topic,
+                                       std::chrono::milliseconds const Time) {
+  auto TopicPartitions = offsetsForTimesForTopic(Topic, Time);
+  std::vector<int64_t> Offsets(TopicPartitions.size(), 0);
+  for (auto TopicPartition : TopicPartitions) {
+    Offsets[TopicPartition->partition()] = TopicPartition->offset();
+  }
+  return Offsets;
+}
+
+void Consumer::addTopicAtTimestamp(std::string const &Topic,
+                                   std::chrono::milliseconds const StartTime) {
+  Logger->info("Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}", Topic,
+               StartTime.count());
+
+  auto TopicPartitionsWithTimestamp = offsetsForTimesForTopic(Topic, StartTime);
   assignToPartitions(Topic, TopicPartitionsWithTimestamp);
 }
 
@@ -179,7 +198,8 @@ std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> Consumer::poll() {
           reinterpret_cast<const char *>(KafkaMsg->payload()), KafkaMsg->len());
       DataToReturn->second.MetaData = FileWriter::MessageMetaData{
           std::chrono::milliseconds(KafkaMsg->timestamp().timestamp),
-          KafkaMsg->timestamp().type, KafkaMsg->offset()};
+          KafkaMsg->timestamp().type, KafkaMsg->offset(),
+          KafkaMsg->partition()};
 
       return DataToReturn;
     } else {

@@ -15,6 +15,7 @@ public:
   IMPLEMENT_MOCK1(topicPresent);
   IMPLEMENT_MOCK1(queryTopicPartitions);
   IMPLEMENT_MOCK0(poll);
+  IMPLEMENT_MOCK2(offsetsForTimesAllPartitions);
 };
 
 class StreamerStandIn : public Streamer {

@@ -2,38 +2,35 @@
 #include <chrono>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
-#include <schemas/f142/FlatbufferReader.h>
 #include <trompeloeil.hpp>
 #include <utility>
 
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
+#include "f142_synth.h"
+#include "schemas/f142/FlatbufferReader.h"
 
 namespace FileWriter {
-namespace Schemas {
-namespace f142 {
-#include "schemas/f142_logdata_generated.h"
-}
-}
-}
 
 using trompeloeil::_;
 using KafkaW::PollStatus;
 using namespace FileWriter;
 
 std::unique_ptr<std::pair<PollStatus, Msg>>
-generateKafkaMsg(char const *DataPtr, size_t const Size) {
+generateKafkaMsg(char const *DataPtr, size_t const Size, int64_t Offset = 0,
+                 int32_t Partition = 0) {
   FileWriter::Msg Message = FileWriter::Msg::owned(DataPtr, Size);
   Message.MetaData = FileWriter::MessageMetaData{
       std::chrono::milliseconds(0),
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_CREATE_TIME,
-      0};
+      Offset, Partition};
   std::pair<PollStatus, FileWriter::Msg> NewPair(PollStatus::Message,
                                                  std::move(Message));
   return std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
       std::move(NewPair));
 }
+
 std::unique_ptr<std::pair<PollStatus, Msg>>
 generateEmptyKafkaMsg(PollStatus Status) {
   FileWriter::Msg KafkaMessage;
@@ -41,6 +38,19 @@ generateEmptyKafkaMsg(PollStatus Status) {
                                                  std::move(KafkaMessage));
   return std::make_unique<std::pair<PollStatus, FileWriter::Msg>>(
       std::move(NewPair));
+}
+
+std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
+    std::string const &SourceName = "test_source", int32_t Value = 42,
+    int64_t Offset = 0, int32_t Partition = 0) {
+  auto IntType = FlatBufs::f142::Value::Int;
+  FlatBufs::f142::Synth MessageSynthesiser(SourceName, IntType);
+  auto FlatbufferMessage = MessageSynthesiser.next(Value, 1);
+
+  return generateKafkaMsg(reinterpret_cast<const char *>(
+                              FlatbufferMessage.builder->GetBufferPointer()),
+                          FlatbufferMessage.builder->GetSize(), Offset,
+                          Partition);
 }
 
 class StreamerInitTest : public ::testing::Test {
@@ -247,7 +257,8 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
-TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
+TEST_F(StreamerProcessTimingTest,
+       ProcessMessageReturnsStopWhenStopOffsetIsReached) {
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
       RegisterIt(ReaderKey);
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
@@ -262,10 +273,18 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+
+  // The newly received message will have an offset of 10
+  int64_t StopOffset = 10;
+
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(
-          generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
-                           DataBuffer.size()))
+      .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName, 42, StopOffset))
+      .TIMES(1);
+
+  // The consumer will report that there is one partition and we should stop at
+  // offset 10
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StopOffset})
       .TIMES(1);
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -273,7 +292,51 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+
+  // We've reached the stop offset, so STOP should be returned
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+}
+
+TEST_F(StreamerProcessTimingTest,
+       ProcessMessageReturnsErrWhenStopOffsetIsReachedButSourceNameIsInvalid) {
+  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
+      RegisterIt(ReaderKey);
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  std::unordered_map<std::string, Source> SourceList;
+  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  SourceList.insert(std::move(TempPair));
+  TestStreamer->setSources(SourceList);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+
+  // The newly received message will have an offset of 10
+  int64_t StopOffset = 10;
+
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(
+          generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
+                           DataBuffer.size(), StopOffset))
+      .TIMES(1);
+
+  // The consumer will report that there is one partition and we should stop at
+  // offset 10
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+
+  // We've reached the stop offset, so STOP should be returned
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::ERR);
 }
 
 TEST_F(StreamerProcessTimingTest, MessageTimeout) {
@@ -406,3 +469,4 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   EXPECT_EQ(TestStreamer->processMessage(Demuxer, EmptyMessage),
             ProcessMessageResult::OK);
 }
+} // namespace

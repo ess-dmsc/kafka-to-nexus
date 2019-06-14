@@ -26,6 +26,9 @@ public:
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual std::vector<int32_t>
   queryTopicPartitions(const std::string &TopicName) = 0;
+  virtual std::vector<int64_t>
+  offsetsForTimesAllPartitions(std::string const &Topic,
+                               std::chrono::milliseconds Time) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -67,6 +70,15 @@ public:
   /// \return Any new messages consumed.
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() override;
 
+  /// Returns first available offset after given time, for each partition in
+  /// specified topic
+  /// \param Topic The name of the topic
+  /// \param Time The time to get offsets corresponding to
+  /// \return Offset for each partition in topic
+  std::vector<int64_t>
+  offsetsForTimesAllPartitions(std::string const &Topic,
+                               std::chrono::milliseconds Time) override;
+
 protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 
@@ -85,5 +97,8 @@ private:
   queryWatermarkOffsets(const std::string &Topic);
   bool metadataCall();
   SharedLogger Logger = spdlog::get("filewriterlogger");
+  std::vector<RdKafka::TopicPartition *>
+  offsetsForTimesForTopic(std::string const &Topic,
+                          std::chrono::milliseconds Time);
 };
 } // namespace KafkaW

@@ -108,7 +108,23 @@ protected:
 private:
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
+
+  /// Creates StopOffsets vector
+  std::vector<std::pair<int64_t, bool>>
+  getStopOffsets(std::chrono::milliseconds StopTime,
+                 std::string const &TopicName);
+
+  /// Checks whether we've now reached the stop offsets
+  bool stopOffsetsReached(int32_t NewMessagePartition,
+                          int64_t NewMessageOffset);
+
   SharedLogger Logger = getLogger();
+  bool CatchingUpToStopOffset = false;
+
+  /// The offset for each partition at which the Streamer should stop consuming
+  /// from Kafka and whether it has been reached yet
+  /// Only set when the system time reaches the requested stop time
+  std::vector<std::pair<int64_t, bool>> StopOffsets;
 };
 
 /// \brief Create a consumer with options specified in the class
