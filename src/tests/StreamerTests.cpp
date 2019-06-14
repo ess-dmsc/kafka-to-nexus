@@ -7,7 +7,6 @@
 
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
-#include "f142_synth.h"
 #include "schemas/f142/FlatbufferReader.h"
 
 namespace FileWriter {
@@ -43,14 +42,21 @@ generateEmptyKafkaMsg(PollStatus Status) {
 std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
     std::string const &SourceName = "test_source", int32_t Value = 42,
     int64_t Offset = 0, int32_t Partition = 0) {
-  auto IntType = Schemas::f142::Value::Int;
-  Schemas::f142::Synth MessageSynthesiser(SourceName, IntType);
-  auto FlatbufferMessage = MessageSynthesiser.next(Value, 1);
 
-  return generateKafkaMsg(reinterpret_cast<const char *>(
-                              FlatbufferMessage.builder->GetBufferPointer()),
-                          FlatbufferMessage.builder->GetSize(), Offset,
-                          Partition);
+  flatbuffers::FlatBufferBuilder Builder;
+
+  auto nameOffset = Builder.CreateString(SourceName);
+  auto valueOffset = Schemas::f142::CreateInt(Builder, Value);
+  uint64_t timestamp = 1234;
+  auto LogDataOffset =
+      CreateLogData(Builder, nameOffset, Schemas::f142::Value::Int,
+                    valueOffset.Union(), timestamp);
+
+  FinishLogDataBuffer(Builder, LogDataOffset);
+  flatbuffers::DetachedBuffer MessageBuffer = Builder.Release();
+
+  return generateKafkaMsg(reinterpret_cast<const char *>(MessageBuffer.data()),
+                          MessageBuffer.size(), Offset, Partition);
 }
 
 class StreamerInitTest : public ::testing::Test {
@@ -260,7 +266,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
 TEST_F(StreamerProcessTimingTest,
        ProcessMessageReturnsStopWhenStopOffsetIsReached) {
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
-      RegisterIt(ReaderKey);
+      RegisterIt("f142");
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
@@ -269,8 +275,7 @@ TEST_F(StreamerProcessTimingTest,
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
+  SourceList.emplace(SourceName, std::move(TestSource));
   TestStreamer->setSources(SourceList);
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
@@ -295,48 +300,6 @@ TEST_F(StreamerProcessTimingTest,
 
   // We've reached the stop offset, so STOP should be returned
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
-}
-
-TEST_F(StreamerProcessTimingTest,
-       ProcessMessageReturnsErrWhenStopOffsetIsReachedButSourceNameIsInvalid) {
-  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
-      RegisterIt(ReaderKey);
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
-  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-      .RETURN(0);
-  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-
-  // The newly received message will have an offset of 10
-  int64_t StopOffset = 10;
-
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(
-          generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
-                           DataBuffer.size(), StopOffset))
-      .TIMES(1);
-
-  // The consumer will report that there is one partition and we should stop at
-  // offset 10
-  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
-      .RETURN(std::vector<int64_t>{StopOffset})
-      .TIMES(1);
-  TestStreamer->ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
-  DemuxTopic Demuxer("SomeTopicName");
-
-  // We've reached the stop offset, so STOP should be returned
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::ERR);
 }
 
 TEST_F(StreamerProcessTimingTest, MessageTimeout) {

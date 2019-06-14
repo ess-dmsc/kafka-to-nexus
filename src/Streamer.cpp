@@ -85,7 +85,6 @@ bool Streamer::stopTimeExceeded(DemuxTopic &MessageProcessor) {
     Logger->info("{} ms passed since stop time in topic {}",
                  (systemTime() - Options.StopTimestamp).count(),
                  MessageProcessor.topic());
-    Sources.clear();
     return true;
   }
   return false;
@@ -126,7 +125,6 @@ ProcessMessageResult Streamer::processMessage(
     DemuxTopic &MessageProcessor,
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
   if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
-    // TODO safe to query offsetsForTimes now
     CatchingUpToStopOffset = true;
     StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
                                  MessageProcessor.topic());
@@ -154,7 +152,6 @@ ProcessMessageResult Streamer::processMessage(
     return ProcessMessageResult::ERR;
   }
 
-  // TODO if we have reached stop offset on every partition
   if (CatchingUpToStopOffset &&
       stopOffsetsReached(KafkaMessage->second.MetaData.Partition,
                          KafkaMessage->second.MetaData.Offset)) {
@@ -235,8 +232,7 @@ void Streamer::setSources(std::unordered_map<std::string, Source> &SourceList) {
 }
 
 bool Streamer::removeSource(const std::string &SourceName) {
-  auto Iter(std::find<std::vector<std::string>::iterator>(
-      Sources.begin(), Sources.end(), SourceName));
+  auto Iter = std::find(Sources.begin(), Sources.end(), SourceName);
   if (Iter == Sources.end()) {
     Logger->warn("Can't remove source {}, not in the source list", SourceName);
     return false;
