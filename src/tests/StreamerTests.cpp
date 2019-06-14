@@ -43,8 +43,8 @@ generateEmptyKafkaMsg(PollStatus Status) {
 std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
     std::string const &SourceName = "test_source", int32_t Value = 42,
     int64_t Offset = 0, int32_t Partition = 0) {
-  auto IntType = FlatBufs::f142::Value::Int;
-  FlatBufs::f142::Synth MessageSynthesiser(SourceName, IntType);
+  auto IntType = Schemas::f142::Value::Int;
+  Schemas::f142::Synth MessageSynthesiser(SourceName, IntType);
   auto FlatbufferMessage = MessageSynthesiser.next(Value, 1);
 
   return generateKafkaMsg(reinterpret_cast<const char *>(
