@@ -10,22 +10,6 @@ namespace ns10 {
 #include "ns10_cache_entry_generated.h"
 }
 
-bool ns10dump(const flatbuffers::FlatBufferBuilder &Builder) {
-  auto Verifier =
-      flatbuffers::Verifier(Builder.GetBufferPointer(), Builder.GetSize());
-
-  if (!ns10::VerifyCacheEntryBuffer(Verifier)) {
-    return false;
-  }
-  auto CacheEntry = ns10::GetCacheEntry(Builder.GetBufferPointer());
-  std::cout << "\tkey : " << CacheEntry->key()->str() << "\n";
-  std::cout << "\tvalue : " << CacheEntry->value()->str() << "\n";
-  std::cout << "\ttime : " << CacheEntry->time() << "\n";
-  std::cout << "\tttl : " << CacheEntry->ttl() << "\n";
-  std::cout << "\texpired : " << bool(CacheEntry->expired()) << "\n";
-  return true;
-}
-
 FileWriter::FlatbufferMessage
 createFlatbufferMessageFromJson(nlohmann::json Json) {
   double Time = 1.0;
@@ -70,9 +54,26 @@ createFlatbufferMessageFromJson(nlohmann::json Json) {
   return Message;
 }
 
+void registerSchema() {
+  try {
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        NicosCacheWriter::CacheReader>
+        RegisterIt("ns10");
+  } catch (...) {
+  }
+  try {
+    FileWriter::HDFWriterModuleRegistry::Registrar<
+        NicosCacheWriter::CacheWriter>
+        RegisterIt("ns10");
+  } catch (...) {
+  }
+}
+
 class NicosCacheReaderTest : public ::testing::Test {
 public:
   void SetUp() override {
+    registerSchema();
+
     nlohmann::json BufferJson = R"({
       "key": "nicos/device/parameter",
       "writer_module": "ns10",
@@ -99,6 +100,8 @@ class NicosCacheWriterTest : public ::testing::Test {
 
 public:
   void SetUp() override {
+    registerSchema();
+
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
     MemoryDriver(fapl);

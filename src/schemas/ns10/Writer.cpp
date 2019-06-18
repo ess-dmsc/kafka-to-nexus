@@ -5,9 +5,6 @@
 
 namespace NicosCacheWriter {
 
-// Creates a factory function used to instantiate zero or more CacheWriter,
-// i.e.
-// one for every data source which produces data with the file id "test".
 static FileWriter::HDFWriterModuleRegistry::Registrar<CacheWriter>
     RegisterWriter("ns10");
 
