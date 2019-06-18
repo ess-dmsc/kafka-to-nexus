@@ -68,38 +68,21 @@ public:
 
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  int32_t flush() override { return 0; }
+  int32_t flush() override;
 
   int32_t close() override;
 
 protected:
-  // void createHDFStructure(hdf5::node::Group &Group, size_t ChunkBytes);
   void initValueDataset(hdf5::node::Group &Parent);
 
+  std::string Sourcename;
+  StringValue Values;
   hdf5::Dimensions ChunkSize{64};
-  StringValue sValues;
-  // std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
   NeXusDataset::Time Timestamp;
   int CueInterval{1000};
   int CueCounter{0};
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
-
-  enum class Type {
-    int8,
-    uint8,
-    int16,
-    uint16,
-    int32,
-    uint32,
-    int64,
-    uint64,
-    float32,
-    float64,
-    c_string,
-  } ElementType{Type::float64};
-  hdf5::Dimensions ArrayShape{1, 1};
-  std::unique_ptr<NeXusDataset::MultiDimDatasetBase> Values;
 
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");

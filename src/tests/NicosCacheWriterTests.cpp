@@ -101,7 +101,7 @@ public:
   void SetUp() override {
     hdf5::property::FileCreationList fcpl;
     hdf5::property::FileAccessList fapl;
-    // MemoryDriver(fapl);
+    MemoryDriver(fapl);
     File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE,
                               fcpl, fapl);
 
@@ -119,45 +119,9 @@ public:
   hdf5::file::MemoryDriver MemoryDriver;
 };
 
-// class NicosCacheWriterTest : public ::testing::Test {
-// public:
-//   static void SetUpTestCase() {
-//     std::ifstream InFile(std::string(TEST_DATA_PATH) + "/someNDArray.data",
-//                          std::ifstream::in | std::ifstream::binary);
-//     InFile.seekg(0, InFile.end);
-//     auto FileSize = InFile.tellg();
-//     auto RawData = std::make_unique<char[]>(FileSize);
-//     InFile.seekg(0, InFile.beg);
-//     InFile.read(RawData.get(), FileSize);
-//   };
-//
-//   static std::unique_ptr<char[]> RawData;
-//   static size_t FileSize;
-//
-//   void SetUp() override {
-//     hdf5::property::FileCreationList fcpl;
-//     hdf5::property::FileAccessList fapl;
-//     MemoryDriver(fapl);
-//     File =
-//         hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
-//         //,
-//     fcpl, fapl);
-//     RootGroup = File.root();
-//     UsedGroup = RootGroup.create_group(NXLogGroup);
-//   };
-//
-//   void TearDown() override { File.close(); };
-//
-//   hdf5::file::MemoryDriver MemoryDriver;
-//   std::string TestFileName{"SomeTestFile.hdf5"};
-//   std::string NXLogGroup{"SomeParentName"};
-//   hdf5::file::File File;
-//   hdf5::node::Group RootGroup;
-//   hdf5::node::Group UsedGroup;
-// };
-
 class CacheWriterF : public NicosCacheWriter::CacheWriter {
 public:
+  using NicosCacheWriter::CacheWriter::Sourcename;
   using NicosCacheWriter::CacheWriter::ChunkSize;
   using NicosCacheWriter::CacheWriter::Timestamp;
   using NicosCacheWriter::CacheWriter::CueInterval;
@@ -197,9 +161,27 @@ TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {
   EXPECT_TRUE(FoundAttribute);
 }
 
-TEST_F(NicosCacheWriterTest, WriterTimeStampTest) {
+TEST_F(NicosCacheWriterTest, WriterConfiguration) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter",
+    "cue_interval": 1024,
+    "chunk_size": 128
+  })"_json;
 
   CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump(), "");
+  EXPECT_EQ(Writer.Sourcename, JsonConfig["source"]);
+  EXPECT_EQ(Writer.ChunkSize.at(0), JsonConfig["chunk_size"].get<uint64_t>());
+  EXPECT_EQ(Writer.CueInterval, JsonConfig["cue_interval"].get<int>());
+}
+
+TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter"
+  })"_json;
+
+  CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump(), "");
 
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
@@ -214,41 +196,95 @@ TEST_F(NicosCacheWriterTest, WriterTimeStampTest) {
   FileWriter::FlatbufferMessage Message(
       createFlatbufferMessageFromJson(BufferJson));
 
-  {
-    std::ofstream f("ns10.dat", std::ios::binary);
-    f.write(Message.data(), Message.size());
-    f.close();
-  }
-
-  std::vector<unsigned char> buf;
-  {
-    std::ifstream f("ns10.dat", std::ios::binary);
-    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(f), {});
-    f.close();
-    buf = buffer;
-    auto Verifier = flatbuffers::Verifier(
-        reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
-    std::cout << "Verifier: " << ns10::VerifyCacheEntryBuffer(Verifier) << "\n";
-  }
   Writer.write(Message);
 
-  auto Verifier = flatbuffers::Verifier(
-      reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
-  std::cout << "Verifier: " << ns10::VerifyCacheEntryBuffer(Verifier) << "\n";
-
-  // std::uint64_t storedTs{11111};
-  // Writer.Timestamp.read(storedTs);
-  // EXPECT_EQ(Message.getTimestamp(), storedTs);
+  uint64_t storedTs{11111};
+  Writer.Timestamp.read(storedTs);
+  EXPECT_EQ(storedTs, 123456000000ul);
 }
 
-// TEST_F(CacheWriterWriter, WriterInitString) {
-//   NicosCacheWriter::CacheWriter Writer;
-//   auto JsonConfig = nlohmann::json::parse(R""({
-//     "type": "string"
-//   })"");
-//   Writer.parse_config(JsonConfig.dump(), "");
-//   Writer.init_hdf(UsedGroup, "{}");
-//   Writer.reopen(UsedGroup);
-//   EXPECT_EQ(hdf5::datatype::create<std::string>(),
-//   Writer.Values->datatype());
-// }
+TEST_F(NicosCacheWriterTest, WriteValues) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter"
+  })"_json;
+
+  CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump(), "");
+
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+
+  nlohmann::json BufferJson = R"({
+    "key": "nicos/device/parameter",
+    "writer_module": "ns10",
+    "time": 123.456,
+    "value": "a string"
+  })"_json;
+
+  FileWriter::FlatbufferMessage Message(
+      createFlatbufferMessageFromJson(BufferJson));
+
+  Writer.write(Message);
+
+  std::string storedValues;
+  Writer.Values.read(storedValues);
+  EXPECT_EQ(BufferJson["value"], storedValues);
+}
+
+TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter"
+  })"_json;
+
+  CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump(), "");
+
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+
+  nlohmann::json BufferJson = R"({
+    "key": "nicos/device2/parameter",
+    "writer_module": "ns10",
+    "time": 123.456,
+    "value": "a string"
+  })"_json;
+
+  FileWriter::FlatbufferMessage Message(
+      createFlatbufferMessageFromJson(BufferJson));
+
+  Writer.write(Message);
+
+  std::uint64_t storedTs;
+  std::string storedValues;
+  EXPECT_ANY_THROW(Writer.Timestamp.read(storedTs));
+  EXPECT_ANY_THROW(Writer.Values.read(storedValues));
+}
+
+TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter",
+    "cue_interval": 10
+  })"_json;
+
+  CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump(), "");
+
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+
+  nlohmann::json BufferJson = R"({
+    "key": "nicos/device/parameter",
+    "writer_module": "ns10",
+    "time": 123.456,
+    "value": "a string"
+  })"_json;
+
+  for (uint64_t i = 0; i < 10; ++i) {
+    FileWriter::FlatbufferMessage Message(
+        createFlatbufferMessageFromJson(BufferJson));
+    Writer.write(Message);
+  }
+
+  uint32_t Index;
+  EXPECT_NO_THROW(Writer.CueTimestampIndex.read(Index));
+}
