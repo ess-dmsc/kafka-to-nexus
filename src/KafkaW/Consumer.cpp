@@ -75,7 +75,6 @@ Consumer::offsetsForTimesForTopic(std::string const &Topic,
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
   for (unsigned int i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
-
     TopicPartition->set_offset(Time.count());
     TopicPartitionsWithTimestamp.push_back(TopicPartition);
   }
@@ -110,6 +109,15 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
 
   auto TopicPartitionsWithTimestamp = offsetsForTimesForTopic(Topic, StartTime);
   assignToPartitions(Topic, TopicPartitionsWithTimestamp);
+}
+
+int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
+                                         int32_t Partition) {
+  int64_t LowWatermark, HighWatermark;
+  // Note, does not query broker
+  KafkaConsumer->get_watermark_offsets(Topic, Partition, &LowWatermark,
+                                       &HighWatermark);
+  return HighWatermark;
 }
 
 /// Checks if a topic is present on the broker. Throws and logs if topic is

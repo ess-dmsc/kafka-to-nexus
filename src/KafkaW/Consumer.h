@@ -29,6 +29,8 @@ public:
   virtual std::vector<int64_t>
   offsetsForTimesAllPartitions(std::string const &Topic,
                                std::chrono::milliseconds Time) = 0;
+  virtual int64_t getHighWatermarkOffset(std::string const &Topic,
+                                         int32_t Partition) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -78,6 +80,14 @@ public:
   std::vector<int64_t>
   offsetsForTimesAllPartitions(std::string const &Topic,
                                std::chrono::milliseconds Time) override;
+
+  /// Get the current known high watermark offset from the consumer
+  /// Does not query the broker
+  /// \param Topic The name of the topic
+  /// \param Partition The parition number to get the offset for
+  /// \return high watermark offset
+  int64_t getHighWatermarkOffset(std::string const &Topic,
+                                 int32_t Partition) override;
 
 protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;

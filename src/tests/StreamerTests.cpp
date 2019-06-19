@@ -302,48 +302,10 @@ TEST_F(StreamerProcessTimingTest,
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
 
-TEST_F(StreamerProcessTimingTest, MessageTimeout) {
-  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
-      ReaderKey);
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
-  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-      .RETURN(0);
-  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  int CallCounter{0};
-  auto PollResult = [this, &CallCounter]() {
-    CallCounter++;
-    if (CallCounter == 1) {
-      return generateKafkaMsg(
-          reinterpret_cast<const char *>(DataBuffer.c_str()),
-          DataBuffer.size());
-    }
-    return generateEmptyKafkaMsg(PollStatus::EndOfPartition);
-  };
-  REQUIRE_CALL(*EmptyPollerConsumer, poll()).RETURN(PollResult()).TIMES(2);
+TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
+  // ProcessMessage will return Ok, because the message timestamp is after
+  // the stop time so the empty payload is not accessed
 
-  TestStreamer->ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
-  DemuxerStandIn Demuxer("SomeTopicName");
-  REQUIRE_CALL(Demuxer, process_message(_))
-      .RETURN(ProcessMessageResult::OK)
-      .TIMES(1);
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
-  std::this_thread::sleep_for(std::chrono::milliseconds(5));
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
-}
-
-TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
       ReaderKey);
 
@@ -362,6 +324,9 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
+  std::vector<int64_t> ReturnedOffsets = {1};
+  ALLOW_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(ReturnedOffsets);
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -370,7 +335,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
       });
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
 TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {

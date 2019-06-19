@@ -16,6 +16,7 @@ public:
   IMPLEMENT_MOCK1(queryTopicPartitions);
   IMPLEMENT_MOCK0(poll);
   IMPLEMENT_MOCK2(offsetsForTimesAllPartitions);
+  IMPLEMENT_MOCK2(getHighWatermarkOffset);
 };
 
 class StreamerStandIn : public Streamer {

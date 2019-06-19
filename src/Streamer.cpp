@@ -100,8 +100,16 @@ Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
   auto Offsets = Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
   std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(Offsets.size(),
                                                         {0, false});
-  for (size_t OffsetIndex = 0; OffsetIndex < Offsets.size(); ++OffsetIndex) {
-    OffsetsToStopAt[OffsetIndex].first = Offsets[OffsetIndex];
+  for (size_t PartitionNumber = 0; PartitionNumber < Offsets.size();
+       ++PartitionNumber) {
+    auto StopOffset = Offsets[PartitionNumber];
+    // If stop offset is -1 that means there are not any messages after the time
+    // we have asked for, so set the stop offset to the current high-watermark
+    if (StopOffset == -1) {
+      StopOffset = Consumer->getHighWatermarkOffset(TopicName, PartitionNumber);
+    }
+    OffsetsToStopAt[PartitionNumber].first = StopOffset;
+    Logger->info("Stop offset: {}", Offsets[PartitionNumber]);
   }
   return OffsetsToStopAt;
 }

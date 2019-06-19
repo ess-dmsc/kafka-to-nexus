@@ -27,6 +27,7 @@ TEST_F(ConsumerTests, pollReturnsConsumerMessageWithMessagePollStatus) {
   TimeStamp.type = RdKafka::MessageTimestamp::MSG_TIMESTAMP_CREATE_TIME;
   REQUIRE_CALL(*Message, timestamp()).TIMES(2).RETURN(TimeStamp);
   REQUIRE_CALL(*Message, offset()).TIMES(1).RETURN(1);
+  ALLOW_CALL(*Message, partition()).RETURN(0);
 
   REQUIRE_CALL(*Message, payload())
       .TIMES(1)
