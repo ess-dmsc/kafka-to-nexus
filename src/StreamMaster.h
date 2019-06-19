@@ -134,12 +134,13 @@ public:
   /// \return True, if can be removed.
   bool isRemovable() const {
 
-    bool StreamStillConnected = std::any_of(Streamers.begin(), Streamers.end(), [](auto & Item)
-    {
-      return Item.second.runStatus() >= StreamerStatus::IS_CONNECTED;
-    });
+    bool StreamStillConnected =
+        std::any_of(Streamers.begin(), Streamers.end(), [](auto &Item) {
+          return Item.second.runStatus() >= StreamerStatus::IS_CONNECTED;
+        });
 
-    return !StreamStillConnected && RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
+    return !StreamStillConnected &&
+           RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
   }
 
   /// \brief Get the unique job id associated with the streamer (and hence
@@ -165,7 +166,8 @@ private:
         return;
       }
 
-      // if the Streamer throws the stream is closed, but the file writing continues
+      // if the Streamer throws the stream is closed, but the file writing
+      // continues
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
@@ -180,8 +182,7 @@ private:
       if (ProcessResult == ProcessMessageResult::STOP) {
         closeStream(Stream, Demux.topic());
         return;
-      }
-      else if (ProcessResult == ProcessMessageResult::ERR) {
+      } else if (ProcessResult == ProcessMessageResult::ERR) {
         // if there's any error in the messages log it
         Logger->info("Topic \"{}\" : {}", Demux.topic(),
                       Err2Str(Stream.runStatus()));
