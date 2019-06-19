@@ -7,9 +7,16 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
+namespace FileWriter {
+namespace Schemas {
 namespace ns10 {
 #include "ns10_cache_entry_generated.h"
-}
+} // namespace ns10
+} // namespace Schemas
+} // namespace FileWriter
+
+using FileWriter::Schemas::ns10::CacheWriter;
+using FileWriter::Schemas::ns10::CacheReader;
 
 FileWriter::FlatbufferMessage
 createFlatbufferMessageFromJson(nlohmann::json Json) {
@@ -39,7 +46,7 @@ createFlatbufferMessageFromJson(nlohmann::json Json) {
   auto FBKey = Builder.CreateString(Key);
   auto FBValue = Builder.CreateString(Value);
 
-  ns10::CacheEntryBuilder CEBuilder(Builder);
+  FileWriter::Schemas::ns10::CacheEntryBuilder CEBuilder(Builder);
 
   CEBuilder.add_key(FBKey);
   CEBuilder.add_time(Time);
@@ -57,15 +64,13 @@ createFlatbufferMessageFromJson(nlohmann::json Json) {
 
 void registerSchema() {
   try {
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        NicosCacheWriter::CacheReader>
-        RegisterIt("ns10");
+    FileWriter::FlatbufferReaderRegistry::Registrar<CacheReader> RegisterIt(
+        "ns10");
   } catch (...) {
   }
   try {
-    FileWriter::HDFWriterModuleRegistry::Registrar<
-        NicosCacheWriter::CacheWriter>
-        RegisterIt("ns10");
+    FileWriter::HDFWriterModuleRegistry::Registrar<CacheWriter> RegisterIt(
+        "ns10");
   } catch (...) {
   }
 }
@@ -91,7 +96,7 @@ public:
 };
 
 TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
-  NicosCacheWriter::CacheReader SomeReader;
+  CacheReader SomeReader;
   EXPECT_TRUE(Message->isValid());
   EXPECT_EQ(Message->getSourceName(), std::string("nicos/device/parameter"));
   EXPECT_EQ(Message->getTimestamp(), 123.456 * 1e9);
@@ -123,19 +128,19 @@ public:
   hdf5::file::MemoryDriver MemoryDriver;
 };
 
-class CacheWriterF : public NicosCacheWriter::CacheWriter {
+class CacheWriterF : public CacheWriter {
 public:
-  using NicosCacheWriter::CacheWriter::Sourcename;
-  using NicosCacheWriter::CacheWriter::ChunkSize;
-  using NicosCacheWriter::CacheWriter::Timestamp;
-  using NicosCacheWriter::CacheWriter::CueInterval;
-  using NicosCacheWriter::CacheWriter::CueTimestamp;
-  using NicosCacheWriter::CacheWriter::CueTimestampIndex;
-  using NicosCacheWriter::CacheWriter::Values;
+  using CacheWriter::Sourcename;
+  using CacheWriter::ChunkSize;
+  using CacheWriter::Timestamp;
+  using CacheWriter::CueInterval;
+  using CacheWriter::CueTimestamp;
+  using CacheWriter::CueTimestampIndex;
+  using CacheWriter::Values;
 };
 
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
-  NicosCacheWriter::CacheWriter SomeWriter;
+  CacheWriter SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
               FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
@@ -145,7 +150,7 @@ TEST_F(NicosCacheWriterTest, WriterReturnValues) {
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {
-  NicosCacheWriter::CacheWriter SomeWriter;
+  CacheWriter SomeWriter;
   SomeWriter.init_hdf(UsedGroup, "{}");
 
   EXPECT_TRUE(UsedGroup.has_dataset("cue_index"));

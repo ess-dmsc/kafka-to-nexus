@@ -8,7 +8,9 @@
 #include "../../HDFWriterModule.h"
 #include "NeXusDataset.h"
 
-namespace NicosCacheWriter {
+namespace FileWriter {
+namespace Schemas {
+namespace ns10 {
 
 /// h5cpp dataset class that writers strings.
 class StringValue : public NeXusDataset::ExtensibleDataset<std::string> {
@@ -53,4 +55,7 @@ protected:
 private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
-} // namespace NicosCacheWriter
+
+} // namespace ns10
+} // namespace Schemas
+} // namespace FileWriter
