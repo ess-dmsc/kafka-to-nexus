@@ -50,7 +50,7 @@ public:
   }
 
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) noexcept = default;
+  StreamMaster(StreamMaster &&) = default;
 
   ~StreamMaster() {
     Stop = true;
@@ -212,7 +212,6 @@ private:
   /// \param Stream The stream to close.
   void closeStream(Streamer &Stream) {
     Logger->trace("All sources in Stream have expired, close connection");
-    Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
     if (NumStreamers == 0) {

@@ -61,7 +61,7 @@ public:
 
   /// \brief Removes the source from the sources list.
   ///
-  /// \param[in]  SourceName  The name of the source to be removed.
+  /// \param SourceName The name of the source to be removed.
   ///
   /// \return True if success, else false (e.g. the source is not in the list).
   bool removeSource(const std::string &SourceName);
@@ -71,7 +71,7 @@ public:
   /// See "Error.h".
   ///
   /// \return The current status.
-  StreamerStatus &runStatus() { return RunStatus; }
+  StreamerStatus runStatus() const { return RunStatus; }
 
   /// Return all the information about the messages consumed.
   Status::MessageInfo &messageInfo() { return MessageInfo; }
