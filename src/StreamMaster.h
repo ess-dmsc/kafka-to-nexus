@@ -228,13 +228,7 @@ private:
         auto &s = Streamers[Demux.topic()];
 
         // If the stream is active process the messages
-        StreamMasterError ProcessResult = processStreamResult(s, Demux);
-        if (ProcessResult == StreamMasterError::HAS_FINISHED) {
-          continue;
-        }
-        if (ProcessResult == StreamMasterError::STREAMER_ERROR) {
-          continue;
-        }
+        processStreamResult(s, Demux);
       }
     }
     RunStatus = StreamMasterError::HAS_FINISHED;
@@ -248,10 +242,16 @@ private:
   /// otherwise set Stop TRUE and return StreamMasterError::has_finished.
   StreamMasterError closeStream(Streamer &Stream,
                                 const std::string &TopicName) {
-    Logger->trace("All sources in Stream have expired, close connection");
+    if (Stream.runStatus() != Status::StreamerStatus::HAS_FINISHED) {
+      // Only decrement active streamer count if we haven't already marked it as
+      // finished
+      NumStreamers--;
+      Logger->info(
+          "Stopped streamer consuming from {}. {} streamers still running.",
+          TopicName, NumStreamers);
+    }
     Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
-    NumStreamers--;
     if (NumStreamers != 0) {
       return StreamMasterError::RUNNING;
     }
