@@ -338,6 +338,47 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
+TEST_F(StreamerProcessTimingTest, NoMessagesInTopicAfterStopTime) {
+  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
+      ReaderKey);
+
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{5};
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  std::unordered_map<std::string, Source> SourceList;
+  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  SourceList.insert(std::move(TempPair));
+  TestStreamer->setSources(SourceList);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
+      .TIMES(1);
+
+  // GIVEN that there are no messages in the topic, and therefore
+  // offsetsForTimes returns -1 as the stop offset
+  std::vector<int64_t> ReturnedOffsets = {-1};
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(ReturnedOffsets);
+  // and high watermark offset is also -1
+  REQUIRE_CALL(*EmptyPollerConsumer, getHighWatermarkOffset(_, _)).RETURN(-1);
+
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxerStandIn Demuxer("SomeTopicName");
+  REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
+  // WHEN pollAndProcess is run
+  // THEN expect STOP response, as there is no need to continue trying to
+  // consume data from this topic
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+}
+
 TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
       ReaderKey);

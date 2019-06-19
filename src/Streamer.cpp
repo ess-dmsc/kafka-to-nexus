@@ -107,6 +107,11 @@ Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
     // we have asked for, so set the stop offset to the current high-watermark
     if (StopOffset == -1) {
       StopOffset = Consumer->getHighWatermarkOffset(TopicName, PartitionNumber);
+      if (StopOffset == -1) {
+        // If the high watermark is also -1 then we can already mark the stop
+        // offset for this partition as being reached
+        OffsetsToStopAt[PartitionNumber].second = true;
+      }
     }
     OffsetsToStopAt[PartitionNumber].first = StopOffset;
     Logger->info("Stop offset: {}", Offsets[PartitionNumber]);
@@ -136,6 +141,16 @@ ProcessMessageResult Streamer::processMessage(
     CatchingUpToStopOffset = true;
     StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
                                  MessageProcessor.topic());
+    // There may be no data in the topic, so check already if all stop offsets
+    // are marked as reached
+    bool NoDataInTopic =
+        std::all_of(StopOffsets.cbegin(), StopOffsets.cend(),
+                    [](std::pair<int64_t, bool> const &StopPair) {
+                      return StopPair.second;
+                    });
+    if (NoDataInTopic) {
+      return ProcessMessageResult::STOP;
+    }
   }
 
   if (KafkaMessage->first == KafkaW::PollStatus::Error) {
