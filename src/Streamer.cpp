@@ -114,7 +114,8 @@ Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
       }
     }
     OffsetsToStopAt[PartitionNumber].first = StopOffset;
-    Logger->info("Stop offset: {}", Offsets[PartitionNumber]);
+    Logger->info("Stop offset for topic {}, partition {}, is {}", TopicName,
+                 PartitionNumber, Offsets[PartitionNumber]);
   }
   return OffsetsToStopAt;
 }
@@ -149,6 +150,8 @@ ProcessMessageResult Streamer::processMessage(
                       return StopPair.second;
                     });
     if (NoDataInTopic) {
+      Logger->warn("There was no data in {} to consume",
+                   MessageProcessor.topic());
       return ProcessMessageResult::STOP;
     }
   }
@@ -178,6 +181,7 @@ ProcessMessageResult Streamer::processMessage(
   if (CatchingUpToStopOffset &&
       stopOffsetsReached(KafkaMessage->second.MetaData.Partition,
                          KafkaMessage->second.MetaData.Offset)) {
+    Logger->info("Reached stop offsets in topic {}", MessageProcessor.topic());
     return ProcessMessageResult::STOP;
   }
 
