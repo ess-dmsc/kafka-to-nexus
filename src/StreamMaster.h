@@ -205,8 +205,8 @@ private:
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {
-        Logger->error("Error in topic \"{}\" : {}", Demux.topic(),
-                      Err2Str(Stream.runStatus()));
+        Logger->info("Topic \"{}\" : {}", Demux.topic(),
+                     Err2Str(Stream.runStatus()));
         return StreamMasterError::STREAMER_ERROR;
       }
     }
@@ -274,8 +274,7 @@ private:
       Logger->info("Shut down {}", s.first);
       auto v = s.second.closeStream();
       if (v == StreamerStatus::HAS_FINISHED) {
-        Logger->info("Error while stopping {} : {}", s.first,
-                     Status::Err2Str(v));
+        Logger->info("While stopping {} : {}", s.first, Status::Err2Str(v));
       } else {
         Logger->info("\t...done");
       }
