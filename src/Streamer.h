@@ -62,19 +62,7 @@ public:
   /// StreamerErrorCode::has_finished.
   StreamerStatus closeStream();
 
-  /// \brief Return the number of different sources whose last message is
-  /// not older than the stop time.
-  ///
-  /// \return The number of sources.
-  const size_t numSources() const { return Sources.size(); }
   void setSources(std::unordered_map<std::string, Source> &SourceList);
-
-  /// \brief Removes the source from the sources list.
-  ///
-  /// \param[in]  SourceName  The name of the source to be removed.
-  ///
-  /// \return True if success, else false (e.g. the source is not in the list).
-  bool removeSource(const std::string &SourceName);
 
   /// \brief Returns the status of the Streamer.
   ///

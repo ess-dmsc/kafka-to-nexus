@@ -195,13 +195,9 @@ private:
         closeStream(Stream, Demux.topic());
         return StreamMasterError::STREAMER_ERROR;
       }
-      // decreases the count of sources in the stream, eventually closes the
-      // stream
+      // We've reached the stop offsets, we can close the stream
       if (ProcessResult == ProcessMessageResult::STOP) {
-        if (Stream.numSources() == 0) {
-          return closeStream(Stream, Demux.topic());
-        }
-        return StreamMasterError::RUNNING;
+        return closeStream(Stream, Demux.topic());
       }
       // if there's any error in the messages logs it
       if (ProcessResult == ProcessMessageResult::ERR) {

@@ -9,8 +9,8 @@ std::chrono::milliseconds systemTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
       now.time_since_epoch());
 }
-bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime) {
+bool messageTimestampIsAfterStopTimestamp(std::uint64_t MessageTimestamp,
+                                          std::chrono::milliseconds Stoptime) {
   return (Stoptime.count() > 0 &&
           static_cast<std::int64_t>(MessageTimestamp) >
               std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
@@ -163,10 +163,7 @@ ProcessMessageResult Streamer::processMessage(
   if (CatchingUpToStopOffset &&
       stopOffsetsReached(KafkaMessage->second.MetaData.Partition,
                          KafkaMessage->second.MetaData.Offset)) {
-    if (removeSource(Message->getSourceName())) {
-      return ProcessMessageResult::STOP;
-    }
-    return ProcessMessageResult::ERR;
+    return ProcessMessageResult::STOP;
   }
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
@@ -195,7 +192,8 @@ ProcessMessageResult Streamer::processMessage(
 
   // If there is a stop time set and the timestamp of message is after it,
   // ignore message and carry on
-  if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp)) {
+  if (messageTimestampIsAfterStopTimestamp(Message->getTimestamp(),
+                                           Options.StopTimestamp)) {
     return ProcessMessageResult::OK;
   }
 
@@ -237,17 +235,6 @@ void Streamer::setSources(std::unordered_map<std::string, Source> &SourceList) {
     Logger->info("Add {} to source list", Src.first);
     Sources.push_back(Src.first);
   }
-}
-
-bool Streamer::removeSource(const std::string &SourceName) {
-  auto Iter = std::find(Sources.begin(), Sources.end(), SourceName);
-  if (Iter == Sources.end()) {
-    Logger->warn("Can't remove source {}, not in the source list", SourceName);
-    return false;
-  }
-  Sources.erase(Iter);
-  Logger->info("Remove source {}", SourceName);
-  return true;
 }
 
 } // namespace FileWriter
