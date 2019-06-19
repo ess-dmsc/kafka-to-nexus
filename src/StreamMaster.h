@@ -172,20 +172,18 @@ private:
         Logger->error("Stream closed due to stream error: {}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
-        closeStream(Stream);
+        closeStream(Stream, Demux.topic());
         return;
       }
 
+      // We've reached the stop offsets, we can close the stream
       if (ProcessResult == ProcessMessageResult::STOP) {
-        if (Stream.numSources() == 0) {
-          closeStream(Stream);
-
-        }
+        closeStream(Stream, Demux.topic());
         return;
       }
       else if (ProcessResult == ProcessMessageResult::ERR) {
         // if there's any error in the messages log it
-        Logger->error("Error in topic \"{}\" : {}", Demux.topic(),
+        Logger->info("Topic \"{}\" : {}", Demux.topic(),
                       Err2Str(Stream.runStatus()));
         return;
       }
@@ -210,10 +208,16 @@ private:
   /// \brief Close the Kafka connection in the specified stream.
   ///
   /// \param Stream The stream to close.
-  void closeStream(Streamer &Stream) {
-    Logger->trace("All sources in Stream have expired, close connection");
+  void closeStream(Streamer &Stream, const std::string &TopicName) {
+    if (Stream.runStatus() != Status::StreamerStatus::HAS_FINISHED) {
+      // Only decrement active streamer count if we haven't already marked it as finished
+      NumStreamers--;
+      Logger->info(
+          "Stopped streamer consuming from {}. {} streamers still running.",
+          TopicName, NumStreamers);
+    }
     Stream.closeStream();
-    NumStreamers--;
+
     if (NumStreamers == 0) {
       // No more streams open, so stop
       Stop = true;
@@ -229,7 +233,7 @@ private:
       Logger->info("Shut down {}", s.first);
       auto v = s.second.closeStream();
       if (v != StreamerStatus::HAS_FINISHED) {
-        Logger->info("Error while stopping {} : {}", s.first,
+        Logger->info("While stopping {} : {}", s.first,
                      Status::Err2Str(v));
       } else {
         Logger->info("\t...done");
