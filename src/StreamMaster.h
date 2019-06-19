@@ -185,7 +185,7 @@ private:
       } else if (ProcessResult == ProcessMessageResult::ERR) {
         // if there's any error in the messages log it
         Logger->info("Topic \"{}\" : {}", Demux.topic(),
-                      Err2Str(Stream.runStatus()));
+                     Err2Str(Stream.runStatus()));
         return;
       }
     }
@@ -211,7 +211,8 @@ private:
   /// \param Stream The stream to close.
   void closeStream(Streamer &Stream, const std::string &TopicName) {
     if (Stream.runStatus() != Status::StreamerStatus::HAS_FINISHED) {
-      // Only decrement active streamer count if we haven't already marked it as finished
+      // Only decrement active streamer count if we haven't already marked it as
+      // finished
       NumStreamers--;
       Logger->info(
           "Stopped streamer consuming from {}. {} streamers still running.",
@@ -234,8 +235,7 @@ private:
       Logger->info("Shut down {}", s.first);
       auto v = s.second.closeStream();
       if (v != StreamerStatus::HAS_FINISHED) {
-        Logger->info("While stopping {} : {}", s.first,
-                     Status::Err2Str(v));
+        Logger->info("While stopping {} : {}", s.first, Status::Err2Str(v));
       } else {
         Logger->info("\t...done");
       }
