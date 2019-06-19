@@ -73,8 +73,7 @@ FileWriter::initTopics(std::string const &TopicName,
 
 FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
   Sources.clear();
-  RunStatus = StreamerStatus::HAS_FINISHED;
-  return (RunStatus = StreamerStatus::HAS_FINISHED);
+  return StreamerStatus::HAS_FINISHED;
 }
 
 bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {

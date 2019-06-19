@@ -121,8 +121,7 @@ void Master::run() {
     StreamMasters.erase(
         std::remove_if(StreamMasters.begin(), StreamMasters.end(),
                        [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
-                         return Iter->status() ==
-                                Status::StreamMasterError::IS_REMOVABLE;
+                         return Iter->isRemovable();
                        }),
         StreamMasters.end());
   }
@@ -133,7 +132,7 @@ void Master::run() {
 
 void Master::stopStreamMasters() {
   for (auto &x : StreamMasters) {
-    x->stop();
+    x->requestStop();
   }
 }
 

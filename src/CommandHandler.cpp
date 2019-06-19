@@ -405,7 +405,7 @@ void CommandHandler::handleStreamMasterStop(const json &Command) {
       } else {
         Logger->info("Received request to gracefully stop file with id : {}",
                      JobID);
-        StreamMaster->stop();
+        StreamMaster->requestStop();
       }
     } else {
       Logger->warn("Can not find StreamMaster for JobID: {}", JobID);

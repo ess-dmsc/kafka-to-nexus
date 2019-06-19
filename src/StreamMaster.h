@@ -1,4 +1,4 @@
-/// \file Header only implementation of the StreamMaster, that
+/// \file Header-only implementation of the StreamMaster, that
 /// coordinates the execution of the Streamers
 
 #pragma once
@@ -16,15 +16,6 @@
 namespace FileWriter {
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
-///
-/// When constructed creates a unique Streamer per topic and waits for a
-/// start command. When this command is issued the StreamMaster calls
-/// the write command sequentially on each Streamer. When the stop
-/// command is issued, or when the Steamer reaches a predetermined
-/// point in time the Streamer is stopped and removed. The
-/// StreamMaster can regularly send report on the status of the Streamers,
-/// the amount of data written and other information as Kafka messages on
-/// the ``status`` topic.
 template <typename Streamer> class StreamMaster {
   using StreamerStatus = Status::StreamerStatus;
   using StreamMasterError = Status::StreamMasterError;
@@ -36,7 +27,7 @@ public:
                std::shared_ptr<KafkaW::ProducerTopic> Producer)
       : Demuxers(FileWriterTask->demuxers()),
         WriterTask(std::move(FileWriterTask)), ServiceId{Options.ServiceID},
-        ProducerTopic{Producer} {
+        ProducerTopic{std::move(Producer)} {
     for (auto &Demux : Demuxers) {
       try {
         std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
@@ -59,7 +50,7 @@ public:
   }
 
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = default;
+  StreamMaster(StreamMaster &&) noexcept = default;
 
   ~StreamMaster() {
     Stop = true;
@@ -75,21 +66,20 @@ public:
 
   StreamMaster &operator=(const StreamMaster &) = delete;
 
-  /// \brief Set the point in time (in std::chrono::milliseconds) that triggers
+  /// \brief Set the point in time that triggers
   /// the termination of the run.
   ///
   /// When the timestamp of a Source in the
   /// Streamer reaches this time the source is removed. When all the
   /// Sources in a Streamer are removed the Streamer connection is
-  /// closed and the Streamer marked as StreamerErrorCode::has_finished
+  /// closed and the Streamer marked as finished.
   ///
-  /// \param StopTime timestamp of the
-  /// last message to be written in nanoseconds
-  bool setStopTime(const std::chrono::milliseconds &StopTime) {
+  /// \param StopTime Timestamp of the
+  /// last message to be written in nanoseconds.
+  void setStopTime(const std::chrono::milliseconds &StopTime) {
     for (auto &s : Streamers) {
       s.second.getOptions().StopTimestamp = StopTime;
     }
-    return true;
   }
 
   void setTopicWriteDuration(std::chrono::milliseconds NewTopicWriteDuration) {
@@ -97,14 +87,13 @@ public:
   }
 
   /// Start writing the streams.
-  ///
-  /// \return True if successful, False otherwise.
-  bool start() {
+  void start() {
     if (NumStreamers == 0) {
       Stop = true;
-      stopImplemented();
-      return WriteThread.joinable();
+      doStop();
+      return;
     }
+
     Logger->info("StreamMaster: start");
     Stop = false;
 
@@ -112,16 +101,12 @@ public:
       WriteThread = std::thread([&] { this->run(); });
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    return WriteThread.joinable();
   }
 
-  /// Stop writing the streams.
-  ///
-  /// \return True if successful, False otherwise.
-  bool stop() {
-    Logger->info("StreamMaster: stop");
+  /// Request to stop writing the streams.
+  void requestStop() {
+    Logger->info("StreamMaster: stop requested");
     Stop = true;
-    return !(WriteThread.joinable() || ReportThread.joinable());
   }
 
   void report(const std::chrono::milliseconds &ReportMs =
@@ -144,136 +129,107 @@ public:
   /// \return Pointer to FileWriterTask.
   FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
 
-  /// \brief Get the current StreamMaster state, or
-  /// StreamMasterError::streamer_error if any
-  /// stream is in any error state.
+  /// \brief Get whether this stream master can be removed.
   ///
-  /// \return StreamMasterError status.
-  const StreamMasterError status() {
+  /// \return True, if can be removed.
+  bool isRemovable() const {
 
-    for (auto &s : Streamers) {
-      if (s.second.runStatus() >= StreamerStatus::IS_CONNECTED) {
-        return StreamMasterError::STREAMER_ERROR;
-      }
-    }
-    return RunStatus.load();
+    bool StreamStillConnected = std::any_of(Streamers.begin(), Streamers.end(), [](auto & Item)
+    {
+      return Item.second.runStatus() >= StreamerStatus::IS_CONNECTED;
+    });
+
+    return !StreamStillConnected && RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
   }
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
-  /// \return Job id as a string.
+  ///
+  /// \return The job id.
   std::string getJobId() const { return WriterTask->jobID(); }
 
 private:
   /// \brief Process the messages in Stream for at most TopicWriteDuration
   /// std::chrono::milliseconds.
   ///
-  /// \param Stream   A reference to the Streamer that will consume messages.
-  /// \param Demux    The demux associated with the topic.
-  ///
-  /// \return The status of the consumption. If there are still working
-  /// streams returns ``running``, if all the streams are terminated return
-  /// ``has_finished``, if error was thrown returns ``streamer_error``.
-  StreamMasterError processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
+  /// \param Stream The Streamer that will consume messages.
+  /// \param Demux The demux associated with the topic.
+  void processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
     auto ProcessStartTime = std::chrono::system_clock::now();
     FileWriter::ProcessMessageResult ProcessResult;
 
-    // process stream Stream fir at most TopicWriteDuration milliseconds
+    // process stream Stream for at most TopicWriteDuration milliseconds
     while ((std::chrono::system_clock::now() - ProcessStartTime) <
            TopicWriteDuration) {
       if (Stop) {
-        return StreamMasterError::HAS_FINISHED;
+        return;
       }
 
-      // if Streamer throws the stream is closed, but the writing continues
+      // if the Streamer throws the stream is closed, but the file writing continues
       try {
         ProcessResult = Stream.pollAndProcess(Demux);
       } catch (std::exception &E) {
         Logger->error("Stream closed due to stream error: {}", E.what());
         logEvent(ProducerTopic, StatusCode::Error, ServiceId,
                  WriterTask->jobID(), E.what());
-        closeStream(Stream, Demux.topic());
-        return StreamMasterError::STREAMER_ERROR;
+        closeStream(Stream);
+        return;
       }
-      // decreases the count of sources in the stream, eventually closes the
-      // stream
+
       if (ProcessResult == ProcessMessageResult::STOP) {
         if (Stream.numSources() == 0) {
-          return closeStream(Stream, Demux.topic());
+          closeStream(Stream);
+
         }
-        return StreamMasterError::RUNNING;
+        return;
       }
-      // if there's any error in the messages logs it
-      if (ProcessResult == ProcessMessageResult::ERR) {
+      else if (ProcessResult == ProcessMessageResult::ERR) {
+        // if there's any error in the messages log it
         Logger->error("Error in topic \"{}\" : {}", Demux.topic(),
                       Err2Str(Stream.runStatus()));
-        return StreamMasterError::STREAMER_ERROR;
+        return;
       }
     }
-    return StreamMasterError::RUNNING;
   }
 
   /// \brief Main loop that handles the writer process for each stream.
   ///
-  /// The streams write as long as Stop is false and there are open streams. As
-  /// the method starts the StreamMaster state is set to
-  /// StreamMasterError::running. If a stream is in the SEC::writing state
-  /// process the messages. If the state is SEC::has_finished or
-  /// SEC::not_initialized skip the stream. A negative state represents an
-  /// error, which is logged. When the method terminates (i.e. messages are not
-  /// processed anymore) the StreamMaster state changes to
-  /// StreamMasterError::has_finished.
+  /// The streams write as long as Stop is false and there are open streams.
   void run() {
-    using namespace std::chrono;
     RunStatus = StreamMasterError::RUNNING;
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
-
       for (auto &Demux : Demuxers) {
         auto &s = Streamers[Demux.topic()];
-
-        // If the stream is active process the messages
-        StreamMasterError ProcessResult = processStreamResult(s, Demux);
-        if (ProcessResult == StreamMasterError::HAS_FINISHED) {
-          continue;
-        }
-        if (ProcessResult == StreamMasterError::STREAMER_ERROR) {
-          continue;
-        }
+        processStreamResult(s, Demux);
       }
     }
     RunStatus = StreamMasterError::HAS_FINISHED;
-    stopImplemented();
+    doStop();
   }
 
-  /// \brief Close the Kafka connection in the selected stream, set its value to
-  /// SEC::has_finished and reduces the counter of the open streams.
+  /// \brief Close the Kafka connection in the specified stream.
   ///
-  /// \return StreamMasterError::has_finished if other streams are open,
-  /// otherwise set Stop TRUE and return StreamMasterError::has_finished.
-  StreamMasterError closeStream(Streamer &Stream,
-                                const std::string &TopicName) {
+  /// \param Stream The stream to close.
+  void closeStream(Streamer &Stream) {
     Logger->trace("All sources in Stream have expired, close connection");
     Stream.runStatus() = Status::StreamerStatus::HAS_FINISHED;
     Stream.closeStream();
     NumStreamers--;
-    if (NumStreamers != 0) {
-      return StreamMasterError::RUNNING;
+    if (NumStreamers == 0) {
+      // No more streams open, so stop
+      Stop = true;
     }
-    Stop = true;
-    return StreamMasterError::HAS_FINISHED;
   }
 
-  //   Implementation of the stop command. Make sure that the Streamers
-  //   are not polled for messages, the status report is stopped and
-  //   closes all the connections to the Kafka streams.
-  void stopImplemented() {
+  /// \brief Stops the streamers and prepares for being removed.
+  void doStop() {
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
     for (auto &s : Streamers) {
       Logger->info("Shut down {}", s.first);
       auto v = s.second.closeStream();
-      if (v == StreamerStatus::HAS_FINISHED) {
+      if (v != StreamerStatus::HAS_FINISHED) {
         Logger->info("Error while stopping {} : {}", s.first,
                      Status::Err2Str(v));
       } else {
