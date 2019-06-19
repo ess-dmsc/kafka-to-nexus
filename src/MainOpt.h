@@ -81,10 +81,6 @@ struct MainOpt {
   /// list of current file writings).
   uint32_t StatusMasterIntervalMS = 2000;
 
-  // For testing.
-  std::function<void(rd_kafka_topic_partition_list_s *)> on_rebalance_assign;
-  // For testing.
-  int64_t start_at_command_offset = -1;
   // Was/is used for testing during development.
   uint64_t teamid = 0;
   bool logpid_sleep = false;
