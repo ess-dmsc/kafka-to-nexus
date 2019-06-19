@@ -171,9 +171,9 @@ ProcessMessageResult Streamer::processMessage(
 
   if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
       Sources.end()) {
-    Logger->warn("Message from topic \"{}\" has an unknown source name "
-                 "(\"{}\"), ignoring.",
-                 MessageProcessor.topic(), Message->getSourceName());
+    Logger->trace("Message from topic \"{}\" has an unknown source name "
+                  "(\"{}\"), ignoring.",
+                  MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
 
