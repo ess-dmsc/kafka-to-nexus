@@ -5,11 +5,8 @@
 /// \brief Writing module for the NICOS cache values.
 
 #pragma once
-#include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "NeXusDataset.h"
-
-#include <iostream>
 
 namespace NicosCacheWriter {
 
@@ -20,19 +17,6 @@ public:
   /// \brief Create the value dataset of NXLog.
   StringValue(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
               size_t ChunkSize = 1024);
-};
-
-class CacheReader : public FileWriter::FlatbufferReader {
-public:
-  bool verify(FileWriter::FlatbufferMessage const &Message) const override;
-
-  std::string
-  source_name(FileWriter::FlatbufferMessage const &Message) const override;
-
-  uint64_t
-  timestamp(FileWriter::FlatbufferMessage const &Message) const override;
-
-private:
 };
 
 class CacheWriter : public FileWriter::HDFWriterModule {

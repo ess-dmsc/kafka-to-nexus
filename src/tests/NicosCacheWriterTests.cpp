@@ -1,6 +1,7 @@
 #include "../json.h"
 #include "AddReader.h"
 #include "FlatbufferMessage.h"
+#include "schemas/ns10/NicosCacheReader.h"
 #include "schemas/ns10/NicosCacheWriter.h"
 #include <flatbuffers/flatbuffers.h>
 #include <fstream>
