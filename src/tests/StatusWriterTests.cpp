@@ -22,7 +22,7 @@ TEST(StatusWriter, emptyWriterHasDefaultFields) {
   FileWriter::Status::StatusWriter Writer;
   StreamMasterInfo sm;
   nlohmann::json json = nlohmann::json::parse(Writer.getJson());
-  std::string temp = json.dump();
+
   EXPECT_EQ(getValue<std::string>("type", json), "stream_master_status");
   EXPECT_EQ(getValue<int>("next_message_eta_ms", json), 0);
   EXPECT_EQ(getValue<int>("job_id", json), 0);
