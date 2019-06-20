@@ -63,6 +63,7 @@ initTopics(std::string const &TopicName, StreamerOptions const &Options,
 
 Streamer::StreamerStatus Streamer::closeStream() {
   Sources.clear();
+  RunStatus = StreamerStatus::HAS_FINISHED;
   return StreamerStatus::HAS_FINISHED;
 }
 
