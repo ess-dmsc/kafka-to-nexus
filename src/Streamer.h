@@ -69,7 +69,7 @@ public:
   /// See "Error.h".
   ///
   /// \return The current status.
-  StreamerStatus &runStatus() { return RunStatus; }
+  StreamerStatus runStatus() const { return RunStatus; }
 
   /// Return all the information about the messages consumed.
   Status::MessageInfo &messageInfo() { return MessageInfo; }
