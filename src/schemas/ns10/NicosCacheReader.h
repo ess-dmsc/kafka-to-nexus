@@ -15,13 +15,13 @@ namespace ns10 {
 
 class CacheReader : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FileWriter::FlatbufferMessage const &Message) const override;
+  bool verify(FlatbufferMessage const &Message) const override;
 
   std::string
-  source_name(FileWriter::FlatbufferMessage const &Message) const override;
+  source_name(FlatbufferMessage const &Message) const override;
 
   uint64_t
-  timestamp(FileWriter::FlatbufferMessage const &Message) const override;
+  timestamp(FlatbufferMessage const &Message) const override;
 
 private:
 };

@@ -41,8 +41,6 @@ public:
   int32_t close() override;
 
 protected:
-  void initValueDataset(hdf5::node::Group &Parent);
-
   std::string Sourcename;
   StringValue Values;
   hdf5::Dimensions ChunkSize{64};
