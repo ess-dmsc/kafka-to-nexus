@@ -142,9 +142,9 @@ public:
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   CacheWriter SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
-      FileWriter::HDFWriterModule_detail::InitResult::OK);
+              FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
-      FileWriter::HDFWriterModule_detail::InitResult::OK);
+              FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_EQ(SomeWriter.flush(), 0);
   EXPECT_EQ(SomeWriter.close(), 0);
 }
