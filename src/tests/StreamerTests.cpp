@@ -302,6 +302,54 @@ TEST_F(StreamerProcessTimingTest,
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
 
+TEST_F(StreamerProcessTimingTest,
+       ProcessMessageReturnsStopWhenStopOffsetHasAlreadyBeenReached) {
+  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
+      RegisterIt("f142");
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+  .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+  .RETURN(0);
+  std::string const HistoricalDataSourceName = "fw-test-helpers";
+  FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey, std::move(Writer));
+  std::unordered_map<std::string, Source> SourceList;
+  SourceList.emplace(HistoricalDataSourceName, std::move(TestSource));
+  TestStreamer->setSources(SourceList);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+
+  // The newly received message will have an offset of 10
+  int64_t StopOffset = 10;
+
+  // Second message which will be received
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+  .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
+      .TIMES(1);
+    // First message which will be received
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+  .RETURN(generateKafkaMsgWithValidFlatbuffer(HistoricalDataSourceName, 42, StopOffset))
+      .TIMES(1);
+  // The consumer will report that there is one partition and we should stop at
+  // offset 10
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+  .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+
+  // No stop time set yet
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
+
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+
+  // We already reached the stop offset, so STOP should be returned
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+}
+
 TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   // ProcessMessage will return Ok, because the message timestamp is after
   // the stop time so the empty payload is not accessed
