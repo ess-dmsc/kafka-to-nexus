@@ -109,9 +109,8 @@ Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
       // -1 as the high watermark is the last available offset + 1
       StopOffset =
           Consumer->getHighWatermarkOffset(TopicName, PartitionNumber) - 1;
-      if (StopOffset == -1) {
-        // If the high watermark is also -1 then we can already mark the stop
-        // offset for this partition as being reached
+      if (StopOffset < 0) {
+        // No data on topic at all so mark this partition as being reached
         OffsetsToStopAt[PartitionNumber].second = true;
         Logger->info(
             "No data on topic {} to consume before specified stop time",
@@ -144,6 +143,36 @@ bool Streamer::stopOffsetsReached(int32_t NewMessagePartition,
 ProcessMessageResult Streamer::processMessage(
     DemuxTopic &MessageProcessor,
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
+
+  if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
+    CatchingUpToStopOffset = true;
+    StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
+                                 MessageProcessor.topic());
+    // There may be no data in the topic, so check already if all stop offsets
+    // are marked as reached
+    bool NoDataInTopic =
+        std::all_of(StopOffsets.cbegin(), StopOffsets.cend(),
+                    [](std::pair<int64_t, bool> const &StopPair) {
+                      return StopPair.second;
+                    });
+    if (NoDataInTopic) {
+      Logger->warn("There was no data in {} to consume",
+                   MessageProcessor.topic());
+      return ProcessMessageResult::STOP;
+    }
+  }
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
+    return ProcessMessageResult::ERR;
+  }
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
+      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
+      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
+    return ProcessMessageResult::OK;
+  }
+
+  // If we reach this point we have a real message with a payload to deal with
 
   // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
   std::unique_ptr<FlatbufferMessage> Message;
@@ -225,35 +254,6 @@ ProcessMessageResult Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
       Consumer->poll();
 
-  if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
-    CatchingUpToStopOffset = true;
-    StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
-                                 MessageProcessor.topic());
-    // There may be no data in the topic, so check already if all stop offsets
-    // are marked as reached
-    bool NoDataInTopic =
-        std::all_of(StopOffsets.cbegin(), StopOffsets.cend(),
-                    [](std::pair<int64_t, bool> const &StopPair) {
-                      return StopPair.second;
-                    });
-    if (NoDataInTopic) {
-      Logger->warn("There was no data in {} to consume",
-                   MessageProcessor.topic());
-      return ProcessMessageResult::STOP;
-    }
-  }
-
-  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
-    return ProcessMessageResult::ERR;
-  }
-
-  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
-      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
-      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
-    return ProcessMessageResult::OK;
-  }
-
-  // If we reach this point we have a real message with a payload
   return processMessage(MessageProcessor, KafkaMessage);
 }
 
