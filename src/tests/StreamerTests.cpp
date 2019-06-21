@@ -308,11 +308,12 @@ TEST_F(StreamerProcessTimingTest,
       RegisterIt("f142");
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-  .RETURN(0);
+      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-  .RETURN(0);
+      .RETURN(0);
   std::string const HistoricalDataSourceName = "fw-test-helpers";
-  FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey, std::move(Writer));
+  FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
+                                std::move(Writer));
   std::unordered_map<std::string, Source> SourceList;
   SourceList.emplace(HistoricalDataSourceName, std::move(TestSource));
   TestStreamer->setSources(SourceList);
@@ -323,16 +324,17 @@ TEST_F(StreamerProcessTimingTest,
 
   // Second message which will be received
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-  .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
-    // First message which will be received
+  // First message which will be received
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
-  .RETURN(generateKafkaMsgWithValidFlatbuffer(HistoricalDataSourceName, 42, StopOffset))
+      .RETURN(generateKafkaMsgWithValidFlatbuffer(HistoricalDataSourceName, 42,
+                                                  StopOffset))
       .TIMES(1);
   // The consumer will report that there is one partition and we should stop at
   // offset 10
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
-  .RETURN(std::vector<int64_t>{StopOffset})
+      .RETURN(std::vector<int64_t>{StopOffset})
       .TIMES(1);
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -341,7 +343,8 @@ TEST_F(StreamerProcessTimingTest,
       });
   DemuxTopic Demuxer("SomeTopicName");
 
-  // No stop time set yet
+  // A message will be received here with an offset of 10
+  // however no stop time has been set yet, so expect OK
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
