@@ -52,11 +52,14 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(dock
     send_writer_command("commands/command-write-historical-data.json", producer, topic=command_topic,
                         start_time=str(start_time),
                         stop_time=str(stop_time))
+    # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
+    # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
 
-    sleep(5)
-    send_writer_command("commands/writer-exit.json", producer)
     filepath = "output-files/output_file_of_historical_data.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
+        # Expect to have recorded one value per ms between the start and stop time
         # +1 because time range for file writer is inclusive
         assert file["entry/historical_data/time"].len() == (stop_time - start_time + 1), \
             "Expected there to be one message per millisecond recorded between specified start and stop time"
+
+        assert file["entry/no_data/time"].len() == 0, "Expect there to be no data as the source topic is empty"

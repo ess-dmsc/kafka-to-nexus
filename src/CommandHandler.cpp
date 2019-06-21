@@ -451,6 +451,7 @@ void CommandHandler::handle(std::string const &Command,
     std::string CommandMain = CmdMaybe.inner();
     std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
                    ::tolower);
+    Logger->info("Handling a command of type: {}", CommandMain);
     if (CommandMain == "filewriter_new") {
       handleNew(JSONCommand, StartTime);
       return;

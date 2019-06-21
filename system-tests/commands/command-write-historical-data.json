@@ -28,6 +28,21 @@
                 }
               }
             ]
+          },
+          {
+            "type": "group",
+            "name": "no_data",
+            "children": [
+              {
+                "type": "stream",
+                "stream": {
+                  "type": "int32",
+                  "topic": "TEST_emptyTopic",
+                  "source": "other-source",
+                  "writer_module": "f142"
+                }
+              }
+            ]
           }
         ],
         "attributes": [

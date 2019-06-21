@@ -59,6 +59,11 @@ void Consumer::assignToPartitions(const std::string &Topic,
                                       &TopicPartitionsWithOffsets) const {
   RdKafka::ErrorCode ErrorCode =
       KafkaConsumer->assign(TopicPartitionsWithOffsets);
+  for (auto Partition : TopicPartitionsWithOffsets) {
+    Logger->trace("Assigning partition to consumer: Topic {}, Partition {}, "
+                  "Starting at offset {}",
+                  Topic, Partition->partition(), Partition->offset());
+  }
   for_each(TopicPartitionsWithOffsets.cbegin(),
            TopicPartitionsWithOffsets.cend(),
            [](RdKafka::TopicPartition *Partition) { delete Partition; });
