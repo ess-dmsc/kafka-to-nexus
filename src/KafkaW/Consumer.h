@@ -31,6 +31,7 @@ public:
                                std::chrono::milliseconds Time) = 0;
   virtual int64_t getHighWatermarkOffset(std::string const &Topic,
                                          int32_t Partition) = 0;
+  virtual std::vector<int64_t> getCurrentOffsets(std::string const &Topic) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -88,6 +89,12 @@ public:
   /// \return high watermark offset
   int64_t getHighWatermarkOffset(std::string const &Topic,
                                  int32_t Partition) override;
+
+  /// Get the current position of the consumer for each partition in the given
+  /// topic
+  /// \param Topic The name of the topic
+  /// \return Vector of current offset in each partition
+  std::vector<int64_t> getCurrentOffsets(std::string const &Topic) override;
 
 protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;

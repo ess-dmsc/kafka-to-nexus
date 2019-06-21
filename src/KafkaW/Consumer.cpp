@@ -33,6 +33,7 @@ void Consumer::addTopic(const std::string &Topic) {
       queryWatermarkOffsets(Topic);
   assignToPartitions(Topic, TopicPartitionsWithOffsets);
 }
+
 std::vector<RdKafka::TopicPartition *>
 Consumer::queryWatermarkOffsets(const std::string &Topic) {
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithOffsets;
@@ -54,6 +55,7 @@ Consumer::queryWatermarkOffsets(const std::string &Topic) {
   }
   return TopicPartitionsWithOffsets;
 }
+
 void Consumer::assignToPartitions(const std::string &Topic,
                                   const std::vector<RdKafka::TopicPartition *>
                                       &TopicPartitionsWithOffsets) const {
@@ -72,6 +74,29 @@ void Consumer::assignToPartitions(const std::string &Topic,
     Logger->error("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::v5::format("Could not assign to {}", Topic));
   }
+}
+
+std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
+  auto NumberOfPartitions = queryTopicPartitions(Topic).size();
+  std::vector<RdKafka::TopicPartition *> TopicPartitions;
+  for (unsigned int i = 0; i < NumberOfPartitions; i++) {
+    auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
+    TopicPartitions.push_back(TopicPartition);
+  }
+
+  auto Error = KafkaConsumer->position(TopicPartitions);
+  if (Error != RdKafka::ErrorCode::ERR_NO_ERROR) {
+    Logger->error("Kafka error while getting current offsets for topic {}: {}",
+                  Topic, Error);
+    throw std::runtime_error(fmt::format(
+        "Kafka error while getting offsets for topic {}: {}", Topic, Error));
+  }
+
+  std::vector<int64_t> CurrentOffsets(NumberOfPartitions);
+  for (auto TopicPartition : TopicPartitions) {
+    CurrentOffsets.push_back(TopicPartition->offset());
+  }
+  return CurrentOffsets;
 }
 
 std::vector<RdKafka::TopicPartition *>

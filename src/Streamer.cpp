@@ -90,6 +90,19 @@ bool Streamer::stopTimeExceeded(DemuxTopic &MessageProcessor) {
   return false;
 }
 
+void Streamer::markIfOffsetsAlreadyReached(
+    std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
+    std::string const &TopicName) {
+  auto CurrentOffsets = Consumer->getCurrentOffsets(TopicName);
+  for (size_t PartitionNumber = 0; PartitionNumber < CurrentOffsets.size();
+       PartitionNumber++) {
+    if (CurrentOffsets[PartitionNumber] >=
+        OffsetsToStopAt[PartitionNumber].first) {
+      OffsetsToStopAt[PartitionNumber].second = true;
+    }
+  }
+}
+
 /// Query Kafka brokers to find out the offset, in every partition, at which we
 /// should stop consuming
 std::vector<std::pair<int64_t, bool>>
@@ -116,11 +129,11 @@ Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
             "No data on topic {} to consume before specified stop time",
             TopicName);
       }
-      // TODO handle case that we have already reached the stop offset
     }
     OffsetsToStopAt[PartitionNumber].first = StopOffset;
     Logger->info("Stop offset for topic {}, partition {}, is {}", TopicName,
                  PartitionNumber, OffsetsToStopAt[PartitionNumber].first);
+    markIfOffsetsAlreadyReached(OffsetsToStopAt, TopicName);
   }
   return OffsetsToStopAt;
 }

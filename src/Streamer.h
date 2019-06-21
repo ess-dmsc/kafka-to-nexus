@@ -113,6 +113,11 @@ private:
   /// from Kafka and whether it has been reached yet
   /// Only set when the system time reaches the requested stop time
   std::vector<std::pair<int64_t, bool>> StopOffsets;
+
+  /// Check if the consumer has already reached the offset we want to stop at
+  void markIfOffsetsAlreadyReached(
+      std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
+      std::string const &TopicName);
 };
 
 /// \brief Create a consumer with options specified in the class

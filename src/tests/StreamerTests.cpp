@@ -285,6 +285,10 @@ TEST_F(StreamerProcessTimingTest,
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName, 42, StopOffset))
       .TIMES(1);
+  // When current offsets are looked up, report that we are on the offset before
+  // the stop offset
+  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+      .RETURN(std::vector<int64_t>{StopOffset - 1});
 
   // The consumer will report that there is one partition and we should stop at
   // offset 10
@@ -336,6 +340,9 @@ TEST_F(StreamerProcessTimingTest,
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{StopOffset})
       .TIMES(1);
+  REQUIRE_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+      .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -378,6 +385,8 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   std::vector<int64_t> ReturnedOffsets = {1};
   ALLOW_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(ReturnedOffsets);
+  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+      .RETURN(std::vector<int64_t>{0});
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
@@ -416,6 +425,8 @@ TEST_F(StreamerProcessTimingTest, NoMessagesInTopicAfterStopTime) {
       .RETURN(ReturnedOffsets);
   // and high watermark offset is also -1
   REQUIRE_CALL(*EmptyPollerConsumer, getHighWatermarkOffset(_, _)).RETURN(-1);
+  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+      .RETURN(std::vector<int64_t>{0});
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
