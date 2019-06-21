@@ -94,6 +94,7 @@ std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
 
   std::vector<int64_t> CurrentOffsets(NumberOfPartitions);
   for (auto TopicPartition : TopicPartitions) {
+    // cppcheck-suppress useStlAlgorithm
     CurrentOffsets.push_back(TopicPartition->offset());
   }
   return CurrentOffsets;
@@ -176,6 +177,7 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
   const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
       matchedTopic->partitions();
   for (const auto &Partition : *PartitionMetadata) {
+    // cppcheck-suppress useStlAlgorithm
     TopicPartitionNumbers.push_back(Partition->id());
   }
   sort(TopicPartitionNumbers.begin(), TopicPartitionNumbers.end());
