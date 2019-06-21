@@ -59,14 +59,15 @@ void Consumer::assignToPartitions(const std::string &Topic,
                                       &TopicPartitionsWithOffsets) const {
   RdKafka::ErrorCode ErrorCode =
       KafkaConsumer->assign(TopicPartitionsWithOffsets);
-  for (auto Partition : TopicPartitionsWithOffsets) {
-    Logger->trace("Assigning partition to consumer: Topic {}, Partition {}, "
-                  "Starting at offset {}",
-                  Topic, Partition->partition(), Partition->offset());
-  }
   for_each(TopicPartitionsWithOffsets.cbegin(),
            TopicPartitionsWithOffsets.cend(),
-           [](RdKafka::TopicPartition *Partition) { delete Partition; });
+           [this, &Topic](RdKafka::TopicPartition *Partition) {
+             Logger->trace(
+                 "Assigning partition to consumer: Topic {}, Partition {}, "
+                 "Starting at offset {}",
+                 Topic, Partition->partition(), Partition->offset());
+             delete Partition;
+           });
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     Logger->error("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::v5::format("Could not assign to {}", Topic));
