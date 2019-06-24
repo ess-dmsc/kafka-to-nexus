@@ -33,6 +33,7 @@ set(UnitTests_SRC
         f142_synth.cpp
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
+        NicosCacheWriterTests.cpp
         )
 
 set(UnitTests_INC
