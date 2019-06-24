@@ -148,7 +148,7 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {
-      size_t N = std::accumulate(DimsMem.begin(), DimsMem.end(), 1,
+      size_t N = std::accumulate(DimsMem.begin(), DimsMem.end(), size_t(1),
                                  std::multiplies<>());
       std::vector<DataType> Buffer(N);
       Dataset.read(Buffer, Type, SpaceMem, SpaceIn);

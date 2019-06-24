@@ -300,7 +300,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
   flatbuffers::Offset<void> DataValue;
   {
     size_t TotalElements = std::accumulate(
-        ThisLengths.begin(), ThisLengths.end(), 1, std::multiplies<>());
+        ThisLengths.begin(), ThisLengths.end(), size_t(1), std::multiplies<>());
 
     std::vector<uint64_t> Data(TotalElements);
     size_t N = 0;
@@ -328,7 +328,7 @@ createTestMessage(size_t HistogramID, size_t PacketID,
   flatbuffers::Offset<void> ErrorValue;
   {
     size_t TotalElements = std::accumulate(
-        ThisLengths.begin(), ThisLengths.end(), 1, std::multiplies<>());
+        ThisLengths.begin(), ThisLengths.end(), size_t(1), std::multiplies<>());
 
     std::vector<double> Data(TotalElements);
     for (size_t i = 0; i < Data.size(); ++i) {
