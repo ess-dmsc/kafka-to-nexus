@@ -365,6 +365,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
 
   for (int i = 0; i < 5; i++) {
     flatbuffers::FlatBufferBuilder builder;
+    // cppcheck-suppress invalidPointerCast
     GenerateFlatbuffer(builder, reinterpret_cast<uint8_t *>(&TestData[0]),
                        1000 * (sizeof(TestData[0])), FB_Tables::DType::Float64);
 
@@ -534,9 +535,9 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   std::iota(testData.begin(), testData.end(), 0);
 
   flatbuffers::FlatBufferBuilder builder;
+  // cppcheck-suppress invalidPointerCast
   GenerateFlatbuffer(builder, reinterpret_cast<uint8_t *>(&testData[0]),
                      1000 * (sizeof(testData[0])), FBType);
-
   FileWriter::FlatbufferMessage Message(
       reinterpret_cast<char *>(builder.GetBufferPointer()), builder.GetSize());
   ADWriterStandIn Writer;
