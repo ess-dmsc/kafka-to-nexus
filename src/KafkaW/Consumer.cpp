@@ -2,10 +2,10 @@
 #include "MetadataException.h"
 #include "Msg.h"
 #include "logger.h"
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <thread>
-#include <algorithm>
 
 namespace KafkaW {
 
@@ -118,8 +118,9 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
   std::vector<int32_t> TopicPartitionNumbers;
   const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
       matchedTopic->partitions();
-  std::transform(PartitionMetadata->begin(), PartitionMetadata->end(), std::back_inserter(TopicPartitionNumbers),
-      [](auto Partition) { return Partition->id();});
+  std::transform(PartitionMetadata->begin(), PartitionMetadata->end(),
+                 std::back_inserter(TopicPartitionNumbers),
+                 [](auto Partition) { return Partition->id(); });
   sort(TopicPartitionNumbers.begin(), TopicPartitionNumbers.end());
   return TopicPartitionNumbers;
 }
