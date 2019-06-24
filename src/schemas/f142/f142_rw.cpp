@@ -240,7 +240,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
       for (auto const &Info : DatasetInfoList) {
         Info.H5Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
-                                                        Info.ChunkBytes);
+                                                          Info.ChunkBytes);
         if (Info.H5Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR;
         }
