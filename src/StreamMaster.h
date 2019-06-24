@@ -198,8 +198,10 @@ private:
     RunStatus = StreamMasterError::RUNNING;
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
       for (auto &Demux : Demuxers) {
-        auto &s = Streamers[Demux.topic()];
-        processStreamResult(s, Demux);
+        auto &Stream = Streamers[Demux.topic()];
+        if (Stream.runStatus() != StreamerStatus::HAS_FINISHED) {
+          processStreamResult(Stream, Demux);
+        }
       }
     }
     RunStatus = StreamMasterError::HAS_FINISHED;
@@ -231,11 +233,12 @@ private:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
-    for (auto &s : Streamers) {
-      Logger->info("Shut down {}", s.first);
-      auto v = s.second.closeStream();
-      if (v != StreamerStatus::HAS_FINISHED) {
-        Logger->info("While stopping {} : {}", s.first, Status::Err2Str(v));
+    for (auto &Stream : Streamers) {
+      Logger->info("Shut down {}", Stream.first);
+      auto CloseResult = Stream.second.closeStream();
+      if (CloseResult != StreamerStatus::HAS_FINISHED) {
+        Logger->info("While stopping {} : {}", Stream.first,
+                     Status::Err2Str(CloseResult));
       } else {
         Logger->info("\t...done");
       }
