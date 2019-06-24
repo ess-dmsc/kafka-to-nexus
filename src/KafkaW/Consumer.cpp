@@ -5,6 +5,7 @@
 #include <atomic>
 #include <chrono>
 #include <thread>
+#include <algorithm>
 
 namespace KafkaW {
 
@@ -117,9 +118,8 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
   std::vector<int32_t> TopicPartitionNumbers;
   const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
       matchedTopic->partitions();
-  for (const auto &Partition : *PartitionMetadata) {
-    TopicPartitionNumbers.push_back(Partition->id());
-  }
+  std::transform(PartitionMetadata->begin(), PartitionMetadata->end(), std::back_inserter(TopicPartitionNumbers),
+      [](auto Partition) { return Partition->id();});
   sort(TopicPartitionNumbers.begin(), TopicPartitionNumbers.end());
   return TopicPartitionNumbers;
 }

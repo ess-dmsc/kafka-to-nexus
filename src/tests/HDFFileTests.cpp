@@ -575,6 +575,7 @@ public:
       };
 
       for (auto &source : sources) {
+        // cppcheck-suppress useStlAlgorithm
         Children.push_back(json_stream(source.source, source.topic, "ev42",
                                        source.run_parallel));
       }

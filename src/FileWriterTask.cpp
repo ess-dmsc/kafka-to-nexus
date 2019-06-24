@@ -85,6 +85,7 @@ void FileWriterTask::addSource(Source &&Source) {
 
   // If source already exists then replace
   for (auto &Demux : Demuxers) {
+    // cppcheck-suppress useStlAlgorithm
     if (Demux.topic() == Source.topic()) {
       Demux.add_source(std::move(Source));
       return;
