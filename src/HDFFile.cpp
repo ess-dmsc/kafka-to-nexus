@@ -756,6 +756,7 @@ void createHDFStructures(
       if (Type == "stream") {
         string pathstr;
         for (auto &x : Path) {
+          // cppcheck-suppress useStlAlgorithm
           pathstr += "/" + x;
         }
 

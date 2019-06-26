@@ -43,6 +43,7 @@ FlatBufferWrapper Synth::next(uint64_t const TestValue,
     using T = double;
     T *BufferPtr = nullptr;
     auto d1 = ret.builder->CreateUninitializedVector(
+        // cppcheck-suppress invalidPointerCast
         NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
     for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
       BufferPtr[i1] = TestValue;
@@ -56,6 +57,7 @@ FlatBufferWrapper Synth::next(uint64_t const TestValue,
     using T = float;
     T *BufferPtr = nullptr;
     auto d1 = ret.builder->CreateUninitializedVector(
+        // cppcheck-suppress invalidPointerCast
         NrOfElements, sizeof(T), reinterpret_cast<uint8_t **>(&BufferPtr));
     for (size_t i1 = 0; i1 < NrOfElements; ++i1) {
       BufferPtr[i1] = TestValue;

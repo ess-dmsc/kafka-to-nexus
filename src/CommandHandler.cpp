@@ -261,6 +261,7 @@ void CommandHandler::handleNew(const json &JSONCommand,
           find<bool>("abort_on_uninitialised_stream", JSONCommand)) {
     if (ThrowOnUninitialisedStreamMaybe.inner()) {
       for (auto const &Item : StreamHDFInfoList) {
+        // cppcheck-suppress useStlAlgorithm
         if (!Item.InitialisedOk) {
           throw std::runtime_error(fmt::format("Could not initialise {}  {}",
                                                Item.HDFParentName,

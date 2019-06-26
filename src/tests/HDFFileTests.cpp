@@ -575,6 +575,7 @@ public:
       };
 
       for (auto &source : sources) {
+        // cppcheck-suppress useStlAlgorithm
         Children.push_back(json_stream(source.source, source.topic, "ev42",
                                        source.run_parallel));
       }
@@ -1169,7 +1170,6 @@ TEST(HDFFile, createStaticDatasetsStrings) {
 }
   )"");
   CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
-  auto CommandString = CommandJSON.dump();
   std::string Filename = CommandJSON["file_attributes"]["file_name"];
   ASSERT_GT(Filename.size(), 8u);
   std::vector<FileWriter::StreamHDFInfo> NoStreams;

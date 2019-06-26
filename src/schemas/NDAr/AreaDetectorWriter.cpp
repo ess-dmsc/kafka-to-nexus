@@ -166,8 +166,9 @@ void AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
       epicsTimeToNsec(NDAr->epicsTS()->secPastEpoch(), NDAr->epicsTS()->nsec());
   FB_Tables::DType Type = NDAr->dataType();
   auto DataPtr = NDAr->pData()->Data();
-  auto NrOfElements = std::accumulate(
-      std::begin(DataShape), std::end(DataShape), 1, std::multiplies<>());
+  auto NrOfElements =
+      std::accumulate(std::begin(DataShape), std::end(DataShape), size_t(1),
+                      std::multiplies<>());
 
   switch (Type) {
   case FB_Tables::DType::Int8:

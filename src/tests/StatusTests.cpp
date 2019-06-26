@@ -88,8 +88,8 @@ TEST(StreamMasterInfo, accumulateInfoFromManyStreamers) {
   const int NumStreamers{13};
   StreamMasterInfo Info;
 
-  double TotalMessages{0.0}, TotalMessages2{0.0};
-  double TotalSize{0.0}, TotalSize2{0.0};
+  double TotalMessages{0.0};
+  double TotalSize{0.0};
   double TotalErrors{0.0};
 
   for (int s = 0; s < NumStreamers; ++s) {
@@ -100,9 +100,7 @@ TEST(StreamMasterInfo, accumulateInfoFromManyStreamers) {
       MsgInfo.newMessage(MessageSize);
 
       TotalMessages += 1.0;
-      TotalMessages2 += 1.0;
       TotalSize += MessageSize * 1e-6;
-      TotalSize2 += MessageSize * MessageSize * 1e-12;
     }
     for (uint64_t ErrorCounter = 0; ErrorCounter < NumErrors; ++ErrorCounter) {
       MsgInfo.error();

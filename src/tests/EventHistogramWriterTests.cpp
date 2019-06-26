@@ -199,7 +199,7 @@ TEST_F(EventHistogramWriter, WriterTypedWithoutShapeThrows) {
 }
 
 TEST_F(EventHistogramWriter, WriterTypedCreatedFromValidJsonInput) {
-  auto TheWriterTyped = WriterTyped<uint64_t, double, uint64_t>::createFromJson(
+  WriterTyped<uint64_t, double, uint64_t>::createFromJson(
       createTestWriterTypedJson());
 }
 
@@ -230,7 +230,7 @@ TEST_F(EventHistogramWriter, WriterTypedCreateHDFStructure) {
   std::string StoredJson;
   Group.attributes["created_from_json"].read(StoredJson);
   ASSERT_EQ(json::parse(StoredJson), Json);
-  auto Dataset = Group.get_dataset("histograms");
+  Group.get_dataset("histograms");
   ASSERT_EQ(Group.get_dataset("x_detector").datatype(),
             hdf5::datatype::create<double>().native_type());
 }
@@ -244,8 +244,7 @@ TEST_F(EventHistogramWriter, WriterTypedReopen) {
   auto Group = File.root();
   size_t ChunkBytes = 2 * 1024 * 1024;
   TheWriterTyped->createHDFStructure(Group, ChunkBytes);
-  TheWriterTyped =
-      WriterTyped<uint64_t, double, uint64_t>::createFromHDF(Group);
+  WriterTyped<uint64_t, double, uint64_t>::createFromHDF(Group);
 }
 
 uint64_t getValueAtFlatIndex(uint32_t HistogramID, size_t Index,
@@ -300,10 +299,9 @@ createTestMessage(size_t HistogramID, size_t PacketID,
 
   flatbuffers::Offset<void> DataValue;
   {
-    size_t TotalElements = 1;
-    for (auto x : ThisLengths) {
-      TotalElements *= x;
-    }
+    size_t TotalElements = std::accumulate(
+        ThisLengths.begin(), ThisLengths.end(), size_t(1), std::multiplies<>());
+
     std::vector<uint64_t> Data(TotalElements);
     size_t N = 0;
     for (size_t I0 = 0; I0 < ThisLengths.at(0); ++I0) {
@@ -329,10 +327,9 @@ createTestMessage(size_t HistogramID, size_t PacketID,
 
   flatbuffers::Offset<void> ErrorValue;
   {
-    size_t TotalElements = 1;
-    for (auto x : ThisLengths) {
-      TotalElements *= x;
-    }
+    size_t TotalElements = std::accumulate(
+        ThisLengths.begin(), ThisLengths.end(), size_t(1), std::multiplies<>());
+
     std::vector<double> Data(TotalElements);
     for (size_t i = 0; i < Data.size(); ++i) {
       Data.at(i) = i * 1e-5;
