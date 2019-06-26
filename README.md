@@ -12,13 +12,15 @@ Part of the ESS data streaming pipeline.
 
 ```
   -h,--help                   Print this help message and exit
-  --commands-json TEXT        Specify a json file to set config
-  --command-uri URI (REQUIRED)
-                              <//host[:port][/topic]> Kafka broker/topic to listen for commands
-  --status-uri URI            <//host[:port][/topic]> Kafka broker/topic to publish status updates on
-  --graylog-logger-address TEXT
+  --version                   Print application version and exit
+  --commands-json TEXT:FILE   Specify a json file to set config
+  --command-uri URI REQUIRED  <host[:port][/topic]> Kafka broker/topic to listen for commands
+  --status-uri URI            <host[:port][/topic]> Kafka broker/topic to publish status updates on
+  --graylog-logger-address URI
                               <host:port> Log to Graylog via graylog_logger library
-  -v,--verbosity INT=3        Set logging level. 3 == Error, 7 == Debug. Default: 3 (Error)
+  -v,--verbosity              Set log message level. Set to 0 - 5 or one of
+                              `Trace`, `Debug`, `Info`, `Warning`, `Error`
+                              or `Critical`. Ex: "-v Debug". Default: `Error`
   --hdf-output-prefix TEXT    <absolute/or/relative/directory> Directory which gets prepended to the HDF output filenames in the file write commands
   --logpid-sleep              
   --use-signal-handler        
