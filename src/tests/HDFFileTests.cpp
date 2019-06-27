@@ -17,12 +17,12 @@
 #include <unistd.h>
 #include <vector>
 
+using nlohmann::json;
 using std::string;
 using std::vector;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
-using nlohmann::json;
 
 MainOpt getTestOptions() {
   MainOpt TestOptions;

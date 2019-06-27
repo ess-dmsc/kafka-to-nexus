@@ -146,7 +146,8 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   }
 
   if (Sources.find(Message->getSourceHash()) == Sources.end()) {
-    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is unknown, ignoring.",
+    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
+                 "unknown, ignoring.",
                  MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
@@ -173,7 +174,8 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
       Logger->info("Remove source {}", Message->getSourceName());
       return ProcessMessageResult::STOP;
     }
-    Logger->warn("Can't remove source {}, not in the source list", Message->getSourceName());
+    Logger->warn("Can't remove source {}, not in the source list",
+                 Message->getSourceName());
     return ProcessMessageResult::ERR;
   }
 

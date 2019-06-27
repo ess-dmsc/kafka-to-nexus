@@ -11,11 +11,11 @@ namespace Schemas {
 namespace f142 {
 #include "schemas/f142_logdata_generated.h"
 }
-}
-}
+} // namespace Schemas
+} // namespace FileWriter
 
-using trompeloeil::_;
 using KafkaW::PollStatus;
+using trompeloeil::_;
 using namespace FileWriter;
 
 std::unique_ptr<std::pair<PollStatus, Msg>>
@@ -64,17 +64,17 @@ TEST_F(StreamerInitTest, CheckTopicExists) {
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
-  EXPECT_THROW(
-      Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
-                                         StreamerOptions().BrokerSettings)),
-      std::runtime_error);
+  EXPECT_THROW(Streamer("", "topic", Options,
+                        std::make_unique<ConsumerEmptyStandIn>(
+                            StreamerOptions().BrokerSettings)),
+               std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
-  EXPECT_THROW(
-      Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
-                                          StreamerOptions().BrokerSettings)),
-      std::runtime_error);
+  EXPECT_THROW(Streamer("broker", "", Options,
+                        std::make_unique<ConsumerEmptyStandIn>(
+                            StreamerOptions().BrokerSettings)),
+               std::runtime_error);
 }
 
 class StreamerStandIn : public Streamer {
@@ -299,7 +299,8 @@ TEST_F(StreamerProcessTimingTest,
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
 
   TestStreamer->setSources(SourceList);
@@ -330,7 +331,8 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -372,7 +374,8 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -409,7 +412,8 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -452,7 +456,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -486,7 +491,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -534,7 +540,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
 

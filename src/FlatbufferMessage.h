@@ -87,13 +87,13 @@ public:
   ///
   /// \return The std::hash<std::string> from flatbuffer id + source name.
   /// Returns 0 if flatbuffer is invalid.
-  SrcHash getSourceHash() const {return SourceNameIDHash;};
+  SrcHash getSourceHash() const { return SourceNameIDHash; };
 
   /// \brief Get flatbuffer ID.
   ///
-  /// \return Returns the four character flatbuffer ID or empty string if invalid.
-  std::string getFlatbufferID() const {return ID;};
-
+  /// \return Returns the four character flatbuffer ID or empty string if
+  /// invalid.
+  std::string getFlatbufferID() const { return ID; };
 
   /// \brief Get pointer to flatbuffer.
   ///

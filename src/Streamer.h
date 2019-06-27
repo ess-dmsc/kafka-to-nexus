@@ -57,7 +57,8 @@ public:
   ///
   /// \return The number of sources.
   const size_t numSources() const { return Sources.size(); }
-  void setSources(std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
+  void setSources(
+      std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
 
   /// \brief Removes the source from the sources list.
   ///

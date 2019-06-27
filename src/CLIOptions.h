@@ -7,7 +7,7 @@
 namespace CLI {
 class App;
 class Option;
-}
+} // namespace CLI
 namespace uri {
 struct URI;
 }
