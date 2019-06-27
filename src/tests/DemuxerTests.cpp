@@ -105,9 +105,10 @@ TEST_F(DemuxerTest, Success) {
   DemuxTopic TestDemuxer("SomeTopicName");
   DummyWriter::ptr Writer(new DummyWriter);
   Source DummySource(SourceName, TestKey, std::move(Writer));
-  TestDemuxer.add_source(std::move(DummySource));
+  auto UsedHash = DummySource.getHash();
+      TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
-  EXPECT_FALSE(TestDemuxer.sources().find(DummySource.getHash()) ==
+  EXPECT_FALSE(TestDemuxer.sources().find(UsedHash) ==
                TestDemuxer.sources().end());
   EXPECT_NO_THROW(Result = TestDemuxer.process_message(CurrentMessage));
   EXPECT_EQ(Result, ProcessMessageResult::OK);
@@ -132,9 +133,10 @@ TEST_F(DemuxerTest, WrongFlatbufferID) {
   DummyWriter::ptr Writer(new DummyWriter);
   std::string AltKey("temi");
   Source DummySource(SourceName, AltKey, std::move(Writer));
+  auto UsedHash = DummySource.getHash();
   TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
-  EXPECT_FALSE(TestDemuxer.sources().find(DummySource.getHash()) ==
+  EXPECT_FALSE(TestDemuxer.sources().find(UsedHash) ==
                TestDemuxer.sources().end());
   EXPECT_NO_THROW(Result = TestDemuxer.process_message(CurrentMessage));
   EXPECT_EQ(Result, ProcessMessageResult::ERR);
