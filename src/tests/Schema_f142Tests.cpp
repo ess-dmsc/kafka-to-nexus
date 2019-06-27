@@ -164,9 +164,7 @@ TEST_F(Schema_f142, writeArrayFloat) {
     "array_size": 5
   })"");
   std::vector<std::vector<DT>> Expected{
-      {4, 8, 1, 9, 4},
-      {5, 7, 0, 3, 6},
-      {4, 2, 2, 4, 2},
+      {4, 8, 1, 9, 4}, {5, 7, 0, 3, 6}, {4, 2, 2, 4, 2},
   };
   auto File = createInMemoryTestFile("Schema_f142.writeArrayFloat");
   {
@@ -343,9 +341,7 @@ TEST_F(Schema_f142, writeArrayFloatWithLatest) {
     "array_size": 5
   })"");
   std::vector<std::vector<DT>> Expected{
-      {4, 8, 1, 9, 4},
-      {5, 7, 0, 3, 6},
-      {4, 2, 2, 4, 2},
+      {4, 8, 1, 9, 4}, {5, 7, 0, 3, 6}, {4, 2, 2, 4, 2},
   };
   auto File =
       createInMemoryTestFile("Schema_f142.writeArrayFloatWithLatest", true);
