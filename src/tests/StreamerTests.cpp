@@ -64,17 +64,17 @@ TEST_F(StreamerInitTest, CheckTopicExists) {
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoBrokerProvided) {
-  EXPECT_THROW(Streamer("", "topic", Options,
-                        std::make_unique<ConsumerEmptyStandIn>(
-                            StreamerOptions().BrokerSettings)),
-               std::runtime_error);
+  EXPECT_THROW(
+      Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                         StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, ThrowsIfNoTopicProvided) {
-  EXPECT_THROW(Streamer("broker", "", Options,
-                        std::make_unique<ConsumerEmptyStandIn>(
-                            StreamerOptions().BrokerSettings)),
-               std::runtime_error);
+  EXPECT_THROW(
+      Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                          StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 class StreamerStandIn : public Streamer {
@@ -569,9 +569,9 @@ TEST_F(StreamerProcessTest, RemoveSource) {
   std::string ReaderKey = "temp";
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-  .RETURN(0);
+      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-  .RETURN(0);
+      .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
   auto UsedHash = TestSource.getHash();
   std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
