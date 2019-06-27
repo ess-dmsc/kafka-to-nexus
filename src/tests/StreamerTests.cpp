@@ -298,8 +298,8 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
 
   TestStreamer->setSources(SourceList);
@@ -329,8 +329,8 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -371,8 +371,8 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -408,8 +408,8 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -451,8 +451,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -485,8 +485,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -533,8 +533,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(), std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
 

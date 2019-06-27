@@ -107,7 +107,7 @@ TEST_F(DemuxerTest, Success) {
   Source DummySource(SourceName, TestKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
-  EXPECT_NO_THROW(TestDemuxer.sources().at(SourceName));
+  EXPECT_FALSE(TestDemuxer.sources().find(DummySource.getHash()) == TestDemuxer.sources().end());
   EXPECT_NO_THROW(Result = TestDemuxer.process_message(CurrentMessage));
   EXPECT_EQ(Result, ProcessMessageResult::OK);
   EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(1));
@@ -133,13 +133,13 @@ TEST_F(DemuxerTest, WrongFlatbufferID) {
   Source DummySource(SourceName, AltKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
-  EXPECT_NO_THROW(TestDemuxer.sources().at(SourceName));
+  EXPECT_FALSE(TestDemuxer.sources().find(DummySource.getHash()) == TestDemuxer.sources().end());
   EXPECT_NO_THROW(Result = TestDemuxer.process_message(CurrentMessage));
   EXPECT_EQ(Result, ProcessMessageResult::ERR);
-  EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(1));
-  EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
+  EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(0));
+  EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(0));
+  EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(0));
+  EXPECT_EQ(TestDemuxer.error_no_source_instance.load(), size_t(1));
 }
 
 TEST_F(DemuxerTest, WrongSourceName) {

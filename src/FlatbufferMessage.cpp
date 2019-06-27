@@ -1,5 +1,6 @@
 #include "FlatbufferMessage.h"
 #include "FlatbufferReader.h"
+#include <functional>
 
 namespace FileWriter {
 
@@ -7,6 +8,10 @@ FlatbufferMessage::FlatbufferMessage(char const *const BufferPtr,
                                      size_t const Size)
     : DataPtr(BufferPtr), DataSize(Size) {
   extractPacketInfo();
+}
+
+FlatbufferMessage::SrcHash calcSourceHash(std::string ID, std::string Name) {
+  return std::hash<std::string>{}(ID + Name);
 }
 
 void FlatbufferMessage::extractPacketInfo() {
@@ -26,6 +31,8 @@ void FlatbufferMessage::extractPacketInfo() {
     }
     Sourcename = Reader->source_name(*this);
     Timestamp = Reader->timestamp(*this);
+    SourceNameIDHash = calcSourceHash(FlatbufferID, Sourcename);
+    ID = FlatbufferID;
   } catch (std::out_of_range &E) {
     Valid = false;
     throw UnknownFlatbufferID(fmt::format(
