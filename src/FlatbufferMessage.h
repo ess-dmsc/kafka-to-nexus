@@ -118,5 +118,6 @@ private:
   bool Valid{false};
 };
 
-FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID, std::string const &Name);
+FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID,
+                                          std::string const &Name);
 } // namespace FileWriter

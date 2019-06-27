@@ -106,7 +106,7 @@ TEST_F(DemuxerTest, Success) {
   DummyWriter::ptr Writer(new DummyWriter);
   Source DummySource(SourceName, TestKey, std::move(Writer));
   auto UsedHash = DummySource.getHash();
-      TestDemuxer.add_source(std::move(DummySource));
+  TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
   EXPECT_FALSE(TestDemuxer.sources().find(UsedHash) ==
                TestDemuxer.sources().end());

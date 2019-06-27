@@ -10,7 +10,8 @@ FlatbufferMessage::FlatbufferMessage(char const *const BufferPtr,
   extractPacketInfo();
 }
 
-FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID, std::string const &Name) {
+FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID,
+                                          std::string const &Name) {
   return std::hash<std::string>{}(ID + Name);
 }
 
