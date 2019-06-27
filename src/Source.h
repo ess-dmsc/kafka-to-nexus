@@ -21,7 +21,7 @@ public:
   ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
-  FlatbufferMessage::SrcHash getHash() {return Hash;};
+  FlatbufferMessage::SrcHash getHash() { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
   void close_writer_module();
   bool is_parallel = false;

@@ -562,3 +562,24 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
+
+TEST_F(StreamerProcessTest, RemoveSource) {
+  StreamerStandIn TestStreamer(Options);
+  std::string SourceName = "TestName";
+  std::string ReaderKey = "temp";
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+  .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+  .RETURN(0);
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  auto UsedHash = TestSource.getHash();
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
+  SourceList.insert(std::move(TempPair));
+
+  TestStreamer.setSources(SourceList);
+  EXPECT_TRUE(TestStreamer.removeSource(UsedHash));
+  EXPECT_FALSE(TestStreamer.removeSource(UsedHash));
+}

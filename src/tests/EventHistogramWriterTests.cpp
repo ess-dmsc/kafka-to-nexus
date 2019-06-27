@@ -23,12 +23,12 @@ namespace hs00 {
 } // namespace FileWriter
 
 using json = nlohmann::json;
-using FileWriter::Schemas::hs00::UnexpectedJsonInput;
 using FileWriter::Schemas::hs00::Dimension;
 using FileWriter::Schemas::hs00::Shape;
 using FileWriter::Schemas::hs00::Slice;
-using FileWriter::Schemas::hs00::WriterTyped;
+using FileWriter::Schemas::hs00::UnexpectedJsonInput;
 using FileWriter::Schemas::hs00::Writer;
+using FileWriter::Schemas::hs00::WriterTyped;
 
 static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
     FlatbufferReaders;

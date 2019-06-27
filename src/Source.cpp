@@ -8,7 +8,8 @@
 namespace FileWriter {
 
 Source::Source(std::string Name, std::string ID, HDFWriterModule::ptr Writer)
-    : SourceName(std::move(Name)), SchemaID(std::move(ID)), Hash(calcSourceHash(SchemaID, SourceName)),
+    : SourceName(std::move(Name)), SchemaID(std::move(ID)),
+      Hash(calcSourceHash(SchemaID, SourceName)),
       WriterModule(std::move(Writer)) {}
 
 Source::~Source() { close_writer_module(); }

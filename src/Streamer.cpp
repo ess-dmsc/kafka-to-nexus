@@ -204,5 +204,6 @@ bool FileWriter::Streamer::removeSource(FlatbufferMessage::SrcHash Hash) {
   if (Sources.find(Hash) == Sources.end()) {
     return false;
   }
+  Sources.erase(Hash);
   return true;
 }
