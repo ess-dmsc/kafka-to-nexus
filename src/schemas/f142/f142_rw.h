@@ -136,8 +136,8 @@ struct WriterFactoryScalar : public WriterFactory {
       ValueTraits<FB_VALUE_TYPE>::enum_value;
 
   std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
+  createWriter(hdf5::node::Group Group, std::string Name, size_t /*Columns*/,
+               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
                Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID,
@@ -157,7 +157,7 @@ struct WriterFactoryArray : public WriterFactory {
 
   std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
+               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
                Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns,
@@ -175,9 +175,9 @@ struct WriterFactoryScalarString : public WriterFactory {
       ValueTraits<String>::enum_value;
 
   std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
-               Mode OpenMode) override {
+  createWriter(hdf5::node::Group Group, std::string Name, size_t /*Columns*/,
+               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
+               Mode /*OpenMode*/) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterScalarString(Group, Name, Mode::Create));
   }

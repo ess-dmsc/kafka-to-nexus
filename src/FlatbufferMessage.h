@@ -55,7 +55,7 @@ public:
   /// \throws     FileWriter::NotValidFlatbuffer The constructor runs
   /// FileWriter::FlatbufferReader::verify() on the flatbuffer and this
   /// exception is thrown if it returns false.
-  FlatbufferMessage(char const *BufferPtr, size_t const Size);
+  FlatbufferMessage(char const *BufferPtr, size_t Size);
 
   /// Default destructor.
   ~FlatbufferMessage() = default;
@@ -84,7 +84,7 @@ public:
   ///
   /// \return Pointer to flatbuffer data if flatbuffer is valid, `nullptr` if it
   /// is not.
-  char const *const data() const { return DataPtr; };
+  char const * data() const { return DataPtr; };
 
   /// \brief Get size of flatbuffer.
   ///
