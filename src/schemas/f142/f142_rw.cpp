@@ -137,8 +137,9 @@ createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
 }
 
 /// Parse the configuration for this stream.
-void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
-                                   std::string const &ConfigurationModule) {
+void HDFWriterModule::parse_config(
+    std::string const &ConfigurationStream,
+    std::string const & /*ConfigurationModule*/) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
   if (auto SourceNameMaybe =
           find<std::string>("source", ConfigurationStreamJson)) {

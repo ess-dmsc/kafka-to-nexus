@@ -70,7 +70,7 @@ public:
   ///
   /// \return `true` if the data was verified as "correct", `false` otherwise.
   // cppcheck-suppress functionStatic
-  bool verify(FileWriter::FlatbufferMessage const &Message) const override {
+  bool verify(FileWriter::FlatbufferMessage const &/*Message*/) const override {
     std::cout << "ReaderClass::verify()\n";
     return true;
   }
@@ -97,7 +97,7 @@ public:
   /// \return The name of the source of the data in the flatbuffer pointed to by
   /// the Message parameter.
   // cppcheck-suppress functionStatic
-  std::string source_name(FileWriter::FlatbufferMessage const &Message) const override {
+  std::string source_name(FileWriter::FlatbufferMessage const &/*Message*/) const override {
     std::cout << "ReaderClass::source_name()\n";
     return "";
   }
@@ -121,7 +121,7 @@ public:
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
   /// (see above).
   // cppcheck-suppress functionStatic
-  uint64_t timestamp(FileWriter::FlatbufferMessage const &Message) const override {
+  uint64_t timestamp(FileWriter::FlatbufferMessage const &/*Message*/) const override {
     std::cout << "ReaderClass::timestamp()\n";
     return 0;
   }
@@ -177,8 +177,8 @@ public:
   /// relevant only to the current instance of this file writing module.
   /// \param[in] config_module This parameter is currently unused and thus any
   /// calls to this member function will have this parameter set to `nullptr`.
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override {
+  void parse_config(std::string const &/*ConfigurationStream*/,
+                    std::string const &/*ConfigurationModule*/) override {
     std::cout << "WriterClass::parse_config()\n";
   }
 
@@ -220,8 +220,8 @@ public:
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override {
+  InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/,
+                      std::string const &/*HDFAttributes*/) override {
     std::cout << "WriterClass::init_hdf()\n";
     return InitResult::OK;
   }
@@ -255,7 +255,7 @@ public:
   /// constructed using the static methods InitResult::OK(),
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   // cppcheck-suppress functionStatic
-  InitResult reopen(hdf5::node::Group &HDFGroup) override {
+  InitResult reopen(hdf5::node::Group &/*HDFGroup*/) override {
     std::cout << "WriterClass::reopen()\n";
     return InitResult::OK;
   }
@@ -282,7 +282,7 @@ public:
   /// \param[in] Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
   // cppcheck-suppress functionStatic
-  void write(FileWriter::FlatbufferMessage const &Message) override {
+  void write(FileWriter::FlatbufferMessage const &/*Message*/) override {
     std::cout << "WriterClass::write()\n";
   }
 

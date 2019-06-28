@@ -9,7 +9,7 @@
 SharedLogger getLogger() { return spdlog::get("filewriterlogger"); }
 
 void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
-                  const std::string &ServiceID, const std::string &LogFile,
+                  const std::string & /*ServiceID*/, const std::string &LogFile,
                   const uri::URI &GraylogURI) {
   std::vector<spdlog::sink_ptr> sinks;
   if (!LogFile.empty()) {
@@ -22,7 +22,7 @@ void setUpLogging(const spdlog::level::level_enum &LoggingLevel,
 #ifdef HAVE_GRAYLOG_LOGGER
     auto GraylogSink = std::make_shared<spdlog::sinks::graylog_sink_mt>(
         LoggingLevel,
-        GraylogURI.HostPort.substr(0, GraylogURI.HostPort.find(":")),
+        GraylogURI.HostPort.substr(0, GraylogURI.HostPort.find(':')),
         GraylogURI.Port);
     GraylogSink->set_pattern("[%l] [processID: %P]: %v");
     sinks.push_back(GraylogSink);

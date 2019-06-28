@@ -1,4 +1,4 @@
-#include "tests/ev42_synth.h"
+#include "ev42_synth.h"
 #include "logger.h"
 #include <random>
 
