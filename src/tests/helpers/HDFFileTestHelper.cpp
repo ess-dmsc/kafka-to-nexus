@@ -1,4 +1,4 @@
-#include "HDFFileTestHelper.h"
+#include "tests/helpers/HDFFileTestHelper.h"
 
 namespace HDFFileTestHelper {
 

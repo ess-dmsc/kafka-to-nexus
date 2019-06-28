@@ -1,4 +1,4 @@
-#include "f142_synth.h"
+#include "tests/helpers/f142_synth.h"
 #include <random>
 
 namespace FlatBufs {
