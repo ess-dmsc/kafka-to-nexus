@@ -1,4 +1,4 @@
-#include "tests/helpers/StubWriterModule.h"
+#include "helpers/StubWriterModule.h"
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
