@@ -49,7 +49,7 @@ protected:
 class ConsumerEmptyStandIn
     : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
 public:
-  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
+  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &/*Settings*/){};
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
   IMPLEMENT_MOCK1(topicPresent);
@@ -207,22 +207,22 @@ TEST_F(StreamerProcessTest, InvalidMessage) {
 
 class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return std::string("SomeRandomSourceName");
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 0;
   }
 };
 
 class StreamerTestDummyReader : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return std::string("SomeRandomSourceName");
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 1;
   }
 };
@@ -352,11 +352,11 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
 class StreamerHighTimestampTestDummyReader
     : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return std::string("SomeRandomSourceName");
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 5000000;
   }
 };
@@ -508,11 +508,11 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
 class StreamerMessageSlightlyAfterStopTestDummyReader
     : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return std::string("SomeRandomSourceName");
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 1;
   }
 };

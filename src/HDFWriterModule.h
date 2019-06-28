@@ -48,14 +48,14 @@ public:
   /// stream to allow the `HDFWriterModule` to create any structures in the HDF
   /// file.
   ///
-  /// \param[in] HDFGroup     The \p HDFGroup into which this HDFWriterModule
+  /// \param HDFGroup The \p HDFGroup into which this HDFWriterModule
   /// should write its data.
-  /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
+  /// \param HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
   /// HDFWriterModule is free to create the structure and data sets according to
   /// its needs, it must also take the responsibility to write these
   /// attributes.
-  /// \param[in] HDFAttributes Json string of the attributes associated with the
+  /// \param HDFAttributes Json string of the attributes associated with the
   /// stream, as defined by the "attributes" key in the Nexus structure.
   ///
   /// \return The result.

@@ -3,11 +3,11 @@
 #include "URI.h"
 #include <CLI/CLI.hpp>
 
-CLI::Option *uriOption(CLI::App &App, const std::string &Name, uri::URI &URIArg,
+CLI::Option *uriOption(CLI::App &App, const std::string &Name,
                        CLI::callback_t Fun, const std::string &Description,
                        bool Defaulted) {
 
-  CLI::Option *Opt = App.add_option(Name, Fun, Description, Defaulted);
+  CLI::Option *Opt = App.add_option(Name, std::move(Fun), Description, Defaulted);
   Opt->type_name("URI");
   Opt->type_size(1);
   return Opt;
@@ -25,7 +25,7 @@ CLI::Option *addUriOption(CLI::App &App, std::string const &Name,
     return true;
   };
 
-  return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
+  return uriOption(App, Name, Fun, Description, Defaulted);
 }
 
 /// \brief Adding a URI option.
@@ -53,7 +53,7 @@ CLI::Option *addUriOption(CLI::App &App, const std::string &Name,
     return true;
   };
 
-  return uriOption(App, Name, URIArg, Fun, Description, Defaulted);
+  return uriOption(App, Name, Fun, Description, Defaulted);
 }
 
 void addMillisecondOption(CLI::App &App, const std::string &Name,

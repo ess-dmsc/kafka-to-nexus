@@ -16,11 +16,11 @@ public:
 
 class DummyReader : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return std::string();
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 0;
   }
 };

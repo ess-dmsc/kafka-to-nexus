@@ -1,6 +1,6 @@
 #include "../KafkaW/MetadataException.h"
 #include "KafkaW/Consumer.h"
-#include "KafkaWMocks.h"
+#include "tests/helpers/KafkaWMocks.h"
 
 #include <Msg.h>
 #include <gtest/gtest.h>

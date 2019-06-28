@@ -25,8 +25,8 @@ enum class AppendResult : uint32_t {
 
 struct append_ret {
   AppendResult status;
-  uint64_t written_bytes;
-  uint64_t ix0;
+  uint64_t written_bytes{0};
+  uint64_t ix0{0};
   explicit operator bool() const { return status == AppendResult::OK; }
   std::string ErrorString{""};
 };

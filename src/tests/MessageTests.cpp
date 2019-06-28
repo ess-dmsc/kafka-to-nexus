@@ -21,22 +21,22 @@ public:
 
 class MsgDummyReader1 : public FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return "SomeSourceName";
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 42;
   }
 };
 
 class InvalidReader : public FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return false; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return false; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return "SomeSourceName";
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 42;
   }
 };

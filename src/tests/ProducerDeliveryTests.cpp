@@ -1,5 +1,5 @@
 #include "../KafkaW/Producer.h"
-#include "MockMessage.h"
+#include "tests/helpers/MockMessage.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <trompeloeil.hpp>

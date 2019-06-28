@@ -1,5 +1,6 @@
 #include <DemuxTopic.h>
 #include <gtest/gtest.h>
+#include "tests/helpers/StubWriterModule.h"
 
 using namespace FileWriter;
 
@@ -16,30 +17,13 @@ public:
 
 class DemuxerDummyReader2 : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &Message) const override { return true; }
-  std::string source_name(FlatbufferMessage const &Message) const override {
+  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
+  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
     return "SomeSourceName";
   }
-  std::uint64_t timestamp(FlatbufferMessage const &Message) const override {
+  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
     return 42;
   }
-};
-
-class DummyWriter : public HDFWriterModule {
-public:
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override {}
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override {
-    return InitResult::OK;
-  }
-  InitResult reopen(hdf5::node::Group &HDFGrup) override {
-    return InitResult::OK;
-  }
-  void write(FlatbufferMessage const &Message) override {}
-  std::int32_t flush() override { return 0; }
-
-  std::int32_t close() override { return 0; }
 };
 
 TEST_F(MessageTimeExtractionTest, Success) {
@@ -103,7 +87,7 @@ TEST_F(DemuxerTest, Success) {
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   ProcessMessageResult Result{ProcessMessageResult::ERR};
   DemuxTopic TestDemuxer("SomeTopicName");
-  DummyWriter::ptr Writer(new DummyWriter);
+  auto Writer = ::std::make_unique<StubWriterModule>();
   Source DummySource(SourceName, TestKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
@@ -128,7 +112,7 @@ TEST_F(DemuxerTest, WrongFlatbufferID) {
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   ProcessMessageResult Result{ProcessMessageResult::OK};
   DemuxTopic TestDemuxer("SomeTopicName");
-  DummyWriter::ptr Writer(new DummyWriter);
+  auto Writer = ::std::make_unique<StubWriterModule>();
   std::string AltKey("temi");
   Source DummySource(SourceName, AltKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
@@ -154,7 +138,7 @@ TEST_F(DemuxerTest, WrongSourceName) {
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
   ProcessMessageResult Result{ProcessMessageResult::OK};
   DemuxTopic TestDemuxer("SomeTopicName");
-  DummyWriter::ptr Writer(new DummyWriter);
+  auto Writer = ::std::make_unique<StubWriterModule>();
   Source DummySource(SourceName, TestKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
   EXPECT_NO_THROW(Result = TestDemuxer.process_message(CurrentMessage));
