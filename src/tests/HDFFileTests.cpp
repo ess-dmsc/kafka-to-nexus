@@ -5,9 +5,9 @@
 #include "../helper.h"
 #include "../json.h"
 #include "AddReader.h"
-#include "tests/helpers/HDFFileTestHelper.h"
-#include "tests/helpers/ev42_synth.h"
-#include "tests/helpers/f142_synth.h"
+#include "helpers/HDFFileTestHelper.h"
+#include "helpers/ev42_synth.h"
+#include "helpers/f142_synth.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
