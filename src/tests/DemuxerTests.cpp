@@ -1,4 +1,4 @@
-#include "tests/helpers/StubWriterModule.h"
+#include "helpers/StubWriterModule.h"
 #include <DemuxTopic.h>
 #include <gtest/gtest.h>
 
