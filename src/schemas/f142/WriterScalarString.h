@@ -16,7 +16,7 @@ public:
   h5::Chunked1DString::ptr ChunkedDataset;
   Value FlatbuffersValueTypeId = Value::String;
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  void storeLatestInto(std::string const & /*StoreLatestInto*/) override {};
+  void storeLatestInto(std::string const & /*StoreLatestInto*/) override{};
 };
 } // namespace f142
 } // namespace Schemas

@@ -7,7 +7,8 @@ CLI::Option *uriOption(CLI::App &App, const std::string &Name,
                        CLI::callback_t Fun, const std::string &Description,
                        bool Defaulted) {
 
-  CLI::Option *Opt = App.add_option(Name, std::move(Fun), Description, Defaulted);
+  CLI::Option *Opt =
+      App.add_option(Name, std::move(Fun), Description, Defaulted);
   Opt->type_name("URI");
   Opt->type_size(1);
   return Opt;

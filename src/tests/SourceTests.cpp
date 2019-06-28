@@ -1,3 +1,4 @@
+#include "tests/helpers/StubWriterModule.h"
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
@@ -5,7 +6,6 @@
 #include <gtest/gtest.h>
 #include <schemas/ev42/ev42_rw.h>
 #include <trompeloeil.hpp>
-#include "tests/helpers/StubWriterModule.h"
 
 namespace ev42 {
 #include "schemas/ev42_events_generated.h"

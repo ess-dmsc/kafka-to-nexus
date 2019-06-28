@@ -1,6 +1,6 @@
+#include "tests/helpers/StubWriterModule.h"
 #include <DemuxTopic.h>
 #include <gtest/gtest.h>
-#include "tests/helpers/StubWriterModule.h"
 
 using namespace FileWriter;
 
@@ -17,11 +17,15 @@ public:
 
 class DemuxerDummyReader2 : public FileWriter::FlatbufferReader {
 public:
-  bool verify(FlatbufferMessage const &/*Message*/) const override { return true; }
-  std::string source_name(FlatbufferMessage const &/*Message*/) const override {
+  bool verify(FlatbufferMessage const & /*Message*/) const override {
+    return true;
+  }
+  std::string
+  source_name(FlatbufferMessage const & /*Message*/) const override {
     return "SomeSourceName";
   }
-  std::uint64_t timestamp(FlatbufferMessage const &/*Message*/) const override {
+  std::uint64_t
+  timestamp(FlatbufferMessage const & /*Message*/) const override {
     return 42;
   }
 };

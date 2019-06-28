@@ -1,7 +1,7 @@
 #include "../json.h"
+#include "tests/helpers/StubWriterModule.h"
 #include <HDFWriterModule.h>
 #include <gtest/gtest.h>
-#include "tests/helpers/StubWriterModule.h"
 
 using namespace FileWriter;
 

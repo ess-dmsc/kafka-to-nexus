@@ -84,7 +84,7 @@ public:
   ///
   /// \return Pointer to flatbuffer data if flatbuffer is valid, `nullptr` if it
   /// is not.
-  char const * data() const { return DataPtr; };
+  char const *data() const { return DataPtr; };
 
   /// \brief Get size of flatbuffer.
   ///
