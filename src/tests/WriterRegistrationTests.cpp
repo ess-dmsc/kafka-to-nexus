@@ -1,5 +1,5 @@
 #include "../json.h"
-#include "tests/helpers/StubWriterModule.h"
+#include "helpers/StubWriterModule.h"
 #include <HDFWriterModule.h>
 #include <gtest/gtest.h>
 
