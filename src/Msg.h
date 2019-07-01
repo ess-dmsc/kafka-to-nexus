@@ -21,7 +21,7 @@ struct Msg {
   static Msg owned(char const *Data, size_t Bytes) {
     auto TempDataPtr = std::make_unique<char[]>(Bytes);
     std::memcpy(reinterpret_cast<void *>(TempDataPtr.get()), Data, Bytes);
-    return {std::move(TempDataPtr), Bytes};
+    return {std::move(TempDataPtr), Bytes, MessageMetaData()};
   }
 
   char const *data() const {

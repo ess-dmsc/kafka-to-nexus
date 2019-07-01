@@ -50,11 +50,13 @@ public:
   ///
   /// \remarks Make sure that the Streamer status is
   /// StreamerErrorCode::has_finished.
+  ///
+  /// \return The current status.
   StreamerStatus closeStream();
 
-  /// \brief Return the number of different sources whose last message is
-  /// not older than the stop time.
+  /// \brief Sets the sources.
   ///
+
   /// \return The number of sources.
   const size_t numSources() const { return Sources.size(); }
   void setSources(
