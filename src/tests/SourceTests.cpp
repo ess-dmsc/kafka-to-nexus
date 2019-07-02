@@ -11,9 +11,9 @@ namespace ev42 {
 #include "schemas/ev42_events_generated.h"
 } // namespace ev42
 
-using FileWriter::Source;
-using FileWriter::HDFWriterModule;
 using FileWriter::FlatbufferMessage;
+using FileWriter::HDFWriterModule;
+using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
 class SourceTests : public ::testing::Test {

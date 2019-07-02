@@ -11,11 +11,11 @@ namespace Schemas {
 namespace f142 {
 #include "schemas/f142_logdata_generated.h"
 }
-}
-}
+} // namespace Schemas
+} // namespace FileWriter
 
-using trompeloeil::_;
 using KafkaW::PollStatus;
+using trompeloeil::_;
 using namespace FileWriter;
 
 std::unique_ptr<std::pair<PollStatus, Msg>>
@@ -306,8 +306,9 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
 
   TestStreamer->setSources(SourceList);
@@ -337,8 +338,9 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -383,8 +385,9 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -420,8 +423,9 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -463,8 +467,9 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -497,8 +502,9 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
@@ -549,8 +555,9 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<std::string, Source> SourceList;
-  std::pair<std::string, Source> TempPair{SourceName, std::move(TestSource)};
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
   SourceList.insert(std::move(TempPair));
   TestStreamer->setSources(SourceList);
 
@@ -570,4 +577,25 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
+}
+
+TEST_F(StreamerProcessTest, RemoveSource) {
+  StreamerStandIn TestStreamer(Options);
+  std::string SourceName = "TestName";
+  std::string ReaderKey = "temp";
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  auto UsedHash = TestSource.getHash();
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
+                                                         std::move(TestSource)};
+  SourceList.insert(std::move(TempPair));
+
+  TestStreamer.setSources(SourceList);
+  EXPECT_TRUE(TestStreamer.removeSource(UsedHash));
+  EXPECT_FALSE(TestStreamer.removeSource(UsedHash));
 }

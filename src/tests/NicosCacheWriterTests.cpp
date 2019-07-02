@@ -15,8 +15,8 @@ namespace ns10 {
 } // namespace Schemas
 } // namespace FileWriter
 
-using FileWriter::Schemas::ns10::CacheWriter;
 using FileWriter::Schemas::ns10::CacheReader;
+using FileWriter::Schemas::ns10::CacheWriter;
 
 FileWriter::FlatbufferMessage
 createFlatbufferMessageFromJson(nlohmann::json Json) {
@@ -130,12 +130,12 @@ public:
 
 class CacheWriterF : public CacheWriter {
 public:
-  using CacheWriter::Sourcename;
   using CacheWriter::ChunkSize;
-  using CacheWriter::Timestamp;
   using CacheWriter::CueInterval;
   using CacheWriter::CueTimestamp;
   using CacheWriter::CueTimestampIndex;
+  using CacheWriter::Sourcename;
+  using CacheWriter::Timestamp;
   using CacheWriter::Values;
 };
 

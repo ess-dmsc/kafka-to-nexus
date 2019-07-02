@@ -7,4 +7,4 @@ struct ProducerMessage {
   unsigned char *data;
   uint32_t size;
 };
-}
+} // namespace KafkaW

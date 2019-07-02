@@ -36,6 +36,8 @@ public:
 /// free the pointers you passed yourself.
 class FlatbufferMessage {
 public:
+  using SrcHash = size_t;
+
   /// Constructor is used in unit testing code to simplify set-up.
   FlatbufferMessage() = default;
 
@@ -80,6 +82,19 @@ public:
   /// \return The timestamp if flatbuffer is valid, 0 if it is not.
   std::uint64_t getTimestamp() const { return Timestamp; };
 
+  /// \brief Get the hash from a combination of the flatbuffer type and source
+  /// name.
+  ///
+  /// \return The std::hash<std::string> from flatbuffer id + source name.
+  /// Returns 0 if flatbuffer is invalid.
+  SrcHash getSourceHash() const { return SourceNameIDHash; };
+
+  /// \brief Get flatbuffer ID.
+  ///
+  /// \return Returns the four character flatbuffer ID or empty string if
+  /// invalid.
+  std::string getFlatbufferID() const { return ID; };
+
   /// \brief Get pointer to flatbuffer.
   ///
   /// \return Pointer to flatbuffer data if flatbuffer is valid, `nullptr` if it
@@ -96,8 +111,13 @@ private:
   void extractPacketInfo();
   char const *const DataPtr{nullptr};
   size_t const DataSize{0};
+  SrcHash SourceNameIDHash{0};
   std::string Sourcename;
+  std::string ID;
   std::uint64_t Timestamp{0};
   bool Valid{false};
 };
+
+FlatbufferMessage::SrcHash calcSourceHash(std::string const &ID,
+                                          std::string const &Name);
 } // namespace FileWriter

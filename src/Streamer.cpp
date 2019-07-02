@@ -145,10 +145,9 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR;
   }
 
-  if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
-      Sources.end()) {
-    Logger->warn("Message from topic \"{}\" has an unknown source name "
-                 "(\"{}\"), ignoring.",
+  if (Sources.find(Message->getSourceHash()) == Sources.end()) {
+    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
+                 "unknown, ignoring.",
                  MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::OK;
   }
@@ -171,9 +170,12 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   // Check if there is a stoptime configured and the message timestamp is
   // greater than it
   if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp, Logger)) {
-    if (removeSource(Message->getSourceName())) {
+    if (removeSource(Message->getSourceHash())) {
+      Logger->info("Remove source {}", Message->getSourceName());
       return ProcessMessageResult::STOP;
     }
+    Logger->warn("Can't remove source {}, not in the source list",
+                 Message->getSourceName());
     return ProcessMessageResult::ERR;
   }
 
@@ -191,21 +193,17 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
 }
 
 void FileWriter::Streamer::setSources(
-    std::unordered_map<std::string, Source> &SourceList) {
+    std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
   for (auto &Src : SourceList) {
-    Logger->info("Add {} to source list", Src.first);
-    Sources.push_back(Src.first);
+    Logger->info("Add {} to source list", Src.second.sourcename());
+    Sources.emplace(Src.second.getHash(), Src.second.sourcename());
   }
 }
 
-bool FileWriter::Streamer::removeSource(const std::string &SourceName) {
-  auto Iter(std::find<std::vector<std::string>::iterator>(
-      Sources.begin(), Sources.end(), SourceName));
-  if (Iter == Sources.end()) {
-    Logger->warn("Can't remove source {}, not in the source list", SourceName);
+bool FileWriter::Streamer::removeSource(FlatbufferMessage::SrcHash Hash) {
+  if (Sources.find(Hash) == Sources.end()) {
     return false;
   }
-  Sources.erase(Iter);
-  Logger->info("Remove source {}", SourceName);
+  Sources.erase(Hash);
   return true;
 }

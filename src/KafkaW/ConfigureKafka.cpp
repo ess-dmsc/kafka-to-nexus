@@ -17,4 +17,4 @@ void configureKafka(RdKafka::Conf *RdKafkaConfiguration,
     }
   }
 }
-}
+} // namespace KafkaW

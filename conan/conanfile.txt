@@ -19,7 +19,7 @@ virtualrunenv
 
 [options]
 FlatBuffers:shared=True
-gtest:shared=True
+gtest:shared=False
 hdf5:shared=True
 librdkafka:shared=True
 date:disable_string_view=True

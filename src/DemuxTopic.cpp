@@ -23,19 +23,19 @@ ProcessMessageResult
 DemuxTopic::process_message(FlatbufferMessage const &Message) {
   Logger->trace("Message received from: {}", Message.getSourceName());
   try {
-    auto &CurrentSource = TopicSources.at(Message.getSourceName());
+    auto &CurrentSource = TopicSources.at(Message.getSourceHash());
     auto ProcessingResult = CurrentSource.process_message(Message);
     ++messages_processed;
     return ProcessingResult;
   } catch (std::out_of_range &e) {
-    Logger->trace("Source with name \"{}\" is not in list.",
-                  Message.getSourceName());
+    Logger->trace("Source with name \"{}\" and ID \"{}\" is not in list.",
+                  Message.getSourceName(), Message.getFlatbufferID());
     ++error_no_source_instance;
   }
   return ProcessMessageResult::ERR;
 }
 
-std::unordered_map<std::string, Source> &DemuxTopic::sources() {
+std::unordered_map<FlatbufferMessage::SrcHash, Source> &DemuxTopic::sources() {
   return TopicSources;
 }
 

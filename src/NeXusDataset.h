@@ -154,7 +154,7 @@ public:
     return reinterpret_cast<const void *>(data.data());
   }
 };
-} // namspace dataspace
+} // namespace dataspace
 } // namespace hdf5
 
 namespace NeXusDataset {
@@ -387,4 +387,4 @@ public:
                    size_t ChunkSize = 1024);
 };
 
-} // namespace NexUsDataset
+} // namespace NeXusDataset

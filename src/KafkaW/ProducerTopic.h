@@ -34,4 +34,4 @@ private:
   std::string Name;
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
-}
+} // namespace KafkaW
