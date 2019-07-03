@@ -84,7 +84,7 @@ private:
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
-  Logger->trace("WriterTyped dtor");
+  Logger->trace("WriterTyped destructor");
 }
 
 template <typename DataType, typename EdgeType, typename ErrorType>
