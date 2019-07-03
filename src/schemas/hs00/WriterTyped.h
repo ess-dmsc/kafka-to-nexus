@@ -284,6 +284,12 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
       auto CurrentSpaceMem = hdf5::dataspace::Simple({1}, {1});
       Dataset.attributes.create("units", TypeUTF8, CurrentSpaceMem)
           .write(Dim.getUnit());
+      if (Group.attributes.exists("NX_class")) {
+        Logger->info("NX_class already specified!");
+      } else {
+        auto ClassAttribute = Group.attributes.create<std::string>("NX_class");
+        ClassAttribute.write("NXdata");
+      }
     }
     ++DimId;
   }
