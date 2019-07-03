@@ -239,6 +239,11 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       return HDFWriterModule::InitResult::ERROR;
     }
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
+      if (!HDFGroup.attributes.exists("NX_class")) {
+        auto ClassAttribute =
+            HDFGroup.attributes.create<std::string>("NX_class");
+        ClassAttribute.write("NXevent_data");
+      }
       for (auto const &Info : DatasetInfoList) {
         Info.H5Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
                                                           Info.ChunkBytes);
