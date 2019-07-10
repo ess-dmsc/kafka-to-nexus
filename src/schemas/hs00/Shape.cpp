@@ -9,7 +9,7 @@ namespace hs00 {
 template <typename EdgeType>
 Shape<EdgeType> Shape<EdgeType>::createFromJson(json const &Json) {
   if (!Json.is_array()) {
-    throw UnexpectedJsonInput();
+    throw UnexpectedJsonInput("\"shape\" field is not an array.");
   }
   Shape TheShape;
   for (auto const &D : Json) {
