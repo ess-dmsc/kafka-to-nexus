@@ -269,7 +269,8 @@ ProcessMessageResult Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   return processMessage(MessageProcessor, KafkaMessage);
 }
 
-void Streamer::setSources(std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
+void Streamer::setSources(
+    std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
   for (auto &Src : SourceList) {
     Logger->info("Add {} to source list", Src.second.sourcename());
     Sources.emplace(Src.second.getHash(), Src.second.sourcename());
