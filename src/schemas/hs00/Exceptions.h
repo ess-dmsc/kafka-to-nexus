@@ -6,7 +6,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
 
-/// To signalise errors in JSON command
+/// To signal errors in JSON command
 class UnexpectedJsonInput : public std::runtime_error {
 public:
   UnexpectedJsonInput() : std::runtime_error("UnexpectedJsonInput") {}
