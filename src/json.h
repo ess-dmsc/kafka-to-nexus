@@ -7,7 +7,7 @@
 template <typename T> class JsonMaybe {
 public:
   JsonMaybe() = default;
-  explicit JsonMaybe(T inner) : inner_(inner), found_(true) {}
+  explicit JsonMaybe(T const &inner) : inner_(inner), found_(true) {}
   explicit operator bool() const { return found_; }
   T inner() const { return inner_; }
 

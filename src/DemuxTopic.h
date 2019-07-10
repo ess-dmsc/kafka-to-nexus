@@ -42,7 +42,7 @@ public:
   /// \brief Gets list of sources handled on this topic.
   ///
   /// \return Unordered map of sources
-  std::unordered_map<std::string, Source> &sources();
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> &sources();
 
   /// Adds a \p source to topic sources.
   ///
@@ -50,8 +50,8 @@ public:
   ///
   /// \return A reference to the source that has been added.
   Source &add_source(Source &&source) {
-    auto k = source.sourcename();
-    std::pair<std::string, Source> v{k, std::move(source)};
+    auto k = source.getHash();
+    std::pair<FlatbufferMessage::SrcHash, Source> v{k, std::move(source)};
     return TopicSources.insert(std::move(v)).first->second;
   }
 
@@ -72,7 +72,7 @@ public:
 
 private:
   std::string Topic;
-  std::unordered_map<std::string, Source> TopicSources;
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> TopicSources;
   friend void swap(DemuxTopic &x, DemuxTopic &y);
   SharedLogger Logger = getLogger();
 };

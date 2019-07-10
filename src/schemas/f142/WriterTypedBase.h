@@ -14,7 +14,7 @@ class WriterTypedBase {
 public:
   virtual ~WriterTypedBase() = default;
   virtual h5::append_ret write(FBUF const *fbuf) = 0;
-  virtual void storeLatestInto(std::string const &StoreLatestInto) {}
+  virtual void storeLatestInto(std::string const &StoreLatestInto) = 0;
 };
 } // namespace f142
 } // namespace Schemas

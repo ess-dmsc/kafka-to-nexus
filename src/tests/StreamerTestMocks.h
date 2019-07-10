@@ -9,7 +9,7 @@ namespace FileWriter {
 class ConsumerEmptyStandIn
     : public trompeloeil::mock_interface<KafkaW::ConsumerInterface> {
 public:
-  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){};
+  explicit ConsumerEmptyStandIn(const KafkaW::BrokerSettings &Settings){ UNUSED_ARG(Settings) };
   IMPLEMENT_MOCK1(addTopic);
   IMPLEMENT_MOCK2(addTopicAtTimestamp);
   IMPLEMENT_MOCK1(topicPresent);
@@ -45,14 +45,17 @@ public:
 class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
 public:
   bool verify(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return true;
   }
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return std::string("SomeRandomSourceName");
   }
   std::uint64_t
   timestamp(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return 0;
   }
 };
@@ -60,14 +63,17 @@ public:
 class StreamerTestDummyReader : public FileWriter::FlatbufferReader {
 public:
   bool verify(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return true;
   }
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return std::string("SomeRandomSourceName");
   }
   std::uint64_t
   timestamp(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return 1;
   }
 };
@@ -76,14 +82,17 @@ class StreamerHighTimestampTestDummyReader
     : public FileWriter::FlatbufferReader {
 public:
   bool verify(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return true;
   }
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return std::string("SomeRandomSourceName");
   }
   std::uint64_t
   timestamp(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return 5000000;
   }
 };
@@ -92,14 +101,17 @@ class StreamerMessageSlightlyAfterStopTestDummyReader
     : public FileWriter::FlatbufferReader {
 public:
   bool verify(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return true;
   }
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return std::string("SomeRandomSourceName");
   }
   std::uint64_t
   timestamp(FileWriter::FlatbufferMessage const &Message) const override {
+    UNUSED_ARG(Message)
     return 1;
   }
 };

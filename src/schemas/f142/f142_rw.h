@@ -34,7 +34,7 @@ struct DatasetInfo {
   /// Maximum size of a message which is considered for buffering.
   size_t BufferPacketMaxSize;
   // Helper
-  uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr;
+  uptr<h5::h5d_chunked_1d<uint64_t>> &H5Ptr;
   DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
               size_t BufferPacketMaxSize,
               uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr);
@@ -136,8 +136,8 @@ struct WriterFactoryScalar : public WriterFactory {
       ValueTraits<FB_VALUE_TYPE>::enum_value;
 
   std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
+  createWriter(hdf5::node::Group Group, std::string Name, size_t /*Columns*/,
+               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
                Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID,
@@ -157,7 +157,7 @@ struct WriterFactoryArray : public WriterFactory {
 
   std::unique_ptr<WriterTypedBase>
   createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
+               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
                Mode OpenMode) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns,
@@ -175,9 +175,9 @@ struct WriterFactoryScalarString : public WriterFactory {
       ValueTraits<String>::enum_value;
 
   std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
-               Mode OpenMode) override {
+  createWriter(hdf5::node::Group Group, std::string Name, size_t /*Columns*/,
+               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
+               Mode /*OpenMode*/) override {
     return std::unique_ptr<WriterTypedBase>(
         new WriterScalarString(Group, Name, Mode::Create));
   }

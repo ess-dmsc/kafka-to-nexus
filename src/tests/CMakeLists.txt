@@ -5,7 +5,7 @@ set(UnitTests_SRC
         H5Tests.cpp
         HDFFileTests.cpp
         HDFFileAttributesTests.cpp
-        HDFFileTestHelper.cpp
+        helpers/HDFFileTestHelper.cpp
         JsonTests.cpp
         StatusTests.cpp
         URITests.cpp
@@ -29,8 +29,8 @@ set(UnitTests_SRC
         SourceTests.cpp
         ProducerTests.cpp
         ProducerDeliveryTests.cpp
-        ev42_synth.cpp
-        f142_synth.cpp
+        helpers/ev42_synth.cpp
+        helpers/f142_synth.cpp
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
@@ -38,11 +38,11 @@ set(UnitTests_SRC
 
 set(UnitTests_INC
         StreamerTestMocks.h
-        HDFFileTestHelper.h
+        helpers/HDFFileTestHelper.h
         AddReader.h
-        ev42_synth.h
-        f142_synth.h
-        KafkaWMocks.h)
+        helpers/ev42_synth.h
+        helpers/f142_synth.h
+        helpers/KafkaWMocks.h)
 
 add_executable(UnitTests
         ${UnitTests_SRC}

@@ -7,6 +7,8 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+#define UNUSED_ARG(x) (void)x;
+
 using SharedLogger = std::shared_ptr<spdlog::logger>;
 
 SharedLogger getLogger();

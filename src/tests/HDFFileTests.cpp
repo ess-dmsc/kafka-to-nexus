@@ -5,9 +5,9 @@
 #include "../helper.h"
 #include "../json.h"
 #include "AddReader.h"
-#include "HDFFileTestHelper.h"
-#include "ev42_synth.h"
-#include "f142_synth.h"
+#include "helpers/HDFFileTestHelper.h"
+#include "helpers/ev42_synth.h"
+#include "helpers/f142_synth.h"
 #include <array>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -17,12 +17,12 @@
 #include <unistd.h>
 #include <vector>
 
+using nlohmann::json;
 using std::string;
 using std::vector;
 using std::chrono::duration_cast;
 using std::chrono::milliseconds;
 using std::chrono::steady_clock;
-using nlohmann::json;
 
 MainOpt getTestOptions() {
   MainOpt TestOptions;
@@ -575,6 +575,7 @@ public:
       };
 
       for (auto &source : sources) {
+        // cppcheck-suppress useStlAlgorithm
         Children.push_back(json_stream(source.source, source.topic, "ev42",
                                        source.run_parallel));
       }
@@ -1169,7 +1170,6 @@ TEST(HDFFile, createStaticDatasetsStrings) {
 }
   )"");
   CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
-  auto CommandString = CommandJSON.dump();
   std::string Filename = CommandJSON["file_attributes"]["file_name"];
   ASSERT_GT(Filename.size(), 8u);
   std::vector<FileWriter::StreamHDFInfo> NoStreams;

@@ -1,3 +1,4 @@
+#include "helpers/StubWriterModule.h"
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
@@ -10,9 +11,9 @@ namespace ev42 {
 #include "schemas/ev42_events_generated.h"
 } // namespace ev42
 
-using FileWriter::Source;
-using FileWriter::HDFWriterModule;
 using FileWriter::FlatbufferMessage;
+using FileWriter::HDFWriterModule;
+using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
 class SourceTests : public ::testing::Test {
@@ -26,23 +27,7 @@ public:
   };
 };
 
-class WriterModuleDummy : public HDFWriterModule {
-public:
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override {}
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes) override {
-    return InitResult::OK;
-  }
-  InitResult reopen(hdf5::node::Group &HDFGrup) override {
-    return InitResult::OK;
-  }
-  void write(FlatbufferMessage const &Message) override {}
-  std::int32_t flush() override { return 0; }
-  std::int32_t close() override { return 0; }
-};
-
-class WriterModuleMock : public WriterModuleDummy {
+class WriterModuleMock : public StubWriterModule {
 public:
   MAKE_MOCK1(write, void(FlatbufferMessage const &), override);
 };
@@ -51,7 +36,7 @@ TEST_F(SourceTests, ConstructorSetsMembers) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
-  auto WriterModule = std::make_unique<WriterModuleDummy>();
+  auto WriterModule = std::make_unique<StubWriterModule>();
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
   ASSERT_EQ(TestSource.topic(), TopicName);
@@ -62,7 +47,7 @@ TEST_F(SourceTests, MovedSourceHasCorrectState) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
-  auto WriterModule = std::make_unique<WriterModuleDummy>();
+  auto WriterModule = std::make_unique<StubWriterModule>();
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
   auto TestSource2 = std::move(TestSource);
@@ -109,7 +94,7 @@ TEST_F(SourceTests, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
   std::string SourceName("TestSourceName");
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
-  auto WriterModule = std::make_unique<WriterModuleDummy>();
+  auto WriterModule = std::make_unique<StubWriterModule>();
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
   flatbuffers::FlatBufferBuilder Builder;

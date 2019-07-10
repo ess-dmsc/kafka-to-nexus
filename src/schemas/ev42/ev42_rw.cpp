@@ -138,6 +138,12 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       ds_cue_timestamp_zero.reset();
       throw std::runtime_error("Dataset init failed");
     }
+    if (HDFGroup.attributes.exists("NX_class")) {
+      Logger->info("NX_class already specified!");
+    } else {
+      auto ClassAttribute = HDFGroup.attributes.create<std::string>("NX_class");
+      ClassAttribute.write("NXevent_data");
+    }
     auto AttributesJson = nlohmann::json::parse(HDFAttributes);
     writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception const &E) {

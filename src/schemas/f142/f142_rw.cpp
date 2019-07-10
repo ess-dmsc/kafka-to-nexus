@@ -93,7 +93,7 @@ DatasetInfo::DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
                          size_t BufferPacketMaxSize,
                          uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr)
     : Name(std::move(Name)), ChunkBytes(ChunkBytes), BufferSize(BufferSize),
-      BufferPacketMaxSize(BufferPacketMaxSize), Ptr(Ptr) {}
+      BufferPacketMaxSize(BufferPacketMaxSize), H5Ptr(Ptr) {}
 
 /// \brief Instantiate a new writer.
 ///
@@ -137,8 +137,9 @@ createWriterTypedBase(hdf5::node::Group const &HDFGroup, size_t ArraySize,
 }
 
 /// Parse the configuration for this stream.
-void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
-                                   std::string const &ConfigurationModule) {
+void HDFWriterModule::parse_config(
+    std::string const &ConfigurationStream,
+    std::string const & /*ConfigurationModule*/) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
   if (auto SourceNameMaybe =
           find<std::string>("source", ConfigurationStreamJson)) {
@@ -238,10 +239,17 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       return HDFWriterModule::InitResult::ERROR;
     }
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {
+      if (HDFGroup.attributes.exists("NX_class")) {
+        Logger->info("NX_class already specified!");
+      } else {
+        auto ClassAttribute =
+            HDFGroup.attributes.create<std::string>("NX_class");
+        ClassAttribute.write("NXevent_data");
+      }
       for (auto const &Info : DatasetInfoList) {
-        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
-                                                        Info.ChunkBytes);
-        if (Info.Ptr.get() == nullptr) {
+        Info.H5Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
+                                                          Info.ChunkBytes);
+        if (Info.H5Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR;
         }
       }
@@ -249,11 +257,11 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       writeAttributes(HDFGroup, &AttributesJson, Logger);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {
-        Info.Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name);
-        if (Info.Ptr.get() == nullptr) {
+        Info.H5Ptr = h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, Info.Name);
+        if (Info.H5Ptr.get() == nullptr) {
           return HDFWriterModule::InitResult::ERROR;
         }
-        Info.Ptr->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
+        Info.H5Ptr->buffer_init(Info.BufferSize, Info.BufferPacketMaxSize);
       }
     }
   } catch (std::exception const &E) {
@@ -321,7 +329,7 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
 /// Implement HDFWriterModule interface, just flushing.
 int32_t HDFWriterModule::flush() {
   for (auto const &Info : DatasetInfoList) {
-    Info.Ptr->flush_buf();
+    Info.H5Ptr->flush_buf();
   }
   return 0;
 }
@@ -332,7 +340,7 @@ int32_t HDFWriterModule::close() {
     ValueWriter->storeLatestInto(StoreLatestInto);
   }
   for (auto const &Info : DatasetInfoList) {
-    Info.Ptr.reset();
+    Info.H5Ptr.reset();
   }
   return 0;
 }

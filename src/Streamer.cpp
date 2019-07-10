@@ -206,8 +206,7 @@ ProcessMessageResult Streamer::processMessage(
     return ProcessMessageResult::STOP;
   }
 
-  if (std::find(Sources.begin(), Sources.end(), Message->getSourceName()) ==
-      Sources.end()) {
+  if (Sources.find(Message->getSourceHash()) == Sources.end()) {
     Logger->trace("Message from topic \"{}\" has an unknown source name "
                   "(\"{}\"), ignoring.",
                   MessageProcessor.topic(), Message->getSourceName());
@@ -270,11 +269,18 @@ ProcessMessageResult Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   return processMessage(MessageProcessor, KafkaMessage);
 }
 
-void Streamer::setSources(std::unordered_map<std::string, Source> &SourceList) {
+void Streamer::setSources(std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
   for (auto &Src : SourceList) {
-    Logger->info("Add {} to source list", Src.first);
-    Sources.push_back(Src.first);
+    Logger->info("Add {} to source list", Src.second.sourcename());
+    Sources.emplace(Src.second.getHash(), Src.second.sourcename());
   }
 }
 
+bool FileWriter::Streamer::removeSource(FlatbufferMessage::SrcHash Hash) {
+  if (Sources.find(Hash) == Sources.end()) {
+    return false;
+  }
+  Sources.erase(Hash);
+  return true;
+}
 } // namespace FileWriter

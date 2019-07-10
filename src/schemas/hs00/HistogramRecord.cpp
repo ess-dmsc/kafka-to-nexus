@@ -15,6 +15,7 @@ HistogramRecord HistogramRecord::create(size_t HDFIndex_, size_t TotalItems_) {
 
 bool HistogramRecord::hasEmptySlice(Slice const &Slice) {
   for (auto &S : Slices) {
+    // cppcheck-suppress useStlAlgorithm
     if (S.doesOverlap(Slice)) {
       return false;
     }

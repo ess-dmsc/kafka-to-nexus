@@ -30,6 +30,7 @@ int MainOpt::parseJsonCommands() {
 void MainOpt::findAndAddCommands() {
   if (auto v = find<nlohmann::json>("commands", CommandsJson)) {
     for (auto const &Command : v.inner()) {
+      // cppcheck-suppress useStlAlgorithm
       CommandsFromJson.emplace_back(Command.dump());
     }
   }

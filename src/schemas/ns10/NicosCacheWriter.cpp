@@ -51,7 +51,7 @@ CacheWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     auto &CurrentGroup = HDFGroup;
-
+    // cppcheck-suppress unusedScopedObject
     StringValue(                    // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)

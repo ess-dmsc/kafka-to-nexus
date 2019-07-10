@@ -21,6 +21,7 @@ public:
   ~Source();
   std::string const &topic() const;
   std::string const &sourcename() const;
+  FlatbufferMessage::SrcHash getHash() const { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
   void close_writer_module();
   bool is_parallel = false;
@@ -31,6 +32,7 @@ private:
   std::string TopicName;
   std::string SourceName;
   std::string SchemaID;
+  FlatbufferMessage::SrcHash Hash;
   std::unique_ptr<HDFWriterModule> WriterModule;
   uint64_t _processed_messages_count = 0;
   uint64_t _cnt_msg_written = 0;

@@ -60,9 +60,24 @@ public:
   ///
   /// \remarks Make sure that the Streamer status is
   /// StreamerErrorCode::has_finished.
+  ///
+  /// \return The current status.
   StreamerStatus closeStream();
 
-  void setSources(std::unordered_map<std::string, Source> &SourceList);
+  /// \brief Sets the sources.
+  ///
+
+  /// \return The number of sources.
+  size_t numSources() const { return Sources.size(); }
+  void setSources(
+      std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
+
+  /// \brief Removes the source from the sources list.
+  ///
+  /// \param SourceName The name of the source to be removed.
+  ///
+  /// \return True if success, else false (e.g. the source is not in the list).
+  bool removeSource(FlatbufferMessage::SrcHash Hash);
 
   /// \brief Returns the status of the Streamer.
   ///
@@ -87,7 +102,7 @@ protected:
   StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
-  std::vector<std::string> Sources;
+  std::map<FlatbufferMessage::SrcHash, std::string> Sources;
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>
@@ -133,8 +148,4 @@ std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 initTopics(std::string const &TopicName,
            FileWriter::StreamerOptions const &Options,
            SharedLogger const &Logger, ConsumerPtr Consumer);
-
-bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime,
-                     SharedLogger const &Logger);
 } // namespace FileWriter

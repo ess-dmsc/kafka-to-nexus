@@ -2,6 +2,7 @@
 #include "MetadataException.h"
 #include "Msg.h"
 #include "logger.h"
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <thread>

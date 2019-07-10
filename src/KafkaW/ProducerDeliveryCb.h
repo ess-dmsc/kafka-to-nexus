@@ -31,4 +31,4 @@ private:
   ProducerStats &Stats;
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
-}
+} // namespace KafkaW

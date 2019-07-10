@@ -9,8 +9,8 @@
 #include <fstream>
 #include <string>
 
-using uri::URI;
 using nlohmann::json;
+using uri::URI;
 
 // POD
 struct MainOpt {

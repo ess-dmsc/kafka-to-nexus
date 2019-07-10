@@ -104,8 +104,8 @@ void WriterArray<DT, FV>::storeLatestInto(std::string const &StoreLatestInto) {
     DimMem.at(I - 1) = DimMem.at(I);
   }
   DimMem.resize(DimMem.size() - 1);
-  auto N = std::accumulate(DimMem.begin(), DimMem.end(), 1,
-                           std::multiplies<size_t>());
+  auto N = std::accumulate(DimMem.begin(), DimMem.end(), size_t(1),
+                           std::multiplies<>());
   hdf5::Dimensions Offset;
   Offset.assign(DimSrc.size(), 0);
   if (DimSrc.at(0) == 0) {

@@ -84,7 +84,7 @@ private:
 
 template <typename DataType, typename EdgeType, typename ErrorType>
 WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
-  Logger->trace("WriterTyped dtor");
+  Logger->trace("WriterTyped destructor");
 }
 
 template <typename DataType, typename EdgeType, typename ErrorType>
@@ -148,12 +148,9 @@ int WriterTyped<DataType, EdgeType, ErrorType>::copyLatestToData(
     }
     auto Latest = Dataset.link().parent().get_dataset("data");
     if (Dims.at(0) > 0) {
-      std::vector<DataType> Buffer;
-      size_t N = 1;
-      for (size_t I : DimsMem) {
-        N *= I;
-      }
-      Buffer.resize(N);
+      size_t N = std::accumulate(DimsMem.begin(), DimsMem.end(), size_t(1),
+                                 std::multiplies<>());
+      std::vector<DataType> Buffer(N);
       Dataset.read(Buffer, Type, SpaceMem, SpaceIn);
       size_t S = 0;
       for (size_t I = 0; I < Buffer.size(); ++I) {
@@ -287,6 +284,12 @@ void WriterTyped<DataType, EdgeType, ErrorType>::createHDFStructure(
       auto CurrentSpaceMem = hdf5::dataspace::Simple({1}, {1});
       Dataset.attributes.create("units", TypeUTF8, CurrentSpaceMem)
           .write(Dim.getUnit());
+      if (Group.attributes.exists("NX_class")) {
+        Logger->info("NX_class already specified!");
+      } else {
+        auto ClassAttribute = Group.attributes.create<std::string>("NX_class");
+        ClassAttribute.write("NXdata");
+      }
     }
     ++DimId;
   }

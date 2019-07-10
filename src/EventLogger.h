@@ -65,4 +65,4 @@ void logEvent(std::shared_ptr<ProducerType> Producer, StatusCode Code,
   std::string EventMessage = Event.dump();
   Producer->produce(EventMessage);
 }
-}
+} // namespace FileWriter
