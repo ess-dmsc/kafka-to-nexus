@@ -73,7 +73,7 @@ builders = pipeline_builder.createBuilders { container ->
       conan remote add \
         --insert 0 \
         ${conan_remote} ${local_conan_server}
-      conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile_no_graylog.txt
+      conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile.txt
     """
     }
   }  // stage
