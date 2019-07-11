@@ -65,6 +65,8 @@ protected:
   StreamerOptions Options;
 };
 
+// Suppress false-positive from cppcheck
+// cppcheck-suppress syntaxError
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
   EXPECT_THROW(
       Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
