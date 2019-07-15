@@ -9,7 +9,7 @@ namespace Schemas {
 namespace ep00 {
 
 using FBUF = EpicsConnectionInfo;
-FBUF const *get_fbuf(char const *data);
+FBUF const *get_fbuf(char const *Data);
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
 public:
