@@ -1,32 +1,48 @@
 #include "ep00_rw.h"
-#include <flatbuffers/flatbuffers.h>
 
 namespace FileWriter {
 namespace Schemas {
 namespace ep00 {
-/// Cast byte blob to flatbuffer message
-FBUF const *get_fbuf(char const *Data) { return GetEpicsConnectionInfo(Data); }
 
-bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
-  auto Verifier = flatbuffers::Verifier(
-      reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
-  return VerifyEpicsConnectionInfoBuffer(Verifier);
+static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
+    RegisterWriter("ep00");
+
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
+                          std::string const &HDFAttributes) {
+  Logger->error("----------------EP00 init_hdf1");
+  return HDFWriterModule::InitResult::ERROR;
 }
 
-std::string
-FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
-  auto FBuffer = get_fbuf(Message.data());
-  auto SourceName = FBuffer->source_name();
-  if (SourceName == nullptr) {
-    spdlog::get("filewriterlogger")->warn("message has no source name");
-    return "";
-  }
-  return SourceName->str();
+void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
+                                   std::string const &ConfigurationModule) {
+  Logger->error("----------------EP00 parse config");
 }
 
-uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
-  auto FBuffer = get_fbuf(Message.data());
-  return FBuffer->timestamp();
+HDFWriterModule::InitResult
+HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
+  Logger->error("----------------EP00 parse config");
+
+  return HDFWriterModule::InitResult::ERROR;
+}
+
+HDFWriterModule::InitResult
+HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
+                          std::string const *HDFAttributes,
+                          CreateWriterTypedBaseMethod CreateMethod) {
+  Logger->error("----------------EP00 init_hdf2");
+
+  return HDFWriterModule::InitResult::ERROR;
+}
+
+void HDFWriterModule::write(FlatbufferMessage const &Message) {}
+
+int32_t HDFWriterModule::flush() { return 0; }
+
+int32_t HDFWriterModule::close() { return 0; }
+
+HDFWriterModule::HDFWriterModule() {
+  Logger->error("----------------EP00 construct");
 }
 } // namespace ep00
 } // namespace Schemas
