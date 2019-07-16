@@ -244,7 +244,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
       } else {
         auto ClassAttribute =
             HDFGroup.attributes.create<std::string>("NX_class");
-        ClassAttribute.write("NXevent_data");
+        ClassAttribute.write("NXlog");
       }
       for (auto const &Info : DatasetInfoList) {
         Info.H5Ptr = h5::h5d_chunked_1d<uint64_t>::create(HDFGroup, Info.Name,
