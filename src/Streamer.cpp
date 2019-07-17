@@ -283,12 +283,4 @@ void Streamer::setSources(
     Sources.emplace(Src.second.getHash(), Src.second.sourcename());
   }
 }
-
-bool FileWriter::Streamer::removeSource(FlatbufferMessage::SrcHash Hash) {
-  if (Sources.find(Hash) == Sources.end()) {
-    return false;
-  }
-  Sources.erase(Hash);
-  return true;
-}
 } // namespace FileWriter

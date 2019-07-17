@@ -65,19 +65,8 @@ public:
   StreamerStatus closeStream();
 
   /// \brief Sets the sources.
-  ///
-
-  /// \return The number of sources.
-  size_t numSources() const { return Sources.size(); }
   void setSources(
       std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
-
-  /// \brief Removes the source from the sources list.
-  ///
-  /// \param SourceName The name of the source to be removed.
-  ///
-  /// \return True if success, else false (e.g. the source is not in the list).
-  bool removeSource(FlatbufferMessage::SrcHash Hash);
 
   /// \brief Returns the status of the Streamer.
   ///
