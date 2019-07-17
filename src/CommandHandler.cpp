@@ -296,7 +296,7 @@ void CommandHandler::handleNew(const json &JSONCommand,
   if (MasterPtr != nullptr) {
     // Register the task with master.
     Logger->info("Write file with job_id: {}", Task->jobID());
-    auto s = std::make_unique<StreamMaster<Streamer>>(
+    auto s = std::make_unique<StreamMaster>(
         Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
