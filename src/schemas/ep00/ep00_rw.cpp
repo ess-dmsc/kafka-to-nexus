@@ -18,8 +18,9 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                   CreateWriterTypedBaseMethod::CREATE);
 }
 
-void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
-                                   std::string const &ConfigurationModule) {
+void HDFWriterModule::parse_config(
+    std::string const &ConfigurationStream,
+    std::string const & /*ConfigurationModule*/) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
   if (auto SourceNameMaybe =
           find<std::string>("source", ConfigurationStreamJson)) {
