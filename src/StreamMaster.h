@@ -230,9 +230,11 @@ private:
 
   /// \brief Stops the streamers and prepares for being removed.
   void doStop() {
+    Logger->info("In doStop");
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
+    Logger->info("Joined ReportThread");
     for (auto &Stream : Streamers) {
       Logger->info("Shut down {}", Stream.first);
       auto CloseResult = Stream.second.closeStream();
@@ -243,6 +245,7 @@ private:
         Logger->info("\t...done");
       }
     }
+    Logger->info("Calling Streamers.clear() in doStop()");
     Streamers.clear();
     RunStatus = StreamMasterError::IS_REMOVABLE;
     Logger->info("RunStatus:  {}", Err2Str(RunStatus));

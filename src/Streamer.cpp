@@ -108,9 +108,14 @@ void Streamer::markIfOffsetsAlreadyReached(
 std::vector<std::pair<int64_t, bool>>
 Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
                          std::string const &TopicName) {
+  Logger->info("In getStopOffsets");
+  if (Consumer == nullptr) {
+    Logger->info("Consumer == nullptr in getStopOffsets");
+  }
   // StopOffsets are a pair of the offset corresponding to the stop time and
   // whether or not that offset has been reached yet
   auto Offsets = Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
+  Logger->info("Done call offsetsForTimesAllPartitions in getStopOffsets");
   std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(Offsets.size(),
                                                         {0, false});
   for (size_t PartitionNumber = 0; PartitionNumber < Offsets.size();
@@ -159,8 +164,10 @@ ProcessMessageResult Streamer::processMessage(
 
   if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
     CatchingUpToStopOffset = true;
+    Logger->info("Calling getStopOffsets");
     StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
                                  MessageProcessor.topic());
+    Logger->info("Finished executing getStopOffsets");
     // There may be no data in the topic, so check already if all stop offsets
     // are marked as reached
     bool NoDataInTopic =
