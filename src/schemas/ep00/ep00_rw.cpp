@@ -20,15 +20,43 @@ void HDFWriterModule::parse_config(
     std::string const &ConfigurationStream,
     std::string const & /*ConfigurationModule*/) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
-  if (auto SourceNameMaybe =
-          find<std::string>("source", ConfigurationStreamJson)) {
-    SourceName = SourceNameMaybe.inner();
-  } else {
-    Logger->error("Key \"source\" is not specified in ep00 json command");
-    return;
-  }
 
-  Logger->error("----------------EP00 parse config");
+  try {
+    ChunkBytes =
+        ConfigurationStreamJson["nexus"]["chunk"]["chunk_kb"].get<uint64_t>() *
+        1024;
+    Logger->trace("chunk_bytes: {}", ChunkBytes);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    ChunkBytes =
+        ConfigurationStreamJson["nexus"]["chunk"]["chunk_mb"].get<uint64_t>() *
+        1024 * 1024;
+    Logger->trace("chunk_bytes: {}", ChunkBytes);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    BufferSize =
+        ConfigurationStreamJson["nexus"]["buffer"]["size_kb"].get<uint64_t>() *
+        1024;
+    Logger->trace("buffer_size: {}", BufferSize);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    BufferSize =
+        ConfigurationStreamJson["nexus"]["buffer"]["size_mb"].get<uint64_t>() *
+        1024 * 1024;
+    Logger->trace("buffer_size: {}", BufferSize);
+  } catch (...) { /* it's ok if not found */
+  }
+  try {
+    BufferPacketMax =
+        ConfigurationStreamJson["nexus"]["buffer"]["packet_max_kb"]
+            .get<uint64_t>() *
+        1024;
+    Logger->trace("buffer_packet_max: {}", BufferPacketMax);
+  } catch (...) { /* it's ok if not found */
+  }
 }
 
 HDFWriterModule::InitResult
