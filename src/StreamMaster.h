@@ -1,8 +1,8 @@
 #pragma once
 
 #include "EventLogger.h"
-#include "Report.h"
 #include "MainOpt.h"
+#include "Report.h"
 
 #include <atomic>
 

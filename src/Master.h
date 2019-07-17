@@ -32,8 +32,7 @@ public:
   void handle_command_message(std::unique_ptr<Msg> CommandMessage) override;
   void handle_command(std::string const &Command) override;
   void statistics() override;
-  void addStreamMaster(
-      std::unique_ptr<StreamMaster> StreamMaster) override;
+  void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) override;
   void stopStreamMasters() override;
   std::unique_ptr<StreamMaster> &
   getStreamMasterForJobID(std::string const &JobID) override;

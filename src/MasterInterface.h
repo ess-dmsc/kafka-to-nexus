@@ -34,8 +34,7 @@ public:
   virtual bool runLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;
   virtual std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() = 0;
-  virtual void
-  addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) = 0;
+  virtual void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) = 0;
   virtual void stopStreamMasters() = 0;
   virtual std::unique_ptr<StreamMaster> &
   getStreamMasterForJobID(std::string const &JobID) = 0;
