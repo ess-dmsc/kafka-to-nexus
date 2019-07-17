@@ -9,14 +9,6 @@ namespace FileWriter {
 namespace Schemas {
 namespace ep00 {
 
-enum class ChannelConnectionState : uint8_t {
-  UNKNOWN,
-  NEVER_CONNECTED,
-  CONNECTED,
-  DISCONNECTED,
-  DESTROYED,
-};
-
 class HDFWriterModule final : public FileWriter::HDFWriterModule {
 public:
   /// Implements HDFWriterModule interface.
@@ -44,17 +36,12 @@ public:
   ~HDFWriterModule() override = default;
 
 private:
-  /// Name of the source that we write.
-  std::string SourceName;
-  /// Datatype as given in the filewriter json command.
-  std::string TypeName;
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  static bool findType(const nlohmann::basic_json<> Attribute,
-                       std::string &DType);
-  std::unique_ptr<h5::Chunked1DString> Value;
-  std::unique_ptr<h5::h5d_chunked_1d<uint64_t>> Timestamp;
-  size_t buffer_size = 10;
-  size_t buffer_packet_max = 15;
+  std::unique_ptr<h5::Chunked1DString> AlarmStatus;
+  std::unique_ptr<h5::h5d_chunked_1d<uint64_t>> AlarmTimestamp;
+  size_t BufferSize = 0;
+  size_t BufferPacketMax = 0;
+  hsize_t ChunkBytes = 1024;
 };
 
 } // namespace ep00
