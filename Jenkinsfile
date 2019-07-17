@@ -102,6 +102,7 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
+          -DUSE_GRAYLOG_LOGGER=FALSE \
           -DBUILD_TESTS=FALSE \
           ../${pipeline_builder.project}
       """
