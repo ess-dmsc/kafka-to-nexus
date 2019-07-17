@@ -246,6 +246,14 @@ private:
       }
     }
     Logger->info("Calling Streamers.clear() in doStop()");
+
+    for (auto it = Streamers.cbegin(); it != Streamers.cend(); /* no increment */)
+    {
+      Logger->info("Erasing Streamer");
+      Streamers.erase(it++);    // or "it = m.erase(it)" since C++11
+    }
+    Logger->info("Erased all Streamers");
+
     Streamers.clear();
     RunStatus = StreamMasterError::IS_REMOVABLE;
     Logger->info("RunStatus:  {}", Err2Str(RunStatus));
