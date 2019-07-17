@@ -214,8 +214,8 @@ void StreamMaster::doStop() {
 
   for (auto it = Streamers.cbegin(); it != Streamers.cend();
        /* no increment */) {
-    Logger->info("Erasing Streamer");
-    Streamers.erase(it++); // or "it = m.erase(it)" since C++11
+    Logger->info("Erasing Streamer {}", it->first);
+    Streamers.erase(it++);
   }
   Logger->info("Erased all Streamers");
 
