@@ -101,9 +101,9 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     }
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    std::throw_with_nested(std::runtime_error(fmt::format(
-        "ep00 could not init HDFGroup: {}  trace: {}",
-        static_cast<std::string>(HDFGroup.link().path()), message)));
+    Logger->error("ep00 could not init HDFGroup: {}  trace: {}",
+                  static_cast<std::string>(HDFGroup.link().path()), message);
+    return HDFWriterModule::InitResult::ERROR;
   }
   return HDFWriterModule::InitResult::OK;
 }
