@@ -17,12 +17,6 @@ public:
           RegisterIt("ep00");
     } catch (...) {
     }
-    try {
-      FileWriter::HDFWriterModuleRegistry::Registrar<
-          FileWriter::Schemas::ep00::HDFWriterModule>
-          RegisterIt("ep00");
-    } catch (...) {
-    }
     File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
     RootGroup = File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
