@@ -27,6 +27,8 @@ public:
     RootGroup = File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
   }
+  void TearDown() override { File.close(); };
+
   std::string NXLogGroup{"SomeParentName"};
   std::string TestFileName{"SomeTestFile.hdf5"};
   hdf5::file::File File;
@@ -44,6 +46,28 @@ TEST_F(ep00Tests, file_init_ok) {
   auto TestGroup = RootGroup.get_group(NXLogGroup);
   EXPECT_TRUE(TestGroup.has_dataset("alarm_status"));
   EXPECT_TRUE(TestGroup.has_dataset("alarm_time"));
+}
+
+TEST_F(ep00Tests, reopen_file) {
+  ep00::HDFWriterModule Writer;
+  EXPECT_FALSE(Writer.reopen(UsedGroup) ==
+               HDFWriterModule_detail::InitResult::OK);
+}
+
+TEST_F(ep00Tests, InitFileFail) {
+  ep00::HDFWriterModule Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
+              HDFWriterModule_detail::InitResult::OK);
+  EXPECT_FALSE(Writer.init_hdf(UsedGroup, "{}") ==
+               HDFWriterModule_detail::InitResult::OK);
+}
+
+TEST_F(ep00Tests, ReopenFileSuccess) {
+  ep00::HDFWriterModule Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
+              HDFWriterModule_detail::InitResult::OK);
+  EXPECT_TRUE(Writer.reopen(UsedGroup) ==
+              HDFWriterModule_detail::InitResult::OK);
 }
 } // namespace ep00
 } // namespace Schemas
