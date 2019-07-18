@@ -84,6 +84,12 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
           HDFGroup, TimestampName, ChunkBytes);
       AlarmStatus =
           h5::Chunked1DString::create(HDFGroup, StatusName, ChunkBytes);
+      if (AlarmStatus == nullptr) {
+        throw std::runtime_error("Cannot create ep00 AlarmStatus.");
+      }
+      if (AlarmTimestamp == nullptr) {
+        throw std::runtime_error("Cannot create ep00 AlarmTimestamp.");
+      }
       auto AttributesJson = nlohmann::json::parse(*HDFAttributes);
       writeAttributes(HDFGroup, &AttributesJson, Logger);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
