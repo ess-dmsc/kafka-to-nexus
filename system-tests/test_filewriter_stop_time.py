@@ -37,11 +37,12 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(dock
     producer = create_producer()
 
     sleep(5)
-    data_topic = "TEST_historicalData"
+    data_topics = ["TEST_historicalData1", "TEST_historicalData2"]
 
     # Publish some data with timestamps in the past(these are from 2019 - 06 - 12)
-    for time_in_ms_after_epoch in range(1560330000000, 1560330000200):
-        publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
+    for data_topic in data_topics:
+        for time_in_ms_after_epoch in range(1560330000000, 1560330000200):
+            publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
 
     sleep(5)
 
@@ -59,7 +60,9 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(dock
     with OpenNexusFileWhenAvailable(filepath) as file:
         # Expect to have recorded one value per ms between the start and stop time
         # +1 because time range for file writer is inclusive
-        assert file["entry/historical_data/time"].len() == (stop_time - start_time + 1), \
+        assert file["entry/historical_data_1/time"].len() == (stop_time - start_time + 1), \
+            "Expected there to be one message per millisecond recorded between specified start and stop time"
+        assert file["entry/historical_data_2/time"].len() == (stop_time - start_time + 1), \
             "Expected there to be one message per millisecond recorded between specified start and stop time"
 
         assert file["entry/no_data/time"].len() == 0, "Expect there to be no data as the source topic is empty"
