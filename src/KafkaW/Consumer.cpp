@@ -20,12 +20,11 @@ Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
 }
 
 Consumer::~Consumer() {
-  //Logger->debug("~Consumer()");
+  Logger->trace("~Consumer()");
   if (KafkaConsumer != nullptr) {
-    //Logger->debug("Closing the consumer");
     KafkaConsumer->close();
     RdKafka::wait_destroyed(5000);
-    //Logger->debug("Consumer closed");
+    Logger->trace("Consumer closed");
   }
 }
 

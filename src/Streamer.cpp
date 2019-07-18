@@ -108,14 +108,10 @@ void Streamer::markIfOffsetsAlreadyReached(
 std::vector<std::pair<int64_t, bool>>
 Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
                          std::string const &TopicName) {
-  Logger->info("In getStopOffsets");
-  if (Consumer == nullptr) {
-    Logger->info("Consumer == nullptr in getStopOffsets");
-  }
+  Logger->trace("In getStopOffsets");
   // StopOffsets are a pair of the offset corresponding to the stop time and
   // whether or not that offset has been reached yet
   auto Offsets = Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
-  Logger->info("Done call offsetsForTimesAllPartitions in getStopOffsets");
   std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(Offsets.size(),
                                                         {0, false});
   for (size_t PartitionNumber = 0; PartitionNumber < Offsets.size();
@@ -130,14 +126,14 @@ Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
       if (StopOffset < 0) {
         // No data on topic at all so mark this partition as being reached
         OffsetsToStopAt[PartitionNumber].second = true;
-        Logger->info(
+        Logger->debug(
             "No data on topic {} to consume before specified stop time",
             TopicName);
       }
     }
     OffsetsToStopAt[PartitionNumber].first = StopOffset;
-    Logger->info("Stop offset for topic {}, partition {}, is {}", TopicName,
-                 PartitionNumber, OffsetsToStopAt[PartitionNumber].first);
+    Logger->debug("Stop offset for topic {}, partition {}, is {}", TopicName,
+                  PartitionNumber, OffsetsToStopAt[PartitionNumber].first);
     markIfOffsetsAlreadyReached(OffsetsToStopAt, TopicName);
   }
   return OffsetsToStopAt;
@@ -164,10 +160,10 @@ ProcessMessageResult Streamer::processMessage(
 
   if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
     CatchingUpToStopOffset = true;
-    Logger->info("Calling getStopOffsets");
+    Logger->trace("Calling getStopOffsets");
     StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
                                  MessageProcessor.topic());
-    Logger->info("Finished executing getStopOffsets");
+    Logger->trace("Finished executing getStopOffsets");
     // There may be no data in the topic, so check already if all stop offsets
     // are marked as reached
     bool NoDataInTopic =
@@ -209,7 +205,7 @@ ProcessMessageResult Streamer::processMessage(
   if (CatchingUpToStopOffset &&
       stopOffsetsReached(KafkaMessage->second.MetaData.Partition,
                          KafkaMessage->second.MetaData.Offset)) {
-    Logger->info("Reached stop offsets in topic {}", MessageProcessor.topic());
+    Logger->debug("Reached stop offsets in topic {}", MessageProcessor.topic());
     return ProcessMessageResult::STOP;
   }
 

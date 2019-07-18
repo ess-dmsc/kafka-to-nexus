@@ -181,7 +181,7 @@ void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
     // Only decrement active streamer count if we haven't already marked it as
     // finished
     NumStreamers--;
-    Logger->info(
+    Logger->debug(
         "Stopped streamer consuming from {}. {} streamers still running.",
         TopicName, NumStreamers);
   }
@@ -195,7 +195,6 @@ void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
 
 /// \brief Stops the streamers and prepares for being removed.
 void StreamMaster::doStop() {
-  Logger->info("In doStop");
   if (ReportThread.joinable()) {
     ReportThread.join();
   }
@@ -210,17 +209,17 @@ void StreamMaster::doStop() {
       Logger->info("\t...done");
     }
   }
-  Logger->info("Calling Streamers.clear() in doStop()");
+  Logger->trace("Calling Streamers.clear() in doStop()");
 
   for (auto it = Streamers.cbegin(); it != Streamers.cend();
        /* no increment */) {
-    Logger->info("Erasing Streamer {}", it->first);
+    Logger->trace("Erasing Streamer {}", it->first);
     Streamers.erase(it++);
   }
-  Logger->info("Erased all Streamers");
+  Logger->trace("Erased all Streamers");
 
   Streamers.clear();
   RunStatus = StreamMasterError::IS_REMOVABLE;
-  Logger->info("RunStatus:  {}", Err2Str(RunStatus));
+  Logger->debug("RunStatus:  {}", Err2Str(RunStatus));
 }
 } // namespace FileWriter
