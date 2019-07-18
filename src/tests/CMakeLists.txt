@@ -34,6 +34,7 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
+        EpicsConnectionStatusTests.cpp
         )
 
 set(UnitTests_INC
@@ -42,7 +43,7 @@ set(UnitTests_INC
         helpers/ev42_synth.h
         helpers/f142_synth.h
         helpers/KafkaWMocks.h
-        schema_ep00Tests.cpp)
+        )
 
 add_executable(UnitTests
         ${UnitTests_SRC}

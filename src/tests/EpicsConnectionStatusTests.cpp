@@ -8,7 +8,7 @@ namespace Schemas {
 namespace ep00 {
 using nlohmann::json;
 
-class Schema_ep00_tests : public ::testing::Test {
+class ep00Tests : public ::testing::Test {
 public:
   void SetUp() override {
     try {
@@ -34,7 +34,7 @@ public:
   hdf5::node::Group UsedGroup;
 };
 
-TEST_F(Schema_ep00_tests, file_init_ok) {
+TEST_F(ep00Tests, file_init_ok) {
   {
     ep00::HDFWriterModule Writer;
     EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
