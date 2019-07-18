@@ -34,7 +34,7 @@ public:
 
 class MockKafkaConsumer : public RdKafka::KafkaConsumer {
 public:
-  MockKafkaConsumer(){};
+  MockKafkaConsumer() = default;
   MockKafkaConsumer(RdKafka::ErrorCode ErrorCode, RdKafka::Metadata *Metadata)
       : ErrorCode(ErrorCode), MetadataPtr(Metadata) {}
   RdKafka::ErrorCode ErrorCode = RdKafka::ErrorCode::ERR_NO_ERROR;
@@ -47,7 +47,7 @@ public:
                               RdKafka::Metadata **Metadata, int) override {
     *Metadata = MetadataPtr;
     metadataCallCounter++;
-    if (metadataCallCounter < 10) {
+    if (metadataCallCounter < 6) {
       return ErrorCode;
     } else {
       return RdKafka::ERR_NO_ERROR;

@@ -396,3 +396,27 @@ TEST_F(ConsumerTests, testMetadataCallThrowsAnError) {
     EXPECT_THROW(Consumer->addTopic("something"), MetadataException);
   }
 }
+
+TEST_F(ConsumerTests, testGetCurrentOffsetsToThrowIfTopicDoesntExist) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("test_topic");
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
+  auto PartitionMetadataVector =
+      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
+  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    std::string NonExistentTopic = "topic_doesnt_exist";
+    EXPECT_THROW(Consumer->getCurrentOffsets(NonExistentTopic),
+                 std::runtime_error);
+  }
+}
