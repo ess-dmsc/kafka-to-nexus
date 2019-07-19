@@ -103,6 +103,22 @@ TEST_F(ep00Tests, WriteDataOnce) {
   EXPECT_EQ(Timestamps[0], Timestamp);
 }
 
+TEST_F(ep00Tests, SuccessfulParseKB) {
+  ep00::HDFWriterModule Writer;
+  std::string Command = "{\"nexus\": {\n\"chunk\": {\n\"chunk_kb\": "
+                        "1066\n},\n\"buffer\": {\n\"size_kb\": "
+                        "512,\n\"packet_max_kb\": 128\n}\n}}";
+  EXPECT_NO_THROW(Writer.parse_config(Command, ""));
+}
+
+TEST_F(ep00Tests, SuccessfulParseMB) {
+  ep00::HDFWriterModule Writer;
+  std::string Command = "{\"nexus\": {\n\"chunk\": {\n\"chunk_mb\": "
+                        "1\n},\n\"buffer\": {\n\"size_mb\": "
+                        "1,\n\"packet_max_kb\": 128\n}\n}}";
+  EXPECT_NO_THROW(Writer.parse_config(Command, ""));
+}
+
 } // namespace ep00
 } // namespace Schemas
 } // namespace FileWriter
