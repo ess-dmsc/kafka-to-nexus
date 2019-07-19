@@ -47,11 +47,9 @@ public:
 };
 
 TEST_F(ep00Tests, file_init_ok) {
-  {
-    ep00::HDFWriterModule Writer;
-    EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
-                HDFWriterModule_detail::InitResult::OK);
-  }
+  ep00::HDFWriterModule Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
+              HDFWriterModule_detail::InitResult::OK);
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
   EXPECT_TRUE(TestGroup.has_dataset("alarm_status"));
@@ -64,7 +62,7 @@ TEST_F(ep00Tests, reopen_file) {
                HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(ep00Tests, InitFileFail) {
+TEST_F(ep00Tests, initializing_file_fail) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
               HDFWriterModule_detail::InitResult::OK);
@@ -72,7 +70,7 @@ TEST_F(ep00Tests, InitFileFail) {
                HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(ep00Tests, ReopenFileSuccess) {
+TEST_F(ep00Tests, reopen_file_success) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
               HDFWriterModule_detail::InitResult::OK);
@@ -80,7 +78,7 @@ TEST_F(ep00Tests, ReopenFileSuccess) {
               HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(ep00Tests, WriteDataOnce) {
+TEST_F(ep00Tests, write_data_once) {
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
   auto Status = EventType::CONNECTED;
@@ -103,20 +101,36 @@ TEST_F(ep00Tests, WriteDataOnce) {
   EXPECT_EQ(Timestamps[0], Timestamp);
 }
 
-TEST_F(ep00Tests, SuccessfulParseKB) {
+TEST_F(ep00Tests, successful_parse_kb) {
   ep00::HDFWriterModule Writer;
-  std::string Command = "{\"nexus\": {\n\"chunk\": {\n\"chunk_kb\": "
-                        "1066\n},\n\"buffer\": {\n\"size_kb\": "
-                        "512,\n\"packet_max_kb\": 128\n}\n}}";
+  auto Chunk = 42;
+  auto Buffer = 42;
+  auto Packet = 42;
+  std::string Command =
+      fmt::format("{{\"nexus\": {{\n\"chunk\": {{\n\"chunk_kb\": "
+                  "{}\n}},\n\"buffer\": {{\n\"size_kb\": "
+                  "{},\n\"packet_max_kb\": {}\n}}\n}}}}",
+                  Chunk, Buffer, Packet);
   EXPECT_NO_THROW(Writer.parse_config(Command, ""));
+  EXPECT_EQ(Writer.BufferPacketMax, Packet * 1024U);
+  EXPECT_EQ(Writer.ChunkBytes, Chunk * 1024U);
+  EXPECT_EQ(Writer.BufferSize, Buffer * 1024U);
 }
 
-TEST_F(ep00Tests, SuccessfulParseMB) {
+TEST_F(ep00Tests, successful_parse_mb) {
   ep00::HDFWriterModule Writer;
-  std::string Command = "{\"nexus\": {\n\"chunk\": {\n\"chunk_mb\": "
-                        "1\n},\n\"buffer\": {\n\"size_mb\": "
-                        "1,\n\"packet_max_kb\": 128\n}\n}}";
+  auto Chunk = 42;
+  auto Buffer = 42;
+  auto Packet = 42;
+  std::string Command =
+      fmt::format("{{\"nexus\": {{\n\"chunk\": {{\n\"chunk_mb\": "
+                  "{}\n}},\n\"buffer\": {{\n\"size_mb\": "
+                  "{},\n\"packet_max_kb\": {}\n}}\n}}}}",
+                  Chunk, Buffer, Packet);
   EXPECT_NO_THROW(Writer.parse_config(Command, ""));
+  EXPECT_EQ(Writer.BufferPacketMax, Packet * 1024U);
+  EXPECT_EQ(Writer.ChunkBytes, Chunk * 1024 * 1024U);
+  EXPECT_EQ(Writer.BufferSize, Buffer * 1024 * 1024U);
 }
 
 } // namespace ep00
