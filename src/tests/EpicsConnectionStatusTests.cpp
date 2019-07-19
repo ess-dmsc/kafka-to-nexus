@@ -8,6 +8,21 @@ namespace Schemas {
 namespace ep00 {
 using nlohmann::json;
 
+static std::unique_ptr<std::int8_t[]>
+GenerateFlatbufferData(size_t &DataSize, uint64_t Timestamp, EventType Status) {
+  flatbuffers::FlatBufferBuilder builder;
+  auto source = builder.CreateString("SIMPLE:DOUBLE");
+  EpicsConnectionInfoBuilder MessageBuilder(builder);
+  MessageBuilder.add_source_name(source);
+  MessageBuilder.add_timestamp(Timestamp);
+  MessageBuilder.add_type(Status);
+  builder.Finish(MessageBuilder.Finish(), "ep00");
+  DataSize = builder.GetSize();
+  auto RawBuffer = std::make_unique<std::int8_t[]>(DataSize);
+  std::memcpy(RawBuffer.get(), builder.GetBufferPointer(), DataSize);
+  return RawBuffer;
+}
+
 class ep00Tests : public ::testing::Test {
 public:
   void SetUp() override {
@@ -28,6 +43,7 @@ public:
   hdf5::file::File File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
+  SharedLogger Logger = getLogger();
 };
 
 TEST_F(ep00Tests, file_init_ok) {
@@ -63,6 +79,30 @@ TEST_F(ep00Tests, ReopenFileSuccess) {
   EXPECT_TRUE(Writer.reopen(UsedGroup) ==
               HDFWriterModule_detail::InitResult::OK);
 }
+
+TEST_F(ep00Tests, WriteDataOnce) {
+  size_t BufferSize;
+  uint64_t Timestamp = 5555555;
+  auto Status = EventType::CONNECTED;
+  std::unique_ptr<std::int8_t[]> Buffer =
+      GenerateFlatbufferData(BufferSize, Timestamp, Status);
+  ep00::HDFWriterModule Writer;
+  {
+    EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
+                HDFWriterModule_detail::InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(UsedGroup) ==
+                HDFWriterModule_detail::InitResult::OK);
+  }
+  FileWriter::FlatbufferMessage TestMsg(
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
+  auto TimeDataSet = UsedGroup.get_dataset("alarm_time");
+  auto Size = TimeDataSet.dataspace().size();
+  std::vector<uint64_t> Timestamps(Size);
+  TimeDataSet.read(Timestamps);
+  EXPECT_EQ(Timestamps[0], Timestamp);
+}
+
 } // namespace ep00
 } // namespace Schemas
 } // namespace FileWriter
