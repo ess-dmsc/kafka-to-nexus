@@ -1,3 +1,5 @@
+#include <memory>
+
 #include "../KafkaW/MetadataException.h"
 #include "KafkaW/Consumer.h"
 #include "helpers/KafkaWMocks.h"
@@ -138,8 +140,7 @@ TEST_F(ConsumerTests, getTopicPartitionNumbersThrowsErrorIfTopicDoesntExist) {
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
 
-  auto TopicMetadata = std::unique_ptr<MockTopicMetadata>(
-      new MockTopicMetadata("not_something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("not_something");
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
   REQUIRE_CALL(*Metadata, topics()).TIMES((1)).RETURN(&TopicVector);
@@ -160,12 +161,10 @@ TEST_F(ConsumerTests,
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
 
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-  auto PartitionMetadata =
-      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
   auto PartitionMetadataVector =
       RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
 
@@ -196,8 +195,7 @@ TEST_F(ConsumerTests,
   auto Metadata = new MockMetadata;
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
 
@@ -218,8 +216,7 @@ TEST_F(ConsumerTests, testTopicPresentReturnsTrueIfTopicDoesExistInMetadata) {
   auto Metadata = new MockMetadata;
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
 
@@ -241,11 +238,9 @@ TEST_F(ConsumerTests, testAddTopicErrorCantgetOffestsForTimestamp) {
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
   REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
 
-  auto PartitionMetadata =
-      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
   auto PartitionMetadataVector =
@@ -276,11 +271,9 @@ TEST_F(ConsumerTests, testAddTopicAtTimestampErrorWhileSubscribingToOffsets) {
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
   REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
 
-  auto PartitionMetadata =
-      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
   auto PartitionMetadataVector =
@@ -314,11 +307,9 @@ TEST_F(ConsumerTests, testAddTopicAtTimestampSuccess) {
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
   REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
 
-  auto PartitionMetadata =
-      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
   auto PartitionMetadataVector =
@@ -353,12 +344,10 @@ TEST_F(ConsumerTests, testUpdatingMetadataMultipleTimes) {
   REQUIRE_CALL(*MockConsumer, close())
       .TIMES((1))
       .RETURN(RdKafka::ERR__TRANSPORT);
-  auto TopicMetadata =
-      std::unique_ptr<MockTopicMetadata>(new MockTopicMetadata("something"));
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>("something");
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
-  auto PartitionMetadata =
-      std::unique_ptr<MockPartitionMetadata>(new MockPartitionMetadata);
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
   auto PartitionMetadataVector =
       RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
   REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
@@ -397,7 +386,7 @@ TEST_F(ConsumerTests, testMetadataCallThrowsAnError) {
   }
 }
 
-TEST_F(ConsumerTests, testGetCurrentOffsetsToThrowIfTopicDoesntExist) {
+TEST_F(ConsumerTests, testGetCurrentOffsetsThrowsIfTopicDoesntExist) {
   auto Metadata = new MockMetadata;
   auto MockConsumer = std::make_unique<MockKafkaConsumer>(
       RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
@@ -418,5 +407,35 @@ TEST_F(ConsumerTests, testGetCurrentOffsetsToThrowIfTopicDoesntExist) {
     std::string NonExistentTopic = "topic_doesnt_exist";
     EXPECT_THROW(Consumer->getCurrentOffsets(NonExistentTopic),
                  std::runtime_error);
+  }
+}
+
+TEST_F(ConsumerTests, testGetCurrentOffsetsDoesNotThrowIfTopicExists) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+  std::string TopicName = "test_topic";
+  auto TopicMetadata = std::make_unique<MockTopicMetadata>(TopicName);
+  auto TopicVector =
+      RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
+  auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
+  auto PartitionMetadataVector =
+      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
+  REQUIRE_CALL(*PartitionMetadata, id()).TIMES((1)).RETURN(1);
+  REQUIRE_CALL(*TopicMetadata, partitions())
+      .TIMES(1)
+      .RETURN(&PartitionMetadataVector);
+  REQUIRE_CALL(*MockConsumer, position(_))
+      .TIMES(1)
+      .RETURN(RdKafka::ErrorCode::ERR_NO_ERROR);
+  REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    EXPECT_NO_THROW(Consumer->getCurrentOffsets(TopicName));
   }
 }
