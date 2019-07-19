@@ -9,11 +9,15 @@ namespace ep00 {
 using nlohmann::json;
 
 static std::unique_ptr<std::int8_t[]>
-GenerateFlatbufferData(size_t &DataSize, uint64_t Timestamp, EventType Status) {
+GenerateFlatbufferData(size_t &DataSize, const uint64_t Timestamp,
+                       const EventType Status, const std::string &SourceName) {
   flatbuffers::FlatBufferBuilder builder;
-  auto source = builder.CreateString("SIMPLE:DOUBLE");
+
+  auto Source = builder.CreateString(SourceName);
   EpicsConnectionInfoBuilder MessageBuilder(builder);
-  MessageBuilder.add_source_name(source);
+  if (!SourceName.empty()) {
+    MessageBuilder.add_source_name(Source);
+  }
   MessageBuilder.add_timestamp(Timestamp);
   MessageBuilder.add_type(Status);
   builder.Finish(MessageBuilder.Finish(), "ep00");
@@ -81,9 +85,10 @@ TEST_F(ep00Tests, reopen_file_success) {
 TEST_F(ep00Tests, write_data_once) {
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
+  std::string SourceName = "SIMPLE:DOUBLE";
   auto Status = EventType::CONNECTED;
   std::unique_ptr<std::int8_t[]> Buffer =
-      GenerateFlatbufferData(BufferSize, Timestamp, Status);
+      GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
   ep00::HDFWriterModule Writer;
   {
     EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
@@ -131,6 +136,34 @@ TEST_F(ep00Tests, successful_parse_mb) {
   EXPECT_EQ(Writer.BufferPacketMax, Packet * 1024U);
   EXPECT_EQ(Writer.ChunkBytes, Chunk * 1024 * 1024U);
   EXPECT_EQ(Writer.BufferSize, Buffer * 1024 * 1024U);
+}
+
+TEST_F(ep00Tests, successful_flush_and_close) {
+  ep00::HDFWriterModule Writer;
+  EXPECT_EQ(0, Writer.flush());
+  EXPECT_EQ(0, Writer.close());
+}
+
+TEST_F(ep00Tests, fb_reader_no_source_name) {
+  size_t BufferSize;
+  uint64_t Timestamp = 5555555;
+  std::string SourceName = "";
+  auto Status = EventType::CONNECTED;
+  std::unique_ptr<std::int8_t[]> Buffer =
+      GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
+  ep00::HDFWriterModule Writer;
+  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
+              HDFWriterModule_detail::InitResult::OK);
+  EXPECT_TRUE(Writer.reopen(UsedGroup) ==
+              HDFWriterModule_detail::InitResult::OK);
+  FileWriter::FlatbufferMessage TestMsg(
+      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
+  EXPECT_NO_THROW(Writer.write(TestMsg));
+  auto TimeDataSet = UsedGroup.get_dataset("alarm_time");
+  auto Size = TimeDataSet.dataspace().size();
+  std::vector<uint64_t> Timestamps(Size);
+  TimeDataSet.read(Timestamps);
+  EXPECT_EQ(Timestamps[0], Timestamp);
 }
 
 } // namespace ep00
