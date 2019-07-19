@@ -34,14 +34,14 @@ public:
 
   HDFWriterModule();
   ~HDFWriterModule() override = default;
+  size_t BufferSize = 0;
+  size_t BufferPacketMax = 0;
+  hsize_t ChunkBytes = 1024;
 
 private:
   SharedLogger Logger = getLogger();
   std::unique_ptr<h5::Chunked1DString> AlarmStatus;
   std::unique_ptr<h5::h5d_chunked_1d<uint64_t>> AlarmTimestamp;
-  size_t BufferSize = 0;
-  size_t BufferPacketMax = 0;
-  hsize_t ChunkBytes = 1024;
 };
 
 } // namespace ep00
