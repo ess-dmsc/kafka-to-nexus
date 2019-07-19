@@ -118,10 +118,7 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
 
 int32_t HDFWriterModule::flush() { return 0; }
 
-int32_t HDFWriterModule::close() {
-  AlarmTimestamp.reset();
-  return 0;
-}
+int32_t HDFWriterModule::close() { return 0; }
 
 HDFWriterModule::HDFWriterModule() {}
 
