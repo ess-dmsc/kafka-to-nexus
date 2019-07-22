@@ -126,14 +126,12 @@ TEST_F(Schema_ep00, successful_parse_mb) {
   ep00::HDFWriterModule Writer;
   auto Chunk = 42;
   auto Buffer = 42;
-  auto Packet = 42;
   std::string Command =
       fmt::format("{{\"nexus\": {{\n\"chunk\": {{\n\"chunk_mb\": "
                   "{}\n}},\n\"buffer\": {{\n\"size_mb\": "
-                  "{},\n\"packet_max_kb\": {}\n}}\n}}}}",
-                  Chunk, Buffer, Packet);
+                  "{}\n}}\n}}}}",
+                  Chunk, Buffer);
   EXPECT_NO_THROW(Writer.parse_config(Command, ""));
-  EXPECT_EQ(Writer.BufferPacketMax, Packet * 1024U);
   EXPECT_EQ(Writer.ChunkBytes, Chunk * 1024 * 1024U);
   EXPECT_EQ(Writer.BufferSize, Buffer * 1024 * 1024U);
 }
