@@ -17,7 +17,6 @@ protected:
   }
 };
 
-
 TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
   unlink("a-dummy-name-01.h5");
   std::string CommandString(R"""(

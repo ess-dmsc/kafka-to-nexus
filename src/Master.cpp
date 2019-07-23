@@ -45,8 +45,7 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
     TimeStamp = CommandMessage->MetaData.Timestamp;
-  }
-  else {
+  } else {
     Logger->info(
         "Kafka command doesn't contain timestamp, so using current time.");
   }
