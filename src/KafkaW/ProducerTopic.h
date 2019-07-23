@@ -20,7 +20,8 @@ public:
 
   /// \brief Send a message to Kafka for publishing on this topic.
   ///
-  /// Note: this copies the provided data, so use only for low volume publishing.
+  /// Note: this copies the provided data, so use only for low volume
+  /// publishing.
   ///
   /// \param MsgData The message to publish
   /// \return 0 if message is successfully passed to RdKafka to be published, 1
