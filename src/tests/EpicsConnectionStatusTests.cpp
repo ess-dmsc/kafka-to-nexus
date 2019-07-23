@@ -50,7 +50,7 @@ public:
   SharedLogger Logger = getLogger();
 };
 
-TEST_F(Schema_ep00, file_init_ok) {
+TEST_F(Schema_ep00, FileInitOk) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
               HDFWriterModule_detail::InitResult::OK);
@@ -60,13 +60,13 @@ TEST_F(Schema_ep00, file_init_ok) {
   EXPECT_TRUE(TestGroup.has_dataset("alarm_time"));
 }
 
-TEST_F(Schema_ep00, reopen_file) {
+TEST_F(Schema_ep00, ReopenFile) {
   ep00::HDFWriterModule Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) ==
                HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(Schema_ep00, initializing_file_fail) {
+TEST_F(Schema_ep00, FileInitFail) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
               HDFWriterModule_detail::InitResult::OK);
@@ -74,7 +74,7 @@ TEST_F(Schema_ep00, initializing_file_fail) {
                HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(Schema_ep00, reopen_file_success) {
+TEST_F(Schema_ep00, ReopenFileSuccess) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
               HDFWriterModule_detail::InitResult::OK);
@@ -82,7 +82,8 @@ TEST_F(Schema_ep00, reopen_file_success) {
               HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(Schema_ep00, write_data_once) {
+TEST_F(Schema_ep00, WriteDataOnce) {
+
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
   std::string SourceName = "SIMPLE:DOUBLE";
@@ -106,7 +107,7 @@ TEST_F(Schema_ep00, write_data_once) {
   EXPECT_EQ(Timestamps[0], Timestamp);
 }
 
-TEST_F(Schema_ep00, successful_parse_kb) {
+TEST_F(Schema_ep00, SuccessfulParseKB) {
   ep00::HDFWriterModule Writer;
   auto Chunk = 42;
   auto Buffer = 42;
@@ -122,7 +123,7 @@ TEST_F(Schema_ep00, successful_parse_kb) {
   EXPECT_EQ(Writer.BufferSize, Buffer * 1024U);
 }
 
-TEST_F(Schema_ep00, successful_parse_mb) {
+TEST_F(Schema_ep00, SuccessfulParseMB) {
   ep00::HDFWriterModule Writer;
   auto Chunk = 42;
   auto Buffer = 42;
@@ -136,13 +137,13 @@ TEST_F(Schema_ep00, successful_parse_mb) {
   EXPECT_EQ(Writer.BufferSize, Buffer * 1024 * 1024U);
 }
 
-TEST_F(Schema_ep00, successful_flush_and_close) {
+TEST_F(Schema_ep00, SuccessfulFlushAndClose) {
   ep00::HDFWriterModule Writer;
   EXPECT_EQ(0, Writer.flush());
   EXPECT_EQ(0, Writer.close());
 }
 
-TEST_F(Schema_ep00, fb_reader_no_source_name) {
+TEST_F(Schema_ep00, FBReaderNoSourceName) {
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
   std::string SourceName = "";
