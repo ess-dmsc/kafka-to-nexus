@@ -33,8 +33,7 @@ set(UnitTests_SRC
         helpers/f142_synth.cpp
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
-        NicosCacheWriterTests.cpp
-        )
+        NicosCacheWriterTests.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h

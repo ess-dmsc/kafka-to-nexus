@@ -17,56 +17,6 @@ protected:
   }
 };
 
-TEST_F(CommandHandler_Testing, MissingStartTimeMeanStartNow) {
-
-  unlink("a-dummy-name-00.h5");
-  std::string CommandString(R"""(
-{
-  "cmd": "FileWriter_new",
-  "file_attributes": {
-    "file_name": "a-dummy-name-00.h5"
-  },
-  "job_id": "qw3rty",
-  "broker": "localhost:202020",
-  "nexus_structure": { }
-})""");
-
-  MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
-
-  std::chrono::milliseconds Now =
-      std::chrono::duration_cast<std::chrono::milliseconds>(
-          CLK::now().time_since_epoch());
-  // Allow 100ms tolerance
-  EXPECT_NEAR(MainOpt.StreamerConfiguration.StartTimestamp.count(), Now.count(),
-              100);
-  unlink("a-dummy-name-00.h5");
-}
-
-TEST_F(CommandHandler_Testing, MissingStopTimeMeanNeverStop) {
-
-  unlink("a-dummy-name-00.h5");
-  std::string CommandString(R"""(
-{
-  "cmd": "FileWriter_new",
-  "file_attributes": {
-    "file_name": "a-dummy-name-00.h5"
-  },
-  "job_id": "qw3rty",
-  "broker": "localhost:202020",
-  "nexus_structure": { }
-})""");
-
-  MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
-
-  EXPECT_FALSE(MainOpt.StreamerConfiguration.StopTimestamp.count() > 0);
-  unlink("a-dummy-name-00.h5");
-}
 
 TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
   unlink("a-dummy-name-01.h5");
@@ -85,8 +35,7 @@ TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
 
   MainOpt MainOpt;
   FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  CommandHandler.tryToHandle(CommandString);
   EXPECT_EQ(MainOpt.StreamerConfiguration.StartTimestamp.count(), 123456789);
   EXPECT_EQ(MainOpt.StreamerConfiguration.StopTimestamp.count(), 123456790);
   unlink("a-dummy-name-01.h5");
@@ -112,8 +61,7 @@ TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotFound) {
   std::string CommandString(
       R"""({"noCmd":"FileWriter_stop","job_id": "xyzwt","stop_time":987654321})""");
   testing::internal::CaptureStdout();
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  CommandHandler.tryToHandle(CommandString);
   EXPECT_TRUE(testing::internal::GetCapturedStdout().find(
       "Can not extract 'cmd' from command."));
 }
@@ -124,8 +72,7 @@ TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotUnderstood) {
   std::string CommandString(
       R"""({"cmd":"FileWriter_invalid_command","job_id": "xyzwt","stop_time":987654321})""");
   testing::internal::CaptureStdout();
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  CommandHandler.tryToHandle(CommandString);
   EXPECT_TRUE(testing::internal::GetCapturedStdout().find(
       "Could not understand 'cmd' field of this command."));
 }
@@ -160,8 +107,7 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
     ]
   }
 })""");
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  CommandHandler.tryToHandle(CommandString);
   // Assert that this command was not accepted by the command handler:
   ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
             static_cast<size_t>(0));
@@ -186,8 +132,7 @@ void createFileWithOptionalSWMR(bool UseSWMR) {
   auto Command = nlohmann::json::parse(CommandString);
   Command["use_hdf_swmr"] = UseSWMR;
   CommandString = Command.dump();
-  CommandHandler.tryToHandle(std::make_unique<FileWriter::Msg>(
-      FileWriter::Msg::owned(CommandString.data(), CommandString.size())));
+  CommandHandler.tryToHandle(CommandString);
   ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
             static_cast<size_t>(1));
   auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");

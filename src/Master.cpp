@@ -13,6 +13,11 @@
 
 namespace FileWriter {
 
+std::chrono::duration<long long int, std::milli> getCurrentTimeStamp() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now().time_since_epoch());
+}
+
 Master::Master(MainOpt &Config)
     : Logger(getLogger()), Listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
@@ -31,18 +36,27 @@ Master::Master(MainOpt &Config)
 
 void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
   CommandHandler command_handler(getMainOpt(), this);
+
+  std::string Message = {CommandMessage->data(), CommandMessage->size()};
+
+  // If Kafka message does not contain a timestamp then use current time.
+  std::chrono::milliseconds TimeStamp = getCurrentTimeStamp();
+
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
-    auto TempTimeStamp = CommandMessage->MetaData.Timestamp;
-    command_handler.tryToHandle(std::move(CommandMessage), TempTimeStamp);
-  } else {
-    command_handler.tryToHandle(std::move(CommandMessage));
+    TimeStamp = CommandMessage->MetaData.Timestamp;
   }
+  else {
+    Logger->info(
+        "Kafka command doesn't contain timestamp, so using current time.");
+  }
+
+  command_handler.tryToHandle(Message, TimeStamp);
 }
 
 void Master::handle_command(std::string const &Command) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(Command);
+  command_handler.tryToHandle(Command, getCurrentTimeStamp());
 }
 
 std::unique_ptr<StreamMaster<Streamer>> &
@@ -93,8 +107,7 @@ void Master::run() {
     }
   }
 
-  // Interpret commands given directly in the configuration file, useful
-  // for testing.
+  // Interpret commands given directly from the configuration file, if present
   for (auto const &cmd : getMainOpt().CommandsFromJson) {
     this->handle_command(cmd);
   }
@@ -106,7 +119,7 @@ void Master::run() {
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
         Listener.poll();
     if (KafkaMessage->first == KafkaW::PollStatus::Message) {
-      Logger->debug("Handle a command");
+      Logger->debug("Command received");
       this->handle_command_message(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
