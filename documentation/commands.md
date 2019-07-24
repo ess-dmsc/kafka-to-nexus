@@ -32,8 +32,8 @@ An example command with the `nexus_structure` skipped for brevity:
   "cmd": "FileWriter_new",
   "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
   "broker": "localhost:9092",
-  "start_time": 1547198055,
-  "stop_time": 1547200800,
+  "start_time": 1547198055000,
+  "stop_time": 1547200800000,
   "service_id": "filewriter1",
   "abort_on_uninitialised_stream": false,
   "use_hdf_swmr": true,
@@ -202,7 +202,7 @@ For example:
 {
   "cmd": "FileWriter_stop",
   "job_id": "7119ce9c-1591-11e9-ab14-d663bd873d93",
-  "stop_time": 1547200800,
+  "stop_time": 1547200800000,
   "service_id": "filewriter1"
 }
 ```
