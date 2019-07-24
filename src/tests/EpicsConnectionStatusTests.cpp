@@ -61,14 +61,12 @@ TEST_F(Schema_ep00, FileInitOk) {
   EXPECT_TRUE(TestGroup.has_dataset("alarm_time"));
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, ReopenFile) {
   ep00::HDFWriterModule Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) ==
                HDFWriterModule_detail::InitResult::OK);
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, FileInitFail) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
@@ -77,7 +75,6 @@ TEST_F(Schema_ep00, FileInitFail) {
                HDFWriterModule_detail::InitResult::OK);
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, ReopenFileSuccess) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
@@ -86,7 +83,6 @@ TEST_F(Schema_ep00, ReopenFileSuccess) {
               HDFWriterModule_detail::InitResult::OK);
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, WriteDataOnce) {
 
   size_t BufferSize;
@@ -112,7 +108,6 @@ TEST_F(Schema_ep00, WriteDataOnce) {
   EXPECT_EQ(Timestamps[0], Timestamp);
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, SuccessfulParseKB) {
   ep00::HDFWriterModule Writer;
   auto Chunk = 42;
@@ -129,7 +124,6 @@ TEST_F(Schema_ep00, SuccessfulParseKB) {
   EXPECT_EQ(Writer.BufferSize, Buffer * 1024U);
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, SuccessfulParseMB) {
   ep00::HDFWriterModule Writer;
   auto Chunk = 42;
@@ -144,14 +138,12 @@ TEST_F(Schema_ep00, SuccessfulParseMB) {
   EXPECT_EQ(Writer.BufferSize, Buffer * 1024 * 1024U);
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, SuccessfulFlushAndClose) {
   ep00::HDFWriterModule Writer;
   EXPECT_EQ(0, Writer.flush());
   EXPECT_EQ(0, Writer.close());
 }
 
-// cppcheck-suppress syntaxError
 TEST_F(Schema_ep00, FBReaderNoSourceName) {
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
