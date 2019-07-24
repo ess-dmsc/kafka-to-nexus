@@ -444,7 +444,7 @@ TEST_F(Schema_f142, UninitializedStreamsDoNotGetReopenedOnStartOfWriting) {
   Command["file_attributes"]["file_name"] = Filename;
   Command["job_id"] = Filename;
   auto CommandString = Command.dump();
-  CommandHandler.tryToHandle(CommandString);
+  CommandHandler.tryToHandle(CommandString, std::chrono::milliseconds(0));
 
   // We write to both sources, but afterwards verify that only the data to the
   // first source has been written
