@@ -105,14 +105,7 @@ void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
 ///
 /// \return True, if can be removed.
 bool StreamMaster::isRemovable() const {
-
-  bool StreamStillConnected =
-      std::any_of(Streamers.begin(), Streamers.end(), [](auto &Item) {
-        return Item.second.runStatus() >= StreamerStatus::IS_CONNECTED;
-      });
-
-  return !StreamStillConnected &&
-         RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
+  return RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
 }
 
 /// \brief Process the messages in Stream for at most TopicWriteDuration
@@ -160,7 +153,7 @@ void StreamMaster::processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
 ///
 /// The streams write as long as Stop is false and there are open streams.
 void StreamMaster::run() {
-  RunStatus = StreamMasterError::RUNNING;
+  RunStatus.store(StreamMasterError::RUNNING);
   while (!Stop && NumStreamers > 0 && !Demuxers.empty()) {
     for (auto &Demux : Demuxers) {
       auto &Stream = Streamers[Demux.topic()];
@@ -169,7 +162,7 @@ void StreamMaster::run() {
       }
     }
   }
-  RunStatus = StreamMasterError::HAS_FINISHED;
+  RunStatus.store(StreamMasterError::HAS_FINISHED);
   doStop();
 }
 
@@ -200,16 +193,17 @@ void StreamMaster::doStop() {
   }
   Logger->info("Joined ReportThread");
   for (auto &Stream : Streamers) {
-    Logger->info("Shut down {}", Stream.first);
+    // Give the streams a chance to close, log if they fail
+    Logger->info("Shutting down {}", Stream.first);
     auto CloseResult = Stream.second.closeStream();
     if (CloseResult != StreamerStatus::HAS_FINISHED) {
-      Logger->info("While stopping {} : {}", Stream.first,
+      Logger->info("Problem with stopping {} : {}", Stream.first,
                    Status::Err2Str(CloseResult));
     } else {
-      Logger->info("\t...done");
+      Logger->info("Stopped {}", Stream.first);
     }
   }
-  Logger->trace("Calling Streamers.clear() in doStop()");
+  Logger->trace("Erasing streamers");
 
   for (auto it = Streamers.cbegin(); it != Streamers.cend();
        /* no increment */) {
@@ -219,7 +213,7 @@ void StreamMaster::doStop() {
   Logger->trace("Erased all Streamers");
 
   Streamers.clear();
-  RunStatus = StreamMasterError::IS_REMOVABLE;
-  Logger->debug("RunStatus:  {}", Err2Str(RunStatus));
+  RunStatus.store(StreamMasterError::IS_REMOVABLE);
+  Logger->debug("StreamMaster is removable");
 }
 } // namespace FileWriter

@@ -44,13 +44,14 @@ int ProducerTopic::produce(std::unique_ptr<ProducerMessage> &Msg) {
   // point we can free the memory
   int MsgFlags = 0;
   auto &ProducerStats = KafkaProducer->Stats;
+  auto MsgSize = static_cast<uint64_t>(Msg->size);
 
   switch (KafkaProducer->produce(
       RdKafkaTopic.get(), RdKafka::Topic::PARTITION_UA, MsgFlags, Msg->data,
       Msg->size, key, key_len, Msg.get())) {
   case RdKafka::ERR_NO_ERROR:
     ++ProducerStats.produced;
-    ProducerStats.produced_bytes += static_cast<uint64_t>(Msg->size);
+    ProducerStats.produced_bytes += MsgSize;
     ++KafkaProducer->TotalMessagesProduced;
     Msg.release(); // we clean up the message after it has been sent, see
                    // comment by MsgFlags declaration

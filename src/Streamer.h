@@ -73,7 +73,7 @@ public:
   /// See "Error.h".
   ///
   /// \return The current status.
-  StreamerStatus runStatus() const { return RunStatus; }
+  StreamerStatus runStatus() const { return RunStatus.load(); }
 
   /// Return all the information about the messages consumed.
   Status::MessageInfo &messageInfo() { return MessageInfo; }
@@ -88,7 +88,7 @@ protected:
   ConsumerPtr Consumer{nullptr};
   KafkaW::BrokerSettings Settings;
 
-  StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
+  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
   std::map<FlatbufferMessage::SrcHash, std::string> Sources;

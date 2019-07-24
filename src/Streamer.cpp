@@ -63,7 +63,7 @@ initTopics(std::string const &TopicName, StreamerOptions const &Options,
 
 Streamer::StreamerStatus Streamer::closeStream() {
   Sources.clear();
-  RunStatus = StreamerStatus::HAS_FINISHED;
+  RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }
 
@@ -74,7 +74,7 @@ bool Streamer::ifConsumerIsReadyThenAssignIt() {
     return false;
   }
   auto Temp = ConsumerInitialised.get();
-  RunStatus = Temp.first;
+  RunStatus.store(Temp.first);
   Consumer = std::move(Temp.second);
   return true;
 }
