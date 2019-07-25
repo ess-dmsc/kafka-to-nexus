@@ -83,7 +83,7 @@ TEST_F(Schema_ep00, ReopenFileSuccess) {
               HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(Schema_ep00, WriteDataOnce) {
+TEST_F(Schema_ep00, WriteDataSuccess) {
 
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
