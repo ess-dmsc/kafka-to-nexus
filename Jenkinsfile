@@ -121,8 +121,6 @@ builders = pipeline_builder.createBuilders { container ->
     . ./activate_run.sh
     make -j4 all VERBOSE=1
     """
-    }
-
   }  // stage
 
   pipeline_builder.stage("${container.key}: Test") {
@@ -214,7 +212,15 @@ builders = pipeline_builder.createBuilders { container ->
         recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
     }  // stage
 
-
+    pipeline_builder.stage("${container.key}: Doxygen") {
+      def test_output = "doxygen_results.txt"
+        container.sh """
+          cd build
+          make docs > ${test_output}
+        """
+        container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
+        archiveArtifacts "${test_output}"
+    }  // stage
   }  // if
 
   if (container.key == release_os) {
