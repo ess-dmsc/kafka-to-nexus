@@ -17,7 +17,7 @@ FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
   auto FBuffer = get_fbuf(Message.data());
   auto SourceName = FBuffer->source_name();
   if (SourceName == nullptr) {
-    spdlog::get("filewriterlogger")->warn("message has no source name");
+    Logger->warn("Message has no source name.");
     return "";
   }
   return SourceName->str();

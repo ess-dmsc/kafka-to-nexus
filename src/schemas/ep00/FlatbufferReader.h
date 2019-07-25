@@ -12,7 +12,6 @@ using FBUF = EpicsConnectionInfo;
 FBUF const *get_fbuf(char const *Data);
 enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
 
-
 class FlatbufferReader : public FileWriter::FlatbufferReader {
 public:
   bool verify(FlatbufferMessage const &Message) const override;
@@ -20,7 +19,7 @@ public:
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 
 private:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 } // namespace ep00
