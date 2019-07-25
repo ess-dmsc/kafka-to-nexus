@@ -14,8 +14,6 @@
 #include <utility>
 #include <vector>
 
-struct rd_kafka_topic_partition_list_s;
-
 // POD
 struct MainOpt {
   bool gtest = false;
