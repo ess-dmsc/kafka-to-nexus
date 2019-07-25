@@ -106,6 +106,14 @@ TEST_F(Schema_ep00, WriteDataOnce) {
   std::vector<uint64_t> Timestamps(Size);
   TimeDataSet.read(Timestamps);
   EXPECT_EQ(Timestamps[0], Timestamp);
+
+  auto StatusDataset = UsedGroup.get_dataset("alarm_status");
+  std::vector<std::string> StatusData(StatusDataset.dataspace().size());
+  auto Datatype = hdf5::datatype::String::variable();
+  Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
+  auto Dataspace = hdf5::dataspace::Simple({1});
+  EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
+  EXPECT_EQ(StatusData[0], "CONNECTED");
 }
 
 TEST_F(Schema_ep00, SuccessfulParseKB) {
