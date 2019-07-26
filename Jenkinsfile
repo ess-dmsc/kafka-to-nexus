@@ -216,6 +216,7 @@ builders = pipeline_builder.createBuilders { container ->
       def test_output = "doxygen_results.txt"
         container.sh """
           cd build
+          pwd
           make docs > ${test_output}
         """
         container.copyFrom("${pipeline_builder.project}/build/${test_output}", '.')
