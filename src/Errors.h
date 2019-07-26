@@ -35,14 +35,14 @@ enum class StreamerStatus {
 
 /// \brief Converts a StreamerError status into a human readable string.
 ///
-/// \param[in] Error The error status.
+/// \param Error The error status.
 ///
 /// \return A string that briefly describes the status.
 const std::string Err2Str(const StreamerStatus &Error);
 
 /// \brief Converts a StreamMasterError status into a human readable string.
 ///
-/// \param[in] Error The error status.
+/// \param Error The error status.
 ///
 /// \return  A string that briefly describes the status.
 const std::string Err2Str(const StreamMasterError &Error);

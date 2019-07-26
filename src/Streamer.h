@@ -26,14 +26,12 @@ public:
 
   /// \brief Create an instance of Streamer.
   ///
-  /// \param[in] broker    Broker name or address of one of the brokers in the
+  /// \param Broker Broker name or address of one of the brokers in the
   /// partition.
-  ///
-  /// \param[in] topic_name   Name of the topic to consume.
-  /// \param[in] Opts         Opts configuration options for the streamer and
+  /// \param TopicName Name of the topic to consume.
+  /// \param Opts Opts configuration options for the streamer and
   /// RdKafka.
-  ///
-  /// \throws     std::runtime_error if failed.
+  /// \param Consumer The Consumer.
   Streamer(const std::string &Broker, const std::string &TopicName,
            StreamerOptions Opts, ConsumerPtr Consumer);
   Streamer(const Streamer &) = delete;
@@ -107,7 +105,7 @@ private:
 /// \brief Create a consumer with options specified in the class
 /// constructor. Connects to the topic, eventually at the specified timestamp.
 ///
-/// \param[in] TopicName  The topic to consume.
+/// \param TopicName The topic to consume.
 /// \param Logger Pointer to spdlog instance to be used for logging.
 ///
 /// \return If the connection is successful returns ``SEC::writing``. If the

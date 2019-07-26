@@ -22,7 +22,7 @@ enum class StatusCode : int {
 
 /// \brief Convert the StatusCode into a string.
 ///
-/// \param[in]  Code  The StatusCode.
+/// \param Code The StatusCode.
 ///
 /// \return An upper case string that NICOS can interpret.
 std::string convertStatusCodeToString(StatusCode Code);
@@ -34,11 +34,11 @@ std::string convertStatusCodeToString(StatusCode Code);
 /// service and job ids, the system timestamp at which the log has been emitted
 /// and a message.
 ///
-/// \param[in]  Producer      The producer, for example KafkaW::ProducerTopic.
-/// \param[in]  Code          The code.
-/// \param[in]  ServiceId     The service identifier.
-/// \param[in]  JobId         The job identifier.
-/// \param[in]  Message       The message.
+/// \param Producer The producer, for example KafkaW::ProducerTopic.
+/// \param Code The code.
+/// \param ServiceId The service identifier.
+/// \param JobId The job identifier.
+/// \param Message The message.
 ///
 /// \tparam     ProducerType  { description }
 template <class ProducerType>
