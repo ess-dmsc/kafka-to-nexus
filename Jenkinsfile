@@ -219,7 +219,7 @@ builders = pipeline_builder.createBuilders { container ->
           pwd
           make docs > ${test_output}
         """
-        container.copyFrom("${pipeline_builder.project}/build/${test_output}", '.')
+        container.copyFrom("/build/${test_output}", '.')
         archiveArtifacts "${test_output}"
     }  // stage
   }  // if
