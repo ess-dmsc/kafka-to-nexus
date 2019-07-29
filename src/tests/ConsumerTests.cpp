@@ -487,3 +487,29 @@ TEST_F(ConsumerTests,
            "partition present in the metadata";
   }
 }
+
+TEST_F(ConsumerTests,
+       testGetHighWatermarkOffsetReturnsFourthArgumentToGetWaterMarkOffsets) {
+  auto Metadata = new MockMetadata;
+  auto MockConsumer = std::make_unique<MockKafkaConsumer>(
+      RdKafka::ErrorCode::ERR_NO_ERROR, Metadata);
+  REQUIRE_CALL(*MockConsumer, close()).TIMES((1)).RETURN(RdKafka::ERR_NO_ERROR);
+
+  int64_t InputHighOffset = 42;
+  // get_watermark_offsets takes a raw pointer as the 4th argument to populate
+  // with the high offset value
+  REQUIRE_CALL(*MockConsumer, get_watermark_offsets(_, _, _, _))
+      .LR_SIDE_EFFECT(*_4 = InputHighOffset)
+      .RETURN(RdKafka::ERR_NO_ERROR)
+      .TIMES(1);
+
+  {
+    auto Consumer = std::make_unique<KafkaW::Consumer>(
+        std::move(MockConsumer),
+        std::unique_ptr<RdKafka::Conf>(
+            RdKafka::Conf::create(RdKafka::Conf::CONF_GLOBAL)),
+        std::make_unique<KafkaW::KafkaEventCb>());
+    auto OutputHighOffset = Consumer->getHighWatermarkOffset("Topic", 0);
+    EXPECT_EQ(OutputHighOffset, InputHighOffset);
+  }
+}
