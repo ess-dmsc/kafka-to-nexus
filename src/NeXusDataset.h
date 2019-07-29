@@ -165,13 +165,11 @@ class ExtensibleDataset : public hdf5::node::ChunkedDataset {
 public:
   ExtensibleDataset() = default;
   /// \brief Will create or open dataset with the given name.
-  /// \param[in] Parent The group/node of the dataset in.
-  /// \param[in] Name The name of the dataset.
-  /// \param[in] CMode Should the dataset be opened or created.
-  /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset,
-  /// ignored if the dataset
-  /// is opened.
-  /// \throw std::runtime_error if dataset can not be created/opened.
+  /// \param Parent The group/node of the dataset in.
+  /// \param Name The name of the dataset.
+  /// \param CMode Should the dataset be opened or created.
+  /// \param ChunkSize The hunk size (as number of elements) of the dataset,
+  /// ignored if the dataset is opened.
   ExtensibleDataset(hdf5::node::Group const &Parent, std::string Name,
                     Mode CMode, size_t ChunkSize)
       : hdf5::node::ChunkedDataset() {
@@ -220,11 +218,9 @@ public:
   /// \brief Open a dataset.
   ///
   /// Can only be used to open a dataset.
-  /// \param[in] Parent The group/node of the dataset in.
+  /// \param Parent The group/node of the dataset in.
   /// \note This parameter is ignored when opening an existing dataset.
-  /// \param[in] CMode Should the dataset be opened or created.
-  /// \throw std::runtime_error if dataset can not opened or the constructor is
-  /// called with the input NeXusDataset::Mode::Create.
+  /// \param CMode Should the dataset be opened or created.
   MultiDimDatasetBase(const hdf5::node::Group &Parent, Mode CMode)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
@@ -287,18 +283,13 @@ public:
   ///
   /// When opening a dataset, some of the paramaters will be ignored.
   ///
-  /// \param[in]  Parent The group/node of the dataset in.
-  /// \note       This parameter is ignored when opening an existing dataset.
-  ///
-  /// \param[in] CMode    Should the dataset be opened or created.
-  /// \param[in] Shape    The shape of the array in the NDArray. This vector
+  /// \param Parent The group/node of the dataset in.
+  /// \note This parameter is ignored when opening an existing dataset.
+  /// \param CMode Should the dataset be opened or created.
+  /// \param Shape The shape of the array in the NDArray. This vector
   /// will be prepended with one dimension to allow for adding of data.
-  ///
-  /// \param[in] ChunkSize The hunk size (as number of elements) of the dataset,
-  /// ignored if the dataset is opened. Vector must be of size 1 or same size as
-  /// Shape.
-  ///
-  /// \throw std::runtime_error if dataset can not be created/opened.
+  /// \param ChunkSize The chunk size (as number of elements) of the dataset,
+  /// ignored if the dataset is opened.
   MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode,
                   hdf5::Dimensions Shape, hdf5::Dimensions ChunkSize)
       : MultiDimDatasetBase() {
@@ -339,14 +330,10 @@ public:
   ///
   /// Can only be used to open a dataset.
   ///
-  /// \param[in] Parent   The group/node of the dataset in.
-  /// \note               This parameter is ignored when opening an existing
+  /// \param Parent The group/node of the dataset in.
+  /// \note This parameter is ignored when opening an existing
   /// dataset.
-  ///
-  /// \param[in] CMode    Should the dataset be opened or created.
-  ///
-  /// \throw std::runtime_error if dataset can not opened or the constructor is
-  /// called with the input NeXusDataset::Mode::Create.
+  /// \param CMode Should the dataset be opened or created.
   MultiDimDataset(hdf5::node::Group const &Parent, Mode CMode)
       : MultiDimDatasetBase(Parent, CMode) {}
 };

@@ -22,7 +22,8 @@ public:
                std::shared_ptr<KafkaW::ProducerTopic> Producer);
 
   ~StreamMaster();
-
+  StreamMaster(const StreamMaster &) = delete;
+  StreamMaster(StreamMaster &&) = default;
   StreamMaster &operator=(const StreamMaster &) = delete;
 
   /// Set the point in time that triggers

@@ -15,7 +15,7 @@ StreamMaster::StreamMaster(const std::string &Broker,
     : Demuxers(FileWriterTask->demuxers()),
       RunStatus(Status::StreamMasterError::NOT_STARTED),
       WriterTask(std::move(FileWriterTask)), ServiceId{Options.ServiceID},
-      ProducerTopic{std::move(Producer)} {
+      ProducerTopic(std::move(Producer)) {
   for (auto &Demux : Demuxers) {
     try {
       std::unique_ptr<KafkaW::ConsumerInterface> Consumer =

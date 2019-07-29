@@ -521,15 +521,6 @@ std::string TruncateCommand(std::string const &Command) {
 
 void CommandHandler::tryToHandle(std::string const &Command,
                                  std::chrono::milliseconds MsgTimestamp) {
-
-  if (MsgTimestamp.count() < 0) {
-    MsgTimestamp = std::chrono::duration_cast<std::chrono::milliseconds>(
-        std::chrono::system_clock::now().time_since_epoch());
-    Logger->info(
-        "Kafka command doesn't contain timestamp, so using current time.");
-  }
-  Logger->info("Kafka command message timestamp : {}", MsgTimestamp.count());
-
   try {
     handle(Command, MsgTimestamp);
   } catch (...) {
@@ -556,12 +547,6 @@ void CommandHandler::tryToHandle(std::string const &Command,
       }
     }
   }
-}
-
-void CommandHandler::tryToHandle(
-    std::unique_ptr<Msg> Message,
-    std::chrono::milliseconds MsgTimestampMilliseconds) {
-  tryToHandle({(Message->data()), Message->size()}, MsgTimestampMilliseconds);
 }
 
 size_t CommandHandler::getNumberOfFileWriterTasks() const {

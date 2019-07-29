@@ -35,7 +35,7 @@ public:
   CommandHandler(MainOpt &Settings, MasterInterface *Master)
       : Config(Settings), MasterPtr(Master){};
 
-  /// \brief Given a nlohman::json, create a new file writer task.
+  /// \brief Create a new file writer task.
   ///
   /// \param JSONCommand Command for configuring the new task.
   void handleNew(const nlohmann::json &JSONCommand,
@@ -52,21 +52,13 @@ public:
   /// \param Command The command defining which job to stop.
   void handleStreamMasterStop(const nlohmann::json &Command);
 
-  /// \brief Try to handle the message.
-  ///
-  /// \param Msg The message.
-  /// \param MsgTimestamp The rd_kafka_message_timestamp.
-  void tryToHandle(std::unique_ptr<Msg> Message,
-                   std::chrono::milliseconds MsgTimestampMilliseconds =
-                       std::chrono::milliseconds{-1});
-
   /// \brief Try to handle the command.
   ///
   /// \param Command The command to parse.
   /// \param MsgTimestamp The rd_kafka_message_timestamp.
   void tryToHandle(
       std::string const &Command,
-      std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{-1});
+      std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{0});
 
   /// \brief Get number of active writer tasks.
   ///

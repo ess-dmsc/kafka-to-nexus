@@ -33,7 +33,7 @@ public:
   ///
   /// Called typically from `Streamer`.
   ///
-  /// \param[in] Message The flatbuffer message that is to be written to file.
+  /// \param Message The flatbuffer message that is to be written to file.
   ///
   /// \return A status message indicating if the write was successful.
   virtual ProcessMessageResult
@@ -46,7 +46,7 @@ public:
 
   /// Adds a \p source to topic sources.
   ///
-  /// \param[in]  source  The `Source` to be added.
+  /// \param source The `Source` to be added.
   ///
   /// \return A reference to the source that has been added.
   Source &add_source(Source &&source) {
