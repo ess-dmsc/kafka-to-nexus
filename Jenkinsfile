@@ -217,7 +217,7 @@ builders = pipeline_builder.createBuilders { container ->
         container.sh """
           cd build
           pwd
-          make docs 1> ${test_output}
+          make docs 2> ${test_output}
         """
         container.copyFrom("build/${test_output}", '.')
         archiveArtifacts "${test_output}"
