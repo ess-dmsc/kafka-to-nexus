@@ -7,6 +7,12 @@
 #include <chrono>
 #include <thread>
 
+namespace {
+std::chrono::nanoseconds currentEpochTimeNanoseconds() {
+  return std::chrono::system_clock::now().time_since_epoch();
+}
+}
+
 namespace KafkaW {
 
 static std::atomic<int> ConsumerInstanceCount;
@@ -190,13 +196,18 @@ bool Consumer::topicPresent(const std::string &TopicName) {
     findTopic(TopicName);
   } catch (std::runtime_error &e) {
     return false;
-  };
+  }
   return true;
 }
 
 /// Updates the RdKafka Metadata pointer. If broker is unavailable, keeps trying
 /// to connect every 500ms, logging messages every few seconds.
 void Consumer::updateMetadata() {
+  int64_t OneSecondInNanoseconds = 1000000000L;
+  if (currentEpochTimeNanoseconds().count() - LastMetadataUpdate.count() <
+      OneSecondInNanoseconds) {
+    Logger->debug("Metadata already up to date, skipping query");
+  }
   short LoopCounter = 0;
   while (!metadataCall()) {
     if (LoopCounter == 7) {
@@ -216,12 +227,17 @@ bool Consumer::metadataCall() {
   switch (ErrorCode) {
   case RdKafka::ERR_NO_ERROR:
     KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
+    LastMetadataUpdate = currentEpochTimeNanoseconds();
     return true;
   case RdKafka::ERR__TRANSPORT:
     return false;
+  case RdKafka::ERR__TIMED_OUT:
+    return false;
   default:
     throw MetadataException(
-        "Consumer::metadataCall() - error while retrieving metadata.");
+        fmt::format("Consumer::metadataCall() - error while retrieving "
+                    "metadata. RdKafka errorcode: {}",
+                    ErrorCode));
   }
 }
 

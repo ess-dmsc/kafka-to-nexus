@@ -12,8 +12,8 @@ struct BrokerSettings {
   BrokerSettings() = default;
   std::string Address;
   int PollTimeoutMS = 100;
-  int MetadataTimeoutMS = 1000;
-  int OffsetsForTimesTimeoutMS = 1000;
+  int MetadataTimeoutMS = 2000;
+  int OffsetsForTimesTimeoutMS = 2000;
   int ConsumerCloseTimeoutMS = 5000;
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs

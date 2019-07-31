@@ -105,6 +105,7 @@ private:
   BrokerSettings ConsumerBrokerSettings;
   void updateMetadata();
   std::shared_ptr<RdKafka::Metadata> KafkaMetadata;
+  std::chrono::nanoseconds LastMetadataUpdate{0};
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
   void assignToPartitions(const std::string &Topic,
