@@ -176,8 +176,8 @@ void Consumer::addTopicAtTimestamp(std::string const &Topic,
   Logger->info("Consumer::addTopicAtTimestamp  Topic: {}  StartTime: {}", Topic,
                StartTime.count());
 
-  auto TopicPartitionsWithTimestamp = offsetsForTimesForTopic(Topic, StartTime);
-  assignToPartitions(Topic, TopicPartitionsWithTimestamp);
+  auto TopicPartitions = offsetsForTimesForTopic(Topic, StartTime);
+  assignToPartitions(Topic, TopicPartitions);
 }
 
 int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
@@ -233,9 +233,9 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 /// Updates the RdKafka Metadata pointer. If broker is unavailable, keeps trying
 /// to connect every 500ms, logging messages every few seconds.
 void Consumer::updateMetadata() {
-  int64_t OneSecondInNanoseconds = 1000000000L;
+  int64_t TwoSecondsInNanoseconds = 2000000000L;
   if (currentEpochTimeNanoseconds().count() - LastMetadataUpdate.count() <
-      OneSecondInNanoseconds) {
+      TwoSecondsInNanoseconds) {
     Logger->debug("Metadata already up to date, skipping query");
     return;
   }

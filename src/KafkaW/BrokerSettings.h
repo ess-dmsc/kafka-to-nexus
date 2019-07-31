@@ -29,6 +29,7 @@ struct BrokerSettings {
       {"heartbeat.interval.ms", "500"},     // 0.5 Secs
       {"statistics.interval.ms", "600000"}, // 1 Min
       {"api.version.request", "true"},
+      {"enable.auto.commit", "false"}
   };
 };
 } // namespace KafkaW
