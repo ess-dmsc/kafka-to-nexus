@@ -119,14 +119,15 @@ Consumer::offsetsForTimesForTopic(std::string const &Topic,
   }
 
   uint32_t LoopCounter = 0;
-  uint32_t MaxRetries = 10;
+  uint32_t WarnOnNRetries = 10;
   while (!queryOffsetsForTimes(TopicPartitionsWithTimestamp)) {
-    if (LoopCounter == MaxRetries) {
-      Logger->error("Cannot contact broker, retrying until connection is "
-                    "established...");
+    if (LoopCounter == WarnOnNRetries) {
+      Logger->warn("Cannot contact broker, retrying until connection is "
+                   "established...");
       LoopCounter = 0;
     }
     LoopCounter++;
+    std::this_thread::sleep_for(std::chrono::seconds(2));
   }
   Logger->debug("Successfully queried offsets for times");
 
@@ -236,20 +237,22 @@ void Consumer::updateMetadata() {
   int64_t TwoSecondsInNanoseconds = 2000000000L;
   if (currentEpochTimeNanoseconds().count() - LastMetadataUpdate.count() <
       TwoSecondsInNanoseconds) {
-    Logger->debug("Metadata already up to date, skipping query");
+    Logger->debug("Using cached Metadata as it is less than 2 seconds old");
     return;
   }
+
+  Logger->debug("Querying broker for updated Metadata");
   uint32_t LoopCounter = 0;
-  uint32_t MaxRetries = 10;
+  uint32_t WarnOnNRetries = 10;
   while (!metadataCall()) {
-    if (LoopCounter == MaxRetries) {
-      Logger->error("Cannot contact broker, retrying until connection is "
-                    "established...");
+    if (LoopCounter == WarnOnNRetries) {
+      Logger->warn("Cannot contact broker, retrying until connection is "
+                   "established...");
       LoopCounter = 0;
     }
     LoopCounter++;
   }
-  Logger->info("Successfully updated metadata from broker");
+  Logger->debug("Successfully updated metadata from broker");
 }
 
 bool Consumer::metadataCall() {
