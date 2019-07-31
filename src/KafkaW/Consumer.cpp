@@ -118,16 +118,46 @@ Consumer::offsetsForTimesForTopic(std::string const &Topic,
     TopicPartitionsWithTimestamp.push_back(TopicPartition);
   }
 
+  uint32_t LoopCounter = 0;
+  uint32_t MaxRetries = 10;
+  while (!queryOffsetsForTimes(TopicPartitionsWithTimestamp)) {
+    if (LoopCounter == MaxRetries) {
+      Logger->error("Cannot contact broker, retrying until connection is "
+                    "established...");
+      LoopCounter = 0;
+    }
+    LoopCounter++;
+  }
+  Logger->debug("Successfully queried offsets for times");
+
+  return TopicPartitionsWithTimestamp;
+}
+
+/// Get offsets for times, returns true if successful and false otherwise
+/// Timestamps in provided topic partitions' offset field will be replaced with
+/// offset if successful
+/// \param TopicPartitionsWithTimestamp topic partitions container timestamp in
+/// the offset field
+/// \return true if successful
+bool Consumer::queryOffsetsForTimes(
+    std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithTimestamp) {
   auto ErrorCode = KafkaConsumer->offsetsForTimes(
       TopicPartitionsWithTimestamp,
       ConsumerBrokerSettings.OffsetsForTimesTimeoutMS);
-  if (ErrorCode != RdKafka::ErrorCode::ERR_NO_ERROR) {
+
+  switch (ErrorCode) {
+  case RdKafka::ERR_NO_ERROR:
+    return true;
+  case RdKafka::ERR__TRANSPORT:
+    return false;
+  case RdKafka::ERR__TIMED_OUT:
+    return false;
+  default:
     Logger->error("Kafka error while getting offsets for timestamp: {}",
                   ErrorCode);
     throw std::runtime_error(fmt::format(
         "Kafka error while getting offsets for timestamp: {}", ErrorCode));
   }
-  return TopicPartitionsWithTimestamp;
 }
 
 std::vector<int64_t>
@@ -207,17 +237,19 @@ void Consumer::updateMetadata() {
   if (currentEpochTimeNanoseconds().count() - LastMetadataUpdate.count() <
       OneSecondInNanoseconds) {
     Logger->debug("Metadata already up to date, skipping query");
+    return;
   }
-  short LoopCounter = 0;
+  uint32_t LoopCounter = 0;
+  uint32_t MaxRetries = 10;
   while (!metadataCall()) {
-    if (LoopCounter == 7) {
+    if (LoopCounter == MaxRetries) {
       Logger->error("Cannot contact broker, retrying until connection is "
                     "established...");
       LoopCounter = 0;
     }
     LoopCounter++;
   }
-  Logger->info("Connection with broker established.");
+  Logger->info("Successfully updated metadata from broker");
 }
 
 bool Consumer::metadataCall() {

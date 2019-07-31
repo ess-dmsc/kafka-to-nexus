@@ -118,5 +118,7 @@ private:
   std::vector<RdKafka::TopicPartition *>
   offsetsForTimesForTopic(std::string const &Topic,
                           std::chrono::milliseconds Time);
+  bool queryOffsetsForTimes(
+      std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithTimestamp);
 };
 } // namespace KafkaW
