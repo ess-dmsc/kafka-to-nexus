@@ -71,7 +71,7 @@ void Consumer::assignToPartitions(const std::string &Topic,
   for_each(TopicPartitionsWithOffsets.cbegin(),
            TopicPartitionsWithOffsets.cend(),
            [this, &Topic](RdKafka::TopicPartition *Partition) {
-             Logger->trace(
+             Logger->debug(
                  "Assigning partition to consumer: Topic {}, Partition {}, "
                  "Starting at offset {}",
                  Topic, Partition->partition(), Partition->offset());
@@ -79,14 +79,15 @@ void Consumer::assignToPartitions(const std::string &Topic,
            });
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     Logger->error("Could not assign to {}", Topic);
-    throw std::runtime_error(fmt::v5::format("Could not assign to {}", Topic));
+    throw std::runtime_error(fmt::v5::format(
+        "Could not assign to {}, RdKafka error code: {}", Topic, ErrorCode));
   }
 }
 
 std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
   auto NumberOfPartitions = queryTopicPartitions(Topic).size();
   std::vector<RdKafka::TopicPartition *> TopicPartitions;
-  for (unsigned int i = 0; i < NumberOfPartitions; i++) {
+  for (uint64_t i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
     TopicPartitions.push_back(TopicPartition);
   }
@@ -112,7 +113,7 @@ Consumer::offsetsForTimesForTopic(std::string const &Topic,
                                   std::chrono::milliseconds const Time) {
   auto NumberOfPartitions = queryTopicPartitions(Topic).size();
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
-  for (unsigned int i = 0; i < NumberOfPartitions; i++) {
+  for (uint64_t i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
     TopicPartition->set_offset(Time.count());
     TopicPartitionsWithTimestamp.push_back(TopicPartition);
