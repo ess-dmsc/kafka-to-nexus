@@ -11,9 +11,9 @@ and `HDFWriterModuleRegistry`.  For an example, please search for `Registrar` in
 
 ### Module for f142 LogData
 
-[Documentation](docs/writer_module_f142_log_data.md).
+[Documentation](writer_module_f142_log_data.md).
 
 
 ### Module for hs00 EventHistogram
 
-[Documentation](docs/writer_module_hs00_event_histogram.md).
+[Documentation](writer_module_hs00_event_histogram.md).
