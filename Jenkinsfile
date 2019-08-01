@@ -87,10 +87,17 @@ builders = pipeline_builder.createBuilders { container ->
         coverage_on = ''
       }
 
+      def doxygen_on
+      if (container.key == clangformat_os) {
+        doxygen_on = '-DRUN_DOXYGEN=TRUE'
+      } else {
+        doxygen_on = ''
+      }
+
       container.sh """
         cd build
         . ./activate_run.sh
-        cmake ${coverage_on} ../${pipeline_builder.project}
+        cmake ${coverage_on} ${doxygen_on} ../${pipeline_builder.project}
       """
     } else {
       container.sh """
@@ -203,6 +210,17 @@ builders = pipeline_builder.createBuilders { container ->
         """
         container.copyFrom("${pipeline_builder.project}/${test_output}", '.')
         recordIssues sourceCodeEncoding: 'UTF-8', qualityGates: [[threshold: 1, type: 'TOTAL', unstable: true]], tools: [cppCheck(pattern: 'cppcheck.xml', reportEncoding: 'UTF-8')]
+    }  // stage
+
+    pipeline_builder.stage("${container.key}: Doxygen") {
+      def test_output = "doxygen_results.txt"
+        container.sh """
+          cd build
+          pwd
+          make docs 2> ${test_output}
+        """
+        container.copyFrom("build/${test_output}", '.')
+        archiveArtifacts "${test_output}"
     }  // stage
   }  // if
 

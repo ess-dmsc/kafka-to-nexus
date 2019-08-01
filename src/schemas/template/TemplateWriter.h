@@ -64,7 +64,7 @@ public:
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   ///
-  /// \param[in] Message The structure containing a pointer to a buffer
+  /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the
   /// buffer.
   ///
@@ -90,7 +90,7 @@ public:
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   ///
-  /// \param[in] Message The structure containing a pointer to a buffer
+  /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the
   /// buffer.
   ///
@@ -115,7 +115,7 @@ public:
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   ///
-  /// \param[in] Message The structure containing a pointer to a buffer
+  /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
   ///
   /// \return The timestamp of the flatbuffer as nanoseconds since Unix epoch
@@ -173,9 +173,9 @@ public:
   /// exceptions here unless you encounter an unrecoverable state as any
   /// exceptions will cause the thread to exit.
   ///
-  /// \param[in] config_stream Contains information about configurations
+  /// \param config_stream Contains information about configurations
   /// relevant only to the current instance of this file writing module.
-  /// \param[in] config_module This parameter is currently unused and thus any
+  /// \param config_module This parameter is currently unused and thus any
   /// calls to this member function will have this parameter set to `nullptr`.
   void parse_config(std::string const &/*ConfigurationStream*/,
                     std::string const &/*ConfigurationModule*/) override {
@@ -207,9 +207,9 @@ public:
   /// \note The return value of this function is not checked in the current
   /// implementation.
   ///
-  /// \param[in] hdf_parent This is the HDF5 group where the relevant
+  /// \param hdf_parent This is the HDF5 group where the relevant
   /// datasets should be created.
-  /// \param[in] HDFAttributes Additional attributes as defined in the Nexus
+  /// \param HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
   /// HDFWriterModule is free to create the structure and datasets according to
   /// its needs, it must also take the reposnsibility to write these
@@ -248,7 +248,7 @@ public:
   /// exceptions here unless you encounter an unrecoverable state as any
   /// exceptions will cause the thread to exit.
   ///
-  /// \param[in] hdf_parent This is HDF5 group which has the datasets created
+  /// \param hdf_parent This is HDF5 group which has the datasets created
   /// using the call to init_hdf().
   ///
   /// \return An instance of InitResult. Note that these instances can only be
@@ -279,7 +279,7 @@ public:
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.
   ///
-  /// \param[in] Message The structure containing a pointer to a buffer
+  /// \param Message The structure containing a pointer to a buffer
   /// containing data received from the Kafka broker and the size of the buffer.
   // cppcheck-suppress functionStatic
   void write(FileWriter::FlatbufferMessage const &/*Message*/) override {
