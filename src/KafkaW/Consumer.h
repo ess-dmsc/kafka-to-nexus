@@ -110,7 +110,7 @@ private:
   std::unique_ptr<KafkaEventCb> EventCallback;
   void assignToPartitions(const std::string &Topic,
                           const std::vector<RdKafka::TopicPartition *>
-                              &TopicPartitionsWithOffsets) const;
+                              &TopicPartitionsWithOffsets);
   std::vector<RdKafka::TopicPartition *>
   queryWatermarkOffsets(const std::string &Topic);
   bool metadataCall();
@@ -120,5 +120,9 @@ private:
                           std::chrono::milliseconds Time);
   bool queryOffsetsForTimes(
       std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithTimestamp);
+  size_t CurrentNumberOfPartitions = 0;
+  std::string CurrentTopic;
+
+  size_t getNumberOfPartitionsInTopic(const std::string &Topic);
 };
 } // namespace KafkaW

@@ -63,9 +63,9 @@ Consumer::queryWatermarkOffsets(const std::string &Topic) {
   return TopicPartitionsWithOffsets;
 }
 
-void Consumer::assignToPartitions(const std::string &Topic,
-                                  const std::vector<RdKafka::TopicPartition *>
-                                      &TopicPartitionsWithOffsets) const {
+void Consumer::assignToPartitions(
+    const std::string &Topic,
+    const std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithOffsets) {
   RdKafka::ErrorCode ErrorCode =
       KafkaConsumer->assign(TopicPartitionsWithOffsets);
   for_each(TopicPartitionsWithOffsets.cbegin(),
@@ -80,8 +80,11 @@ void Consumer::assignToPartitions(const std::string &Topic,
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     Logger->error("Could not assign to {}", Topic);
     throw std::runtime_error(fmt::v5::format(
-        "Could not assign to {}, RdKafka error code: {}", Topic, ErrorCode));
+        "Could not assign partitions of topic {}, RdKafka error code: {}",
+        Topic, ErrorCode));
   }
+  CurrentTopic = Topic;
+  CurrentNumberOfPartitions = TopicPartitionsWithOffsets.size();
 }
 
 std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
@@ -111,7 +114,7 @@ std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
 std::vector<RdKafka::TopicPartition *>
 Consumer::offsetsForTimesForTopic(std::string const &Topic,
                                   std::chrono::milliseconds const Time) {
-  auto NumberOfPartitions = queryTopicPartitions(Topic).size();
+  size_t NumberOfPartitions = getNumberOfPartitionsInTopic(Topic);
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
   for (uint64_t i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
@@ -133,6 +136,21 @@ Consumer::offsetsForTimesForTopic(std::string const &Topic,
   Logger->debug("Successfully queried offsets for times");
 
   return TopicPartitionsWithTimestamp;
+}
+
+/// Returns the number of partitions in the topic, if the provided Topic name is
+/// the current assignment then number of partitions is already known and we can
+/// avoid a metadata request
+/// \param Topic Name of the topic
+/// \return Number of partitions in the named topic
+size_t Consumer::getNumberOfPartitionsInTopic(const std::string &Topic) {
+  size_t NumberOfPartitions;
+  if (Topic == CurrentTopic && CurrentNumberOfPartitions != 0) {
+    NumberOfPartitions = CurrentNumberOfPartitions;
+  } else {
+    NumberOfPartitions = queryTopicPartitions(Topic).size();
+  }
+  return NumberOfPartitions;
 }
 
 /// Get offsets for times, returns true if successful and false otherwise
