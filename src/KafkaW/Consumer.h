@@ -108,9 +108,9 @@ private:
   std::chrono::nanoseconds LastMetadataUpdate{0};
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
-  void assignToPartitions(const std::string &Topic,
-                          const std::vector<RdKafka::TopicPartition *>
-                              &TopicPartitionsWithOffsets);
+  void assignToPartitions(
+      const std::string &Topic,
+      const std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithOffsets);
   std::vector<RdKafka::TopicPartition *>
   queryWatermarkOffsets(const std::string &Topic);
   bool metadataCall();
