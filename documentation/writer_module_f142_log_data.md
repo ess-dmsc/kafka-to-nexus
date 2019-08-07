@@ -22,7 +22,7 @@ Example `nexus_structure` to write a scalar `double` value:
 }
 ```
 
-For `double` arrays, we have to specify the `array_size`:
+For arrays, we have to specify the `array_size`:
 
 ```json
 {
