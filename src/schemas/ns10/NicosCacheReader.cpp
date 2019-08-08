@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-
 #include "NicosCacheReader.h"
 #include "ns10_cache_entry_generated.h"
 
