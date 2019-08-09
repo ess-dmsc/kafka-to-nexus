@@ -8,13 +8,18 @@ from datetime import datetime
 from time import sleep
 from helpers.timehelpers import unix_time_milliseconds
 from subprocess import Popen
+import signal
 
 LOCAL_BUILD = "--local-build"
+WAIT_FOR_DEBUGGER_ATTACH = "--wait-to-attach-debugger"
 
 
 def pytest_addoption(parser):
     parser.addoption(LOCAL_BUILD, action="store", default=None,
                      help="Directory of local build to run tests against instead of rebuilding in a container")
+    parser.addoption(WAIT_FOR_DEBUGGER_ATTACH, type=bool, action="store", default=False,
+                     help=f"Use this flag when using the {LOCAL_BUILD} option to cause the system "
+                          f"tests to prompt you to attach a debugger to the file writer process")
 
 
 def pytest_collection_modifyitems(items, config):
@@ -126,7 +131,7 @@ def run_containers(cmd, options):
     wait_until_kafka_ready(cmd, options)
 
 
-def build_and_run(options, request, local_path=None):
+def build_and_run(options, request, local_path=None, wait_for_debugger=False):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
@@ -136,6 +141,11 @@ def build_and_run(options, request, local_path=None):
         # Launch local build of file writer
         full_path_of_file_writer_exe = os.path.join(local_path, "bin", "kafka-to-nexus")
         proc = Popen([full_path_of_file_writer_exe, "-c", "./config-files/local_file_writer_config.ini"])
+        if wait_for_debugger:
+            proc.send_signal(signal.SIGSTOP)  # Pause the file writer until we've had chance to attach a debugger
+            input(f'\n'
+                  f'Attach a debugger to process id {proc.pid} now if you wish, then press enter to continue: ')
+            proc.send_signal(signal.SIGCONT)
 
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
@@ -220,7 +230,8 @@ def docker_compose(request):
         # Only run the producer via docker-compose, not the file writer image,
         # as we're using a local build of the file writer
         options["--file"] = ["docker-compose-producer.yml"]
-    return build_and_run(options, request, request.config.getoption(LOCAL_BUILD))
+    return build_and_run(options, request, request.config.getoption(LOCAL_BUILD),
+                         request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH))
 
 
 @pytest.fixture(scope="module")
