@@ -143,8 +143,10 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
         proc = Popen([full_path_of_file_writer_exe, "-c", "./config-files/local_file_writer_config.ini"])
         if wait_for_debugger:
             proc.send_signal(signal.SIGSTOP)  # Pause the file writer until we've had chance to attach a debugger
-            input(f'\n'
-                  f'Attach a debugger to process id {proc.pid} now if you wish, then press enter to continue: ')
+            input(f"\n"
+                  f"Attach a debugger to process id {proc.pid} now if you wish, then press enter to continue: ")
+            print("You'll need to tell the debugger to continue after it has attached, "
+                  "for example type \"continue\" if using gdb.")
             proc.send_signal(signal.SIGCONT)
 
     def fin():
