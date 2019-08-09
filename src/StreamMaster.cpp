@@ -205,6 +205,8 @@ void StreamMaster::doStop() {
   }
   Logger->trace("Erasing streamers");
 
+  // TEMPORARY - erase Streamers one at a time to discover where the problem
+  // occurs
   for (auto it = Streamers.cbegin(); it != Streamers.cend();
        /* no increment */) {
     Logger->trace("Erasing Streamer {}", it->first);
