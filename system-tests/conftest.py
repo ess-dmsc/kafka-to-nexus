@@ -7,6 +7,36 @@ import docker
 from datetime import datetime
 from time import sleep
 from helpers.timehelpers import unix_time_milliseconds
+from subprocess import Popen
+
+LOCAL_BUILD = "--local-build"
+
+
+def pytest_addoption(parser):
+    parser.addoption(LOCAL_BUILD, action="store", default=None,
+                     help="Directory of local build to run tests against instead of rebuilding in a container")
+
+
+def pytest_collection_modifyitems(items, config):
+    """
+    If we are running against a local build then only run tests which use the "docker_compose" fixture.
+    The configurations in other fixtures are more complicated, for example run multiple file writers,
+    and are not yet supported by the LOCAL_BUILD option
+    """
+    if config.option.local_build is not None:
+        fixture_name = "docker_compose"
+        selected_items = []
+        deselected_items = []
+
+        for item in items:
+            if fixture_name in getattr(item, 'fixturenames', ()):
+                selected_items.append(item)
+            else:
+                deselected_items.append(item)
+        config.hook.pytest_deselected(items=deselected_items)
+        items[:] = selected_items
+        print(f"\nRunning against local build. This currently only supports running tests which use the {fixture_name}"
+              f" fixture. Other tests have been automatically deselected.")
 
 
 def wait_until_kafka_ready(docker_cmd, docker_options):
@@ -72,19 +102,21 @@ common_options = {"--no-deps": False,
 
 
 @pytest.fixture(scope="session", autouse=True)
-def build_filewriter_image():
-    client = docker.from_env()
-    print("Building Filewriter image", flush=True)
-    build_args = {}
-    if "http_proxy" in os.environ:
-        build_args["http_proxy"] = os.environ["http_proxy"]
-    if "https_proxy" in os.environ:
-        build_args["https_proxy"] = os.environ["https_proxy"]
-    if "local_conan_server" in os.environ:
-        build_args["local_conan_server"] = os.environ["local_conan_server"]
-    image, logs = client.images.build(path="../", tag="kafka-to-nexus:latest", rm=False, buildargs=build_args)
-    for item in logs:
-        print(item, flush=True)
+def build_filewriter_image(request):
+    # Only build image if we are not running against a local build
+    if request.config.getoption(LOCAL_BUILD) is None:
+        client = docker.from_env()
+        print("Building Filewriter image", flush=True)
+        build_args = {}
+        if "http_proxy" in os.environ:
+            build_args["http_proxy"] = os.environ["http_proxy"]
+        if "https_proxy" in os.environ:
+            build_args["https_proxy"] = os.environ["https_proxy"]
+        if "local_conan_server" in os.environ:
+            build_args["local_conan_server"] = os.environ["local_conan_server"]
+        image, logs = client.images.build(path="../", tag="kafka-to-nexus:latest", rm=False, buildargs=build_args)
+        for item in logs:
+            print(item, flush=True)
 
 
 def run_containers(cmd, options):
@@ -94,25 +126,33 @@ def run_containers(cmd, options):
     wait_until_kafka_ready(cmd, options)
 
 
-def build_and_run(options, request):
+def build_and_run(options, request, local_path=None):
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
     run_containers(cmd, options)
 
+    if local_path is not None:
+        # Launch local build of file writer
+        full_path_of_file_writer_exe = os.path.join(local_path, "bin", "kafka-to-nexus")
+        proc = Popen([full_path_of_file_writer_exe, "-c", "./config-files/local_file_writer_config.ini"])
+
     def fin():
         # Stop the containers then remove them and their volumes (--volumes option)
         print("containers stopping", flush=True)
-        try:
-            # Used for when there are multiple filewriter instances
-            # as the service is not called "filewriter"
-            multiple_log_options = dict(options)
-            multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
-            cmd.logs(multiple_log_options)
-        except:
-            log_options = dict(options)
-            log_options["SERVICE"] = ["filewriter"]
-            cmd.logs(log_options)
+        if local_path is None:
+            try:
+                # Used for when there are multiple filewriter instances
+                # as the service is not called "filewriter"
+                multiple_log_options = dict(options)
+                multiple_log_options["SERVICE"] = ["filewriter1", "filewriter2"]
+                cmd.logs(multiple_log_options)
+            except:
+                log_options = dict(options)
+                log_options["SERVICE"] = ["filewriter"]
+                cmd.logs(log_options)
+        else:
+            proc.wait(timeout=100)
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
@@ -174,8 +214,13 @@ def docker_compose(request):
 
     # Options must be given as long form
     options = common_options
-    options["--file"] = ["docker-compose.yml"]
-    return build_and_run(options, request)
+    if request.config.getoption(LOCAL_BUILD) is None:
+        options["--file"] = ["docker-compose.yml"]
+    else:
+        # Only run the producer via docker-compose, not the file writer image,
+        # as we're using a local build of the file writer
+        options["--file"] = ["docker-compose-producer.yml"]
+    return build_and_run(options, request, request.config.getoption(LOCAL_BUILD))
 
 
 @pytest.fixture(scope="module")
