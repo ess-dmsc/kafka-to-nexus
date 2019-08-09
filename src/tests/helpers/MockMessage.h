@@ -18,5 +18,8 @@ public:
   MAKE_CONST_MOCK0(timestamp, RdKafka::MessageTimestamp());
   MAKE_CONST_MOCK0(msg_opaque, void *());
   MAKE_CONST_MOCK0(latency, int64_t());
+  MAKE_CONST_MOCK0(status, RdKafka::Message::Status());
+  MAKE_MOCK0(headers, RdKafka::Headers *());
+  MAKE_MOCK1(headers, RdKafka::Headers *(RdKafka::ErrorCode*));
   MAKE_MOCK0(c_ptr, rd_kafka_message_s *());
 };

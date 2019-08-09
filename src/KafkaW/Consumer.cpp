@@ -27,9 +27,9 @@ Consumer::Consumer(std::unique_ptr<RdKafka::KafkaConsumer> RdConsumer,
 
 Consumer::~Consumer() {
   Logger->debug("~Consumer()");
-  KafkaMetadata.reset();
   if (KafkaConsumer != nullptr) {
     KafkaConsumer->close();
+    KafkaMetadata.reset();
     RdKafka::wait_destroyed(5000);
     Logger->debug("Consumer closed");
   }
