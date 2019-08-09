@@ -209,10 +209,10 @@ void StreamMaster::doStop() {
   // occurs
   for (auto it = Streamers.cbegin(); it != Streamers.cend();
        /* no increment */) {
-    Logger->trace("Erasing Streamer {}", it->first);
+    Logger->debug("Erasing Streamer {}", it->first);
     Streamers.erase(it++);
   }
-  Logger->trace("Erased all Streamers");
+  Logger->debug("Erased all Streamers");
 
   Streamers.clear();
   RunStatus.store(StreamMasterError::IS_REMOVABLE);
