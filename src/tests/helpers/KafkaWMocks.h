@@ -127,8 +127,8 @@ public:
   MAKE_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
   MAKE_MOCK5(oauthbearer_set_token,
              RdKafka::ErrorCode(const std::string &, int64_t,
-                 const std::string &,
-                 const std::list<std::string> &, std::string &),
+                                const std::string &,
+                                const std::list<std::string> &, std::string &),
              override);
   MAKE_MOCK1(oauthbearer_set_token_failure,
              RdKafka::ErrorCode(const std::string &), override);
