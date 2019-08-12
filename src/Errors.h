@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
 /// \file This file defines the different success and failure status that the
 /// `StreamMaster` and the `Streamer` can incur. These error object have some
 /// utility methods that can be used to test the more common situations.
