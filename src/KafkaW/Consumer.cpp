@@ -80,9 +80,9 @@ void Consumer::assignToPartitions(
            });
   if (ErrorCode != RdKafka::ERR_NO_ERROR) {
     Logger->error("Could not assign to {}", Topic);
-    throw std::runtime_error(fmt::v5::format(
-        "Could not assign partitions of topic {}, RdKafka error code: {}",
-        Topic, ErrorCode));
+    throw std::runtime_error(fmt::format(
+        "Could not assign partitions of topic {}, RdKafka error: \"{}\"", Topic,
+        err2str(ErrorCode)));
   }
   CurrentTopic = Topic;
   CurrentNumberOfPartitions = TopicPartitionsWithOffsets.size();
