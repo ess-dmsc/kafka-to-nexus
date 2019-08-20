@@ -239,7 +239,8 @@ private:
       Logger->info("Shut down {}", Stream.first);
       auto CloseResult = Stream.second.closeStream();
       if (CloseResult != StreamerStatus::HAS_FINISHED) {
-        Logger->info("Problem with stopping {} : {}", Stream.first, Status::Err2Str(CloseResult));
+        Logger->info("Problem with stopping {} : {}", Stream.first,
+                     Status::Err2Str(CloseResult));
       } else {
         Logger->info("Stopped {}", Stream.first);
       }
