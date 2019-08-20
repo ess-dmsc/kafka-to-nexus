@@ -27,13 +27,15 @@ namespace ns10 {
 using FileWriter::Schemas::ns10::CacheReader;
 using FileWriter::Schemas::ns10::CacheWriter;
 
-FileWriter::FlatbufferMessage
-createFlatbufferMessageFromJson(nlohmann::json Json) {
+
+
+std::unique_ptr<flatbuffers::FlatBufferBuilder>
+createFlatbufferMessageFromJson(nlohmann::json const & Json) {
   double Time = 1.0;
   double Ttl = 1.0;
   uint8_t Expired = 0;
-  std::string Key("");
-  std::string Value("");
+  std::string Key;
+  std::string Value;
 
   if (auto Val = find<double>("time", Json)) {
     Time = Val.inner();
@@ -51,24 +53,21 @@ createFlatbufferMessageFromJson(nlohmann::json Json) {
     Expired = Val.inner();
   }
 
-  auto Builder = flatbuffers::FlatBufferBuilder();
-  auto FBKey = Builder.CreateString(Key);
-  auto FBValue = Builder.CreateString(Value);
+  auto Builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
+  auto FBKey = Builder->CreateString(Key);
+  auto FBValue = Builder->CreateString(Value);
 
-  FileWriter::Schemas::ns10::CacheEntryBuilder CEBuilder(Builder);
+  FileWriter::Schemas::ns10::CacheEntryBuilder CEBuilder(*Builder);
 
-  CEBuilder.add_key(FBKey);
+  CEBuilder.add_value(FBValue);
+  CEBuilder.add_expired(Expired);
   CEBuilder.add_time(Time);
   CEBuilder.add_ttl(Ttl);
-  CEBuilder.add_expired(Expired);
-  CEBuilder.add_value(FBValue);
+  CEBuilder.add_key(FBKey);
 
-  FinishCacheEntryBuffer(Builder, CEBuilder.Finish());
+  FinishCacheEntryBuffer(*Builder, CEBuilder.Finish());
 
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder.GetBufferPointer()), Builder.GetSize());
-
-  return Message;
+  return Builder;
 }
 
 void registerSchema() {
@@ -88,27 +87,27 @@ class NicosCacheReaderTest : public ::testing::Test {
 public:
   void SetUp() override {
     registerSchema();
+  };
 
-    nlohmann::json BufferJson = R"({
+  void TearDown() override{};
+};
+
+TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
+  nlohmann::json BufferJson = R"({
       "key": "nicos/device/parameter",
       "writer_module": "ns10",
       "time": 123.456,
       "value": "a string"
     })"_json;
 
-    Message = std::make_unique<FileWriter::FlatbufferMessage>(
-        createFlatbufferMessageFromJson(BufferJson));
-  };
+  auto Builder = createFlatbufferMessageFromJson(BufferJson);
+  auto Message = FileWriter::FlatbufferMessage(
+      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
 
-  void TearDown() override{};
-  std::unique_ptr<FileWriter::FlatbufferMessage> Message;
-};
-
-TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
-  CacheReader SomeReader;
-  EXPECT_TRUE(Message->isValid());
-  EXPECT_EQ(Message->getSourceName(), std::string("nicos/device/parameter"));
-  EXPECT_EQ(Message->getTimestamp(), 123.456 * 1e9);
+  EXPECT_TRUE(Message.isValid());
+  EXPECT_EQ(Message.getSourceName(), std::string("nicos/device/parameter"));
+  EXPECT_EQ(Message.getTimestamp(), 123.456 * 1e9);
 }
 
 class NicosCacheWriterTest : public ::testing::Test {
@@ -211,8 +210,10 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
     "value": "a string"
   })"_json;
 
-  FileWriter::FlatbufferMessage Message(
-      createFlatbufferMessageFromJson(BufferJson));
+  auto Builder = createFlatbufferMessageFromJson(BufferJson);
+  auto Message = FileWriter::FlatbufferMessage(
+      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
 
   Writer.write(Message);
 
@@ -239,8 +240,10 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
     "value": "a string"
   })"_json;
 
-  FileWriter::FlatbufferMessage Message(
-      createFlatbufferMessageFromJson(BufferJson));
+  auto Builder = createFlatbufferMessageFromJson(BufferJson);
+  auto Message = FileWriter::FlatbufferMessage(
+      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
 
   Writer.write(Message);
 
@@ -267,8 +270,10 @@ TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
     "value": "a string"
   })"_json;
 
-  FileWriter::FlatbufferMessage Message(
-      createFlatbufferMessageFromJson(BufferJson));
+  auto Builder = createFlatbufferMessageFromJson(BufferJson);
+  auto Message = FileWriter::FlatbufferMessage(
+      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
 
   Writer.write(Message);
 
@@ -298,8 +303,10 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   })"_json;
 
   for (uint64_t i = 0; i < 10; ++i) {
-    FileWriter::FlatbufferMessage Message(
-        createFlatbufferMessageFromJson(BufferJson));
+    auto Builder = createFlatbufferMessageFromJson(BufferJson);
+    auto Message = FileWriter::FlatbufferMessage(
+        reinterpret_cast<char *>(Builder->GetBufferPointer()),
+        Builder->GetSize());
     Writer.write(Message);
   }
 
