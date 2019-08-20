@@ -142,14 +142,7 @@ public:
   ///
   /// \return True, if can be removed.
   bool isRemovable() const {
-
-    bool StreamStillConnected =
-        std::any_of(Streamers.begin(), Streamers.end(), [](auto &Item) {
-          return Item.second.runStatus() >= StreamerStatus::IS_CONNECTED;
-        });
-
-    return !StreamStillConnected &&
-           RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
+    return RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
   }
 
   /// \brief Get the unique job id associated with the streamer (and hence
@@ -204,14 +197,14 @@ private:
   ///
   /// The streams write as long as Stop is false and there are open streams.
   void run() {
-    RunStatus = StreamMasterError::RUNNING;
+    RunStatus.store(StreamMasterError::RUNNING);
     while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
       for (auto &Demux : Demuxers) {
         auto &s = Streamers[Demux.topic()];
         processStreamResult(s, Demux);
       }
     }
-    RunStatus = StreamMasterError::HAS_FINISHED;
+    RunStatus.store(StreamMasterError::HAS_FINISHED);
     doStop();
   }
 
@@ -240,18 +233,20 @@ private:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
-    for (auto &s : Streamers) {
-      Logger->info("Shut down {}", s.first);
-      auto v = s.second.closeStream();
-      if (v != StreamerStatus::HAS_FINISHED) {
-        Logger->info("While stopping {} : {}", s.first, Status::Err2Str(v));
+    for (auto &Stream : Streamers) {
+      // Give the streams a chance to close, log if they fail
+      Logger->info("Shutting down {}", Stream.first);
+      Logger->info("Shut down {}", Stream.first);
+      auto CloseResult = Stream.second.closeStream();
+      if (CloseResult != StreamerStatus::HAS_FINISHED) {
+        Logger->info("Problem with stopping {} : {}", Stream.first, Status::Err2Str(CloseResult));
       } else {
-        Logger->info("\t...done");
+        Logger->info("Stopped {}", Stream.first);
       }
     }
     Streamers.clear();
-    RunStatus = StreamMasterError::IS_REMOVABLE;
-    Logger->info("RunStatus:  {}", Err2Str(RunStatus));
+    RunStatus.store(StreamMasterError::IS_REMOVABLE);
+    Logger->debug("StreamMaster is removable");
   }
 
   std::map<std::string, Streamer> Streamers;

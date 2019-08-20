@@ -76,7 +76,7 @@ private:
   uint64_t Errors{0};
   double Mbytes{0};
   double MbytesSquare{0};
-  std::mutex Mutex;
+  mutable std::mutex Mutex;
 };
 
 /// \brief Collect information about each stream's messages and
