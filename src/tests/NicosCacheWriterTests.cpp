@@ -27,10 +27,8 @@ namespace ns10 {
 using FileWriter::Schemas::ns10::CacheReader;
 using FileWriter::Schemas::ns10::CacheWriter;
 
-
-
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
-createFlatbufferMessageFromJson(nlohmann::json const & Json) {
+createFlatbufferMessageFromJson(nlohmann::json const &Json) {
   double Time = 1.0;
   double Ttl = 1.0;
   uint8_t Expired = 0;
@@ -85,9 +83,7 @@ void registerSchema() {
 
 class NicosCacheReaderTest : public ::testing::Test {
 public:
-  void SetUp() override {
-    registerSchema();
-  };
+  void SetUp() override { registerSchema(); };
 
   void TearDown() override{};
 };
