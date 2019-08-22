@@ -14,6 +14,7 @@
 #include "schemas/ns10/NicosCacheWriter.h"
 #include <flatbuffers/flatbuffers.h>
 #include <fstream>
+#include <memory>
 #include <gtest/gtest.h>
 
 namespace FileWriter {
