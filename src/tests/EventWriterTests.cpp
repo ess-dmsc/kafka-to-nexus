@@ -59,7 +59,7 @@ public:
   std::unique_ptr<ev42::FlatbufferReader> ReaderUnderTest;
 };
 
-TEST_F(EventReaderTests, GetSourceName) {
+TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
   std::string const TestSourceName = "TestSource";
   auto MessageBuffer = GenerateFlatbufferData(TestSourceName);
   FileWriter::FlatbufferMessage TestMessage(
