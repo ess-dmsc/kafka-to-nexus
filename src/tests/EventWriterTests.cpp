@@ -84,3 +84,32 @@ TEST_F(EventReaderTests, ReaderVerifiesValidMessage) {
       MessageBuffer.size());
   EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
+
+class EventWriterTests : public ::testing::Test {
+public:
+  void SetUp() override {
+    File = HDFFileTestHelper::createInMemoryTestFile("EventWriterTestFile.nxs");
+    TestGroup = File.H5File.root().create_group(TestGroupName);
+  };
+
+  void TearDown() override { File.close(); };
+  FileWriter::HDFFile File;
+  hdf5::node::Group TestGroup;
+  std::string const TestGroupName = "test_group";
+};
+
+using FileWriter::HDFWriterModule_detail::InitResult;
+
+TEST_F(EventWriterTests, EventWriterInitialisesFileWithNXEventDataDatasets) {
+  {
+    ev42::HDFWriterModule Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+  }
+  ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
+  EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_index"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_id"));
+  EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
+  EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
+}
