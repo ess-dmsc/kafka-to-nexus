@@ -113,3 +113,20 @@ TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
 }
+
+TEST_F(EventWriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
+  ev42::HDFWriterModule Writer;
+  EXPECT_FALSE(Writer.reopen(TestGroup) == InitResult::OK);
+}
+
+TEST_F(EventWriterTests, WriterSuccessfullyReopensGroupWhichWasInitialised) {
+  ev42::HDFWriterModule Writer;
+  EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+  EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+}
+
+TEST_F(EventWriterTests, WriterReportsFailureIfTryToInitialiseTwice) {
+  ev42::HDFWriterModule Writer;
+  EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+  EXPECT_FALSE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+}

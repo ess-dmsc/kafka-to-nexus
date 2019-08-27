@@ -158,27 +158,34 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     writeAttributes(HDFGroup, &AttributesJson, Logger);
   } catch (std::exception const &E) {
     auto message = hdf5::error::print_nested(E);
-    throw std::runtime_error(
-        fmt::format("ev42 could not init hdf_parent: {}  trace: {}",
-                    static_cast<std::string>(HDFGroup.link().path()), message));
+    Logger->error("ev42 could not init hdf_parent: {}  trace: {}",
+                  static_cast<std::string>(HDFGroup.link().path()), message);
+    return HDFWriterModule::InitResult::ERROR;
   }
   return HDFWriterModule::InitResult::OK;
 }
 
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
-  // Keep these for now, experimenting with those on another branch.
-  this->ds_event_time_offset =
-      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_time_offset");
-  this->ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
-  this->ds_event_time_zero =
-      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "event_time_zero");
-  this->ds_event_index =
-      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_index");
-  this->ds_cue_index =
-      h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index");
-  this->ds_cue_timestamp_zero =
-      h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_timestamp_zero");
+  try {
+    this->ds_event_time_offset =
+        h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_time_offset");
+    this->ds_event_id =
+        h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
+    this->ds_event_time_zero =
+        h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "event_time_zero");
+    this->ds_event_index =
+        h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_index");
+    this->ds_cue_index =
+        h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index");
+    this->ds_cue_timestamp_zero =
+        h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_timestamp_zero");
+  } catch (std::exception &E) {
+    Logger->error(
+        "Failed to reopen datasets in HDF file with error message: \"{}\"",
+        std::string(E.what()));
+    return HDFWriterModule::InitResult::ERROR;
+  }
 
   ds_event_time_offset->buffer_init(buffer_size, buffer_packet_max);
   ds_event_id->buffer_init(buffer_size, buffer_packet_max);
