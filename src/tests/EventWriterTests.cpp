@@ -10,6 +10,7 @@
 // This filename is chosen such that it shows up in searches after the
 // case-sensitive flatbuffer schema identifier.
 
+#include <dtdb_adc_pulse_debug_generated.h>
 #include <ev42_events_generated.h>
 #include <gtest/gtest.h>
 
@@ -65,4 +66,21 @@ TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
       reinterpret_cast<const char *>(MessageBuffer.data()),
       MessageBuffer.size());
   EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), TestSourceName);
+}
+
+TEST_F(EventReaderTests, ReaderReturnsPulseTimeAsMessageTimestamp) {
+  uint64_t PulseTime = 42;
+  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
+  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), PulseTime);
+}
+
+TEST_F(EventReaderTests, ReaderVerifiesValidMessage) {
+  auto MessageBuffer = GenerateFlatbufferData();
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
+  EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
 }
