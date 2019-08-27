@@ -41,8 +41,7 @@ GenerateFlatbufferData(std::string const &SourceName = "TestSource",
   builder.Finish(MessageBuilder.Finish(), EventMessageIdentifier());
 
   // Note, Release gives us a "DetachedBuffer" which owns the data
-  auto RawBuffer = builder.Release();
-  return RawBuffer;
+  return builder.Release();
 }
 
 class EventReaderTests : public ::testing::Test {
