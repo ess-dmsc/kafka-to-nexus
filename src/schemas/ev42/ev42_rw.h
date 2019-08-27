@@ -17,6 +17,7 @@ namespace ev42 {
 template <typename T> using uptr = std::unique_ptr<T>;
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
+public:
   bool verify(FlatbufferMessage const &Message) const override;
   std::string source_name(FlatbufferMessage const &Message) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;

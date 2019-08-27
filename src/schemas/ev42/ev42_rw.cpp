@@ -7,11 +7,12 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "ev42_rw.h"
+#include <ev42_events_generated.h>
+
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
-#include "ev42_events_generated.h"
+#include "ev42_rw.h"
 
 namespace FileWriter {
 namespace Schemas {
