@@ -100,7 +100,7 @@ public:
 
 using FileWriter::HDFWriterModule_detail::InitResult;
 
-TEST_F(EventWriterTests, EventWriterInitialisesFileWithNXEventDataDatasets) {
+TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
     ev42::HDFWriterModule Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
