@@ -144,10 +144,12 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
       MessageBuffer.size());
 
   // Create writer and give it the message to write
-  ev42::HDFWriterModule Writer;
-  EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
-  EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
-  EXPECT_NO_THROW(Writer.write(TestMessage));
+  {
+    ev42::HDFWriterModule Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage));
+  }  // These braces are required due to "h5.cpp"
 
   // Read data from the file
   auto EventTimeOffsetDataset = TestGroup.get_dataset("event_time_offset");
