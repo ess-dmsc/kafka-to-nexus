@@ -149,7 +149,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
-  }  // These braces are required due to "h5.cpp"
+  } // These braces are required due to "h5.cpp"
 
   // Read data from the file
   auto EventTimeOffsetDataset = TestGroup.get_dataset("event_time_offset");
@@ -185,4 +185,64 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
   EXPECT_THAT(EventID, testing::ContainerEq(DetectorID))
       << "Expected event_id dataset to contain the detector ID "
          "values from the message";
+}
+
+TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
+  // Create a single event message with data we can later check is recorded in
+  // the file
+  uint64_t const PulseTime = 42;
+  std::vector<uint32_t> TimeOfFlight = {0, 1, 2};
+  std::vector<uint32_t> DetectorID = {3, 4, 5};
+  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime,
+                                              TimeOfFlight, DetectorID);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
+
+  // Create writer and give it the message to write
+  {
+    ev42::HDFWriterModule Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage));
+    EXPECT_NO_THROW(Writer.write(TestMessage));
+  } // These braces are required due to "h5.cpp"
+
+  // Read data from the file
+  auto EventTimeOffsetDataset = TestGroup.get_dataset("event_time_offset");
+  auto EventTimeZeroDataset = TestGroup.get_dataset("event_time_zero");
+  auto EventIndexDataset = TestGroup.get_dataset("event_index");
+  auto EventIDDataset = TestGroup.get_dataset("event_id");
+  std::vector<uint32_t> EventTimeOffset(
+      EventTimeOffsetDataset.dataspace().size());
+  std::vector<uint64_t> EventTimeZero(EventTimeZeroDataset.dataspace().size());
+  std::vector<uint32_t> EventIndex(EventIndexDataset.dataspace().size());
+  std::vector<uint32_t> EventID(EventIDDataset.dataspace().size());
+  EventTimeOffsetDataset.read(EventTimeOffset);
+  EventTimeZeroDataset.read(EventTimeZero);
+  EventIndexDataset.read(EventIndex);
+  EventIDDataset.read(EventID);
+
+  // Repeat the input value vectors as the same message should be written twice
+  TimeOfFlight.insert(TimeOfFlight.end(), TimeOfFlight.begin(),
+                      TimeOfFlight.end());
+  DetectorID.insert(DetectorID.end(), DetectorID.begin(), DetectorID.end());
+
+  // Test data in file matches what we originally put in the message
+  EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
+      << "Expected event_time_offset dataset to contain the time of flight "
+         "values from both messages";
+  EXPECT_EQ(EventTimeZero.size(), 2U)
+      << "Expected event_time_zero to contain a "
+         "two values, as we wrote two "
+         "messages";
+  EXPECT_EQ(EventTimeZero[0], PulseTime)
+      << "Expected event_time_zero to contain the pulse time from the message";
+  EXPECT_EQ(EventIndex.size(), 2U) << "Expected event_index to contain two "
+                                      "values, as we wrote two messages";
+  EXPECT_EQ(EventIndex[1], 3U) << "Expected second message to start at index 3 "
+                                  "as there were 3 events in the first message";
+  EXPECT_THAT(EventID, testing::ContainerEq(DetectorID))
+      << "Expected event_id dataset to contain the detector ID "
+         "values from both messages";
 }
