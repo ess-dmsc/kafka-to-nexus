@@ -14,23 +14,54 @@
 #include <ev42_events_generated.h>
 #include <gmock/gmock.h>
 
+#include <utility>
+
 #include "helpers/HDFFileTestHelper.h"
 #include "schemas/ev42/ev42_rw.h"
 
 using namespace FileWriter::Schemas;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
+struct AdcDebugInfo {
+  explicit AdcDebugInfo(std::vector<uint32_t> Amplitude = {0, 1, 2},
+                        std::vector<uint32_t> PeakArea = {0, 1, 2},
+                        std::vector<uint32_t> Background = {0, 1, 2},
+                        std::vector<uint64_t> ThresholdTime = {0, 1, 2},
+                        std::vector<uint64_t> PeakTime = {0, 1, 2})
+      : Amplitude(std::move(Amplitude)), PeakArea(std::move(PeakArea)),
+        Background(std::move(Background)),
+        ThresholdTime(std::move(ThresholdTime)),
+        PeakTime(std::move(PeakTime)){};
+
+  std::vector<uint32_t> const Amplitude;
+  std::vector<uint32_t> const PeakArea;
+  std::vector<uint32_t> const Background;
+  std::vector<uint64_t> const ThresholdTime;
+  std::vector<uint64_t> const PeakTime;
+};
+
 flatbuffers::DetachedBuffer
 GenerateFlatbufferData(std::string const &SourceName = "TestSource",
                        uint64_t const MessageID = 0,
                        uint64_t const PulseTime = 0,
                        std::vector<uint32_t> const &TimeOfFlight = {0, 1, 2},
-                       std::vector<uint32_t> const &DetectorID = {0, 1, 2}) {
+                       std::vector<uint32_t> const &DetectorID = {0, 1, 2},
+                       bool IncludeAdcDebugInfo = false,
+                       AdcDebugInfo const &AdcDebugData = AdcDebugInfo()) {
   flatbuffers::FlatBufferBuilder builder;
 
   auto FBSourceNameOffset = builder.CreateString(SourceName);
   auto FBTimeOfFlightOffset = builder.CreateVector(TimeOfFlight);
   auto FBDetectorIDOffset = builder.CreateVector(DetectorID);
+
+  auto FBAmplitudeOffset = builder.CreateVector(AdcDebugData.Amplitude);
+  auto FBPeakAreaOffset = builder.CreateVector(AdcDebugData.PeakArea);
+  auto FBBackgroundOffset = builder.CreateVector(AdcDebugData.Background);
+  auto FBThresholdTimeOffset = builder.CreateVector(AdcDebugData.ThresholdTime);
+  auto FBPeakTimeOffset = builder.CreateVector(AdcDebugData.PeakTime);
+  auto FBAdcInfoOffset = CreateAdcPulseDebug(
+      builder, FBAmplitudeOffset, FBPeakAreaOffset, FBBackgroundOffset,
+      FBThresholdTimeOffset, FBPeakTimeOffset);
 
   EventMessageBuilder MessageBuilder(builder);
   MessageBuilder.add_source_name(FBSourceNameOffset);
@@ -38,6 +69,11 @@ GenerateFlatbufferData(std::string const &SourceName = "TestSource",
   MessageBuilder.add_pulse_time(PulseTime);
   MessageBuilder.add_time_of_flight(FBTimeOfFlightOffset);
   MessageBuilder.add_detector_id(FBDetectorIDOffset);
+
+  if (IncludeAdcDebugInfo) {
+    MessageBuilder.add_facility_specific_data_type(FacilityData::AdcPulseDebug);
+    MessageBuilder.add_facility_specific_data(FBAdcInfoOffset.Union());
+  }
 
   builder.Finish(MessageBuilder.Finish(), EventMessageIdentifier());
 
@@ -245,4 +281,31 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   EXPECT_THAT(EventID, testing::ContainerEq(DetectorID))
       << "Expected event_id dataset to contain the detector ID "
          "values from both messages";
+}
+
+TEST_F(EventWriterTests,
+       WriterSuccessfullyRecordsAdcPulseDebugDataWhenPresentInMessage) {
+  // Create a single event message with data we can later check is recorded in
+  // the file
+  uint64_t const PulseTime = 42;
+  std::vector<uint32_t> const TimeOfFlight = {0, 1, 2};
+  std::vector<uint32_t> const DetectorID = {3, 4, 5};
+  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime,
+                                              TimeOfFlight, DetectorID, true);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
+
+  // Create writer and give it the message to write
+  {
+    ev42::HDFWriterModule Writer;
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage));
+  } // These braces are required due to "h5.cpp"
+
+  // Read AdcDebug data from the file
+
+  // Test data in file matches what we originally put in the message
+  EXPECT_EQ(1, 2);
 }
