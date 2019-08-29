@@ -53,6 +53,8 @@ public:
   size_t buffer_packet_max = 0;
 
 private:
+  void createAdcGroupAndDatasets(hdf5::node::Group &HDFGroup);
+  bool adc_pulse_debug = false;
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace ev42

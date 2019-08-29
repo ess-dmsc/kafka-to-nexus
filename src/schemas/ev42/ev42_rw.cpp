@@ -12,7 +12,12 @@
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
+#include "AdcDatasets.h"
 #include "ev42_rw.h"
+
+namespace {
+std::string const AdcGroupName = "adc_pulse_debug";
+}
 
 namespace FileWriter {
 namespace Schemas {
@@ -112,6 +117,40 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
     Logger->trace("buffer_packet_max: {}", buffer_packet_max);
   } catch (...) { /* it's ok if not found */
   }
+  try {
+    adc_pulse_debug = ConfigurationStreamJson["adc_pulse_debug"].get<bool>();
+    Logger->trace("adc_pulse_debug: {}", adc_pulse_debug);
+  } catch (...) { /* it's ok if not found */
+  }
+}
+
+void HDFWriterModule::createAdcGroupAndDatasets(hdf5::node::Group &HDFGroup) {
+  auto AdcGroup = HDFGroup.create_group(AdcGroupName);
+
+  NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)
+      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+
+  NeXusDataset::PeakArea(         // NOLINT(bugprone-unused-raii)
+      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+
+  NeXusDataset::Background(       // NOLINT(bugprone-unused-raii)
+      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+
+  NeXusDataset::ThresholdTime(    // NOLINT(bugprone-unused-raii)
+      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+
+  NeXusDataset::PeakTime(         // NOLINT(bugprone-unused-raii)
+      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
+      chunk_bytes);               // NOLINT(bugprone-unused-raii)
 }
 
 HDFWriterModule::InitResult
@@ -119,18 +158,22 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
 
   try {
-    this->ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
+    ds_event_time_offset = h5::h5d_chunked_1d<uint32_t>::create(
         HDFGroup, "event_time_offset", chunk_bytes);
-    this->ds_event_id =
+    ds_event_id =
         h5::h5d_chunked_1d<uint32_t>::create(HDFGroup, "event_id", chunk_bytes);
-    this->ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
+    ds_event_time_zero = h5::h5d_chunked_1d<uint64_t>::create(
         HDFGroup, "event_time_zero", chunk_bytes);
-    this->ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
+    ds_event_index = h5::h5d_chunked_1d<uint32_t>::create(
         HDFGroup, "event_index", chunk_bytes);
-    this->ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(
-        HDFGroup, "cue_index", chunk_bytes);
-    this->ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
+    ds_cue_index = h5::h5d_chunked_1d<uint32_t>::create(HDFGroup, "cue_index",
+                                                        chunk_bytes);
+    ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
         HDFGroup, "cue_timestamp_zero", chunk_bytes);
+
+    if (adc_pulse_debug) {
+      createAdcGroupAndDatasets(HDFGroup);
+    }
 
     if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
         !ds_event_index || !ds_cue_index || !ds_cue_timestamp_zero) {
