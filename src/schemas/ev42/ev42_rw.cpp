@@ -281,16 +281,16 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
     index_at_bytes = total_written_bytes;
   }
 
-  // If module has been configured to write ADC pulse data and it is present in
-  // this message then also write it
-  if (RecordAdcPulseDebugData &&
-      EventMsgFlatbuffer->facility_specific_data_type() ==
-          FacilityData::AdcPulseDebug) {
+  if (RecordAdcPulseDebugData) {
     writeAdcPulseData(Message);
   }
 }
 void HDFWriterModule::writeAdcPulseData(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
+  if (EventMsgFlatbuffer->facility_specific_data_type() !=
+      FacilityData::AdcPulseDebug) {
+    return;
+  }
   auto AdcPulseDebugMsgFlatbuffer =
       EventMsgFlatbuffer->facility_specific_data_as_AdcPulseDebug();
 
