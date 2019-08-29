@@ -77,12 +77,6 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   } catch (...) { /* it's ok if not found */
   }
   try {
-    ConfigurationStreamJson["nexus"]["chunk"]["chunk_n_elements"]
-        .get<uint64_t>();
-    Logger->error("chunk_n_elements is no longer supported");
-  } catch (...) { /* it's ok if not found */
-  }
-  try {
     chunk_bytes =
         ConfigurationStreamJson["nexus"]["chunk"]["chunk_kb"].get<uint64_t>() *
         1024;

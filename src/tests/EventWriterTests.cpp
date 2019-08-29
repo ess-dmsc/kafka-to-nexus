@@ -132,6 +132,7 @@ public:
   FileWriter::HDFFile File;
   hdf5::node::Group TestGroup;
   std::string const TestGroupName = "test_group";
+  std::string const AdcGroupName = "adc_pulse_debug";
 };
 
 using FileWriter::HDFWriterModule_detail::InitResult;
@@ -139,6 +140,7 @@ using FileWriter::HDFWriterModule_detail::InitResult;
 TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
     ev42::HDFWriterModule Writer;
+    Writer.parse_config("{}", "");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
   ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
@@ -148,6 +150,36 @@ TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   EXPECT_TRUE(TestGroup.has_dataset("event_id"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
+
+  // Did not specify adc_pulse_debug in configuration so no ADC group should be
+  // created
+  EXPECT_FALSE(TestGroup.has_group(AdcGroupName));
+}
+
+TEST_F(
+    EventWriterTests,
+    WriterInitialisesFileWithNXEventDataDatasetsAndAdcDatasetsWhenRequested) {
+  {
+    ev42::HDFWriterModule Writer;
+    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+  }
+  ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
+  EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_index"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_id"));
+  EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
+  EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
+
+  // Specified adc_pulse_debug in configuration so ADC group should be created
+  EXPECT_TRUE(TestGroup.has_group(AdcGroupName));
+  hdf5::node::Group AdcTestGroup = TestGroup[AdcGroupName];
+  EXPECT_TRUE(AdcTestGroup.has_dataset("amplitude"));
+  EXPECT_TRUE(AdcTestGroup.has_dataset("peak_area"));
+  EXPECT_TRUE(AdcTestGroup.has_dataset("background"));
+  EXPECT_TRUE(AdcTestGroup.has_dataset("threshold_time"));
+  EXPECT_TRUE(AdcTestGroup.has_dataset("peak_time"));
 }
 
 TEST_F(EventWriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
@@ -285,13 +317,17 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
 
 TEST_F(EventWriterTests,
        WriterSuccessfullyRecordsAdcPulseDebugDataWhenPresentInMessage) {
-  // Create a single event message with data we can later check is recorded in
-  // the file
-  uint64_t const PulseTime = 42;
-  std::vector<uint32_t> const TimeOfFlight = {0, 1, 2};
-  std::vector<uint32_t> const DetectorID = {3, 4, 5};
-  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime,
-                                              TimeOfFlight, DetectorID, true);
+  // Create a single event message with Adc data we can later check is recorded
+  // in the file
+  std::vector<uint32_t> const Amplitude = {0, 1, 2};
+  std::vector<uint32_t> const PeakArea = {3, 4, 5};
+  std::vector<uint32_t> const Background = {6, 7, 8};
+  std::vector<uint64_t> const ThresholdTime = {9, 10, 11};
+  std::vector<uint64_t> const PeakTime = {12, 13, 14};
+  auto AdcDebugData =
+      AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
+  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+                                              {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
       MessageBuffer.size());
