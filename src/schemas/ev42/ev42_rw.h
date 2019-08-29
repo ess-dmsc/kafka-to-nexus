@@ -10,6 +10,7 @@
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
 #include "../../h5.h"
+#include "AdcDatasets.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -54,8 +55,15 @@ public:
 
 private:
   void createAdcGroupAndDatasets(hdf5::node::Group &HDFGroup);
-  bool adc_pulse_debug = false;
+  bool RecordAdcPulseDebugData = false;
+  NeXusDataset::Amplitude AmplitudeDataset;
+  NeXusDataset::PeakArea PeakAreaDataset;
+  NeXusDataset::Background BackgroundDataset;
+  NeXusDataset::ThresholdTime ThresholdTimeDataset;
+  NeXusDataset::PeakTime PeakTimeDataset;
   SharedLogger Logger = spdlog::get("filewriterlogger");
+  void reopenAdcDatasets(const hdf5::node::Group &HDFGroup);
+  void writeAdcPulseData(FlatbufferMessage const &Message);
 };
 } // namespace ev42
 } // namespace Schemas

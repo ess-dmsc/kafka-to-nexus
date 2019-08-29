@@ -12,7 +12,6 @@
 #include "../../HDFFile.h"
 #include "../../helper.h"
 #include "../../json.h"
-#include "AdcDatasets.h"
 #include "ev42_rw.h"
 
 namespace {
@@ -33,10 +32,6 @@ struct append_ret {
   explicit operator bool() const { return status == 0; }
 };
 
-static EventMessage const *get_fbuf(char const *data) {
-  return GetEventMessage(data);
-}
-
 bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
   flatbuffers::Verifier VerifierInstance(
       reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
@@ -45,7 +40,7 @@ bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
 
 std::string
 FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
-  auto fbuf = get_fbuf(Message.data());
+  auto fbuf = GetEventMessage(Message.data());
   auto NamePtr = fbuf->source_name();
   if (NamePtr == nullptr) {
     Logger->info("message has no source_name");
@@ -55,7 +50,7 @@ FlatbufferReader::source_name(FlatbufferMessage const &Message) const {
 }
 
 uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
-  auto fbuf = get_fbuf(Message.data());
+  auto fbuf = GetEventMessage(Message.data());
   return fbuf->pulse_time();
 }
 
@@ -118,8 +113,9 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   } catch (...) { /* it's ok if not found */
   }
   try {
-    adc_pulse_debug = ConfigurationStreamJson["adc_pulse_debug"].get<bool>();
-    Logger->trace("adc_pulse_debug: {}", adc_pulse_debug);
+    RecordAdcPulseDebugData =
+        ConfigurationStreamJson["adc_pulse_debug"].get<bool>();
+    Logger->trace("adc_pulse_debug: {}", RecordAdcPulseDebugData);
   } catch (...) { /* it's ok if not found */
   }
 }
@@ -171,7 +167,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
     ds_cue_timestamp_zero = h5::h5d_chunked_1d<uint64_t>::create(
         HDFGroup, "cue_timestamp_zero", chunk_bytes);
 
-    if (adc_pulse_debug) {
+    if (RecordAdcPulseDebugData) {
       createAdcGroupAndDatasets(HDFGroup);
     }
 
@@ -205,18 +201,19 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   try {
-    this->ds_event_time_offset =
+    ds_event_time_offset =
         h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_time_offset");
-    this->ds_event_id =
-        h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
-    this->ds_event_time_zero =
+    ds_event_id = h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_id");
+    ds_event_time_zero =
         h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "event_time_zero");
-    this->ds_event_index =
+    ds_event_index =
         h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "event_index");
-    this->ds_cue_index =
-        h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index");
-    this->ds_cue_timestamp_zero =
+    ds_cue_index = h5::h5d_chunked_1d<uint32_t>::open(HDFGroup, "cue_index");
+    ds_cue_timestamp_zero =
         h5::h5d_chunked_1d<uint64_t>::open(HDFGroup, "cue_timestamp_zero");
+    if (RecordAdcPulseDebugData) {
+      reopenAdcDatasets(HDFGroup);
+    }
   } catch (std::exception &E) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
@@ -245,31 +242,83 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   }
   return HDFWriterModule::InitResult::OK;
 }
+void HDFWriterModule::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
+  hdf5::node::Group AdcGroup = HDFGroup[AdcGroupName];
+  AmplitudeDataset =
+      NeXusDataset::Amplitude(AdcGroup, NeXusDataset::Mode::Open);
+  PeakAreaDataset = NeXusDataset::PeakArea(AdcGroup, NeXusDataset::Mode::Open);
+  BackgroundDataset =
+      NeXusDataset::Background(AdcGroup, NeXusDataset::Mode::Open);
+  ThresholdTimeDataset =
+      NeXusDataset::ThresholdTime(AdcGroup, NeXusDataset::Mode::Open);
+  PeakTimeDataset = NeXusDataset::PeakTime(AdcGroup, NeXusDataset::Mode::Open);
+}
 
 void HDFWriterModule::write(FlatbufferMessage const &Message) {
   if (!ds_event_time_offset) {
     throw FileWriter::HDFWriterModuleRegistry::WriterException(
         "Error, time of flight not present.");
   }
-  auto fbuf = get_fbuf(Message.data());
-  auto w1ret = this->ds_event_time_offset->append_data_1d(
-      fbuf->time_of_flight()->data(), fbuf->time_of_flight()->size());
-  auto w2ret = this->ds_event_id->append_data_1d(fbuf->detector_id()->data(),
-                                                 fbuf->detector_id()->size());
-  if (w1ret.ix0 != w2ret.ix0) {
+  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
+  auto EventTimeAppendResultInfo = ds_event_time_offset->append_data_1d(
+      EventMsgFlatbuffer->time_of_flight()->data(),
+      EventMsgFlatbuffer->time_of_flight()->size());
+  auto EventIdAppendResultInfo =
+      ds_event_id->append_data_1d(EventMsgFlatbuffer->detector_id()->data(),
+                                  EventMsgFlatbuffer->detector_id()->size());
+  if (EventTimeAppendResultInfo.ix0 != EventIdAppendResultInfo.ix0) {
     Logger->warn("written data lengths differ");
   }
-  auto pulse_time = fbuf->pulse_time();
-  this->ds_event_time_zero->append_data_1d(&pulse_time, 1);
-  uint32_t event_index = w1ret.ix0;
-  this->ds_event_index->append_data_1d(&event_index, 1);
-  total_written_bytes += w1ret.written_bytes;
+  auto pulse_time = EventMsgFlatbuffer->pulse_time();
+  ds_event_time_zero->append_data_1d(&pulse_time, 1);
+  uint32_t event_index = EventTimeAppendResultInfo.ix0;
+  ds_event_index->append_data_1d(&event_index, 1);
+  total_written_bytes += EventTimeAppendResultInfo.written_bytes;
   ts_max = std::max(pulse_time, ts_max);
   if (total_written_bytes > index_at_bytes + index_every_bytes) {
-    this->ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
-    this->ds_cue_index->append_data_1d(&event_index, 1);
+    ds_cue_timestamp_zero->append_data_1d(&ts_max, 1);
+    ds_cue_index->append_data_1d(&event_index, 1);
     index_at_bytes = total_written_bytes;
   }
+
+  // If module has been configured to write ADC pulse data and it is present in
+  // this message then also write it
+  if (RecordAdcPulseDebugData &&
+      EventMsgFlatbuffer->facility_specific_data_type() ==
+          FacilityData::AdcPulseDebug) {
+    writeAdcPulseData(Message);
+  }
+}
+void HDFWriterModule::writeAdcPulseData(FlatbufferMessage const &Message) {
+  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
+  auto AdcPulseDebugMsgFlatbuffer =
+      EventMsgFlatbuffer->facility_specific_data_as_AdcPulseDebug();
+
+  auto AmplitudePtr = AdcPulseDebugMsgFlatbuffer->amplitude()->data();
+  auto AmplitudeSize = AdcPulseDebugMsgFlatbuffer->amplitude()->size();
+  ArrayAdapter<const uint32_t> AmplitudeArray(AmplitudePtr, AmplitudeSize);
+  AmplitudeDataset.appendArray(AmplitudeArray);
+
+  auto PeakAreaPtr = AdcPulseDebugMsgFlatbuffer->peak_area()->data();
+  auto PeakAreaSize = AdcPulseDebugMsgFlatbuffer->peak_area()->size();
+  ArrayAdapter<const uint32_t> PeakAreaArray(PeakAreaPtr, PeakAreaSize);
+  PeakAreaDataset.appendArray(PeakAreaArray);
+
+  auto BackgroundPtr = AdcPulseDebugMsgFlatbuffer->background()->data();
+  auto BackgroundSize = AdcPulseDebugMsgFlatbuffer->background()->size();
+  ArrayAdapter<const uint32_t> BackgroundArray(BackgroundPtr, BackgroundSize);
+  BackgroundDataset.appendArray(BackgroundArray);
+
+  auto ThresholdTimePtr = AdcPulseDebugMsgFlatbuffer->threshold_time()->data();
+  auto ThresholdTimeSize = AdcPulseDebugMsgFlatbuffer->threshold_time()->size();
+  ArrayAdapter<const uint64_t> ThresholdTimeArray(ThresholdTimePtr,
+                                                  ThresholdTimeSize);
+  ThresholdTimeDataset.appendArray(ThresholdTimeArray);
+
+  auto PeakTimePtr = AdcPulseDebugMsgFlatbuffer->peak_time()->data();
+  auto PeakTimeSize = AdcPulseDebugMsgFlatbuffer->peak_time()->size();
+  ArrayAdapter<const uint64_t> PeakTimeArray(PeakTimePtr, PeakTimeSize);
+  PeakTimeDataset.appendArray(PeakTimeArray);
 }
 
 int32_t HDFWriterModule::flush() { return 0; }
