@@ -41,7 +41,7 @@ struct AdcDebugInfo {
 };
 
 flatbuffers::DetachedBuffer
-GenerateFlatbufferData(std::string const &SourceName = "TestSource",
+generateFlatbufferData(std::string const &SourceName = "TestSource",
                        uint64_t const MessageID = 0,
                        uint64_t const PulseTime = 0,
                        std::vector<uint32_t> const &TimeOfFlight = {0, 1, 2},
@@ -81,6 +81,12 @@ GenerateFlatbufferData(std::string const &SourceName = "TestSource",
   return builder.Release();
 }
 
+/// Modifies the input vector such that it is the concatenation of itself with
+/// itself
+template <typename T> void repeatVector(std::vector<T> &InputVector) {
+  InputVector.insert(InputVector.end(), InputVector.begin(), InputVector.end());
+}
+
 class EventReaderTests : public ::testing::Test {
 public:
   void SetUp() override {
@@ -97,7 +103,7 @@ public:
 
 TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
   std::string const TestSourceName = "TestSource";
-  auto MessageBuffer = GenerateFlatbufferData(TestSourceName);
+  auto MessageBuffer = generateFlatbufferData(TestSourceName);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
       MessageBuffer.size());
@@ -106,7 +112,7 @@ TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
 
 TEST_F(EventReaderTests, ReaderReturnsPulseTimeAsMessageTimestamp) {
   uint64_t PulseTime = 42;
-  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime);
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
       MessageBuffer.size());
@@ -114,7 +120,7 @@ TEST_F(EventReaderTests, ReaderReturnsPulseTimeAsMessageTimestamp) {
 }
 
 TEST_F(EventReaderTests, ReaderVerifiesValidMessage) {
-  auto MessageBuffer = GenerateFlatbufferData();
+  auto MessageBuffer = generateFlatbufferData();
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
       MessageBuffer.size());
@@ -161,6 +167,7 @@ TEST_F(
     WriterInitialisesFileWithNXEventDataDatasetsAndAdcDatasetsWhenRequested) {
   {
     ev42::HDFWriterModule Writer;
+    // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}", "");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
@@ -205,7 +212,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
   uint64_t const PulseTime = 42;
   std::vector<uint32_t> const TimeOfFlight = {0, 1, 2};
   std::vector<uint32_t> const DetectorID = {3, 4, 5};
-  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime,
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime,
                                               TimeOfFlight, DetectorID);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -261,7 +268,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   uint64_t const PulseTime = 42;
   std::vector<uint32_t> TimeOfFlight = {0, 1, 2};
   std::vector<uint32_t> DetectorID = {3, 4, 5};
-  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, PulseTime,
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime,
                                               TimeOfFlight, DetectorID);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -292,9 +299,8 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
   EventIDDataset.read(EventID);
 
   // Repeat the input value vectors as the same message should be written twice
-  TimeOfFlight.insert(TimeOfFlight.end(), TimeOfFlight.begin(),
-                      TimeOfFlight.end());
-  DetectorID.insert(DetectorID.end(), DetectorID.begin(), DetectorID.end());
+  repeatVector(TimeOfFlight);
+  repeatVector(DetectorID);
 
   // Test data in file matches what we originally put in the message
   EXPECT_THAT(EventTimeOffset, testing::ContainerEq(TimeOfFlight))
@@ -316,7 +322,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
 }
 
 TEST_F(EventWriterTests,
-       WriterSuccessfullyRecordsAdcPulseDebugDataWhenPresentInMessage) {
+       WriterSuccessfullyRecordsAdcPulseDebugDataWhenPresentInSingleMessage) {
   // Create a single event message with Adc data we can later check is recorded
   // in the file
   std::vector<uint32_t> const Amplitude = {0, 1, 2};
@@ -326,7 +332,7 @@ TEST_F(EventWriterTests,
   std::vector<uint64_t> const PeakTime = {12, 13, 14};
   auto AdcDebugData =
       AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
-  auto MessageBuffer = GenerateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -335,13 +341,100 @@ TEST_F(EventWriterTests,
   // Create writer and give it the message to write
   {
     ev42::HDFWriterModule Writer;
+    // Tell writer module to write ADC pulse debug data
+    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
   } // These braces are required due to "h5.cpp"
 
   // Read AdcDebug data from the file
+  hdf5::node::Group AdcGroup = TestGroup[AdcGroupName];
+  auto AmplitudeDataset = AdcGroup.get_dataset("amplitude");
+  auto PeakAreaDataset = AdcGroup.get_dataset("peak_area");
+  auto BackgroundDataset = AdcGroup.get_dataset("background");
+  auto ThresholdTimeDataset = AdcGroup.get_dataset("threshold_time");
+  auto PeakTimeDataset = AdcGroup.get_dataset("peak_time");
+  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
+  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
+  std::vector<uint32_t> BackgroundFromFile(
+      BackgroundDataset.dataspace().size());
+  std::vector<uint64_t> ThresholdTimeFromFile(
+      ThresholdTimeDataset.dataspace().size());
+  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
+  AmplitudeDataset.read(AmplitudeFromFile);
+  PeakAreaDataset.read(PeakAreaFromFile);
+  BackgroundDataset.read(BackgroundFromFile);
+  ThresholdTimeDataset.read(ThresholdTimeFromFile);
+  PeakTimeDataset.read(PeakTimeFromFile);
 
   // Test data in file matches what we originally put in the message
-  EXPECT_EQ(1, 2);
+  EXPECT_THAT(AmplitudeFromFile, testing::ContainerEq(Amplitude));
+  EXPECT_THAT(PeakAreaFromFile, testing::ContainerEq(PeakArea));
+  EXPECT_THAT(BackgroundFromFile, testing::ContainerEq(Background));
+  EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
+  EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
+}
+
+TEST_F(EventWriterTests,
+       WriterSuccessfullyRecordsAdcPulseDebugDataWhenPresentInTwoMessages) {
+  // Create a single event message with Adc data we can later check is recorded
+  // in the file
+  std::vector<uint32_t> Amplitude = {0, 1, 2};
+  std::vector<uint32_t> PeakArea = {3, 4, 5};
+  std::vector<uint32_t> Background = {6, 7, 8};
+  std::vector<uint64_t> ThresholdTime = {9, 10, 11};
+  std::vector<uint64_t> PeakTime = {12, 13, 14};
+  auto AdcDebugData =
+      AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+                                              {0, 0, 0}, true, AdcDebugData);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
+
+  // Create writer and give it the message to write
+  {
+    ev42::HDFWriterModule Writer;
+    // Tell writer module to write ADC pulse debug data
+    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage)); // First message
+    EXPECT_NO_THROW(Writer.write(TestMessage)); // Second message
+  } // These braces are required due to "h5.cpp"
+
+  // Read AdcDebug data from the file
+  hdf5::node::Group AdcGroup = TestGroup[AdcGroupName];
+  auto AmplitudeDataset = AdcGroup.get_dataset("amplitude");
+  auto PeakAreaDataset = AdcGroup.get_dataset("peak_area");
+  auto BackgroundDataset = AdcGroup.get_dataset("background");
+  auto ThresholdTimeDataset = AdcGroup.get_dataset("threshold_time");
+  auto PeakTimeDataset = AdcGroup.get_dataset("peak_time");
+  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
+  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
+  std::vector<uint32_t> BackgroundFromFile(
+      BackgroundDataset.dataspace().size());
+  std::vector<uint64_t> ThresholdTimeFromFile(
+      ThresholdTimeDataset.dataspace().size());
+  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
+  AmplitudeDataset.read(AmplitudeFromFile);
+  PeakAreaDataset.read(PeakAreaFromFile);
+  BackgroundDataset.read(BackgroundFromFile);
+  ThresholdTimeDataset.read(ThresholdTimeFromFile);
+  PeakTimeDataset.read(PeakTimeFromFile);
+
+  // Repeat the input value vectors as the same message should be written twice
+  repeatVector(Amplitude);
+  repeatVector(PeakArea);
+  repeatVector(Background);
+  repeatVector(ThresholdTime);
+  repeatVector(PeakTime);
+
+  // Test data in file matches what we originally put in the messages
+  EXPECT_THAT(AmplitudeFromFile, testing::ContainerEq(Amplitude));
+  EXPECT_THAT(PeakAreaFromFile, testing::ContainerEq(PeakArea));
+  EXPECT_THAT(BackgroundFromFile, testing::ContainerEq(Background));
+  EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
+  EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
 }
