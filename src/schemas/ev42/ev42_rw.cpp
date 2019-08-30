@@ -16,6 +16,12 @@
 
 namespace {
 std::string const AdcGroupName = "adc_pulse_debug";
+
+template <typename DataType>
+ArrayAdapter<const DataType>
+getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
+  return {Data->data(), Data->size()};
+}
 }
 
 namespace FileWriter {
@@ -124,8 +130,8 @@ void HDFWriterModule::createAdcGroupAndDatasets(hdf5::node::Group &HDFGroup) {
   auto AdcGroup = HDFGroup.create_group(AdcGroupName);
 
   // bytes to number of elements
-  size_t ChunkSizeFor32BitTypes = chunk_bytes/8;
-  size_t ChunkSizeFor64BitTypes = chunk_bytes/16;
+  size_t ChunkSizeFor32BitTypes = chunk_bytes / 8;
+  size_t ChunkSizeFor64BitTypes = chunk_bytes / 16;
 
   NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)
       AdcGroup,                   // NOLINT(bugprone-unused-raii)
@@ -289,6 +295,7 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
     writeAdcPulseData(Message);
   }
 }
+
 void HDFWriterModule::writeAdcPulseData(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
   if (EventMsgFlatbuffer->facility_specific_data_type() !=
@@ -298,30 +305,24 @@ void HDFWriterModule::writeAdcPulseData(FlatbufferMessage const &Message) {
   auto AdcPulseDebugMsgFlatbuffer =
       EventMsgFlatbuffer->facility_specific_data_as_AdcPulseDebug();
 
-  auto AmplitudePtr = AdcPulseDebugMsgFlatbuffer->amplitude()->data();
-  auto AmplitudeSize = AdcPulseDebugMsgFlatbuffer->amplitude()->size();
-  ArrayAdapter<const uint32_t> AmplitudeArray(AmplitudePtr, AmplitudeSize);
+  ArrayAdapter<const uint32_t> AmplitudeArray =
+      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->amplitude());
   AmplitudeDataset.appendArray(AmplitudeArray);
 
-  auto PeakAreaPtr = AdcPulseDebugMsgFlatbuffer->peak_area()->data();
-  auto PeakAreaSize = AdcPulseDebugMsgFlatbuffer->peak_area()->size();
-  ArrayAdapter<const uint32_t> PeakAreaArray(PeakAreaPtr, PeakAreaSize);
+  ArrayAdapter<const uint32_t> PeakAreaArray =
+      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_area());
   PeakAreaDataset.appendArray(PeakAreaArray);
 
-  auto BackgroundPtr = AdcPulseDebugMsgFlatbuffer->background()->data();
-  auto BackgroundSize = AdcPulseDebugMsgFlatbuffer->background()->size();
-  ArrayAdapter<const uint32_t> BackgroundArray(BackgroundPtr, BackgroundSize);
+  ArrayAdapter<const uint32_t> BackgroundArray =
+      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->background());
   BackgroundDataset.appendArray(BackgroundArray);
 
-  auto ThresholdTimePtr = AdcPulseDebugMsgFlatbuffer->threshold_time()->data();
-  auto ThresholdTimeSize = AdcPulseDebugMsgFlatbuffer->threshold_time()->size();
-  ArrayAdapter<const uint64_t> ThresholdTimeArray(ThresholdTimePtr,
-                                                  ThresholdTimeSize);
+  ArrayAdapter<const uint64_t> ThresholdTimeArray =
+      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->threshold_time());
   ThresholdTimeDataset.appendArray(ThresholdTimeArray);
 
-  auto PeakTimePtr = AdcPulseDebugMsgFlatbuffer->peak_time()->data();
-  auto PeakTimeSize = AdcPulseDebugMsgFlatbuffer->peak_time()->size();
-  ArrayAdapter<const uint64_t> PeakTimeArray(PeakTimePtr, PeakTimeSize);
+  ArrayAdapter<const uint64_t> PeakTimeArray =
+      getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_time());
   PeakTimeDataset.appendArray(PeakTimeArray);
 }
 
