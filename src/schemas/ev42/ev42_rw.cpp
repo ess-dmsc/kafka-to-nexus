@@ -15,8 +15,6 @@
 #include "ev42_rw.h"
 
 namespace {
-std::string const AdcGroupName = "adc_pulse_debug";
-
 template <typename DataType>
 ArrayAdapter<const DataType>
 getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
@@ -126,35 +124,33 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   }
 }
 
-void HDFWriterModule::createAdcGroupAndDatasets(hdf5::node::Group &HDFGroup) {
-  auto AdcGroup = HDFGroup.create_group(AdcGroupName);
-
+void HDFWriterModule::createAdcDatasets(hdf5::node::Group &HDFGroup) {
   // bytes to number of elements
   size_t ChunkSizeFor32BitTypes = chunk_bytes / 8;
   size_t ChunkSizeFor64BitTypes = chunk_bytes / 16;
 
   NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)
-      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
       ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::PeakArea(         // NOLINT(bugprone-unused-raii)
-      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
       ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::Background(       // NOLINT(bugprone-unused-raii)
-      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
       ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::ThresholdTime(    // NOLINT(bugprone-unused-raii)
-      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
       ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::PeakTime(         // NOLINT(bugprone-unused-raii)
-      AdcGroup,                   // NOLINT(bugprone-unused-raii)
+      HDFGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
       ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
 }
@@ -178,7 +174,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
         HDFGroup, "cue_timestamp_zero", chunk_bytes);
 
     if (RecordAdcPulseDebugData) {
-      createAdcGroupAndDatasets(HDFGroup);
+      createAdcDatasets(HDFGroup);
     }
 
     if (!ds_event_time_offset || !ds_event_id || !ds_event_time_zero ||
@@ -253,15 +249,14 @@ HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
   return HDFWriterModule::InitResult::OK;
 }
 void HDFWriterModule::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
-  hdf5::node::Group AdcGroup = HDFGroup[AdcGroupName];
   AmplitudeDataset =
-      NeXusDataset::Amplitude(AdcGroup, NeXusDataset::Mode::Open);
-  PeakAreaDataset = NeXusDataset::PeakArea(AdcGroup, NeXusDataset::Mode::Open);
+      NeXusDataset::Amplitude(HDFGroup, NeXusDataset::Mode::Open);
+  PeakAreaDataset = NeXusDataset::PeakArea(HDFGroup, NeXusDataset::Mode::Open);
   BackgroundDataset =
-      NeXusDataset::Background(AdcGroup, NeXusDataset::Mode::Open);
+      NeXusDataset::Background(HDFGroup, NeXusDataset::Mode::Open);
   ThresholdTimeDataset =
-      NeXusDataset::ThresholdTime(AdcGroup, NeXusDataset::Mode::Open);
-  PeakTimeDataset = NeXusDataset::PeakTime(AdcGroup, NeXusDataset::Mode::Open);
+      NeXusDataset::ThresholdTime(HDFGroup, NeXusDataset::Mode::Open);
+  PeakTimeDataset = NeXusDataset::PeakTime(HDFGroup, NeXusDataset::Mode::Open);
 }
 
 void HDFWriterModule::write(FlatbufferMessage const &Message) {

@@ -20,7 +20,7 @@ public:
   /// \throw std::runtime_error if dataset already exists.
   Amplitude(hdf5::node::Group const &Parent, Mode CMode,
             size_t ChunkSize = 1024)
-      : ExtensibleDataset<std::uint32_t>(Parent, "amplitude", CMode,
+      : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_amplitude", CMode,
                                          ChunkSize){};
 };
 
@@ -30,7 +30,7 @@ public:
   /// \brief Create the raw_value dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
   PeakArea(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize = 1024)
-      : ExtensibleDataset<std::uint32_t>(Parent, "peak_area", CMode,
+      : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_peak_area", CMode,
                                          ChunkSize){};
 };
 
@@ -41,7 +41,7 @@ public:
   /// \throw std::runtime_error if dataset already exists.
   Background(hdf5::node::Group const &Parent, Mode CMode,
              size_t ChunkSize = 1024)
-      : ExtensibleDataset<std::uint32_t>(Parent, "background", CMode,
+      : ExtensibleDataset<std::uint32_t>(Parent, "adc_pulse_background", CMode,
                                          ChunkSize){};
 };
 
