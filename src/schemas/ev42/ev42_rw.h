@@ -64,6 +64,9 @@ private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
   void reopenAdcDatasets(const hdf5::node::Group &HDFGroup);
   void writeAdcPulseData(FlatbufferMessage const &Message);
+  void
+  padDatasetsWithZeroesEqualToNumberOfEvents(FlatbufferMessage const &Message);
+  void writeAdcPulseDataFromMessageToFile(FlatbufferMessage const &Message);
 };
 } // namespace ev42
 } // namespace Schemas

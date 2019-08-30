@@ -300,8 +300,15 @@ void HDFWriterModule::writeAdcPulseData(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
   if (EventMsgFlatbuffer->facility_specific_data_type() !=
       FacilityData::AdcPulseDebug) {
-    return;
+    padDatasetsWithZeroesEqualToNumberOfEvents(Message);
+  } else {
+    writeAdcPulseDataFromMessageToFile(Message);
   }
+}
+
+void HDFWriterModule::writeAdcPulseDataFromMessageToFile(
+    FlatbufferMessage const &Message) {
+  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
   auto AdcPulseDebugMsgFlatbuffer =
       EventMsgFlatbuffer->facility_specific_data_as_AdcPulseDebug();
 
@@ -324,6 +331,27 @@ void HDFWriterModule::writeAdcPulseData(FlatbufferMessage const &Message) {
   ArrayAdapter<const uint64_t> PeakTimeArray =
       getFBVectorAsArrayAdapter(AdcPulseDebugMsgFlatbuffer->peak_time());
   PeakTimeDataset.appendArray(PeakTimeArray);
+}
+
+/// If ADC pulse data is missing from message then pad the datasets so that
+/// event_index and event_time_zero datasets will still be consistent with ADC
+/// datasets
+void HDFWriterModule::padDatasetsWithZeroesEqualToNumberOfEvents(
+    FlatbufferMessage const &Message) {
+  auto EventMsgFlatbuffer = GetEventMessage(Message.data());
+  size_t NumberOfEventsInMessage = EventMsgFlatbuffer->time_of_flight()->size();
+  std::vector<uint32_t> ZeroesUInt32(NumberOfEventsInMessage, 0);
+  ArrayAdapter<const uint32_t> ZeroesUInt32ArrayAdapter(ZeroesUInt32.data(),
+                                                        ZeroesUInt32.size());
+  std::vector<uint64_t> ZeroesUInt64(NumberOfEventsInMessage, 0);
+  ArrayAdapter<const uint64_t> ZeroesUInt64ArrayAdapter(ZeroesUInt64.data(),
+                                                        ZeroesUInt64.size());
+
+  AmplitudeDataset.appendArray(ZeroesUInt32ArrayAdapter);
+  PeakAreaDataset.appendArray(ZeroesUInt32ArrayAdapter);
+  BackgroundDataset.appendArray(ZeroesUInt32ArrayAdapter);
+  ThresholdTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
+  PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
 
 int32_t HDFWriterModule::flush() { return 0; }
