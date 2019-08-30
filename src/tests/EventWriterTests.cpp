@@ -87,6 +87,29 @@ template <typename T> void repeatVector(std::vector<T> &InputVector) {
   InputVector.insert(InputVector.end(), InputVector.begin(), InputVector.end());
 }
 
+AdcDebugInfo readAdcPulseDataFromFile(hdf5::node::Group &TestGroup) {
+  auto AmplitudeDataset = TestGroup.get_dataset("adc_pulse_amplitude");
+  auto PeakAreaDataset = TestGroup.get_dataset("adc_pulse_peak_area");
+  auto BackgroundDataset = TestGroup.get_dataset("adc_pulse_background");
+  auto ThresholdTimeDataset = TestGroup.get_dataset("adc_pulse_threshold_time");
+  auto PeakTimeDataset = TestGroup.get_dataset("adc_pulse_peak_time");
+  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
+  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
+  std::vector<uint32_t> BackgroundFromFile(
+      BackgroundDataset.dataspace().size());
+  std::vector<uint64_t> ThresholdTimeFromFile(
+      ThresholdTimeDataset.dataspace().size());
+  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
+  AmplitudeDataset.read(AmplitudeFromFile);
+  PeakAreaDataset.read(PeakAreaFromFile);
+  BackgroundDataset.read(BackgroundFromFile);
+  ThresholdTimeDataset.read(ThresholdTimeFromFile);
+  PeakTimeDataset.read(PeakTimeFromFile);
+
+  return AdcDebugInfo(AmplitudeFromFile, PeakAreaFromFile, BackgroundFromFile,
+                      ThresholdTimeFromFile, PeakTimeFromFile);
+}
+
 class EventReaderTests : public ::testing::Test {
 public:
   void SetUp() override {
@@ -138,7 +161,6 @@ public:
   FileWriter::HDFFile File;
   hdf5::node::Group TestGroup;
   std::string const TestGroupName = "test_group";
-  std::string const AdcGroupName = "adc_pulse_debug";
 };
 
 using FileWriter::HDFWriterModule_detail::InitResult;
@@ -157,9 +179,13 @@ TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
 
-  // Did not specify adc_pulse_debug in configuration so no ADC group should be
-  // created
-  EXPECT_FALSE(TestGroup.has_group(AdcGroupName));
+  // Did not specify adc_pulse_debug in configuration so no ADC datasets should
+  // be created
+  EXPECT_FALSE(TestGroup.has_dataset("adc_pulse_amplitude"));
+  EXPECT_FALSE(TestGroup.has_dataset("adc_pulse_peak_area"));
+  EXPECT_FALSE(TestGroup.has_dataset("adc_pulse_background"));
+  EXPECT_FALSE(TestGroup.has_dataset("adc_pulse_threshold_time"));
+  EXPECT_FALSE(TestGroup.has_dataset("adc_pulse_peak_time"));
 }
 
 TEST_F(
@@ -179,14 +205,13 @@ TEST_F(
   EXPECT_TRUE(TestGroup.has_dataset("cue_index"));
   EXPECT_TRUE(TestGroup.has_dataset("cue_timestamp_zero"));
 
-  // Specified adc_pulse_debug in configuration so ADC group should be created
-  EXPECT_TRUE(TestGroup.has_group(AdcGroupName));
-  hdf5::node::Group AdcTestGroup = TestGroup[AdcGroupName];
-  EXPECT_TRUE(AdcTestGroup.has_dataset("amplitude"));
-  EXPECT_TRUE(AdcTestGroup.has_dataset("peak_area"));
-  EXPECT_TRUE(AdcTestGroup.has_dataset("background"));
-  EXPECT_TRUE(AdcTestGroup.has_dataset("threshold_time"));
-  EXPECT_TRUE(AdcTestGroup.has_dataset("peak_time"));
+  // Specified adc_pulse_debug in configuration so ADC datasets should be
+  // created
+  EXPECT_TRUE(TestGroup.has_dataset("adc_pulse_amplitude"));
+  EXPECT_TRUE(TestGroup.has_dataset("adc_pulse_peak_area"));
+  EXPECT_TRUE(TestGroup.has_dataset("adc_pulse_background"));
+  EXPECT_TRUE(TestGroup.has_dataset("adc_pulse_threshold_time"));
+  EXPECT_TRUE(TestGroup.has_dataset("adc_pulse_peak_time"));
 }
 
 TEST_F(EventWriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
@@ -348,32 +373,14 @@ TEST_F(EventWriterTests,
     EXPECT_NO_THROW(Writer.write(TestMessage));
   } // These braces are required due to "h5.cpp"
 
-  // Read AdcDebug data from the file
-  hdf5::node::Group AdcGroup = TestGroup[AdcGroupName];
-  auto AmplitudeDataset = AdcGroup.get_dataset("amplitude");
-  auto PeakAreaDataset = AdcGroup.get_dataset("peak_area");
-  auto BackgroundDataset = AdcGroup.get_dataset("background");
-  auto ThresholdTimeDataset = AdcGroup.get_dataset("threshold_time");
-  auto PeakTimeDataset = AdcGroup.get_dataset("peak_time");
-  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
-  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
-  std::vector<uint32_t> BackgroundFromFile(
-      BackgroundDataset.dataspace().size());
-  std::vector<uint64_t> ThresholdTimeFromFile(
-      ThresholdTimeDataset.dataspace().size());
-  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
-  AmplitudeDataset.read(AmplitudeFromFile);
-  PeakAreaDataset.read(PeakAreaFromFile);
-  BackgroundDataset.read(BackgroundFromFile);
-  ThresholdTimeDataset.read(ThresholdTimeFromFile);
-  PeakTimeDataset.read(PeakTimeFromFile);
-
   // Test data in file matches what we originally put in the message
-  EXPECT_THAT(AmplitudeFromFile, testing::ContainerEq(Amplitude));
-  EXPECT_THAT(PeakAreaFromFile, testing::ContainerEq(PeakArea));
-  EXPECT_THAT(BackgroundFromFile, testing::ContainerEq(Background));
-  EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
-  EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
+  auto AdcInfoFromFile = readAdcPulseDataFromFile(TestGroup);
+  EXPECT_THAT(AdcInfoFromFile.Amplitude, testing::ContainerEq(Amplitude));
+  EXPECT_THAT(AdcInfoFromFile.PeakArea, testing::ContainerEq(PeakArea));
+  EXPECT_THAT(AdcInfoFromFile.Background, testing::ContainerEq(Background));
+  EXPECT_THAT(AdcInfoFromFile.ThresholdTime,
+              testing::ContainerEq(ThresholdTime));
+  EXPECT_THAT(AdcInfoFromFile.PeakTime, testing::ContainerEq(PeakTime));
 }
 
 TEST_F(EventWriterTests,
@@ -404,26 +411,6 @@ TEST_F(EventWriterTests,
     EXPECT_NO_THROW(Writer.write(TestMessage)); // Second message
   } // These braces are required due to "h5.cpp"
 
-  // Read AdcDebug data from the file
-  hdf5::node::Group AdcGroup = TestGroup[AdcGroupName];
-  auto AmplitudeDataset = AdcGroup.get_dataset("amplitude");
-  auto PeakAreaDataset = AdcGroup.get_dataset("peak_area");
-  auto BackgroundDataset = AdcGroup.get_dataset("background");
-  auto ThresholdTimeDataset = AdcGroup.get_dataset("threshold_time");
-  auto PeakTimeDataset = AdcGroup.get_dataset("peak_time");
-  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
-  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
-  std::vector<uint32_t> BackgroundFromFile(
-      BackgroundDataset.dataspace().size());
-  std::vector<uint64_t> ThresholdTimeFromFile(
-      ThresholdTimeDataset.dataspace().size());
-  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
-  AmplitudeDataset.read(AmplitudeFromFile);
-  PeakAreaDataset.read(PeakAreaFromFile);
-  BackgroundDataset.read(BackgroundFromFile);
-  ThresholdTimeDataset.read(ThresholdTimeFromFile);
-  PeakTimeDataset.read(PeakTimeFromFile);
-
   // Repeat the input value vectors as the same message should be written twice
   repeatVector(Amplitude);
   repeatVector(PeakArea);
@@ -432,11 +419,13 @@ TEST_F(EventWriterTests,
   repeatVector(PeakTime);
 
   // Test data in file matches what we originally put in the messages
-  EXPECT_THAT(AmplitudeFromFile, testing::ContainerEq(Amplitude));
-  EXPECT_THAT(PeakAreaFromFile, testing::ContainerEq(PeakArea));
-  EXPECT_THAT(BackgroundFromFile, testing::ContainerEq(Background));
-  EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
-  EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
+  auto AdcInfoFromFile = readAdcPulseDataFromFile(TestGroup);
+  EXPECT_THAT(AdcInfoFromFile.Amplitude, testing::ContainerEq(Amplitude));
+  EXPECT_THAT(AdcInfoFromFile.PeakArea, testing::ContainerEq(PeakArea));
+  EXPECT_THAT(AdcInfoFromFile.Background, testing::ContainerEq(Background));
+  EXPECT_THAT(AdcInfoFromFile.ThresholdTime,
+              testing::ContainerEq(ThresholdTime));
+  EXPECT_THAT(AdcInfoFromFile.PeakTime, testing::ContainerEq(PeakTime));
 }
 
 TEST_F(EventWriterTests,
@@ -478,26 +467,6 @@ TEST_F(EventWriterTests,
     EXPECT_NO_THROW(Writer.write(SecondTestMessage)); // Second message
   } // These braces are required due to "h5.cpp"
 
-  // Read AdcDebug data from the file
-  hdf5::node::Group AdcGroup = TestGroup[AdcGroupName];
-  auto AmplitudeDataset = AdcGroup.get_dataset("amplitude");
-  auto PeakAreaDataset = AdcGroup.get_dataset("peak_area");
-  auto BackgroundDataset = AdcGroup.get_dataset("background");
-  auto ThresholdTimeDataset = AdcGroup.get_dataset("threshold_time");
-  auto PeakTimeDataset = AdcGroup.get_dataset("peak_time");
-  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
-  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
-  std::vector<uint32_t> BackgroundFromFile(
-      BackgroundDataset.dataspace().size());
-  std::vector<uint64_t> ThresholdTimeFromFile(
-      ThresholdTimeDataset.dataspace().size());
-  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
-  AmplitudeDataset.read(AmplitudeFromFile);
-  PeakAreaDataset.read(PeakAreaFromFile);
-  BackgroundDataset.read(BackgroundFromFile);
-  ThresholdTimeDataset.read(ThresholdTimeFromFile);
-  PeakTimeDataset.read(PeakTimeFromFile);
-
   // Append zeroes to the ADC data from the first message, equivalent to the
   // number of events in the second message
   size_t NumberOfEventsInSecondMessage = 3;
@@ -509,9 +478,11 @@ TEST_F(EventWriterTests,
 
   // Test data in file matches what we originally put in the first message, plus
   // the expected zeroes
-  EXPECT_THAT(AmplitudeFromFile, testing::ContainerEq(Amplitude));
-  EXPECT_THAT(PeakAreaFromFile, testing::ContainerEq(PeakArea));
-  EXPECT_THAT(BackgroundFromFile, testing::ContainerEq(Background));
-  EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
-  EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
+  auto AdcInfoFromFile = readAdcPulseDataFromFile(TestGroup);
+  EXPECT_THAT(AdcInfoFromFile.Amplitude, testing::ContainerEq(Amplitude));
+  EXPECT_THAT(AdcInfoFromFile.PeakArea, testing::ContainerEq(PeakArea));
+  EXPECT_THAT(AdcInfoFromFile.Background, testing::ContainerEq(Background));
+  EXPECT_THAT(AdcInfoFromFile.ThresholdTime,
+              testing::ContainerEq(ThresholdTime));
+  EXPECT_THAT(AdcInfoFromFile.PeakTime, testing::ContainerEq(PeakTime));
 }
