@@ -438,3 +438,80 @@ TEST_F(EventWriterTests,
   EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
   EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
 }
+
+TEST_F(EventWriterTests,
+       WriterRecordsZeroesDataWhenAdcPulseDebugMissingFromMessage) {
+  // So that the ADC pulse datasets are still consistent with event_index and
+  // event_time_zero, the writer should record zeroes if a message arrives
+  // without ADC pulse data
+
+  std::vector<uint32_t> Amplitude = {0, 1, 2};
+  std::vector<uint32_t> PeakArea = {3, 4, 5};
+  std::vector<uint32_t> Background = {6, 7, 8};
+  std::vector<uint64_t> ThresholdTime = {9, 10, 11};
+  std::vector<uint64_t> PeakTime = {12, 13, 14};
+  auto AdcDebugData =
+      AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
+
+  // First message with ADC pulse data
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+                                              {0, 0, 0}, true, AdcDebugData);
+  FileWriter::FlatbufferMessage TestMessage(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
+
+  // Second message without ADC pulse data
+  auto SecondMessageBuffer =
+      generateFlatbufferData("TestSource", 0, 0, {0, 0, 0}, {0, 0, 0}, false);
+  FileWriter::FlatbufferMessage SecondTestMessage(
+      reinterpret_cast<const char *>(SecondMessageBuffer.data()),
+      MessageBuffer.size());
+
+  // Create writer and give it the message to write
+  {
+    ev42::HDFWriterModule Writer;
+    // Tell writer module to write ADC pulse debug data
+    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+    EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
+    EXPECT_NO_THROW(Writer.write(TestMessage));       // First message
+    EXPECT_NO_THROW(Writer.write(SecondTestMessage)); // Second message
+  } // These braces are required due to "h5.cpp"
+
+  // Read AdcDebug data from the file
+  hdf5::node::Group AdcGroup = TestGroup[AdcGroupName];
+  auto AmplitudeDataset = AdcGroup.get_dataset("amplitude");
+  auto PeakAreaDataset = AdcGroup.get_dataset("peak_area");
+  auto BackgroundDataset = AdcGroup.get_dataset("background");
+  auto ThresholdTimeDataset = AdcGroup.get_dataset("threshold_time");
+  auto PeakTimeDataset = AdcGroup.get_dataset("peak_time");
+  std::vector<uint32_t> AmplitudeFromFile(AmplitudeDataset.dataspace().size());
+  std::vector<uint32_t> PeakAreaFromFile(PeakAreaDataset.dataspace().size());
+  std::vector<uint32_t> BackgroundFromFile(
+      BackgroundDataset.dataspace().size());
+  std::vector<uint64_t> ThresholdTimeFromFile(
+      ThresholdTimeDataset.dataspace().size());
+  std::vector<uint64_t> PeakTimeFromFile(PeakTimeDataset.dataspace().size());
+  AmplitudeDataset.read(AmplitudeFromFile);
+  PeakAreaDataset.read(PeakAreaFromFile);
+  BackgroundDataset.read(BackgroundFromFile);
+  ThresholdTimeDataset.read(ThresholdTimeFromFile);
+  PeakTimeDataset.read(PeakTimeFromFile);
+
+  // Append zeroes to the ADC data from the first message, equivalent to the
+  // number of events in the second message
+  size_t NumberOfEventsInSecondMessage = 3;
+  Amplitude.resize(Amplitude.size() + NumberOfEventsInSecondMessage, 0);
+  PeakArea.resize(PeakArea.size() + NumberOfEventsInSecondMessage, 0);
+  Background.resize(Background.size() + NumberOfEventsInSecondMessage, 0);
+  ThresholdTime.resize(ThresholdTime.size() + NumberOfEventsInSecondMessage, 0);
+  PeakTime.resize(PeakTime.size() + NumberOfEventsInSecondMessage, 0);
+
+  // Test data in file matches what we originally put in the first message, plus
+  // the expected zeroes
+  EXPECT_THAT(AmplitudeFromFile, testing::ContainerEq(Amplitude));
+  EXPECT_THAT(PeakAreaFromFile, testing::ContainerEq(PeakArea));
+  EXPECT_THAT(BackgroundFromFile, testing::ContainerEq(Background));
+  EXPECT_THAT(ThresholdTimeFromFile, testing::ContainerEq(ThresholdTime));
+  EXPECT_THAT(PeakTimeFromFile, testing::ContainerEq(PeakTime));
+}
