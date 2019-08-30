@@ -123,30 +123,34 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
 void HDFWriterModule::createAdcGroupAndDatasets(hdf5::node::Group &HDFGroup) {
   auto AdcGroup = HDFGroup.create_group(AdcGroupName);
 
+  // bytes to number of elements
+  size_t ChunkSizeFor32BitTypes = chunk_bytes/8;
+  size_t ChunkSizeFor64BitTypes = chunk_bytes/16;
+
   NeXusDataset::Amplitude(        // NOLINT(bugprone-unused-raii)
       AdcGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+      ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::PeakArea(         // NOLINT(bugprone-unused-raii)
       AdcGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+      ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::Background(       // NOLINT(bugprone-unused-raii)
       AdcGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+      ChunkSizeFor32BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::ThresholdTime(    // NOLINT(bugprone-unused-raii)
       AdcGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+      ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
 
   NeXusDataset::PeakTime(         // NOLINT(bugprone-unused-raii)
       AdcGroup,                   // NOLINT(bugprone-unused-raii)
       NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
-      chunk_bytes);               // NOLINT(bugprone-unused-raii)
+      ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
 }
 
 HDFWriterModule::InitResult
