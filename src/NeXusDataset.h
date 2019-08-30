@@ -170,7 +170,7 @@ namespace NeXusDataset {
 enum class Mode { Create, Open };
 /// h5cpp dataset class that implements methods for appending data.
 template <class DataType>
-class  ExtensibleDataset : public hdf5::node::ChunkedDataset {
+class ExtensibleDataset : public hdf5::node::ChunkedDataset {
 public:
   ExtensibleDataset() = default;
   /// \brief Will create or open dataset with the given name.
