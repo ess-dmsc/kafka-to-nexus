@@ -347,7 +347,6 @@ public:
       : MultiDimDatasetBase(Parent, CMode) {}
 };
 
-// Make all of single param constructors explicit
 class RawValue : public ExtensibleDataset<std::uint16_t> {
 public:
   RawValue() = default;

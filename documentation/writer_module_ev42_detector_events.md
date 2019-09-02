@@ -23,6 +23,11 @@ Example `nexus_structure` to write radiation detector events:
 
 ## More configuration options
 
+* `adc_pulse_debug` (bool)
+  If present and set to `true`, indicates the writer should create a group called 
+  "adc_pulse_debug" in the event data group and record any ADC pulse debug data it 
+  receives in the event messages. ADC pulse debug data uses the `dtdb` schema and is 
+  included as an optional field in the `ev42` schema.
 * `nexus.indices.index_every_mb` (int)
   Write an index entry (in Nexus terminology: cue entry) every given megabytes.
 * `nexus.indices.index_every_kb` (int)
