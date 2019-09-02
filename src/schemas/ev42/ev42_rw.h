@@ -54,7 +54,7 @@ public:
   size_t buffer_packet_max = 0;
 
 private:
-  void createAdcDatasets(hdf5::node::Group &HDFGroup);
+  void createAdcDatasets(hdf5::node::Group &HDFGroup) const;
   bool RecordAdcPulseDebugData = false;
   NeXusDataset::Amplitude AmplitudeDataset;
   NeXusDataset::PeakArea PeakAreaDataset;

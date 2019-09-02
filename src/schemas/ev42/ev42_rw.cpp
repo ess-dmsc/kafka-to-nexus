@@ -124,7 +124,7 @@ void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
   }
 }
 
-void HDFWriterModule::createAdcDatasets(hdf5::node::Group &HDFGroup) {
+void HDFWriterModule::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
   // bytes to number of elements
   size_t ChunkSizeFor32BitTypes = chunk_bytes / 8;
   size_t ChunkSizeFor64BitTypes = chunk_bytes / 16;
