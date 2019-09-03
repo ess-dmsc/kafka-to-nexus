@@ -10,7 +10,6 @@ find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10
 find_package(FlatBuffers REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
-find_package(GitCommitExtract)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(Date REQUIRED)
 find_package(GraylogLogger)
@@ -91,7 +90,6 @@ set(kafka_to_nexus_SRC
         h5.cpp
         FlatbufferMessage.cpp
         MainOpt.cpp
-        ${CMAKE_CURRENT_BINARY_DIR}/git_commit_current.cxx
         CLIOptions.cpp
         NeXusDataset.cpp
         )
@@ -147,7 +145,7 @@ add_library(${tgt} OBJECT
 
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
 
 set(tgt "send-command")
@@ -156,9 +154,8 @@ set(sources
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         )
 add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
-add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common})
+target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
         )
 
@@ -174,7 +171,6 @@ set(sources
         )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)
-add_dependencies(${tgt} git_commit_current)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
