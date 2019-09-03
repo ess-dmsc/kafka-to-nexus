@@ -10,6 +10,7 @@
 #include "CLIOptions.h"
 #include "KafkaW/ProducerTopic.h"
 #include "URI.h"
+#include "Version.h"
 #include "helper.h"
 #include "json.h"
 #include <CLI/CLI.hpp>
@@ -82,7 +83,6 @@ std::string make_command_from_file(const std::string &filename) {
   return {buf1.data(), buf1.size()};
 }
 
-extern "C" char const GIT_COMMIT[];
 
 int main(int argc, char **argv) {
 
@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
 
   fmt::print("send-command {:.7} (ESS, BrightnESS)\n"
              "  Contact: dominik.werder@psi.ch\n\n",
-             GIT_COMMIT);
+             GetVersion());
 
   CLI::App App{
       "Writes NeXus files in a format specified with a json template.\n"
