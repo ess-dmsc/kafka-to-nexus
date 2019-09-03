@@ -7,12 +7,14 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "schemas/NDAr/AreaDetectorWriter.h"
-#include "schemas/NDAr_NDArray_schema_generated.h"
+#include <NDAr_NDArray_schema_generated.h>
 #include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <gtest/gtest.h>
+
+#include "helpers/HDFFileTestHelper.h"
+#include "schemas/NDAr/AreaDetectorWriter.h"
 
 class AreaDetectorReader : public ::testing::Test {
 public:
@@ -121,8 +123,8 @@ public:
   static size_t FileSize;
 
   void SetUp() override {
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
-    RootGroup = File.root();
+    File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
+    RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
         &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
@@ -135,7 +137,7 @@ public:
 
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
-  hdf5::file::File File;
+  FileWriter::HDFFile File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
 };

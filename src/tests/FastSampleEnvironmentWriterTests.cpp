@@ -7,11 +7,12 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "schemas/senv/FastSampleEnvironmentWriter.h"
-#include "senv_data_generated.h"
-#include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
+#include <senv_data_generated.h>
+
+#include "helpers/HDFFileTestHelper.h"
+#include "schemas/senv/FastSampleEnvironmentWriter.h"
 
 std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -95,15 +96,15 @@ TEST_F(FastSampleEnvironmentReader, VerifyFail) {
 class FastSampleEnvironmentWriter : public ::testing::Test {
 public:
   void SetUp() override {
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
-    RootGroup = File.root();
+    File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
+    RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
   };
 
   void TearDown() override { File.close(); };
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
-  hdf5::file::File File;
+  FileWriter::HDFFile File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
 };
