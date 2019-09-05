@@ -9,6 +9,7 @@ from time import sleep
 from helpers.timehelpers import unix_time_milliseconds
 from subprocess import Popen
 import signal
+import warnings
 
 LOCAL_BUILD = "--local-build"
 WAIT_FOR_DEBUGGER_ATTACH = "--wait-to-attach-debugger"
@@ -132,6 +133,10 @@ def run_containers(cmd, options):
 
 
 def build_and_run(options, request, local_path=None, wait_for_debugger=False):
+    if wait_for_debugger and local_path is None:
+        warnings.warn("Option specified to wait for debugger to attach, but this "
+                      "can only be used if a local build path is provided")
+
     project = project_from_options(os.path.dirname(__file__), options)
     cmd = TopLevelCommand(project)
     start_time = str(int(unix_time_milliseconds(datetime.utcnow())))
