@@ -192,8 +192,8 @@ builders = pipeline_builder.createBuilders { container ->
         // Do black format of python scripts
         container.sh """
           python3.6 -m pip install --user black
-          black --version
-          black system-tests
+          /home/jenkins/.local/bin/black --version
+          /home/jenkins/.local/bin/black system-tests
           git status -s
           git add -u
           git commit -m 'GO FORMAT YOURSELF (black)'
