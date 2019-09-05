@@ -1,3 +1,15 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
+/// \file Header-only implementation of the StreamMaster, that
+/// coordinates the execution of the Streamers
+
 #pragma once
 
 #include "EventLogger.h"
@@ -49,9 +61,7 @@ public:
   /// \return Pointer to FileWriterTask.
   FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
 
-  /// \brief Get whether this stream master can be removed.
-  ///
-  /// \return True, if can be removed.
+  /// Get whether this stream master can be removed.
   bool isRemovable() const;
 
   /// \brief Get the unique job id associated with the streamer (and hence

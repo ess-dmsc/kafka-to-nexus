@@ -1,7 +1,18 @@
-#include "schemas/tdct/ChopperTimeStampWriter.h"
-#include "tdct_timestamps_generated.h"
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
 #include <gtest/gtest.h>
 #include <memory>
+#include <tdct_timestamps_generated.h>
+
+#include "helpers/HDFFileTestHelper.h"
+#include "schemas/tdct/ChopperTimeStampWriter.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -75,15 +86,15 @@ TEST_F(ChopperTimeStampGuard, VerifyFail) {
 class ChopperTimeStampWriter : public ::testing::Test {
 public:
   void SetUp() override {
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
-    RootGroup = File.root();
+    File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
+    RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
   };
 
   void TearDown() override { File.close(); };
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
-  hdf5::file::File File;
+  FileWriter::HDFFile File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
 };
