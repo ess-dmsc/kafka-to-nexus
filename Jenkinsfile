@@ -186,6 +186,8 @@ builders = pipeline_builder.createBuilders { container ->
         """
       } catch (e) {
        // Okay to fail as there could be no badly formatted files to commit
+      } finally {
+        // Clean up
       }
 
       try {
@@ -193,6 +195,7 @@ builders = pipeline_builder.createBuilders { container ->
         container.sh """
           python3.6 -m pip install --user black
           /home/jenkins/.local/bin/black --version
+          cd ${project}
           /home/jenkins/.local/bin/black system-tests
           git status -s
           git add -u
@@ -200,6 +203,8 @@ builders = pipeline_builder.createBuilders { container ->
         """
       } catch (e) {
        // Okay to fail as there could be no badly formatted files to commit
+      } finally {
+        // Clean up
       }
 
       // Push any changes resulting from formatting
@@ -218,6 +223,8 @@ builders = pipeline_builder.createBuilders { container ->
         } // withCredentials
       } catch (e) {
         // Okay to fail; there may be nothing to push
+      } finally {
+        // Clean up
       }
     }  // stage
 
