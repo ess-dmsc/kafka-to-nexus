@@ -5,6 +5,10 @@ import numpy as np
 
 
 def test_static_data_reaches_file(docker_compose):
+
+
+
+
     producer = create_producer()
     sleep(20)
     # Start file writing
