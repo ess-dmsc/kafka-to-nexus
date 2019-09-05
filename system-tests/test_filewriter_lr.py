@@ -1,7 +1,11 @@
 import pytest
 import docker
 from time import sleep
-from helpers.kafkahelpers import create_producer, send_writer_command, consume_everything
+from helpers.kafkahelpers import (
+    create_producer,
+    send_writer_command,
+    consume_everything,
+)
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from math import isclose
 
@@ -21,7 +25,9 @@ def change_pv_value(pvname, value):
             break
     if not container:
         raise Exception("IOC Container not found")
-    exit_code, output = container.exec_run("caput {} {}".format(pvname, value), privileged=True)
+    exit_code, output = container.exec_run(
+        "caput {} {}".format(pvname, value), privileged=True
+    )
     assert exit_code == 0
     print("Updating PV value using caput: ")
     print(output.decode("utf-8"), flush=True)
@@ -32,17 +38,24 @@ def test_long_run(docker_compose_long_running):
     producer = create_producer()
     sleep(20)
     # Start file writing
-    send_writer_command("commands/longrunning.json", producer, topic="TEST_writerCommandLR", start_time=docker_compose_long_running)
+    send_writer_command(
+        "commands/longrunning.json",
+        producer,
+        topic="TEST_writerCommandLR",
+        start_time=docker_compose_long_running,
+    )
     producer.flush()
     sleep(10)
     # Minimum length of the test is determined by (pv_updates * 3) + 10 seconds
     pv_updates = 6000
     # range is exclusive of the last number, so in order to get 1 to pv_updates we need to use pv_updates+1
-    for i in range(1, pv_updates+1):
+    for i in range(1, pv_updates + 1):
         change_pv_value("SIMPLE:DOUBLE", i)
         sleep(3)
 
-    send_writer_command("commands/stop-command-lr.json", producer, topic="TEST_writerCommandLR")
+    send_writer_command(
+        "commands/stop-command-lr.json", producer, topic="TEST_writerCommandLR"
+    )
     producer.flush()
     sleep(30)
 
@@ -57,7 +70,7 @@ def test_long_run(docker_compose_long_running):
     # check that the last value is the same as the number of updates
     assert counter == pv_updates + 1
 
-    with open("logs/lr_status_messages.log", 'w+') as file:
+    with open("logs/lr_status_messages.log", "w+") as file:
         status_messages = consume_everything("TEST_writerStatus")
         for msg in status_messages:
-            file.write(str(msg.value(), encoding='utf-8') + "\n")
+            file.write(str(msg.value(), encoding="utf-8") + "\n")

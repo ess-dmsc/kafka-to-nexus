@@ -172,6 +172,7 @@ builders = pipeline_builder.createBuilders { container ->
         return
       }
       try {
+        // Do clang-format of C++ files
         container.sh """
           clang-format -version
           cd ${project}
@@ -181,8 +182,33 @@ builders = pipeline_builder.createBuilders { container ->
           git config user.name 'cow-bot'
           git status -s
           git add -u
-          git commit -m 'GO FORMAT YOURSELF'
+          git commit -m 'GO FORMAT YOURSELF (clang-format)'
         """
+      } catch (e) {
+       // Okay to fail as there could be no badly formatted files to commit
+      } finally {
+        // Clean up
+      }
+
+      try {
+        // Do black format of python scripts
+        container.sh """
+          python3.6 -m pip install --user black
+          /home/jenkins/.local/bin/black --version
+          cd ${project}
+          /home/jenkins/.local/bin/black system-tests
+          git status -s
+          git add -u
+          git commit -m 'GO FORMAT YOURSELF (black)'
+        """
+      } catch (e) {
+       // Okay to fail as there could be no badly formatted files to commit
+      } finally {
+        // Clean up
+      }
+
+      // Push any changes resulting from formatting
+      try {
         withCredentials([
           usernamePassword(
           credentialsId: 'cow-bot-username',
@@ -196,7 +222,7 @@ builders = pipeline_builder.createBuilders { container ->
           """
         } // withCredentials
       } catch (e) {
-       // Okay to fail as there could be no badly formatted files to commit
+        // Okay to fail; there may be nothing to push
       } finally {
         // Clean up
       }
