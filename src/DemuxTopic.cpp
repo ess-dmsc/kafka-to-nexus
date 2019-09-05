@@ -17,7 +17,7 @@ namespace FileWriter {
 
 DemuxTopic::DemuxTopic(std::string TopicName) : Topic(std::move(TopicName)) {}
 
-DemuxTopic::~DemuxTopic() { Logger->trace("DemuxTopic destructor"          ); }
+DemuxTopic::~DemuxTopic() { Logger->trace("DemuxTopic destructor"); }
 
 DemuxTopic::DemuxTopic(DemuxTopic &&x) noexcept { swap(*this, x); }
 
