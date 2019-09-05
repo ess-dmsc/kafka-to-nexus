@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
 #include "Streamer.h"
 #include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/PollStatus.h"
@@ -73,6 +82,7 @@ FileWriter::initTopics(std::string const &TopicName,
 
 FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
   Sources.clear();
+  RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }
 
@@ -83,7 +93,7 @@ bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
     return false;
   }
   auto Temp = ConsumerInitialised.get();
-  RunStatus = Temp.first;
+  RunStatus.store(Temp.first);
   Consumer = std::move(Temp.second);
   return true;
 }
