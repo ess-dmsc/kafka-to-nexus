@@ -172,6 +172,7 @@ builders = pipeline_builder.createBuilders { container ->
         return
       }
       try {
+        // Do clang-format of C++ files and black format for python scripts
         container.sh """
           clang-format -version
           cd ${project}
@@ -181,7 +182,14 @@ builders = pipeline_builder.createBuilders { container ->
           git config user.name 'cow-bot'
           git status -s
           git add -u
-          git commit -m 'GO FORMAT YOURSELF'
+          git commit -m 'GO FORMAT YOURSELF (clang-format)'
+
+          python3.6 -m pip install --user black
+          black --version
+          black system-tests
+          git status -s
+          git add -u
+          git commit -m 'GO FORMAT YOURSELF (black)'
         """
         withCredentials([
           usernamePassword(
