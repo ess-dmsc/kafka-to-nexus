@@ -9,9 +9,9 @@
 
 #include "../KafkaW/MetadataException.h"
 #include "KafkaW/Consumer.h"
+#include "Msg.h"
 #include "helpers/KafkaWMocks.h"
 #include "helpers/MockMessage.h"
-#include "Msg.h"
 
 #include <gtest/gtest.h>
 #include <memory>
