@@ -27,9 +27,10 @@ struct BrokerSettings {
   std::map<std::string, std::string> KafkaConfiguration = {
       {"metadata.request.timeout.ms", "2000"}, // 2 Secs
       {"socket.timeout.ms", "2000"},
-      {"message.max.bytes", "24117248"}, // 23 MiB
-      {"fetch.message.max.bytes", "24117248"},
-      {"receive.message.max.bytes", "24117248"},
+      {"message.max.bytes", "24000000"},
+      {"fetch.message.max.bytes", "24000000"},
+      {"receive.message.max.bytes",
+       "25000000"}, // must be at least fetch.message.max.bytes + 512
       {"queue.buffering.max.messages", "100000"},
       {"queue.buffering.max.ms", "50"},
       {"queue.buffering.max.kbytes", "819200"}, // 819.2 Mib
