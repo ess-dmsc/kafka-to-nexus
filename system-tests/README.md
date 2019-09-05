@@ -19,7 +19,7 @@ It uses Docker containers to create containerised instances of Kafka and other c
 * Optionally use `--local-build <PATH_TO_BUILD_DIR>` to run against a local build of the file writer rather than rebuilding in a docker container. Note that the build directory is the one containing the `bin` directory.
 Can also use `--wait-to-attach-debugger` to cause the system tests to display the process ID of the file writer and give opportunity for you to attach a debugger before continuing.
 
-Note: these tests take several minutes to run.
+Note: these tests may take up to 30 minutes to run.
 
 
 ### General Architecture
