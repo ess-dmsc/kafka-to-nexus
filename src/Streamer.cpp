@@ -82,6 +82,7 @@ FileWriter::initTopics(std::string const &TopicName,
 
 FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
   Sources.clear();
+  RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }
 
@@ -92,7 +93,7 @@ bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
     return false;
   }
   auto Temp = ConsumerInitialised.get();
-  RunStatus = Temp.first;
+  RunStatus.store(Temp.first);
   Consumer = std::move(Temp.second);
   return true;
 }

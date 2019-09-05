@@ -7,15 +7,17 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "../json.h"
-#include "AddReader.h"
-#include "FlatbufferMessage.h"
-#include "schemas/ns10/NicosCacheReader.h"
-#include "schemas/ns10/NicosCacheWriter.h"
 #include <flatbuffers/flatbuffers.h>
 #include <fstream>
 #include <gtest/gtest.h>
 #include <memory>
+
+#include "../json.h"
+#include "AddReader.h"
+#include "FlatbufferMessage.h"
+#include "helpers/HDFFileTestHelper.h"
+#include "schemas/ns10/NicosCacheReader.h"
+#include "schemas/ns10/NicosCacheWriter.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -113,13 +115,8 @@ public:
   void SetUp() override {
     registerSchema();
 
-    hdf5::property::FileCreationList fcpl;
-    hdf5::property::FileAccessList fapl;
-    MemoryDriver(fapl);
-    File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE,
-                              fcpl, fapl);
-
-    RootGroup = File.root();
+    File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
+    RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
   };
 
@@ -127,7 +124,7 @@ public:
 
   std::string TestFileName{"SomeTestFile.hdf5"};
   std::string NXLogGroup{"SomeParentName"};
-  hdf5::file::File File;
+  FileWriter::HDFFile File;
   hdf5::node::Group RootGroup;
   hdf5::node::Group UsedGroup;
   hdf5::file::MemoryDriver MemoryDriver;

@@ -15,7 +15,8 @@
 
 namespace HDFFileTestHelper {
 
-FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename);
+FileWriter::HDFFile createInMemoryTestFile(const std::string &Filename,
+                                           bool OnDisk = false);
 
 template <typename T>
 std::string
