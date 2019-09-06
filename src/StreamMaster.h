@@ -34,19 +34,19 @@ public:
       const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
       const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer) {
 
-    std::map<std::string, Streamer> Streamers;
+    std::map<std::string, Streamer> Streams;
 
     for (auto &Demux : FileWriterTask->demuxers()) {
       try {
         std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
             KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
                                    Broker);
-        Streamers.emplace(std::piecewise_construct,
+        Streams.emplace(std::piecewise_construct,
                           std::forward_as_tuple(Demux.topic()),
                           std::forward_as_tuple(Broker, Demux.topic(),
                                                 Options.StreamerConfiguration,
                                                 std::move(Consumer)));
-        Streamers[Demux.topic()].setSources(Demux.sources());
+        Streams[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         getLogger()->critical("{}", E.what());
         logEvent(Producer, StatusCode::Error, Options.ServiceID,
@@ -56,7 +56,7 @@ public:
 
     return std::make_unique<StreamMaster>(
         std::move(FileWriterTask), Options.ServiceID, std::move(Producer),
-        std::move(Streamers));
+        std::move(Streams));
   }
 
   StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
