@@ -80,7 +80,7 @@ FileWriter::initTopics(std::string const &TopicName,
   }
 }
 
-FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
+FileWriter::Streamer::StreamerStatus FileWriter::Streamer::close() {
   Sources.clear();
   RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;

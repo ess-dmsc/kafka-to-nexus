@@ -204,7 +204,7 @@ void CommandHandler::handleNew(const json &JSONCommand,
 
     if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        Logger->error("job_id {} already in use, ignore command", JobID);
+        Logger->error("Command ignored as job id {} is already in progress", JobID);
         return;
       }
     }
@@ -305,7 +305,7 @@ void CommandHandler::handleNew(const json &JSONCommand,
   if (MasterPtr != nullptr) {
     // Register the task with master.
     Logger->info("Write file with job_id: {}", Task->jobID());
-    auto s = std::make_unique<StreamMaster<Streamer>>(
+    auto s = StreamMaster<Streamer>::createStreamMaster(
         Broker.HostPort, std::move(Task), Config,
         MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {

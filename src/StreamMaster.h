@@ -30,14 +30,13 @@ template <typename Streamer> class StreamMaster {
   using StreamMasterError = Status::StreamMasterError;
 
 public:
-  StreamMaster(const std::string &Broker,
-               std::unique_ptr<FileWriterTask> FileWriterTask,
-               const MainOpt &Options,
-               std::shared_ptr<KafkaW::ProducerTopic> Producer)
-      : Demuxers(FileWriterTask->demuxers()),
-        WriterTask(std::move(FileWriterTask)), ServiceId(Options.ServiceID),
-        ProducerTopic(std::move(Producer)) {
-    for (auto &Demux : Demuxers) {
+  static std::unique_ptr<StreamMaster> createStreamMaster(
+      const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
+      const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer) {
+
+    std::map<std::string, Streamer> Streamers;
+
+    for (auto &Demux : FileWriterTask->demuxers()) {
       try {
         std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
             KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
@@ -49,14 +48,24 @@ public:
                                                 std::move(Consumer)));
         Streamers[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
-        RunStatus = StreamMasterError::STREAMER_ERROR;
-        Logger->critical("{}", E.what());
-        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-                 WriterTask->jobID(), E.what());
+        getLogger()->critical("{}", E.what());
+        logEvent(Producer, StatusCode::Error, Options.ServiceID,
+                 FileWriterTask->jobID(), E.what());
       }
     }
-    NumStreamers = Streamers.size();
+
+    return std::make_unique<StreamMaster>(
+        std::move(FileWriterTask), Options.ServiceID, std::move(Producer),
+        std::move(Streamers));
   }
+
+  StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
+               std::string const &ServiceID,
+               std::shared_ptr<KafkaW::ProducerTopic> Producer,
+               std::map<std::string, Streamer> Streams)
+      : Streamers(std::move(Streams)), WriterTask(std::move(FileWriterTask)),
+        NumStreamers(Streams.size()), ServiceId(ServiceID),
+        ProducerTopic(std::move(Producer)) {}
 
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = default;
@@ -69,8 +78,7 @@ public:
     if (ReportThread.joinable()) {
       ReportThread.join();
     }
-    Logger->info("Stop StreamMaster for file with id : {}, ready to be removed",
-                 getJobId());
+    Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
   }
 
   StreamMaster &operator=(const StreamMaster &) = delete;
@@ -97,12 +105,6 @@ public:
 
   /// Start writing the streams.
   void start() {
-    if (NumStreamers == 0) {
-      Stop = true;
-      doStop();
-      return;
-    }
-
     Logger->info("StreamMaster: start");
     Stop = false;
 
@@ -194,12 +196,10 @@ private:
   }
 
   /// \brief Main loop that handles the writer process for each stream.
-  ///
-  /// The streams write as long as Stop is false and there are open streams.
   void run() {
     RunStatus.store(StreamMasterError::RUNNING);
-    while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
-      for (auto &Demux : Demuxers) {
+    while (!Stop) {
+      for (auto &Demux : WriterTask->demuxers()) {
         auto &s = Streamers[Demux.topic()];
         processStreamResult(s, Demux);
       }
@@ -220,12 +220,7 @@ private:
           "Stopped streamer consuming from {}. {} streamers still running.",
           TopicName, NumStreamers);
     }
-    Stream.closeStream();
-
-    if (NumStreamers == 0) {
-      // No more streams open, so stop
-      Stop = true;
-    }
+    Stream.close();
   }
 
   /// \brief Stops the streamers and prepares for being removed.
@@ -237,7 +232,7 @@ private:
       // Give the streams a chance to close, log if they fail
       Logger->info("Shutting down {}", Stream.first);
       Logger->info("Shut down {}", Stream.first);
-      auto CloseResult = Stream.second.closeStream();
+      auto CloseResult = Stream.second.close();
       if (CloseResult != StreamerStatus::HAS_FINISHED) {
         Logger->info("Problem with stopping {} : {}", Stream.first,
                      Status::Err2Str(CloseResult));
@@ -251,10 +246,9 @@ private:
   }
 
   std::map<std::string, Streamer> Streamers;
-  std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;
-  std::atomic<StreamMasterError> RunStatus;
+  std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};

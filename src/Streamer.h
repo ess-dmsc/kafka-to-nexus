@@ -59,7 +59,7 @@ public:
   /// StreamerErrorCode::has_finished.
   ///
   /// \return The current status.
-  StreamerStatus closeStream();
+  StreamerStatus close();
 
   /// \brief Sets the sources.
   ///
