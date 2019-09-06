@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
 /// \file
 /// MessageInfo collects information about number and the size of
 /// messages and the number of errors in a stream.
@@ -67,7 +76,7 @@ private:
   uint64_t Errors{0};
   double Mbytes{0};
   double MbytesSquare{0};
-  std::mutex Mutex;
+  mutable std::mutex Mutex;
 };
 
 /// \brief Collect information about each stream's messages and

@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
 /// \file
 /// \brief This file contains the declaration of the Streamer class, which
 /// consumes kafka logs and calls the write procedure
@@ -72,7 +81,7 @@ public:
   /// See "Error.h".
   ///
   /// \return The current status.
-  StreamerStatus runStatus() const { return RunStatus; }
+  StreamerStatus runStatus() const { return RunStatus.load(); }
 
   /// Return all the information about the messages consumed.
   Status::MessageInfo &messageInfo() { return MessageInfo; }
@@ -87,7 +96,7 @@ protected:
   ConsumerPtr Consumer{nullptr};
   KafkaW::BrokerSettings Settings;
 
-  StreamerStatus RunStatus{StreamerStatus::NOT_INITIALIZED};
+  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
   std::map<FlatbufferMessage::SrcHash, std::string> Sources;

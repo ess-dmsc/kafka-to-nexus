@@ -7,11 +7,12 @@ class OpenNexusFileWhenAvailable:
     Context manager for opening NeXus files
     Retries opening until successful
     """
+
     def __init__(self, filepath):
         attempts = 0
         while attempts < 50:
             try:
-                self.file = h5py.File(filepath, mode='r')
+                self.file = h5py.File(filepath, mode="r")
             except OSError:
                 attempts += 1
                 sleep(1)

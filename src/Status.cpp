@@ -1,3 +1,12 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
 #include <cmath>
 
 #include "Status.h"
@@ -27,6 +36,7 @@ double standardDeviation(double Sum, double SumSquared, uint64_t N) {
 
 std::pair<double, double>
 FileWriter::Status::MessageInfo::messageSizeStats() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
   // Nan causes failure in JSON
   if (Mbytes == 0) {
     return std::pair<double, double>{};
@@ -51,14 +61,19 @@ void FileWriter::Status::MessageInfo::error() {
 }
 
 void FileWriter::Status::MessageInfo::resetStatistics() {
+  std::lock_guard<std::mutex> Lock(Mutex);
   Mbytes = MbytesSquare = 0.0;
   Messages = 0;
   Errors = 0;
 }
 
-double FileWriter::Status::MessageInfo::getMbytes() const { return Mbytes; }
+double FileWriter::Status::MessageInfo::getMbytes() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
+  return Mbytes;
+}
 
 uint64_t FileWriter::Status::MessageInfo::getNumberMessages() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
   return Messages;
 }
 

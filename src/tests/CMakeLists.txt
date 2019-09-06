@@ -12,6 +12,7 @@ set(UnitTests_SRC
         StatusWriterTests.cpp
         CommandHandlerTests.cpp
         FastSampleEnvironmentWriterTests.cpp
+        EventWriterTests.cpp
         NeXusDatasetTests.cpp
         ReaderRegistrationTests.cpp
         WriterRegistrationTests.cpp
