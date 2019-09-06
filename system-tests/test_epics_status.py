@@ -1,4 +1,8 @@
-from helpers.kafkahelpers import create_producer, send_writer_command, publish_ep00_message
+from helpers.kafkahelpers import (
+    create_producer,
+    send_writer_command,
+    publish_ep00_message,
+)
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from helpers.flatbufferhelpers import _millseconds_to_nanoseconds
 from time import sleep
@@ -15,10 +19,16 @@ def test_ep00(docker_compose):
     sleep(10)
 
     # Start file writing
-    send_writer_command("commands/writing-epics-status-command.json", producer, start_time=docker_compose)
+    send_writer_command(
+        "commands/writing-epics-status-command.json",
+        producer,
+        start_time=docker_compose,
+    )
     producer.flush()
     sleep(5)
-    publish_ep00_message(producer, topic, EventType.CONNECTED, kafka_timestamp=timestamp+1)
+    publish_ep00_message(
+        producer, topic, EventType.CONNECTED, kafka_timestamp=timestamp + 1
+    )
 
     # Give it some time to accumulate data
     sleep(10)
@@ -31,8 +41,11 @@ def test_ep00(docker_compose):
 
     filepath = "output-files/output_file_ep00.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
-        assert file["EpicsConnectionStatus/alarm_time"][0] == _millseconds_to_nanoseconds(timestamp)
+        assert file["EpicsConnectionStatus/alarm_time"][
+            0
+        ] == _millseconds_to_nanoseconds(timestamp)
         assert file["EpicsConnectionStatus/alarm_status"][0] == "NEVER_CONNECTED"
-        assert file["EpicsConnectionStatus/alarm_time"][1] == _millseconds_to_nanoseconds(timestamp+1)
+        assert file["EpicsConnectionStatus/alarm_time"][
+            1
+        ] == _millseconds_to_nanoseconds(timestamp + 1)
         assert file["EpicsConnectionStatus/alarm_status"][1] == "CONNECTED"
-

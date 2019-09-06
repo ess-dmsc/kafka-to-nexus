@@ -1,6 +1,11 @@
 import flatbuffers
-from .ep00.EpicsConnectionInfo import EpicsConnectionInfoAddType, EpicsConnectionInfoAddTimestamp,\
-    EpicsConnectionInfoAddSourceName, EpicsConnectionInfoStart, EpicsConnectionInfoEnd
+from .ep00.EpicsConnectionInfo import (
+    EpicsConnectionInfoAddType,
+    EpicsConnectionInfoAddTimestamp,
+    EpicsConnectionInfoAddSourceName,
+    EpicsConnectionInfoStart,
+    EpicsConnectionInfoEnd,
+)
 
 
 def _millseconds_to_nanoseconds(time_ms):
