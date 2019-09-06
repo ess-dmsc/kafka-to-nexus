@@ -68,7 +68,7 @@ public:
         ProducerTopic(std::move(Producer)) {}
 
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = default;
+  StreamMaster &operator=(const StreamMaster &) = delete;
 
   ~StreamMaster() {
     Stop = true;
@@ -80,8 +80,6 @@ public:
     }
     Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
   }
-
-  StreamMaster &operator=(const StreamMaster &) = delete;
 
   /// \brief Set the point in time that triggers
   /// the termination of the run.
