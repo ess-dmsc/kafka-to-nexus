@@ -42,10 +42,10 @@ public:
             KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
                                    Broker);
         Streams.emplace(std::piecewise_construct,
-                          std::forward_as_tuple(Demux.topic()),
-                          std::forward_as_tuple(Broker, Demux.topic(),
-                                                Options.StreamerConfiguration,
-                                                std::move(Consumer)));
+                        std::forward_as_tuple(Demux.topic()),
+                        std::forward_as_tuple(Broker, Demux.topic(),
+                                              Options.StreamerConfiguration,
+                                              std::move(Consumer)));
         Streams[Demux.topic()].setSources(Demux.sources());
       } catch (std::exception &E) {
         getLogger()->critical("{}", E.what());
