@@ -204,7 +204,8 @@ void CommandHandler::handleNew(const json &JSONCommand,
 
     if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
       if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        Logger->error("Command ignored as job id {} is already in progress", JobID);
+        Logger->error("Command ignored as job id {} is already in progress",
+                      JobID);
         return;
       }
     }
