@@ -38,7 +38,6 @@ Consumer::~Consumer() {
   Logger->debug("~Consumer()");
   if (KafkaConsumer != nullptr) {
     KafkaConsumer->close();
-    KafkaMetadata.reset();
     RdKafka::wait_destroyed(5000);
     Logger->debug("Consumer closed");
   }
