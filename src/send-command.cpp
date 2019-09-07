@@ -83,7 +83,6 @@ std::string make_command_from_file(const std::string &filename) {
   return {buf1.data(), buf1.size()};
 }
 
-
 int main(int argc, char **argv) {
 
   MainOpt MainOptions;

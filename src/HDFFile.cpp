@@ -835,7 +835,6 @@ void checkHDFVersion(SharedLogger const &Logger) {
   }
 }
 
-
 void HDFFile::init(std::string const &Filename,
                    nlohmann::json const &NexusStructure, nlohmann::json const &,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
