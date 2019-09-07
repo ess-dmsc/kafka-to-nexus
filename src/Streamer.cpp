@@ -106,34 +106,39 @@ void Streamer::markIfOffsetsAlreadyReached(
 /// Query Kafka brokers to find out the offset, in every partition, at which we
 /// should stop consuming
 std::vector<std::pair<int64_t, bool>>
-Streamer::getStopOffsets(std::chrono::milliseconds StopTime,
+Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
+                         std::chrono::milliseconds StopTime,
                          std::string const &TopicName) {
   Logger->trace("In getStopOffsets");
   // StopOffsets are a pair of the offset corresponding to the stop time and
   // whether or not that offset has been reached yet
-  auto Offsets = Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
-  std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(Offsets.size(),
+  auto OffsetsFromStartTime = Consumer->offsetsForTimesAllPartitions(TopicName, StartTime);
+  auto OffsetsFromStopTime = Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
+  std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(OffsetsFromStopTime.size(),
                                                         {0, false});
-  for (size_t PartitionNumber = 0; PartitionNumber < Offsets.size();
+  for (size_t PartitionNumber = 0; PartitionNumber < OffsetsFromStopTime.size();
        ++PartitionNumber) {
-    int64_t StopOffset = Offsets[PartitionNumber];
+    int64_t StopOffset = OffsetsFromStopTime[PartitionNumber];
+    int64_t StartOffset = OffsetsFromStartTime[PartitionNumber];
     // If stop offset is -1 that means there are not any messages after the time
     // we have asked for, so set the stop offset to the current high-watermark
     if (StopOffset == -1) {
       // -1 as the high watermark is the last available offset + 1
       StopOffset =
           Consumer->getHighWatermarkOffset(TopicName, PartitionNumber) - 1;
-      if (StopOffset < 0) {
-        // No data on topic at all so mark this partition as being reached
-        OffsetsToStopAt[PartitionNumber].second = true;
-        Logger->debug(
-            "No data on topic {} to consume before specified stop time",
-            TopicName);
-      }
+    }
+    if (StopOffset < 0 || StartOffset < 0 || StopOffset<=StartOffset) {
+      // No data on topic at all or between start and stop of run,
+      // so mark this partition as stop already reached
+      OffsetsToStopAt[PartitionNumber].second = true;
+      Logger->debug(
+          "No data on topic {} to consume before specified stop time",
+          TopicName);
     }
     OffsetsToStopAt[PartitionNumber].first = StopOffset;
-    Logger->debug("Stop offset for topic {}, partition {}, is {}", TopicName,
-                  PartitionNumber, OffsetsToStopAt[PartitionNumber].first);
+    Logger->debug("Stop offset for topic {}, partition {}, is {}. Start offset was {}",
+                  TopicName, PartitionNumber, OffsetsToStopAt[PartitionNumber].first,
+                  StartOffset);
     markIfOffsetsAlreadyReached(OffsetsToStopAt, TopicName);
   }
   return OffsetsToStopAt;
@@ -161,7 +166,8 @@ ProcessMessageResult Streamer::processMessage(
   if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
     CatchingUpToStopOffset = true;
     Logger->trace("Calling getStopOffsets");
-    StopOffsets = getStopOffsets(Options.StopTimestamp + Options.AfterStopTime,
+    StopOffsets = getStopOffsets(Options.StartTimestamp,
+                                 Options.StopTimestamp + Options.AfterStopTime,
                                  MessageProcessor.topic());
     Logger->trace("Finished executing getStopOffsets");
     // There may be no data in the topic, so check already if all stop offsets

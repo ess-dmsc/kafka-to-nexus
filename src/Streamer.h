@@ -110,7 +110,8 @@ private:
 
   /// Creates StopOffsets vector
   std::vector<std::pair<int64_t, bool>>
-  getStopOffsets(std::chrono::milliseconds StopTime,
+  getStopOffsets(std::chrono::milliseconds StartTime,
+                 std::chrono::milliseconds StopTime,
                  std::string const &TopicName);
 
   /// Checks whether we've now reached the stop offsets
