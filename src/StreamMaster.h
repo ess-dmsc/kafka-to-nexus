@@ -68,7 +68,9 @@ public:
         ProducerTopic(std::move(Producer)) {}
 
   StreamMaster(const StreamMaster &) = delete;
+  StreamMaster(StreamMaster &&) = delete;
   StreamMaster &operator=(const StreamMaster &) = delete;
+  StreamMaster &operator=(StreamMaster &&) = delete;
 
   ~StreamMaster() {
     Stop = true;
