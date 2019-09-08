@@ -63,8 +63,8 @@ public:
                std::string const &ServiceID,
                std::shared_ptr<KafkaW::ProducerTopic> Producer,
                std::map<std::string, Streamer> Streams)
-      : Streamers(std::move(Streams)), WriterTask(std::move(FileWriterTask)),
-        NumStreamers(Streams.size()), ServiceId(ServiceID),
+      : NumStreamers(Streams.size()), Streamers(std::move(Streams)),
+        WriterTask(std::move(FileWriterTask)), ServiceId(ServiceID),
         ProducerTopic(std::move(Producer)) {}
 
   StreamMaster(const StreamMaster &) = delete;
@@ -243,6 +243,7 @@ private:
     Logger->debug("StreamMaster is removable");
   }
 
+  size_t NumStreamers{0};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
   std::thread ReportThread;
@@ -251,7 +252,6 @@ private:
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
-  size_t NumStreamers{0};
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
   SharedLogger Logger = getLogger();
