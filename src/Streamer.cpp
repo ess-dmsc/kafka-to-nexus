@@ -111,10 +111,12 @@ Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
                          std::string const &TopicName) {
   // StopOffsets are a pair of the offset corresponding to the stop time and
   // whether or not that offset has been reached yet
-  auto OffsetsFromStartTime = Consumer->offsetsForTimesAllPartitions(TopicName, StartTime);
-  auto OffsetsFromStopTime = Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
-  std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(OffsetsFromStopTime.size(),
-                                                        {0, false});
+  auto OffsetsFromStartTime =
+      Consumer->offsetsForTimesAllPartitions(TopicName, StartTime);
+  auto OffsetsFromStopTime =
+      Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
+  std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(
+      OffsetsFromStopTime.size(), {0, false});
   for (size_t PartitionNumber = 0; PartitionNumber < OffsetsFromStopTime.size();
        ++PartitionNumber) {
     int64_t StopOffset = OffsetsFromStopTime[PartitionNumber];
@@ -126,18 +128,18 @@ Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
       StopOffset =
           Consumer->getHighWatermarkOffset(TopicName, PartitionNumber) - 1;
     }
-    if (StopOffset < 0 || StartOffset < 0 || StopOffset<=StartOffset) {
+    if (StopOffset < 0 || StartOffset < 0 || StopOffset <= StartOffset) {
       // No data on topic at all or between start and stop of run,
       // so mark this partition as stop already reached
       OffsetsToStopAt[PartitionNumber].second = true;
-      Logger->debug(
-          "No data on topic {} to consume before specified stop time",
-          TopicName);
+      Logger->debug("No data on topic {} to consume before specified stop time",
+                    TopicName);
     }
     OffsetsToStopAt[PartitionNumber].first = StopOffset;
-    Logger->debug("Stop offset for topic {}, partition {}, is {}. Start offset was {}",
-                  TopicName, PartitionNumber, OffsetsToStopAt[PartitionNumber].first,
-                  StartOffset);
+    Logger->debug(
+        "Stop offset for topic {}, partition {}, is {}. Start offset was {}",
+        TopicName, PartitionNumber, OffsetsToStopAt[PartitionNumber].first,
+        StartOffset);
     markIfOffsetsAlreadyReached(OffsetsToStopAt, TopicName);
   }
   return OffsetsToStopAt;

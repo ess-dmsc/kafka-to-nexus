@@ -303,7 +303,8 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
       .RETURN(std::vector<int64_t>{StopOffset - 1});
 
-  // Start offsets are queried first, this is in order to check that there are actually
+  // Start offsets are queried first, this is in order to check that there are
+  // actually
   // messages between the start and stop times which we should wait to consume
   // We'll pretend we started at offset 0
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
@@ -354,7 +355,8 @@ TEST_F(StreamerProcessTimingTest,
       .RETURN(generateKafkaMsgWithValidFlatbuffer(HistoricalDataSourceName, 42,
                                                   StopOffset))
       .TIMES(1);
-  // Start offsets are queried first, this is in order to check that there are actually
+  // Start offsets are queried first, this is in order to check that there are
+  // actually
   // messages between the start and stop times which we should wait to consume
   // We'll pretend we started at offset 0
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
@@ -391,9 +393,9 @@ TEST_F(StreamerProcessTimingTest,
       RegisterIt("f142");
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-  .RETURN(0);
+      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-  .RETURN(0);
+      .RETURN(0);
   std::string const HistoricalDataSourceName = "fw-test-helpers";
   FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
                                 std::move(Writer));
@@ -413,15 +415,17 @@ TEST_F(StreamerProcessTimingTest,
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{StopOffset})
       .TIMES(1);
-  // Start offsets are queried first, this is in order to check that there are actually
+  // Start offsets are queried first, this is in order to check that there are
+  // actually
   // messages between the start and stop times which we should wait to consume
-  // There is no data on the topic, so both start and stop offset will be reported as -1
+  // There is no data on the topic, so both start and stop offset will be
+  // reported as -1
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{-1})
       .TIMES(1);
   REQUIRE_CALL(*EmptyPollerConsumer, getHighWatermarkOffset(_, _)).RETURN(-1);
   ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
-  .RETURN(std::vector<int64_t>{0});
+      .RETURN(std::vector<int64_t>{0});
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -441,9 +445,9 @@ TEST_F(StreamerProcessTimingTest,
       RegisterIt("f142");
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-  .RETURN(0);
+      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-  .RETURN(0);
+      .RETURN(0);
   std::string const HistoricalDataSourceName = "fw-test-helpers";
   FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
                                 std::move(Writer));
@@ -456,20 +460,23 @@ TEST_F(StreamerProcessTimingTest,
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
 
-  // No data between start and stop time so the start and stop offsets are the same
+  // No data between start and stop time so the start and stop offsets are the
+  // same
   int64_t StopOffset = 42;
   int64_t StartOffset = StopOffset;
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{StopOffset})
       .TIMES(1);
-  // Start offsets are queried first, this is in order to check that there are actually
+  // Start offsets are queried first, this is in order to check that there are
+  // actually
   // messages between the start and stop times which we should wait to consume
-  // There is no data on the topic, so both start and stop offset will be reported as -1
+  // There is no data on the topic, so both start and stop offset will be
+  // reported as -1
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{StartOffset})
       .TIMES(1);
   ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
-  .RETURN(std::vector<int64_t>{0});
+      .RETURN(std::vector<int64_t>{0});
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
@@ -507,7 +514,8 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   int64_t StopOffset = 2;
   ALLOW_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{StopOffset});
-  // Start offsets are queried first, this is in order to check that there are actually
+  // Start offsets are queried first, this is in order to check that there are
+  // actually
   // messages between the start and stop times which we should wait to consume
   // We'll pretend we started at offset 0
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
