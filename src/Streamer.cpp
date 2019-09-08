@@ -109,7 +109,6 @@ std::vector<std::pair<int64_t, bool>>
 Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
                          std::chrono::milliseconds StopTime,
                          std::string const &TopicName) {
-  Logger->trace("In getStopOffsets");
   // StopOffsets are a pair of the offset corresponding to the stop time and
   // whether or not that offset has been reached yet
   auto OffsetsFromStartTime = Consumer->offsetsForTimesAllPartitions(TopicName, StartTime);

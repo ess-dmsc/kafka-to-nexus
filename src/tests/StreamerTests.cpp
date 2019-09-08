@@ -303,6 +303,12 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
       .RETURN(std::vector<int64_t>{StopOffset - 1});
 
+  // Start offsets are queried first, this is in order to check that there are actually
+  // messages between the start and stop times which we should wait to consume
+  // We'll pretend we started at offset 0
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{0})
+      .TIMES(1);
   // The consumer will report that there is one partition and we should stop at
   // offset 10
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
@@ -348,6 +354,12 @@ TEST_F(StreamerProcessTimingTest,
       .RETURN(generateKafkaMsgWithValidFlatbuffer(HistoricalDataSourceName, 42,
                                                   StopOffset))
       .TIMES(1);
+  // Start offsets are queried first, this is in order to check that there are actually
+  // messages between the start and stop times which we should wait to consume
+  // We'll pretend we started at offset 0
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{0})
+      .TIMES(1);
   // The consumer will report that there is one partition and we should stop at
   // offset 10
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
@@ -363,13 +375,111 @@ TEST_F(StreamerProcessTimingTest,
       });
   DemuxTopic Demuxer("SomeTopicName");
 
-  // A message will be received here with an offset of 10
+  // A message will be received here
   // however no stop time has been set yet, so expect OK
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
 
   // We already reached the stop offset, so STOP should be returned
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+}
+
+TEST_F(StreamerProcessTimingTest,
+       ProcessMessageReturnsStopWhenThereIsNoDataOnTopicToConsume) {
+  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
+      RegisterIt("f142");
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+  .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+  .RETURN(0);
+  std::string const HistoricalDataSourceName = "fw-test-helpers";
+  FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
+                                std::move(Writer));
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
+  TestStreamer->setSources(SourceList);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+
+  // There is no data, so polling the consumer will give us an EndOfPartition
+  // message with no payload
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
+      .TIMES(1);
+
+  // No data on topic so stop offset will be reported by RdKafka as -1
+  int64_t StopOffset = -1;
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
+  // Start offsets are queried first, this is in order to check that there are actually
+  // messages between the start and stop times which we should wait to consume
+  // There is no data on the topic, so both start and stop offset will be reported as -1
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{-1})
+      .TIMES(1);
+  REQUIRE_CALL(*EmptyPollerConsumer, getHighWatermarkOffset(_, _)).RETURN(-1);
+  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+  .RETURN(std::vector<int64_t>{0});
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+
+  // No data on topic to consume, so STOP should be returned
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+}
+
+TEST_F(StreamerProcessTimingTest,
+       ProcessMessageReturnsStopWhenThereIsNoDataBetweenRunStartAndStop) {
+  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
+      RegisterIt("f142");
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+  .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+  .RETURN(0);
+  std::string const HistoricalDataSourceName = "fw-test-helpers";
+  FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
+                                std::move(Writer));
+  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
+  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
+  TestStreamer->setSources(SourceList);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
+      .TIMES(1);
+
+  // No data between start and stop time so the start and stop offsets are the same
+  int64_t StopOffset = 42;
+  int64_t StartOffset = StopOffset;
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
+  // Start offsets are queried first, this is in order to check that there are actually
+  // messages between the start and stop times which we should wait to consume
+  // There is no data on the topic, so both start and stop offset will be reported as -1
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StartOffset})
+      .TIMES(1);
+  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+  .RETURN(std::vector<int64_t>{0});
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+
+  // No data on topic between start and stop of run, so STOP should be returned
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
 
@@ -394,9 +504,15 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
-  std::vector<int64_t> ReturnedOffsets = {1};
+  int64_t StopOffset = 2;
   ALLOW_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
-      .RETURN(ReturnedOffsets);
+      .RETURN(std::vector<int64_t>{StopOffset});
+  // Start offsets are queried first, this is in order to check that there are actually
+  // messages between the start and stop times which we should wait to consume
+  // We'll pretend we started at offset 0
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{0})
+      .TIMES(1);
   ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
       .RETURN(std::vector<int64_t>{0});
 
@@ -408,50 +524,6 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   DemuxerStandIn Demuxer("SomeTopicName");
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
-}
-
-TEST_F(StreamerProcessTimingTest, NoMessagesInTopicAfterStopTime) {
-  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
-      ReaderKey);
-
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{5};
-  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-      .RETURN(0);
-  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
-  REQUIRE_CALL(*EmptyPollerConsumer, poll())
-      .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
-      .TIMES(1);
-
-  // GIVEN that there are no messages in the topic, and therefore
-  // offsetsForTimes returns -1 as the stop offset
-  std::vector<int64_t> ReturnedOffsets = {-1};
-  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
-      .RETURN(ReturnedOffsets);
-  // and high watermark offset is also -1
-  REQUIRE_CALL(*EmptyPollerConsumer, getHighWatermarkOffset(_, _)).RETURN(-1);
-  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
-      .RETURN(std::vector<int64_t>{0});
-
-  TestStreamer->ConsumerInitialised =
-      std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
-      });
-  DemuxerStandIn Demuxer("SomeTopicName");
-  REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
-  // WHEN pollAndProcess is run
-  // THEN expect STOP response, as there is no need to continue trying to
-  // consume data from this topic
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
 
 TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
