@@ -37,7 +37,7 @@ int main(int argc, char **argv) {
       "https://github.com/ess-dmsc/kafka-to-nexus\n\n"
       "Writes NeXus files in a format specified with a json template.\n"
       "Writer modules can be used to populate the file from Kafka topics.\n",
-      GIT_COMMIT)};
+      GetVersion())};
   auto Options = std::make_unique<MainOpt>();
   Options->init();
   setCLIOptions(App, *Options);
