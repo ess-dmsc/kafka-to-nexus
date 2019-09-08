@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "HDFFile.h"
+#include "Version.h"
 #include <date/date.h>
 #include <date/tz.h>
 #include <flatbuffers/flatbuffers.h>
@@ -834,8 +835,6 @@ void checkHDFVersion(SharedLogger const &Logger) {
   }
 }
 
-extern "C" char const GIT_COMMIT[];
-
 void HDFFile::init(std::string const &Filename,
                    nlohmann::json const &NexusStructure, nlohmann::json const &,
                    std::vector<StreamHDFInfo> &StreamHDFInfo, bool UseHDFSWMR) {
@@ -912,7 +911,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
                          H5File.id().file_name().string());
     writeStringAttribute(
         RootGroup, "creator",
-        fmt::format("kafka-to-nexus commit {:.7}", GIT_COMMIT));
+        fmt::format("kafka-to-nexus commit {:.7}", GetVersion()));
     writeHDFISO8601AttributeCurrentTime(RootGroup, "file_time", Logger);
     writeAttributesIfPresent(RootGroup, NexusStructure, Logger);
   } catch (std::exception const &E) {
