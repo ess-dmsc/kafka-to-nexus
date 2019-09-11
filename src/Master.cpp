@@ -67,19 +67,19 @@ void Master::handle_command(std::string const &Command) {
   command_handler.tryToHandle(Command, getCurrentTimeStamp());
 }
 
-std::unique_ptr<StreamMaster<Streamer>> &
+std::unique_ptr<StreamMaster> &
 Master::getStreamMasterForJobID(std::string const &JobID) {
   for (auto &StreamMaster : StreamMasters) {
     if (StreamMaster->getJobId() == JobID) {
       return StreamMaster;
     }
   }
-  static std::unique_ptr<StreamMaster<Streamer>> NotFound;
+  static std::unique_ptr<StreamMaster> NotFound;
   return NotFound;
 }
 
 void Master::addStreamMaster(
-    std::unique_ptr<StreamMaster<Streamer>> StreamMaster) {
+    std::unique_ptr<StreamMaster> StreamMaster) {
   StreamMasters.push_back(std::move(StreamMaster));
 }
 
@@ -141,7 +141,7 @@ void Master::run() {
     // Remove any job which is in 'is_removable' state
     StreamMasters.erase(
         std::remove_if(StreamMasters.begin(), StreamMasters.end(),
-                       [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
+                       [](std::unique_ptr<StreamMaster> &Iter) {
                          return Iter->isRemovable();
                        }),
         StreamMasters.end());

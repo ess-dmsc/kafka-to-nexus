@@ -42,9 +42,9 @@ public:
   void handle_command(std::string const &Command) override;
   void statistics() override;
   void addStreamMaster(
-      std::unique_ptr<StreamMaster<Streamer>> StreamMaster) override;
+      std::unique_ptr<StreamMaster> StreamMaster) override;
   void stopStreamMasters() override;
-  std::unique_ptr<StreamMaster<Streamer>> &
+  std::unique_ptr<StreamMaster> &
   getStreamMasterForJobID(std::string const &JobID) override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
@@ -62,7 +62,7 @@ private:
   CommandListener Listener;
   std::atomic<bool> Running{true};
   std::atomic<bool> HasExitedRunLoop{false};
-  std::vector<std::unique_ptr<StreamMaster<Streamer>>> StreamMasters;
+  std::vector<std::unique_ptr<StreamMaster>> StreamMasters;
   std::string FileWriterProcessId;
   MainOpt &MainConfig;
 };

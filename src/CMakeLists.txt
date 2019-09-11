@@ -91,7 +91,7 @@ set(kafka_to_nexus_SRC
         MainOpt.cpp
         CLIOptions.cpp
         NeXusDataset.cpp
-        )
+        StreamMaster.cpp)
 
 set(kafka_to_nexus_INC
         CommandHandler.h
