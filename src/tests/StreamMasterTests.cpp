@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include <gtest/gtest.h>
-#include "Streamer.h"
 #include "StreamMaster.h"
+#include "Streamer.h"
+#include <gtest/gtest.h>
 
 class ProducerStandIn : public KafkaW::Producer {
 public:
@@ -22,11 +22,12 @@ public:
 class StreamMasterTests : public ::testing::Test {
 public:
   void SetUp() override {
-    FileWriterTask = std::make_unique<FileWriter::FileWriterTask>("Not Important", nullptr);
+    FileWriterTask =
+        std::make_unique<FileWriter::FileWriterTask>("Not Important", nullptr);
     FileWriterTask->setJobId(JobId);
     std::map<std::string, FileWriter::Streamer> Streamers;
-    StreamMaster = std::make_unique<FileWriter::StreamMaster>(std::move(FileWriterTask), "ServiceID", nullptr, std::move(Streamers));
-
+    StreamMaster = std::make_unique<FileWriter::StreamMaster>(
+        std::move(FileWriterTask), "ServiceID", nullptr, std::move(Streamers));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;
