@@ -78,8 +78,7 @@ Master::getStreamMasterForJobID(std::string const &JobID) {
   return NotFound;
 }
 
-void Master::addStreamMaster(
-    std::unique_ptr<StreamMaster> StreamMaster) {
+void Master::addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) {
   StreamMasters.push_back(std::move(StreamMaster));
 }
 
@@ -139,12 +138,12 @@ void Master::run() {
     }
 
     // Remove any job which is in 'is_removable' state
-    StreamMasters.erase(
-        std::remove_if(StreamMasters.begin(), StreamMasters.end(),
-                       [](std::unique_ptr<StreamMaster> &Iter) {
-                         return Iter->isRemovable();
-                       }),
-        StreamMasters.end());
+    StreamMasters.erase(std::remove_if(StreamMasters.begin(),
+                                       StreamMasters.end(),
+                                       [](std::unique_ptr<StreamMaster> &Iter) {
+                                         return Iter->isRemovable();
+                                       }),
+                        StreamMasters.end());
   }
   Logger->info("calling stop on all stream_masters");
   stopStreamMasters();

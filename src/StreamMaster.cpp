@@ -57,8 +57,7 @@ void StreamMaster::setStopTime(const std::chrono::milliseconds &StopTime) {
   }
 }
 
-void StreamMaster::setTopicWriteDuration(
-    std::chrono::milliseconds Duration) {
+void StreamMaster::setTopicWriteDuration(std::chrono::milliseconds Duration) {
   TopicWriteDuration = Duration;
 }
 
@@ -80,7 +79,8 @@ void StreamMaster::requestStop() {
 void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
   if (NumStreamers != 0) {
     if (!ReportThread.joinable()) {
-      ReportPtr = std::make_unique<Report>(ProducerTopic, WriterTask->jobID(), ReportMs);
+      ReportPtr = std::make_unique<Report>(ProducerTopic, WriterTask->jobID(),
+                                           ReportMs);
       ReportThread =
           std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
     } else {
