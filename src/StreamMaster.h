@@ -15,18 +15,25 @@
 #include "Errors.h"
 #include "EventLogger.h"
 #include "MainOpt.h"
+#include "Report.h"
 #include <atomic>
 
 namespace FileWriter {
 class Streamer;
 class FileWriterTask;
-class Report;
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
 class StreamMaster {
   using StreamMasterError = Status::StreamMasterError;
 
 public:
+  /// \brief Builder method for StreamMaster.
+  ///
+  /// \param Broker The Kafka broker for the consumers.
+  /// \param FileWriterTask The file-writer.
+  /// \param Options The general application settings.
+  /// \param Producer The Kafka producer used for reporting.
+  /// \return
   static std::unique_ptr<StreamMaster> createStreamMaster(
       const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
       const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer);
@@ -88,12 +95,11 @@ public:
   std::string getJobId() const { return WriterTask->jobID(); }
 
 private:
-  /// \brief Process the messages in Stream for at most TopicWriteDuration
-  /// std::chrono::milliseconds.
+  /// \brief Process the messages in the specified stream.
   ///
-  /// \param Stream The Streamer that will consume messages.
+  /// \param Stream The stream that will consume messages.
   /// \param Demux The demux associated with the topic.
-  void processStreamResult(Streamer &Stream, DemuxTopic &Demux);
+  void processStream(Streamer &Stream, DemuxTopic &Demux);
 
   /// \brief Main loop that handles the writer process for each stream.
   void run();

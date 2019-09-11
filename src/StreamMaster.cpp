@@ -1,6 +1,5 @@
 #include "StreamMaster.h"
 #include "KafkaW/ConsumerFactory.h"
-#include "Report.h"
 #include "Streamer.h"
 #include <condition_variable>
 
@@ -81,7 +80,7 @@ void StreamMaster::requestStop() {
 void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
   if (NumStreamers != 0) {
     if (!ReportThread.joinable()) {
-      ReportPtr.reset(new Report(ProducerTopic, WriterTask->jobID(), ReportMs));
+      ReportPtr = std::make_unique<Report>(ProducerTopic, WriterTask->jobID(), ReportMs);
       ReportThread =
           std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
     } else {
@@ -94,11 +93,11 @@ bool StreamMaster::isRemovable() const {
   return RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
 }
 
-void StreamMaster::processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
+void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
   auto ProcessStartTime = std::chrono::system_clock::now();
   FileWriter::ProcessMessageResult ProcessResult;
 
-  // process stream Stream for at most TopicWriteDuration milliseconds
+  // Consume and process messages
   while ((std::chrono::system_clock::now() - ProcessStartTime) <
          TopicWriteDuration) {
     if (Stop) {
@@ -135,7 +134,7 @@ void StreamMaster::run() {
   while (!Stop) {
     for (auto &Demux : WriterTask->demuxers()) {
       auto &s = Streamers[Demux.topic()];
-      processStreamResult(s, Demux);
+      processStream(s, Demux);
     }
   }
   RunStatus.store(StreamMasterError::HAS_FINISHED);
