@@ -61,7 +61,7 @@ initTopics(std::string const &TopicName, StreamerOptions const &Options,
   }
 }
 
-Streamer::StreamerStatus Streamer::closeStream() {
+FileWriter::Streamer::StreamerStatus FileWriter::Streamer::close() {
   Sources.clear();
   RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;

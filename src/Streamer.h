@@ -69,9 +69,10 @@ public:
   /// StreamerErrorCode::has_finished.
   ///
   /// \return The current status.
-  StreamerStatus closeStream();
+  StreamerStatus close();
 
   /// \brief Sets the sources.
+  /// \param SourceList The new source list.
   void setSources(
       std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
 

@@ -34,7 +34,8 @@ set(UnitTests_SRC
         helpers/f142_synth.cpp
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
-        NicosCacheWriterTests.cpp)
+        NicosCacheWriterTests.cpp
+        StreamMasterTests.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h
