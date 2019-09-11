@@ -59,13 +59,11 @@ public:
   /// StreamerErrorCode::has_finished.
   ///
   /// \return The current status.
-  StreamerStatus closeStream();
+  StreamerStatus close();
 
   /// \brief Sets the sources.
   ///
-
-  /// \return The number of sources.
-  size_t numSources() const { return Sources.size(); }
+  /// \param SourceList The new source list.
   void setSources(
       std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
 

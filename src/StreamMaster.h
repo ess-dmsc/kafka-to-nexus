@@ -7,73 +7,46 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/// \file Header-only implementation of the StreamMaster, that
+/// \file Header file for the StreamMaster, that
 /// coordinates the execution of the Streamers
 
 #pragma once
 
+#include "Errors.h"
 #include "EventLogger.h"
-#include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "Report.h"
-#include "helper.h"
-
-#include <KafkaW/ConsumerFactory.h>
 #include <atomic>
-#include <condition_variable>
 
 namespace FileWriter {
+class Streamer;
+class FileWriterTask;
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
-template <typename Streamer> class StreamMaster {
-  using StreamerStatus = Status::StreamerStatus;
+class StreamMaster {
   using StreamMasterError = Status::StreamMasterError;
 
 public:
-  StreamMaster(const std::string &Broker,
-               std::unique_ptr<FileWriterTask> FileWriterTask,
-               const MainOpt &Options,
-               std::shared_ptr<KafkaW::ProducerTopic> Producer)
-      : Demuxers(FileWriterTask->demuxers()),
-        WriterTask(std::move(FileWriterTask)), ServiceId(Options.ServiceID),
-        ProducerTopic(std::move(Producer)) {
-    for (auto &Demux : Demuxers) {
-      try {
-        std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
-            KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
-                                   Broker);
-        Streamers.emplace(std::piecewise_construct,
-                          std::forward_as_tuple(Demux.topic()),
-                          std::forward_as_tuple(Broker, Demux.topic(),
-                                                Options.StreamerConfiguration,
-                                                std::move(Consumer)));
-        Streamers[Demux.topic()].setSources(Demux.sources());
-      } catch (std::exception &E) {
-        RunStatus = StreamMasterError::STREAMER_ERROR;
-        Logger->critical("{}", E.what());
-        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-                 WriterTask->jobID(), E.what());
-      }
-    }
-    NumStreamers = Streamers.size();
-  }
+  /// \brief Builder method for StreamMaster.
+  ///
+  /// \param Broker The Kafka broker for the consumers.
+  /// \param FileWriterTask The file-writer.
+  /// \param Options The general application settings.
+  /// \param Producer The Kafka producer used for reporting.
+  /// \return
+  static std::unique_ptr<StreamMaster> createStreamMaster(
+      const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
+      const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer);
 
+  StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
+               std::string const &ServiceID,
+               std::shared_ptr<KafkaW::ProducerTopic> Producer,
+               std::map<std::string, Streamer> Streams);
+  ~StreamMaster();
   StreamMaster(const StreamMaster &) = delete;
-  StreamMaster(StreamMaster &&) = default;
-
-  ~StreamMaster() {
-    Stop = true;
-    if (WriteThread.joinable()) {
-      WriteThread.join();
-    }
-    if (ReportThread.joinable()) {
-      ReportThread.join();
-    }
-    Logger->info("Stop StreamMaster for file with id : {}, ready to be removed",
-                 getJobId());
-  }
-
+  StreamMaster(StreamMaster &&) = delete;
   StreamMaster &operator=(const StreamMaster &) = delete;
+  StreamMaster &operator=(StreamMaster &&) = delete;
 
   /// \brief Set the point in time that triggers
   /// the termination of the run.
@@ -85,52 +58,24 @@ public:
   ///
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
-  void setStopTime(const std::chrono::milliseconds &StopTime) {
-    for (auto &s : Streamers) {
-      s.second.getOptions().StopTimestamp = StopTime;
-    }
-  }
+  void setStopTime(const std::chrono::milliseconds &StopTime);
 
-  void setTopicWriteDuration(std::chrono::milliseconds NewTopicWriteDuration) {
-    TopicWriteDuration = NewTopicWriteDuration;
-  }
+  /// \brief Sets the write duration for the streams.
+  ///
+  /// \param Duration The duration to set.
+  void setTopicWriteDuration(std::chrono::milliseconds Duration);
 
   /// Start writing the streams.
-  void start() {
-    if (NumStreamers == 0) {
-      Stop = true;
-      doStop();
-      return;
-    }
-
-    Logger->info("StreamMaster: start");
-    Stop = false;
-
-    if (!WriteThread.joinable()) {
-      WriteThread = std::thread([&] { this->run(); });
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    }
-  }
+  void start();
 
   /// Request to stop writing the streams.
-  void requestStop() {
-    Logger->info("StreamMaster: stop requested");
-    Stop = true;
-  }
+  void requestStop();
 
+  /// \brief Start the reporting thread.
+  ///
+  /// \param ReportMs How often to report.
   void report(const std::chrono::milliseconds &ReportMs =
-                  std::chrono::milliseconds{1000}) {
-    if (NumStreamers != 0) {
-      if (!ReportThread.joinable()) {
-        ReportPtr.reset(
-            new Report(ProducerTopic, WriterTask->jobID(), ReportMs));
-        ReportThread =
-            std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
-      } else {
-        Logger->trace("Status report already started, nothing to do");
-      }
-    }
-  }
+                  std::chrono::milliseconds{1000});
 
   /// \brief Get FileWriterTask associated with the
   /// current file.
@@ -141,9 +86,7 @@ public:
   /// \brief Get whether this stream master can be removed.
   ///
   /// \return True, if can be removed.
-  bool isRemovable() const {
-    return RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
-  }
+  bool isRemovable() const;
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
@@ -152,114 +95,32 @@ public:
   std::string getJobId() const { return WriterTask->jobID(); }
 
 private:
-  /// \brief Process the messages in Stream for at most TopicWriteDuration
-  /// std::chrono::milliseconds.
+  /// \brief Process the messages in the specified stream.
   ///
-  /// \param Stream The Streamer that will consume messages.
+  /// \param Stream The stream that will consume messages.
   /// \param Demux The demux associated with the topic.
-  void processStreamResult(Streamer &Stream, DemuxTopic &Demux) {
-    auto ProcessStartTime = std::chrono::system_clock::now();
-    FileWriter::ProcessMessageResult ProcessResult;
-
-    // process stream Stream for at most TopicWriteDuration milliseconds
-    while ((std::chrono::system_clock::now() - ProcessStartTime) <
-           TopicWriteDuration) {
-      if (Stop) {
-        return;
-      }
-
-      // if the Streamer throws the stream is closed, but the file writing
-      // continues
-      try {
-        ProcessResult = Stream.pollAndProcess(Demux);
-      } catch (std::exception &E) {
-        Logger->error("Stream closed due to stream error: {}", E.what());
-        logEvent(ProducerTopic, StatusCode::Error, ServiceId,
-                 WriterTask->jobID(), E.what());
-        closeStream(Stream, Demux.topic());
-        return;
-      }
-
-      // We've reached the stop offsets, we can close the stream
-      if (ProcessResult == ProcessMessageResult::STOP) {
-        closeStream(Stream, Demux.topic());
-        return;
-      } else if (ProcessResult == ProcessMessageResult::ERR) {
-        // if there's any error in the messages log it
-        Logger->info("Topic \"{}\" : {}", Demux.topic(),
-                     Err2Str(Stream.runStatus()));
-        return;
-      }
-    }
-  }
+  void processStream(Streamer &Stream, DemuxTopic &Demux);
 
   /// \brief Main loop that handles the writer process for each stream.
-  ///
-  /// The streams write as long as Stop is false and there are open streams.
-  void run() {
-    RunStatus.store(StreamMasterError::RUNNING);
-    while (!Stop && NumStreamers > 0 && Demuxers.size() > 0) {
-      for (auto &Demux : Demuxers) {
-        auto &s = Streamers[Demux.topic()];
-        processStreamResult(s, Demux);
-      }
-    }
-    RunStatus.store(StreamMasterError::HAS_FINISHED);
-    doStop();
-  }
+  void run();
 
   /// \brief Close the Kafka connection in the specified stream.
   ///
   /// \param Stream The stream to close.
-  void closeStream(Streamer &Stream, const std::string &TopicName) {
-    if (Stream.runStatus() != Status::StreamerStatus::HAS_FINISHED) {
-      // Only decrement active streamer count if we haven't already marked it as
-      // finished
-      NumStreamers--;
-      Logger->info(
-          "Stopped streamer consuming from {}. {} streamers still running.",
-          TopicName, NumStreamers);
-    }
-    Stream.closeStream();
-
-    if (NumStreamers == 0) {
-      // No more streams open, so stop
-      Stop = true;
-    }
-  }
+  void closeStream(Streamer &Stream, const std::string &TopicName);
 
   /// \brief Stops the streamers and prepares for being removed.
-  void doStop() {
-    if (ReportThread.joinable()) {
-      ReportThread.join();
-    }
-    for (auto &Stream : Streamers) {
-      // Give the streams a chance to close, log if they fail
-      Logger->info("Shutting down {}", Stream.first);
-      Logger->info("Shut down {}", Stream.first);
-      auto CloseResult = Stream.second.closeStream();
-      if (CloseResult != StreamerStatus::HAS_FINISHED) {
-        Logger->info("Problem with stopping {} : {}", Stream.first,
-                     Status::Err2Str(CloseResult));
-      } else {
-        Logger->info("Stopped {}", Stream.first);
-      }
-    }
-    Streamers.clear();
-    RunStatus.store(StreamMasterError::IS_REMOVABLE);
-    Logger->debug("StreamMaster is removable");
-  }
+  void doStop();
 
+  size_t NumStreamers{0};
   std::map<std::string, Streamer> Streamers;
-  std::vector<DemuxTopic> &Demuxers;
   std::thread WriteThread;
   std::thread ReportThread;
-  std::atomic<StreamMasterError> RunStatus;
+  std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
-  size_t NumStreamers{0};
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
   SharedLogger Logger = getLogger();
