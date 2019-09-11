@@ -48,7 +48,7 @@ public:
   StreamMaster &operator=(const StreamMaster &) = delete;
   StreamMaster &operator=(StreamMaster &&) = delete;
 
-  /// Set the point in time that triggers
+  /// \brief Set the point in time that triggers
   /// the termination of the run.
   ///
   /// When the timestamp of a Source in the
