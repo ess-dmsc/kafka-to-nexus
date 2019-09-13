@@ -21,14 +21,13 @@ namespace FileWriter {
 
 /// \brief Used to keep track of file writing modules on one topic and call the
 /// correct module based on sourcename.
-
 class DemuxTopic {
 public:
-  /// Initialize with the given \p TopicName.
+  /// Initialize with the given TopicName.
   explicit DemuxTopic(std::string TopicName);
 
   /// Move constructor.
-  explicit DemuxTopic(DemuxTopic &&x) noexcept;
+  DemuxTopic(DemuxTopic &&x) noexcept;
 
   virtual ~DemuxTopic();
 
@@ -39,8 +38,6 @@ public:
 
   /// \brief Finds the appropriate `Source` for this `Message` and delegates
   /// processing.
-  ///
-  /// Called typically from `Streamer`.
   ///
   /// \param Message The flatbuffer message that is to be written to file.
   ///
@@ -53,7 +50,7 @@ public:
   /// \return Unordered map of sources
   std::unordered_map<FlatbufferMessage::SrcHash, Source> &sources();
 
-  /// Adds a \p source to topic sources.
+  /// Adds a source to topic sources.
   ///
   /// \param source The `Source` to be added.
   ///
