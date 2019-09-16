@@ -44,8 +44,9 @@ def pytest_collection_modifyitems(items, config):
         deselected_items = []
 
         for item in items:
-            if fixture_name in getattr(item, "fixturenames", ()) or \
-                    fixture_name_stop_command in getattr(item, "fixturenames", ()):
+            if fixture_name in getattr(
+                item, "fixturenames", ()
+            ) or fixture_name_stop_command in getattr(item, "fixturenames", ()):
                 selected_items.append(item)
             else:
                 deselected_items.append(item)
