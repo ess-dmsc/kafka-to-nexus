@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "kafka-to-nexus.h"
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
 #include "HDFWriterModule.h"
