@@ -109,12 +109,9 @@ protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 
 private:
-  const RdKafka::TopicMetadata *findTopic(const std::string &Topic);
   std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings ConsumerBrokerSettings;
-  void updateMetadata();
-  std::shared_ptr<RdKafka::Metadata> KafkaMetadata;
-  std::chrono::nanoseconds LastMetadataUpdate{0};
+  std::shared_ptr<RdKafka::Metadata> getMetadata();
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
   void assignToPartitions(
@@ -122,7 +119,7 @@ private:
       const std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithOffsets);
   std::vector<RdKafka::TopicPartition *>
   queryWatermarkOffsets(const std::string &Topic);
-  bool metadataCall();
+  std::shared_ptr<RdKafka::Metadata> metadataCall();
   SharedLogger Logger = spdlog::get("filewriterlogger");
   std::vector<RdKafka::TopicPartition *>
   offsetsForTimesForTopic(std::string const &Topic,

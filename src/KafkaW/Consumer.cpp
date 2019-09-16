@@ -17,8 +17,22 @@
 #include <thread>
 
 namespace {
-std::chrono::nanoseconds currentEpochTimeNanoseconds() {
-  return std::chrono::system_clock::now().time_since_epoch();
+/// Finds named topic in metadata. Throws if topic is not found.
+/// \param Topic Name of the topic to look for
+/// \return The topic metadata object
+const RdKafka::TopicMetadata *
+findTopic(const std::string &Topic,
+          const std::shared_ptr<RdKafka::Metadata> &KafkaMetadata) {
+  auto Topics = KafkaMetadata->topics();
+  auto Iterator =
+      std::find_if(Topics->cbegin(), Topics->cend(),
+                   [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
+                     return TopicMetadata->topic() == Topic;
+                   });
+  if (Iterator == Topics->end()) {
+    throw std::runtime_error(fmt::format("Topic {} does not exist", Topic));
+  }
+  return *Iterator;
 }
 }
 
@@ -218,27 +232,9 @@ int64_t Consumer::getHighWatermarkOffset(std::string const &Topic,
   return HighWatermark;
 }
 
-/// Checks if a topic is present on the broker. Throws and logs if topic is
-/// not found.
-/// NB this is not put in a smart pointer as we don't want to take ownership.
-/// \param Topic Name of the topic to check.
-/// \return The topic metadata object.
-const RdKafka::TopicMetadata *Consumer::findTopic(const std::string &Topic) {
-  updateMetadata();
-  auto Topics = KafkaMetadata->topics();
-  auto Iterator =
-      std::find_if(Topics->cbegin(), Topics->cend(),
-                   [Topic](const RdKafka::TopicMetadata *TopicMetadata) {
-                     return TopicMetadata->topic() == Topic;
-                   });
-  if (Iterator == Topics->end()) {
-    throw std::runtime_error(fmt::format("Topic {} does not exist", Topic));
-  }
-  return *Iterator;
-}
-
 std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
-  auto matchedTopic = findTopic(Topic);
+  std::shared_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
+  auto matchedTopic = findTopic(Topic, KafkaMetadata);
   std::vector<int32_t> TopicPartitionNumbers;
   const RdKafka::TopicMetadata::PartitionMetadataVector *PartitionMetadata =
       matchedTopic->partitions();
@@ -252,7 +248,8 @@ std::vector<int32_t> Consumer::queryTopicPartitions(const std::string &Topic) {
 
 bool Consumer::topicPresent(const std::string &TopicName) {
   try {
-    findTopic(TopicName);
+    std::shared_ptr<RdKafka::Metadata> KafkaMetadata = getMetadata();
+    findTopic(TopicName, KafkaMetadata);
   } catch (std::runtime_error &e) {
     return false;
   }
@@ -261,41 +258,35 @@ bool Consumer::topicPresent(const std::string &TopicName) {
 
 /// Updates the RdKafka Metadata pointer. If broker is unavailable, keeps trying
 /// to connect every 500ms, logging messages every few seconds.
-void Consumer::updateMetadata() {
-  int64_t TwoSecondsInNanoseconds = 2000000000L;
-  if (currentEpochTimeNanoseconds().count() - LastMetadataUpdate.count() <
-      TwoSecondsInNanoseconds) {
-    Logger->debug("Using cached Metadata as it is less than 2 seconds old");
-    return;
-  }
-
-  Logger->debug("Querying broker for updated Metadata");
+std::shared_ptr<RdKafka::Metadata> Consumer::getMetadata() {
+  Logger->trace("Querying broker for Metadata");
   uint32_t LoopCounter = 0;
   uint32_t WarnOnNRetries = 10;
-  while (!metadataCall()) {
+  std::shared_ptr<RdKafka::Metadata> KafkaMetadata = metadataCall();
+  while (KafkaMetadata == nullptr) {
     if (LoopCounter == WarnOnNRetries) {
       Logger->warn("Cannot contact broker, retrying until connection is "
                    "established...");
       LoopCounter = 0;
     }
+    KafkaMetadata = metadataCall();
     LoopCounter++;
   }
-  Logger->debug("Successfully updated metadata from broker");
+  Logger->trace("Successfully retrieved metadata from broker");
+  return KafkaMetadata;
 }
 
-bool Consumer::metadataCall() {
+std::shared_ptr<RdKafka::Metadata> Consumer::metadataCall() {
   RdKafka::Metadata *MetadataPtr = nullptr;
   auto ErrorCode = KafkaConsumer->metadata(
       true, nullptr, &MetadataPtr, ConsumerBrokerSettings.MetadataTimeoutMS);
   switch (ErrorCode) {
   case RdKafka::ERR_NO_ERROR:
-    KafkaMetadata = std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
-    LastMetadataUpdate = currentEpochTimeNanoseconds();
-    return true;
+    return std::shared_ptr<RdKafka::Metadata>(MetadataPtr);
   case RdKafka::ERR__TRANSPORT:
-    return false;
+    return nullptr;
   case RdKafka::ERR__TIMED_OUT:
-    return false;
+    return nullptr;
   default:
     throw MetadataException(
         fmt::format("Consumer::metadataCall() - error while retrieving "
