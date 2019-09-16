@@ -107,7 +107,6 @@ set(kafka_to_nexus_INC
         HDFWriterModule.h
         helper.h
         json.h
-        kafka-to-nexus.h
         KafkaW/BrokerSettings.h
         KafkaW/Consumer.h
         KafkaW/Producer.h
