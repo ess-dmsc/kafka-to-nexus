@@ -8,10 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "DemuxTopic.h"
-#include "FlatbufferReader.h"
-#include "logger.h"
-#include <limits>
-#include <stdexcept>
 
 namespace FileWriter {
 

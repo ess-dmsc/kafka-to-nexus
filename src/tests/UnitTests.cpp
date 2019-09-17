@@ -7,8 +7,10 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "URI.h"
 #include "logger.h"
 #include <gtest/gtest.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <trompeloeil.hpp>
 
 namespace trompeloeil {

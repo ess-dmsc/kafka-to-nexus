@@ -9,15 +9,14 @@
 
 #include "../CommandHandler.h"
 #include "../HDFFile.h"
-#include "../KafkaW/Consumer.h"
 #include "../MainOpt.h"
 #include "../helper.h"
 #include "../json.h"
+#include "Msg.h"
 #include "AddReader.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/ev42_synth.h"
 #include "helpers/f142_synth.h"
-#include <array>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <hdf5.h>

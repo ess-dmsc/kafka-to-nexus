@@ -47,14 +47,14 @@ enum class StreamerStatus {
 /// \param Error The error status.
 ///
 /// \return A string that briefly describes the status.
-const std::string Err2Str(const StreamerStatus &Error);
+std::string Err2Str(const StreamerStatus &Error);
 
 /// \brief Converts a StreamMasterError status into a human readable string.
 ///
 /// \param Error The error status.
 ///
 /// \return  A string that briefly describes the status.
-const std::string Err2Str(const StreamMasterError &Error);
+std::string Err2Str(const StreamMasterError &Error);
 
 } // namespace Status
 } // namespace FileWriter

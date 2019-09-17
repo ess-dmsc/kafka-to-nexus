@@ -15,7 +15,7 @@ using StreamerStatus = FileWriter::Status::StreamerStatus;
 
 // Utilities
 
-const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
+std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
   switch (Error) {
   case StreamerStatus::OK:
     return "No error.";
@@ -34,7 +34,7 @@ const std::string FileWriter::Status::Err2Str(const StreamerStatus &Error) {
   }
 }
 
-const std::string FileWriter::Status::Err2Str(const StreamMasterError &Error) {
+std::string FileWriter::Status::Err2Str(const StreamMasterError &Error) {
   switch (Error) {
   case StreamMasterError::OK:
     return "No Error";

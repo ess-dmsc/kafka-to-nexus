@@ -16,8 +16,6 @@
 #include "StreamMaster.h"
 #include "Streamer.h"
 #include <atomic>
-#include <functional>
-#include <stdexcept>
 #include <string>
 #include <vector>
 

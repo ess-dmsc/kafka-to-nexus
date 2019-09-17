@@ -9,12 +9,12 @@
 
 #pragma once
 
-#include "URI.h"
-#include <fmt/format.h>
-#include <spdlog/sinks/basic_file_sink.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 #include <string>
+
+namespace uri {
+struct URI;
+}
 
 using SharedLogger = std::shared_ptr<spdlog::logger>;
 

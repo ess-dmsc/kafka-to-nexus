@@ -10,12 +10,9 @@
 #pragma once
 #include "ProcessMessageResult.h"
 #include "Source.h"
-#include "json.h"
-#include <chrono>
-#include <functional>
+#include "logger.h"
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace FileWriter {
 

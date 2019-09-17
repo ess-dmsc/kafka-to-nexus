@@ -10,12 +10,6 @@
 #pragma once
 
 #include "logger.h"
-#include <atomic>
-#include <cstddef>
-#include <cstdint>
-#include <librdkafka/rdkafkacpp.h>
-#include <memory>
-#include <vector>
 
 namespace FileWriter {
 class BufferTooSmallError : public std::runtime_error {

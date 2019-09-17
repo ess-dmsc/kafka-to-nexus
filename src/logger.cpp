@@ -8,6 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #include "logger.h"
+#include "URI.h"
+#include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <string>
 #ifdef HAVE_GRAYLOG_LOGGER
 #include <graylog_logger/GraylogInterface.hpp>

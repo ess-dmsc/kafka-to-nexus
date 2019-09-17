@@ -8,13 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "helper.h"
-#include <array>
 #include <fstream>
 #include <unistd.h>
 
 // getpid()
 #include <sys/types.h>
-#include <unistd.h>
 
 int getpid_wrapper() { return getpid(); }
 
