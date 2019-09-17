@@ -52,14 +52,6 @@ uint64_t createId(int ExtraValue) {
          (ExtraValue & 0xffff);
 }
 
-FileWriterTask::FileWriterTask(
-    std::string TaskID,
-    std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
-    : ServiceId(std::move(TaskID)),
-      StatusProducer(std::move(StatusProducerPtr)), Logger(getLogger()) {
-  Id = createId(++n_FileWriterTask_created);
-}
-
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
   Demuxers.clear();
@@ -142,8 +134,6 @@ void FileWriterTask::reopenFile() {
     throw;
   }
 }
-
-uint64_t FileWriterTask::id() const { return Id; }
 
 std::string FileWriterTask::jobID() const { return JobId; }
 
