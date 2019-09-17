@@ -10,6 +10,7 @@
 #include "Streamer.h"
 #include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/PollStatus.h"
+#include "Msg.h"
 #include "helper.h"
 #include <ciso646>
 

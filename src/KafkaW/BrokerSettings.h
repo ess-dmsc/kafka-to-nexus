@@ -9,7 +9,6 @@
 
 #pragma once
 
-#include "logger.h"
 #include <librdkafka/rdkafkacpp.h>
 #include <map>
 #include <string>

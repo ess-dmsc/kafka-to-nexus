@@ -8,11 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Source.h"
-#include "helper.h"
-#include "logger.h"
-#include <chrono>
-#include <fstream>
-#include <thread>
 
 namespace FileWriter {
 

@@ -10,12 +10,13 @@
 #pragma once
 
 #include "Producer.h"
-#include "ProducerMessage.h"
 #include "logger.h"
 #include <memory>
 #include <string>
 
 namespace KafkaW {
+
+struct ProducerMessage;
 
 class TopicCreationError : public std::runtime_error {
 public:

@@ -8,13 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include <KafkaW/ConsumerFactory.h>
-#include <memory>
 
 #include "CommandListener.h"
 #include "KafkaW/PollStatus.h"
 #include "Msg.h"
-#include "helper.h"
-#include "logger.h"
 
 namespace FileWriter {
 

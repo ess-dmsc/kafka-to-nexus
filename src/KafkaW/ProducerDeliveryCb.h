@@ -14,7 +14,6 @@
 #include "ProducerStats.h"
 #include "logger.h"
 #include <librdkafka/rdkafkacpp.h>
-#include <utility>
 
 namespace KafkaW {
 
