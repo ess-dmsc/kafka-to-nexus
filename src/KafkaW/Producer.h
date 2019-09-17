@@ -15,7 +15,6 @@
 #include "ProducerMessage.h"
 #include "ProducerStats.h"
 #include <atomic>
-#include <functional>
 
 namespace KafkaW {
 

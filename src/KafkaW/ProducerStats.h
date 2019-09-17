@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #pragma once
-#include <atomic>
+
 namespace KafkaW {
 
 // Provides statistics for all producers

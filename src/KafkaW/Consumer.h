@@ -14,7 +14,6 @@
 #include "KafkaEventCb.h"
 #include "PollStatus.h"
 #include <chrono>
-#include <functional>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 
