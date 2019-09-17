@@ -58,6 +58,15 @@ public:
     return TopicSources.insert(std::move(v)).first->second;
   }
 
+  /// Removes a source
+  /// for example when the last message before the stop time has been consumed
+  ///
+  /// \param SourceHash Uniquely identifies the source to be removed
+  /// \return True if successful, false if key source hash not found
+  bool removeSource(FlatbufferMessage::SrcHash SourceHash) {
+    return static_cast<bool>(TopicSources.erase(SourceHash));
+  }
+
   /// Counts the number of processed message.
   std::atomic<size_t> messages_processed{0};
 
