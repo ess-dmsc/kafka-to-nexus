@@ -93,7 +93,6 @@ public:
 
 protected:
   ConsumerPtr Consumer{nullptr};
-  KafkaW::BrokerSettings Settings;
 
   std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
