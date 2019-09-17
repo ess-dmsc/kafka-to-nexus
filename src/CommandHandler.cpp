@@ -13,14 +13,12 @@
 #include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
+#include "Msg.h"
 #include "StreamMaster.h"
-#include "Streamer.h"
-#include "helper.h"
 #include "json.h"
 #include <algorithm>
 #include <chrono>
 #include <future>
-#include <sstream>
 
 using std::vector;
 

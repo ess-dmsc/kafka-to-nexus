@@ -10,7 +10,6 @@
 #pragma once
 
 #include <nlohmann/json.hpp>
-#include <stdexcept>
 #include <string>
 
 template <typename T> class JsonMaybe {

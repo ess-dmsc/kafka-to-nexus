@@ -14,13 +14,8 @@
 #include "json.h"
 #include "logger.h"
 
-#include <atomic>
 #include <chrono>
-#include <functional>
-#include <map>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 // POD

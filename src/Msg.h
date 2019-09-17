@@ -11,8 +11,6 @@
 
 #include "logger.h"
 #include <chrono>
-#include <cstdint>
-#include <cstring>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 

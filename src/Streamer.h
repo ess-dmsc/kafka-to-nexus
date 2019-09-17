@@ -21,6 +21,7 @@
 #include "logger.h"
 #include <chrono>
 #include <future>
+#include <utility>
 
 namespace FileWriter {
 using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;

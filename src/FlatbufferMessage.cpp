@@ -9,7 +9,6 @@
 
 #include "FlatbufferMessage.h"
 #include "FlatbufferReader.h"
-#include <functional>
 
 namespace FileWriter {
 

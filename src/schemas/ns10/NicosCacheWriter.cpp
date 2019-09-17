@@ -9,6 +9,7 @@
 
 #include "NicosCacheWriter.h"
 #include "../../HDFFile.h"
+#include "FlatbufferMessage.h"
 #include "ns10_cache_entry_generated.h"
 
 namespace FileWriter {

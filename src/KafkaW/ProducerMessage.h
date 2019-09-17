@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #pragma once
-#include <stdint.h>
 
 namespace KafkaW {
 struct ProducerMessage {

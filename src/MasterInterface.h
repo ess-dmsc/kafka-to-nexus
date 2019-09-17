@@ -11,9 +11,10 @@
 
 #include "CommandListener.h"
 #include "KafkaW/ProducerTopic.h"
-#include "MainOpt.h"
 #include <memory>
 #include <string>
+
+struct MainOpt;
 
 namespace FileWriter {
 

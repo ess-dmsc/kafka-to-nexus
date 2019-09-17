@@ -9,15 +9,15 @@
 
 #pragma once
 
-#include "FlatbufferMessage.h"
 #include <fmt/format.h>
-#include <functional>
 #include <h5cpp/hdf5.hpp>
 #include <map>
 #include <memory>
 #include <string>
 
 namespace FileWriter {
+
+class FlatbufferMessage;
 
 namespace HDFWriterModule_detail {
 
