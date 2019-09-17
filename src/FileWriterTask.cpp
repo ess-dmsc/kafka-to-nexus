@@ -14,7 +14,6 @@
 #include "helper.h"
 #include "logger.h"
 #include <atomic>
-#include <chrono>
 #include <thread>
 
 namespace FileWriter {
@@ -33,8 +32,6 @@ json hdf_parse(std::string const &Structure, SharedLogger Logger) {
   }
 }
 } // namespace
-
-std::atomic<uint32_t> n_FileWriterTask_created{0};
 
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
 
