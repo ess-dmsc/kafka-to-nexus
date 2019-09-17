@@ -38,20 +38,6 @@ std::atomic<uint32_t> n_FileWriterTask_created{0};
 
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
 
-/// Helper function for creating an ID.
-///
-/// \param ExtraValue Used to help make a unique ID.
-/// \return A "unique" id.
-uint64_t createId(int ExtraValue) {
-  namespace chrono = std::chrono;
-  return (static_cast<uint64_t>(
-              chrono::duration_cast<chrono::nanoseconds>(
-                  chrono::system_clock::now().time_since_epoch())
-                  .count())
-          << 16) +
-         (ExtraValue & 0xffff);
-}
-
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
   Demuxers.clear();
