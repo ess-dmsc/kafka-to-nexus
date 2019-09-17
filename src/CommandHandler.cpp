@@ -13,8 +13,8 @@
 #include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
-#include "StreamMaster.h"
 #include "Msg.h"
+#include "StreamMaster.h"
 #include "json.h"
 #include <algorithm>
 #include <chrono>

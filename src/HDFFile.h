@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "logger.h"
 #include "json.h"
+#include "logger.h"
 #include <H5Ipublic.h>
 #include <chrono>
 #include <h5cpp/hdf5.hpp>
