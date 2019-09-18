@@ -10,6 +10,7 @@
 /// \file  CommandHandler.cpp
 
 #include "CommandHandler.h"
+#include "CommandParser.h"
 #include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
@@ -186,7 +187,17 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 
 void CommandHandler::handleNew(const json &JSONCommand,
                                std::chrono::milliseconds StartTime) {
-  using nlohmann::detail::out_of_range;
+  CommandParser Parser;
+  Parser.extractStartInformation(JSONCommand, StartTime);
+
+  // Check job is not already running
+  if (MasterPtr != nullptr) {
+    if (MasterPtr->getStreamMasterForJobID(Parser.JobID) != nullptr) {
+      Logger->error("Command ignored as job id {} is already in progress",
+                    Parser.JobID);
+      return;
+    }
+  }
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   if (MasterPtr != nullptr) {
@@ -194,109 +205,39 @@ void CommandHandler::handleNew(const json &JSONCommand,
   }
   auto Task =
       std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
-  if (auto x = find<std::string>("job_id", JSONCommand)) {
-    std::string JobID = x.inner();
-    if (JobID.empty()) {
-      throwMissingKey("job_id", JSONCommand.dump());
-    }
-
-    if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
-      if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        Logger->error("Command ignored as job id {} is already in progress",
-                      JobID);
-        return;
-      }
-    }
-
-    Task->setJobId(JobID);
-  } else {
-    throwMissingKey("job_id", JSONCommand.dump());
-  }
+  Task->setJobId(Parser.JobID);
+  Task->setFilename(Config.HDFOutputPrefix, Parser.Filename);
 
   if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
              Config.ServiceID, Task->jobID(), "Start job");
   }
 
-  uri::URI Broker("localhost:9092");
-  if (auto BrokerStringMaybe = find<std::string>("broker", JSONCommand)) {
-    auto BrokerString = BrokerStringMaybe.inner();
-    try {
-      Broker.parse(BrokerString);
-    } catch (std::runtime_error &e) {
-      Logger->warn("Unable to parse broker {} in command message, using "
-                   "default broker (localhost:9092)",
-                   BrokerString);
-    }
-    Logger->trace("Use main broker: {}", Broker.HostPort);
-  }
-
-  if (auto FileAttributesMaybe = find<json>("file_attributes", JSONCommand)) {
-    if (auto FileNameMaybe =
-            find<std::string>("file_name", FileAttributesMaybe.inner())) {
-      Task->setFilename(Config.HDFOutputPrefix, FileNameMaybe.inner());
-    } else {
-      throwMissingKey("file_attributes.file_name", JSONCommand.dump());
-    }
-  } else {
-    throwMissingKey("file_attributes", JSONCommand.dump());
-  }
-
-  bool UseSwmr = true;
-  if (auto UseHDFSWMRMaybe = find<bool>("use_hdf_swmr", JSONCommand)) {
-    UseSwmr = UseHDFSWMRMaybe.inner();
-  }
-
-  // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will
-  // contain the list of streams which have been found in the `nexus_structure`.
-  std::vector<StreamHDFInfo> StreamHDFInfoList;
-  if (auto NexusStructureMaybe = find<json>("nexus_structure", JSONCommand)) {
-    try {
-      StreamHDFInfoList =
-          initializeHDF(*Task, NexusStructureMaybe.inner().dump(), UseSwmr);
-    } catch (std::runtime_error const &E) {
-      std::throw_with_nested(std::runtime_error(
-          fmt::format("Failed to initializeHDF: {}", E.what())));
-    }
-  } else {
-    throwMissingKey("nexus_structure", JSONCommand.dump());
-  }
+  std::vector<StreamHDFInfo> StreamHDFInfoList =
+      initializeHDF(*Task, Parser.NexusStructure, Parser.UseSwmr);
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
-  if (auto ThrowOnUninitialisedStreamMaybe =
-          find<bool>("abort_on_uninitialised_stream", JSONCommand)) {
-    if (ThrowOnUninitialisedStreamMaybe.inner()) {
-      for (auto const &Item : StreamHDFInfoList) {
-        // cppcheck-suppress useStlAlgorithm
-        if (!Item.InitialisedOk) {
-          throw std::runtime_error(fmt::format("Could not initialise {}  {}",
-                                               Item.HDFParentName,
-                                               Item.ConfigStream));
-        }
+  if (Parser.AbortOnStreamFailure) {
+    for (auto const &Item : StreamHDFInfoList) {
+      // cppcheck-suppress useStlAlgorithm
+      if (!Item.InitialisedOk) {
+        throw std::runtime_error(fmt::format("Could not initialise {}  {}",
+                                             Item.HDFParentName,
+                                             Item.ConfigStream));
       }
     }
   }
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
-  Config.StreamerConfiguration.StartTimestamp =
-      std::chrono::milliseconds::zero();
-  Config.StreamerConfiguration.StopTimestamp =
-      std::chrono::milliseconds::zero();
 
-  // If start time not specified use command message timestamp
-  std::chrono::milliseconds Time = findTime(JSONCommand, "start_time");
-  if (Time.count() > 0) {
-    Config.StreamerConfiguration.StartTimestamp = Time;
-  } else {
-    Config.StreamerConfiguration.StartTimestamp = StartTime;
-  }
+  Config.StreamerConfiguration.StartTimestamp = Parser.StartTime;
+  Config.StreamerConfiguration.StopTimestamp = Parser.StopTime;
+
   Logger->info("Start time: {}ms",
                Config.StreamerConfiguration.StartTimestamp.count());
-  Time = findTime(JSONCommand, "stop_time");
-  if (Time.count() > 0) {
-    Config.StreamerConfiguration.StopTimestamp = Time;
+  if (Config.StreamerConfiguration.StopTimestamp.count() > 0) {
     Logger->info("Stop time: {}ms",
                  Config.StreamerConfiguration.StopTimestamp.count());
   }
@@ -304,8 +245,8 @@ void CommandHandler::handleNew(const json &JSONCommand,
   if (MasterPtr != nullptr) {
     // Register the task with master.
     Logger->info("Write file with job_id: {}", Task->jobID());
-    auto s = StreamMaster::createStreamMaster(Broker.HostPort, std::move(Task),
-                                              Config,
+    auto s = StreamMaster::createStreamMaster(Parser.BrokerInfo.HostPort,
+                                              std::move(Task), Config,
                                               MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
