@@ -15,6 +15,7 @@
 
 #include "Status.h"
 #include "StatusWriter.h"
+#include "Streamer.h"
 #include "logger.h"
 
 namespace FileWriter {
@@ -27,15 +28,14 @@ public:
   Report(std::shared_ptr<KafkaW::ProducerTopic> KafkaProducer, std::string JID,
          const std::chrono::milliseconds &MsBetweenReports =
              std::chrono::milliseconds{1000})
-      : Producer{KafkaProducer}, JobId(std::move(JID)),
-        ReportMs{MsBetweenReports} {}
+      : Producer(std::move(KafkaProducer)), JobId(std::move(JID)),
+        ReportMs(MsBetweenReports) {}
   Report(const Report &) = delete;
   Report(Report &&) = default;
   Report &operator=(Report &&) = default;
   ~Report() = default;
 
-  template <class S>
-  void report(std::map<std::string, S> &Streamers, std::atomic<bool> &Stop,
+  void report(std::map<std::string, Streamer> &Streamers, std::atomic<bool> &Stop,
               std::atomic<StreamMasterError> &StreamMasterStatus) {
 
     while (!Stop.load()) {
@@ -53,9 +53,8 @@ public:
   }
 
 private:
-  template <class S>
   StreamMasterError
-  produceReport(std::map<std::string, S> &Streamers,
+  produceReport(std::map<std::string, Streamer> &Streamers,
                 std::atomic<StreamMasterError> &StreamMasterStatus) {
     std::this_thread::sleep_for(ReportMs);
     if (!Producer) {
