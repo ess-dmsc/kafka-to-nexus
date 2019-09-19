@@ -138,6 +138,19 @@ TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
                std::runtime_error);
 }
 
+TEST(CommandParserSadStartTests, IfStopCommandPassedToStartMethodThenThrows) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "qw3rty",
+  "service_id": "filewriter1"
+})""");
+
+  FileWriter::CommandParser Parser;
+  ASSERT_THROW(Parser.extractStartInformation(nlohmann::json::parse(Command)),
+               std::runtime_error);
+}
+
 TEST(CommandParserStartTests, IfNoBrokerThenUsesDefault) {
   std::string Command(R"""(
 {
@@ -304,3 +317,20 @@ TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
 
   ASSERT_EQ("filewriter1", StopInfo.ServiceID);
 }
+
+TEST(CommandParserSadStopTests, IfStartCommandPassedToStopMethodThenThrows) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_new",
+  "job_id": "qw3rty",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "nexus_structure": { }
+})""");
+
+  FileWriter::CommandParser Parser;
+  ASSERT_THROW(Parser.extractStopInformation(nlohmann::json::parse(Command)),
+               std::runtime_error);
+}
+

@@ -14,8 +14,17 @@
 
 namespace FileWriter {
 
+std::string const CommandParser::StopCommand = "filewriter_stop";
+std::string const CommandParser::StartCommand = "filewriter_new";
+std::string const CommandParser::ExitCommand = "filewriter_exit";
+std::string const CommandParser::StopAllWritingCommand = "file_writer_tasks_clear_all";
+
 StartCommandInfo CommandParser::extractStartInformation(const nlohmann::json &JSONCommand,
                                             std::chrono::milliseconds DefaultStartTime) {
+  if (extractCommandName(JSONCommand) != StartCommand) {
+    throw std::runtime_error("Command was not a start command");
+  }
+
   StartCommandInfo Result;
 
   // Required items
@@ -36,6 +45,10 @@ StartCommandInfo CommandParser::extractStartInformation(const nlohmann::json &JS
 }
 
 StopCommandInfo CommandParser::extractStopInformation(const nlohmann::json &JSONCommand) {
+  if (extractCommandName(JSONCommand) != StopCommand) {
+    throw std::runtime_error("Command was not a stop command");
+  }
+
   StopCommandInfo Result;
 
   // Required items
@@ -87,6 +100,13 @@ std::chrono::milliseconds CommandParser::extractTime(std::string const & Key, nl
   else {
     return DefaultTime;
   }
+}
+
+std::string CommandParser::extractCommandName(const nlohmann::json &JSONCommand) {
+  auto Cmd = getRequiredValue<std::string>("cmd", JSONCommand);
+  std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(),
+                 ::tolower);
+  return Cmd;
 }
 
 }

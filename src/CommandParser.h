@@ -47,8 +47,16 @@ public:
 
   StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand);
 
+  static std::string extractCommandName(const nlohmann::json &JSONCommand);
+
+  static std::string const StopCommand;
+  static std::string const StartCommand;
+  static std::string const ExitCommand;
+  static std::string const StopAllWritingCommand;
+
 private:
   SharedLogger Logger = getLogger();
+
   uri::URI extractBroker(nlohmann::json const &JSONCommand);
   std::string extractJobID(nlohmann::json const &JSONCommand);
   static std::chrono::duration<long long int, std::milli> getCurrentTime();
@@ -57,7 +65,7 @@ private:
               std::chrono::milliseconds const &DefaultTime);
 
   template <typename T>
-  T getRequiredValue(std::string const &Key,
+  static T getRequiredValue(std::string const &Key,
                      nlohmann::json const &JSONCommand) {
     if (auto x = find<T>(Key, JSONCommand)) {
       return x.inner();
@@ -68,7 +76,7 @@ private:
   }
 
   template <typename T>
-  T getOptionalValue(std::string const &Key,
+  static T getOptionalValue(std::string const &Key,
                      nlohmann::json const &JSONCommand, T const &Default) {
     if (auto x = find<T>(Key, JSONCommand)) {
       return x.inner();

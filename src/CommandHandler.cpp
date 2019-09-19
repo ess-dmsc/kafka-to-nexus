@@ -337,7 +337,7 @@ void CommandHandler::handleExit() {
 void CommandHandler::handleStreamMasterStop(const json &Command) {
   Logger->trace("{}", Command.dump());
   CommandParser Parser;
-  
+
   auto StopInfo = Parser.extractStopInformation(Command);
 
   if (MasterPtr != nullptr) {
@@ -382,42 +382,22 @@ void CommandHandler::handle(std::string const &Command,
     }
   }
 
-  uint64_t TeamId = 0;
-  uint64_t CommandTeamId = 0;
-  if (auto x = find<uint64_t>("teamid", JSONCommand)) {
-    CommandTeamId = x.inner();
-  }
-  if (CommandTeamId != TeamId) {
-    Logger->info("INFO command is for teamid {:016x}, we are {:016x}",
-                 CommandTeamId, TeamId);
-    return;
-  }
-
   if (auto CmdMaybe = find<std::string>("cmd", JSONCommand)) {
-    std::string CommandMain = CmdMaybe.inner();
-    std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
-                   ::tolower);
+    std::string CommandMain = CommandParser::extractCommandName(JSONCommand);
+
     Logger->info("Handling a command of type: {}", CommandMain);
-    if (CommandMain == "filewriter_new") {
+    if (CommandMain == CommandParser::StartCommand) {
       handleNew(JSONCommand, StartTime);
       return;
-    } else if (CommandMain == "filewriter_exit") {
+    } else if (CommandMain == CommandParser::ExitCommand) {
       handleExit();
       return;
-    } else if (CommandMain == "filewriter_stop") {
+    } else if (CommandMain == CommandParser::StopCommand) {
       handleStreamMasterStop(JSONCommand);
       return;
-    } else if (CommandMain == "file_writer_tasks_clear_all") {
-      if (auto y = find<std::string>("recv_type", JSONCommand)) {
-        std::string ReceiverType = y.inner();
-        if (ReceiverType == "FileWriter") {
-          handleFileWriterTaskClearAll();
-          return;
-        }
-      } else {
-        throwMissingKey("recv_type", JSONCommand.dump());
-      }
-
+    } else if (CommandMain == CommandParser::StopAllWritingCommand) {
+      handleFileWriterTaskClearAll();
+      return;
     } else {
       throw std::runtime_error(
           fmt::format("Could not understand 'cmd' field of this command."));
