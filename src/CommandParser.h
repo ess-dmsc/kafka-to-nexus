@@ -41,12 +41,27 @@ struct StopCommandInfo {
 
 class CommandParser {
 public:
+  /// \brief Extract the information from the start command.
+  ///
+  /// \param JSONCommand The JSON Command.
+  /// \param DefaultStartTime The start time to use if not supplied in the JSON
+  /// \return The start information.
   StartCommandInfo extractStartInformation(
       const nlohmann::json &JSONCommand,
       std::chrono::milliseconds DefaultStartTime = getCurrentTime());
 
+  /// \brief Extract the information from the stop command.
+  ///
+  /// \param JSONCommand The JSON Command.
+  /// \return The stop information.
   StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand);
 
+  /// \brief Extract the command name from the command.
+  ///
+  /// Note: the command is converted to lower-case.
+  ///
+  /// \param JSONCommand The JSON Command.
+  /// \return The command name.
   static std::string extractCommandName(const nlohmann::json &JSONCommand);
 
   static std::string const StopCommand;
