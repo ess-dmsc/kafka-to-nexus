@@ -80,7 +80,7 @@ private:
 
   template <typename T>
   static T getRequiredValue(std::string const &Key,
-                     nlohmann::json const &JSONCommand) {
+                            nlohmann::json const &JSONCommand) {
     if (auto x = find<T>(Key, JSONCommand)) {
       return x.inner();
     }
@@ -91,7 +91,8 @@ private:
 
   template <typename T>
   static T getOptionalValue(std::string const &Key,
-                     nlohmann::json const &JSONCommand, T const &Default) {
+                            nlohmann::json const &JSONCommand,
+                            T const &Default) {
     if (auto x = find<T>(Key, JSONCommand)) {
       return x.inner();
     }

@@ -32,7 +32,8 @@ public:
 })"""};
 
   void SetUp() override {
-    StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Good_Command));
+    StartInfo =
+        Parser.extractStartInformation(nlohmann::json::parse(Good_Command));
   }
 };
 
@@ -53,7 +54,8 @@ TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
   ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
 }
 
-TEST_F(CommandParserHappyStartTests, IfNexusStructurePresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests,
+       IfNexusStructurePresentThenExtractedCorrectly) {
   ASSERT_EQ("{}", StartInfo.NexusStructure);
 }
 
@@ -163,7 +165,8 @@ TEST(CommandParserStartTests, IfNoBrokerThenUsesDefault) {
 })""");
 
   FileWriter::CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Command));
+  auto StartInfo =
+      Parser.extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_TRUE(StartInfo.BrokerInfo.Port > 0u);
 }
@@ -181,7 +184,8 @@ TEST(CommandParserStartTests, IfBrokerIsWrongFormThenUsesDefault) {
 })""");
 
   FileWriter::CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Command));
+  auto StartInfo =
+      Parser.extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_TRUE(StartInfo.BrokerInfo.Port > 0u);
 }
@@ -200,7 +204,8 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   auto FakeCurrentTime = std::chrono::milliseconds{987654321};
 
   FileWriter::CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Command), FakeCurrentTime);
+  auto StartInfo = Parser.extractStartInformation(
+      nlohmann::json::parse(Command), FakeCurrentTime);
 
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
 }
@@ -217,7 +222,8 @@ TEST(CommandParserStartTests, IfNoStopTimeThenSetToZero) {
 })""");
 
   FileWriter::CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Command));
+  auto StartInfo =
+      Parser.extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ(std::chrono::milliseconds::zero(), StartInfo.StopTime);
 }
@@ -234,7 +240,8 @@ TEST(CommandParserStartTests, IfNoServiceIdThenIsBlank) {
 })""");
 
   FileWriter::CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Command));
+  auto StartInfo =
+      Parser.extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ("", StartInfo.ServiceID);
 }
@@ -333,4 +340,3 @@ TEST(CommandParserSadStopTests, IfStartCommandPassedToStopMethodThenThrows) {
   ASSERT_THROW(Parser.extractStopInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
-

@@ -169,7 +169,7 @@ bool Consumer::metadataCall() {
     return false;
   default:
     Logger->error("Error while retrieving metadata. Error code is: {}",
-                 ErrorCode);
+                  ErrorCode);
     throw MetadataException(
         "Consumer::metadataCall() - error while retrieving metadata.");
   }

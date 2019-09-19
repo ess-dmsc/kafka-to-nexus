@@ -101,7 +101,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
           find<std::string>("writer_module", ConfigStreamInner)) {
     StreamSettings.Module = WriterModuleMaybe.inner();
   } else {
-      throwMissingKey("writer_module", ConfigStreamInner.dump());
+    throwMissingKey("writer_module", ConfigStreamInner.dump());
   }
 
   if (auto RunParallelMaybe = find<bool>("run_parallel", ConfigStream)) {

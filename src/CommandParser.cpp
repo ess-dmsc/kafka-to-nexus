@@ -17,10 +17,12 @@ namespace FileWriter {
 std::string const CommandParser::StopCommand = "filewriter_stop";
 std::string const CommandParser::StartCommand = "filewriter_new";
 std::string const CommandParser::ExitCommand = "filewriter_exit";
-std::string const CommandParser::StopAllWritingCommand = "file_writer_tasks_clear_all";
+std::string const CommandParser::StopAllWritingCommand =
+    "file_writer_tasks_clear_all";
 
-StartCommandInfo CommandParser::extractStartInformation(const nlohmann::json &JSONCommand,
-                                            std::chrono::milliseconds DefaultStartTime) {
+StartCommandInfo CommandParser::extractStartInformation(
+    const nlohmann::json &JSONCommand,
+    std::chrono::milliseconds DefaultStartTime) {
   if (extractCommandName(JSONCommand) != StartCommand) {
     throw std::runtime_error("Command was not a start command");
   }
@@ -29,22 +31,28 @@ StartCommandInfo CommandParser::extractStartInformation(const nlohmann::json &JS
 
   // Required items
   Result.JobID = extractJobID(JSONCommand);
-  Result.NexusStructure = getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
-  auto FileAttributes = getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
+  Result.NexusStructure =
+      getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
+  auto FileAttributes =
+      getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
   Result.Filename = getRequiredValue<std::string>("file_name", FileAttributes);
 
   // Optional items
   Result.BrokerInfo = extractBroker(JSONCommand);
   Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
-  Result.StopTime = extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
+  Result.StopTime =
+      extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
   Result.UseSwmr = getOptionalValue<bool>("use_hdf_swmr", JSONCommand, true);
-  Result.AbortOnStreamFailure = getOptionalValue<bool>("abort_on_uninitialised_stream", JSONCommand, false);
-  Result.ServiceID = getOptionalValue<std::string>("service_id", JSONCommand, "");
+  Result.AbortOnStreamFailure = getOptionalValue<bool>(
+      "abort_on_uninitialised_stream", JSONCommand, false);
+  Result.ServiceID =
+      getOptionalValue<std::string>("service_id", JSONCommand, "");
 
   return Result;
 }
 
-StopCommandInfo CommandParser::extractStopInformation(const nlohmann::json &JSONCommand) {
+StopCommandInfo
+CommandParser::extractStopInformation(const nlohmann::json &JSONCommand) {
   if (extractCommandName(JSONCommand) != StopCommand) {
     throw std::runtime_error("Command was not a stop command");
   }
@@ -55,8 +63,10 @@ StopCommandInfo CommandParser::extractStopInformation(const nlohmann::json &JSON
   Result.JobID = extractJobID(JSONCommand);
 
   // Optional items
-  Result.StopTime = extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  Result.ServiceID = getOptionalValue<std::string>("service_id", JSONCommand, "");
+  Result.StopTime =
+      extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
+  Result.ServiceID =
+      getOptionalValue<std::string>("service_id", JSONCommand, "");
 
   return Result;
 }
@@ -65,7 +75,8 @@ uri::URI CommandParser::extractBroker(nlohmann::json const &JSONCommand) {
   // Set to default
   uri::URI BrokerInfo{"localhost:9092"};
 
-  std::string Broker = getOptionalValue<std::string>("broker", JSONCommand, BrokerInfo.HostPort);
+  std::string Broker =
+      getOptionalValue<std::string>("broker", JSONCommand, BrokerInfo.HostPort);
   if (!Broker.empty()) {
     try {
       BrokerInfo.parse(Broker);
@@ -87,27 +98,28 @@ std::string CommandParser::extractJobID(nlohmann::json const &JSONCommand) {
   return JobID;
 }
 
-std::chrono::duration<long long int, std::milli> CommandParser::getCurrentTime() {
+std::chrono::duration<long long int, std::milli>
+CommandParser::getCurrentTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now().time_since_epoch());
 }
 
-std::chrono::milliseconds CommandParser::extractTime(std::string const & Key, nlohmann::json const &JSONCommand, std::chrono::milliseconds const &DefaultTime) {
+std::chrono::milliseconds
+CommandParser::extractTime(std::string const &Key,
+                           nlohmann::json const &JSONCommand,
+                           std::chrono::milliseconds const &DefaultTime) {
   uint64_t RawTime = getOptionalValue(Key, JSONCommand, 0);
   if (RawTime > 0) {
     return std::chrono::milliseconds{RawTime};
-  }
-  else {
+  } else {
     return DefaultTime;
   }
 }
 
-std::string CommandParser::extractCommandName(const nlohmann::json &JSONCommand) {
+std::string
+CommandParser::extractCommandName(const nlohmann::json &JSONCommand) {
   auto Cmd = getRequiredValue<std::string>("cmd", JSONCommand);
-  std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(),
-                 ::tolower);
+  std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(), ::tolower);
   return Cmd;
 }
-
 }
-
