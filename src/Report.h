@@ -35,7 +35,8 @@ public:
   Report &operator=(Report &&) = default;
   ~Report() = default;
 
-  void report(std::map<std::string, Streamer> &Streamers, std::atomic<bool> &Stop,
+  void report(std::map<std::string, Streamer> &Streamers,
+              std::atomic<bool> &Stop,
               std::atomic<StreamMasterError> &StreamMasterStatus) {
 
     while (!Stop.load()) {

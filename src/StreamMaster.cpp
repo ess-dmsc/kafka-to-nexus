@@ -19,7 +19,6 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
                       std::forward_as_tuple(Broker, Demux.topic(),
                                             Options.StreamerConfiguration,
                                             std::move(Consumer)));
-      Streams[Demux.topic()].setSources(Demux.sources());
     } catch (std::exception &E) {
       getLogger()->critical("{}", E.what());
       logEvent(Producer, StatusCode::Error, Options.ServiceID,
