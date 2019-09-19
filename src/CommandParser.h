@@ -53,7 +53,7 @@ public:
   ///
   /// \param JSONCommand The JSON Command.
   /// \return The stop information.
-  StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand);
+  static StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand);
 
   /// \brief Extract the command name from the command.
   ///
