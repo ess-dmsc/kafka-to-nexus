@@ -165,3 +165,36 @@ TEST_F(DemuxerTest, WrongSourceName) {
   EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
   EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(1));
 }
+
+TEST_F(DemuxerTest, RemovingExistingSourceIsSuccessful) {
+  std::string TestKey("temp");
+  std::string SourceName("SourceName");
+  {
+    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
+        TestKey);
+  }
+  DemuxTopic TestDemuxer("SomeTopicName");
+  auto Writer = ::std::make_unique<StubWriterModule>();
+  Source DummySource(SourceName, TestKey, std::move(Writer));
+  auto DummySourceHash = DummySource.getHash();
+
+  TestDemuxer.add_source(std::move(DummySource));
+  EXPECT_TRUE(TestDemuxer.removeSource(DummySourceHash));
+}
+
+TEST_F(DemuxerTest, RemovingNonExistingSourceIsUnSuccessful) {
+  std::string TestKey("temp");
+  std::string SourceName("SourceName");
+  {
+    FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
+        TestKey);
+  }
+  DemuxTopic TestDemuxer("SomeTopicName");
+  auto Writer = ::std::make_unique<StubWriterModule>();
+  Source DummySource(SourceName, TestKey, std::move(Writer));
+  auto DummySourceHash = DummySource.getHash();
+
+  EXPECT_FALSE(TestDemuxer.removeSource(DummySourceHash))
+      << "Source was never added so we expect false to be returned when we try "
+         "to remove it";
+}

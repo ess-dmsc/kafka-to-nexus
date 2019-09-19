@@ -315,12 +315,7 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
 
-  TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -334,6 +329,7 @@ TEST_F(StreamerProcessTimingTest,
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::ERR);
 }
 
@@ -347,11 +343,6 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -365,6 +356,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
@@ -394,11 +386,6 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -412,6 +399,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimestamp) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
 
@@ -432,11 +420,6 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   int CallCounter{0};
@@ -457,6 +440,7 @@ TEST_F(StreamerProcessTimingTest, MessageTimeout) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   REQUIRE_CALL(Demuxer, process_message(_))
       .RETURN(ProcessMessageResult::OK)
       .TIMES(1);
@@ -476,11 +460,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -493,6 +472,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageAfterStop) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
 }
@@ -511,11 +491,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -528,6 +503,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
@@ -564,11 +540,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
 
   BrokerSettings.OffsetsForTimesTimeoutMS = 10;
   BrokerSettings.MetadataTimeoutMS = 10;
@@ -584,27 +555,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
-}
-
-TEST_F(StreamerProcessTest, RemoveSource) {
-  StreamerStandIn TestStreamer(Options);
-  std::string SourceName = "TestName";
-  std::string ReaderKey = "temp";
-  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
-      .RETURN(0);
-  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  auto UsedHash = TestSource.getHash();
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-
-  TestStreamer.setSources(SourceList);
-  EXPECT_TRUE(TestStreamer.removeSource(UsedHash));
-  EXPECT_FALSE(TestStreamer.removeSource(UsedHash));
 }

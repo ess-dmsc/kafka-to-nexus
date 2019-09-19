@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Streamer.h"
-#include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/PollStatus.h"
 #include "Msg.h"
 #include "helper.h"
@@ -82,7 +81,6 @@ FileWriter::initTopics(std::string const &TopicName,
 }
 
 FileWriter::Streamer::StreamerStatus FileWriter::Streamer::close() {
-  Sources.clear();
   RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }
@@ -107,7 +105,6 @@ bool FileWriter::Streamer::stopTimeExceeded(
                  "passed since stop time.",
                  MessageProcessor.topic(),
                  (systemTime() - Options.StopTimestamp).count());
-    Sources.clear();
     return true;
   }
   return false;
@@ -156,18 +153,19 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     return ProcessMessageResult::ERR;
   }
 
-  if (Sources.find(Message->getSourceHash()) == Sources.end()) {
-    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
-                 "unknown, ignoring.",
-                 MessageProcessor.topic(), Message->getSourceName());
-    return ProcessMessageResult::OK;
-  }
-
   if (Message->getTimestamp() == 0) {
     Logger->error(
         R"(Message from topic "{}", source "{}" has no timestamp, ignoring)",
         MessageProcessor.topic(), Message->getSourceName());
     return ProcessMessageResult::ERR;
+  }
+
+  if (MessageProcessor.sources().find(Message->getSourceHash()) ==
+      MessageProcessor.sources().end()) {
+    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
+                 "unknown, ignoring.",
+                 MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::OK;
   }
 
   // Timestamp of message is before the "start" timestamp
@@ -181,7 +179,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   // Check if there is a stoptime configured and the message timestamp is
   // greater than it
   if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp, Logger)) {
-    if (removeSource(Message->getSourceHash())) {
+    if (MessageProcessor.removeSource(Message->getSourceHash())) {
       Logger->info("Remove source {}", Message->getSourceName());
       return ProcessMessageResult::STOP;
     }
@@ -201,20 +199,4 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
     MessageInfo.error();
   }
   return result;
-}
-
-void FileWriter::Streamer::setSources(
-    std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
-  for (auto &Src : SourceList) {
-    Logger->info("Add {} to source list", Src.second.sourcename());
-    Sources.emplace(Src.second.getHash(), Src.second.sourcename());
-  }
-}
-
-bool FileWriter::Streamer::removeSource(FlatbufferMessage::SrcHash Hash) {
-  if (Sources.find(Hash) == Sources.end()) {
-    return false;
-  }
-  Sources.erase(Hash);
-  return true;
 }

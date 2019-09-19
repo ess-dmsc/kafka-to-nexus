@@ -38,7 +38,9 @@ public:
   /// \param TaskID The service ID.
   /// \param StatusProducer_ The status producer.
   FileWriterTask(std::string TaskID,
-                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr);
+                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
+      : ServiceId(std::move(TaskID)),
+        StatusProducer(std::move(StatusProducerPtr)), Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -74,13 +76,6 @@ public:
   /// \return The demux topics.
   std::vector<DemuxTopic> &demuxers();
 
-  /// \brief  Get the unique numeric identifier of this job.
-  ///
-  /// Could maybe be replaced by `JobID`.
-  ///
-  /// \return The unique identifier.
-  uint64_t id() const;
-
   /// \brief  Get the job ID of the file being written.
   ///
   /// \return The job ID.
@@ -111,7 +106,6 @@ private:
   std::vector<DemuxTopic> Demuxers;
   void closeFile();
   void reopenFile();
-  uint64_t Id;
   std::string JobId;
   std::string ServiceId;
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
