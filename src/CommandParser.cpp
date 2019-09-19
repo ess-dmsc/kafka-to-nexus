@@ -17,27 +17,42 @@ namespace FileWriter {
 StartCommandInfo CommandParser::extractStartInformation(const nlohmann::json &JSONCommand,
                                             std::chrono::milliseconds DefaultStartTime) {
   StartCommandInfo Result;
-  
+
   // Required items
-  extractJobID(JSONCommand, Result.JobID);
+  Result.JobID = extractJobID(JSONCommand);
   Result.NexusStructure = getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
   auto FileAttributes = getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
   Result.Filename = getRequiredValue<std::string>("file_name", FileAttributes);
 
   // Optional items
-  extractBroker(JSONCommand, Result.BrokerInfo);
-  setOptionalValue<bool>("use_hdf_swmr", JSONCommand, Result.UseSwmr);
-  setOptionalValue<bool>("abort_on_uninitialised_stream", JSONCommand, Result.AbortOnStreamFailure);
+  Result.BrokerInfo = extractBroker(JSONCommand);
   Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
   Result.StopTime = extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  setOptionalValue<std::string>("service_id", JSONCommand, Result.ServiceID);
+  Result.UseSwmr = getOptionalValue<bool>("use_hdf_swmr", JSONCommand, true);
+  Result.AbortOnStreamFailure = getOptionalValue<bool>("abort_on_uninitialised_stream", JSONCommand, false);
+  Result.ServiceID = getOptionalValue<std::string>("service_id", JSONCommand, "");
 
   return Result;
 }
 
-void CommandParser::extractBroker(nlohmann::json const &JSONCommand, uri::URI &BrokerInfo) {
-  std::string Broker;
-  setOptionalValue("broker", JSONCommand, Broker);
+StopCommandInfo CommandParser::extractStopInformation(const nlohmann::json &JSONCommand) {
+  StopCommandInfo Result;
+
+  // Required items
+  Result.JobID = extractJobID(JSONCommand);
+
+  // Optional items
+  Result.StopTime = extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
+  Result.ServiceID = getOptionalValue<std::string>("service_id", JSONCommand, "");
+
+  return Result;
+}
+
+uri::URI CommandParser::extractBroker(nlohmann::json const &JSONCommand) {
+  // Set to default
+  uri::URI BrokerInfo{"localhost:9092"};
+
+  std::string Broker = getOptionalValue<std::string>("broker", JSONCommand, BrokerInfo.HostPort);
   if (!Broker.empty()) {
     try {
       BrokerInfo.parse(Broker);
@@ -47,13 +62,16 @@ void CommandParser::extractBroker(nlohmann::json const &JSONCommand, uri::URI &B
                    Broker);
     }
   }
+
+  return BrokerInfo;
 }
 
-void CommandParser::extractJobID(nlohmann::json const &JSONCommand, std::string & JobID) {
-  JobID = getRequiredValue<std::string>("job_id", JSONCommand);
+std::string CommandParser::extractJobID(nlohmann::json const &JSONCommand) {
+  auto JobID = getRequiredValue<std::string>("job_id", JSONCommand);
   if (JobID.empty()) {
     throw std::runtime_error("Missing key job_id from command JSON");
   }
+  return JobID;
 }
 
 std::chrono::duration<long long int, std::milli> CommandParser::getCurrentTime() {
@@ -62,8 +80,7 @@ std::chrono::duration<long long int, std::milli> CommandParser::getCurrentTime()
 }
 
 std::chrono::milliseconds CommandParser::extractTime(std::string const & Key, nlohmann::json const &JSONCommand, std::chrono::milliseconds const &DefaultTime) {
-  uint64_t RawTime = 0;
-  setOptionalValue(Key, JSONCommand, RawTime);
+  uint64_t RawTime = getOptionalValue(Key, JSONCommand, 0);
   if (RawTime > 0) {
     return std::chrono::milliseconds{RawTime};
   }

@@ -11,7 +11,7 @@
 #include <chrono>
 #include <gtest/gtest.h>
 
-class CommandParserHappyTests : public testing::Test {
+class CommandParserHappyStartTests : public testing::Test {
 public:
   FileWriter::CommandParser Parser;
   FileWriter::StartCommandInfo StartInfo;
@@ -36,44 +36,44 @@ public:
   }
 };
 
-TEST_F(CommandParserHappyTests, IfJobIDPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfJobIDPresentThenExtractedCorrectly) {
   ASSERT_EQ("qw3rty", StartInfo.JobID);
 }
 
-TEST_F(CommandParserHappyTests, IfFilenamePresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
   ASSERT_EQ("a-dummy-name-01.h5", StartInfo.Filename);
 }
 
-TEST_F(CommandParserHappyTests, IfSwmrPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfSwmrPresentThenExtractedCorrectly) {
   ASSERT_FALSE(StartInfo.UseSwmr);
 }
 
-TEST_F(CommandParserHappyTests, IfBrokerPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
   ASSERT_EQ("somehost:1234", StartInfo.BrokerInfo.HostPort);
   ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
 }
 
-TEST_F(CommandParserHappyTests, IfNexusStructurePresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfNexusStructurePresentThenExtractedCorrectly) {
   ASSERT_EQ("{}", StartInfo.NexusStructure);
 }
 
-TEST_F(CommandParserHappyTests, IfAbortPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfAbortPresentThenExtractedCorrectly) {
   ASSERT_TRUE(StartInfo.AbortOnStreamFailure);
 }
 
-TEST_F(CommandParserHappyTests, IfStartPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfStartPresentThenExtractedCorrectly) {
   ASSERT_EQ(std::chrono::milliseconds{123456789}, StartInfo.StartTime);
 }
 
-TEST_F(CommandParserHappyTests, IfStopPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
   ASSERT_EQ(std::chrono::milliseconds{123456790}, StartInfo.StopTime);
 }
 
-TEST_F(CommandParserHappyTests, IfServiceIdPresentThenExtractedCorrectly) {
+TEST_F(CommandParserHappyStartTests, IfServiceIdPresentThenExtractedCorrectly) {
   ASSERT_EQ("filewriter1", StartInfo.ServiceID);
 }
 
-TEST(CommandParserSadTests, ThrowsIfNoJobID) {
+TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -92,7 +92,7 @@ TEST(CommandParserSadTests, ThrowsIfNoJobID) {
                std::runtime_error);
 }
 
-TEST(CommandParserSadTests, ThrowsIfNoFileAttributes) {
+TEST(CommandParserSadStartTests, ThrowsIfNoFileAttributes) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -106,7 +106,7 @@ TEST(CommandParserSadTests, ThrowsIfNoFileAttributes) {
                std::runtime_error);
 }
 
-TEST(CommandParserSadTests, ThrowsIfNoFilename) {
+TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -122,7 +122,7 @@ TEST(CommandParserSadTests, ThrowsIfNoFilename) {
                std::runtime_error);
 }
 
-TEST(CommandParserSadTests, ThrowsIfNoNexusStructure) {
+TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -138,7 +138,7 @@ TEST(CommandParserSadTests, ThrowsIfNoNexusStructure) {
                std::runtime_error);
 }
 
-TEST(CommandParserTests, IfNoBrokerThenUsesDefault) {
+TEST(CommandParserStartTests, IfNoBrokerThenUsesDefault) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -155,7 +155,7 @@ TEST(CommandParserTests, IfNoBrokerThenUsesDefault) {
   ASSERT_TRUE(StartInfo.BrokerInfo.Port > 0u);
 }
 
-TEST(CommandParserTests, IfBrokerIsWrongFormThenUsesDefault) {
+TEST(CommandParserStartTests, IfBrokerIsWrongFormThenUsesDefault) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -173,7 +173,7 @@ TEST(CommandParserTests, IfBrokerIsWrongFormThenUsesDefault) {
   ASSERT_TRUE(StartInfo.BrokerInfo.Port > 0u);
 }
 
-TEST(CommandParserTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
+TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -192,7 +192,7 @@ TEST(CommandParserTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
 }
 
-TEST(CommandParserTests, IfNoStopTimeThenSetToZero) {
+TEST(CommandParserStartTests, IfNoStopTimeThenSetToZero) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -209,7 +209,7 @@ TEST(CommandParserTests, IfNoStopTimeThenSetToZero) {
   ASSERT_EQ(std::chrono::milliseconds::zero(), StartInfo.StopTime);
 }
 
-TEST(CommandParserTests, IfNoServiceIdThenIsBlank) {
+TEST(CommandParserStartTests, IfNoServiceIdThenIsBlank) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -224,4 +224,83 @@ TEST(CommandParserTests, IfNoServiceIdThenIsBlank) {
   auto StartInfo = Parser.extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ("", StartInfo.ServiceID);
+}
+
+TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop"
+})""");
+
+  FileWriter::CommandParser Parser;
+
+  ASSERT_THROW(Parser.extractStopInformation(nlohmann::json::parse(Command)),
+               std::runtime_error);
+}
+
+TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "qw3rty"
+})""");
+
+  FileWriter::CommandParser Parser;
+  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+
+  ASSERT_EQ("qw3rty", StopInfo.JobID);
+}
+
+TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "qw3rty",
+  "stop_time": 123456790
+})""");
+
+  FileWriter::CommandParser Parser;
+  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+
+  ASSERT_EQ(std::chrono::milliseconds{123456790}, StopInfo.StopTime);
+}
+
+TEST(CommandParserStopTests, IfNoStopTimeThenSetToZero) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "qw3rty"
+})""");
+
+  FileWriter::CommandParser Parser;
+  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+
+  ASSERT_EQ(std::chrono::milliseconds::zero(), StopInfo.StopTime);
+}
+
+TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "qw3rty"
+})""");
+
+  FileWriter::CommandParser Parser;
+  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+
+  ASSERT_EQ("", StopInfo.ServiceID);
+}
+
+TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
+  std::string Command(R"""(
+{
+  "cmd": "FileWriter_stop",
+  "job_id": "qw3rty",
+  "service_id": "filewriter1"
+})""");
+
+  FileWriter::CommandParser Parser;
+  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+
+  ASSERT_EQ("filewriter1", StopInfo.ServiceID);
 }

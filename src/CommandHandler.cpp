@@ -336,29 +336,25 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(const json &Command) {
   Logger->trace("{}", Command.dump());
-  std::string JobID;
-  if (auto x = find<std::string>("job_id", Command)) {
-    JobID = x.inner();
-  } else {
-    throwMissingKey("job_id", Command.dump());
-  }
+  CommandParser Parser;
+  
+  auto StopInfo = Parser.extractStopInformation(Command);
 
-  std::chrono::milliseconds StopTime = findTime(Command, "stop_time");
   if (MasterPtr != nullptr) {
-    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(StopInfo.JobID);
     if (StreamMaster != nullptr) {
-      if (StopTime.count() > 0) {
+      if (StopInfo.StopTime.count() > 0) {
         Logger->info(
             "Received request to gracefully stop file with id : {} at {} ms",
-            JobID, StopTime.count());
-        StreamMaster->setStopTime(StopTime);
+            StopInfo.JobID, StopInfo.StopTime.count());
+        StreamMaster->setStopTime(StopInfo.StopTime);
       } else {
         Logger->info("Received request to gracefully stop file with id : {}",
-                     JobID);
+                     StopInfo.JobID);
         StreamMaster->requestStop();
       }
     } else {
-      Logger->warn("Can not find StreamMaster for JobID: {}", JobID);
+      Logger->warn("Can not find StreamMaster for JobID: {}", StopInfo.JobID);
     }
   }
 }

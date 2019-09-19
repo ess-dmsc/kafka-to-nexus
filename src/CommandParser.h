@@ -26,11 +26,17 @@ struct StartCommandInfo {
   std::string Filename;
   std::string NexusStructure;
   std::string ServiceID;
-  bool UseSwmr = true;
-  bool AbortOnStreamFailure = false;
+  bool UseSwmr;
+  bool AbortOnStreamFailure;
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
   std::chrono::milliseconds StopTime{0};
+};
+
+struct StopCommandInfo {
+  std::string JobID;
+  std::chrono::milliseconds StopTime{0};
+  std::string ServiceID;
 };
 
 class CommandParser {
@@ -39,10 +45,12 @@ public:
       const nlohmann::json &JSONCommand,
       std::chrono::milliseconds DefaultStartTime = getCurrentTime());
 
+  StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand);
+
 private:
   SharedLogger Logger = getLogger();
-  void extractBroker(nlohmann::json const &JSONCommand, uri::URI &BrokerInfo);
-  void extractJobID(nlohmann::json const &JSONCommand, std::string & JobID);
+  uri::URI extractBroker(nlohmann::json const &JSONCommand);
+  std::string extractJobID(nlohmann::json const &JSONCommand);
   static std::chrono::duration<long long int, std::milli> getCurrentTime();
   std::chrono::milliseconds
   extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
@@ -60,11 +68,13 @@ private:
   }
 
   template <typename T>
-  void setOptionalValue(std::string const &Key,
-                        nlohmann::json const &JSONCommand, T &Value) {
+  T getOptionalValue(std::string const &Key,
+                     nlohmann::json const &JSONCommand, T const &Default) {
     if (auto x = find<T>(Key, JSONCommand)) {
-      Value = x.inner();
+      return x.inner();
     }
+
+    return Default;
   }
 };
 } // namespace FileWriter
