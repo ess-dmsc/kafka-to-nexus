@@ -73,8 +73,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
-  json ConfigStream;
-  ConfigStream = json::parse(StreamInfo.ConfigStream);
+  json ConfigStream = json::parse(StreamInfo.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -102,14 +101,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
           find<std::string>("writer_module", ConfigStreamInner)) {
     StreamSettings.Module = WriterModuleMaybe.inner();
   } else {
-    // Allow the old key name as well:
-    if (auto ModuleMaybe = find<std::string>("module", ConfigStreamInner)) {
-      StreamSettings.Module = ModuleMaybe.inner();
-      Logger->debug("The key \"stream.module\" is deprecated, please use "
-                    "\"stream.writer_module\" instead.");
-    } else {
       throwMissingKey("writer_module", ConfigStreamInner.dump());
-    }
   }
 
   if (auto RunParallelMaybe = find<bool>("run_parallel", ConfigStream)) {
