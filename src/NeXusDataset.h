@@ -232,7 +232,7 @@ public:
 
 private:
   hdf5::dataspace::Simple ArrayDataSpace;
-  hdf5::datatype::Datatype ArrayValueType{hdf5::datatype::create(DataType(0))};
+  hdf5::datatype::Datatype ArrayValueType{hdf5::datatype::create(DataType())};
   hdf5::Dimensions NewDimensions{0};
   hdf5::dataspace::Hyperslab ArraySelection{{0}, {1}};
   hdf5::property::DatasetTransferList Dtpl;
