@@ -17,7 +17,6 @@
 #include "json.h"
 #include "logger.h"
 #include <chrono>
-#include <iostream>
 
 namespace FileWriter {
 

@@ -133,7 +133,9 @@ set(kafka_to_nexus_INC
         CLIOptions.h
         NeXusDataset.h
         KafkaW/ConfigureKafka.cpp
-        KafkaW/ConfigureKafka.h CommandParser.h CommandParser.cpp)
+        KafkaW/ConfigureKafka.h
+        CommandParser.h
+        CommandParser.cpp)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
