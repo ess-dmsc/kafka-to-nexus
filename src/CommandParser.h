@@ -72,9 +72,9 @@ private:
   SharedLogger Logger = getLogger();
 
   uri::URI extractBroker(nlohmann::json const &JSONCommand);
-  std::string extractJobID(nlohmann::json const &JSONCommand);
+  static std::string extractJobID(nlohmann::json const &JSONCommand);
   static std::chrono::duration<long long int, std::milli> getCurrentTime();
-  std::chrono::milliseconds
+  static std::chrono::milliseconds
   extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
               std::chrono::milliseconds const &DefaultTime);
 
