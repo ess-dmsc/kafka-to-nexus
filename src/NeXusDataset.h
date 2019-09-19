@@ -180,7 +180,7 @@ public:
   /// \param ChunkSize The hunk size (as number of elements) of the dataset,
   /// ignored if the dataset is opened.
   ExtensibleDataset(hdf5::node::Group const &Parent, std::string Name,
-                    Mode CMode, size_t ChunkSize)
+                    Mode CMode, size_t ChunkSize = 1024)
       : hdf5::node::ChunkedDataset() {
     if (Mode::Create == CMode) {
       Dataset::operator=(hdf5::node::ChunkedDataset(
@@ -196,6 +196,20 @@ public:
       throw std::runtime_error(
           "ExtensibleDataset::ExtensibleDataset(): Unknown mode.");
     }
+  }
+
+  void appendArray(ArrayAdapter<const DataType> const &NewData) {
+    NewDimensions[0] = NrOfElements + NewData.size();
+    Dataset::resize(NewDimensions);
+    ArraySelection.offset({NrOfElements});
+    ArraySelection.block({static_cast<unsigned long long>(NewData.size())});
+
+    ArrayDataSpace.dimensions({NewData.size()}, {NewData.size()});
+    hdf5::dataspace::Dataspace FileSpace = dataspace();
+    FileSpace.selection(hdf5::dataspace::SelectionOperation::SET,ArraySelection);
+    write(NewData, ArrayValueType, ArrayDataSpace, FileSpace, Dtpl);
+
+    NrOfElements += NewData.size();
   }
 
   /// Append data to dataset that is contained in some sort of container.
@@ -217,7 +231,31 @@ public:
   }
 
 private:
+  hdf5::dataspace::Simple ArrayDataSpace;
+  hdf5::datatype::Datatype ArrayValueType{hdf5::datatype::create(DataType(0))};
+  hdf5::Dimensions NewDimensions{0};
+  hdf5::dataspace::Hyperslab ArraySelection{{0}, {1}};
+  hdf5::property::DatasetTransferList Dtpl;
   size_t NrOfElements{0};
+};
+
+class FixedSizeString : public hdf5::node::ChunkedDataset {
+public:
+  FixedSizeString() = default;
+  /// \brief Open a dataset.
+  ///
+  /// Can only be used to open a dataset.
+  /// \param Parent The group/node of the dataset in.
+  /// \note This parameter is ignored when opening an existing dataset.
+  /// \param CMode Should the dataset be opened or created.
+  FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode, size_t StringSize = 300, size_t ChunkSize = 1024);
+  size_t getMaxStringSize();
+  void appendString(std::string InString);
+private:
+  hdf5::datatype::String StringType;
+  hdf5::dataspace::Scalar ScalarSpace;
+  size_t MaxStringSize;
+  size_t NrOfStrings{0};
 };
 
 class MultiDimDatasetBase : public hdf5::node::ChunkedDataset {
@@ -367,7 +405,7 @@ public:
 class CueIndex : public ExtensibleDataset<std::uint32_t> {
 public:
   CueIndex() = default;
-  /// \brief Create the cue_index dataset of NXLog.
+  /// \brief Create the cue_index dataset of NXLog and NXevent_data.
   /// \throw std::runtime_error if dataset already exists.
   CueIndex(hdf5::node::Group const &Parent, Mode CMode,
            size_t ChunkSize = 1024);
@@ -376,10 +414,46 @@ public:
 class CueTimestampZero : public ExtensibleDataset<std::uint64_t> {
 public:
   CueTimestampZero() = default;
-  /// \brief Create the cue_timestamp_zero dataset of NXLog.
+  /// \brief Create the cue_timestamp_zero dataset of NXLog and NXevent_data.
   /// \throw std::runtime_error if dataset already exists.
   CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize = 1024);
+};
+
+class EventId : public ExtensibleDataset<std::uint32_t> {
+public:
+  EventId() = default;
+  /// \brief Create the event_id dataset of NXevent_data.
+  /// \throw std::runtime_error if dataset already exists.
+  EventId(hdf5::node::Group const &Parent, Mode CMode,
+                   size_t ChunkSize = 1024);
+};
+
+class EventTimeOffset : public ExtensibleDataset<std::uint32_t> {
+public:
+  EventTimeOffset() = default;
+  /// \brief Create the event_time_offset dataset of NXevent_data.
+  /// \throw std::runtime_error if dataset already exists.
+  EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
+          size_t ChunkSize = 1024);
+};
+
+class EventIndex : public ExtensibleDataset<std::uint32_t> {
+public:
+  EventIndex() = default;
+  /// \brief Create the event_index dataset of NXevent_data.
+  /// \throw std::runtime_error if dataset already exists.
+  EventIndex(hdf5::node::Group const &Parent, Mode CMode,
+                  size_t ChunkSize = 1024);
+};
+
+class EventTimeZero : public ExtensibleDataset<std::uint64_t> {
+public:
+  EventTimeZero() = default;
+  /// \brief Create the event_time_zero dataset of NXevent_data.
+  /// \throw std::runtime_error if dataset already exists.
+  EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
+          size_t ChunkSize = 1024);
 };
 
 } // namespace NeXusDataset
