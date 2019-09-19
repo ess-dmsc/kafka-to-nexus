@@ -35,14 +35,15 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
-        StreamMasterTests.cpp)
+        StreamMasterTests.cpp
+        CommandParserTests.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
         AddReader.h
         helpers/ev42_synth.h
         helpers/f142_synth.h
-        helpers/KafkaWMocks.h CommandParserTests.cpp)
+        helpers/KafkaWMocks.h)
 
 add_executable(UnitTests
         ${UnitTests_SRC}
