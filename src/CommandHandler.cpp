@@ -188,13 +188,13 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 void CommandHandler::handleNew(const json &JSONCommand,
                                std::chrono::milliseconds StartTime) {
   CommandParser Parser;
-  Parser.extractStartInformation(JSONCommand, StartTime);
+  auto StartInfo = Parser.extractStartInformation(JSONCommand, StartTime);
 
   // Check job is not already running
   if (MasterPtr != nullptr) {
-    if (MasterPtr->getStreamMasterForJobID(Parser.JobID) != nullptr) {
+    if (MasterPtr->getStreamMasterForJobID(StartInfo.JobID) != nullptr) {
       Logger->error("Command ignored as job id {} is already in progress",
-                    Parser.JobID);
+                    StartInfo.JobID);
       return;
     }
   }
@@ -205,8 +205,8 @@ void CommandHandler::handleNew(const json &JSONCommand,
   }
   auto Task =
       std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
-  Task->setJobId(Parser.JobID);
-  Task->setFilename(Config.HDFOutputPrefix, Parser.Filename);
+  Task->setJobId(StartInfo.JobID);
+  Task->setFilename(Config.HDFOutputPrefix, StartInfo.Filename);
 
   if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
@@ -214,12 +214,12 @@ void CommandHandler::handleNew(const json &JSONCommand,
   }
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
-      initializeHDF(*Task, Parser.NexusStructure, Parser.UseSwmr);
+      initializeHDF(*Task, StartInfo.NexusStructure, StartInfo.UseSwmr);
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
-  if (Parser.AbortOnStreamFailure) {
+  if (StartInfo.AbortOnStreamFailure) {
     for (auto const &Item : StreamHDFInfoList) {
       // cppcheck-suppress useStlAlgorithm
       if (!Item.InitialisedOk) {
@@ -232,8 +232,8 @@ void CommandHandler::handleNew(const json &JSONCommand,
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
-  Config.StreamerConfiguration.StartTimestamp = Parser.StartTime;
-  Config.StreamerConfiguration.StopTimestamp = Parser.StopTime;
+  Config.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
+  Config.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
 
   Logger->info("Start time: {}ms",
                Config.StreamerConfiguration.StartTimestamp.count());
@@ -245,7 +245,7 @@ void CommandHandler::handleNew(const json &JSONCommand,
   if (MasterPtr != nullptr) {
     // Register the task with master.
     Logger->info("Write file with job_id: {}", Task->jobID());
-    auto s = StreamMaster::createStreamMaster(Parser.BrokerInfo.HostPort,
+    auto s = StreamMaster::createStreamMaster(StartInfo.BrokerInfo.HostPort,
                                               std::move(Task), Config,
                                               MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
@@ -401,6 +401,7 @@ void CommandHandler::handle(std::string const &Command,
     std::string CommandMain = CmdMaybe.inner();
     std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
                    ::tolower);
+    Logger->info("Handling a command of type: {}", CommandMain);
     if (CommandMain == "filewriter_new") {
       handleNew(JSONCommand, StartTime);
       return;

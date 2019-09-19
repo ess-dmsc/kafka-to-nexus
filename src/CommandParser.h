@@ -17,11 +17,11 @@
 #include "json.h"
 #include "logger.h"
 #include <chrono>
+#include <iostream>
 
 namespace FileWriter {
 
-class CommandParser {
-public:
+struct StartCommandInfo {
   std::string JobID;
   std::string Filename;
   std::string NexusStructure;
@@ -31,15 +31,18 @@ public:
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
   std::chrono::milliseconds StopTime{0};
+};
 
-  void extractStartInformation(
+class CommandParser {
+public:
+  StartCommandInfo extractStartInformation(
       const nlohmann::json &JSONCommand,
       std::chrono::milliseconds DefaultStartTime = getCurrentTime());
 
 private:
   SharedLogger Logger = getLogger();
-  void extractBroker(nlohmann::json const &JSONCommand);
-  void extractJobID(nlohmann::json const &JSONCommand);
+  void extractBroker(nlohmann::json const &JSONCommand, uri::URI &BrokerInfo);
+  void extractJobID(nlohmann::json const &JSONCommand, std::string & JobID);
   static std::chrono::duration<long long int, std::milli> getCurrentTime();
   std::chrono::milliseconds
   extractTime(std::string const &Key, nlohmann::json const &JSONCommand,

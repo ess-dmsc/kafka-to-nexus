@@ -14,25 +14,28 @@
 
 namespace FileWriter {
 
-void CommandParser::extractStartInformation(const nlohmann::json &JSONCommand,
+StartCommandInfo CommandParser::extractStartInformation(const nlohmann::json &JSONCommand,
                                             std::chrono::milliseconds DefaultStartTime) {
+  StartCommandInfo Result;
+  
   // Required items
-  extractJobID(JSONCommand);
-  NexusStructure = getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
-
+  extractJobID(JSONCommand, Result.JobID);
+  Result.NexusStructure = getRequiredValue<nlohmann::json>("nexus_structure", JSONCommand).dump();
   auto FileAttributes = getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
-  Filename = getRequiredValue<std::string>("file_name", FileAttributes);
+  Result.Filename = getRequiredValue<std::string>("file_name", FileAttributes);
 
   // Optional items
-  extractBroker(JSONCommand);
-  setOptionalValue<bool>("use_hdf_swmr", JSONCommand, UseSwmr);
-  setOptionalValue<bool>("abort_on_uninitialised_stream", JSONCommand, AbortOnStreamFailure);
-  StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
-  StopTime = extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  setOptionalValue<std::string>("service_id", JSONCommand, ServiceID);
+  extractBroker(JSONCommand, Result.BrokerInfo);
+  setOptionalValue<bool>("use_hdf_swmr", JSONCommand, Result.UseSwmr);
+  setOptionalValue<bool>("abort_on_uninitialised_stream", JSONCommand, Result.AbortOnStreamFailure);
+  Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
+  Result.StopTime = extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
+  setOptionalValue<std::string>("service_id", JSONCommand, Result.ServiceID);
+
+  return Result;
 }
 
-void CommandParser::extractBroker(nlohmann::json const &JSONCommand) {
+void CommandParser::extractBroker(nlohmann::json const &JSONCommand, uri::URI &BrokerInfo) {
   std::string Broker;
   setOptionalValue("broker", JSONCommand, Broker);
   if (!Broker.empty()) {
@@ -46,7 +49,7 @@ void CommandParser::extractBroker(nlohmann::json const &JSONCommand) {
   }
 }
 
-void CommandParser::extractJobID(nlohmann::json const &JSONCommand) {
+void CommandParser::extractJobID(nlohmann::json const &JSONCommand, std::string & JobID) {
   JobID = getRequiredValue<std::string>("job_id", JSONCommand);
   if (JobID.empty()) {
     throw std::runtime_error("Missing key job_id from command JSON");

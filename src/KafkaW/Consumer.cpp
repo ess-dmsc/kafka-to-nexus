@@ -168,6 +168,8 @@ bool Consumer::metadataCall() {
   case RdKafka::ERR__TRANSPORT:
     return false;
   default:
+    Logger->error("Error while retrieving metadata. Error code is: {}",
+                 ErrorCode);
     throw MetadataException(
         "Consumer::metadataCall() - error while retrieving metadata.");
   }
