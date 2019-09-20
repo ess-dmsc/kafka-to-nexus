@@ -11,7 +11,7 @@
 #include "KafkaW/ProducerTopic.h"
 #include "URI.h"
 #include "Version.h"
-#include "Utilities.h"
+#include "helper.h"
 #include "json.h"
 #include <CLI/CLI.hpp>
 #include <cstdio>
@@ -79,7 +79,7 @@ std::string make_command_from_file(const std::string &filename) {
     return "";
   }
   Logger->trace("make_command_from_file {}", filename);
-  auto buf1 = FileWriter::readFileIntoVector(filename);
+  auto buf1 = readFileIntoVector(filename);
   return {buf1.data(), buf1.size()};
 }
 

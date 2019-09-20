@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Streamer.h"
-#include "Utilities.h"
 #include <Msg.h>
 #include <chrono>
 #include <flatbuffers/flatbuffers.h>
@@ -530,7 +529,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
       StreamerMessageSlightlyAfterStopTestDummyReader>
       RegisterIt(ReaderKey);
   namespace c = std::chrono;
-  auto Now = FileWriter::getCurrentTimeStampMS();
+  auto Now = c::duration_cast<c::milliseconds>(
+      c::system_clock::now().time_since_epoch());
   TestStreamer->Options.StopTimestamp = Now;
   TestStreamer->Options.AfterStopTime = c::milliseconds(20000);
   std::this_thread::sleep_for(c::milliseconds(5));

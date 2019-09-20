@@ -11,6 +11,7 @@
 #include "EventLogger.h"
 #include "HDFFile.h"
 #include "Source.h"
+#include "helper.h"
 #include "logger.h"
 #include <atomic>
 #include <thread>

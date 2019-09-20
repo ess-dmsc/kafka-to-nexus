@@ -9,7 +9,8 @@
 
 #include "StatusWriter.h"
 #include "Status.h"
-#include "Utilities.h"
+
+#include <chrono>
 
 namespace FileWriter {
 namespace Status {
@@ -44,7 +45,9 @@ void StatusWriter::setJobId(const std::string &JobId) {
 void StatusWriter::write(StreamMasterInfo &Information) {
   json["next_message_eta_ms"] = Information.getTimeToNextMessage().count();
   json["stream_master"] = StreamMasterToJson(Information);
-  json["timestamp"] = getCurrentTimeStampMS().count();
+  json["timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
+                          std::chrono::system_clock::now().time_since_epoch())
+                          .count();
 }
 
 void StatusWriter::write(MessageInfo &Information, const std::string &Topic) {

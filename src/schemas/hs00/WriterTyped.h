@@ -14,7 +14,7 @@
 #include "HistogramRecord.h"
 #include "Shape.h"
 #include "WriterUntyped.h"
-#include "Utilities.h"
+#include "helper.h"
 #include "json.h"
 #include "logger.h"
 #include <flatbuffers/flatbuffers.h>

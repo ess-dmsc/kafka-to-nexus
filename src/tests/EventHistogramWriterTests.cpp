@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Msg.h"
+#include "helper.h"
 #include "json.h"
 #include "schemas/hs00/Dimension.h"
 #include "schemas/hs00/Exceptions.h"
@@ -499,8 +500,8 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
                          FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
-  auto V1 = FileWriter::readFileIntoVector("/s/amor-hs00-stream");
-  auto V2 = FileWriter::readFileIntoVector("/s/amor-msg");
+  auto V1 = readFileIntoVector("/s/amor-hs00-stream");
+  auto V2 = readFileIntoVector("/s/amor-msg");
   if (V1.empty() && V2.empty()) {
     return;
   }

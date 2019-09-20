@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "WriterTyped.h"
-#include "../../Utilities.h"
+#include "../../helper.h"
 
 namespace FileWriter {
 namespace Schemas {

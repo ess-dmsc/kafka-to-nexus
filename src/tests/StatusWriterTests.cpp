@@ -12,7 +12,6 @@
 #include "Status.h"
 #include "StatusWriter.h"
 #include "json.h"
-#include "Utilities.h"
 
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;
@@ -38,6 +37,12 @@ TEST(StatusWriter, emptyWriterHasDefaultFields) {
   EXPECT_EQ(getValue<int>("job_id", json), 0);
 }
 
+int64_t getTimestampMs() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+             std::chrono::system_clock::now().time_since_epoch())
+      .count();
+};
+
 TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   FileWriter::Status::StatusWriter Writer;
   StreamMasterInfo sm;
@@ -51,7 +56,7 @@ TEST(StatusWriter, addEmptyStreamMasterInfoUsesDefaults) {
   EXPECT_LT(getValue<double>("runtime", json["stream_master"]), 10.0);
   EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
             "Not Started");
-  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), FileWriter::getCurrentTimeStampMS().count(), 1000);
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
 }
 
 TEST(StatusWriter, showTimeToNextMessage) {
@@ -86,7 +91,7 @@ TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 1.0);
   EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
             "Not Started");
-  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), FileWriter::getCurrentTimeStampMS().count(), 1000);
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
 }
 
 TEST(StatusWriter, addErrorUpdatesStreamMaster) {
@@ -107,7 +112,7 @@ TEST(StatusWriter, addErrorUpdatesStreamMaster) {
   EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 0.0);
   EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
             "Not Started");
-  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), FileWriter::getCurrentTimeStampMS().count(), 1000);
+  EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
 }
 
 TEST(StatusWriter, addStreamEmptyMessageInfo) {

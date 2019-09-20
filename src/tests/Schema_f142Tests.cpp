@@ -18,6 +18,7 @@
 #include "CommandHandler.h"
 #include "FlatbufferMessage.h"
 #include "MainOpt.h"
+#include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "json.h"
 #include "schemas/f142/FlatbufferReader.h"

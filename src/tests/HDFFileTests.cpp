@@ -10,7 +10,7 @@
 #include "../CommandHandler.h"
 #include "../HDFFile.h"
 #include "../MainOpt.h"
-#include "../Utilities.h"
+#include "../helper.h"
 #include "../json.h"
 #include "AddReader.h"
 #include "Msg.h"
@@ -99,7 +99,7 @@ class T_CommandHandler : public testing::Test {
 public:
   static void new_03() {
     auto StaticLogger = spdlog::get("testlogger");
-    auto CommandData = FileWriter::readFileIntoVector(std::string(TEST_DATA_PATH) +
+    auto CommandData = readFileIntoVector(std::string(TEST_DATA_PATH) +
                                           "/msg-cmd-new-03.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
@@ -117,7 +117,7 @@ public:
   static void new_04() {
     auto StaticLogger = spdlog::get("testlogger");
 
-    auto CommandData = FileWriter::readFileIntoVector(std::string(TEST_DATA_PATH) +
+    auto CommandData = readFileIntoVector(std::string(TEST_DATA_PATH) +
                                           "/msg-cmd-new-04.json");
     std::string CommandString(CommandData.data(),
                               CommandData.data() + CommandData.size());
