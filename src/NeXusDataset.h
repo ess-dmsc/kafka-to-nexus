@@ -25,7 +25,6 @@ template <typename T> class ArrayAdapter {
 public:
   ArrayAdapter(T *data, size_t size) : data_(data), size_(size) {}
   size_t size() const { return size_; }
-  T *data() { return data_; }
   const T *data() const { return data_; }
 
 private:
