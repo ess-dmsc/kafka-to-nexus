@@ -11,22 +11,12 @@
 #include "MainOpt.h"
 #include "helper.h"
 #include "json.h"
-#include <fstream>
 #include <gtest/gtest.h>
-#include <sstream>
 
 using nlohmann::json;
 using CLK = std::chrono::system_clock;
 
-class CommandHandler_Testing : public testing::Test {
-protected:
-  static size_t
-  FileWriterTasksSize(FileWriter::CommandHandler const &CommandHandler) {
-    return CommandHandler.getNumberOfFileWriterTasks();
-  }
-};
-
-TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
+TEST(CommandHandler_Testing, UseFoundStartStopTime) {
   unlink("a-dummy-name-01.h5");
   std::string CommandString(R"""(
 {
@@ -42,30 +32,32 @@ TEST_F(CommandHandler_Testing, UseFoundStartStopTime) {
 })""");
 
   MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
   CommandHandler.tryToHandle(CommandString);
   EXPECT_EQ(MainOpt.StreamerConfiguration.StartTimestamp.count(), 123456789);
   EXPECT_EQ(MainOpt.StreamerConfiguration.StopTimestamp.count(), 123456790);
   unlink("a-dummy-name-01.h5");
 }
 
-TEST_F(CommandHandler_Testing, MissingTimeHandleStopCommand) {
+TEST(CommandHandler_Testing, MissingTimeHandleStopCommand) {
   std::string CommandString(
       R"""({"cmd":"FileWriter_stop","job_id": "xyzwt"})""");
   nlohmann::json Command = nlohmann::json::parse(CommandString);
   EXPECT_EQ(FileWriter::findTime(Command, "stop_time").count(), -1);
 }
 
-TEST_F(CommandHandler_Testing, FindTimeHandleStopCommand) {
+TEST(CommandHandler_Testing, FindTimeHandleStopCommand) {
   std::string CommandString(
       R"""({"cmd":"FileWriter_stop","job_id": "xyzwt","stop_time":987654321})""");
   nlohmann::json Command = nlohmann::json::parse(CommandString);
   EXPECT_EQ(FileWriter::findTime(Command, "stop_time").count(), 987654321);
 }
 
-TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotFound) {
+TEST(CommandHandler_Testing, displayMessageWhenCmdNotFound) {
   MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
   std::string CommandString(
       R"""({"noCmd":"FileWriter_stop","job_id": "xyzwt","stop_time":987654321})""");
   testing::internal::CaptureStdout();
@@ -74,9 +66,10 @@ TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotFound) {
       "Can not extract 'cmd' from command."));
 }
 
-TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotUnderstood) {
+TEST(CommandHandler_Testing, displayMessageWhenCmdNotUnderstood) {
   MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
   std::string CommandString(
       R"""({"cmd":"FileWriter_invalid_command","job_id": "xyzwt","stop_time":987654321})""");
   testing::internal::CaptureStdout();
@@ -85,12 +78,13 @@ TEST_F(CommandHandler_Testing, displayMessageWhenCmdNotUnderstood) {
       "Could not understand 'cmd' field of this command."));
 }
 
-TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
+TEST(CommandHandler_Testing, jobNotStartedIfItWillOverwriteFile) {
   std::ofstream ofs;
   ofs.open("tmp-dummy-hdf");
   ofs.close();
   MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
   std::string CommandString(R"""(
 {
   "cmd": "FileWriter_new",
@@ -117,46 +111,11 @@ TEST_F(CommandHandler_Testing, CatchExceptionOnAttemptToOverwriteFile) {
 })""");
   CommandHandler.tryToHandle(CommandString);
   // Assert that this command was not accepted by the command handler:
-  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
-            static_cast<size_t>(0));
+  ASSERT_FALSE(StreamsController->jobIDInUse("vwa98nv983qn98snev"));
   unlink("tmp-dummy-hdf");
 }
 
-void createFileWithOptionalSWMR(bool UseSWMR) {
-  unlink("tmp_swmr_enable.h5");
-  MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  std::string CommandString = R"""(
-{
-  "cmd": "FileWriter_new",
-  "file_attributes": {
-    "file_name": "tmp_swmr_enable.h5"
-  },
-  "use_hdf_swmr": true,
-  "job_id": "tmp_swmr_enable",
-  "broker": "//localhost:202020",
-  "nexus_structure": { "children": [] }
-})""";
-  auto Command = nlohmann::json::parse(CommandString);
-  Command["use_hdf_swmr"] = UseSWMR;
-  CommandString = Command.dump();
-  CommandHandler.tryToHandle(CommandString);
-  ASSERT_EQ(CommandHandler.getNumberOfFileWriterTasks(),
-            static_cast<size_t>(1));
-  auto &Task = CommandHandler.getFileWriterTaskByJobID("tmp_swmr_enable");
-  ASSERT_EQ(Task->swmrEnabled(), UseSWMR);
-  unlink("tmp_swmr_enable.h5");
-}
-
-TEST_F(CommandHandler_Testing, OpenFileInNonSWMRMode) {
-  createFileWithOptionalSWMR(false);
-}
-
-TEST_F(CommandHandler_Testing, OpenFileInSWMRMode) {
-  createFileWithOptionalSWMR(true);
-}
-
-TEST_F(CommandHandler_Testing, FormatNestedException) {
+TEST(CommandHandler_Testing, FormatNestedException) {
   try {
     try {
       throw std::runtime_error("2nd_level");
@@ -167,90 +126,4 @@ TEST_F(CommandHandler_Testing, FormatNestedException) {
     ASSERT_EQ(std::string("1st_level\n  2nd_level"),
               FileWriter::format_nested_exception(E));
   }
-}
-
-TEST_F(CommandHandler_Testing, CreateHDFLinks) {
-  std::string Filename("Test.CommandHandler_Testing.CreateHDFLinks");
-  unlink(Filename.c_str());
-  MainOpt MainOpt;
-  FileWriter::CommandHandler CommandHandler(MainOpt, nullptr);
-  auto Command = json::parse(R""(
-{
-  "cmd": "FileWriter_new",
-  "file_attributes": {
-    "file_name": "tmp-dummy-hdf"
-  },
-  "job_id": "vwa98nv983qn98snev",
-  "broker": "//localhost:202020",
-  "nexus_structure": {
-    "children": [
-      {
-        "type": "link",
-        "name": "link_at_root",
-        "target": "a_group/a_subgroup/value"
-      },
-      {
-        "type": "group",
-        "name": "extra_group",
-        "children": [
-          {
-            "type": "link",
-            "name": "some_link_to_value",
-            "target": "../a_group/a_subgroup/value"
-          },
-          {
-            "type": "link",
-            "name": "some_link_to_a_group",
-            "target": "../a_group/a_subgroup"
-          },
-          {
-            "type": "link",
-            "name": "some_absolute_link_to_a_dataset",
-            "target": "/a_group/a_subgroup/value"
-          }
-        ]
-      },
-      {
-        "type": "group",
-        "name": "a_group",
-        "children": [
-          {
-            "type": "group",
-            "name": "a_subgroup",
-            "children": [
-              {
-                "type": "dataset",
-                "name": "value",
-                "values": 42.24
-              }
-            ]
-          }
-        ]
-      }
-    ]
-  }
-}
-  )"");
-  Command["file_attributes"]["file_name"] = Filename;
-  auto CommandString = Command.dump();
-  CommandHandler.tryToHandle(CommandString);
-  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
-            static_cast<size_t>(1));
-  auto CommandStop = json::parse(R""(
-{
-  "cmd": "file_writer_tasks_clear_all",
-  "recv_type": "FileWriter"
-}
-  )"");
-  CommandString = CommandStop.dump();
-  CommandHandler.tryToHandle(CommandString);
-  ASSERT_EQ(CommandHandler_Testing::FileWriterTasksSize(CommandHandler),
-            static_cast<size_t>(0));
-  auto File = hdf5::file::open(Filename);
-  File.root().get_group("a_group").get_group("a_subgroup").get_dataset("value");
-  File.root().get_group("extra_group").get_dataset("some_link_to_value");
-  File.root()
-      .get_group("extra_group")
-      .get_dataset("some_absolute_link_to_a_dataset");
-  unlink(Filename.c_str());
 }

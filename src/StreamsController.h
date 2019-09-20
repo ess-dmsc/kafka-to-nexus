@@ -30,6 +30,24 @@ public:
     }
   }
 
+  bool jobIDInUse(std::string const &JobID) {
+    for (auto &StreamMaster : StreamMasters) {
+      if (StreamMaster->getJobId() == JobID) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  void stopJob(std::string const & JobID) {
+    getStreamMasterForJobID(JobID)->requestStop();
+  }
+
+  void setStopTimeForJob(std::string const & JobID, std::chrono::milliseconds const & StopTime) {
+    getStreamMasterForJobID(JobID)->setStopTime(StopTime);
+  }
+
   std::unique_ptr<IStreamMaster> &
   getStreamMasterForJobID(std::string const &JobID) {
     for (auto &StreamMaster : StreamMasters) {

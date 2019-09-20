@@ -15,6 +15,7 @@
 #include "MasterInterface.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
+#include "StreamsController.h"
 #include <atomic>
 #include <string>
 #include <vector>
@@ -39,10 +40,6 @@ public:
   void handle_command_message(std::unique_ptr<Msg> CommandMessage) override;
   void handle_command(std::string const &Command) override;
   void statistics() override;
-  void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) override;
-  void stopStreamMasters() override;
-  std::unique_ptr<StreamMaster> &
-  getStreamMasterForJobID(std::string const &JobID) override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
@@ -52,15 +49,15 @@ public:
   std::string getFileWriterProcessId() const override;
 
   bool runLoopExited() override { return HasExitedRunLoop; };
-  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
 
 private:
   SharedLogger Logger;
   CommandListener Listener;
   std::atomic<bool> Running{true};
   std::atomic<bool> HasExitedRunLoop{false};
-  std::vector<std::unique_ptr<StreamMaster>> StreamMasters;
   std::string FileWriterProcessId;
   MainOpt &MainConfig;
+  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
+  std::shared_ptr<StreamsController> StreamsControl = std::make_shared<StreamsController>();
 };
 } // namespace FileWriter

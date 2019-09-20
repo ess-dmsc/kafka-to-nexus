@@ -11,9 +11,9 @@
 #include "CommandHandler.h"
 #include "Errors.h"
 #include "Msg.h"
-#include "helper.h"
 #include "json.h"
 #include "logger.h"
+#include "helper.h"
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -44,12 +44,12 @@ Master::Master(MainOpt &Config)
 }
 
 void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
-  CommandHandler command_handler(getMainOpt(), this);
+  CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
 
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
 
   // If Kafka message does not contain a timestamp then use current time.
-  std::chrono::milliseconds TimeStamp = getCurrentTimeStamp();
+  auto TimeStamp = getCurrentTimeStampMS();
 
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
@@ -63,23 +63,8 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
 }
 
 void Master::handle_command(std::string const &Command) {
-  CommandHandler command_handler(getMainOpt(), this);
+  CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
   command_handler.tryToHandle(Command, getCurrentTimeStamp());
-}
-
-std::unique_ptr<StreamMaster> &
-Master::getStreamMasterForJobID(std::string const &JobID) {
-  for (auto &StreamMaster : StreamMasters) {
-    if (StreamMaster->getJobId() == JobID) {
-      return StreamMaster;
-    }
-  }
-  static std::unique_ptr<StreamMaster> NotFound;
-  return NotFound;
-}
-
-void Master::addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) {
-  StreamMasters.push_back(std::move(StreamMaster));
 }
 
 struct OnScopeExit {
@@ -137,23 +122,11 @@ void Master::run() {
       statistics();
     }
 
-    // Remove any job which is in 'is_removable' state
-    StreamMasters.erase(std::remove_if(StreamMasters.begin(),
-                                       StreamMasters.end(),
-                                       [](std::unique_ptr<StreamMaster> &Iter) {
-                                         return Iter->isRemovable();
-                                       }),
-                        StreamMasters.end());
+    StreamsControl->deleteRemovable();
   }
   Logger->info("calling stop on all stream_masters");
-  stopStreamMasters();
+  StreamsControl->stopStreamMasters();
   Logger->info("called stop on all stream_masters");
-}
-
-void Master::stopStreamMasters() {
-  for (auto &x : StreamMasters) {
-    x->requestStop();
-  }
 }
 
 void Master::statistics() {
@@ -165,12 +138,13 @@ void Master::statistics() {
   Status["type"] = "filewriter_status_master";
   Status["service_id"] = getMainOpt().ServiceID;
   Status["files"] = json::object();
-  for (auto &StreamMaster : StreamMasters) {
-    auto FilewriterTaskID =
-        fmt::format("{}", StreamMaster->getFileWriterTask().jobID());
-    auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
-    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
-  }
+  // TODO
+//  for (auto &StreamMaster : StreamMasters) {
+//    auto FilewriterTaskID =
+//        fmt::format("{}", StreamMaster->getFileWriterTask().jobID());
+//    auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
+//    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
+//  }
   std::string Buffer = Status.dump();
   StatusProducer->produce(Buffer);
 }

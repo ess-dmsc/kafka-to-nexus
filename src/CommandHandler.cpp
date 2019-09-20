@@ -188,10 +188,6 @@ void CommandHandler::handleNew(const json &JSONCommand,
                                std::chrono::milliseconds StartTime) {
   using nlohmann::detail::out_of_range;
 
-  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
-  if (MasterPtr != nullptr) {
-    StatusProducer = MasterPtr->getStatusProducer();
-  }
   auto Task =
       std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
   if (auto x = find<std::string>("job_id", JSONCommand)) {
@@ -200,12 +196,10 @@ void CommandHandler::handleNew(const json &JSONCommand,
       throwMissingKey("job_id", JSONCommand.dump());
     }
 
-    if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
-      if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        Logger->error("Command ignored as job id {} is already in progress",
-                      JobID);
-        return;
-      }
+    if (StreamControl->jobIDInUse(JobID)) {
+      Logger->error("Command ignored as job id {} is already in progress",
+                    JobID);
+      return;
     }
 
     Task->setJobId(JobID);
@@ -213,10 +207,8 @@ void CommandHandler::handleNew(const json &JSONCommand,
     throwMissingKey("job_id", JSONCommand.dump());
   }
 
-  if (MasterPtr != nullptr) {
-    logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
-             Config.ServiceID, Task->jobID(), "Start job");
-  }
+  logEvent(StatusProducer, StatusCode::Start, Config.ServiceID, Task->jobID(),
+           "Start job");
 
   uri::URI Broker("localhost:9092");
   if (auto BrokerStringMaybe = find<std::string>("broker", JSONCommand)) {
@@ -301,24 +293,19 @@ void CommandHandler::handleNew(const json &JSONCommand,
                  Config.StreamerConfiguration.StopTimestamp.count());
   }
 
-  if (MasterPtr != nullptr) {
-    // Register the task with master.
-    Logger->info("Write file with job_id: {}", Task->jobID());
-    auto s = StreamMaster::createStreamMaster(Broker.HostPort, std::move(Task),
-                                              Config,
-                                              MasterPtr->getStatusProducer());
-    if (auto status_producer = MasterPtr->getStatusProducer()) {
-      s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
-    }
-    if (Config.topic_write_duration.count() != 0) {
-      s->setTopicWriteDuration(Config.topic_write_duration);
-    }
-    s->start();
 
-    MasterPtr->addStreamMaster(std::move(s));
-  } else {
-    FileWriterTasks.emplace_back(std::move(Task));
+  // Register the task with master.
+  Logger->info("Write file with job_id: {}", Task->jobID());
+  auto s = StreamMaster::createStreamMaster(Broker.HostPort, std::move(Task),
+                                            Config, StatusProducer);
+  s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
+  if (Config.topic_write_duration.count() != 0) {
+    s->setTopicWriteDuration(Config.topic_write_duration);
   }
+  s->start();
+
+  StreamControl->addStreamMaster(std::move(s));
+
 }
 
 void CommandHandler::addStreamSourceToWriterModule(
@@ -381,15 +368,13 @@ void CommandHandler::addStreamSourceToWriterModule(
 }
 
 void CommandHandler::handleFileWriterTaskClearAll() {
-  if (MasterPtr != nullptr) {
-    MasterPtr->stopStreamMasters();
-  }
-  FileWriterTasks.clear();
+    StreamControl->stopStreamMasters();
 }
 
 void CommandHandler::handleExit() {
-  if (MasterPtr != nullptr) {
-    MasterPtr->stop();
+  if (StreamControl != nullptr) {
+    // TODO
+    // StreamControl->stop();
   }
 }
 
@@ -403,22 +388,20 @@ void CommandHandler::handleStreamMasterStop(const json &Command) {
   }
 
   std::chrono::milliseconds StopTime = findTime(Command, "stop_time");
-  if (MasterPtr != nullptr) {
-    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
-    if (StreamMaster != nullptr) {
-      if (StopTime.count() > 0) {
-        Logger->info(
-            "Received request to gracefully stop file with id : {} at {} ms",
-            JobID, StopTime.count());
-        StreamMaster->setStopTime(StopTime);
-      } else {
-        Logger->info("Received request to gracefully stop file with id : {}",
-                     JobID);
-        StreamMaster->requestStop();
-      }
+
+  try {
+    if (StopTime.count() > 0) {
+      Logger->info(
+          "Received request to gracefully stop file with id : {} at {} ms",
+          JobID, StopTime.count());
+      StreamControl->setStopTimeForJob(JobID, StopTime);
     } else {
-      Logger->warn("Can not find StreamMaster for JobID: {}", JobID);
+      Logger->info("Received request to gracefully stop file with id : {}",
+                   JobID);
+      StreamControl->stopJob(JobID);
     }
+  } catch (std::runtime_error &Error) {
+    Logger->warn("{}", Error.what());
   }
 }
 
@@ -443,17 +426,6 @@ void CommandHandler::handle(std::string const &Command,
                     ServiceIDMaybe.inner());
       return;
     }
-  }
-
-  uint64_t TeamId = 0;
-  uint64_t CommandTeamId = 0;
-  if (auto x = find<uint64_t>("teamid", JSONCommand)) {
-    CommandTeamId = x.inner();
-  }
-  if (CommandTeamId != TeamId) {
-    Logger->info("INFO command is for teamid {:016x}, we are {:016x}",
-                 CommandTeamId, TeamId);
-    return;
   }
 
   if (auto CmdMaybe = find<std::string>("cmd", JSONCommand)) {
@@ -548,28 +520,10 @@ void CommandHandler::tryToHandle(std::string const &Command,
           format_nested_exception(E), TruncatedCommand);
       Logger->error("JobID: {}  StatusCode: {}  Message: {}", JobID,
                     convertStatusCodeToString(StatusCode::Fail), Message);
-      if (MasterPtr != nullptr) {
-        logEvent(MasterPtr->getStatusProducer(), StatusCode::Fail,
-                 Config.ServiceID, JobID, Message);
-      }
+      logEvent(StatusProducer, StatusCode::Fail, Config.ServiceID, JobID,
+               Message);
     }
   }
-}
-
-size_t CommandHandler::getNumberOfFileWriterTasks() const {
-  return FileWriterTasks.size();
-}
-
-std::unique_ptr<FileWriterTask> &
-CommandHandler::getFileWriterTaskByJobID(std::string const &JobID) {
-  auto Task = std::find_if(
-      FileWriterTasks.begin(), FileWriterTasks.end(),
-      [&JobID](auto const &FwTask) { return FwTask->jobID() == JobID; });
-
-  if (Task != FileWriterTasks.end()) {
-    return *Task;
-  }
-  throw std::out_of_range("Unable to find task by Job ID");
 }
 
 } // namespace FileWriter

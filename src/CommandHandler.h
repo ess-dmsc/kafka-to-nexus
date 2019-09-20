@@ -12,6 +12,7 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
+#include "StreamsController.h"
 #include "json.h"
 #include <memory>
 
@@ -40,8 +41,8 @@ public:
   /// \param Config Configuration of the file writer.
   /// \param MasterPtr Optional `Master` which can continue to watch over newly
   /// created jobs. Not used for example in some tests.
-  CommandHandler(MainOpt &Settings, MasterInterface *Master)
-      : Config(Settings), MasterPtr(Master){};
+  CommandHandler(MainOpt &Settings, std::shared_ptr<StreamsController> Master, std::shared_ptr<KafkaW::ProducerTopic> Producer)
+      : Config(Settings), StreamControl(std::move(Master)), StatusProducer(std::move(Producer)){};
 
   /// \brief Create a new file writer task.
   ///
@@ -68,18 +69,6 @@ public:
       std::string const &Command,
       std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{0});
 
-  /// \brief Get number of active writer tasks.
-  ///
-  /// \return  Number of active writer tasks.
-  size_t getNumberOfFileWriterTasks() const;
-
-  /// \brief Find a writer task given its `JobID`.
-  ///
-  /// \param JobID The job id to find.
-  /// \return The writer task.
-  std::unique_ptr<FileWriterTask> &
-  getFileWriterTaskByJobID(std::string const &JobID);
-
 private:
   void handle(std::string const &command,
               std::chrono::milliseconds MsgTimestamp);
@@ -92,8 +81,8 @@ private:
   initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
                 bool UseSwmr);
   MainOpt &Config;
-  MasterInterface *MasterPtr = nullptr;
-  std::vector<std::unique_ptr<FileWriterTask>> FileWriterTasks;
+  std::shared_ptr<StreamsController> StreamControl;
+  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   SharedLogger Logger = getLogger();
 };
 
