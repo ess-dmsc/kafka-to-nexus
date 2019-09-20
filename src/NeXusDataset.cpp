@@ -96,12 +96,10 @@ size_t FixedSizeString::getMaxStringSize() const { return MaxStringSize; }
 void FixedSizeString::appendString(std::string const &InString) {
   Dataset::extent(0, 1);
   hdf5::dataspace::Hyperslab Selection{{NrOfStrings}, {1}};
-  hdf5::dataspace::Scalar scalar_space;
+  hdf5::dataspace::Scalar ScalarSpace;
   hdf5::dataspace::Dataspace FileSpace = dataspace();
   FileSpace.selection(hdf5::dataspace::SelectionOperation::SET, Selection);
-  write(InString, StringType, scalar_space,
-        FileSpace); //, scalar_space, Selection,
-                    //hdf5::property::DatasetTransferList());
+  write(InString, StringType, ScalarSpace, FileSpace);
   NrOfStrings += 1;
 }
 
