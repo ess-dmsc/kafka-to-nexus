@@ -42,20 +42,21 @@ CueTimestampZero::CueTimestampZero(hdf5::node::Group const &Parent, Mode CMode,
   }
 }
 
-EventId::EventId(hdf5::node::Group const &Parent, Mode CMode,
-                   size_t ChunkSize)
+EventId::EventId(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     : ExtensibleDataset<std::uint32_t>(Parent, "event_id", CMode, ChunkSize) {}
 
 EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
-                 size_t ChunkSize)
-    : ExtensibleDataset<std::uint32_t>(Parent, "event_time_offset", CMode, ChunkSize) {}
+                                 size_t ChunkSize)
+    : ExtensibleDataset<std::uint32_t>(Parent, "event_time_offset", CMode,
+                                       ChunkSize) {}
 
 EventIndex::EventIndex(hdf5::node::Group const &Parent, Mode CMode,
-                                 size_t ChunkSize)
-    : ExtensibleDataset<std::uint32_t>(Parent, "EventIndex", CMode, ChunkSize) {}
+                       size_t ChunkSize)
+    : ExtensibleDataset<std::uint32_t>(Parent, "EventIndex", CMode, ChunkSize) {
+}
 
 EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
-                                   size_t ChunkSize)
+                             size_t ChunkSize)
     : ExtensibleDataset<std::uint64_t>(Parent, "event_time_zero", CMode,
                                        ChunkSize) {
   if (Mode::Create == CMode) {
@@ -66,8 +67,12 @@ EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
   }
 }
 
-FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode, size_t StringSize, size_t ChunkSize)
-    : hdf5::node::ChunkedDataset(), StringType(hdf5::datatype::String::fixed(StringSize)), MaxStringSize(StringSize) {
+FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent,
+                                 std::string Name, Mode CMode,
+                                 size_t StringSize, size_t ChunkSize)
+    : hdf5::node::ChunkedDataset(),
+      StringType(hdf5::datatype::String::fixed(StringSize)),
+      MaxStringSize(StringSize) {
   StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   StringType.padding(hdf5::datatype::StringPad::NULLTERM);
   if (Mode::Create == CMode) {
@@ -87,14 +92,16 @@ FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent, std::string Na
         "FixedSizeStringValue::FixedSizeStringValue(): Unknown mode.");
   }
 }
-size_t FixedSizeString::getMaxStringSize() {return MaxStringSize;}
+size_t FixedSizeString::getMaxStringSize() { return MaxStringSize; }
 void FixedSizeString::appendString(std::string InString) {
-    Dataset::extent(0, 1);
+  Dataset::extent(0, 1);
   hdf5::dataspace::Hyperslab Selection{{NrOfStrings}, {1}};
   hdf5::dataspace::Scalar scalar_space;
   hdf5::dataspace::Dataspace FileSpace = dataspace();
-  FileSpace.selection(hdf5::dataspace::SelectionOperation::SET,Selection);
-  write(InString, StringType, scalar_space, FileSpace);//, scalar_space, Selection, hdf5::property::DatasetTransferList());
+  FileSpace.selection(hdf5::dataspace::SelectionOperation::SET, Selection);
+  write(InString, StringType, scalar_space,
+        FileSpace); //, scalar_space, Selection,
+                    //hdf5::property::DatasetTransferList());
   NrOfStrings += 1;
 }
 

@@ -287,7 +287,8 @@ TEST_F(DatasetCreation, AppendArrayAdpaterDataTwice) {
   std::array<const std::uint16_t, 4> SomeData{{0, 1, 2, 3}};
   NeXusDataset::ExtensibleDataset<std::uint16_t> TestDataset(
       RootGroup, "SomeDataset", NeXusDataset::Mode::Create, ChunkSize);
-  ArrayAdapter<const std::uint16_t> TempAdapter{SomeData.data(), static_cast<size_t>(SomeData.size())};
+  ArrayAdapter<const std::uint16_t> TempAdapter{
+      SomeData.data(), static_cast<size_t>(SomeData.size())};
   TestDataset.appendArray(TempAdapter);
   TestDataset.appendArray(TempAdapter);
   auto DataspaceSize = TestDataset.dataspace().size();
@@ -296,7 +297,7 @@ TEST_F(DatasetCreation, AppendArrayAdpaterDataTwice) {
   TestDataset.read(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(Buffer.at(i), SomeData.at(i % SomeData.size()))
-                  << "Failed at i = " << i;
+        << "Failed at i = " << i;
   }
 }
 
@@ -499,7 +500,11 @@ TEST_F(DatasetCreation, StringDatasetDefaultCreation) {
   std::string DatasetName{"SomeName"};
   size_t StringLength{24};
   size_t ChunkSize{511};
-  {NeXusDataset::FixedSizeString Strings(RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength, ChunkSize);}
+  {
+    NeXusDataset::FixedSizeString Strings(RootGroup, DatasetName,
+                                          NeXusDataset::Mode::Create,
+                                          StringLength, ChunkSize);
+  }
 
   ASSERT_TRUE(RootGroup.has_dataset(DatasetName));
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset(DatasetName);
@@ -507,7 +512,8 @@ TEST_F(DatasetCreation, StringDatasetDefaultCreation) {
   auto ChunkDims = CreationProperties.chunk();
   ASSERT_EQ(ChunkDims.size(), 1u);
   EXPECT_EQ(ChunkDims.at(0), ChunkSize);
-  hdf5::datatype::String StringType(hdf5::datatype::String::fixed(StringLength));
+  hdf5::datatype::String StringType(
+      hdf5::datatype::String::fixed(StringLength));
   StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   StringType.padding(hdf5::datatype::StringPad::NULLTERM);
   EXPECT_EQ(StringType, TestDataset.datatype());
@@ -517,27 +523,35 @@ TEST_F(DatasetCreation, StringDatasetReopen) {
   std::string DatasetName{"SomeName"};
   size_t StringLength{24};
   size_t ChunkSize{511};
-  NeXusDataset::FixedSizeString(RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength, ChunkSize);
+  NeXusDataset::FixedSizeString(RootGroup, DatasetName,
+                                NeXusDataset::Mode::Create, StringLength,
+                                ChunkSize);
 
-  NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName, NeXusDataset::Mode::Open);
+  NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName,
+                                            NeXusDataset::Mode::Open);
   EXPECT_EQ(StringLength, TestDataset.getMaxStringSize());
   EXPECT_EQ(TestDataset.dataspace().size(), 0);
 }
 
 TEST_F(DatasetCreation, StringDatasetFailReopen) {
   std::string DatasetName{"SomeName"};
-  EXPECT_THROW(NeXusDataset::FixedSizeString(RootGroup, DatasetName, NeXusDataset::Mode::Open), std::runtime_error);
+  EXPECT_THROW(NeXusDataset::FixedSizeString(RootGroup, DatasetName,
+                                             NeXusDataset::Mode::Open),
+               std::runtime_error);
 }
 
 TEST_F(DatasetCreation, StringDatasetWriteString1) {
   std::string DatasetName{"SomeName"};
   size_t StringLength{10};
-  NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
+  NeXusDataset::FixedSizeString TestDataset(
+      RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
 
   std::string TestString{"Hello"};
   TestDataset.appendString(TestString);
   std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(), hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{0},{1}});
+  TestDataset.read(ReadBackString, TestDataset.datatype(),
+                   hdf5::dataspace::Scalar(),
+                   hdf5::dataspace::Hyperslab{{0}, {1}});
   std::string CompareString(ReadBackString.data());
   EXPECT_EQ(TestString, CompareString);
 }
@@ -545,7 +559,8 @@ TEST_F(DatasetCreation, StringDatasetWriteString1) {
 TEST_F(DatasetCreation, StringDatasetWriteString2) {
   std::string DatasetName{"SomeName"};
   size_t StringLength{10};
-  NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
+  NeXusDataset::FixedSizeString TestDataset(
+      RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
 
   std::string TestString1{"Hello"};
   TestDataset.appendString(TestString1);
@@ -553,7 +568,9 @@ TEST_F(DatasetCreation, StringDatasetWriteString2) {
   TestDataset.appendString(TestString2);
 
   std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(), hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{1},{1}});
+  TestDataset.read(ReadBackString, TestDataset.datatype(),
+                   hdf5::dataspace::Scalar(),
+                   hdf5::dataspace::Hyperslab{{1}, {1}});
   std::string CompareString(ReadBackString.data());
   EXPECT_EQ(TestString2, CompareString);
 }
@@ -561,13 +578,17 @@ TEST_F(DatasetCreation, StringDatasetWriteString2) {
 TEST_F(DatasetCreation, StringDatasetWriteTooLongString) {
   std::string DatasetName{"SomeName"};
   size_t StringLength{10};
-  NeXusDataset::FixedSizeString TestDataset(RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
+  NeXusDataset::FixedSizeString TestDataset(
+      RootGroup, DatasetName, NeXusDataset::Mode::Create, StringLength);
 
   std::string TestString{"The quick brown fox jumped over the lazy turtle"};
   TestDataset.appendString(TestString);
   std::string ReadBackString;
-  TestDataset.read(ReadBackString, TestDataset.datatype(), hdf5::dataspace::Scalar(), hdf5::dataspace::Hyperslab{{0},{1}});
+  TestDataset.read(ReadBackString, TestDataset.datatype(),
+                   hdf5::dataspace::Scalar(),
+                   hdf5::dataspace::Hyperslab{{0}, {1}});
   std::string CompareString(ReadBackString.data());
   EXPECT_NE(TestString, CompareString);
-  EXPECT_EQ(std::string(TestString.begin(), TestString.begin() + StringLength), CompareString);
+  EXPECT_EQ(std::string(TestString.begin(), TestString.begin() + StringLength),
+            CompareString);
 }
