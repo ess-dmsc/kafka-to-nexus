@@ -242,12 +242,13 @@ private:
 class FixedSizeString : public hdf5::node::ChunkedDataset {
 public:
   FixedSizeString() = default;
-  /// \brief Open a dataset.
+  /// \brief Create/open a fixed string length datatset.
   ///
-  /// Can only be used to open a dataset.
-  /// \param Parent The group/node of the dataset in.
-  /// \note This parameter is ignored when opening an existing dataset.
+  /// \param Parent The group/node where the dataset is to be located.
+  /// \param Name The name of the dataset.
   /// \param CMode Should the dataset be opened or created.
+  /// \param StringSize What is the maximum number of characters in the string.
+  /// \param ChunkSize The number of strings in one chunk.
   FixedSizeString(const hdf5::node::Group &Parent, std::string Name, Mode CMode, size_t StringSize = 300, size_t ChunkSize = 1024);
   size_t getMaxStringSize();
   void appendString(std::string InString);
