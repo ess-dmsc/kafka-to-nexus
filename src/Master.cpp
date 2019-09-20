@@ -11,7 +11,7 @@
 #include "CommandHandler.h"
 #include "Errors.h"
 #include "Msg.h"
-#include "helper.h"
+#include "Utilities.h"
 #include "json.h"
 #include "logger.h"
 #include <algorithm>
@@ -21,11 +21,6 @@
 #include <unistd.h>
 
 namespace FileWriter {
-
-std::chrono::duration<long long int, std::milli> getCurrentTimeStamp() {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch());
-}
 
 Master::Master(MainOpt &Config)
     : Logger(getLogger()), Listener(Config), MainConfig(Config) {
@@ -49,7 +44,7 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
 
   // If Kafka message does not contain a timestamp then use current time.
-  std::chrono::milliseconds TimeStamp = getCurrentTimeStamp();
+  std::chrono::milliseconds TimeStamp = getCurrentTimeStampMS();
 
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
@@ -64,7 +59,7 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
 
 void Master::handle_command(std::string const &Command) {
   CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(Command, getCurrentTimeStamp());
+  command_handler.tryToHandle(Command, getCurrentTimeStampMS());
 }
 
 std::unique_ptr<StreamMaster> &

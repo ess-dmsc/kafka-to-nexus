@@ -8,10 +8,8 @@
 // Screaming Udder!                              https://esss.se
 
 #include "MainOpt.h"
-#include "URI.h"
-#include "helper.h"
+#include "Utilities.h"
 #include "json.h"
-#include <iostream>
 
 using uri::URI;
 
@@ -21,11 +19,11 @@ using uri::URI;
 // following init function.
 void MainOpt::init() {
   ServiceID = fmt::format("kafka-to-nexus--host:{}--pid:{}",
-                          gethostname_wrapper(), getpid_wrapper());
+                          FileWriter::gethostname_wrapper(), FileWriter::getpid_wrapper());
 }
 
 int MainOpt::parseJsonCommands() {
-  auto jsontxt = readFileIntoVector(CommandsJsonFilename);
+  auto jsontxt = FileWriter::readFileIntoVector(CommandsJsonFilename);
   using nlohmann::json;
   try {
     CommandsJson = json::parse(jsontxt);

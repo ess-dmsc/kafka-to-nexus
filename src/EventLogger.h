@@ -10,7 +10,7 @@
 #pragma once
 
 #include "FileWriterTask.h"
-#include <chrono>
+#include "Utilities.h"
 
 namespace KafkaW {
 class ProducerTopic;
@@ -59,13 +59,10 @@ void logEvent(std::shared_ptr<ProducerType> Producer, StatusCode Code,
     return;
   }
 
-  std::chrono::system_clock::time_point Now = std::chrono::system_clock::now();
   nlohmann::json Event;
   Event["type"] = "filewriter_event";
   Event["code"] = convertStatusCodeToString(Code);
-  Event["timestamp"] = std::chrono::duration_cast<std::chrono::milliseconds>(
-                           Now.time_since_epoch())
-                           .count();
+  Event["timestamp"] = getCurrentTimeStampMS().count();
   Event["service_id"] = ServiceId;
   Event["job_id"] = JobId;
   Event["message"] = Message;

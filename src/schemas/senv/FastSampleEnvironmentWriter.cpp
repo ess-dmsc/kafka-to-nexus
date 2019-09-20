@@ -12,7 +12,7 @@
 /// \file
 /// \brief Implement classes required to implement the ADC file writing module.
 
-#include "../../helper.h"
+#include "../../Utilities.h"
 
 #include "FastSampleEnvironmentWriter.h"
 #include "HDFFile.h"

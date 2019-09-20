@@ -9,10 +9,8 @@
 
 #include "f142_rw.h"
 #include "../../HDFFile.h"
-#include "../../helper.h"
 #include "../../json.h"
 #include "FlatbufferReader.h"
-#include "WriterArray.h"
 #include "WriterScalar.h"
 #include <hdf5.h>
 #include <limits>

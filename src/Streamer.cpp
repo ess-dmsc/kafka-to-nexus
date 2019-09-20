@@ -10,15 +10,11 @@
 #include "Streamer.h"
 #include "KafkaW/PollStatus.h"
 #include "Msg.h"
-#include "helper.h"
+#include "Utilities.h"
 #include <ciso646>
 
 namespace FileWriter {
-std::chrono::milliseconds systemTime() {
-  std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      now.time_since_epoch());
-}
+
 bool stopTimeElapsed(std::uint64_t MessageTimestamp,
                      std::chrono::milliseconds Stoptime,
                      SharedLogger const &Logger) {
@@ -44,9 +40,7 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
   Options.BrokerSettings.KafkaConfiguration["group.id"] =
       fmt::format("filewriter--streamer--host:{}--pid:{}--topic:{}--time:{}",
                   gethostname_wrapper(), getpid_wrapper(), TopicName,
-                  std::chrono::duration_cast<std::chrono::milliseconds>(
-                      std::chrono::steady_clock::now().time_since_epoch())
-                      .count());
+                  getCurrentTimeStampMS().count());
   Options.BrokerSettings.Address = Broker;
 
   ConsumerInitialised =
@@ -99,12 +93,13 @@ bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
 
 bool FileWriter::Streamer::stopTimeExceeded(
     FileWriter::DemuxTopic &MessageProcessor) {
-  if ((Options.StopTimestamp.count() > 0) and
-      (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
+  auto SystemTime = getCurrentTimeStampMS();
+  if ((Options.StopTimestamp.count() > 0) &&
+      (SystemTime > Options.StopTimestamp + Options.AfterStopTime)) {
     Logger->info("Stop stream timeout for topic \"{}\" reached. {} ms "
                  "passed since stop time.",
                  MessageProcessor.topic(),
-                 (systemTime() - Options.StopTimestamp).count());
+                 (SystemTime - Options.StopTimestamp).count());
     return true;
   }
   return false;

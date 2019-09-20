@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "ConsumerFactory.h"
-#include "helper.h"
+#include "Utilities.h"
 
 namespace KafkaW {
 
@@ -18,10 +18,8 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
 
   // Create a unique group.id for this consumer
   SettingsCopy.KafkaConfiguration["group.id"] = fmt::format(
-      "filewriter--streamer--host:{}--pid:{}--time:{}", gethostname_wrapper(),
-      getpid_wrapper(), std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::steady_clock::now().time_since_epoch())
-                            .count());
+      "filewriter--streamer--host:{}--pid:{}--time:{}", FileWriter::gethostname_wrapper(),
+      FileWriter::getpid_wrapper(), FileWriter::getCurrentTimeStampMS().count());
   SettingsCopy.Address = Broker;
 
   auto Conf = std::unique_ptr<RdKafka::Conf>(
