@@ -77,17 +77,17 @@ protected:
 // Suppress false-positive from cppcheck
 // cppcheck-suppress syntaxError
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
-  EXPECT_THROW(Streamer("", "topic", Options,
-                        std::make_unique<ConsumerEmptyStandIn>(
-                            StreamerOptions().BrokerSettings)),
-               std::runtime_error);
+  EXPECT_THROW(
+      Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                         StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingATopic) {
-  EXPECT_THROW(Streamer("broker", "", Options,
-                        std::make_unique<ConsumerEmptyStandIn>(
-                            StreamerOptions().BrokerSettings)),
-               std::runtime_error);
+  EXPECT_THROW(
+      Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
+                                          StreamerOptions().BrokerSettings)),
+      std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, CanCreateAStreamerIfProvideABrokerAndATopic) {
