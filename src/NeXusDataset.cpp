@@ -101,7 +101,7 @@ void FixedSizeString::appendString(std::string InString) {
   FileSpace.selection(hdf5::dataspace::SelectionOperation::SET, Selection);
   write(InString, StringType, scalar_space,
         FileSpace); //, scalar_space, Selection,
-                    //hdf5::property::DatasetTransferList());
+                    // hdf5::property::DatasetTransferList());
   NrOfStrings += 1;
 }
 
