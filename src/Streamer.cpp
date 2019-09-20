@@ -8,7 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Streamer.h"
-#include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/PollStatus.h"
 #include "Msg.h"
 #include "helper.h"
@@ -72,7 +71,6 @@ initTopics(std::string const &TopicName, StreamerOptions const &Options,
 }
 
 FileWriter::Streamer::StreamerStatus FileWriter::Streamer::close() {
-  Sources.clear();
   RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }
@@ -223,14 +221,14 @@ ProcessMessageResult Streamer::processMessage(
       stopOffsetsReached(KafkaMessage->second.MetaData.Partition,
                          KafkaMessage->second.MetaData.Offset)) {
     Logger->debug("Reached stop offsets in topic {}", MessageProcessor.topic());
-    return ProcessMessageResult::STOP;
-  }
 
-  if (Sources.find(Message->getSourceHash()) == Sources.end()) {
-    Logger->trace("Message from topic \"{}\" has an unknown source name "
-                  "(\"{}\"), ignoring.",
-                  MessageProcessor.topic(), Message->getSourceName());
-    return ProcessMessageResult::OK;
+    if (MessageProcessor.removeSource(Message->getSourceHash())) {
+      Logger->debug("Remove source {}", Message->getSourceName());
+      return ProcessMessageResult::STOP;
+    }
+    Logger->warn("Can't remove source {}, not in the source list",
+                 Message->getSourceName());
+    return ProcessMessageResult::ERR;
   }
 
   if (Message->getTimestamp() == 0) {
@@ -240,19 +238,20 @@ ProcessMessageResult Streamer::processMessage(
     return ProcessMessageResult::ERR;
   }
 
+  if (MessageProcessor.sources().find(Message->getSourceHash()) ==
+      MessageProcessor.sources().end()) {
+    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
+                 "unknown, ignoring.",
+                 MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::OK;
+  }
+
   // If timestamp of message is before the start timestamp, ignore message and
   // carry on
   if (static_cast<std::int64_t>(Message->getTimestamp()) <
       std::chrono::duration_cast<std::chrono::nanoseconds>(
           Options.StartTimestamp)
           .count()) {
-    return ProcessMessageResult::OK;
-  }
-
-  // If there is a stop time set and the timestamp of message is after it,
-  // ignore message and carry on
-  if (messageTimestampIsAfterStopTimestamp(Message->getTimestamp(),
-                                           Options.StopTimestamp)) {
     return ProcessMessageResult::OK;
   }
 
@@ -289,11 +288,4 @@ ProcessMessageResult Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   return processMessage(MessageProcessor, KafkaMessage);
 }
 
-void Streamer::setSources(
-    std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
-  for (auto &Src : SourceList) {
-    Logger->info("Add {} to source list", Src.second.sourcename());
-    Sources.emplace(Src.second.getHash(), Src.second.sourcename());
-  }
-}
 } // namespace FileWriter

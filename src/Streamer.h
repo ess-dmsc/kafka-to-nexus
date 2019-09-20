@@ -72,11 +72,6 @@ public:
   /// \return The current status.
   StreamerStatus close();
 
-  /// \brief Sets the sources.
-  /// \param SourceList The new source list.
-  void setSources(
-      std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
-
   /// \brief Returns the status of the Streamer.
   ///
   /// See "Error.h".
@@ -95,12 +90,10 @@ public:
 
 protected:
   ConsumerPtr Consumer{nullptr};
-  KafkaW::BrokerSettings Settings;
 
   std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
-  std::map<FlatbufferMessage::SrcHash, std::string> Sources;
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>

@@ -77,17 +77,17 @@ protected:
 // Suppress false-positive from cppcheck
 // cppcheck-suppress syntaxError
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingABroker) {
-  EXPECT_THROW(
-      Streamer("", "topic", Options, std::make_unique<ConsumerEmptyStandIn>(
-                                         StreamerOptions().BrokerSettings)),
-      std::runtime_error);
+  EXPECT_THROW(Streamer("", "topic", Options,
+                        std::make_unique<ConsumerEmptyStandIn>(
+                            StreamerOptions().BrokerSettings)),
+               std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, CannotCreateStreamerWithoutProvidingATopic) {
-  EXPECT_THROW(
-      Streamer("broker", "", Options, std::make_unique<ConsumerEmptyStandIn>(
-                                          StreamerOptions().BrokerSettings)),
-      std::runtime_error);
+  EXPECT_THROW(Streamer("broker", "", Options,
+                        std::make_unique<ConsumerEmptyStandIn>(
+                            StreamerOptions().BrokerSettings)),
+               std::runtime_error);
 }
 
 TEST_F(StreamerInitTest, CanCreateAStreamerIfProvideABrokerAndATopic) {
@@ -232,16 +232,12 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
 
   auto MessageWithNoTimestamp = generateKafkaMsg(
       reinterpret_cast<const char *>(DataBuffer.c_str()), DataBuffer.size());
 
-  TestStreamer->setSources(SourceList);
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   EXPECT_EQ(TestStreamer->processMessage(Demuxer, MessageWithNoTimestamp),
             ProcessMessageResult::ERR);
 }
@@ -256,12 +252,8 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  ConsumerEmptyStandIn *EmptyPollerConsumer =
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
@@ -273,6 +265,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
 
@@ -287,9 +280,6 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
-  TestStreamer->setSources(SourceList);
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
   // The newly received message will have an offset of 10
@@ -322,8 +312,9 @@ TEST_F(StreamerProcessTimingTest,
       });
   DemuxTopic Demuxer("SomeTopicName");
 
-  // We've reached the stop offset, so STOP should be returned
-  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP);
+  Demuxer.add_source(std::move(TestSource));
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::STOP)
+      << "We've reached the stop offset, so STOP should be returned";
 }
 
 TEST_F(StreamerProcessTimingTest,
@@ -338,9 +329,6 @@ TEST_F(StreamerProcessTimingTest,
   std::string const HistoricalDataSourceName = "fw-test-helpers";
   FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
                                 std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
-  TestStreamer->setSources(SourceList);
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
   // The newly received message will have an offset of 10
@@ -376,6 +364,7 @@ TEST_F(StreamerProcessTimingTest,
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
 
   // A message will be received here
   // however no stop time has been set yet, so expect OK
@@ -399,9 +388,6 @@ TEST_F(StreamerProcessTimingTest,
   std::string const HistoricalDataSourceName = "fw-test-helpers";
   FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
                                 std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
-  TestStreamer->setSources(SourceList);
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
   // There is no data, so polling the consumer will give us an EndOfPartition
@@ -431,7 +417,9 @@ TEST_F(StreamerProcessTimingTest,
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
+
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
 
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
 
@@ -451,9 +439,6 @@ TEST_F(StreamerProcessTimingTest,
   std::string const HistoricalDataSourceName = "fw-test-helpers";
   FileWriter::Source TestSource(HistoricalDataSourceName, ReaderKey,
                                 std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
-  TestStreamer->setSources(SourceList);
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -483,6 +468,7 @@ TEST_F(StreamerProcessTimingTest,
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
 
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
 
@@ -504,10 +490,8 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  SourceList.emplace(TestSource.getHash(), std::move(TestSource));
-  TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  ConsumerEmptyStandIn *EmptyPollerConsumer =
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -530,6 +514,7 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
@@ -548,12 +533,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
-  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+  ConsumerEmptyStandIn *EmptyPollerConsumer =
+      new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -564,6 +545,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   REQUIRE_CALL(Demuxer, process_message(_)).TIMES(0);
   EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
 }
@@ -584,15 +566,11 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  std::unordered_map<FlatbufferMessage::SrcHash, Source> SourceList;
-  std::pair<FlatbufferMessage::SrcHash, Source> TempPair{TestSource.getHash(),
-                                                         std::move(TestSource)};
-  SourceList.insert(std::move(TempPair));
-  TestStreamer->setSources(SourceList);
 
   auto EmptyMessage = generateEmptyKafkaMsg(PollStatus::EndOfPartition);
   DemuxerStandIn Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
   EXPECT_EQ(TestStreamer->processMessage(Demuxer, EmptyMessage),
             ProcessMessageResult::OK);
 }
-} // namespace
+}
