@@ -22,8 +22,17 @@ namespace FileWriter {
 class Streamer;
 class FileWriterTask;
 
+class IStreamMaster {
+public:
+  virtual ~IStreamMaster() = default;
+  virtual std::string getJobId() const = 0;
+  virtual void requestStop() = 0;
+  virtual bool isRemovable() const = 0;
+  virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
+};
+
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
-class StreamMaster {
+class StreamMaster : public IStreamMaster {
   using StreamMasterError = Status::StreamMasterError;
 
 public:
@@ -42,7 +51,7 @@ public:
                std::string const &ServiceID,
                std::shared_ptr<KafkaW::ProducerTopic> Producer,
                std::map<std::string, Streamer> Streams);
-  ~StreamMaster();
+  ~StreamMaster() override;
   StreamMaster(const StreamMaster &) = delete;
   StreamMaster(StreamMaster &&) = delete;
   StreamMaster &operator=(const StreamMaster &) = delete;
@@ -58,7 +67,7 @@ public:
   ///
   /// \param StopTime Timestamp of the
   /// last message to be written in nanoseconds.
-  void setStopTime(const std::chrono::milliseconds &StopTime);
+  void setStopTime(const std::chrono::milliseconds &StopTime) override;
 
   /// \brief Sets the write duration for the streams.
   ///
@@ -69,7 +78,7 @@ public:
   void start();
 
   /// Request to stop writing the streams.
-  void requestStop();
+  void requestStop() override;
 
   /// \brief Start the reporting thread.
   ///
@@ -86,13 +95,13 @@ public:
   /// \brief Get whether this stream master can be removed.
   ///
   /// \return True, if can be removed.
-  bool isRemovable() const;
+  bool isRemovable() const override;
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
   ///
   /// \return The job id.
-  std::string getJobId() const { return WriterTask->jobID(); }
+  std::string getJobId() const override { return WriterTask->jobID(); }
 
 private:
   /// \brief Process the messages in the specified stream.

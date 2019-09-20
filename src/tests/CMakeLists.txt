@@ -35,7 +35,8 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
-        StreamMasterTests.cpp)
+        StreamMasterTests.cpp
+        StreamsControllerTests.cpp)
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
