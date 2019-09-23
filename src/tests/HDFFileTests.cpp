@@ -45,6 +45,7 @@ void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
 json basic_command(string filename) {
   auto Command = json::parse(R""({
     "cmd": "FileWriter_new",
+    "broker": "localhost:9092",
     "nexus_structure": {
       "children": []
     },
@@ -304,6 +305,7 @@ public:
     unlink(hdf_output_filename.c_str());
     auto CommandJSON = json::parse(R""({
       "cmd": "FileWriter_new",
+      "broker": "localhost:9092",
       "nexus_structure": {
         "attributes": {
           "some_top_level_int": 42,
@@ -1095,6 +1097,7 @@ TEST(HDFFile, createStaticDatasetsStrings) {
   auto CommandJSON = json::parse(R""(
 {
   "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
   "file_attributes": {
   },
   "nexus_structure": {
