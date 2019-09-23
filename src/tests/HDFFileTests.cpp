@@ -937,6 +937,7 @@ public:
       CommandJSON["file_attributes"]["file_name"] = "tmp-f142.h5";
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "unit_test_job_data_f142";
+      CommandJSON["broker"] = "localhost:9092";
     }
 
     auto CommandString = CommandJSON.dump();
