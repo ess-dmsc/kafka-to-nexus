@@ -18,7 +18,6 @@
 
 namespace NeXusDataset {
 
-
 class RawValue : public ExtensibleDataset<std::uint16_t> {
 public:
   RawValue() = default;

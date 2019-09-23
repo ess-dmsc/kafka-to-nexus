@@ -226,8 +226,7 @@ TEST_F(NeXusDatasetCreation, CueTimestampZeroThrowOnExists) {
 TEST_F(NeXusDatasetCreation, EventIdDefaultCreation) {
   size_t ChunkSize = 256;
   {
-    NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create,
-                               ChunkSize);
+    NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create, ChunkSize);
   }
   ASSERT_TRUE(RootGroup.has_dataset("event_id"));
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset("event_id");
@@ -241,8 +240,7 @@ TEST_F(NeXusDatasetCreation, EventIdDefaultCreation) {
 TEST_F(NeXusDatasetCreation, EventIdReOpen) {
   {
     size_t ChunkSize{256};
-    NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create,
-                               ChunkSize);
+    NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create, ChunkSize);
   }
   EXPECT_NO_THROW(
       NeXusDataset::EventId ReOpened(RootGroup, NeXusDataset::Mode::Open));
@@ -251,11 +249,10 @@ TEST_F(NeXusDatasetCreation, EventIdReOpen) {
 TEST_F(NeXusDatasetCreation, EventIdThrowOnExists) {
   size_t ChunkSize = 256;
   {
-    NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create,
-                               ChunkSize);
+    NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create, ChunkSize);
   }
   EXPECT_THROW(NeXusDataset::EventId Cue(RootGroup, NeXusDataset::Mode::Create,
-                   ChunkSize),
+                                         ChunkSize),
                std::runtime_error);
 }
 
@@ -265,7 +262,7 @@ TEST_F(NeXusDatasetCreation, EventIndexDefaultCreation) {
   size_t ChunkSize = 256;
   {
     NeXusDataset::EventIndex Cue(RootGroup, NeXusDataset::Mode::Create,
-                              ChunkSize);
+                                 ChunkSize);
   }
   ASSERT_TRUE(RootGroup.has_dataset("event_index"));
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset("event_index");
@@ -280,7 +277,7 @@ TEST_F(NeXusDatasetCreation, EventIndexReOpen) {
   {
     size_t ChunkSize{256};
     NeXusDataset::EventIndex Cue(RootGroup, NeXusDataset::Mode::Create,
-                              ChunkSize);
+                                 ChunkSize);
   }
   EXPECT_NO_THROW(
       NeXusDataset::EventIndex ReOpened(RootGroup, NeXusDataset::Mode::Open));
@@ -290,10 +287,10 @@ TEST_F(NeXusDatasetCreation, EventIndexThrowOnExists) {
   size_t ChunkSize = 256;
   {
     NeXusDataset::EventIndex Cue(RootGroup, NeXusDataset::Mode::Create,
-                              ChunkSize);
+                                 ChunkSize);
   }
-  EXPECT_THROW(NeXusDataset::EventIndex Cue(RootGroup, NeXusDataset::Mode::Create,
-                   ChunkSize),
+  EXPECT_THROW(NeXusDataset::EventIndex Cue(
+                   RootGroup, NeXusDataset::Mode::Create, ChunkSize),
                std::runtime_error);
 }
 
@@ -303,7 +300,7 @@ TEST_F(NeXusDatasetCreation, EventTimeOffsetDefaultCreation) {
   size_t ChunkSize = 256;
   {
     NeXusDataset::EventTimeOffset Cue(RootGroup, NeXusDataset::Mode::Create,
-                                 ChunkSize);
+                                      ChunkSize);
   }
   ASSERT_TRUE(RootGroup.has_dataset("event_time_offset"));
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset("event_time_offset");
@@ -318,20 +315,20 @@ TEST_F(NeXusDatasetCreation, EventTimeOffsetReOpen) {
   {
     size_t ChunkSize{256};
     NeXusDataset::EventTimeOffset Cue(RootGroup, NeXusDataset::Mode::Create,
-                                 ChunkSize);
+                                      ChunkSize);
   }
-  EXPECT_NO_THROW(
-      NeXusDataset::EventTimeOffset ReOpened(RootGroup, NeXusDataset::Mode::Open));
+  EXPECT_NO_THROW(NeXusDataset::EventTimeOffset ReOpened(
+      RootGroup, NeXusDataset::Mode::Open));
 }
 
 TEST_F(NeXusDatasetCreation, EventTimeOffsetThrowOnExists) {
   size_t ChunkSize = 256;
   {
     NeXusDataset::EventTimeOffset Cue(RootGroup, NeXusDataset::Mode::Create,
-                                 ChunkSize);
+                                      ChunkSize);
   }
-  EXPECT_THROW(NeXusDataset::EventTimeOffset Cue(RootGroup, NeXusDataset::Mode::Create,
-                   ChunkSize),
+  EXPECT_THROW(NeXusDataset::EventTimeOffset Cue(
+                   RootGroup, NeXusDataset::Mode::Create, ChunkSize),
                std::runtime_error);
 }
 
@@ -341,7 +338,7 @@ TEST_F(NeXusDatasetCreation, EventTimeZeroDefaultCreation) {
   size_t ChunkSize = 256;
   {
     NeXusDataset::EventTimeZero Cue(RootGroup, NeXusDataset::Mode::Create,
-                                       ChunkSize);
+                                    ChunkSize);
   }
   ASSERT_TRUE(RootGroup.has_dataset("event_time_zero"));
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset("event_time_zero");
@@ -374,17 +371,17 @@ TEST_F(NeXusDatasetCreation, EventTimeZeroReOpen) {
   {
     size_t ChunkSize{256};
     NeXusDataset::EventTimeZero Cue(RootGroup, NeXusDataset::Mode::Create,
-                                       ChunkSize);
+                                    ChunkSize);
   }
   EXPECT_NO_THROW(NeXusDataset::EventTimeZero ReOpened(
-                      RootGroup, NeXusDataset::Mode::Open));
+      RootGroup, NeXusDataset::Mode::Open));
 }
 
 TEST_F(NeXusDatasetCreation, EventTimeZeroThrowOnExists) {
   size_t ChunkSize = 256;
   {
     NeXusDataset::EventTimeZero Cue(RootGroup, NeXusDataset::Mode::Create,
-                                       ChunkSize);
+                                    ChunkSize);
   }
   EXPECT_THROW(NeXusDataset::EventTimeZero Cue(
                    RootGroup, NeXusDataset::Mode::Create, ChunkSize),

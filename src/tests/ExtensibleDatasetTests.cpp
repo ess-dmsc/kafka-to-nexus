@@ -33,7 +33,7 @@ TEST_F(DatasetCreation, NDArrOpen) {
         RootGroup, NeXusDataset::Mode::Create, {10, 10}, {ChunkSize});
   }
   EXPECT_NO_THROW(NeXusDataset::MultiDimDataset<int> ReOpened(
-                      RootGroup, NeXusDataset::Mode::Open));
+      RootGroup, NeXusDataset::Mode::Open));
 }
 
 TEST_F(DatasetCreation, NDArrOpenAlt2) {
@@ -277,7 +277,7 @@ TEST_F(DatasetCreation, AppendDataTwice) {
   TestDataset.read(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(Buffer.at(i), SomeData.at(i % SomeData.size()))
-                  << "Failed at i = " << i;
+        << "Failed at i = " << i;
   }
 }
 
@@ -296,7 +296,7 @@ TEST_F(DatasetCreation, AppendArrayAdpaterDataTwice) {
   TestDataset.read(Buffer);
   for (int i = 0; i < DataspaceSize; i++) {
     ASSERT_EQ(Buffer.at(i), SomeData.at(i % SomeData.size()))
-                  << "Failed at i = " << i;
+        << "Failed at i = " << i;
   }
 }
 
