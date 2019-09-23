@@ -52,7 +52,7 @@ EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
 
 EventIndex::EventIndex(hdf5::node::Group const &Parent, Mode CMode,
                        size_t ChunkSize)
-    : ExtensibleDataset<std::uint32_t>(Parent, "EventIndex", CMode, ChunkSize) {
+    : ExtensibleDataset<std::uint32_t>(Parent, "event_index", CMode, ChunkSize) {
 }
 
 EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
@@ -65,42 +65,6 @@ EventTimeZero::EventTimeZero(hdf5::node::Group const &Parent, Mode CMode,
     auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
     UnitAttr.write("ns");
   }
-}
-
-FixedSizeString::FixedSizeString(const hdf5::node::Group &Parent,
-                                 std::string Name, Mode CMode,
-                                 size_t StringSize, size_t ChunkSize)
-    : hdf5::node::ChunkedDataset(),
-      StringType(hdf5::datatype::String::fixed(StringSize)),
-      MaxStringSize(StringSize) {
-  StringType.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  StringType.padding(hdf5::datatype::StringPad::NULLTERM);
-  if (Mode::Create == CMode) {
-    Dataset::operator=(hdf5::node::ChunkedDataset(
-        Parent, Name, StringType,
-        hdf5::dataspace::Simple({0}, {hdf5::dataspace::Simple::UNLIMITED}),
-        {
-            static_cast<unsigned long long>(ChunkSize),
-        }));
-  } else if (Mode::Open == CMode) {
-    Dataset::operator=(Parent.get_dataset(Name));
-    hdf5::datatype::String Type(datatype());
-    MaxStringSize = Type.size();
-    NrOfStrings = static_cast<size_t>(dataspace().size());
-  } else {
-    throw std::runtime_error(
-        "FixedSizeStringValue::FixedSizeStringValue(): Unknown mode.");
-  }
-}
-size_t FixedSizeString::getMaxStringSize() const { return MaxStringSize; }
-void FixedSizeString::appendString(std::string const &InString) {
-  Dataset::extent(0, 1);
-  hdf5::dataspace::Hyperslab Selection{{NrOfStrings}, {1}};
-  hdf5::dataspace::Scalar ScalarSpace;
-  hdf5::dataspace::Dataspace FileSpace = dataspace();
-  FileSpace.selection(hdf5::dataspace::SelectionOperation::SET, Selection);
-  write(InString, StringType, ScalarSpace, FileSpace);
-  NrOfStrings += 1;
 }
 
 } // namespace NeXusDataset

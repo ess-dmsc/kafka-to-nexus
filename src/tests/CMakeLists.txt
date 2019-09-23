@@ -36,7 +36,9 @@ set(UnitTests_SRC
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
         StreamMasterTests.cpp
-        CommandParserTests.cpp)
+        CommandParserTests.cpp
+        ExtensibleDatasetTests.cpp
+    )
 
 set(UnitTests_INC
         helpers/HDFFileTestHelper.h
