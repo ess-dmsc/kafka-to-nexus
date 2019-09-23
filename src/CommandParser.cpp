@@ -15,9 +15,9 @@
 namespace FileWriter {
 namespace CommandParser {
 
-StartCommandInfo extractStartInformation(
-    const nlohmann::json &JSONCommand,
-    std::chrono::milliseconds DefaultStartTime) {
+StartCommandInfo
+extractStartInformation(const nlohmann::json &JSONCommand,
+                        std::chrono::milliseconds DefaultStartTime) {
   if (extractCommandName(JSONCommand) != StartCommand) {
     throw std::runtime_error("Command was not a start command");
   }
@@ -46,8 +46,7 @@ StartCommandInfo extractStartInformation(
   return Result;
 }
 
-StopCommandInfo
-extractStopInformation(const nlohmann::json &JSONCommand) {
+StopCommandInfo extractStopInformation(const nlohmann::json &JSONCommand) {
   if (extractCommandName(JSONCommand) != StopCommand) {
     throw std::runtime_error("Command was not a stop command");
   }
@@ -67,15 +66,13 @@ extractStopInformation(const nlohmann::json &JSONCommand) {
 }
 
 uri::URI extractBroker(nlohmann::json const &JSONCommand) {
-  std::string Broker =
-      getRequiredValue<std::string>("broker", JSONCommand);
+  std::string Broker = getRequiredValue<std::string>("broker", JSONCommand);
   try {
     uri::URI BrokerInfo{Broker};
     return BrokerInfo;
   } catch (std::runtime_error &e) {
     throw std::runtime_error(
-        fmt::format("Unable to parse broker {} in command message",
-                    Broker));
+        fmt::format("Unable to parse broker {} in command message", Broker));
   }
 }
 
@@ -88,9 +85,8 @@ std::string extractJobID(nlohmann::json const &JSONCommand) {
 }
 
 std::chrono::milliseconds
-extractTime(std::string const &Key,
-                           nlohmann::json const &JSONCommand,
-                           std::chrono::milliseconds const &DefaultTime) {
+extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
+            std::chrono::milliseconds const &DefaultTime) {
   uint64_t RawTime = getOptionalValue(Key, JSONCommand, 0);
   if (RawTime > 0) {
     return std::chrono::milliseconds{RawTime};
@@ -99,8 +95,7 @@ extractTime(std::string const &Key,
   }
 }
 
-std::string
-extractCommandName(const nlohmann::json &JSONCommand) {
+std::string extractCommandName(const nlohmann::json &JSONCommand) {
   auto Cmd = getRequiredValue<std::string>("cmd", JSONCommand);
   std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(), ::tolower);
   return Cmd;
