@@ -327,9 +327,8 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(const json &Command) {
   Logger->trace("{}", Command.dump());
-  CommandParser Parser;
 
-  auto StopInfo = Parser.extractStopInformation(Command);
+  auto StopInfo = CommandParser::extractStopInformation(Command);
 
   if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(StopInfo.JobID);
