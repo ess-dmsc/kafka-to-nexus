@@ -16,6 +16,7 @@
 #include "URI.h"
 #include "json.h"
 #include "logger.h"
+#include "helper.h"
 #include <chrono>
 
 namespace FileWriter {
@@ -38,8 +39,12 @@ struct StopCommandInfo {
   std::string ServiceID;
 };
 
-class CommandParser {
-public:
+namespace CommandParser {
+  static std::string const StartCommand = "filewriter_new";
+  static std::string const StopCommand = "filewriter_stop";
+  static std::string const ExitCommand = "filewriter_exit";
+  static std::string const StopAllWritingCommand = "file_writer_tasks_clear_all";
+
   /// \brief Extract the information from the start command.
   ///
   /// \param JSONCommand The JSON Command.
@@ -47,13 +52,13 @@ public:
   /// \return The start information.
   StartCommandInfo extractStartInformation(
       const nlohmann::json &JSONCommand,
-      std::chrono::milliseconds DefaultStartTime = getCurrentTime());
+      std::chrono::milliseconds DefaultStartTime = getCurrentTimeStampMS());
 
   /// \brief Extract the information from the stop command.
   ///
   /// \param JSONCommand The JSON Command.
   /// \return The stop information.
-  static StopCommandInfo
+  StopCommandInfo
   extractStopInformation(const nlohmann::json &JSONCommand);
 
   /// \brief Extract the command name from the command.
@@ -62,25 +67,39 @@ public:
   ///
   /// \param JSONCommand The JSON Command.
   /// \return The command name.
-  static std::string extractCommandName(const nlohmann::json &JSONCommand);
+  std::string extractCommandName(const nlohmann::json &JSONCommand);
 
-  static std::string const StopCommand;
-  static std::string const StartCommand;
-  static std::string const ExitCommand;
-  static std::string const StopAllWritingCommand;
-
-private:
-  SharedLogger Logger = getLogger();
-
+  /// \brief Extract the broker from the command.
+  ///
+  /// \param JSONCommand The JSON Command.
+  /// \return The broker details.
   uri::URI extractBroker(nlohmann::json const &JSONCommand);
-  static std::string extractJobID(nlohmann::json const &JSONCommand);
-  static std::chrono::duration<long long int, std::milli> getCurrentTime();
-  static std::chrono::milliseconds
+
+  /// \brief Extract the job ID from the command.
+  ///
+  /// \param JSONCommand The JSON Command.
+  /// \return The job ID.
+  std::string extractJobID(nlohmann::json const &JSONCommand);
+
+  /// \brief Extract a value as a time-stamp.
+  ///
+  /// \param Key The key for the value to extract.
+  /// \param JSONCommand The JSON Command.
+  /// \param DefaultTime The time to use if the key does not exist.
+  /// \return The extract (or default) time.
+  std::chrono::milliseconds
   extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
               std::chrono::milliseconds const &DefaultTime);
 
+  /// \brief Extract the specified value.
+  ///
+  /// Throws if the key is not present
+  ///
+  /// \param Key The key for the value to extract.
+  /// \param JSONCommand The JSON Command.
+  /// \return The extracted value.
   template <typename T>
-  static T getRequiredValue(std::string const &Key,
+  T getRequiredValue(std::string const &Key,
                             nlohmann::json const &JSONCommand) {
     if (auto x = find<T>(Key, JSONCommand)) {
       return x.inner();
@@ -90,8 +109,15 @@ private:
         fmt::format("Missing key {} from command JSON", Key));
   }
 
+  /// \brief Extract the specified value or use supplied value.
+  ///
+  ///
+  /// \param Key The key for the value to extract.
+  /// \param JSONCommand The JSON Command.
+  /// \param Default The value to use if the key is not present.
+  /// \return The extracted (or default) value.
   template <typename T>
-  static T getOptionalValue(std::string const &Key,
+  T getOptionalValue(std::string const &Key,
                             nlohmann::json const &JSONCommand,
                             T const &Default) {
     if (auto x = find<T>(Key, JSONCommand)) {
@@ -100,5 +126,5 @@ private:
 
     return Default;
   }
-};
+}
 } // namespace FileWriter

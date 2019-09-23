@@ -13,7 +13,6 @@
 
 class CommandParserHappyStartTests : public testing::Test {
 public:
-  FileWriter::CommandParser Parser;
   FileWriter::StartCommandInfo StartInfo;
   std::string Good_Command{R"""(
 {
@@ -33,7 +32,7 @@ public:
 
   void SetUp() override {
     StartInfo =
-        Parser.extractStartInformation(nlohmann::json::parse(Good_Command));
+        FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Good_Command));
   }
 };
 
@@ -88,9 +87,7 @@ TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
-
-  ASSERT_THROW(Parser.extractStartInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
 
@@ -99,12 +96,11 @@ TEST(CommandParserSadStartTests, ThrowsIfNoFileAttributes) {
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
+  "broker": "localhost:9092",
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
-
-  ASSERT_THROW(Parser.extractStartInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
 
@@ -113,14 +109,13 @@ TEST(CommandParserSadStartTests, ThrowsIfNoFilename) {
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
+  "broker": "localhost:9092",
   "file_attributes": {
   },
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
-
-  ASSERT_THROW(Parser.extractStartInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
 
@@ -129,14 +124,13 @@ TEST(CommandParserSadStartTests, ThrowsIfNoNexusStructure) {
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
+  "broker": "localhost:9092",
   "file_attributes": {
     "file_name": "a-dummy-name-01.h5"
   }
 })""");
 
-  FileWriter::CommandParser Parser;
-
-  ASSERT_THROW(Parser.extractStartInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
 
@@ -148,12 +142,11 @@ TEST(CommandParserSadStartTests, IfStopCommandPassedToStartMethodThenThrows) {
   "service_id": "filewriter1"
 })""");
 
-  FileWriter::CommandParser Parser;
-  ASSERT_THROW(Parser.extractStartInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
 
-TEST(CommandParserStartTests, IfNoBrokerThenUsesDefault) {
+TEST(CommandParserSadStartTests, IfNoBrokerThenThrows) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -164,14 +157,11 @@ TEST(CommandParserStartTests, IfNoBrokerThenUsesDefault) {
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StartInfo =
-      Parser.extractStartInformation(nlohmann::json::parse(Command));
-
-  ASSERT_TRUE(StartInfo.BrokerInfo.Port > 0u);
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
+               std::runtime_error);
 }
 
-TEST(CommandParserStartTests, IfBrokerIsWrongFormThenUsesDefault) {
+TEST(CommandParserSadStartTests, IfBrokerIsWrongFormThenThrows) {
   std::string Command(R"""(
 {
   "cmd": "FileWriter_new",
@@ -183,11 +173,8 @@ TEST(CommandParserStartTests, IfBrokerIsWrongFormThenUsesDefault) {
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StartInfo =
-      Parser.extractStartInformation(nlohmann::json::parse(Command));
-
-  ASSERT_TRUE(StartInfo.BrokerInfo.Port > 0u);
+  ASSERT_THROW(FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command)),
+               std::runtime_error);
 }
 
 TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
@@ -195,6 +182,7 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
+  "broker": "localhost:9092",
   "file_attributes": {
     "file_name": "a-dummy-name-01.h5"
   },
@@ -203,8 +191,7 @@ TEST(CommandParserStartTests, IfNoStartTimeThenUsesSuppliedCurrentTime) {
 
   auto FakeCurrentTime = std::chrono::milliseconds{987654321};
 
-  FileWriter::CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(
+  auto StartInfo = FileWriter::CommandParser::extractStartInformation(
       nlohmann::json::parse(Command), FakeCurrentTime);
 
   ASSERT_EQ(FakeCurrentTime, StartInfo.StartTime);
@@ -215,15 +202,15 @@ TEST(CommandParserStartTests, IfNoStopTimeThenSetToZero) {
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
+  "broker": "localhost:9092",
   "file_attributes": {
     "file_name": "a-dummy-name-01.h5"
   },
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
   auto StartInfo =
-      Parser.extractStartInformation(nlohmann::json::parse(Command));
+      FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ(std::chrono::milliseconds::zero(), StartInfo.StopTime);
 }
@@ -233,15 +220,15 @@ TEST(CommandParserStartTests, IfNoServiceIdThenIsBlank) {
 {
   "cmd": "FileWriter_new",
   "job_id": "qw3rty",
+  "broker": "localhost:9092",
   "file_attributes": {
     "file_name": "a-dummy-name-01.h5"
   },
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
   auto StartInfo =
-      Parser.extractStartInformation(nlohmann::json::parse(Command));
+      FileWriter::CommandParser::extractStartInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ("", StartInfo.ServiceID);
 }
@@ -252,9 +239,7 @@ TEST(CommandParserSadStopTests, IfNoJobIdThenThrows) {
   "cmd": "FileWriter_stop"
 })""");
 
-  FileWriter::CommandParser Parser;
-
-  ASSERT_THROW(Parser.extractStopInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }
 
@@ -265,8 +250,7 @@ TEST(CommandParserHappyStopTests, IfJobIdPresentThenExtractedCorrectly) {
   "job_id": "qw3rty"
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+  auto StopInfo = FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ("qw3rty", StopInfo.JobID);
 }
@@ -279,8 +263,7 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
   "stop_time": 123456790
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+  auto StopInfo = FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ(std::chrono::milliseconds{123456790}, StopInfo.StopTime);
 }
@@ -292,8 +275,7 @@ TEST(CommandParserStopTests, IfNoStopTimeThenSetToZero) {
   "job_id": "qw3rty"
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+  auto StopInfo = FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ(std::chrono::milliseconds::zero(), StopInfo.StopTime);
 }
@@ -305,8 +287,7 @@ TEST(CommandParserStopTests, IfNoServiceIdThenIsBlank) {
   "job_id": "qw3rty"
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+  auto StopInfo = FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ("", StopInfo.ServiceID);
 }
@@ -319,8 +300,7 @@ TEST(CommandParserStopTests, IfServiceIdPresentThenExtractedCorrectly) {
   "service_id": "filewriter1"
 })""");
 
-  FileWriter::CommandParser Parser;
-  auto StopInfo = Parser.extractStopInformation(nlohmann::json::parse(Command));
+  auto StopInfo = FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command));
 
   ASSERT_EQ("filewriter1", StopInfo.ServiceID);
 }
@@ -336,7 +316,6 @@ TEST(CommandParserSadStopTests, IfStartCommandPassedToStopMethodThenThrows) {
   "nexus_structure": { }
 })""");
 
-  FileWriter::CommandParser Parser;
-  ASSERT_THROW(Parser.extractStopInformation(nlohmann::json::parse(Command)),
+  ASSERT_THROW(FileWriter::CommandParser::extractStopInformation(nlohmann::json::parse(Command)),
                std::runtime_error);
 }

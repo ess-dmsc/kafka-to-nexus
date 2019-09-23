@@ -13,14 +13,9 @@
 #include "CommandParser.h"
 
 namespace FileWriter {
+namespace CommandParser {
 
-std::string const CommandParser::StopCommand = "filewriter_stop";
-std::string const CommandParser::StartCommand = "filewriter_new";
-std::string const CommandParser::ExitCommand = "filewriter_exit";
-std::string const CommandParser::StopAllWritingCommand =
-    "file_writer_tasks_clear_all";
-
-StartCommandInfo CommandParser::extractStartInformation(
+StartCommandInfo extractStartInformation(
     const nlohmann::json &JSONCommand,
     std::chrono::milliseconds DefaultStartTime) {
   if (extractCommandName(JSONCommand) != StartCommand) {
@@ -36,9 +31,9 @@ StartCommandInfo CommandParser::extractStartInformation(
   auto FileAttributes =
       getRequiredValue<nlohmann::json>("file_attributes", JSONCommand);
   Result.Filename = getRequiredValue<std::string>("file_name", FileAttributes);
+  Result.BrokerInfo = extractBroker(JSONCommand);
 
   // Optional items
-  Result.BrokerInfo = extractBroker(JSONCommand);
   Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
   Result.StopTime =
       extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
@@ -52,7 +47,7 @@ StartCommandInfo CommandParser::extractStartInformation(
 }
 
 StopCommandInfo
-CommandParser::extractStopInformation(const nlohmann::json &JSONCommand) {
+extractStopInformation(const nlohmann::json &JSONCommand) {
   if (extractCommandName(JSONCommand) != StopCommand) {
     throw std::runtime_error("Command was not a stop command");
   }
@@ -71,26 +66,20 @@ CommandParser::extractStopInformation(const nlohmann::json &JSONCommand) {
   return Result;
 }
 
-uri::URI CommandParser::extractBroker(nlohmann::json const &JSONCommand) {
-  // Set to default
-  uri::URI BrokerInfo{"localhost:9092"};
-
+uri::URI extractBroker(nlohmann::json const &JSONCommand) {
   std::string Broker =
-      getOptionalValue<std::string>("broker", JSONCommand, BrokerInfo.HostPort);
-  if (!Broker.empty()) {
-    try {
-      BrokerInfo.parse(Broker);
-    } catch (std::runtime_error &e) {
-      Logger->warn("Unable to parse broker {} in command message, using "
-                   "default broker",
-                   Broker);
-    }
+      getRequiredValue<std::string>("broker", JSONCommand);
+  try {
+    uri::URI BrokerInfo{Broker};
+    return BrokerInfo;
+  } catch (std::runtime_error &e) {
+    throw std::runtime_error(
+        fmt::format("Unable to parse broker {} in command message",
+                    Broker));
   }
-
-  return BrokerInfo;
 }
 
-std::string CommandParser::extractJobID(nlohmann::json const &JSONCommand) {
+std::string extractJobID(nlohmann::json const &JSONCommand) {
   auto JobID = getRequiredValue<std::string>("job_id", JSONCommand);
   if (JobID.empty()) {
     throw std::runtime_error("Missing key job_id from command JSON");
@@ -98,14 +87,8 @@ std::string CommandParser::extractJobID(nlohmann::json const &JSONCommand) {
   return JobID;
 }
 
-std::chrono::duration<long long int, std::milli>
-CommandParser::getCurrentTime() {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch());
-}
-
 std::chrono::milliseconds
-CommandParser::extractTime(std::string const &Key,
+extractTime(std::string const &Key,
                            nlohmann::json const &JSONCommand,
                            std::chrono::milliseconds const &DefaultTime) {
   uint64_t RawTime = getOptionalValue(Key, JSONCommand, 0);
@@ -117,9 +100,10 @@ CommandParser::extractTime(std::string const &Key,
 }
 
 std::string
-CommandParser::extractCommandName(const nlohmann::json &JSONCommand) {
+extractCommandName(const nlohmann::json &JSONCommand) {
   auto Cmd = getRequiredValue<std::string>("cmd", JSONCommand);
   std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(), ::tolower);
   return Cmd;
+}
 }
 }
