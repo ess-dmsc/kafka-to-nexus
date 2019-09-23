@@ -597,6 +597,7 @@ public:
       CommandJSON["file_attributes"]["file_name"] = filename;
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "test-ev42";
+      CommandJSON["broker"] = "localhost:9092";
     }
 
     Logger->trace("CommandJSON: {}", CommandJSON.dump());
