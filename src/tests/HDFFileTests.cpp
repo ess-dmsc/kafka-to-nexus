@@ -279,6 +279,7 @@ public:
       CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "000000000dataset";
+      CommandJSON["broker"] = "localhost:9092";
     }
 
     auto CommandString = CommandJSON.dump();
