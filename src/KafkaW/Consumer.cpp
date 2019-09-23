@@ -125,7 +125,7 @@ std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
         "Kafka error while getting offsets for topic {}: {}", Topic, Error));
   }
 
-  std::vector<int64_t> CurrentOffsets(NumberOfPartitions);
+  std::vector<int64_t> CurrentOffsets;
   for (auto TopicPartition : TopicPartitions) {
     // cppcheck-suppress useStlAlgorithm
     CurrentOffsets.push_back(TopicPartition->offset());

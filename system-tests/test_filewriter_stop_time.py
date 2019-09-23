@@ -64,7 +64,7 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     command_topic = "TEST_writerCommand"
     start_time = 1560330000002
     stop_time = 1560330000148
-    # Ask to write 196 messages from the middle of the 200 messages we published
+    # Ask to write 147 messages from the middle of the 200 messages we published
     send_writer_command(
         "commands/command-write-historical-data.json",
         producer,

@@ -102,6 +102,7 @@ void Streamer::markIfOffsetsAlreadyReached(
     std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
     std::string const &TopicName) {
   auto CurrentOffsets = Consumer->getCurrentOffsets(TopicName);
+  assert(CurrentOffsets.size() == OffsetsToStopAt.size());
   for (size_t PartitionNumber = 0; PartitionNumber < CurrentOffsets.size();
        PartitionNumber++) {
     if (CurrentOffsets[PartitionNumber] >=

@@ -152,6 +152,11 @@ void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
         TopicName, NumStreamers);
   }
   Stream.close();
+
+  if (NumStreamers == 0) {
+    // No more streams open, so stop the StreamMaster
+    Stop = true;
+  }
 }
 
 void StreamMaster::doStop() {
