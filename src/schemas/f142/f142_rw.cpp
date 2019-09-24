@@ -231,7 +231,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
 /// `init_hdf`.
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
-  return init_hdf(HDFGroup, nullptr, CreateWriterTypedBaseMethod::OPEN);
+  return init_hdf(HDFGroup, "", CreateWriterTypedBaseMethod::OPEN);
 }
 
 HDFWriterModule::InitResult

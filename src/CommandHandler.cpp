@@ -111,13 +111,13 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   }
 
   if (auto x = find<json>("attributes", ConfigStream)) {
-    StreamSettings.Attributes = x.inner();
+    StreamSettings.Attributes = x.inner().dump();
   }
 
   return StreamSettings;
 }
 
-void setUpHdfStructures(StreamSettings StreamSettings, std::unique_ptr<FileWriterTask> const &Task){
+void setUpHdfStructure(StreamSettings const &StreamSettings, std::unique_ptr<FileWriterTask> const &Task){
   HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
   try {
     ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
@@ -159,8 +159,8 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      StreamSettingsList.push_back(extractStreamInformationFromJsonForSource(
-          Task, StreamHDFInfo, Logger));
+      StreamSettingsList.push_back(extractStreamInformationFromJsonForSource(StreamHDFInfo, Logger));
+      setUpHdfStructure(StreamSettingsList.back(), Task);
       StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
       Logger->warn("Invalid json: {}", StreamHDFInfo.ConfigStream);
