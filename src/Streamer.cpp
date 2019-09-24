@@ -18,11 +18,21 @@ std::chrono::milliseconds systemTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
       now.time_since_epoch());
 }
+
+bool messageTimestampIsBeforeStartTimestamp(
+    std::uint64_t MessageTimestamp, std::chrono::milliseconds StartTime) {
+  return (
+      static_cast<std::int64_t>(MessageTimestamp) <
+      std::chrono::duration_cast<std::chrono::nanoseconds>(StartTime).count());
+}
+
 bool messageTimestampIsAfterStopTimestamp(std::uint64_t MessageTimestamp,
-                                          std::chrono::milliseconds Stoptime) {
-  return (Stoptime.count() > 0 &&
+                                          std::chrono::milliseconds StopTime) {
+  // Also return false if StopTime == 0, this means a stop time has not yet been
+  // set
+  return (StopTime.count() > 0 &&
           static_cast<std::int64_t>(MessageTimestamp) >
-              std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
+              std::chrono::duration_cast<std::chrono::nanoseconds>(StopTime)
                   .count());
 }
 
@@ -247,16 +257,11 @@ ProcessMessageResult Streamer::processMessage(
     return ProcessMessageResult::OK;
   }
 
-  // If timestamp of message is before the start timestamp or after
-  // the stop timestamp, ignore message and carry on
-  if (static_cast<std::int64_t>(Message->getTimestamp()) <
-          std::chrono::duration_cast<std::chrono::nanoseconds>(
-              Options.StartTimestamp)
-              .count() ||
-      static_cast<std::int64_t>(Message->getTimestamp()) >
-          std::chrono::duration_cast<std::chrono::nanoseconds>(
-              Options.StopTimestamp)
-              .count()) {
+  if (messageTimestampIsBeforeStartTimestamp(Message->getTimestamp(),
+                                             Options.StartTimestamp) ||
+      messageTimestampIsAfterStopTimestamp(Message->getTimestamp(),
+                                           Options.StopTimestamp)) {
+    // ignore message and carry on
     return ProcessMessageResult::OK;
   }
 
