@@ -45,6 +45,7 @@ void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
 json basic_command(string filename) {
   auto Command = json::parse(R""({
     "cmd": "FileWriter_new",
+    "broker": "localhost:9092",
     "nexus_structure": {
       "children": []
     },
@@ -278,6 +279,7 @@ public:
       CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "000000000dataset";
+      CommandJSON["broker"] = "localhost:9092";
     }
 
     auto CommandString = CommandJSON.dump();
@@ -304,6 +306,7 @@ public:
     unlink(hdf_output_filename.c_str());
     auto CommandJSON = json::parse(R""({
       "cmd": "FileWriter_new",
+      "broker": "localhost:9092",
       "nexus_structure": {
         "attributes": {
           "some_top_level_int": 42,
@@ -594,6 +597,7 @@ public:
       CommandJSON["file_attributes"]["file_name"] = filename;
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "test-ev42";
+      CommandJSON["broker"] = "localhost:9092";
     }
 
     Logger->trace("CommandJSON: {}", CommandJSON.dump());
@@ -934,6 +938,7 @@ public:
       CommandJSON["file_attributes"]["file_name"] = "tmp-f142.h5";
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "unit_test_job_data_f142";
+      CommandJSON["broker"] = "localhost:9092";
     }
 
     auto CommandString = CommandJSON.dump();
@@ -1095,6 +1100,7 @@ TEST(HDFFile, createStaticDatasetsStrings) {
   auto CommandJSON = json::parse(R""(
 {
   "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
   "file_attributes": {
   },
   "nexus_structure": {
