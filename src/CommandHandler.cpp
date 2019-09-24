@@ -179,8 +179,8 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 
 void CommandHandler::handleNew(const json &JSONCommand,
                                std::chrono::milliseconds StartTime) {
-  CommandParser Parser;
-  auto StartInfo = Parser.extractStartInformation(JSONCommand, StartTime);
+  auto StartInfo =
+      CommandParser::extractStartInformation(JSONCommand, StartTime);
 
   // Check job is not already running
   if (MasterPtr != nullptr) {
@@ -328,9 +328,8 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(const json &Command) {
   Logger->trace("{}", Command.dump());
-  CommandParser Parser;
 
-  auto StopInfo = Parser.extractStopInformation(Command);
+  auto StopInfo = CommandParser::extractStopInformation(Command);
 
   if (MasterPtr != nullptr) {
     auto &StreamMaster = MasterPtr->getStreamMasterForJobID(StopInfo.JobID);
