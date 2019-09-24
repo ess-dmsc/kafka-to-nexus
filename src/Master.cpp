@@ -9,6 +9,7 @@
 
 #include "Master.h"
 #include "CommandHandler.h"
+#include "CommandParser.h"
 #include "Errors.h"
 #include "Msg.h"
 #include "json.h"
@@ -61,8 +62,28 @@ void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
 void Master::handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) {
   CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
 
-  // Get the command name, this will throw if the json is malformed.
-  command_handler.tryToHandle(Command, TimeStamp);
+  try {
+    auto Json =  CommandHandler::parseCommand(Command);
+    auto CommandName = CommandHandler::getCommandName(Json);
+
+    if (CommandName == CommandParser::StartCommand) {
+
+    } else {
+      throw std::runtime_error(fmt::format("Did not recognise command name {}", CommandName));
+    }
+
+  }
+  catch(std::runtime_error const & Error) {
+    Logger->error("{}", Error);
+//    logEvent(StatusProducer, StatusCode::Fail, Config.ServiceID, JobID,
+//             Message);
+    return;
+  }
+
+
+
+
+//  command_handler.tryToHandle(Command, TimeStamp);
 }
 
 struct OnScopeExit {

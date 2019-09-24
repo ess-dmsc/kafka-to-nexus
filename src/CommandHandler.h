@@ -70,7 +70,7 @@ public:
       std::chrono::milliseconds MsgTimestamp = std::chrono::milliseconds{0});
 
   static nlohmann::json parseCommand(std::string const &Command);
-  std::string getCommandName(nlohmann::json const &Command);
+  static std::string getCommandName(nlohmann::json const &Command);
 
 
 private:

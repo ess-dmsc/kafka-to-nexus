@@ -447,7 +447,7 @@ void CommandHandler::tryToHandle(std::string const &Command,
 nlohmann::json CommandHandler::parseCommand(std::string const &Command) {
   try {
     return json::parse(Command);
-  } catch (json::parse_error & Error) {
+  } catch (json::parse_error const & Error) {
     throw std::runtime_error(fmt::format("Could not parse command: {}", TruncateCommand(Command)));
   }
 }
