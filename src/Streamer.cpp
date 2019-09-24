@@ -247,12 +247,16 @@ ProcessMessageResult Streamer::processMessage(
     return ProcessMessageResult::OK;
   }
 
-  // If timestamp of message is before the start timestamp, ignore message and
-  // carry on
+  // If timestamp of message is before the start timestamp or after
+  // the stop timestamp, ignore message and carry on
   if (static_cast<std::int64_t>(Message->getTimestamp()) <
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          Options.StartTimestamp)
-          .count()) {
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+              Options.StartTimestamp)
+              .count() ||
+      static_cast<std::int64_t>(Message->getTimestamp()) >
+          std::chrono::duration_cast<std::chrono::nanoseconds>(
+              Options.StopTimestamp)
+              .count()) {
     return ProcessMessageResult::OK;
   }
 

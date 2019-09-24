@@ -199,7 +199,7 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
                 log_options["SERVICE"] = ["filewriter"]
                 cmd.logs(log_options)
         else:
-            proc.wait(timeout=100)
+            proc.kill()
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
