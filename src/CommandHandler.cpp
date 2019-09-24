@@ -10,6 +10,7 @@
 /// \file  CommandHandler.cpp
 
 #include "CommandHandler.h"
+#include "CommandParser.h"
 #include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "HDFWriterModule.h"
@@ -72,8 +73,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
-  json ConfigStream;
-  ConfigStream = json::parse(StreamInfo.ConfigStream);
+  json ConfigStream = json::parse(StreamInfo.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -101,14 +101,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
           find<std::string>("writer_module", ConfigStreamInner)) {
     StreamSettings.Module = WriterModuleMaybe.inner();
   } else {
-    // Allow the old key name as well:
-    if (auto ModuleMaybe = find<std::string>("module", ConfigStreamInner)) {
-      StreamSettings.Module = ModuleMaybe.inner();
-      Logger->debug("The key \"stream.module\" is deprecated, please use "
-                    "\"stream.writer_module\" instead.");
-    } else {
-      throwMissingKey("writer_module", ConfigStreamInner.dump());
-    }
+    throwMissingKey("writer_module", ConfigStreamInner.dump());
   }
 
   if (auto RunParallelMaybe = find<bool>("run_parallel", ConfigStream)) {
@@ -186,7 +179,17 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 
 void CommandHandler::handleNew(const json &JSONCommand,
                                std::chrono::milliseconds StartTime) {
-  using nlohmann::detail::out_of_range;
+  auto StartInfo =
+      CommandParser::extractStartInformation(JSONCommand, StartTime);
+
+  // Check job is not already running
+  if (MasterPtr != nullptr) {
+    if (MasterPtr->getStreamMasterForJobID(StartInfo.JobID) != nullptr) {
+      Logger->error("Command ignored as job id {} is already in progress",
+                    StartInfo.JobID);
+      return;
+    }
+  }
 
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   if (MasterPtr != nullptr) {
@@ -194,109 +197,39 @@ void CommandHandler::handleNew(const json &JSONCommand,
   }
   auto Task =
       std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
-  if (auto x = find<std::string>("job_id", JSONCommand)) {
-    std::string JobID = x.inner();
-    if (JobID.empty()) {
-      throwMissingKey("job_id", JSONCommand.dump());
-    }
-
-    if (MasterPtr != nullptr) { // workaround to prevent seg fault in tests
-      if (MasterPtr->getStreamMasterForJobID(JobID) != nullptr) {
-        Logger->error("Command ignored as job id {} is already in progress",
-                      JobID);
-        return;
-      }
-    }
-
-    Task->setJobId(JobID);
-  } else {
-    throwMissingKey("job_id", JSONCommand.dump());
-  }
+  Task->setJobId(StartInfo.JobID);
+  Task->setFilename(Config.HDFOutputPrefix, StartInfo.Filename);
 
   if (MasterPtr != nullptr) {
     logEvent(MasterPtr->getStatusProducer(), StatusCode::Start,
              Config.ServiceID, Task->jobID(), "Start job");
   }
 
-  uri::URI Broker("localhost:9092");
-  if (auto BrokerStringMaybe = find<std::string>("broker", JSONCommand)) {
-    auto BrokerString = BrokerStringMaybe.inner();
-    try {
-      Broker.parse(BrokerString);
-    } catch (std::runtime_error &e) {
-      Logger->warn("Unable to parse broker {} in command message, using "
-                   "default broker (localhost:9092)",
-                   BrokerString);
-    }
-    Logger->trace("Use main broker: {}", Broker.HostPort);
-  }
-
-  if (auto FileAttributesMaybe = find<json>("file_attributes", JSONCommand)) {
-    if (auto FileNameMaybe =
-            find<std::string>("file_name", FileAttributesMaybe.inner())) {
-      Task->setFilename(Config.HDFOutputPrefix, FileNameMaybe.inner());
-    } else {
-      throwMissingKey("file_attributes.file_name", JSONCommand.dump());
-    }
-  } else {
-    throwMissingKey("file_attributes", JSONCommand.dump());
-  }
-
-  bool UseSwmr = true;
-  if (auto UseHDFSWMRMaybe = find<bool>("use_hdf_swmr", JSONCommand)) {
-    UseSwmr = UseHDFSWMRMaybe.inner();
-  }
-
-  // When FileWriterTask::InitialiseHdf() returns, `stream_hdf_info` will
-  // contain the list of streams which have been found in the `nexus_structure`.
-  std::vector<StreamHDFInfo> StreamHDFInfoList;
-  if (auto NexusStructureMaybe = find<json>("nexus_structure", JSONCommand)) {
-    try {
-      StreamHDFInfoList =
-          initializeHDF(*Task, NexusStructureMaybe.inner().dump(), UseSwmr);
-    } catch (std::runtime_error const &E) {
-      std::throw_with_nested(std::runtime_error(
-          fmt::format("Failed to initializeHDF: {}", E.what())));
-    }
-  } else {
-    throwMissingKey("nexus_structure", JSONCommand.dump());
-  }
+  std::vector<StreamHDFInfo> StreamHDFInfoList =
+      initializeHDF(*Task, StartInfo.NexusStructure, StartInfo.UseSwmr);
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
-  if (auto ThrowOnUninitialisedStreamMaybe =
-          find<bool>("abort_on_uninitialised_stream", JSONCommand)) {
-    if (ThrowOnUninitialisedStreamMaybe.inner()) {
-      for (auto const &Item : StreamHDFInfoList) {
-        // cppcheck-suppress useStlAlgorithm
-        if (!Item.InitialisedOk) {
-          throw std::runtime_error(fmt::format("Could not initialise {}  {}",
-                                               Item.HDFParentName,
-                                               Item.ConfigStream));
-        }
+  if (StartInfo.AbortOnStreamFailure) {
+    for (auto const &Item : StreamHDFInfoList) {
+      // cppcheck-suppress useStlAlgorithm
+      if (!Item.InitialisedOk) {
+        throw std::runtime_error(fmt::format("Could not initialise {}  {}",
+                                             Item.HDFParentName,
+                                             Item.ConfigStream));
       }
     }
   }
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
-  Config.StreamerConfiguration.StartTimestamp =
-      std::chrono::milliseconds::zero();
-  Config.StreamerConfiguration.StopTimestamp =
-      std::chrono::milliseconds::zero();
 
-  // If start time not specified use command message timestamp
-  std::chrono::milliseconds Time = findTime(JSONCommand, "start_time");
-  if (Time.count() > 0) {
-    Config.StreamerConfiguration.StartTimestamp = Time;
-  } else {
-    Config.StreamerConfiguration.StartTimestamp = StartTime;
-  }
+  Config.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
+  Config.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
+
   Logger->info("Start time: {}ms",
                Config.StreamerConfiguration.StartTimestamp.count());
-  Time = findTime(JSONCommand, "stop_time");
-  if (Time.count() > 0) {
-    Config.StreamerConfiguration.StopTimestamp = Time;
+  if (Config.StreamerConfiguration.StopTimestamp.count() > 0) {
     Logger->info("Stop time: {}ms",
                  Config.StreamerConfiguration.StopTimestamp.count());
   }
@@ -304,8 +237,8 @@ void CommandHandler::handleNew(const json &JSONCommand,
   if (MasterPtr != nullptr) {
     // Register the task with master.
     Logger->info("Write file with job_id: {}", Task->jobID());
-    auto s = StreamMaster::createStreamMaster(Broker.HostPort, std::move(Task),
-                                              Config,
+    auto s = StreamMaster::createStreamMaster(StartInfo.BrokerInfo.HostPort,
+                                              std::move(Task), Config,
                                               MasterPtr->getStatusProducer());
     if (auto status_producer = MasterPtr->getStatusProducer()) {
       s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
@@ -395,29 +328,24 @@ void CommandHandler::handleExit() {
 
 void CommandHandler::handleStreamMasterStop(const json &Command) {
   Logger->trace("{}", Command.dump());
-  std::string JobID;
-  if (auto x = find<std::string>("job_id", Command)) {
-    JobID = x.inner();
-  } else {
-    throwMissingKey("job_id", Command.dump());
-  }
 
-  std::chrono::milliseconds StopTime = findTime(Command, "stop_time");
+  auto StopInfo = CommandParser::extractStopInformation(Command);
+
   if (MasterPtr != nullptr) {
-    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(JobID);
+    auto &StreamMaster = MasterPtr->getStreamMasterForJobID(StopInfo.JobID);
     if (StreamMaster != nullptr) {
-      if (StopTime.count() > 0) {
+      if (StopInfo.StopTime.count() > 0) {
         Logger->info(
             "Received request to gracefully stop file with id : {} at {} ms",
-            JobID, StopTime.count());
-        StreamMaster->setStopTime(StopTime);
+            StopInfo.JobID, StopInfo.StopTime.count());
+        StreamMaster->setStopTime(StopInfo.StopTime);
       } else {
         Logger->info("Received request to gracefully stop file with id : {}",
-                     JobID);
+                     StopInfo.JobID);
         StreamMaster->requestStop();
       }
     } else {
-      Logger->warn("Can not find StreamMaster for JobID: {}", JobID);
+      Logger->warn("Can not find StreamMaster for JobID: {}", StopInfo.JobID);
     }
   }
 }
@@ -445,42 +373,22 @@ void CommandHandler::handle(std::string const &Command,
     }
   }
 
-  uint64_t TeamId = 0;
-  uint64_t CommandTeamId = 0;
-  if (auto x = find<uint64_t>("teamid", JSONCommand)) {
-    CommandTeamId = x.inner();
-  }
-  if (CommandTeamId != TeamId) {
-    Logger->info("INFO command is for teamid {:016x}, we are {:016x}",
-                 CommandTeamId, TeamId);
-    return;
-  }
-
   if (auto CmdMaybe = find<std::string>("cmd", JSONCommand)) {
-    std::string CommandMain = CmdMaybe.inner();
-    std::transform(CommandMain.begin(), CommandMain.end(), CommandMain.begin(),
-                   ::tolower);
+    std::string CommandMain = CommandParser::extractCommandName(JSONCommand);
+
     Logger->info("Handling a command of type: {}", CommandMain);
-    if (CommandMain == "filewriter_new") {
+    if (CommandMain == CommandParser::StartCommand) {
       handleNew(JSONCommand, StartTime);
       return;
-    } else if (CommandMain == "filewriter_exit") {
+    } else if (CommandMain == CommandParser::ExitCommand) {
       handleExit();
       return;
-    } else if (CommandMain == "filewriter_stop") {
+    } else if (CommandMain == CommandParser::StopCommand) {
       handleStreamMasterStop(JSONCommand);
       return;
-    } else if (CommandMain == "file_writer_tasks_clear_all") {
-      if (auto y = find<std::string>("recv_type", JSONCommand)) {
-        std::string ReceiverType = y.inner();
-        if (ReceiverType == "FileWriter") {
-          handleFileWriterTaskClearAll();
-          return;
-        }
-      } else {
-        throwMissingKey("recv_type", JSONCommand.dump());
-      }
-
+    } else if (CommandMain == CommandParser::StopAllWritingCommand) {
+      handleFileWriterTaskClearAll();
+      return;
     } else {
       throw std::runtime_error(
           fmt::format("Could not understand 'cmd' field of this command."));

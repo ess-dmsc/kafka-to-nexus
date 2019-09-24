@@ -2,6 +2,7 @@
   "file_attributes": {
     "file_name": "a-dummy-name-02.h5"
   },
+  "broker": "localhost:9092",
   "cmd": "FileWriter_new",
   "nexus_structure": {
     "children": [

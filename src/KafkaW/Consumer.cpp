@@ -287,6 +287,8 @@ std::shared_ptr<RdKafka::Metadata> Consumer::metadataCall() {
   case RdKafka::ERR__TIMED_OUT:
     return nullptr;
   default:
+    Logger->error("Error while retrieving metadata. Error code is: {}",
+                  ErrorCode);
     throw MetadataException(
         fmt::format("Consumer::metadataCall() - error while retrieving "
                     "metadata. RdKafka errorcode: {}",

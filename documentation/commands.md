@@ -11,19 +11,24 @@ Note: some example commands can be found in the system tests.
 ## Command to start writing
 
 The start command consists of a number of parameters which are defined as key-value pairs in the JSON.
-These are:
 
-- cmd: The command name, must be `FileWriter_new`.
-- job_id: A unique identifier for the request, a UUID for example.
+Required:
+
+- cmd: The command name, must be `filewriter_new`
+- job_id: A unique identifier for the request, a UUID for example
 - broker: The Kafka broker to use for data.
-- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. Optional, if not supplied then the timestamp of the Kafka message containing the start command is used.
-- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. Optional, if not supplied then file writing continues until a stop command is received
-- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
-- abort_on_uninitialised_stream: Whether to abort if the stream cannot be initialised. Optional, default is not to abort but carry on.
-- use_hdf_swmr: Whether to use HDF5's Single Writer Multiple Reader (SWMR) capabilities. Optional, default is true. For more on SWMR see [below](Single Writer Multiple Reader).
 - file_attributes: Dictionary specifying the details of the file to be written:
     * file_name: The file name
-- nexus_structure: Defines the structure of the NeXus file to be written.
+- nexus_structure: Defines the structure of the NeXus file to be written
+
+Optional:
+
+- start_time: The start time in milliseconds (UNIX epoch) for data to be written from. If not supplied then the timestamp of the Kafka message containing the start command is used.
+- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then file writing continues until a stop command is received
+- service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present.
+- abort_on_uninitialised_stream: Whether to abort if the stream cannot be initialised. Default is not to abort but carry on.
+- use_hdf_swmr: Whether to use HDF5's Single Writer Multiple Reader (SWMR) capabilities. Default is true. For more on SWMR see [below](Single Writer Multiple Reader).
+
 
 An example command with the `nexus_structure` skipped for brevity:
 
@@ -189,12 +194,16 @@ For example:
 ## Command to stop writing
 
 The stop command consists of a number of parameters which are defined as key-value pairs in the JSON.
-These are:
 
-- cmd: The command name, must be `FileWriter_stop`.
-- job_id: A unique identifier for the request, a UUID for example. Should be the same as used in the start command.
-- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. Optional, if not supplied then the Kafka message time is used.
-- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
+Required:
+
+- cmd: The command name, must be `filewriter_stop`
+- job_id: A unique identifier for the request, a UUID for example. Should be the same as used in the start command
+
+Optional:
+
+- stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then the Kafka message time is used
+- service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present
 
 For example:
 
@@ -212,8 +221,8 @@ For example:
 The file-writer can be requested to exit.
 The parameters for the command are:
 
-- cmd: The command name, must be `FileWriter_stop`.
-- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present.
+- cmd: The command name, must be `filewriter_exit`
+- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present
 
 For example:
 
