@@ -87,7 +87,7 @@ std::string extractJobID(nlohmann::json const &JSONCommand) {
 std::chrono::milliseconds
 extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
             std::chrono::milliseconds const &DefaultTime) {
-  uint64_t RawTime = getOptionalValue(Key, JSONCommand, 0);
+  auto RawTime = getOptionalValue<uint64_t>(Key, JSONCommand, 0);
   if (RawTime > 0) {
     return std::chrono::milliseconds{RawTime};
   } else {
