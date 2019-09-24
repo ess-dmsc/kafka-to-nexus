@@ -223,8 +223,7 @@ HDFWriterModule::HDFWriterModule() {
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
-  return init_hdf(HDFGroup, HDFAttributes,
-                  CreateWriterTypedBaseMethod::CREATE);
+  return init_hdf(HDFGroup, HDFAttributes, CreateWriterTypedBaseMethod::CREATE);
 }
 
 /// \brief Implement the HDFWriterModule interface, forward to the OPEN case of

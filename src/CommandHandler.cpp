@@ -67,8 +67,9 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \param Logger Pointer to spdlog instance to be used for logging.
 ///
 /// \return The stream information.
-static StreamSettings extractStreamInformationFromJsonForSource(
-    StreamHDFInfo const &StreamInfo, SharedLogger Logger) {
+static StreamSettings
+extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo,
+                                          SharedLogger Logger) {
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
@@ -97,7 +98,7 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   }
 
   if (auto WriterModuleMaybe =
-      find<std::string>("writer_module", ConfigStreamInner)) {
+          find<std::string>("writer_module", ConfigStreamInner)) {
     StreamSettings.Module = WriterModuleMaybe.inner();
   } else {
     throwMissingKey("writer_module", ConfigStreamInner.dump());
@@ -117,7 +118,8 @@ static StreamSettings extractStreamInformationFromJsonForSource(
   return StreamSettings;
 }
 
-void setUpHdfStructure(StreamSettings const &StreamSettings, std::unique_ptr<FileWriterTask> const &Task){
+void setUpHdfStructure(StreamSettings const &StreamSettings,
+                       std::unique_ptr<FileWriterTask> const &Task) {
   HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
   try {
     ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
@@ -143,7 +145,8 @@ void setUpHdfStructure(StreamSettings const &StreamSettings, std::unique_ptr<Fil
                     StreamSettings.Module, StreamSettings.Source, E.what())));
   }
 
-  auto StreamGroup = hdf5::node::get_group(RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
+  auto StreamGroup = hdf5::node::get_group(
+      RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, StreamSettings.Attributes);
   HDFWriterModule->close();
   HDFWriterModule.reset();
@@ -159,7 +162,8 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      StreamSettingsList.push_back(extractStreamInformationFromJsonForSource(StreamHDFInfo, Logger));
+      StreamSettingsList.push_back(
+          extractStreamInformationFromJsonForSource(StreamHDFInfo, Logger));
       setUpHdfStructure(StreamSettingsList.back(), Task);
       StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
