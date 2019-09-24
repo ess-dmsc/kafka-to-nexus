@@ -22,8 +22,8 @@ public:
     "file_name": "a-dummy-name-01.h5"
   },
   "broker": "somehost:1234",
-  "start_time": 123456789,
-  "stop_time": 123456790,
+  "start_time": 123456789000,
+  "stop_time": 123456790000,
   "use_hdf_swmr": false,
   "abort_on_uninitialised_stream": true,
   "service_id": "filewriter1",
@@ -63,11 +63,11 @@ TEST_F(CommandParserHappyStartTests, IfAbortPresentThenExtractedCorrectly) {
 }
 
 TEST_F(CommandParserHappyStartTests, IfStartPresentThenExtractedCorrectly) {
-  ASSERT_EQ(std::chrono::milliseconds{123456789}, StartInfo.StartTime);
+  ASSERT_EQ(std::chrono::milliseconds{123456789000}, StartInfo.StartTime);
 }
 
 TEST_F(CommandParserHappyStartTests, IfStopPresentThenExtractedCorrectly) {
-  ASSERT_EQ(std::chrono::milliseconds{123456790}, StartInfo.StopTime);
+  ASSERT_EQ(std::chrono::milliseconds{123456790000}, StartInfo.StopTime);
 }
 
 TEST_F(CommandParserHappyStartTests, IfServiceIdPresentThenExtractedCorrectly) {
@@ -82,8 +82,6 @@ TEST(CommandParserSadStartTests, ThrowsIfNoJobID) {
     "file_name": "a-dummy-name-01.h5"
   },
   "broker": "localhost:9092",
-  "start_time": 123456789,
-  "stop_time": 123456790,
   "nexus_structure": { }
 })""");
 
@@ -269,13 +267,13 @@ TEST(CommandParserHappyStopTests, IfStopTimePresentThenExtractedCorrectly) {
 {
   "cmd": "FileWriter_stop",
   "job_id": "qw3rty",
-  "stop_time": 123456790
+  "stop_time": 123456790000
 })""");
 
   auto StopInfo = FileWriter::CommandParser::extractStopInformation(
       nlohmann::json::parse(Command));
 
-  ASSERT_EQ(std::chrono::milliseconds{123456790}, StopInfo.StopTime);
+  ASSERT_EQ(std::chrono::milliseconds{123456790000}, StopInfo.StopTime);
 }
 
 TEST(CommandParserStopTests, IfNoStopTimeThenSetToZero) {
