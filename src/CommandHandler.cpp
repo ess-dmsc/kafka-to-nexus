@@ -456,4 +456,18 @@ std::string CommandHandler::getCommandName(const nlohmann::json &Command){
   return CommandParser::extractCommandName(Command);
 }
 
+void CommandHandler::handleNew1(nlohmann::json const &JSONCommand,
+                std::chrono::milliseconds StartTime) {
+
+  auto StartInfo =
+      CommandParser::extractStartInformation(JSONCommand, StartTime);
+
+  // Check job is not already running
+  if (StreamControl->jobIDInUse(StartInfo.JobID)) {
+    throw std::runtime_error(fmt::format("Command ignored as job id {} is already in progress",
+                  StartInfo.JobID));
+  }
+
+}
+
 } // namespace FileWriter

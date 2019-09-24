@@ -60,13 +60,16 @@ void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
 }
 
 void Master::handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) {
-  CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
+  CommandHandler Handler(getMainOpt(), StreamsControl, StatusProducer);
 
   try {
     auto Json =  CommandHandler::parseCommand(Command);
     auto CommandName = CommandHandler::getCommandName(Json);
 
     if (CommandName == CommandParser::StartCommand) {
+      Handler.handleNew1(Json, TimeStamp);
+
+
 
     } else {
       throw std::runtime_error(fmt::format("Did not recognise command name {}", CommandName));
@@ -74,7 +77,7 @@ void Master::handle_command(std::string const &Command, std::chrono::millisecond
 
   }
   catch(std::runtime_error const & Error) {
-    Logger->error("{}", Error);
+    Logger->error("{}", Error.what());
 //    logEvent(StatusProducer, StatusCode::Fail, Config.ServiceID, JobID,
 //             Message);
     return;
@@ -179,5 +182,7 @@ MainOpt &Master::getMainOpt() { return MainConfig; }
 std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
   return StatusProducer;
 }
+
+
 
 } // namespace FileWriter

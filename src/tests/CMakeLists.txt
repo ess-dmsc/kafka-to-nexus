@@ -45,7 +45,9 @@ set(UnitTests_INC
         AddReader.h
         helpers/ev42_synth.h
         helpers/f142_synth.h
-        helpers/KafkaWMocks.h)
+        helpers/KafkaWMocks.h
+        helpers/FakeStreamMaster.h
+        )
 
 add_executable(UnitTests
         ${UnitTests_SRC}

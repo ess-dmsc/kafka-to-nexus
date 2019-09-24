@@ -8,28 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include "StreamsController.h"
-#include "StreamMaster.h"
+#include "helpers/FakeStreamMaster.h"
 #include <gtest/gtest.h>
 #include <memory>
 
-class FakeStreamMaster : public FileWriter::IStreamMaster {
-public:
-  explicit FakeStreamMaster(std::string const & JobID, bool Removable=false): JobID(JobID), IsRemovable(Removable) {}
-  std::string getJobId() const override {return JobID;}
-  void requestStop() override {
-    IsRemovable = true;
-  }
-  bool isRemovable() const override {
-    return IsRemovable;
-  }
-  void setStopTime(const std::chrono::milliseconds &/*StopTime*/) override {
-
-  }
-private:
-  std::string JobID;
-  bool IsRemovable;
-
-};
 
 TEST(StreamsControllerTests, AddedStreamMasterCanBeRetrieved) {
   std::string JobID = "job_id";

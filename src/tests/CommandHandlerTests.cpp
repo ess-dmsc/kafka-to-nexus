@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "CommandHandler.h"
+#include "helpers/FakeStreamMaster.h"
 #include "MainOpt.h"
 #include "helper.h"
 #include "json.h"
@@ -202,4 +203,28 @@ TEST(CommandHandlerTesting, gettingWronglyCasedCommandNameReturnsCorrectCase) {
 
   ASSERT_EQ("filewriter_new", Name);
 }
+
+TEST(CommandHandlerTesting, onNewCommandIfJobIDAlreadyExistsThenThrows) {
+  std::string Command(R"""(
+{
+  "cmd": "FILEWRITER_NEW",
+  "job_id": "qw3rty",
+  "broker": "//localhost:9092",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "nexus_structure": { }
+})""");
+
+  MainOpt MainOpt;
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  StreamsController->addStreamMaster(std::make_unique<FakeStreamMaster>("qw3rty"));
+
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
+  auto Json = FileWriter::CommandHandler::parseCommand(Command);
+
+  ASSERT_THROW(CommandHandler.handleNew1(Json, std::chrono::milliseconds{0}), std::runtime_error);
+
+}
+
 

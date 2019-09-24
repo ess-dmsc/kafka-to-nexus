@@ -71,6 +71,8 @@ public:
 
   static nlohmann::json parseCommand(std::string const &Command);
   static std::string getCommandName(nlohmann::json const &Command);
+  void handleNew1(const nlohmann::json &JSONCommand,
+                 std::chrono::milliseconds StartTime);
 
 
 private:
