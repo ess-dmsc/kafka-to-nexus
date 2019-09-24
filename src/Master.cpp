@@ -22,11 +22,6 @@
 
 namespace FileWriter {
 
-std::chrono::duration<long long int, std::milli> getCurrentTimeStamp() {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch());
-}
-
 Master::Master(MainOpt &Config)
     : Logger(getLogger()), Listener(Config), MainConfig(Config) {
   std::vector<char> buffer;
@@ -43,7 +38,8 @@ Master::Master(MainOpt &Config)
   Logger->info("getFileWriterProcessId: {}", Master::getFileWriterProcessId());
 }
 
-void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
+
+void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
   CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
 
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
@@ -59,12 +55,14 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
         "Kafka command doesn't contain timestamp, so using current time.");
   }
 
-  command_handler.tryToHandle(Message, TimeStamp);
+  handle_command(Message, TimeStamp);
 }
 
-void Master::handle_command(std::string const &Command) {
+void Master::handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) {
   CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
-  command_handler.tryToHandle(Command, getCurrentTimeStamp());
+
+  // Get the command name, this will throw if the json is malformed.
+  command_handler.tryToHandle(Command, TimeStamp);
 }
 
 struct OnScopeExit {
@@ -99,9 +97,9 @@ void Master::run() {
     }
   }
 
-  // Interpret commands given directly from the configuration file, if present
+  // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {
-    this->handle_command(cmd);
+    this->handle_command(cmd, getCurrentTimeStampMS());
   }
 
   Listener.start();
@@ -112,7 +110,7 @@ void Master::run() {
         Listener.poll();
     if (KafkaMessage->first == KafkaW::PollStatus::Message) {
       Logger->debug("Command received");
-      this->handle_command_message(
+      this->handle_command(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
     if (getMainOpt().ReportStatus &&

@@ -127,3 +127,79 @@ TEST(CommandHandler_Testing, FormatNestedException) {
               FileWriter::format_nested_exception(E));
   }
 }
+
+// TODO: New tests
+TEST(CommandHandlerTesting, parsingValidJsonDoesNotThrow) {
+  std::string Command(R"""(
+{
+  "cmd": "filewriter_new",
+  "job_id": "qw3rty",
+  "broker": "//localhost:9092",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "nexus_structure": { }
+})""");
+
+  ASSERT_NO_THROW(FileWriter::CommandHandler::parseCommand(Command));
+}
+
+TEST(CommandHandlerTesting, parsingInvalidJsonThrows) {
+  std::string Command(R"""(
+{
+  "cmd": "filewriter_new",
+  "job_id": "qw3rty"
+  "broker": "//localhost:9092",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "nexus_structure": { }
+})""");
+
+  ASSERT_THROW(FileWriter::CommandHandler::parseCommand(Command), std::runtime_error);
+}
+
+TEST(CommandHandlerTesting, gettingCommandNameReturnsName) {
+  std::string Command(R"""(
+{
+  "cmd": "filewriter_new",
+  "job_id": "qw3rty",
+  "broker": "//localhost:9092",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "nexus_structure": { }
+})""");
+
+  MainOpt MainOpt;
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
+  auto Json = FileWriter::CommandHandler::parseCommand(Command);
+
+  auto Name = CommandHandler.getCommandName(Json);
+
+  ASSERT_EQ("filewriter_new", Name);
+}
+
+TEST(CommandHandlerTesting, gettingWronglyCasedCommandNameReturnsCorrectCase) {
+  std::string Command(R"""(
+{
+  "cmd": "FILEWRITER_NEW",
+  "job_id": "qw3rty",
+  "broker": "//localhost:9092",
+  "file_attributes": {
+    "file_name": "a-dummy-name-01.h5"
+  },
+  "nexus_structure": { }
+})""");
+
+  MainOpt MainOpt;
+  auto StreamsController = std::make_shared<FileWriter::StreamsController>();
+  FileWriter::CommandHandler CommandHandler(MainOpt, StreamsController, nullptr);
+  auto Json = FileWriter::CommandHandler::parseCommand(Command);
+
+  auto Name = CommandHandler.getCommandName(Json);
+
+  ASSERT_EQ("filewriter_new", Name);
+}
+

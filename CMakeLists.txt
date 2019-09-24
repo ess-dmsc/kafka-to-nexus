@@ -13,7 +13,7 @@ create_version_header(
   ${VERSION_INCLUDE_DIR}/Version.h
 )
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
 
 if(CMAKE_COMPILER_IS_GNUCXX AND COV)
   include(CodeCoverage)

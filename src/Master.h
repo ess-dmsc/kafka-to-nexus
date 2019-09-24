@@ -37,8 +37,8 @@ public:
 
   /// Stop running.
   void stop() override;
-  void handle_command_message(std::unique_ptr<Msg> CommandMessage) override;
-  void handle_command(std::string const &Command) override;
+  void handle_command(std::unique_ptr<Msg> CommandMessage) override;
+  void handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) override;
   void statistics() override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
