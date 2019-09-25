@@ -573,4 +573,44 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   EXPECT_EQ(TestStreamer->processMessage(Demuxer, EmptyMessage),
             ProcessMessageResult::OK);
 }
+
+TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
+  FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
+      RegisterIt("f142");
+  TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
+  // Message timestamp returned is higher than this
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{20};
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
+      .RETURN(0);
+  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
+      .RETURN(0);
+
+  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  ConsumerEmptyStandIn *EmptyPollerConsumer =
+      new ConsumerEmptyStandIn(BrokerSettings);
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName))
+      .TIMES(1);
+  int64_t StopOffset = 10;
+  ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
+      .RETURN(std::vector<int64_t>{StopOffset - 2});
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{0})
+      .TIMES(1);
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  DemuxTopic Demuxer("SomeTopicName");
+  Demuxer.add_source(std::move(TestSource));
+  EXPECT_EQ(TestStreamer->pollAndProcess(Demuxer), ProcessMessageResult::OK);
+  EXPECT_EQ(Demuxer.messages_processed, 0U) << "Expected message not to be "
+                                               "processed because it is from "
+                                               "after the requested stop time";
+}
 }
