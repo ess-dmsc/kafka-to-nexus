@@ -9,7 +9,6 @@
 
 #include "NeXusDataset.h"
 #include <gtest/gtest.h>
-#include <h5cpp/dataspace/simple.hpp>
 #include <h5cpp/datatype/type_trait.hpp>
 #include <h5cpp/hdf5.hpp>
 
