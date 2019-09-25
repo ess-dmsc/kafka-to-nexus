@@ -62,7 +62,7 @@ public:
 
   /// Actual initialziation code, mostly shared among CREATE and OPEN phases.
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const *HDFAttributes,
+                      std::string const &HDFAttributes,
                       CreateWriterTypedBaseMethod CreateMethod);
 
   /// Write an incoming message which should contain a flatbuffer.
