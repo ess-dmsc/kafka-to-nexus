@@ -271,15 +271,16 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
 
 TEST_F(StreamerProcessTimingTest,
        ProcessMessageReturnsStopWhenStopOffsetIsReached) {
+  std::string const SchemaID = "f142";
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
-      RegisterIt("f142");
+      RegisterIt(SchemaID);
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
       .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
-  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
   // The newly received message will have an offset of 10
@@ -293,6 +294,11 @@ TEST_F(StreamerProcessTimingTest,
   ALLOW_CALL(*EmptyPollerConsumer, getCurrentOffsets(_))
       .RETURN(std::vector<int64_t>{StopOffset - 1});
 
+  // The consumer will report that there is one partition and we should stop at
+  // offset 10
+  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
+      .RETURN(std::vector<int64_t>{StopOffset})
+      .TIMES(1);
   // Start offsets are queried first, this is in order to check that there are
   // actually
   // messages between the start and stop times which we should wait to consume
@@ -300,11 +306,7 @@ TEST_F(StreamerProcessTimingTest,
   REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
       .RETURN(std::vector<int64_t>{0})
       .TIMES(1);
-  // The consumer will report that there is one partition and we should stop at
-  // offset 10
-  REQUIRE_CALL(*EmptyPollerConsumer, offsetsForTimesAllPartitions(_, _))
-      .RETURN(std::vector<int64_t>{StopOffset})
-      .TIMES(1);
+
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
