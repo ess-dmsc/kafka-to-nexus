@@ -34,25 +34,26 @@ def pytest_addoption(parser):
 
 def pytest_collection_modifyitems(items, config):
     """
-    If we are running against a local build then only run tests which use the "docker_compose" fixture.
-    The configurations in other fixtures are more complicated, for example run multiple file writers,
-    and are not yet supported by the LOCAL_BUILD option
+    If we are running against a local build then don't try to run the tests
+    involving multiple instances of the file writer
     """
     if config.option.local_build is not None:
         fixture_name = "docker_compose"
+        fixture_name_stop_command = "docker_compose_stop_command"
         selected_items = []
         deselected_items = []
 
         for item in items:
-            if fixture_name in getattr(item, "fixturenames", ()):
+            if fixture_name in getattr(
+                item, "fixturenames", ()
+            ) or fixture_name_stop_command in getattr(item, "fixturenames", ()):
                 selected_items.append(item)
             else:
                 deselected_items.append(item)
         config.hook.pytest_deselected(items=deselected_items)
         items[:] = selected_items
         print(
-            f"\nRunning against local build. This currently only supports running tests which use the {fixture_name}"
-            f" fixture. Other tests have been automatically deselected."
+            f"\nRunning against local build. Only currently supported by a subset of the system tests."
         )
 
 
@@ -198,7 +199,7 @@ def build_and_run(options, request, local_path=None, wait_for_debugger=False):
                 log_options["SERVICE"] = ["filewriter"]
                 cmd.logs(log_options)
         else:
-            proc.wait(timeout=100)
+            proc.kill()
         options["--timeout"] = 30
         cmd.down(options)
         print("containers stopped", flush=True)
@@ -295,8 +296,18 @@ def docker_compose_stop_command(request):
     """
     print("Started preparing test environment...", flush=True)
     options = common_options
-    options["--file"] = ["docker-compose-stop-command.yml"]
-    return build_and_run(options, request)
+    if request.config.getoption(LOCAL_BUILD) is None:
+        options["--file"] = ["docker-compose.yml"]
+    else:
+        # Only run the producer via docker-compose, not the file writer image,
+        # as we're using a local build of the file writer
+        options["--file"] = ["docker-compose-producer.yml"]
+    return build_and_run(
+        options,
+        request,
+        request.config.getoption(LOCAL_BUILD),
+        request.config.getoption(WAIT_FOR_DEBUGGER_ATTACH),
+    )
 
 
 @pytest.fixture(scope="module")

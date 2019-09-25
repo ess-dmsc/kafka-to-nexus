@@ -34,6 +34,12 @@ public:
   virtual bool topicPresent(const std::string &Topic) = 0;
   virtual std::vector<int32_t>
   queryTopicPartitions(const std::string &TopicName) = 0;
+  virtual std::vector<int64_t>
+  offsetsForTimesAllPartitions(std::string const &Topic,
+                               std::chrono::milliseconds Time) = 0;
+  virtual int64_t getHighWatermarkOffset(std::string const &Topic,
+                                         int32_t Partition) = 0;
+  virtual std::vector<int64_t> getCurrentOffsets(std::string const &Topic) = 0;
 };
 
 class Consumer : public ConsumerInterface {
@@ -75,23 +81,53 @@ public:
   /// \return Any new messages consumed.
   std::unique_ptr<std::pair<PollStatus, FileWriter::Msg>> poll() override;
 
+  /// Returns first available offset after given time, for each partition in
+  /// specified topic
+  /// \param Topic The name of the topic
+  /// \param Time The time to get offsets corresponding to
+  /// \return Offset for each partition in topic
+  std::vector<int64_t>
+  offsetsForTimesAllPartitions(std::string const &Topic,
+                               std::chrono::milliseconds Time) override;
+
+  /// Get the current known high watermark offset from the consumer
+  /// Does not query the broker
+  /// \param Topic The name of the topic
+  /// \param Partition The parition number to get the offset for
+  /// \return high watermark offset
+  int64_t getHighWatermarkOffset(std::string const &Topic,
+                                 int32_t Partition) override;
+
+  /// Get the current position of the consumer for each partition in the given
+  /// topic
+  /// \param Topic The name of the topic
+  /// \return Vector of current offset in each partition
+  std::vector<int64_t> getCurrentOffsets(std::string const &Topic) override;
+
 protected:
   std::unique_ptr<RdKafka::KafkaConsumer> KafkaConsumer;
 
 private:
-  const RdKafka::TopicMetadata *findTopic(const std::string &Topic);
   std::unique_ptr<RdKafka::Conf> Conf;
   BrokerSettings ConsumerBrokerSettings;
-  void updateMetadata();
-  std::shared_ptr<RdKafka::Metadata> KafkaMetadata;
+  std::shared_ptr<RdKafka::Metadata> getMetadata();
   int id = 0;
   std::unique_ptr<KafkaEventCb> EventCallback;
-  void assignToPartitions(const std::string &Topic,
-                          const std::vector<RdKafka::TopicPartition *>
-                              &TopicPartitionsWithOffsets) const;
+  void assignToPartitions(
+      const std::string &Topic,
+      const std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithOffsets);
   std::vector<RdKafka::TopicPartition *>
   queryWatermarkOffsets(const std::string &Topic);
-  bool metadataCall();
+  std::shared_ptr<RdKafka::Metadata> metadataCall();
   SharedLogger Logger = spdlog::get("filewriterlogger");
+  std::vector<RdKafka::TopicPartition *>
+  offsetsForTimesForTopic(std::string const &Topic,
+                          std::chrono::milliseconds Time);
+  bool queryOffsetsForTimes(
+      std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithTimestamp);
+  size_t CurrentNumberOfPartitions = 0;
+  std::string CurrentTopic;
+
+  size_t getNumberOfPartitionsInTopic(const std::string &Topic);
 };
 } // namespace KafkaW

@@ -48,10 +48,20 @@ public:
 
   ~Streamer() = default;
 
-  /// \brief Method that process a message.
+  /// \brief Polls for message and processes it if there is one
   ///
-  /// \param mp instance of the policy that describe how to process the message
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
   ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
+
+  /// \brief Processes received message
+  ///
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
+  /// \param KafkaMessage the received message
+  ProcessMessageResult processMessage(
+      FileWriter::DemuxTopic &MessageProcessor,
+      std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.
@@ -92,7 +102,29 @@ protected:
 private:
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
+
+  /// Creates StopOffsets vector
+  std::vector<std::pair<int64_t, bool>>
+  getStopOffsets(std::chrono::milliseconds StartTime,
+                 std::chrono::milliseconds StopTime,
+                 std::string const &TopicName);
+
+  /// Checks whether we've now reached the stop offsets
+  bool stopOffsetsReached(int32_t NewMessagePartition,
+                          int64_t NewMessageOffset);
+
   SharedLogger Logger = getLogger();
+  bool CatchingUpToStopOffset = false;
+
+  /// The offset for each partition at which the Streamer should stop consuming
+  /// from Kafka and whether it has been reached yet
+  /// Only set when the system time reaches the requested stop time
+  std::vector<std::pair<int64_t, bool>> StopOffsets;
+
+  /// Check if the consumer has already reached the offset we want to stop at
+  void markIfOffsetsAlreadyReached(
+      std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
+      std::string const &TopicName);
 };
 
 /// \brief Create a consumer with options specified in the class
@@ -108,8 +140,4 @@ std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 initTopics(std::string const &TopicName,
            FileWriter::StreamerOptions const &Options,
            SharedLogger const &Logger, ConsumerPtr Consumer);
-
-bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime,
-                     SharedLogger const &Logger);
 } // namespace FileWriter

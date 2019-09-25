@@ -39,6 +39,7 @@ set(UnitTests_SRC
         CommandParserTests.cpp)
 
 set(UnitTests_INC
+        StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
         AddReader.h
         helpers/ev42_synth.h

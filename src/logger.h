@@ -12,6 +12,8 @@
 #include <spdlog/spdlog.h>
 #include <string>
 
+#define UNUSED_ARG(x) (void)x;
+
 namespace uri {
 struct URI;
 }
