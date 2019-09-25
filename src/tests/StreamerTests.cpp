@@ -56,7 +56,7 @@ std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
 
   auto nameOffset = Builder.CreateString(SourceName);
   auto valueOffset = Schemas::f142::CreateInt(Builder, Value);
-  uint64_t timestamp = 1234;
+  uint64_t timestamp = 123456789;
   auto LogDataOffset =
       CreateLogData(Builder, nameOffset, Schemas::f142::Value::Int,
                     valueOffset.Union(), timestamp);
@@ -577,18 +577,19 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
 }
 
 TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
+  std::string const SchemaID = "f142";
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
-      RegisterIt("f142");
+      RegisterIt(SchemaID);
   TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
   // Message timestamp returned is higher than this
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{20};
+  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{2};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
       .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
 
-  FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
   ConsumerEmptyStandIn *EmptyPollerConsumer =
       new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
