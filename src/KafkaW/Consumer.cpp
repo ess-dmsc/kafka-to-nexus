@@ -258,8 +258,8 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   return true;
 }
 
-/// Updates the RdKafka Metadata pointer. If broker is unavailable, keeps trying
-/// to connect every 500ms, logging messages every few seconds.
+/// Gets metadata from the Kafka broker, if unsuccessful then keeps trying,
+/// and logs a warning message every WarnOnNRetries attempts.
 std::shared_ptr<RdKafka::Metadata> Consumer::getMetadata() {
   Logger->trace("Querying broker for Metadata");
   uint32_t LoopCounter = 0;
