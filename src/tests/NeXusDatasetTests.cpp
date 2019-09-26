@@ -25,37 +25,37 @@ public:
   hdf5::node::Group RootGroup;
 };
 
-template<class Dataset, typename DatasetType>
-void defaultDatasetCreation(hdf5::node::Group &RootGroup, std::string DatasetName) {
+template <class Dataset, typename DatasetType>
+void defaultDatasetCreation(hdf5::node::Group &RootGroup,
+                            std::string DatasetName) {
   size_t ChunkSize = 256;
-  {
-    Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create,
-                      ChunkSize);
-  }
-  ASSERT_TRUE(RootGroup.has_dataset(DatasetName)) << "Missing dataset: " << DatasetName;
+  { Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize); }
+  ASSERT_TRUE(RootGroup.has_dataset(DatasetName))
+      << "Missing dataset: " << DatasetName;
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset(DatasetName);
   auto CreationProperties = TestDataset.creation_list();
   auto ChunkDims = CreationProperties.chunk();
   ASSERT_EQ(ChunkDims.size(), 1u);
   EXPECT_EQ(ChunkDims.at(0), ChunkSize);
-  EXPECT_EQ(hdf5::datatype::create<DatasetType>(), TestDataset.datatype()) << "Wrong type for dataset: " << DatasetName;
+  EXPECT_EQ(hdf5::datatype::create<DatasetType>(), TestDataset.datatype())
+      << "Wrong type for dataset: " << DatasetName;
   RootGroup.remove(DatasetName);
 }
 
-template<class Dataset, typename DatasetType>
-void defaultTimeDatasetCreation(hdf5::node::Group &RootGroup, std::string DatasetName) {
+template <class Dataset, typename DatasetType>
+void defaultTimeDatasetCreation(hdf5::node::Group &RootGroup,
+                                std::string DatasetName) {
   size_t ChunkSize = 256;
-  {
-    Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create,
-                                  ChunkSize);
-  }
-  ASSERT_TRUE(RootGroup.has_dataset(DatasetName)) << "Missing dataset: " << DatasetName;
+  { Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize); }
+  ASSERT_TRUE(RootGroup.has_dataset(DatasetName))
+      << "Missing dataset: " << DatasetName;
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset(DatasetName);
   auto CreationProperties = TestDataset.creation_list();
   auto ChunkDims = CreationProperties.chunk();
   ASSERT_EQ(ChunkDims.size(), 1u);
   EXPECT_EQ(ChunkDims.at(0), ChunkSize);
-  EXPECT_EQ(hdf5::datatype::create<DatasetType>(), TestDataset.datatype()) << "Wrong type for dataset: " << DatasetName;
+  EXPECT_EQ(hdf5::datatype::create<DatasetType>(), TestDataset.datatype())
+      << "Wrong type for dataset: " << DatasetName;
   bool FoundStartAttr{false};
   bool FoundUnitAttr{false};
   for (const auto &Attribute : TestDataset.attributes) {
@@ -77,37 +77,34 @@ void defaultTimeDatasetCreation(hdf5::node::Group &RootGroup, std::string Datase
   RootGroup.remove(DatasetName);
 }
 
-template<class Dataset>
+template <class Dataset>
 void reOpenDataset(hdf5::node::Group &RootGroup, std::string DatasetName) {
   {
     size_t ChunkSize{256};
-    Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create,
-                      ChunkSize);
+    Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize);
   }
-  EXPECT_NO_THROW(
-      Dataset ReOpened(RootGroup, NeXusDataset::Mode::Open)) << "Unable to re-open dataset.";
+  EXPECT_NO_THROW(Dataset ReOpened(RootGroup, NeXusDataset::Mode::Open))
+      << "Unable to re-open dataset.";
   RootGroup.remove(DatasetName);
 }
 
-template<class Dataset>
-void failOnReCreateDataset(hdf5::node::Group &RootGroup, std::string DatasetName) {
+template <class Dataset>
+void failOnReCreateDataset(hdf5::node::Group &RootGroup,
+                           std::string DatasetName) {
   size_t ChunkSize = 256;
-  {
-    Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create,
-                      ChunkSize);
-  }
-  EXPECT_THROW(Dataset UnderTest(
-                   RootGroup, NeXusDataset::Mode::Create, ChunkSize),
-               std::runtime_error) << "Re-creation of dataset should fail but did not.";
+  { Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize); }
+  EXPECT_THROW(
+      Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize),
+      std::runtime_error)
+      << "Re-creation of dataset should fail but did not.";
   RootGroup.remove(DatasetName);
 }
 
-template<class Dataset>
-void wrongModeOpen(hdf5::node::Group &RootGroup) {
+template <class Dataset> void wrongModeOpen(hdf5::node::Group &RootGroup) {
   size_t ChunkSize = 256;
-  EXPECT_THROW(Dataset(RootGroup, NeXusDataset::Mode(-1247832),
-                                      ChunkSize),
-               std::runtime_error) << "Should have failed to open (but did not) due to wrong mode.";
+  EXPECT_THROW(Dataset(RootGroup, NeXusDataset::Mode(-1247832), ChunkSize),
+               std::runtime_error)
+      << "Should have failed to open (but did not) due to wrong mode.";
 }
 
 //--------------------------------------------------
@@ -126,7 +123,8 @@ TEST_F(NeXusDatasetCreation, RawValueOpen) {
 TEST_F(NeXusDatasetCreation, TimeOpen) {
   using TypeUnderTest = NeXusDataset::Time;
   std::string DatasetName{"time"};
-  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup, DatasetName);
+  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup,
+                                                           DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
@@ -137,10 +135,10 @@ TEST_F(NeXusDatasetCreation, TimeOpen) {
 TEST_F(NeXusDatasetCreation, CueIndexOpen) {
   using TypeUnderTest = NeXusDataset::CueIndex;
   std::string DatasetName{"cue_index"};
-  defaultDatasetCreation<TypeUnderTest , std::uint32_t>(RootGroup, DatasetName);
-  reOpenDataset<TypeUnderTest >(RootGroup, DatasetName);
-  wrongModeOpen<TypeUnderTest >(RootGroup);
-  failOnReCreateDataset<TypeUnderTest >(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
+  wrongModeOpen<TypeUnderTest>(RootGroup);
+  failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
 }
 
 //--------------------------------------------------
@@ -148,7 +146,8 @@ TEST_F(NeXusDatasetCreation, CueIndexOpen) {
 TEST_F(NeXusDatasetCreation, CueTimestampZeroOpen) {
   using TypeUnderTest = NeXusDataset::CueTimestampZero;
   std::string DatasetName{"cue_timestamp_zero"};
-  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup, DatasetName);
+  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup,
+                                                           DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
@@ -159,10 +158,10 @@ TEST_F(NeXusDatasetCreation, CueTimestampZeroOpen) {
 TEST_F(NeXusDatasetCreation, EventIdOpen) {
   using TypeUnderTest = NeXusDataset::EventId;
   std::string DatasetName{"event_id"};
-  defaultDatasetCreation<TypeUnderTest , std::uint32_t>(RootGroup, DatasetName);
-  reOpenDataset<TypeUnderTest >(RootGroup, DatasetName);
-  wrongModeOpen<TypeUnderTest >(RootGroup);
-  failOnReCreateDataset<TypeUnderTest >(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
+  wrongModeOpen<TypeUnderTest>(RootGroup);
+  failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
 }
 
 //--------------------------------------------------
@@ -170,10 +169,10 @@ TEST_F(NeXusDatasetCreation, EventIdOpen) {
 TEST_F(NeXusDatasetCreation, EventIndexOpen) {
   using TypeUnderTest = NeXusDataset::EventIndex;
   std::string DatasetName{"event_index"};
-  defaultDatasetCreation<TypeUnderTest , std::uint32_t>(RootGroup, DatasetName);
-  reOpenDataset<TypeUnderTest >(RootGroup, DatasetName);
-  wrongModeOpen<TypeUnderTest >(RootGroup);
-  failOnReCreateDataset<TypeUnderTest >(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
+  wrongModeOpen<TypeUnderTest>(RootGroup);
+  failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
 }
 
 //--------------------------------------------------
@@ -181,10 +180,10 @@ TEST_F(NeXusDatasetCreation, EventIndexOpen) {
 TEST_F(NeXusDatasetCreation, EventTimeOffsetOpen) {
   using TypeUnderTest = NeXusDataset::EventTimeOffset;
   std::string DatasetName{"event_time_offset"};
-  defaultDatasetCreation<TypeUnderTest , std::uint32_t>(RootGroup, DatasetName);
-  reOpenDataset<TypeUnderTest >(RootGroup, DatasetName);
-  wrongModeOpen<TypeUnderTest >(RootGroup);
-  failOnReCreateDataset<TypeUnderTest >(RootGroup, DatasetName);
+  defaultDatasetCreation<TypeUnderTest, std::uint32_t>(RootGroup, DatasetName);
+  reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
+  wrongModeOpen<TypeUnderTest>(RootGroup);
+  failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
 }
 
 //--------------------------------------------------
@@ -192,7 +191,8 @@ TEST_F(NeXusDatasetCreation, EventTimeOffsetOpen) {
 TEST_F(NeXusDatasetCreation, EventTimeZeroOpen) {
   using TypeUnderTest = NeXusDataset::EventTimeZero;
   std::string DatasetName{"event_time_zero"};
-  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup, DatasetName);
+  defaultTimeDatasetCreation<TypeUnderTest, std::uint64_t>(RootGroup,
+                                                           DatasetName);
   reOpenDataset<TypeUnderTest>(RootGroup, DatasetName);
   wrongModeOpen<TypeUnderTest>(RootGroup);
   failOnReCreateDataset<TypeUnderTest>(RootGroup, DatasetName);
