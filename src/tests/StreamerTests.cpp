@@ -252,8 +252,7 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
           generateKafkaMsg(reinterpret_cast<const char *>(DataBuffer.c_str()),
@@ -492,8 +491,7 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -535,8 +533,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
-  ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateEmptyKafkaMsg(PollStatus::EndOfPartition))
       .TIMES(1);
@@ -590,8 +587,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
       .RETURN(0);
 
   FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
-  ConsumerEmptyStandIn *EmptyPollerConsumer =
-      new ConsumerEmptyStandIn(BrokerSettings);
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName))
       .TIMES(1);
