@@ -17,8 +17,9 @@
 
 namespace {
 /// Finds named topic in metadata. Throws if topic is not found.
-/// \param Topic Name of the topic to look for
-/// \return The topic metadata object
+///
+/// \param Topic Name of the topic to look for.
+/// \return The topic metadata object.
 const RdKafka::TopicMetadata *
 findTopic(const std::string &Topic,
           const std::shared_ptr<RdKafka::Metadata> &KafkaMetadata) {
@@ -136,7 +137,7 @@ std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
 std::vector<RdKafka::TopicPartition *>
 Consumer::offsetsForTimesForTopic(std::string const &Topic,
                                   std::chrono::milliseconds const Time) {
-  size_t NumberOfPartitions = getNumberOfPartitionsInTopic(Topic);
+  auto NumberOfPartitions = getNumberOfPartitionsInTopic(Topic);
   std::vector<RdKafka::TopicPartition *> TopicPartitionsWithTimestamp;
   for (uint64_t i = 0; i < NumberOfPartitions; i++) {
     auto TopicPartition = RdKafka::TopicPartition::create(Topic, i);
@@ -162,9 +163,10 @@ Consumer::offsetsForTimesForTopic(std::string const &Topic,
 
 /// Returns the number of partitions in the topic, if the provided Topic name is
 /// the current assignment then number of partitions is already known and we can
-/// avoid a metadata request
-/// \param Topic Name of the topic
-/// \return Number of partitions in the named topic
+/// avoid a metadata request.
+///
+/// \param Topic Name of the topic.
+/// \return Number of partitions in the named topic.
 size_t Consumer::getNumberOfPartitionsInTopic(const std::string &Topic) {
   size_t NumberOfPartitions;
   if (Topic == CurrentTopic && CurrentNumberOfPartitions != 0) {
@@ -177,10 +179,11 @@ size_t Consumer::getNumberOfPartitionsInTopic(const std::string &Topic) {
 
 /// Get offsets for times, returns true if successful and false otherwise
 /// Timestamps in provided topic partitions' offset field will be replaced with
-/// offset if successful
+/// offset if successful.
+///
 /// \param TopicPartitionsWithTimestamp topic partitions container timestamp in
-/// the offset field
-/// \return true if successful
+/// the offset field.
+/// \return true if successful.
 bool Consumer::queryOffsetsForTimes(
     std::vector<RdKafka::TopicPartition *> &TopicPartitionsWithTimestamp) {
   auto ErrorCode = KafkaConsumer->offsetsForTimes(

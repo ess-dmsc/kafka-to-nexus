@@ -165,10 +165,11 @@ Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
 }
 
 /// Checks if the newly received message means that we have now reached the stop
-/// offset for every partition
-/// \param NewMessagePartition partition number of the newly received message
-/// \param NewMessageOffset offset of the newly received message
-/// \return true if we've reached stop offset for every partition
+/// offset for every partition.
+///
+/// \param NewMessagePartition partition number of the newly received message.
+/// \param NewMessageOffset offset of the newly received message.
+/// \return true if we've reached stop offset for every partition.
 bool Streamer::stopOffsetsReached(int32_t NewMessagePartition,
                                   int64_t NewMessageOffset) {
   if (NewMessageOffset >= StopOffsets[NewMessagePartition].first) {
