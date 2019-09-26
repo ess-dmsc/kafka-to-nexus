@@ -109,9 +109,12 @@ private:
                  std::chrono::milliseconds StopTime,
                  std::string const &TopicName);
 
-  /// Checks whether we've now reached the stop offsets
-  bool stopOffsetsReached(int32_t NewMessagePartition,
-                          int64_t NewMessageOffset);
+  /// Checks whether current message means we've now reached the stop offsets
+  bool stopOffsetsNowReached(int32_t NewMessagePartition,
+                             int64_t NewMessageOffset);
+
+  /// Checks whether we've reached the stop offsets
+  bool stopOffsetsReached();
 
   SharedLogger Logger = getLogger();
   bool CatchingUpToStopOffset = false;

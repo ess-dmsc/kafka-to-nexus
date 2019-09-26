@@ -170,11 +170,15 @@ Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
 /// \param NewMessagePartition partition number of the newly received message.
 /// \param NewMessageOffset offset of the newly received message.
 /// \return true if we've reached stop offset for every partition.
-bool Streamer::stopOffsetsReached(int32_t NewMessagePartition,
-                                  int64_t NewMessageOffset) {
+bool Streamer::stopOffsetsNowReached(int32_t NewMessagePartition,
+                                     int64_t NewMessageOffset) {
   if (NewMessageOffset >= StopOffsets[NewMessagePartition].first) {
     StopOffsets[NewMessagePartition].second = true;
   }
+  return stopOffsetsReached();
+}
+
+bool Streamer::stopOffsetsReached() {
   return std::all_of(
       StopOffsets.cbegin(), StopOffsets.cend(),
       [](std::pair<int64_t, bool> const &StopPair) { return StopPair.second; });
@@ -191,14 +195,9 @@ ProcessMessageResult Streamer::processMessage(
                                  Options.StopTimestamp + Options.AfterStopTime,
                                  MessageProcessor.topic());
     Logger->trace("Finished executing getStopOffsets");
-    // There may be no data in the topic, so check already if all stop offsets
-    // are marked as reached
-    bool NoDataInTopic =
-        std::all_of(StopOffsets.cbegin(), StopOffsets.cend(),
-                    [](std::pair<int64_t, bool> const &StopPair) {
-                      return StopPair.second;
-                    });
-    if (NoDataInTopic) {
+    // There may be no data in the topic, so check if all stop offsets
+    // are already marked as reached
+    if (stopOffsetsReached()) {
       Logger->warn("There was no data in {} to consume",
                    MessageProcessor.topic());
       return ProcessMessageResult::STOP;
@@ -230,8 +229,8 @@ ProcessMessageResult Streamer::processMessage(
   }
 
   if (CatchingUpToStopOffset &&
-      stopOffsetsReached(KafkaMessage->second.MetaData.Partition,
-                         KafkaMessage->second.MetaData.Offset)) {
+      stopOffsetsNowReached(KafkaMessage->second.MetaData.Partition,
+                            KafkaMessage->second.MetaData.Offset)) {
     Logger->debug("Reached stop offsets in topic {}", MessageProcessor.topic());
 
     if (MessageProcessor.removeSource(Message->getSourceHash())) {

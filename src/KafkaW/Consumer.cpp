@@ -258,7 +258,7 @@ bool Consumer::topicPresent(const std::string &TopicName) {
   return true;
 }
 
-/// Gets metadata from the Kafka broker, if unsuccessful then keeps trying,
+/// Gets metadata from the Kafka broker, if unsuccessful then keeps trying
 /// and logs a warning message every WarnOnNRetries attempts.
 std::shared_ptr<RdKafka::Metadata> Consumer::getMetadata() {
   Logger->trace("Querying broker for Metadata");
