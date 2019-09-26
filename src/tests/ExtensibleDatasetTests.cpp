@@ -200,7 +200,7 @@ TEST_F(DatasetCreation, MultiDimAppendAnotherType) {
 
 TEST_F(DatasetCreation, MultiDimAppendSmallerSize1) {
   hdf5::Dimensions DatasetDimensions{2, 2};
-  auto AppendDims = hdf5::Dimensions{1,2};
+  auto AppendDims = hdf5::Dimensions{1, 2};
   NeXusDataset::MultiDimDataset<int> Dataset(
       RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8};
@@ -223,7 +223,7 @@ TEST_F(DatasetCreation, MultiDimAppendWrongRank) {
 
 TEST_F(DatasetCreation, MultiDimAppendSmallerSize2) {
   hdf5::Dimensions DatasetDimensions{2, 2};
-  auto AppendDims = hdf5::Dimensions{2,1};
+  auto AppendDims = hdf5::Dimensions{2, 1};
   NeXusDataset::MultiDimDataset<int> Dataset(
       RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8};
@@ -238,7 +238,7 @@ TEST_F(DatasetCreation, MultiDimAppendSmallerSize2) {
 
 TEST_F(DatasetCreation, MultiDimAppendBiggerSize) {
   hdf5::Dimensions DatasetDimensions{2, 2};
-  auto AppendDims = hdf5::Dimensions{2,3};
+  auto AppendDims = hdf5::Dimensions{2, 3};
   NeXusDataset::MultiDimDataset<int> Dataset(
       RootGroup, NeXusDataset::Mode::Create, DatasetDimensions, {});
   std::vector<int> TestData{6, 8, 10, 12, 14, 16};

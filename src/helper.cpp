@@ -43,3 +43,8 @@ std::vector<char> readFileIntoVector(std::string const &FileName) {
   ifs.read(ret.data(), n1);
   return ret;
 }
+
+std::chrono::duration<long long int, std::milli> getCurrentTimeStampMS() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now().time_since_epoch());
+}
