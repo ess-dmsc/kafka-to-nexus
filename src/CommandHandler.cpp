@@ -19,7 +19,6 @@
 #include "json.h"
 #include <algorithm>
 #include <chrono>
-#include <future>
 
 using std::vector;
 
@@ -31,17 +30,6 @@ using nlohmann::json;
 static void throwMissingKey(std::string const &Key,
                             std::string const &Context) {
   throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
-}
-
-std::chrono::milliseconds findTime(json const &Document,
-                                   std::string const &Key) {
-  if (auto x = find<uint64_t>(Key, Document)) {
-    std::chrono::milliseconds Time(x.inner());
-    if (Time.count() != 0) {
-      return Time;
-    }
-  }
-  return std::chrono::milliseconds{-1};
 }
 
 std::vector<StreamHDFInfo>
@@ -184,24 +172,14 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-void CommandHandler::handleNew(const json &JSONCommand,
-                               std::chrono::milliseconds StartTime) {
-  auto StartInfo =
-      CommandParser::extractStartInformation(JSONCommand, StartTime);
-
-  // Check job is not already running
-  if (StreamControl->jobIDInUse(StartInfo.JobID)) {
-    Logger->error("Command ignored as job id {} is already in progress",
-                  StartInfo.JobID);
-    return;
-  }
-
+std::unique_ptr<IStreamMaster> CommandHandler::createFileWritingJob(StartCommandInfo const &StartInfo,
+    std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer, MainOpt &Settings) {
   auto Task =
-      std::make_unique<FileWriterTask>(Config.ServiceID, StatusProducer);
+      std::make_unique<FileWriterTask>(Settings.ServiceID, StatusProducer);
   Task->setJobId(StartInfo.JobID);
-  Task->setFilename(Config.HDFOutputPrefix, StartInfo.Filename);
+  Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
-  logEvent(StatusProducer, StatusCode::Start, Config.ServiceID, Task->jobID(),
+  logEvent(StatusProducer, StatusCode::Start, Settings.ServiceID, Task->jobID(),
            "Start job");
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
@@ -223,28 +201,26 @@ void CommandHandler::handleNew(const json &JSONCommand,
 
   addStreamSourceToWriterModule(StreamSettingsList, Task);
 
-  Config.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
-  Config.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
+  Settings.StreamerConfiguration.StartTimestamp = StartInfo.StartTime;
+  Settings.StreamerConfiguration.StopTimestamp = StartInfo.StopTime;
 
   Logger->info("Start time: {}ms",
-               Config.StreamerConfiguration.StartTimestamp.count());
-  if (Config.StreamerConfiguration.StopTimestamp.count() > 0) {
+               Settings.StreamerConfiguration.StartTimestamp.count());
+  if (Settings.StreamerConfiguration.StopTimestamp.count() > 0) {
     Logger->info("Stop time: {}ms",
-                 Config.StreamerConfiguration.StopTimestamp.count());
+                 Settings.StreamerConfiguration.StopTimestamp.count());
   }
 
-  // Register the task with master.
   Logger->info("Write file with job_id: {}", Task->jobID());
   auto s = StreamMaster::createStreamMaster(StartInfo.BrokerInfo.HostPort, std::move(Task),
-                                            Config, StatusProducer);
-  s->report(std::chrono::milliseconds{Config.StatusMasterIntervalMS});
-  if (Config.topic_write_duration.count() != 0) {
-    s->setTopicWriteDuration(Config.topic_write_duration);
+                                            Settings, StatusProducer);
+  s->report(std::chrono::milliseconds{Settings.StatusMasterIntervalMS});
+  if (Settings.topic_write_duration.count() != 0) {
+    s->setTopicWriteDuration(Settings.topic_write_duration);
   }
   s->start();
 
-  StreamControl->addStreamMaster(std::move(s));
-
+  return s;
 }
 
 void CommandHandler::addStreamSourceToWriterModule(
@@ -306,175 +282,6 @@ void CommandHandler::addStreamSourceToWriterModule(
   }
 }
 
-void CommandHandler::handleFileWriterTaskClearAll() {
-    StreamControl->stopStreamMasters();
-}
 
-void CommandHandler::handleExit() {
-  if (StreamControl != nullptr) {
-    // TODO
-    // StreamControl->stop();
-  }
-}
-
-void CommandHandler::handleStreamMasterStop(const json &Command) {
-  Logger->trace("{}", Command.dump());
-
-  auto StopInfo = CommandParser::extractStopInformation(Command);
-
-  try {
-    if (StopInfo.StopTime.count() > 0) {
-      Logger->info(
-          "Received request to gracefully stop file with id : {} at {} ms",
-          StopInfo.JobID, StopInfo.StopTime.count());
-      StreamControl->setStopTimeForJob(StopInfo.JobID, StopInfo.StopTime);
-    } else {
-      Logger->info("Received request to gracefully stop file with id : {}",
-                   StopInfo.JobID);
-      StreamControl->stopJob(StopInfo.JobID);
-    }
-  } catch (std::runtime_error &Error) {
-    Logger->warn("{}", Error.what());
-  }
-}
-
-/// \brief Parse the given command and pass it on to a more specific
-/// handler.
-///
-/// \param Command The command to parse.
-/// \param MsgTimestamp The message timestamp.
-void CommandHandler::handle(std::string const &Command,
-                            const std::chrono::milliseconds StartTime) {
-  json JSONCommand;
-  try {
-    JSONCommand = json::parse(Command);
-  } catch (...) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Can not parse command: {}", TruncateCommand(Command))));
-  }
-
-  if (auto ServiceIDMaybe = find<std::string>("service_id", JSONCommand)) {
-    if (ServiceIDMaybe.inner() != Config.ServiceID) {
-      Logger->trace("Ignoring command addressed to service_id: {}",
-                    ServiceIDMaybe.inner());
-      return;
-    }
-  }
-
-  if (auto CmdMaybe = find<std::string>("cmd", JSONCommand)) {
-    std::string CommandMain = CommandParser::extractCommandName(JSONCommand);
-
-    Logger->info("Handling a command of type: {}", CommandMain);
-    if (CommandMain == CommandParser::StartCommand) {
-      handleNew(JSONCommand, StartTime);
-      return;
-    } else if (CommandMain == CommandParser::ExitCommand) {
-      handleExit();
-      return;
-    } else if (CommandMain == CommandParser::StopCommand) {
-      handleStreamMasterStop(JSONCommand);
-      return;
-    } else if (CommandMain == CommandParser::StopAllWritingCommand) {
-      handleFileWriterTaskClearAll();
-      return;
-    } else {
-      throw std::runtime_error(
-          fmt::format("Could not understand 'cmd' field of this command."));
-    }
-  } else {
-    throw std::runtime_error(
-        fmt::format("Can not extract 'cmd' from command."));
-  }
-}
-
-std::string format_nested_exception(std::exception const &E,
-                                    std::stringstream &StrS, int Level) {
-  if (Level > 0) {
-    StrS << '\n';
-  }
-  StrS << fmt::format("{:{}}{}", "", 2 * Level, E.what());
-  try {
-    std::rethrow_if_nested(E);
-  } catch (std::exception const &E) {
-    format_nested_exception(E, StrS, Level + 1);
-  } catch (...) {
-  }
-  return StrS.str();
-}
-
-std::string format_nested_exception(std::exception const &E) {
-  std::stringstream StrS;
-  return format_nested_exception(E, StrS, 0);
-}
-
-/// Truncate logged command so that it doesn't saturate logs.
-///
-/// \param Command Original command that threw an error
-/// \return shorter version to be written in logs.
-std::string TruncateCommand(std::string const &Command) {
-
-  unsigned int MaxCmdSize = 1500;
-  if (Command.size() > MaxCmdSize) {
-    auto TruncatedCommand = Command.substr(0, MaxCmdSize);
-    TruncatedCommand.append("\n  [...]\n Command was truncated, displayed "
-                            "first 1500 characters.\n");
-    return TruncatedCommand;
-  }
-  return Command;
-}
-
-void CommandHandler::tryToHandle(std::string const &Command,
-                                 std::chrono::milliseconds MsgTimestamp) {
-  try {
-    handle(Command, MsgTimestamp);
-  } catch (...) {
-    std::string JobID = "unknown";
-    try {
-      JobID = json::parse(Command)["job_id"];
-    } catch (...) {
-      // Okay to ignore as original exception will give the reason.
-    }
-
-    try {
-      std::throw_with_nested(
-          std::runtime_error("Error in CommandHandler::tryToHandle"));
-    } catch (std::runtime_error const &E) {
-      auto TruncatedCommand = TruncateCommand(Command);
-      auto Message = fmt::format(
-          "Unexpected std::exception while handling command:\n{}\n{}",
-          format_nested_exception(E), TruncatedCommand);
-      Logger->error("JobID: {}  StatusCode: {}  Message: {}", JobID,
-                    convertStatusCodeToString(StatusCode::Fail), Message);
-      logEvent(StatusProducer, StatusCode::Fail, Config.ServiceID, JobID,
-               Message);
-    }
-  }
-}
-
-nlohmann::json CommandHandler::parseCommand(std::string const &Command) {
-  try {
-    return json::parse(Command);
-  } catch (json::parse_error const & Error) {
-    throw std::runtime_error(fmt::format("Could not parse command: {}", TruncateCommand(Command)));
-  }
-}
-
-std::string CommandHandler::getCommandName(const nlohmann::json &Command){
-  return CommandParser::extractCommandName(Command);
-}
-
-void CommandHandler::handleNew1(nlohmann::json const &JSONCommand,
-                std::chrono::milliseconds StartTime) {
-
-  auto StartInfo =
-      CommandParser::extractStartInformation(JSONCommand, StartTime);
-
-  // Check job is not already running
-  if (StreamControl->jobIDInUse(StartInfo.JobID)) {
-    throw std::runtime_error(fmt::format("Command ignored as job id {} is already in progress",
-                  StartInfo.JobID));
-  }
-
-}
 
 } // namespace FileWriter

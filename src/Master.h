@@ -59,5 +59,6 @@ private:
   MainOpt &MainConfig;
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   std::shared_ptr<StreamsController> StreamsControl = std::make_shared<StreamsController>();
+  nlohmann::json parseCommand(std::string const &Command);
 };
 } // namespace FileWriter

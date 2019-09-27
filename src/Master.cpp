@@ -41,8 +41,6 @@ Master::Master(MainOpt &Config)
 
 
 void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
-  CommandHandler command_handler(getMainOpt(), StreamsControl, StatusProducer);
-
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
 
   // If Kafka message does not contain a timestamp then use current time.
@@ -59,18 +57,49 @@ void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
   handle_command(Message, TimeStamp);
 }
 
-void Master::handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) {
-  CommandHandler Handler(getMainOpt(), StreamsControl, StatusProducer);
-
+nlohmann::json Master::parseCommand(std::string const &Command) {
   try {
-    auto Json =  CommandHandler::parseCommand(Command);
-    auto CommandName = CommandHandler::getCommandName(Json);
+    return nlohmann::json::parse(Command);
+  } catch (nlohmann::json::parse_error const & Error) {
+    throw std::runtime_error("Could not parse command JSON");
+  }
+}
+
+void Master::handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) {
+  try {
+    auto CommandJson =  parseCommand(Command);
+    auto CommandName = CommandParser::extractCommandName(CommandJson);
 
     if (CommandName == CommandParser::StartCommand) {
-      Handler.handleNew1(Json, TimeStamp);
+      auto StartInfo =
+          CommandParser::extractStartInformation(CommandJson, TimeStamp);
 
+      // Check job is not already running
+      if (StreamsControl->jobIDInUse(StartInfo.JobID)) {
+        throw std::runtime_error(fmt::format("Command ignored as job id {} is already in progress",
+                                             StartInfo.JobID));
+      }
 
-
+      CommandHandler Handler;
+      auto NewJob = Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
+      StreamsControl->addStreamMaster(std::move(NewJob));
+    }
+    else if (CommandName == CommandParser::StopCommand) {
+      auto StopInfo = CommandParser::extractStopInformation(CommandJson);
+      if (StopInfo.StopTime.count() > 0) {
+        Logger->info(
+            "Received request to gracefully stop file with id : {} at {} ms",
+            StopInfo.JobID, StopInfo.StopTime.count());
+        StreamsControl->setStopTimeForJob(StopInfo.JobID, StopInfo.StopTime);
+      } else {
+        Logger->info("Received request to gracefully stop file with id : {}",
+                     StopInfo.JobID);
+        StreamsControl->stopJob(StopInfo.JobID);
+      }
+    } else if (CommandName == CommandParser::StopAllWritingCommand) {
+      StreamsControl->stopStreamMasters();
+    } else if (CommandName == CommandParser::ExitCommand) {
+     stop();
     } else {
       throw std::runtime_error(fmt::format("Did not recognise command name {}", CommandName));
     }
@@ -82,11 +111,6 @@ void Master::handle_command(std::string const &Command, std::chrono::millisecond
 //             Message);
     return;
   }
-
-
-
-
-//  command_handler.tryToHandle(Command, TimeStamp);
 }
 
 struct OnScopeExit {
