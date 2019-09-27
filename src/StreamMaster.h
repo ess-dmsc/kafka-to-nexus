@@ -29,6 +29,7 @@ public:
   virtual void requestStop() = 0;
   virtual bool isRemovable() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
+  virtual nlohmann::json getStats() const = 0;
 };
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
@@ -86,12 +87,6 @@ public:
   void report(const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000});
 
-  /// \brief Get FileWriterTask associated with the
-  /// current file.
-  ///
-  /// \return Pointer to FileWriterTask.
-  FileWriterTask const &getFileWriterTask() const { return *WriterTask; }
-
   /// \brief Get whether this stream master can be removed.
   ///
   /// \return True, if can be removed.
@@ -102,6 +97,8 @@ public:
   ///
   /// \return The job id.
   std::string getJobId() const override { return WriterTask->jobID(); }
+
+  nlohmann::json getStats() const override {return WriterTask->stats();}
 
 private:
   /// \brief Process the messages in the specified stream.

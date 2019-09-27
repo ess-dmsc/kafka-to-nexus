@@ -107,8 +107,8 @@ void Master::handle_command(std::string const &Command, std::chrono::millisecond
   }
   catch(std::runtime_error const & Error) {
     Logger->error("{}", Error.what());
-//    logEvent(StatusProducer, StatusCode::Fail, Config.ServiceID, JobID,
-//             Message);
+    logEvent(StatusProducer, StatusCode::Fail, getMainOpt().ServiceID, "N/A",
+             Error.what());
     return;
   }
 }
@@ -179,20 +179,7 @@ void Master::statistics() {
   if (!StatusProducer) {
     return;
   }
-  using nlohmann::json;
-  auto Status = json::object();
-  Status["type"] = "filewriter_status_master";
-  Status["service_id"] = getMainOpt().ServiceID;
-  Status["files"] = json::object();
-  // TODO
-//  for (auto &StreamMaster : StreamMasters) {
-//    auto FilewriterTaskID =
-//        fmt::format("{}", StreamMaster->getFileWriterTask().jobID());
-//    auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
-//    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
-//  }
-  std::string Buffer = Status.dump();
-  StatusProducer->produce(Buffer);
+  StreamsControl->publishStreamStats(StatusProducer, getMainOpt().ServiceID);
 }
 
 void Master::stop() { Running = false; }
@@ -206,7 +193,5 @@ MainOpt &Master::getMainOpt() { return MainConfig; }
 std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
   return StatusProducer;
 }
-
-
 
 } // namespace FileWriter

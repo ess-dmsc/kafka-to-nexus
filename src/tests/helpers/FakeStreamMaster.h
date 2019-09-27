@@ -14,7 +14,7 @@
 
 class FakeStreamMaster : public FileWriter::IStreamMaster {
 public:
-  explicit FakeStreamMaster(std::string const & JobID, bool Removable=false): JobID(JobID), IsRemovable(Removable) {}
+  explicit FakeStreamMaster(std::string const &JobID, bool Removable=false): JobID(JobID), IsRemovable(Removable) {}
   std::string getJobId() const override {return JobID;}
   void requestStop() override {
     IsRemovable = true;
@@ -23,7 +23,10 @@ public:
     return IsRemovable;
   }
   void setStopTime(const std::chrono::milliseconds &/*StopTime*/) override {
+  }
 
+  nlohmann::json getStats() const override {
+    return nlohmann::json::object();
   }
 private:
   std::string JobID;

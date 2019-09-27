@@ -7,10 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-/// \file This file defines the different success and failure status that the
-/// `StreamMaster` and the `Streamer` can incur. These error object have some
-/// utility methods that can be used to test the more common situations.
-
 #pragma once
 
 #include "StreamMaster.h"
@@ -20,53 +16,46 @@
 namespace FileWriter {
 class StreamsController {
 public:
-  void addStreamMaster(std::unique_ptr<IStreamMaster> StreamMaster) {
-    StreamMasters.emplace_back(std::move(StreamMaster));
-  }
+  /// \brief Add a new job.
+  ///
+  /// \param StreamMaster The job to add.
+  void addStreamMaster(std::unique_ptr<IStreamMaster> StreamMaster);
 
-  void stopStreamMasters() {
-    for (auto &SM : StreamMasters) {
-      SM->requestStop();
-    }
-  }
+  /// \brief Stop all the jobs.
+  void stopStreamMasters();
 
-  bool jobIDInUse(std::string const &JobID) {
-    for (auto &StreamMaster : StreamMasters) {
-      if (StreamMaster->getJobId() == JobID) {
-        return true;
-      }
-    }
+  /// \brief Check with a job ID is already being used.
+  ///
+  /// \param JobID The ID to check for.
+  /// \return true if in use.
+  bool jobIDInUse(std::string const &JobID);
 
-    return false;
-  }
+  /// \brief Stop a job based on an ID.
+  ///
+  /// \param JobID The ID of the job to stop.
+  void stopJob(std::string const & JobID);
 
-  void stopJob(std::string const & JobID) {
-    getStreamMasterForJobID(JobID)->requestStop();
-  }
+  /// \brief Set the stop time for a specific job.
+  ///
+  /// \param JobID The job.
+  /// \param StopTime The stop time.
+  void setStopTimeForJob(std::string const & JobID, std::chrono::milliseconds const & StopTime);
 
-  void setStopTimeForJob(std::string const & JobID, std::chrono::milliseconds const & StopTime) {
-    getStreamMasterForJobID(JobID)->setStopTime(StopTime);
-  }
-
+  /// \brief Retrieve the associated job.
+  ///
+  /// \param JobID The ID.
+  /// \return The associated job.
   std::unique_ptr<IStreamMaster> &
-  getStreamMasterForJobID(std::string const &JobID) {
-    for (auto &StreamMaster : StreamMasters) {
-      if (StreamMaster->getJobId() == JobID) {
-        return StreamMaster;
-      }
-    }
-    throw std::runtime_error(
-        fmt::format("Could not find stream master with job id {}", JobID));
-  }
+  getStreamMasterForJobID(std::string const &JobID);
 
-  void deleteRemovable() {
-    StreamMasters.erase(
-        std::remove_if(StreamMasters.begin(), StreamMasters.end(),
-                       [](std::unique_ptr<IStreamMaster> &Iter) {
-                         return Iter->isRemovable();
-                       }),
-        StreamMasters.end());
-  }
+  /// \brief Delete any jobs that have been marked removable.
+  void deleteRemovable();
+
+  /// \brief Publish the stats for all the jobs to Kafka
+  ///
+  /// \param Producer The producer to publish via.
+  /// \param ServiceID The service ID.
+  void publishStreamStats(std::shared_ptr<KafkaW::ProducerTopic> const &Producer, std::string const &ServiceID);
 
 private:
   std::vector<std::unique_ptr<IStreamMaster>> StreamMasters;

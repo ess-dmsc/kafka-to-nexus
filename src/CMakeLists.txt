@@ -92,7 +92,10 @@ set(kafka_to_nexus_SRC
         MainOpt.cpp
         CLIOptions.cpp
         NeXusDataset.cpp
-        StreamMaster.cpp)
+        StreamMaster.cpp
+        CommandParser.cpp
+        StreamsController.cpp
+        )
 
 set(kafka_to_nexus_INC
         CommandHandler.h
@@ -137,7 +140,6 @@ set(kafka_to_nexus_INC
         KafkaW/ConfigureKafka.h
         StreamsController.h
         CommandParser.h
-        CommandParser.cpp
         )
 
 set(tgt "kafka_to_nexus__objects")
