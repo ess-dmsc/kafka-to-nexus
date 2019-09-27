@@ -223,20 +223,19 @@ HDFWriterModule::HDFWriterModule() {
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const &HDFAttributes) {
-  return init_hdf(HDFGroup, &HDFAttributes,
-                  CreateWriterTypedBaseMethod::CREATE);
+  return init_hdf(HDFGroup, HDFAttributes, CreateWriterTypedBaseMethod::CREATE);
 }
 
 /// \brief Implement the HDFWriterModule interface, forward to the OPEN case of
 /// `init_hdf`.
 HDFWriterModule::InitResult
 HDFWriterModule::reopen(hdf5::node::Group &HDFGroup) {
-  return init_hdf(HDFGroup, nullptr, CreateWriterTypedBaseMethod::OPEN);
+  return init_hdf(HDFGroup, "", CreateWriterTypedBaseMethod::OPEN);
 }
 
 HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
-                          std::string const *HDFAttributes,
+                          std::string const &HDFAttributes,
                           CreateWriterTypedBaseMethod CreateMethod) {
   try {
     ValueWriter = createWriterTypedBase(HDFGroup, ArraySize, TypeName, "value",
@@ -262,7 +261,7 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
           return HDFWriterModule::InitResult::ERROR;
         }
       }
-      auto AttributesJson = nlohmann::json::parse(*HDFAttributes);
+      auto AttributesJson = nlohmann::json::parse(HDFAttributes);
       writeAttributes(HDFGroup, &AttributesJson, Logger);
     } else if (CreateMethod == CreateWriterTypedBaseMethod::OPEN) {
       for (auto const &Info : DatasetInfoList) {

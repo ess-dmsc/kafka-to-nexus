@@ -25,7 +25,6 @@ RUN export DEBIAN_FRONTEND=noninteractive \
 COPY ./cmake ../kafka_to_nexus_src/cmake
 COPY ./src ../kafka_to_nexus_src/src
 COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
-COPY ./docker_launch.sh ../docker_launch.sh
 
 RUN cd kafka_to_nexus \
     && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
@@ -36,4 +35,5 @@ RUN cd kafka_to_nexus \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 
+COPY ./docker_launch.sh ../docker_launch.sh
 CMD ["/docker_launch.sh"]

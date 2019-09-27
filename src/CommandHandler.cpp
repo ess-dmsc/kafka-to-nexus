@@ -67,13 +67,13 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
 /// \param Logger Pointer to spdlog instance to be used for logging.
 ///
 /// \return The stream information.
-static StreamSettings extractStreamInformationFromJsonForSource(
-    std::unique_ptr<FileWriterTask> const &Task,
-    StreamHDFInfo const &StreamInfo, SharedLogger Logger) {
+static StreamSettings
+extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo,
+                                          SharedLogger Logger) {
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
-  json ConfigStream = json::parse(StreamInfo.ConfigStream);
+  json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
   json ConfigStreamInner;
   if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
@@ -111,6 +111,15 @@ static StreamSettings extractStreamInformationFromJsonForSource(
     Logger->info("Run parallel for source: {}", StreamSettings.Source);
   }
 
+  if (auto x = find<json>("attributes", ConfigStream)) {
+    StreamSettings.Attributes = x.inner().dump();
+  }
+
+  return StreamSettings;
+}
+
+void setUpHdfStructure(StreamSettings const &StreamSettings,
+                       std::unique_ptr<FileWriterTask> const &Task) {
   HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
   try {
     ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
@@ -128,22 +137,19 @@ static StreamSettings extractStreamInformationFromJsonForSource(
 
   auto RootGroup = Task->hdfGroup();
   try {
-    HDFWriterModule->parse_config(ConfigStreamInner.dump(), "{}");
+    HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
   } catch (std::exception const &E) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("Exception while HDFWriterModule::parse_config  module: {} "
                     " source: {}  what: {}",
                     StreamSettings.Module, StreamSettings.Source, E.what())));
   }
-  auto Attributes = json::object();
-  if (auto x = find<json>("attributes", ConfigStream)) {
-    Attributes = x.inner();
-  }
-  auto StreamGroup = hdf5::node::get_group(RootGroup, StreamInfo.HDFParentName);
-  HDFWriterModule->init_hdf({StreamGroup}, Attributes.dump());
+
+  auto StreamGroup = hdf5::node::get_group(
+      RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
+  HDFWriterModule->init_hdf({StreamGroup}, StreamSettings.Attributes);
   HDFWriterModule->close();
   HDFWriterModule.reset();
-  return StreamSettings;
 }
 
 /// Helper to extract information about the provided streams.
@@ -156,8 +162,9 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
-      StreamSettingsList.push_back(extractStreamInformationFromJsonForSource(
-          Task, StreamHDFInfo, Logger));
+      StreamSettingsList.push_back(
+          extractStreamInformationFromJsonForSource(StreamHDFInfo, Logger));
+      setUpHdfStructure(StreamSettingsList.back(), Task);
       StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
       Logger->warn("Invalid json: {}", StreamHDFInfo.ConfigStream);

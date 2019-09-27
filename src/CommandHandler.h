@@ -26,6 +26,7 @@ struct StreamSettings {
   std::string Source;
   bool RunParallel = false;
   std::string ConfigStreamJson;
+  std::string Attributes;
 };
 
 std::string format_nested_exception(std::exception const &E);

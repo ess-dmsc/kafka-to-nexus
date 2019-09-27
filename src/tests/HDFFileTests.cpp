@@ -764,7 +764,7 @@
 //    string source;
 //    uint64_t seed = 0;
 //    std::mt19937 rnd;
-//    vector<FlatBufs::f142::FlatBufferWrapper> fbs;
+//    vector<FileWriter::Schemas::f142::FlatBufferWrapper> fbs;
 //    vector<FileWriter::Msg> msgs;
 //    // Number of messages already fed into file writer during testing
 //    size_t n_fed = 0;
@@ -773,11 +773,11 @@
 //    /// file writer.
 //    void pregenerate(size_t array_size, uint64_t n) {
 //      Logger->trace("generating {} {}...", topic, source);
-//      auto ty = FlatBufs::f142::Value::Double;
+//      auto ty = FileWriter::Schemas::f142::Value::Double;
 //      if (array_size > 0) {
-//        ty = FlatBufs::f142::Value::ArrayFloat;
+//        ty = FileWriter::Schemas::f142::Value::ArrayFloat;
 //      }
-//      FlatBufs::f142::Synth synth(source, ty);
+//      FileWriter::Schemas::f142::Synth synth(source, ty);
 //      rnd.seed(seed);
 //      for (uint64_t i1 = 0; i1 < n; ++i1) {
 //        // Number of events per message:
@@ -1252,4 +1252,4 @@
 //    }
 //  }
 //}
-//
+//>>>>>>> master
