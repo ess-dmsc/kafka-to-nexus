@@ -3,7 +3,6 @@ find_package(Trompeloeil REQUIRED)
 set(UnitTests_SRC
         UnitTests.cpp
         H5Tests.cpp
-        HDFFileTests.cpp
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
         JsonTests.cpp
