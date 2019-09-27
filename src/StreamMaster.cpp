@@ -1,6 +1,8 @@
 #include "StreamMaster.h"
+#include "FileWriterTask.h"
 #include "KafkaW/ConsumerFactory.h"
 #include "Streamer.h"
+#include "helper.h"
 #include <condition_variable>
 
 namespace FileWriter {
@@ -150,6 +152,11 @@ void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
         TopicName, NumStreamers);
   }
   Stream.close();
+
+  if (NumStreamers == 0) {
+    // No more streams open, so stop the StreamMaster
+    Stop = true;
+  }
 }
 
 void StreamMaster::doStop() {
@@ -168,9 +175,9 @@ void StreamMaster::doStop() {
       Logger->info("Stopped {}", Stream.first);
     }
   }
+
   Streamers.clear();
   RunStatus.store(StreamMasterError::IS_REMOVABLE);
   Logger->debug("StreamMaster is removable");
 }
-
 } // namespace FileWriter

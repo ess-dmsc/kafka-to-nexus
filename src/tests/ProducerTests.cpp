@@ -77,6 +77,19 @@ public:
              override);
   MAKE_MOCK1(flush, RdKafka::ErrorCode(int), override);
   MAKE_MOCK1(controllerid, int32_t(int), override);
+  MAKE_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
+  MAKE_MOCK5(oauthbearer_set_token,
+             RdKafka::ErrorCode(const std::string &, int64_t,
+                                const std::string &,
+                                const std::list<std::string> &, std::string &),
+             override);
+  MAKE_MOCK1(oauthbearer_set_token_failure,
+             RdKafka::ErrorCode(const std::string &), override);
+  MAKE_MOCK10(produce, RdKafka::ErrorCode(std::string, int32_t, int, void *,
+                                          size_t, const void *, size_t, int64_t,
+                                          RdKafka::Headers *, void *),
+              override);
+  MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
 };
 
 // Don't really care if anything gets called with this as it's RdKafka's
