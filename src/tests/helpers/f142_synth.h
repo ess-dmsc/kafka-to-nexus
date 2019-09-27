@@ -13,7 +13,8 @@
 #include <memory>
 #include <string>
 
-namespace FlatBufs {
+namespace FileWriter {
+namespace Schemas {
 namespace f142 {
 
 #include "f142_logdata_generated.h"
@@ -41,4 +42,5 @@ public:
 };
 
 } // namespace f142
-} // namespace FlatBufs
+} // namespace Schemas
+} // namespace FileWriter
