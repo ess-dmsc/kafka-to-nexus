@@ -137,7 +137,7 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
 
   auto RootGroup = Task->hdfGroup();
   try {
-    HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
+    HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
   } catch (std::exception const &E) {
     std::throw_with_nested(std::runtime_error(
         fmt::format("Exception while HDFWriterModule::parse_config  module: {} "
@@ -289,7 +289,7 @@ void CommandHandler::addStreamSourceToWriterModule(
 
       try {
         // Reopen the previously created HDF dataset.
-        HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson, "{}");
+        HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
         try {
           auto RootGroup = Task->hdfGroup();
           auto StreamGroup = hdf5::node::get_group(

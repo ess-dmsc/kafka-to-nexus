@@ -12,7 +12,9 @@
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
+#include "Msg.h"
 #include "ProcessMessageResult.h"
+#include "json.h"
 #include <string>
 
 namespace FileWriter {

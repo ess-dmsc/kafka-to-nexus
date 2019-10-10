@@ -61,8 +61,7 @@ uint64_t FlatbufferReader::timestamp(FlatbufferMessage const &Message) const {
 static FlatbufferReaderRegistry::Registrar<FlatbufferReader>
     RegisterReader("ev42");
 
-void HDFWriterModule::parse_config(std::string const &ConfigurationStream,
-                                   std::string const &) {
+void HDFWriterModule::parse_config(std::string const &ConfigurationStream) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
   try {
     index_every_bytes =
@@ -348,8 +347,6 @@ void HDFWriterModule::padDatasetsWithZeroesEqualToNumberOfEvents(
   ThresholdTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
   PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
-
-int32_t HDFWriterModule::flush() { return 0; }
 
 int32_t HDFWriterModule::close() {
   ds_event_time_offset.reset();
