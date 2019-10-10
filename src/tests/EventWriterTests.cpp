@@ -168,7 +168,7 @@ using FileWriter::HDFWriterModule_detail::InitResult;
 TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
     ev42::HDFWriterModule Writer;
-    Writer.parse_config("{}", "");
+    Writer.parse_config("{}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
   ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
@@ -194,7 +194,7 @@ TEST_F(
   {
     ev42::HDFWriterModule Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
   ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
@@ -367,7 +367,7 @@ TEST_F(EventWriterTests,
   {
     ev42::HDFWriterModule Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -404,7 +404,7 @@ TEST_F(EventWriterTests,
   {
     ev42::HDFWriterModule Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage)); // First message
@@ -460,7 +460,7 @@ TEST_F(EventWriterTests,
   {
     ev42::HDFWriterModule Writer;
     // Tell writer module to write ADC pulse debug data
-    Writer.parse_config("{\"adc_pulse_debug\": true}", "");
+    Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));       // First message

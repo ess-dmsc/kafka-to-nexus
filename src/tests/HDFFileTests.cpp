@@ -9,14 +9,15 @@
 
 #include "../CommandHandler.h"
 #include "../HDFFile.h"
+#include "../KafkaW/Consumer.h"
 #include "../MainOpt.h"
 #include "../helper.h"
 #include "../json.h"
 #include "AddReader.h"
-#include "Msg.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/ev42_synth.h"
 #include "helpers/f142_synth.h"
+#include <array>
 #include <chrono>
 #include <gtest/gtest.h>
 #include <hdf5.h>
@@ -45,7 +46,6 @@ void merge_config_into_main_opt(MainOpt &main_opt, string JSONString) {
 json basic_command(string filename) {
   auto Command = json::parse(R""({
     "cmd": "FileWriter_new",
-    "broker": "localhost:9092",
     "nexus_structure": {
       "children": []
     },
@@ -279,7 +279,6 @@ public:
       CommandJSON["file_attributes"]["file_name"] = hdf_output_filename;
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "000000000dataset";
-      CommandJSON["broker"] = "localhost:9092";
     }
 
     auto CommandString = CommandJSON.dump();
@@ -306,7 +305,6 @@ public:
     unlink(hdf_output_filename.c_str());
     auto CommandJSON = json::parse(R""({
       "cmd": "FileWriter_new",
-      "broker": "localhost:9092",
       "nexus_structure": {
         "attributes": {
           "some_top_level_int": 42,
@@ -597,7 +595,6 @@ public:
       CommandJSON["file_attributes"]["file_name"] = filename;
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "test-ev42";
-      CommandJSON["broker"] = "localhost:9092";
     }
 
     Logger->trace("CommandJSON: {}", CommandJSON.dump());
@@ -764,7 +761,7 @@ public:
     string source;
     uint64_t seed = 0;
     std::mt19937 rnd;
-    vector<FileWriter::Schemas::f142::FlatBufferWrapper> fbs;
+    vector<FlatBufs::f142::FlatBufferWrapper> fbs;
     vector<FileWriter::Msg> msgs;
     // Number of messages already fed into file writer during testing
     size_t n_fed = 0;
@@ -773,11 +770,11 @@ public:
     /// file writer.
     void pregenerate(size_t array_size, uint64_t n) {
       Logger->trace("generating {} {}...", topic, source);
-      auto ty = FileWriter::Schemas::f142::Value::Double;
+      auto ty = FlatBufs::f142::Value::Double;
       if (array_size > 0) {
-        ty = FileWriter::Schemas::f142::Value::ArrayFloat;
+        ty = FlatBufs::f142::Value::ArrayFloat;
       }
-      FileWriter::Schemas::f142::Synth synth(source, ty);
+      FlatBufs::f142::Synth synth(source, ty);
       rnd.seed(seed);
       for (uint64_t i1 = 0; i1 < n; ++i1) {
         // Number of events per message:
@@ -938,7 +935,6 @@ public:
       CommandJSON["file_attributes"]["file_name"] = "tmp-f142.h5";
       CommandJSON["cmd"] = "FileWriter_new";
       CommandJSON["job_id"] = "unit_test_job_data_f142";
-      CommandJSON["broker"] = "localhost:9092";
     }
 
     auto CommandString = CommandJSON.dump();
@@ -1100,7 +1096,6 @@ TEST(HDFFile, createStaticDatasetsStrings) {
   auto CommandJSON = json::parse(R""(
 {
   "cmd": "FileWriter_new",
-  "broker": "localhost:9092",
   "file_attributes": {
   },
   "nexus_structure": {
