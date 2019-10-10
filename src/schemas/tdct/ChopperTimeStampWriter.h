@@ -38,7 +38,7 @@ public:
   ChopperTimeStampWriter() = default;
   ~ChopperTimeStampWriter() override = default;
 
-  void parse_config(std::string const &, std::string const &) override;
+  void parse_config(std::string const &) override;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
@@ -46,8 +46,6 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   void write(FlatbufferMessage const &Message) override;
-
-  int32_t flush() override;
 
   int32_t close() override;
 

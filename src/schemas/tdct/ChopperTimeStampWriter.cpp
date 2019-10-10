@@ -50,8 +50,7 @@ std::string ChopperTimeStampGuard::source_name(
   return FbPointer->name()->str();
 }
 
-void ChopperTimeStampWriter::parse_config(std::string const &,
-                                          std::string const &) {
+void ChopperTimeStampWriter::parse_config(std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
                 "ChopperTimeStampWriter class.");
 }
@@ -122,8 +121,6 @@ void ChopperTimeStampWriter::write(
   CueTimestamp.appendElement(FbPointer->timestamps()->operator[](0));
   Timestamp.appendArray(CArray);
 }
-
-std::int32_t ChopperTimeStampWriter::flush() { return 0; }
 
 std::int32_t ChopperTimeStampWriter::close() { return 0; }
 

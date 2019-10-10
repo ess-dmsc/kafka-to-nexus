@@ -59,11 +59,10 @@ std::string AreaDetectorDataGuard::source_name(
 /// \brief Parse config JSON structure.
 ///
 /// The default is to use double as the element type.
-void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
-                                      std::string const &) {
+void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream) {
   auto Config = nlohmann::json::parse(ConfigurationStream);
   try {
-    CueInterval = Config["cue_interval"].get<uint64_t>();
+    CueInterval = Config["nexus.cue_interval"].get<uint64_t>();
   } catch (...) {
     // Do nothing
   }
@@ -96,9 +95,9 @@ void AreaDetectorWriter::parse_config(std::string const &ConfigurationStream,
         E.what());
   }
 
-  auto JsonChunkSize = Config["chunk_size"];
+  auto JsonChunkSize = Config["nexus.chunk_size"];
   if (JsonChunkSize.is_array()) {
-    ChunkSize = Config["chunk_size"].get<hdf5::Dimensions>();
+    ChunkSize = Config["nexus.chunk_size"].get<hdf5::Dimensions>();
   } else if (JsonChunkSize.is_number_integer()) {
     ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
   } else {
@@ -218,8 +217,6 @@ void AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
     CueCounter = 0;
   }
 }
-
-std::int32_t AreaDetectorWriter::flush() { return 0; }
 
 std::int32_t AreaDetectorWriter::close() { return 0; }
 

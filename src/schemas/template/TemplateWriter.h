@@ -184,10 +184,7 @@ public:
   ///
   /// \param config_stream Contains information about configurations
   /// relevant only to the current instance of this file writing module.
-  /// \param config_module This parameter is currently unused and thus any
-  /// calls to this member function will have this parameter set to `nullptr`.
-  void parse_config(std::string const &/*ConfigurationStream*/,
-                    std::string const &/*ConfigurationModule*/) override {
+  void parse_config(std::string const &/*ConfigurationStream*/) override {
     std::cout << "WriterClass::parse_config()\n";
   }
 
@@ -221,7 +218,7 @@ public:
   /// \param HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
   /// HDFWriterModule is free to create the structure and datasets according to
-  /// its needs, it must also take the responsibility to write these
+  /// its needs, it must also take the reposnsibility to write these
   /// attributes.
   /// \return An instance of InitResult. Note that these instances can only be
   /// constructed using the static methods InitResult::OK(),
@@ -294,13 +291,6 @@ public:
   void write(FileWriter::FlatbufferMessage const &/*Message*/) override {
     std::cout << "WriterClass::write()\n";
   }
-
-  /// \brief Provides no functionality and is never called.
-  ///
-  /// This member function is never called by the main application but because
-  /// FileWriter::HDFWriterModule defines it as a pure virtual, it must be
-  /// implemented in classes deriving from it.
-  int32_t flush() override { return 0; }
 
   /// \brief Should (probably) not implement any functionality.
   ///

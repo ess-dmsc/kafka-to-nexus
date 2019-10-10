@@ -10,13 +10,11 @@
 #pragma once
 
 #include "Exceptions.h"
-#include "FlatbufferMessage.h"
 #include "HistogramRecord.h"
 #include "Shape.h"
 #include "WriterUntyped.h"
 #include "helper.h"
 #include "json.h"
-#include "logger.h"
 #include <flatbuffers/flatbuffers.h>
 #include <h5cpp/hdf5.hpp>
 #include <type_traits>
