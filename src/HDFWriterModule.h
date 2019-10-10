@@ -9,15 +9,15 @@
 
 #pragma once
 
+#include "FlatbufferMessage.h"
 #include <fmt/format.h>
+#include <functional>
 #include <h5cpp/hdf5.hpp>
 #include <map>
 #include <memory>
 #include <string>
 
 namespace FileWriter {
-
-class FlatbufferMessage;
 
 namespace HDFWriterModule_detail {
 
@@ -46,10 +46,7 @@ public:
   ///
   /// \param config_stream Configuration from the write file command for this
   /// stream.
-  /// \param config_module Configuration for all instances of this
-  /// HDFWriterModule.
-  virtual void parse_config(std::string const &ConfigurationStream,
-                            std::string const &ConfigurationModule) = 0;
+  virtual void parse_config(std::string const &ConfigurationStream) = 0;
 
   /// \brief Initialise the HDF file.
   ///
@@ -83,14 +80,6 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FlatbufferMessage const &Message) = 0;
-
-  /// \brief Flush the internal buffer.
-  ///
-  /// You are expected to flush all the internal buffers which you have to
-  /// the HDF file.
-  ///
-  /// \return Error code.
-  virtual int32_t flush() = 0;
 
   /// \brief Close all open HDF handlers.
   ///
