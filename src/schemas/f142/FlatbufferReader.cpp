@@ -14,7 +14,7 @@ namespace Schemas {
 namespace f142 {
 
 /// Cast byte blob to flatbuffer message
-FBUF const *get_fbuf(char const *data) { return GetLogData(data); }
+LogData const *get_fbuf(char const *data) { return GetLogData(data); }
 
 /// \brief  Use flatbuffers library to validate a message
 bool FlatbufferReader::verify(FlatbufferMessage const &Message) const {
