@@ -8,12 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "../../HDFWriterModule.h"
-#include "../../h5.h"
-#include "Common.h"
-#include "WriterArray.h"
-#include "WriterScalar.h"
-#include "WriterScalarString.h"
-#include "WriterTypedBase.h"
+#include <NeXusDataset.h>
 #include <array>
 #include <chrono>
 #include <memory>
@@ -24,177 +19,64 @@ namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
-/// Because of SWMR, we have to create HDF structures first, then close
-/// everything again, and then reopen those structures from the previously
-/// created file.  This enum is used to indicate which phase we are in.
-enum class CreateWriterTypedBaseMethod { CREATE, OPEN };
+using ForwarderDebugDataset = NeXusDataset::ExtensibleDataset<std::uint64_t>;
 
-/// The HDFWriterModule contains a list of these DatasetInfo, which represent
-/// the essential information about the datasets used in this HDFWriterModule.
-/// By having this information in a separate list we can condense the code
-/// needed for initialization.
-struct DatasetInfo {
-  /// Name of the HDF dataset.
-  std::string Name;
-  /// Size of the HDF chunks in bytes.
-  size_t ChunkBytes;
-  /// Size of the buffer which is used to optimize writing of small messages.
-  size_t BufferSize;
-  /// Maximum size of a message which is considered for buffering.
-  size_t BufferPacketMaxSize;
-  // Helper
-  uptr<h5::h5d_chunked_1d<uint64_t>> &H5Ptr;
-  DatasetInfo(std::string Name, size_t ChunkBytes, size_t BufferSize,
-              size_t BufferPacketMaxSize,
-              uptr<h5::h5d_chunked_1d<uint64_t>> &Ptr);
-};
-
-class HDFWriterModule final : public FileWriter::HDFWriterModule {
+class f142Writer : public FileWriter::HDFWriterModule {
 public:
   /// Implements HDFWriterModule interface.
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   /// Implements HDFWriterModule interface.
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override;
+  void parse_config(std::string const &ConfigurationStream) override;
   /// Implements HDFWriterModule interface.
-  HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
-
-  /// Actual initialziation code, mostly shared among CREATE and OPEN phases.
-  InitResult init_hdf(hdf5::node::Group &HDFGroup,
-                      std::string const &HDFAttributes,
-                      CreateWriterTypedBaseMethod CreateMethod);
+  f142Writer::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  /// Flush underlying buffers.
-  int32_t flush() override;
-  int32_t close() override;
+  int32_t close() override {return 0;};
 
-  HDFWriterModule();
-  ~HDFWriterModule() override = default;
+  f142Writer();
+  ~f142Writer() override = default;
 
-  /// Datatype as given in the filewriter json command.
-  std::string TypeName;
+  enum class Type {
+    int8,
+    uint8,
+    int16,
+    uint16,
+    int32,
+    uint32,
+    int64,
+    uint64,
+    float32,
+    float64,
+  };
 
-  /// Name of the source that we write.
-  std::string SourceName;
+protected:
+  SharedLogger Logger = spdlog::get("filewriterlogger");
+  std::string findDataType(const nlohmann::basic_json<> Attribute);
 
-  /// Dataset with the actual values, with requested datatype.
-  uptr<WriterTypedBase> ValueWriter;
+  Type ElementType{Type::float64};
+
+  NeXusDataset::MultiDimDatasetBase Values;
 
   /// Timestamps of the f142 updates.
-  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetTimestamp;
+  NeXusDataset::Time Timestamp;
 
   /// Index into DatasetTimestamp.
-  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueTimestampZero;
+  NeXusDataset::CueTimestampZero CueTimestampZero;
 
   /// Index into the f142 values.
-  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetCueIndex;
+  NeXusDataset::CueIndex CueIndex;
 
-  // Some optional helper datasets for debugging.
-  bool DoWriteForwarderInternalDebugInfo = false;
-  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqData;
-  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetSeqFwd;
-  uptr<h5::h5d_chunked_1d<uint64_t>> DatasetTsData;
-
-  /// List of essential information about the datasets used by this
-  /// HDFModuleWriter.  Used in `init_hdf()`.
-  std::vector<DatasetInfo> DatasetInfoList;
-
-  uint64_t WrittenBytesTotal = 0;
-  uint64_t IndexAtBytes = 0;
+//  uint64_t TotalWrittenValues = 0;
+//  uint64_t LastIndexPosition = 0;
   // set by default to a large value:
-  uint64_t IndexEveryBytes = std::numeric_limits<uint64_t>::max();
-  uint64_t TimestampMax = 0;
-  size_t ArraySize = 0;
-  std::string StoreLatestInto;
-
-  // Reduce LOG rate in some cases
-  using CLOCK = std::chrono::steady_clock;
-  using MS = std::chrono::milliseconds;
-  MS ErrorLogMinInterval{500};
-  std::chrono::time_point<CLOCK> TimestampLastErrorLog{CLOCK::now() -
-                                                       ErrorLogMinInterval};
-
-private:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
-  static bool findType(const nlohmann::basic_json<> Attribute,
-                       std::string &DType);
+  uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
+  size_t ArraySize{1};
+  size_t ChunkSize{64*1024};
 };
 
-/// \brief  Interface for creating and opening a dataset.
-///
-/// Interface for creating and opening a dataset for the f142 values of a
-/// dynamically specified datatype.  Implemented by WriterFactoryScalar and
-/// WriterFactoryArray.
-struct WriterFactory {
-  virtual ~WriterFactory() = default;
-  virtual std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value ValueUnionID,
-               Mode OpenMode) = 0;
-  virtual FileWriter::Schemas::f142::Value getValueUnionID() = 0;
-};
-
-/// Factory for scalar writers.
-template <typename C_TYPE, typename FB_VALUE_TYPE>
-struct WriterFactoryScalar : public WriterFactory {
-  FileWriter::Schemas::f142::Value ValueUnionID =
-      ValueTraits<FB_VALUE_TYPE>::enum_value;
-
-  std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t /*Columns*/,
-               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
-               Mode OpenMode) override {
-    return std::unique_ptr<WriterTypedBase>(
-        new WriterScalar<C_TYPE, FB_VALUE_TYPE>(Group, Name, ValueUnionID,
-                                                OpenMode));
-  }
-
-  FileWriter::Schemas::f142::Value getValueUnionID() override {
-    return ValueUnionID;
-  }
-};
-
-/// Factory for array writers.
-template <typename C_TYPE, typename FB_VALUE_TYPE>
-struct WriterFactoryArray : public WriterFactory {
-  FileWriter::Schemas::f142::Value ValueUnionID =
-      ValueTraits<FB_VALUE_TYPE>::enum_value;
-
-  std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t Columns,
-               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
-               Mode OpenMode) override {
-    return std::unique_ptr<WriterTypedBase>(
-        new WriterArray<C_TYPE, FB_VALUE_TYPE>(Group, Name, Columns,
-                                               ValueUnionID, OpenMode));
-  }
-
-  FileWriter::Schemas::f142::Value getValueUnionID() override {
-    return ValueUnionID;
-  }
-};
-
-/// Factory for scalar string writers
-struct WriterFactoryScalarString : public WriterFactory {
-  FileWriter::Schemas::f142::Value ValueUnionID =
-      ValueTraits<String>::enum_value;
-
-  std::unique_ptr<WriterTypedBase>
-  createWriter(hdf5::node::Group Group, std::string Name, size_t /*Columns*/,
-               FileWriter::Schemas::f142::Value /*ValueUnionID*/,
-               Mode /*OpenMode*/) override {
-    return std::unique_ptr<WriterTypedBase>(
-        new WriterScalarString(Group, Name, Mode::Create));
-  }
-
-  FileWriter::Schemas::f142::Value getValueUnionID() override {
-    return ValueUnionID;
-  }
-};
 } // namespace f142
 } // namespace Schemas
 } // namespace FileWriter

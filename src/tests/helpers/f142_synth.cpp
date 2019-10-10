@@ -10,8 +10,7 @@
 #include "f142_synth.h"
 #include <random>
 
-namespace FileWriter {
-namespace Schemas {
+namespace FlatBufs {
 namespace f142 {
 
 LogData const *FlatBufferWrapper::root() {
@@ -96,5 +95,4 @@ FlatBufferWrapper Synth::next(uint64_t const TestValue,
 }
 
 } // namespace f142
-} // namespace Schemas
-} // namespace FileWriter
+} // namespace FlatBufs
