@@ -4,6 +4,7 @@
     "file_name": "a-dummy-name-04.h5"
   },
   "cmd": "FileWriter_new",
+  "broker": "localhost:9092",
   "nexus_structure": {
     "children": [
       {
@@ -18,7 +19,7 @@
             "stream": {
               "topic": "topic.that.is.not.registered",
               "source": "for_example_motor",
-              "module": "asdf",
+              "writer_module": "asdf",
               "type": "float",
               "array_size": 4
             }

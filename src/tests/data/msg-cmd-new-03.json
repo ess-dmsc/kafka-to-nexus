@@ -2,6 +2,7 @@
   "file_attributes": {
     "file_name": "a-dummy-name-02.h5"
   },
+  "broker": "localhost:9092",
   "cmd": "FileWriter_new",
   "nexus_structure": {
     "children": [
@@ -17,7 +18,7 @@
             "stream": {
               "topic": "topic.with.multiple.sources",
               "source": "for_example_motor",
-              "module": "f142",
+              "writer_module": "f142",
               "dtype": "float",
               "array_size": 4
             }

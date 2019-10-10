@@ -55,10 +55,10 @@ std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
   flatbuffers::FlatBufferBuilder Builder;
 
   auto nameOffset = Builder.CreateString(SourceName);
-  auto valueOffset = Schemas::f142::CreateInt(Builder, Value);
+  auto valueOffset = CreateInt(Builder, Value);
   uint64_t timestamp = 123456789;
   auto LogDataOffset =
-      CreateLogData(Builder, nameOffset, Schemas::f142::Value::Int,
+      CreateLogData(Builder, nameOffset, Value::Int,
                     valueOffset.Union(), timestamp);
 
   FinishLogDataBuffer(Builder, LogDataOffset);

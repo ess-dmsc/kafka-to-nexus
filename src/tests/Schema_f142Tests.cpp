@@ -256,7 +256,7 @@ std::pair<std::unique_ptr<uint8_t[]>,size_t> generateFlatbufferMessageBase(ValFu
   LogDataBuilder.add_timestamp(Timestamp);
   LogDataBuilder.add_source_name(SourceNameOffset);
   LogDataBuilder.add_value_type(ValueTypeId);
-  FileWriter::Schemas::f142::FinishLogDataBuffer(Builder,
+  FinishLogDataBuffer(Builder,
                                                  LogDataBuilder.Finish());
   size_t BufferSize = Builder.GetSize();
   auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
