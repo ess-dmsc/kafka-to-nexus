@@ -11,9 +11,9 @@
 #include "../../HDFFile.h"
 #include "../../json.h"
 #include "FlatbufferReader.h"
-#include <limits>
 #include <algorithm>
 #include <cctype>
+#include <limits>
 
 namespace FileWriter {
 namespace Schemas {
@@ -23,11 +23,10 @@ using nlohmann::json;
 
 using Type = f142Writer::Type;
 
-std::string
-f142Writer::findDataType(const nlohmann::basic_json<> Attribute) {
+std::string f142Writer::findDataType(const nlohmann::basic_json<> Attribute) {
   auto toLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
-                   [](auto C){ return std::tolower(C); });
+                   [](auto C) { return std::tolower(C); });
     return InString;
   };
 
@@ -44,55 +43,48 @@ f142Writer::findDataType(const nlohmann::basic_json<> Attribute) {
 
 template <typename Type>
 void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
-       hdf5::Dimensions const &ChunkSize) {
+            hdf5::Dimensions const &ChunkSize) {
   NeXusDataset::MultiDimDataset<Type>( // NOLINT(bugprone-unused-raii)
-      Parent, NeXusDataset::Mode::Create, Shape, ChunkSize); // NOLINT(bugprone-unused-raii)
+      Parent, NeXusDataset::Mode::Create, Shape,
+      ChunkSize); // NOLINT(bugprone-unused-raii)
 }
 
-void
-initValueDataset(hdf5::node::Group &Parent, Type ElementType,
-                 hdf5::Dimensions const &Shape,
-                 hdf5::Dimensions const &ChunkSize) {
-  using OpenFuncType =
-      std::function<void()>;
+void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
+                      hdf5::Dimensions const &Shape,
+                      hdf5::Dimensions const &ChunkSize) {
+  using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
-      {Type::int8,
-       [&]() {makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
-      {Type::uint8,
-       [&]() {makeIt<std::uint8_t>(Parent, Shape, ChunkSize); }},
-      {Type::int16,
-       [&]() {makeIt<std::int16_t>(Parent, Shape, ChunkSize); }},
+      {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
+      {Type::uint8, [&]() { makeIt<std::uint8_t>(Parent, Shape, ChunkSize); }},
+      {Type::int16, [&]() { makeIt<std::int16_t>(Parent, Shape, ChunkSize); }},
       {Type::uint16,
-       [&]() {makeIt<std::uint16_t>(Parent, Shape, ChunkSize); }},
-      {Type::int32,
-       [&]() {makeIt<std::int32_t>(Parent, Shape, ChunkSize); }},
+       [&]() { makeIt<std::uint16_t>(Parent, Shape, ChunkSize); }},
+      {Type::int32, [&]() { makeIt<std::int32_t>(Parent, Shape, ChunkSize); }},
       {Type::uint32,
-       [&]() {makeIt<std::uint32_t>(Parent, Shape, ChunkSize); }},
-      {Type::int64,
-       [&]() {makeIt<std::int64_t>(Parent, Shape, ChunkSize); }},
+       [&]() { makeIt<std::uint32_t>(Parent, Shape, ChunkSize); }},
+      {Type::int64, [&]() { makeIt<std::int64_t>(Parent, Shape, ChunkSize); }},
       {Type::uint64,
-       [&]() {makeIt<std::uint64_t>(Parent, Shape, ChunkSize); }},
+       [&]() { makeIt<std::uint64_t>(Parent, Shape, ChunkSize); }},
       {Type::float32,
-       [&]() {makeIt<std::float_t>(Parent, Shape, ChunkSize); }},
+       [&]() { makeIt<std::float_t>(Parent, Shape, ChunkSize); }},
       {Type::float64,
-       [&]() {makeIt<std::double_t>(Parent, Shape, ChunkSize); }},
+       [&]() { makeIt<std::double_t>(Parent, Shape, ChunkSize); }},
   };
   CreateValuesMap.at(ElementType)();
 }
 
 /// Parse the configuration for this stream.
-void f142Writer::parse_config(
-    std::string const &ConfigurationStream) {
+void f142Writer::parse_config(std::string const &ConfigurationStream) {
   auto ConfigurationStreamJson = json::parse(ConfigurationStream);
 
   std::map<std::string, Type> TypeMap{
-      {"int8", Type::int8},         {"uint8", Type::uint8},
-      {"int16", Type::int16},       {"uint16", Type::uint16},
-      {"int32", Type::int32},       {"uint32", Type::uint32},
-      {"int64", Type::int64},       {"uint64", Type::uint64},
-      {"float32", Type::float32},   {"float64", Type::float64},
-      {"float", Type::float32},     {"double", Type::float64},
-      {"short", Type::int16},       {"int", Type::int32},
+      {"int8", Type::int8},       {"uint8", Type::uint8},
+      {"int16", Type::int16},     {"uint16", Type::uint16},
+      {"int32", Type::int32},     {"uint32", Type::uint32},
+      {"int64", Type::int64},     {"uint64", Type::uint64},
+      {"float32", Type::float32}, {"float64", Type::float64},
+      {"float", Type::float32},   {"double", Type::float64},
+      {"short", Type::int16},     {"int", Type::int32},
       {"long", Type::int64}};
 
   try {
@@ -109,16 +101,15 @@ void f142Writer::parse_config(
 
   try {
     ValueIndexInterval =
-        ConfigurationStreamJson["nexus.cue_interval"]
-            .get<uint64_t>();
+        ConfigurationStreamJson["nexus.cue_interval"].get<uint64_t>();
     Logger->trace("Value index interval: {}", ValueIndexInterval);
   } catch (...) { /* it's ok if not found */
   }
   try {
-    ChunkSize = ConfigurationStreamJson["nexus.chunk_size"]
-        .get<uint64_t>();
+    ChunkSize = ConfigurationStreamJson["nexus.chunk_size"].get<uint64_t>();
     Logger->trace("Chunk size: {}", ChunkSize);
-  } catch (...) { /* it's ok if not found */}
+  } catch (...) { /* it's ok if not found */
+  }
 }
 
 /// Initialize some parameters and the list of datasets to be created.
@@ -127,8 +118,8 @@ f142Writer::f142Writer() {}
 /// \brief Implement the HDFWriterModule interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-f142Writer::InitResult
-f142Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
+f142Writer::InitResult f142Writer::init_hdf(hdf5::node::Group &HDFGroup,
+                                            std::string const &) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -138,10 +129,10 @@ f142Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
     NeXusDataset::CueIndex(HDFGroup, Create,
                            ChunkSize); // NOLINT(bugprone-unused-raii)
     initValueDataset(HDFGroup, ElementType,
-                              {
-                                  ArraySize,
-                              },
-                              {ChunkSize, ArraySize});
+                     {
+                         ArraySize,
+                     },
+                     {ChunkSize, ArraySize});
 
     if (HDFGroup.attributes.exists("NX_class")) {
       Logger->info("NX_class already specified!");
@@ -161,15 +152,13 @@ f142Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
 
 /// \brief Implement the HDFWriterModule interface, forward to the OPEN case of
 /// `init_hdf`.
-f142Writer::InitResult
-f142Writer::reopen(hdf5::node::Group &HDFGroup) {
+f142Writer::InitResult f142Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
     CueIndex = NeXusDataset::CueIndex(HDFGroup, Open);
     CueTimestampZero = NeXusDataset::CueTimestampZero(HDFGroup, Open);
-    Values = NeXusDataset::MultiDimDatasetBase(
-        HDFGroup, Open);
+    Values = NeXusDataset::MultiDimDatasetBase(HDFGroup, Open);
   } catch (std::exception &E) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
@@ -183,7 +172,9 @@ template <typename DataType, class DatasetType>
 void appendData(DatasetType &Dataset, const void *Pointer, size_t Size) {
   Dataset.appendArray(
       ArrayAdapter<const DataType>(reinterpret_cast<DataType *>(Pointer), Size),
-      {Size, });
+      {
+          Size,
+      });
 }
 
 void f142Writer::write(FlatbufferMessage const &Message) {
@@ -194,71 +185,72 @@ void f142Writer::write(FlatbufferMessage const &Message) {
 
   // Note that we are using our knowledge about flatbuffers here to minimise
   // amount of code we have to write by using some pointer arithmetric.
-  auto DataPtr = reinterpret_cast<void const*>(reinterpret_cast<uint8_t const*>(Flatbuffer->value()) + 4);
+  auto DataPtr = reinterpret_cast<void const *>(
+      reinterpret_cast<uint8_t const *>(Flatbuffer->value()) + 4);
 
   auto extractArrayInfo = [&NrOfElements, &DataPtr]() {
-    NrOfElements = *(reinterpret_cast<int const*>(DataPtr) + 1);
-    DataPtr = reinterpret_cast<void const *>(reinterpret_cast<int const*>(DataPtr) + 2);
+    NrOfElements = *(reinterpret_cast<int const *>(DataPtr) + 1);
+    DataPtr = reinterpret_cast<void const *>(
+        reinterpret_cast<int const *>(DataPtr) + 2);
   };
   switch (Type) {
-    case Value::ArrayByte:
-      extractArrayInfo();
-    case Value::Byte:
-      appendData<const std::int8_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayUByte:
-      extractArrayInfo();
-    case Value::UByte:
-      appendData<const std::uint8_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayShort:
-      extractArrayInfo();
-    case Value::Short:
-      appendData<const std::int16_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayUShort:
-      extractArrayInfo();
-    case Value::UShort:
-      appendData<const std::uint16_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayInt:
-      extractArrayInfo();
-    case Value::Int:
-      appendData<const std::int32_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayUInt:
-      extractArrayInfo();
-    case Value::UInt:
-      appendData<const std::uint32_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayLong:
-      extractArrayInfo();
-    case Value::Long:
-      appendData<const std::int64_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayULong:
-      extractArrayInfo();
-    case Value::ULong:
-      appendData<const std::uint64_t>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayFloat:
-      extractArrayInfo();
-    case Value::Float:
-      appendData<const float>(Values, DataPtr, NrOfElements);
-      break;
-    case Value::ArrayDouble:
-      extractArrayInfo();
-    case Value::Double:
-      appendData<const double>(Values, DataPtr, NrOfElements);
-      break;
-    default:
-      throw FileWriter::HDFWriterModuleRegistry::WriterException(
-          "Error in flatbuffer.");
+  case Value::ArrayByte:
+    extractArrayInfo();
+  case Value::Byte:
+    appendData<const std::int8_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayUByte:
+    extractArrayInfo();
+  case Value::UByte:
+    appendData<const std::uint8_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayShort:
+    extractArrayInfo();
+  case Value::Short:
+    appendData<const std::int16_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayUShort:
+    extractArrayInfo();
+  case Value::UShort:
+    appendData<const std::uint16_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayInt:
+    extractArrayInfo();
+  case Value::Int:
+    appendData<const std::int32_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayUInt:
+    extractArrayInfo();
+  case Value::UInt:
+    appendData<const std::uint32_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayLong:
+    extractArrayInfo();
+  case Value::Long:
+    appendData<const std::int64_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayULong:
+    extractArrayInfo();
+  case Value::ULong:
+    appendData<const std::uint64_t>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayFloat:
+    extractArrayInfo();
+  case Value::Float:
+    appendData<const float>(Values, DataPtr, NrOfElements);
+    break;
+  case Value::ArrayDouble:
+    extractArrayInfo();
+  case Value::Double:
+    appendData<const double>(Values, DataPtr, NrOfElements);
+    break;
+  default:
+    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+        "Error in flatbuffer.");
   }
 }
 /// Register the writer module.
-static HDFWriterModuleRegistry::Registrar<f142Writer>
-    RegisterWriter("f142");
+static HDFWriterModuleRegistry::Registrar<f142Writer> RegisterWriter("f142");
 
 } // namespace f142
 } // namespace Schemas

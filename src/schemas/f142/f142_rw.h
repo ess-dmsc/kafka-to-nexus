@@ -34,7 +34,7 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  int32_t close() override {return 0;};
+  int32_t close() override { return 0; };
 
   f142Writer();
   ~f142Writer() override = default;
@@ -69,12 +69,12 @@ protected:
   /// Index into the f142 values.
   NeXusDataset::CueIndex CueIndex;
 
-//  uint64_t TotalWrittenValues = 0;
-//  uint64_t LastIndexPosition = 0;
+  //  uint64_t TotalWrittenValues = 0;
+  //  uint64_t LastIndexPosition = 0;
   // set by default to a large value:
   uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
   size_t ArraySize{1};
-  size_t ChunkSize{64*1024};
+  size_t ChunkSize{64 * 1024};
 };
 
 } // namespace f142

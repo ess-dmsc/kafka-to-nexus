@@ -30,8 +30,9 @@ using namespace FileWriter::Schemas::f142;
 
 class f142Init : public ::testing::Test {
 public:
-  void SetUp() override  {
-    TestFile = HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
+  void SetUp() override {
+    TestFile =
+        HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
     RootGroup = TestFile.H5File.root();
   }
   FileWriter::HDFFile TestFile;
@@ -41,13 +42,13 @@ public:
 class f142WriterStandIn : public f142Writer {
 public:
   using f142Writer::ArraySize;
-  using f142Writer::ElementType;
   using f142Writer::ChunkSize;
-  using f142Writer::ValueIndexInterval;
-  using f142Writer::Values;
-  using f142Writer::Timestamp;
   using f142Writer::CueIndex;
   using f142Writer::CueTimestampZero;
+  using f142Writer::ElementType;
+  using f142Writer::Timestamp;
+  using f142Writer::ValueIndexInterval;
+  using f142Writer::Values;
 };
 
 TEST_F(f142Init, BasicDefaultInit) {
@@ -97,17 +98,16 @@ TEST_F(f142Init, CheckValueInitShape2) {
 
 TEST_F(f142Init, CheckAllDataTypes) {
   std::vector<std::pair<f142Writer::Type, hdf5::datatype::Datatype>> TypeMap{
-      {f142Writer::Type::int8, hdf5::datatype::create<std::int8_t >()},
-      {f142Writer::Type::uint8, hdf5::datatype::create<std::uint8_t >()},
-      {f142Writer::Type::int16, hdf5::datatype::create<std::int16_t >()},
-      {f142Writer::Type::uint16, hdf5::datatype::create<std::uint16_t >()},
-      {f142Writer::Type::int32, hdf5::datatype::create<std::int32_t >()},
-      {f142Writer::Type::uint32, hdf5::datatype::create<std::uint32_t >()},
-      {f142Writer::Type::int64, hdf5::datatype::create<std::int64_t >()},
-      {f142Writer::Type::uint64, hdf5::datatype::create<std::uint64_t >()},
-      {f142Writer::Type::float32, hdf5::datatype::create<float >()},
-      {f142Writer::Type::float64, hdf5::datatype::create<double >()}
-  };
+      {f142Writer::Type::int8, hdf5::datatype::create<std::int8_t>()},
+      {f142Writer::Type::uint8, hdf5::datatype::create<std::uint8_t>()},
+      {f142Writer::Type::int16, hdf5::datatype::create<std::int16_t>()},
+      {f142Writer::Type::uint16, hdf5::datatype::create<std::uint16_t>()},
+      {f142Writer::Type::int32, hdf5::datatype::create<std::int32_t>()},
+      {f142Writer::Type::uint32, hdf5::datatype::create<std::uint32_t>()},
+      {f142Writer::Type::int64, hdf5::datatype::create<std::int64_t>()},
+      {f142Writer::Type::uint64, hdf5::datatype::create<std::uint64_t>()},
+      {f142Writer::Type::float32, hdf5::datatype::create<float>()},
+      {f142Writer::Type::float64, hdf5::datatype::create<double>()}};
   auto Open = NeXusDataset::Mode::Open;
   f142WriterStandIn TestWriter;
   int Ctr{0};
@@ -209,37 +209,29 @@ TEST_F(f142ConfigParse, DataTypeFailure) {
 TEST_F(f142ConfigParse, DataTypes) {
   using Type = f142Writer::Type;
   std::vector<std::pair<std::string, Type>> TypeList{
-      {"int8", Type::int8},
-      {"INT8", Type::int8},
-      {"SHORT", Type::int16},
-      {"UINT8", Type::uint8},
-      {"INT16", Type::int16},
-      {"Uint16", Type::uint16},
-      {"int32", Type::int32},
-      {"Int", Type::int32},
-      {"uint32", Type::uint32},
-      {"int64", Type::int64},
-      {"long", Type::int64},
-      {"uint64", Type::uint64},
-      {"float32", Type::float32},
-      {"float", Type::float32},
-      {"FLOAT", Type::float32},
-      {"float64", Type::float64},
-      {"double", Type::float64},
-      {"DOUBLE", Type::float64}
-  };
+      {"int8", Type::int8},       {"INT8", Type::int8},
+      {"SHORT", Type::int16},     {"UINT8", Type::uint8},
+      {"INT16", Type::int16},     {"Uint16", Type::uint16},
+      {"int32", Type::int32},     {"Int", Type::int32},
+      {"uint32", Type::uint32},   {"int64", Type::int64},
+      {"long", Type::int64},      {"uint64", Type::uint64},
+      {"float32", Type::float32}, {"float", Type::float32},
+      {"FLOAT", Type::float32},   {"float64", Type::float64},
+      {"double", Type::float64},  {"DOUBLE", Type::float64}};
   for (auto &CType : TypeList) {
     f142WriterStandIn TestWriter;
     EXPECT_EQ(TestWriter.ElementType, Type::float64);
     TestWriter.parse_config("{\"type\":\"" + CType.first + "\"}");
-    EXPECT_EQ(TestWriter.ElementType, CType.second) << "Failed on type string: " << CType.first;
+    EXPECT_EQ(TestWriter.ElementType, CType.second)
+        << "Failed on type string: " << CType.first;
   }
 }
 
 class f142WriteData : public ::testing::Test {
 public:
-  void SetUp() override  {
-    TestFile = HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
+  void SetUp() override {
+    TestFile =
+        HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
     RootGroup = TestFile.H5File.root();
   }
   FileWriter::HDFFile TestFile;
@@ -247,7 +239,9 @@ public:
 };
 
 template <class ValFuncType>
-std::pair<std::unique_ptr<uint8_t[]>,size_t> generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId, std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessageBase(ValFuncType ValueFunc, Value ValueTypeId,
+                              std::uint64_t Timestamp) {
   auto Builder = flatbuffers::FlatBufferBuilder();
   auto SourceNameOffset = Builder.CreateString("SomeSourceName");
   auto ValueOffset = ValueFunc(Builder);
@@ -256,15 +250,15 @@ std::pair<std::unique_ptr<uint8_t[]>,size_t> generateFlatbufferMessageBase(ValFu
   LogDataBuilder.add_timestamp(Timestamp);
   LogDataBuilder.add_source_name(SourceNameOffset);
   LogDataBuilder.add_value_type(ValueTypeId);
-  FinishLogDataBuffer(Builder,
-                                                 LogDataBuilder.Finish());
+  FinishLogDataBuffer(Builder, LogDataBuilder.Finish());
   size_t BufferSize = Builder.GetSize();
   auto ReturnBuffer = std::make_unique<uint8_t[]>(BufferSize);
   std::memcpy(ReturnBuffer.get(), Builder.GetBufferPointer(), BufferSize);
   return {std::move(ReturnBuffer), BufferSize};
 }
 
-std::pair<std::unique_ptr<uint8_t[]>,size_t> generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
   auto ValueFunc = [Value](auto &Builder) {
     DoubleBuilder ValueBuilder(Builder);
     ValueBuilder.add_value(Value);
@@ -295,14 +289,17 @@ TEST_F(f142WriteData, WriteOneElement) {
   EXPECT_EQ(WrittenTimes.at(0), Timestamp);
 }
 
-std::pair<std::unique_ptr<uint8_t[]>,size_t> generateFlatbufferArrayMessage(std::vector<double> Value, std::uint64_t Timestamp) {
+std::pair<std::unique_ptr<uint8_t[]>, size_t>
+generateFlatbufferArrayMessage(std::vector<double> Value,
+                               std::uint64_t Timestamp) {
   auto ValueFunc = [Value](auto &Builder) {
     auto VectorOffset = Builder.CreateVector(Value);
     ArrayDoubleBuilder ValueBuilder(Builder);
     ValueBuilder.add_value(VectorOffset);
     return ValueBuilder.Finish().Union();
   };
-  return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble, Timestamp);
+  return generateFlatbufferMessageBase(ValueFunc, Value::ArrayDouble,
+                                       Timestamp);
 }
 
 TEST_F(f142WriteData, WriteOneArray) {
@@ -311,7 +308,8 @@ TEST_F(f142WriteData, WriteOneArray) {
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 4.5, 3.1};
   std::uint64_t Timestamp{12};
-  auto FlatbufferData = generateFlatbufferArrayMessage(ElementValues, Timestamp);
+  auto FlatbufferData =
+      generateFlatbufferArrayMessage(ElementValues, Timestamp);
   TestWriter.write(FileWriter::FlatbufferMessage(
       reinterpret_cast<char const *>(FlatbufferData.first.get()),
       FlatbufferData.second));
