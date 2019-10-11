@@ -195,58 +195,58 @@ void f142Writer::write(FlatbufferMessage const &Message) {
   };
   switch (Type) {
   case Value::ArrayByte:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::Byte:
     appendData<const std::int8_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayUByte:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::UByte:
     appendData<const std::uint8_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayShort:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::Short:
     appendData<const std::int16_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayUShort:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::UShort:
     appendData<const std::uint16_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayInt:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::Int:
     appendData<const std::int32_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayUInt:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::UInt:
     appendData<const std::uint32_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayLong:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::Long:
     appendData<const std::int64_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayULong:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::ULong:
     appendData<const std::uint64_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayFloat:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::Float:
     appendData<const float>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayDouble:
-    extractArrayInfo();
+    extractArrayInfo();  // fallthrough
   case Value::Double:
     appendData<const double>(Values, DataPtr, NrOfElements);
     break;
   default:
     throw FileWriter::HDFWriterModuleRegistry::WriterException(
-        "Error in flatbuffer.");
+        "Unknown data type in f142 flatbuffer.");
   }
 }
 /// Register the writer module.
