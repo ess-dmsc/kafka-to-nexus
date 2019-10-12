@@ -222,8 +222,8 @@ TEST_F(f142ConfigParse, DataTypes) {
     f142WriterStandIn TestWriter;
     EXPECT_EQ(TestWriter.ElementType, Type::float64);
     TestWriter.parse_config("{\"type\":\"" + CType.first + "\"}");
-    EXPECT_EQ(TestWriter.ElementType, CType.second)
-        << "Failed on type string: " << CType.first;
+    EXPECT_EQ(TestWriter.ElementType, CType.second) << "Failed on type string: "
+                                                    << CType.first;
   }
 }
 

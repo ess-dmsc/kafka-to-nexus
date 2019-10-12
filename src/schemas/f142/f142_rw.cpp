@@ -195,52 +195,52 @@ void f142Writer::write(FlatbufferMessage const &Message) {
   };
   switch (Type) {
   case Value::ArrayByte:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::Byte:
     appendData<const std::int8_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayUByte:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::UByte:
     appendData<const std::uint8_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayShort:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::Short:
     appendData<const std::int16_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayUShort:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::UShort:
     appendData<const std::uint16_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayInt:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::Int:
     appendData<const std::int32_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayUInt:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::UInt:
     appendData<const std::uint32_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayLong:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::Long:
     appendData<const std::int64_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayULong:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::ULong:
     appendData<const std::uint64_t>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayFloat:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::Float:
     appendData<const float>(Values, DataPtr, NrOfElements);
     break;
   case Value::ArrayDouble:
-    extractArrayInfo();  // fallthrough
+    extractArrayInfo(); // fallthrough
   case Value::Double:
     appendData<const double>(Values, DataPtr, NrOfElements);
     break;
