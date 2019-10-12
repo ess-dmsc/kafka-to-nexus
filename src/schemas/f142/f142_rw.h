@@ -69,8 +69,6 @@ protected:
   /// Index into the f142 values.
   NeXusDataset::CueIndex CueIndex;
 
-  //  uint64_t TotalWrittenValues = 0;
-  //  uint64_t LastIndexPosition = 0;
   // set by default to a large value:
   uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
   size_t ArraySize{1};
