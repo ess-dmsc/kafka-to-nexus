@@ -25,7 +25,6 @@ struct StreamSettings {
   std::string Topic;
   std::string Module;
   std::string Source;
-  bool RunParallel = false;
   std::string ConfigStreamJson;
   std::string Attributes;
 };
@@ -43,7 +42,6 @@ public:
       std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer, MainOpt &Settings);
 
 private:
-
   static void
   addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
                                 std::unique_ptr<FileWriterTask> &Task);
@@ -53,5 +51,12 @@ private:
                 bool UseSwmr);
   SharedLogger Logger = getLogger();
 };
+
+/// \brief Extract information about the stream.
+///
+/// \param StreamInfo
+/// \return The stream information.
+StreamSettings
+extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo);
 
 } // namespace FileWriter

@@ -26,12 +26,6 @@ namespace FileWriter {
 
 using nlohmann::json;
 
-/// Helper to throw a common error message type.
-static void throwMissingKey(std::string const &Key,
-                            std::string const &Context) {
-  throw std::runtime_error(fmt::format("Missing key {} from {}", Key, Context));
-}
-
 std::vector<StreamHDFInfo>
 CommandHandler::initializeHDF(FileWriterTask &Task,
                               std::string const &NexusStructureString,
@@ -44,64 +38,19 @@ CommandHandler::initializeHDF(FileWriterTask &Task,
   return StreamHDFInfoList;
 }
 
-/// \brief Extract information about the stream.
-///
-/// Extract the information about the stream from the json command and calls
-/// the corresponding HDF writer modules to set up initial HDF structures
-/// in the output file.
-///
-/// \param Task The task which will write the HDF file.
-/// \param StreamHDFInfoList
-/// \param Logger Pointer to spdlog instance to be used for logging.
-///
-/// \return The stream information.
-static StreamSettings
-extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo,
-                                          SharedLogger Logger) {
+StreamSettings
+extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
   StreamSettings StreamSettings;
   StreamSettings.StreamHDFInfoObj = StreamInfo;
 
   json ConfigStream = json::parse(StreamSettings.StreamHDFInfoObj.ConfigStream);
 
-  json ConfigStreamInner;
-  if (auto StreamMaybe = find<json>("stream", ConfigStream)) {
-    ConfigStreamInner = StreamMaybe.inner();
-  } else {
-    throwMissingKey("stream", ConfigStream.dump());
-  }
-
+  auto ConfigStreamInner = CommandParser::getRequiredValue<json>("stream", ConfigStream);
   StreamSettings.ConfigStreamJson = ConfigStreamInner.dump();
-  Logger->info("Adding stream: {}", StreamSettings.ConfigStreamJson);
-
-  if (auto TopicMaybe = find<json>("topic", ConfigStreamInner)) {
-    StreamSettings.Topic = TopicMaybe.inner();
-  } else {
-    throwMissingKey("topic", ConfigStreamInner.dump());
-  }
-
-  if (auto SourceMaybe = find<std::string>("source", ConfigStreamInner)) {
-    StreamSettings.Source = SourceMaybe.inner();
-  } else {
-    throwMissingKey("source", ConfigStreamInner.dump());
-  }
-
-  if (auto WriterModuleMaybe =
-          find<std::string>("writer_module", ConfigStreamInner)) {
-    StreamSettings.Module = WriterModuleMaybe.inner();
-  } else {
-    throwMissingKey("writer_module", ConfigStreamInner.dump());
-  }
-
-  if (auto RunParallelMaybe = find<bool>("run_parallel", ConfigStream)) {
-    StreamSettings.RunParallel = RunParallelMaybe.inner();
-  }
-  if (StreamSettings.RunParallel) {
-    Logger->info("Run parallel for source: {}", StreamSettings.Source);
-  }
-
-  if (auto x = find<json>("attributes", ConfigStream)) {
-    StreamSettings.Attributes = x.inner().dump();
-  }
+  StreamSettings.Topic = CommandParser::getRequiredValue<std::string>("topic", ConfigStreamInner);
+  StreamSettings.Source = CommandParser::getRequiredValue<std::string>("source", ConfigStreamInner);
+  StreamSettings.Module = CommandParser::getRequiredValue<std::string>("writer_module", ConfigStreamInner);
+  StreamSettings.Attributes = CommandParser::getOptionalValue<json>("attributes", ConfigStream,"").dump();
 
   return StreamSettings;
 }
@@ -145,13 +94,14 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
 static vector<StreamSettings>
 extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
                                  std::vector<StreamHDFInfo> &StreamHDFInfoList,
-                                 SharedLogger Logger) {
+                                 SharedLogger const &Logger) {
   Logger->info("Command contains {} streams", StreamHDFInfoList.size());
   std::vector<StreamSettings> StreamSettingsList;
   for (auto &StreamHDFInfo : StreamHDFInfoList) {
     try {
       StreamSettingsList.push_back(
-          extractStreamInformationFromJsonForSource(StreamHDFInfo, Logger));
+          extractStreamInformationFromJsonForSource(StreamHDFInfo));
+      Logger->info("Adding stream: {}", StreamSettingsList.back().ConfigStreamJson);
       setUpHdfStructure(StreamSettingsList.back(), Task);
       StreamHDFInfo.InitialisedOk = true;
     } catch (json::parse_error const &E) {
@@ -227,11 +177,9 @@ void CommandHandler::addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   auto Logger = getLogger();
-  bool UseParallelWriter = false;
 
   for (auto const &StreamSettings : StreamSettingsList) {
-    if (!UseParallelWriter || !StreamSettings.RunParallel) {
-      Logger->trace("add Source as non-parallel: {}", StreamSettings.Topic);
+      Logger->trace("Add Source: {}", StreamSettings.Topic);
       HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
 
       try {
@@ -278,10 +226,6 @@ void CommandHandler::addStreamSourceToWriterModule(
             StreamSettings.Module, StreamSettings.Source, E.what());
         continue;
       }
-    }
   }
 }
-
-
-
 } // namespace FileWriter
