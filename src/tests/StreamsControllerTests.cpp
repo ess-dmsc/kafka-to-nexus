@@ -12,7 +12,6 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-
 TEST(StreamsControllerTests, AddedStreamMasterCanBeRetrieved) {
   std::string JobID = "job_id";
   FileWriter::StreamsController Controller;
@@ -26,7 +25,8 @@ TEST(StreamsControllerTests, AddedStreamMasterCanBeRetrieved) {
 TEST(StreamsControllerTests, RequestingNonExistingJobIDThrows) {
   FileWriter::StreamsController Controller;
 
-  ASSERT_THROW(Controller.getStreamMasterForJobID("NOT-USED"), std::runtime_error);
+  ASSERT_THROW(Controller.getStreamMasterForJobID("NOT-USED"),
+               std::runtime_error);
 }
 
 TEST(StreamsControllerTests, StreamMastersCanBeStopped) {
@@ -70,4 +70,3 @@ TEST(StreamsControllerTests, RemovableStreamMasterIsDeleted) {
   // Deleted
   ASSERT_THROW(Controller.getStreamMasterForJobID(JobID2), std::runtime_error);
 }
-

@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "FileWriterTask.h"
 #include "CommandParser.h"
+#include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
 #include "StreamsController.h"
@@ -29,7 +29,6 @@ struct StreamSettings {
   std::string Attributes;
 };
 
-
 class CommandHandler {
 public:
   /// \brief Create a new file-writing job.
@@ -38,8 +37,10 @@ public:
   /// \param StatusProducer The producer for the job to report its status on.
   /// \param Settings General settings for the file writer.
   /// \return The new file-writing job.
-  std::unique_ptr<IStreamMaster> createFileWritingJob(StartCommandInfo const &StartInfo,
-      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer, MainOpt &Settings);
+  std::unique_ptr<IStreamMaster> createFileWritingJob(
+      StartCommandInfo const &StartInfo,
+      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
+      MainOpt &Settings);
 
 private:
   static void

@@ -12,9 +12,9 @@
 #include "CommandParser.h"
 #include "Errors.h"
 #include "Msg.h"
+#include "helper.h"
 #include "json.h"
 #include "logger.h"
-#include "helper.h"
 #include <algorithm>
 #include <chrono>
 #include <functional>
@@ -39,7 +39,6 @@ Master::Master(MainOpt &Config)
   Logger->info("getFileWriterProcessId: {}", Master::getFileWriterProcessId());
 }
 
-
 void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
 
@@ -60,14 +59,15 @@ void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
 nlohmann::json Master::parseCommand(std::string const &Command) {
   try {
     return nlohmann::json::parse(Command);
-  } catch (nlohmann::json::parse_error const & Error) {
+  } catch (nlohmann::json::parse_error const &Error) {
     throw std::runtime_error("Could not parse command JSON");
   }
 }
 
-void Master::handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) {
+void Master::handle_command(std::string const &Command,
+                            std::chrono::milliseconds TimeStamp) {
   try {
-    auto CommandJson =  parseCommand(Command);
+    auto CommandJson = parseCommand(Command);
     auto CommandName = CommandParser::extractCommandName(CommandJson);
 
     if (CommandName == CommandParser::StartCommand) {
@@ -76,15 +76,16 @@ void Master::handle_command(std::string const &Command, std::chrono::millisecond
 
       // Check job is not already running
       if (StreamsControl->jobIDInUse(StartInfo.JobID)) {
-        throw std::runtime_error(fmt::format("Command ignored as job id {} is already in progress",
-                                             StartInfo.JobID));
+        throw std::runtime_error(
+            fmt::format("Command ignored as job id {} is already in progress",
+                        StartInfo.JobID));
       }
 
       CommandHandler Handler;
-      auto NewJob = Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
+      auto NewJob =
+          Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
       StreamsControl->addStreamMaster(std::move(NewJob));
-    }
-    else if (CommandName == CommandParser::StopCommand) {
+    } else if (CommandName == CommandParser::StopCommand) {
       auto StopInfo = CommandParser::extractStopInformation(CommandJson);
       if (StopInfo.StopTime.count() > 0) {
         Logger->info(
@@ -99,13 +100,13 @@ void Master::handle_command(std::string const &Command, std::chrono::millisecond
     } else if (CommandName == CommandParser::StopAllWritingCommand) {
       StreamsControl->stopStreamMasters();
     } else if (CommandName == CommandParser::ExitCommand) {
-     stop();
+      stop();
     } else {
-      throw std::runtime_error(fmt::format("Did not recognise command name {}", CommandName));
+      throw std::runtime_error(
+          fmt::format("Did not recognise command name {}", CommandName));
     }
 
-  }
-  catch(std::runtime_error const & Error) {
+  } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
     logEvent(StatusProducer, StatusCode::Fail, getMainOpt().ServiceID, "N/A",
              Error.what());

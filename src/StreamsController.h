@@ -33,13 +33,14 @@ public:
   /// \brief Stop a job based on an ID.
   ///
   /// \param JobID The ID of the job to stop.
-  void stopJob(std::string const & JobID);
+  void stopJob(std::string const &JobID);
 
   /// \brief Set the stop time for a specific job.
   ///
   /// \param JobID The job.
   /// \param StopTime The stop time.
-  void setStopTimeForJob(std::string const & JobID, std::chrono::milliseconds const & StopTime);
+  void setStopTimeForJob(std::string const &JobID,
+                         std::chrono::milliseconds const &StopTime);
 
   /// \brief Retrieve the associated job.
   ///
@@ -55,7 +56,9 @@ public:
   ///
   /// \param Producer The producer to publish via.
   /// \param ServiceID The service ID.
-  void publishStreamStats(std::shared_ptr<KafkaW::ProducerTopic> const &Producer, std::string const &ServiceID);
+  void
+  publishStreamStats(std::shared_ptr<KafkaW::ProducerTopic> const &Producer,
+                     std::string const &ServiceID);
 
 private:
   std::vector<std::unique_ptr<IStreamMaster>> StreamMasters;

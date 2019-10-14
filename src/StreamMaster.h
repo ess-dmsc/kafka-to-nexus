@@ -98,7 +98,7 @@ public:
   /// \return The job id.
   std::string getJobId() const override { return WriterTask->jobID(); }
 
-  nlohmann::json getStats() const override {return WriterTask->stats();}
+  nlohmann::json getStats() const override { return WriterTask->stats(); }
 
 private:
   /// \brief Process the messages in the specified stream.

@@ -14,7 +14,8 @@
 #include "StreamsController.h"
 
 namespace FileWriter {
-void StreamsController::addStreamMaster(std::unique_ptr<IStreamMaster> StreamMaster) {
+void StreamsController::addStreamMaster(
+    std::unique_ptr<IStreamMaster> StreamMaster) {
   StreamMasters.emplace_back(std::move(StreamMaster));
 }
 
@@ -34,11 +35,12 @@ bool StreamsController::jobIDInUse(std::string const &JobID) {
   return false;
 }
 
-void StreamsController::stopJob(std::string const & JobID) {
+void StreamsController::stopJob(std::string const &JobID) {
   getStreamMasterForJobID(JobID)->requestStop();
 }
 
-void StreamsController::setStopTimeForJob(std::string const & JobID, std::chrono::milliseconds const & StopTime) {
+void StreamsController::setStopTimeForJob(
+    std::string const &JobID, std::chrono::milliseconds const &StopTime) {
   getStreamMasterForJobID(JobID)->setStopTime(StopTime);
 }
 
@@ -54,28 +56,26 @@ StreamsController::getStreamMasterForJobID(std::string const &JobID) {
 }
 
 void StreamsController::deleteRemovable() {
-  StreamMasters.erase(
-      std::remove_if(StreamMasters.begin(), StreamMasters.end(),
-                     [](std::unique_ptr<IStreamMaster> &Iter) {
-                       return Iter->isRemovable();
-                     }),
-      StreamMasters.end());
+  StreamMasters.erase(std::remove_if(StreamMasters.begin(), StreamMasters.end(),
+                                     [](std::unique_ptr<IStreamMaster> &Iter) {
+                                       return Iter->isRemovable();
+                                     }),
+                      StreamMasters.end());
 }
 
-void StreamsController::publishStreamStats(std::shared_ptr<KafkaW::ProducerTopic> const &Producer, std::string const &ServiceID) {
-auto Status = nlohmann::json::object();
-Status["type"] = "filewriter_status_master";
-Status["service_id"] = ServiceID;
-Status["files"] = nlohmann::json::object();
+void StreamsController::publishStreamStats(
+    std::shared_ptr<KafkaW::ProducerTopic> const &Producer,
+    std::string const &ServiceID) {
+  auto Status = nlohmann::json::object();
+  Status["type"] = "filewriter_status_master";
+  Status["service_id"] = ServiceID;
+  Status["files"] = nlohmann::json::object();
 
-for (auto &StreamMaster : StreamMasters) {
-auto FilewriterTaskID =
-    fmt::format("{}", StreamMaster->getJobId());
-auto FilewriterTaskStatus = StreamMaster->getStats();
-Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
+  for (auto &StreamMaster : StreamMasters) {
+    auto FilewriterTaskID = fmt::format("{}", StreamMaster->getJobId());
+    auto FilewriterTaskStatus = StreamMaster->getStats();
+    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
+  }
+  Producer->produce(Status.dump());
 }
-Producer->produce(Status.dump());
 }
-
-}
-

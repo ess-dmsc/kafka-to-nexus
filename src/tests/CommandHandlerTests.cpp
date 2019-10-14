@@ -18,7 +18,8 @@ TEST(ExtractStreamSettings, IfStreamNotDefinedThenThrows) {
   FileWriter::StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info), std::runtime_error);
+  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+               std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
@@ -34,7 +35,8 @@ TEST(ExtractStreamSettings, IfSourceNotDefinedThenThrows) {
   FileWriter::StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info), std::runtime_error);
+  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+               std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
@@ -50,7 +52,8 @@ TEST(ExtractStreamSettings, IfTopicNotDefinedThenThrows) {
   FileWriter::StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info), std::runtime_error);
+  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+               std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
@@ -66,7 +69,8 @@ TEST(ExtractStreamSettings, IfWriterModuleNotDefinedThenThrows) {
   FileWriter::StreamHDFInfo Info;
   Info.ConfigStream = Command;
 
-  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info), std::runtime_error);
+  ASSERT_THROW(FileWriter::extractStreamInformationFromJsonForSource(Info),
+               std::runtime_error);
 }
 
 TEST(ExtractStreamSettings, IfValidThenBasicStreamSettingsExtracted) {

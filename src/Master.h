@@ -38,7 +38,8 @@ public:
   /// Stop running.
   void stop() override;
   void handle_command(std::unique_ptr<Msg> CommandMessage) override;
-  void handle_command(std::string const &Command, std::chrono::milliseconds TimeStamp) override;
+  void handle_command(std::string const &Command,
+                      std::chrono::milliseconds TimeStamp) override;
   void statistics() override;
   MainOpt &getMainOpt() override;
   std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
@@ -58,7 +59,8 @@ private:
   std::string FileWriterProcessId;
   MainOpt &MainConfig;
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
-  std::shared_ptr<StreamsController> StreamsControl = std::make_shared<StreamsController>();
+  std::shared_ptr<StreamsController> StreamsControl =
+      std::make_shared<StreamsController>();
   nlohmann::json parseCommand(std::string const &Command);
 };
 } // namespace FileWriter
