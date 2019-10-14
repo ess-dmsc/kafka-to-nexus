@@ -42,7 +42,6 @@ public:
                       std::chrono::milliseconds TimeStamp) override;
   void statistics() override;
   MainOpt &getMainOpt() override;
-  std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() override;
 
   /// \brief The unique identifier for this file writer on the network.
   ///
@@ -61,6 +60,6 @@ private:
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   std::shared_ptr<StreamsController> StreamsControl =
       std::make_shared<StreamsController>();
-  nlohmann::json parseCommand(std::string const &Command);
+  static nlohmann::json parseCommand(std::string const &Command);
 };
 } // namespace FileWriter
