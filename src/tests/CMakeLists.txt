@@ -37,6 +37,7 @@ set(UnitTests_SRC
         StreamMasterTests.cpp
         StreamsControllerTests.cpp
         CommandParserTests.cpp
+        ExtensibleDatasetTests.cpp
         )
 
 set(UnitTests_INC

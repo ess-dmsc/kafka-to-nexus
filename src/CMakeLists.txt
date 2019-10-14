@@ -95,6 +95,7 @@ set(kafka_to_nexus_SRC
         StreamMaster.cpp
         CommandParser.cpp
         StreamsController.cpp
+        ExtensibleDataset.cpp
         )
 
 set(kafka_to_nexus_INC
@@ -140,7 +141,8 @@ set(kafka_to_nexus_INC
         KafkaW/ConfigureKafka.h
         StreamsController.h
         CommandParser.h
-        )
+        ExtensibleDataset.h
+    )
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
