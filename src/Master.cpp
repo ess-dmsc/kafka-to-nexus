@@ -191,8 +191,4 @@ std::string Master::getFileWriterProcessId() const {
 
 MainOpt &Master::getMainOpt() { return MainConfig; }
 
-std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
-  return StatusProducer;
-}
-
 } // namespace FileWriter

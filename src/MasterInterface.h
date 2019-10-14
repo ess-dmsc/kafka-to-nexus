@@ -45,7 +45,6 @@ public:
 
   virtual bool runLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;
-  virtual std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() = 0;
 };
 
 } // namespace FileWriter

@@ -24,13 +24,3 @@ void AddF142Reader() {
       FileWriter::Schemas::f142::FlatbufferReader>
       RegisterIt("f142");
 }
-
-void AddEv42Reader() {
-  using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-  std::map<std::string, ReaderPtr> &Readers =
-      FileWriter::FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
-  FileWriter::FlatbufferReaderRegistry::Registrar<
-      FileWriter::Schemas::ev42::FlatbufferReader>
-      RegisterIt("ev42");
-}
