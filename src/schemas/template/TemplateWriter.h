@@ -218,7 +218,7 @@ public:
   /// \param HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
   /// HDFWriterModule is free to create the structure and datasets according to
-  /// its needs, it must also take the reposnsibility to write these
+  /// its needs, it must also take the responsibility to write these
   /// attributes.
   /// \return An instance of InitResult. Note that these instances can only be
   /// constructed using the static methods InitResult::OK(),
