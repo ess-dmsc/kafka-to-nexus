@@ -129,5 +129,7 @@ private:
   std::string CurrentTopic;
 
   size_t getNumberOfPartitionsInTopic(const std::string &Topic);
+  static std::vector<int64_t> getOffsets(std::vector<RdKafka::TopicPartition *> const &TopicPartitions);
+  static void deletePartitions(std::vector<RdKafka::TopicPartition *> const &TopicPartitions);
 };
 } // namespace KafkaW
