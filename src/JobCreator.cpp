@@ -9,7 +9,7 @@
 
 /// \file  CommandHandler.cpp
 
-#include "CommandHandler.h"
+#include "JobCreator.h"
 #include "CommandParser.h"
 #include "EventLogger.h"
 #include "FileWriterTask.h"
@@ -27,9 +27,9 @@ namespace FileWriter {
 using nlohmann::json;
 
 std::vector<StreamHDFInfo>
-CommandHandler::initializeHDF(FileWriterTask &Task,
-                              std::string const &NexusStructureString,
-                              bool UseSwmr) {
+JobCreator::initializeHDF(FileWriterTask &Task,
+                          std::string const &NexusStructureString,
+                          bool UseSwmr) {
   json NexusStructure = json::parse(NexusStructureString);
   std::vector<StreamHDFInfo> StreamHDFInfoList;
   json ConfigFile = json::parse("{}");
@@ -129,7 +129,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-std::unique_ptr<IStreamMaster> CommandHandler::createFileWritingJob(
+std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
     StartCommandInfo const &StartInfo,
     std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
     MainOpt &Settings) {
@@ -182,7 +182,7 @@ std::unique_ptr<IStreamMaster> CommandHandler::createFileWritingJob(
   return s;
 }
 
-void CommandHandler::addStreamSourceToWriterModule(
+void JobCreator::addStreamSourceToWriterModule(
     std::vector<StreamSettings> &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   auto Logger = getLogger();

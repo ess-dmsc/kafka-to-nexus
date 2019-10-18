@@ -15,7 +15,7 @@
 #include <memory>
 
 #include "AddReader.h"
-#include "CommandHandler.h"
+#include "JobCreator.h"
 #include "FlatbufferMessage.h"
 #include "MainOpt.h"
 #include "helper.h"

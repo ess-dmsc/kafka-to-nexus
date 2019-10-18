@@ -29,7 +29,7 @@ struct StreamSettings {
   std::string Attributes;
 };
 
-class CommandHandler {
+class JobCreator {
 public:
   /// \brief Create a new file-writing job.
   ///

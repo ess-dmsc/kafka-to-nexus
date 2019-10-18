@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "CommandHandler.h"
+#include "JobCreator.h"
 #include <gtest/gtest.h>
 
 TEST(ExtractStreamSettings, IfStreamNotDefinedThenThrows) {

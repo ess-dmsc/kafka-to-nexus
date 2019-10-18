@@ -73,7 +73,7 @@ set(kafka_to_nexus_SRC
         Master.cpp
         logger.cpp
         CommandListener.cpp
-        CommandHandler.cpp
+        JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
         DemuxTopic.cpp
@@ -99,7 +99,7 @@ set(kafka_to_nexus_SRC
         )
 
 set(kafka_to_nexus_INC
-        CommandHandler.h
+        JobCreator.h
         CommandListener.h
         DemuxTopic.h
         Errors.h

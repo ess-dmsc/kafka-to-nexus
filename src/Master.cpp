@@ -8,7 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Master.h"
-#include "CommandHandler.h"
+#include "JobCreator.h"
 #include "CommandParser.h"
 #include "Errors.h"
 #include "Msg.h"
@@ -81,7 +81,7 @@ void Master::handle_command(std::string const &Command,
                         StartInfo.JobID));
       }
 
-      CommandHandler Handler;
+      JobCreator Handler;
       auto NewJob =
           Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
       StreamsControl->addStreamMaster(std::move(NewJob));
