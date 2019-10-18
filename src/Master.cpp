@@ -8,9 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Master.h"
-#include "JobCreator.h"
 #include "CommandParser.h"
 #include "Errors.h"
+#include "JobCreator.h"
 #include "Msg.h"
 #include "helper.h"
 #include "json.h"
