@@ -15,10 +15,12 @@
 #include "WriterUntyped.h"
 #include "helper.h"
 #include "json.h"
+#include "FlatbufferMessage.h"
 #include <flatbuffers/flatbuffers.h>
 #include <h5cpp/hdf5.hpp>
 #include <type_traits>
 #include <vector>
+#include "logger.h"
 
 namespace FileWriter {
 namespace Schemas {

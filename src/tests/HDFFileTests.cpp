@@ -25,6 +25,7 @@
 #include <string>
 #include <unistd.h>
 #include <vector>
+#include "Msg.h"
 
 using nlohmann::json;
 using std::string;
