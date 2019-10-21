@@ -15,8 +15,8 @@
 #include <memory>
 
 #include "AddReader.h"
-#include "JobCreator.h"
 #include "FlatbufferMessage.h"
+#include "JobCreator.h"
 #include "MainOpt.h"
 #include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
