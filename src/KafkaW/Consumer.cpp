@@ -34,7 +34,7 @@ findTopic(const std::string &Topic,
   }
   return *Iterator;
 }
-}
+} // namespace
 
 namespace KafkaW {
 
@@ -126,12 +126,10 @@ std::vector<int64_t> Consumer::getCurrentOffsets(std::string const &Topic) {
         "Kafka error while getting offsets for topic {}: {}", Topic, Error));
   }
 
-  std::vector<int64_t> CurrentOffsets;
-  for (auto TopicPartition : TopicPartitions) {
-    // cppcheck-suppress useStlAlgorithm
-    CurrentOffsets.push_back(TopicPartition->offset());
-  }
-  return CurrentOffsets;
+  auto Offsets = getOffsets(TopicPartitions);
+  deletePartitions(TopicPartitions);
+
+  return Offsets;
 }
 
 std::vector<RdKafka::TopicPartition *>
@@ -209,6 +207,19 @@ std::vector<int64_t>
 Consumer::offsetsForTimesAllPartitions(std::string const &Topic,
                                        std::chrono::milliseconds const Time) {
   auto TopicPartitions = offsetsForTimesForTopic(Topic, Time);
+  auto Offsets = getOffsets(TopicPartitions);
+  deletePartitions(TopicPartitions);
+  return Offsets;
+}
+
+void Consumer::deletePartitions(
+    std::vector<RdKafka::TopicPartition *> const &TopicPartitions) {
+  for_each(TopicPartitions.cbegin(), TopicPartitions.cend(),
+           [](RdKafka::TopicPartition *Partition) { delete Partition; });
+}
+
+std::vector<int64_t> Consumer::getOffsets(
+    std::vector<RdKafka::TopicPartition *> const &TopicPartitions) {
   std::vector<int64_t> Offsets(TopicPartitions.size(), 0);
   for (auto TopicPartition : TopicPartitions) {
     Offsets[TopicPartition->partition()] = TopicPartition->offset();
