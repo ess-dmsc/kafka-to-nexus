@@ -10,17 +10,17 @@
 #pragma once
 
 #include "Exceptions.h"
+#include "FlatbufferMessage.h"
 #include "HistogramRecord.h"
 #include "Shape.h"
 #include "WriterUntyped.h"
 #include "helper.h"
 #include "json.h"
-#include "FlatbufferMessage.h"
+#include "logger.h"
 #include <flatbuffers/flatbuffers.h>
 #include <h5cpp/hdf5.hpp>
 #include <type_traits>
 #include <vector>
-#include "logger.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -447,10 +447,9 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
   Record.addToItemsWritten(DataPtr->size());
   {
     std::vector<uint64_t> Timestamps;
-    Timestamps.resize(2 *
-                      hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
-                          .current_dimensions()
-                          .at(0));
+    Timestamps.resize(2 * hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
+                              .current_dimensions()
+                              .at(0));
     DatasetTimestamps.read(Timestamps, hdf5::property::DatasetTransferList());
     Timestamps.resize(2 * HistogramRecords.size());
     Timestamps.at(2 * Record.getHDFIndex()) = Timestamp;
