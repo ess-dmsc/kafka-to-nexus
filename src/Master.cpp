@@ -163,8 +163,7 @@ void Master::run() {
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
     if (getMainOpt().ReportStatus &&
-        Clock::now() - t_last_statistics >
-            std::chrono::milliseconds(getMainOpt().StatusMasterIntervalMS)) {
+        Clock::now() - t_last_statistics > getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
       statistics();
     }
