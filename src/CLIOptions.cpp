@@ -175,8 +175,9 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
-  addMillisecondOption(App, "--status-master-interval", MainOptions.StatusMasterIntervalMS,
-                 "Interval in milliseconds for status updates", true);
+  addMillisecondOption(App, "--status-master-interval",
+                       MainOptions.StatusMasterIntervalMS,
+                       "Interval in milliseconds for status updates", true);
   addMillisecondOption(App, "--streamer-ms-before-start",
                        MainOptions.StreamerConfiguration.BeforeStartTime,
                        "Streamer option - milliseconds before start time",
