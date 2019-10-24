@@ -3,7 +3,6 @@ find_package(Trompeloeil REQUIRED)
 set(UnitTests_SRC
         UnitTests.cpp
         H5Tests.cpp
-        HDFFileTests.cpp
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
         JsonTests.cpp
@@ -36,9 +35,10 @@ set(UnitTests_SRC
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
         StreamMasterTests.cpp
+        StreamsControllerTests.cpp
         CommandParserTests.cpp
         ExtensibleDatasetTests.cpp
-    )
+        )
 
 set(UnitTests_INC
         StreamerTestMocks.h
@@ -46,7 +46,9 @@ set(UnitTests_INC
         AddReader.h
         helpers/ev42_synth.h
         helpers/f142_synth.h
-        helpers/KafkaWMocks.h)
+        helpers/KafkaWMocks.h
+        helpers/FakeStreamMaster.h
+        )
 
 add_executable(UnitTests
         ${UnitTests_SRC}

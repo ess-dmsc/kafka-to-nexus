@@ -73,7 +73,7 @@ set(kafka_to_nexus_SRC
         Master.cpp
         logger.cpp
         CommandListener.cpp
-        CommandHandler.cpp
+        JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
         DemuxTopic.cpp
@@ -93,11 +93,13 @@ set(kafka_to_nexus_SRC
         CLIOptions.cpp
         NeXusDataset.cpp
         StreamMaster.cpp
+        CommandParser.cpp
+        StreamsController.cpp
         ExtensibleDataset.cpp
-    )
+        )
 
 set(kafka_to_nexus_INC
-        CommandHandler.h
+        JobCreator.h
         CommandListener.h
         DemuxTopic.h
         Errors.h
@@ -137,8 +139,8 @@ set(kafka_to_nexus_INC
         NeXusDataset.h
         KafkaW/ConfigureKafka.cpp
         KafkaW/ConfigureKafka.h
+        StreamsController.h
         CommandParser.h
-        CommandParser.cpp
         ExtensibleDataset.h
     )
 

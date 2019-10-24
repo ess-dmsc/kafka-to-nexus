@@ -33,8 +33,9 @@ public:
   virtual void run() = 0;
 
   virtual void stop() = 0;
-  virtual void handle_command_message(std::unique_ptr<Msg> msg) = 0;
-  virtual void handle_command(std::string const &command) = 0;
+  virtual void handle_command(std::unique_ptr<Msg> msg) = 0;
+  virtual void handle_command(std::string const &command,
+                              std::chrono::milliseconds TimeStamp) = 0;
   virtual void statistics() = 0;
 
   /// \brief The unique identifier for this file writer on the network.
@@ -44,11 +45,6 @@ public:
 
   virtual bool runLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;
-  virtual std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() = 0;
-  virtual void addStreamMaster(std::unique_ptr<StreamMaster> StreamMaster) = 0;
-  virtual void stopStreamMasters() = 0;
-  virtual std::unique_ptr<StreamMaster> &
-  getStreamMasterForJobID(std::string const &JobID) = 0;
 };
 
 } // namespace FileWriter
