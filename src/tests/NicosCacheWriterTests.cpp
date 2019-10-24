@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "../json.h"
-#include "AddReader.h"
 #include "FlatbufferMessage.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "schemas/ns10/NicosCacheReader.h"

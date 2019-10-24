@@ -14,7 +14,6 @@
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 
-#include "AddReader.h"
 #include "FlatbufferMessage.h"
 #include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
