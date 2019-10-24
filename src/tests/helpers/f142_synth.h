@@ -35,7 +35,6 @@ struct SynthImpl {
 class Synth {
 public:
   Synth(std::string SynthName, Value Type);
-  FlatBufferWrapper next(uint64_t TestValue, size_t NrOfElements);
   std::string Name;
   std::unique_ptr<SynthImpl> Impl;
 };

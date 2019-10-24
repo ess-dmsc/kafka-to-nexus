@@ -26,7 +26,7 @@ public:
 class ProducerTopic {
 public:
   ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
-  ~ProducerTopic() = default;
+  virtual ~ProducerTopic() = default;
 
   /// \brief Send a message to Kafka for publishing on this topic.
   ///
@@ -36,7 +36,7 @@ public:
   /// \param MsgData The message to publish
   /// \return 0 if message is successfully passed to RdKafka to be published, 1
   /// otherwise
-  int produce(const std::string &MsgData);
+  virtual int produce(const std::string &MsgData);
   std::string name() const;
 
 private:

@@ -172,11 +172,12 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--service-id", MainOptions.ServiceID,
                  "Identifier string for this filewriter instance. Otherwise by "
                  "default a string containing hostname and process id.");
-  App.add_option("--status-master-interval", MainOptions.StatusMasterIntervalMS,
-                 "Interval in milliseconds for status updates", true);
   App.add_flag("--list_modules", MainOptions.ListWriterModules,
                "List registered read and writer parts of file-writing modules"
                " and then exit.");
+  addMillisecondOption(App, "--status-master-interval",
+                       MainOptions.StatusMasterIntervalMS,
+                       "Interval in milliseconds for status updates", true);
   addMillisecondOption(App, "--streamer-ms-before-start",
                        MainOptions.StreamerConfiguration.BeforeStartTime,
                        "Streamer option - milliseconds before start time",
