@@ -63,4 +63,4 @@ public:
            size_t ChunkSize = 1024);
 };
 
-} // NeXusDataset namespace
+} // namespace NeXusDataset

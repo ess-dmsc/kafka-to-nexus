@@ -20,7 +20,7 @@ ArrayAdapter<const DataType> const
 getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
   return {Data->data(), Data->size()};
 }
-}
+} // namespace
 
 namespace FileWriter {
 namespace Schemas {
@@ -140,36 +140,35 @@ HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
   size_t Chunk64Bit = ChunkSizeBytes / 8;
   try {
 
-    NeXusDataset::EventTimeOffset(        // NOLINT(bugprone-unused-raii)
-        HDFGroup,                   // NOLINT(bugprone-unused-raii)
-        Create, // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);    // NOLINT(bugprone-unused-raii)
+    NeXusDataset::EventTimeOffset( // NOLINT(bugprone-unused-raii)
+        HDFGroup,                  // NOLINT(bugprone-unused-raii)
+        Create,                    // NOLINT(bugprone-unused-raii)
+        Chunk32Bit);               // NOLINT(bugprone-unused-raii)
 
-    NeXusDataset::EventId(        // NOLINT(bugprone-unused-raii)
-        HDFGroup,                   // NOLINT(bugprone-unused-raii)
-        Create, // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);    // NOLINT(bugprone-unused-raii)
+    NeXusDataset::EventId( // NOLINT(bugprone-unused-raii)
+        HDFGroup,          // NOLINT(bugprone-unused-raii)
+        Create,            // NOLINT(bugprone-unused-raii)
+        Chunk32Bit);       // NOLINT(bugprone-unused-raii)
 
-    NeXusDataset::EventTimeZero(        // NOLINT(bugprone-unused-raii)
-        HDFGroup,                   // NOLINT(bugprone-unused-raii)
-        Create, // NOLINT(bugprone-unused-raii)
-        Chunk64Bit);    // NOLINT(bugprone-unused-raii)
+    NeXusDataset::EventTimeZero( // NOLINT(bugprone-unused-raii)
+        HDFGroup,                // NOLINT(bugprone-unused-raii)
+        Create,                  // NOLINT(bugprone-unused-raii)
+        Chunk64Bit);             // NOLINT(bugprone-unused-raii)
 
-    NeXusDataset::EventIndex(        // NOLINT(bugprone-unused-raii)
-        HDFGroup,                   // NOLINT(bugprone-unused-raii)
-        Create, // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);    // NOLINT(bugprone-unused-raii)
+    NeXusDataset::EventIndex( // NOLINT(bugprone-unused-raii)
+        HDFGroup,             // NOLINT(bugprone-unused-raii)
+        Create,               // NOLINT(bugprone-unused-raii)
+        Chunk32Bit);          // NOLINT(bugprone-unused-raii)
 
-    NeXusDataset::CueIndex(        // NOLINT(bugprone-unused-raii)
-        HDFGroup,                   // NOLINT(bugprone-unused-raii)
-        Create, // NOLINT(bugprone-unused-raii)
-        Chunk32Bit);    // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueIndex( // NOLINT(bugprone-unused-raii)
+        HDFGroup,           // NOLINT(bugprone-unused-raii)
+        Create,             // NOLINT(bugprone-unused-raii)
+        Chunk32Bit);        // NOLINT(bugprone-unused-raii)
 
-    NeXusDataset::CueTimestampZero(        // NOLINT(bugprone-unused-raii)
+    NeXusDataset::CueTimestampZero( // NOLINT(bugprone-unused-raii)
         HDFGroup,                   // NOLINT(bugprone-unused-raii)
-        Create, // NOLINT(bugprone-unused-raii)
-        Chunk64Bit);    // NOLINT(bugprone-unused-raii)
-
+        Create,                     // NOLINT(bugprone-unused-raii)
+        Chunk64Bit);                // NOLINT(bugprone-unused-raii)
 
     if (RecordAdcPulseDebugData) {
       createAdcDatasets(HDFGroup);
@@ -226,9 +225,12 @@ void HDFWriterModule::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
 
 void HDFWriterModule::write(FlatbufferMessage const &Message) {
   auto EventMsgFlatbuffer = GetEventMessage(Message.data());
-  EventTimeOffset.appendArray(getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
-  EventId.appendArray(getFBVectorAsArrayAdapter(EventMsgFlatbuffer->detector_id()));
-  if (EventMsgFlatbuffer->time_of_flight()->size() != EventMsgFlatbuffer->detector_id()->size()) {
+  EventTimeOffset.appendArray(
+      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->time_of_flight()));
+  EventId.appendArray(
+      getFBVectorAsArrayAdapter(EventMsgFlatbuffer->detector_id()));
+  if (EventMsgFlatbuffer->time_of_flight()->size() !=
+      EventMsgFlatbuffer->detector_id()->size()) {
     Logger->warn("written data lengths differ");
   }
   auto CurrentRefTime = EventMsgFlatbuffer->pulse_time();
@@ -237,12 +239,12 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
   EventIndex.appendElement(EventsWritten);
   EventsWritten += CurrentNumberOfEvents;
   if (EventsWritten > LastEventIndex + EventIndexInterval) {
-    auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](CurrentNumberOfEvents - 1);
+    auto LastRefTimeOffset = EventMsgFlatbuffer->time_of_flight()->operator[](
+        CurrentNumberOfEvents - 1);
     CueTimestampZero.appendElement(CurrentRefTime + LastRefTimeOffset);
     CueIndex.appendElement(EventsWritten - 1);
     LastEventIndex = EventsWritten - 1;
   }
-
 
   if (RecordAdcPulseDebugData) {
     writeAdcPulseData(Message);
@@ -307,9 +309,7 @@ void HDFWriterModule::padDatasetsWithZeroesEqualToNumberOfEvents(
   PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
 
-int32_t HDFWriterModule::close() {
-  return 0;
-}
+int32_t HDFWriterModule::close() { return 0; }
 
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
     RegisterWriter("ev42");
