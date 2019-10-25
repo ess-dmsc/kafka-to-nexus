@@ -30,13 +30,11 @@ private:
 
 class HDFWriterModule : public FileWriter::HDFWriterModule {
 public:
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override;
+  void parse_config(std::string const &ConfigurationStream) override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
-  int32_t flush() override;
   int32_t close() override;
 
   uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;

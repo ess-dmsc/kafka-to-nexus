@@ -119,12 +119,10 @@ public:
 
 class WriterModuleStandIn : public FileWriter::HDFWriterModule {
 public:
-  MAKE_MOCK2(parse_config, void(std::string const &, std::string const &),
-             override);
+  MAKE_MOCK1(parse_config, void(std::string const &), override);
   MAKE_MOCK2(init_hdf, InitResult(hdf5::node::Group &, std::string const &),
              override);
   MAKE_MOCK1(reopen, InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const &), override);
-  MAKE_MOCK0(flush, int32_t(), override);
   MAKE_MOCK0(close, int32_t(), override);
 };

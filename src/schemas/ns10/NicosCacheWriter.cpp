@@ -24,8 +24,7 @@ StringValue::StringValue(hdf5::node::Group const &Parent,
     : NeXusDataset::ExtensibleDataset<std::string>(Parent, "value", CMode,
                                                    ChunkSize) {}
 
-void CacheWriter::parse_config(std::string const &ConfigurationStream,
-                               std::string const &) {
+void CacheWriter::parse_config(std::string const &ConfigurationStream) {
   auto Config = nlohmann::json::parse(ConfigurationStream);
   try {
     CueInterval = Config["cue_interval"].get<uint64_t>();
@@ -135,8 +134,6 @@ void CacheWriter::write(const FileWriter::FlatbufferMessage &Message) {
     CueCounter = 0;
   }
 }
-
-std::int32_t CacheWriter::flush() { return 0; }
 
 std::int32_t CacheWriter::close() { return 0; }
 

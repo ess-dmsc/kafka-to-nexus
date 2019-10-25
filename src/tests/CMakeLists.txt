@@ -2,7 +2,6 @@ find_package(Trompeloeil REQUIRED)
 
 set(UnitTests_SRC
         UnitTests.cpp
-        H5Tests.cpp
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
         JsonTests.cpp
@@ -19,7 +18,6 @@ set(UnitTests_SRC
         DemuxerTests.cpp
         MessageTests.cpp
         StreamerTests.cpp
-        AddReader.cpp
         Schema_f142Tests.cpp
         AreaDetectorTests.cpp
         EventLoggerTests.cpp
@@ -43,7 +41,6 @@ set(UnitTests_SRC
 set(UnitTests_INC
         StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
-        AddReader.h
         helpers/ev42_synth.h
         helpers/f142_synth.h
         helpers/KafkaWMocks.h

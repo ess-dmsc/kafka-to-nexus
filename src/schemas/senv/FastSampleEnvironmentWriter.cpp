@@ -53,8 +53,7 @@ std::string SampleEnvironmentDataGuard::source_name(
   return FbPointer->Name()->str();
 }
 
-void FastSampleEnvironmentWriter::parse_config(std::string const &,
-                                               std::string const &) {
+void FastSampleEnvironmentWriter::parse_config(std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
                 "FastSampleEnvironmentWriter class.");
 }
@@ -152,8 +151,6 @@ void FastSampleEnvironmentWriter::write(
     Timestamp.appendArray(TempTimeStamps);
   }
 }
-
-std::int32_t FastSampleEnvironmentWriter::flush() { return 0; }
 
 std::int32_t FastSampleEnvironmentWriter::close() { return 0; }
 

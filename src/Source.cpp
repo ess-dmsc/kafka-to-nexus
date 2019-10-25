@@ -53,7 +53,6 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
 void Source::close_writer_module() {
   if (WriterModule) {
     getLogger()->trace("Closing writer module for {}", SourceName);
-    WriterModule->flush();
     WriterModule->close();
     WriterModule.reset();
     getLogger()->trace("Writer module closed for {}", SourceName);

@@ -55,11 +55,10 @@ std::unique_ptr<std::pair<PollStatus, Msg>> generateKafkaMsgWithValidFlatbuffer(
   flatbuffers::FlatBufferBuilder Builder;
 
   auto nameOffset = Builder.CreateString(SourceName);
-  auto valueOffset = Schemas::f142::CreateInt(Builder, Value);
+  auto valueOffset = CreateInt(Builder, Value);
   uint64_t timestamp = 123456789;
-  auto LogDataOffset =
-      CreateLogData(Builder, nameOffset, Schemas::f142::Value::Int,
-                    valueOffset.Union(), timestamp);
+  auto LogDataOffset = CreateLogData(Builder, nameOffset, Value::Int,
+                                     valueOffset.Union(), timestamp);
 
   FinishLogDataBuffer(Builder, LogDataOffset);
   flatbuffers::DetachedBuffer MessageBuffer = Builder.Release();
@@ -227,8 +226,6 @@ TEST_F(StreamerProcessTimingTest,
       RegisterIt(ReaderKey);
   TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
@@ -247,8 +244,6 @@ TEST_F(StreamerProcessTimingTest, MessageBeforeStartTimestamp) {
       ReaderKey);
   TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
@@ -275,8 +270,6 @@ TEST_F(StreamerProcessTimingTest,
       RegisterIt(SchemaID);
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
@@ -323,8 +316,6 @@ TEST_F(StreamerProcessTimingTest,
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
       RegisterIt("f142");
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   std::string const HistoricalDataSourceName = "fw-test-helpers";
@@ -382,8 +373,6 @@ TEST_F(StreamerProcessTimingTest,
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
       RegisterIt("f142");
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   std::string const HistoricalDataSourceName = "fw-test-helpers";
@@ -433,8 +422,6 @@ TEST_F(StreamerProcessTimingTest,
   FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
       RegisterIt("f142");
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   std::string const HistoricalDataSourceName = "fw-test-helpers";
@@ -486,8 +473,6 @@ TEST_F(StreamerProcessTimingTest, ReceivingEmptyMessageAfterStopIsOk) {
 
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{5};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
@@ -528,8 +513,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStop) {
               std::chrono::milliseconds(12000);
   TestStreamer->Options.StopTimestamp = Then;
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
@@ -560,8 +543,6 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageSlightlyAfterStop) {
   TestStreamer->Options.AfterStopTime = c::milliseconds(20000);
   std::this_thread::sleep_for(c::milliseconds(5));
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
   FileWriter::Source TestSource(SourceName, ReaderKey, std::move(Writer));
@@ -581,8 +562,6 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
   // Message timestamp returned is higher than this
   TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{2};
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), flush())
-      .RETURN(0);
   ALLOW_CALL(*dynamic_cast<WriterModuleStandIn *>(Writer.get()), close())
       .RETURN(0);
 

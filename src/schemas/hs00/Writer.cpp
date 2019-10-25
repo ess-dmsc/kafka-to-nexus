@@ -14,8 +14,7 @@ namespace FileWriter {
 namespace Schemas {
 namespace hs00 {
 
-void Writer::parse_config(std::string const &ConfigurationStream,
-                          std::string const &) {
+void Writer::parse_config(std::string const &ConfigurationStream) {
   TheWriterUntyped = WriterUntyped::createFromJson(
       WriterUntyped::json::parse(ConfigurationStream));
 }
@@ -49,11 +48,6 @@ void Writer::write(FlatbufferMessage const &Message) {
                              "that you call parse_config() before.");
   }
   TheWriterUntyped->write(Message, DoFlushEachWrite);
-}
-
-int32_t Writer::flush() {
-  Logger->trace("flush");
-  return 0;
 }
 
 int32_t Writer::close() {

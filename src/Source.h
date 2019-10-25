@@ -13,6 +13,7 @@
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
 #include "ProcessMessageResult.h"
+#include "logger.h"
 #include <string>
 
 namespace FileWriter {

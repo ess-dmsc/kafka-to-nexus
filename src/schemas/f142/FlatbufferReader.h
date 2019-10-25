@@ -10,14 +10,14 @@
 #pragma once
 
 #include "../../FlatbufferReader.h"
-#include "Common.h"
+#include <f142_logdata_generated.h>
 
 namespace FileWriter {
 namespace Schemas {
 namespace f142 {
 
 /// Declare helper to extract flatbuffer data from byte blob
-FBUF const *get_fbuf(char const *data);
+LogData const *get_fbuf(char const *data);
 
 /// Implement Reader interface for f142
 class FlatbufferReader : public FileWriter::FlatbufferReader {
