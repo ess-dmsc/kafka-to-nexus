@@ -87,7 +87,6 @@ set(kafka_to_nexus_SRC
         KafkaW/ConsumerFactory.cpp
         helper.cpp
         URI.cpp
-        h5.cpp
         FlatbufferMessage.cpp
         MainOpt.cpp
         CLIOptions.cpp
@@ -106,7 +105,6 @@ set(kafka_to_nexus_INC
         EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h
-        h5.h
         HDFFile.h
         HDFWriterModule.h
         helper.h
