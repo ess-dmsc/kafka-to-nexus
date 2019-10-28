@@ -9,13 +9,12 @@
 
 #include "../../FlatbufferReader.h"
 #include "../../HDFWriterModule.h"
-#include "../../h5.h"
 #include "AdcDatasets.h"
+#include "NeXusDataset.h"
 
 namespace FileWriter {
 namespace Schemas {
 namespace ev42 {
-template <typename T> using uptr = std::unique_ptr<T>;
 
 class FlatbufferReader : public FileWriter::FlatbufferReader {
 public:
@@ -37,19 +36,16 @@ public:
   void write(FlatbufferMessage const &Message) override;
   int32_t close() override;
 
-  uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_time_offset;
-  uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_id;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_event_time_zero;
-  uptr<h5::h5d_chunked_1d<uint32_t>> ds_event_index;
-  uptr<h5::h5d_chunked_1d<uint32_t>> ds_cue_index;
-  uptr<h5::h5d_chunked_1d<uint64_t>> ds_cue_timestamp_zero;
-  hsize_t chunk_bytes = 1 << 16;
-  uint64_t total_written_bytes = 0;
-  uint64_t index_at_bytes = 0;
-  uint64_t index_every_bytes = std::numeric_limits<uint64_t>::max();
-  uint64_t ts_max = 0;
-  size_t buffer_size = 0;
-  size_t buffer_packet_max = 0;
+  NeXusDataset::EventTimeOffset EventTimeOffset;
+  NeXusDataset::EventId EventId;
+  NeXusDataset::EventTimeZero EventTimeZero;
+  NeXusDataset::EventIndex EventIndex;
+  NeXusDataset::CueIndex CueIndex;
+  NeXusDataset::CueTimestampZero CueTimestampZero;
+  hsize_t ChunkSizeBytes = 1 << 16;
+  uint64_t EventsWritten = 0;
+  uint64_t LastEventIndex = 0;
+  uint64_t EventIndexInterval = std::numeric_limits<uint64_t>::max();
 
 private:
   void createAdcDatasets(hdf5::node::Group &HDFGroup) const;

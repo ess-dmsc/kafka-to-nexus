@@ -36,11 +36,3 @@ Example `nexus_structure` to write radiation detector events:
   Size of the HDF chunks given in megabytes.
 * `nexus.chunk.chunk_kb` (int)
   Size of the HDF chunks given in kilobytes.
-* `nexus.buffer.size_mb` (int)
-  Small messages can additionally be buffered to reduce HDF writes. This gives
-  the buffer size in megabytes.
-* `nexus.buffer.size_kb` (int)
-  Small messages can additionally be buffered to reduce HDF writes. This gives
-  the buffer size in kilobytes.
-* `nexus.buffer.packet_max_kb` (int)
-  Maximum size of messages to be considered for buffering in kilobytes.
