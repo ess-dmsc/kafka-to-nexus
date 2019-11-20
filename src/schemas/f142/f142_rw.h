@@ -54,7 +54,7 @@ public:
 
 protected:
   SharedLogger Logger = spdlog::get("filewriterlogger");
-  std::string findDataType(const nlohmann::basic_json<> Attribute);
+  std::string findDataType(nlohmann::basic_json<> const &Attribute);
 
   Type ElementType{Type::float64};
 

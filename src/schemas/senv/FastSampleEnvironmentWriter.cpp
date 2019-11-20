@@ -64,7 +64,7 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::RawValue(         // NOLINT(bugprone-unused-raii)
+    NeXusDataset::UInt16Value(         // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
@@ -98,7 +98,7 @@ FileWriterBase::InitResult
 FastSampleEnvironmentWriter::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Value = NeXusDataset::RawValue(CurrentGroup, NeXusDataset::Mode::Open);
+    Value = NeXusDataset::UInt16Value(CurrentGroup, NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
