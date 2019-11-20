@@ -8,8 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Master.h"
-#include "CommandHandler.h"
+#include "CommandParser.h"
 #include "Errors.h"
+#include "JobCreator.h"
 #include "Msg.h"
 #include "helper.h"
 #include "json.h"
@@ -21,11 +22,6 @@
 #include <unistd.h>
 
 namespace FileWriter {
-
-std::chrono::duration<long long int, std::milli> getCurrentTimeStamp() {
-  return std::chrono::duration_cast<std::chrono::milliseconds>(
-      std::chrono::system_clock::now().time_since_epoch());
-}
 
 Master::Master(MainOpt &Config)
     : Logger(getLogger()), Listener(Config), MainConfig(Config) {
@@ -43,13 +39,11 @@ Master::Master(MainOpt &Config)
   Logger->info("getFileWriterProcessId: {}", Master::getFileWriterProcessId());
 }
 
-void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
-  CommandHandler command_handler(getMainOpt(), this);
-
+void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
 
   // If Kafka message does not contain a timestamp then use current time.
-  std::chrono::milliseconds TimeStamp = getCurrentTimeStamp();
+  auto TimeStamp = getCurrentTimeStampMS();
 
   if (CommandMessage->MetaData.TimestampType !=
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
@@ -59,28 +53,65 @@ void Master::handle_command_message(std::unique_ptr<Msg> CommandMessage) {
         "Kafka command doesn't contain timestamp, so using current time.");
   }
 
-  command_handler.tryToHandle(Message, TimeStamp);
+  handle_command(Message, TimeStamp);
 }
 
-void Master::handle_command(std::string const &Command) {
-  CommandHandler command_handler(getMainOpt(), this);
-  command_handler.tryToHandle(Command, getCurrentTimeStamp());
-}
-
-std::unique_ptr<StreamMaster<Streamer>> &
-Master::getStreamMasterForJobID(std::string const &JobID) {
-  for (auto &StreamMaster : StreamMasters) {
-    if (StreamMaster->getJobId() == JobID) {
-      return StreamMaster;
-    }
+nlohmann::json Master::parseCommand(std::string const &Command) {
+  try {
+    return nlohmann::json::parse(Command);
+  } catch (nlohmann::json::parse_error const &Error) {
+    throw std::runtime_error("Could not parse command JSON");
   }
-  static std::unique_ptr<StreamMaster<Streamer>> NotFound;
-  return NotFound;
 }
 
-void Master::addStreamMaster(
-    std::unique_ptr<StreamMaster<Streamer>> StreamMaster) {
-  StreamMasters.push_back(std::move(StreamMaster));
+void Master::handle_command(std::string const &Command,
+                            std::chrono::milliseconds TimeStamp) {
+  try {
+    auto CommandJson = parseCommand(Command);
+    auto CommandName = CommandParser::extractCommandName(CommandJson);
+
+    if (CommandName == CommandParser::StartCommand) {
+      auto StartInfo =
+          CommandParser::extractStartInformation(CommandJson, TimeStamp);
+
+      // Check job is not already running
+      if (StreamsControl->jobIDInUse(StartInfo.JobID)) {
+        throw std::runtime_error(
+            fmt::format("Command ignored as job id {} is already in progress",
+                        StartInfo.JobID));
+      }
+
+      JobCreator Handler;
+      auto NewJob =
+          Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
+      StreamsControl->addStreamMaster(std::move(NewJob));
+    } else if (CommandName == CommandParser::StopCommand) {
+      auto StopInfo = CommandParser::extractStopInformation(CommandJson);
+      if (StopInfo.StopTime.count() > 0) {
+        Logger->info(
+            "Received request to gracefully stop file with id : {} at {} ms",
+            StopInfo.JobID, StopInfo.StopTime.count());
+        StreamsControl->setStopTimeForJob(StopInfo.JobID, StopInfo.StopTime);
+      } else {
+        Logger->info("Received request to gracefully stop file with id : {}",
+                     StopInfo.JobID);
+        StreamsControl->stopJob(StopInfo.JobID);
+      }
+    } else if (CommandName == CommandParser::StopAllWritingCommand) {
+      StreamsControl->stopStreamMasters();
+    } else if (CommandName == CommandParser::ExitCommand) {
+      stop();
+    } else {
+      throw std::runtime_error(
+          fmt::format("Did not recognise command name {}", CommandName));
+    }
+
+  } catch (std::runtime_error const &Error) {
+    Logger->error("{}", Error.what());
+    logEvent(StatusProducer, StatusCode::Fail, getMainOpt().ServiceID, "N/A",
+             Error.what());
+    return;
+  }
 }
 
 struct OnScopeExit {
@@ -115,9 +146,9 @@ void Master::run() {
     }
   }
 
-  // Interpret commands given directly from the configuration file, if present
+  // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {
-    this->handle_command(cmd);
+    this->handle_command(cmd, getCurrentTimeStampMS());
   }
 
   Listener.start();
@@ -128,52 +159,28 @@ void Master::run() {
         Listener.poll();
     if (KafkaMessage->first == KafkaW::PollStatus::Message) {
       Logger->debug("Command received");
-      this->handle_command_message(
+      this->handle_command(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
     if (getMainOpt().ReportStatus &&
         Clock::now() - t_last_statistics >
-            std::chrono::milliseconds(getMainOpt().StatusMasterIntervalMS)) {
+            getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
       statistics();
     }
 
-    // Remove any job which is in 'is_removable' state
-    StreamMasters.erase(
-        std::remove_if(StreamMasters.begin(), StreamMasters.end(),
-                       [](std::unique_ptr<StreamMaster<Streamer>> &Iter) {
-                         return Iter->isRemovable();
-                       }),
-        StreamMasters.end());
+    StreamsControl->deleteRemovable();
   }
   Logger->info("calling stop on all stream_masters");
-  stopStreamMasters();
+  StreamsControl->stopStreamMasters();
   Logger->info("called stop on all stream_masters");
-}
-
-void Master::stopStreamMasters() {
-  for (auto &x : StreamMasters) {
-    x->requestStop();
-  }
 }
 
 void Master::statistics() {
   if (!StatusProducer) {
     return;
   }
-  using nlohmann::json;
-  auto Status = json::object();
-  Status["type"] = "filewriter_status_master";
-  Status["service_id"] = getMainOpt().ServiceID;
-  Status["files"] = json::object();
-  for (auto &StreamMaster : StreamMasters) {
-    auto FilewriterTaskID =
-        fmt::format("{}", StreamMaster->getFileWriterTask().jobID());
-    auto FilewriterTaskStatus = StreamMaster->getFileWriterTask().stats();
-    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
-  }
-  std::string Buffer = Status.dump();
-  StatusProducer->produce(Buffer);
+  StreamsControl->publishStreamStats(StatusProducer, getMainOpt().ServiceID);
 }
 
 void Master::stop() { Running = false; }
@@ -183,9 +190,5 @@ std::string Master::getFileWriterProcessId() const {
 }
 
 MainOpt &Master::getMainOpt() { return MainConfig; }
-
-std::shared_ptr<KafkaW::ProducerTopic> Master::getStatusProducer() {
-  return StatusProducer;
-}
 
 } // namespace FileWriter

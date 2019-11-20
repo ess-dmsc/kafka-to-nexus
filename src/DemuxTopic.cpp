@@ -8,10 +8,6 @@
 // Screaming Udder!                              https://esss.se
 
 #include "DemuxTopic.h"
-#include "FlatbufferReader.h"
-#include "logger.h"
-#include <limits>
-#include <stdexcept>
 
 namespace FileWriter {
 
@@ -37,7 +33,7 @@ DemuxTopic::process_message(FlatbufferMessage const &Message) {
     ++messages_processed;
     return ProcessingResult;
   } catch (std::out_of_range &e) {
-    Logger->trace("Source with name \"{}\" and ID \"{}\" is not in list.",
+    Logger->trace(R"(Source with name "{}" and ID "{}" is not in list.)",
                   Message.getSourceName(), Message.getFlatbufferID());
     ++error_no_source_instance;
   }

@@ -21,6 +21,7 @@
 #include "logger.h"
 #include <chrono>
 #include <future>
+#include <utility>
 
 namespace FileWriter {
 using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
@@ -47,10 +48,20 @@ public:
 
   ~Streamer() = default;
 
-  /// \brief Method that process a message.
+  /// \brief Polls for message and processes it if there is one
   ///
-  /// \param mp instance of the policy that describe how to process the message
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
   ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
+
+  /// \brief Processes received message
+  ///
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
+  /// \param KafkaMessage the received message
+  ProcessMessageResult processMessage(
+      FileWriter::DemuxTopic &MessageProcessor,
+      std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.
@@ -59,22 +70,7 @@ public:
   /// StreamerErrorCode::has_finished.
   ///
   /// \return The current status.
-  StreamerStatus closeStream();
-
-  /// \brief Sets the sources.
-  ///
-
-  /// \return The number of sources.
-  size_t numSources() const { return Sources.size(); }
-  void setSources(
-      std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList);
-
-  /// \brief Removes the source from the sources list.
-  ///
-  /// \param SourceName The name of the source to be removed.
-  ///
-  /// \return True if success, else false (e.g. the source is not in the list).
-  bool removeSource(FlatbufferMessage::SrcHash Hash);
+  StreamerStatus close();
 
   /// \brief Returns the status of the Streamer.
   ///
@@ -94,12 +90,10 @@ public:
 
 protected:
   ConsumerPtr Consumer{nullptr};
-  KafkaW::BrokerSettings Settings;
 
   std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
   Status::MessageInfo MessageInfo;
 
-  std::map<FlatbufferMessage::SrcHash, std::string> Sources;
   StreamerOptions Options;
 
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>
@@ -108,7 +102,32 @@ protected:
 private:
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
+
+  /// Creates StopOffsets vector
+  std::vector<std::pair<int64_t, bool>>
+  getStopOffsets(std::chrono::milliseconds StartTime,
+                 std::chrono::milliseconds StopTime,
+                 std::string const &TopicName);
+
+  /// Checks whether current message means we've now reached the stop offsets
+  bool stopOffsetsNowReached(int32_t NewMessagePartition,
+                             int64_t NewMessageOffset);
+
+  /// Checks whether we've reached the stop offsets
+  bool stopOffsetsReached();
+
   SharedLogger Logger = getLogger();
+  bool CatchingUpToStopOffset = false;
+
+  /// The offset for each partition at which the Streamer should stop consuming
+  /// from Kafka and whether it has been reached yet
+  /// Only set when the system time reaches the requested stop time
+  std::vector<std::pair<int64_t, bool>> StopOffsets;
+
+  /// Check if the consumer has already reached the offset we want to stop at
+  void markIfOffsetsAlreadyReached(
+      std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
+      std::string const &TopicName);
 };
 
 /// \brief Create a consumer with options specified in the class
@@ -124,8 +143,4 @@ std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
 initTopics(std::string const &TopicName,
            FileWriter::StreamerOptions const &Options,
            SharedLogger const &Logger, ConsumerPtr Consumer);
-
-bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime,
-                     SharedLogger const &Logger);
 } // namespace FileWriter

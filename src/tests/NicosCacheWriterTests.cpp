@@ -13,7 +13,6 @@
 #include <memory>
 
 #include "../json.h"
-#include "AddReader.h"
 #include "FlatbufferMessage.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "schemas/ns10/NicosCacheReader.h"
@@ -147,7 +146,6 @@ TEST_F(NicosCacheWriterTest, WriterReturnValues) {
               FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
               FileWriter::HDFWriterModule_detail::InitResult::OK);
-  EXPECT_EQ(SomeWriter.flush(), 0);
   EXPECT_EQ(SomeWriter.close(), 0);
 }
 
@@ -180,7 +178,7 @@ TEST_F(NicosCacheWriterTest, WriterConfiguration) {
   })"_json;
 
   CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.Sourcename, JsonConfig["source"]);
   EXPECT_EQ(Writer.ChunkSize.at(0), JsonConfig["chunk_size"].get<uint64_t>());
   EXPECT_EQ(Writer.CueInterval, JsonConfig["cue_interval"].get<int>());
@@ -192,7 +190,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
   })"_json;
 
   CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
 
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
@@ -222,7 +220,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
   })"_json;
 
   CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
 
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
@@ -252,7 +250,7 @@ TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
   })"_json;
 
   CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
 
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
@@ -284,7 +282,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
   })"_json;
 
   CacheWriterF Writer;
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
 
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);

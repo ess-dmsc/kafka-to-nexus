@@ -26,4 +26,4 @@ PeakTime::PeakTime(hdf5::node::Group const &Parent, Mode CMode,
   }
 };
 
-} // NeXusDataset namespace
+} // namespace NeXusDataset

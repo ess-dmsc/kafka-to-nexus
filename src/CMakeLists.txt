@@ -70,10 +70,11 @@ set(kafka_to_nexus_SRC
         StatusWriter.cpp
         Errors.cpp
         Streamer.cpp
+        StreamMaster.cpp
         Master.cpp
         logger.cpp
         CommandListener.cpp
-        CommandHandler.cpp
+        JobCreator.cpp
         FileWriterTask.cpp
         Source.cpp
         DemuxTopic.cpp
@@ -87,27 +88,28 @@ set(kafka_to_nexus_SRC
         KafkaW/ConsumerFactory.cpp
         helper.cpp
         URI.cpp
-        h5.cpp
         FlatbufferMessage.cpp
         MainOpt.cpp
         CLIOptions.cpp
         NeXusDataset.cpp
+        StreamMaster.cpp
+        CommandParser.cpp
+        StreamsController.cpp
+        ExtensibleDataset.cpp
         )
 
 set(kafka_to_nexus_INC
-        CommandHandler.h
+        JobCreator.h
         CommandListener.h
         DemuxTopic.h
         Errors.h
         EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h
-        h5.h
         HDFFile.h
         HDFWriterModule.h
         helper.h
         json.h
-        kafka-to-nexus.h
         KafkaW/BrokerSettings.h
         KafkaW/Consumer.h
         KafkaW/Producer.h
@@ -135,7 +137,11 @@ set(kafka_to_nexus_INC
         CLIOptions.h
         NeXusDataset.h
         KafkaW/ConfigureKafka.cpp
-        KafkaW/ConfigureKafka.h)
+        KafkaW/ConfigureKafka.h
+        StreamsController.h
+        CommandParser.h
+        ExtensibleDataset.h
+    )
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

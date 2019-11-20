@@ -11,7 +11,6 @@
 
 #include "FileWriterTask.h"
 #include <chrono>
-#include <functional>
 
 namespace KafkaW {
 class ProducerTopic;

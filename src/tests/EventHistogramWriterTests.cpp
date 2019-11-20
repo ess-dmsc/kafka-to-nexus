@@ -384,7 +384,7 @@ TEST_F(EventHistogramWriter, WriterInitHDF) {
                          FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
 }
 
@@ -393,10 +393,10 @@ TEST_F(EventHistogramWriter, WriterReopen) {
                          FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
   Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
 }
 
@@ -406,10 +406,10 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
       FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
   Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   std::vector<uint32_t> DimLengths{4, 2, 2};
   for (size_t i = 0; i < 4; ++i) {
@@ -429,10 +429,10 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
                          FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
   Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   std::vector<uint32_t> DimLengths{4, 2, 2};
   size_t HistogramID = 0;
@@ -464,10 +464,10 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
                          FileCreationLocation::Default);
   auto Group = File.root();
   auto Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
   Writer = Writer::create();
-  Writer->parse_config(createTestWriterTypedJson().dump(), "{}");
+  Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   std::vector<uint32_t> DimLengths{4, 2, 2};
   for (size_t HistogramID = 0; HistogramID < 18; ++HistogramID) {
@@ -506,10 +506,10 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
     return;
   }
   std::string JsonBulk(V1.data(), V1.data() + V1.size());
-  Writer->parse_config(JsonBulk, "{}");
+  Writer->parse_config(JsonBulk);
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
   Writer = Writer::create();
-  Writer->parse_config(JsonBulk, "{}");
+  Writer->parse_config(JsonBulk);
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   auto M = FileWriter::FlatbufferMessage(
       reinterpret_cast<const char *>(V2.data()), V2.size());

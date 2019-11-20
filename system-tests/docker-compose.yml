@@ -8,8 +8,8 @@ services:
       CONFIG_FILE: "/streamer_config.ini"
       KAFKA_BROKER: "localhost"
     volumes:
-    - ./config-files/streamer_config.ini:/streamer_config.ini
-    - ./config-files/SANS2D_reduced_with_geometry.nxs:/SANS2D_reduced_with_geometry.nxs
+      - ./config-files/streamer_config.ini:/streamer_config.ini
+      - ./config-files/SANS2D_reduced_with_geometry.nxs:/SANS2D_reduced_with_geometry.nxs
 
   filewriter:
     depends_on:
@@ -19,6 +19,6 @@ services:
     environment:
       CONFIG_FILE: "/file_writer_config.ini"
     volumes:
-    - ./config-files/file_writer_config.ini:/file_writer_config.ini
-    - ./output-files/:/output-files/
-    - ./logs/:/filewriter_logs/
+      - ./config-files/file_writer_config.ini:/file_writer_config.ini
+      - ./output-files/:/output-files/
+      - ./logs/:/filewriter_logs/

@@ -9,19 +9,22 @@
 
 #pragma once
 
-#include <array>
 #include <string>
-#include <vector>
 
 namespace uri {
 
 /// \brief Thin parser for URIs.
 struct URI {
   URI() = default;
-  /// Creates and parses the given URI
+
+  /// Constructor
+  ///
+  /// \param URIString The default to initialise with.
   explicit URI(const std::string &URIString);
 
-  /// Parses the given `uri`
+  /// \brief Sets new values, if value successfully parsed.
+  ///
+  /// \param URIString The value to parse.
   void parse(const std::string &URIString);
 
   /// \brief If port was specified (or already non-zero before `URI::parse`) it

@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include <cstdint>
-
 namespace FileWriter {
 enum class ProcessMessageResult {
   OK,

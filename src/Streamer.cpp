@@ -8,10 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Streamer.h"
-#include "KafkaW/ConsumerFactory.h"
 #include "KafkaW/PollStatus.h"
+#include "Msg.h"
 #include "helper.h"
-#include <ciso646>
 
 namespace FileWriter {
 std::chrono::milliseconds systemTime() {
@@ -19,22 +18,26 @@ std::chrono::milliseconds systemTime() {
   return std::chrono::duration_cast<std::chrono::milliseconds>(
       now.time_since_epoch());
 }
-bool stopTimeElapsed(std::uint64_t MessageTimestamp,
-                     std::chrono::milliseconds Stoptime,
-                     SharedLogger const &Logger) {
-  Logger->trace("\t\tStoptime:         {}", Stoptime.count());
-  Logger->trace("\t\tMessageTimestamp: {}",
-                static_cast<std::int64_t>(MessageTimestamp));
-  return (Stoptime.count() > 0 and
+
+bool messageTimestampIsBeforeStartTimestamp(
+    std::uint64_t MessageTimestamp, std::chrono::milliseconds StartTime) {
+  return (
+      static_cast<std::int64_t>(MessageTimestamp) <
+      std::chrono::duration_cast<std::chrono::nanoseconds>(StartTime).count());
+}
+
+bool messageTimestampIsAfterStopTimestamp(std::uint64_t MessageTimestamp,
+                                          std::chrono::milliseconds StopTime) {
+  // Also return false if StopTime == 0, this means a stop time has not yet been
+  // set
+  return (StopTime.count() > 0 &&
           static_cast<std::int64_t>(MessageTimestamp) >
-              std::chrono::duration_cast<std::chrono::nanoseconds>(Stoptime)
+              std::chrono::duration_cast<std::chrono::nanoseconds>(StopTime)
                   .count());
 }
-} // namespace FileWriter
 
-FileWriter::Streamer::Streamer(const std::string &Broker,
-                               const std::string &TopicName,
-                               StreamerOptions Opts, ConsumerPtr Consumer)
+Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
+                   StreamerOptions Opts, ConsumerPtr Consumer)
     : Options(std::move(Opts)) {
 
   if (TopicName.empty() || Broker.empty()) {
@@ -49,15 +52,13 @@ FileWriter::Streamer::Streamer(const std::string &Broker,
                       .count());
   Options.BrokerSettings.Address = Broker;
 
-  ConsumerInitialised =
-      std::async(std::launch::async, &FileWriter::initTopics, TopicName,
-                 Options, Logger, std::move(Consumer));
+  ConsumerInitialised = std::async(std::launch::async, &initTopics, TopicName,
+                                   Options, Logger, std::move(Consumer));
 }
 
-std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-FileWriter::initTopics(std::string const &TopicName,
-                       FileWriter::StreamerOptions const &Options,
-                       SharedLogger const &Logger, ConsumerPtr Consumer) {
+std::pair<Status::StreamerStatus, ConsumerPtr>
+initTopics(std::string const &TopicName, StreamerOptions const &Options,
+           SharedLogger const &Logger, ConsumerPtr Consumer) {
   Logger->trace("Connecting to \"{}\"", TopicName);
   try {
     if (Options.StartTimestamp.count() != 0) {
@@ -70,23 +71,21 @@ FileWriter::initTopics(std::string const &TopicName,
     if (!Consumer->topicPresent(TopicName)) {
       Logger->error("Topic \"{}\" not in broker, remove corresponding stream",
                     TopicName);
-      return {FileWriter::Status::StreamerStatus::TOPIC_PARTITION_ERROR,
-              nullptr};
+      return {Status::StreamerStatus::TOPIC_PARTITION_ERROR, nullptr};
     }
-    return {FileWriter::Status::StreamerStatus::WRITING, std::move(Consumer)};
+    return {Status::StreamerStatus::WRITING, std::move(Consumer)};
   } catch (std::exception &Error) {
     Logger->error("{}", Error.what());
-    return {FileWriter::Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
+    return {Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
   }
 }
 
-FileWriter::Streamer::StreamerStatus FileWriter::Streamer::closeStream() {
-  Sources.clear();
+FileWriter::Streamer::StreamerStatus FileWriter::Streamer::close() {
   RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }
 
-bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
+bool Streamer::ifConsumerIsReadyThenAssignIt() {
   if (ConsumerInitialised.wait_for(std::chrono::milliseconds(100)) !=
       std::future_status::ready) {
     Logger->warn("Not yet done setting up consumer. Deferring consumption.");
@@ -98,22 +97,188 @@ bool FileWriter::Streamer::ifConsumerIsReadyThenAssignIt() {
   return true;
 }
 
-bool FileWriter::Streamer::stopTimeExceeded(
-    FileWriter::DemuxTopic &MessageProcessor) {
+bool Streamer::stopTimeExceeded(DemuxTopic &MessageProcessor) {
   if ((Options.StopTimestamp.count() > 0) and
       (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
-    Logger->info("Stop stream timeout for topic \"{}\" reached. {} ms "
-                 "passed since stop time.",
-                 MessageProcessor.topic(),
-                 (systemTime() - Options.StopTimestamp).count());
-    Sources.clear();
+    Logger->info("{} ms passed since stop time in topic {}",
+                 (systemTime() - Options.StopTimestamp).count(),
+                 MessageProcessor.topic());
     return true;
   }
   return false;
 }
 
-FileWriter::ProcessMessageResult
-FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
+void Streamer::markIfOffsetsAlreadyReached(
+    std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
+    std::string const &TopicName) {
+  auto CurrentOffsets = Consumer->getCurrentOffsets(TopicName);
+  assert(CurrentOffsets.size() == OffsetsToStopAt.size());
+  for (size_t PartitionNumber = 0; PartitionNumber < CurrentOffsets.size();
+       PartitionNumber++) {
+    if (CurrentOffsets[PartitionNumber] >=
+        OffsetsToStopAt[PartitionNumber].first) {
+      OffsetsToStopAt[PartitionNumber].second = true;
+    }
+  }
+}
+
+/// Query Kafka brokers to find out the offset, in every partition, at which we
+/// should stop consuming
+std::vector<std::pair<int64_t, bool>>
+Streamer::getStopOffsets(std::chrono::milliseconds StartTime,
+                         std::chrono::milliseconds StopTime,
+                         std::string const &TopicName) {
+  // StopOffsets are a pair of the offset corresponding to the stop time and
+  // whether or not that offset has been reached yet
+  auto OffsetsFromStartTime =
+      Consumer->offsetsForTimesAllPartitions(TopicName, StartTime);
+  auto OffsetsFromStopTime =
+      Consumer->offsetsForTimesAllPartitions(TopicName, StopTime);
+  std::vector<std::pair<int64_t, bool>> OffsetsToStopAt(
+      OffsetsFromStopTime.size(), {0, false});
+  for (size_t PartitionNumber = 0; PartitionNumber < OffsetsFromStopTime.size();
+       ++PartitionNumber) {
+    int64_t StopOffset = OffsetsFromStopTime[PartitionNumber];
+    int64_t StartOffset = OffsetsFromStartTime[PartitionNumber];
+    // If stop offset is -1 that means there are not any messages after the time
+    // we have asked for, so set the stop offset to the current high-watermark
+    if (StopOffset == -1) {
+      // -1 as the high watermark is the last available offset + 1
+      StopOffset =
+          Consumer->getHighWatermarkOffset(TopicName, PartitionNumber) - 1;
+    }
+    if (StopOffset < 0 || StartOffset < 0 || StopOffset <= StartOffset) {
+      // No data on topic at all or between start and stop of run,
+      // so mark this partition as stop already reached
+      OffsetsToStopAt[PartitionNumber].second = true;
+      Logger->debug("No data on topic {} to consume before specified stop time",
+                    TopicName);
+    }
+    OffsetsToStopAt[PartitionNumber].first = StopOffset;
+    Logger->debug(
+        "Stop offset for topic {}, partition {}, is {}. Start offset was {}",
+        TopicName, PartitionNumber, OffsetsToStopAt[PartitionNumber].first,
+        StartOffset);
+    markIfOffsetsAlreadyReached(OffsetsToStopAt, TopicName);
+  }
+  return OffsetsToStopAt;
+}
+
+/// Checks if the newly received message means that we have now reached the stop
+/// offset for every partition.
+///
+/// \param NewMessagePartition partition number of the newly received message.
+/// \param NewMessageOffset offset of the newly received message.
+/// \return true if we've reached stop offset for every partition.
+bool Streamer::stopOffsetsNowReached(int32_t NewMessagePartition,
+                                     int64_t NewMessageOffset) {
+  if (NewMessageOffset >= StopOffsets[NewMessagePartition].first) {
+    StopOffsets[NewMessagePartition].second = true;
+  }
+  return stopOffsetsReached();
+}
+
+bool Streamer::stopOffsetsReached() {
+  return std::all_of(
+      StopOffsets.cbegin(), StopOffsets.cend(),
+      [](std::pair<int64_t, bool> const &StopPair) { return StopPair.second; });
+}
+
+ProcessMessageResult Streamer::processMessage(
+    DemuxTopic &MessageProcessor,
+    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
+
+  if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
+    CatchingUpToStopOffset = true;
+    Logger->trace("Calling getStopOffsets");
+    StopOffsets = getStopOffsets(Options.StartTimestamp,
+                                 Options.StopTimestamp + Options.AfterStopTime,
+                                 MessageProcessor.topic());
+    Logger->trace("Finished executing getStopOffsets");
+    // There may be no data in the topic, so check if all stop offsets
+    // are already marked as reached
+    if (stopOffsetsReached()) {
+      Logger->warn("There was no data in {} to consume",
+                   MessageProcessor.topic());
+      return ProcessMessageResult::STOP;
+    }
+  }
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
+    return ProcessMessageResult::ERR;
+  }
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
+      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
+      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
+    return ProcessMessageResult::OK;
+  }
+
+  // If we reach this point we have a real message with a payload to deal with
+
+  // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
+  std::unique_ptr<FlatbufferMessage> Message;
+  try {
+    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
+                                                  KafkaMessage->second.size());
+  } catch (std::runtime_error &Error) {
+    Logger->warn("Message that is not a valid flatbuffer encountered "
+                 "(msg. offset: {}). The error was: {}",
+                 KafkaMessage->second.MetaData.Offset, Error.what());
+    return ProcessMessageResult::ERR;
+  }
+
+  if (CatchingUpToStopOffset &&
+      stopOffsetsNowReached(KafkaMessage->second.MetaData.Partition,
+                            KafkaMessage->second.MetaData.Offset)) {
+    Logger->debug("Reached stop offsets in topic {}", MessageProcessor.topic());
+
+    if (MessageProcessor.removeSource(Message->getSourceHash())) {
+      Logger->debug("Remove source {}", Message->getSourceName());
+      return ProcessMessageResult::STOP;
+    }
+    Logger->warn("Can't remove source {}, not in the source list",
+                 Message->getSourceName());
+    return ProcessMessageResult::ERR;
+  }
+
+  if (Message->getTimestamp() == 0) {
+    Logger->error(
+        R"(Message from topic "{}", source "{}" has no timestamp, ignoring)",
+        MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::ERR;
+  }
+
+  if (MessageProcessor.sources().find(Message->getSourceHash()) ==
+      MessageProcessor.sources().end()) {
+    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
+                 "unknown, ignoring.",
+                 MessageProcessor.topic(), Message->getSourceName());
+    return ProcessMessageResult::OK;
+  }
+
+  if (messageTimestampIsBeforeStartTimestamp(Message->getTimestamp(),
+                                             Options.StartTimestamp) ||
+      messageTimestampIsAfterStopTimestamp(Message->getTimestamp(),
+                                           Options.StopTimestamp)) {
+    // ignore message and carry on
+    return ProcessMessageResult::OK;
+  }
+
+  // Collect information about the data received
+  MessageInfo.newMessage(Message->size());
+
+  // Write the message. Log any error and return the result of processing
+  ProcessMessageResult result = MessageProcessor.process_message(*Message);
+  Logger->trace("Processed: {}::{}", MessageProcessor.topic(),
+                Message->getSourceName());
+  if (ProcessMessageResult::OK != result) {
+    MessageInfo.error();
+  }
+  return result;
+}
+
+ProcessMessageResult Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
@@ -130,90 +295,7 @@ FileWriter::Streamer::pollAndProcess(FileWriter::DemuxTopic &MessageProcessor) {
   std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
       Consumer->poll();
 
-  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
-    return ProcessMessageResult::ERR;
-  }
-
-  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
-      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
-      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
-    if (stopTimeExceeded(MessageProcessor)) {
-      return ProcessMessageResult::STOP;
-    }
-    return ProcessMessageResult::OK;
-  }
-
-  // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
-  std::unique_ptr<FlatbufferMessage> Message;
-  try {
-    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
-                                                  KafkaMessage->second.size());
-  } catch (std::runtime_error &Error) {
-    Logger->warn("Message that is not a valid flatbuffer encountered "
-                 "(msg. offset: {}). The error was: {}",
-                 KafkaMessage->second.MetaData.Offset, Error.what());
-    return ProcessMessageResult::ERR;
-  }
-
-  if (Sources.find(Message->getSourceHash()) == Sources.end()) {
-    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
-                 "unknown, ignoring.",
-                 MessageProcessor.topic(), Message->getSourceName());
-    return ProcessMessageResult::OK;
-  }
-
-  if (Message->getTimestamp() == 0) {
-    Logger->error(
-        R"(Message from topic "{}", source "{}" has no timestamp, ignoring)",
-        MessageProcessor.topic(), Message->getSourceName());
-    return ProcessMessageResult::ERR;
-  }
-
-  // Timestamp of message is before the "start" timestamp
-  if (static_cast<std::int64_t>(Message->getTimestamp()) <
-      std::chrono::duration_cast<std::chrono::nanoseconds>(
-          Options.StartTimestamp)
-          .count()) {
-    return ProcessMessageResult::OK;
-  }
-
-  // Check if there is a stoptime configured and the message timestamp is
-  // greater than it
-  if (stopTimeElapsed(Message->getTimestamp(), Options.StopTimestamp, Logger)) {
-    if (removeSource(Message->getSourceHash())) {
-      Logger->info("Remove source {}", Message->getSourceName());
-      return ProcessMessageResult::STOP;
-    }
-    Logger->warn("Can't remove source {}, not in the source list",
-                 Message->getSourceName());
-    return ProcessMessageResult::ERR;
-  }
-
-  // Collect information about the data received
-  MessageInfo.newMessage(Message->size());
-
-  // Write the message. Log any error and return the result of processing
-  ProcessMessageResult result = MessageProcessor.process_message(*Message);
-  Logger->trace("Processed: {}::{}", MessageProcessor.topic(),
-                Message->getSourceName());
-  if (ProcessMessageResult::OK != result) {
-    MessageInfo.error();
-  }
-  return result;
+  return processMessage(MessageProcessor, KafkaMessage);
 }
 
-void FileWriter::Streamer::setSources(
-    std::unordered_map<FlatbufferMessage::SrcHash, Source> &SourceList) {
-  for (auto &Src : SourceList) {
-    Logger->info("Add {} to source list", Src.second.sourcename());
-    Sources.emplace(Src.second.getHash(), Src.second.sourcename());
-  }
-}
-
-bool FileWriter::Streamer::removeSource(FlatbufferMessage::SrcHash Hash) {
-  if (Sources.find(Hash) == Sources.end()) {
-    return false;
-  }
-  Sources.erase(Hash);
-  return true;
-}
+} // namespace FileWriter

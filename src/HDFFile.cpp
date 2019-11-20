@@ -9,6 +9,7 @@
 
 #include "HDFFile.h"
 #include "Version.h"
+#include "json.h"
 #include <date/date.h>
 #include <date/tz.h>
 #include <flatbuffers/flatbuffers.h>

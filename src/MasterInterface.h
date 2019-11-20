@@ -11,13 +11,14 @@
 
 #include "CommandListener.h"
 #include "KafkaW/ProducerTopic.h"
-#include "MainOpt.h"
 #include <memory>
 #include <string>
 
+struct MainOpt;
+
 namespace FileWriter {
 
-template <typename T> class StreamMaster;
+class StreamMaster;
 class Streamer;
 
 /// \brief Listens to the Kafka configuration topic and handles any requests.
@@ -32,8 +33,9 @@ public:
   virtual void run() = 0;
 
   virtual void stop() = 0;
-  virtual void handle_command_message(std::unique_ptr<Msg> msg) = 0;
-  virtual void handle_command(std::string const &command) = 0;
+  virtual void handle_command(std::unique_ptr<Msg> msg) = 0;
+  virtual void handle_command(std::string const &command,
+                              std::chrono::milliseconds TimeStamp) = 0;
   virtual void statistics() = 0;
 
   /// \brief The unique identifier for this file writer on the network.
@@ -43,12 +45,6 @@ public:
 
   virtual bool runLoopExited() = 0;
   virtual MainOpt &getMainOpt() = 0;
-  virtual std::shared_ptr<KafkaW::ProducerTopic> getStatusProducer() = 0;
-  virtual void
-  addStreamMaster(std::unique_ptr<StreamMaster<Streamer>> StreamMaster) = 0;
-  virtual void stopStreamMasters() = 0;
-  virtual std::unique_ptr<StreamMaster<Streamer>> &
-  getStreamMasterForJobID(std::string const &JobID) = 0;
 };
 
 } // namespace FileWriter

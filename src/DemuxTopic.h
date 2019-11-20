@@ -10,25 +10,21 @@
 #pragma once
 #include "ProcessMessageResult.h"
 #include "Source.h"
-#include "json.h"
-#include <chrono>
-#include <functional>
+#include "logger.h"
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace FileWriter {
 
 /// \brief Used to keep track of file writing modules on one topic and call the
 /// correct module based on sourcename.
-
 class DemuxTopic {
 public:
-  /// Initialize with the given \p TopicName.
+  /// Initialize with the given TopicName.
   explicit DemuxTopic(std::string TopicName);
 
   /// Move constructor.
-  explicit DemuxTopic(DemuxTopic &&x) noexcept;
+  DemuxTopic(DemuxTopic &&x) noexcept;
 
   virtual ~DemuxTopic();
 
@@ -39,8 +35,6 @@ public:
 
   /// \brief Finds the appropriate `Source` for this `Message` and delegates
   /// processing.
-  ///
-  /// Called typically from `Streamer`.
   ///
   /// \param Message The flatbuffer message that is to be written to file.
   ///
@@ -53,7 +47,7 @@ public:
   /// \return Unordered map of sources
   std::unordered_map<FlatbufferMessage::SrcHash, Source> &sources();
 
-  /// Adds a \p source to topic sources.
+  /// Adds a source to topic sources.
   ///
   /// \param source The `Source` to be added.
   ///
@@ -62,6 +56,15 @@ public:
     auto k = source.getHash();
     std::pair<FlatbufferMessage::SrcHash, Source> v{k, std::move(source)};
     return TopicSources.insert(std::move(v)).first->second;
+  }
+
+  /// Removes a source
+  /// for example when the last message before the stop time has been consumed
+  ///
+  /// \param SourceHash Uniquely identifies the source to be removed
+  /// \return True if successful, false if key source hash not found
+  bool removeSource(FlatbufferMessage::SrcHash SourceHash) {
+    return static_cast<bool>(TopicSources.erase(SourceHash));
   }
 
   /// Counts the number of processed message.

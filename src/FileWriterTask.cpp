@@ -14,7 +14,6 @@
 #include "helper.h"
 #include "logger.h"
 #include <atomic>
-#include <chrono>
 #include <thread>
 
 namespace FileWriter {
@@ -34,31 +33,7 @@ json hdf_parse(std::string const &Structure, SharedLogger Logger) {
 }
 } // namespace
 
-std::atomic<uint32_t> n_FileWriterTask_created{0};
-
 std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
-
-/// Helper function for creating an ID.
-///
-/// \param ExtraValue Used to help make a unique ID.
-/// \return A "unique" id.
-uint64_t createId(int ExtraValue) {
-  namespace chrono = std::chrono;
-  return (static_cast<uint64_t>(
-              chrono::duration_cast<chrono::nanoseconds>(
-                  chrono::system_clock::now().time_since_epoch())
-                  .count())
-          << 16) +
-         (ExtraValue & 0xffff);
-}
-
-FileWriterTask::FileWriterTask(
-    std::string TaskID,
-    std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
-    : ServiceId(std::move(TaskID)),
-      StatusProducer(std::move(StatusProducerPtr)), Logger(getLogger()) {
-  Id = createId(++n_FileWriterTask_created);
-}
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
@@ -142,8 +117,6 @@ void FileWriterTask::reopenFile() {
     throw;
   }
 }
-
-uint64_t FileWriterTask::id() const { return Id; }
 
 std::string FileWriterTask::jobID() const { return JobId; }
 

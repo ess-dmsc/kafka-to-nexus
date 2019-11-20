@@ -35,8 +35,7 @@ public:
   CacheWriter() = default;
   ~CacheWriter() override = default;
 
-  void parse_config(std::string const &ConfigurationStream,
-                    std::string const &ConfigurationModule) override;
+  void parse_config(std::string const &ConfigurationStream) override;
 
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
@@ -44,8 +43,6 @@ public:
   InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   void write(FileWriter::FlatbufferMessage const &Message) override;
-
-  int32_t flush() override;
 
   int32_t close() override;
 

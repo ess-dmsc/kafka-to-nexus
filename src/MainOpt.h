@@ -14,13 +14,8 @@
 #include "json.h"
 #include "logger.h"
 
-#include <atomic>
 #include <chrono>
-#include <functional>
-#include <map>
-#include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 // POD
@@ -83,10 +78,9 @@ struct MainOpt {
   /// Kafka topic where status updates are to be published.
   uri::URI KafkaStatusURI{"localhost:9092/kafka-to-nexus.status"};
 
-  /// \brief std::chrono::milliseconds interval to publish status of `Master`
-  /// (e.g.
-  /// list of current file writings).
-  uint32_t StatusMasterIntervalMS = 2000;
+  /// \brief Interval to publish status of `Master`
+  /// (e.g. list of current file writings).
+  std::chrono::milliseconds StatusMasterIntervalMS{2000};
 
   // Was/is used for testing during development.
   uint64_t teamid = 0;

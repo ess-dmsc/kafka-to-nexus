@@ -10,7 +10,6 @@
 #pragma once
 
 #include "KafkaW/BrokerSettings.h"
-#include "json.h"
 #include <chrono>
 
 namespace FileWriter {

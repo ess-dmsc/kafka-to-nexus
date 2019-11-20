@@ -196,7 +196,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt8) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int8"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int8_t>(), Writer.Values->datatype());
@@ -207,7 +207,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt8) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint8"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint8_t>(), Writer.Values->datatype());
@@ -218,7 +218,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt16) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int16"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int16_t>(), Writer.Values->datatype());
@@ -229,7 +229,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt16) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint16"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint16_t>(), Writer.Values->datatype());
@@ -240,7 +240,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt32) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int32"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int32_t>(), Writer.Values->datatype());
@@ -251,7 +251,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt32) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint32"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint32_t>(), Writer.Values->datatype());
@@ -262,7 +262,7 @@ TEST_F(AreaDetectorWriter, WriterInitInt64) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "int64"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::int64_t>(), Writer.Values->datatype());
@@ -273,7 +273,7 @@ TEST_F(AreaDetectorWriter, WriterInitUInt64) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "uint64"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::uint64_t>(), Writer.Values->datatype());
@@ -284,7 +284,7 @@ TEST_F(AreaDetectorWriter, WriterInitDouble) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "float64"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::double_t>(), Writer.Values->datatype());
@@ -295,7 +295,7 @@ TEST_F(AreaDetectorWriter, WriterInitFloat) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "float32"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<std::float_t>(), Writer.Values->datatype());
@@ -306,7 +306,7 @@ TEST_F(AreaDetectorWriter, WriterInitChar) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "type": "c_string"
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   EXPECT_EQ(hdf5::datatype::create<char>(), Writer.Values->datatype());
@@ -342,7 +342,7 @@ TEST_F(AreaDetectorWriter, WriterCueCounterTest) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "cue_interval": 3
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   for (int i = 0; i < 5; i++) {
@@ -367,7 +367,7 @@ TEST_F(AreaDetectorWriter, WriterCueIndexTest) {
     "cue_interval": 3,
     "array_size": [10,10,10]
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
 
@@ -428,7 +428,7 @@ TEST_F(AreaDetectorWriter, ConfigTypeTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ElementType, ADWriterStandIn::Type::float64);
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ElementType, ADWriterStandIn::Type::int32);
 }
 
@@ -438,7 +438,7 @@ TEST_F(AreaDetectorWriter, ConfigTypeFailureTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ElementType, ADWriterStandIn::Type::float64);
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ElementType, ADWriterStandIn::Type::float64);
 }
 
@@ -448,7 +448,7 @@ TEST_F(AreaDetectorWriter, ConfigCueIntervalTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.CueInterval, 1000);
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.CueInterval, 42);
 }
 
@@ -458,7 +458,7 @@ TEST_F(AreaDetectorWriter, ConfigCueIntervalFailureTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.CueInterval, 1000);
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.CueInterval, 1000);
 }
 
@@ -468,7 +468,7 @@ TEST_F(AreaDetectorWriter, ConfigArraySizeTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{5, 5, 5}));
 }
 
@@ -478,7 +478,7 @@ TEST_F(AreaDetectorWriter, ConfigArraySizeFailureTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ArrayShape, (hdf5::Dimensions{1, 1}));
 }
 
@@ -488,7 +488,7 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeTestAlt) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{1024}));
 }
 
@@ -498,7 +498,7 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{5, 5, 5, 5}));
 }
 
@@ -508,7 +508,7 @@ TEST_F(AreaDetectorWriter, ConfigChunkSizeFailureTest) {
   })"");
   ADWriterStandIn Writer;
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   EXPECT_EQ(Writer.ChunkSize, (hdf5::Dimensions{64}));
 }
 
@@ -555,7 +555,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   auto JsonConfig = nlohmann::json::parse(R""({
     "array_size": [10,10,10]
   })"");
-  Writer.parse_config(JsonConfig.dump(), "");
+  Writer.parse_config(JsonConfig.dump());
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   try {

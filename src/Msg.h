@@ -11,8 +11,6 @@
 
 #include "logger.h"
 #include <chrono>
-#include <cstdint>
-#include <cstring>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
 
@@ -24,6 +22,7 @@ struct MessageMetaData {
       RdKafka::MessageTimestamp::MessageTimestampType::
           MSG_TIMESTAMP_NOT_AVAILABLE};
   int64_t Offset{0};
+  int32_t Partition{0};
 };
 
 struct Msg {

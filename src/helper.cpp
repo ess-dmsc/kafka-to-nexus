@@ -8,13 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "helper.h"
-#include <array>
 #include <fstream>
 #include <unistd.h>
 
 // getpid()
 #include <sys/types.h>
-#include <unistd.h>
 
 int getpid_wrapper() { return getpid(); }
 
@@ -44,4 +42,9 @@ std::vector<char> readFileIntoVector(std::string const &FileName) {
   ifs.seekg(0);
   ifs.read(ret.data(), n1);
   return ret;
+}
+
+std::chrono::duration<long long int, std::milli> getCurrentTimeStampMS() {
+  return std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now().time_since_epoch());
 }

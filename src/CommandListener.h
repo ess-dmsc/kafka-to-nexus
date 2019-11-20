@@ -11,8 +11,7 @@
 
 #include "KafkaW/Consumer.h"
 #include "MainOpt.h"
-#include "URI.h"
-#include <thread>
+#include "logger.h"
 
 namespace FileWriter {
 
@@ -24,7 +23,6 @@ public:
 
   /// Start listening to command messages.
   void start();
-  void stop();
 
   /// Check for new command packets and return one if there is.
   std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
