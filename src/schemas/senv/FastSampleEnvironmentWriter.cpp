@@ -64,7 +64,7 @@ FastSampleEnvironmentWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
-    NeXusDataset::UInt16Value(         // NOLINT(bugprone-unused-raii)
+    NeXusDataset::UInt16Value(      // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)

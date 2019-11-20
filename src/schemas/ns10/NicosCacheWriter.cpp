@@ -123,7 +123,8 @@ void CacheWriter::write(const FileWriter::FlatbufferMessage &Message) {
     double ConvertedValue = std::stod(Value->str());
     Values.appendElement(ConvertedValue);
   } catch (std::invalid_argument const &Exception) {
-    Logger->error("Could not convert string value to double: '{}'", Value->str());
+    Logger->error("Could not convert string value to double: '{}'",
+                  Value->str());
     throw;
   } catch (std::out_of_range const &Exception) {
     Logger->error("Converted value too big for result type: {}", Value->str());

@@ -21,7 +21,6 @@ namespace FileWriter {
 namespace Schemas {
 namespace ns10 {
 
-
 class CacheWriter : public FileWriter::HDFWriterModule {
 public:
   CacheWriter() = default;
