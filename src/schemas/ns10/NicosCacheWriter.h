@@ -40,7 +40,7 @@ public:
 protected:
   std::string Sourcename;
   NeXusDataset::DoubleValue Values;
-  hdf5::Dimensions ChunkSize{64};
+  hdf5::Dimensions ChunkSize{1024};
   NeXusDataset::Time Timestamp;
   int CueInterval{1000};
   int CueCounter{0};
