@@ -19,18 +19,15 @@ namespace ns10 {
 static FileWriter::HDFWriterModuleRegistry::Registrar<CacheWriter>
     RegisterWriter("ns10");
 
-StringValue::StringValue(hdf5::node::Group const &Parent,
-                         NeXusDataset::Mode CMode, size_t ChunkSize)
-    : NeXusDataset::ExtensibleDataset<std::string>(Parent, "value", CMode,
-                                                   ChunkSize) {}
-
 void CacheWriter::parse_config(std::string const &ConfigurationStream) {
   auto Config = nlohmann::json::parse(ConfigurationStream);
   try {
     CueInterval = Config["cue_interval"].get<uint64_t>();
-  } catch (...) {
-    // Do nothing
+  } catch (std::exception const &Exception) {
+    Logger->warn("Unable to extract cue interval from JSON.");
   }
+
+  Logger->info("Using a cue interval of {}.", CueInterval);
 
   auto JsonChunkSize = Config["chunk_size"];
   if (JsonChunkSize.is_array()) {
@@ -38,17 +35,13 @@ void CacheWriter::parse_config(std::string const &ConfigurationStream) {
   } else if (JsonChunkSize.is_number_integer()) {
     ChunkSize = hdf5::Dimensions{JsonChunkSize.get<hsize_t>()};
   } else {
-    Logger->warn("Unable to extract chunk size, using the default (64). "
-                 "This might be very inefficient.");
+    Logger->warn("Unable to extract chunk size, using the existing value");
   }
   try {
     Sourcename = Config["source"];
-  } catch (...) {
-    Logger->error("Key \"source\" is not specified in json command");
-    return;
+  } catch (std::exception const &Exception) {
+    Logger->error("Key \"source\" is not specified in JSON command");
   }
-
-  Logger->info("Using a cue interval of {}.", CueInterval);
 }
 
 using FileWriterBase = FileWriter::HDFWriterModule;
@@ -59,8 +52,7 @@ CacheWriter::init_hdf(hdf5::node::Group &HDFGroup,
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     auto &CurrentGroup = HDFGroup;
-    // cppcheck-suppress unusedScopedObject
-    StringValue(                    // NOLINT(bugprone-unused-raii)
+    NeXusDataset::DoubleValue(      // NOLINT(bugprone-unused-raii)
         CurrentGroup,               // NOLINT(bugprone-unused-raii)
         NeXusDataset::Mode::Create, // NOLINT(bugprone-unused-raii)
         DefaultChunkSize);          // NOLINT(bugprone-unused-raii)
@@ -93,7 +85,7 @@ CacheWriter::init_hdf(hdf5::node::Group &HDFGroup,
 FileWriterBase::InitResult CacheWriter::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
-    Values = StringValue(CurrentGroup, NeXusDataset::Mode::Open);
+    Values = NeXusDataset::DoubleValue(CurrentGroup, NeXusDataset::Mode::Open);
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
     CueTimestampIndex =
         NeXusDataset::CueIndex(CurrentGroup, NeXusDataset::Mode::Open);
@@ -122,10 +114,21 @@ void CacheWriter::write(const FileWriter::FlatbufferMessage &Message) {
   }
 
   if (Source->str() != Sourcename) {
+    Logger->warn("Invalid source name: {}", Source->str());
     return;
   }
 
-  Values.appendElement(Value->str());
+  try {
+    double ConvertedValue = std::stod(Value->str());
+    Values.appendElement(ConvertedValue);
+  } catch (std::invalid_argument const &Exception) {
+    Logger->error("Could not convert string value to double: '{}'",
+                  Value->str());
+    throw;
+  } catch (std::out_of_range const &Exception) {
+    Logger->error("Converted value too big for result type: {}", Value->str());
+    throw;
+  }
 
   Timestamp.appendElement(std::lround(1e9 * CurrentTimestamp));
   if (++CueCounter == CueInterval) {

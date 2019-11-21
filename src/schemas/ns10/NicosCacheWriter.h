@@ -21,15 +21,6 @@ namespace FileWriter {
 namespace Schemas {
 namespace ns10 {
 
-/// h5cpp dataset class that writers strings.
-class StringValue : public NeXusDataset::ExtensibleDataset<std::string> {
-public:
-  StringValue() = default;
-  /// \brief Create the value dataset of NXLog.
-  StringValue(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
-              size_t ChunkSize = 1024);
-};
-
 class CacheWriter : public FileWriter::HDFWriterModule {
 public:
   CacheWriter() = default;
@@ -48,8 +39,8 @@ public:
 
 protected:
   std::string Sourcename;
-  StringValue Values;
-  hdf5::Dimensions ChunkSize{64};
+  NeXusDataset::DoubleValue Values;
+  hdf5::Dimensions ChunkSize{1024};
   NeXusDataset::Time Timestamp;
   int CueInterval{1000};
   int CueCounter{0};

@@ -23,7 +23,7 @@ using nlohmann::json;
 
 using Type = f142Writer::Type;
 
-std::string f142Writer::findDataType(const nlohmann::basic_json<> Attribute) {
+std::string f142Writer::findDataType(nlohmann::basic_json<> const &Attribute) {
   auto toLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
                    [](auto C) { return std::tolower(C); });
