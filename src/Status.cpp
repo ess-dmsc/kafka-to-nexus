@@ -12,7 +12,6 @@
 #include "Status.h"
 #include "logger.h"
 
-
 void FileWriter::Status::MessageInfo::incrementTotalMessageCount() {
   std::lock_guard<std::mutex> lock(Mutex);
   ++Messages;
@@ -102,11 +101,13 @@ uint64_t FileWriter::Status::StreamMasterInfo::getNumberMessages() const {
   return Messages;
 }
 
-uint64_t FileWriter::Status::StreamMasterInfo::getNumberProcessedMessages() const {
+uint64_t
+FileWriter::Status::StreamMasterInfo::getNumberProcessedMessages() const {
   return SuccessfullyProcessedMessages;
 }
 
-uint64_t FileWriter::Status::StreamMasterInfo::getNumberValidationErrors() const {
+uint64_t
+FileWriter::Status::StreamMasterInfo::getNumberValidationErrors() const {
   return ValidationErrors;
 }
 

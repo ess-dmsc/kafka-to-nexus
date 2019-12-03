@@ -10,8 +10,8 @@
 #include "Status.h"
 
 #include <gtest/gtest.h>
-#include <random>
 #include <hdf5.h>
+#include <random>
 
 using MessageInfo = FileWriter::Status::MessageInfo;
 using StreamMasterInfo = FileWriter::Status::StreamMasterInfo;

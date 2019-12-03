@@ -16,13 +16,14 @@ namespace FileWriter {
 namespace Status {
 
 nlohmann::json StreamMasterToJson(StreamMasterInfo const &Information) {
-  nlohmann::json Value = {{"state", Err2Str(Information.StreamMasterStatus)},
-                          {"messages", Information.getNumberMessages()},
-                          {"processed", Information.getNumberProcessedMessages()},
-                          {"Mbytes", Information.getMbytes()},
-                          {"errors", Information.getNumberErrors()},
-                          {"validate_errors", Information.getNumberValidationErrors()},
-                          {"runtime", Information.runTime().count()}};
+  nlohmann::json Value = {
+      {"state", Err2Str(Information.StreamMasterStatus)},
+      {"messages", Information.getNumberMessages()},
+      {"processed", Information.getNumberProcessedMessages()},
+      {"Mbytes", Information.getMbytes()},
+      {"errors", Information.getNumberErrors()},
+      {"validate_errors", Information.getNumberValidationErrors()},
+      {"runtime", Information.runTime().count()}};
   return Value;
 }
 
