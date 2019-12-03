@@ -12,64 +12,34 @@
 #include "Status.h"
 #include "logger.h"
 
-/// \brief Returns the average.
-///
-/// \param sum The sum of the elements.
-/// \param N Number of elements.
-/// \return The average.
-double average(double Sum, uint64_t N) { return Sum / N; }
 
-/// Return the unbiased standard deviation computed as \f$\sigma =
-/// \sqrt{\frac{\langle x^2 \rangle - \langle x \rangle^2}{N(N-1)}}\f$
-double standardDeviation(double Sum, double SumSquared, uint64_t N) {
-  // Avoid divide-by-zero error due to too few messages.
-  if (N <= 1) {
-    return 0.0;
-  }
-
-  double Variance = (SumSquared - (Sum * Sum) / N) / (N - 1);
-  if (Variance > 0) {
-    return std::sqrt(Variance);
-  }
-  return 0.0;
-}
-
-std::pair<double, double>
-FileWriter::Status::MessageInfo::messageSizeStats() const {
-  std::lock_guard<std::mutex> Lock(Mutex);
-  // Nan causes failure in JSON
-  if (Mbytes == 0) {
-    return std::pair<double, double>{};
-  }
-  std::pair<double, double> result(
-      average(Mbytes, Messages),
-      standardDeviation(Mbytes, MbytesSquare, Messages));
-  return result;
-}
-
-void FileWriter::Status::MessageInfo::newMessage(double MessageBytes) {
-  std::lock_guard<std::mutex> Lock(Mutex);
-  double Size = MessageBytes * 1e-6;
-  Mbytes += Size;
-  MbytesSquare += Size * Size;
-  Messages++;
-}
-
-void FileWriter::Status::MessageInfo::error() {
+void FileWriter::Status::MessageInfo::incrementTotalMessageCount() {
   std::lock_guard<std::mutex> lock(Mutex);
-  Errors++;
+  ++Messages;
+}
+
+void FileWriter::Status::MessageInfo::incrementProcessedCount(double MsgSize) {
+  std::lock_guard<std::mutex> lock(Mutex);
+  TotalBytesProcessed += MsgSize;
+  ++ProcessedMessages;
+}
+
+void FileWriter::Status::MessageInfo::incrementWriteError() {
+  std::lock_guard<std::mutex> lock(Mutex);
+  ++WriteErrors;
+}
+
+void FileWriter::Status::MessageInfo::incrementValidationErrors() {
+  std::lock_guard<std::mutex> lock(Mutex);
+  ++ValidationErrors;
 }
 
 void FileWriter::Status::MessageInfo::resetStatistics() {
   std::lock_guard<std::mutex> Lock(Mutex);
-  Mbytes = MbytesSquare = 0.0;
+  TotalBytesProcessed = 0;
   Messages = 0;
-  Errors = 0;
-}
-
-double FileWriter::Status::MessageInfo::getMbytes() const {
-  std::lock_guard<std::mutex> Lock(Mutex);
-  return Mbytes;
+  WriteErrors = 0;
+  ProcessedMessages = 0;
 }
 
 uint64_t FileWriter::Status::MessageInfo::getNumberMessages() const {
@@ -77,13 +47,33 @@ uint64_t FileWriter::Status::MessageInfo::getNumberMessages() const {
   return Messages;
 }
 
-uint64_t FileWriter::Status::MessageInfo::getErrors() const { return Errors; }
+double FileWriter::Status::MessageInfo::getMbytes() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
+  return TotalBytesProcessed * 1e-6;
+}
+
+uint64_t FileWriter::Status::MessageInfo::getNumberProcessedMessages() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
+  return ProcessedMessages;
+}
+
+uint64_t FileWriter::Status::MessageInfo::getNumberWriteErrors() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
+  return WriteErrors;
+}
+
+uint64_t FileWriter::Status::MessageInfo::getNumberValidationErrors() const {
+  std::lock_guard<std::mutex> Lock(Mutex);
+  return ValidationErrors;
+}
 
 void FileWriter::Status::StreamMasterInfo::add(
     FileWriter::Status::MessageInfo &Info) {
   Mbytes += Info.getMbytes();
   Messages += Info.getNumberMessages();
-  Errors += Info.getErrors();
+  SuccessfullyProcessedMessages += Info.getNumberProcessedMessages();
+  Errors += Info.getNumberWriteErrors();
+  ValidationErrors += Info.getNumberValidationErrors();
   Info.resetStatistics();
 }
 
@@ -91,11 +81,13 @@ void FileWriter::Status::StreamMasterInfo::setTimeToNextMessage(
     const std::chrono::milliseconds &ToNextMessage) {
   MillisecondsToNextMessage = ToNextMessage;
 }
-const std::chrono::milliseconds
+
+std::chrono::milliseconds
 FileWriter::Status::StreamMasterInfo::getTimeToNextMessage() const {
   return MillisecondsToNextMessage;
 }
-const std::chrono::milliseconds
+
+std::chrono::milliseconds
 FileWriter::Status::StreamMasterInfo::runTime() const {
   auto result = std::chrono::duration_cast<std::chrono::milliseconds>(
       std::chrono::system_clock::now() - StartTime);
@@ -106,10 +98,18 @@ double FileWriter::Status::StreamMasterInfo::getMbytes() const {
   return Mbytes;
 }
 
-uint64_t FileWriter::Status::StreamMasterInfo::getMessages() const {
+uint64_t FileWriter::Status::StreamMasterInfo::getNumberMessages() const {
   return Messages;
 }
 
-uint64_t FileWriter::Status::StreamMasterInfo::getErrors() const {
+uint64_t FileWriter::Status::StreamMasterInfo::getNumberProcessedMessages() const {
+  return SuccessfullyProcessedMessages;
+}
+
+uint64_t FileWriter::Status::StreamMasterInfo::getNumberValidationErrors() const {
+  return ValidationErrors;
+}
+
+uint64_t FileWriter::Status::StreamMasterInfo::getNumberErrors() const {
   return Errors;
 }

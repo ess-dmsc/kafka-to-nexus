@@ -204,14 +204,16 @@ ProcessMessageResult Streamer::processMessage(
     }
   }
 
-  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
-    return ProcessMessageResult::ERR;
-  }
-
   if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
       KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
       KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
     return ProcessMessageResult::OK;
+  }
+
+  MessageInfo.incrementTotalMessageCount();
+
+  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
+    return ProcessMessageResult::ERR;
   }
 
   // If we reach this point we have a real message with a payload to deal with
@@ -225,6 +227,7 @@ ProcessMessageResult Streamer::processMessage(
     Logger->warn("Message that is not a valid flatbuffer encountered "
                  "(msg. offset: {}). The error was: {}",
                  KafkaMessage->second.MetaData.Offset, Error.what());
+    MessageInfo.incrementValidationErrors();
     return ProcessMessageResult::ERR;
   }
 
@@ -265,16 +268,16 @@ ProcessMessageResult Streamer::processMessage(
     return ProcessMessageResult::OK;
   }
 
-  // Collect information about the data received
-  MessageInfo.newMessage(Message->size());
-
   // Write the message. Log any error and return the result of processing
   ProcessMessageResult result = MessageProcessor.process_message(*Message);
   Logger->trace("Processed: {}::{}", MessageProcessor.topic(),
                 Message->getSourceName());
   if (ProcessMessageResult::OK != result) {
-    MessageInfo.error();
+    MessageInfo.incrementWriteError();
+  } else {
+    MessageInfo.incrementProcessedCount(Message->size());
   }
+
   return result;
 }
 

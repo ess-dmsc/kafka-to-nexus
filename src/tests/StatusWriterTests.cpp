@@ -73,8 +73,8 @@ TEST(StatusWriter, showTimeToNextMessage) {
 TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   const size_t MessageSizeBytes = 1024;
   MessageInfo Message;
+  Message.incrementProcessedCount(MessageSizeBytes);
   StreamMasterInfo sm;
-  Message.newMessage(MessageSizeBytes);
   sm.add(Message);
 
   FileWriter::Status::StatusWriter Writer;
@@ -88,7 +88,8 @@ TEST(StatusWriter, addMessageUpdatesStreamMaster) {
   EXPECT_EQ(getValue<double>("Mbytes", json["stream_master"]),
             MessageSizeBytes * 1e-6);
   EXPECT_EQ(getValue<double>("errors", json["stream_master"]), 0.0);
-  EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 1.0);
+  EXPECT_EQ(getValue<double>("messages", json["stream_master"]), 0.0);
+  EXPECT_EQ(getValue<double>("processed", json["stream_master"]), 1.0);
   EXPECT_EQ(getValue<std::string>("state", json["stream_master"]),
             "Not Started");
   EXPECT_NEAR(getValue<uint64_t>("timestamp", json), getTimestampMs(), 1000);
@@ -98,7 +99,7 @@ TEST(StatusWriter, addErrorUpdatesStreamMaster) {
   MessageInfo Message;
   StreamMasterInfo sm;
 
-  Message.error();
+  Message.incrementWriteError();
   sm.add(Message);
   FileWriter::Status::StatusWriter Writer;
   Writer.write(sm);
@@ -128,13 +129,6 @@ TEST(StatusWriter, addStreamEmptyMessageInfo) {
   ASSERT_NO_THROW(json.at("streamer"));
   ASSERT_NO_THROW(json["streamer"].at(Topic));
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
-
-  EXPECT_EQ(getValue<double>("average",
-                             json["streamer"][Topic]["rates"]["message_size"]),
-            0.0);
-  EXPECT_EQ(getValue<double>("standard_deviation",
-                             json["streamer"][Topic]["rates"]["message_size"]),
-            0.0);
   EXPECT_EQ(getValue<double>("Mbytes", json["streamer"][Topic]["rates"]), 0.0);
   EXPECT_EQ(getValue<int>("errors", json["streamer"][Topic]["rates"]), 0);
   EXPECT_EQ(getValue<int>("messages", json["streamer"][Topic]["rates"]), 0);
@@ -142,9 +136,9 @@ TEST(StatusWriter, addStreamEmptyMessageInfo) {
 
 TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   const size_t MessageSizeBytes = 1024;
-  const int NumMessages = 1;
+
   MessageInfo Message;
-  Message.newMessage(MessageSizeBytes);
+  Message.incrementProcessedCount(MessageSizeBytes);
 
   std::string Topic{"no-topic"};
   FileWriter::Status::StatusWriter Writer;
@@ -156,23 +150,4 @@ TEST(StatusWriter, addStreamValidMessageUpdatesStreamerInfo) {
   ASSERT_NO_THROW(json.at("streamer"));
   ASSERT_NO_THROW(json["streamer"].at(Topic));
   ASSERT_NO_THROW(json["streamer"][Topic].at("rates"));
-
-  EXPECT_EQ(getValue<double>("average",
-                             json["streamer"][Topic]["rates"]["message_size"]),
-            MessageSizeBytes / NumMessages * 1e-6);
-  EXPECT_EQ(getValue<double>("standard_deviation",
-                             json["streamer"][Topic]["rates"]["message_size"]),
-            0.0);
-}
-
-TEST(StatFunctions, messageSize) {
-  const size_t NumMessages = 100;
-  const size_t MessageBytes = 1024;
-  MessageInfo Message;
-  for (size_t i = 0; i < NumMessages; ++i) {
-    Message.newMessage(MessageBytes * i);
-  }
-  std::pair<double, double> MessageSize = Message.messageSizeStats();
-  EXPECT_DOUBLE_EQ(MessageSize.first, 0.050688);
-  EXPECT_DOUBLE_EQ(MessageSize.second, 0.0297077677833032);
 }

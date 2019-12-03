@@ -17,23 +17,23 @@ namespace Status {
 
 nlohmann::json StreamMasterToJson(StreamMasterInfo const &Information) {
   nlohmann::json Value = {{"state", Err2Str(Information.StreamMasterStatus)},
-                          {"messages", Information.getMessages()},
+                          {"messages", Information.getNumberMessages()},
+                          {"processed", Information.getNumberProcessedMessages()},
                           {"Mbytes", Information.getMbytes()},
-                          {"errors", Information.getErrors()},
+                          {"errors", Information.getNumberErrors()},
+                          {"validate_errors", Information.getNumberValidationErrors()},
                           {"runtime", Information.runTime().count()}};
   return Value;
 }
 
 nlohmann::json StreamerToJson(MessageInfo const &Information) {
-  std::pair<double, double> Size = Information.messageSizeStats();
-
   nlohmann::json Status;
   Status["rates"] = {
       {"messages", Information.getNumberMessages()},
+      {"processed", Information.getNumberProcessedMessages()},
       {"Mbytes", Information.getMbytes()},
-      {"errors", Information.getErrors()},
-      {"message_size",
-       {{"average", Size.first}, {"standard_deviation", Size.second}}}};
+      {"errors", Information.getNumberWriteErrors()},
+      {"validate_errors", Information.getNumberValidationErrors()}};
 
   return Status;
 }

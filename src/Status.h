@@ -37,45 +37,44 @@ class MessageInfo {
 public:
   MessageInfo() = default;
 
-  /// \brief Increments the number of messages that have been correctly
-  /// processed by one unit and the number of processed megabytes accordingly.
-  ///
-  /// \param MessageSize The message size in bytes.
-  void newMessage(double MessageBytes);
+  /// Increment the number of messages received including invalid ones.
+  void incrementTotalMessageCount();
 
-  ///  Increments the error count by one unit.
-  void error();
+  /// Increment the number of messages sucessfully processed.
+  ///
+  /// \param MsgSize The size in bytes of the message.
+  void incrementProcessedCount(double MsgSize);
+
+  /// Increment the count of messages that failed FaltBuffer validation.
+  void incrementValidationErrors();
+
+  ///  Increment the writing error count.
+  void incrementWriteError();
 
   ///  Reset the message statistics counters.
   void resetStatistics();
 
-  /// \brief Return the average size and relative standard deviation of the
-  /// number of messages.
-  ///
-  /// \return A pair containing {average size, standard deviation}.
-  std::pair<double, double> messageSizeStats() const;
-
-  /// \brief Returns the number of megabytes processed.
-  ///
-  /// \return The number of megabytes.
+  /// \return The number of megabytes processed.
   double getMbytes() const;
 
-  /// \brief Returns the number of messages that have been processed
-  /// correctly.
-  ///
-  /// \return The number of messages.
+  /// \return The number of processed messages.
   uint64_t getNumberMessages() const;
 
-  /// \brief Returns the number of messages recognised as error.
-  ///
-  /// \return The number of messages.
-  uint64_t getErrors() const;
+  /// \return The number of messages processed.
+  uint64_t getNumberProcessedMessages() const;
+
+  /// \return  The number of Flatbuffer validation errors.
+  uint64_t getNumberValidationErrors() const;
+
+  /// \return The number of writing errors.
+  uint64_t getNumberWriteErrors() const;
 
 private:
   uint64_t Messages{0};
-  uint64_t Errors{0};
-  double Mbytes{0};
-  double MbytesSquare{0};
+  uint64_t ProcessedMessages{0};
+  uint64_t WriteErrors{0};
+  uint64_t ValidationErrors{0};
+  double TotalBytesProcessed{0};
   mutable std::mutex Mutex;
 };
 
@@ -108,12 +107,12 @@ public:
   /// \brief Get the time difference between two consecutive status messages.
   ///
   /// \return Time from the last message to the next.
-  const std::chrono::milliseconds getTimeToNextMessage() const;
+  std::chrono::milliseconds getTimeToNextMessage() const;
 
   /// \brief Returns the total execution time.
   ///
   /// \return Time since the write command has been issued.
-  const std::chrono::milliseconds runTime() const;
+  std::chrono::milliseconds runTime() const;
 
   /// \brief Returns the total number of megabytes processed for the
   /// current file.
@@ -124,13 +123,17 @@ public:
   /// \brief Return the number of messages whose information has been stored.
   ///
   /// \return The number of messages.
-  uint64_t getMessages() const;
+  uint64_t getNumberMessages() const;
+
+  uint64_t getNumberProcessedMessages() const;
+
+  uint64_t getNumberValidationErrors() const;
 
   /// \brief  Returns the total number of error in the messages processed
   /// for the current file.
   ///
   /// \return  The number of errors.
-  uint64_t getErrors() const;
+  uint64_t getNumberErrors() const;
 
   /// \brief Returns the error status of the StreamMaster associated with the
   /// file.
@@ -141,7 +144,9 @@ public:
 private:
   double Mbytes{0};
   uint64_t Messages{0};
+  uint64_t SuccessfullyProcessedMessages{0};
   uint64_t Errors{0};
+  uint64_t ValidationErrors{0};
   std::chrono::system_clock::time_point StartTime;
   std::chrono::milliseconds MillisecondsToNextMessage{0};
 };
