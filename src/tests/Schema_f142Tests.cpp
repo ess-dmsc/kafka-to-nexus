@@ -263,6 +263,27 @@ generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
   return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
 }
 
+TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
+  f142WriterStandIn TestWriter;
+  const std::string units_string = "parsecs";
+  // GIVEN value_units is specified in the JSON config
+  TestWriter.parse_config(
+      fmt::format(R"({{"value_units": "{}"}})", units_string));
+
+  // WHEN the writer module creates the datasets
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+
+  // THEN a units attributes is created on the value dataset with the specified
+  // string
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attributes["units"].read(attribute_value))
+      << "Expect units attribute to be present on the value dataset";
+  EXPECT_EQ(attribute_value, units_string) << "Expect units attribute to have "
+                                              "the value specified in the JSON "
+                                              "configuration";
+}
+
 TEST_F(f142WriteData, WriteOneElement) {
   f142WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
