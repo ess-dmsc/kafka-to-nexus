@@ -284,6 +284,21 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
                                               "configuration";
 }
 
+TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
+  f142WriterStandIn TestWriter;
+  // GIVEN value_units is not specified in the JSON config
+  TestWriter.parse_config("{}");
+
+  // WHEN the writer module creates the datasets
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+
+  // THEN a units attributes is not created on the value dataset
+  EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
+      << "units attribute should not be created if it was not specified in the "
+         "JSON config";
+}
+
 TEST_F(f142WriteData, WriteOneElement) {
   f142WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
