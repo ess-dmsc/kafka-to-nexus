@@ -73,6 +73,7 @@ protected:
   uint64_t ValueIndexInterval = std::numeric_limits<uint64_t>::max();
   size_t ArraySize{1};
   size_t ChunkSize{64 * 1024};
+  std::string ValueUnits;
 };
 
 } // namespace f142

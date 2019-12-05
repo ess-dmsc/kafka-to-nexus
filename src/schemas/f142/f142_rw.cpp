@@ -51,7 +51,8 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
 
 void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
                       hdf5::Dimensions const &Shape,
-                      hdf5::Dimensions const &ChunkSize) {
+                      hdf5::Dimensions const &ChunkSize,
+                      std::string const &ValueUnits) {
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
@@ -71,6 +72,10 @@ void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
        [&]() { makeIt<std::double_t>(Parent, Shape, ChunkSize); }},
   };
   CreateValuesMap.at(ElementType)();
+
+  if (!ValueUnits.empty()) {
+    Parent["value"].attributes.create_from<std::string>("units", ValueUnits);
+  }
 }
 
 /// Parse the configuration for this stream.
@@ -97,6 +102,11 @@ void f142Writer::parse_config(std::string const &ConfigurationStream) {
   if (auto ArraySizeMaybe =
           find<uint64_t>("array_size", ConfigurationStreamJson)) {
     ArraySize = size_t(ArraySizeMaybe.inner());
+  }
+
+  if (auto ValueUnitsOptional =
+          find<std::string>("value_units", ConfigurationStreamJson)) {
+    ValueUnits = ValueUnitsOptional.inner();
   }
 
   try {
@@ -132,7 +142,7 @@ f142Writer::InitResult f142Writer::init_hdf(hdf5::node::Group &HDFGroup,
                      {
                          ArraySize,
                      },
-                     {ChunkSize, ArraySize});
+                     {ChunkSize, ArraySize}, ValueUnits);
 
     if (HDFGroup.attributes.exists("NX_class")) {
       Logger->info("NX_class already specified!");
