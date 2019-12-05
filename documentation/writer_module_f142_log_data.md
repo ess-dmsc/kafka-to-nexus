@@ -14,13 +14,16 @@ Example `nexus_structure` to write a scalar `double` value:
           "topic": "the_kafka_topic",
           "source": "the_source_name",
           "writer_module": "f142",
-          "type": "double"
+          "type": "double",
+          "value_units": "cubits"
         }
       }
     ]
   }
 }
 ```
+
+"value_units" is optional; if it is present the writer module creates a units attribute on the value dataset.
 
 For arrays, we have to specify the `array_size`:
 
