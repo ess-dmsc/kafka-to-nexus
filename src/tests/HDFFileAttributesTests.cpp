@@ -397,3 +397,133 @@ TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
     ASSERT_EQ(StringValue, "Some Value");
   }
 }
+
+
+TEST(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs", false);
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": [1,-2,4.234]
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+      .attributes["vec"];
+  std::vector<double> AttrValue(3);
+  Attr.read(AttrValue);
+  std::vector<double> ExpectedAttr{1,-2,4.234};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+TEST(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": ["one", "two", "three", "four"],
+              "encoding":"ascii"
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+      .attributes["vec"];
+  std::vector<std::string> AttrValue(4);
+  Attr.read(AttrValue);
+  std::vector<std::string> ExpectedAttr{"one", "two", "three", "four"};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+TEST(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": ["one", 2, "three", "four"],
+              "encoding":"ascii"
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+      .attributes["vec"];
+  std::vector<std::string> AttrValue(4);
+  Attr.read(AttrValue);
+  std::vector<std::string> ExpectedAttr{"one", "2", "three", "four"};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+TEST(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": ["", ""],
+              "encoding":"ascii"
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+      .attributes["vec"];
+  std::vector<std::string> AttrValue(2);
+  Attr.read(AttrValue);
+  std::vector<std::string> ExpectedAttr{"", ""};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+// Add empty string value test

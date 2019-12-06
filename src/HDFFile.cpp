@@ -88,7 +88,11 @@ public:
   using DataType = std::string;
   static void append(std::vector<DataType> &Buffer, nlohmann::json const &Value,
                      size_t const) {
-    Buffer.push_back(Value);
+    if (not Value.is_string()) {
+      Buffer.push_back(Value.dump());
+    } else {
+      Buffer.push_back(Value);
+    }
   }
 };
 
@@ -267,7 +271,7 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
         continue;
       }
       if (auto const &ValuesMaybe = find<json>("values", Attribute)) {
-        std::string DType;
+        std::string DType{"double"};
         auto const &Values = *ValuesMaybe;
         uint32_t StringSize = 0;
         if (auto StringSizeMaybe = find<uint32_t>("string_size", Attribute)) {
@@ -280,15 +284,19 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
           }
         }
 
-        // get type/dtype
-        if (findType(Attribute, DType)) {
+        if (Values.is_array()) {
+          if (findType(Attribute, DType)) {
+            Logger->warn("No type defined for attribute, using the default.");
+          }
+          for (auto const &Elem : Values) {
+            if (Elem.is_string()) {
+              DType = "string";
+              break;
+            }
+          }
           writeAttrOfSpecifiedType(DType, Node, Name, StringSize, Encoding,
                                    Values, Logger);
         } else {
-          if (Values.is_array()) {
-            Logger->warn("Attributes with array values must specify type");
-            continue;
-          }
           writeScalarAttribute(Node, Name, Values);
         }
       }
