@@ -287,7 +287,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
 TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
   f142WriterStandIn TestWriter;
   // GIVEN value_units is specified as an empty string in the JSON config
-  TestWriter.parse_config(R"({{"value_units": ""}})");
+  TestWriter.parse_config(R"({"value_units": ""})");
 
   // WHEN the writer module creates the datasets
   TestWriter.init_hdf(RootGroup, "");

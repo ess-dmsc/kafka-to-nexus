@@ -52,7 +52,7 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
 void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
                       hdf5::Dimensions const &Shape,
                       hdf5::Dimensions const &ChunkSize,
-                      std::string const &ValueUnits) {
+                      nonstd::optional<std::string> const &ValueUnits) {
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
@@ -73,8 +73,8 @@ void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
   };
   CreateValuesMap.at(ElementType)();
 
-  if (!ValueUnits.empty()) {
-    Parent["value"].attributes.create_from<std::string>("units", ValueUnits);
+  if (ValueUnits) {
+    Parent["value"].attributes.create_from<std::string>("units", *ValueUnits);
   }
 }
 
@@ -104,9 +104,9 @@ void f142Writer::parse_config(std::string const &ConfigurationStream) {
     ArraySize = size_t(ArraySizeMaybe.inner());
   }
 
-  if (auto ValueUnitsOptional =
+  if (auto ValueUnitsMaybe =
           find<std::string>("value_units", ConfigurationStreamJson)) {
-    ValueUnits = ValueUnitsOptional.inner();
+    ValueUnits = ValueUnitsMaybe.inner();
   }
 
   try {
