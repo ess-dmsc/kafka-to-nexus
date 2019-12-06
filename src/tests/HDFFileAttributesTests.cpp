@@ -398,7 +398,6 @@ TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
   }
 }
 
-
 TEST(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
   auto TestFile =
       HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs", false);
@@ -423,16 +422,15 @@ TEST(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
 
   auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
                                       "/dataset_with_numerical_attr")
-      .attributes["vec"];
+                  .attributes["vec"];
   std::vector<double> AttrValue(3);
   Attr.read(AttrValue);
-  std::vector<double> ExpectedAttr{1,-2,4.234};
+  std::vector<double> ExpectedAttr{1, -2, 4.234};
   EXPECT_EQ(AttrValue, ExpectedAttr);
 }
 
 TEST(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
-  auto TestFile =
-      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
 
   std::string CommandWithNumericalAttr = R""({
       "children": [
@@ -455,7 +453,7 @@ TEST(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
 
   auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
                                       "/dataset_with_numerical_attr")
-      .attributes["vec"];
+                  .attributes["vec"];
   std::vector<std::string> AttrValue(4);
   Attr.read(AttrValue);
   std::vector<std::string> ExpectedAttr{"one", "two", "three", "four"};
@@ -463,8 +461,7 @@ TEST(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
 }
 
 TEST(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
-  auto TestFile =
-      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
 
   std::string CommandWithNumericalAttr = R""({
       "children": [
@@ -487,7 +484,7 @@ TEST(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
 
   auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
                                       "/dataset_with_numerical_attr")
-      .attributes["vec"];
+                  .attributes["vec"];
   std::vector<std::string> AttrValue(4);
   Attr.read(AttrValue);
   std::vector<std::string> ExpectedAttr{"one", "2", "three", "four"};
@@ -495,8 +492,7 @@ TEST(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
 }
 
 TEST(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
-  auto TestFile =
-      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
 
   std::string CommandWithNumericalAttr = R""({
       "children": [
@@ -519,7 +515,7 @@ TEST(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
 
   auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
                                       "/dataset_with_numerical_attr")
-      .attributes["vec"];
+                  .attributes["vec"];
   std::vector<std::string> AttrValue(2);
   Attr.read(AttrValue);
   std::vector<std::string> ExpectedAttr{"", ""};

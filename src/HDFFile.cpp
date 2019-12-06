@@ -285,7 +285,8 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
           }
         }
 
-        if (Values.is_array() or StringSize > 0 or Encoding != EncodingType::UTF8) {
+        if (Values.is_array() or StringSize > 0 or
+            Encoding != EncodingType::UTF8) {
           if (findType(Attribute, DType)) {
             Logger->warn("No type defined for attribute, using the default.");
           }
