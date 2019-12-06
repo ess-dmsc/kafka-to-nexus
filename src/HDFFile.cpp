@@ -110,13 +110,13 @@ public:
 
 template <typename DataHandler>
 static std::vector<typename DataHandler::DataType>
-populateBlob(nlohmann::json const &Value, size_t const GoalSize,
+populateBlob(nlohmann::json const &ValueJson, size_t const GoalSize,
              size_t const ItemLength = 0) {
   using DataType = typename DataHandler::DataType;
   std::vector<DataType> Buffer;
-  if (Value.is_array()) {
+  if (ValueJson.is_array()) {
     std::stack<StackItem> Stack;
-    Stack.emplace(Value);
+    Stack.emplace(ValueJson);
     while (!Stack.empty()) {
       if (Stack.size() > MAX_DIMENSIONS_OF_ARRAY) {
         break;
@@ -135,7 +135,7 @@ populateBlob(nlohmann::json const &Value, size_t const GoalSize,
       }
     }
   } else {
-    DataHandler::append(Buffer, Value, ItemLength);
+    DataHandler::append(Buffer, ValueJson, ItemLength);
   }
   if (GoalSize != 0 && Buffer.size() != GoalSize) {
     auto What =
@@ -253,29 +253,29 @@ void writeAttributes(hdf5::node::Node const &Node, nlohmann::json const *Value,
 /// \param JsonValue    json value array of attribute objects.
 /// \param Logger Pointer to spdlog instance to be used for logging.
 void writeArrayOfAttributes(hdf5::node::Node const &Node,
-                            const nlohmann::json &Values,
+                            const nlohmann::json &ValuesJson,
                             SharedLogger const &Logger) {
-  if (!Values.is_array()) {
+  if (!ValuesJson.is_array()) {
     return;
   }
-  for (auto const &Attribute : Values) {
+  for (auto const &Attribute : ValuesJson) {
     if (Attribute.is_object()) {
       string Name;
       if (auto NameMaybe = find<std::string>("name", Attribute)) {
-        Name = NameMaybe.inner();
+        Name = *NameMaybe;
       } else {
         continue;
       }
       if (auto const &ValuesMaybe = find<json>("values", Attribute)) {
         std::string DType;
-        auto const &Values = ValuesMaybe.inner();
+        auto const &Values = *ValuesMaybe;
         uint32_t StringSize = 0;
         if (auto StringSizeMaybe = find<uint32_t>("string_size", Attribute)) {
-          StringSize = StringSizeMaybe.inner();
+          StringSize = *StringSizeMaybe;
         }
         auto Encoding = hdf5::datatype::CharacterEncoding::UTF8;
         if (auto EncodingString = find<std::string>("encoding", Attribute)) {
-          if (EncodingString.inner() == "ascii") {
+          if (*EncodingString == "ascii") {
             Encoding = hdf5::datatype::CharacterEncoding::ASCII;
           }
         }
@@ -297,14 +297,18 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
 }
 
 bool findType(const nlohmann::basic_json<> Attribute, std::string &DType) {
-  if (auto AttrType = find<std::string>("type", Attribute)) {
-    DType = AttrType.inner();
+  auto AttrType = find<std::string>("type", Attribute);
+  if (AttrType) {
+    DType = *AttrType;
     return true;
-  } else if (auto AttrType = find<std::string>("dtype", Attribute)) {
-    DType = AttrType.inner();
-    return true;
-  } else
-    return false;
+  } else {
+    AttrType = find<std::string>("dtype", Attribute);
+    if (AttrType) {
+      DType = *AttrType;
+      return true;
+    } else
+      return false;
+  }
 }
 
 void writeAttrStringVariableLength(hdf5::node::Node const &Node,
@@ -474,7 +478,7 @@ void writeAttributesIfPresent(hdf5::node::Node const &Node,
                               nlohmann::json const &Values,
                               SharedLogger const &Logger) {
   if (auto AttributesMaybe = find<json>("attributes", Values)) {
-    auto const Attributes = AttributesMaybe.inner();
+    auto const Attributes = *AttributesMaybe;
     writeAttributes(Node, &Attributes, Logger);
   }
 }
@@ -668,7 +672,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
                   SharedLogger const &Logger) {
   std::string Name;
   if (auto NameMaybe = find<std::string>("name", *Values)) {
-    Name = NameMaybe.inner();
+    Name = *NameMaybe;
   } else {
     return;
   }
@@ -678,9 +682,9 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
 
   std::vector<hsize_t> Sizes;
   if (auto DatasetJSONObject = find<json>("dataset", *Values)) {
-    auto DatasetInnerObject = DatasetJSONObject.inner();
+    auto DatasetInnerObject = *DatasetJSONObject;
     if (auto DataSpaceObject = find<std::string>("space", DatasetInnerObject)) {
-      if (DataSpaceObject.inner() != "simple") {
+      if (*DataSpaceObject != "simple") {
         Logger->warn("sorry, can only handle simple data spaces");
         return;
       }
@@ -688,8 +692,8 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
     findType(DatasetInnerObject, DataType);
     // optional, default to scalar
     if (auto DatasetSizeObject = find<json>("size", DatasetInnerObject)) {
-      if (DatasetSizeObject.inner().is_array()) {
-        auto DatasetSizeInnerObject = DatasetSizeObject.inner();
+      auto DatasetSizeInnerObject = *DatasetSizeObject;
+      if (DatasetSizeInnerObject.is_array()) {
         for (auto const &Element : DatasetSizeInnerObject) {
           if (Element.is_number_integer()) {
             Sizes.push_back(Element.get<int64_t>());
@@ -704,9 +708,9 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
 
     if (auto DatasetStringSizeObject =
             find<uint64_t>("string_size", DatasetInnerObject)) {
-      if ((DatasetStringSizeObject.inner() > 0) &&
-          (DatasetStringSizeObject.inner() != H5T_VARIABLE)) {
-        ElementSize = DatasetStringSizeObject.inner();
+      if ((*DatasetStringSizeObject > 0) &&
+          (*DatasetStringSizeObject != H5T_VARIABLE)) {
+        ElementSize = *DatasetStringSizeObject;
       }
     }
   }
@@ -715,7 +719,7 @@ void writeDataset(hdf5::node::Group const &Parent, const nlohmann::json *Values,
   if (!DatasetValuesObject) {
     return;
   }
-  auto DatasetValuesInnerObject = DatasetValuesObject.inner();
+  auto DatasetValuesInnerObject = *DatasetValuesObject;
 
   if (DatasetValuesInnerObject.is_number_float()) {
     DataType = "double";
@@ -755,7 +759,7 @@ void createHDFStructures(
     if (findType(*Value, Type)) {
       if (Type == "group") {
         if (auto NameMaybe = find<std::string>("name", *Value)) {
-          auto Name = NameMaybe.inner();
+          auto Name = *NameMaybe;
           try {
             hdf_this = Parent.create_group(Name, LinkCreationPropertyList);
             Path.push_back(Name);
@@ -783,7 +787,7 @@ void createHDFStructures(
     if (hdf_this.is_valid()) {
       writeAttributesIfPresent(hdf_this, *Value, Logger);
       if (auto ChildrenMaybe = find<json>("children", *Value)) {
-        auto Children = ChildrenMaybe.inner();
+        auto Children = *ChildrenMaybe;
         if (Children.is_array()) {
           for (auto &Child : Children) {
             createHDFStructures(&Child, hdf_this, Level + 1,
@@ -897,7 +901,7 @@ void HDFFile::init(const nlohmann::json &NexusStructure,
     if (NexusStructure.is_object()) {
       auto value = &NexusStructure;
       if (auto ChildrenMaybe = find<json>("children", *value)) {
-        auto Children = ChildrenMaybe.inner();
+        auto Children = *ChildrenMaybe;
         if (Children.is_array()) {
           for (auto &Child : Children) {
             createHDFStructures(&Child, RootGroup, 0, lcpl, var_string,

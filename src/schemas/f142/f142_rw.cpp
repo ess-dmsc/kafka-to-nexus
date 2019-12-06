@@ -13,7 +13,6 @@
 #include "FlatbufferReader.h"
 #include <algorithm>
 #include <cctype>
-#include <limits>
 
 namespace FileWriter {
 namespace Schemas {
@@ -101,13 +100,10 @@ void f142Writer::parse_config(std::string const &ConfigurationStream) {
 
   if (auto ArraySizeMaybe =
           find<uint64_t>("array_size", ConfigurationStreamJson)) {
-    ArraySize = size_t(ArraySizeMaybe.inner());
+    ArraySize = size_t(*ArraySizeMaybe);
   }
 
-  if (auto ValueUnitsMaybe =
-          find<std::string>("value_units", ConfigurationStreamJson)) {
-    ValueUnits = ValueUnitsMaybe.inner();
-  }
+  ValueUnits = find<std::string>("value_units", ConfigurationStreamJson);
 
   try {
     ValueIndexInterval =
