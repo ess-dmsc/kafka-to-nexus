@@ -277,14 +277,15 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
         if (auto StringSizeMaybe = find<uint32_t>("string_size", Attribute)) {
           StringSize = *StringSizeMaybe;
         }
-        auto Encoding = hdf5::datatype::CharacterEncoding::UTF8;
+        using EncodingType = hdf5::datatype::CharacterEncoding;
+        auto Encoding = EncodingType::UTF8;
         if (auto EncodingString = find<std::string>("encoding", Attribute)) {
           if (*EncodingString == "ascii") {
-            Encoding = hdf5::datatype::CharacterEncoding::ASCII;
+            Encoding = EncodingType::ASCII;
           }
         }
 
-        if (Values.is_array()) {
+        if (Values.is_array() or StringSize > 0 or Encoding != EncodingType::UTF8) {
           if (findType(Attribute, DType)) {
             Logger->warn("No type defined for attribute, using the default.");
           }

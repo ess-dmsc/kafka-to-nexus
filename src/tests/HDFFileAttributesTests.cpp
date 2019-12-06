@@ -286,13 +286,13 @@ TEST(HDFFileAttributesTest,
         hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_fixed_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
-    ASSERT_FALSE(Type.is_variable_length());
-    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    EXPECT_FALSE(Type.is_variable_length());
+    EXPECT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     std::string StringValue;
     StringAttr.read(StringValue, StringAttr.datatype());
     std::string Expected("string_value");
     StringValue.resize(Expected.size());
-    ASSERT_EQ(StringValue, Expected.data());
+    EXPECT_EQ(StringValue, Expected.data());
   }
 
   {
