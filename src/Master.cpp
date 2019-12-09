@@ -75,30 +75,29 @@ void Master::handle_command(std::string const &Command,
           CommandParser::extractStartInformation(CommandJson, TimeStamp);
 
       // Check job is not already running
-      if (StreamsControl->isRunning()) {
+      if (CurrentStreamMaster != nullptr) {
         throw std::runtime_error(
-            fmt::format("Command ignored as job id {} is already in progress",
-                        StartInfo.JobID));
+            fmt::format("Command ignored as this instance of the file-writer already has a job."));
       }
 
       JobCreator Handler;
-      auto NewJob =
+      CurrentStreamMaster =
           Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
-      StreamsControl->addStreamMaster(std::move(NewJob));
+
     } else if (CommandName == CommandParser::StopCommand) {
       auto StopInfo = CommandParser::extractStopInformation(CommandJson);
       if (StopInfo.StopTime.count() > 0) {
         Logger->info(
             "Received request to gracefully stop file with id : {} at {} ms",
             StopInfo.JobID, StopInfo.StopTime.count());
-        StreamsControl->setStopTimeForJob(StopInfo.JobID, StopInfo.StopTime);
+        CurrentStreamMaster->setStopTime(StopInfo.StopTime);
       } else {
         Logger->info("Received request to gracefully stop file with id : {}",
                      StopInfo.JobID);
-        StreamsControl->stopJob(StopInfo.JobID);
+        CurrentStreamMaster->requestStop();
       }
     } else if (CommandName == CommandParser::StopAllWritingCommand) {
-      StreamsControl->stopStreamMasters();
+      CurrentStreamMaster->requestStop();
     } else if (CommandName == CommandParser::ExitCommand) {
       stop();
     } else {
@@ -168,19 +167,31 @@ void Master::run() {
       t_last_statistics = Clock::now();
       statistics();
     }
-
-    StreamsControl->deleteRemovable();
+    if (CurrentStreamMaster->isRemovable()) {
+      CurrentStreamMaster.reset(nullptr);
+    }
   }
   Logger->info("calling stop on all stream_masters");
-  StreamsControl->stopStreamMasters();
+  CurrentStreamMaster->requestStop();
   Logger->info("called stop on all stream_masters");
 }
 
 void Master::statistics() {
-  if (!StatusProducer) {
+  if (StatusProducer == nullptr) {
     return;
   }
-  StreamsControl->publishStreamStats(StatusProducer, getMainOpt().ServiceID);
+  auto Status = nlohmann::json::object();
+  Status["type"] = "filewriter_status_master";
+  Status["service_id"] = getMainOpt().ServiceID;
+  Status["files"] = nlohmann::json::object();
+
+  if (CurrentStreamMaster != nullptr) {
+    auto FilewriterTaskID = fmt::format("{}", CurrentStreamMaster->getJobId());
+    auto FilewriterTaskStatus = CurrentStreamMaster->getStats();
+    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
+  }
+
+  StatusProducer->produce(Status.dump());
 }
 
 void Master::stop() { Running = false; }

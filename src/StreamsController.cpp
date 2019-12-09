@@ -57,7 +57,7 @@ void StreamsController::deleteRemovable() {
                       StreamMasters.end());
 }
 
-void StreamsController::publishStreamStats(
+void StreamsController::publishStatus(
     std::shared_ptr<KafkaW::ProducerTopic> const &Producer,
     std::string const &ServiceID) {
   auto Status = nlohmann::json::object();

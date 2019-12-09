@@ -57,8 +57,8 @@ public:
   /// \param Producer The producer to publish via.
   /// \param ServiceID The service ID.
   void
-  publishStreamStats(std::shared_ptr<KafkaW::ProducerTopic> const &Producer,
-                     std::string const &ServiceID);
+  publishStatus(std::shared_ptr<KafkaW::ProducerTopic> const &Producer,
+                std::string const &ServiceID);
 private:
   std::vector<std::unique_ptr<IStreamMaster>> StreamMasters;
 };
