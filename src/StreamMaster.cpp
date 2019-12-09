@@ -9,7 +9,7 @@ namespace FileWriter {
 
 std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
     const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-    const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer) {
+    const MainOpt &Options) {
   std::map<std::string, Streamer> Streams;
   for (auto &Demux : FileWriterTask->demuxers()) {
     try {
@@ -23,31 +23,24 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
                                             std::move(Consumer)));
     } catch (std::exception &E) {
       getLogger()->critical("{}", E.what());
-      logEvent(Producer, StatusCode::Error, Options.ServiceID,
-               FileWriterTask->jobID(), E.what());
     }
   }
 
   return std::make_unique<StreamMaster>(std::move(FileWriterTask),
-                                        Options.ServiceID, std::move(Producer),
+                                        Options.ServiceID,
                                         std::move(Streams));
 }
 
 StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                            std::string const &ServiceID,
-                           std::shared_ptr<KafkaW::ProducerTopic> Producer,
                            std::map<std::string, Streamer> Streams)
     : NumStreamers(Streams.size()), Streamers(std::move(Streams)),
-      WriterTask(std::move(FileWriterTask)), ServiceId(ServiceID),
-      ProducerTopic(std::move(Producer)) {}
+      WriterTask(std::move(FileWriterTask)), ServiceId(ServiceID) {}
 
 StreamMaster::~StreamMaster() {
   Stop = true;
   if (WriteThread.joinable()) {
     WriteThread.join();
-  }
-  if (ReportThread.joinable()) {
-    ReportThread.join();
   }
   Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
 }
@@ -72,19 +65,6 @@ void StreamMaster::start() {
   }
 }
 
-void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
-  if (NumStreamers != 0) {
-    if (!ReportThread.joinable()) {
-      ReportPtr = std::make_unique<Report>(ProducerTopic, WriterTask->jobID(),
-                                           ReportMs);
-      ReportThread =
-          std::thread([&] { ReportPtr->report(Streamers, Stop, RunStatus); });
-    } else {
-      Logger->trace("Status report already started, nothing to do");
-    }
-  }
-}
-
 void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
   auto ProcessStartTime = std::chrono::system_clock::now();
   FileWriter::ProcessMessageResult ProcessResult;
@@ -102,8 +82,6 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
       ProcessResult = Stream.pollAndProcess(Demux);
     } catch (std::exception &E) {
       Logger->error("Stream closed due to stream error: {}", E.what());
-      logEvent(ProducerTopic, StatusCode::Error, ServiceId, WriterTask->jobID(),
-               E.what());
       closeStream(Stream, Demux.topic());
       return;
     }
@@ -151,9 +129,6 @@ void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
 }
 
 void StreamMaster::doStop() {
-  if (ReportThread.joinable()) {
-    ReportThread.join();
-  }
   for (auto &Stream : Streamers) {
     // Give the streams a chance to close, log if they fail
     Logger->info("Shutting down {}", Stream.first);
