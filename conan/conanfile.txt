@@ -11,7 +11,7 @@ trompeloeil/v31@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
 spdlog-graylog/1.2.1-dm8@ess-dmsc/testing
 asio/1.13.0@bincrafters/stable
-optional-lite/3.2.0@_/stable
+optional-lite/3.2.0@bincrafters/stable
 
 [generators]
 cmake
