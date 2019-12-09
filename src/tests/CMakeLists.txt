@@ -33,7 +33,6 @@ set(UnitTests_SRC
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
         StreamMasterTests.cpp
-        StreamsControllerTests.cpp
         CommandParserTests.cpp
         ExtensibleDatasetTests.cpp
         )

@@ -41,7 +41,7 @@ public:
   MAKE_MOCK1(process_message, ProcessMessageResult(FlatbufferMessage const &),
              override);
 };
-}
+} // namespace FileWriter
 
 class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
 public:

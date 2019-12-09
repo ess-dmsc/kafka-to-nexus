@@ -60,5 +60,6 @@ private:
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
   static nlohmann::json parseCommand(std::string const &Command);
+  bool IsWriting{false};
 };
 } // namespace FileWriter

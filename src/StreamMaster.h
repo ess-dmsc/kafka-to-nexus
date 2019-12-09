@@ -26,10 +26,9 @@ class IStreamMaster {
 public:
   virtual ~IStreamMaster() = default;
   virtual std::string getJobId() const = 0;
-  virtual void requestStop() = 0;
-  virtual bool isRemovable() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
   virtual nlohmann::json getStats() const = 0;
+  virtual bool isDoneWriting() = 0;
 };
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
@@ -78,19 +77,13 @@ public:
   /// Start writing the streams.
   void start();
 
-  /// Request to stop writing the streams.
-  void requestStop() override;
+  bool isDoneWriting() override;
 
   /// \brief Start the reporting thread.
   ///
   /// \param ReportMs How often to report.
   void report(const std::chrono::milliseconds &ReportMs =
                   std::chrono::milliseconds{1000});
-
-  /// \brief Get whether this stream master can be removed.
-  ///
-  /// \return True, if can be removed.
-  bool isRemovable() const override;
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).

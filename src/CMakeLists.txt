@@ -93,7 +93,6 @@ set(kafka_to_nexus_SRC
         NeXusDataset.cpp
         StreamMaster.cpp
         CommandParser.cpp
-        StreamsController.cpp
         ExtensibleDataset.cpp
         )
 
@@ -137,7 +136,6 @@ set(kafka_to_nexus_INC
         NeXusDataset.h
         KafkaW/ConfigureKafka.cpp
         KafkaW/ConfigureKafka.h
-        StreamsController.h
         CommandParser.h
         ExtensibleDataset.h
     )

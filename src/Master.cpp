@@ -70,41 +70,37 @@ void Master::handle_command(std::string const &Command,
     auto CommandJson = parseCommand(Command);
     auto CommandName = CommandParser::extractCommandName(CommandJson);
 
-    if (CommandName == CommandParser::StartCommand) {
-      auto StartInfo =
-          CommandParser::extractStartInformation(CommandJson, TimeStamp);
-
-      // Check job is not already running
-      if (CurrentStreamMaster != nullptr) {
-        throw std::runtime_error(
-            fmt::format("Command ignored as this instance of the file-writer already has a job."));
-      }
-
-      JobCreator Handler;
-      CurrentStreamMaster =
-          Handler.createFileWritingJob(StartInfo, StatusProducer, getMainOpt());
-
-    } else if (CommandName == CommandParser::StopCommand) {
-      auto StopInfo = CommandParser::extractStopInformation(CommandJson);
-      if (StopInfo.StopTime.count() > 0) {
-        Logger->info(
-            "Received request to gracefully stop file with id : {} at {} ms",
-            StopInfo.JobID, StopInfo.StopTime.count());
-        CurrentStreamMaster->setStopTime(StopInfo.StopTime);
+    if (IsWriting) {
+      if (CommandName == CommandParser::StopCommand) {
+        auto StopInfo = CommandParser::extractStopInformation(CommandJson);
+        if (StopInfo.StopTime.count() > 0) {
+          Logger->info(
+              "Received request to gracefully stop file with id : {} at {} ms",
+              StopInfo.JobID, StopInfo.StopTime.count());
+          CurrentStreamMaster->setStopTime(StopInfo.StopTime);
+        } else {
+          Logger->info("Received request to gracefully stop file with id : {}",
+                       StopInfo.JobID);
+          CurrentStreamMaster.reset(nullptr);
+          IsWriting = false;
+        }
       } else {
-        Logger->info("Received request to gracefully stop file with id : {}",
-                     StopInfo.JobID);
-        CurrentStreamMaster->requestStop();
+        throw std::runtime_error(fmt::format(
+            "The command \"{}\" is not allowed when writing.", CommandName));
       }
-    } else if (CommandName == CommandParser::StopAllWritingCommand) {
-      CurrentStreamMaster->requestStop();
-    } else if (CommandName == CommandParser::ExitCommand) {
-      stop();
     } else {
-      throw std::runtime_error(
-          fmt::format("Did not recognise command name {}", CommandName));
+      if (CommandName == CommandParser::StartCommand) {
+        auto StartInfo =
+            CommandParser::extractStartInformation(CommandJson, TimeStamp);
+        JobCreator Handler;
+        CurrentStreamMaster = Handler.createFileWritingJob(
+            StartInfo, StatusProducer, getMainOpt());
+        IsWriting = true;
+      } else {
+        throw std::runtime_error(fmt::format(
+            "The command \"{}\" is not allowed when idle.", CommandName));
+      }
     }
-
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
     logEvent(StatusProducer, StatusCode::Fail, getMainOpt().ServiceID, "N/A",
@@ -161,19 +157,18 @@ void Master::run() {
       this->handle_command(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
-    if (getMainOpt().ReportStatus &&
-        Clock::now() - t_last_statistics >
-            getMainOpt().StatusMasterIntervalMS) {
+    if (getMainOpt().ReportStatus && Clock::now() - t_last_statistics >
+                                         getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
       statistics();
     }
-    if (CurrentStreamMaster->isRemovable()) {
+    if (CurrentStreamMaster != nullptr and
+        CurrentStreamMaster->isDoneWriting()) {
       CurrentStreamMaster.reset(nullptr);
+      IsWriting = false;
     }
   }
   Logger->info("calling stop on all stream_masters");
-  CurrentStreamMaster->requestStop();
-  Logger->info("called stop on all stream_masters");
 }
 
 void Master::statistics() {

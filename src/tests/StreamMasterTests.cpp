@@ -37,13 +37,3 @@ public:
 TEST_F(StreamMasterTests, getJobIdReturnsCorrectValue) {
   ASSERT_EQ(JobId, StreamMaster->getJobId());
 }
-
-TEST_F(StreamMasterTests, whenConstructedIsNotRemovable) {
-  ASSERT_FALSE(StreamMaster->isRemovable());
-}
-
-TEST_F(StreamMasterTests, whenRunningIsNotRemovable) {
-  StreamMaster->start();
-
-  ASSERT_FALSE(StreamMaster->isRemovable());
-}

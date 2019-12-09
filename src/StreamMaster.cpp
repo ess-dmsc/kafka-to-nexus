@@ -72,11 +72,6 @@ void StreamMaster::start() {
   }
 }
 
-void StreamMaster::requestStop() {
-  Logger->info("StreamMaster: stop requested");
-  Stop = true;
-}
-
 void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
   if (NumStreamers != 0) {
     if (!ReportThread.joinable()) {
@@ -88,10 +83,6 @@ void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
       Logger->trace("Status report already started, nothing to do");
     }
   }
-}
-
-bool StreamMaster::isRemovable() const {
-  return RunStatus.load() == Status::StreamMasterError::IS_REMOVABLE;
 }
 
 void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
@@ -180,4 +171,6 @@ void StreamMaster::doStop() {
   RunStatus.store(StreamMasterError::IS_REMOVABLE);
   Logger->debug("StreamMaster is removable");
 }
+
+bool StreamMaster::isDoneWriting() { return NumStreamers == 0; }
 } // namespace FileWriter
