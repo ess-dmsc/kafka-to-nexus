@@ -25,14 +25,8 @@ void StreamsController::stopStreamMasters() {
   }
 }
 
-bool StreamsController::jobIDInUse(std::string const &JobID) {
-  for (auto &StreamMaster : StreamMasters) {
-    if (StreamMaster->getJobId() == JobID) {
-      return true;
-    }
-  }
-
-  return false;
+bool StreamsController::isRunning() {
+  return not StreamMasters.empty();
 }
 
 void StreamsController::stopJob(std::string const &JobID) {

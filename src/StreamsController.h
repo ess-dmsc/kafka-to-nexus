@@ -28,7 +28,7 @@ public:
   ///
   /// \param JobID The ID to check for.
   /// \return true if in use.
-  bool jobIDInUse(std::string const &JobID);
+  bool isRunning();
 
   /// \brief Stop a job based on an ID.
   ///
@@ -59,7 +59,6 @@ public:
   void
   publishStreamStats(std::shared_ptr<KafkaW::ProducerTopic> const &Producer,
                      std::string const &ServiceID);
-
 private:
   std::vector<std::unique_ptr<IStreamMaster>> StreamMasters;
 };

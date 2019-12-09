@@ -75,7 +75,7 @@ void Master::handle_command(std::string const &Command,
           CommandParser::extractStartInformation(CommandJson, TimeStamp);
 
       // Check job is not already running
-      if (StreamsControl->jobIDInUse(StartInfo.JobID)) {
+      if (StreamsControl->isRunning()) {
         throw std::runtime_error(
             fmt::format("Command ignored as job id {} is already in progress",
                         StartInfo.JobID));
