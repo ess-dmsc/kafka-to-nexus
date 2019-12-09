@@ -290,8 +290,9 @@ void writeArrayOfAttributes(hdf5::node::Node const &Node,
           if (findType(Attribute, DType)) {
             Logger->warn("No type defined for attribute, using the default.");
           }
-          // cppcheck-suppress useStlAlgorithm
+
           for (auto const &Elem : Values) {
+            // cppcheck-suppress useStlAlgorithm
             if (Elem.is_string()) {
               DType = "string";
               break;
