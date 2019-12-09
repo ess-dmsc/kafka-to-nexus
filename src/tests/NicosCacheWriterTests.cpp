@@ -38,19 +38,19 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
   std::string Value;
 
   if (auto Val = find<double>("time", Json)) {
-    Time = Val.inner();
+    Time = *Val;
   }
   if (auto Val = find<std::string>("key", Json)) {
-    Key = Val.inner();
+    Key = *Val;
   }
   if (auto Val = find<std::string>("value", Json)) {
-    Value = Val.inner();
+    Value = *Val;
   }
   if (auto Val = find<double>("ttl", Json)) {
-    Ttl = Val.inner();
+    Ttl = *Val;
   }
   if (auto Val = find<uint8_t>("expired", Json)) {
-    Expired = Val.inner();
+    Expired = *Val;
   }
 
   auto Builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
