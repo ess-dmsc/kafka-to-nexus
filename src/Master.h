@@ -15,7 +15,6 @@
 #include "MasterInterface.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
-#include "StreamsController.h"
 #include <atomic>
 #include <string>
 #include <vector>

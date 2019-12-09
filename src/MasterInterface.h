@@ -18,7 +18,6 @@ struct MainOpt;
 
 namespace FileWriter {
 
-class StreamMaster;
 class Streamer;
 
 /// \brief Listens to the Kafka configuration topic and handles any requests.
