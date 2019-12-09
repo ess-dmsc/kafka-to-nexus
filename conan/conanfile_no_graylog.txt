@@ -10,6 +10,7 @@ CLI11/1.8.0@cliutils/stable
 trompeloeil/v31@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
 spdlog/1.3.1@bincrafters/stable
+optional-lite/3.2.0@bincrafters/stable
 
 [generators]
 cmake

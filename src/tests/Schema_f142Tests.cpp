@@ -263,6 +263,61 @@ generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
   return generateFlatbufferMessageBase(ValueFunc, Value::Double, Timestamp);
 }
 
+TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
+  f142WriterStandIn TestWriter;
+  const std::string units_string = "parsecs";
+  // GIVEN value_units is specified in the JSON config
+  TestWriter.parse_config(
+      fmt::format(R"({{"value_units": "{}"}})", units_string));
+
+  // WHEN the writer module creates the datasets
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+
+  // THEN a units attributes is created on the value dataset with the specified
+  // string
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attributes["units"].read(attribute_value))
+      << "Expect units attribute to be present on the value dataset";
+  EXPECT_EQ(attribute_value, units_string) << "Expect units attribute to have "
+                                              "the value specified in the JSON "
+                                              "configuration";
+}
+
+TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
+  f142WriterStandIn TestWriter;
+  // GIVEN value_units is specified as an empty string in the JSON config
+  TestWriter.parse_config(R"({"value_units": ""})");
+
+  // WHEN the writer module creates the datasets
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+
+  // THEN a units attributes is created on the value dataset with an empty
+  // string value
+  std::string attribute_value;
+  EXPECT_NO_THROW(TestWriter.Values.attributes["units"].read(attribute_value))
+      << "Expect units attribute to be present on the value dataset";
+  EXPECT_EQ(attribute_value, "") << "Expect units attribute to have empty "
+                                    "string as the value, as specified in the "
+                                    "JSON configuration";
+}
+
+TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
+  f142WriterStandIn TestWriter;
+  // GIVEN value_units is not specified in the JSON config
+  TestWriter.parse_config("{}");
+
+  // WHEN the writer module creates the datasets
+  TestWriter.init_hdf(RootGroup, "");
+  TestWriter.reopen(RootGroup);
+
+  // THEN a units attributes is not created on the value dataset
+  EXPECT_FALSE(TestWriter.Values.attributes.exists("units"))
+      << "units attribute should not be created if it was not specified in the "
+         "JSON config";
+}
+
 TEST_F(f142WriteData, WriteOneElement) {
   f142WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
