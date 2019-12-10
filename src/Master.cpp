@@ -152,7 +152,6 @@ void Master::run() {
       IsWriting = false;
     }
   }
-  Logger->info("calling stop on all stream_masters");
 }
 
 void Master::initialiseStatusProducer() {
