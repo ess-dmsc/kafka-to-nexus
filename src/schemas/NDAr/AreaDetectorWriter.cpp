@@ -218,8 +218,6 @@ void AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
   }
 }
 
-std::int32_t AreaDetectorWriter::close() { return 0; }
-
 template <typename Type>
 std::unique_ptr<NeXusDataset::MultiDimDatasetBase>
 makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,

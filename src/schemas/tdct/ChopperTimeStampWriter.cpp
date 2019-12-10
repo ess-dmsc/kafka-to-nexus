@@ -122,6 +122,4 @@ void ChopperTimeStampWriter::write(
   Timestamp.appendArray(CArray);
 }
 
-std::int32_t ChopperTimeStampWriter::close() { return 0; }
-
 } // namespace tdct

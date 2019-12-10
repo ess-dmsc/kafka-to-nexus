@@ -50,14 +50,6 @@ void Writer::write(FlatbufferMessage const &Message) {
   TheWriterUntyped->write(Message, DoFlushEachWrite);
 }
 
-int32_t Writer::close() {
-  Logger->trace("close");
-  if (!TheWriterUntyped) {
-    throw std::runtime_error("TheWriterUntyped is not initialized.");
-  }
-  return TheWriterUntyped->close();
-}
-
 FileWriter::HDFWriterModule::ptr Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new Writer);
 }

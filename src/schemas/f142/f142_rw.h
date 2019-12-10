@@ -35,8 +35,6 @@ public:
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
 
-  int32_t close() override { return 0; };
-
   f142Writer();
   ~f142Writer() override = default;
 

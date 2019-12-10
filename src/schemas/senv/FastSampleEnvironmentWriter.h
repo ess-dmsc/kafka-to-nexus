@@ -53,8 +53,6 @@ public:
 
   void write(FlatbufferMessage const &Message) override;
 
-  int32_t close() override;
-
 protected:
   NeXusDataset::UInt16Value Value;
   NeXusDataset::Time Timestamp;

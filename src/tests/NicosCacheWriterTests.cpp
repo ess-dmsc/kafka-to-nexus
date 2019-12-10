@@ -146,7 +146,6 @@ TEST_F(NicosCacheWriterTest, WriterReturnValues) {
               FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
               FileWriter::HDFWriterModule_detail::InitResult::OK);
-  EXPECT_EQ(SomeWriter.close(), 0);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {

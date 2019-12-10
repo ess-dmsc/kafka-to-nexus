@@ -91,8 +91,6 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   auto StreamGroup = hdf5::node::get_group(
       RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, StreamSettings.Attributes);
-  HDFWriterModule->close();
-  HDFWriterModule.reset();
 }
 
 /// Helper to extract information about the provided streams.

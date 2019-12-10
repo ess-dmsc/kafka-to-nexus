@@ -55,7 +55,6 @@ public:
   void write(FlatbufferMessage const &Message, bool DoFlushEachWrite) override;
 
   ~WriterTyped() override;
-  int close() override;
   int copyLatestToData(size_t HDFIndex);
 
 private:
@@ -96,13 +95,6 @@ private:
 template <typename DataType, typename EdgeType, typename ErrorType>
 WriterTyped<DataType, EdgeType, ErrorType>::~WriterTyped() {
   Logger->trace("WriterTyped destructor");
-}
-
-template <typename DataType, typename EdgeType, typename ErrorType>
-int WriterTyped<DataType, EdgeType, ErrorType>::close() {
-  // Currently copy after each full write
-  // return copyLatestToData();
-  return 0;
 }
 
 template <typename DataType, typename EdgeType, typename ErrorType>

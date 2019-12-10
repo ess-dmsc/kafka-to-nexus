@@ -26,12 +26,11 @@ class Source final {
 public:
   Source(std::string Name, std::string ID, HDFWriterModule::ptr Writer);
   Source(Source &&) = default;
-  ~Source();
+  ~Source() = default;
   std::string const &topic() const;
   std::string const &sourcename() const;
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
-  void close_writer_module();
   HDFFile *HDFFileForSWMR = nullptr;
   void setTopic(std::string const &Name);
 

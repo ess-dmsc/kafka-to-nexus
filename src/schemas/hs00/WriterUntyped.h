@@ -40,7 +40,6 @@ public:
                      bool DoFlushEachWrite) = 0;
 
   virtual ~WriterUntyped() = default;
-  virtual int close() = 0;
 
 private:
   template <typename DataType> static ptr createFromJsonL1(json const &Json);

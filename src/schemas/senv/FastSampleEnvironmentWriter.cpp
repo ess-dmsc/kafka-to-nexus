@@ -152,6 +152,4 @@ void FastSampleEnvironmentWriter::write(
   }
 }
 
-std::int32_t FastSampleEnvironmentWriter::close() { return 0; }
-
 } // namespace senv

@@ -34,7 +34,6 @@ public:
                       std::string const &HDFAttributes) override;
   HDFWriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
-  int32_t close() override;
 
   NeXusDataset::EventTimeOffset EventTimeOffset;
   NeXusDataset::EventId EventId;

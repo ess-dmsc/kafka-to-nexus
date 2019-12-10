@@ -22,5 +22,4 @@ public:
     return InitResult::OK;
   }
   void write(FileWriter::FlatbufferMessage const & /*Message*/) override {}
-  std::int32_t close() override { return 0; }
 };

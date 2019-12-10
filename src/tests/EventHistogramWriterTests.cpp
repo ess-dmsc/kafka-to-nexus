@@ -450,7 +450,6 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
     auto M = createTestMessage(HistogramID, i, DimLengths);
     ASSERT_NO_THROW(Writer->write(wrapBuilder(M)));
   }
-  Writer->close();
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 3u);
@@ -476,7 +475,6 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
       ASSERT_NO_THROW(Writer->write(wrapBuilder(M)));
     }
   }
-  Writer->close();
   auto Histograms = Group.get_dataset("histograms");
   hdf5::dataspace::Simple Dataspace(Histograms.dataspace());
   ASSERT_EQ(Dataspace.current_dimensions().at(0), 4u);
