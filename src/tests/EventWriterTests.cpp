@@ -188,6 +188,33 @@ TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   EXPECT_FALSE(TestGroup.has_dataset("adc_pulse_peak_time"));
 }
 
+TEST_F(EventWriterTests, WriterCreatesUnitsAttributesForTimeDatasets) {
+  {
+    ev42::HDFWriterModule Writer;
+    Writer.parse_config("{}");
+    EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
+  }
+  ASSERT_TRUE(File.H5File.root().has_group(TestGroupName));
+  EXPECT_TRUE(TestGroup.has_dataset("event_time_offset"));
+  EXPECT_TRUE(TestGroup.has_dataset("event_time_zero"));
+
+  std::string const expected_time_units = "ns";
+
+  std::string time_zero_units;
+  EXPECT_NO_THROW(
+      TestGroup["event_time_zero"].attributes["units"].read(time_zero_units))
+      << "Expect units attribute to be present on the event_time_zero dataset";
+  EXPECT_EQ(time_zero_units, expected_time_units)
+      << fmt::format("Expect time units to be {}", expected_time_units);
+
+  std::string time_offset_units;
+  EXPECT_NO_THROW(TestGroup["event_time_offset"].attributes["units"].read(
+      time_offset_units))
+      << "Expect units attribute to be present on the event_time_zero dataset";
+  EXPECT_EQ(time_offset_units, expected_time_units)
+      << fmt::format("Expect time units to be {}", expected_time_units);
+}
+
 TEST_F(
     EventWriterTests,
     WriterInitialisesFileWithNXEventDataDatasetsAndAdcDatasetsWhenRequested) {
