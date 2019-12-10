@@ -35,7 +35,7 @@ public:
   virtual void handle_command(std::unique_ptr<Msg> msg) = 0;
   virtual void handle_command(std::string const &command,
                               std::chrono::milliseconds TimeStamp) = 0;
-  virtual void statistics() = 0;
+  virtual void publishStatus() = 0;
 
   /// \brief The unique identifier for this file writer on the network.
   ///

@@ -40,7 +40,7 @@ public:
   void handle_command(std::unique_ptr<Msg> CommandMessage) override;
   void handle_command(std::string const &Command,
                       std::chrono::milliseconds TimeStamp) override;
-  void statistics() override;
+  void publishStatus() override;
   MainOpt &getMainOpt() override;
 
   /// \brief The unique identifier for this file writer on the network.

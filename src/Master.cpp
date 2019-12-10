@@ -144,7 +144,7 @@ void Master::run() {
     if (getMainOpt().ReportStatus && Clock::now() - t_last_statistics >
                                          getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
-      statistics();
+      publishStatus();
     }
     if (CurrentStreamMaster != nullptr and
         CurrentStreamMaster->isDoneWriting()) {
@@ -172,7 +172,7 @@ void Master::initialiseStatusProducer() {
   }
 }
 
-void Master::statistics() {
+void Master::publishStatus() {
   if (StatusProducer == nullptr) {
     return;
   }
