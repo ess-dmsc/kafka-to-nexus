@@ -42,8 +42,6 @@ private:
   std::string SchemaID;
   FlatbufferMessage::SrcHash Hash;
   std::unique_ptr<HDFWriterModule> WriterModule;
-  uint64_t _processed_messages_count = 0;
-  uint64_t _cnt_msg_written = 0;
   SharedLogger Logger = getLogger();
 };
 

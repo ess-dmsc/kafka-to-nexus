@@ -36,8 +36,6 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     }
     try {
       WriterModule->write(Message);
-      _cnt_msg_written += 1;
-      _processed_messages_count += 1;
       if (HDFFileForSWMR != nullptr) {
         HDFFileForSWMR->SWMRFlush();
       }
