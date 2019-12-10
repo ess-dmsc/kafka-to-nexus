@@ -20,6 +20,7 @@
 #include <vector>
 
 namespace FileWriter {
+class IJobCreator;
 
 /// \brief Listens to the Kafka configuration topic and handles any requests.
 ///
@@ -27,7 +28,7 @@ namespace FileWriter {
 /// Reacts also to stop, and possibly other future commands.
 class Master : public MasterInterface {
 public:
-  explicit Master(MainOpt &Config);
+  explicit Master(MainOpt &Config, std::unique_ptr<IJobCreator> Creator);
 
   /// \brief Sets up command listener and handles any commands received.
   ///
@@ -48,6 +49,7 @@ public:
   std::string getFileWriterProcessId() const override;
 
   bool runLoopExited() override { return HasExitedRunLoop; };
+  bool isWriting() { return IsWriting; }
 
 private:
   SharedLogger Logger;
@@ -56,6 +58,7 @@ private:
   std::atomic<bool> HasExitedRunLoop{false};
   std::string FileWriterProcessId;
   MainOpt &MainConfig;
+  std::unique_ptr<IJobCreator> Creator_;
   std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
   static nlohmann::json parseCommand(std::string const &Command);

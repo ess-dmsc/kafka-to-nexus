@@ -35,7 +35,7 @@ set(UnitTests_SRC
         StreamMasterTests.cpp
         CommandParserTests.cpp
         ExtensibleDatasetTests.cpp
-        )
+        MasterTests.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h

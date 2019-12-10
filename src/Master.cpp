@@ -10,21 +10,19 @@
 #include "Master.h"
 #include "CommandParser.h"
 #include "Errors.h"
-#include "JobCreator.h"
 #include "Msg.h"
 #include "helper.h"
+#include "JobCreator.h"
 #include "json.h"
 #include "logger.h"
-#include <algorithm>
 #include <chrono>
 #include <functional>
-#include <sys/types.h>
 #include <unistd.h>
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config)
-    : Logger(getLogger()), Listener(Config), MainConfig(Config) {
+Master::Master(MainOpt &Config, std::unique_ptr<IJobCreator> Creator)
+    : Logger(getLogger()), Listener(Config), MainConfig(Config), Creator_(std::move(Creator))  {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -92,9 +90,8 @@ void Master::handle_command(std::string const &Command,
       if (CommandName == CommandParser::StartCommand) {
         auto StartInfo =
             CommandParser::extractStartInformation(CommandJson, TimeStamp);
-        JobCreator Handler;
-        CurrentStreamMaster = Handler.createFileWritingJob(
-            StartInfo, StatusProducer, getMainOpt());
+        CurrentStreamMaster = Creator_->createFileWritingJob(
+            StartInfo, StatusProducer, getMainOpt(), Logger);
         IsWriting = true;
       } else {
         throw std::runtime_error(fmt::format(
