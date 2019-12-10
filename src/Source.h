@@ -32,7 +32,6 @@ public:
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
   void close_writer_module();
-  bool is_parallel = false;
   HDFFile *HDFFileForSWMR = nullptr;
   void setTopic(std::string const &Name);
 
