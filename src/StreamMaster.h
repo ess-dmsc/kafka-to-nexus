@@ -103,11 +103,6 @@ private:
   /// \brief Main loop that handles the writer process for each stream.
   void run();
 
-  /// \brief Close the Kafka connection in the specified stream.
-  ///
-  /// \param Stream The stream to close.
-  void closeStream(Streamer &Stream, const std::string &TopicName);
-
   /// \brief Stops the streamers and prepares for being removed.
   void doStop();
 

@@ -184,7 +184,7 @@ bool Streamer::stopOffsetsReached() {
       [](std::pair<int64_t, bool> const &StopPair) { return StopPair.second; });
 }
 
-ProcessMessageResult Streamer::processMessage(
+void Streamer::processMessage(
     DemuxTopic &MessageProcessor,
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
 
@@ -200,18 +200,20 @@ ProcessMessageResult Streamer::processMessage(
     if (stopOffsetsReached()) {
       Logger->warn("There was no data in {} to consume",
                    MessageProcessor.topic());
-      return ProcessMessageResult::STOP;
+      RunStatus.store(StreamerStatus::HAS_FINISHED);
+      return;
     }
   }
 
   if (KafkaMessage->first == KafkaW::PollStatus::Error) {
-    return ProcessMessageResult::ERR;
+    // TODO count Kafka error
+    return;
   }
 
   if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
       KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
       KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
-    return ProcessMessageResult::OK;
+    return;
   }
 
   // If we reach this point we have a real message with a payload to deal with
@@ -222,10 +224,9 @@ ProcessMessageResult Streamer::processMessage(
     Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
                                                   KafkaMessage->second.size());
   } catch (std::runtime_error &Error) {
-    Logger->warn("Message that is not a valid flatbuffer encountered "
-                 "(msg. offset: {}). The error was: {}",
-                 KafkaMessage->second.MetaData.Offset, Error.what());
-    return ProcessMessageResult::ERR;
+    // TODO count Flatbuffer validation error
+    // TODO catch different exceptions and increment different counter
+    return;
   }
 
   if (CatchingUpToStopOffset &&
@@ -233,36 +234,30 @@ ProcessMessageResult Streamer::processMessage(
                             KafkaMessage->second.MetaData.Offset)) {
     Logger->debug("Reached stop offsets in topic {}", MessageProcessor.topic());
 
-    if (MessageProcessor.removeSource(Message->getSourceHash())) {
-      Logger->debug("Remove source {}", Message->getSourceName());
-      return ProcessMessageResult::STOP;
-    }
-    Logger->warn("Can't remove source {}, not in the source list",
-                 Message->getSourceName());
-    return ProcessMessageResult::ERR;
-  }
+    RunStatus.store(StreamerStatus::HAS_FINISHED);
+    return;
 
-  if (Message->getTimestamp() == 0) {
-    Logger->error(
-        R"(Message from topic "{}", source "{}" has no timestamp, ignoring)",
-        MessageProcessor.topic(), Message->getSourceName());
-    return ProcessMessageResult::ERR;
+    //    if (MessageProcessor.removeSource(Message->getSourceHash())) {
+    //      Logger->debug("Remove source {}", Message->getSourceName());
+    //      return ProcessMessageResult::STOP;
+    //    }
+    //    Logger->warn("Can't remove source {}, not in the source list",
+    //                 Message->getSourceName());
+    //    return ProcessMessageResult::ERR;
   }
 
   if (MessageProcessor.sources().find(Message->getSourceHash()) ==
       MessageProcessor.sources().end()) {
-    Logger->warn("Message from topic \"{}\" with the source name \"{}\" is "
-                 "unknown, ignoring.",
-                 MessageProcessor.topic(), Message->getSourceName());
-    return ProcessMessageResult::OK;
+    // TODO count unknown source name
+    return;
   }
 
   if (messageTimestampIsBeforeStartTimestamp(Message->getTimestamp(),
                                              Options.StartTimestamp) ||
       messageTimestampIsAfterStopTimestamp(Message->getTimestamp(),
                                            Options.StopTimestamp)) {
-    // ignore message and carry on
-    return ProcessMessageResult::OK;
+    // ignore message and carry on polling
+    return;
   }
 
   // Collect information about the data received
@@ -275,27 +270,22 @@ ProcessMessageResult Streamer::processMessage(
   if (ProcessMessageResult::OK != result) {
     MessageInfo.error();
   }
-  return result;
 }
 
-ProcessMessageResult Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
+void Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
       // Not ready, so try again on next poll
-      return ProcessMessageResult::OK;
+      return;
     }
-  }
-
-  if (RunStatus < StreamerStatus::IS_CONNECTED) {
-    throw std::runtime_error(Err2Str(RunStatus));
   }
 
   // Consume message
   std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
       Consumer->poll();
 
-  return processMessage(MessageProcessor, KafkaMessage);
+  processMessage(MessageProcessor, KafkaMessage);
 }
 
 } // namespace FileWriter

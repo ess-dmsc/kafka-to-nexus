@@ -87,7 +87,6 @@ void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
 
 void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
   auto ProcessStartTime = std::chrono::system_clock::now();
-  FileWriter::ProcessMessageResult ProcessResult;
 
   // Consume and process messages
   while ((std::chrono::system_clock::now() - ProcessStartTime) <
@@ -96,26 +95,16 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
       return;
     }
 
-    // if the Streamer throws the stream is closed, but the file writing
+    // if the Streamer throws then set the stream to finished, but the file
+    // writing
     // continues
     try {
-      ProcessResult = Stream.pollAndProcess(Demux);
+      Stream.pollAndProcess(Demux);
     } catch (std::exception &E) {
       Logger->error("Stream closed due to stream error: {}", E.what());
       logEvent(ProducerTopic, StatusCode::Error, ServiceId, WriterTask->jobID(),
                E.what());
-      closeStream(Stream, Demux.topic());
-      return;
-    }
-
-    // We've reached the stop offsets, we can close the stream
-    if (ProcessResult == ProcessMessageResult::STOP) {
-      closeStream(Stream, Demux.topic());
-      return;
-    } else if (ProcessResult == ProcessMessageResult::ERR) {
-      // if there's any error in the messages log it
-      Logger->info("Topic \"{}\" : {}", Demux.topic(),
-                   Err2Str(Stream.runStatus()));
+      Stream.setFinished();
       return;
     }
   }
@@ -124,30 +113,24 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
 void StreamMaster::run() {
   RunStatus.store(StreamMasterError::RUNNING);
   while (!Stop) {
-    for (auto &Demux : WriterTask->demuxers()) {
-      auto &s = Streamers[Demux.topic()];
-      processStream(s, Demux);
+    Stop = true;
+    for (auto &TopicStreamerPair : Streamers) {
+      if (TopicStreamerPair.second.runStatus() !=
+          Status::StreamerStatus::HAS_FINISHED) {
+        // TODO WriterTask->demuxers()[0] is completely mental, MUST give it
+        // correct DemuxTopic
+        processStream(TopicStreamerPair.second, WriterTask->demuxers()[0]);
+        Stop = false;
+      }
     }
+
+    //    for (auto &Demux : WriterTask->demuxers()) {
+    //      auto &s = Streamers[Demux.topic()];
+    //      processStream(s, Demux);
+    //    }
   }
   RunStatus.store(StreamMasterError::HAS_FINISHED);
   doStop();
-}
-
-void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
-  if (Stream.runStatus() != Status::StreamerStatus::HAS_FINISHED) {
-    // Only decrement active streamer count if we haven't already marked it as
-    // finished
-    NumStreamers--;
-    Logger->info(
-        "Stopped streamer consuming from {}. {} streamers still running.",
-        TopicName, NumStreamers);
-  }
-  Stream.close();
-
-  if (NumStreamers == 0) {
-    // No more streams open, so stop the StreamMaster
-    Stop = true;
-  }
 }
 
 void StreamMaster::doStop() {

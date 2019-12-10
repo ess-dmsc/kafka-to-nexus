@@ -40,6 +40,9 @@ void FlatbufferMessage::extractPacketInfo() {
     }
     Sourcename = Reader->source_name(*this);
     Timestamp = Reader->timestamp(*this);
+    if (Timestamp == 0){
+      throw InvalidFlatbufferTimestamp("Flatbuffer timestamp is zero.");
+    }
     SourceNameIDHash = calcSourceHash(FlatbufferID, Sourcename);
     ID = FlatbufferID;
   } catch (std::out_of_range &E) {

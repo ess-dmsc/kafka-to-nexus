@@ -52,14 +52,14 @@ public:
   ///
   /// \param MessageProcessor instance of the policy that describe how to
   /// process the message
-  ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
+  void pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
 
   /// \brief Processes received message
   ///
   /// \param MessageProcessor instance of the policy that describe how to
   /// process the message
   /// \param KafkaMessage the received message
-  ProcessMessageResult processMessage(
+  void processMessage(
       FileWriter::DemuxTopic &MessageProcessor,
       std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 
@@ -87,6 +87,9 @@ public:
   ///
   /// The method can be used to change the current values.
   StreamerOptions &getOptions() { return Options; }
+
+  /// Use to force stream to finish if something has gone wrong
+  void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
 
 protected:
   ConsumerPtr Consumer{nullptr};
