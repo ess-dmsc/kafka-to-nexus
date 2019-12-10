@@ -122,21 +122,8 @@ struct OnScopeExit {
 
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
-  // Set up connection to the Kafka status topic if desired.
-  if (getMainOpt().ReportStatus) {
-    Logger->info("Publishing status to kafka://{}/{}",
-                 getMainOpt().KafkaStatusURI.HostPort,
-                 getMainOpt().KafkaStatusURI.Topic);
-    KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
-    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
-    try {
-      StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().KafkaStatusURI.Topic);
-    } catch (KafkaW::TopicCreationError const &e) {
-      Logger->error("Can not create Kafka status producer: {}", e.what());
-    }
-  }
+
+  initialiseStatusProducer();
 
   // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {
@@ -166,6 +153,23 @@ void Master::run() {
     }
   }
   Logger->info("calling stop on all stream_masters");
+}
+
+void Master::initialiseStatusProducer() {
+  if (getMainOpt().ReportStatus) {
+    Logger->info("Publishing status to kafka://{}/{}",
+                 getMainOpt().KafkaStatusURI.HostPort,
+                 getMainOpt().KafkaStatusURI.Topic);
+    KafkaW::BrokerSettings BrokerSettings;
+    BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
+    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
+    try {
+      StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
+          producer, getMainOpt().KafkaStatusURI.Topic);
+    } catch (KafkaW::TopicCreationError const &e) {
+      Logger->error("Can not create Kafka status producer: {}", e.what());
+    }
+  }
 }
 
 void Master::statistics() {

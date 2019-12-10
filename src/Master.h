@@ -63,5 +63,6 @@ private:
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
   static nlohmann::json parseCommand(std::string const &Command);
   bool IsWriting{false};
+  void initialiseStatusProducer();
 };
 } // namespace FileWriter
