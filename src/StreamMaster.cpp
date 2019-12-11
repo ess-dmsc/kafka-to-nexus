@@ -112,14 +112,15 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
 
 void StreamMaster::run() {
   RunStatus.store(StreamMasterError::RUNNING);
-  while (!Stop) {
-    Stop = true;
+  bool StreamersLeft = true;
+  while (!Stop && StreamersLeft) {
+    StreamersLeft = false;
     for (auto &TopicStreamerPair : Streamers) {
       if (TopicStreamerPair.second.runStatus() !=
           Status::StreamerStatus::HAS_FINISHED) {
         processStream(TopicStreamerPair.second,
                       WriterTask->demuxers()[TopicStreamerPair.first]);
-        Stop = false;
+        StreamersLeft = true;
       }
     }
   }
