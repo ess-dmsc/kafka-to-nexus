@@ -43,7 +43,7 @@ struct AdcDebugInfo {
 flatbuffers::DetachedBuffer
 generateFlatbufferData(std::string const &SourceName = "TestSource",
                        uint64_t const MessageID = 0,
-                       uint64_t const PulseTime = 0,
+                       uint64_t const PulseTime = 1,
                        std::vector<uint32_t> const &TimeOfFlight = {0, 1, 2},
                        std::vector<uint32_t> const &DetectorID = {0, 1, 2},
                        bool IncludeAdcDebugInfo = false,
@@ -357,7 +357,7 @@ TEST_F(EventWriterTests,
   std::vector<uint64_t> const PeakTime = {12, 13, 14};
   auto AdcDebugData =
       AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
-  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -394,7 +394,7 @@ TEST_F(EventWriterTests,
   std::vector<uint64_t> PeakTime = {12, 13, 14};
   auto AdcDebugData =
       AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
-  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -443,7 +443,7 @@ TEST_F(EventWriterTests,
       AdcDebugInfo(Amplitude, PeakArea, Background, ThresholdTime, PeakTime);
 
   // First message with ADC pulse data
-  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 0, {0, 0, 0},
+  auto MessageBuffer = generateFlatbufferData("TestSource", 0, 1, {0, 0, 0},
                                               {0, 0, 0}, true, AdcDebugData);
   FileWriter::FlatbufferMessage TestMessage(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -451,7 +451,7 @@ TEST_F(EventWriterTests,
 
   // Second message without ADC pulse data
   auto SecondMessageBuffer =
-      generateFlatbufferData("TestSource", 0, 0, {0, 0, 0}, {0, 0, 0}, false);
+      generateFlatbufferData("TestSource", 0, 1, {0, 0, 0}, {0, 0, 0}, false);
   FileWriter::FlatbufferMessage SecondTestMessage(
       reinterpret_cast<const char *>(SecondMessageBuffer.data()),
       MessageBuffer.size());

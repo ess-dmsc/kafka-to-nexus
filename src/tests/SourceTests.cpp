@@ -25,6 +25,17 @@ using FileWriter::HDFWriterModule;
 using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
+flatbuffers::DetachedBuffer createEventMessageBuffer() {
+  flatbuffers::FlatBufferBuilder Builder;
+  ev42::EventMessageBuilder EventMessage(Builder);
+  EventMessage.add_pulse_time(
+      1); // avoid 0 pulse time which is detected as a validation error
+  Builder.Finish(EventMessage.Finish(), ev42::EventMessageIdentifier());
+
+  // Note, Release gives us a "DetachedBuffer" which owns the data
+  return Builder.Release();
+}
+
 class SourceTests : public ::testing::Test {
 public:
   void SetUp() override {
@@ -72,11 +83,10 @@ TEST_F(SourceTests, ProcessMessagePassesMessageToWriterModule) {
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)));
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
-  flatbuffers::FlatBufferBuilder Builder;
-  ev42::EventMessageBuilder EventMessage(Builder);
-  ev42::FinishEventMessageBuffer(Builder, EventMessage.Finish());
-  FlatbufferMessage Message(
-      reinterpret_cast<char *>(Builder.GetBufferPointer()), Builder.GetSize());
+  auto MessageBuffer = createEventMessageBuffer();
+  FileWriter::FlatbufferMessage Message(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
   ASSERT_EQ(FileWriter::ProcessMessageResult::OK,
             TestSource.process_message(Message));
 }
@@ -90,11 +100,10 @@ TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
       .THROW(FileWriter::HDFWriterModuleRegistry::WriterException("IO Error"));
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
-  flatbuffers::FlatBufferBuilder Builder;
-  ev42::EventMessageBuilder EventMessage(Builder);
-  ev42::FinishEventMessageBuffer(Builder, EventMessage.Finish());
-  FlatbufferMessage Message(
-      reinterpret_cast<char *>(Builder.GetBufferPointer()), Builder.GetSize());
+  auto MessageBuffer = createEventMessageBuffer();
+  FileWriter::FlatbufferMessage Message(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
   ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
             TestSource.process_message(Message));
 }
@@ -106,24 +115,10 @@ TEST_F(SourceTests, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
   auto WriterModule = std::make_unique<StubWriterModule>();
   Source TestSource(SourceName, ModuleName, std::move(WriterModule));
   TestSource.setTopic(TopicName);
-  flatbuffers::FlatBufferBuilder Builder;
-  ev42::EventMessageBuilder EventMessage(Builder);
-  ev42::FinishEventMessageBuffer(Builder, EventMessage.Finish());
-  FlatbufferMessage Message(
-      reinterpret_cast<char *>(Builder.GetBufferPointer()), Builder.GetSize());
-  ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
-            TestSource.process_message(Message));
-}
-
-TEST_F(SourceTests, ProcessMessageWithoutWriterModuleReturnsError) {
-  std::string SourceName("TestSourceName");
-  std::string ModuleName("ev42");
-  Source TestSource(SourceName, ModuleName, {nullptr});
-  flatbuffers::FlatBufferBuilder Builder;
-  ev42::EventMessageBuilder EventMessage(Builder);
-  ev42::FinishEventMessageBuffer(Builder, EventMessage.Finish());
-  FlatbufferMessage Message(
-      reinterpret_cast<char *>(Builder.GetBufferPointer()), Builder.GetSize());
+  auto MessageBuffer = createEventMessageBuffer();
+  FileWriter::FlatbufferMessage Message(
+      reinterpret_cast<const char *>(MessageBuffer.data()),
+      MessageBuffer.size());
   ASSERT_EQ(FileWriter::ProcessMessageResult::ERR,
             TestSource.process_message(Message));
 }
