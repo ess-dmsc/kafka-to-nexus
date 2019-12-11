@@ -17,7 +17,6 @@ set(UnitTests_SRC
         TemplateWriterTests.cpp
         DemuxerTests.cpp
         MessageTests.cpp
-        StreamerTests.cpp
         Schema_f142Tests.cpp
         AreaDetectorTests.cpp
         EventLoggerTests.cpp
