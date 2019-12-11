@@ -100,7 +100,7 @@ extractTime(std::string const &Key, nlohmann::json const &JSONCommand,
 template <typename T>
 T getRequiredValue(std::string const &Key, nlohmann::json const &JSONCommand) {
   if (auto x = find<T>(Key, JSONCommand)) {
-    return x.inner();
+    return *x;
   }
 
   throw std::runtime_error(
@@ -118,7 +118,7 @@ template <typename T>
 T getOptionalValue(std::string const &Key, nlohmann::json const &JSONCommand,
                    T const &Default) {
   if (auto x = find<T>(Key, JSONCommand)) {
-    return x.inner();
+    return *x;
   }
 
   return Default;
