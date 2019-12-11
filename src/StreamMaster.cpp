@@ -96,8 +96,7 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
     }
 
     // if the Streamer throws then set the stream to finished, but the file
-    // writing
-    // continues
+    // writing continues
     try {
       Stream.pollAndProcess(Demux);
     } catch (std::exception &E) {
