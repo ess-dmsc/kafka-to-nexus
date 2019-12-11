@@ -37,9 +37,8 @@ StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                            std::string const &ServiceID,
                            std::shared_ptr<KafkaW::ProducerTopic> Producer,
                            std::map<std::string, Streamer> Streams)
-    : NumStreamers(Streams.size()), Streamers(std::move(Streams)),
-      WriterTask(std::move(FileWriterTask)), ServiceId(ServiceID),
-      ProducerTopic(std::move(Producer)) {}
+    : Streamers(std::move(Streams)), WriterTask(std::move(FileWriterTask)),
+      ServiceId(ServiceID), ProducerTopic(std::move(Producer)) {}
 
 StreamMaster::~StreamMaster() {
   Stop = true;
@@ -73,7 +72,7 @@ void StreamMaster::start() {
 }
 
 void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
-  if (NumStreamers != 0) {
+  if (StreamersRemaining) {
     if (!ReportThread.joinable()) {
       ReportPtr = std::make_unique<Report>(ProducerTopic, WriterTask->jobID(),
                                            ReportMs);
@@ -111,15 +110,15 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
 
 void StreamMaster::run() {
   RunStatus.store(StreamMasterError::RUNNING);
-  bool StreamersLeft = true;
-  while (!Stop && StreamersLeft) {
-    StreamersLeft = false;
+  StreamersRemaining = true;
+  while (!Stop && StreamersRemaining) {
+    StreamersRemaining = false;
     for (auto &TopicStreamerPair : Streamers) {
       if (TopicStreamerPair.second.runStatus() !=
           Status::StreamerStatus::HAS_FINISHED) {
         processStream(TopicStreamerPair.second,
                       WriterTask->demuxers()[TopicStreamerPair.first]);
-        StreamersLeft = true;
+        StreamersRemaining = true;
       }
     }
   }
@@ -149,5 +148,5 @@ void StreamMaster::doStop() {
   Logger->debug("StreamMaster is removable");
 }
 
-bool StreamMaster::isDoneWriting() { return NumStreamers == 0; }
+bool StreamMaster::isDoneWriting() { return !StreamersRemaining; }
 } // namespace FileWriter

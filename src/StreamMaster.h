@@ -106,7 +106,7 @@ private:
   /// \brief Stops the streamers and prepares for being removed.
   void doStop();
 
-  size_t NumStreamers{0};
+  bool StreamersRemaining{true};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
   std::thread ReportThread;
