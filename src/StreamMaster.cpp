@@ -20,7 +20,7 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
                       std::forward_as_tuple(TopicNameDemuxerPair.first),
                       std::forward_as_tuple(Broker, TopicNameDemuxerPair.first,
                                             Options.StreamerConfiguration,
-                                            std::move(Consumer)));
+                                            std::move(Consumer), TopicNameDemuxerPair.second));
     } catch (std::exception &E) {
       getLogger()->critical("{}", E.what());
       logEvent(Producer, StatusCode::Error, Options.ServiceID,
@@ -72,7 +72,7 @@ void StreamMaster::start() {
 }
 
 void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
-  if (StreamersRemaining) {
+  if (StreamersRemaining.load()) {
     if (!ReportThread.joinable()) {
       ReportPtr = std::make_unique<Report>(ProducerTopic, WriterTask->jobID(),
                                            ReportMs);
@@ -84,7 +84,7 @@ void StreamMaster::report(const std::chrono::milliseconds &ReportMs) {
   }
 }
 
-void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
+void StreamMaster::processStream(Streamer &Stream) {
   auto ProcessStartTime = std::chrono::system_clock::now();
 
   // Consume and process messages
@@ -97,7 +97,7 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
     // if the Streamer throws then set the stream to finished, but the file
     // writing continues
     try {
-      Stream.pollAndProcess(Demux);
+      Stream.pollAndProcess();
     } catch (std::exception &E) {
       Logger->error("Stream closed due to stream error: {}", E.what());
       logEvent(ProducerTopic, StatusCode::Error, ServiceId, WriterTask->jobID(),
@@ -110,15 +110,14 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
 
 void StreamMaster::run() {
   RunStatus.store(StreamMasterError::RUNNING);
-  StreamersRemaining = true;
-  while (!Stop && StreamersRemaining) {
-    StreamersRemaining = false;
+
+  while (!Stop && StreamersRemaining.load()) {
+    StreamersRemaining.store(false);
     for (auto &TopicStreamerPair : Streamers) {
       if (TopicStreamerPair.second.runStatus() !=
           Status::StreamerStatus::HAS_FINISHED) {
-        processStream(TopicStreamerPair.second,
-                      WriterTask->demuxers()[TopicStreamerPair.first]);
-        StreamersRemaining = true;
+        StreamersRemaining.store(true);
+        processStream(TopicStreamerPair.second);
       }
     }
   }
@@ -148,5 +147,5 @@ void StreamMaster::doStop() {
   Logger->debug("StreamMaster is removable");
 }
 
-bool StreamMaster::isDoneWriting() { return !StreamersRemaining; }
+bool StreamMaster::isDoneWriting() { return !StreamersRemaining.load(); }
 } // namespace FileWriter

@@ -80,6 +80,7 @@ void Master::handle_command(std::string const &Command,
           Logger->info("Received request to gracefully stop file with id : {}",
                        StopInfo.JobID);
           CurrentStreamMaster.reset(nullptr);
+          // TODO: Wait for it to finish writing?
           IsWriting = false;
         }
       } else {

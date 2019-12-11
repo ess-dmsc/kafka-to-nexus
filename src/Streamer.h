@@ -21,10 +21,13 @@
 #include "logger.h"
 #include <chrono>
 #include <future>
+#include <memory>
 #include <utility>
 
 namespace FileWriter {
 using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
+using DemuxPtr = std::shared_ptr<DemuxTopic>;
+
 
 /// \brief Connect to kafka topics eventually at a given point in time
 /// and consume messages.
@@ -43,25 +46,13 @@ public:
   /// RdKafka.
   /// \param Consumer The Consumer.
   Streamer(const std::string &Broker, const std::string &TopicName,
-           StreamerOptions Opts, ConsumerPtr Consumer);
+           StreamerOptions Opts, ConsumerPtr Consumer, DemuxPtr Demuxer);
   Streamer(const Streamer &) = delete;
 
   ~Streamer() = default;
 
   /// \brief Polls for message and processes it if there is one
-  ///
-  /// \param MessageProcessor instance of the policy that describe how to
-  /// process the message
-  void pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
-
-  /// \brief Processes received message
-  ///
-  /// \param MessageProcessor instance of the policy that describe how to
-  /// process the message
-  /// \param KafkaMessage the received message
-  void processMessage(
-      FileWriter::DemuxTopic &MessageProcessor,
-      std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
+  void pollAndProcess();
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.
@@ -103,8 +94,10 @@ protected:
       ConsumerInitialised;
 
 private:
+  std::string ConsumerTopicName;
+  DemuxPtr MessageProcessor;
   bool ifConsumerIsReadyThenAssignIt();
-  bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
+  bool stopTimeExceeded();
 
   /// Creates StopOffsets vector
   std::vector<std::pair<int64_t, bool>>
@@ -131,6 +124,13 @@ private:
   void markIfOffsetsAlreadyReached(
       std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
       std::string const &TopicName);
+
+  /// \brief Processes received message
+  ///
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
+  /// \param KafkaMessage the received message
+  void processMessage(std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 };
 
 /// \brief Create a consumer with options specified in the class

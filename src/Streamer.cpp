@@ -37,8 +37,8 @@ bool messageTimestampIsAfterStopTimestamp(std::uint64_t MessageTimestamp,
 }
 
 Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
-                   StreamerOptions Opts, ConsumerPtr Consumer)
-    : Options(std::move(Opts)) {
+                   StreamerOptions Opts, ConsumerPtr Consumer, DemuxPtr Demuxer)
+    : Options(std::move(Opts)), ConsumerTopicName(TopicName), MessageProcessor(std::move(Demuxer)) {
 
   if (TopicName.empty() || Broker.empty()) {
     throw std::runtime_error("Missing broker or topic");
@@ -97,12 +97,12 @@ bool Streamer::ifConsumerIsReadyThenAssignIt() {
   return true;
 }
 
-bool Streamer::stopTimeExceeded(DemuxTopic &MessageProcessor) {
+bool Streamer::stopTimeExceeded() {
   if ((Options.StopTimestamp.count() > 0) and
       (systemTime() > Options.StopTimestamp + Options.AfterStopTime)) {
     Logger->info("{} ms passed since stop time in topic {}",
                  (systemTime() - Options.StopTimestamp).count(),
-                 MessageProcessor.topic());
+                 ConsumerTopicName);
     return true;
   }
   return false;
@@ -185,21 +185,20 @@ bool Streamer::stopOffsetsReached() {
 }
 
 void Streamer::processMessage(
-    DemuxTopic &MessageProcessor,
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
 
-  if (!CatchingUpToStopOffset && stopTimeExceeded(MessageProcessor)) {
+  if (!CatchingUpToStopOffset && stopTimeExceeded()) {
     CatchingUpToStopOffset = true;
     Logger->trace("Calling getStopOffsets");
     StopOffsets = getStopOffsets(Options.StartTimestamp,
                                  Options.StopTimestamp + Options.AfterStopTime,
-                                 MessageProcessor.topic());
+                                 ConsumerTopicName);
     Logger->trace("Finished executing getStopOffsets");
     // There may be no data in the topic, so check if all stop offsets
     // are already marked as reached
     if (stopOffsetsReached()) {
       Logger->warn("There was no data in {} to consume",
-                   MessageProcessor.topic());
+                   ConsumerTopicName);
       RunStatus.store(StreamerStatus::HAS_FINISHED);
       return;
     }
@@ -232,22 +231,15 @@ void Streamer::processMessage(
   if (CatchingUpToStopOffset &&
       stopOffsetsNowReached(KafkaMessage->second.MetaData.Partition,
                             KafkaMessage->second.MetaData.Offset)) {
-    Logger->debug("Reached stop offsets in topic {}", MessageProcessor.topic());
+    Logger->debug("Reached stop offsets in topic {}", ConsumerTopicName);
 
     RunStatus.store(StreamerStatus::HAS_FINISHED);
     return;
 
-    //    if (MessageProcessor.removeSource(Message->getSourceHash())) {
-    //      Logger->debug("Remove source {}", Message->getSourceName());
-    //      return ProcessMessageResult::STOP;
-    //    }
-    //    Logger->warn("Can't remove source {}, not in the source list",
-    //                 Message->getSourceName());
-    //    return ProcessMessageResult::ERR;
   }
 
-  if (MessageProcessor.sources().find(Message->getSourceHash()) ==
-      MessageProcessor.sources().end()) {
+  if (MessageProcessor->sources().find(Message->getSourceHash()) ==
+      MessageProcessor->sources().end()) {
     // TODO count unknown source name
     return;
   }
@@ -264,15 +256,15 @@ void Streamer::processMessage(
   MessageInfo.newMessage(Message->size());
 
   // Write the message. Log any error and return the result of processing
-  ProcessMessageResult result = MessageProcessor.process_message(*Message);
-  Logger->trace("Processed: {}::{}", MessageProcessor.topic(),
+  ProcessMessageResult result = MessageProcessor->process_message(*Message);
+  Logger->trace("Processed: {}::{}", ConsumerTopicName,
                 Message->getSourceName());
   if (ProcessMessageResult::OK != result) {
     MessageInfo.error();
   }
 }
 
-void Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
+void Streamer::pollAndProcess() {
   if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
@@ -285,7 +277,7 @@ void Streamer::pollAndProcess(DemuxTopic &MessageProcessor) {
   std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
       Consumer->poll();
 
-  processMessage(MessageProcessor, KafkaMessage);
+  processMessage(KafkaMessage);
 }
 
 } // namespace FileWriter

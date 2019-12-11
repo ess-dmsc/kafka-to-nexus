@@ -97,8 +97,7 @@ private:
   /// \brief Process the messages in the specified stream.
   ///
   /// \param Stream The stream that will consume messages.
-  /// \param Demux The demux associated with the topic.
-  void processStream(Streamer &Stream, DemuxTopic &Demux);
+  void processStream(Streamer &Stream);
 
   /// \brief Main loop that handles the writer process for each stream.
   void run();
@@ -106,7 +105,7 @@ private:
   /// \brief Stops the streamers and prepares for being removed.
   void doStop();
 
-  bool StreamersRemaining{true};
+  std::atomic<bool> StreamersRemaining{true};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
   std::thread ReportThread;
