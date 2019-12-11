@@ -45,11 +45,10 @@ public:
   /// \return
   static std::unique_ptr<StreamMaster> createStreamMaster(
       const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-      const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer);
+      const MainOpt &Options);
 
   StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                std::string const &ServiceID,
-               std::shared_ptr<KafkaW::ProducerTopic> Producer,
                std::map<std::string, Streamer> Streams);
   ~StreamMaster() override;
   StreamMaster(const StreamMaster &) = delete;
@@ -78,12 +77,6 @@ public:
   void start();
 
   bool isDoneWriting() override;
-
-  /// \brief Start the reporting thread.
-  ///
-  /// \param ReportMs How often to report.
-  void report(const std::chrono::milliseconds &ReportMs =
-                  std::chrono::milliseconds{1000});
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
@@ -114,14 +107,11 @@ private:
   size_t NumStreamers{0};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
-  std::thread ReportThread;
   std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
-  std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
   std::string ServiceId;
-  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
   SharedLogger Logger = getLogger();
 };
 

@@ -27,7 +27,7 @@ public:
     FileWriterTask->setJobId(JobId);
     std::map<std::string, FileWriter::Streamer> Streamers;
     StreamMaster = std::make_unique<FileWriter::StreamMaster>(
-        std::move(FileWriterTask), "ServiceID", nullptr, std::move(Streamers));
+        std::move(FileWriterTask), "ServiceID", std::move(Streamers));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;

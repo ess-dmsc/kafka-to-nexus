@@ -173,8 +173,7 @@ std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
 
   Logger->info("Write file with job_id: {}", Task->jobID());
   auto s = StreamMaster::createStreamMaster(
-      StartInfo.BrokerInfo.HostPort, std::move(Task), Settings, StatusProducer);
-  s->report(Settings.StatusMasterIntervalMS);
+      StartInfo.BrokerInfo.HostPort, std::move(Task), Settings);
   if (Settings.topic_write_duration.count() != 0) {
     s->setTopicWriteDuration(Settings.topic_write_duration);
   }
