@@ -13,6 +13,7 @@
 #include "KafkaW/ProducerTopic.h"
 #include "Source.h"
 #include "json.h"
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -74,7 +75,7 @@ public:
   /// \brief Get the list of demuxers.
   ///
   /// \return The demux topics.
-  std::vector<DemuxTopic> &demuxers();
+  std::map<std::string, DemuxTopic> &demuxers();
 
   /// \brief  Get the job ID of the file being written.
   ///
@@ -103,7 +104,7 @@ public:
 
 private:
   std::string Filename;
-  std::vector<DemuxTopic> Demuxers;
+  std::map<std::string, DemuxTopic> TopicNameToDemuxerMap;
   void closeFile();
   void reopenFile();
   std::string JobId;

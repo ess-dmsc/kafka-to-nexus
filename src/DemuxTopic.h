@@ -20,6 +20,8 @@ namespace FileWriter {
 /// correct module based on sourcename.
 class DemuxTopic {
 public:
+  DemuxTopic() = default;
+
   /// Initialize with the given TopicName.
   explicit DemuxTopic(std::string TopicName);
 

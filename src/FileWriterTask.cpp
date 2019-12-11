@@ -33,11 +33,13 @@ json hdf_parse(std::string const &Structure, SharedLogger Logger) {
 }
 } // namespace
 
-std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
+std::map<std::string, DemuxTopic> &FileWriterTask::demuxers() {
+  return TopicNameToDemuxerMap;
+}
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
-  Demuxers.clear();
+  TopicNameToDemuxerMap.clear();
   try {
     File.close();
     if (StatusProducer) {
@@ -67,19 +69,13 @@ void FileWriterTask::addSource(Source &&Source) {
     Source.HDFFileForSWMR = &File;
   }
 
-  // If source already exists then replace
-  for (auto &Demux : Demuxers) {
-    // cppcheck-suppress useStlAlgorithm
-    if (Demux.topic() == Source.topic()) {
-      Demux.add_source(std::move(Source));
-      return;
-    }
+  // If demuxer does not already exist for this topic then create it
+  if (TopicNameToDemuxerMap.find(Source.topic()) == TopicNameToDemuxerMap.end()) {
+    TopicNameToDemuxerMap.emplace(Source.topic(), DemuxTopic(Source.topic()));
   }
 
-  // Add new source
-  Demuxers.emplace_back(Source.topic());
-  auto &Demux = Demuxers.back();
-  Demux.add_source(std::move(Source));
+  // Add the source to the demuxer for its topic
+  TopicNameToDemuxerMap[Source.topic()].add_source(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
@@ -128,7 +124,8 @@ void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
 json FileWriterTask::stats() const {
   auto Topics = json::object();
-  for (auto &Demux : Demuxers) {
+  for (auto &TopicDemuxerPair : TopicNameToDemuxerMap) {
+    auto &Demux = TopicDemuxerPair.second;
     auto DemuxStats = json::object();
     DemuxStats["messages_processed"] = Demux.messages_processed.load();
     DemuxStats["error_message_too_small"] =

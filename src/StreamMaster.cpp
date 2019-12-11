@@ -11,14 +11,14 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
     const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
     const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer) {
   std::map<std::string, Streamer> Streams;
-  for (auto &Demux : FileWriterTask->demuxers()) {
+  for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
       std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
           KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
                                  Broker);
       Streams.emplace(std::piecewise_construct,
-                      std::forward_as_tuple(Demux.topic()),
-                      std::forward_as_tuple(Broker, Demux.topic(),
+                      std::forward_as_tuple(TopicNameDemuxerPair.first),
+                      std::forward_as_tuple(Broker, TopicNameDemuxerPair.first,
                                             Options.StreamerConfiguration,
                                             std::move(Consumer)));
     } catch (std::exception &E) {
@@ -117,17 +117,11 @@ void StreamMaster::run() {
     for (auto &TopicStreamerPair : Streamers) {
       if (TopicStreamerPair.second.runStatus() !=
           Status::StreamerStatus::HAS_FINISHED) {
-        // TODO WriterTask->demuxers()[0] is completely mental, MUST give it
-        // correct DemuxTopic
-        processStream(TopicStreamerPair.second, WriterTask->demuxers()[0]);
+        processStream(TopicStreamerPair.second,
+                      WriterTask->demuxers()[TopicStreamerPair.first]);
         Stop = false;
       }
     }
-
-    //    for (auto &Demux : WriterTask->demuxers()) {
-    //      auto &s = Streamers[Demux.topic()];
-    //      processStream(s, Demux);
-    //    }
   }
   RunStatus.store(StreamMasterError::HAS_FINISHED);
   doStop();
