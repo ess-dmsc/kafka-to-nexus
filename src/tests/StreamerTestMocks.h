@@ -124,5 +124,4 @@ public:
              override);
   MAKE_MOCK1(reopen, InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const &), override);
-  MAKE_MOCK0(close, int32_t(), override);
 };
