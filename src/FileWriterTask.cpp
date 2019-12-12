@@ -70,8 +70,10 @@ void FileWriterTask::addSource(Source &&Source) {
   }
 
   // If demuxer does not already exist for this topic then create it
-  if (TopicNameToDemuxerMap.find(Source.topic()) == TopicNameToDemuxerMap.end()) {
-    TopicNameToDemuxerMap.emplace(Source.topic(), std::make_shared<DemuxTopic>(Source.topic()));
+  if (TopicNameToDemuxerMap.find(Source.topic()) ==
+      TopicNameToDemuxerMap.end()) {
+    TopicNameToDemuxerMap.emplace(Source.topic(),
+                                  std::make_shared<DemuxTopic>(Source.topic()));
   }
 
   // Add the source to the demuxer for its topic

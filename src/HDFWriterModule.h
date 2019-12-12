@@ -81,7 +81,6 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FlatbufferMessage const &Message) = 0;
-
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
