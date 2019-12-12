@@ -21,26 +21,35 @@ public:
   IMPLEMENT_MOCK1(getCurrentOffsets);
 };
 
+class DemuxerStandIn : public DemuxTopic {
+public:
+  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
+  ProcessMessageResult process_message(FlatbufferMessage const &) override {
+    return ProcessMessageResult::OK;
+  }
+};
+
 class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn()
       : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
                  std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings)) {}
+                     StreamerOptions().BrokerSettings),
+                 std::make_shared<DemuxerStandIn>("SomeTopic")) {}
   explicit StreamerStandIn(StreamerOptions Opts)
       : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
                  std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings)) {}
+                     StreamerOptions().BrokerSettings),
+                 std::make_shared<DemuxerStandIn>("SomeTopic")) {}
+  StreamerStandIn(StreamerOptions Opts, std::shared_ptr<DemuxTopic> &Demuxer)
+      : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
+                 std::make_unique<ConsumerEmptyStandIn>(
+                     StreamerOptions().BrokerSettings),
+                 Demuxer) {}
   using Streamer::ConsumerInitialised;
   using Streamer::Options;
 };
 
-class DemuxerStandIn : public DemuxTopic {
-public:
-  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
-  MAKE_MOCK1(process_message, ProcessMessageResult(FlatbufferMessage const &),
-             override);
-};
 } // namespace FileWriter
 
 class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {

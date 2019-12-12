@@ -38,7 +38,8 @@ bool messageTimestampIsAfterStopTimestamp(std::uint64_t MessageTimestamp,
 
 Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
                    StreamerOptions Opts, ConsumerPtr Consumer, DemuxPtr Demuxer)
-    : Options(std::move(Opts)), ConsumerTopicName(TopicName), MessageProcessor(std::move(Demuxer)) {
+    : Options(std::move(Opts)), ConsumerTopicName(TopicName),
+      MessageProcessor(std::move(Demuxer)) {
 
   if (TopicName.empty() || Broker.empty()) {
     throw std::runtime_error("Missing broker or topic");
@@ -197,8 +198,7 @@ void Streamer::processMessage(
     // There may be no data in the topic, so check if all stop offsets
     // are already marked as reached
     if (stopOffsetsReached()) {
-      Logger->warn("There was no data in {} to consume",
-                   ConsumerTopicName);
+      Logger->warn("There was no data in {} to consume", ConsumerTopicName);
       RunStatus.store(StreamerStatus::HAS_FINISHED);
       return;
     }
@@ -235,7 +235,6 @@ void Streamer::processMessage(
 
     RunStatus.store(StreamerStatus::HAS_FINISHED);
     return;
-
   }
 
   if (MessageProcessor->sources().find(Message->getSourceHash()) ==
@@ -252,15 +251,12 @@ void Streamer::processMessage(
     return;
   }
 
-  // Collect information about the data received
-  MessageInfo.newMessage(Message->size());
+  // TODO: Collect information about the data received
 
-  // Write the message. Log any error and return the result of processing
   ProcessMessageResult result = MessageProcessor->process_message(*Message);
-  Logger->trace("Processed: {}::{}", ConsumerTopicName,
-                Message->getSourceName());
-  if (ProcessMessageResult::OK != result) {
-    MessageInfo.error();
+
+  if (ProcessMessageResult::OK == result) {
+    ++NumberProcessedMessages;
   }
 }
 
@@ -271,6 +267,11 @@ void Streamer::pollAndProcess() {
       // Not ready, so try again on next poll
       return;
     }
+  }
+
+  // Potentially the consumer might not be usable.
+  if (RunStatus < StreamerStatus::IS_CONNECTED) {
+    throw std::runtime_error(Err2Str(RunStatus));
   }
 
   // Consume message

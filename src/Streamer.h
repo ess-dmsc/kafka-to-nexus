@@ -28,7 +28,6 @@ namespace FileWriter {
 using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
 using DemuxPtr = std::shared_ptr<DemuxTopic>;
 
-
 /// \brief Connect to kafka topics eventually at a given point in time
 /// and consume messages.
 class Streamer {
@@ -53,6 +52,14 @@ public:
 
   /// \brief Polls for message and processes it if there is one
   void pollAndProcess();
+
+  /// \brief Processes received message
+  ///
+  /// \param MessageProcessor instance of the policy that describe how to
+  /// process the message
+  /// \param KafkaMessage the received message
+  void processMessage(
+      std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
   /// vector.
@@ -82,6 +89,8 @@ public:
   /// Use to force stream to finish if something has gone wrong
   void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
 
+  int getNumberProcessedMessages() { return NumberProcessedMessages.load(); }
+
 protected:
   ConsumerPtr Consumer{nullptr};
 
@@ -94,6 +103,7 @@ protected:
       ConsumerInitialised;
 
 private:
+  std::atomic<int> NumberProcessedMessages{0};
   std::string ConsumerTopicName;
   DemuxPtr MessageProcessor;
   bool ifConsumerIsReadyThenAssignIt();
@@ -124,13 +134,6 @@ private:
   void markIfOffsetsAlreadyReached(
       std::vector<std::pair<int64_t, bool>> &OffsetsToStopAt,
       std::string const &TopicName);
-
-  /// \brief Processes received message
-  ///
-  /// \param MessageProcessor instance of the policy that describe how to
-  /// process the message
-  /// \param KafkaMessage the received message
-  void processMessage(std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 };
 
 /// \brief Create a consumer with options specified in the class
