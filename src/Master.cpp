@@ -10,9 +10,9 @@
 #include "Master.h"
 #include "CommandParser.h"
 #include "Errors.h"
+#include "JobCreator.h"
 #include "Msg.h"
 #include "helper.h"
-#include "JobCreator.h"
 #include "json.h"
 #include "logger.h"
 #include <chrono>
@@ -22,7 +22,8 @@
 namespace FileWriter {
 
 Master::Master(MainOpt &Config, std::unique_ptr<IJobCreator> Creator)
-    : Logger(getLogger()), Listener(Config), MainConfig(Config), Creator_(std::move(Creator))  {
+    : Logger(getLogger()), Listener(Config), MainConfig(Config),
+      Creator_(std::move(Creator)) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -142,8 +143,9 @@ void Master::run() {
       this->handle_command(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
-    if (getMainOpt().ReportStatus && Clock::now() - t_last_statistics >
-                                         getMainOpt().StatusMasterIntervalMS) {
+    if (getMainOpt().ReportStatus &&
+        Clock::now() - t_last_statistics >
+            getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
       publishStatus();
     }

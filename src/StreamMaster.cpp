@@ -20,7 +20,8 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
                       std::forward_as_tuple(TopicNameDemuxerPair.first),
                       std::forward_as_tuple(Broker, TopicNameDemuxerPair.first,
                                             Options.StreamerConfiguration,
-                                            std::move(Consumer), TopicNameDemuxerPair.second));
+                                            std::move(Consumer),
+                                            TopicNameDemuxerPair.second));
     } catch (std::exception &E) {
       getLogger()->critical("{}", E.what());
       logEvent(Producer, StatusCode::Error, Options.ServiceID,

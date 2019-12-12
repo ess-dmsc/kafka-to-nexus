@@ -13,8 +13,8 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
-#include "json.h"
 #include "StreamMaster.h"
+#include "json.h"
 #include <memory>
 
 namespace FileWriter {
@@ -34,12 +34,11 @@ public:
   virtual std::unique_ptr<IStreamMaster> createFileWritingJob(
       StartCommandInfo const &StartInfo,
       std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-      MainOpt &Settings,
-      SharedLogger const &Logger) = 0;
+      MainOpt &Settings, SharedLogger const &Logger) = 0;
   virtual ~IJobCreator() = default;
 };
 
-class JobCreator: public IJobCreator {
+class JobCreator : public IJobCreator {
 public:
   /// \brief Create a new file-writing job.
   ///
@@ -51,8 +50,7 @@ public:
   std::unique_ptr<IStreamMaster> createFileWritingJob(
       StartCommandInfo const &StartInfo,
       std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-      MainOpt &Settings,
-      SharedLogger const &Logger) override;
+      MainOpt &Settings, SharedLogger const &Logger) override;
 
 private:
   static void
