@@ -1,0 +1,62 @@
+
+#pragma once
+
+#include <vector>
+#include <string>
+#include <numeric>
+#include <thread>
+#include <mutex>
+#include <map>
+#include "Type.h"
+#include "Registrar.h"
+#include <chrono>
+#include "logger.h"
+
+namespace Metrics {
+
+struct InternalMetric {
+  InternalMetric(std::string Name, std::string Description, CounterType *Counter, Severity Lvl);
+  std::string FullName;
+  CounterType *Counter{nullptr};
+  std::string DescriptionString;
+  std::int64_t LastValue{0};
+  std::chrono::system_clock::time_point LastTime{std::chrono::system_clock::now()};
+  Severity ValueSeverity{Severity::ERROR};
+};
+
+class ProcessorInterface {
+public:
+  virtual ~ProcessorInterface() = default;
+
+  virtual bool registerMetric(std::string Name, CounterType *Counter, std::string Description, Severity LogLevel, DestList Targets) = 0;
+
+  virtual bool deRegisterMetric(std::string Name) = 0;
+
+  virtual Registrar getRegistrar() = 0;
+};
+
+using PollInterval = std::chrono::system_clock::duration;
+using std::chrono_literals::operator""ms;
+using std::chrono_literals::operator""s;
+
+class Processor : public ProcessorInterface {
+public:
+  Processor(std::string AppName, std::string GraphiteAddress, std::uint16_t GraphitePort, PollInterval Log = 100ms, PollInterval Carbon = 1s);
+
+  bool registerMetric(std::string Name, CounterType *Counter, std::string Description, Severity LogLevel, DestList Targets) override;
+
+  bool deRegisterMetric(std::string) override { return true; }
+
+  Registrar getRegistrar() override;
+
+protected:
+  std::string Prefix;
+  PollInterval LogMsgInterval;
+  PollInterval CarbonInterval;
+  std::vector<InternalMetric> LogMsgMetrics;
+  std::vector<InternalMetric> GrafanaMetrics;
+  SharedLogger Logger = getLogger();
+  std::mutex MetricsMutex;
+};
+
+} // namespace Metrics

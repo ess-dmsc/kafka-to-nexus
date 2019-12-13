@@ -35,7 +35,7 @@ set(UnitTests_SRC
         StreamMasterTests.cpp
         CommandParserTests.cpp
         ExtensibleDatasetTests.cpp
-        )
+    Metrics/MetricsRegistrarTest.cpp Metrics/MetricTest.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h
@@ -44,7 +44,7 @@ set(UnitTests_INC
         helpers/f142_synth.h
         helpers/KafkaWMocks.h
         helpers/FakeStreamMaster.h
-        )
+    Metrics/MetricsProcessorTest.cpp Metrics/ProcessorStandIn.h Metrics/MetricStandIn.h)
 
 add_executable(UnitTests
         ${UnitTests_SRC}
