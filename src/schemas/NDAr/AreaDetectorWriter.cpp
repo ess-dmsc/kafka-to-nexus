@@ -175,7 +175,7 @@ void AreaDetectorWriter::write(const FileWriter::FlatbufferMessage &Message) {
   FB_Tables::DType Type = NDAr->dataType();
   auto DataPtr = NDAr->pData()->Data();
   auto NrOfElements =
-      std::accumulate(std::begin(DataShape), std::end(DataShape), size_t(1),
+      std::accumulate(std::cbegin(DataShape), std::cend(DataShape), size_t(1),
                       std::multiplies<>());
 
   switch (Type) {

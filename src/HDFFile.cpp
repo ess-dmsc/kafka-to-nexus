@@ -461,7 +461,7 @@ void writeAttrOfSpecifiedType(std::string const &DType,
 /// \param jsv    Json value object of attributes.
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              nlohmann::json const &Values) {
-  for (auto It = Values.begin(); It != Values.end(); ++It) {
+  for (auto It = Values.cbegin(); It != Values.cend(); ++It) {
 
     auto const Name = It.key();
     writeScalarAttribute(Node, Name, It.value());

@@ -37,7 +37,7 @@ struct Msg_ : public ProducerMessage {
 
 int ProducerTopic::produce(const std::string &MsgData) {
   auto MsgPtr = new Msg_;
-  std::copy(MsgData.begin(), MsgData.end(), std::back_inserter(MsgPtr->v));
+  std::copy(MsgData.cbegin(), MsgData.cend(), std::back_inserter(MsgPtr->v));
   MsgPtr->finalize();
   std::unique_ptr<ProducerMessage> Msg(MsgPtr);
   return produce(Msg);
