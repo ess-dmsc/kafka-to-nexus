@@ -222,8 +222,10 @@ void Streamer::processMessage(
   try {
     Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
                                                   KafkaMessage->second.size());
+  } catch (NotValidFlatbuffer &Error) {
+    ++NumberFailedValidation;
+    return;
   } catch (std::runtime_error &Error) {
-    // TODO count Flatbuffer validation error
     // TODO catch different exceptions and increment different counter
     return;
   }

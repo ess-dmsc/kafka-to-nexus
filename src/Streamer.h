@@ -90,6 +90,7 @@ public:
   void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
 
   int getNumberProcessedMessages() { return NumberProcessedMessages.load(); }
+  int getNumberFailedValidation() { return NumberFailedValidation.load(); }
 
 protected:
   ConsumerPtr Consumer{nullptr};
@@ -104,6 +105,7 @@ protected:
 
 private:
   std::atomic<int> NumberProcessedMessages{0};
+  std::atomic<int> NumberFailedValidation{0};
   std::string ConsumerTopicName;
   DemuxPtr MessageProcessor;
   bool ifConsumerIsReadyThenAssignIt();
