@@ -113,14 +113,17 @@ void StreamMaster::run() {
   RunStatus.store(StreamMasterError::RUNNING);
 
   while (!Stop && StreamersRemaining.load()) {
-    StreamersRemaining.store(false);
+    bool StreamsStillWriting = false;
+
     for (auto &TopicStreamerPair : Streamers) {
       if (TopicStreamerPair.second.runStatus() !=
           Status::StreamerStatus::HAS_FINISHED) {
-        StreamersRemaining.store(true);
+        StreamsStillWriting = true;
         processStream(TopicStreamerPair.second);
       }
     }
+    // Only update once we know the final answer to avoid race conditions
+    StreamersRemaining.store(StreamsStillWriting);
   }
   RunStatus.store(StreamMasterError::HAS_FINISHED);
   doStop();
