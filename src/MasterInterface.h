@@ -41,7 +41,7 @@ public:
   ///
   /// \return The unique id.
   virtual std::string getFileWriterProcessId() const = 0;
-  virtual bool runLoopExited() = 0;
+  virtual bool runLoopExited() const = 0;
   virtual MainOpt &getMainOpt() = 0;
 };
 

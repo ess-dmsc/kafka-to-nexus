@@ -48,8 +48,8 @@ public:
   /// \return The unique id.
   std::string getFileWriterProcessId() const override;
 
-  bool runLoopExited() override { return HasExitedRunLoop; };
-  bool isWriting() { return IsWriting; }
+  bool runLoopExited() const override { return HasExitedRunLoop; };
+  bool isWriting() const { return IsWriting; }
 
 private:
   SharedLogger Logger;

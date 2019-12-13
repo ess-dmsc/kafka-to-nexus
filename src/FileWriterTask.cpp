@@ -22,7 +22,7 @@ namespace {
 
 using nlohmann::json;
 
-json hdf_parse(std::string const &Structure, SharedLogger Logger) {
+json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
   try {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
@@ -33,7 +33,7 @@ json hdf_parse(std::string const &Structure, SharedLogger Logger) {
 }
 } // namespace
 
-std::map<std::string, DemuxTopic> &FileWriterTask::demuxers() {
+std::map<std::string, std::shared_ptr<DemuxTopic>> &FileWriterTask::demuxers() {
   return TopicNameToDemuxerMap;
 }
 
@@ -70,12 +70,14 @@ void FileWriterTask::addSource(Source &&Source) {
   }
 
   // If demuxer does not already exist for this topic then create it
-  if (TopicNameToDemuxerMap.find(Source.topic()) == TopicNameToDemuxerMap.end()) {
-    TopicNameToDemuxerMap.emplace(Source.topic(), DemuxTopic(Source.topic()));
+  if (TopicNameToDemuxerMap.find(Source.topic()) ==
+      TopicNameToDemuxerMap.end()) {
+    TopicNameToDemuxerMap.emplace(Source.topic(),
+                                  std::make_shared<DemuxTopic>(Source.topic()));
   }
 
   // Add the source to the demuxer for its topic
-  TopicNameToDemuxerMap[Source.topic()].add_source(std::move(Source));
+  TopicNameToDemuxerMap[Source.topic()]->add_source(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
@@ -127,14 +129,14 @@ json FileWriterTask::stats() const {
   for (auto &TopicDemuxerPair : TopicNameToDemuxerMap) {
     auto &Demux = TopicDemuxerPair.second;
     auto DemuxStats = json::object();
-    DemuxStats["messages_processed"] = Demux.messages_processed.load();
+    DemuxStats["messages_processed"] = Demux->messages_processed.load();
     DemuxStats["error_message_too_small"] =
-        Demux.error_message_too_small.load();
+        Demux->error_message_too_small.load();
     DemuxStats["error_no_flatbuffer_reader"] =
-        Demux.error_no_flatbuffer_reader.load();
+        Demux->error_no_flatbuffer_reader.load();
     DemuxStats["error_no_source_instance"] =
-        Demux.error_no_source_instance.load();
-    Topics[Demux.topic()] = DemuxStats;
+        Demux->error_no_source_instance.load();
+    Topics[Demux->topic()] = DemuxStats;
   }
   auto FWT = json::object();
   FWT["filename"] = Filename;

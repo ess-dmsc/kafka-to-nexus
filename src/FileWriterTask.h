@@ -75,7 +75,7 @@ public:
   /// \brief Get the list of demuxers.
   ///
   /// \return The demux topics.
-  std::map<std::string, DemuxTopic> &demuxers();
+  std::map<std::string, std::shared_ptr<DemuxTopic>> &demuxers();
 
   /// \brief  Get the job ID of the file being written.
   ///
@@ -104,7 +104,7 @@ public:
 
 private:
   std::string Filename;
-  std::map<std::string, DemuxTopic> TopicNameToDemuxerMap;
+  std::map<std::string, std::shared_ptr<DemuxTopic>> TopicNameToDemuxerMap;
   void closeFile();
   void reopenFile();
   std::string JobId;

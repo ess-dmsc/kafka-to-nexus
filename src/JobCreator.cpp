@@ -130,8 +130,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
     StartCommandInfo const &StartInfo,
     std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-    MainOpt &Settings,
-    SharedLogger const &Logger) {
+    MainOpt &Settings, SharedLogger const &Logger) {
   auto Task =
       std::make_unique<FileWriterTask>(Settings.ServiceID, StatusProducer);
   Task->setJobId(StartInfo.JobID);

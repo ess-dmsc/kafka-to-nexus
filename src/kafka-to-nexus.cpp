@@ -82,7 +82,8 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
   }
-  FileWriter::Master Master(*Options, std::make_unique<FileWriter::JobCreator>());
+  FileWriter::Master Master(*Options,
+                            std::make_unique<FileWriter::JobCreator>());
   std::thread MasterThread([&Master, Logger] {
     try {
       Master.run();
