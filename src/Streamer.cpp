@@ -255,10 +255,11 @@ void Streamer::processMessage(
 
   // TODO: Collect information about the data received
 
-  ProcessMessageResult result = MessageProcessor->process_message(*Message);
-
-  if (ProcessMessageResult::OK == result) {
+  try {
+    MessageProcessor->process_message(*Message);
     ++NumberProcessedMessages;
+  } catch(MessageProcessingException const &Error) {
+    // TODO: Log process failures?
   }
 }
 

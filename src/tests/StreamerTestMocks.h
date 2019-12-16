@@ -24,9 +24,7 @@ public:
 class DemuxerStandIn : public DemuxTopic {
 public:
   explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
-  ProcessMessageResult process_message(FlatbufferMessage const &) override {
-    return ProcessMessageResult::OK;
-  }
+  void process_message(FlatbufferMessage const &) override {}
 };
 
 class StreamerStandIn : public Streamer {

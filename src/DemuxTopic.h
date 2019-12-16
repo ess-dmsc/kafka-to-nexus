@@ -16,6 +16,12 @@
 
 namespace FileWriter {
 
+class MessageProcessingException : public std::runtime_error {
+public:
+  explicit MessageProcessingException(const std::string &ErrorMessage)
+      : std::runtime_error(ErrorMessage) {}
+};
+
 /// \brief Used to keep track of file writing modules on one topic and call the
 /// correct module based on sourcename.
 class DemuxTopic {
@@ -41,7 +47,7 @@ public:
   /// \param Message The flatbuffer message that is to be written to file.
   ///
   /// \return A status message indicating if the write was successful.
-  virtual ProcessMessageResult
+  virtual void
   process_message(FlatbufferMessage const &Message);
 
   /// \brief Gets list of sources handled on this topic.
