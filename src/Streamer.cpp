@@ -309,6 +309,7 @@ void Streamer::process() {
 }
 
 void Streamer::setStartTime(std::chrono::milliseconds const &StartTime) {
+  // cppcheck-suppress unusedFunction; used by unit tests.
   Options.StartTimestamp = StartTime;
 }
 
