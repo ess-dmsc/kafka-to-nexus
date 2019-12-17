@@ -91,7 +91,6 @@ protected:
   /// \brief Set the start time.
   ///
   /// Only used in unit tests.
-  // cppcheck-suppress unusedFunction; used by unit tests.
   void setStartTime(std::chrono::milliseconds const &StartTime);
 
   /// Protected so unit tests can inject it.
@@ -127,7 +126,7 @@ private:
 
   static bool messageHasPayload(KafkaW::PollStatus MessageStatus);
 
-  bool messageSourceIsValid(size_t SourceHash) const;
+  bool messageSourceIsValid(FlatbufferMessage::SrcHash SourceHash) const;
 
   bool messageTimestampInRange(std::uint64_t Timestamp) const;
 
