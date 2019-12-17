@@ -124,7 +124,7 @@ private:
 
   bool haveReachedStopOffsets(int32_t Partition, int64_t Offset);
 
-  static bool kafkaMessageIsValid(KafkaW::PollStatus MessageStatus);
+  static bool messageHasPayload(KafkaW::PollStatus MessageStatus);
 
   bool messageSourceIsValid(size_t SourceHash) const;
 

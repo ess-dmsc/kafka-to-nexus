@@ -209,7 +209,7 @@ bool Streamer::haveReachedStopOffsets(int32_t Partition, int64_t Offset) {
   return false;
 }
 
-bool Streamer::kafkaMessageIsValid(KafkaW::PollStatus MessageStatus) {
+bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
   if (MessageStatus == KafkaW::PollStatus::Error) {
     // TODO count Kafka error
     return false;
@@ -300,7 +300,7 @@ void Streamer::process() {
       return;
     }
 
-    if (!kafkaMessageIsValid(KafkaMessage->first)) {
+    if (!messageHasPayload(KafkaMessage->first)) {
       return;
     }
 

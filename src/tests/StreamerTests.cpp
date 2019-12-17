@@ -518,4 +518,40 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
   TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
+
+TEST(FlatBufferValidationTest,
+     NumberOfValidationFailuresIncreasesIfFlatBufferIsInvalid) {
+  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
+      FlatbufferReaderRegistry::getReaders();
+  Readers.clear();
+  KafkaW::BrokerSettings BrokerSettings;
+  StreamerOptions Options;
+  std::unique_ptr<StreamerStandIn> TestStreamer;
+  std::string SchemaID = "f142";
+  std::string SourceName{"SomeRandomSourceName"};
+  FlatbufferReaderRegistry::Registrar<
+      StreamerMessageFailsValidationTestDummyReader>
+      RegisterIt(SchemaID);
+  HDFWriterModule::ptr Writer(new WriterModuleStandIn());
+  FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
+  DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
+  Demuxer->add_source(std::move(TestSource));
+  TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);
+
+  auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
+
+  REQUIRE_CALL(*EmptyPollerConsumer, poll())
+      .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName, 42, 10))
+      .TIMES(1);
+
+  TestStreamer->ConsumerInitialised =
+      std::async(std::launch::async, [&EmptyPollerConsumer]() {
+        return std::pair<Status::StreamerStatus, ConsumerPtr>{
+            Status::StreamerStatus::OK, EmptyPollerConsumer};
+      });
+  TestStreamer->process();
+
+  EXPECT_EQ(TestStreamer->getNumberFailedValidation(), 1);
+  EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
+}
 } // namespace FileWriter
