@@ -13,7 +13,6 @@
 
 #pragma once
 
-#include "DemuxTopic.h"
 #include "EventLogger.h"
 #include "KafkaW/Consumer.h"
 #include "Status.h"
@@ -25,6 +24,7 @@
 #include <utility>
 
 namespace FileWriter {
+class DemuxTopic;
 using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
 using DemuxPtr = std::shared_ptr<DemuxTopic>;
 

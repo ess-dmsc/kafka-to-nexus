@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Streamer.h"
+#include "DemuxTopic.h"
 #include "KafkaW/PollStatus.h"
 #include "Msg.h"
 #include "helper.h"
@@ -220,9 +221,8 @@ bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
            MessageStatus == KafkaW::PollStatus::TimedOut);
 }
 
-bool Streamer::messageSourceIsValid(size_t SourceHash) const {
-  return !(MessageProcessor->sources().find(SourceHash) ==
-      MessageProcessor->sources().end());
+bool Streamer::messageSourceIsValid(FlatbufferMessage::SrcHash SourceHash) const {
+  return MessageProcessor->canHandleSource(SourceHash);
 }
 
 bool Streamer::messageTimestampInRange(std::uint64_t Timestamp) const {

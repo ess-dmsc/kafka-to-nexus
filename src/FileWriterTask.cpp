@@ -8,13 +8,14 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
+#include "DemuxTopic.h"
 #include "EventLogger.h"
 #include "HDFFile.h"
+#include "KafkaW/ProducerTopic.h"
 #include "Source.h"
 #include "helper.h"
 #include "logger.h"
 #include <atomic>
-#include <thread>
 
 namespace FileWriter {
 
@@ -77,7 +78,7 @@ void FileWriterTask::addSource(Source &&Source) {
   }
 
   // Add the source to the demuxer for its topic
-  TopicNameToDemuxerMap[Source.topic()]->add_source(std::move(Source));
+  TopicNameToDemuxerMap[Source.topic()]->addSource(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
@@ -130,12 +131,6 @@ json FileWriterTask::stats() const {
     auto &Demux = TopicDemuxerPair.second;
     auto DemuxStats = json::object();
     DemuxStats["messages_processed"] = Demux->messages_processed.load();
-    DemuxStats["error_message_too_small"] =
-        Demux->error_message_too_small.load();
-    DemuxStats["error_no_flatbuffer_reader"] =
-        Demux->error_no_flatbuffer_reader.load();
-    DemuxStats["error_no_source_instance"] =
-        Demux->error_no_source_instance.load();
     Topics[Demux->topic()] = DemuxStats;
   }
   auto FWT = json::object();
@@ -143,6 +138,7 @@ json FileWriterTask::stats() const {
   FWT["topics"] = Topics;
   return FWT;
 }
+
 std::string FileWriterTask::filename() const { return Filename; }
 
 } // namespace FileWriter
