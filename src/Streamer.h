@@ -91,6 +91,7 @@ protected:
   /// \brief Set the start time.
   ///
   /// Only used in unit tests.
+  // cppcheck-suppress unusedFunction; used by unit tests.
   void setStartTime(std::chrono::milliseconds const &StartTime);
 
   /// Protected so unit tests can inject it.
