@@ -107,7 +107,6 @@ private:
   DemuxPtr MessageProcessor;
   ConsumerPtr Consumer{nullptr};
 
-
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded();
 

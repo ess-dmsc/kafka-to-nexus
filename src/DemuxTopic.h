@@ -47,8 +47,7 @@ public:
   /// \param Message The flatbuffer message that is to be written to file.
   ///
   /// \return A status message indicating if the write was successful.
-  virtual void
-  process_message(FlatbufferMessage const &Message);
+  virtual void process_message(FlatbufferMessage const &Message);
 
   /// \brief Gets list of sources handled on this topic.
   ///

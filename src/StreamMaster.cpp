@@ -7,9 +7,10 @@
 
 namespace FileWriter {
 
-std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
-    const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-    const MainOpt &Options) {
+std::unique_ptr<StreamMaster>
+StreamMaster::createStreamMaster(const std::string &Broker,
+                                 std::unique_ptr<FileWriterTask> FileWriterTask,
+                                 const MainOpt &Options) {
   std::map<std::string, Streamer> Streams;
   for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
@@ -28,8 +29,7 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
   }
 
   return std::make_unique<StreamMaster>(std::move(FileWriterTask),
-                                        Options.ServiceID,
-                                        std::move(Streams));
+                                        Options.ServiceID, std::move(Streams));
 }
 
 StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
@@ -66,7 +66,6 @@ void StreamMaster::start() {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
   }
 }
-
 
 void StreamMaster::processStream(Streamer &Stream) {
   auto ProcessStartTime = std::chrono::system_clock::now();

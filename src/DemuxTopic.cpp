@@ -24,8 +24,7 @@ void swap(DemuxTopic &x, DemuxTopic &y) {
 
 std::string const &DemuxTopic::topic() const { return Topic; }
 
-void
-DemuxTopic::process_message(FlatbufferMessage const &Message) {
+void DemuxTopic::process_message(FlatbufferMessage const &Message) {
   Logger->trace("Message received from: {}", Message.getSourceName());
 
   auto ProcessingResult = ProcessMessageResult::OK;
