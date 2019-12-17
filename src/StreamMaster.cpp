@@ -47,9 +47,9 @@ StreamMaster::~StreamMaster() {
   Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
 }
 
-void StreamMaster::setStopTime(const std::chrono::milliseconds &StopTime) {
+void StreamMaster::setStopTime(std::chrono::milliseconds const &StopTime) {
   for (auto &s : Streamers) {
-    s.second.getOptions().StopTimestamp = StopTime;
+    s.second.setStopTime(StopTime);
   }
 }
 
@@ -81,7 +81,7 @@ void StreamMaster::processStream(Streamer &Stream) {
     // if the Streamer throws then set the stream to finished, but the file
     // writing continues
     try {
-      Stream.pollAndProcess();
+      Stream.process();
     } catch (std::exception &E) {
       Logger->error("Stream closed due to stream error: {}", E.what());
       Stream.setFinished();

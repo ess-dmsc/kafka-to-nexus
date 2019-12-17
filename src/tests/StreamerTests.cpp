@@ -119,14 +119,14 @@ TEST_F(StreamerProcessTest, CreationNotYetDoneThenDoesNotPoll) {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
-  TestStreamer.pollAndProcess();
+  TestStreamer.process();
 }
 
 TEST_F(StreamerProcessTest, InvalidFuture) {
   StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerInitialised =
       std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>();
-  EXPECT_THROW(TestStreamer.pollAndProcess(), std::runtime_error);
+  EXPECT_THROW(TestStreamer.process(), std::runtime_error);
 }
 
 TEST_F(StreamerProcessTest,
@@ -136,7 +136,7 @@ TEST_F(StreamerProcessTest,
     return std::pair<Status::StreamerStatus, ConsumerPtr>{
         Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
   });
-  EXPECT_THROW(TestStreamer.pollAndProcess(), std::runtime_error);
+  EXPECT_THROW(TestStreamer.process(), std::runtime_error);
 }
 
 TEST_F(StreamerProcessTest,
@@ -224,8 +224,6 @@ protected:
 
 TEST_F(StreamerProcessTimingTest,
        NumberOfProcessedMessagesDoesNotIncreaseIfMessageHasNoTimestamp) {
-  TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
-
   auto TestMessage = generateKafkaMsg(
       reinterpret_cast<const char *>(DataBuffer.c_str()), DataBuffer.size());
 
@@ -235,7 +233,7 @@ TEST_F(StreamerProcessTimingTest,
 
 TEST_F(StreamerProcessTimingTest,
        NumberOfProcessedMessagesDoesNotIncreaseIfMessageBeforeStartTimestamp) {
-  TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
+  TestStreamer->setStartTime(std::chrono::milliseconds{1});
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(
@@ -248,13 +246,13 @@ TEST_F(StreamerProcessTimingTest,
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
 
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
 TEST_F(StreamerProcessTimingTest,
        NumberOfProcessedMessagesDoesNotIncreaseIfOffsetIsReached) {
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+  TestStreamer->setStopTime(std::chrono::milliseconds{1});
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
 
   // The newly received message will have an offset of 10
@@ -286,7 +284,7 @@ TEST_F(StreamerProcessTimingTest,
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
@@ -329,14 +327,14 @@ TEST_F(
 
   // A message will be received here
   // however no stop time has been set yet, so expect increase
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 1);
 
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+  TestStreamer->setStopTime(std::chrono::milliseconds{1});
 
   // We already reached the stop offset, so the number of processed messages
   // doesn't increase
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 1);
 }
 
@@ -373,9 +371,9 @@ TEST_F(
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
 
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+  TestStreamer->setStopTime(std::chrono::milliseconds{1});
 
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
@@ -411,15 +409,15 @@ TEST_F(
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
 
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{1};
+  TestStreamer->setStopTime(std::chrono::milliseconds{1});
 
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
 TEST_F(StreamerProcessTimingTest,
        ReceivingEmptyMessageAfterStopIsNotProcessed) {
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{5};
+  TestStreamer->setStopTime(std::chrono::milliseconds{5});
 
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -444,7 +442,7 @@ TEST_F(StreamerProcessTimingTest,
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
 
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
@@ -453,7 +451,7 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStopAreNotProcessed) {
   auto Then = std::chrono::duration_cast<std::chrono::milliseconds>(
                   Now.time_since_epoch()) +
               std::chrono::milliseconds(12000);
-  TestStreamer->Options.StopTimestamp = Then;
+  TestStreamer->setStopTime(Then);
 
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -465,18 +463,16 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStopAreNotProcessed) {
         return std::pair<Status::StreamerStatus, ConsumerPtr>{
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
 TEST_F(StreamerProcessTimingTest,
        EmptyMessageSlightlyAfterStopAreNotProcessed) {
-  namespace c = std::chrono;
-  auto Now = c::duration_cast<c::milliseconds>(
-      c::system_clock::now().time_since_epoch());
-  TestStreamer->Options.StopTimestamp = Now;
-  TestStreamer->Options.AfterStopTime = c::milliseconds(20000);
-  std::this_thread::sleep_for(c::milliseconds(5));
+  auto Now = std::chrono::duration_cast<std::chrono::milliseconds>(
+      std::chrono::system_clock::now().time_since_epoch());
+  TestStreamer->setStopTime(Now);
+  std::this_thread::sleep_for(std::chrono::milliseconds(5));
 
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
@@ -489,14 +485,14 @@ TEST_F(StreamerProcessTimingTest,
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
 
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 
 TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
-  TestStreamer->Options.StartTimestamp = std::chrono::milliseconds{1};
+  TestStreamer->setStartTime(std::chrono::milliseconds{1});
   // Message timestamp returned is higher than this
-  TestStreamer->Options.StopTimestamp = std::chrono::milliseconds{2};
+  TestStreamer->setStopTime(std::chrono::milliseconds{2});
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
 
   FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
@@ -519,7 +515,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
             Status::StreamerStatus::OK, EmptyPollerConsumer};
       });
 
-  TestStreamer->pollAndProcess();
+  TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
 }
 } // namespace FileWriter

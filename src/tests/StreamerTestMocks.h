@@ -45,7 +45,7 @@ public:
                      StreamerOptions().BrokerSettings),
                  Demuxer) {}
   using Streamer::ConsumerInitialised;
-  using Streamer::Options;
+  using Streamer::setStartTime;
 };
 
 } // namespace FileWriter
