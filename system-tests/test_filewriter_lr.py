@@ -53,7 +53,10 @@ def test_long_run(docker_compose_long_running):
         sleep(3)
 
     send_writer_command(
-        "commands/stop-command.json", producer, topic="TEST_writerCommandLR", job_id=job_id
+        "commands/stop-command.json",
+        producer,
+        topic="TEST_writerCommandLR",
+        job_id=job_id,
     )
     sleep(30)
 

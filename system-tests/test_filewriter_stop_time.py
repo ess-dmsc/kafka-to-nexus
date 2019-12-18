@@ -20,12 +20,16 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         topic=topic,
         stop_time=int(unix_time_milliseconds(datetime.utcnow())),
         job_id="should_start_then_stop",
-        filename="output_file_with_stop_time.nxs"
+        filename="output_file_with_stop_time.nxs",
     )
     sleep(10)
-    job_id = send_writer_command("commands/start-command-generic.json", producer, topic=topic,
-                                 job_id="should_start_but_not_stop",
-                                 filename="output_file_no_stop_time.nxs")
+    job_id = send_writer_command(
+        "commands/start-command-generic.json",
+        producer,
+        topic=topic,
+        job_id="should_start_but_not_stop",
+        filename="output_file_no_stop_time.nxs",
+    )
     sleep(10)
     msgs = consume_everything("TEST_writerStatus")
 
@@ -33,15 +37,9 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     started = False
     for message in msgs:
         message = str(message.value(), encoding="utf-8")
-        if (
-            '"code":"START"' in message
-            and f'"job_id":"{job_id}"' in message
-        ):
+        if '"code":"START"' in message and f'"job_id":"{job_id}"' in message:
             started = True
-        if (
-            '"code":"CLOSE"' in message
-            and f'"job_id":"{job_id}"' in message
-        ):
+        if '"code":"CLOSE"' in message and f'"job_id":"{job_id}"' in message:
             stopped = True
 
     assert started
@@ -62,14 +60,14 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
 
     # Publish some data with timestamps in the past(these are from 2019 - 06 - 12)
     for data_topic in data_topics:
-        for time_in_ms_after_epoch in range(1560330000000, 1560330000200):
+        for time_in_ms_after_epoch in range(1_560_330_000_000, 1_560_330_000_200):
             publish_f142_message(producer, data_topic, time_in_ms_after_epoch)
 
     sleep(5)
 
     command_topic = "TEST_writerCommand"
-    start_time = 1560330000002
-    stop_time = 1560330000148
+    start_time = 1_560_330_000_002
+    stop_time = 1_560_330_000_148
     # Ask to write 147 messages from the middle of the 200 messages we published
     send_writer_command(
         "commands/start-command-for-historical-data.json",
