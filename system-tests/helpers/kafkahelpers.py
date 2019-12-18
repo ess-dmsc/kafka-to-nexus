@@ -1,6 +1,7 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
 from .flatbufferhelpers import create_f142_message
 import uuid
+import json
 
 
 def create_producer():
@@ -13,15 +14,25 @@ def create_producer():
 
 
 def send_writer_command(
-    filepath, producer, topic="TEST_writerCommand", start_time=None, stop_time=None
+    filepath, producer, topic="TEST_writerCommand", start_time=None, stop_time=None, job_id=None, service_id=None, filename=None
 ):
     with open(filepath, "r") as cmd_file:
-        data = cmd_file.read().replace("\n", "")
+        data_str = cmd_file.read().replace("\n", "")
+        data = json.loads(data_str)
         if start_time is not None:
-            data = data.replace("STARTTIME", start_time)
+            data["start_time"] = start_time
         if stop_time is not None:
-            data = data.replace("STOPTIME", stop_time)
-    producer.produce(topic, data)
+            data["stop_time"] = stop_time
+        if job_id is not None:
+            data["job_id"] = job_id
+        if service_id is not None:
+            data["service_id"] = service_id
+        if filename is not None:
+            data["file_attributes"]["file_name"] = filename
+
+    producer.produce(topic, json.dumps(data))
+    producer.flush()
+    return data["job_id"]
 
 
 def create_consumer():
@@ -54,7 +65,4 @@ def publish_f142_message(producer, topic, kafka_timestamp=None):
     """
     f142_message = create_f142_message(kafka_timestamp)
     producer.produce(topic, f142_message, timestamp=kafka_timestamp)
-    # Flush producer queue after each message, we don't want the messages to be batched in our tests
-    # for example in test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past
-    producer.flush()
     producer.poll(0)
