@@ -222,7 +222,7 @@ bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
 
 bool Streamer::messageSourceIsValid(size_t SourceHash) const {
   return !(MessageProcessor->sources().find(SourceHash) ==
-      MessageProcessor->sources().end());
+           MessageProcessor->sources().end());
 }
 
 bool Streamer::messageTimestampInRange(std::uint64_t Timestamp) const {
