@@ -15,7 +15,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     sleep(10)
     topic = "TEST_writerCommand"
     send_writer_command(
-        "commands/start-command-with-no-times.json",
+        "commands/start-command-generic.json",
         producer,
         topic=topic,
         stop_time=int(unix_time_milliseconds(datetime.utcnow())),
@@ -23,7 +23,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         filename="output_file_with_stop_time.nxs"
     )
     sleep(10)
-    job_id = send_writer_command("commands/start-command-with-no-times.json", producer, topic=topic,
+    job_id = send_writer_command("commands/start-command-generic.json", producer, topic=topic,
                                  job_id="should_start_but_not_stop",
                                  filename="output_file_no_stop_time.nxs")
     sleep(10)

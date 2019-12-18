@@ -267,6 +267,26 @@
             "values": "NXentry"
           }
         ]
+      },
+      {
+        "type": "group",
+        "name": "detector_1_events",
+        "children": [
+          {
+            "type": "stream",
+            "stream": {
+              "topic": "TEST_events",
+              "source": "NeXus-Streamer",
+              "writer_module": "ev42"
+            }
+          }
+        ],
+        "attributes": [
+          {
+            "name": "NX_class",
+            "values": "NXgroup"
+          }
+        ]
       }
     ]
   }
