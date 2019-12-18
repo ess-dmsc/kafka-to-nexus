@@ -14,7 +14,14 @@ def create_producer():
 
 
 def send_writer_command(
-    filepath, producer, topic="TEST_writerCommand", start_time=None, stop_time=None, job_id=None, service_id=None, filename=None
+    filepath,
+    producer,
+    topic="TEST_writerCommand",
+    start_time=None,
+    stop_time=None,
+    job_id=None,
+    service_id=None,
+    filename=None,
 ):
     with open(filepath, "r") as cmd_file:
         data_str = cmd_file.read().replace("\n", "")

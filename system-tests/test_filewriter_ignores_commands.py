@@ -5,12 +5,24 @@ from time import sleep
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
-    job_id = send_writer_command("commands/start-command-generic.json", producer, service_id="filewriter1", filename="output_file_ignores_stop_1.nxs")
-    send_writer_command("commands/start-command-generic.json", producer, service_id="filewriter2", filename="output_file_ignores_stop_2.nxs")
+    job_id = send_writer_command(
+        "commands/start-command-generic.json",
+        producer,
+        service_id="filewriter1",
+        filename="output_file_ignores_stop_1.nxs",
+    )
+    send_writer_command(
+        "commands/start-command-generic.json",
+        producer,
+        service_id="filewriter2",
+        filename="output_file_ignores_stop_2.nxs",
+    )
 
     sleep(10)
 
-    send_writer_command("commands/stop-command.json", producer, job_id=job_id, service_id="filewriter1")
+    send_writer_command(
+        "commands/stop-command.json", producer, job_id=job_id, service_id="filewriter1"
+    )
 
     consumer = create_consumer()
     consumer.subscribe(["TEST_writerStatus2"])

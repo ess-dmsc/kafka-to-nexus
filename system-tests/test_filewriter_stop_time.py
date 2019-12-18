@@ -20,12 +20,16 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
         topic=topic,
         stop_time=int(unix_time_milliseconds(datetime.utcnow())),
         job_id="should_start_then_stop",
-        filename="output_file_with_stop_time.nxs"
+        filename="output_file_with_stop_time.nxs",
     )
     sleep(10)
-    job_id = send_writer_command("commands/start-command-generic.json", producer, topic=topic,
-                                 job_id="should_start_but_not_stop",
-                                 filename="output_file_no_stop_time.nxs")
+    job_id = send_writer_command(
+        "commands/start-command-generic.json",
+        producer,
+        topic=topic,
+        job_id="should_start_but_not_stop",
+        filename="output_file_no_stop_time.nxs",
+    )
     sleep(10)
     msgs = consume_everything("TEST_writerStatus")
 
@@ -33,15 +37,9 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     started = False
     for message in msgs:
         message = str(message.value(), encoding="utf-8")
-        if (
-            '"code":"START"' in message
-            and f'"job_id":"{job_id}"' in message
-        ):
+        if '"code":"START"' in message and f'"job_id":"{job_id}"' in message:
             started = True
-        if (
-            '"code":"CLOSE"' in message
-            and f'"job_id":"{job_id}"' in message
-        ):
+        if '"code":"CLOSE"' in message and f'"job_id":"{job_id}"' in message:
             stopped = True
 
     assert started
