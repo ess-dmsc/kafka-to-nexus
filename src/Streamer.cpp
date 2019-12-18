@@ -179,15 +179,13 @@ bool Streamer::stopOffsetsNowReached(int32_t NewMessagePartition,
   return stopOffsetsReached();
 }
 
-bool Streamer::stopOffsetsReached() {
+bool Streamer::stopOffsetsReached() const {
   return std::all_of(
       StopOffsets.cbegin(), StopOffsets.cend(),
       [](std::pair<int64_t, bool> const &StopPair) { return StopPair.second; });
 }
 
-void Streamer::processMessage(
-    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
-
+bool Streamer::haveReachedStopOffsets(int32_t Partition, int64_t Offset) {
   if (!CatchingUpToStopOffset && stopTimeExceeded()) {
     CatchingUpToStopOffset = true;
     Logger->trace("Calling getStopOffsets");
@@ -199,76 +197,88 @@ void Streamer::processMessage(
     // are already marked as reached
     if (stopOffsetsReached()) {
       Logger->warn("There was no data in {} to consume", ConsumerTopicName);
-      RunStatus.store(StreamerStatus::HAS_FINISHED);
-      return;
+      return true;
     }
   }
 
-  if (KafkaMessage->first == KafkaW::PollStatus::Error) {
+  if (CatchingUpToStopOffset && stopOffsetsNowReached(Partition, Offset)) {
+    Logger->debug("Reached stop offsets in topic {}", ConsumerTopicName);
+    return true;
+  }
+
+  return false;
+}
+
+bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
+  if (MessageStatus == KafkaW::PollStatus::Error) {
     // TODO count Kafka error
-    return;
+    return false;
   }
 
-  if (KafkaMessage->first == KafkaW::PollStatus::Empty ||
-      KafkaMessage->first == KafkaW::PollStatus::EndOfPartition ||
-      KafkaMessage->first == KafkaW::PollStatus::TimedOut) {
-    return;
-  }
+  return !(MessageStatus == KafkaW::PollStatus::Empty ||
+           MessageStatus == KafkaW::PollStatus::EndOfPartition ||
+           MessageStatus == KafkaW::PollStatus::TimedOut);
+}
 
-  // If we reach this point we have a real message with a payload to deal with
+bool Streamer::messageSourceIsValid(size_t SourceHash) const {
+  return !(MessageProcessor->sources().find(SourceHash) ==
+           MessageProcessor->sources().end());
+}
 
-  // Convert from KafkaW to FlatbufferMessage, handles validation of flatbuffer
-  std::unique_ptr<FlatbufferMessage> Message;
+bool Streamer::messageTimestampInRange(std::uint64_t Timestamp) const {
+  return !(
+      messageTimestampIsBeforeStartTimestamp(Timestamp,
+                                             Options.StartTimestamp) ||
+      messageTimestampIsAfterStopTimestamp(Timestamp, Options.StopTimestamp));
+}
+
+std::unique_ptr<FlatbufferMessage>
+Streamer::createFlatBufferMessage(char const *Data, size_t Size) {
+  std::unique_ptr<FlatbufferMessage> FBMessage;
   try {
-    Message = std::make_unique<FlatbufferMessage>(KafkaMessage->second.data(),
-                                                  KafkaMessage->second.size());
+    FBMessage = std::make_unique<FlatbufferMessage>(Data, Size);
   } catch (NotValidFlatbuffer &Error) {
     ++NumberFailedValidation;
-    return;
+    return nullptr;
   } catch (std::runtime_error &Error) {
-    // TODO catch different exceptions and increment different counter
-    return;
+    // TODO catch different exceptions and increment different counters
+    return nullptr;
   }
 
-  if (CatchingUpToStopOffset &&
-      stopOffsetsNowReached(KafkaMessage->second.MetaData.Partition,
-                            KafkaMessage->second.MetaData.Offset)) {
-    Logger->debug("Reached stop offsets in topic {}", ConsumerTopicName);
+  return FBMessage;
+}
 
-    RunStatus.store(StreamerStatus::HAS_FINISHED);
-    return;
-  }
+void Streamer::processMessage(
+    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage) {
 
-  if (MessageProcessor->sources().find(Message->getSourceHash()) ==
-      MessageProcessor->sources().end()) {
-    // TODO count unknown source name
-    return;
-  }
+  if (auto const FBMessage = createFlatBufferMessage(
+          KafkaMessage->second.data(), KafkaMessage->second.size())) {
+    if (!messageSourceIsValid(FBMessage->getSourceHash())) {
+      // TODO count unknown source name
+      return;
+    }
 
-  if (messageTimestampIsBeforeStartTimestamp(Message->getTimestamp(),
-                                             Options.StartTimestamp) ||
-      messageTimestampIsAfterStopTimestamp(Message->getTimestamp(),
-                                           Options.StopTimestamp)) {
-    // ignore message and carry on polling
-    return;
-  }
+    if (!messageTimestampInRange(FBMessage->getTimestamp())) {
+      return;
+    }
 
-  // TODO: Collect information about the data received
+    // TODO: Collect information about the data received
 
-  try {
-    MessageProcessor->process_message(*Message);
-    ++NumberProcessedMessages;
-  } catch(MessageProcessingException const &Error) {
-    // TODO: Log process failures?
+    try {
+      MessageProcessor->process_message(*FBMessage);
+      ++NumberProcessedMessages;
+    } catch (MessageProcessingException const &Error) {
+      // TODO: Log process failures?
+    }
   }
 }
 
-void Streamer::pollAndProcess() {
+std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Streamer::poll() {
   if (Consumer == nullptr && ConsumerInitialised.valid()) {
     auto ready = ifConsumerIsReadyThenAssignIt();
     if (!ready) {
       // Not ready, so try again on next poll
-      return;
+      return nullptr;
     }
   }
 
@@ -277,11 +287,34 @@ void Streamer::pollAndProcess() {
     throw std::runtime_error(Err2Str(RunStatus));
   }
 
-  // Consume message
-  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
-      Consumer->poll();
+  return Consumer->poll();
+}
 
-  processMessage(KafkaMessage);
+void Streamer::process() {
+  // Consume message
+  if (auto KafkaMessage = poll()) {
+    // Check stop offsets
+    if (haveReachedStopOffsets(KafkaMessage->second.MetaData.Partition,
+                               KafkaMessage->second.MetaData.Offset)) {
+      RunStatus.store(StreamerStatus::HAS_FINISHED);
+      return;
+    }
+
+    if (!messageHasPayload(KafkaMessage->first)) {
+      return;
+    }
+
+    processMessage(KafkaMessage);
+  }
+}
+
+// cppcheck-suppress unusedFunction; used by unit tests.
+void Streamer::setStartTime(std::chrono::milliseconds const &StartTime) {
+  Options.StartTimestamp = StartTime;
+}
+
+void Streamer::setStopTime(std::chrono::milliseconds const &StopTime) {
+  Options.StopTimestamp = StopTime;
 }
 
 } // namespace FileWriter

@@ -132,7 +132,8 @@ TEST_F(DemuxerTests, WrongFlatbufferID) {
   ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
   EXPECT_FALSE(TestDemuxer.sources().find(UsedHash) ==
                TestDemuxer.sources().end());
-  EXPECT_THROW(TestDemuxer.process_message(CurrentMessage), MessageProcessingException);
+  EXPECT_THROW(TestDemuxer.process_message(CurrentMessage),
+               MessageProcessingException);
   EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(0));
   EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(0));
   EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(0));
@@ -153,7 +154,8 @@ TEST_F(DemuxerTests, WrongSourceName) {
   auto Writer = ::std::make_unique<StubWriterModule>();
   Source DummySource(SourceName, TestKey, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
-  EXPECT_THROW(TestDemuxer.process_message(CurrentMessage), MessageProcessingException);
+  EXPECT_THROW(TestDemuxer.process_message(CurrentMessage),
+               MessageProcessingException);
   EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(0));
   EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
   EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));

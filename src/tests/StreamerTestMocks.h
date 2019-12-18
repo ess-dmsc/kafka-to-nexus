@@ -45,7 +45,7 @@ public:
                      StreamerOptions().BrokerSettings),
                  Demuxer) {}
   using Streamer::ConsumerInitialised;
-  using Streamer::Options;
+  using Streamer::setStartTime;
 };
 
 } // namespace FileWriter
@@ -105,12 +105,12 @@ public:
   }
 };
 
-class StreamerMessageSlightlyAfterStopTestDummyReader
+class StreamerMessageFailsValidationTestDummyReader
     : public FileWriter::FlatbufferReader {
 public:
   bool verify(FileWriter::FlatbufferMessage const &Message) const override {
     UNUSED_ARG(Message)
-    return true;
+    return false;
   }
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override {

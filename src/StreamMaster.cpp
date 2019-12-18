@@ -7,9 +7,10 @@
 
 namespace FileWriter {
 
-std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
-    const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-    const MainOpt &Options) {
+std::unique_ptr<StreamMaster>
+StreamMaster::createStreamMaster(const std::string &Broker,
+                                 std::unique_ptr<FileWriterTask> FileWriterTask,
+                                 const MainOpt &Options) {
   std::map<std::string, Streamer> Streams;
   for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
@@ -28,8 +29,7 @@ std::unique_ptr<StreamMaster> StreamMaster::createStreamMaster(
   }
 
   return std::make_unique<StreamMaster>(std::move(FileWriterTask),
-                                        Options.ServiceID,
-                                        std::move(Streams));
+                                        Options.ServiceID, std::move(Streams));
 }
 
 StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
@@ -47,9 +47,9 @@ StreamMaster::~StreamMaster() {
   Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
 }
 
-void StreamMaster::setStopTime(const std::chrono::milliseconds &StopTime) {
+void StreamMaster::setStopTime(std::chrono::milliseconds const &StopTime) {
   for (auto &s : Streamers) {
-    s.second.getOptions().StopTimestamp = StopTime;
+    s.second.setStopTime(StopTime);
   }
 }
 
@@ -67,7 +67,6 @@ void StreamMaster::start() {
   }
 }
 
-
 void StreamMaster::processStream(Streamer &Stream) {
   auto ProcessStartTime = std::chrono::system_clock::now();
 
@@ -81,7 +80,7 @@ void StreamMaster::processStream(Streamer &Stream) {
     // if the Streamer throws then set the stream to finished, but the file
     // writing continues
     try {
-      Stream.pollAndProcess();
+      Stream.process();
     } catch (std::exception &E) {
       Logger->error("Stream closed due to stream error: {}", E.what());
       Stream.setFinished();

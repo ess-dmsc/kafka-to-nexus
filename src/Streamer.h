@@ -50,8 +50,8 @@ public:
 
   ~Streamer() = default;
 
-  /// \brief Polls for message and processes it if there is one
-  void pollAndProcess();
+  /// \brief Polls for message and processes it if there is one.
+  void process();
 
   /// \brief Processes received message
   ///
@@ -72,42 +72,41 @@ public:
 
   /// \brief Returns the status of the Streamer.
   ///
-  /// See "Error.h".
-  ///
   /// \return The current status.
   StreamerStatus runStatus() const { return RunStatus.load(); }
+
+  /// \brief Set the stop time.
+  void setStopTime(std::chrono::milliseconds const &StopTime);
 
   /// Return all the information about the messages consumed.
   Status::MessageInfo &messageInfo() { return MessageInfo; }
 
-  /// \brief Return a reference to the Options that has been set for the current
-  /// Streamer.
-  ///
-  /// The method can be used to change the current values.
-  StreamerOptions &getOptions() { return Options; }
-
-  /// Use to force stream to finish if something has gone wrong
+  /// \brief Use to force stream to finish if something has gone wrong.
   void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
 
   int getNumberProcessedMessages() { return NumberProcessedMessages.load(); }
   int getNumberFailedValidation() { return NumberFailedValidation.load(); }
 
 protected:
-  ConsumerPtr Consumer{nullptr};
+  /// \brief Set the start time.
+  ///
+  /// Only used in unit tests.
+  void setStartTime(std::chrono::milliseconds const &StartTime);
 
-  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
-  Status::MessageInfo MessageInfo;
-
-  StreamerOptions Options;
-
+  /// Protected so unit tests can inject it.
   std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>
       ConsumerInitialised;
 
 private:
+  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
   std::atomic<int> NumberProcessedMessages{0};
   std::atomic<int> NumberFailedValidation{0};
+  StreamerOptions Options;
   std::string ConsumerTopicName;
+  Status::MessageInfo MessageInfo;
   DemuxPtr MessageProcessor;
+  ConsumerPtr Consumer{nullptr};
+
   bool ifConsumerIsReadyThenAssignIt();
   bool stopTimeExceeded();
 
@@ -117,12 +116,25 @@ private:
                  std::chrono::milliseconds StopTime,
                  std::string const &TopicName);
 
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
+
   /// Checks whether current message means we've now reached the stop offsets
   bool stopOffsetsNowReached(int32_t NewMessagePartition,
                              int64_t NewMessageOffset);
 
+  bool haveReachedStopOffsets(int32_t Partition, int64_t Offset);
+
+  static bool messageHasPayload(KafkaW::PollStatus MessageStatus);
+
+  bool messageSourceIsValid(FlatbufferMessage::SrcHash SourceHash) const;
+
+  bool messageTimestampInRange(std::uint64_t Timestamp) const;
+
+  std::unique_ptr<FlatbufferMessage> createFlatBufferMessage(char const *Data,
+                                                             size_t Size);
+
   /// Checks whether we've reached the stop offsets
-  bool stopOffsetsReached();
+  bool stopOffsetsReached() const;
 
   SharedLogger Logger = getLogger();
   bool CatchingUpToStopOffset = false;

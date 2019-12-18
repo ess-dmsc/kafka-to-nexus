@@ -17,7 +17,6 @@ def test_data_reaches_file(docker_compose):
     # Stop file writing
     send_writer_command("commands/stop-command.json", producer)
     sleep(10)
-    send_writer_command("commands/writer-exit.json", producer)
     producer.flush()
 
     filepath = "output-files/output_file.nxs"
