@@ -6,6 +6,8 @@ It uses Docker containers to create containerised instances of Kafka and other c
 
 ### Usage
 
+Requires Python 3.6+.
+
 [optional] Set up a Python virtual environment and activate it (see [here](https://virtualenv.pypa.io/en/stable/))
 
 * Install Docker

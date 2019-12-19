@@ -3,7 +3,6 @@
   "broker": "localhost:9092",
   "job_id": "e094c12a-cd4b-11e8-93f1-484d7e9b68dc",
   "use_hdf_swmr": false,
-  "start_time": STARTTIME,
   "file_attributes": {
     "file_name": "output_file.nxs"
   },
