@@ -9,8 +9,6 @@
 
 #pragma once
 
-#include "DemuxTopic.h"
-#include "KafkaW/ProducerTopic.h"
 #include "Source.h"
 #include "json.h"
 #include <map>
@@ -18,7 +16,12 @@
 #include <string>
 #include <vector>
 
+namespace KafkaW {
+class ProducerTopic;
+};
+
 namespace FileWriter {
+class DemuxTopic;
 
 /// JSON parsing exception.
 class ParseError : public std::runtime_error {

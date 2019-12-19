@@ -13,6 +13,7 @@
 #include <trompeloeil.hpp>
 #include <utility>
 
+#include "DemuxTopic.h"
 #include "Msg.h"
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
@@ -211,7 +212,7 @@ protected:
     HDFWriterModule::ptr Writer(new WriterModuleStandIn());
     FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
     DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
-    Demuxer->add_source(std::move(TestSource));
+    Demuxer->addSource(std::move(TestSource));
     TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);
   }
   std::string SchemaID{"f142"};
@@ -537,7 +538,7 @@ TEST(FlatBufferValidationTest,
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
   DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
-  Demuxer->add_source(std::move(TestSource));
+  Demuxer->addSource(std::move(TestSource));
   TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);
 
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);

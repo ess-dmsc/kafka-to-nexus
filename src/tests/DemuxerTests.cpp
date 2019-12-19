@@ -103,15 +103,10 @@ TEST_F(DemuxerTests, Success) {
   auto Writer = ::std::make_unique<StubWriterModule>();
   Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   auto UsedHash = DummySource.getHash();
-  TestDemuxer.add_source(std::move(DummySource));
-  ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
-  EXPECT_FALSE(TestDemuxer.sources().find(UsedHash) ==
-               TestDemuxer.sources().end());
+  TestDemuxer.addSource(std::move(DummySource));
+  EXPECT_TRUE(TestDemuxer.canHandleSource(UsedHash));
   EXPECT_NO_THROW(TestDemuxer.process_message(CurrentMessage));
   EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(1));
-  EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(0));
 }
 
 TEST_F(DemuxerTests, WrongFlatbufferID) {
@@ -130,16 +125,11 @@ TEST_F(DemuxerTests, WrongFlatbufferID) {
   std::string AltKey("temi");
   Source DummySource(SourceName, AltKey, TopicName, std::move(Writer));
   auto UsedHash = DummySource.getHash();
-  TestDemuxer.add_source(std::move(DummySource));
-  ASSERT_EQ(TestDemuxer.sources().size(), size_t(1));
-  EXPECT_FALSE(TestDemuxer.sources().find(UsedHash) ==
-               TestDemuxer.sources().end());
+  TestDemuxer.addSource(std::move(DummySource));
+  EXPECT_TRUE(TestDemuxer.canHandleSource(UsedHash));
   EXPECT_THROW(TestDemuxer.process_message(CurrentMessage),
                MessageProcessingException);
   EXPECT_EQ(TestDemuxer.messages_processed.load(), size_t(0));
-  EXPECT_EQ(TestDemuxer.error_message_too_small.load(), size_t(0));
-  EXPECT_EQ(TestDemuxer.error_no_flatbuffer_reader.load(), size_t(0));
-  EXPECT_EQ(TestDemuxer.error_no_source_instance.load(), size_t(1));
 }
 
 TEST_F(DemuxerTests, WrongSourceName) {
@@ -157,12 +147,10 @@ TEST_F(DemuxerTests, WrongSourceName) {
   auto Writer = ::std::make_unique<StubWriterModule>();
   Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   TestDemuxer.add_source(std::move(DummySource));
+
   EXPECT_THROW(TestDemuxer.process_message(CurrentMessage),
                MessageProcessingException);
   EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_message_too_small.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_no_flatbuffer_reader.load() == size_t(0));
-  EXPECT_TRUE(TestDemuxer.error_no_source_instance.load() == size_t(1));
 }
 
 TEST_F(DemuxerTests, RemovingExistingSourceIsSuccessful) {
@@ -178,7 +166,7 @@ TEST_F(DemuxerTests, RemovingExistingSourceIsSuccessful) {
   Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   auto DummySourceHash = DummySource.getHash();
 
-  TestDemuxer.add_source(std::move(DummySource));
+  TestDemuxer.addSource(std::move(DummySource));
   EXPECT_TRUE(TestDemuxer.removeSource(DummySourceHash));
 }
 
