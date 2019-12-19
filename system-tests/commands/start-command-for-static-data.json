@@ -2,7 +2,7 @@
   "cmd": "filewriter_new",
   "broker": "localhost:9092",
   "job_id": "f3c1ad52-f8b2-11e8-8eb2-f2801f1b9fd1",
-  "use_hdf_swmr": false,
+  "use_hdf_swmr": true,
   "file_attributes": {
     "file_name": "output_file_static.nxs"
   },
