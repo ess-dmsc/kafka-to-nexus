@@ -146,7 +146,7 @@ TEST_F(DemuxerTests, WrongSourceName) {
   DemuxTopic TestDemuxer(TopicName);
   auto Writer = ::std::make_unique<StubWriterModule>();
   Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
-  TestDemuxer.add_source(std::move(DummySource));
+  TestDemuxer.addSource(std::move(DummySource));
 
   EXPECT_THROW(TestDemuxer.process_message(CurrentMessage),
                MessageProcessingException);
