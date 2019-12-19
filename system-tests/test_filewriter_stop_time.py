@@ -45,6 +45,10 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     assert started
     assert not stopped
 
+    # Clean up by stopping writing
+    send_writer_command("commands/stop-command-no-stop-time.json", producer)
+    sleep(10)
+
 
 def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     docker_compose_stop_command,
@@ -74,7 +78,6 @@ def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     )
     # The command also includes a stream for topic TEST_emptyTopic which exists but has no data in it, the
     # file writer should recognise there is no data in that topic and close the corresponding streamer without problem.
-
     filepath = "output-files/output_file_of_historical_data.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
         # Expect to have recorded one value per ms between the start and stop time
