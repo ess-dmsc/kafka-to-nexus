@@ -11,8 +11,8 @@
 
 namespace FileWriter {
 
-Source::Source(std::string Name, std::string ID, HDFWriterModule::ptr Writer)
-    : SourceName(std::move(Name)), SchemaID(std::move(ID)),
+Source::Source(std::string Name, std::string ID, std::string Topic, HDFWriterModule::ptr Writer)
+    : SourceName(std::move(Name)), SchemaID(std::move(ID)), TopicName(std::move(Topic)),
       Hash(calcSourceHash(SchemaID, SourceName)),
       WriterModule(std::move(Writer)) {}
 
@@ -39,7 +39,5 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
 
   return ProcessMessageResult::OK;
 }
-
-void Source::setTopic(std::string const &Name) { TopicName = Name; }
 
 } // namespace FileWriter

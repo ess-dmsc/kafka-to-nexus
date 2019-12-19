@@ -57,8 +57,7 @@ TEST_F(SourceTests, ConstructorSetsMembers) {
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, std::move(WriterModule));
-  TestSource.setTopic(TopicName);
+  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
   ASSERT_EQ(TestSource.topic(), TopicName);
   ASSERT_EQ(TestSource.sourcename(), SourceName);
 }
@@ -68,8 +67,7 @@ TEST_F(SourceTests, MovedSourceHasCorrectState) {
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, std::move(WriterModule));
-  TestSource.setTopic(TopicName);
+  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
   auto TestSource2 = std::move(TestSource);
   ASSERT_EQ(TestSource2.topic(), TopicName);
   ASSERT_EQ(TestSource2.sourcename(), SourceName);
@@ -81,8 +79,7 @@ TEST_F(SourceTests, ProcessMessagePassesMessageToWriterModule) {
   std::string ModuleName("ev42");
   auto WriterModule = std::make_unique<WriterModuleMock>();
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)));
-  Source TestSource(SourceName, ModuleName, std::move(WriterModule));
-  TestSource.setTopic(TopicName);
+  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
   auto MessageBuffer = createEventMessageBuffer();
   FileWriter::FlatbufferMessage Message(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -98,8 +95,7 @@ TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
   auto WriterModule = std::make_unique<WriterModuleMock>();
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
       .THROW(FileWriter::HDFWriterModuleRegistry::WriterException("IO Error"));
-  Source TestSource(SourceName, ModuleName, std::move(WriterModule));
-  TestSource.setTopic(TopicName);
+  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
   auto MessageBuffer = createEventMessageBuffer();
   FileWriter::FlatbufferMessage Message(
       reinterpret_cast<const char *>(MessageBuffer.data()),
@@ -113,8 +109,7 @@ TEST_F(SourceTests, ProcessMessageWithNonMatchingSchemaIdReturnsError) {
   std::string TopicName("TestTopicName");
   std::string ModuleName("test");
   auto WriterModule = std::make_unique<StubWriterModule>();
-  Source TestSource(SourceName, ModuleName, std::move(WriterModule));
-  TestSource.setTopic(TopicName);
+  Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
   auto MessageBuffer = createEventMessageBuffer();
   FileWriter::FlatbufferMessage Message(
       reinterpret_cast<const char *>(MessageBuffer.data()),

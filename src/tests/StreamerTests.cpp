@@ -209,7 +209,7 @@ protected:
     Options.BrokerSettings.OffsetsForTimesTimeoutMS = 10;
     Options.BrokerSettings.MetadataTimeoutMS = 10;
     HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-    FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
+    FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
     DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
     Demuxer->add_source(std::move(TestSource));
     TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);
@@ -217,6 +217,7 @@ protected:
   std::string SchemaID{"f142"};
   std::string DataBuffer{"0000test"};
   std::string SourceName{"SomeRandomSourceName"};
+  std::string TopicName{"SomeRandomTopicName"};
   KafkaW::BrokerSettings BrokerSettings;
   StreamerOptions Options;
   std::unique_ptr<StreamerStandIn> TestStreamer;
@@ -495,7 +496,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
   TestStreamer->setStopTime(std::chrono::milliseconds{2});
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
 
-  FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName))
@@ -529,11 +530,12 @@ TEST(FlatBufferValidationTest,
   std::unique_ptr<StreamerStandIn> TestStreamer;
   std::string SchemaID = "f142";
   std::string SourceName{"SomeRandomSourceName"};
+  std::string TopicName{"SomeRandomTopicName"};
   FlatbufferReaderRegistry::Registrar<
       StreamerMessageFailsValidationTestDummyReader>
       RegisterIt(SchemaID);
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  FileWriter::Source TestSource(SourceName, SchemaID, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
   DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
   Demuxer->add_source(std::move(TestSource));
   TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);

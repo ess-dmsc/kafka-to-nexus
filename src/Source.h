@@ -24,7 +24,7 @@ namespace FileWriter {
 /// which are exclusively used for only one sourcename.
 class Source final {
 public:
-  Source(std::string Name, std::string ID, HDFWriterModule::ptr Writer);
+  Source(std::string Name, std::string ID, std::string Topic,  HDFWriterModule::ptr Writer);
   Source(Source &&) = default;
   ~Source() = default;
   std::string const &topic() const;
@@ -32,12 +32,11 @@ public:
   FlatbufferMessage::SrcHash getHash() const { return Hash; };
   ProcessMessageResult process_message(FlatbufferMessage const &Message);
   HDFFile *HDFFileForSWMR = nullptr;
-  void setTopic(std::string const &Name);
 
 private:
-  std::string TopicName;
   std::string SourceName;
   std::string SchemaID;
+  std::string TopicName;
   FlatbufferMessage::SrcHash Hash;
   std::unique_ptr<HDFWriterModule> WriterModule;
   SharedLogger Logger = getLogger();
