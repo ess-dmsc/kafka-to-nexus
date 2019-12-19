@@ -38,13 +38,12 @@ def test_long_run(docker_compose_long_running):
     producer = create_producer()
     sleep(20)
     # Start file writing
-    send_writer_command(
-        "commands/longrunning.json",
+    job_id = send_writer_command(
+        "commands/start-command-for-long-running.json",
         producer,
         topic="TEST_writerCommandLR",
-        start_time=docker_compose_long_running,
+        start_time=int(docker_compose_long_running),
     )
-    producer.flush()
     sleep(10)
     # Minimum length of the test is determined by (pv_updates * 3) + 10 seconds
     pv_updates = 6000
@@ -54,9 +53,11 @@ def test_long_run(docker_compose_long_running):
         sleep(3)
 
     send_writer_command(
-        "commands/stop-command-lr.json", producer, topic="TEST_writerCommandLR"
+        "commands/stop-command.json",
+        producer,
+        topic="TEST_writerCommandLR",
+        job_id=job_id,
     )
-    producer.flush()
     sleep(30)
 
     filepath = "output-files/output_file_lr.nxs"
