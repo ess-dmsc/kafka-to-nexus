@@ -210,7 +210,8 @@ protected:
     Options.BrokerSettings.OffsetsForTimesTimeoutMS = 10;
     Options.BrokerSettings.MetadataTimeoutMS = 10;
     HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-    FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
+    FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
+                                  std::move(Writer));
     DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
     Demuxer->addSource(std::move(TestSource));
     TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);
@@ -497,7 +498,8 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
   TestStreamer->setStopTime(std::chrono::milliseconds{2});
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
 
-  FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
+                                std::move(Writer));
   auto *EmptyPollerConsumer = new ConsumerEmptyStandIn(BrokerSettings);
   REQUIRE_CALL(*EmptyPollerConsumer, poll())
       .RETURN(generateKafkaMsgWithValidFlatbuffer(SourceName))
@@ -536,7 +538,8 @@ TEST(FlatBufferValidationTest,
       StreamerMessageFailsValidationTestDummyReader>
       RegisterIt(SchemaID);
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
-  FileWriter::Source TestSource(SourceName, SchemaID, TopicName, std::move(Writer));
+  FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
+                                std::move(Writer));
   DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
   Demuxer->addSource(std::move(TestSource));
   TestStreamer = std::make_unique<StreamerStandIn>(Options, Demuxer);

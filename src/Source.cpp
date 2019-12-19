@@ -11,9 +11,10 @@
 
 namespace FileWriter {
 
-Source::Source(std::string Name, std::string ID, std::string Topic, HDFWriterModule::ptr Writer)
-    : SourceName(std::move(Name)), SchemaID(std::move(ID)), TopicName(std::move(Topic)),
-      Hash(calcSourceHash(SchemaID, SourceName)),
+Source::Source(std::string Name, std::string ID, std::string Topic,
+               HDFWriterModule::ptr Writer)
+    : SourceName(std::move(Name)), SchemaID(std::move(ID)),
+      TopicName(std::move(Topic)), Hash(calcSourceHash(SchemaID, SourceName)),
       WriterModule(std::move(Writer)) {}
 
 std::string const &Source::topic() const { return TopicName; }
