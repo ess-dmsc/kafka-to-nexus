@@ -19,7 +19,7 @@ public:
   std::string getJobId() const override { return JobID; }
   void setStopTime(const std::chrono::milliseconds & /*StopTime*/) override {}
   bool isDoneWriting() override { return !IsRemovable; }
-  nlohmann::json getStats() const override { return nlohmann::json::object(); }
+  nlohmann::json getStatus() const override { return nlohmann::json::object(); }
 
 private:
   std::string JobID;

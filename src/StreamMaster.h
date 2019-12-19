@@ -27,7 +27,7 @@ public:
   virtual ~IStreamMaster() = default;
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
-  virtual nlohmann::json getStats() const = 0;
+  virtual nlohmann::json getStatus() const = 0;
   virtual bool isDoneWriting() = 0;
 };
 
@@ -83,9 +83,9 @@ public:
   /// with the NeXus file).
   ///
   /// \return The job id.
-  std::string getJobId() const override { return WriterTask->jobID(); }
+  std::string getJobId() const override;
 
-  nlohmann::json getStats() const override { return WriterTask->stats(); }
+  nlohmann::json getStatus() const override;
 
 private:
   /// \brief Process the messages in the specified stream.
