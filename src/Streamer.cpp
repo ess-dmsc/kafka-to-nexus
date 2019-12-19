@@ -221,7 +221,8 @@ bool Streamer::messageHasPayload(KafkaW::PollStatus MessageStatus) {
            MessageStatus == KafkaW::PollStatus::TimedOut);
 }
 
-bool Streamer::messageSourceIsValid(FlatbufferMessage::SrcHash SourceHash) const {
+bool Streamer::messageSourceIsValid(
+    FlatbufferMessage::SrcHash SourceHash) const {
   return MessageProcessor->canHandleSource(SourceHash);
 }
 
