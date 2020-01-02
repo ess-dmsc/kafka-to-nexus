@@ -1,12 +1,3 @@
-/* Copyright (C) 2018 European Spallation Source, ERIC. See LICENSE file */
-//===----------------------------------------------------------------------===//
-///
-/// \file
-///
-/// \brief Header file of the networking code.
-///
-//===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include "CarbonInterface.h"

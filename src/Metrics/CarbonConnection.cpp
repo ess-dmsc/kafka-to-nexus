@@ -1,13 +1,3 @@
-/* Copyright (C) 2018 European Spallation Source, ERIC. See LICENSE file */
-//===----------------------------------------------------------------------===//
-///
-/// \file
-///
-/// \brief Implements the networking code for sending messages to a graylog
-/// server.
-///
-//===----------------------------------------------------------------------===//
-
 #include "CarbonConnection.h"
 #include <chrono>
 #include <ciso646>

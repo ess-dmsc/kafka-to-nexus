@@ -1,11 +1,3 @@
-/* Copyright (C) 2019 European Spallation Source, ERIC. See LICENSE file */
-//===----------------------------------------------------------------------===//
-///
-/// \file
-///
-/// \brief Graylog connection status.
-///
-//===----------------------------------------------------------------------===//
 #pragma once
 
 namespace Metrics {

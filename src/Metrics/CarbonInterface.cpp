@@ -1,13 +1,3 @@
-/* Copyright (C) 2018 European Spallation Source, ERIC. See LICENSE file */
-//===----------------------------------------------------------------------===//
-///
-/// \file
-///
-/// \brief The interface implementation for sending messages to a graylog
-/// server.
-///
-//===----------------------------------------------------------------------===//
-
 #include "CarbonInterface.h"
 #include "CarbonConnection.h"
 

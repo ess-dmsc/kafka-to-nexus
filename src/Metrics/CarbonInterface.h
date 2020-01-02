@@ -1,12 +1,3 @@
-/* Copyright (C) 2018 European Spallation Source, ERIC. See LICENSE file */
-//===----------------------------------------------------------------------===//
-///
-/// \file
-///
-/// \brief Graylog-server interface header file.
-///
-//===----------------------------------------------------------------------===//
-
 #pragma once
 
 #include "ConnectionStatus.h"
