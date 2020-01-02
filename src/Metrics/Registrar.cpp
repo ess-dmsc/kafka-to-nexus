@@ -3,7 +3,8 @@
 
 namespace Metrics {
 
-Registrar::Registrar(std::string MetricsPrefix, ProcessorInterface *ProcessorPtr)
+Registrar::Registrar(std::string MetricsPrefix,
+                     ProcessorInterface *ProcessorPtr)
     : Prefix(MetricsPrefix), MetricsProcessor(ProcessorPtr) {}
 
 bool Registrar::registerMetric(Metric &NewMetric, DestList Destinations) {
@@ -11,9 +12,9 @@ bool Registrar::registerMetric(Metric &NewMetric, DestList Destinations) {
     throw std::runtime_error("Can not register a metric with an empty name.");
   }
   auto NewMetricString = Prefix + "." + NewMetric.getName();
-  if (MetricsProcessor->registerMetric(NewMetricString, NewMetric.getCounterPtr(),
-                                NewMetric.getDescription(),
-                                NewMetric.getSeverity(), Destinations)) {
+  if (MetricsProcessor->registerMetric(
+          NewMetricString, NewMetric.getCounterPtr(),
+          NewMetric.getDescription(), NewMetric.getSeverity(), Destinations)) {
     NewMetric.setDeRegParams(NewMetricString, MetricsProcessor);
     return true;
   }

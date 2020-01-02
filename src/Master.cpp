@@ -157,8 +157,9 @@ void Master::run() {
       this->handle_command(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
-    if (getMainOpt().ReportStatus && Clock::now() - t_last_statistics >
-                                         getMainOpt().StatusMasterIntervalMS) {
+    if (getMainOpt().ReportStatus &&
+        Clock::now() - t_last_statistics >
+            getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
       statistics();
     }
