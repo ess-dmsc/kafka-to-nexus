@@ -9,7 +9,7 @@ namespace Metrics {
 
 class ProcessorStandIn : public Processor {
 public:
-  ProcessorStandIn() : Processor("some_name", "some_addr", 0) {};
+  ProcessorStandIn(PollInterval LogMsg = 100ms) : Processor("some_name", "some_addr", 0, LogMsg) {};
   MAKE_MOCK5(registerMetric, bool(std::string, CounterType
       *, std::string, Severity, DestList), override);
   MAKE_MOCK1(deRegisterMetric, bool(std::string), override);
@@ -17,8 +17,10 @@ public:
   Registrar getRegistrarBase() {return Processor::getRegistrar();}
   bool registerMetricBase(std::string Name, CounterType
   *Counter, std::string Description, Severity LogLevel, DestList Targets) { return Processor::registerMetric(Name, Counter, Description, LogLevel, Targets);}
+  bool deRegisterMetricBase(std::string Name) {return Processor::deRegisterMetric(Name);}
   using Processor::LogMsgMetrics;
   using Processor::GrafanaMetrics;
+  using Processor::Logger;
 };
 
 } // namespace Metrics

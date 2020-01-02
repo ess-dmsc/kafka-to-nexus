@@ -43,20 +43,35 @@ class Processor : public ProcessorInterface {
 public:
   Processor(std::string AppName, std::string GraphiteAddress, std::uint16_t GraphitePort, PollInterval Log = 100ms, PollInterval Carbon = 1s);
 
+  virtual ~Processor();
+
   bool registerMetric(std::string Name, CounterType *Counter, std::string Description, Severity LogLevel, DestList Targets) override;
 
-  bool deRegisterMetric(std::string) override { return true; }
+  bool deRegisterMetric(std::string) override;
 
   Registrar getRegistrar() override;
 
 protected:
+  bool metricIsInList(std::string Name);
+
+  void threadFunction();
+
+  void generateGrafanaUpdate();
+
+  void generateLogMessages();
+
   std::string Prefix;
   PollInterval LogMsgInterval;
   PollInterval CarbonInterval;
+  PollInterval const ExitThreadCheckInterval{20ms};
   std::vector<InternalMetric> LogMsgMetrics;
   std::vector<InternalMetric> GrafanaMetrics;
   SharedLogger Logger = getLogger();
   std::mutex MetricsMutex;
+  std::atomic_bool RunThread{true};
+  std::thread MetricsThread;
+  using spdlog_lvl = spdlog::level::level_enum ;
+  std::unordered_map<Severity,spdlog::level::level_enum> LogSeverityMap{{Severity::DEBUG, spdlog_lvl::debug}, {Severity::INFO, spdlog_lvl::info}, {Severity::WARNING, spdlog_lvl::warn}, {Severity::ERROR, spdlog_lvl::err}};
 };
 
 } // namespace Metrics
