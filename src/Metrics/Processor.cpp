@@ -4,8 +4,9 @@ namespace Metrics {
 
 InternalMetric::InternalMetric(std::string Name, std::string Description,
                                CounterType *Counter, Severity Lvl)
-    : FullName(std::move(Name)), Counter(Counter), DescriptionString(std::move(Description)),
-      LastValue(*Counter), ValueSeverity(Lvl) {}
+    : FullName(std::move(Name)), Counter(Counter),
+      DescriptionString(std::move(Description)), LastValue(*Counter),
+      ValueSeverity(Lvl) {}
 
 Processor::Processor(std::string AppName, std::string CarbonAddress,
                      std::uint16_t CarbonPort, PollInterval Log,
