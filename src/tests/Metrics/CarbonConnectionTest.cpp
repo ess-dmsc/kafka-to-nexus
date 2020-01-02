@@ -5,7 +5,7 @@
 #include <gtest/gtest.h>
 #include <regex>
 
-using std::chrono_literals::operator""ms;
+using namespace std::chrono_literals;
 
 class DISABLED_MetricsCarbonConnectionTest : public ::testing::Test {
 public:

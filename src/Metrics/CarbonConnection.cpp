@@ -19,8 +19,7 @@ namespace {
 
 namespace Metrics {
 
-using std::chrono_literals::operator""ms;
-using std::chrono_literals::operator""s;
+using namespace std::chrono_literals;
 
 struct QueryResult {
   explicit QueryResult(asio::ip::tcp::resolver::iterator &&Endpoints)

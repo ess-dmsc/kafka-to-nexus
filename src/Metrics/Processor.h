@@ -41,8 +41,7 @@ public:
 };
 
 using PollInterval = std::chrono::system_clock::duration;
-using std::chrono_literals::operator""ms;
-using std::chrono_literals::operator""s;
+using namespace std::chrono_literals;
 
 class Processor : public ProcessorInterface {
 public:
