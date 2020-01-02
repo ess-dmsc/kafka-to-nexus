@@ -5,7 +5,7 @@ namespace Metrics {
 
 Registrar::Registrar(std::string MetricsPrefix,
                      ProcessorInterface *ProcessorPtr)
-    : Prefix(MetricsPrefix), MetricsProcessor(ProcessorPtr) {}
+    : Prefix(std::move(MetricsPrefix)), MetricsProcessor(ProcessorPtr) {}
 
 bool Registrar::registerMetric(Metric &NewMetric, DestList Destinations) {
   if (NewMetric.getName().empty()) {

@@ -60,7 +60,7 @@ public:
   Registrar getRegistrar() override;
 
 protected:
-  bool metricIsInList(std::string Name);
+  bool metricIsInList(std::string const &Name);
 
   void threadFunction();
 

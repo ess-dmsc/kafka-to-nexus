@@ -4,15 +4,15 @@ namespace Metrics {
 
 InternalMetric::InternalMetric(std::string Name, std::string Description,
                                CounterType *Counter, Severity Lvl)
-    : FullName(Name), Counter(Counter), DescriptionString(Description),
+    : FullName(std::move(Name)), Counter(Counter), DescriptionString(std::move(Description)),
       LastValue(*Counter), ValueSeverity(Lvl) {}
 
 Processor::Processor(std::string AppName, std::string CarbonAddress,
                      std::uint16_t CarbonPort, PollInterval Log,
                      PollInterval Carbon)
-    : ProcessorInterface(), Prefix(AppName), LogMsgInterval(Log),
+    : ProcessorInterface(), Prefix(std::move(AppName)), LogMsgInterval(Log),
       CarbonInterval(Carbon), MetricsThread(&Processor::threadFunction, this),
-      Carbon(CarbonAddress, CarbonPort) {}
+      Carbon(std::move(CarbonAddress), CarbonPort) {}
 
 Processor::~Processor() {
   RunThread.store(false);
@@ -29,10 +29,10 @@ bool Processor::registerMetric(std::string Name, Metrics::CounterType *Counter,
                                std::string Description, Severity LogLevel,
                                Metrics::DestList Targets) {
   if (metricIsInList(Name)) {
-    return false;
     Logger->warn("Unable to register metric with name \"{}\" as it is already "
                  "registered.",
                  Name);
+    return false;
   }
   std::lock_guard<std::mutex> LocalLock(MetricsMutex);
   InternalMetric MetricToAdd(Name, Description, Counter, LogLevel);
@@ -49,7 +49,7 @@ bool Processor::registerMetric(std::string Name, Metrics::CounterType *Counter,
   return true;
 }
 
-bool Processor::metricIsInList(std::string Name) {
+bool Processor::metricIsInList(std::string const &Name) {
   std::lock_guard<std::mutex> LocalLock(MetricsMutex);
   auto IsInLogsList =
       std::any_of(LogMsgMetrics.begin(), LogMsgMetrics.end(),
