@@ -1,8 +1,8 @@
 
 #pragma once
 
-#include "Registrar.h"
 #include "CarbonInterface.h"
+#include "Registrar.h"
 #include "Type.h"
 #include "logger.h"
 #include <chrono>

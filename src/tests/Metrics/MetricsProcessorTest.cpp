@@ -9,7 +9,6 @@ class MetricsProcessorTest : public ::testing::Test {
 public:
 };
 
-
 TEST_F(MetricsProcessorTest, RegisterNothing) {
   auto TestName = std::string("SomeName");
   CounterType Ctr;

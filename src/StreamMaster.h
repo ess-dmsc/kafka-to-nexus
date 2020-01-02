@@ -43,9 +43,10 @@ public:
   /// \param Options The general application settings.
   /// \param Producer The Kafka producer used for reporting.
   /// \return
-  static std::unique_ptr<StreamMaster> createStreamMaster(
-      const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-      const MainOpt &Options);
+  static std::unique_ptr<StreamMaster>
+  createStreamMaster(const std::string &Broker,
+                     std::unique_ptr<FileWriterTask> FileWriterTask,
+                     const MainOpt &Options);
 
   StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                std::string const &ServiceID,

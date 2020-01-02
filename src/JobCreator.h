@@ -13,8 +13,8 @@
 #include "FileWriterTask.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
-#include "json.h"
 #include "StreamMaster.h"
+#include "json.h"
 #include <memory>
 
 namespace FileWriter {

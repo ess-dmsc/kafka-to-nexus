@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Metrics/Registrar.h"
 #include "Metrics/Processor.h"
+#include "Metrics/Registrar.h"
 #include "Metrics/Type.h"
 #include <trompeloeil.hpp>
 
@@ -26,9 +26,8 @@ public:
   bool deRegisterMetricBase(std::string Name) {
     return Processor::deRegisterMetric(Name);
   }
-  MAKE_MOCK3(sendMsgToCarbon,
-             void(std::string, InternalCounterType,
-                  std::chrono::system_clock::time_point),
+  MAKE_MOCK3(sendMsgToCarbon, void(std::string, InternalCounterType,
+                                   std::chrono::system_clock::time_point),
              override);
   void sendMsgToCarbonBase(std::string Name, InternalCounterType Value,
                            std::chrono::system_clock::time_point Time) {
