@@ -218,7 +218,7 @@ TEST_F(MetricsProcessorTest, NoCarbonValueChange) {
   auto TestName = "SomeLongWindedName"s;
   CounterType Ctr{0};
   auto Description = "A long description of a metric."s;
-  ProcessorStandIn UnderTest(10s, 1ms);
+  ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::CARBON});
   REQUIRE_CALL(UnderTest, sendMsgToCarbon(TestName, InternalCounterType(0), _))
@@ -230,7 +230,7 @@ TEST_F(MetricsProcessorTest, NoCarbonMsg1) {
   auto TestName = "SomeLongWindedName"s;
   CounterType Ctr{0};
   auto Description = "A long description of a metric."s;
-  ProcessorStandIn UnderTest(10s, 1ms);
+  ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::LOG_MSG});
   FORBID_CALL(UnderTest, sendMsgToCarbon(_, _, _));
@@ -241,7 +241,7 @@ TEST_F(MetricsProcessorTest, NoCarbonMsg2) {
   auto TestName = "SomeLongWindedName"s;
   CounterType Ctr{0};
   auto Description = "A long description of a metric."s;
-  ProcessorStandIn UnderTest(10s, 1ms);
+  ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {});
   FORBID_CALL(UnderTest, sendMsgToCarbon(_, _, _));
@@ -252,7 +252,7 @@ TEST_F(MetricsProcessorTest, CarbonUpdate) {
   auto TestName = "SomeLongWindedName"s;
   CounterType Ctr{0};
   auto Description = "A long description of a metric."s;
-  ProcessorStandIn UnderTest(10s, 1ms);
+  ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::CARBON});
   ALLOW_CALL(UnderTest, sendMsgToCarbon(TestName, InternalCounterType(0), _));
@@ -266,7 +266,7 @@ TEST_F(MetricsProcessorTest, QueuedCarbonMsg) {
   auto TestName = "SomeLongWindedName"s;
   CounterType Ctr{0};
   auto Description = "A long description of a metric."s;
-  ProcessorStandIn UnderTest(10s, 1ms);
+  ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::CARBON});
   UnderTest.sendMsgToCarbonBase(TestName, 11, std::chrono::system_clock::now());
