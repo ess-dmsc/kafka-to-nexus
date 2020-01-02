@@ -11,11 +11,9 @@ class MetricTest : public ::testing::Test {
 public:
 };
 
-using std::string_literals::operator""s;
-
 TEST_F(MetricTest, Init) {
-  auto NameStr = "test_name"s;
-  auto DescStr = "some_description"s;
+  auto NameStr = std::string("test_name");
+  auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
   MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
   EXPECT_EQ(UnderTest.getName(), NameStr);
@@ -25,8 +23,8 @@ TEST_F(MetricTest, Init) {
 }
 
 TEST_F(MetricTest, PreIncrement) {
-  auto NameStr = "test_name"s;
-  auto DescStr = "some_description"s;
+  auto NameStr = std::string("test_name");
+  auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
   MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
@@ -35,8 +33,8 @@ TEST_F(MetricTest, PreIncrement) {
 }
 
 TEST_F(MetricTest, PostIncrement) {
-  auto NameStr = "test_name"s;
-  auto DescStr = "some_description"s;
+  auto NameStr = std::string("test_name");
+  auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
   MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
@@ -45,8 +43,8 @@ TEST_F(MetricTest, PostIncrement) {
 }
 
 TEST_F(MetricTest, SumValue) {
-  auto NameStr = "test_name"s;
-  auto DescStr = "some_description"s;
+  auto NameStr = std::string("test_name");
+  auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
   MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
   auto TestValue = 42;
@@ -56,8 +54,8 @@ TEST_F(MetricTest, SumValue) {
 }
 
 TEST_F(MetricTest, SetValue) {
-  auto NameStr = "test_name"s;
-  auto DescStr = "some_description"s;
+  auto NameStr = std::string("test_name");
+  auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
   MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
   auto TestValue = std::int64_t(42);
@@ -67,10 +65,10 @@ TEST_F(MetricTest, SetValue) {
 }
 
 TEST_F(MetricTest, DeRegister) {
-  auto NameStr = "test_name"s;
-  auto DescStr = "some_description"s;
+  auto NameStr = std::string("test_name");
+  auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto SomeDeRegName = "some other string"s;
+  auto SomeDeRegName = std::string("some other string");
   ProcessorStandIn TestProcessor;
   REQUIRE_CALL(TestProcessor, deRegisterMetric(SomeDeRegName))
       .TIMES(1)

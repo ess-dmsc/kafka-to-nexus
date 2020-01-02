@@ -13,13 +13,12 @@ public:
 
 using trompeloeil::_;
 using trompeloeil::ne;
-using std::string_literals::operator""s;
 
 TEST_F(MetricsRegistrarTest, RegAndDeReg) {
-  auto Name = "some_name"s;
-  auto Desc = "Description"s;
+  auto Name = std::string("some_name");
+  auto Desc = std::string("Description");
   auto Sev = Severity::INFO;
-  auto FullName = "some_name."s + Name;
+  auto FullName = std::string("some_name.") + Name;
   REQUIRE_CALL(MockProcessor,
                registerMetric(FullName, ne(nullptr), Desc, Sev, _))
       .TIMES(1)
@@ -33,12 +32,12 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg) {
 }
 
 TEST_F(MetricsRegistrarTest, RegAndDeReg2) {
-  auto BasePrefix = "some_name."s;
-  auto ExtraPrefix = "some_prefix"s;
-  auto Name = "some_metric"s;
-  auto Desc = "Description"s;
+  auto BasePrefix = std::string("some_name.");
+  auto ExtraPrefix = std::string("some_prefix");
+  auto Name = std::string("some_metric");
+  auto Desc = std::string("Description");
   auto Sev = Severity::INFO;
-  auto FullName = BasePrefix + ExtraPrefix + "."s + Name;
+  auto FullName = BasePrefix + ExtraPrefix + "." + Name;
   auto Registrar1 = MockProcessor.getRegistrarBase();
   auto Registrar2 = Registrar1.getNewRegistrar(ExtraPrefix);
 
@@ -54,8 +53,8 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg2) {
 }
 
 TEST_F(MetricsRegistrarTest, RegisterEmptyNameFail) {
-  auto EmptyName = ""s;
-  auto Desc = "Description"s;
+  auto EmptyName = std::string();
+  auto Desc = std::string("Description");
   auto Sev = Severity::INFO;
   FORBID_CALL(MockProcessor, registerMetric(_, _, _, _, _));
   FORBID_CALL(MockProcessor, deRegisterMetric(_));
@@ -67,10 +66,10 @@ TEST_F(MetricsRegistrarTest, RegisterEmptyNameFail) {
 }
 
 TEST_F(MetricsRegistrarTest, RegisterNameFail) {
-  auto Name = "yet_another_name"s;
-  auto Desc = "Description"s;
+  auto Name = std::string("yet_another_name");
+  auto Desc = std::string("Description");
   auto Sev = Severity::INFO;
-  auto FullName = "some_name."s + Name;
+  auto FullName = std::string("some_name.") + Name;
   REQUIRE_CALL(MockProcessor,
                registerMetric(FullName, ne(nullptr), Desc, Sev, _))
       .TIMES(1)

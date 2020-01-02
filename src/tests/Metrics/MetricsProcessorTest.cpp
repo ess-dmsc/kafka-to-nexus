@@ -9,12 +9,11 @@ class MetricsProcessorTest : public ::testing::Test {
 public:
 };
 
-using std::string_literals::operator""s;
 
 TEST_F(MetricsProcessorTest, RegisterNothing) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG, {}));
@@ -23,9 +22,9 @@ TEST_F(MetricsProcessorTest, RegisterNothing) {
 }
 
 TEST_F(MetricsProcessorTest, RegisterLogMsgCounter) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::DEBUG,
                                {LogTo::LOG_MSG});
@@ -34,9 +33,9 @@ TEST_F(MetricsProcessorTest, RegisterLogMsgCounter) {
 }
 
 TEST_F(MetricsProcessorTest, RegisterGrafanaCounter) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::DEBUG,
                                {LogTo::CARBON});
@@ -45,9 +44,9 @@ TEST_F(MetricsProcessorTest, RegisterGrafanaCounter) {
 }
 
 TEST_F(MetricsProcessorTest, RegisterLogMsgAndGrafanaCounter) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::DEBUG,
                                {LogTo::CARBON, LogTo::LOG_MSG});
@@ -56,10 +55,10 @@ TEST_F(MetricsProcessorTest, RegisterLogMsgAndGrafanaCounter) {
 }
 
 TEST_F(MetricsProcessorTest, SecondRegistrationSuccess) {
-  auto TestName = "SomeName"s;
-  auto TestName2 = "SomeName2"s;
+  auto TestName = std::string("SomeName");
+  auto TestName2 = std::string("SomeName2");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG, {LogTo::LOG_MSG}));
@@ -70,9 +69,9 @@ TEST_F(MetricsProcessorTest, SecondRegistrationSuccess) {
 }
 
 TEST_F(MetricsProcessorTest, SecondRegistrationFail) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG, {LogTo::LOG_MSG}));
@@ -83,15 +82,15 @@ TEST_F(MetricsProcessorTest, SecondRegistrationFail) {
 }
 
 TEST_F(MetricsProcessorTest, DeRegisterFail1) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   ProcessorStandIn UnderTest;
   EXPECT_FALSE(UnderTest.deRegisterMetricBase(TestName));
 }
 
 TEST_F(MetricsProcessorTest, DeRegisterFail2) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG,
@@ -102,9 +101,9 @@ TEST_F(MetricsProcessorTest, DeRegisterFail2) {
 }
 
 TEST_F(MetricsProcessorTest, DeRegisterFromBothSuccess) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG,
@@ -115,9 +114,9 @@ TEST_F(MetricsProcessorTest, DeRegisterFromBothSuccess) {
 }
 
 TEST_F(MetricsProcessorTest, DeRegisterFromLogMsgSuccess) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG, {LogTo::LOG_MSG}));
@@ -127,9 +126,9 @@ TEST_F(MetricsProcessorTest, DeRegisterFromLogMsgSuccess) {
 }
 
 TEST_F(MetricsProcessorTest, DeRegisterFromGrafanaSuccess) {
-  auto TestName = "SomeName"s;
+  auto TestName = std::string("SomeName");
   CounterType Ctr;
-  auto Description = "Some description"s;
+  auto Description = std::string("Some description");
   ProcessorStandIn UnderTest;
   EXPECT_TRUE(UnderTest.registerMetricBase(TestName, &Ctr, Description,
                                            Severity::DEBUG, {LogTo::CARBON}));
@@ -156,9 +155,9 @@ public:
 using trompeloeil::_;
 
 TEST_F(MetricsProcessorTest, NoLogMsgUpdate1) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(1ms);
   auto UsedLogger = std::make_shared<LoggerStandIn>(TestName);
   UnderTest.Logger = UsedLogger;
@@ -170,9 +169,9 @@ TEST_F(MetricsProcessorTest, NoLogMsgUpdate1) {
 }
 
 TEST_F(MetricsProcessorTest, NoLogMsgUpdate2) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(1ms);
   auto UsedLogger = std::make_shared<LoggerStandIn>(TestName);
   UnderTest.Logger = UsedLogger;
@@ -184,9 +183,9 @@ TEST_F(MetricsProcessorTest, NoLogMsgUpdate2) {
 }
 
 TEST_F(MetricsProcessorTest, NoLogMsgUpdate3) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(1ms);
   auto UsedLogger = std::make_shared<LoggerStandIn>(TestName);
   UnderTest.Logger = UsedLogger;
@@ -198,9 +197,9 @@ TEST_F(MetricsProcessorTest, NoLogMsgUpdate3) {
 }
 
 TEST_F(MetricsProcessorTest, OneLogMsgUpate) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(1ms);
   auto UsedLogger = std::make_shared<LoggerStandIn>(TestName);
   UnderTest.Logger = UsedLogger;
@@ -215,9 +214,9 @@ TEST_F(MetricsProcessorTest, OneLogMsgUpate) {
 using trompeloeil::_;
 
 TEST_F(MetricsProcessorTest, NoCarbonValueChange) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::CARBON});
@@ -227,9 +226,9 @@ TEST_F(MetricsProcessorTest, NoCarbonValueChange) {
 }
 
 TEST_F(MetricsProcessorTest, NoCarbonMsg1) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::LOG_MSG});
@@ -238,9 +237,9 @@ TEST_F(MetricsProcessorTest, NoCarbonMsg1) {
 }
 
 TEST_F(MetricsProcessorTest, NoCarbonMsg2) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {});
@@ -249,9 +248,9 @@ TEST_F(MetricsProcessorTest, NoCarbonMsg2) {
 }
 
 TEST_F(MetricsProcessorTest, CarbonUpdate) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::CARBON});
@@ -263,9 +262,9 @@ TEST_F(MetricsProcessorTest, CarbonUpdate) {
 }
 
 TEST_F(MetricsProcessorTest, QueuedCarbonMsg) {
-  auto TestName = "SomeLongWindedName"s;
+  auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
-  auto Description = "A long description of a metric."s;
+  auto Description = std::string("A long description of a metric.");
   ProcessorStandIn UnderTest(10000ms, 1ms);
   UnderTest.registerMetricBase(TestName, &Ctr, Description, Severity::ERROR,
                                {LogTo::CARBON});
