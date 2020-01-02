@@ -19,6 +19,9 @@ public:
   *Counter, std::string Description, Severity LogLevel, DestList Targets) { return Processor::registerMetric(Name, Counter, Description, LogLevel, Targets);}
   bool deRegisterMetricBase(std::string Name) {return Processor::deRegisterMetric(Name);}
   MAKE_MOCK3(sendMsgToCarbon, void(std::string, InternalCounterType, std::chrono::system_clock::time_point), override);
+  void sendMsgToCarbonBase(std::string Name, InternalCounterType Value, std::chrono::system_clock::time_point Time) {
+    Processor::sendMsgToCarbon(Name, Value, Time);
+  };
   using Processor::LogMsgMetrics;
   using Processor::GrafanaMetrics;
   using Processor::Logger;

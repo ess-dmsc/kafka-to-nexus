@@ -112,6 +112,9 @@ void Processor::generateLogMessages() {
 }
 
 void Processor::generateGrafanaUpdate() {
+  if (not Carbon.messageQueueEmpty()) {
+    return;
+  }
   auto Now = std::chrono::system_clock::now();
   std::lock_guard<std::mutex> LocalLock(MetricsMutex);
   for (auto &CMetric : GrafanaMetrics) {
