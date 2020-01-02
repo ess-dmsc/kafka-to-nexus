@@ -185,7 +185,7 @@ void Master::publishStatus() {
 
   if (CurrentStreamMaster != nullptr) {
     auto FilewriterTaskID = fmt::format("{}", CurrentStreamMaster->getJobId());
-    auto FilewriterTaskStatus = CurrentStreamMaster->getStats();
+    auto FilewriterTaskStatus = CurrentStreamMaster->getStatus();
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
 

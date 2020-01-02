@@ -129,4 +129,9 @@ void StreamMaster::doStop() {
 }
 
 bool StreamMaster::isDoneWriting() { return !StreamersRemaining.load(); }
+
+std::string StreamMaster::getJobId() const { return WriterTask->jobID(); }
+
+nlohmann::json StreamMaster::getStatus() const { return WriterTask->stats(); }
+
 } // namespace FileWriter

@@ -98,9 +98,10 @@ TEST_F(DemuxerTests, Success) {
   auto TestData = std::make_unique<char[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
-  DemuxTopic TestDemuxer("SomeTopicName");
+  std::string TopicName = "SomeTopicName";
+  DemuxTopic TestDemuxer(TopicName);
   auto Writer = ::std::make_unique<StubWriterModule>();
-  Source DummySource(SourceName, TestKey, std::move(Writer));
+  Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   auto UsedHash = DummySource.getHash();
   TestDemuxer.addSource(std::move(DummySource));
   EXPECT_TRUE(TestDemuxer.canHandleSource(UsedHash));
@@ -118,10 +119,11 @@ TEST_F(DemuxerTests, WrongFlatbufferID) {
   auto TestData = std::make_unique<char[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
-  DemuxTopic TestDemuxer("SomeTopicName");
+  std::string TopicName = "SomeTopicName";
+  DemuxTopic TestDemuxer(TopicName);
   auto Writer = ::std::make_unique<StubWriterModule>();
   std::string AltKey("temi");
-  Source DummySource(SourceName, AltKey, std::move(Writer));
+  Source DummySource(SourceName, AltKey, TopicName, std::move(Writer));
   auto UsedHash = DummySource.getHash();
   TestDemuxer.addSource(std::move(DummySource));
   EXPECT_TRUE(TestDemuxer.canHandleSource(UsedHash));
@@ -140,10 +142,12 @@ TEST_F(DemuxerTests, WrongSourceName) {
   auto TestData = std::make_unique<char[]>(8);
   std::memcpy(TestData.get() + 4, TestKey.c_str(), 4);
   FileWriter::FlatbufferMessage CurrentMessage(TestData.get(), 8);
-  DemuxTopic TestDemuxer("SomeTopicName");
+  std::string TopicName = "SomeTopicName";
+  DemuxTopic TestDemuxer(TopicName);
   auto Writer = ::std::make_unique<StubWriterModule>();
-  Source DummySource(SourceName, TestKey, std::move(Writer));
+  Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   TestDemuxer.addSource(std::move(DummySource));
+
   EXPECT_THROW(TestDemuxer.process_message(CurrentMessage),
                MessageProcessingException);
   EXPECT_TRUE(TestDemuxer.messages_processed.load() == size_t(0));
@@ -156,9 +160,10 @@ TEST_F(DemuxerTests, RemovingExistingSourceIsSuccessful) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  DemuxTopic TestDemuxer("SomeTopicName");
+  std::string TopicName = "SomeTopicName";
+  DemuxTopic TestDemuxer(TopicName);
   auto Writer = ::std::make_unique<StubWriterModule>();
-  Source DummySource(SourceName, TestKey, std::move(Writer));
+  Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   auto DummySourceHash = DummySource.getHash();
 
   TestDemuxer.addSource(std::move(DummySource));
@@ -172,9 +177,10 @@ TEST_F(DemuxerTests, RemovingNonExistingSourceIsUnSuccessful) {
     FlatbufferReaderRegistry::Registrar<DemuxerDummyReader2> RegisterIt(
         TestKey);
   }
-  DemuxTopic TestDemuxer("SomeTopicName");
+  std::string TopicName = "SomeTopicName";
+  DemuxTopic TestDemuxer(TopicName);
   auto Writer = ::std::make_unique<StubWriterModule>();
-  Source DummySource(SourceName, TestKey, std::move(Writer));
+  Source DummySource(SourceName, TestKey, TopicName, std::move(Writer));
   auto DummySourceHash = DummySource.getHash();
 
   EXPECT_FALSE(TestDemuxer.removeSource(DummySourceHash))

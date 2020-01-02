@@ -29,7 +29,7 @@ TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 
 TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
   FileWriter::FileWriterTask Task("SomeID", nullptr);
-  FileWriter::Source Src("Src1", "Id1", nullptr);
+  FileWriter::Source Src("Src1", "Id1", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
 
