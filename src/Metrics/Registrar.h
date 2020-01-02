@@ -7,7 +7,7 @@
 namespace Metrics {
 
 enum class LogTo {
-  GRAPHITE,
+  CARBON,
   LOG_MSG
 };
 

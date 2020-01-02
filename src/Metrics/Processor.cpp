@@ -6,7 +6,7 @@ InternalMetric::InternalMetric(std::string Name, std::string Description, Counte
 
 }
 
-Processor::Processor(std::string AppName, std::string, std::uint16_t, PollInterval Log, PollInterval Carbon) : ProcessorInterface(), Prefix(AppName), LogMsgInterval(Log), CarbonInterval(Carbon), MetricsThread(&Processor::threadFunction, this) {
+Processor::Processor(std::string AppName, std::string CarbonAddress, std::uint16_t CarbonPort, PollInterval Log, PollInterval Carbon) : ProcessorInterface(), Prefix(AppName), LogMsgInterval(Log), CarbonInterval(Carbon), MetricsThread(&Processor::threadFunction, this), Carbon(CarbonAddress, CarbonPort) {
 }
 
 Processor::~Processor() {
@@ -27,7 +27,7 @@ bool Processor::registerMetric(std::string Name, Metrics::CounterType * Counter,
   }
   std::lock_guard<std::mutex> LocalLock(MetricsMutex);
   InternalMetric MetricToAdd(Name, Description, Counter, LogLevel);
-  if (Targets.find(LogTo::GRAPHITE) != Targets.end()) {
+  if (Targets.find(LogTo::CARBON) != Targets.end()) {
     GrafanaMetrics.push_back(MetricToAdd);
     Logger->info("Registering the metric \"{}\" for publishing to Grafana.", Name);
   }
@@ -113,13 +113,18 @@ void Processor::generateLogMessages() {
 
 void Processor::generateGrafanaUpdate() {
   auto Now = std::chrono::system_clock::now();
-  auto TimeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(Now.time_since_epoch()).count();
   std::lock_guard<std::mutex> LocalLock(MetricsMutex);
-  for (auto &CMetric : LogMsgMetrics) {
+  for (auto &CMetric : GrafanaMetrics) {
     auto CurrentValue = CMetric.Counter->load();
     auto CurrentName = CMetric.FullName;
-
+    sendMsgToCarbon(CurrentName, CurrentValue, Now);
   }
+}
+
+void Processor::sendMsgToCarbon(std::string Name, Metrics::InternalCounterType Value,
+                                std::chrono::system_clock::time_point ValueTime) {
+  auto TimeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(ValueTime.time_since_epoch()).count();
+  Carbon.sendMessage(fmt::format("{} {} {}\n", Name, Value, TimeSinceEpoch));
 }
 
 } // namespace Metrics

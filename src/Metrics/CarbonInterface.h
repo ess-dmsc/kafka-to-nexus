@@ -15,10 +15,11 @@
 #include <memory>
 
 namespace Metrics {
+
 class CarbonConnection {
 public:
   CarbonConnection(std::string Host, int Port);
-  virtual ~CarbonConnection() = default;
+  virtual ~CarbonConnection();
   virtual void sendMessage(std::string Msg);
   virtual Status getConnectionStatus() const;
   virtual bool messageQueueEmpty();
@@ -28,4 +29,5 @@ private:
   class Impl;
   std::unique_ptr<Impl> Pimpl;
 };
+
 } // namespace Metrics

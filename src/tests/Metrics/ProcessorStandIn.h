@@ -9,7 +9,7 @@ namespace Metrics {
 
 class ProcessorStandIn : public Processor {
 public:
-  ProcessorStandIn(PollInterval LogMsg = 100ms) : Processor("some_name", "some_addr", 0, LogMsg) {};
+  ProcessorStandIn(PollInterval LogMsg = 100ms, PollInterval CarbonUpdt = 500ms) : Processor("some_name", "some_addr", 0, LogMsg, CarbonUpdt) {};
   MAKE_MOCK5(registerMetric, bool(std::string, CounterType
       *, std::string, Severity, DestList), override);
   MAKE_MOCK1(deRegisterMetric, bool(std::string), override);
@@ -18,6 +18,7 @@ public:
   bool registerMetricBase(std::string Name, CounterType
   *Counter, std::string Description, Severity LogLevel, DestList Targets) { return Processor::registerMetric(Name, Counter, Description, LogLevel, Targets);}
   bool deRegisterMetricBase(std::string Name) {return Processor::deRegisterMetric(Name);}
+  MAKE_MOCK3(sendMsgToCarbon, void(std::string, InternalCounterType, std::chrono::system_clock::time_point), override);
   using Processor::LogMsgMetrics;
   using Processor::GrafanaMetrics;
   using Processor::Logger;

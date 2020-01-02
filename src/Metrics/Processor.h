@@ -11,6 +11,7 @@
 #include "Registrar.h"
 #include <chrono>
 #include "logger.h"
+#include "CarbonInterface.h"
 
 namespace Metrics {
 
@@ -41,7 +42,7 @@ using std::chrono_literals::operator""s;
 
 class Processor : public ProcessorInterface {
 public:
-  Processor(std::string AppName, std::string GraphiteAddress, std::uint16_t GraphitePort, PollInterval Log = 100ms, PollInterval Carbon = 1s);
+  Processor(std::string AppName, std::string CarbonAddress, std::uint16_t CarbonPort, PollInterval Log = 100ms, PollInterval Carbon = 1s);
 
   virtual ~Processor();
 
@@ -60,6 +61,8 @@ protected:
 
   void generateLogMessages();
 
+  virtual void sendMsgToCarbon(std::string Name, Metrics::InternalCounterType Value, std::chrono::system_clock::time_point ValueTime);
+
   std::string Prefix;
   PollInterval LogMsgInterval;
   PollInterval CarbonInterval;
@@ -70,6 +73,7 @@ protected:
   std::mutex MetricsMutex;
   std::atomic_bool RunThread{true};
   std::thread MetricsThread;
+  CarbonConnection Carbon;
   using spdlog_lvl = spdlog::level::level_enum ;
   std::unordered_map<Severity,spdlog::level::level_enum> LogSeverityMap{{Severity::DEBUG, spdlog_lvl::debug}, {Severity::INFO, spdlog_lvl::info}, {Severity::WARNING, spdlog_lvl::warn}, {Severity::ERROR, spdlog_lvl::err}};
 };

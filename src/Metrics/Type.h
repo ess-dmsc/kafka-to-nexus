@@ -17,6 +17,7 @@ enum class Severity {
 };
 
 using CounterType = std::atomic_int64_t;
+using InternalCounterType = decltype(((CounterType*)(nullptr))->load());
 
 class Metric {
 public:
