@@ -11,7 +11,7 @@ class Registrar;
 
 enum class Severity { DEBUG, INFO, WARNING, ERROR };
 
-using CounterType = std::atomic_int64_t;
+using CounterType = std::atomic<std::int64_t>;
 using InternalCounterType = decltype(((CounterType *)(nullptr))->load());
 
 class Metric {
