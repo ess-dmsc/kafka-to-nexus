@@ -76,7 +76,7 @@ void CarbonConnection::Impl::resolverHandler(
 }
 
 void CarbonConnection::Impl::connectHandler(const asio::error_code &Error,
-                                             const QueryResult &AllEndpoints) {
+                                            const QueryResult &AllEndpoints) {
   if (!Error) {
     setState(Status::SEND_LOOP);
     auto HandlerGlue = [this](auto &Error, auto Size) {
@@ -110,7 +110,7 @@ void CarbonConnection::Impl::reConnect(ReconnectDelay Delay) {
 }
 
 void CarbonConnection::Impl::receiveHandler(const asio::error_code &Error,
-                                             std::size_t BytesReceived) {
+                                            std::size_t BytesReceived) {
   UNUSED_ARG(BytesReceived);
   if (Error) {
     Socket.close();
@@ -150,7 +150,7 @@ void CarbonConnection::Impl::trySendMessage() {
 }
 
 void CarbonConnection::Impl::sentMessageHandler(const asio::error_code &Error,
-                                                 std::size_t BytesSent) {
+                                                std::size_t BytesSent) {
   if (BytesSent == MessageBuffer.size()) {
     MessageBuffer.clear();
   } else if (BytesSent > 0) {
@@ -197,15 +197,13 @@ CarbonConnection::Impl::~Impl() {
   }
 }
 
-Status
-CarbonConnection::Impl::getConnectionStatus() const {
+Status CarbonConnection::Impl::getConnectionStatus() const {
   return ConnectionState;
 }
 
 void CarbonConnection::Impl::threadFunction() { Service.run(); }
 
-void CarbonConnection::Impl::setState(
-    Status NewState) {
+void CarbonConnection::Impl::setState(Status NewState) {
   ConnectionState = NewState;
 }
 

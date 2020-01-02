@@ -52,7 +52,7 @@ std::string CarbonTestServer::GetLatestMessage() {
 void CarbonTestServer::ThreadFunction() { service.run(); }
 
 void CarbonTestServer::OnConnectionAccept(const std::error_code &ec,
-                                       sock_ptr cSock) {
+                                          sock_ptr cSock) {
   socketError = ec;
   if (asio::error::basic_errors::operation_aborted == ec or
       asio::error::basic_errors::bad_descriptor == ec) {
@@ -69,7 +69,7 @@ void CarbonTestServer::OnConnectionAccept(const std::error_code &ec,
 }
 
 void CarbonTestServer::HandleRead(std::error_code ec, std::size_t bytesReceived,
-                               sock_ptr cSock) {
+                                  sock_ptr cSock) {
   socketError = ec;
   if (asio::error::operation_aborted == ec) {
     RemoveSocket(cSock);

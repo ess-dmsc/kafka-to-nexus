@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
 #include "CarbonTestServer.h"
 #include "Metrics/CarbonInterface.h"
 #include "Metrics/Processor.h"
 #include <chrono>
+#include <gtest/gtest.h>
 #include <regex>
 
 using std::chrono_literals::operator""ms;
@@ -13,14 +13,11 @@ public:
     UsedPort += 1;
     CarbonServer = std::make_unique<CarbonTestServer>(UsedPort);
   }
-  void TearDown() override {
-    CarbonServer.reset();
-  }
+  void TearDown() override { CarbonServer.reset(); }
   std::uint16_t UsedPort{6587};
   std::unique_ptr<CarbonTestServer> CarbonServer;
   std::chrono::system_clock::duration SleepTime{100ms};
 };
-
 
 TEST_F(DISABLED_MetricsCarbonConnectionTest, UnknownHost) {
   Metrics::CarbonConnection con("no_host", UsedPort);
@@ -42,7 +39,7 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, Connection) {
     ASSERT_EQ(CarbonServer->GetLatestMessage().size(), 0ul);
     ASSERT_TRUE(!CarbonServer->GetLastSocketError());
     ASSERT_EQ(Metrics::Status::SEND_LOOP, con.getConnectionStatus())
-                  << "Connection status returned " << int(con.getConnectionStatus());
+        << "Connection status returned " << int(con.getConnectionStatus());
   }
   std::this_thread::sleep_for(SleepTime);
   ASSERT_EQ(0l, CarbonServer->GetNrOfConnections());
@@ -66,7 +63,7 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, IPv6Connection) {
     ASSERT_EQ(CarbonServer->GetLatestMessage().size(), 0ul);
     ASSERT_TRUE(!CarbonServer->GetLastSocketError());
     ASSERT_EQ(Metrics::Status::SEND_LOOP, con.getConnectionStatus())
-                  << "Connection status returned " << int(con.getConnectionStatus());
+        << "Connection status returned " << int(con.getConnectionStatus());
   }
   std::this_thread::sleep_for(SleepTime);
   ASSERT_EQ(0, CarbonServer->GetNrOfConnections());
@@ -98,7 +95,7 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, CloseConnection) {
     std::this_thread::sleep_for(SleepTime * 2);
     EXPECT_EQ(Metrics::Status::SEND_LOOP, con.getConnectionStatus());
     EXPECT_EQ(1, CarbonServer->GetNrOfConnections())
-              << "Failed to reconnect after connection was closed remotely.";
+        << "Failed to reconnect after connection was closed remotely.";
   }
   std::this_thread::sleep_for(SleepTime);
   EXPECT_EQ(0, CarbonServer->GetNrOfConnections());
@@ -174,7 +171,8 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
   Metrics::CounterType Ctr{112233};
   auto Description = "A long description of a metric.";
   Metrics::Processor UnderTest("SomeName", "localhost", UsedPort, 1000ms, 10ms);
-  UnderTest.registerMetric(TestName, &Ctr, Description, Metrics::Severity::ERROR, {Metrics::LogTo::CARBON});
+  UnderTest.registerMetric(TestName, &Ctr, Description,
+                           Metrics::Severity::ERROR, {Metrics::LogTo::CARBON});
   std::this_thread::sleep_for(500ms);
   ASSERT_GE(CarbonServer->GetNrOfMessages(), 0);
   auto LastCarbonString = CarbonServer->GetLatestMessage();

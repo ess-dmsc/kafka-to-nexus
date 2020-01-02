@@ -1,15 +1,12 @@
 #pragma once
 
+#include "Type.h"
 #include <string>
 #include <unordered_set>
-#include "Type.h"
 
 namespace Metrics {
 
-enum class LogTo {
-  CARBON,
-  LOG_MSG
-};
+enum class LogTo { CARBON, LOG_MSG };
 
 using DestList = std::unordered_set<LogTo>;
 

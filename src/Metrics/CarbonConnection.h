@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include <readerwriterqueue/readerwriterqueue.h>
-#include "ConnectionStatus.h"
 #include "CarbonInterface.h"
+#include "ConnectionStatus.h"
 #include <array>
 #include <asio.hpp>
 #include <atomic>
 #include <memory>
+#include <readerwriterqueue/readerwriterqueue.h>
 #include <string>
 #include <thread>
 
@@ -29,7 +29,9 @@ class CarbonConnection::Impl {
 public:
   Impl(std::string Host, int Port);
   virtual ~Impl();
-  virtual bool sendMessage(std::string Msg) { return Messages.try_enqueue(Msg); };
+  virtual bool sendMessage(std::string Msg) {
+    return Messages.try_enqueue(Msg);
+  };
   Status getConnectionStatus() const;
   bool messageQueueEmpty() { return Messages.size_approx() == 0; }
   size_t messageQueueSize() { return Messages.size_approx(); }

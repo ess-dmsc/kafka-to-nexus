@@ -7,4 +7,4 @@ Metric::~Metric() {
     DeRegPtr->deRegisterMetric(DeRegName);
   }
 }
-}
+} // namespace Metrics

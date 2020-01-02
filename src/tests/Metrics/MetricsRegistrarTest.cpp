@@ -1,7 +1,7 @@
-#include <gtest/gtest.h>
+#include "MetricStandIn.h"
 #include "Metrics/Processor.h"
 #include "ProcessorStandIn.h"
-#include "MetricStandIn.h"
+#include <gtest/gtest.h>
 #include <trompeloeil.hpp>
 
 namespace Metrics {
@@ -20,7 +20,10 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg) {
   auto Desc = "Description"s;
   auto Sev = Severity::INFO;
   auto FullName = "some_name."s + Name;
-  REQUIRE_CALL(MockProcessor, registerMetric(FullName, ne(nullptr), Desc, Sev, _)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(MockProcessor,
+               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
+      .TIMES(1)
+      .RETURN(true);
   REQUIRE_CALL(MockProcessor, deRegisterMetric(FullName)).TIMES(1).RETURN(true);
   {
     MetricStandIn Ctr(Name, Desc, Sev);
@@ -28,7 +31,6 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg) {
     EXPECT_TRUE(Registrar.registerMetric(Ctr, {}));
   }
 }
-
 
 TEST_F(MetricsRegistrarTest, RegAndDeReg2) {
   auto BasePrefix = "some_name."s;
@@ -40,7 +42,10 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg2) {
   auto Registrar1 = MockProcessor.getRegistrarBase();
   auto Registrar2 = Registrar1.getNewRegistrar(ExtraPrefix);
 
-  REQUIRE_CALL(MockProcessor, registerMetric(FullName, ne(nullptr), Desc, Sev, _)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(MockProcessor,
+               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
+      .TIMES(1)
+      .RETURN(true);
   REQUIRE_CALL(MockProcessor, deRegisterMetric(FullName)).TIMES(1).RETURN(true);
   {
     MetricStandIn Ctr(Name, Desc, Sev);
@@ -66,7 +71,10 @@ TEST_F(MetricsRegistrarTest, RegisterNameFail) {
   auto Desc = "Description"s;
   auto Sev = Severity::INFO;
   auto FullName = "some_name."s + Name;
-  REQUIRE_CALL(MockProcessor, registerMetric(FullName, ne(nullptr), Desc, Sev, _)).TIMES(1).RETURN(false);
+  REQUIRE_CALL(MockProcessor,
+               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
+      .TIMES(1)
+      .RETURN(false);
   FORBID_CALL(MockProcessor, deRegisterMetric(_));
   auto Registrar = MockProcessor.getRegistrarBase();
   {

@@ -15,4 +15,4 @@ enum class Status {
   CONNECT,
   SEND_LOOP,
 };
-} // namespace Log
+} // namespace Metrics

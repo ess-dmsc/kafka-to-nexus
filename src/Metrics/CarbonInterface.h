@@ -11,8 +11,8 @@
 
 #include "ConnectionStatus.h"
 #include <cstdint>
-#include <string>
 #include <memory>
+#include <string>
 
 namespace Metrics {
 

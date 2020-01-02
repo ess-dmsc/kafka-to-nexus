@@ -1,27 +1,29 @@
 
 #pragma once
 
-#include <vector>
-#include <string>
-#include <numeric>
-#include <thread>
-#include <mutex>
-#include <map>
-#include "Type.h"
-#include "Registrar.h"
-#include <chrono>
-#include "logger.h"
 #include "CarbonInterface.h"
+#include "Registrar.h"
+#include "Type.h"
+#include "logger.h"
+#include <chrono>
+#include <map>
+#include <mutex>
+#include <numeric>
+#include <string>
+#include <thread>
+#include <vector>
 
 namespace Metrics {
 
 struct InternalMetric {
-  InternalMetric(std::string Name, std::string Description, CounterType *Counter, Severity Lvl);
+  InternalMetric(std::string Name, std::string Description,
+                 CounterType *Counter, Severity Lvl);
   std::string FullName;
   CounterType *Counter{nullptr};
   std::string DescriptionString;
   std::int64_t LastValue{0};
-  std::chrono::system_clock::time_point LastTime{std::chrono::system_clock::now()};
+  std::chrono::system_clock::time_point LastTime{
+      std::chrono::system_clock::now()};
   Severity ValueSeverity{Severity::ERROR};
 };
 
@@ -29,7 +31,9 @@ class ProcessorInterface {
 public:
   virtual ~ProcessorInterface() = default;
 
-  virtual bool registerMetric(std::string Name, CounterType *Counter, std::string Description, Severity LogLevel, DestList Targets) = 0;
+  virtual bool registerMetric(std::string Name, CounterType *Counter,
+                              std::string Description, Severity LogLevel,
+                              DestList Targets) = 0;
 
   virtual bool deRegisterMetric(std::string Name) = 0;
 
@@ -42,11 +46,15 @@ using std::chrono_literals::operator""s;
 
 class Processor : public ProcessorInterface {
 public:
-  Processor(std::string AppName, std::string CarbonAddress, std::uint16_t CarbonPort, PollInterval Log = 100ms, PollInterval Carbon = 1s);
+  Processor(std::string AppName, std::string CarbonAddress,
+            std::uint16_t CarbonPort, PollInterval Log = 100ms,
+            PollInterval Carbon = 1s);
 
   virtual ~Processor();
 
-  bool registerMetric(std::string Name, CounterType *Counter, std::string Description, Severity LogLevel, DestList Targets) override;
+  bool registerMetric(std::string Name, CounterType *Counter,
+                      std::string Description, Severity LogLevel,
+                      DestList Targets) override;
 
   bool deRegisterMetric(std::string) override;
 
@@ -61,7 +69,9 @@ protected:
 
   void generateLogMessages();
 
-  virtual void sendMsgToCarbon(std::string Name, Metrics::InternalCounterType Value, std::chrono::system_clock::time_point ValueTime);
+  virtual void sendMsgToCarbon(std::string Name,
+                               Metrics::InternalCounterType Value,
+                               std::chrono::system_clock::time_point ValueTime);
 
   std::string Prefix;
   PollInterval LogMsgInterval;
@@ -74,8 +84,12 @@ protected:
   std::atomic_bool RunThread{true};
   std::thread MetricsThread;
   CarbonConnection Carbon;
-  using spdlog_lvl = spdlog::level::level_enum ;
-  std::unordered_map<Severity,spdlog::level::level_enum> LogSeverityMap{{Severity::DEBUG, spdlog_lvl::debug}, {Severity::INFO, spdlog_lvl::info}, {Severity::WARNING, spdlog_lvl::warn}, {Severity::ERROR, spdlog_lvl::err}};
+  using spdlog_lvl = spdlog::level::level_enum;
+  std::unordered_map<Severity, spdlog::level::level_enum> LogSeverityMap{
+      {Severity::DEBUG, spdlog_lvl::debug},
+      {Severity::INFO, spdlog_lvl::info},
+      {Severity::WARNING, spdlog_lvl::warn},
+      {Severity::ERROR, spdlog_lvl::err}};
 };
 
 } // namespace Metrics

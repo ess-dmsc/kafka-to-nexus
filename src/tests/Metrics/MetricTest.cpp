@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
-#include "Metrics/Type.h"
-#include "Metrics/Processor.h"
-#include "ProcessorStandIn.h"
 #include "MetricStandIn.h"
+#include "Metrics/Processor.h"
+#include "Metrics/Type.h"
+#include "ProcessorStandIn.h"
+#include <gtest/gtest.h>
 #include <trompeloeil.hpp>
 
 namespace Metrics {
@@ -72,10 +72,13 @@ TEST_F(MetricTest, DeRegister) {
   auto TestSeverity = Severity::ERROR;
   auto SomeDeRegName = "some other string"s;
   ProcessorStandIn TestProcessor;
-  REQUIRE_CALL(TestProcessor, deRegisterMetric(SomeDeRegName)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(TestProcessor, deRegisterMetric(SomeDeRegName))
+      .TIMES(1)
+      .RETURN(true);
   {
     MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
-    UnderTest.setDeRegParams(SomeDeRegName, dynamic_cast<ProcessorInterface*>(&TestProcessor));
+    UnderTest.setDeRegParams(
+        SomeDeRegName, dynamic_cast<ProcessorInterface *>(&TestProcessor));
   }
 }
 

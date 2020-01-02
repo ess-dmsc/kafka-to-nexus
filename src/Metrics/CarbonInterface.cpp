@@ -16,11 +16,9 @@ namespace Metrics {
 CarbonConnection::CarbonConnection(std::string Host, int Port)
     : Pimpl(std::make_unique<CarbonConnection::Impl>(std::move(Host), Port)) {}
 
-    CarbonConnection::~CarbonConnection() {}
+CarbonConnection::~CarbonConnection() {}
 
-void CarbonConnection::sendMessage(std::string Msg) {
-  Pimpl->sendMessage(Msg);
-}
+void CarbonConnection::sendMessage(std::string Msg) { Pimpl->sendMessage(Msg); }
 
 Status CarbonConnection::getConnectionStatus() const {
   return Pimpl->getConnectionStatus();
