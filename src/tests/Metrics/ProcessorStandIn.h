@@ -1,7 +1,7 @@
 #pragma once
 
-#include "Metrics/Processor.h"
 #include "Metrics/Registrar.h"
+#include "Metrics/Processor.h"
 #include "Metrics/Type.h"
 #include <trompeloeil.hpp>
 
