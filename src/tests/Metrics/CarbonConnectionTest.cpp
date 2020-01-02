@@ -7,7 +7,7 @@
 
 using std::chrono_literals::operator""ms;
 
-class MetricsCarbonConnectionTest : public ::testing::Test {
+class DISABLED_MetricsCarbonConnectionTest : public ::testing::Test {
 public:
   void SetUp() override {
     UsedPort += 1;
@@ -22,7 +22,7 @@ public:
 };
 
 
-TEST_F(MetricsCarbonConnectionTest, UnknownHost) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, UnknownHost) {
   Metrics::CarbonConnection con("no_host", UsedPort);
   std::this_thread::sleep_for(SleepTime);
   ASSERT_EQ(CarbonServer->GetNrOfConnections(), 0);
@@ -31,7 +31,7 @@ TEST_F(MetricsCarbonConnectionTest, UnknownHost) {
   EXPECT_NE(con.getConnectionStatus(), Metrics::Status::SEND_LOOP);
 }
 
-TEST_F(MetricsCarbonConnectionTest, Connection) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, Connection) {
   ASSERT_EQ(0l, CarbonServer->GetNrOfConnections());
   ASSERT_EQ(0ul, CarbonServer->GetLatestMessage().size());
   ASSERT_TRUE(!CarbonServer->GetLastSocketError());
@@ -55,7 +55,7 @@ TEST_F(MetricsCarbonConnectionTest, Connection) {
 #endif
 }
 
-TEST_F(MetricsCarbonConnectionTest, IPv6Connection) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, IPv6Connection) {
   ASSERT_EQ(0, CarbonServer->GetNrOfConnections());
   ASSERT_EQ(0ul, CarbonServer->GetLatestMessage().size());
   ASSERT_TRUE(!CarbonServer->GetLastSocketError());
@@ -79,7 +79,7 @@ TEST_F(MetricsCarbonConnectionTest, IPv6Connection) {
 #endif
 }
 
-TEST_F(MetricsCarbonConnectionTest, WrongPort) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, WrongPort) {
   Metrics::CarbonConnection con("localhost", UsedPort + 1);
   std::this_thread::sleep_for(SleepTime);
   ASSERT_EQ(CarbonServer->GetNrOfConnections(), 0);
@@ -88,7 +88,7 @@ TEST_F(MetricsCarbonConnectionTest, WrongPort) {
   EXPECT_NE(con.getConnectionStatus(), Metrics::Status::SEND_LOOP);
 }
 
-TEST_F(MetricsCarbonConnectionTest, CloseConnection) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, CloseConnection) {
   {
     Metrics::CarbonConnection con("localhost", UsedPort);
     std::this_thread::sleep_for(SleepTime);
@@ -104,7 +104,7 @@ TEST_F(MetricsCarbonConnectionTest, CloseConnection) {
   EXPECT_EQ(0, CarbonServer->GetNrOfConnections());
 }
 
-TEST_F(MetricsCarbonConnectionTest, MessageTransmission) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, MessageTransmission) {
   {
     std::string testString("This is a test string!");
     Metrics::CarbonConnection con("localhost", UsedPort);
@@ -117,7 +117,7 @@ TEST_F(MetricsCarbonConnectionTest, MessageTransmission) {
   }
 }
 
-TEST_F(MetricsCarbonConnectionTest, LargeMessageTransmission) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, LargeMessageTransmission) {
   {
     std::string RepeatedString("This is a test string!");
     std::string TargetString;
@@ -134,7 +134,7 @@ TEST_F(MetricsCarbonConnectionTest, LargeMessageTransmission) {
   }
 }
 
-TEST_F(MetricsCarbonConnectionTest, MultipleMessages) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, MultipleMessages) {
   std::vector<std::string> lines = {"This is a test.", "!\"#€%&/()=?*^_-.,:;",
                                     "Another line bites the dust."};
   {
@@ -153,7 +153,7 @@ TEST_F(MetricsCarbonConnectionTest, MultipleMessages) {
   }
 }
 
-TEST_F(MetricsCarbonConnectionTest, DISABLED_MultipleCloseConnection) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, DISABLED_MultipleCloseConnection) {
   {
     Metrics::CarbonConnection con("localhost", UsedPort);
     std::string SomeTestMessage(
@@ -169,7 +169,7 @@ TEST_F(MetricsCarbonConnectionTest, DISABLED_MultipleCloseConnection) {
   }
 }
 
-TEST_F(MetricsCarbonConnectionTest, SendUpdate) {
+TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
   auto TestName = std::string("SomeLongWindedName");
   Metrics::CounterType Ctr{112233};
   auto Description = "A long description of a metric.";
