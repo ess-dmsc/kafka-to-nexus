@@ -24,9 +24,9 @@ public:
 
 private:
   friend Processor;
-  Registrar(std::string MetricsPrefix, ProcessorInterface *Processor);
+  Registrar(std::string MetricsPrefix, ProcessorInterface *ProcessorPtr);
 
   std::string Prefix;
-  ProcessorInterface *Processor{nullptr};
+  ProcessorInterface *MetricsProcessor{nullptr};
 };
 } // namespace Metrics
