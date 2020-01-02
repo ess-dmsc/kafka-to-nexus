@@ -152,10 +152,11 @@ add_library(${tgt} OBJECT
         ${kafka_to_nexus_INC}
         )
 
+find_package(ASIO REQUIRED)
+
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-
 
 set(tgt "send-command")
 set(sources
@@ -164,7 +165,7 @@ set(sources
         )
 add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
+target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR} ${ASIO_INCLUDE_DIR})
 target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
         )
 
