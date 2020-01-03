@@ -14,15 +14,14 @@ typedef std::shared_ptr<asio::ip::tcp::socket> sock_ptr;
 
 class CarbonTestServer {
 public:
-  CarbonTestServer(short port);
+  explicit CarbonTestServer(short port);
   ~CarbonTestServer();
   std::string GetLatestMessage();
   std::error_code GetLastSocketError();
   void CloseAllConnections();
-  int GetNrOfConnections();
-  size_t GetReceivedBytes();
-  int GetNrOfMessages();
-  void ClearReceivedBytes();
+  int GetNrOfConnections() const {return connections;};
+  size_t GetReceivedBytes() const { return receivedBytes; };
+  int GetNrOfMessages() const { return nrOfMessagesReceived; };
 
 private:
   asio::io_service service;

@@ -20,7 +20,7 @@ public:
 
   bool registerMetric(Metric &NewMetric, DestList Destinations);
 
-  Registrar getNewRegistrar(std::string MetricsPrefix);
+  Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
 
 private:
   friend Processor;

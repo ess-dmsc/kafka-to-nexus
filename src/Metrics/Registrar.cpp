@@ -21,7 +21,7 @@ bool Registrar::registerMetric(Metric &NewMetric, DestList Destinations) {
   return false;
 }
 
-Registrar Registrar::getNewRegistrar(std::string MetricsPrefix) {
+Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
   return {Prefix + "." + MetricsPrefix, MetricsProcessor};
 }
 

@@ -112,11 +112,3 @@ std::error_code CarbonTestServer::GetLastSocketError() {
   socketError.clear();
   return tempError;
 }
-
-int CarbonTestServer::GetNrOfConnections() { return connections; }
-
-size_t CarbonTestServer::GetReceivedBytes() { return receivedBytes; }
-
-int CarbonTestServer::GetNrOfMessages() { return nrOfMessagesReceived; }
-
-void CarbonTestServer::ClearReceivedBytes() { receivedBytes = 0; }

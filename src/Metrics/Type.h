@@ -18,7 +18,7 @@ class Metric {
 public:
   Metric(std::string Name, std::string Description,
          Severity Level = Severity::DEBUG)
-      : MName(Name), MDesc(Description), SevLvl(Level) {}
+      : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level) {}
   ~Metric();
   std::int64_t operator++() {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
@@ -40,12 +40,12 @@ public:
 protected:
   friend Registrar;
   void setDeRegParams(std::string FullName, ProcessorInterface *Ptr) {
-    DeRegName = FullName;
+    DeRegName = std::move(FullName);
     DeRegPtr = Ptr;
   };
-  std::string getName() { return MName; }
-  std::string getDescription() { return MDesc; }
-  Severity getSeverity() { return SevLvl; }
+  std::string getName() const { return MName; }
+  std::string getDescription() const { return MDesc; }
+  Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
   std::string MName;
