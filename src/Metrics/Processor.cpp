@@ -11,8 +11,9 @@ InternalMetric::InternalMetric(std::string Name, std::string Description,
 Processor::Processor(std::string AppName, std::string CarbonAddress,
                      std::uint16_t CarbonPort, PollInterval Log,
                      PollInterval Carbon)
-    : ProcessorInterface(), Prefix(std::move(AppName)), LogMsgInterval(std::move(Log)),
-      CarbonInterval(std::move(Carbon)), MetricsThread(&Processor::threadFunction, this),
+    : ProcessorInterface(), Prefix(std::move(AppName)),
+      LogMsgInterval(std::move(Log)), CarbonInterval(std::move(Carbon)),
+      MetricsThread(&Processor::threadFunction, this),
       Carbon(std::move(CarbonAddress), CarbonPort) {}
 
 Processor::~Processor() {

@@ -19,7 +19,7 @@ public:
   std::string GetLatestMessage();
   std::error_code GetLastSocketError();
   void CloseAllConnections();
-  int GetNrOfConnections() const {return connections;};
+  int GetNrOfConnections() const { return connections; };
   size_t GetReceivedBytes() const { return receivedBytes; };
   int GetNrOfMessages() const { return nrOfMessagesReceived; };
 
