@@ -2,9 +2,7 @@
   "cmd": "FileWriter_new",
   "broker": "localhost:9092",
   "job_id": "b294c12a-cd4b-11e8-93f1-484d7e3b68dc",
-  "use_hdf_swmr": false,
-  "start_time": STARTTIME,
-  "stop_time": STOPTIME,
+  "use_hdf_swmr": true,
   "file_attributes": {
     "file_name": "output_file_of_historical_data.nxs"
   },

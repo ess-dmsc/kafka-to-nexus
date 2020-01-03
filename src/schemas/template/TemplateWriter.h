@@ -291,25 +291,6 @@ public:
   void write(FileWriter::FlatbufferMessage const &/*Message*/) override {
     std::cout << "WriterClass::write()\n";
   }
-
-  /// \brief Should (probably) not implement any functionality.
-  ///
-  /// In the current implementation, this member function is called only after
-  /// FileWriter::HDFWriterModule::init_hdf() and nowhere else. Thus, this
-  /// member function should not be trusted to be called and any cleanup should
-  /// be done in the destructor instead (or as well).
-  ///
-  /// \note This call is executed in a catch-all block (which re-throws)
-  /// relatively high up in call hierarchy. You should for this reason probably
-  /// try to avoid throwing exceptions here unless you encounter an
-  /// unrecoverable state as any exceptions will cause the thread to exit.
-  ///
-  /// \return The return value is never checked. For parity with other file
-  /// writing modules, return 0.
-  int32_t close() override {
-    std::cout << "WriterClass::close()\n";
-    return 0;
-  }
 };
 } // namespace TemplateWriter
 // clang-format on

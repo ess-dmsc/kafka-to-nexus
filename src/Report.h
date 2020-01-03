@@ -13,6 +13,7 @@
 #include <memory>
 #include <thread>
 
+#include "KafkaW/ProducerTopic.h"
 #include "Status.h"
 #include "StatusWriter.h"
 #include "Streamer.h"

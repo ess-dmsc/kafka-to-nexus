@@ -27,7 +27,7 @@ public:
   virtual ~IStreamMaster() = default;
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
-  virtual nlohmann::json getStats() const = 0;
+  virtual nlohmann::json getStatus() const = 0;
   virtual bool isDoneWriting() = 0;
 };
 
@@ -83,29 +83,23 @@ public:
   /// with the NeXus file).
   ///
   /// \return The job id.
-  std::string getJobId() const override { return WriterTask->jobID(); }
+  std::string getJobId() const override;
 
-  nlohmann::json getStats() const override { return WriterTask->stats(); }
+  nlohmann::json getStatus() const override;
 
 private:
   /// \brief Process the messages in the specified stream.
   ///
   /// \param Stream The stream that will consume messages.
-  /// \param Demux The demux associated with the topic.
-  void processStream(Streamer &Stream, DemuxTopic &Demux);
+  void processStream(Streamer &Stream);
 
   /// \brief Main loop that handles the writer process for each stream.
   void run();
 
-  /// \brief Close the Kafka connection in the specified stream.
-  ///
-  /// \param Stream The stream to close.
-  void closeStream(Streamer &Stream, const std::string &TopicName);
-
   /// \brief Stops the streamers and prepares for being removed.
   void doStop();
 
-  size_t NumStreamers{0};
+  std::atomic<bool> StreamersRemaining{true};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
   std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};

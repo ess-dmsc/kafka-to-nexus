@@ -35,8 +35,6 @@ public:
 
   void write(FileWriter::FlatbufferMessage const &Message) override;
 
-  int32_t close() override;
-
 protected:
   std::string Sourcename;
   NeXusDataset::DoubleValue Values;

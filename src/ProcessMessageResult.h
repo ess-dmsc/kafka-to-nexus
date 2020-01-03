@@ -10,10 +10,5 @@
 #pragma once
 
 namespace FileWriter {
-enum class ProcessMessageResult {
-  OK,
-  ERR,
-  ALL_SOURCES_FULL,
-  STOP,
-};
+enum class ProcessMessageResult { OK, ERR };
 } // namespace FileWriter

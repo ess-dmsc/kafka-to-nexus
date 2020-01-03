@@ -17,7 +17,6 @@ set(UnitTests_SRC
         TemplateWriterTests.cpp
         DemuxerTests.cpp
         MessageTests.cpp
-        StreamerTests.cpp
         Schema_f142Tests.cpp
         AreaDetectorTests.cpp
         EventLoggerTests.cpp
@@ -39,7 +38,9 @@ set(UnitTests_SRC
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
         Metrics/CarbonTestServer.cpp
-        Metrics/MetricsProcessorTest.cpp)
+        Metrics/MetricsProcessorTest.cpp
+        MasterTests.cpp
+        StreamerTests.cpp)
 
 set(UnitTests_INC
         StreamerTestMocks.h

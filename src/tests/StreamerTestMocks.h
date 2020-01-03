@@ -21,26 +21,33 @@ public:
   IMPLEMENT_MOCK1(getCurrentOffsets);
 };
 
+class DemuxerStandIn : public DemuxTopic {
+public:
+  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
+  void process_message(FlatbufferMessage const &) override {}
+};
+
 class StreamerStandIn : public Streamer {
 public:
   StreamerStandIn()
       : Streamer("SomeBroker", "SomeTopic", StreamerOptions(),
                  std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings)) {}
+                     StreamerOptions().BrokerSettings),
+                 std::make_shared<DemuxerStandIn>("SomeTopic")) {}
   explicit StreamerStandIn(StreamerOptions Opts)
       : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
                  std::make_unique<ConsumerEmptyStandIn>(
-                     StreamerOptions().BrokerSettings)) {}
+                     StreamerOptions().BrokerSettings),
+                 std::make_shared<DemuxerStandIn>("SomeTopic")) {}
+  StreamerStandIn(StreamerOptions Opts, std::shared_ptr<DemuxTopic> &Demuxer)
+      : Streamer("SomeBroker", "SomeTopic", std::move(Opts),
+                 std::make_unique<ConsumerEmptyStandIn>(
+                     StreamerOptions().BrokerSettings),
+                 Demuxer) {}
   using Streamer::ConsumerInitialised;
-  using Streamer::Options;
+  using Streamer::setStartTime;
 };
 
-class DemuxerStandIn : public DemuxTopic {
-public:
-  explicit DemuxerStandIn(std::string Topic) : DemuxTopic(std::move(Topic)) {}
-  MAKE_MOCK1(process_message, ProcessMessageResult(FlatbufferMessage const &),
-             override);
-};
 } // namespace FileWriter
 
 class StreamerNoTimestampTestDummyReader : public FileWriter::FlatbufferReader {
@@ -98,12 +105,12 @@ public:
   }
 };
 
-class StreamerMessageSlightlyAfterStopTestDummyReader
+class StreamerMessageFailsValidationTestDummyReader
     : public FileWriter::FlatbufferReader {
 public:
   bool verify(FileWriter::FlatbufferMessage const &Message) const override {
     UNUSED_ARG(Message)
-    return true;
+    return false;
   }
   std::string
   source_name(FileWriter::FlatbufferMessage const &Message) const override {
@@ -124,5 +131,4 @@ public:
              override);
   MAKE_MOCK1(reopen, InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const &), override);
-  MAKE_MOCK0(close, int32_t(), override);
 };

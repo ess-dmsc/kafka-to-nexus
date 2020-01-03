@@ -309,8 +309,6 @@ void HDFWriterModule::padDatasetsWithZeroesEqualToNumberOfEvents(
   PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
 
-int32_t HDFWriterModule::close() { return 0; }
-
 static HDFWriterModuleRegistry::Registrar<HDFWriterModule>
     RegisterWriter("ev42");
 

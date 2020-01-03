@@ -81,11 +81,6 @@ public:
   ///
   /// \param msg The message to process
   virtual void write(FlatbufferMessage const &Message) = 0;
-
-  /// \brief Close all open HDF handlers.
-  ///
-  /// \return Error code.
-  virtual int32_t close() = 0;
 };
 
 /// \brief Keeps track of the registered FlatbufferReader instances.

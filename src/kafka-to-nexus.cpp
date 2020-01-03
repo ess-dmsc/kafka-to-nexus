@@ -10,6 +10,7 @@
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
 #include "HDFWriterModule.h"
+#include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
 #include "URI.h"
@@ -81,7 +82,8 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
   }
-  FileWriter::Master Master(*Options);
+  FileWriter::Master Master(*Options,
+                            std::make_unique<FileWriter::JobCreator>());
   std::thread MasterThread([&Master, Logger] {
     try {
       Master.run();

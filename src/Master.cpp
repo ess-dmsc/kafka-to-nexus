@@ -15,16 +15,15 @@
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
-#include <algorithm>
 #include <chrono>
 #include <functional>
-#include <sys/types.h>
 #include <unistd.h>
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config)
-    : Logger(getLogger()), Listener(Config), MainConfig(Config) {
+Master::Master(MainOpt &Config, std::unique_ptr<IJobCreator> Creator)
+    : Logger(getLogger()), Listener(Config), MainConfig(Config),
+      Creator_(std::move(Creator)) {
   std::vector<char> buffer;
   buffer.resize(128);
   gethostname(buffer.data(), buffer.size());
@@ -82,6 +81,7 @@ void Master::handle_command(std::string const &Command,
           Logger->info("Received request to gracefully stop file with id : {}",
                        StopInfo.JobID);
           CurrentStreamMaster.reset(nullptr);
+          // TODO: Wait for it to finish writing?
           IsWriting = false;
         }
       } else {
@@ -92,9 +92,8 @@ void Master::handle_command(std::string const &Command,
       if (CommandName == CommandParser::StartCommand) {
         auto StartInfo =
             CommandParser::extractStartInformation(CommandJson, TimeStamp);
-        JobCreator Handler;
-        CurrentStreamMaster = Handler.createFileWritingJob(
-            StartInfo, StatusProducer, getMainOpt());
+        CurrentStreamMaster = Creator_->createFileWritingJob(
+            StartInfo, StatusProducer, getMainOpt(), Logger);
         IsWriting = true;
       } else {
         throw std::runtime_error(fmt::format(
@@ -125,21 +124,8 @@ struct OnScopeExit {
 
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
-  // Set up connection to the Kafka status topic if desired.
-  if (getMainOpt().ReportStatus) {
-    Logger->info("Publishing status to kafka://{}/{}",
-                 getMainOpt().KafkaStatusURI.HostPort,
-                 getMainOpt().KafkaStatusURI.Topic);
-    KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
-    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
-    try {
-      StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().KafkaStatusURI.Topic);
-    } catch (KafkaW::TopicCreationError const &e) {
-      Logger->error("Can not create Kafka status producer: {}", e.what());
-    }
-  }
+
+  initialiseStatusProducer();
 
   // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {
@@ -161,7 +147,7 @@ void Master::run() {
         Clock::now() - t_last_statistics >
             getMainOpt().StatusMasterIntervalMS) {
       t_last_statistics = Clock::now();
-      statistics();
+      publishStatus();
     }
     if (CurrentStreamMaster != nullptr and
         CurrentStreamMaster->isDoneWriting()) {
@@ -169,10 +155,26 @@ void Master::run() {
       IsWriting = false;
     }
   }
-  Logger->info("calling stop on all stream_masters");
 }
 
-void Master::statistics() {
+void Master::initialiseStatusProducer() {
+  if (getMainOpt().ReportStatus) {
+    Logger->info("Publishing status to kafka://{}/{}",
+                 getMainOpt().KafkaStatusURI.HostPort,
+                 getMainOpt().KafkaStatusURI.Topic);
+    KafkaW::BrokerSettings BrokerSettings;
+    BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
+    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
+    try {
+      StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
+          producer, getMainOpt().KafkaStatusURI.Topic);
+    } catch (KafkaW::TopicCreationError const &e) {
+      Logger->error("Can not create Kafka status producer: {}", e.what());
+    }
+  }
+}
+
+void Master::publishStatus() {
   if (StatusProducer == nullptr) {
     return;
   }
@@ -183,7 +185,7 @@ void Master::statistics() {
 
   if (CurrentStreamMaster != nullptr) {
     auto FilewriterTaskID = fmt::format("{}", CurrentStreamMaster->getJobId());
-    auto FilewriterTaskStatus = CurrentStreamMaster->getStats();
+    auto FilewriterTaskStatus = CurrentStreamMaster->getStatus();
     Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
   }
 

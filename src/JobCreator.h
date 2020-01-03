@@ -29,18 +29,28 @@ struct StreamSettings {
   std::string Attributes;
 };
 
-class JobCreator {
+class IJobCreator {
+public:
+  virtual std::unique_ptr<IStreamMaster> createFileWritingJob(
+      StartCommandInfo const &StartInfo,
+      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
+      MainOpt &Settings, SharedLogger const &Logger) = 0;
+  virtual ~IJobCreator() = default;
+};
+
+class JobCreator : public IJobCreator {
 public:
   /// \brief Create a new file-writing job.
   ///
   /// \param StartInfo The details for starting the job.
   /// \param StatusProducer The producer for the job to report its status on.
   /// \param Settings General settings for the file writer.
+  /// \param Logger The logger.
   /// \return The new file-writing job.
   std::unique_ptr<IStreamMaster> createFileWritingJob(
       StartCommandInfo const &StartInfo,
       std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-      MainOpt &Settings);
+      MainOpt &Settings, SharedLogger const &Logger) override;
 
 private:
   static void
@@ -50,7 +60,6 @@ private:
   static std::vector<StreamHDFInfo>
   initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,
                 bool UseSwmr);
-  SharedLogger Logger = getLogger();
 };
 
 /// \brief Extract information about the stream.

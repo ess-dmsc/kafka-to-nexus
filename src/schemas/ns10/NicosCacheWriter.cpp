@@ -138,8 +138,6 @@ void CacheWriter::write(const FileWriter::FlatbufferMessage &Message) {
   }
 }
 
-std::int32_t CacheWriter::close() { return 0; }
-
 } // namespace ns10
 } // namespace Schemas
 } // namespace FileWriter

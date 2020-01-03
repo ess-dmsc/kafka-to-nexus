@@ -12,16 +12,17 @@ StreamMaster::createStreamMaster(const std::string &Broker,
                                  std::unique_ptr<FileWriterTask> FileWriterTask,
                                  const MainOpt &Options) {
   std::map<std::string, Streamer> Streams;
-  for (auto &Demux : FileWriterTask->demuxers()) {
+  for (auto &TopicNameDemuxerPair : FileWriterTask->demuxers()) {
     try {
       std::unique_ptr<KafkaW::ConsumerInterface> Consumer =
           KafkaW::createConsumer(Options.StreamerConfiguration.BrokerSettings,
                                  Broker);
       Streams.emplace(std::piecewise_construct,
-                      std::forward_as_tuple(Demux.topic()),
-                      std::forward_as_tuple(Broker, Demux.topic(),
+                      std::forward_as_tuple(TopicNameDemuxerPair.first),
+                      std::forward_as_tuple(Broker, TopicNameDemuxerPair.first,
                                             Options.StreamerConfiguration,
-                                            std::move(Consumer)));
+                                            std::move(Consumer),
+                                            TopicNameDemuxerPair.second));
     } catch (std::exception &E) {
       getLogger()->critical("{}", E.what());
     }
@@ -34,8 +35,9 @@ StreamMaster::createStreamMaster(const std::string &Broker,
 StreamMaster::StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                            std::string const &ServiceID,
                            std::map<std::string, Streamer> Streams)
-    : NumStreamers(Streams.size()), Streamers(std::move(Streams)),
-      WriterTask(std::move(FileWriterTask)), ServiceId(ServiceID) {}
+
+    : Streamers(std::move(Streams)), WriterTask(std::move(FileWriterTask)),
+      ServiceId(ServiceID) {}
 
 StreamMaster::~StreamMaster() {
   Stop = true;
@@ -45,9 +47,9 @@ StreamMaster::~StreamMaster() {
   Logger->info("Stopped StreamMaster for file with id : {}", getJobId());
 }
 
-void StreamMaster::setStopTime(const std::chrono::milliseconds &StopTime) {
+void StreamMaster::setStopTime(std::chrono::milliseconds const &StopTime) {
   for (auto &s : Streamers) {
-    s.second.getOptions().StopTimestamp = StopTime;
+    s.second.setStopTime(StopTime);
   }
 }
 
@@ -65,9 +67,8 @@ void StreamMaster::start() {
   }
 }
 
-void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
+void StreamMaster::processStream(Streamer &Stream) {
   auto ProcessStartTime = std::chrono::system_clock::now();
-  FileWriter::ProcessMessageResult ProcessResult;
 
   // Consume and process messages
   while ((std::chrono::system_clock::now() - ProcessStartTime) <
@@ -76,24 +77,13 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
       return;
     }
 
-    // if the Streamer throws the stream is closed, but the file writing
-    // continues
+    // if the Streamer throws then set the stream to finished, but the file
+    // writing continues
     try {
-      ProcessResult = Stream.pollAndProcess(Demux);
+      Stream.process();
     } catch (std::exception &E) {
       Logger->error("Stream closed due to stream error: {}", E.what());
-      closeStream(Stream, Demux.topic());
-      return;
-    }
-
-    // We've reached the stop offsets, we can close the stream
-    if (ProcessResult == ProcessMessageResult::STOP) {
-      closeStream(Stream, Demux.topic());
-      return;
-    } else if (ProcessResult == ProcessMessageResult::ERR) {
-      // if there's any error in the messages log it
-      Logger->info("Topic \"{}\" : {}", Demux.topic(),
-                   Err2Str(Stream.runStatus()));
+      Stream.setFinished();
       return;
     }
   }
@@ -101,31 +91,22 @@ void StreamMaster::processStream(Streamer &Stream, DemuxTopic &Demux) {
 
 void StreamMaster::run() {
   RunStatus.store(StreamMasterError::RUNNING);
-  while (!Stop) {
-    for (auto &Demux : WriterTask->demuxers()) {
-      auto &s = Streamers[Demux.topic()];
-      processStream(s, Demux);
+
+  while (!Stop && StreamersRemaining.load()) {
+    bool StreamsStillWriting = false;
+
+    for (auto &TopicStreamerPair : Streamers) {
+      if (TopicStreamerPair.second.runStatus() !=
+          Status::StreamerStatus::HAS_FINISHED) {
+        StreamsStillWriting = true;
+        processStream(TopicStreamerPair.second);
+      }
     }
+    // Only update once we know the final answer to avoid race conditions
+    StreamersRemaining.store(StreamsStillWriting);
   }
   RunStatus.store(StreamMasterError::HAS_FINISHED);
   doStop();
-}
-
-void StreamMaster::closeStream(Streamer &Stream, const std::string &TopicName) {
-  if (Stream.runStatus() != Status::StreamerStatus::HAS_FINISHED) {
-    // Only decrement active streamer count if we haven't already marked it as
-    // finished
-    NumStreamers--;
-    Logger->info(
-        "Stopped streamer consuming from {}. {} streamers still running.",
-        TopicName, NumStreamers);
-  }
-  Stream.close();
-
-  if (NumStreamers == 0) {
-    // No more streams open, so stop the StreamMaster
-    Stop = true;
-  }
 }
 
 void StreamMaster::doStop() {
@@ -147,5 +128,10 @@ void StreamMaster::doStop() {
   Logger->debug("StreamMaster is removable");
 }
 
-bool StreamMaster::isDoneWriting() { return NumStreamers == 0; }
+bool StreamMaster::isDoneWriting() { return !StreamersRemaining.load(); }
+
+std::string StreamMaster::getJobId() const { return WriterTask->jobID(); }
+
+nlohmann::json StreamMaster::getStatus() const { return WriterTask->stats(); }
+
 } // namespace FileWriter

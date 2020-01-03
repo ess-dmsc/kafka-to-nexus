@@ -91,8 +91,6 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   auto StreamGroup = hdf5::node::get_group(
       RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
   HDFWriterModule->init_hdf({StreamGroup}, StreamSettings.Attributes);
-  HDFWriterModule->close();
-  HDFWriterModule.reset();
 }
 
 /// Helper to extract information about the provided streams.
@@ -132,7 +130,7 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
 std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
     StartCommandInfo const &StartInfo,
     std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-    MainOpt &Settings) {
+    MainOpt &Settings, SharedLogger const &Logger) {
   auto Task =
       std::make_unique<FileWriterTask>(Settings.ServiceID, StatusProducer);
   Task->setJobId(StartInfo.JobID);
@@ -225,8 +223,7 @@ void JobCreator::addStreamSourceToWriterModule(
 
       // Create a Source instance for the stream and add to the task.
       Source ThisSource(StreamSettings.Source, StreamSettings.Module,
-                        move(HDFWriterModule));
-      ThisSource.setTopic(StreamSettings.Topic);
+                        StreamSettings.Topic, move(HDFWriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {
       Logger->warn(

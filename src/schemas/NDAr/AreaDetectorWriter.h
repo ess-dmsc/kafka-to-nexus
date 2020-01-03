@@ -51,8 +51,6 @@ public:
 
   void write(FlatbufferMessage const &Message) override;
 
-  int32_t close() override;
-
 protected:
   void initValueDataset(hdf5::node::Group &Parent);
   enum class Type {

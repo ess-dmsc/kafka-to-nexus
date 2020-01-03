@@ -226,6 +226,13 @@ TEST_F(f142ConfigParse, DataTypes) {
 class f142WriteData : public ::testing::Test {
 public:
   void SetUp() override {
+    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
+        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
+    Readers.clear();
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FileWriter::Schemas::f142::FlatbufferReader>
+        RegisterIt("f142");
+
     TestFile =
         HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
     RootGroup = TestFile.H5File.root();
