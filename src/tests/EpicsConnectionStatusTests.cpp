@@ -114,53 +114,21 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
 
   auto StatusDataset = UsedGroup.get_dataset(StatusName);
   std::vector<std::string> StatusData(StatusDataset.dataspace().size());
-  auto Datatype = hdf5::datatype::String::variable();
+  auto Datatype = hdf5::datatype::String::fixed(20);
   Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   auto Dataspace = hdf5::dataspace::Simple({1});
   EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
-  EXPECT_EQ(StatusData[0], "CONNECTED");
-}
-
-TEST_F(Schema_ep00, SuccessfulParseKB) {
-  ep00::HDFWriterModule Writer;
-  auto Chunk = 42;
-  auto Buffer = 42;
-  auto Packet = 42;
-  std::string Command =
-      fmt::format("{{\"nexus\": {{\n\"chunk\": {{\n\"chunk_kb\": "
-                  "{}\n}},\n\"buffer\": {{\n\"size_kb\": "
-                  "{},\n\"packet_max_kb\": {}\n}}\n}}}}",
-                  Chunk, Buffer, Packet);
-  EXPECT_NO_THROW(Writer.parse_config(Command, ""));
-  EXPECT_EQ(Writer.BufferPacketMax, Packet * 1024U);
-  EXPECT_EQ(Writer.ChunkBytes, Chunk * 1024U);
-  EXPECT_EQ(Writer.BufferSize, Buffer * 1024U);
-}
-
-TEST_F(Schema_ep00, SuccessfulParseMB) {
-  ep00::HDFWriterModule Writer;
-  auto Chunk = 42;
-  auto Buffer = 42;
-  std::string Command =
-      fmt::format("{{\"nexus\": {{\n\"chunk\": {{\n\"chunk_mb\": "
-                  "{}\n}},\n\"buffer\": {{\n\"size_mb\": "
-                  "{}\n}}\n}}}}",
-                  Chunk, Buffer);
-  EXPECT_NO_THROW(Writer.parse_config(Command, ""));
-  EXPECT_EQ(Writer.ChunkBytes, Chunk * 1024 * 1024U);
-  EXPECT_EQ(Writer.BufferSize, Buffer * 1024 * 1024U);
-}
-
-TEST_F(Schema_ep00, SuccessfulFlushAndClose) {
-  ep00::HDFWriterModule Writer;
-  EXPECT_EQ(0, Writer.flush());
-  EXPECT_EQ(0, Writer.close());
+  std::string StringFromDataset = StatusData[0];
+  StringFromDataset.erase(
+      std::find(StringFromDataset.begin(), StringFromDataset.end(), '\0'),
+      StringFromDataset.end());
+  EXPECT_EQ(StringFromDataset, "CONNECTED");
 }
 
 TEST_F(Schema_ep00, FBReaderNoSourceName) {
   size_t BufferSize;
   uint64_t Timestamp = 5555555;
-  std::string SourceName = "";
+  std::string SourceName;
   auto Status = EventType::NEVER_CONNECTED;
   std::unique_ptr<std::int8_t[]> Buffer =
       GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
@@ -180,11 +148,15 @@ TEST_F(Schema_ep00, FBReaderNoSourceName) {
 
   auto StatusDataset = UsedGroup.get_dataset(StatusName);
   std::vector<std::string> StatusData(StatusDataset.dataspace().size());
-  auto Datatype = hdf5::datatype::String::variable();
+  auto Datatype = hdf5::datatype::String::fixed(20);
   Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
   auto Dataspace = hdf5::dataspace::Simple({1});
   EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
-  EXPECT_EQ(StatusData[0], "NEVER_CONNECTED");
+  std::string StringFromDataset = StatusData[0];
+  StringFromDataset.erase(
+      std::find(StringFromDataset.begin(), StringFromDataset.end(), '\0'),
+      StringFromDataset.end());
+  EXPECT_EQ(StringFromDataset, "NEVER_CONNECTED");
 }
 
 } // namespace ep00

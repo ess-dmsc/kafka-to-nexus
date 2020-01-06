@@ -20,7 +20,8 @@ public:
   /// \throw std::runtime_error if dataset already exists.
   ConnectionStatusTime(hdf5::node::Group const &Parent, Mode CMode,
                        size_t ChunkSize = 1024)
-      : ExtensibleDataset<std::uint64_t>(Parent, "time", CMode, ChunkSize) {
+      : ExtensibleDataset<std::uint64_t>(Parent, "connection_status_time",
+                                         CMode, ChunkSize) {
     if (Mode::Create == CMode) {
       auto StartAttr =
           ExtensibleDataset::attributes.create<std::string>("start");
@@ -38,7 +39,8 @@ public:
   /// \brief Create the alarm_status dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
   ConnectionStatus(hdf5::node::Group const &Parent, Mode CMode,
-                   size_t ChunkSize = 1024)
-      : FixedSizeString(Parent, "connection_status", CMode, ChunkSize){};
+                   size_t StringSize = 20, size_t ChunkSize = 1024)
+      : FixedSizeString(Parent, "connection_status", CMode, StringSize,
+                        ChunkSize){};
 };
 }
