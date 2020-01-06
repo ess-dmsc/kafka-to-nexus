@@ -13,7 +13,6 @@
 #include "FlatbufferReader.h"
 #include <algorithm>
 #include <cctype>
-#include <limits>
 
 namespace FileWriter {
 namespace Schemas {
@@ -23,7 +22,7 @@ using nlohmann::json;
 
 using Type = f142Writer::Type;
 
-std::string f142Writer::findDataType(const nlohmann::basic_json<> Attribute) {
+std::string f142Writer::findDataType(nlohmann::basic_json<> const &Attribute) {
   auto toLower = [](auto InString) {
     std::transform(InString.begin(), InString.end(), InString.begin(),
                    [](auto C) { return std::tolower(C); });
@@ -51,7 +50,8 @@ void makeIt(hdf5::node::Group const &Parent, hdf5::Dimensions const &Shape,
 
 void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
                       hdf5::Dimensions const &Shape,
-                      hdf5::Dimensions const &ChunkSize) {
+                      hdf5::Dimensions const &ChunkSize,
+                      nonstd::optional<std::string> const &ValueUnits) {
   using OpenFuncType = std::function<void()>;
   std::map<Type, OpenFuncType> CreateValuesMap{
       {Type::int8, [&]() { makeIt<std::int8_t>(Parent, Shape, ChunkSize); }},
@@ -71,6 +71,10 @@ void initValueDataset(hdf5::node::Group &Parent, Type ElementType,
        [&]() { makeIt<std::double_t>(Parent, Shape, ChunkSize); }},
   };
   CreateValuesMap.at(ElementType)();
+
+  if (ValueUnits) {
+    Parent["value"].attributes.create_from<std::string>("units", *ValueUnits);
+  }
 }
 
 /// Parse the configuration for this stream.
@@ -96,8 +100,10 @@ void f142Writer::parse_config(std::string const &ConfigurationStream) {
 
   if (auto ArraySizeMaybe =
           find<uint64_t>("array_size", ConfigurationStreamJson)) {
-    ArraySize = size_t(ArraySizeMaybe.inner());
+    ArraySize = size_t(*ArraySizeMaybe);
   }
+
+  ValueUnits = find<std::string>("value_units", ConfigurationStreamJson);
 
   try {
     ValueIndexInterval =
@@ -132,7 +138,7 @@ f142Writer::InitResult f142Writer::init_hdf(hdf5::node::Group &HDFGroup,
                      {
                          ArraySize,
                      },
-                     {ChunkSize, ArraySize});
+                     {ChunkSize, ArraySize}, ValueUnits);
 
     if (HDFGroup.attributes.exists("NX_class")) {
       Logger->info("NX_class already specified!");

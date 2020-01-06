@@ -286,13 +286,13 @@ TEST(HDFFileAttributesTest,
         hdf5::node::get_group(TestFile.RootGroup, "group_with_attributes")
             .attributes["string_fixed_attribute"];
     auto Type = hdf5::datatype::String(StringAttr.datatype());
-    ASSERT_FALSE(Type.is_variable_length());
-    ASSERT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
+    EXPECT_FALSE(Type.is_variable_length());
+    EXPECT_EQ(Type.encoding(), hdf5::datatype::CharacterEncoding::UTF8);
     std::string StringValue;
     StringAttr.read(StringValue, StringAttr.datatype());
     std::string Expected("string_value");
     StringValue.resize(Expected.size());
-    ASSERT_EQ(StringValue, Expected.data());
+    EXPECT_EQ(StringValue, Expected.data());
   }
 
   {
@@ -397,3 +397,129 @@ TEST(HDFFileAttributesTest, ObjectOfAttributesOfTypeString) {
     ASSERT_EQ(StringValue, "Some Value");
   }
 }
+
+TEST(HDFFileAttributesTest, NumArrayAttributeWithoutType) {
+  auto TestFile =
+      HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs", false);
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": [1,-2,4.234]
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+                  .attributes["vec"];
+  std::vector<double> AttrValue(3);
+  Attr.read(AttrValue);
+  std::vector<double> ExpectedAttr{1, -2, 4.234};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+TEST(HDFFileAttributesTest, StringArrayAttributeWithoutType) {
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": ["one", "two", "three", "four"],
+              "encoding":"ascii"
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+                  .attributes["vec"];
+  std::vector<std::string> AttrValue(4);
+  Attr.read(AttrValue);
+  std::vector<std::string> ExpectedAttr{"one", "two", "three", "four"};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+TEST(HDFFileAttributesTest, MixedArrayAttributeWithoutType) {
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": ["one", 2, "three", "four"],
+              "encoding":"ascii"
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+                  .attributes["vec"];
+  std::vector<std::string> AttrValue(4);
+  Attr.read(AttrValue);
+  std::vector<std::string> ExpectedAttr{"one", "2", "three", "four"};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+TEST(HDFFileAttributesTest, EmptyStringArrayAttributeWithoutType) {
+  auto TestFile = HDFFileTestHelper::createInMemoryTestFile("in-mem-file.nxs");
+
+  std::string CommandWithNumericalAttr = R""({
+      "children": [
+        {
+          "type": "dataset",
+          "name": "dataset_with_numerical_attr",
+          "values" : 3,
+          "attributes": [
+            {
+              "name": "vec",
+              "values": ["", ""],
+              "encoding":"ascii"
+            }
+          ]
+        }
+      ]
+    })"";
+  std::vector<FileWriter::StreamHDFInfo> EmptyStreamHDFInfo;
+  TestFile.init(CommandWithNumericalAttr, EmptyStreamHDFInfo);
+
+  auto Attr = hdf5::node::get_dataset(TestFile.RootGroup,
+                                      "/dataset_with_numerical_attr")
+                  .attributes["vec"];
+  std::vector<std::string> AttrValue(2);
+  Attr.read(AttrValue);
+  std::vector<std::string> ExpectedAttr{"", ""};
+  EXPECT_EQ(AttrValue, ExpectedAttr);
+}
+
+// Add empty string value test

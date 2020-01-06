@@ -47,7 +47,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
 
 
 def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
-    docker_compose_stop_command
+    docker_compose_stop_command,
 ):
     producer = create_producer()
 

@@ -3,7 +3,7 @@ gtest/1.8.1@bincrafters/stable
 fmt/5.3.0@bincrafters/stable
 flatbuffers/1.10.0@google/stable
 h5cpp/e99b997@ess-dmsc/test
-librdkafka/1.1.0@ess-dmsc/stable
+librdkafka/1.2.0@ess-dmsc/stable
 jsonformoderncpp/3.6.1@vthiery/stable
 streaming-data-types/358b661@ess-dmsc/stable
 CLI11/1.8.0@cliutils/stable
@@ -11,6 +11,7 @@ trompeloeil/v31@ess-dmsc/stable
 date/4b46deb@ess-dmsc/stable
 spdlog-graylog/1.2.1-dm8@ess-dmsc/testing
 asio/1.13.0@bincrafters/stable
+optional-lite/3.2.0@bincrafters/stable
 
 [generators]
 cmake

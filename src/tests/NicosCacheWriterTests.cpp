@@ -38,19 +38,19 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
   std::string Value;
 
   if (auto Val = find<double>("time", Json)) {
-    Time = Val.inner();
+    Time = *Val;
   }
   if (auto Val = find<std::string>("key", Json)) {
-    Key = Val.inner();
+    Key = *Val;
   }
   if (auto Val = find<std::string>("value", Json)) {
-    Value = Val.inner();
+    Value = *Val;
   }
   if (auto Val = find<double>("ttl", Json)) {
-    Ttl = Val.inner();
+    Ttl = *Val;
   }
   if (auto Val = find<uint8_t>("expired", Json)) {
-    Expired = Val.inner();
+    Expired = *Val;
   }
 
   auto Builder = std::make_unique<flatbuffers::FlatBufferBuilder>();
@@ -95,7 +95,7 @@ TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
       "key": "nicos/device/parameter",
       "writer_module": "ns10",
       "time": 123.456,
-      "value": "a string"
+      "value": "10.01"
     })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
@@ -199,7 +199,7 @@ TEST_F(NicosCacheWriterTest, WriteTimeStamp) {
     "key": "nicos/device/parameter",
     "writer_module": "ns10",
     "time": 123.456,
-    "value": "a string"
+    "value": "10.01"
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
@@ -229,7 +229,7 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
     "key": "nicos/device/parameter",
     "writer_module": "ns10",
     "time": 123.456,
-    "value": "a string"
+    "value": "10.01"
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
@@ -239,9 +239,9 @@ TEST_F(NicosCacheWriterTest, WriteValues) {
 
   Writer.write(Message);
 
-  std::string storedValues;
-  Writer.Values.read(storedValues);
-  EXPECT_EQ(BufferJson["value"], storedValues);
+  double storedValue;
+  Writer.Values.read(storedValue);
+  EXPECT_EQ(10.01, storedValue);
 }
 
 TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
@@ -259,7 +259,7 @@ TEST_F(NicosCacheWriterTest, IgnoreMessagesFromDifferentSource) {
     "key": "nicos/device2/parameter",
     "writer_module": "ns10",
     "time": 123.456,
-    "value": "a string"
+    "value": "10.01"
   })"_json;
 
   auto Builder = createFlatbufferMessageFromJson(BufferJson);
@@ -291,7 +291,7 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
     "key": "nicos/device/parameter",
     "writer_module": "ns10",
     "time": 123.456,
-    "value": "a string"
+    "value": "10.01"
   })"_json;
 
   for (uint64_t i = 0; i < 10; ++i) {
@@ -304,4 +304,55 @@ TEST_F(NicosCacheWriterTest, UpdateCueIndex) {
 
   uint32_t Index;
   EXPECT_NO_THROW(Writer.CueTimestampIndex.read(Index));
+}
+
+TEST_F(NicosCacheWriterTest, ThrowsIfValueCannotBeCastToDouble) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter"
+  })"_json;
+
+  CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump());
+
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+
+  nlohmann::json BufferJson = R"({
+    "key": "nicos/device/parameter",
+    "writer_module": "ns10",
+    "time": 123.456,
+    "value": "This is a string"
+  })"_json;
+
+  auto Builder = createFlatbufferMessageFromJson(BufferJson);
+  auto Message = FileWriter::FlatbufferMessage(
+      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
+
+  EXPECT_THROW(Writer.write(Message), std::invalid_argument);
+}
+
+TEST_F(NicosCacheWriterTest, ThrowsIfValueDoesNotFitIntoDouble) {
+  nlohmann::json JsonConfig = R"({
+    "source" : "nicos/device/parameter"
+  })"_json;
+
+  CacheWriterF Writer;
+  Writer.parse_config(JsonConfig.dump());
+
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
+
+  nlohmann::json BufferJson = R"({
+    "key": "nicos/device/parameter",
+    "writer_module": "ns10",
+    "time": 123.456,
+    "value": "2e1024"
+  })"_json;
+
+  auto Builder = createFlatbufferMessageFromJson(BufferJson);
+  auto Message = FileWriter::FlatbufferMessage(
+      reinterpret_cast<char *>(Builder->GetBufferPointer()),
+      Builder->GetSize());
+  EXPECT_THROW(Writer.write(Message), std::out_of_range);
 }

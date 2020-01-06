@@ -12,8 +12,8 @@
 #include "NeXusDataset.h"
 
 namespace NeXusDataset {
-RawValue::RawValue(hdf5::node::Group const &Parent, Mode CMode,
-                   size_t ChunkSize)
+UInt16Value::UInt16Value(hdf5::node::Group const &Parent, Mode CMode,
+                         size_t ChunkSize)
     : ExtensibleDataset<std::uint16_t>(Parent, "raw_value", CMode, ChunkSize) {}
 
 Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
@@ -25,6 +25,11 @@ Time::Time(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
     UnitAttr.write("ns");
   }
 }
+
+DoubleValue::DoubleValue(hdf5::node::Group const &Parent,
+                         NeXusDataset::Mode CMode, size_t ChunkSize)
+    : NeXusDataset::ExtensibleDataset<double>(Parent, "value", CMode,
+                                              ChunkSize) {}
 
 CueIndex::CueIndex(hdf5::node::Group const &Parent, Mode CMode,
                    size_t ChunkSize)
@@ -48,7 +53,12 @@ EventId::EventId(hdf5::node::Group const &Parent, Mode CMode, size_t ChunkSize)
 EventTimeOffset::EventTimeOffset(hdf5::node::Group const &Parent, Mode CMode,
                                  size_t ChunkSize)
     : ExtensibleDataset<std::uint32_t>(Parent, "event_time_offset", CMode,
-                                       ChunkSize) {}
+                                       ChunkSize) {
+  if (Mode::Create == CMode) {
+    auto UnitAttr = ExtensibleDataset::attributes.create<std::string>("units");
+    UnitAttr.write("ns");
+  }
+}
 
 EventIndex::EventIndex(hdf5::node::Group const &Parent, Mode CMode,
                        size_t ChunkSize)

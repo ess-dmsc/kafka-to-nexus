@@ -18,13 +18,21 @@
 
 namespace NeXusDataset {
 
-class RawValue : public ExtensibleDataset<std::uint16_t> {
+class UInt16Value : public ExtensibleDataset<std::uint16_t> {
 public:
-  RawValue() = default;
+  UInt16Value() = default;
   /// \brief Create the raw_value dataset of NXLog.
   /// \throw std::runtime_error if dataset already exists.
-  RawValue(hdf5::node::Group const &Parent, Mode CMode,
-           size_t ChunkSize = 1024);
+  UInt16Value(hdf5::node::Group const &Parent, Mode CMode,
+              size_t ChunkSize = 1024);
+};
+
+class DoubleValue : public NeXusDataset::ExtensibleDataset<double> {
+public:
+  DoubleValue() = default;
+  /// \brief Create the value dataset of NXLog.
+  DoubleValue(hdf5::node::Group const &Parent, NeXusDataset::Mode CMode,
+              size_t ChunkSize = 1024);
 };
 
 class Time : public ExtensibleDataset<std::uint64_t> {

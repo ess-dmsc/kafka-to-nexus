@@ -21,7 +21,7 @@ template <typename T>
 T getValue(const std::string &Key, nlohmann::json &Document) {
 
   if (auto x = find<T>(Key, Document)) {
-    return x.inner();
+    return *x;
   }
 
   throw std::runtime_error("Could not get value");

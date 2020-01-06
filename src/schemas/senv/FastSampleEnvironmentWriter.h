@@ -56,7 +56,7 @@ public:
   int32_t close() override;
 
 protected:
-  NeXusDataset::RawValue Value;
+  NeXusDataset::UInt16Value Value;
   NeXusDataset::Time Timestamp;
   NeXusDataset::CueIndex CueTimestampIndex;
   NeXusDataset::CueTimestampZero CueTimestamp;
