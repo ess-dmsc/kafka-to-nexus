@@ -41,11 +41,11 @@ def test_ep00(docker_compose):
 
     filepath = "output-files/output_file_ep00.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
-        assert file["EpicsConnectionStatus/alarm_time"][
+        assert file["EpicsConnectionStatus/connection_status_time"][
             0
         ] == _millseconds_to_nanoseconds(timestamp)
-        assert file["EpicsConnectionStatus/alarm_status"][0] == "NEVER_CONNECTED"
-        assert file["EpicsConnectionStatus/alarm_time"][
+        assert file["EpicsConnectionStatus/connection_status"][0] == "NEVER_CONNECTED"
+        assert file["EpicsConnectionStatus/connection_status_time"][
             1
         ] == _millseconds_to_nanoseconds(timestamp + 1)
-        assert file["EpicsConnectionStatus/alarm_status"][1] == "CONNECTED"
+        assert file["EpicsConnectionStatus/connection_status"][1] == "CONNECTED"

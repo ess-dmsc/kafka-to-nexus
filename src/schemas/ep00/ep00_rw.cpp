@@ -68,8 +68,8 @@ HDFWriterModule::InitResult
 HDFWriterModule::init_hdf(hdf5::node::Group &HDFGroup,
                           std::string const *HDFAttributes,
                           CreateWriterTypedBaseMethod CreateMethod) {
-  const std::string StatusName = "alarm_status";
-  const std::string TimestampName = "alarm_time";
+  const std::string StatusName = "connection_status";
+  const std::string TimestampName = "connection_status_time";
 
   try {
     if (CreateMethod == CreateWriterTypedBaseMethod::CREATE) {

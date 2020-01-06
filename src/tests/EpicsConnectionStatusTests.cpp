@@ -3,6 +3,11 @@
 #include "HDFWriterModule.h"
 #include <gtest/gtest.h>
 
+namespace {
+const std::string StatusName = "connection_status";
+const std::string TimestampName = "connection_status_time";
+}
+
 namespace FileWriter {
 namespace Schemas {
 namespace ep00 {
@@ -57,8 +62,8 @@ TEST_F(Schema_ep00, FileInitOk) {
               HDFWriterModule_detail::InitResult::OK);
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
   auto TestGroup = RootGroup.get_group(NXLogGroup);
-  EXPECT_TRUE(TestGroup.has_dataset("alarm_status"));
-  EXPECT_TRUE(TestGroup.has_dataset("alarm_time"));
+  EXPECT_TRUE(TestGroup.has_dataset(StatusName));
+  EXPECT_TRUE(TestGroup.has_dataset(TimestampName));
 }
 
 TEST_F(Schema_ep00, ReopenFile) {
@@ -101,13 +106,13 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto TimeDataSet = UsedGroup.get_dataset("alarm_time");
+  auto TimeDataSet = UsedGroup.get_dataset(TimestampName);
   auto Size = TimeDataSet.dataspace().size();
   std::vector<uint64_t> Timestamps(Size);
   TimeDataSet.read(Timestamps);
   EXPECT_EQ(Timestamps[0], Timestamp);
 
-  auto StatusDataset = UsedGroup.get_dataset("alarm_status");
+  auto StatusDataset = UsedGroup.get_dataset(StatusName);
   std::vector<std::string> StatusData(StatusDataset.dataspace().size());
   auto Datatype = hdf5::datatype::String::variable();
   Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
@@ -167,13 +172,13 @@ TEST_F(Schema_ep00, FBReaderNoSourceName) {
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
   EXPECT_NO_THROW(Writer.write(TestMsg));
-  auto TimeDataSet = UsedGroup.get_dataset("alarm_time");
+  auto TimeDataSet = UsedGroup.get_dataset(TimestampName);
   auto Size = TimeDataSet.dataspace().size();
   std::vector<uint64_t> Timestamps(Size);
   TimeDataSet.read(Timestamps);
   EXPECT_EQ(Timestamps[0], Timestamp);
 
-  auto StatusDataset = UsedGroup.get_dataset("alarm_status");
+  auto StatusDataset = UsedGroup.get_dataset(StatusName);
   std::vector<std::string> StatusData(StatusDataset.dataspace().size());
   auto Datatype = hdf5::datatype::String::variable();
   Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
