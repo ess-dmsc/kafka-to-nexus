@@ -6,6 +6,12 @@
 namespace {
 const std::string StatusName = "connection_status";
 const std::string TimestampName = "connection_status_time";
+
+void removeTrailingNullFromString(std::string &StringToTruncate) {
+  StringToTruncate.erase(
+      std::find(StringToTruncate.begin(), StringToTruncate.end(), '\0'),
+      StringToTruncate.end());
+}
 }
 
 namespace FileWriter {
@@ -119,9 +125,7 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
   auto Dataspace = hdf5::dataspace::Simple({1});
   EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
   std::string StringFromDataset = StatusData[0];
-  StringFromDataset.erase(
-      std::find(StringFromDataset.begin(), StringFromDataset.end(), '\0'),
-      StringFromDataset.end());
+  removeTrailingNullFromString(StringFromDataset);
   EXPECT_EQ(StringFromDataset, "CONNECTED");
 }
 
@@ -153,9 +157,7 @@ TEST_F(Schema_ep00, FBReaderNoSourceName) {
   auto Dataspace = hdf5::dataspace::Simple({1});
   EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
   std::string StringFromDataset = StatusData[0];
-  StringFromDataset.erase(
-      std::find(StringFromDataset.begin(), StringFromDataset.end(), '\0'),
-      StringFromDataset.end());
+  removeTrailingNullFromString(StringFromDataset);
   EXPECT_EQ(StringFromDataset, "NEVER_CONNECTED");
 }
 
