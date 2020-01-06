@@ -6,6 +6,7 @@ set(ep00_module_SRC
 set(ep00_module_INC
     ep00_rw.h
     FlatbufferReader.h
+    ConnectionStatusDatasets.h
 )
 
 create_module(ep00_module)
