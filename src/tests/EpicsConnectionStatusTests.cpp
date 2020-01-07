@@ -104,10 +104,8 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
       GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
   ep00::HDFWriterModule Writer;
   {
-    EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
-                HDFWriterModule_detail::InitResult::OK);
-    EXPECT_TRUE(Writer.reopen(UsedGroup) ==
-                HDFWriterModule_detail::InitResult::OK);
+    Writer.init_hdf(UsedGroup, "{}");
+    Writer.reopen(UsedGroup);
   }
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
@@ -127,36 +125,6 @@ TEST_F(Schema_ep00, WriteDataSuccess) {
   std::string StringFromDataset = StatusData[0];
   removeTrailingNullFromString(StringFromDataset);
   EXPECT_EQ(StringFromDataset, "CONNECTED");
-}
-
-TEST_F(Schema_ep00, FBReaderNoSourceName) {
-  size_t BufferSize;
-  uint64_t Timestamp = 5555555;
-  std::string SourceName;
-  auto Status = EventType::NEVER_CONNECTED;
-  std::unique_ptr<std::int8_t[]> Buffer =
-      GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
-  ep00::HDFWriterModule Writer;
-  Writer.init_hdf(UsedGroup, "{}");
-  Writer.reopen(UsedGroup);
-  FileWriter::FlatbufferMessage TestMsg(
-      reinterpret_cast<const char *>(Buffer.get()), BufferSize);
-  Writer.write(TestMsg);
-  auto TimeDataSet = UsedGroup.get_dataset(TimestampName);
-  auto Size = TimeDataSet.dataspace().size();
-  std::vector<uint64_t> Timestamps(Size);
-  TimeDataSet.read(Timestamps);
-  EXPECT_EQ(Timestamps[0], Timestamp);
-
-  auto StatusDataset = UsedGroup.get_dataset(StatusName);
-  std::vector<std::string> StatusData(StatusDataset.dataspace().size());
-  auto Datatype = hdf5::datatype::String::fixed(20);
-  Datatype.encoding(hdf5::datatype::CharacterEncoding::UTF8);
-  auto Dataspace = hdf5::dataspace::Simple({1});
-  EXPECT_NO_THROW(StatusDataset.read(StatusData, Datatype, Dataspace));
-  std::string StringFromDataset = StatusData[0];
-  removeTrailingNullFromString(StringFromDataset);
-  EXPECT_EQ(StringFromDataset, "NEVER_CONNECTED");
 }
 
 } // namespace ep00
