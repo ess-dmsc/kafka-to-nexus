@@ -44,8 +44,8 @@ def test_ep00(docker_compose):
         assert file["EpicsConnectionStatus/connection_status_time"][
             0
         ] == _millseconds_to_nanoseconds(timestamp)
-        assert file["EpicsConnectionStatus/connection_status"][0] == "NEVER_CONNECTED"
+        assert file["EpicsConnectionStatus/connection_status"][0] == b"NEVER_CONNECTED"
         assert file["EpicsConnectionStatus/connection_status_time"][
             1
         ] == _millseconds_to_nanoseconds(timestamp + 1)
-        assert file["EpicsConnectionStatus/connection_status"][1] == "CONNECTED"
+        assert file["EpicsConnectionStatus/connection_status"][1] == b"CONNECTED"

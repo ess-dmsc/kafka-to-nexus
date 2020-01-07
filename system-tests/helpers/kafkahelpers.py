@@ -1,5 +1,6 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
 from .flatbufferhelpers import create_ep00_message
+from .flatbufferhelpers import create_f142_message
 import uuid
 
 
@@ -49,3 +50,18 @@ def publish_ep00_message(producer, topic, status, kafka_timestamp=None):
 
     ep00_message = create_ep00_message(status, timestamp=kafka_timestamp)
     producer.produce(topic, ep00_message, timestamp=kafka_timestamp)
+
+
+def publish_f142_message(producer, topic, kafka_timestamp=None):
+    """
+    Publish an f142 message to a given topic.
+    Optionally set the timestamp in the kafka header to allow, for example, fake "historical" data.
+    :param topic: Name of topic to publish to
+    :param kafka_timestamp: Timestamp to set in the Kafka header (milliseconds after unix epoch)
+    """
+    f142_message = create_f142_message(kafka_timestamp)
+    producer.produce(topic, f142_message, timestamp=kafka_timestamp)
+    # Flush producer queue after each message, we don't want the messages to be batched in our tests
+    # for example in test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past
+    producer.flush()
+    producer.poll(0)

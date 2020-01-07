@@ -21,12 +21,6 @@
               "writer_module": "ep00"
             }
           }
-        ],
-        "attributes": [
-          {
-            "name": "NX_class",
-            "values": "NXlog"
-          }
         ]
       }
     ]
