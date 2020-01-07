@@ -1,4 +1,11 @@
 import flatbuffers
+from .ep00.EpicsConnectionInfo import (
+    EpicsConnectionInfoAddType,
+    EpicsConnectionInfoAddTimestamp,
+    EpicsConnectionInfoAddSourceName,
+    EpicsConnectionInfoStart,
+    EpicsConnectionInfoEnd,
+)
 from .f142_logdata import LogData
 from .f142_logdata.Value import Value
 from .f142_logdata.Int import IntStart, IntAddValue, IntEnd
@@ -25,6 +32,23 @@ def create_f142_message(timestamp_unix_ms=None):
     log_msg = LogData.LogDataEnd(builder)
     builder.Finish(log_msg)
 
+    # Generate the output and replace the file_identifier
+    buff = builder.Output()
+    buff[4:8] = file_identifier
+    return bytes(buff)
+
+
+def create_ep00_message(status, timestamp):
+    file_identifier = b"ep00"
+    builder = flatbuffers.Builder(1024)
+    source = builder.CreateString("SIMPLE:DOUBLE")
+    EpicsConnectionInfoStart(builder)
+    EpicsConnectionInfoAddType(builder, status)
+    EpicsConnectionInfoAddSourceName(builder, source)
+
+    EpicsConnectionInfoAddTimestamp(builder, _millseconds_to_nanoseconds(timestamp))
+    end = EpicsConnectionInfoEnd(builder)
+    builder.Finish(end)
     # Generate the output and replace the file_identifier
     buff = builder.Output()
     buff[4:8] = file_identifier

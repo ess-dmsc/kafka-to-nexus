@@ -1,4 +1,5 @@
 from confluent_kafka import Producer, Consumer, TopicPartition
+from .flatbufferhelpers import create_ep00_message
 from .flatbufferhelpers import create_f142_message
 import uuid
 
@@ -43,6 +44,12 @@ def consume_everything(topic):
     low, high = consumer.get_watermark_offsets(topicpart)
 
     return consumer.consume(high - 1)
+
+
+def publish_ep00_message(producer, topic, status, kafka_timestamp=None):
+
+    ep00_message = create_ep00_message(status, timestamp=kafka_timestamp)
+    producer.produce(topic, ep00_message, timestamp=kafka_timestamp)
 
 
 def publish_f142_message(producer, topic, kafka_timestamp=None):

@@ -2,6 +2,6 @@ pytest
 confluent-kafka
 docker-compose
 docker
-h5py
+h5py>=2.10.0
 flatbuffers
 black

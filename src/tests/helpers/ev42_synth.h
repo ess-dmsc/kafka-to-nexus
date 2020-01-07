@@ -42,7 +42,7 @@ public:
   std::unique_ptr<SynthImpl> Impl;
 
 private:
-  SharedLogger Logger = spdlog::get("filewriterlogger");
+  SharedLogger Logger = getLogger();
 };
 
 } // namespace ev42

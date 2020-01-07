@@ -32,6 +32,7 @@ set(UnitTests_SRC
         ConsumerTests.cpp
         ChopperTimeStampWriterTests.cpp
         NicosCacheWriterTests.cpp
+        EpicsConnectionStatusTests.cpp
         StreamMasterTests.cpp
         StreamsControllerTests.cpp
         CommandParserTests.cpp
