@@ -1,6 +1,6 @@
 #include "ep00_rw.h"
-#include <HDFFile.h>
-#include <json.h>
+#include "HDFFile.h"
+#include "json.h"
 
 namespace FileWriter {
 namespace Schemas {
@@ -55,8 +55,6 @@ void HDFWriterModule::write(FlatbufferMessage const &Message) {
 }
 
 int32_t HDFWriterModule::close() { return 0; }
-
-HDFWriterModule::HDFWriterModule() {}
 
 } // namespace ep00
 } // namespace Schemas
