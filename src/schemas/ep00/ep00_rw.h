@@ -19,7 +19,7 @@ public:
 
   int32_t close() override;
 
-  HDFWriterModule();
+  HDFWriterModule() = default;
   ~HDFWriterModule() override = default;
   size_t BufferSize = 0;
   size_t BufferPacketMax = 0;
