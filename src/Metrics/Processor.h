@@ -64,7 +64,7 @@ protected:
 
   void threadFunction();
 
-  void generateGrafanaUpdate();
+  void generateCarbonUpdate();
 
   void generateLogMessages();
 

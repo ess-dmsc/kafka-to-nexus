@@ -102,7 +102,7 @@ void Processor::threadFunction() {
     std::this_thread::sleep_until(NextWakeTime);
     Now = std::chrono::system_clock::now();
     if (Now > NextGrafanaTime) {
-      generateGrafanaUpdate();
+      generateCarbonUpdate();
     }
     if (Now > NextLogMsgTime) {
       generateLogMessages();
@@ -135,7 +135,7 @@ void Processor::generateLogMessages() {
   }
 }
 
-void Processor::generateGrafanaUpdate() {
+void Processor::generateCarbonUpdate() {
   if (not Carbon.messageQueueEmpty()) {
     return;
   }

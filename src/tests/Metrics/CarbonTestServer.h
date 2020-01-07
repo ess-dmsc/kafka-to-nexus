@@ -6,7 +6,7 @@
 #include <thread>
 #include <vector>
 
-typedef std::shared_ptr<asio::ip::tcp::socket> sock_ptr;
+using sock_ptr = std::shared_ptr<asio::ip::tcp::socket>;
 
 //------------------------------------------------------------------------------
 //     THIS CLASS IS NOT THREAD SAFE AND MAY CRASH AT ANY MOMENT

@@ -59,7 +59,7 @@ private:
   void reConnect(ReconnectDelay Delay);
   void tryConnect(QueryResult AllEndpoints);
 
-  typedef std::unique_ptr<asio::io_service::work> WorkPtr;
+  using WorkPtr = std::unique_ptr<asio::io_service::work>;
 
   std::array<std::uint8_t, 64> InputBuffer{};
   asio::io_service Service;

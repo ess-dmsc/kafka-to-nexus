@@ -9,6 +9,14 @@ class MetricsProcessorTest : public ::testing::Test {
 public:
 };
 
+class MetricsProcessorCarbonTest : public ::testing::Test {
+public:
+};
+
+class MetricsProcessorLogTest : public ::testing::Test {
+public:
+};
+
 TEST_F(MetricsProcessorTest, RegisterNothing) {
   auto TestName = std::string("SomeName");
   CounterType Ctr;
@@ -80,13 +88,13 @@ TEST_F(MetricsProcessorTest, SecondRegistrationFail) {
   EXPECT_EQ(UnderTest.LogMsgMetrics.size(), 1u);
 }
 
-TEST_F(MetricsProcessorTest, DeRegisterFail1) {
+TEST_F(MetricsProcessorTest, DeRegisterUnknownMetric) {
   auto TestName = std::string("SomeName");
   ProcessorStandIn UnderTest;
   EXPECT_FALSE(UnderTest.deRegisterMetricBase(TestName));
 }
 
-TEST_F(MetricsProcessorTest, DeRegisterFail2) {
+TEST_F(MetricsProcessorTest, DeRegisterUnknownMetricAlt) {
   auto TestName = std::string("SomeName");
   CounterType Ctr;
   auto Description = std::string("Some description");
@@ -153,7 +161,7 @@ public:
 
 using trompeloeil::_;
 
-TEST_F(MetricsProcessorTest, NoLogMsgUpdate1) {
+TEST_F(MetricsProcessorLogTest, NoCounterUpdateNoMsg) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -167,7 +175,7 @@ TEST_F(MetricsProcessorTest, NoLogMsgUpdate1) {
   EXPECT_EQ(UsedLogger->MessagesWithSubString, 1);
 }
 
-TEST_F(MetricsProcessorTest, NoLogMsgUpdate2) {
+TEST_F(MetricsProcessorLogTest, CounterUpdateButNoMsg) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -181,7 +189,7 @@ TEST_F(MetricsProcessorTest, NoLogMsgUpdate2) {
   EXPECT_EQ(UsedLogger->MessagesWithSubString, 0);
 }
 
-TEST_F(MetricsProcessorTest, NoLogMsgUpdate3) {
+TEST_F(MetricsProcessorLogTest, CounterUpdateButNoMsgAlt) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -195,7 +203,7 @@ TEST_F(MetricsProcessorTest, NoLogMsgUpdate3) {
   EXPECT_EQ(UsedLogger->MessagesWithSubString, 1);
 }
 
-TEST_F(MetricsProcessorTest, OneLogMsgUpate) {
+TEST_F(MetricsProcessorLogTest, CounterUpdateAndMsg) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -212,7 +220,7 @@ TEST_F(MetricsProcessorTest, OneLogMsgUpate) {
 
 using trompeloeil::_;
 
-TEST_F(MetricsProcessorTest, NoCarbonValueChange) {
+TEST_F(MetricsProcessorCarbonTest, NoCounterUpdate) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -224,7 +232,7 @@ TEST_F(MetricsProcessorTest, NoCarbonValueChange) {
   std::this_thread::sleep_for(50ms);
 }
 
-TEST_F(MetricsProcessorTest, NoCarbonMsg1) {
+TEST_F(MetricsProcessorCarbonTest, NotCarbonMetric) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -235,7 +243,7 @@ TEST_F(MetricsProcessorTest, NoCarbonMsg1) {
   std::this_thread::sleep_for(50ms);
 }
 
-TEST_F(MetricsProcessorTest, NoCarbonMsg2) {
+TEST_F(MetricsProcessorCarbonTest, NotCarbonMetricAlt) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -246,7 +254,7 @@ TEST_F(MetricsProcessorTest, NoCarbonMsg2) {
   std::this_thread::sleep_for(50ms);
 }
 
-TEST_F(MetricsProcessorTest, CarbonUpdate) {
+TEST_F(MetricsProcessorCarbonTest, CounterUpdate) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
@@ -260,7 +268,7 @@ TEST_F(MetricsProcessorTest, CarbonUpdate) {
   std::this_thread::sleep_for(50ms);
 }
 
-TEST_F(MetricsProcessorTest, QueuedCarbonMsg) {
+TEST_F(MetricsProcessorCarbonTest, NoMsgDueToQue) {
   auto TestName = std::string("SomeLongWindedName");
   CounterType Ctr{0};
   auto Description = std::string("A long description of a metric.");
