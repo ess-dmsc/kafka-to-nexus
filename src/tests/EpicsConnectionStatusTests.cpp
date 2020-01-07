@@ -45,7 +45,7 @@ public:
       FileWriter::FlatbufferReaderRegistry::Registrar<
           FileWriter::Schemas::ep00::FlatbufferReader>
           RegisterIt("ep00");
-    } catch (...) {
+    } catch (std::runtime_error const &error) {
     }
     File = hdf5::file::create(TestFileName, hdf5::file::AccessFlags::TRUNCATE);
     RootGroup = File.root();
@@ -78,7 +78,7 @@ TEST_F(Schema_ep00, ReopenFile) {
                HDFWriterModule_detail::InitResult::OK);
 }
 
-TEST_F(Schema_ep00, FileInitFail) {
+TEST_F(Schema_ep00, FileInitFailIfInitialisedTwice) {
   ep00::HDFWriterModule Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
               HDFWriterModule_detail::InitResult::OK);
@@ -137,13 +137,11 @@ TEST_F(Schema_ep00, FBReaderNoSourceName) {
   std::unique_ptr<std::int8_t[]> Buffer =
       GenerateFlatbufferData(BufferSize, Timestamp, Status, SourceName);
   ep00::HDFWriterModule Writer;
-  EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") ==
-              HDFWriterModule_detail::InitResult::OK);
-  EXPECT_TRUE(Writer.reopen(UsedGroup) ==
-              HDFWriterModule_detail::InitResult::OK);
+  Writer.init_hdf(UsedGroup, "{}");
+  Writer.reopen(UsedGroup);
   FileWriter::FlatbufferMessage TestMsg(
       reinterpret_cast<const char *>(Buffer.get()), BufferSize);
-  EXPECT_NO_THROW(Writer.write(TestMsg));
+  Writer.write(TestMsg);
   auto TimeDataSet = UsedGroup.get_dataset(TimestampName);
   auto Size = TimeDataSet.dataspace().size();
   std::vector<uint64_t> Timestamps(Size);
