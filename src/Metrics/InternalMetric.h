@@ -24,12 +24,12 @@ struct InternalMetric {
         DescriptionString(MetricToGetDetailsFrom.getDescription()),
         LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),
         ValueSeverity(MetricToGetDetailsFrom.getSeverity()){};
-  std::string Name;
+  std::string const Name;
   CounterType *Counter{nullptr};
-  std::string DescriptionString;
+  std::string const DescriptionString;
   std::int64_t LastValue{0};
   std::chrono::system_clock::time_point LastTime{
       std::chrono::system_clock::now()};
-  Severity ValueSeverity{Severity::ERROR};
+  Severity const ValueSeverity;
 };
 }
