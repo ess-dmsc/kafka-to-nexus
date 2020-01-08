@@ -27,5 +27,5 @@ void LogSink::reportMetric(InternalMetric &MetricToBeReported) {
         MetricToBeReported.DescriptionString);
   }
   MetricToBeReported.LastTime = Now;
-};
+}
 }

@@ -21,7 +21,7 @@ class Connection::Impl {
 public:
   Impl(std::string Host, int Port);
   virtual ~Impl();
-  virtual bool sendMessage(std::string Msg) {
+  virtual bool sendMessage(std::string const &Msg) {
     return Messages.try_enqueue(Msg);
   };
   Status getConnectionStatus() const;

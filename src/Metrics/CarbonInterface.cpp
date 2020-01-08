@@ -9,7 +9,7 @@ Connection::Connection(std::string Host, int Port)
 
 Connection::~Connection() = default;
 
-void Connection::sendMessage(std::string Msg) { Pimpl->sendMessage(Msg); }
+void Connection::sendMessage(std::string const &Msg) { Pimpl->sendMessage(Msg); }
 
 Status Connection::getConnectionStatus() const {
   return Pimpl->getConnectionStatus();

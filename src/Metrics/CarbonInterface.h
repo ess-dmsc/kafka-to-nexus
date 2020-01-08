@@ -11,7 +11,7 @@ class Connection {
 public:
   Connection(std::string Host, int Port);
   virtual ~Connection();
-  virtual void sendMessage(std::string Msg);
+  virtual void sendMessage(std::string const &Msg);
   virtual Status getConnectionStatus() const;
   virtual bool messageQueueEmpty();
   virtual size_t messageQueueSize();

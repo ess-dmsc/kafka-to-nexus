@@ -95,11 +95,11 @@ set(kafka_to_nexus_SRC
         CommandParser.cpp
         ExtensibleDataset.cpp
         Metrics/Metric.cpp
-        Metrics/Processor.cpp
         Metrics/CarbonInterface.cpp
         Metrics/CarbonConnection.cpp
         Metrics/ReporterFactory.cpp
-        Metrics/LogSink.cpp)
+        Metrics/LogSink.cpp
+        Metrics/CarbonSink.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -145,13 +145,13 @@ set(kafka_to_nexus_INC
         ExtensibleDataset.h
         Metrics/Registrar.h
         Metrics/Metric.h
-        Metrics/Processor.h
         Metrics/CarbonInterface.h
         Metrics/CarbonConnection.h
         Metrics/MetricsList.h
         Metrics/ReporterFactory.h
         Metrics/Sink.h
         Metrics/LogSink.h
+        Metrics/CarbonSink.h
         Metrics/InternalMetric.h
         Metrics/Reporter.h)
 
