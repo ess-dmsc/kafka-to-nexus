@@ -2,24 +2,26 @@
 #include "CarbonConnection.h"
 
 namespace Metrics {
+namespace Carbon {
 
-CarbonConnection::CarbonConnection(std::string Host, int Port)
-    : Pimpl(std::make_unique<CarbonConnection::Impl>(std::move(Host), Port)) {}
+Connection::Connection(std::string Host, int Port)
+    : Pimpl(std::make_unique<Connection::Impl>(std::move(Host), Port)) {}
 
-CarbonConnection::~CarbonConnection() = default;
+Connection::~Connection() = default;
 
-void CarbonConnection::sendMessage(std::string Msg) { Pimpl->sendMessage(Msg); }
+void Connection::sendMessage(std::string Msg) { Pimpl->sendMessage(Msg); }
 
-Status CarbonConnection::getConnectionStatus() const {
+Status Connection::getConnectionStatus() const {
   return Pimpl->getConnectionStatus();
 }
 
-bool CarbonConnection::messageQueueEmpty() {
+bool Connection::messageQueueEmpty() {
   return Pimpl->messageQueueEmpty();
 }
 
-size_t CarbonConnection::messageQueueSize() {
+size_t Connection::messageQueueSize() {
   return Pimpl->messageQueueSize();
 }
 
+} // namespace Carbon
 } // namespace Metrics

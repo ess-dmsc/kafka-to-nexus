@@ -11,12 +11,13 @@
 #include <thread>
 
 namespace Metrics {
+namespace Carbon {
 
 struct QueryResult;
 
 using MsgQueue = moodycamel::BlockingReaderWriterQueue<std::string>;
 
-class CarbonConnection::Impl {
+class Connection::Impl {
 public:
   Impl(std::string Host, int Port);
   virtual ~Impl();
@@ -69,4 +70,5 @@ private:
   asio::system_timer ReconnectTimeout;
 };
 
+} // namespace Carbon
 } // namespace Metrics
