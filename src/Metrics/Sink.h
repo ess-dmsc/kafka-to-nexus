@@ -16,7 +16,8 @@ struct InternalMetric;
 enum struct LogTo { CARBON, LOG_MSG };
 
 class Sink {
-virtual void reportMetric(InternalMetric &MetricToBeReported) = 0;
+public:
+  virtual void reportMetric(InternalMetric &MetricToBeReported) = 0;
 };
 
 } // namespace Metrics

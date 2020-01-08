@@ -6,10 +6,11 @@
 
 namespace Metrics {
 
-Reporter createReporter(std::shared_ptr<Registrar> const &MetricsRegistrar,
-                        Metrics::LogTo SinkType,
-                        std::string const &CarbonHost = "",
-                        uint16_t const CarbonPort = 0) {
+std::unique_ptr<Reporter>
+createReporter(std::shared_ptr<Registrar> const &MetricsRegistrar,
+               Metrics::LogTo SinkType, std::chrono::milliseconds Interval,
+               std::string const &CarbonHost = "",
+               uint16_t const CarbonPort = 0) {
   auto ListOfMetrics = std::make_shared<MetricsList>();
 
   std::unique_ptr<Sink> MetricSink;
@@ -21,10 +22,10 @@ Reporter createReporter(std::shared_ptr<Registrar> const &MetricsRegistrar,
     MetricSink = std::unique_ptr<Sink>(new LogSink());
   }
 
-  Reporter NewReporter(std::move(MetricSink), ListOfMetrics);
   MetricsRegistrar->addMetricsList(SinkType, ListOfMetrics);
 
-  return NewReporter;
+  return std::make_unique<Reporter>(std::move(MetricSink), ListOfMetrics,
+                                    Interval);
 }
 
 } // namespace Metrics

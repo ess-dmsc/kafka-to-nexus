@@ -36,6 +36,8 @@ public:
     ListOfMetrics.erase(MetricName);
   };
 
+  std::map<std::string, InternalMetric> getListOfMetrics() { return ListOfMetrics; };
+
 private:
   std::map<std::string, InternalMetric> ListOfMetrics; // MetricName: Metric
   std::mutex ListMutex;
