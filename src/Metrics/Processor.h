@@ -72,9 +72,9 @@ protected:
                                Metrics::InternalCounterType Value,
                                std::chrono::system_clock::time_point ValueTime);
 
-  std::string Prefix;
-  PollInterval LogMsgInterval;
-  PollInterval CarbonInterval;
+  std::string const Prefix;
+  PollInterval const LogMsgInterval;
+  PollInterval const CarbonInterval;
   PollInterval const ExitThreadCheckInterval{20ms};
   std::vector<InternalMetric> LogMsgMetrics;
   std::vector<InternalMetric> GrafanaMetrics;

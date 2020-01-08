@@ -23,7 +23,7 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg) {
                registerMetric(FullName, ne(nullptr), Desc, Sev, _))
       .TIMES(1)
       .RETURN(true);
-  REQUIRE_CALL(MockProcessor, deRegisterMetric(FullName)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(MockProcessor, deregisterMetric(FullName)).TIMES(1).RETURN(true);
   {
     MetricStandIn Ctr(Name, Desc, Sev);
     auto Registrar = MockProcessor.getRegistrarBase();
@@ -45,7 +45,7 @@ TEST_F(MetricsRegistrarTest, RegAndDeReg2) {
                registerMetric(FullName, ne(nullptr), Desc, Sev, _))
       .TIMES(1)
       .RETURN(true);
-  REQUIRE_CALL(MockProcessor, deRegisterMetric(FullName)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(MockProcessor, deregisterMetric(FullName)).TIMES(1).RETURN(true);
   {
     MetricStandIn Ctr(Name, Desc, Sev);
     Registrar2.registerMetric(Ctr, {});
@@ -57,7 +57,7 @@ TEST_F(MetricsRegistrarTest, RegisterEmptyNameFail) {
   auto Desc = std::string("Description");
   auto Sev = Severity::INFO;
   FORBID_CALL(MockProcessor, registerMetric(_, _, _, _, _));
-  FORBID_CALL(MockProcessor, deRegisterMetric(_));
+  FORBID_CALL(MockProcessor, deregisterMetric(_));
   auto Registrar = MockProcessor.getRegistrarBase();
   {
     MetricStandIn Ctr(EmptyName, Desc, Sev);
@@ -74,7 +74,7 @@ TEST_F(MetricsRegistrarTest, RegisterNameFail) {
                registerMetric(FullName, ne(nullptr), Desc, Sev, _))
       .TIMES(1)
       .RETURN(false);
-  FORBID_CALL(MockProcessor, deRegisterMetric(_));
+  FORBID_CALL(MockProcessor, deregisterMetric(_));
   auto Registrar = MockProcessor.getRegistrarBase();
   {
     MetricStandIn Ctr(Name, Desc, Sev);

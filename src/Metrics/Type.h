@@ -9,7 +9,7 @@ namespace Metrics {
 class ProcessorInterface;
 class Registrar;
 
-enum class Severity { DEBUG, INFO, WARNING, ERROR };
+enum struct Severity { DEBUG, INFO, WARNING, ERROR };
 
 using CounterType = std::atomic<std::int64_t>;
 using InternalCounterType = decltype(((CounterType *)(nullptr))->load());
@@ -39,21 +39,21 @@ public:
 
 protected:
   friend Registrar;
-  void setDeRegParams(std::string FullName, ProcessorInterface *Ptr) {
-    DeRegName = std::move(FullName);
-    DeRegPtr = Ptr;
+  void setDeregParams(std::string FullName, ProcessorInterface *Ptr) {
+    DeregName = std::move(FullName);
+    DeregPtr = Ptr;
   };
   std::string getName() const { return MName; }
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
-  std::string MName;
-  std::string DeRegName;
-  std::string MDesc;
-  Severity SevLvl;
+  std::string const MName;
+  std::string DeregName;
+  std::string const MDesc;
+  Severity const SevLvl;
   CounterType Counter{0};
-  ProcessorInterface *DeRegPtr{nullptr};
+  ProcessorInterface *DeregPtr{nullptr};
 
 private:
   std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};

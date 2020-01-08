@@ -28,7 +28,7 @@ public:
   size_t messageQueueSize() { return Messages.size_approx(); }
 
 protected:
-  enum class ReconnectDelay { LONG, SHORT };
+  enum struct ReconnectDelay { LONG, SHORT };
 
   void threadFunction();
   void setState(Status NewState);
@@ -39,20 +39,20 @@ protected:
 
   std::vector<char> MessageBuffer;
 
-  std::string HostAddress;
-  std::string HostPort;
+  std::string const HostAddress;
+  std::string const HostPort;
 
   std::thread AsioThread;
   MsgQueue Messages;
 
 private:
-  const size_t MessageAdditionLimit{3000};
-  void resolverHandler(const asio::error_code &Error,
+  size_t const MessageAdditionLimit{3000};
+  void resolverHandler(asio::error_code const &Error,
                        asio::ip::tcp::resolver::iterator EndpointIter);
-  void connectHandler(const asio::error_code &Error,
-                      const QueryResult &AllEndpoints);
-  void sentMessageHandler(const asio::error_code &Error, std::size_t BytesSent);
-  void receiveHandler(const asio::error_code &Error, std::size_t BytesReceived);
+  void connectHandler(asio::error_code const &Error,
+                      QueryResult const &AllEndpoints);
+  void sentMessageHandler(asio::error_code const &Error, std::size_t BytesSent);
+  void receiveHandler(asio::error_code const &Error, std::size_t BytesReceived);
   void trySendMessage();
   void waitForMessage();
   void doAddressQuery();

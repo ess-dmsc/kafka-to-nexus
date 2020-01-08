@@ -53,7 +53,7 @@ CarbonConnection::Impl::Impl(std::string Host, int Port)
 }
 
 void CarbonConnection::Impl::resolverHandler(
-    const asio::error_code &Error,
+    asio::error_code const &Error,
     asio::ip::tcp::resolver::iterator EndpointIter) {
   if (Error) {
     setState(Status::ADDR_RETRY_WAIT);
@@ -64,8 +64,8 @@ void CarbonConnection::Impl::resolverHandler(
   tryConnect(AllEndpoints);
 }
 
-void CarbonConnection::Impl::connectHandler(const asio::error_code &Error,
-                                            const QueryResult &AllEndpoints) {
+void CarbonConnection::Impl::connectHandler(asio::error_code const &Error,
+                                            QueryResult const &AllEndpoints) {
   if (!Error) {
     setState(Status::SEND_LOOP);
     auto HandlerGlue = [this](auto &Error, auto Size) {
@@ -98,7 +98,7 @@ void CarbonConnection::Impl::reconnect(ReconnectDelay Delay) {
   setState(Status::ADDR_RETRY_WAIT);
 }
 
-void CarbonConnection::Impl::receiveHandler(const asio::error_code &Error,
+void CarbonConnection::Impl::receiveHandler(asio::error_code const &Error,
                                             std::size_t BytesReceived) {
   UNUSED_ARG(BytesReceived);
   if (Error) {
@@ -138,7 +138,7 @@ void CarbonConnection::Impl::trySendMessage() {
   }
 }
 
-void CarbonConnection::Impl::sentMessageHandler(const asio::error_code &Error,
+void CarbonConnection::Impl::sentMessageHandler(asio::error_code const &Error,
                                                 std::size_t BytesSent) {
   if (BytesSent == MessageBuffer.size()) {
     MessageBuffer.clear();

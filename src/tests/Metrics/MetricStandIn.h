@@ -12,7 +12,7 @@ public:
   using Metric::getDescription;
   using Metric::getName;
   using Metric::getSeverity;
-  using Metric::setDeRegParams;
+  using Metric::setDeregParams;
   using Metric::operator++;
   using Metric::operator=;
 };

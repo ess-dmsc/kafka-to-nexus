@@ -1,7 +1,7 @@
 #pragma once
 
 namespace Metrics {
-enum class Status {
+enum struct Status {
   ADDR_LOOKUP,
   ADDR_RETRY_WAIT,
   CONNECT,

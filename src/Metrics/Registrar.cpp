@@ -15,7 +15,7 @@ bool Registrar::registerMetric(Metric &NewMetric, DestList Destinations) {
   if (MetricsProcessor->registerMetric(
           NewMetricString, NewMetric.getCounterPtr(),
           NewMetric.getDescription(), NewMetric.getSeverity(), Destinations)) {
-    NewMetric.setDeRegParams(NewMetricString, MetricsProcessor);
+    NewMetric.setDeregParams(NewMetricString, MetricsProcessor);
     return true;
   }
   return false;

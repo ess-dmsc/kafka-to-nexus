@@ -6,7 +6,7 @@
 
 namespace Metrics {
 
-enum class LogTo { CARBON, LOG_MSG };
+enum struct LogTo { CARBON, LOG_MSG };
 
 using DestList = std::unordered_set<LogTo>;
 
@@ -24,7 +24,7 @@ private:
   friend Processor;
   Registrar(std::string MetricsPrefix, ProcessorInterface *ProcessorPtr);
 
-  std::string Prefix;
+  std::string const Prefix;
   ProcessorInterface *MetricsProcessor{nullptr};
 };
 } // namespace Metrics

@@ -3,8 +3,8 @@
 
 namespace Metrics {
 Metric::~Metric() {
-  if (DeRegPtr != nullptr) {
-    DeRegPtr->deregisterMetric(DeRegName);
+  if (DeregPtr != nullptr) {
+    DeregPtr->deregisterMetric(DeregName);
   }
 }
 } // namespace Metrics

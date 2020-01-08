@@ -70,12 +70,12 @@ TEST_F(MetricTest, DeRegister) {
   auto TestSeverity = Severity::ERROR;
   auto SomeDeRegName = std::string("some other string");
   ProcessorStandIn TestProcessor;
-  REQUIRE_CALL(TestProcessor, deRegisterMetric(SomeDeRegName))
+  REQUIRE_CALL(TestProcessor, deregisterMetric(SomeDeRegName))
       .TIMES(1)
       .RETURN(true);
   {
     MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
-    UnderTest.setDeRegParams(
+    UnderTest.setDeregParams(
         SomeDeRegName, dynamic_cast<ProcessorInterface *>(&TestProcessor));
   }
 }

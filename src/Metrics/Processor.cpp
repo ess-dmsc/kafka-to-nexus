@@ -65,7 +65,7 @@ bool Processor::metricIsInList(std::string const &Name) {
 bool Processor::deregisterMetric(std::string Name) {
   if (not metricIsInList(Name)) {
     Logger->warn(
-        "Unable to de-register the metric \"{}\" as it is not a known metric.",
+        "Unable to deregister the metric \"{}\" as it is not a known metric.",
         Name);
     return false;
   }
@@ -73,7 +73,7 @@ bool Processor::deregisterMetric(std::string Name) {
   auto CheckMetricName = [&Name](auto const &Element) {
     return Name == Element.FullName;
   };
-  Logger->info("De-registering the metric \"{}\".", Name);
+  Logger->info("Deregistering the metric \"{}\".", Name);
   LogMsgMetrics.erase(std::remove_if(LogMsgMetrics.begin(), LogMsgMetrics.end(),
                                      CheckMetricName),
                       LogMsgMetrics.end());
@@ -128,7 +128,7 @@ void Processor::generateLogMessages() {
                           .count();
       Logger->log(
           LogSeverityMap[CMetric.ValueSeverity],
-          "In the past {} ms, {} events of type \"{}\" have occured ({}).",
+          "In the past {} ms, {} events of type \"{}\" have occurred ({}).",
           TimeDiff, ValueDiff, CMetric.FullName, CMetric.DescriptionString);
     }
     CMetric.LastTime = Now;

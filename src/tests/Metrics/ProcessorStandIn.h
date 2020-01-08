@@ -26,7 +26,7 @@ public:
   bool deRegisterMetricBase(std::string Name) {
     return Processor::deregisterMetric(Name);
   }
-  MAKE_MOCK3(sendMsgToCarbon, void(std::string, InternalCounterType,
+  MAKE_MOCK3(sendMsgToCarbon, void(std::string const &, InternalCounterType,
                                    std::chrono::system_clock::time_point),
              override);
   void sendMsgToCarbonBase(std::string Name, InternalCounterType Value,
