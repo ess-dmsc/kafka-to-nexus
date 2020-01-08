@@ -11,7 +11,7 @@ class Registrar;
 
 enum struct Severity { DEBUG, INFO, WARNING, ERROR };
 
-using CounterType = std::atomic<std::int64_t>;
+using CounterType = std::atomic<int64_t>;
 
 class Metric {
 public:
@@ -38,16 +38,13 @@ public:
   };
 
   std::string getName() const { return MName; }
-
-private:
-  std::shared_ptr<Registrar> MetricsRegistrar;
-  std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
-
-protected:
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
+private:
+  std::shared_ptr<Registrar> MetricsRegistrar;
+  std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
   std::string const MName;
   std::string const MDesc;
   Severity const SevLvl;

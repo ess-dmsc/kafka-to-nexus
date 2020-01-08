@@ -1,5 +1,5 @@
 #include "Metric.h"
-#include "Processor.h"
+#include "Registrar.h"
 
 namespace Metrics {
 Metric::~Metric() {

@@ -1,6 +1,7 @@
 #include "Reporter.h"
 #include "Registrar.h"
 #include "Sink.h"
+#include "LogSink.h"
 #include "Reporter.h"
 
 namespace Metrics {

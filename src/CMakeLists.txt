@@ -98,7 +98,8 @@ set(kafka_to_nexus_SRC
         Metrics/Processor.cpp
         Metrics/CarbonInterface.cpp
         Metrics/CarbonConnection.cpp
-        Metrics/ReporterFactory.cpp)
+        Metrics/ReporterFactory.cpp
+        Metrics/LogSink.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -150,6 +151,8 @@ set(kafka_to_nexus_INC
         Metrics/MetricsList.h
         Metrics/ReporterFactory.h
         Metrics/Sink.h
+        Metrics/LogSink.h
+        Metrics/InternalMetric.h
         Metrics/Reporter.h)
 
 set(tgt "kafka_to_nexus__objects")

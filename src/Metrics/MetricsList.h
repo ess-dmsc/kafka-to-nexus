@@ -9,6 +9,7 @@
 
 #pragma once
 
+#include "InternalMetric.h"
 #include "Metric.h"
 #include "logger.h"
 #include <map>
@@ -27,7 +28,7 @@ public:
           "Metric name is not unique, cannot add to list to be reported");
       return;
     }
-    ListOfMetrics.emplace(NewMetric.getName(), NewMetric);
+    ListOfMetrics.emplace(NewMetric.getName(), InternalMetric(NewMetric));
   };
 
   /// Removes Metric by name if it exists in this list
@@ -36,7 +37,7 @@ public:
   };
 
 private:
-  std::map<std::string, Metric &> ListOfMetrics; // MetricName: Metric
+  std::map<std::string, InternalMetric> ListOfMetrics; // MetricName: Metric
   std::mutex ListMutex;
   SharedLogger Logger = getLogger();
 };

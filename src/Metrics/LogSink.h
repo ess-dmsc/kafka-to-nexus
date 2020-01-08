@@ -9,14 +9,16 @@
 
 #pragma once
 
+#include "Sink.h"
+#include "logger.h"
+
 namespace Metrics {
 
-struct InternalMetric;
+class LogSink : public Sink {
+public:
+  void reportMetric(InternalMetric &MetricToBeReported) override;
 
-enum struct LogTo { CARBON, LOG_MSG };
-
-class Sink {
-virtual void reportMetric(InternalMetric &MetricToBeReported) = 0;
+private:
+  SharedLogger Logger = getLogger();
 };
-
-} // namespace Metrics
+}

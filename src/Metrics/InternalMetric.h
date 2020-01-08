@@ -1,0 +1,35 @@
+// SPDX-License-Identifier: BSD-2-Clause
+//
+// This code has been produced by the European Spallation Source
+// and its partner institutes under the BSD 2 Clause License.
+//
+// See LICENSE.md at the top level for license information.
+//
+// Screaming Udder!                              https://esss.se
+
+#pragma once
+
+#include "Metric.h"
+#include <chrono>
+
+namespace Metrics {
+
+/// Should not be used outside of objects in the Metrics namespace
+/// InternalMetric contains details we need from a Metric instance in order for
+/// the Reporter to report on the Metric
+struct InternalMetric {
+  explicit InternalMetric(Metric &MetricToGetDetailsFrom)
+      : Name(MetricToGetDetailsFrom.getName()),
+        Counter(MetricToGetDetailsFrom.getCounterPtr()),
+        DescriptionString(MetricToGetDetailsFrom.getDescription()),
+        LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),
+        ValueSeverity(MetricToGetDetailsFrom.getSeverity()){};
+  std::string Name;
+  CounterType *Counter{nullptr};
+  std::string DescriptionString;
+  std::int64_t LastValue{0};
+  std::chrono::system_clock::time_point LastTime{
+      std::chrono::system_clock::now()};
+  Severity ValueSeverity{Severity::ERROR};
+};
+}
