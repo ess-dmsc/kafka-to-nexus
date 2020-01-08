@@ -35,7 +35,7 @@ public:
                               std::string Description, Severity LogLevel,
                               DestList Targets) = 0;
 
-  virtual bool deRegisterMetric(std::string Name) = 0;
+  virtual bool deregisterMetric(std::string Name) = 0;
 
   virtual Registrar getRegistrar() = 0;
 };
@@ -55,7 +55,7 @@ public:
                       std::string Description, Severity LogLevel,
                       DestList Targets) override;
 
-  bool deRegisterMetric(std::string) override;
+  bool deregisterMetric(std::string) override;
 
   Registrar getRegistrar() override;
 
@@ -68,7 +68,7 @@ protected:
 
   void generateLogMessages();
 
-  virtual void sendMsgToCarbon(std::string Name,
+  virtual void sendMsgToCarbon(std::string const &Name,
                                Metrics::InternalCounterType Value,
                                std::chrono::system_clock::time_point ValueTime);
 

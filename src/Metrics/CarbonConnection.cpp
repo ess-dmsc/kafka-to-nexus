@@ -57,7 +57,7 @@ void CarbonConnection::Impl::resolverHandler(
     asio::ip::tcp::resolver::iterator EndpointIter) {
   if (Error) {
     setState(Status::ADDR_RETRY_WAIT);
-    reConnect(ReconnectDelay::LONG);
+    reconnect(ReconnectDelay::LONG);
     return;
   }
   QueryResult AllEndpoints(std::move(EndpointIter));
@@ -77,13 +77,13 @@ void CarbonConnection::Impl::connectHandler(const asio::error_code &Error,
   }
   Socket.close();
   if (AllEndpoints.isDone()) {
-    reConnect(ReconnectDelay::LONG);
+    reconnect(ReconnectDelay::LONG);
     return;
   }
   tryConnect(AllEndpoints);
 }
 
-void CarbonConnection::Impl::reConnect(ReconnectDelay Delay) {
+void CarbonConnection::Impl::reconnect(ReconnectDelay Delay) {
   auto HandlerGlue = [this](auto &) { this->doAddressQuery(); };
   switch (Delay) {
   case ReconnectDelay::SHORT:
@@ -103,7 +103,7 @@ void CarbonConnection::Impl::receiveHandler(const asio::error_code &Error,
   UNUSED_ARG(BytesReceived);
   if (Error) {
     Socket.close();
-    reConnect(ReconnectDelay::SHORT);
+    reconnect(ReconnectDelay::SHORT);
     return;
   }
   auto HandlerGlue = [this](auto &Error, auto Size) {

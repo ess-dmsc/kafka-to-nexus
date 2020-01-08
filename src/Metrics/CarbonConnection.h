@@ -56,7 +56,7 @@ private:
   void trySendMessage();
   void waitForMessage();
   void doAddressQuery();
-  void reConnect(ReconnectDelay Delay);
+  void reconnect(ReconnectDelay Delay);
   void tryConnect(QueryResult AllEndpoints);
 
   using WorkPtr = std::unique_ptr<asio::io_service::work>;

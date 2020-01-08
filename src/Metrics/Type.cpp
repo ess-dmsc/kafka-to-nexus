@@ -4,7 +4,7 @@
 namespace Metrics {
 Metric::~Metric() {
   if (DeRegPtr != nullptr) {
-    DeRegPtr->deRegisterMetric(DeRegName);
+    DeRegPtr->deregisterMetric(DeRegName);
   }
 }
 } // namespace Metrics

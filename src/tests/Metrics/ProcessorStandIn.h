@@ -14,7 +14,7 @@ public:
   MAKE_MOCK5(registerMetric,
              bool(std::string, CounterType *, std::string, Severity, DestList),
              override);
-  MAKE_MOCK1(deRegisterMetric, bool(std::string), override);
+  MAKE_MOCK1(deregisterMetric, bool(std::string), override);
   MAKE_MOCK0(getRegistrar, Registrar(), override);
   Registrar getRegistrarBase() { return Processor::getRegistrar(); }
   bool registerMetricBase(std::string Name, CounterType *Counter,
@@ -24,7 +24,7 @@ public:
                                      Targets);
   }
   bool deRegisterMetricBase(std::string Name) {
-    return Processor::deRegisterMetric(Name);
+    return Processor::deregisterMetric(Name);
   }
   MAKE_MOCK3(sendMsgToCarbon, void(std::string, InternalCounterType,
                                    std::chrono::system_clock::time_point),

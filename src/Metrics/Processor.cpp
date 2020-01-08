@@ -62,7 +62,7 @@ bool Processor::metricIsInList(std::string const &Name) {
   return IsInLogsList or IsInGrafanaList;
 }
 
-bool Processor::deRegisterMetric(std::string Name) {
+bool Processor::deregisterMetric(std::string Name) {
   if (not metricIsInList(Name)) {
     Logger->warn(
         "Unable to de-register the metric \"{}\" as it is not a known metric.",
@@ -149,7 +149,7 @@ void Processor::generateCarbonUpdate() {
 }
 
 void Processor::sendMsgToCarbon(
-    std::string Name, Metrics::InternalCounterType Value,
+    std::string const &Name, Metrics::InternalCounterType Value,
     std::chrono::system_clock::time_point ValueTime) {
   auto TimeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(
                             ValueTime.time_since_epoch())

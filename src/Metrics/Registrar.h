@@ -16,8 +16,6 @@ class Processor;
 
 class Registrar {
 public:
-  Registrar(Registrar &&Registrar);
-
   bool registerMetric(Metric &NewMetric, DestList Destinations);
 
   Registrar getNewRegistrar(std::string const &MetricsPrefix) const;

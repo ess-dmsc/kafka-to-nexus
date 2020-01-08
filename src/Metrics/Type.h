@@ -20,19 +20,19 @@ public:
          Severity Level = Severity::DEBUG)
       : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level) {}
   ~Metric();
-  std::int64_t operator++() {
+  int64_t operator++() {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
-  std::int64_t operator++(int) {
+  int64_t operator++(int) {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
-  std::int64_t operator=(std::int64_t const &NewValue) {
+  int64_t operator=(int64_t const &NewValue) {
     Counter.store(NewValue, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
-  std::int64_t operator+=(std::int64_t AddValue) {
+  int64_t operator+=(int64_t AddValue) {
     Counter.store(AddValue + Counter.load(MemoryOrder), MemoryOrder);
     return Counter.load(MemoryOrder);
   };
