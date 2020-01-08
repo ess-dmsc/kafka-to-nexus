@@ -1,6 +1,6 @@
 #include "MetricStandIn.h"
+#include "Metrics/Metric.h"
 #include "Metrics/Processor.h"
-#include "Metrics/Type.h"
 #include "ProcessorStandIn.h"
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>

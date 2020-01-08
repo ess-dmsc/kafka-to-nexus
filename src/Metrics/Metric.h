@@ -2,23 +2,23 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace Metrics {
 
-class ProcessorInterface;
 class Registrar;
 
 enum struct Severity { DEBUG, INFO, WARNING, ERROR };
 
 using CounterType = std::atomic<std::int64_t>;
-using InternalCounterType = decltype(((CounterType *)(nullptr))->load());
 
 class Metric {
 public:
-  Metric(std::string Name, std::string Description,
-         Severity Level = Severity::DEBUG)
-      : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level) {}
+  Metric(std::shared_ptr<Registrar> RegistrarUsed, std::string Name,
+         std::string Description, Severity Level = Severity::DEBUG)
+      : MetricsRegistrar(std::move(RegistrarUsed)), MName(std::move(Name)),
+        MDesc(std::move(Description)), SevLvl(Level) {}
   ~Metric();
   int64_t operator++() {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
@@ -37,25 +37,20 @@ public:
     return Counter.load(MemoryOrder);
   };
 
-protected:
-  friend Registrar;
-  void setDeregParams(std::string FullName, ProcessorInterface *Ptr) {
-    DeregName = std::move(FullName);
-    DeregPtr = Ptr;
-  };
   std::string getName() const { return MName; }
+
+private:
+  std::shared_ptr<Registrar> MetricsRegistrar;
+  std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
+
+protected:
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
   std::string const MName;
-  std::string DeregName;
   std::string const MDesc;
   Severity const SevLvl;
   CounterType Counter{0};
-  ProcessorInterface *DeregPtr{nullptr};
-
-private:
-  std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
 };
 } // namespace Metrics

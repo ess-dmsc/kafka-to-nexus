@@ -1,8 +1,8 @@
 #pragma once
 
+#include "Metrics/Metric.h"
 #include "Metrics/Processor.h"
 #include "Metrics/Registrar.h"
-#include "Metrics/Type.h"
 #include <trompeloeil.hpp>
 
 namespace Metrics {

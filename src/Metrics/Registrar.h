@@ -1,30 +1,44 @@
 #pragma once
 
-#include "Type.h"
+#include "Metric.h"
+#include "MetricsList.h"
+#include "Sink.h"
+#include <algorithm>
+#include <map>
+#include <mutex>
 #include <string>
-#include <unordered_set>
+#include <vector>
 
 namespace Metrics {
 
-enum struct LogTo { CARBON, LOG_MSG };
-
-using DestList = std::unordered_set<LogTo>;
-
-class ProcessorInterface;
-
-class Processor;
-
 class Registrar {
 public:
-  bool registerMetric(Metric &NewMetric, DestList Destinations);
+  void registerMetric(Metric &NewMetric, std::vector<LogTo> const &SinkTypes) {
+    std::lock_guard<std::mutex> Lock(MetricListsMutex);
+    for (auto &SinkTypeAndMetric : MetricLists) {
+      if (std::find(SinkTypes.begin(), SinkTypes.end(),
+                    SinkTypeAndMetric.first) != SinkTypes.end()) {
+        SinkTypeAndMetric.second->addMetric(NewMetric);
+      }
+    }
+  };
 
-  Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
+  void deregisterMetric(std::string const &MetricName){
+    std::lock_guard<std::mutex> Lock(MetricListsMutex);
+    for (auto &SinkTypeAndMetric : MetricLists) {
+      SinkTypeAndMetric.second->tryRemoveMetric(MetricName);
+    }
+  };
+
+  void addMetricsList(LogTo SinkType,
+                      std::shared_ptr<MetricsList> const &NewMetricsList) {
+    std::lock_guard<std::mutex> Lock(MetricListsMutex);
+    MetricLists.emplace(SinkType, NewMetricsList);
+  };
 
 private:
-  friend Processor;
-  Registrar(std::string MetricsPrefix, ProcessorInterface *ProcessorPtr);
-
-  std::string const Prefix;
-  ProcessorInterface *MetricsProcessor{nullptr};
+  std::mutex MetricListsMutex;
+  std::map<LogTo, std::shared_ptr<MetricsList>> MetricLists;
 };
+
 } // namespace Metrics

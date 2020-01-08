@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Metrics/Type.h"
+#include "Metrics/Metric.h"
 
 namespace Metrics {
 
