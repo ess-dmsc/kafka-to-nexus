@@ -17,6 +17,7 @@ class Reporter;
 class Registrar;
 struct LogTo;
 
+/// Create a Reporter with a specified type of Sink
 Reporter createReporter(std::shared_ptr<Registrar> const &MetricsRegistrar,
                         LogTo SinkType);
 
