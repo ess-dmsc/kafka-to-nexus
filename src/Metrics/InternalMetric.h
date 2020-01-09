@@ -19,8 +19,7 @@ namespace Metrics {
 /// the Reporter to report on the Metric
 struct InternalMetric {
   explicit InternalMetric(Metric &MetricToGetDetailsFrom, std::string Name)
-      : Name(MetricToGetDetailsFrom.getName()),
-        FullName(std::move(Name)),
+      : Name(MetricToGetDetailsFrom.getName()), FullName(std::move(Name)),
         Counter(MetricToGetDetailsFrom.getCounterPtr()),
         DescriptionString(MetricToGetDetailsFrom.getDescription()),
         LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),

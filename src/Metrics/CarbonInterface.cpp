@@ -9,19 +9,17 @@ Connection::Connection(std::string Host, int Port)
 
 Connection::~Connection() = default;
 
-void Connection::sendMessage(std::string const &Msg) { Pimpl->sendMessage(Msg); }
+void Connection::sendMessage(std::string const &Msg) {
+  Pimpl->sendMessage(Msg);
+}
 
 Status Connection::getConnectionStatus() const {
   return Pimpl->getConnectionStatus();
 }
 
-bool Connection::messageQueueEmpty() {
-  return Pimpl->messageQueueEmpty();
-}
+bool Connection::messageQueueEmpty() { return Pimpl->messageQueueEmpty(); }
 
-size_t Connection::messageQueueSize() {
-  return Pimpl->messageQueueSize();
-}
+size_t Connection::messageQueueSize() { return Pimpl->messageQueueSize(); }
 
 } // namespace Carbon
 } // namespace Metrics

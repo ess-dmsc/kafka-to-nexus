@@ -66,7 +66,7 @@ void Connection::Impl::resolverHandler(
 }
 
 void Connection::Impl::connectHandler(asio::error_code const &Error,
-                                            QueryResult const &AllEndpoints) {
+                                      QueryResult const &AllEndpoints) {
   if (!Error) {
     setState(Status::SEND_LOOP);
     auto HandlerGlue = [this](auto &Error, auto Size) {
@@ -100,7 +100,7 @@ void Connection::Impl::reconnect(ReconnectDelay Delay) {
 }
 
 void Connection::Impl::receiveHandler(asio::error_code const &Error,
-                                            std::size_t BytesReceived) {
+                                      std::size_t BytesReceived) {
   UNUSED_ARG(BytesReceived);
   if (Error) {
     Socket.close();
@@ -140,7 +140,7 @@ void Connection::Impl::trySendMessage() {
 }
 
 void Connection::Impl::sentMessageHandler(asio::error_code const &Error,
-                                                std::size_t BytesSent) {
+                                          std::size_t BytesSent) {
   if (BytesSent == MessageBuffer.size()) {
     MessageBuffer.clear();
   } else if (BytesSent > 0) {
@@ -187,15 +187,11 @@ Connection::Impl::~Impl() {
   }
 }
 
-Status Connection::Impl::getConnectionStatus() const {
-  return ConnectionState;
-}
+Status Connection::Impl::getConnectionStatus() const { return ConnectionState; }
 
 void Connection::Impl::threadFunction() { Service.run(); }
 
-void Connection::Impl::setState(Status NewState) {
-  ConnectionState = NewState;
-}
+void Connection::Impl::setState(Status NewState) { ConnectionState = NewState; }
 
 } // namespace Carbon
 } // namespace Metrics
