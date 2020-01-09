@@ -21,14 +21,14 @@ namespace Metrics {
 /// Owned by the Registrar and a Reporter
 class MetricsList {
 public:
-  void addMetric(Metric &NewMetric) {
+  void addMetric(Metric &NewMetric, std::string const &NewName) {
     std::lock_guard<std::mutex> Lock(ListMutex);
-    if (ListOfMetrics.find(NewMetric.getName()) != ListOfMetrics.end()) {
+    if (ListOfMetrics.find(NewName) != ListOfMetrics.end()) {
       Logger->error(
           "Metric name is not unique, cannot add to list to be reported");
       return;
     }
-    ListOfMetrics.emplace(NewMetric.getName(), InternalMetric(NewMetric));
+    ListOfMetrics.emplace(NewName, InternalMetric(NewMetric, NewName));
   };
 
   /// Removes Metric by name if it exists in this list

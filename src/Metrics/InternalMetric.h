@@ -18,13 +18,15 @@ namespace Metrics {
 /// InternalMetric contains details we need from a Metric instance in order for
 /// the Reporter to report on the Metric
 struct InternalMetric {
-  explicit InternalMetric(Metric &MetricToGetDetailsFrom)
+  explicit InternalMetric(Metric &MetricToGetDetailsFrom, std::string Name)
       : Name(MetricToGetDetailsFrom.getName()),
+        FullName(std::move(Name)),
         Counter(MetricToGetDetailsFrom.getCounterPtr()),
         DescriptionString(MetricToGetDetailsFrom.getDescription()),
         LastValue(MetricToGetDetailsFrom.getCounterPtr()->load()),
         ValueSeverity(MetricToGetDetailsFrom.getSeverity()){};
   std::string const Name;
+  std::string const FullName; // Including prefix from local registrar
   CounterType *Counter{nullptr};
   std::string const DescriptionString;
   std::int64_t LastValue{0};

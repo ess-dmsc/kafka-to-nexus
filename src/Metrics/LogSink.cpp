@@ -23,7 +23,7 @@ void LogSink::reportMetric(InternalMetric &MetricToBeReported) {
     Logger->log(
         LogSeverityMap[MetricToBeReported.ValueSeverity],
         "In the past {} ms, {} events of type \"{}\" have occurred ({}).",
-        TimeDiff, ValueDiff, MetricToBeReported.Name,
+        TimeDiff, ValueDiff, MetricToBeReported.FullName,
         MetricToBeReported.DescriptionString);
   }
   MetricToBeReported.LastTime = Now;
