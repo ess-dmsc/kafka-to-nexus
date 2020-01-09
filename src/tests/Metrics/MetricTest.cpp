@@ -1,9 +1,6 @@
-#include "MetricStandIn.h"
 #include "Metrics/Metric.h"
-#include "Metrics/Processor.h"
-#include "ProcessorStandIn.h"
+#include "Metrics/Registrar.h"
 #include <gtest/gtest.h>
-#include <trompeloeil.hpp>
 
 namespace Metrics {
 
@@ -15,7 +12,8 @@ TEST_F(MetricTest, Init) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
+  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
   EXPECT_EQ(UnderTest.getName(), NameStr);
   EXPECT_EQ(UnderTest.getDescription(), DescStr);
   EXPECT_EQ(UnderTest.getSeverity(), TestSeverity);
@@ -26,7 +24,8 @@ TEST_F(MetricTest, PreIncrement) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
+  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(++UnderTest, 1);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 1);
@@ -36,7 +35,8 @@ TEST_F(MetricTest, PostIncrement) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
+  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(UnderTest++, 1);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 1);
@@ -46,7 +46,8 @@ TEST_F(MetricTest, SumValue) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
+  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
   auto TestValue = 42;
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(UnderTest += TestValue, TestValue);
@@ -57,27 +58,36 @@ TEST_F(MetricTest, SetValue) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
+  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
   auto TestValue = std::int64_t(42);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(UnderTest = TestValue, TestValue);
   EXPECT_EQ(*UnderTest.getCounterPtr(), TestValue);
 }
 
-TEST_F(MetricTest, DeRegister) {
+TEST_F(MetricTest, Deregister) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto SomeDeRegName = std::string("some other string");
-  ProcessorStandIn TestProcessor;
-  REQUIRE_CALL(TestProcessor, deregisterMetric(SomeDeRegName))
-      .TIMES(1)
-      .RETURN(true);
+  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+
+  auto TestMetricsList = std::make_shared<MetricsList>();
+  TestRegistrar->addMetricsList(LogTo::LOG_MSG, TestMetricsList);
+
   {
-    MetricStandIn UnderTest(NameStr, DescStr, TestSeverity);
-    UnderTest.setDeregParams(
-        SomeDeRegName, dynamic_cast<ProcessorInterface *>(&TestProcessor));
-  }
+    Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+    TestRegistrar->registerMetric(UnderTest, {LogTo::LOG_MSG});
+
+    // Test UnderTest is in MetricList
+    auto ListOfMetrics = TestMetricsList->getListOfMetrics();
+    EXPECT_TRUE(ListOfMetrics.find(NameStr) != ListOfMetrics.end())
+        << "Expect to find the metric in the list";
+  } // UnderTest Metric goes out of scope so should get deregistered
+
+  auto ListOfMetrics = TestMetricsList->getListOfMetrics();
+  EXPECT_TRUE(ListOfMetrics.find(NameStr) == ListOfMetrics.end())
+      << "Expect not to find the metric in the list";
 }
 
 } // namespace Metrics
