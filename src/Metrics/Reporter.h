@@ -24,7 +24,7 @@ public:
            std::chrono::milliseconds Interval)
       : MetricSink(std::move(MetricSink)),
         MetricsToReportOn(std::move(ListOfMetrics)), IO(), Period(Interval),
-        AsioTimer(IO, Period), Running(false){};
+        AsioTimer(IO, Period){};
 
   void reportMetrics() {
     for (auto &MetricNameValue : MetricsToReportOn->getListOfMetrics()) {
@@ -33,14 +33,12 @@ public:
   };
 
   void start() {
-    Running = true;
     AsioTimer.async_wait(
         [this](std::error_code const & /*error*/) { this->reportMetrics(); });
     ReporterThread = std::thread(&Reporter::run, this);
   }
 
   void waitForStop() {
-    Running = false;
     AsioTimer.cancel();
     ReporterThread.join();
   }
@@ -53,7 +51,6 @@ private:
   asio::io_context IO;
   std::chrono::milliseconds Period;
   asio::steady_timer AsioTimer;
-  std::atomic_bool Running;
   std::thread ReporterThread;
 };
 }

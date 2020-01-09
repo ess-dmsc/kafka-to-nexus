@@ -94,6 +94,7 @@ set(kafka_to_nexus_SRC
         StreamMaster.cpp
         CommandParser.cpp
         ExtensibleDataset.cpp
+        Metrics/Registrar.cpp
         Metrics/Metric.cpp
         Metrics/CarbonInterface.cpp
         Metrics/CarbonConnection.cpp
