@@ -30,6 +30,10 @@ void Registrar::addMetricsList(
 };
 
 Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
+  // Pass a pointer to the same MetricList to the new registrar, because the
+  // MetricList is also owned by the Reporter
+  // We don't want to create a new list and also have to tell the Reporter about
+  // it somehow
   return {prependPrefix(MetricsPrefix), MetricLists};
 }
 

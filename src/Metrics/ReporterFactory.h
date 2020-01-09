@@ -15,10 +15,12 @@ namespace Metrics {
 
 class Reporter;
 class Registrar;
-struct LogTo;
+enum struct LogTo;
 
 /// Create a Reporter with a specified type of Sink
-Reporter createReporter(std::shared_ptr<Registrar> const &MetricsRegistrar,
-                        LogTo SinkType);
+std::unique_ptr<Reporter>
+createReporter(std::shared_ptr<Registrar> const &MetricsRegistrar,
+               Metrics::LogTo SinkType, std::chrono::milliseconds Interval,
+               std::string const &CarbonHost = "", uint16_t CarbonPort = 0);
 
 } // namespace Metrics
