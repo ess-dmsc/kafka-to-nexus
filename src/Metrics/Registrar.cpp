@@ -10,14 +10,9 @@ void Registrar::registerMetric(Metric &NewMetric,
     if (std::find(SinkTypes.begin(), SinkTypes.end(),
                   SinkTypeAndReporter.first) != SinkTypes.end()) {
       std::string NewName = prependPrefix(NewMetric.getName());
+      NewMetric.setDeregistrationDetails(NewName, SinkTypeAndReporter.second);
       SinkTypeAndReporter.second->addMetric(NewMetric, NewName);
     }
-  }
-}
-
-void Registrar::deregisterMetric(std::string const &MetricName) {
-  for (auto &SinkTypeAndReporter : ReporterList) {
-    SinkTypeAndReporter.second->tryRemoveMetric(prependPrefix(MetricName));
   }
 }
 

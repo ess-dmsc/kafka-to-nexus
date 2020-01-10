@@ -1,10 +1,10 @@
 #include "Metric.h"
-#include "Registrar.h"
+#include "Reporter.h"
 
 namespace Metrics {
 Metric::~Metric() {
-  if (MetricsRegistrar != nullptr) {
-    MetricsRegistrar->deregisterMetric(MName);
+  if (ReporterForMetric != nullptr) {
+    ReporterForMetric->tryRemoveMetric(FullName);
   }
 }
 } // namespace Metrics

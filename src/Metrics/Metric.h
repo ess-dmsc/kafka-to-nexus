@@ -7,7 +7,7 @@
 
 namespace Metrics {
 
-class Registrar;
+class Reporter;
 
 enum struct Severity { DEBUG, INFO, WARNING, ERROR };
 
@@ -15,10 +15,9 @@ using CounterType = std::atomic<int64_t>;
 
 class Metric {
 public:
-  Metric(std::shared_ptr<Registrar> RegistrarUsed, std::string Name,
-         std::string Description, Severity Level = Severity::DEBUG)
-      : MetricsRegistrar(std::move(RegistrarUsed)), MName(std::move(Name)),
-        MDesc(std::move(Description)), SevLvl(Level) {}
+  Metric(std::string Name, std::string Description,
+         Severity Level = Severity::DEBUG)
+      : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level) {}
   ~Metric();
   int64_t operator++() {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
@@ -42,8 +41,20 @@ public:
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
+  void setDeregistrationDetails(
+      std::string const &NameWithPrefix,
+      std::shared_ptr<Reporter> &ReporterResponsibleForMetric) {
+    FullName = NameWithPrefix;
+    ReporterForMetric = ReporterResponsibleForMetric;
+  }
+
 private:
-  std::shared_ptr<Registrar> MetricsRegistrar;
+  // Details used for deregistration, keeping these rather than the Registrar
+  // means that the Registrar does not need to be kept alive until the metric is
+  // deregistered
+  std::string FullName;
+  std::shared_ptr<Reporter> ReporterForMetric;
+
   std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
   std::string const MName;
   std::string const MDesc;

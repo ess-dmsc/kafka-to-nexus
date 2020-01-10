@@ -10,8 +10,9 @@ namespace Metrics {
 
 class Metric;
 
-/// Register and deregister metrics to be reported via a specified sink
+/// Register and metrics to be reported via a specified sink
 /// Manages metrics name prefixes
+/// Deregistration of metric happens via Metric's destructor
 class Registrar {
 public:
   Registrar(std::string MetricsPrefix,
@@ -23,9 +24,6 @@ public:
   };
 
   void registerMetric(Metric &NewMetric, std::vector<LogTo> const &SinkTypes);
-
-  /// Deregister from all sinks
-  void deregisterMetric(std::string const &MetricName);
 
   Registrar getNewRegistrar(std::string const &MetricsPrefix);
 
