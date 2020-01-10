@@ -98,7 +98,6 @@ set(kafka_to_nexus_SRC
         Metrics/Metric.cpp
         Metrics/CarbonInterface.cpp
         Metrics/CarbonConnection.cpp
-        Metrics/ReporterFactory.cpp
         Metrics/LogSink.cpp
         Metrics/CarbonSink.cpp)
 
@@ -148,8 +147,6 @@ set(kafka_to_nexus_INC
         Metrics/Metric.h
         Metrics/CarbonInterface.h
         Metrics/CarbonConnection.h
-        Metrics/MetricsList.h
-        Metrics/ReporterFactory.h
         Metrics/Sink.h
         Metrics/LogSink.h
         Metrics/CarbonSink.h

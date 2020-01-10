@@ -18,6 +18,7 @@ enum struct LogTo { CARBON, LOG_MSG };
 class Sink {
 public:
   virtual void reportMetric(InternalMetric &MetricToBeReported) = 0;
+  virtual LogTo getType() = 0;
   virtual ~Sink() = default;
 };
 

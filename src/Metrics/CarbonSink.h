@@ -20,6 +20,7 @@ public:
   CarbonSink(std::string Host, uint16_t const Port)
       : CarbonConnection(std::move(Host), Port){};
   void reportMetric(InternalMetric &MetricToBeReported) override;
+  LogTo getType() override { return LogTo::CARBON; };
 
 private:
   Carbon::Connection CarbonConnection;
