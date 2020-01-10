@@ -34,6 +34,7 @@ Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
   // MetricList is also owned by the Reporter
   // We don't want to create a new list and also have to tell the Reporter about
   // it somehow
+  std::lock_guard<std::mutex> Lock(MetricListsMutex);
   return {prependPrefix(MetricsPrefix), MetricLists};
 }
 
