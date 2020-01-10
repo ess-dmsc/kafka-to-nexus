@@ -9,13 +9,12 @@
 
 #pragma once
 
-#include "Sink.h"
 #include "InternalMetric.h"
+#include "Sink.h"
 #include <asio.hpp>
+#include <map>
 #include <memory>
 #include <thread>
-#include <map>
-#include <mutex>
 
 namespace Metrics {
 
@@ -26,23 +25,21 @@ public:
         AsioTimer(IO, Period){};
 
   void reportMetrics() {
-    std::lock_guard<std::mutex> Lock(MetricsMutex);
-    for (auto &MetricNameValue : MetricsToReportOn) {
-      MetricSink->reportMetric(MetricNameValue.second);
-    }
+    IO.post([&]() {
+      for (auto &MetricNameValue : MetricsToReportOn) {
+        MetricSink->reportMetric(MetricNameValue.second);
+      }
+    });
   }
 
   void addMetric(Metric &NewMetric, std::string const &NewName) {
-    std::lock_guard<std::mutex> Lock(MetricsMutex);
-    if (MetricsToReportOn.find(NewName) != MetricsToReportOn.end()) {
-      return;
-    }
-    MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
+    IO.post([&]() {
+      MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
+    });
   }
 
   void tryRemoveMetric(std::string const &MetricName) {
-    std::lock_guard<std::mutex> Lock(MetricsMutex);
-    MetricsToReportOn.erase(MetricName);
+    IO.post([&]() { MetricsToReportOn.erase(MetricName); });
   }
 
   LogTo getSinkType() { return MetricSink->getType(); };
@@ -62,7 +59,6 @@ private:
   void run() { IO.run(); }
 
   std::unique_ptr<Sink> MetricSink;
-  std::mutex MetricsMutex;
   std::map<std::string, InternalMetric> MetricsToReportOn; // MetricName: Metric
   asio::io_context IO;
   std::chrono::milliseconds Period;
