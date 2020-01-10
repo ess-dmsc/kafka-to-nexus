@@ -1,8 +1,8 @@
 #include "CarbonTestServer.h"
 #include "Metrics/CarbonInterface.h"
+#include "Metrics/CarbonSink.h"
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
-#include "Metrics/ReporterFactory.h"
 #include <Metrics/Reporter.h>
 #include <chrono>
 #include <gtest/gtest.h>
@@ -173,12 +173,15 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
   auto TestName = std::string("SomeLongWindedName");
   Metrics::CounterType Ctr{112233};
   auto Description = "A long description of a metric.";
+  auto TestSink = std::unique_ptr<Metrics::Sink>(
+      new Metrics::CarbonSink("localhost", UsedPort));
+  auto TestReporter =
+      std::make_shared<Metrics::Reporter>(std::move(TestSink), 10ms);
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
+  auto TestRegistrar =
+      std::make_shared<Metrics::Registrar>("Test", TestReporters);
+  Metrics::Metric TestMetric(TestName, Description, Metrics::Severity::ERROR);
 
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-  Metrics::Metric TestMetric(TestRegistrar, TestName, Description,
-                             Metrics::Severity::ERROR);
-  auto TestReporter = Metrics::createReporter(
-      TestRegistrar, Metrics::LogTo::CARBON, 10ms, "localhost", UsedPort);
   TestReporter->start();
   TestRegistrar->registerMetric(TestMetric, {Metrics::LogTo::CARBON});
   std::this_thread::sleep_for(200ms);

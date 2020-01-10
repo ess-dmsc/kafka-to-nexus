@@ -12,8 +12,7 @@ TEST_F(MetricTest, Init) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+  Metric UnderTest(NameStr, DescStr, TestSeverity);
   EXPECT_EQ(UnderTest.getName(), NameStr);
   EXPECT_EQ(UnderTest.getDescription(), DescStr);
   EXPECT_EQ(UnderTest.getSeverity(), TestSeverity);
@@ -24,8 +23,7 @@ TEST_F(MetricTest, PreIncrement) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+  Metric UnderTest(NameStr, DescStr, TestSeverity);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(++UnderTest, 1);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 1);
@@ -35,8 +33,7 @@ TEST_F(MetricTest, PostIncrement) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+  Metric UnderTest(NameStr, DescStr, TestSeverity);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(UnderTest++, 1);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 1);
@@ -46,8 +43,7 @@ TEST_F(MetricTest, SumValue) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+  Metric UnderTest(NameStr, DescStr, TestSeverity);
   auto TestValue = 42;
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(UnderTest += TestValue, TestValue);
@@ -58,8 +54,7 @@ TEST_F(MetricTest, SetValue) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-  Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+  Metric UnderTest(NameStr, DescStr, TestSeverity);
   auto TestValue = std::int64_t(42);
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
   EXPECT_EQ(UnderTest = TestValue, TestValue);
@@ -71,9 +66,6 @@ TEST_F(MetricTest, Deregister) {
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
   auto TestRegistrar = std::make_shared<Metrics::Registrar>();
-
-  auto TestMetricsList = std::make_shared<MetricsList>();
-  TestRegistrar->addMetricsList(LogTo::LOG_MSG, TestMetricsList);
 
   {
     Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
