@@ -13,9 +13,9 @@
 
 #pragma once
 
+#include "Errors.h"
 #include "EventLogger.h"
 #include "KafkaW/Consumer.h"
-#include "Status.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include <chrono>
@@ -78,9 +78,6 @@ public:
   /// \brief Set the stop time.
   void setStopTime(std::chrono::milliseconds const &StopTime);
 
-  /// Return all the information about the messages consumed.
-  Status::MessageInfo &messageInfo() { return MessageInfo; }
-
   /// \brief Use to force stream to finish if something has gone wrong.
   void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
 
@@ -103,7 +100,6 @@ private:
   std::atomic<int> NumberFailedValidation{0};
   StreamerOptions Options;
   std::string ConsumerTopicName;
-  Status::MessageInfo MessageInfo;
   DemuxPtr MessageProcessor;
   ConsumerPtr Consumer{nullptr};
 

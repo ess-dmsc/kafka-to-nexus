@@ -40,7 +40,6 @@ public:
   void handle_command(std::unique_ptr<Msg> CommandMessage) override;
   void handle_command(std::string const &Command,
                       std::chrono::milliseconds TimeStamp) override;
-  void publishStatus() override;
   MainOpt &getMainOpt() override;
 
   /// \brief The unique identifier for this file writer on the network.
@@ -59,10 +58,8 @@ private:
   std::string FileWriterProcessId;
   MainOpt &MainConfig;
   std::unique_ptr<IJobCreator> Creator_;
-  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
   static nlohmann::json parseCommand(std::string const &Command);
   bool IsWriting{false};
-  void initialiseStatusProducer();
 };
 } // namespace FileWriter

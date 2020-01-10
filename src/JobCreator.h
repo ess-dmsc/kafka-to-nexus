@@ -33,7 +33,6 @@ class IJobCreator {
 public:
   virtual std::unique_ptr<IStreamMaster> createFileWritingJob(
       StartCommandInfo const &StartInfo,
-      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
       MainOpt &Settings, SharedLogger const &Logger) = 0;
   virtual ~IJobCreator() = default;
 };
@@ -49,7 +48,6 @@ public:
   /// \return The new file-writing job.
   std::unique_ptr<IStreamMaster> createFileWritingJob(
       StartCommandInfo const &StartInfo,
-      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
       MainOpt &Settings, SharedLogger const &Logger) override;
 
 private:

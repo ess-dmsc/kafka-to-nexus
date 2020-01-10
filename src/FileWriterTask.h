@@ -40,11 +40,8 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  /// \param StatusProducer_ The status producer.
-  FileWriterTask(std::string TaskID,
-                 std::shared_ptr<KafkaW::ProducerTopic> StatusProducerPtr)
-      : ServiceId(std::move(TaskID)),
-        StatusProducer(std::move(StatusProducerPtr)), Logger(getLogger()){};
+  FileWriterTask(std::string TaskID)
+      : ServiceId(std::move(TaskID)), Logger(getLogger()){};
 
   /// Destructor.
   ~FileWriterTask();
@@ -85,9 +82,6 @@ public:
   /// \return The job ID.
   std::string jobID() const;
 
-  /// \brief  Return statistics about this job as JSON.
-  nlohmann::json stats() const;
-
   /// \brief  Name of the file being written.
   ///
   /// Important for reopening of files.
@@ -112,7 +106,6 @@ private:
   void reopenFile();
   std::string JobId;
   std::string ServiceId;
-  std::shared_ptr<KafkaW::ProducerTopic> StatusProducer;
   HDFFile File;
   SharedLogger Logger;
 };

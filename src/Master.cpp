@@ -93,7 +93,7 @@ void Master::handle_command(std::string const &Command,
         auto StartInfo =
             CommandParser::extractStartInformation(CommandJson, TimeStamp);
         CurrentStreamMaster = Creator_->createFileWritingJob(
-            StartInfo, StatusProducer, getMainOpt(), Logger);
+            StartInfo, getMainOpt(), Logger);
         IsWriting = true;
       } else {
         throw std::runtime_error(fmt::format(
@@ -102,9 +102,6 @@ void Master::handle_command(std::string const &Command,
     }
   } catch (std::runtime_error const &Error) {
     Logger->error("{}", Error.what());
-    logEvent(StatusProducer, StatusCode::Fail, getMainOpt().ServiceID, "N/A",
-             Error.what());
-    return;
   }
 }
 
@@ -125,16 +122,13 @@ struct OnScopeExit {
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
 
-  initialiseStatusProducer();
-
   // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {
     this->handle_command(cmd, getCurrentTimeStampMS());
   }
 
   Listener.start();
-  using Clock = std::chrono::steady_clock;
-  auto t_last_statistics = Clock::now();
+
   while (Running) {
     std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
         Listener.poll();
@@ -143,12 +137,7 @@ void Master::run() {
       this->handle_command(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
     }
-    if (getMainOpt().ReportStatus &&
-        Clock::now() - t_last_statistics >
-            getMainOpt().StatusMasterIntervalMS) {
-      t_last_statistics = Clock::now();
-      publishStatus();
-    }
+
     if (CurrentStreamMaster != nullptr and
         CurrentStreamMaster->isDoneWriting()) {
       CurrentStreamMaster.reset(nullptr);
@@ -157,40 +146,6 @@ void Master::run() {
   }
 }
 
-void Master::initialiseStatusProducer() {
-  if (getMainOpt().ReportStatus) {
-    Logger->info("Publishing status to kafka://{}/{}",
-                 getMainOpt().KafkaStatusURI.HostPort,
-                 getMainOpt().KafkaStatusURI.Topic);
-    KafkaW::BrokerSettings BrokerSettings;
-    BrokerSettings.Address = getMainOpt().KafkaStatusURI.HostPort;
-    auto producer = std::make_shared<KafkaW::Producer>(BrokerSettings);
-    try {
-      StatusProducer = std::make_shared<KafkaW::ProducerTopic>(
-          producer, getMainOpt().KafkaStatusURI.Topic);
-    } catch (KafkaW::TopicCreationError const &e) {
-      Logger->error("Can not create Kafka status producer: {}", e.what());
-    }
-  }
-}
-
-void Master::publishStatus() {
-  if (StatusProducer == nullptr) {
-    return;
-  }
-  auto Status = nlohmann::json::object();
-  Status["type"] = "filewriter_status_master";
-  Status["service_id"] = getMainOpt().ServiceID;
-  Status["files"] = nlohmann::json::object();
-
-  if (CurrentStreamMaster != nullptr) {
-    auto FilewriterTaskID = fmt::format("{}", CurrentStreamMaster->getJobId());
-    auto FilewriterTaskStatus = CurrentStreamMaster->getStatus();
-    Status["files"][FilewriterTaskID] = FilewriterTaskStatus;
-  }
-
-  StatusProducer->produce(Status.dump());
-}
 
 void Master::stop() { Running = false; }
 
