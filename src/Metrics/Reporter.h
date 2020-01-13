@@ -27,21 +27,22 @@ public:
   virtual ~Reporter() = default;
 
   void reportMetrics() {
-    IO.post([&]() {
-      for (auto &MetricNameValue : MetricsToReportOn) {
-        MetricSink->reportMetric(MetricNameValue.second);
-      }
-    });
+    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
+    for (auto &MetricNameValue : MetricsToReportOn) {
+      MetricSink->reportMetric(MetricNameValue.second);
+    }
   }
 
-  virtual void addMetric(Metric &NewMetric, std::string const &NewName) {
-    IO.post([&]() {
-      MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
-    });
+  virtual bool addMetric(Metric &NewMetric, std::string const &NewName) {
+    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
+    auto Result =
+        MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
+    return Result.second;
   }
 
-  virtual void tryRemoveMetric(std::string const &MetricName) {
-    IO.post([&]() { MetricsToReportOn.erase(MetricName); });
+  virtual bool tryRemoveMetric(std::string const &MetricName) {
+    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
+    return static_cast<bool>(MetricsToReportOn.erase(MetricName));
   }
 
   LogTo getSinkType() { return MetricSink->getType(); };
@@ -61,6 +62,7 @@ private:
   void run() { IO.run(); }
 
   std::unique_ptr<Sink> MetricSink;
+  std::mutex MetricsMapMutex; // lock when accessing MetricToReportOn
   std::map<std::string, InternalMetric> MetricsToReportOn; // MetricName: Metric
   asio::io_context IO;
   std::chrono::milliseconds Period;

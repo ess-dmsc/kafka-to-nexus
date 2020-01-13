@@ -84,8 +84,9 @@ TEST_F(MetricTest, Deregister) {
 
   // Expect call to tryRemoveMetric when the metric gets deregisterd
   REQUIRE_CALL(*TestReporterMock, tryRemoveMetric(NamePrefix + "." + NameStr))
-      .TIMES(1);
-  ALLOW_CALL(*TestReporterMock, addMetric(_, _));
+      .TIMES(1)
+      .RETURN(true);
+  ALLOW_CALL(*TestReporterMock, addMetric(_, _)).RETURN(true);
 
   {
     Metric UnderTest(NameStr, DescStr, TestSeverity);

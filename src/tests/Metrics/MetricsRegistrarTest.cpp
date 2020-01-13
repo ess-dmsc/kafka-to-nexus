@@ -33,9 +33,9 @@ TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
 
-  REQUIRE_CALL(*TestReporterMock, addMetric(_, Name)).TIMES(1);
+  REQUIRE_CALL(*TestReporterMock, addMetric(_, Name)).TIMES(1).RETURN(true);
   // Allow deregister call when Metric goes out of scope
-  ALLOW_CALL(*TestReporterMock, tryRemoveMetric(Name));
+  ALLOW_CALL(*TestReporterMock, tryRemoveMetric(Name)).RETURN(true);
 
   {
     Metric TestMetric(Name, Desc, Sev);
@@ -57,8 +57,10 @@ TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
 
-  REQUIRE_CALL(*TestReporterMock, addMetric(_, FullName)).TIMES(1);
-  REQUIRE_CALL(*TestReporterMock, tryRemoveMetric(FullName)).TIMES(1);
+  REQUIRE_CALL(*TestReporterMock, addMetric(_, FullName)).TIMES(1).RETURN(true);
+  REQUIRE_CALL(*TestReporterMock, tryRemoveMetric(FullName))
+      .TIMES(1)
+      .RETURN(true);
   {
     Metric Ctr(Name, Desc, Sev);
     TestRegistrarExtraPrefix.registerMetric(Ctr, {LogTo::LOG_MSG});
