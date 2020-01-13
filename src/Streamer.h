@@ -36,7 +36,7 @@ class Streamer {
 public:
   Streamer() = default;
 
-  /// \brief Create an instance of Streamer.
+  /// \brief Constructor.
   ///
   /// \param Broker Broker name or address of one of the brokers in the
   /// partition.
