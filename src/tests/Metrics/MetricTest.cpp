@@ -1,6 +1,10 @@
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
+#include "MockReporter.h"
+#include "MockSink.h"
 #include <gtest/gtest.h>
+
+using namespace std::chrono_literals;
 
 namespace Metrics {
 
@@ -62,24 +66,30 @@ TEST_F(MetricTest, SetValue) {
 }
 
 TEST_F(MetricTest, Deregister) {
+  using trompeloeil::_;
+
+  std::string const NamePrefix = "Test";
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
-  auto TestRegistrar = std::make_shared<Metrics::Registrar>();
+
+  auto TestSink = std::unique_ptr<Metrics::Sink>(new Metrics::MockSink());
+  auto TestReporter = std::shared_ptr<Metrics::Reporter>(
+      new MockReporter(std::move(TestSink), 10ms));
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
+  auto TestRegistrar =
+      std::make_shared<Metrics::Registrar>(NamePrefix, TestReporters);
+
+  auto TestReporterMock = std::dynamic_pointer_cast<MockReporter>(TestReporter);
+
+  // Expect call to tryRemoveMetric when the metric gets deregisterd
+  REQUIRE_CALL(*TestReporterMock, tryRemoveMetric(NamePrefix + "." + NameStr))
+      .TIMES(1);
+  ALLOW_CALL(*TestReporterMock, addMetric(_, _));
 
   {
-    Metric UnderTest(TestRegistrar, NameStr, DescStr, TestSeverity);
+    Metric UnderTest(NameStr, DescStr, TestSeverity);
     TestRegistrar->registerMetric(UnderTest, {LogTo::LOG_MSG});
-
-    // Test UnderTest is in MetricList
-    auto ListOfMetrics = TestMetricsList->getListOfMetrics();
-    EXPECT_TRUE(ListOfMetrics.find(NameStr) != ListOfMetrics.end())
-        << "Expect to find the metric in the list";
-  } // UnderTest Metric goes out of scope so should get deregistered
-
-  auto ListOfMetrics = TestMetricsList->getListOfMetrics();
-  EXPECT_TRUE(ListOfMetrics.find(NameStr) == ListOfMetrics.end())
-      << "Expect not to find the metric in the list";
+  } // When UnderTest Metric goes out of scope it should get deregistered
 }
-
 } // namespace Metrics

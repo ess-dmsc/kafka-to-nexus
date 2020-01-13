@@ -24,6 +24,8 @@ public:
       : MetricSink(std::move(MetricSink)), IO(), Period(Interval),
         AsioTimer(IO, Period){};
 
+  virtual ~Reporter() = default;
+
   void reportMetrics() {
     IO.post([&]() {
       for (auto &MetricNameValue : MetricsToReportOn) {
@@ -32,13 +34,13 @@ public:
     });
   }
 
-  void addMetric(Metric &NewMetric, std::string const &NewName) {
+  virtual void addMetric(Metric &NewMetric, std::string const &NewName) {
     IO.post([&]() {
       MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
     });
   }
 
-  void tryRemoveMetric(std::string const &MetricName) {
+  virtual void tryRemoveMetric(std::string const &MetricName) {
     IO.post([&]() { MetricsToReportOn.erase(MetricName); });
   }
 

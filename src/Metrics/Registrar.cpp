@@ -25,6 +25,9 @@ Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
 }
 
 std::string Registrar::prependPrefix(std::string const &Name) {
+  if (Prefix.empty()) {
+    return Name;
+  }
   return {Prefix + "." + Name};
 }
 

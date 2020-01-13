@@ -1,85 +1,108 @@
-#include "MetricStandIn.h"
-#include "Metrics/Processor.h"
-#include "ProcessorStandIn.h"
+#include "MockReporter.h"
+#include "MockSink.h"
+#include <Metrics/Registrar.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
+
+using namespace std::chrono_literals;
 
 namespace Metrics {
 
 class MetricsRegistrarTest : public ::testing::Test {
 public:
-  ProcessorStandIn MockProcessor{};
+  void SetUp() override {
+    auto TestSink = std::unique_ptr<Metrics::Sink>(new Metrics::MockSink());
+    auto TestReporter = std::shared_ptr<Metrics::Reporter>(
+        new MockReporter(std::move(TestSink), 10ms));
+    TestReporters = {TestReporter};
+  }
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters;
 };
 
 using trompeloeil::_;
-using trompeloeil::ne;
 
-TEST_F(MetricsRegistrarTest, RegAndDeReg) {
-  auto Name = std::string("some_name");
-  auto Desc = std::string("Description");
+TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
+  std::string const Name = "some_name";
+  std::string const Desc = "Description";
   auto Sev = Severity::INFO;
-  auto FullName = std::string("some_name.") + Name;
-  REQUIRE_CALL(MockProcessor,
-               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
-      .TIMES(1)
-      .RETURN(true);
-  REQUIRE_CALL(MockProcessor, deregisterMetric(FullName)).TIMES(1).RETURN(true);
+
+  std::string const EmptyPrefix;
+  auto TestRegistrar =
+      std::make_shared<Metrics::Registrar>(EmptyPrefix, TestReporters);
+
+  auto TestReporterMock =
+      std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
+
+  REQUIRE_CALL(*TestReporterMock, addMetric(_, Name)).TIMES(1);
+  // Allow deregister call when Metric goes out of scope
+  ALLOW_CALL(*TestReporterMock, tryRemoveMetric(Name));
+
   {
-    MetricStandIn Ctr(Name, Desc, Sev);
-    auto Registrar = MockProcessor.getRegistrarBase();
-    EXPECT_TRUE(Registrar.registerMetric(Ctr, {}));
+    Metric TestMetric(Name, Desc, Sev);
+    TestRegistrar->registerMetric(TestMetric, {LogTo::LOG_MSG});
   }
 }
 
-TEST_F(MetricsRegistrarTest, RegAndDeReg2) {
+TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
   auto BasePrefix = std::string("some_name.");
   auto ExtraPrefix = std::string("some_prefix");
   auto Name = std::string("some_metric");
   auto Desc = std::string("Description");
   auto Sev = Severity::INFO;
-  auto FullName = BasePrefix + ExtraPrefix + "." + Name;
-  auto Registrar1 = MockProcessor.getRegistrarBase();
-  auto Registrar2 = Registrar1.getNewRegistrar(ExtraPrefix);
+  auto FullName = BasePrefix + "." + ExtraPrefix + "." + Name;
 
-  REQUIRE_CALL(MockProcessor,
-               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
-      .TIMES(1)
-      .RETURN(true);
-  REQUIRE_CALL(MockProcessor, deregisterMetric(FullName)).TIMES(1).RETURN(true);
+  auto TestRegistrar =
+      std::make_shared<Metrics::Registrar>(BasePrefix, TestReporters);
+  auto TestRegistrarExtraPrefix = TestRegistrar->getNewRegistrar(ExtraPrefix);
+  auto TestReporterMock =
+      std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
+
+  REQUIRE_CALL(*TestReporterMock, addMetric(_, FullName)).TIMES(1);
+  REQUIRE_CALL(*TestReporterMock, tryRemoveMetric(FullName)).TIMES(1);
   {
-    MetricStandIn Ctr(Name, Desc, Sev);
-    Registrar2.registerMetric(Ctr, {});
+    Metric Ctr(Name, Desc, Sev);
+    TestRegistrarExtraPrefix.registerMetric(Ctr, {LogTo::LOG_MSG});
   }
 }
 
-TEST_F(MetricsRegistrarTest, RegisterEmptyNameFail) {
-  auto EmptyName = std::string();
-  auto Desc = std::string("Description");
-  auto Sev = Severity::INFO;
-  FORBID_CALL(MockProcessor, registerMetric(_, _, _, _, _));
-  FORBID_CALL(MockProcessor, deregisterMetric(_));
-  auto Registrar = MockProcessor.getRegistrarBase();
-  {
-    MetricStandIn Ctr(EmptyName, Desc, Sev);
-    EXPECT_THROW(Registrar.registerMetric(Ctr, {}), std::runtime_error);
-  }
-}
+//TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
+//  auto EmptyName = std::string();
+//  auto Desc = std::string("Description");
+//  auto Sev = Severity::INFO;
+//
+//  std::string const EmptyPrefix;
+//  auto TestRegistrar =
+//      std::make_shared<Metrics::Registrar>(EmptyPrefix, TestReporters);
+//
+//  auto TestReporterMock =
+//      std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
+//
+//  FORBID_CALL(MockProcessor, registerMetric(_, _, _, _, _));
+//  FORBID_CALL(MockProcessor, deregisterMetric(_));
+//  auto Registrar = MockProcessor.getRegistrarBase();
+//  {
+//    Metric Ctr(EmptyName, Desc, Sev);
+//    EXPECT_THROW(Registrar.registerMetric(Ctr, {}), std::runtime_error);
+//  }
+//}
+//
+// TEST_F(MetricsRegistrarTest, RegisterNameFail) {
+//  auto Name = std::string("yet_another_name");
+//  auto Desc = std::string("Description");
+//  auto Sev = Severity::INFO;
+//  auto FullName = std::string("some_name.") + Name;
+//  REQUIRE_CALL(MockProcessor,
+//               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
+//      .TIMES(1)
+//      .RETURN(false);
+//  FORBID_CALL(MockProcessor, deregisterMetric(_));
+//  auto Registrar = MockProcessor.getRegistrarBase();
+//  {
+//    Metric Ctr(Name, Desc, Sev);
+//    EXPECT_FALSE(Registrar.registerMetric(Ctr, {}));
+//  }
+//}
 
-TEST_F(MetricsRegistrarTest, RegisterNameFail) {
-  auto Name = std::string("yet_another_name");
-  auto Desc = std::string("Description");
-  auto Sev = Severity::INFO;
-  auto FullName = std::string("some_name.") + Name;
-  REQUIRE_CALL(MockProcessor,
-               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
-      .TIMES(1)
-      .RETURN(false);
-  FORBID_CALL(MockProcessor, deregisterMetric(_));
-  auto Registrar = MockProcessor.getRegistrarBase();
-  {
-    MetricStandIn Ctr(Name, Desc, Sev);
-    EXPECT_FALSE(Registrar.registerMetric(Ctr, {}));
-  }
-}
+// RegisterWithExistingNameFails?
 
 } // namespace Metrics
