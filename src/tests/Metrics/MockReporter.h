@@ -19,5 +19,4 @@ public:
   MAKE_MOCK2(addMetric, void(Metric &, std::string const &), override);
   MAKE_MOCK1(tryRemoveMetric, void(std::string const &), override);
 };
-
 }

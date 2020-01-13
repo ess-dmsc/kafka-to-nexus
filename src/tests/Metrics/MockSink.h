@@ -16,9 +16,7 @@ namespace Metrics {
 class MockSink : public Sink {
 public:
   MAKE_MOCK1(reportMetric, void(InternalMetric &), override);
-  LogTo getType() override {
-    return LogTo::LOG_MSG;
-  }
+  LogTo getType() override { return LogTo::LOG_MSG; }
 };
 
 } // namespace Metrics

@@ -65,7 +65,7 @@ TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
   }
 }
 
-//TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
+// TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
 //  auto EmptyName = std::string();
 //  auto Desc = std::string("Description");
 //  auto Sev = Severity::INFO;
