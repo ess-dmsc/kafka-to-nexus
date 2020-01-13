@@ -40,7 +40,7 @@ public:
   /// Constructor
   ///
   /// \param TaskID The service ID.
-  FileWriterTask(std::string TaskID)
+  explicit FileWriterTask(std::string TaskID)
       : ServiceId(std::move(TaskID)), Logger(getLogger()){};
 
   /// Destructor.
