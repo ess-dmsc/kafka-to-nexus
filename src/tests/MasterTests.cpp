@@ -15,9 +15,10 @@
 
 class FakeJobCreator : public FileWriter::IJobCreator {
 public:
-  std::unique_ptr<FileWriter::IStreamMaster> createFileWritingJob(
-      FileWriter::StartCommandInfo const & /*StartInfo*/,
-      MainOpt & /*Settings*/, SharedLogger const & /*Logger*/) override {
+  std::unique_ptr<FileWriter::IStreamMaster>
+  createFileWritingJob(FileWriter::StartCommandInfo const & /*StartInfo*/,
+                       MainOpt & /*Settings*/,
+                       SharedLogger const & /*Logger*/) override {
     return std::make_unique<FakeStreamMaster>("some_id");
   };
 };

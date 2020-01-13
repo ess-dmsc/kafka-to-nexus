@@ -13,9 +13,9 @@
 
 #pragma once
 
-#include "StreamStatus.h"
 #include "EventLogger.h"
 #include "KafkaW/Consumer.h"
+#include "StreamStatus.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include <chrono>

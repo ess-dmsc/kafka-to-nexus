@@ -71,7 +71,8 @@ initTopic(std::string const &TopicName, StreamerOptions const &Options,
     }
     // Error if the topic cannot be found in the metadata
     if (!Consumer->topicPresent(TopicName)) {
-      throw std::runtime_error(fmt::format("could not find topic \"{}\"", TopicName));
+      throw std::runtime_error(
+          fmt::format("could not find topic \"{}\"", TopicName));
     }
     return {Status::StreamerStatus::WRITING, std::move(Consumer)};
   } catch (std::exception &Error) {

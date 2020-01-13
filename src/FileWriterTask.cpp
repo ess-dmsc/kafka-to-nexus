@@ -44,8 +44,8 @@ FileWriterTask::~FileWriterTask() {
   try {
     File.close();
   } catch (std::exception const &E) {
-    Logger->error(fmt::format("Exception while closing file in ~FileWriterTask: {}",
-                              E.what()));
+    Logger->error(fmt::format(
+        "Exception while closing file in ~FileWriterTask: {}", E.what()));
   }
 }
 
