@@ -135,7 +135,7 @@ TEST_F(StreamerProcessTest,
   StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerInitialised = std::async(std::launch::async, []() {
     return std::pair<Status::StreamerStatus, ConsumerPtr>{
-        Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
+        Status::StreamerStatus::INITIALISATION_FAILED, nullptr};
   });
   EXPECT_THROW(TestStreamer.process(), std::runtime_error);
 }

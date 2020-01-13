@@ -90,7 +90,6 @@ void StreamMaster::processStream(Streamer &Stream) {
 }
 
 void StreamMaster::run() {
-  RunStatus.store(StreamMasterError::RUNNING);
 
   while (!Stop && StreamersRemaining.load()) {
     bool StreamsStillWriting = false;
@@ -105,7 +104,7 @@ void StreamMaster::run() {
     // Only update once we know the final answer to avoid race conditions
     StreamersRemaining.store(StreamsStillWriting);
   }
-  RunStatus.store(StreamMasterError::HAS_FINISHED);
+
   doStop();
 }
 
@@ -117,15 +116,13 @@ void StreamMaster::doStop() {
     auto CloseResult = Stream.second.close();
     if (CloseResult != Status::StreamerStatus::HAS_FINISHED) {
       Logger->info("Problem with stopping {} : {}", Stream.first,
-                   Status::Err2Str(CloseResult));
+                   Status::StatusDescription(CloseResult));
     } else {
       Logger->info("Stopped {}", Stream.first);
     }
   }
 
   Streamers.clear();
-  RunStatus.store(StreamMasterError::IS_REMOVABLE);
-  Logger->debug("StreamMaster is removable");
 }
 
 bool StreamMaster::isDoneWriting() { return !StreamersRemaining.load(); }

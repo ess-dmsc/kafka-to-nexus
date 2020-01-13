@@ -12,7 +12,6 @@
 
 #pragma once
 
-#include "Errors.h"
 #include "EventLogger.h"
 #include "MainOpt.h"
 #include <atomic>
@@ -31,8 +30,6 @@ public:
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
 class StreamMaster : public IStreamMaster {
-  using StreamMasterError = Status::StreamMasterError;
-
 public:
   /// \brief Builder method for StreamMaster.
   ///
@@ -98,7 +95,6 @@ private:
   std::atomic<bool> StreamersRemaining{true};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
-  std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};

@@ -54,14 +54,14 @@ Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
                       .count());
   Options.BrokerSettings.Address = Broker;
 
-  ConsumerInitialised = std::async(std::launch::async, &initTopics, TopicName,
+  ConsumerInitialised = std::async(std::launch::async, &initTopic, TopicName,
                                    Options, Logger, std::move(Consumer));
 }
 
 std::pair<Status::StreamerStatus, ConsumerPtr>
-initTopics(std::string const &TopicName, StreamerOptions const &Options,
-           SharedLogger const &Logger, ConsumerPtr Consumer) {
-  Logger->trace("Connecting to \"{}\"", TopicName);
+initTopic(std::string const &TopicName, StreamerOptions const &Options,
+          SharedLogger const &Logger, ConsumerPtr Consumer) {
+  Logger->trace("Trying to connect to \"{}\"", TopicName);
   try {
     if (Options.StartTimestamp.count() != 0) {
       Consumer->addTopicAtTimestamp(TopicName, Options.StartTimestamp -
@@ -71,14 +71,12 @@ initTopics(std::string const &TopicName, StreamerOptions const &Options,
     }
     // Error if the topic cannot be found in the metadata
     if (!Consumer->topicPresent(TopicName)) {
-      Logger->error("Topic \"{}\" not in broker, remove corresponding stream",
-                    TopicName);
-      return {Status::StreamerStatus::TOPIC_PARTITION_ERROR, nullptr};
+      throw std::runtime_error(fmt::format("could not find topic \"{}\"", TopicName));
     }
     return {Status::StreamerStatus::WRITING, std::move(Consumer)};
   } catch (std::exception &Error) {
-    Logger->error("{}", Error.what());
-    return {Status::StreamerStatus::CONFIGURATION_ERROR, nullptr};
+    Logger->error("Initialisation failed: {}", Error.what());
+    return {Status::StreamerStatus::INITIALISATION_FAILED, nullptr};
   }
 }
 
@@ -285,7 +283,7 @@ std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Streamer::poll() {
 
   // Potentially the consumer might not be usable.
   if (RunStatus < StreamerStatus::IS_CONNECTED) {
-    throw std::runtime_error(Err2Str(RunStatus));
+    throw std::runtime_error(StatusDescription(RunStatus));
   }
 
   return Consumer->poll();

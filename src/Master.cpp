@@ -9,7 +9,6 @@
 
 #include "Master.h"
 #include "CommandParser.h"
-#include "Errors.h"
 #include "JobCreator.h"
 #include "Msg.h"
 #include "helper.h"
