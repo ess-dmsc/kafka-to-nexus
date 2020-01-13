@@ -13,7 +13,7 @@
 
 #pragma once
 
-#include "Errors.h"
+#include "StreamStatus.h"
 #include "EventLogger.h"
 #include "KafkaW/Consumer.h"
 #include "StreamerOptions.h"

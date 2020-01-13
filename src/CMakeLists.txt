@@ -65,7 +65,7 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
-        Errors.cpp
+        StreamStatus.cpp
         Streamer.cpp
         StreamMaster.cpp
         Master.cpp
@@ -98,7 +98,7 @@ set(kafka_to_nexus_INC
         JobCreator.h
         CommandListener.h
         DemuxTopic.h
-        Errors.h
+        StreamStatus.h
         EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h

@@ -7,7 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Errors.h"
+#include "StreamStatus.h"
 
 using StreamerStatus = FileWriter::Status::StreamerStatus;
 
