@@ -127,11 +127,11 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
-    StartCommandInfo const &StartInfo,
-    MainOpt &Settings, SharedLogger const &Logger) {
-  auto Task =
-      std::make_unique<FileWriterTask>(Settings.ServiceID);
+std::unique_ptr<IStreamMaster>
+JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
+                                 MainOpt &Settings,
+                                 SharedLogger const &Logger) {
+  auto Task = std::make_unique<FileWriterTask>(Settings.ServiceID);
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 

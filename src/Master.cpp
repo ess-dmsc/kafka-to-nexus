@@ -91,8 +91,8 @@ void Master::handle_command(std::string const &Command,
       if (CommandName == CommandParser::StartCommand) {
         auto StartInfo =
             CommandParser::extractStartInformation(CommandJson, TimeStamp);
-        CurrentStreamMaster = Creator_->createFileWritingJob(
-            StartInfo, getMainOpt(), Logger);
+        CurrentStreamMaster =
+            Creator_->createFileWritingJob(StartInfo, getMainOpt(), Logger);
         IsWriting = true;
       } else {
         throw std::runtime_error(fmt::format(
@@ -144,7 +144,6 @@ void Master::run() {
     }
   }
 }
-
 
 void Master::stop() { Running = false; }
 

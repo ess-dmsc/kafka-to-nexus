@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "KafkaW/Producer.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
-#include "KafkaW/Producer.h"
 #include <gtest/gtest.h>
 
 class ProducerStandIn : public KafkaW::Producer {
