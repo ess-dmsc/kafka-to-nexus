@@ -12,7 +12,7 @@
 #include <trompeloeil.hpp>
 
 namespace Metrics {
-/// Sink which doesn't do anything for use in unit tests
+
 class MockSink : public Sink {
 public:
   MAKE_MOCK1(reportMetric, void(InternalMetric &), override);

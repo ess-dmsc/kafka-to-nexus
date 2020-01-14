@@ -85,23 +85,29 @@ TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
   }
 }
 
-// TEST_F(MetricsRegistrarTest, RegisterNameFail) {
-//  auto Name = std::string("yet_another_name");
-//  auto Desc = std::string("Description");
-//  auto Sev = Severity::INFO;
-//  auto FullName = std::string("some_name.") + Name;
-//  REQUIRE_CALL(MockProcessor,
-//               registerMetric(FullName, ne(nullptr), Desc, Sev, _))
-//      .TIMES(1)
-//      .RETURN(false);
-//  FORBID_CALL(MockProcessor, deregisterMetric(_));
-//  auto Registrar = MockProcessor.getRegistrarBase();
-//  {
-//    Metric Ctr(Name, Desc, Sev);
-//    EXPECT_FALSE(Registrar.registerMetric(Ctr, {}));
-//  }
-//}
+TEST_F(MetricsRegistrarTest, RegisterWithExistingNameFails) {
+  std::string const Name = "metric_name";
+  std::string const Desc = "Description";
+  auto const Sev = Severity::INFO;
 
-// RegisterWithExistingNameFails?
+  auto TestSink = std::unique_ptr<Metrics::Sink>(new Metrics::MockSink());
+  auto TestReporter =
+      std::make_shared<Metrics::Reporter>(std::move(TestSink), 10ms);
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporterList{
+      TestReporter};
+
+  std::string const EmptyPrefix;
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
+
+  {
+    Metric TestMetric(Name, Desc, Sev);
+    TestRegistrar.registerMetric(TestMetric, {LogTo::LOG_MSG});
+    Metric TestMetricWithSameName(Name, Desc, Sev);
+    EXPECT_THROW(
+        TestRegistrar.registerMetric(TestMetricWithSameName, {LogTo::LOG_MSG}),
+        std::runtime_error)
+        << "Expect registering metric with existing name to fail";
+  }
+}
 
 } // namespace Metrics
