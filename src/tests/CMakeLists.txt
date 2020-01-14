@@ -3,7 +3,7 @@ find_package(Trompeloeil REQUIRED)
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 
 add_subdirectory(writer_module)
-#add_subdirectory(fb_metadata)
+add_subdirectory(fb_metadata)
 
 set(UnitTests_SRC
         UnitTests.cpp
@@ -32,7 +32,7 @@ set(UnitTests_SRC
         MasterTests.cpp
         StreamerTests.cpp
         $<TARGET_OBJECTS:writer_module>
-#        $<TARGET_OBJECTS:fb_metadata>
+        $<TARGET_OBJECTS:fb_metadata>
     )
 
 set(UnitTests_INC

@@ -1,14 +1,13 @@
 set(fb_metadata_SRC
-    AreaDetectorTests.cpp
-    ChopperTimeStampWriterTests.cpp
-    EventHistogramWriterTests.cpp
-    EventWriterTests.cpp
-    FastSampleEnvironmentWriterTests.cpp
-    NicosCacheWriterTests.cpp
+    NDAr_ExtractorTests.cpp
+    TemplateExtractorTests.cpp
+    tdct_ExtractorTests.cpp
+    ev42_ExtractorTests.cpp
+    senv_ExtractorTests.cpp
+    ns10_ExtractorTests.cpp
     ReaderRegistrationTests.cpp
-    Schema_f142Tests.cpp
-    TemplateWriterTests.cpp
     )
 
 add_library(fb_metadata OBJECT ${fb_metadata_SRC})
-target_include_directories(fb_metadata PRIVATE ..)
+target_include_directories(fb_metadata PRIVATE .. ../../)
+target_compile_definitions(fb_metadata PRIVATE TEST_DATA_PATH="${TEST_DATA_PATH}")

@@ -39,7 +39,7 @@
 
 /// \brief A separate namespace for this specific file writing module. Use this
 /// to minimize the risk of name collisions.
-namespace TemplateWriter {
+namespace TemplateExtractor {
 
 /// \brief This class is used to extract information from a flatbuffer which
 /// uses a specific four character file identifier.

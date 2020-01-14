@@ -1,9 +1,9 @@
 set(template_module_SRC
-  TemplateWriter.cpp
+    TemplateExtractor.cpp
 )
 
 set(template_module_INC
-  TemplateWriter.h
+    TemplateExtractor.h
 )
 
 create_fb_extractor(template_module)

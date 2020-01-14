@@ -7,9 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "TemplateWriter.h"
+#include "TemplateExtractor.h"
 
-namespace TemplateWriter {
+namespace TemplateExtractor {
 
 // Instantiates a ReaderClass used for extracting source names, timestamps and
 // verifying a flatbuffers.
