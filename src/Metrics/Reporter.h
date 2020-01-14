@@ -25,38 +25,12 @@ public:
         AsioTimer(IO, Period){};
 
   virtual ~Reporter() = default;
-
-  void reportMetrics() {
-    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
-    for (auto &MetricNameValue : MetricsToReportOn) {
-      MetricSink->reportMetric(MetricNameValue.second);
-    }
-  }
-
-  virtual bool addMetric(Metric &NewMetric, std::string const &NewName) {
-    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
-    auto Result =
-        MetricsToReportOn.emplace(NewName, InternalMetric(NewMetric, NewName));
-    return Result.second;
-  }
-
-  virtual bool tryRemoveMetric(std::string const &MetricName) {
-    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
-    return static_cast<bool>(MetricsToReportOn.erase(MetricName));
-  }
-
-  LogTo getSinkType() { return MetricSink->getType(); };
-
-  void start() {
-    AsioTimer.async_wait(
-        [this](std::error_code const & /*error*/) { this->reportMetrics(); });
-    ReporterThread = std::thread(&Reporter::run, this);
-  }
-
-  void waitForStop() {
-    AsioTimer.cancel();
-    ReporterThread.join();
-  }
+  void reportMetrics();
+  virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
+  virtual bool tryRemoveMetric(std::string const &MetricName);
+  LogTo getSinkType();
+  void start();
+  void waitForStop();
 
 private:
   void run() { IO.run(); }
