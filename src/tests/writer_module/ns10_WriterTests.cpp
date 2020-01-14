@@ -12,9 +12,9 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "json.h"
 #include "FlatbufferMessage.h"
 #include "helpers/HDFFileTestHelper.h"
+#include "json.h"
 #include "writer_modules/ns10/ns10_Writer.h"
 #include <ns10_cache_entry_generated.h>
 

@@ -16,8 +16,8 @@
 
 #include <utility>
 
-#include "helpers/HDFFileTestHelper.h"
 #include "fb_metadata_extractors/ev42/ev42_Extractor.h"
+#include "helpers/HDFFileTestHelper.h"
 
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
@@ -93,7 +93,8 @@ public:
     std::map<std::string, ReaderPtr> &Readers =
         FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<FlatbufferMetadata::ev42_Extractor>
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FlatbufferMetadata::ev42_Extractor>
         RegisterIt("ev42");
   };
 

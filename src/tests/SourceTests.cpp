@@ -11,14 +11,14 @@
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
+#include <fb_metadata_extractors/ev42/ev42_Extractor.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
-#include <fb_metadata_extractors/ev42/ev42_Extractor.h>
 #include <trompeloeil.hpp>
 
 namespace FlatbufferMetadata {
 #include "schemas/ev42_events_generated.h"
-} // namespace ev42
+} // namespace FlatbufferMetadata
 
 using FileWriter::FlatbufferMessage;
 using FileWriter::HDFWriterModule;
@@ -30,7 +30,8 @@ flatbuffers::DetachedBuffer createEventMessageBuffer() {
   FlatbufferMetadata::EventMessageBuilder EventMessage(Builder);
   EventMessage.add_pulse_time(
       1); // avoid 0 pulse time which is detected as a validation error
-  Builder.Finish(EventMessage.Finish(), FlatbufferMetadata::EventMessageIdentifier());
+  Builder.Finish(EventMessage.Finish(),
+                 FlatbufferMetadata::EventMessageIdentifier());
 
   // Note, Release gives us a "DetachedBuffer" which owns the data
   return Builder.Release();

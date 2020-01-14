@@ -14,21 +14,21 @@
 #include <gtest/gtest.h>
 
 #include "FlatbufferReader.h"
+#include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "writer_modules/NDAr/NDAr_Writer.h"
-#include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
 
 class ADWriterStandIn : public Module::NDAr::NDAr_Writer {
 public:
-  using NDAr_Writer::ChunkSize;
   using NDAr_Writer::ArrayShape;
-  using NDAr_Writer::Type;
-  using NDAr_Writer::ElementType;
-  using NDAr_Writer::Values;
-  using NDAr_Writer::Timestamp;
+  using NDAr_Writer::ChunkSize;
   using NDAr_Writer::CueInterval;
   using NDAr_Writer::CueTimestamp;
   using NDAr_Writer::CueTimestampIndex;
+  using NDAr_Writer::ElementType;
+  using NDAr_Writer::Timestamp;
+  using NDAr_Writer::Type;
+  using NDAr_Writer::Values;
 };
 
 class AreaDetectorWriter : public ::testing::Test {
@@ -53,7 +53,8 @@ public:
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
         &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<FlatbufferMetadata::NDAr_Extractor>
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FlatbufferMetadata::NDAr_Extractor>
         RegisterIt("NDAr");
   };
 
@@ -338,8 +339,8 @@ TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   auto tempNDArr = FB_Tables::GetNDArray(RawData.get());
-  auto compTs = Module::NDAr::NDAr_Writer::epicsTimeToNsec(tempNDArr->epicsTS()->secPastEpoch(),
-                                      tempNDArr->epicsTS()->nsec());
+  auto compTs = Module::NDAr::NDAr_Writer::epicsTimeToNsec(
+      tempNDArr->epicsTS()->secPastEpoch(), tempNDArr->epicsTS()->nsec());
   Writer.write(Message);
   std::uint64_t storedTs{11111};
   Writer.Timestamp.read(storedTs);

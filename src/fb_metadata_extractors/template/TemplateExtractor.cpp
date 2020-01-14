@@ -15,4 +15,4 @@ namespace TemplateExtractor {
 // verifying a flatbuffers.
 static FileWriter::FlatbufferReaderRegistry::Registrar<Extractor>
     RegisterReader("test");
-} // namespace TemplateWriter
+} // namespace TemplateExtractor

@@ -12,10 +12,10 @@
 #include "json.h"
 #include "writer_modules/hs00/Dimension.h"
 #include "writer_modules/hs00/Exceptions.h"
-#include "writer_modules/hs00/hs00_Writer.h"
 #include "writer_modules/hs00/Shape.h"
 #include "writer_modules/hs00/Slice.h"
 #include "writer_modules/hs00/WriterTyped.h"
+#include "writer_modules/hs00/hs00_Writer.h"
 #include <HDFWriterModule.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
@@ -24,17 +24,18 @@
 
 using json = nlohmann::json;
 using Module::hs00::Dimension;
+using Module::hs00::hs00_Writer;
 using Module::hs00::Shape;
 using Module::hs00::Slice;
 using Module::hs00::UnexpectedJsonInput;
-using Module::hs00::hs00_Writer;
 using Module::hs00::WriterTyped;
 
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
     try {
-      FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterIt("hs00");
+      FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterIt(
+          "hs00");
     } catch (...) {
     }
   }

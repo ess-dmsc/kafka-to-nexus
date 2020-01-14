@@ -11,8 +11,8 @@
 #include <memory>
 #include <tdct_timestamps_generated.h>
 
-#include "helpers/HDFFileTestHelper.h"
 #include "fb_metadata_extractors/tdct/tdct_Extractor.h"
+#include "helpers/HDFFileTestHelper.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -39,7 +39,8 @@ public:
     std::map<std::string, ReaderPtr> &Readers =
         FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<FlatbufferMetadata::tdct_Extractor>
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FlatbufferMetadata::tdct_Extractor>
         RegisterIt("tdct");
     RawBuffer = GenerateFlatbufferData(BufferSize);
     TestMessage = std::make_unique<FBMsg>(

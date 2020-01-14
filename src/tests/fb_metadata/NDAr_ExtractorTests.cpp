@@ -35,7 +35,8 @@ public:
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
         &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<FlatbufferMetadata::NDAr_Extractor>
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FlatbufferMetadata::NDAr_Extractor>
         RegisterIt("NDAr");
   };
 
@@ -56,10 +57,16 @@ TEST_F(AreaDetectorReader, ValidateTestFail) {
   flatbuffers::FlatBufferBuilder builder;
   auto epics_ts = FB_Tables::epicsTimeStamp(0, 0);
   auto someDims = builder.CreateVector(std::vector<std::uint64_t>({
-      0, 1, 2, 3,
+      0,
+      1,
+      2,
+      3,
   }));
   auto someData = builder.CreateVector(std::vector<std::uint8_t>({
-      0, 1, 2, 3,
+      0,
+      1,
+      2,
+      3,
   }));
   auto tmpPkg = FB_Tables::CreateNDArray(builder, 0, 0, &epics_ts, someDims,
                                          FB_Tables::DType::Uint8, someData);

@@ -12,9 +12,9 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "json.h"
 #include "FlatbufferMessage.h"
 #include "fb_metadata_extractors/ns10/ns10_Extractor.h"
+#include "json.h"
 #include "ns10_cache_entry_generated.h"
 
 static std::unique_ptr<flatbuffers::FlatBufferBuilder>
@@ -60,8 +60,9 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 
 static void registerSchema() {
   try {
-    FileWriter::FlatbufferReaderRegistry::Registrar<FlatbufferMetadata::ns10_Extractor> RegisterIt(
-        "ns10");
+    FileWriter::FlatbufferReaderRegistry::Registrar<
+        FlatbufferMetadata::ns10_Extractor>
+        RegisterIt("ns10");
   } catch (...) {
   }
 }
