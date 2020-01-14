@@ -15,8 +15,12 @@ namespace Metrics {
 
 class MockSink : public Sink {
 public:
+  explicit MockSink(LogTo LogToSink = LogTo::LOG_MSG) : SinkType(LogToSink){};
   MAKE_MOCK1(reportMetric, void(InternalMetric &), override);
-  LogTo getType() override { return LogTo::LOG_MSG; }
+  LogTo getType() override { return SinkType; };
+
+private:
+  LogTo SinkType;
 };
 
 } // namespace Metrics
