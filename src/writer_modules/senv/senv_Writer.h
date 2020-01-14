@@ -14,12 +14,13 @@
 
 #pragma once
 
+#include "FlatbufferMessage.h"
 #include "HDFFile.h"
 #include "HDFWriterModule.h"
 #include "Msg.h"
 #include "NeXusDataset.h"
-#include "FlatbufferMessage.h"
 
+namespace Module {
 namespace senv {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = FileWriter::HDFWriterModule;
@@ -51,3 +52,4 @@ protected:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace senv
+} // namespace Module

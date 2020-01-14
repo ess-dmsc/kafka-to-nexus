@@ -14,10 +14,11 @@
 
 #include "helper.h"
 
-#include "NDAr_Writer.h"
 #include "HDFFile.h"
+#include "NDAr_Writer.h"
 #include <NDAr_NDArray_schema_generated.h>
 
+namespace Module {
 namespace NDAr {
 
 // Register the file writing part of this module.
@@ -83,7 +84,7 @@ void NDAr_Writer::parse_config(std::string const &ConfigurationStream) {
 
 FileWriterBase::InitResult
 NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-               std::string const &HDFAttributes) {
+                      std::string const &HDFAttributes) {
   const int DefaultChunkSize = ChunkSize.at(0);
   try {
     auto &CurrentGroup = HDFGroup;
@@ -114,8 +115,7 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
   return FileWriterBase::InitResult::OK;
 }
 
-FileWriterBase::InitResult
-NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
+FileWriterBase::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Values = std::make_unique<NeXusDataset::MultiDimDatasetBase>(
@@ -256,3 +256,4 @@ void NDAr_Writer::initValueDataset(hdf5::node::Group &Parent) {
   Values = CreateValuesMap.at(ElementType)();
 }
 } // namespace NDAr
+} // namespace Module

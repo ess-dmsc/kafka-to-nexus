@@ -20,6 +20,7 @@
 #include "Msg.h"
 #include "NeXusDataset.h"
 
+namespace Module {
 namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = FileWriter::HDFWriterModule;
@@ -67,3 +68,4 @@ private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace NDAr
+} // namespace Module

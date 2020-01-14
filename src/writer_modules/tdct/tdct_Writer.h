@@ -18,6 +18,7 @@
 #include "HDFWriterModule.h"
 #include "NeXusDataset.h"
 
+namespace Module {
 namespace tdct {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using FileWriterBase = FileWriter::HDFWriterModule;
@@ -44,3 +45,4 @@ protected:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace tdct
+} // namespace Module

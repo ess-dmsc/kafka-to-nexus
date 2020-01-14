@@ -11,6 +11,7 @@
 #include "Exceptions.h"
 #include "hs00_Writer.h"
 
+namespace Module {
 namespace hs00 {
 
 template <typename EdgeType>
@@ -69,3 +70,4 @@ template size_t Shape<uint64_t>::getTotalItems() const;
 template size_t Shape<double>::getTotalItems() const;
 template size_t Shape<float>::getTotalItems() const;
 } // namespace hs00
+} // namespace Module

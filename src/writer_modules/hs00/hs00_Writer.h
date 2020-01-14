@@ -13,6 +13,7 @@
 #include "HDFWriterModule.h"
 #include "WriterUntyped.h"
 
+namespace Module {
 namespace hs00 {
 
 template <typename T> using uptr = std::unique_ptr<T>;
@@ -36,3 +37,4 @@ private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace hs00
+} // namespace Module

@@ -22,7 +22,8 @@ bool hs00_Extractor::verify(FlatbufferMessage const &Message) const {
   return VerifyEventHistogramBuffer(Verifier);
 }
 
-std::string hs00_Extractor::source_name(FlatbufferMessage const &Message) const {
+std::string
+hs00_Extractor::source_name(FlatbufferMessage const &Message) const {
   auto Buffer = getRoot(Message.data());
   auto Source = Buffer->source();
   if (Source == nullptr) {
@@ -37,5 +38,6 @@ uint64_t hs00_Extractor::timestamp(FlatbufferMessage const &Message) const {
   return Buffer->timestamp();
 }
 
-FileWriter::FlatbufferReaderRegistry::Registrar<hs00_Extractor> RegisterReader("hs00");
-} // namespace hs00
+FileWriter::FlatbufferReaderRegistry::Registrar<hs00_Extractor>
+    RegisterReader("hs00");
+} // namespace FlatbufferMetadata

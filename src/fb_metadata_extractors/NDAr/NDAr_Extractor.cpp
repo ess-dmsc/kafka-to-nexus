@@ -34,18 +34,17 @@ std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec) {
   return (sec + TimeDiffUNIXtoEPICSepoch) * NSecMultiplier + nsec;
 }
 
-uint64_t
-NDAr_Extractor::timestamp(FlatbufferMessage const &Message) const {
+uint64_t NDAr_Extractor::timestamp(FlatbufferMessage const &Message) const {
   auto FbPointer = FB_Tables::GetNDArray(Message.data());
   auto epicsTime = FbPointer->epicsTS();
   return epicsTimeToNsec(epicsTime->secPastEpoch(), epicsTime->nsec());
 }
 
-std::string NDAr_Extractor::source_name(
-    const FileWriter::FlatbufferMessage &) const {
+std::string
+NDAr_Extractor::source_name(const FileWriter::FlatbufferMessage &) const {
   // The source name was left out of the relevant EPICS areaDetector plugin.
   // There is currently a pull request for adding this variable to the FB
   // schema. When the variable has been addded, this function will be updated.
   return "ADPluginKafka";
 }
-} // namespace NDAr
+} // namespace FlatbufferMetadata

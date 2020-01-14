@@ -27,4 +27,4 @@ public:
   std::string source_name(FlatbufferMessage const &Message) const override;
   uint64_t timestamp(FlatbufferMessage const &Message) const override;
 };
-} // namespace tdct
+} // namespace FlatbufferMetadata

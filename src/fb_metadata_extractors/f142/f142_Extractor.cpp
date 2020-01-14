@@ -41,4 +41,4 @@ uint64_t f142_Extractor::timestamp(FlatbufferMessage const &Message) const {
 /// Register the Reader with the application's registry
 static FileWriter::FlatbufferReaderRegistry::Registrar<f142_Extractor>
     RegisterReader("f142");
-} // namespace f142
+} // namespace FlatbufferMetadata

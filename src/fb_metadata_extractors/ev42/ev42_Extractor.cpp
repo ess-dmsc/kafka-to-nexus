@@ -37,4 +37,4 @@ uint64_t ev42_Extractor::timestamp(FlatbufferMessage const &Message) const {
 static FileWriter::FlatbufferReaderRegistry::Registrar<ev42_Extractor>
     RegisterReader("ev42");
 
-} // namespace ev42
+} // namespace FlatbufferMetadata

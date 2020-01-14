@@ -15,6 +15,7 @@
 #include <h5cpp/hdf5.hpp>
 #include <vector>
 
+namespace Module {
 namespace hs00 {
 
 using FileWriter::FlatbufferMessage;
@@ -57,3 +58,4 @@ private:
                                        json const &Json);
 };
 } // namespace hs00
+} // namespace Module

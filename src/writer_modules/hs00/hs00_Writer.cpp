@@ -10,6 +10,7 @@
 #include "hs00_Writer.h"
 #include "Exceptions.h"
 
+namespace Module {
 namespace hs00 {
 
 void hs00_Writer::parse_config(std::string const &ConfigurationStream) {
@@ -52,5 +53,7 @@ FileWriter::HDFWriterModule::ptr hs00_Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new hs00_Writer);
 }
 
-FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterWriter("hs00");
+FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer>
+    RegisterWriter("hs00");
 } // namespace hs00
+} // namespace Module

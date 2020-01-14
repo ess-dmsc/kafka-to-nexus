@@ -11,6 +11,7 @@
 
 #include <stdexcept>
 
+namespace Module {
 namespace hs00 {
 
 /// To signal errors in JSON command
@@ -21,3 +22,4 @@ public:
       : std::runtime_error(Error) {}
 };
 } // namespace hs00
+} // namespace Module

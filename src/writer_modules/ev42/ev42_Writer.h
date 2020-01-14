@@ -7,11 +7,12 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "HDFWriterModule.h"
 #include "AdcDatasets.h"
-#include "NeXusDataset.h"
 #include "FlatbufferMessage.h"
+#include "HDFWriterModule.h"
+#include "NeXusDataset.h"
 
+namespace Module {
 namespace ev42 {
 
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
@@ -51,3 +52,4 @@ private:
   void writeAdcPulseDataFromMessageToFile(FlatbufferMessage const &Message);
 };
 } // namespace ev42
+} // namespace Module

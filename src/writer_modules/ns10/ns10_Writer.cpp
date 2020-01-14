@@ -8,10 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "ns10_Writer.h"
-#include "HDFFile.h"
 #include "FlatbufferMessage.h"
+#include "HDFFile.h"
 #include <ns10_cache_entry_generated.h>
 
+namespace Module {
 namespace ns10 {
 
 void ns10_Writer::parse_config(std::string const &ConfigurationStream) {
@@ -134,3 +135,4 @@ void ns10_Writer::write(const FileWriter::FlatbufferMessage &Message) {
 }
 
 } // namespace ns10
+} // namespace Module

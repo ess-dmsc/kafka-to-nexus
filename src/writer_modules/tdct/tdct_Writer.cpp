@@ -14,10 +14,11 @@
 
 #include "tdct_Writer.h"
 #include "HDFFile.h"
-#include <tdct_timestamps_generated.h>
 #include <limits>
 #include <nlohmann/json.hpp>
+#include <tdct_timestamps_generated.h>
 
+namespace Module {
 namespace tdct {
 
 // Register the file writing part of this module
@@ -31,7 +32,7 @@ void tdct_Writer::parse_config(std::string const &) {
 
 FileWriterBase::InitResult
 tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                 std::string const &HDFAttributes) {
+                      std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
@@ -61,8 +62,7 @@ tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
   return FileWriterBase::InitResult::OK;
 }
 
-FileWriterBase::InitResult
-tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
+FileWriterBase::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
@@ -79,8 +79,7 @@ tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
   return FileWriterBase::InitResult::OK;
 }
 
-void tdct_Writer::write(
-    const FileWriter::FlatbufferMessage &Message) {
+void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = Gettimestamp(Message.data());
   auto TempTimePtr = FbPointer->timestamps()->data();
   auto TempTimeSize = FbPointer->timestamps()->size();
@@ -97,3 +96,4 @@ void tdct_Writer::write(
 }
 
 } // namespace tdct
+} // namespace Module

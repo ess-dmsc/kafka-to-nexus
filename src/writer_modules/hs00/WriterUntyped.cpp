@@ -8,10 +8,11 @@
 // Screaming Udder!                              https://esss.se
 
 #include "WriterUntyped.h"
-#include "logger.h"
 #include "Exceptions.h"
 #include "WriterTyped.h"
+#include "logger.h"
 
+namespace Module {
 namespace hs00 {
 
 WriterUntyped::ptr WriterUntyped::createFromJson(json const &Json) {
@@ -115,3 +116,4 @@ WriterUntyped::createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group,
                   Json.at("error_type").get<std::string>()));
 }
 } // namespace hs00
+} // namespace Module

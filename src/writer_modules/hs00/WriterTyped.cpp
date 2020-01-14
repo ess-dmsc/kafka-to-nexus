@@ -10,6 +10,7 @@
 #include "WriterTyped.h"
 #include "helper.h"
 
+namespace Module {
 namespace hs00 {
 template <> Array getMatchingFlatbufferType(uint32_t *) {
   return Array::ArrayUInt;
@@ -24,3 +25,4 @@ template <> Array getMatchingFlatbufferType(float *) {
   return Array::ArrayFloat;
 }
 } // namespace hs00
+} // namespace Module

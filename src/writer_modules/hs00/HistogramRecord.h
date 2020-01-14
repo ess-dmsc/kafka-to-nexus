@@ -13,6 +13,7 @@
 #include "json.h"
 #include <vector>
 
+namespace Module {
 namespace hs00 {
 
 class HistogramRecord {
@@ -31,3 +32,4 @@ private:
   size_t TotalItems = 0;
 };
 } // namespace hs00
+} // namespace Module

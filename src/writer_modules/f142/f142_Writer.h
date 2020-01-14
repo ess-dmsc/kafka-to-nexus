@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "HDFWriterModule.h"
 #include "FlatbufferMessage.h"
+#include "HDFWriterModule.h"
 #include <NeXusDataset.h>
 #include <array>
 #include <chrono>
@@ -19,6 +19,7 @@
 #include <nonstd/optional.hpp>
 #include <vector>
 
+namespace Module {
 namespace f142 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using ForwarderDebugDataset = NeXusDataset::ExtensibleDataset<std::uint64_t>;
@@ -77,3 +78,4 @@ protected:
 };
 
 } // namespace f142
+} // namespace Module

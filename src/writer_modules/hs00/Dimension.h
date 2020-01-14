@@ -13,6 +13,7 @@
 #include <string>
 #include <vector>
 
+namespace Module {
 namespace hs00 {
 
 template <typename EdgeType> class Dimension {
@@ -35,3 +36,4 @@ private:
   std::string DatasetName;
 };
 } // namespace hs00
+} // namespace Module

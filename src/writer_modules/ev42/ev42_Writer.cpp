@@ -10,9 +10,9 @@
 #include <ev42_events_generated.h>
 
 #include "HDFFile.h"
+#include "ev42_Writer.h"
 #include "helper.h"
 #include "json.h"
-#include "ev42_Writer.h"
 
 namespace {
 template <typename DataType>
@@ -22,6 +22,7 @@ getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
 }
 } // namespace
 
+namespace Module {
 namespace ev42 {
 
 using nlohmann::json;
@@ -108,7 +109,7 @@ void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
 
 HDFWriterModule::InitResult
 ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                          std::string const &HDFAttributes) {
+                      std::string const &HDFAttributes) {
   auto Create = NeXusDataset::Mode::Create;
   size_t Chunk32Bit = ChunkSizeBytes / 4;
   size_t Chunk64Bit = ChunkSizeBytes / 8;
@@ -165,8 +166,7 @@ ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
   return HDFWriterModule::InitResult::OK;
 }
 
-HDFWriterModule::InitResult
-ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
+HDFWriterModule::InitResult ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     EventTimeOffset = NeXusDataset::EventTimeOffset(HDFGroup, Open);
@@ -287,3 +287,4 @@ static FileWriter::HDFWriterModuleRegistry::Registrar<ev42_Writer>
     RegisterWriter("ev42");
 
 } // namespace ev42
+} // namespace Module

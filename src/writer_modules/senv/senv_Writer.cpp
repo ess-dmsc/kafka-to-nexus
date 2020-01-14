@@ -14,16 +14,16 @@
 
 #include "helper.h"
 
-#include "senv_Writer.h"
 #include "HDFFile.h"
-#include <senv_data_generated.h>
+#include "senv_Writer.h"
 #include <limits>
+#include <senv_data_generated.h>
 
+namespace Module {
 namespace senv {
 
 // Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<
-    senv_Writer>
+static FileWriter::HDFWriterModuleRegistry::Registrar<senv_Writer>
     RegisterSenvWriter("senv");
 
 void senv_Writer::parse_config(std::string const &) {
@@ -33,7 +33,7 @@ void senv_Writer::parse_config(std::string const &) {
 
 FileWriterBase::InitResult
 senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                      std::string const &HDFAttributes) {
+                      std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
   try {
     auto &CurrentGroup = HDFGroup;
@@ -67,8 +67,7 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
   return FileWriterBase::InitResult::OK;
 }
 
-FileWriterBase::InitResult
-senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
+FileWriterBase::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Value = NeXusDataset::UInt16Value(CurrentGroup, NeXusDataset::Mode::Open);
@@ -96,8 +95,7 @@ std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
   return ReturnVector;
 }
 
-void senv_Writer::write(
-    const FileWriter::FlatbufferMessage &Message) {
+void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
   auto FbPointer = GetSampleEnvironmentData(Message.data());
   auto TempDataPtr = FbPointer->Values()->data();
   auto TempDataSize = FbPointer->Values()->size();
@@ -126,3 +124,4 @@ void senv_Writer::write(
 }
 
 } // namespace senv
+} // namespace Module

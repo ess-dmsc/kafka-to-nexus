@@ -21,4 +21,4 @@ private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 
-} // namespace ev42
+} // namespace FlatbufferMetadata

@@ -11,6 +11,7 @@
 #include "Exceptions.h"
 #include "hs00_Writer.h"
 
+namespace Module {
 namespace hs00 {
 
 HistogramRecord HistogramRecord::create(size_t HDFIndex_, size_t TotalItems_) {
@@ -42,3 +43,4 @@ void HistogramRecord::addToItemsWritten(size_t Written) {
 
 bool HistogramRecord::isFull() const { return ItemsWritten == TotalItems; }
 } // namespace hs00
+} // namespace Module

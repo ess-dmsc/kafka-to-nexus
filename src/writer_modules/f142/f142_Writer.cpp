@@ -8,12 +8,13 @@
 // Screaming Udder!                              https://esss.se
 
 #include "f142_Writer.h"
-#include <f142_logdata_generated.h>
 #include "HDFFile.h"
 #include "json.h"
 #include <algorithm>
 #include <cctype>
+#include <f142_logdata_generated.h>
 
+namespace Module {
 namespace f142 {
 
 using nlohmann::json;
@@ -120,7 +121,7 @@ void f142_Writer::parse_config(std::string const &ConfigurationStream) {
 /// of
 /// `init_hdf`.
 f142_Writer::InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                            std::string const &) {
+                                              std::string const &) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -251,6 +252,8 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   }
 }
 /// Register the writer module.
-static FileWriter::HDFWriterModuleRegistry::Registrar<f142_Writer> RegisterWriter("f142");
+static FileWriter::HDFWriterModuleRegistry::Registrar<f142_Writer>
+    RegisterWriter("f142");
 
 } // namespace f142
+} // namespace Module

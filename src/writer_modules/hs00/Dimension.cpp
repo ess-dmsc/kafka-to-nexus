@@ -10,6 +10,7 @@
 #include "Dimension.h"
 #include "Exceptions.h"
 
+namespace Module {
 namespace hs00 {
 
 template <typename EdgeType>
@@ -94,3 +95,4 @@ template std::string Dimension<double>::getDatasetName() const;
 template std::string Dimension<float>::getDatasetName() const;
 
 } // namespace hs00
+} // namespace Module

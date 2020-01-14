@@ -17,14 +17,15 @@ namespace FlatbufferMetadata {
 static FileWriter::FlatbufferReaderRegistry::Registrar<ns10_Extractor>
     RegisterReader("ns10");
 
-bool ns10_Extractor::verify(FileWriter::FlatbufferMessage const &Message) const {
+bool ns10_Extractor::verify(
+    FileWriter::FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(
       reinterpret_cast<const uint8_t *>(Message.data()), Message.size());
   return VerifyCacheEntryBuffer(Verifier);
 }
 
-std::string
-ns10_Extractor::source_name(FileWriter::FlatbufferMessage const &Message) const {
+std::string ns10_Extractor::source_name(
+    FileWriter::FlatbufferMessage const &Message) const {
   auto Entry = GetCacheEntry(Message.data());
   std::string NicosKey = Entry->key()->str();
   return NicosKey;
@@ -39,4 +40,4 @@ ns10_Extractor::timestamp(FileWriter::FlatbufferMessage const &Message) const {
   return std::lround(TimeNs);
 }
 
-} // namespace ns10
+} // namespace FlatbufferMetadata

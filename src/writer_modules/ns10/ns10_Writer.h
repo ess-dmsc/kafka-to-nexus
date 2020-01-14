@@ -14,10 +14,11 @@
 /// \brief Writing module for the NICOS cache values.
 
 #pragma once
-#include "HDFWriterModule.h"
 #include "FlatbufferMessage.h"
+#include "HDFWriterModule.h"
 #include "NeXusDataset.h"
 
+namespace Module {
 namespace ns10 {
 
 class ns10_Writer : public FileWriter::HDFWriterModule {
@@ -49,3 +50,4 @@ private:
 };
 
 } // namespace ns10
+} // namespace Module
