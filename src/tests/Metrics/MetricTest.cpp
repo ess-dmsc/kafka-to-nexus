@@ -77,8 +77,7 @@ TEST_F(MetricTest, Deregister) {
   auto TestReporter = std::shared_ptr<Metrics::Reporter>(
       new MockReporter(std::move(TestSink), 10ms));
   std::vector<std::shared_ptr<Metrics::Reporter>> TestReporters{TestReporter};
-  auto TestRegistrar =
-      std::make_shared<Metrics::Registrar>(NamePrefix, TestReporters);
+  auto TestRegistrar = Metrics::Registrar(NamePrefix, TestReporters);
 
   auto TestReporterMock = std::dynamic_pointer_cast<MockReporter>(TestReporter);
 
@@ -90,7 +89,7 @@ TEST_F(MetricTest, Deregister) {
 
   {
     Metric UnderTest(NameStr, DescStr, TestSeverity);
-    TestRegistrar->registerMetric(UnderTest, {LogTo::LOG_MSG});
+    TestRegistrar.registerMetric(UnderTest, {LogTo::LOG_MSG});
   } // When UnderTest Metric goes out of scope it should get deregistered
 }
 } // namespace Metrics

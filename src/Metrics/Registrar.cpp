@@ -6,6 +6,9 @@ namespace Metrics {
 
 void Registrar::registerMetric(Metric &NewMetric,
                                std::vector<LogTo> const &SinkTypes) {
+  if (NewMetric.getName().empty()){
+    throw std::runtime_error("Metrics cannot be registered with an empty name");
+  }
   for (auto &SinkTypeAndReporter : ReporterList) {
     if (std::find(SinkTypes.begin(), SinkTypes.end(),
                   SinkTypeAndReporter.first) != SinkTypes.end()) {

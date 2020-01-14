@@ -24,12 +24,10 @@ using trompeloeil::_;
 TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
   std::string const Name = "some_name";
   std::string const Desc = "Description";
-  auto Sev = Severity::INFO;
+  auto const Sev = Severity::INFO;
 
   std::string const EmptyPrefix;
-  auto TestRegistrar =
-      std::make_shared<Metrics::Registrar>(EmptyPrefix, TestReporters);
-
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporters);
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
 
@@ -39,21 +37,20 @@ TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
 
   {
     Metric TestMetric(Name, Desc, Sev);
-    TestRegistrar->registerMetric(TestMetric, {LogTo::LOG_MSG});
+    TestRegistrar.registerMetric(TestMetric, {LogTo::LOG_MSG});
   }
 }
 
 TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
-  auto BasePrefix = std::string("some_name.");
-  auto ExtraPrefix = std::string("some_prefix");
-  auto Name = std::string("some_metric");
-  auto Desc = std::string("Description");
-  auto Sev = Severity::INFO;
-  auto FullName = BasePrefix + "." + ExtraPrefix + "." + Name;
+  std::string const BasePrefix = "some_name.";
+  std::string const ExtraPrefix = "some_prefix";
+  std::string const Name = "some_metric";
+  std::string const Desc = "Description";
+  auto const Sev = Severity::INFO;
+  auto const FullName = BasePrefix + "." + ExtraPrefix + "." + Name;
 
-  auto TestRegistrar =
-      std::make_shared<Metrics::Registrar>(BasePrefix, TestReporters);
-  auto TestRegistrarExtraPrefix = TestRegistrar->getNewRegistrar(ExtraPrefix);
+  auto TestRegistrar = Metrics::Registrar(BasePrefix, TestReporters);
+  auto TestRegistrarExtraPrefix = TestRegistrar.getNewRegistrar(ExtraPrefix);
   auto TestReporterMock =
       std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
 
@@ -67,27 +64,27 @@ TEST_F(MetricsRegistrarTest, RegisterAndDeregisterWithMetricNamePrefix) {
   }
 }
 
-// TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
-//  auto EmptyName = std::string();
-//  auto Desc = std::string("Description");
-//  auto Sev = Severity::INFO;
-//
-//  std::string const EmptyPrefix;
-//  auto TestRegistrar =
-//      std::make_shared<Metrics::Registrar>(EmptyPrefix, TestReporters);
-//
-//  auto TestReporterMock =
-//      std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
-//
-//  FORBID_CALL(MockProcessor, registerMetric(_, _, _, _, _));
-//  FORBID_CALL(MockProcessor, deregisterMetric(_));
-//  auto Registrar = MockProcessor.getRegistrarBase();
-//  {
-//    Metric Ctr(EmptyName, Desc, Sev);
-//    EXPECT_THROW(Registrar.registerMetric(Ctr, {}), std::runtime_error);
-//  }
-//}
-//
+TEST_F(MetricsRegistrarTest, RegisterWithEmptyNameFails) {
+  std::string const EmptyName;
+  std::string const Desc = "Description";
+  auto const Sev = Severity::INFO;
+
+  std::string const EmptyPrefix;
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporters);
+
+  auto TestReporterMock =
+      std::dynamic_pointer_cast<MockReporter>(TestReporters[0]);
+
+  FORBID_CALL(*TestReporterMock, addMetric(_, _));
+  FORBID_CALL(*TestReporterMock, tryRemoveMetric(_));
+  {
+    Metric Ctr(EmptyName, Desc, Sev);
+    EXPECT_THROW(TestRegistrar.registerMetric(Ctr, {LogTo::LOG_MSG}),
+                 std::runtime_error)
+        << "Expect registering metric with empty name to fail";
+  }
+}
+
 // TEST_F(MetricsRegistrarTest, RegisterNameFail) {
 //  auto Name = std::string("yet_another_name");
 //  auto Desc = std::string("Description");
