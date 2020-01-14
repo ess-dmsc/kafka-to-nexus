@@ -188,4 +188,44 @@ TEST_F(MetricsRegistrarTest,
   }
 }
 
+TEST_F(MetricsRegistrarTest, RegisterMetricToMultipleReporters) {
+  std::string const Name = "some_name";
+  std::string const Desc = "Description";
+  auto const Sev = Severity::INFO;
+
+  // Make a reporter with a logger sink
+  auto TestLogSink = std::unique_ptr<Metrics::Sink>(
+      new Metrics::MockSink(Metrics::LogTo::LOG_MSG));
+  auto TestLogReporter = std::shared_ptr<Metrics::Reporter>(
+      new Metrics::MockReporter(std::move(TestLogSink), 10ms));
+
+  // Make a reporter with a Carbon sink
+  auto TestCarbonSink = std::unique_ptr<Metrics::Sink>(
+      new Metrics::MockSink(Metrics::LogTo::CARBON));
+  auto TestCarbonReporter = std::shared_ptr<Metrics::Reporter>(
+      new Metrics::MockReporter(std::move(TestCarbonSink), 10ms));
+
+  std::vector<std::shared_ptr<Metrics::Reporter>> TestReporterList = {
+      TestLogReporter, TestCarbonReporter};
+
+  std::string const EmptyPrefix;
+  auto TestRegistrar = Metrics::Registrar(EmptyPrefix, TestReporterList);
+  auto TestLogReporterMock =
+      std::dynamic_pointer_cast<MockReporter>(TestLogReporter);
+  auto TestCarbonReporterMock =
+      std::dynamic_pointer_cast<MockReporter>(TestCarbonReporter);
+
+  REQUIRE_CALL(*TestCarbonReporterMock, addMetric(_, Name))
+      .TIMES(1)
+      .RETURN(true);
+  REQUIRE_CALL(*TestLogReporterMock, addMetric(_, Name)).TIMES(1).RETURN(true);
+  // Allow deregister call when Metric goes out of scope
+  ALLOW_CALL(*TestCarbonReporterMock, tryRemoveMetric(Name)).RETURN(true);
+  ALLOW_CALL(*TestLogReporterMock, tryRemoveMetric(Name)).RETURN(true);
+  {
+    Metric TestMetric(Name, Desc, Sev);
+    TestRegistrar.registerMetric(TestMetric, {LogTo::CARBON, LogTo::LOG_MSG});
+  }
+}
+
 } // namespace Metrics
