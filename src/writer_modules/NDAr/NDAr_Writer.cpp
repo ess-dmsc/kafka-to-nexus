@@ -25,7 +25,7 @@ namespace NDAr {
 static FileWriter::HDFWriterModuleRegistry::Registrar<NDAr_Writer>
     RegisterNDArWriter("NDAr");
 
-static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec) {
+std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec) {
   const auto TimeDiffUNIXtoEPICSepoch = 631152000L;
   const auto NSecMultiplier = 1000000000L;
   return (sec + TimeDiffUNIXtoEPICSepoch) * NSecMultiplier + nsec;

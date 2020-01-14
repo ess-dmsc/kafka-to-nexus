@@ -40,6 +40,8 @@ public:
 
   void write(FlatbufferMessage const &Message) override;
 
+  static std::uint64_t epicsTimeToNsec(std::uint64_t sec, std::uint64_t nsec);
+
 protected:
   void initValueDataset(hdf5::node::Group &Parent);
   enum class Type {

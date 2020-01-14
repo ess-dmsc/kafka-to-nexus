@@ -17,10 +17,9 @@
 #include <utility>
 
 #include "helpers/HDFFileTestHelper.h"
-#include "schemas/ev42/ev42_rw.h"
+#include "writer_modules/ev42/ev42_Writer.h"
 
-using namespace FileWriter::Schemas;
-using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+using namespace Module::ev42;
 
 struct AdcDebugInfo {
   explicit AdcDebugInfo(std::vector<uint32_t> Amplitude = {0, 1, 2},
@@ -110,46 +109,6 @@ AdcDebugInfo readAdcPulseDataFromFile(hdf5::node::Group &TestGroup) {
                       ThresholdTimeFromFile, PeakTimeFromFile);
 }
 
-class EventReaderTests : public ::testing::Test {
-public:
-  void SetUp() override {
-    ReaderUnderTest = std::make_unique<ev42::FlatbufferReader>();
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<ev42::FlatbufferReader>
-        RegisterIt("ev42");
-  };
-
-  std::unique_ptr<ev42::FlatbufferReader> ReaderUnderTest;
-};
-
-TEST_F(EventReaderTests, ReaderReturnsSourceNameFromMessage) {
-  std::string const TestSourceName = "TestSource";
-  auto MessageBuffer = generateFlatbufferData(TestSourceName);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
-  EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), TestSourceName);
-}
-
-TEST_F(EventReaderTests, ReaderReturnsPulseTimeAsMessageTimestamp) {
-  uint64_t PulseTime = 42;
-  auto MessageBuffer = generateFlatbufferData("TestSource", 0, PulseTime);
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
-  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), PulseTime);
-}
-
-TEST_F(EventReaderTests, ReaderVerifiesValidMessage) {
-  auto MessageBuffer = generateFlatbufferData();
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(MessageBuffer.data()),
-      MessageBuffer.size());
-  EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
-}
-
 class EventWriterTests : public ::testing::Test {
 public:
   void SetUp() override {
@@ -167,7 +126,7 @@ using FileWriter::HDFWriterModule_detail::InitResult;
 
 TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     Writer.parse_config("{}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
@@ -192,7 +151,7 @@ TEST_F(
     EventWriterTests,
     WriterInitialisesFileWithNXEventDataDatasetsAndAdcDatasetsWhenRequested) {
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
@@ -215,18 +174,18 @@ TEST_F(
 }
 
 TEST_F(EventWriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
-  ev42::HDFWriterModule Writer;
+  Module::ev42::ev42_Writer Writer;
   EXPECT_FALSE(Writer.reopen(TestGroup) == InitResult::OK);
 }
 
 TEST_F(EventWriterTests, WriterSuccessfullyReopensGroupWhichWasInitialised) {
-  ev42::HDFWriterModule Writer;
+  Module::ev42::ev42_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
 }
 
 TEST_F(EventWriterTests, WriterReportsFailureIfTryToInitialiseTwice) {
-  ev42::HDFWriterModule Writer;
+  Module::ev42::ev42_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
 }
@@ -245,7 +204,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
 
   // Create writer and give it the message to write
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -301,7 +260,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
 
   // Create writer and give it the message to write
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -365,7 +324,7 @@ TEST_F(EventWriterTests,
 
   // Create writer and give it the message to write
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
@@ -402,7 +361,7 @@ TEST_F(EventWriterTests,
 
   // Create writer and give it the message to write
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
@@ -458,7 +417,7 @@ TEST_F(EventWriterTests,
 
   // Create writer and give it the message to write
   {
-    ev42::HDFWriterModule Writer;
+    Module::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);

@@ -10,53 +10,33 @@
 #include "Msg.h"
 #include "helper.h"
 #include "json.h"
-#include "schemas/hs00/Dimension.h"
-#include "schemas/hs00/Exceptions.h"
-#include "schemas/hs00/Reader.h"
-#include "schemas/hs00/Shape.h"
-#include "schemas/hs00/Slice.h"
-#include "schemas/hs00/Writer.h"
-#include "schemas/hs00/WriterTyped.h"
+#include "writer_modules/hs00/Dimension.h"
+#include "writer_modules/hs00/Exceptions.h"
+#include "writer_modules/hs00/hs00_Writer.h"
+#include "writer_modules/hs00/Shape.h"
+#include "writer_modules/hs00/Slice.h"
+#include "writer_modules/hs00/WriterTyped.h"
 #include <HDFWriterModule.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 
-namespace FileWriter {
-namespace Schemas {
-namespace hs00 {
-#include "schemas/hs00_event_histogram_generated.h"
-} // namespace hs00
-} // namespace Schemas
-} // namespace FileWriter
-
 using json = nlohmann::json;
-using FileWriter::Schemas::hs00::Dimension;
-using FileWriter::Schemas::hs00::Shape;
-using FileWriter::Schemas::hs00::Slice;
-using FileWriter::Schemas::hs00::UnexpectedJsonInput;
-using FileWriter::Schemas::hs00::Writer;
-using FileWriter::Schemas::hs00::WriterTyped;
-
-static std::map<std::string, std::unique_ptr<FileWriter::FlatbufferReader>>
-    FlatbufferReaders;
+using Module::hs00::Dimension;
+using Module::hs00::Shape;
+using Module::hs00::Slice;
+using Module::hs00::UnexpectedJsonInput;
+using Module::hs00::hs00_Writer;
+using Module::hs00::WriterTyped;
 
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
     try {
-      FileWriter::FlatbufferReaderRegistry::Registrar<
-          FileWriter::Schemas::hs00::Reader>
-          RegisterIt("hs00");
+      FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterIt("hs00");
     } catch (...) {
     }
-    try {
-      FileWriter::HDFWriterModuleRegistry::Registrar<Writer> RegisterIt("hs00");
-    } catch (...) {
-    }
-    FlatbufferReaders["hs00"] =
-        std::make_unique<FileWriter::Schemas::hs00::Reader>();
   }
 };
 
@@ -273,7 +253,7 @@ uint64_t getValueAtFlatIndex(uint32_t HistogramID, size_t Index,
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createTestMessage(size_t HistogramID, size_t PacketID,
                   std::vector<uint32_t> const &DimLengths) {
-  namespace hs00 = FileWriter::Schemas::hs00;
+  namespace hs00 = Module::hs00;
   auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   flatbuffers::Offset<void> BinBoundaries;
@@ -385,7 +365,7 @@ TEST_F(EventHistogramWriter, WriterInitHDF) {
   auto File = createFile("Test.EventHistogramWriter.WriterInitHDF",
                          FileCreationLocation::Default);
   auto Group = File.root();
-  auto Writer = Writer::create();
+  auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
 }
@@ -394,10 +374,10 @@ TEST_F(EventHistogramWriter, WriterReopen) {
   auto File = createFile("Test.EventHistogramWriter.WriterReopen",
                          FileCreationLocation::Default);
   auto Group = File.root();
-  auto Writer = Writer::create();
+  auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
-  Writer = Writer::create();
+  Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
 }
@@ -407,10 +387,10 @@ TEST_F(EventHistogramWriter, WriteFullHistogramFromMultipleMessages) {
       "Test.EventHistogramWriter.WriteFullHistogramFromMultipleMessages",
       FileCreationLocation::Default);
   auto Group = File.root();
-  auto Writer = Writer::create();
+  auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
-  Writer = Writer::create();
+  Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   std::vector<uint32_t> DimLengths{4, 2, 2};
@@ -430,10 +410,10 @@ TEST_F(EventHistogramWriter, WriteMultipleHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteMultipleHistograms",
                          FileCreationLocation::Default);
   auto Group = File.root();
-  auto Writer = Writer::create();
+  auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
-  Writer = Writer::create();
+  Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   std::vector<uint32_t> DimLengths{4, 2, 2};
@@ -464,10 +444,10 @@ TEST_F(EventHistogramWriter, WriteManyHistograms) {
   auto File = createFile("Test.EventHistogramWriter.WriteManyHistograms",
                          FileCreationLocation::Default);
   auto Group = File.root();
-  auto Writer = Writer::create();
+  auto Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
-  Writer = Writer::create();
+  Writer = hs00_Writer::create();
   Writer->parse_config(createTestWriterTypedJson().dump());
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   std::vector<uint32_t> DimLengths{4, 2, 2};
@@ -499,7 +479,7 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   auto File = createFile("Test.EventHistogramWriter.WriteAMORExample",
                          FileCreationLocation::Default);
   auto Group = File.root();
-  auto Writer = Writer::create();
+  auto Writer = hs00_Writer::create();
   auto V1 = readFileIntoVector("/s/amor-hs00-stream");
   auto V2 = readFileIntoVector("/s/amor-msg");
   if (V1.empty() && V2.empty()) {
@@ -508,7 +488,7 @@ TEST_F(EventHistogramWriter, WriteAMORExample) {
   std::string JsonBulk(V1.data(), V1.data() + V1.size());
   Writer->parse_config(JsonBulk);
   ASSERT_TRUE(Writer->init_hdf(Group, "{}") == InitResult::OK);
-  Writer = Writer::create();
+  Writer = hs00_Writer::create();
   Writer->parse_config(JsonBulk);
   ASSERT_TRUE(Writer->reopen(Group) == InitResult::OK);
   auto M = FileWriter::FlatbufferMessage(

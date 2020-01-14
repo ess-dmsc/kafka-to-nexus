@@ -12,7 +12,7 @@
 #include <tdct_timestamps_generated.h>
 
 #include "helpers/HDFFileTestHelper.h"
-#include "schemas/tdct/ChopperTimeStampWriter.h"
+#include "schemas/tdct/tdct.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -35,11 +35,11 @@ using FBMsg = FileWriter::FlatbufferMessage;
 class ChopperTimeStampGuard : public ::testing::Test {
 public:
   static void SetUpTestCase() {
-    ReaderUnderTest = std::make_unique<tdct::ChopperTimeStampGuard>();
+    ReaderUnderTest = std::make_unique<tdct::tdct>();
     std::map<std::string, ReaderPtr> &Readers =
         FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<tdct::ChopperTimeStampGuard>
+    FileWriter::FlatbufferReaderRegistry::Registrar<tdct::tdct>
         RegisterIt("tdct");
     RawBuffer = GenerateFlatbufferData(BufferSize);
     TestMessage = std::make_unique<FBMsg>(
@@ -48,7 +48,7 @@ public:
 
   void SetUp() override { ASSERT_NE(RawBuffer.get(), nullptr); };
 
-  static std::unique_ptr<tdct::ChopperTimeStampGuard> ReaderUnderTest;
+  static std::unique_ptr<tdct::tdct> ReaderUnderTest;
   static std::unique_ptr<std::int8_t[]> RawBuffer;
   static size_t BufferSize;
   static std::unique_ptr<FBMsg> TestMessage;
@@ -56,7 +56,7 @@ public:
 std::unique_ptr<std::int8_t[]> ChopperTimeStampGuard::RawBuffer{nullptr};
 size_t ChopperTimeStampGuard::BufferSize{0};
 std::unique_ptr<FBMsg> ChopperTimeStampGuard::TestMessage{nullptr};
-std::unique_ptr<tdct::ChopperTimeStampGuard>
+std::unique_ptr<tdct::tdct>
     ChopperTimeStampGuard::ReaderUnderTest{nullptr};
 
 TEST_F(ChopperTimeStampGuard, GetSourceName) {

@@ -17,12 +17,12 @@
 #include "FlatbufferMessage.h"
 #include "helper.h"
 #include "helpers/HDFFileTestHelper.h"
-#include "schemas/f142/FlatbufferReader.h"
-#include "schemas/f142/f142_rw.h"
+#include "writer_modules/f142/f142_Writer.h"
+#include <f142_logdata_generated.h>
 
 using nlohmann::json;
 
-using namespace FileWriter::Schemas::f142;
+using namespace Module::f142;
 
 class f142Init : public ::testing::Test {
 public:
@@ -35,20 +35,20 @@ public:
   hdf5::node::Group RootGroup;
 };
 
-class f142WriterStandIn : public f142Writer {
+class f142_WriterStandIn : public f142_Writer {
 public:
-  using f142Writer::ArraySize;
-  using f142Writer::ChunkSize;
-  using f142Writer::CueIndex;
-  using f142Writer::CueTimestampZero;
-  using f142Writer::ElementType;
-  using f142Writer::Timestamp;
-  using f142Writer::ValueIndexInterval;
-  using f142Writer::Values;
+  using f142_Writer::ArraySize;
+  using f142_Writer::ChunkSize;
+  using f142_Writer::CueIndex;
+  using f142_Writer::CueTimestampZero;
+  using f142_Writer::ElementType;
+  using f142_Writer::Timestamp;
+  using f142_Writer::ValueIndexInterval;
+  using f142_Writer::Values;
 };
 
 TEST_F(f142Init, BasicDefaultInit) {
-  f142Writer TestWriter;
+  f142_Writer TestWriter;
   TestWriter.init_hdf(RootGroup, "");
   EXPECT_TRUE(RootGroup.has_dataset("cue_index"));
   EXPECT_TRUE(RootGroup.has_dataset("cue_timestamp_zero"));
@@ -57,18 +57,18 @@ TEST_F(f142Init, BasicDefaultInit) {
 }
 
 TEST_F(f142Init, ReOpenSuccess) {
-  f142Writer TestWriter;
+  f142_Writer TestWriter;
   TestWriter.init_hdf(RootGroup, "");
-  EXPECT_EQ(TestWriter.reopen(RootGroup), f142Writer::InitResult::OK);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), f142_Writer::InitResult::OK);
 }
 
 TEST_F(f142Init, ReOpenFailure) {
-  f142Writer TestWriter;
-  EXPECT_EQ(TestWriter.reopen(RootGroup), f142Writer::InitResult::ERROR);
+  f142_Writer TestWriter;
+  EXPECT_EQ(TestWriter.reopen(RootGroup), f142_Writer::InitResult::ERROR);
 }
 
 TEST_F(f142Init, CheckInitDataType) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
@@ -76,7 +76,7 @@ TEST_F(f142Init, CheckInitDataType) {
 }
 
 TEST_F(f142Init, CheckValueInitShape1) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
   auto Open = NeXusDataset::Mode::Open;
   NeXusDataset::MultiDimDatasetBase Value(RootGroup, Open);
@@ -84,7 +84,7 @@ TEST_F(f142Init, CheckValueInitShape1) {
 }
 
 TEST_F(f142Init, CheckValueInitShape2) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.ArraySize = 10;
   TestWriter.init_hdf(RootGroup, "");
   auto Open = NeXusDataset::Mode::Open;
@@ -93,19 +93,19 @@ TEST_F(f142Init, CheckValueInitShape2) {
 }
 
 TEST_F(f142Init, CheckAllDataTypes) {
-  std::vector<std::pair<f142Writer::Type, hdf5::datatype::Datatype>> TypeMap{
-      {f142Writer::Type::int8, hdf5::datatype::create<std::int8_t>()},
-      {f142Writer::Type::uint8, hdf5::datatype::create<std::uint8_t>()},
-      {f142Writer::Type::int16, hdf5::datatype::create<std::int16_t>()},
-      {f142Writer::Type::uint16, hdf5::datatype::create<std::uint16_t>()},
-      {f142Writer::Type::int32, hdf5::datatype::create<std::int32_t>()},
-      {f142Writer::Type::uint32, hdf5::datatype::create<std::uint32_t>()},
-      {f142Writer::Type::int64, hdf5::datatype::create<std::int64_t>()},
-      {f142Writer::Type::uint64, hdf5::datatype::create<std::uint64_t>()},
-      {f142Writer::Type::float32, hdf5::datatype::create<float>()},
-      {f142Writer::Type::float64, hdf5::datatype::create<double>()}};
+  std::vector<std::pair<f142_Writer::Type, hdf5::datatype::Datatype>> TypeMap{
+      {f142_Writer::Type::int8, hdf5::datatype::create<std::int8_t>()},
+      {f142_Writer::Type::uint8, hdf5::datatype::create<std::uint8_t>()},
+      {f142_Writer::Type::int16, hdf5::datatype::create<std::int16_t>()},
+      {f142_Writer::Type::uint16, hdf5::datatype::create<std::uint16_t>()},
+      {f142_Writer::Type::int32, hdf5::datatype::create<std::int32_t>()},
+      {f142_Writer::Type::uint32, hdf5::datatype::create<std::uint32_t>()},
+      {f142_Writer::Type::int64, hdf5::datatype::create<std::int64_t>()},
+      {f142_Writer::Type::uint64, hdf5::datatype::create<std::uint64_t>()},
+      {f142_Writer::Type::float32, hdf5::datatype::create<float>()},
+      {f142_Writer::Type::float64, hdf5::datatype::create<double>()}};
   auto Open = NeXusDataset::Mode::Open;
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   int Ctr{0};
   for (auto &Type : TypeMap) {
     auto CurrentGroup = RootGroup.create_group("Group" + std::to_string(Ctr++));
@@ -121,9 +121,9 @@ public:
 };
 
 TEST_F(f142ConfigParse, EmptyConfig) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config("{}");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
@@ -131,11 +131,11 @@ TEST_F(f142ConfigParse, EmptyConfig) {
 }
 
 TEST_F(f142ConfigParse, SetArraySize) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "array_size": 3
             })");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, 3u);
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
@@ -143,11 +143,11 @@ TEST_F(f142ConfigParse, SetArraySize) {
 }
 
 TEST_F(f142ConfigParse, SetChunkSize) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "nexus.chunk_size": 511
             })");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
@@ -155,11 +155,11 @@ TEST_F(f142ConfigParse, SetChunkSize) {
 }
 
 TEST_F(f142ConfigParse, CuInterval) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "nexus.cue_interval": 24
             })");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
   EXPECT_EQ(TestWriter.ElementType, TestWriter2.ElementType);
   EXPECT_EQ(TestWriter.ValueIndexInterval, 24u);
@@ -167,43 +167,43 @@ TEST_F(f142ConfigParse, CuInterval) {
 }
 
 TEST_F(f142ConfigParse, DataType1) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "type": "int8"
             })");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
-  EXPECT_EQ(TestWriter.ElementType, f142Writer::Type::int8);
+  EXPECT_EQ(TestWriter.ElementType, f142_Writer::Type::int8);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
 TEST_F(f142ConfigParse, DataType2) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "dtype": "uint64"
             })");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
-  EXPECT_EQ(TestWriter.ElementType, f142Writer::Type::uint64);
+  EXPECT_EQ(TestWriter.ElementType, f142_Writer::Type::uint64);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
 TEST_F(f142ConfigParse, DataTypeFailure) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.parse_config(R"({
               "Dtype": "uint64"
             })");
-  f142WriterStandIn TestWriter2;
+  f142_WriterStandIn TestWriter2;
   EXPECT_EQ(TestWriter.ArraySize, TestWriter2.ArraySize);
-  EXPECT_EQ(TestWriter.ElementType, f142Writer::Type::float64);
+  EXPECT_EQ(TestWriter.ElementType, f142_Writer::Type::float64);
   EXPECT_EQ(TestWriter.ValueIndexInterval, TestWriter2.ValueIndexInterval);
   EXPECT_EQ(TestWriter.ChunkSize, TestWriter2.ChunkSize);
 }
 
 TEST_F(f142ConfigParse, DataTypes) {
-  using Type = f142Writer::Type;
+  using Type = f142_Writer::Type;
   std::vector<std::pair<std::string, Type>> TypeList{
       {"int8", Type::int8},       {"INT8", Type::int8},
       {"SHORT", Type::int16},     {"UINT8", Type::uint8},
@@ -215,7 +215,7 @@ TEST_F(f142ConfigParse, DataTypes) {
       {"FLOAT", Type::float32},   {"float64", Type::float64},
       {"double", Type::float64},  {"DOUBLE", Type::float64}};
   for (auto &CType : TypeList) {
-    f142WriterStandIn TestWriter;
+    f142_WriterStandIn TestWriter;
     EXPECT_EQ(TestWriter.ElementType, Type::float64);
     TestWriter.parse_config("{\"type\":\"" + CType.first + "\"}");
     EXPECT_EQ(TestWriter.ElementType, CType.second) << "Failed on type string: "
@@ -226,13 +226,6 @@ TEST_F(f142ConfigParse, DataTypes) {
 class f142WriteData : public ::testing::Test {
 public:
   void SetUp() override {
-    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
-        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FileWriter::Schemas::f142::FlatbufferReader>
-        RegisterIt("f142");
-
     TestFile =
         HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
     RootGroup = TestFile.H5File.root();
@@ -271,7 +264,7 @@ generateFlatbufferMessage(double Value, std::uint64_t Timestamp) {
 }
 
 TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   const std::string units_string = "parsecs";
   // GIVEN value_units is specified in the JSON config
   TestWriter.parse_config(
@@ -292,7 +285,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDataset) {
 }
 
 TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   // GIVEN value_units is specified as an empty string in the JSON config
   TestWriter.parse_config(R"({"value_units": ""})");
 
@@ -311,7 +304,7 @@ TEST_F(f142WriteData, ConfigUnitsAttributeOnValueDatasetIfEmpty) {
 }
 
 TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   // GIVEN value_units is not specified in the JSON config
   TestWriter.parse_config("{}");
 
@@ -326,7 +319,7 @@ TEST_F(f142WriteData, UnitsAttributeOnValueDatasetNotCreatedIfNotInConfig) {
 }
 
 TEST_F(f142WriteData, WriteOneElement) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
   TestWriter.reopen(RootGroup);
   double ElementValue{3.14};
@@ -361,7 +354,7 @@ generateFlatbufferArrayMessage(std::vector<double> Value,
 }
 
 TEST_F(f142WriteData, WriteOneArray) {
-  f142WriterStandIn TestWriter;
+  f142_WriterStandIn TestWriter;
   TestWriter.init_hdf(RootGroup, "");
   TestWriter.reopen(RootGroup);
   std::vector<double> ElementValues{3.14, 4.5, 3.1};

@@ -12,22 +12,13 @@
 #include <gtest/gtest.h>
 #include <memory>
 
-#include "../json.h"
+#include "json.h"
 #include "FlatbufferMessage.h"
 #include "helpers/HDFFileTestHelper.h"
-#include "schemas/ns10/NicosCacheReader.h"
-#include "schemas/ns10/NicosCacheWriter.h"
+#include "writer_modules/ns10/ns10_Writer.h"
+#include <ns10_cache_entry_generated.h>
 
-namespace FileWriter {
-namespace Schemas {
-namespace ns10 {
-#include "ns10_cache_entry_generated.h"
-} // namespace ns10
-} // namespace Schemas
-} // namespace FileWriter
-
-using FileWriter::Schemas::ns10::CacheReader;
-using FileWriter::Schemas::ns10::CacheWriter;
+using Module::ns10::ns10_Writer;
 
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createFlatbufferMessageFromJson(nlohmann::json const &Json) {
@@ -57,7 +48,7 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
   auto FBKey = Builder->CreateString(Key);
   auto FBValue = Builder->CreateString(Value);
 
-  FileWriter::Schemas::ns10::CacheEntryBuilder CEBuilder(*Builder);
+  CacheEntryBuilder CEBuilder(*Builder);
 
   CEBuilder.add_value(FBValue);
   CEBuilder.add_expired(Expired);
@@ -72,40 +63,10 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 
 void registerSchema() {
   try {
-    FileWriter::FlatbufferReaderRegistry::Registrar<CacheReader> RegisterIt(
+    FileWriter::HDFWriterModuleRegistry::Registrar<ns10_Writer> RegisterIt(
         "ns10");
   } catch (...) {
   }
-  try {
-    FileWriter::HDFWriterModuleRegistry::Registrar<CacheWriter> RegisterIt(
-        "ns10");
-  } catch (...) {
-  }
-}
-
-class NicosCacheReaderTest : public ::testing::Test {
-public:
-  void SetUp() override { registerSchema(); };
-
-  void TearDown() override{};
-};
-
-TEST_F(NicosCacheReaderTest, ReaderReturnValues) {
-  nlohmann::json BufferJson = R"({
-      "key": "nicos/device/parameter",
-      "writer_module": "ns10",
-      "time": 123.456,
-      "value": "10.01"
-    })"_json;
-
-  auto Builder = createFlatbufferMessageFromJson(BufferJson);
-  auto Message = FileWriter::FlatbufferMessage(
-      reinterpret_cast<char *>(Builder->GetBufferPointer()),
-      Builder->GetSize());
-
-  EXPECT_TRUE(Message.isValid());
-  EXPECT_EQ(Message.getSourceName(), std::string("nicos/device/parameter"));
-  EXPECT_EQ(Message.getTimestamp(), 123.456 * 1e9);
 }
 
 class NicosCacheWriterTest : public ::testing::Test {
@@ -129,19 +90,19 @@ public:
   hdf5::file::MemoryDriver MemoryDriver;
 };
 
-class CacheWriterF : public CacheWriter {
+class CacheWriterF : public ns10_Writer {
 public:
-  using CacheWriter::ChunkSize;
-  using CacheWriter::CueInterval;
-  using CacheWriter::CueTimestamp;
-  using CacheWriter::CueTimestampIndex;
-  using CacheWriter::Sourcename;
-  using CacheWriter::Timestamp;
-  using CacheWriter::Values;
+  using ns10_Writer::ChunkSize;
+  using ns10_Writer::CueInterval;
+  using ns10_Writer::CueTimestamp;
+  using ns10_Writer::CueTimestampIndex;
+  using ns10_Writer::Sourcename;
+  using ns10_Writer::Timestamp;
+  using ns10_Writer::Values;
 };
 
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
-  CacheWriter SomeWriter;
+  ns10_Writer SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
               FileWriter::HDFWriterModule_detail::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
@@ -149,7 +110,7 @@ TEST_F(NicosCacheWriterTest, WriterReturnValues) {
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {
-  CacheWriter SomeWriter;
+  ns10_Writer SomeWriter;
   SomeWriter.init_hdf(UsedGroup, "{}");
 
   EXPECT_TRUE(UsedGroup.has_dataset("cue_index"));

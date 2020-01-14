@@ -13,98 +13,22 @@
 #include <fstream>
 #include <gtest/gtest.h>
 
+#include "FlatbufferReader.h"
 #include "helpers/HDFFileTestHelper.h"
-#include "schemas/NDAr/AreaDetectorWriter.h"
+#include "writer_modules/NDAr/NDAr_Writer.h"
+#include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
 
-class AreaDetectorReader : public ::testing::Test {
+class ADWriterStandIn : public Module::NDAr::NDAr_Writer {
 public:
-  // cppcheck-suppress unusedFunction; used by google-test
-  static void SetUpTestCase() {
-    std::ifstream InFile(std::string(TEST_DATA_PATH) + "/someNDArray.data",
-                         std::ifstream::in | std::ifstream::binary);
-    InFile.seekg(0, InFile.end);
-    FileSize = InFile.tellg();
-    RawData = std::make_unique<char[]>(FileSize);
-    InFile.seekg(0, InFile.beg);
-    InFile.read(RawData.get(), FileSize);
-  };
-
-  // cppcheck-suppress unusedFunction; used by google-test
-  void SetUp() override {
-    ASSERT_NE(FileSize, size_t(0));
-    Reader = std::make_unique<NDAr::AreaDetectorDataGuard>();
-    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
-        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<NDAr::AreaDetectorDataGuard>
-        RegisterIt("NDAr");
-  };
-
-  // cppcheck-suppress unusedFunction; used by google-test
-  void TearDown() override{};
-  std::unique_ptr<NDAr::AreaDetectorDataGuard> Reader;
-  static std::unique_ptr<char[]> RawData;
-  static size_t FileSize;
-};
-
-std::unique_ptr<char[]> AreaDetectorReader::RawData;
-size_t AreaDetectorReader::FileSize = 0;
-
-TEST_F(AreaDetectorReader, ValidateTestOk) {
-  FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
-  EXPECT_TRUE(Reader->verify(Message));
-}
-
-TEST_F(AreaDetectorReader, ValidateTestFail) {
-  flatbuffers::FlatBufferBuilder builder;
-  auto epics_ts = FB_Tables::epicsTimeStamp(0, 0);
-  auto someDims = builder.CreateVector(std::vector<std::uint64_t>({
-      0, 1, 2, 3,
-  }));
-  auto someData = builder.CreateVector(std::vector<std::uint8_t>({
-      0, 1, 2, 3,
-  }));
-  auto tmpPkg = FB_Tables::CreateNDArray(builder, 0, 0, &epics_ts, someDims,
-                                         FB_Tables::DType::Uint8, someData);
-  builder.Finish(tmpPkg); // Finish without file identifier will fail verify
-
-  EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<char *>(builder.GetBufferPointer()),
-                   builder.GetSize()),
-               std::runtime_error);
-}
-
-// We are currently using a static source name, this should be changed
-// eventually
-TEST_F(AreaDetectorReader, SourceNameTest) {
-  FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
-  EXPECT_EQ(Reader->source_name(Message), "ADPluginKafka");
-}
-
-TEST_F(AreaDetectorReader, TimeStampTest) {
-  FileWriter::FlatbufferMessage Message(RawData.get(), FileSize);
-  auto tempNDArr = FB_Tables::GetNDArray(RawData.get());
-  EXPECT_NE(tempNDArr->epicsTS()->secPastEpoch(), 0);
-  EXPECT_NE(tempNDArr->epicsTS()->nsec(), 0);
-  std::uint64_t unixEpicsSecDiff = 631152000;
-  std::uint64_t secToNsec = 1000000000;
-  std::uint64_t tempTimeStamp =
-      (tempNDArr->epicsTS()->secPastEpoch() + unixEpicsSecDiff) * secToNsec;
-  tempTimeStamp += tempNDArr->epicsTS()->nsec();
-  EXPECT_EQ(Reader->timestamp(Message), tempTimeStamp);
-}
-
-class ADWriterStandIn : public NDAr::AreaDetectorWriter {
-public:
-  using NDAr::AreaDetectorWriter::ChunkSize;
-  using NDAr::AreaDetectorWriter::ArrayShape;
-  using NDAr::AreaDetectorWriter::Type;
-  using NDAr::AreaDetectorWriter::ElementType;
-  using NDAr::AreaDetectorWriter::Values;
-  using NDAr::AreaDetectorWriter::Timestamp;
-  using NDAr::AreaDetectorWriter::CueInterval;
-  using NDAr::AreaDetectorWriter::CueTimestamp;
-  using NDAr::AreaDetectorWriter::CueTimestampIndex;
+  using NDAr_Writer::ChunkSize;
+  using NDAr_Writer::ArrayShape;
+  using NDAr_Writer::Type;
+  using NDAr_Writer::ElementType;
+  using NDAr_Writer::Values;
+  using NDAr_Writer::Timestamp;
+  using NDAr_Writer::CueInterval;
+  using NDAr_Writer::CueTimestamp;
+  using NDAr_Writer::CueTimestampIndex;
 };
 
 class AreaDetectorWriter : public ::testing::Test {
@@ -129,7 +53,7 @@ public:
     std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
         &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
     Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<NDAr::AreaDetectorDataGuard>
+    FileWriter::FlatbufferReaderRegistry::Registrar<FlatbufferMetadata::NDAr_Extractor>
         RegisterIt("NDAr");
   };
 
@@ -414,7 +338,7 @@ TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   auto tempNDArr = FB_Tables::GetNDArray(RawData.get());
-  auto compTs = NDAr::epicsTimeToNsec(tempNDArr->epicsTS()->secPastEpoch(),
+  auto compTs = Module::NDAr::NDAr_Writer::epicsTimeToNsec(tempNDArr->epicsTS()->secPastEpoch(),
                                       tempNDArr->epicsTS()->nsec());
   Writer.write(Message);
   std::uint64_t storedTs{11111};

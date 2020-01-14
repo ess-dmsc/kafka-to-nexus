@@ -17,7 +17,7 @@
 #include "Msg.h"
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
-#include "schemas/f142/FlatbufferReader.h"
+#include <f142_logdata_generated.h>
 
 namespace FileWriter {
 

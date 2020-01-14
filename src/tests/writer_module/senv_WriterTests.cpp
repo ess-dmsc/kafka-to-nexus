@@ -12,7 +12,7 @@
 #include <senv_data_generated.h>
 
 #include "helpers/HDFFileTestHelper.h"
-#include "schemas/senv/FastSampleEnvironmentWriter.h"
+#include "writer_modules/senv/senv_Writer.h"
 
 std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -37,62 +37,6 @@ std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   return RawBuffer;
 }
 
-using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
-
-class FastSampleEnvironmentReader : public ::testing::Test {
-public:
-  static void SetUpTestCase() {
-    RawBuffer = GenerateFlatbufferData(BufferSize);
-  };
-
-  void SetUp() override {
-    ASSERT_NE(RawBuffer.get(), nullptr);
-    ReaderUnderTest = std::make_unique<senv::SampleEnvironmentDataGuard>();
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        senv::SampleEnvironmentDataGuard>
-        RegisterIt("senv");
-  };
-
-  std::unique_ptr<senv::SampleEnvironmentDataGuard> ReaderUnderTest;
-  static std::unique_ptr<std::int8_t[]> RawBuffer;
-  static size_t BufferSize;
-};
-std::unique_ptr<std::int8_t[]> FastSampleEnvironmentReader::RawBuffer{nullptr};
-size_t FastSampleEnvironmentReader::BufferSize{0};
-
-TEST_F(FastSampleEnvironmentReader, GetSourceName) {
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->source_name(TestMessage), "SomeTestString");
-}
-
-TEST_F(FastSampleEnvironmentReader, GetTimeStamp) {
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_EQ(ReaderUnderTest->timestamp(TestMessage), 123456789u);
-}
-
-TEST_F(FastSampleEnvironmentReader, Verify) {
-  FileWriter::FlatbufferMessage TestMessage(
-      reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);
-  EXPECT_TRUE(ReaderUnderTest->verify(TestMessage));
-}
-
-TEST_F(FastSampleEnvironmentReader, VerifyFail) {
-  auto TempData = std::make_unique<char[]>(BufferSize);
-  std::memcpy(TempData.get(), RawBuffer.get(), BufferSize);
-  FileWriter::FlatbufferMessage TestMessage1(
-      reinterpret_cast<const char *>(TempData.get()), BufferSize);
-  EXPECT_TRUE(ReaderUnderTest->verify(TestMessage1));
-  TempData[3] = 'h';
-  EXPECT_THROW(FileWriter::FlatbufferMessage(
-                   reinterpret_cast<const char *>(TempData.get()), BufferSize),
-               FileWriter::NotValidFlatbuffer);
-}
-
 class FastSampleEnvironmentWriter : public ::testing::Test {
 public:
   void SetUp() override {
@@ -113,7 +57,7 @@ using FileWriter::HDFWriterModule_detail::InitResult;
 
 TEST_F(FastSampleEnvironmentWriter, InitFile) {
   {
-    senv::FastSampleEnvironmentWriter Writer;
+    Module::senv::senv_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
@@ -125,18 +69,18 @@ TEST_F(FastSampleEnvironmentWriter, InitFile) {
 }
 
 TEST_F(FastSampleEnvironmentWriter, ReopenFileFailure) {
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(FastSampleEnvironmentWriter, InitFileFail) {
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
 }
 
 TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
@@ -144,7 +88,7 @@ TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
 TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
@@ -184,7 +128,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
 TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
@@ -228,7 +172,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
           const_cast<std::uint8_t *>(FbPointer->Values()->Data())) -
       1;
   *ValueLengthPtr = 0;
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
@@ -253,7 +197,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
           const_cast<std::uint8_t *>(FbPointer->Timestamps()->Data())) -
       1;
   *TimestampsLengthPtr = 0;
-  senv::FastSampleEnvironmentWriter Writer;
+  Module::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
