@@ -1,9 +1,9 @@
 set(senv_SRC
-    senv.cpp
+    senv_Extractor.cpp
 )
 
 set(senv_INC
-    senv.h
+    senv_Extractor.h
 )
 
 create_fb_extractor(senv)

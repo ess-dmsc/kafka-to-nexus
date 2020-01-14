@@ -1,9 +1,9 @@
 set(hs00_SRC
-    hs00.cpp
+    hs00_Extractor.cpp
 )
 
 set(hs00_INC
-    hs00.h
+    hs00_Extractor.h
 )
 
 create_fb_extractor(hs00)

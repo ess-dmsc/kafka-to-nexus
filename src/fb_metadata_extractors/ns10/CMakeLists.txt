@@ -1,9 +1,9 @@
 set(ns10_SRC
-    ns10.cpp
+    ns10_Extractor.cpp
 )
 
 set(ns10_INC
-    ns10.h
+    ns10_Extractor.h
 )
 
 create_fb_extractor(ns10)

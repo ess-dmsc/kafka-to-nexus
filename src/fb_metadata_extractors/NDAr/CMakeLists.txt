@@ -1,9 +1,9 @@
 set(NDAr_SRC
-    NDAr.cpp
+    NDAr_Extractor.cpp
 )
 
 set(NDAr_INC
-    NDAr.h
+    NDAr_Extractor.h
 )
 
 create_fb_extractor(NDAr)

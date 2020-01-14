@@ -163,14 +163,17 @@ target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
         )
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
+set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
-add_subdirectory(schemas)
+add_subdirectory(writer_modules)
+add_subdirectory(fb_metadata_extractors)
 
 set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         ${WRITER_MODULES}
+        ${FB_METADATA_EXTRACTORS}
         )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)

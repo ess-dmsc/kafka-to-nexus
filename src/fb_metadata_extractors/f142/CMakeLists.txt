@@ -1,9 +1,9 @@
 set(f142_SRC
-    f142.cpp
+    f142_Extractor.cpp
 )
 
 set(f142_INC
-    f142.h
+    f142_Extractor.h
     )
 
 create_fb_extractor(f142)

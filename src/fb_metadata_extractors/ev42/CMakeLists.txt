@@ -1,9 +1,9 @@
 set(ev42_SRC
-  ev42.cpp
+    ev42_Extractor.cpp
 )
 
 set(ev42_INC
-  ev42.h
+    ev42_Extractor.h
 )
 
 create_fb_extractor(ev42)

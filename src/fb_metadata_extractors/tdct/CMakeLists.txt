@@ -1,9 +1,9 @@
 set(tdct_SRC
-    tdct.cpp
+    tdct_Extractor.cpp
 )
 
 set(tdct_INC
-    tdct.h
+    tdct_Extractor.h
 )
 
 create_fb_extractor(tdct)

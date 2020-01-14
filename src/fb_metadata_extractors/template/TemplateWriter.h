@@ -33,8 +33,8 @@
 // Formatting disabled because of bug in cppcheck inline suppression.
 
 #pragma once
-#include "../../FlatbufferReader.h"
-#include "../../HDFWriterModule.h"
+#include "FlatbufferReader.h"
+#include "HDFWriterModule.h"
 #include <iostream>
 
 /// \brief A separate namespace for this specific file writing module. Use this
