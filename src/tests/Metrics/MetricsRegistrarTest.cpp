@@ -1,6 +1,5 @@
 #include "MockReporter.h"
 #include "MockSink.h"
-#include "logger.h"
 #include <Metrics/Registrar.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
