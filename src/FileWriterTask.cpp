@@ -43,16 +43,9 @@ FileWriterTask::~FileWriterTask() {
   TopicNameToDemuxerMap.clear();
   try {
     File.close();
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Close, ServiceId, JobId,
-               "File closed");
-    }
   } catch (std::exception const &E) {
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Fail, ServiceId, JobId,
-               fmt::format("Exception while finishing FileWriterTask: {}",
-                           E.what()));
-    }
+    Logger->error(fmt::format(
+        "Exception while closing file in ~FileWriterTask: {}", E.what()));
   }
 }
 
@@ -108,11 +101,7 @@ void FileWriterTask::reopenFile() {
   try {
     File.reopen(Filename);
   } catch (std::exception const &E) {
-    Logger->error("Exception: {}", E.what());
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Error, ServiceId, JobId,
-               fmt::format("Exception: {}", E.what()));
-    }
+    Logger->error("Exception when reopening file: {}", E.what());
     throw;
   }
 }
@@ -124,20 +113,6 @@ hdf5::node::Group FileWriterTask::hdfGroup() { return File.H5File.root(); }
 bool FileWriterTask::swmrEnabled() const { return File.isSWMREnabled(); }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
-
-json FileWriterTask::stats() const {
-  auto Topics = json::object();
-  for (auto &TopicDemuxerPair : TopicNameToDemuxerMap) {
-    auto &Demux = TopicDemuxerPair.second;
-    auto DemuxStats = json::object();
-    DemuxStats["messages_processed"] = Demux->messages_processed.load();
-    Topics[Demux->topic()] = DemuxStats;
-  }
-  auto FWT = json::object();
-  FWT["filename"] = Filename;
-  FWT["topics"] = Topics;
-  return FWT;
-}
 
 std::string FileWriterTask::filename() const { return Filename; }
 
