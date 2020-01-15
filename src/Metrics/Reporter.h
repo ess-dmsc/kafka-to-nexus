@@ -26,7 +26,7 @@ public:
     start();
   };
 
-  virtual ~Reporter() { waitForStop(); };
+  virtual ~Reporter();
   void reportMetrics();
   virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
   virtual bool tryRemoveMetric(std::string const &MetricName);

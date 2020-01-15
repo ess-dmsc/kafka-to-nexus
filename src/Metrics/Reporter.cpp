@@ -1,4 +1,5 @@
 #include "Reporter.h"
+#include "logger.h"
 
 namespace Metrics {
 
@@ -32,5 +33,22 @@ void Reporter::start() {
 void Reporter::waitForStop() {
   AsioTimer.cancel();
   ReporterThread.join();
+}
+
+Reporter::~Reporter() {
+  if (!MetricsToReportOn.empty()) {
+    auto Logger = getLogger();
+    std::string NamesOfMetricsStillRegistered;
+    for (auto &NameMetricPair : MetricsToReportOn) {
+      NamesOfMetricsStillRegistered += NameMetricPair.first;
+      NamesOfMetricsStillRegistered += ", ";
+    }
+    Logger->error(
+        "Reporter is being cleaned up, but still has the following metrics "
+        "registered to it: {}",
+        NamesOfMetricsStillRegistered);
+  }
+
+  waitForStop();
 }
 } // namespace Metrics
