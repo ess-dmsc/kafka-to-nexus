@@ -21,9 +21,7 @@ public:
   };
 
   // cppcheck-suppress unusedFunction
-  void TearDown() override {
-    File.close();
-  };
+  void TearDown() override { File.close(); };
   std::string TestFileName{"DatasetCreationTestFile.hdf5"};
   hdf5::file::File File;
   hdf5::node::Group RootGroup;
