@@ -31,10 +31,9 @@ struct StreamSettings {
 
 class IJobCreator {
 public:
-  virtual std::unique_ptr<IStreamMaster> createFileWritingJob(
-      StartCommandInfo const &StartInfo,
-      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-      MainOpt &Settings, SharedLogger const &Logger) = 0;
+  virtual std::unique_ptr<IStreamMaster>
+  createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
+                       SharedLogger const &Logger) = 0;
   virtual ~IJobCreator() = default;
 };
 
@@ -47,10 +46,9 @@ public:
   /// \param Settings General settings for the file writer.
   /// \param Logger The logger.
   /// \return The new file-writing job.
-  std::unique_ptr<IStreamMaster> createFileWritingJob(
-      StartCommandInfo const &StartInfo,
-      std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-      MainOpt &Settings, SharedLogger const &Logger) override;
+  std::unique_ptr<IStreamMaster>
+  createFileWritingJob(StartCommandInfo const &StartInfo, MainOpt &Settings,
+                       SharedLogger const &Logger) override;
 
 private:
   static void

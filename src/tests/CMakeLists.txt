@@ -10,9 +10,7 @@ set(UnitTests_SRC
         HDFFileAttributesTests.cpp
         helpers/HDFFileTestHelper.cpp
         JsonTests.cpp
-        StatusTests.cpp
         URITests.cpp
-        StatusWriterTests.cpp
         CommandHandlerTests.cpp
         NeXusDatasetTests.cpp
         DemuxerTests.cpp

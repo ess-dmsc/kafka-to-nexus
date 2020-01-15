@@ -65,9 +65,7 @@ elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
 endif()
 
 set(kafka_to_nexus_SRC
-        Status.cpp
-        StatusWriter.cpp
-        Errors.cpp
+        StreamStatus.cpp
         Streamer.cpp
         StreamMaster.cpp
         Master.cpp
@@ -100,7 +98,7 @@ set(kafka_to_nexus_INC
         JobCreator.h
         CommandListener.h
         DemuxTopic.h
-        Errors.h
+        StreamStatus.h
         EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h
@@ -124,10 +122,7 @@ set(kafka_to_nexus_INC
         Msg.h
         FlatbufferMessage.h
         ProcessMessageResult.h
-        Report.h
         Source.h
-        Status.h
-        StatusWriter.h
         Streamer.h
         StreamerOptions.h
         StreamMaster.h
@@ -149,18 +144,6 @@ add_library(${tgt} OBJECT
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-
-
-set(tgt "send-command")
-set(sources
-        send-command.cpp
-        $<TARGET_OBJECTS:kafka_to_nexus__objects>
-        )
-add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
-        )
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")

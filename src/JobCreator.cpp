@@ -127,17 +127,13 @@ extractStreamInformationFromJson(std::unique_ptr<FileWriterTask> const &Task,
   return StreamSettingsList;
 }
 
-std::unique_ptr<IStreamMaster> JobCreator::createFileWritingJob(
-    StartCommandInfo const &StartInfo,
-    std::shared_ptr<KafkaW::ProducerTopic> const &StatusProducer,
-    MainOpt &Settings, SharedLogger const &Logger) {
-  auto Task =
-      std::make_unique<FileWriterTask>(Settings.ServiceID, StatusProducer);
+std::unique_ptr<IStreamMaster>
+JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
+                                 MainOpt &Settings,
+                                 SharedLogger const &Logger) {
+  auto Task = std::make_unique<FileWriterTask>(Settings.ServiceID);
   Task->setJobId(StartInfo.JobID);
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
-
-  logEvent(StatusProducer, StatusCode::Start, Settings.ServiceID, Task->jobID(),
-           "Start job");
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
       initializeHDF(*Task, StartInfo.NexusStructure, StartInfo.UseSwmr);
