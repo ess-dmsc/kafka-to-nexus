@@ -28,8 +28,8 @@ Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
   std::vector<std::shared_ptr<Reporter>> Reporters;
   Reporters.reserve(ReporterList.size());
 
-  // cppcheck-suppress useStlAlgorithm
   for (auto &SinkTypeAndReporter : ReporterList) {
+    // cppcheck-suppress useStlAlgorithm
     Reporters.push_back(SinkTypeAndReporter.second);
   }
   return {prependPrefix(MetricsPrefix), Reporters};
