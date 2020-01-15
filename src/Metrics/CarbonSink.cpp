@@ -4,12 +4,6 @@
 namespace Metrics {
 
 void CarbonSink::reportMetric(InternalMetric &MetricToBeReported) {
-  if (not CarbonConnection.messageQueueEmpty()) {
-    Logger->warn("Not keeping up with reporting metrics to Carbon:"
-                 "local queue not empty before next report iteration");
-    return;
-  }
-
   auto CurrentValue = MetricToBeReported.Counter->load();
   auto CurrentName = MetricToBeReported.FullName;
   auto TimeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(
