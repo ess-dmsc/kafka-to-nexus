@@ -1,14 +1,12 @@
 #pragma once
 
-#include <string>
-#include <memory>
 #include "FlatbufferReader.h"
+#include <memory>
+#include <string>
 
-template <class ExtractorType>
-void setExtractorModule(std::string FbId) {
-  auto &Readers =
-      FileWriter::FlatbufferReaderRegistry::getReaders();
+template <class ExtractorType> void setExtractorModule(std::string FbId) {
+  auto &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
   Readers.clear();
-  FileWriter::FlatbufferReaderRegistry::Registrar<ExtractorType>
-      RegisterIt(FbId);
+  FileWriter::FlatbufferReaderRegistry::Registrar<ExtractorType> RegisterIt(
+      FbId);
 }

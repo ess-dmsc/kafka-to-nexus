@@ -11,10 +11,10 @@
 #include <memory>
 #include <tdct_timestamps_generated.h>
 
+#include "fb_metadata_extractors/tdct/tdct_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/tdct/tdct_Writer.h"
-#include "fb_metadata_extractors/tdct/tdct_Extractor.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;

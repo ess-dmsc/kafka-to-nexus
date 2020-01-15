@@ -16,10 +16,10 @@
 
 #include <utility>
 
-#include "helpers/HDFFileTestHelper.h"
-#include "writer_modules/ev42/ev42_Writer.h"
-#include "helpers/SetExtractorModule.h"
 #include "fb_metadata_extractors/ev42/ev42_Extractor.h"
+#include "helpers/HDFFileTestHelper.h"
+#include "helpers/SetExtractorModule.h"
+#include "writer_modules/ev42/ev42_Writer.h"
 
 using namespace Module::ev42;
 

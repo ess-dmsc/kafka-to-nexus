@@ -8,10 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include "fb_metadata_extractors/senv/senv_Extractor.h"
+#include "helpers/SetExtractorModule.h"
 #include <gtest/gtest.h>
 #include <memory>
 #include <senv_data_generated.h>
-#include "helpers/SetExtractorModule.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;

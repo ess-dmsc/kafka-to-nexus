@@ -14,9 +14,9 @@
 
 #include "FlatbufferMessage.h"
 #include "fb_metadata_extractors/ns10/ns10_Extractor.h"
+#include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "ns10_cache_entry_generated.h"
-#include "helpers/SetExtractorModule.h"
 
 static std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createFlatbufferMessageFromJson(nlohmann::json const &Json) {

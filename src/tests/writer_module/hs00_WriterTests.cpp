@@ -7,7 +7,9 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "fb_metadata_extractors/hs00/hs00_Extractor.h"
 #include "helper.h"
+#include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "writer_modules/hs00/Dimension.h"
 #include "writer_modules/hs00/Exceptions.h"
@@ -20,8 +22,6 @@
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
-#include "fb_metadata_extractors/hs00/hs00_Extractor.h"
-#include "helpers/SetExtractorModule.h"
 
 using json = nlohmann::json;
 using Module::hs00::Dimension;

@@ -13,11 +13,11 @@
 #include <memory>
 
 #include "FlatbufferMessage.h"
+#include "fb_metadata_extractors/ns10/ns10_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
+#include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "writer_modules/ns10/ns10_Writer.h"
-#include "helpers/SetExtractorModule.h"
-#include "fb_metadata_extractors/ns10/ns10_Extractor.h"
 #include <ns10_cache_entry_generated.h>
 
 using Module::ns10::ns10_Writer;
