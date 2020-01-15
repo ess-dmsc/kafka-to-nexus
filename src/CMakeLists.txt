@@ -146,14 +146,17 @@ target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
+set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
-add_subdirectory(schemas)
+add_subdirectory(writer_modules)
+add_subdirectory(fb_metadata_extractors)
 
 set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         ${WRITER_MODULES}
+        ${FB_METADATA_EXTRACTORS}
         )
 add_executable(${tgt} ${sources})
 add_dependencies(${tgt} flatbuffers_generate)

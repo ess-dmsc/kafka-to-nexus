@@ -7,18 +7,19 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "helpers/SetExtractorModule.h"
 #include "helpers/StubWriterModule.h"
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
 #include <Source.h>
+#include <fb_metadata_extractors/ev42/ev42_Extractor.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
-#include <schemas/ev42/ev42_rw.h>
 #include <trompeloeil.hpp>
 
-namespace ev42 {
+namespace FlatbufferMetadata {
 #include "schemas/ev42_events_generated.h"
-} // namespace ev42
+} // namespace FlatbufferMetadata
 
 using FileWriter::FlatbufferMessage;
 using FileWriter::HDFWriterModule;
@@ -27,10 +28,11 @@ using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
 flatbuffers::DetachedBuffer createEventMessageBuffer() {
   flatbuffers::FlatBufferBuilder Builder;
-  ev42::EventMessageBuilder EventMessage(Builder);
+  FlatbufferMetadata::EventMessageBuilder EventMessage(Builder);
   EventMessage.add_pulse_time(
       1); // avoid 0 pulse time which is detected as a validation error
-  Builder.Finish(EventMessage.Finish(), ev42::EventMessageIdentifier());
+  Builder.Finish(EventMessage.Finish(),
+                 FlatbufferMetadata::EventMessageIdentifier());
 
   // Note, Release gives us a "DetachedBuffer" which owns the data
   return Builder.Release();
@@ -39,11 +41,7 @@ flatbuffers::DetachedBuffer createEventMessageBuffer() {
 class SourceTests : public ::testing::Test {
 public:
   void SetUp() override {
-    auto &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FileWriter::Schemas::ev42::FlatbufferReader>
-        RegisterIt("ev42");
+    setExtractorModule<FlatbufferMetadata::ev42_Extractor>("ev42");
   };
 };
 

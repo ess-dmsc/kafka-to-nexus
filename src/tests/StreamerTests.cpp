@@ -17,7 +17,8 @@
 #include "Msg.h"
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
-#include "schemas/f142/FlatbufferReader.h"
+#include "helpers/SetExtractorModule.h"
+#include <f142_logdata_generated.h>
 
 namespace FileWriter {
 
@@ -182,13 +183,10 @@ TEST_F(
 TEST_F(
     StreamerProcessTest,
     NumberOfProcessedMessagesDoesNotIncreaseIfMessageContainsUnknownSourceName) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
-  std::string ReaderKey{"test"};
 
-  FlatbufferReaderRegistry::Registrar<StreamerTestDummyReader> RegisterIt(
-      ReaderKey);
+  std::string ReaderKey{"test"};
+  setExtractorModule<StreamerTestDummyReader>(ReaderKey);
+
   char DataBuffer[]{"0000test"};
 
   auto TestMessage = generateKafkaMsg(static_cast<const char *>(DataBuffer),
@@ -201,11 +199,7 @@ TEST_F(
 class StreamerProcessTimingTest : public ::testing::Test {
 protected:
   void SetUp() override {
-    std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-        FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FlatbufferReaderRegistry::Registrar<StreamerHighTimestampTestDummyReader>
-        RegisterIt(SchemaID);
+    setExtractorModule<StreamerHighTimestampTestDummyReader>(SchemaID);
     BrokerSettings.Address = "127.0.0.1:1";
     Options.BrokerSettings.OffsetsForTimesTimeoutMS = 10;
     Options.BrokerSettings.MetadataTimeoutMS = 10;
@@ -525,18 +519,13 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
 
 TEST(FlatBufferValidationTest,
      NumberOfValidationFailuresIncreasesIfFlatBufferIsInvalid) {
-  std::map<std::string, FlatbufferReaderRegistry::ReaderPtr> &Readers =
-      FlatbufferReaderRegistry::getReaders();
-  Readers.clear();
   KafkaW::BrokerSettings BrokerSettings;
   StreamerOptions Options;
   std::unique_ptr<StreamerStandIn> TestStreamer;
   std::string SchemaID = "f142";
   std::string SourceName{"SomeRandomSourceName"};
   std::string TopicName{"SomeRandomTopicName"};
-  FlatbufferReaderRegistry::Registrar<
-      StreamerMessageFailsValidationTestDummyReader>
-      RegisterIt(SchemaID);
+  setExtractorModule<StreamerMessageFailsValidationTestDummyReader>(SchemaID);
   HDFWriterModule::ptr Writer(new WriterModuleStandIn());
   FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
                                 std::move(Writer));
