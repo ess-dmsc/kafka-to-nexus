@@ -8,11 +8,10 @@ using namespace std::chrono_literals;
 
 namespace Metrics {
 
-class MetricTest : public ::testing::Test {
-public:
-};
+class MetricTest : public ::testing::Test {};
 
-TEST_F(MetricTest, Init) {
+// cppcheck-suppress syntaxError
+TEST(MetricTest, Init) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
@@ -23,7 +22,7 @@ TEST_F(MetricTest, Init) {
   EXPECT_EQ(*UnderTest.getCounterPtr(), 0);
 }
 
-TEST_F(MetricTest, PreIncrement) {
+TEST(MetricTest, PreIncrement) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
@@ -33,7 +32,7 @@ TEST_F(MetricTest, PreIncrement) {
   EXPECT_EQ(*UnderTest.getCounterPtr(), 1);
 }
 
-TEST_F(MetricTest, PostIncrement) {
+TEST(MetricTest, PostIncrement) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
@@ -43,7 +42,7 @@ TEST_F(MetricTest, PostIncrement) {
   EXPECT_EQ(*UnderTest.getCounterPtr(), 1);
 }
 
-TEST_F(MetricTest, SumValue) {
+TEST(MetricTest, SumValue) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
@@ -54,7 +53,7 @@ TEST_F(MetricTest, SumValue) {
   EXPECT_EQ(*UnderTest.getCounterPtr(), TestValue);
 }
 
-TEST_F(MetricTest, SetValue) {
+TEST(MetricTest, SetValue) {
   auto NameStr = std::string("test_name");
   auto DescStr = std::string("some_description");
   auto TestSeverity = Severity::ERROR;
@@ -65,7 +64,7 @@ TEST_F(MetricTest, SetValue) {
   EXPECT_EQ(*UnderTest.getCounterPtr(), TestValue);
 }
 
-TEST_F(MetricTest, Deregister) {
+TEST(MetricTest, Deregister) {
   using trompeloeil::_;
 
   std::string const NamePrefix = "Test";

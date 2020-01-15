@@ -26,13 +26,16 @@ void Registrar::registerMetric(Metric &NewMetric,
 
 Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
   std::vector<std::shared_ptr<Reporter>> Reporters;
+  Reporters.reserve(ReporterList.size());
+
+  // cppcheck-suppress useStlAlgorithm
   for (auto &SinkTypeAndReporter : ReporterList) {
     Reporters.push_back(SinkTypeAndReporter.second);
   }
   return {prependPrefix(MetricsPrefix), Reporters};
 }
 
-std::string Registrar::prependPrefix(std::string const &Name) {
+std::string Registrar::prependPrefix(std::string const &Name) const {
   if (Prefix.empty()) {
     return Name;
   }

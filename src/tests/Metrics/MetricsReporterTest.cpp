@@ -24,6 +24,7 @@ TEST(MetricsReporterTest,
   ASSERT_TRUE(TestReporter.tryRemoveMetric(FullName));
 }
 
+// cppcheck-suppress syntaxError
 TEST(MetricsReporterTest, TryingToAddMetricWithSameFullNameTwiceFails) {
   Metric TestMetric1("some_name", "Description", Severity::INFO);
   Metric TestMetric2("some_name", "Different description", Severity::DEBUG);

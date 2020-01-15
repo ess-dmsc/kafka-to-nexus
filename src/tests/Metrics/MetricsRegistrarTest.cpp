@@ -21,6 +21,7 @@ public:
 
 using trompeloeil::_;
 
+// cppcheck-suppress syntaxError
 TEST_F(MetricsRegistrarTest, RegisteringANewMetricAddsItToTheReporter) {
   std::string const Name = "some_name";
   std::string const Desc = "Description";

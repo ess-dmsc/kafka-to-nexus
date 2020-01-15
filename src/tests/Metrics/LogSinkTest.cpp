@@ -29,6 +29,7 @@ TEST(LogSinkTest, LogSinkReportsSinkTypeAsLog) {
   ASSERT_EQ(TestLogSink.getType(), LogTo::LOG_MSG);
 }
 
+// cppcheck-suppress syntaxError
 TEST(LogSinkTest, NothingIsLoggedIfMetricDidNotIncrement) {
   LogSink TestLogSink{};
   TestLogSink.Logger = std::shared_ptr<spdlog::logger>(new MockLogger());
