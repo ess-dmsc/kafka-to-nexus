@@ -15,6 +15,7 @@
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
+#include "helpers/SetExtractorModule.h"
 
 namespace FlatbufferMetadata {
 #include "schemas/ev42_events_generated.h"
@@ -40,11 +41,7 @@ flatbuffers::DetachedBuffer createEventMessageBuffer() {
 class SourceTests : public ::testing::Test {
 public:
   void SetUp() override {
-    auto &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::ev42_Extractor>
-        RegisterIt("ev42");
+    setExtractorModule<FlatbufferMetadata::ev42_Extractor>("ev42");
   };
 };
 

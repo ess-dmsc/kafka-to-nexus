@@ -16,6 +16,7 @@
 #include "FlatbufferReader.h"
 #include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
+#include "helpers/SetExtractorModule.h"
 #include "writer_modules/NDAr/NDAr_Writer.h"
 
 class ADWriterStandIn : public Module::NDAr::NDAr_Writer {
@@ -50,12 +51,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
-    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
-        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::NDAr_Extractor>
-        RegisterIt("NDAr");
+    setExtractorModule<FlatbufferMetadata::NDAr_Extractor>("NDAr");
   };
 
   void TearDown() override { File.close(); };
