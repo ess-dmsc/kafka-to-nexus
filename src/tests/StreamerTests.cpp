@@ -17,8 +17,8 @@
 #include "Msg.h"
 #include "Streamer.h"
 #include "StreamerTestMocks.h"
-#include <f142_logdata_generated.h>
 #include "helpers/SetExtractorModule.h"
+#include <f142_logdata_generated.h>
 
 namespace FileWriter {
 

@@ -20,7 +20,9 @@ public:
     RootGroup = File.root();
   };
 
-  void TearDown() override { File.close(); }; // cppcheck-suppress unusedFunction
+  void TearDown() override {
+    File.close();
+  }; // cppcheck-suppress unusedFunction
   std::string TestFileName{"DatasetCreationTestFile.hdf5"};
   hdf5::file::File File;
   hdf5::node::Group RootGroup;

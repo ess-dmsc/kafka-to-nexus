@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "helpers/SetExtractorModule.h"
 #include "helpers/StubWriterModule.h"
 #include <FlatbufferMessage.h>
 #include <ProcessMessageResult.h>
@@ -15,7 +16,6 @@
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
-#include "helpers/SetExtractorModule.h"
 
 namespace FlatbufferMetadata {
 #include "schemas/ev42_events_generated.h"
