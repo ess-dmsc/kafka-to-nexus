@@ -23,8 +23,6 @@ set(UnitTests_SRC
         SourceTests.cpp
         ProducerTests.cpp
         ProducerDeliveryTests.cpp
-        helpers/ev42_synth.cpp
-        helpers/f142_synth.cpp
         ConsumerTests.cpp
         StreamMasterTests.cpp
         CommandParserTests.cpp
@@ -38,11 +36,9 @@ set(UnitTests_SRC
 set(UnitTests_INC
         StreamerTestMocks.h
         helpers/HDFFileTestHelper.h
-        helpers/ev42_synth.h
-        helpers/f142_synth.h
         helpers/KafkaWMocks.h
         helpers/FakeStreamMaster.h
-        )
+    helpers/SetExtractorModule.h)
 
 add_executable(UnitTests
         ${UnitTests_SRC}

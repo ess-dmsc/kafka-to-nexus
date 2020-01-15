@@ -12,7 +12,9 @@
 #include <tdct_timestamps_generated.h>
 
 #include "helpers/HDFFileTestHelper.h"
+#include "helpers/SetExtractorModule.h"
 #include "writer_modules/tdct/tdct_Writer.h"
+#include "fb_metadata_extractors/tdct/tdct_Extractor.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -38,6 +40,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
+    setExtractorModule<FlatbufferMetadata::tdct_Extractor>("tdct");
   };
 
   void TearDown() override { File.close(); };

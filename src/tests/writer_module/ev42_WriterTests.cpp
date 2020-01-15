@@ -18,6 +18,8 @@
 
 #include "helpers/HDFFileTestHelper.h"
 #include "writer_modules/ev42/ev42_Writer.h"
+#include "helpers/SetExtractorModule.h"
+#include "fb_metadata_extractors/ev42/ev42_Extractor.h"
 
 using namespace Module::ev42;
 
@@ -114,6 +116,7 @@ public:
   void SetUp() override {
     File = HDFFileTestHelper::createInMemoryTestFile("EventWriterTestFile.nxs");
     TestGroup = File.H5File.root().create_group(TestGroupName);
+    setExtractorModule<FlatbufferMetadata::ev42_Extractor>("ev42");
   };
 
   void TearDown() override { File.close(); };

@@ -7,7 +7,6 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "Msg.h"
 #include "helper.h"
 #include "json.h"
 #include "writer_modules/hs00/Dimension.h"
@@ -21,6 +20,8 @@
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
+#include "fb_metadata_extractors/hs00/hs00_Extractor.h"
+#include "helpers/SetExtractorModule.h"
 
 using json = nlohmann::json;
 using Module::hs00::Dimension;
@@ -33,6 +34,7 @@ using Module::hs00::WriterTyped;
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
+    setExtractorModule<FlatbufferMetadata::hs00_Extractor>("hs00");
     try {
       FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterIt(
           "hs00");

@@ -17,7 +17,7 @@
 #include <utility>
 
 #include "fb_metadata_extractors/ev42/ev42_Extractor.h"
-#include "helpers/HDFFileTestHelper.h"
+#include "helpers/SetExtractorModule.h"
 
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
@@ -90,12 +90,7 @@ class EventReaderTests : public ::testing::Test {
 public:
   void SetUp() override {
     ReaderUnderTest = std::make_unique<FlatbufferMetadata::ev42_Extractor>();
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::ev42_Extractor>
-        RegisterIt("ev42");
+    setExtractorModule<FlatbufferMetadata::ev42_Extractor>("ev42");
   };
 
   std::unique_ptr<FlatbufferMetadata::ev42_Extractor> ReaderUnderTest;

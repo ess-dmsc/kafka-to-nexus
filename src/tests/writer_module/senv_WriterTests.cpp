@@ -13,6 +13,8 @@
 
 #include "helpers/HDFFileTestHelper.h"
 #include "writer_modules/senv/senv_Writer.h"
+#include "helpers/SetExtractorModule.h"
+#include "fb_metadata_extractors/senv/senv_Extractor.h"
 
 std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -43,6 +45,7 @@ public:
     File = HDFFileTestHelper::createInMemoryTestFile(TestFileName);
     RootGroup = File.H5File.root();
     UsedGroup = RootGroup.create_group(NXLogGroup);
+    setExtractorModule<FlatbufferMetadata::senv_Extractor>("senv");
   };
 
   void TearDown() override { File.close(); };

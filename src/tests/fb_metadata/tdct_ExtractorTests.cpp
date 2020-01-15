@@ -13,6 +13,7 @@
 
 #include "fb_metadata_extractors/tdct/tdct_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
+#include "helpers/SetExtractorModule.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -36,12 +37,7 @@ class ChopperTimeStampGuard : public ::testing::Test {
 public:
   static void SetUpTestCase() {
     ReaderUnderTest = std::make_unique<FlatbufferMetadata::tdct_Extractor>();
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::tdct_Extractor>
-        RegisterIt("tdct");
+    setExtractorModule<FlatbufferMetadata::tdct_Extractor>("tdct");
     RawBuffer = GenerateFlatbufferData(BufferSize);
     TestMessage = std::make_unique<FBMsg>(
         reinterpret_cast<const char *>(RawBuffer.get()), BufferSize);

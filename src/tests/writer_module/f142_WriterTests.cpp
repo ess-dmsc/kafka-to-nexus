@@ -19,6 +19,8 @@
 #include "helpers/HDFFileTestHelper.h"
 #include "writer_modules/f142/f142_Writer.h"
 #include <f142_logdata_generated.h>
+#include "helpers/SetExtractorModule.h"
+#include "fb_metadata_extractors/f142/f142_Extractor.h"
 
 using nlohmann::json;
 
@@ -229,6 +231,7 @@ public:
     TestFile =
         HDFFileTestHelper::createInMemoryTestFile("SomeTestFile.hdf5", false);
     RootGroup = TestFile.H5File.root();
+    setExtractorModule<FlatbufferMetadata::f142_Extractor>("f142");
   }
   FileWriter::HDFFile TestFile;
   hdf5::node::Group RootGroup;

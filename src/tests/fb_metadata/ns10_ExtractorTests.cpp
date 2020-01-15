@@ -16,6 +16,7 @@
 #include "fb_metadata_extractors/ns10/ns10_Extractor.h"
 #include "json.h"
 #include "ns10_cache_entry_generated.h"
+#include "helpers/SetExtractorModule.h"
 
 static std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createFlatbufferMessageFromJson(nlohmann::json const &Json) {
@@ -58,18 +59,11 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
   return Builder;
 }
 
-static void registerSchema() {
-  try {
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::ns10_Extractor>
-        RegisterIt("ns10");
-  } catch (...) {
-  }
-}
-
 class NicosCacheReaderTest : public ::testing::Test {
 public:
-  void SetUp() override { registerSchema(); };
+  void SetUp() override {
+    setExtractorModule<FlatbufferMetadata::ns10_Extractor>("ns10");
+  };
 };
 
 TEST_F(NicosCacheReaderTest, ReaderReturnValues) {

@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 
 #include "fb_metadata_extractors/NDAr/NDAr_Extractor.h"
+#include "helpers/SetExtractorModule.h"
 
 class AreaDetectorReader : public ::testing::Test {
 public:
@@ -32,12 +33,7 @@ public:
   void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<FlatbufferMetadata::NDAr_Extractor>();
-    std::map<std::string, FileWriter::FlatbufferReaderRegistry::ReaderPtr>
-        &Readers = FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::NDAr_Extractor>
-        RegisterIt("NDAr");
+    setExtractorModule<FlatbufferMetadata::NDAr_Extractor>("NDAr");
   };
 
   std::unique_ptr<FlatbufferMetadata::NDAr_Extractor> Reader;

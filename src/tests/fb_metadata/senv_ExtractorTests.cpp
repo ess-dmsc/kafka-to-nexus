@@ -11,6 +11,7 @@
 #include <gtest/gtest.h>
 #include <memory>
 #include <senv_data_generated.h>
+#include "helpers/SetExtractorModule.h"
 
 static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
   flatbuffers::FlatBufferBuilder builder;
@@ -46,12 +47,7 @@ public:
   void SetUp() override {
     ASSERT_NE(RawBuffer.get(), nullptr);
     ReaderUnderTest = std::make_unique<FlatbufferMetadata::senv_Extractor>();
-    std::map<std::string, ReaderPtr> &Readers =
-        FileWriter::FlatbufferReaderRegistry::getReaders();
-    Readers.clear();
-    FileWriter::FlatbufferReaderRegistry::Registrar<
-        FlatbufferMetadata::senv_Extractor>
-        RegisterIt("senv");
+    setExtractorModule<FlatbufferMetadata::senv_Extractor>("senv");
   };
 
   std::unique_ptr<FlatbufferMetadata::senv_Extractor> ReaderUnderTest;
