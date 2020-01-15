@@ -29,7 +29,6 @@ public:
     InFile.read(RawData.get(), FileSize);
   };
 
-  // cppcheck-suppress unusedFunction; used by google-test
   void SetUp() override {
     ASSERT_NE(FileSize, size_t(0));
     Reader = std::make_unique<FlatbufferMetadata::NDAr_Extractor>();
