@@ -39,6 +39,7 @@ set(UnitTests_SRC
         Metrics/CarbonConnectionTest.cpp
         Metrics/CarbonTestServer.cpp
         Metrics/MetricsReporterTest.cpp
+        Metrics/LogSinkTest.cpp
         MasterTests.cpp
         StreamerTests.cpp)
 
