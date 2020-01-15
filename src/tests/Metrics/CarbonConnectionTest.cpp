@@ -182,7 +182,6 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
       std::make_shared<Metrics::Registrar>("Test", TestReporters);
   Metrics::Metric TestMetric(TestName, Description, Metrics::Severity::ERROR);
 
-  TestReporter->start();
   TestRegistrar->registerMetric(TestMetric, {Metrics::LogTo::CARBON});
   std::this_thread::sleep_for(200ms);
   ASSERT_GE(CarbonServer->GetNrOfMessages(), 0);
@@ -191,5 +190,4 @@ TEST_F(DISABLED_MetricsCarbonConnectionTest, SendUpdate) {
   std::smatch Matches;
   std::regex_match(LastCarbonString, Matches, Regex);
   EXPECT_TRUE(not Matches.empty());
-  TestReporter->waitForStop();
 }

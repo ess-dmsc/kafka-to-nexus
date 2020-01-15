@@ -22,18 +22,20 @@ class Reporter {
 public:
   Reporter(std::unique_ptr<Sink> MetricSink, std::chrono::milliseconds Interval)
       : MetricSink(std::move(MetricSink)), IO(), Period(Interval),
-        AsioTimer(IO, Period){};
+        AsioTimer(IO, Period) {
+    start();
+  };
 
-  virtual ~Reporter() = default;
+  virtual ~Reporter() { waitForStop(); };
   void reportMetrics();
   virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
   virtual bool tryRemoveMetric(std::string const &MetricName);
   LogTo getSinkType();
-  void start();
-  void waitForStop();
 
 private:
   void run() { IO.run(); }
+  void start();
+  void waitForStop();
 
   std::unique_ptr<Sink> MetricSink;
   std::mutex MetricsMapMutex; // lock when accessing MetricToReportOn
