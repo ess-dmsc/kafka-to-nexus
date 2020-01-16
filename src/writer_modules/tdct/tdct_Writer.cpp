@@ -22,7 +22,7 @@ namespace Module {
 namespace tdct {
 
 // Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<tdct_Writer>
+static Module::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct");
 
 void tdct_Writer::parse_config(std::string const &) {

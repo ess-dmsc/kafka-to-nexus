@@ -16,7 +16,7 @@
 
 #include "FlatbufferMessage.h"
 #include "HDFFile.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include "Msg.h"
 #include "NeXusDataset.h"
 

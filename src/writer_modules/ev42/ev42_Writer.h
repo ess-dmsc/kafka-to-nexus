@@ -9,7 +9,7 @@
 
 #include "AdcDatasets.h"
 #include "FlatbufferMessage.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include "NeXusDataset.h"
 
 namespace Module {

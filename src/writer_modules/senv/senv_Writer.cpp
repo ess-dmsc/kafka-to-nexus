@@ -23,7 +23,7 @@ namespace Module {
 namespace senv {
 
 // Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<senv_Writer>
+static Module::Registrar<senv_Writer>
     RegisterSenvWriter("senv");
 
 void senv_Writer::parse_config(std::string const &) {

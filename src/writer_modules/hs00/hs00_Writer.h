@@ -10,7 +10,7 @@
 #pragma once
 
 #include "FlatbufferReader.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include "WriterUntyped.h"
 
 namespace Module {

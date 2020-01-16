@@ -9,7 +9,7 @@
 
 #include "../json.h"
 #include "helpers/StubWriterModule.h"
-#include <HDFWriterModule.h>
+#include <WriterModuleBase.h>
 #include <gtest/gtest.h>
 
 using namespace FileWriter;

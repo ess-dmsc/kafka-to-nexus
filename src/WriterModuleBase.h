@@ -16,7 +16,8 @@
 #include <memory>
 #include <string>
 
-namespace FileWriter {
+namespace Module {
+
 
 class FlatbufferMessage;
 
@@ -37,11 +38,10 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// can be arbitrary but should as a convention contain the flatbuffer schema
 /// id (`FBID`) like `FBID_<writer-module-name>`.
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
-class HDFWriterModule {
+class WriterBase {
 public:
-  using ptr = std::unique_ptr<HDFWriterModule>;
   using InitResult = HDFWriterModule_detail::InitResult;
-  virtual ~HDFWriterModule() = default;
+  virtual ~WriterBase() = default;
 
   /// \brief Parses the configuration of a stream.
   ///
@@ -83,49 +83,12 @@ public:
   virtual void write(FlatbufferMessage const &Message) = 0;
 };
 
-/// \brief Keeps track of the registered FlatbufferReader instances.
-///
-/// Writer modules register themselves via instantiation of the `Registrar`.
-/// See for example `src/schemas/ev42/ev42_rw.cxx` and search for
-/// HDFWriterModuleRegistry.
-namespace HDFWriterModuleRegistry {
-using ModuleFactory = std::function<std::unique_ptr<HDFWriterModule>()>;
-
-/// \brief Get all registered modules.
-///
-/// \return A reference to the map of registered modules.
-std::map<std::string, ModuleFactory> &getFactories();
-
-/// \brief Registers a new writer module. Called by `Registrar`.
-///
-/// \param key
-/// \param value
-void addWriterModule(std::string const &Key, ModuleFactory Value);
-
-/// \brief Get `ModuleFactory for a given `key`.
-///
-/// \return Matching `ModuleFactory`.
-ModuleFactory &find(std::string const &key);
-
-/// \brief  Registers the writer module at program start if instantiated in the
-/// namespace of each writer module with the writer module given as `Module`.
-template <typename Module> class Registrar {
-public:
-  /// \brief Register the writer module given in template parameter `Module`
-  /// under the
-  /// identifier `FlatbufferID`.
-  ///
-  /// \param FlatbufferID The unique identifier for this writer module.
-  explicit Registrar(std::string const &FlatbufferID) {
-    auto FactoryFunction = []() { return std::make_unique<Module>(); };
-    addWriterModule(FlatbufferID, FactoryFunction);
-  };
-};
-
 class WriterException : public std::runtime_error {
 public:
   explicit WriterException(const std::string &ErrorMessage)
       : std::runtime_error(ErrorMessage) {}
 };
-} // namespace HDFWriterModuleRegistry
-} // namespace FileWriter
+
+using ptr = std::unique_ptr<WriterBase>;
+
+} // namespace Module

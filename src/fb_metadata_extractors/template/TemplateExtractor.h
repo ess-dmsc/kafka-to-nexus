@@ -34,7 +34,7 @@
 
 #pragma once
 #include "FlatbufferReader.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include <iostream>
 
 /// \brief A separate namespace for this specific file writing module. Use this

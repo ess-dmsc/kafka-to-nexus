@@ -9,7 +9,7 @@
 
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
@@ -71,8 +71,8 @@ int main(int argc, char **argv) {
     }
     fmt::print("\n--Identifiers of HDFWriterModule factories\n");
     for (auto &WriterPair :
-         FileWriter::HDFWriterModuleRegistry::getFactories()) {
-      fmt::print("---- {}\n", WriterPair.first);
+         Module::getFactoriesFromHash()) {
+      fmt::print("---- {}\n", WriterPair.); // We want the module name here
     }
     fmt::print("\nDone, exiting\n");
     return 0;

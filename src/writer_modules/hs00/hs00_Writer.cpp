@@ -53,7 +53,7 @@ FileWriter::HDFWriterModule::ptr hs00_Writer::create() {
   return FileWriter::HDFWriterModule::ptr(new hs00_Writer);
 }
 
-FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer>
+Module::Registrar<hs00_Writer>
     RegisterWriter("hs00");
 } // namespace hs00
 } // namespace Module

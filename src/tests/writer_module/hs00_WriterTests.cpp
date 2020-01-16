@@ -17,7 +17,7 @@
 #include "writer_modules/hs00/Slice.h"
 #include "writer_modules/hs00/WriterTyped.h"
 #include "writer_modules/hs00/hs00_Writer.h"
-#include <HDFWriterModule.h>
+#include <WriterModuleBase.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
@@ -36,7 +36,7 @@ public:
   void SetUp() override {
     setExtractorModule<FlatbufferMetadata::hs00_Extractor>("hs00");
     try {
-      FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterIt(
+      Module::Registrar<hs00_Writer> RegisterIt(
           "hs00");
     } catch (...) {
     }

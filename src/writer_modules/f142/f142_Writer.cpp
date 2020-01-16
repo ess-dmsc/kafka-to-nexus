@@ -247,12 +247,12 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     appendData<const double>(Values, DataPtr, NrOfElements);
     break;
   default:
-    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+    throw Module::WriterException(
         "Unknown data type in f142 flatbuffer.");
   }
 }
 /// Register the writer module.
-static FileWriter::HDFWriterModuleRegistry::Registrar<f142_Writer>
+static Module::Registrar<f142_Writer>
     RegisterWriter("f142");
 
 } // namespace f142

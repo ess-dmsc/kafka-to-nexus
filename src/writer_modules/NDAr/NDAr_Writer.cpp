@@ -22,7 +22,7 @@ namespace Module {
 namespace NDAr {
 
 // Register the file writing part of this module.
-static FileWriter::HDFWriterModuleRegistry::Registrar<NDAr_Writer>
+static Module::Registrar<NDAr_Writer>
     RegisterNDArWriter("NDAr");
 
 std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
@@ -182,7 +182,7 @@ void NDAr_Writer::write(const FileWriter::FlatbufferMessage &Message) {
     appendData<const char>(Values, DataPtr, NrOfElements, DataShape);
     break;
   default:
-    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+    throw Module::WriterException(
         "Error in flatbuffer.");
   }
   Timestamp.appendElement(CurrentTimestamp);

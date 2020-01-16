@@ -9,7 +9,7 @@
 
 #pragma once
 
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include "Shape.h"
 #include "json.h"
 #include <h5cpp/hdf5.hpp>

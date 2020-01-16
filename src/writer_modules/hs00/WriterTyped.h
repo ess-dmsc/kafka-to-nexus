@@ -302,7 +302,7 @@ template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 template <typename DataType, typename EdgeType, typename ErrorType>
 void WriterTyped<DataType, EdgeType, ErrorType>::write(
     FlatbufferMessage const &Message, bool DoFlushEachWrite) {
-  using FileWriter::HDFWriterModuleRegistry::WriterException;
+  using Module::WriterException;
 
   if (!Dataset.is_valid()) {
     throw WriterException("Invalid dataset");

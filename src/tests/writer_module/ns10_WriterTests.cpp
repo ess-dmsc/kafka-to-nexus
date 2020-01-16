@@ -65,7 +65,7 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 
 void registerSchema() {
   try {
-    FileWriter::HDFWriterModuleRegistry::Registrar<ns10_Writer> RegisterIt(
+    Module::Registrar<ns10_Writer> RegisterIt(
         "ns10");
   } catch (...) {
   }

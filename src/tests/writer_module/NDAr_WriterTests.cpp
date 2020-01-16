@@ -481,7 +481,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   Writer.reopen(UsedGroup);
   try {
     Writer.write(Message);
-  } catch (FileWriter::HDFWriterModuleRegistry::WriterException &Exception) {
+  } catch (Module::WriterException &Exception) {
     return false;
   }
   std::vector<Type> dataFromFile(testData.size());

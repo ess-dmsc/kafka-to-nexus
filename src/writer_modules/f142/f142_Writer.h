@@ -10,7 +10,7 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include <NeXusDataset.h>
 #include <array>
 #include <chrono>

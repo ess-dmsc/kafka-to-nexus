@@ -13,7 +13,7 @@
 #include "CommandParser.h"
 #include "EventLogger.h"
 #include "FileWriterTask.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include "Msg.h"
 #include "StreamMaster.h"
 #include "json.h"

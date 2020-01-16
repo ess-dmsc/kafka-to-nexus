@@ -9,7 +9,7 @@
 
 #pragma once
 #include "FlatbufferMessage.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 
 class StubWriterModule : public FileWriter::HDFWriterModule {
 public:
