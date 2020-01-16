@@ -4,10 +4,16 @@
 namespace Metrics {
 
 void Reporter::reportMetrics() {
+  if (!Running) {
+    return;
+  }
   std::lock_guard<std::mutex> Lock(MetricsMapMutex);
   for (auto &MetricNameValue : MetricsToReportOn) {
     MetricSink->reportMetric(MetricNameValue.second);
   }
+  AsioTimer.expires_at(AsioTimer.expires_at() + Period);
+  AsioTimer.async_wait(
+      [this](std::error_code const & /*error*/) { this->reportMetrics(); });
 }
 
 bool Reporter::addMetric(Metric &NewMetric, std::string const &NewName) {
@@ -25,12 +31,17 @@ bool Reporter::tryRemoveMetric(std::string const &MetricName) {
 LogTo Reporter::getSinkType() { return MetricSink->getType(); };
 
 void Reporter::start() {
+  Running = true;
   AsioTimer.async_wait(
       [this](std::error_code const & /*error*/) { this->reportMetrics(); });
   ReporterThread = std::thread(&Reporter::run, this);
 }
 
 void Reporter::waitForStop() {
+  // AsioTimer.cancel() would only stop the timer execution if there is an
+  // async_wait "in flight" we therefore need the Running flag and supporting
+  // logic too, to ensure that the reportMetrics call chain is definitely stopped
+  Running = false;
   AsioTimer.cancel();
   ReporterThread.join();
 }
