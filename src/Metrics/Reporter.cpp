@@ -40,7 +40,8 @@ void Reporter::start() {
 void Reporter::waitForStop() {
   // AsioTimer.cancel() would only stop the timer execution if there is an
   // async_wait "in flight" we therefore need the Running flag and supporting
-  // logic too, to ensure that the reportMetrics call chain is definitely stopped
+  // logic too, to ensure that the reportMetrics call chain is definitely
+  // stopped
   Running = false;
   AsioTimer.cancel();
   ReporterThread.join();
