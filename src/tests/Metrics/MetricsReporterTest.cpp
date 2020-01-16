@@ -58,13 +58,15 @@ TEST(MetricsReporterTest, AddedMetricIsReportedOn) {
 
   // Test reportMetric is called with a metric containing the name we set for
   // our test Metric
-  REQUIRE_CALL(*TestMockSink, reportMetric(_)).WITH(_1.Name == TestMetricName);
+  REQUIRE_CALL(*TestMockSink, reportMetric(_))
+      .WITH(_1.Name == TestMetricName)
+      .TIMES(AT_LEAST(2));
 
   std::string const FullName = "some_prefix.some_name";
   TestReporter.addMetric(TestMetric, FullName);
 
-  // Give the reporter plenty of time to report on the metric at least once.
-  std::this_thread::sleep_for(50ms);
+  // Give the reporter plenty of time to report on the metric at least twice.
+  std::this_thread::sleep_for(100ms);
 
   TestReporter.tryRemoveMetric(FullName);
 }
