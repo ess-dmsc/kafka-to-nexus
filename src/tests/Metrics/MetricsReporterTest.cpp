@@ -22,6 +22,7 @@ private:
   LogTo SinkType;
 };
 
+// cppcheck-suppress syntaxError
 TEST(MetricsReporterTest,
      MetricSuccessfullyAddedCanBeRemovedUsingSameFullName) {
   Metric TestMetric("some_name", "Description", Severity::INFO);
@@ -36,7 +37,6 @@ TEST(MetricsReporterTest,
   ASSERT_TRUE(TestReporter.tryRemoveMetric(FullName));
 }
 
-// cppcheck-suppress syntaxError
 TEST(MetricsReporterTest, TryingToAddMetricWithSameFullNameTwiceFails) {
   Metric TestMetric1("some_name", "Description", Severity::INFO);
   Metric TestMetric2("some_name", "Different description", Severity::DEBUG);
