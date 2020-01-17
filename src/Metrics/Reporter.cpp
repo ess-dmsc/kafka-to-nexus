@@ -3,19 +3,27 @@
 
 namespace Metrics {
 
-void Reporter::reportMetrics(std::error_code const &Error) {
-  if (!MetricSink->isHealthy() ||
-      (Error.value() == asio::error::operation_aborted)) {
-    // skip this batch of reports and give Sink time to recover
-    return;
-  }
-  std::lock_guard<std::mutex> Lock(MetricsMapMutex);
-  for (auto &MetricNameValue : MetricsToReportOn) {
-    MetricSink->reportMetric(MetricNameValue.second);
+void Reporter::reportMetrics() {
+  if (MetricSink->isHealthy()) {
+    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
+    for (auto &MetricNameValue : MetricsToReportOn) {
+      MetricSink->reportMetric(MetricNameValue.second);
+    }
+  } else {
+    std::string MetricsSinkName{"Unknown"};
+    std::map<LogTo, std::string> SinkNameMap{{LogTo::CARBON, "grafana/graphite"}, {LogTo::LOG_MSG, "log-message"}};
+    if (SinkNameMap.find(MetricSink->getType()) != SinkNameMap.end()) {
+      MetricsSinkName = SinkNameMap[MetricSink->getType()];
+    }
+    getLogger()->error("Unable to push metrics to the {} sink.", MetricsSinkName);
   }
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
   AsioTimer.async_wait(
-      [this](std::error_code const &Error) { this->reportMetrics(Error); });
+      [this](std::error_code const &Error) {
+        if (Error != asio::error::operation_aborted) {
+          this->reportMetrics();
+        }
+      });
 }
 
 bool Reporter::addMetric(Metric &NewMetric, std::string const &NewName) {
@@ -34,29 +42,34 @@ LogTo Reporter::getSinkType() { return MetricSink->getType(); };
 
 void Reporter::start() {
   AsioTimer.async_wait(
-      [this](std::error_code const &Error) { this->reportMetrics(Error); });
+      [this](std::error_code const &Error) {
+        if (Error != asio::error::operation_aborted) {
+          this->reportMetrics();
+        }
+      });
   ReporterThread = std::thread(&Reporter::run, this);
 }
 
 void Reporter::waitForStop() {
-  AsioTimer.cancel();
   IO.stop();
   ReporterThread.join();
 }
 
 Reporter::~Reporter() {
-  std::lock_guard<std::mutex> Lock(MetricsMapMutex);
-  if (!MetricsToReportOn.empty()) {
-    auto Logger = getLogger();
-    std::string NamesOfMetricsStillRegistered;
-    for (auto &NameMetricPair : MetricsToReportOn) {
-      NamesOfMetricsStillRegistered += NameMetricPair.first;
-      NamesOfMetricsStillRegistered += ", ";
+  {
+    std::lock_guard<std::mutex> Lock(MetricsMapMutex);
+    if (!MetricsToReportOn.empty()) {
+      auto Logger = getLogger();
+      std::string NamesOfMetricsStillRegistered;
+      for (auto &NameMetricPair : MetricsToReportOn) {
+        NamesOfMetricsStillRegistered += NameMetricPair.first;
+        NamesOfMetricsStillRegistered += ", ";
+      }
+      Logger->error(
+          "Reporter is being cleaned up, but still has the following metrics "
+          "registered to it: {}",
+          NamesOfMetricsStillRegistered);
     }
-    Logger->error(
-        "Reporter is being cleaned up, but still has the following metrics "
-        "registered to it: {}",
-        NamesOfMetricsStillRegistered);
   }
 
   waitForStop();
