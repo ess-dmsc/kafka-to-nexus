@@ -4,7 +4,8 @@
 namespace Metrics {
 
 void Reporter::reportMetrics(std::error_code const &Error) {
-  if (!MetricSink->isHealthy() || (Error.value() == asio::error::operation_aborted)) {
+  if (!MetricSink->isHealthy() ||
+      (Error.value() == asio::error::operation_aborted)) {
     // skip this batch of reports and give Sink time to recover
     return;
   }
