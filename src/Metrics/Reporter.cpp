@@ -11,19 +11,20 @@ void Reporter::reportMetrics() {
     }
   } else {
     std::string MetricsSinkName{"Unknown"};
-    std::map<LogTo, std::string> SinkNameMap{{LogTo::CARBON, "grafana/graphite"}, {LogTo::LOG_MSG, "log-message"}};
+    std::map<LogTo, std::string> SinkNameMap{
+        {LogTo::CARBON, "grafana/graphite"}, {LogTo::LOG_MSG, "log-message"}};
     if (SinkNameMap.find(MetricSink->getType()) != SinkNameMap.end()) {
       MetricsSinkName = SinkNameMap[MetricSink->getType()];
     }
-    getLogger()->error("Unable to push metrics to the {} sink.", MetricsSinkName);
+    getLogger()->error("Unable to push metrics to the {} sink.",
+                       MetricsSinkName);
   }
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
-  AsioTimer.async_wait(
-      [this](std::error_code const &Error) {
-        if (Error != asio::error::operation_aborted) {
-          this->reportMetrics();
-        }
-      });
+  AsioTimer.async_wait([this](std::error_code const &Error) {
+    if (Error != asio::error::operation_aborted) {
+      this->reportMetrics();
+    }
+  });
 }
 
 bool Reporter::addMetric(Metric &NewMetric, std::string const &NewName) {
@@ -41,12 +42,11 @@ bool Reporter::tryRemoveMetric(std::string const &MetricName) {
 LogTo Reporter::getSinkType() { return MetricSink->getType(); };
 
 void Reporter::start() {
-  AsioTimer.async_wait(
-      [this](std::error_code const &Error) {
-        if (Error != asio::error::operation_aborted) {
-          this->reportMetrics();
-        }
-      });
+  AsioTimer.async_wait([this](std::error_code const &Error) {
+    if (Error != asio::error::operation_aborted) {
+      this->reportMetrics();
+    }
+  });
   ReporterThread = std::thread(&Reporter::run, this);
 }
 
