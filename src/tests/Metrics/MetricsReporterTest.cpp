@@ -10,6 +10,18 @@ class MetricsReporterTest : public ::testing::Test {};
 
 namespace Metrics {
 
+class MockUnhealthySink : public Sink {
+public:
+  explicit MockUnhealthySink(LogTo LogToSink = LogTo::LOG_MSG)
+      : SinkType(LogToSink){};
+  MAKE_MOCK1(reportMetric, void(InternalMetric &), override);
+  LogTo getType() override { return SinkType; };
+  bool isHealthy() override { return false; };
+
+private:
+  LogTo SinkType;
+};
+
 TEST(MetricsReporterTest,
      MetricSuccessfullyAddedCanBeRemovedUsingSameFullName) {
   Metric TestMetric("some_name", "Description", Severity::INFO);
@@ -66,6 +78,24 @@ TEST(MetricsReporterTest, AddedMetricIsReportedOn) {
   TestReporter.addMetric(TestMetric, FullName);
 
   // Give the reporter plenty of time to report on the metric at least twice.
+  std::this_thread::sleep_for(100ms);
+
+  TestReporter.tryRemoveMetric(FullName);
+}
+
+TEST(MetricsReporterTest, DoesNotReportMetricsIfSinkIsNotHealthy) {
+  Metric TestMetric("some_name", "Description", Severity::INFO);
+  auto TestSink = std::unique_ptr<Sink>(new MockUnhealthySink());
+  auto TestMockSink = dynamic_cast<MockUnhealthySink *>(TestSink.get());
+  Reporter TestReporter(std::move(TestSink), 10ms);
+
+  FORBID_CALL(*TestMockSink, reportMetric(_));
+
+  std::string const FullName = "some_prefix.some_name";
+  TestReporter.addMetric(TestMetric, FullName);
+
+  // Give the reporter plenty of time to report on the metric. But it shouldn't
+  // because the Sink claims to be unhealthy.
   std::this_thread::sleep_for(100ms);
 
   TestReporter.tryRemoveMetric(FullName);
