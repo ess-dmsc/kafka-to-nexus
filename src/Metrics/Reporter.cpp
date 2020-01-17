@@ -4,6 +4,10 @@
 namespace Metrics {
 
 void Reporter::reportMetrics() {
+  if (!MetricSink->isHealthy()) {
+    // skip this batch of reports and give Sink time to recover
+    return;
+  }
   std::lock_guard<std::mutex> Lock(MetricsMapMutex);
   for (auto &MetricNameValue : MetricsToReportOn) {
     MetricSink->reportMetric(MetricNameValue.second);

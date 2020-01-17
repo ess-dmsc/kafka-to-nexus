@@ -18,6 +18,7 @@ public:
   explicit MockSink(LogTo LogToSink = LogTo::LOG_MSG) : SinkType(LogToSink){};
   MAKE_MOCK1(reportMetric, void(InternalMetric &), override);
   LogTo getType() override { return SinkType; };
+  bool isHealthy() override { return true; };
 
 private:
   LogTo SinkType;

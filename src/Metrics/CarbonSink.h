@@ -21,6 +21,7 @@ public:
       : CarbonConnection(std::move(Host), Port){};
   void reportMetric(InternalMetric &MetricToBeReported) override;
   LogTo getType() override { return LogTo::CARBON; };
+  bool isHealthy() override;
 
 private:
   Carbon::Connection CarbonConnection;

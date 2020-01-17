@@ -13,4 +13,10 @@ void CarbonSink::reportMetric(InternalMetric &MetricToBeReported) {
   CarbonConnection.sendMessage(
       fmt::format("{} {} {}\n", CurrentName, CurrentValue, TimeSinceEpoch));
 }
+
+bool CarbonSink::isHealthy() {
+  // If it has successfully sent the previous batch of metrics then report
+  // healthy and ready for a next batch
+  return (CarbonConnection.messageQueueSize() == 0);
+}
 }
