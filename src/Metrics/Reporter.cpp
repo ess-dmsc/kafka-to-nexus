@@ -4,7 +4,7 @@
 namespace Metrics {
 
 void Reporter::reportMetrics() {
-  if (!MetricSink->isHealthy()) {
+  if (!MetricSink->isHealthy() || !Running) {
     // skip this batch of reports and give Sink time to recover
     return;
   }
@@ -32,12 +32,16 @@ bool Reporter::tryRemoveMetric(std::string const &MetricName) {
 LogTo Reporter::getSinkType() { return MetricSink->getType(); };
 
 void Reporter::start() {
+  Running = true;
   AsioTimer.async_wait(
       [this](std::error_code const & /*error*/) { this->reportMetrics(); });
   ReporterThread = std::thread(&Reporter::run, this);
 }
 
 void Reporter::waitForStop() {
+  // Running flag is required in addition to calling timer::cancel() and
+  // io_context::stop to reliably break the timer execution train
+  Running = false;
   AsioTimer.cancel();
   IO.stop();
   ReporterThread.join();
