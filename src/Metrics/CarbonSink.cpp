@@ -4,7 +4,8 @@
 namespace Metrics {
 
 void CarbonSink::reportMetric(InternalMetric &MetricToBeReported) {
-  auto CurrentValue = MetricToBeReported.Counter->load();
+  auto CurrentValue =
+      MetricToBeReported.Counter->load(std::memory_order_relaxed);
   auto CurrentName = MetricToBeReported.FullName;
   auto TimeSinceEpoch = std::chrono::duration_cast<std::chrono::milliseconds>(
                             std::chrono::system_clock::now().time_since_epoch())

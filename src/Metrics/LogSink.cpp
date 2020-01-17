@@ -13,7 +13,8 @@ namespace Metrics {
 
 void LogSink::reportMetric(InternalMetric &MetricToBeReported) {
   auto Now = std::chrono::system_clock::now();
-  auto CurrentValue = MetricToBeReported.Counter->load();
+  auto CurrentValue =
+      MetricToBeReported.Counter->load(std::memory_order_relaxed);
   auto ValueDiff = CurrentValue - MetricToBeReported.LastValue;
   if (ValueDiff != 0) {
     MetricToBeReported.LastValue = CurrentValue;

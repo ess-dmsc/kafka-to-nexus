@@ -17,6 +17,8 @@ enum struct LogTo { CARBON, LOG_MSG };
 
 class Sink {
 public:
+  /// Note, access metric values with relaxed memory ordering
+  /// (atomic::load(std::memory_order_relaxed)) when implementing reportMetric
   virtual void reportMetric(InternalMetric &MetricToBeReported) = 0;
   virtual LogTo getType() = 0;
   virtual ~Sink() = default;
