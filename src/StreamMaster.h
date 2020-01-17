@@ -12,10 +12,8 @@
 
 #pragma once
 
-#include "Errors.h"
 #include "EventLogger.h"
 #include "MainOpt.h"
-#include "Report.h"
 #include <atomic>
 
 namespace FileWriter {
@@ -27,14 +25,11 @@ public:
   virtual ~IStreamMaster() = default;
   virtual std::string getJobId() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
-  virtual nlohmann::json getStatus() const = 0;
   virtual bool isDoneWriting() = 0;
 };
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
 class StreamMaster : public IStreamMaster {
-  using StreamMasterError = Status::StreamMasterError;
-
 public:
   /// \brief Builder method for StreamMaster.
   ///
@@ -85,8 +80,6 @@ public:
   /// \return The job id.
   std::string getJobId() const override;
 
-  nlohmann::json getStatus() const override;
-
 private:
   /// \brief Process the messages in the specified stream.
   ///
@@ -102,7 +95,6 @@ private:
   std::atomic<bool> StreamersRemaining{true};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
-  std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};

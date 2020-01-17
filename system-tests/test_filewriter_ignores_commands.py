@@ -1,7 +1,11 @@
 from helpers.kafkahelpers import create_producer, send_writer_command, create_consumer
 from time import sleep
+import pytest
 
 
+@pytest.mark.skip(
+    reason="Test relies on status reporting which is currently being replaced"
+)
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)

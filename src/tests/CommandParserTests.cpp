@@ -30,6 +30,7 @@ public:
   "nexus_structure": { }
 })"""};
 
+  // cppcheck-suppress unusedFunction
   void SetUp() override {
     StartInfo = FileWriter::CommandParser::extractStartInformation(
         nlohmann::json::parse(Good_Command));

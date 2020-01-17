@@ -15,7 +15,7 @@
 
 #include "EventLogger.h"
 #include "KafkaW/Consumer.h"
-#include "Status.h"
+#include "StreamStatus.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include <chrono>
@@ -36,7 +36,7 @@ class Streamer {
 public:
   Streamer() = default;
 
-  /// \brief Create an instance of Streamer.
+  /// \brief Constructor.
   ///
   /// \param Broker Broker name or address of one of the brokers in the
   /// partition.
@@ -78,9 +78,6 @@ public:
   /// \brief Set the stop time.
   void setStopTime(std::chrono::milliseconds const &StopTime);
 
-  /// Return all the information about the messages consumed.
-  Status::MessageInfo &messageInfo() { return MessageInfo; }
-
   /// \brief Use to force stream to finish if something has gone wrong.
   void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
 
@@ -98,12 +95,11 @@ protected:
       ConsumerInitialised;
 
 private:
-  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
+  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALISED};
   std::atomic<int> NumberProcessedMessages{0};
   std::atomic<int> NumberFailedValidation{0};
   StreamerOptions Options;
   std::string ConsumerTopicName;
-  Status::MessageInfo MessageInfo;
   DemuxPtr MessageProcessor;
   ConsumerPtr Consumer{nullptr};
 
@@ -160,7 +156,7 @@ private:
 /// consumer can't be created returns ``SEC::configuration_error``, if the topic
 /// is not in the partition ``SEC::topic_partition_error``;
 std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-initTopics(std::string const &TopicName,
-           FileWriter::StreamerOptions const &Options,
-           SharedLogger const &Logger, ConsumerPtr Consumer);
+initTopic(std::string const &TopicName,
+          FileWriter::StreamerOptions const &Options,
+          SharedLogger const &Logger, ConsumerPtr Consumer);
 } // namespace FileWriter
