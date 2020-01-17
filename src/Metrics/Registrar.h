@@ -1,32 +1,37 @@
 #pragma once
 
-#include "Type.h"
+#include "Reporter.h"
+#include "Sink.h"
+#include <map>
 #include <string>
-#include <unordered_set>
+#include <vector>
 
 namespace Metrics {
 
-enum class LogTo { CARBON, LOG_MSG };
+class Metric;
 
-using DestList = std::unordered_set<LogTo>;
-
-class ProcessorInterface;
-
-class Processor;
-
+/// Register and metrics to be reported via a specified sink
+/// Manages metrics name prefixes
+/// Deregistration of metric happens via Metric's destructor
 class Registrar {
 public:
-  Registrar(Registrar &&Registrar);
+  Registrar(std::string MetricsPrefix,
+            std::vector<std::shared_ptr<Reporter>> Reporters)
+      : Prefix(std::move(MetricsPrefix)) {
+    for (auto const &NewReporter : Reporters) {
+      ReporterList.emplace(NewReporter->getSinkType(), NewReporter);
+    }
+  };
 
-  bool registerMetric(Metric &NewMetric, DestList Destinations);
+  void registerMetric(Metric &NewMetric, std::vector<LogTo> const &SinkTypes);
 
-  Registrar getNewRegistrar(std::string const &MetricsPrefix) const;
+  Registrar getNewRegistrar(std::string const &MetricsPrefix);
 
 private:
-  friend Processor;
-  Registrar(std::string MetricsPrefix, ProcessorInterface *ProcessorPtr);
-
-  std::string Prefix;
-  ProcessorInterface *MetricsProcessor{nullptr};
+  std::string prependPrefix(std::string const &Name) const;
+  std::string const Prefix;
+  /// List of reporters we might want to add a metric to
+  std::map<LogTo, std::shared_ptr<Reporter>> ReporterList;
 };
+
 } // namespace Metrics

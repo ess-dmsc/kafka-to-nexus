@@ -35,7 +35,7 @@ private:
   void HandleRead(std::error_code ec, std::size_t bytesReceived,
                   sock_ptr cSock);
 
-  void RemoveSocket(sock_ptr cSock);
+  void RemoveSocket(sock_ptr const &cSock);
 
   static const int bufferSize = 100;
   char receiveBuffer[bufferSize];

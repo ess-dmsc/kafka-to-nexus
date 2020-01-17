@@ -8,6 +8,7 @@ namespace {
 } // namespace
 
 namespace Metrics {
+namespace Carbon {
 
 using namespace std::chrono_literals;
 
@@ -35,7 +36,7 @@ struct QueryResult {
   size_t NextEndpoint{0};
 };
 
-void CarbonConnection::Impl::tryConnect(QueryResult AllEndpoints) {
+void Connection::Impl::tryConnect(QueryResult AllEndpoints) {
   asio::ip::tcp::endpoint CurrentEndpoint = AllEndpoints.getNextEndpoint();
   auto HandlerGlue = [this, AllEndpoints](auto &Err) {
     this->connectHandler(Err, AllEndpoints);
@@ -44,28 +45,28 @@ void CarbonConnection::Impl::tryConnect(QueryResult AllEndpoints) {
   setState(Status::CONNECT);
 }
 
-CarbonConnection::Impl::Impl(std::string Host, int Port)
+Connection::Impl::Impl(std::string Host, int Port)
     : HostAddress(std::move(Host)), HostPort(std::to_string(Port)), Service(),
       Work(std::make_unique<asio::io_service::work>(Service)), Socket(Service),
       Resolver(Service), ReconnectTimeout(Service, 10s) {
   doAddressQuery();
-  AsioThread = std::thread(&CarbonConnection::Impl::threadFunction, this);
+  AsioThread = std::thread(&Connection::Impl::threadFunction, this);
 }
 
-void CarbonConnection::Impl::resolverHandler(
-    const asio::error_code &Error,
+void Connection::Impl::resolverHandler(
+    asio::error_code const &Error,
     asio::ip::tcp::resolver::iterator EndpointIter) {
   if (Error) {
     setState(Status::ADDR_RETRY_WAIT);
-    reConnect(ReconnectDelay::LONG);
+    reconnect(ReconnectDelay::LONG);
     return;
   }
   QueryResult AllEndpoints(std::move(EndpointIter));
   tryConnect(AllEndpoints);
 }
 
-void CarbonConnection::Impl::connectHandler(const asio::error_code &Error,
-                                            const QueryResult &AllEndpoints) {
+void Connection::Impl::connectHandler(asio::error_code const &Error,
+                                      QueryResult const &AllEndpoints) {
   if (!Error) {
     setState(Status::SEND_LOOP);
     auto HandlerGlue = [this](auto &Error, auto Size) {
@@ -77,13 +78,13 @@ void CarbonConnection::Impl::connectHandler(const asio::error_code &Error,
   }
   Socket.close();
   if (AllEndpoints.isDone()) {
-    reConnect(ReconnectDelay::LONG);
+    reconnect(ReconnectDelay::LONG);
     return;
   }
   tryConnect(AllEndpoints);
 }
 
-void CarbonConnection::Impl::reConnect(ReconnectDelay Delay) {
+void Connection::Impl::reconnect(ReconnectDelay Delay) {
   auto HandlerGlue = [this](auto &) { this->doAddressQuery(); };
   switch (Delay) {
   case ReconnectDelay::SHORT:
@@ -98,12 +99,12 @@ void CarbonConnection::Impl::reConnect(ReconnectDelay Delay) {
   setState(Status::ADDR_RETRY_WAIT);
 }
 
-void CarbonConnection::Impl::receiveHandler(const asio::error_code &Error,
-                                            std::size_t BytesReceived) {
+void Connection::Impl::receiveHandler(asio::error_code const &Error,
+                                      std::size_t BytesReceived) {
   UNUSED_ARG(BytesReceived);
   if (Error) {
     Socket.close();
-    reConnect(ReconnectDelay::SHORT);
+    reconnect(ReconnectDelay::SHORT);
     return;
   }
   auto HandlerGlue = [this](auto &Error, auto Size) {
@@ -112,7 +113,7 @@ void CarbonConnection::Impl::receiveHandler(const asio::error_code &Error,
   Socket.async_receive(asio::buffer(InputBuffer), HandlerGlue);
 }
 
-void CarbonConnection::Impl::trySendMessage() {
+void Connection::Impl::trySendMessage() {
   if (not Socket.is_open()) {
     return;
   }
@@ -138,8 +139,8 @@ void CarbonConnection::Impl::trySendMessage() {
   }
 }
 
-void CarbonConnection::Impl::sentMessageHandler(const asio::error_code &Error,
-                                                std::size_t BytesSent) {
+void Connection::Impl::sentMessageHandler(asio::error_code const &Error,
+                                          std::size_t BytesSent) {
   if (BytesSent == MessageBuffer.size()) {
     MessageBuffer.clear();
   } else if (BytesSent > 0) {
@@ -155,7 +156,7 @@ void CarbonConnection::Impl::sentMessageHandler(const asio::error_code &Error,
   trySendMessage();
 }
 
-void CarbonConnection::Impl::waitForMessage() {
+void Connection::Impl::waitForMessage() {
   if (not Socket.is_open()) {
     return;
   }
@@ -167,7 +168,7 @@ void CarbonConnection::Impl::waitForMessage() {
   Service.post([this]() { this->waitForMessage(); });
 }
 
-void CarbonConnection::Impl::doAddressQuery() {
+void Connection::Impl::doAddressQuery() {
   setState(Status::ADDR_LOOKUP);
   asio::ip::tcp::resolver::query Query(HostAddress, HostPort);
   auto HandlerGlue = [this](auto &Error, auto EndpointIter) {
@@ -176,7 +177,7 @@ void CarbonConnection::Impl::doAddressQuery() {
   Resolver.async_resolve(Query, HandlerGlue);
 }
 
-CarbonConnection::Impl::~Impl() {
+Connection::Impl::~Impl() {
   Service.stop();
   AsioThread.join();
   try {
@@ -186,14 +187,11 @@ CarbonConnection::Impl::~Impl() {
   }
 }
 
-Status CarbonConnection::Impl::getConnectionStatus() const {
-  return ConnectionState;
-}
+Status Connection::Impl::getConnectionStatus() const { return ConnectionState; }
 
-void CarbonConnection::Impl::threadFunction() { Service.run(); }
+void Connection::Impl::threadFunction() { Service.run(); }
 
-void CarbonConnection::Impl::setState(Status NewState) {
-  ConnectionState = NewState;
-}
+void Connection::Impl::setState(Status NewState) { ConnectionState = NewState; }
 
+} // namespace Carbon
 } // namespace Metrics

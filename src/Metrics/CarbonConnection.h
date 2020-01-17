@@ -11,16 +11,17 @@
 #include <thread>
 
 namespace Metrics {
+namespace Carbon {
 
 struct QueryResult;
 
 using MsgQueue = moodycamel::BlockingReaderWriterQueue<std::string>;
 
-class CarbonConnection::Impl {
+class Connection::Impl {
 public:
   Impl(std::string Host, int Port);
   virtual ~Impl();
-  virtual bool sendMessage(std::string Msg) {
+  virtual bool sendMessage(std::string const &Msg) {
     return Messages.try_enqueue(Msg);
   };
   Status getConnectionStatus() const;
@@ -28,7 +29,7 @@ public:
   size_t messageQueueSize() { return Messages.size_approx(); }
 
 protected:
-  enum class ReconnectDelay { LONG, SHORT };
+  enum struct ReconnectDelay { LONG, SHORT };
 
   void threadFunction();
   void setState(Status NewState);
@@ -39,24 +40,24 @@ protected:
 
   std::vector<char> MessageBuffer;
 
-  std::string HostAddress;
-  std::string HostPort;
+  std::string const HostAddress;
+  std::string const HostPort;
 
   std::thread AsioThread;
   MsgQueue Messages;
 
 private:
-  const size_t MessageAdditionLimit{3000};
-  void resolverHandler(const asio::error_code &Error,
+  size_t const MessageAdditionLimit{3000};
+  void resolverHandler(asio::error_code const &Error,
                        asio::ip::tcp::resolver::iterator EndpointIter);
-  void connectHandler(const asio::error_code &Error,
-                      const QueryResult &AllEndpoints);
-  void sentMessageHandler(const asio::error_code &Error, std::size_t BytesSent);
-  void receiveHandler(const asio::error_code &Error, std::size_t BytesReceived);
+  void connectHandler(asio::error_code const &Error,
+                      QueryResult const &AllEndpoints);
+  void sentMessageHandler(asio::error_code const &Error, std::size_t BytesSent);
+  void receiveHandler(asio::error_code const &Error, std::size_t BytesReceived);
   void trySendMessage();
   void waitForMessage();
   void doAddressQuery();
-  void reConnect(ReconnectDelay Delay);
+  void reconnect(ReconnectDelay Delay);
   void tryConnect(QueryResult AllEndpoints);
 
   using WorkPtr = std::unique_ptr<asio::io_service::work>;
@@ -69,4 +70,5 @@ private:
   asio::system_timer ReconnectTimeout;
 };
 
+} // namespace Carbon
 } // namespace Metrics

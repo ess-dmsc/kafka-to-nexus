@@ -1,28 +1,45 @@
 #include "Registrar.h"
-#include "Processor.h"
+#include "Metric.h"
+#include <algorithm>
+#include <logger.h>
 
 namespace Metrics {
 
-Registrar::Registrar(std::string MetricsPrefix,
-                     ProcessorInterface *ProcessorPtr)
-    : Prefix(std::move(MetricsPrefix)), MetricsProcessor(ProcessorPtr) {}
-
-bool Registrar::registerMetric(Metric &NewMetric, DestList Destinations) {
+void Registrar::registerMetric(Metric &NewMetric,
+                               std::vector<LogTo> const &SinkTypes) {
   if (NewMetric.getName().empty()) {
-    throw std::runtime_error("Can not register a metric with an empty name.");
+    throw std::runtime_error("Metrics cannot be registered with an empty name");
   }
-  auto NewMetricString = Prefix + "." + NewMetric.getName();
-  if (MetricsProcessor->registerMetric(
-          NewMetricString, NewMetric.getCounterPtr(),
-          NewMetric.getDescription(), NewMetric.getSeverity(), Destinations)) {
-    NewMetric.setDeRegParams(NewMetricString, MetricsProcessor);
-    return true;
+  for (auto &SinkTypeAndReporter : ReporterList) {
+    if (std::find(SinkTypes.begin(), SinkTypes.end(),
+                  SinkTypeAndReporter.first) != SinkTypes.end()) {
+      std::string NewName = prependPrefix(NewMetric.getName());
+
+      if (!SinkTypeAndReporter.second->addMetric(NewMetric, NewName)) {
+        throw std::runtime_error(
+            "Metric with same full name is already registered");
+      }
+      NewMetric.setDeregistrationDetails(NewName, SinkTypeAndReporter.second);
+    }
   }
-  return false;
 }
 
-Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) const {
-  return {Prefix + "." + MetricsPrefix, MetricsProcessor};
+Registrar Registrar::getNewRegistrar(std::string const &MetricsPrefix) {
+  std::vector<std::shared_ptr<Reporter>> Reporters;
+  Reporters.reserve(ReporterList.size());
+
+  for (auto &SinkTypeAndReporter : ReporterList) {
+    // cppcheck-suppress useStlAlgorithm
+    Reporters.push_back(SinkTypeAndReporter.second);
+  }
+  return {prependPrefix(MetricsPrefix), Reporters};
+}
+
+std::string Registrar::prependPrefix(std::string const &Name) const {
+  if (Prefix.empty()) {
+    return Name;
+  }
+  return {Prefix + "." + Name};
 }
 
 } // namespace Metrics

@@ -38,7 +38,8 @@ set(UnitTests_SRC
         Metrics/MetricTest.cpp
         Metrics/CarbonConnectionTest.cpp
         Metrics/CarbonTestServer.cpp
-        Metrics/MetricsProcessorTest.cpp
+        Metrics/MetricsReporterTest.cpp
+        Metrics/LogSinkTest.cpp
         MasterTests.cpp
         StreamerTests.cpp)
 
@@ -49,9 +50,9 @@ set(UnitTests_INC
         helpers/f142_synth.h
         helpers/KafkaWMocks.h
         helpers/FakeStreamMaster.h
-        Metrics/ProcessorStandIn.h
-        Metrics/MetricStandIn.h
         Metrics/CarbonTestServer.h
+        Metrics/MockSink.h
+        Metrics/MockReporter.h
     )
 
 add_executable(UnitTests

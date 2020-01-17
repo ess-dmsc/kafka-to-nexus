@@ -2,17 +2,16 @@
 
 #include <atomic>
 #include <cstdint>
+#include <memory>
 #include <string>
 
 namespace Metrics {
 
-class ProcessorInterface;
-class Registrar;
+class Reporter;
 
-enum class Severity { DEBUG, INFO, WARNING, ERROR };
+enum struct Severity { DEBUG, INFO, WARNING, ERROR };
 
-using CounterType = std::atomic<std::int64_t>;
-using InternalCounterType = decltype(((CounterType *)(nullptr))->load());
+using CounterType = std::atomic<int64_t>;
 
 class Metric {
 public:
@@ -20,42 +19,46 @@ public:
          Severity Level = Severity::DEBUG)
       : MName(std::move(Name)), MDesc(std::move(Description)), SevLvl(Level) {}
   ~Metric();
-  std::int64_t operator++() {
+  int64_t operator++() {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
-  std::int64_t operator++(int) {
+  int64_t operator++(int) {
     Counter.store(Counter.load(MemoryOrder) + 1, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
-  std::int64_t operator=(std::int64_t const &NewValue) {
+  int64_t operator=(int64_t const &NewValue) {
     Counter.store(NewValue, MemoryOrder);
     return Counter.load(MemoryOrder);
   };
-  std::int64_t operator+=(std::int64_t AddValue) {
+  int64_t operator+=(int64_t AddValue) {
     Counter.store(AddValue + Counter.load(MemoryOrder), MemoryOrder);
     return Counter.load(MemoryOrder);
   };
 
-protected:
-  friend Registrar;
-  void setDeRegParams(std::string FullName, ProcessorInterface *Ptr) {
-    DeRegName = std::move(FullName);
-    DeRegPtr = Ptr;
-  };
   std::string getName() const { return MName; }
   std::string getDescription() const { return MDesc; }
   Severity getSeverity() const { return SevLvl; }
   CounterType *getCounterPtr() { return &Counter; }
 
-  std::string MName;
-  std::string DeRegName;
-  std::string MDesc;
-  Severity SevLvl;
-  CounterType Counter{0};
-  ProcessorInterface *DeRegPtr{nullptr};
+  void setDeregistrationDetails(
+      std::string const &NameWithPrefix,
+      std::shared_ptr<Reporter> &ReporterResponsibleForMetric) {
+    FullName = NameWithPrefix;
+    ReporterForMetric = ReporterResponsibleForMetric;
+  }
 
 private:
+  // Details used for deregistration, keeping these rather than the Registrar
+  // means that the Registrar does not need to be kept alive until the metric is
+  // deregistered
+  std::string FullName;
+  std::shared_ptr<Reporter> ReporterForMetric;
+
   std::memory_order const MemoryOrder{std::memory_order::memory_order_relaxed};
+  std::string const MName;
+  std::string const MDesc;
+  Severity const SevLvl;
+  CounterType Counter{0};
 };
 } // namespace Metrics

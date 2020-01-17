@@ -94,11 +94,13 @@ set(kafka_to_nexus_SRC
         StreamMaster.cpp
         CommandParser.cpp
         ExtensibleDataset.cpp
-    Metrics/Registrar.cpp
-    Metrics/Type.cpp
-    Metrics/Processor.cpp
-    Metrics/CarbonInterface.cpp
-    Metrics/CarbonConnection.cpp)
+        Metrics/Reporter.cpp
+        Metrics/Registrar.cpp
+        Metrics/Metric.cpp
+        Metrics/CarbonInterface.cpp
+        Metrics/CarbonConnection.cpp
+        Metrics/LogSink.cpp
+        Metrics/CarbonSink.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -142,9 +144,15 @@ set(kafka_to_nexus_INC
         KafkaW/ConfigureKafka.h
         CommandParser.h
         ExtensibleDataset.h
-    Metrics/Registrar.h Metrics/Type.h Metrics/Processor.h
-    Metrics/CarbonInterface.h
-    Metrics/CarbonConnection.h)
+        Metrics/Registrar.h
+        Metrics/Metric.h
+        Metrics/CarbonInterface.h
+        Metrics/CarbonConnection.h
+        Metrics/Sink.h
+        Metrics/LogSink.h
+        Metrics/CarbonSink.h
+        Metrics/InternalMetric.h
+        Metrics/Reporter.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

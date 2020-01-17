@@ -98,7 +98,7 @@ void CarbonTestServer::HandleRead(std::error_code ec, std::size_t bytesReceived,
                                    cSock));
 }
 
-void CarbonTestServer::RemoveSocket(sock_ptr cSock) {
+void CarbonTestServer::RemoveSocket(sock_ptr const &cSock) {
   for (size_t i = 0; i < existingSockets.size(); i++) {
     if (existingSockets[i] == cSock) {
       existingSockets.erase(existingSockets.begin() + i);
