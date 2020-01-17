@@ -22,12 +22,12 @@ class Reporter {
 public:
   Reporter(std::unique_ptr<Sink> MetricSink, std::chrono::milliseconds Interval)
       : MetricSink(std::move(MetricSink)), IO(), Period(Interval),
-        AsioTimer(IO, Period), Running(false) {
+        AsioTimer(IO, Period) {
     start();
   };
 
   virtual ~Reporter();
-  void reportMetrics();
+  void reportMetrics(std::error_code const &Error);
   virtual bool addMetric(Metric &NewMetric, std::string const &NewName);
   virtual bool tryRemoveMetric(std::string const &MetricName);
   LogTo getSinkType();
@@ -44,6 +44,5 @@ private:
   std::chrono::milliseconds Period;
   asio::steady_timer AsioTimer;
   std::thread ReporterThread;
-  std::atomic_bool Running;
 };
 }

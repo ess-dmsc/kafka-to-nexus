@@ -3,8 +3,8 @@
 
 namespace Metrics {
 
-void Reporter::reportMetrics() {
-  if (!MetricSink->isHealthy() || !Running) {
+void Reporter::reportMetrics(std::error_code const &Error) {
+  if (!MetricSink->isHealthy() || (Error.value() == asio::error::operation_aborted)) {
     // skip this batch of reports and give Sink time to recover
     return;
   }
@@ -14,7 +14,7 @@ void Reporter::reportMetrics() {
   }
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
   AsioTimer.async_wait(
-      [this](std::error_code const & /*error*/) { this->reportMetrics(); });
+      [this](std::error_code const &Error) { this->reportMetrics(Error); });
 }
 
 bool Reporter::addMetric(Metric &NewMetric, std::string const &NewName) {
@@ -32,16 +32,12 @@ bool Reporter::tryRemoveMetric(std::string const &MetricName) {
 LogTo Reporter::getSinkType() { return MetricSink->getType(); };
 
 void Reporter::start() {
-  Running = true;
   AsioTimer.async_wait(
-      [this](std::error_code const & /*error*/) { this->reportMetrics(); });
+      [this](std::error_code const &Error) { this->reportMetrics(Error); });
   ReporterThread = std::thread(&Reporter::run, this);
 }
 
 void Reporter::waitForStop() {
-  // Running flag is required in addition to calling timer::cancel() and
-  // io_context::stop to reliably break the timer execution train
-  Running = false;
   AsioTimer.cancel();
   IO.stop();
   ReporterThread.join();
