@@ -2,7 +2,6 @@
   "cmd": "FileWriter_new",
   "broker": "localhost:9092",
   "job_id": "253ce528-00cb-45c7-966c-131742a24834",
-  "use_hdf_swmr": false,
   "start_time": STARTTIME,
   "file_attributes": {
     "file_name": "output_file_lr.nxs"

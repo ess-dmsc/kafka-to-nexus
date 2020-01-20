@@ -24,7 +24,6 @@ public:
   "broker": "somehost:1234",
   "start_time": 123456789000,
   "stop_time": 123456790000,
-  "abort_on_uninitialised_stream": true,
   "service_id": "filewriter1",
   "nexus_structure": { }
 })"""};
