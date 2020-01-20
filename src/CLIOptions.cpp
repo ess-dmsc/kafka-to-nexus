@@ -200,7 +200,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       App, "-S,--kafka-config",
       MainOptions.StreamerConfiguration.BrokerSettings.KafkaConfiguration,
       "LibRDKafka options");
-  App.add_option("--use_hdf_swmr", MainOptions.UseHdfSwmr,
+  App.add_option("--use-hdf-swmr", MainOptions.UseHdfSwmr,
                  "Write in HDF's Single Writer Multiple Reader (SWMR) mode",
                  true);
   App.add_option("--abort_on_uninitialised_stream",
