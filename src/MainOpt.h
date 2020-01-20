@@ -20,7 +20,6 @@
 
 // POD
 struct MainOpt {
-  bool gtest = false;
   bool use_signal_handler = true;
 
   /// \brief Each running filewriter is identifiable by an id.
