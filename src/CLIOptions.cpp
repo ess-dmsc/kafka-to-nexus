@@ -203,7 +203,7 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_option("--use-hdf-swmr", MainOptions.UseHdfSwmr,
                  "Write in HDF's Single Writer Multiple Reader (SWMR) mode",
                  true);
-  App.add_option("--abort_on_uninitialised_stream",
+  App.add_option("--abort-on-uninitialised-stream",
                  MainOptions.AbortOnUninitialisedStream,
                  "Writer aborts the whole job if one or more streams are "
                  "misconfigured and fail to start",
