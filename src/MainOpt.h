@@ -22,6 +22,13 @@
 struct MainOpt {
   bool use_signal_handler = true;
 
+  /// Write in HDF's Single Writer Multiple Reader (SWMR) mode
+  bool UseHdfSwmr = true;
+
+  /// If true the filewriter aborts the whole job if one or more streams are
+  /// misconfigured and fail to start
+  bool AbortOnUninitialisedStream = false;
+
   /// \brief Each running filewriter is identifiable by an id.
   ///
   /// This `service_id` is announced in the status updates.

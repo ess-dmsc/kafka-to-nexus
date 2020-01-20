@@ -37,9 +37,6 @@ extractStartInformation(const nlohmann::json &JSONCommand,
   Result.StartTime = extractTime("start_time", JSONCommand, DefaultStartTime);
   Result.StopTime =
       extractTime("stop_time", JSONCommand, std::chrono::milliseconds::zero());
-  Result.UseSwmr = getOptionalValue<bool>("use_hdf_swmr", JSONCommand, true);
-  Result.AbortOnStreamFailure = getOptionalValue<bool>(
-      "abort_on_uninitialised_stream", JSONCommand, false);
   Result.ServiceID =
       getOptionalValue<std::string>("service_id", JSONCommand, "");
 

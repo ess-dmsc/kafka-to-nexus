@@ -24,7 +24,6 @@ public:
   "broker": "somehost:1234",
   "start_time": 123456789000,
   "stop_time": 123456790000,
-  "use_hdf_swmr": false,
   "abort_on_uninitialised_stream": true,
   "service_id": "filewriter1",
   "nexus_structure": { }
@@ -44,10 +43,6 @@ TEST_F(CommandParserHappyStartTests, IfFilenamePresentThenExtractedCorrectly) {
   ASSERT_EQ("a-dummy-name-01.h5", StartInfo.Filename);
 }
 
-TEST_F(CommandParserHappyStartTests, IfSwmrPresentThenExtractedCorrectly) {
-  ASSERT_FALSE(StartInfo.UseSwmr);
-}
-
 TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
   ASSERT_EQ("somehost:1234", StartInfo.BrokerInfo.HostPort);
   ASSERT_EQ(1234u, StartInfo.BrokerInfo.Port);
@@ -56,10 +51,6 @@ TEST_F(CommandParserHappyStartTests, IfBrokerPresentThenExtractedCorrectly) {
 TEST_F(CommandParserHappyStartTests,
        IfNexusStructurePresentThenExtractedCorrectly) {
   ASSERT_EQ("{}", StartInfo.NexusStructure);
-}
-
-TEST_F(CommandParserHappyStartTests, IfAbortPresentThenExtractedCorrectly) {
-  ASSERT_TRUE(StartInfo.AbortOnStreamFailure);
 }
 
 TEST_F(CommandParserHappyStartTests, IfStartPresentThenExtractedCorrectly) {
