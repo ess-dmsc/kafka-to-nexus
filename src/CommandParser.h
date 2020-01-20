@@ -26,8 +26,6 @@ struct StartCommandInfo {
   std::string Filename;
   std::string NexusStructure;
   std::string ServiceID;
-  bool UseSwmr;
-  bool AbortOnStreamFailure;
   uri::URI BrokerInfo{"localhost:9092"};
   std::chrono::milliseconds StartTime{0};
   std::chrono::milliseconds StopTime{0};

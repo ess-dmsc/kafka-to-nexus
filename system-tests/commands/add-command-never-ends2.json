@@ -3,7 +3,6 @@
   "broker": "localhost:9092",
   "job_id" : "neverends",
   "service_id": "filewriter2",
-  "use_hdf_swmr": false,
   "file_attributes": {
     "file_name": "output_file_ignores_stop_2.nxs"
   },
