@@ -25,6 +25,12 @@ set(UnitTests_SRC
         StreamMasterTests.cpp
         CommandParserTests.cpp
         ExtensibleDatasetTests.cpp
+        Metrics/MetricsRegistrarTest.cpp
+        Metrics/MetricTest.cpp
+        Metrics/CarbonConnectionTest.cpp
+        Metrics/CarbonTestServer.cpp
+        Metrics/MetricsReporterTest.cpp
+        Metrics/LogSinkTest.cpp
         MasterTests.cpp
         StreamerTests.cpp
         $<TARGET_OBJECTS:writer_module>
@@ -36,7 +42,10 @@ set(UnitTests_INC
         helpers/HDFFileTestHelper.h
         helpers/KafkaWMocks.h
         helpers/FakeStreamMaster.h
-    helpers/SetExtractorModule.h)
+        Metrics/CarbonTestServer.h
+        Metrics/MockSink.h
+        Metrics/MockReporter.h
+        helpers/SetExtractorModule.h)
 
 add_executable(UnitTests
         ${UnitTests_SRC}
