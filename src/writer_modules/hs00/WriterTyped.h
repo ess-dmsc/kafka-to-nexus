@@ -22,7 +22,7 @@
 #include <type_traits>
 #include <vector>
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 #include "hs00_event_histogram_generated.h"
@@ -302,7 +302,7 @@ template <typename DataType> Array getMatchingFlatbufferType(DataType *);
 template <typename DataType, typename EdgeType, typename ErrorType>
 void WriterTyped<DataType, EdgeType, ErrorType>::write(
     FlatbufferMessage const &Message, bool DoFlushEachWrite) {
-  using Module::WriterException;
+  using WriterModule::WriterException;
 
   if (!Dataset.is_valid()) {
     throw WriterException("Invalid dataset");
@@ -496,4 +496,4 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
   Logger->trace("hs00 -------------------------------   DONE");
 }
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule

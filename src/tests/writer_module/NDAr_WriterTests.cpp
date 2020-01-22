@@ -19,7 +19,7 @@
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/NDAr/NDAr_Writer.h"
 
-class ADWriterStandIn : public Module::NDAr::NDAr_Writer {
+class ADWriterStandIn : public WriterModule::NDAr::NDAr_Writer {
 public:
   using NDAr_Writer::ArrayShape;
   using NDAr_Writer::ChunkSize;
@@ -87,7 +87,7 @@ TEST_F(AreaDetectorWriter, WriterInitTest) {
   EXPECT_TRUE(FoundAttribute);
 }
 
-using Module::InitResult;
+using WriterModule::InitResult;
 
 TEST_F(AreaDetectorWriter, WriterAttributeExists) {
   auto ClassAttribute = UsedGroup.attributes.create<std::string>("NX_class");
@@ -335,7 +335,7 @@ TEST_F(AreaDetectorWriter, WriterTimeStampTest) {
   Writer.init_hdf(UsedGroup, "{}");
   Writer.reopen(UsedGroup);
   auto tempNDArr = FB_Tables::GetNDArray(RawData.get());
-  auto compTs = Module::NDAr::NDAr_Writer::epicsTimeToNsec(
+  auto compTs = WriterModule::NDAr::NDAr_Writer::epicsTimeToNsec(
       tempNDArr->epicsTS()->secPastEpoch(), tempNDArr->epicsTS()->nsec());
   Writer.write(Message);
   std::uint64_t storedTs{11111};
@@ -481,7 +481,7 @@ bool WriteTest(hdf5::node::Group &UsedGroup, FB_Tables::DType FBType) {
   Writer.reopen(UsedGroup);
   try {
     Writer.write(Message);
-  } catch (Module::WriterException &Exception) {
+  } catch (WriterModule::WriterException &Exception) {
     return false;
   }
   std::vector<Type> dataFromFile(testData.size());

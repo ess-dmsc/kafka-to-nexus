@@ -15,54 +15,54 @@
 
 using namespace FileWriter;
 
-using ModuleFactory = Module::Registry::ModuleFactory;
+using ModuleFactory = WriterModule::Registry::ModuleFactory;
 
 class WriterRegistrationTest : public ::testing::Test {
 public:
   void SetUp() override {
-    Module::Registry::clear();
+    WriterModule::Registry::clear();
   };
 };
 
 TEST_F(WriterRegistrationTest, SimpleRegistration) {
   std::string TestKey("temp");
-  EXPECT_EQ(Module::Registry::getFactoryIdsAndNames().size(), 0u);
-  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
-  EXPECT_EQ(Module::Registry::getFactoryIdsAndNames().size(), 1u);
-  EXPECT_NO_THROW(Module::Registry::find(TestKey));
+  EXPECT_EQ(WriterModule::Registry::getFactoryIdsAndNames().size(), 0u);
+  { WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
+  EXPECT_EQ(WriterModule::Registry::getFactoryIdsAndNames().size(), 1u);
+  EXPECT_NO_THROW(WriterModule::Registry::find(TestKey));
 }
 
 TEST_F(WriterRegistrationTest, SameKeyRegistration) {
   std::string TestKey("temp");
-  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
+  { WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
   EXPECT_THROW(
-      Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
+      WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
       std::runtime_error);
 }
 
 TEST_F(WriterRegistrationTest, KeyTooShort) {
   std::string TestKey("tem");
   EXPECT_THROW(
-      Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
+      WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
       std::runtime_error);
 }
 
 TEST_F(WriterRegistrationTest, KeyTooLong) {
   std::string TestKey("tempp");
   EXPECT_THROW(
-      Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
+      WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
       std::runtime_error);
 }
 
 TEST_F(WriterRegistrationTest, StrKeyFound) {
   std::string TestKey("t3mp");
-  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
-  EXPECT_NE(Module::Registry::find(TestKey), nullptr);
+  { WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
+  EXPECT_NE(WriterModule::Registry::find(TestKey), nullptr);
 }
 
 TEST_F(WriterRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
-  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
+  { WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
   std::string FailKey("trump");
-  EXPECT_THROW(Module::Registry::find(FailKey), std::out_of_range);
+  EXPECT_THROW(WriterModule::Registry::find(FailKey), std::out_of_range);
 }

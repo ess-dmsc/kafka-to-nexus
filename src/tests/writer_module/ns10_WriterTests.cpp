@@ -21,7 +21,7 @@
 #include "WriterRegistrar.h"
 #include <ns10_cache_entry_generated.h>
 
-using Module::ns10::ns10_Writer;
+using WriterModule::ns10::ns10_Writer;
 
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createFlatbufferMessageFromJson(nlohmann::json const &Json) {
@@ -66,7 +66,7 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 
 void registerSchema() {
   try {
-    Module::Registry::Registrar<ns10_Writer> RegisterIt(
+    WriterModule::Registry::Registrar<ns10_Writer> RegisterIt(
         "ns10", "another_test_name");
   } catch (...) {
   }
@@ -108,9 +108,9 @@ public:
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
-              Module::InitResult::OK);
+              WriterModule::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
-              Module::InitResult::OK);
+              WriterModule::InitResult::OK);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {

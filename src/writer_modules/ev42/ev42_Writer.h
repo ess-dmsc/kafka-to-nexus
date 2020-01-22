@@ -12,17 +12,17 @@
 #include "WriterModuleBase.h"
 #include "NeXusDataset.h"
 
-namespace Module {
+namespace WriterModule {
 namespace ev42 {
 
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
-class ev42_Writer : public Module::WriterBase {
+class ev42_Writer : public WriterModule::Base {
 public:
   void parse_config(std::string const &ConfigurationStream) override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
-  Module::InitResult reopen(hdf5::node::Group &HDFGroup) override;
+  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
   void write(FlatbufferMessage const &Message) override;
 
   NeXusDataset::EventTimeOffset EventTimeOffset;
@@ -52,4 +52,4 @@ private:
   void writeAdcPulseDataFromMessageToFile(FlatbufferMessage const &Message);
 };
 } // namespace ev42
-} // namespace Module
+} // namespace WriterModule

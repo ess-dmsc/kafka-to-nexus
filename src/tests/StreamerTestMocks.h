@@ -124,11 +124,11 @@ public:
   }
 };
 
-class WriterModuleStandIn : public Module::WriterBase {
+class WriterModuleStandIn : public WriterModule::Base {
 public:
   MAKE_MOCK1(parse_config, void(std::string const &), override);
-  MAKE_MOCK2(init_hdf, Module::InitResult(hdf5::node::Group &, std::string const &),
+  MAKE_MOCK2(init_hdf, WriterModule::InitResult(hdf5::node::Group &, std::string const &),
              override);
-  MAKE_MOCK1(reopen, Module::InitResult(hdf5::node::Group &), override);
+  MAKE_MOCK1(reopen, WriterModule::InitResult(hdf5::node::Group &), override);
   MAKE_MOCK1(write, void(FileWriter::FlatbufferMessage const &), override);
 };

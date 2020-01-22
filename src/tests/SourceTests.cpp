@@ -22,7 +22,7 @@ namespace FlatbufferMetadata {
 } // namespace FlatbufferMetadata
 
 using FileWriter::FlatbufferMessage;
-using Module::WriterBase;
+using WriterModule::Base;
 using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 
@@ -92,7 +92,7 @@ TEST_F(SourceTests, ProcessMessageReturnsErrorIfWriterModuleReturnsError) {
   std::string ModuleName("ev42");
   auto WriterModule = std::make_unique<WriterModuleMock>();
   REQUIRE_CALL(*WriterModule, write(ANY(FlatbufferMessage const &)))
-      .THROW(Module::WriterException("IO Error"));
+      .THROW(WriterModule::WriterException("IO Error"));
   Source TestSource(SourceName, ModuleName, TopicName, std::move(WriterModule));
   auto MessageBuffer = createEventMessageBuffer();
   FileWriter::FlatbufferMessage Message(

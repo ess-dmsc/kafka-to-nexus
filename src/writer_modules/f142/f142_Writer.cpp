@@ -15,7 +15,7 @@
 #include <f142_logdata_generated.h>
 #include "WriterRegistrar.h"
 
-namespace Module {
+namespace WriterModule {
 namespace f142 {
 
 using nlohmann::json;
@@ -118,7 +118,7 @@ void f142_Writer::parse_config(std::string const &ConfigurationStream) {
   }
 }
 
-/// \brief Implement the HDFWriterModule interface, forward to the CREATE case
+/// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
 InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
@@ -153,7 +153,7 @@ InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
   return InitResult::OK;
 }
 
-/// \brief Implement the HDFWriterModule interface, forward to the OPEN case of
+/// \brief Implement the writer module interface, forward to the OPEN case of
 /// `init_hdf`.
 InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
@@ -248,13 +248,13 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     appendData<const double>(Values, DataPtr, NrOfElements);
     break;
   default:
-    throw Module::WriterException(
+    throw WriterModule::WriterException(
         "Unknown data type in f142 flatbuffer.");
   }
 }
 /// Register the writer module.
-static Module::Registry::Registrar<f142_Writer>
+static WriterModule::Registry::Registrar<f142_Writer>
     RegisterWriter("f142", "general_epics_writer");
 
 } // namespace f142
-} // namespace Module
+} // namespace WriterModule

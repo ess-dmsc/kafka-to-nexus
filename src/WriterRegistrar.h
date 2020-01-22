@@ -9,17 +9,17 @@
 
 /// \brief Keeps track of the registered FlatbufferReader instances.
 ///
-/// Writer modules register themselves via instantiation of the `Registrar`.
-/// HDFWriterModuleRegistry.
+/// Writer modules register themselves via instantiation of a
+/// `WriterModule::Registry::Registrar`.
 
 #pragma once
 #include <map>
 #include <string>
 #include "WriterModuleBase.h"
 
-namespace Module {
+namespace WriterModule {
 namespace Registry {
-using ModuleFactory = std::function<std::unique_ptr<Module::WriterBase>()>;
+using ModuleFactory = std::function<std::unique_ptr<WriterModule::Base>()>;
 using IdNameHash = size_t;
 
 IdNameHash getWriterModuleHash(std::string const &FlatbufferID, std::string const &ModuleName);
@@ -67,4 +67,4 @@ public:
   };
 };
 } //namespace Registry
-} // namespace Module
+} // namespace WriterModule

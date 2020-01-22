@@ -17,7 +17,7 @@
 #include <string>
 #include "FlatbufferMessage.h"
 
-namespace Module {
+namespace WriterModule {
 
 
 class FlatbufferMessage;
@@ -26,16 +26,16 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// \brief Writes a given flatbuffer to HDF.
 ///
 /// Base class for the writer modules which are responsible for actually
-/// writing a flatbuffer message to the HDF file.  A HDFWriterModule is
+/// writing a flatbuffer message to the HDF file.  A writer module is
 /// instantiated for each 'stream' which is configured in a file writer json
-/// command.  The HDFWriterModule class registers itself via a string id which
+/// command.  The writer module class registers itself via a string id which
 /// must be unique.  This id is used in the file writer json command.  The id
 /// can be arbitrary but should as a convention contain the flatbuffer schema
 /// id (`FBID`) like `FBID_<writer-module-name>`.
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
-class WriterBase {
+class Base {
 public:
-  virtual ~WriterBase() = default;
+  virtual ~Base() = default;
 
   /// \brief Parses the configuration of a stream.
   ///
@@ -46,14 +46,14 @@ public:
   /// \brief Initialise the HDF file.
   ///
   /// Called before any data has arrived with the json configuration of this
-  /// stream to allow the `HDFWriterModule` to create any structures in the HDF
+  /// stream to allow the writer module to create any structures in the HDF
   /// file.
   ///
-  /// \param HDFGroup The \p HDFGroup into which this HDFWriterModule
+  /// \param HDFGroup The \p HDFGroup into which this module
   /// should write its data.
   /// \param HDFAttributes Additional attributes as defined in the Nexus
-  /// structure which the HDFWriterModule should write to the file. Because the
-  /// HDFWriterModule is free to create the structure and data sets according to
+  /// structure which the module should write to the file. Because the
+  /// writer module is free to create the structure and data sets according to
   /// its needs, it must also take the responsibility to write these
   /// attributes.
   /// \param HDFAttributes Json string of the attributes associated with the
@@ -63,10 +63,10 @@ public:
   virtual InitResult init_hdf(hdf5::node::Group &HDFGroup,
                               std::string const &HDFAttributes) = 0;
 
-  /// \brief Reopen the HDF objects which are used by this HDFWriterModule.
+  /// \brief Reopen the HDF objects which are used by this writer module.
   ///
   /// \param InitParameters Contains most importantly the \p HDFGroup into
-  /// which this HDFWriterModule should write its data.
+  /// which this module should write its data.
   ///
   /// \return The result.
   virtual InitResult reopen(hdf5::node::Group &HDFGroup) = 0;
@@ -83,6 +83,6 @@ public:
       : std::runtime_error(ErrorMessage) {}
 };
 
-using ptr = std::unique_ptr<WriterBase>;
+using ptr = std::unique_ptr<Base>;
 
-} // namespace Module
+} // namespace WriterModule

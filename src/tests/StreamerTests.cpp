@@ -203,7 +203,7 @@ protected:
     BrokerSettings.Address = "127.0.0.1:1";
     Options.BrokerSettings.OffsetsForTimesTimeoutMS = 10;
     Options.BrokerSettings.MetadataTimeoutMS = 10;
-    Module::ptr Writer(new WriterModuleStandIn());
+    WriterModule::ptr Writer(new WriterModuleStandIn());
     FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
                                   std::move(Writer));
     DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);
@@ -490,7 +490,7 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
   TestStreamer->setStartTime(std::chrono::milliseconds{1});
   // Message timestamp returned is higher than this
   TestStreamer->setStopTime(std::chrono::milliseconds{2});
-  Module::ptr Writer(new WriterModuleStandIn());
+  WriterModule::ptr Writer(new WriterModuleStandIn());
 
   FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
                                 std::move(Writer));
@@ -526,7 +526,7 @@ TEST(FlatBufferValidationTest,
   std::string SourceName{"SomeRandomSourceName"};
   std::string TopicName{"SomeRandomTopicName"};
   setExtractorModule<StreamerMessageFailsValidationTestDummyReader>(SchemaID);
-  Module::ptr Writer(new WriterModuleStandIn());
+  WriterModule::ptr Writer(new WriterModuleStandIn());
   FileWriter::Source TestSource(SourceName, SchemaID, TopicName,
                                 std::move(Writer));
   DemuxPtr Demuxer = std::make_shared<DemuxerStandIn>(SourceName);

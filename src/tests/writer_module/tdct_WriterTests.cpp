@@ -32,7 +32,7 @@ static std::unique_ptr<std::int8_t[]> GenerateFlatbufferData(size_t &DataSize) {
 }
 
 using FBMsg = FileWriter::FlatbufferMessage;
-using namespace Module;
+using namespace WriterModule;
 
 class ChopperTimeStampWriter : public ::testing::Test {
 public:
@@ -51,7 +51,7 @@ public:
   hdf5::node::Group UsedGroup;
 };
 
-using Module::InitResult;
+using WriterModule::InitResult;
 
 TEST_F(ChopperTimeStampWriter, InitFile) {
   {

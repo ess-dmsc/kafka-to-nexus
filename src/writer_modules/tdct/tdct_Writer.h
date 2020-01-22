@@ -18,12 +18,12 @@
 #include "WriterModuleBase.h"
 #include "NeXusDataset.h"
 
-namespace Module {
+namespace WriterModule {
 namespace tdct {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 /// See parent class for documentation.
-  class tdct_Writer : public Module::WriterBase {
+  class tdct_Writer : public WriterModule::Base {
 public:
   tdct_Writer() = default;
   ~tdct_Writer() override = default;
@@ -44,4 +44,4 @@ protected:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace tdct
-} // namespace Module
+} // namespace WriterModule

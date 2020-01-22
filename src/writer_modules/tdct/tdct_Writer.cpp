@@ -19,11 +19,11 @@
 #include <tdct_timestamps_generated.h>
 #include "WriterRegistrar.h"
 
-namespace Module {
+namespace WriterModule {
 namespace tdct {
 
 // Register the file writing part of this module
-  static Module::Registry::Registrar<tdct_Writer>
+  static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "chopper_tdc_writer");
 
 void tdct_Writer::parse_config(std::string const &) {
@@ -31,7 +31,7 @@ void tdct_Writer::parse_config(std::string const &) {
                 "ChopperTimeStampWriter class.");
 }
 
-Module::InitResult
+WriterModule::InitResult
 tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
@@ -58,12 +58,12 @@ tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise chopper time stamp tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return Module::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return Module::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
-Module::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
@@ -75,9 +75,9 @@ Module::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return Module::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return Module::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
 void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
@@ -97,4 +97,4 @@ void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
 }
 
 } // namespace tdct
-} // namespace Module
+} // namespace WriterModule

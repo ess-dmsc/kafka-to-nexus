@@ -11,7 +11,7 @@
 #include "Exceptions.h"
 #include "hs00_Writer.h"
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 Slice Slice::fromOffsetsSizes(std::vector<uint32_t> const &SliceOffsets,
@@ -46,4 +46,4 @@ bool Slice::doesOverlap(Slice const &Other) const {
   return OverlappingDims == Offsets.size();
 }
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule

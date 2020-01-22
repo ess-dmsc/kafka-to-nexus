@@ -13,14 +13,14 @@
 #include "WriterModuleBase.h"
 #include "WriterUntyped.h"
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 template <typename T> using uptr = std::unique_ptr<T>;
 
-class hs00_Writer : public Module::WriterBase {
+class hs00_Writer : public WriterModule::Base {
 public:
-  static Module::ptr create();
+  static WriterModule::ptr create();
   void parse_config(std::string const &ConfigurationStream) override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
@@ -37,4 +37,4 @@ private:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule

@@ -18,10 +18,10 @@
 #include "WriterModuleBase.h"
 #include "NeXusDataset.h"
 
-namespace Module {
+namespace WriterModule {
 namespace ns10 {
 
-class ns10_Writer : public Module::WriterBase {
+class ns10_Writer : public WriterModule::Base {
 public:
   ns10_Writer() = default;
   ~ns10_Writer() override = default;
@@ -50,4 +50,4 @@ private:
 };
 
 } // namespace ns10
-} // namespace Module
+} // namespace WriterModule

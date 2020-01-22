@@ -14,7 +14,7 @@ namespace TemplateWriter {
 
 // Creates a factory function used to instantiate zero or more WriterClass, i.e.
 // one for every data source which produces data with the file id "test".
-static Module::Registry::Registrar<WriterClass>
+static WriterModule::Registry::Registrar<WriterClass>
     RegisterWriter("test", "some_name");
 
 } // namespace TemplateWriter

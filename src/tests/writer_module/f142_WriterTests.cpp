@@ -24,7 +24,7 @@
 
 using nlohmann::json;
 
-using namespace Module::f142;
+using namespace WriterModule::f142;
 
 class f142Init : public ::testing::Test {
 public:
@@ -61,12 +61,12 @@ TEST_F(f142Init, BasicDefaultInit) {
 TEST_F(f142Init, ReOpenSuccess) {
   f142_Writer TestWriter;
   TestWriter.init_hdf(RootGroup, "");
-  EXPECT_EQ(TestWriter.reopen(RootGroup), Module::InitResult::OK);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::OK);
 }
 
 TEST_F(f142Init, ReOpenFailure) {
   f142_Writer TestWriter;
-  EXPECT_EQ(TestWriter.reopen(RootGroup), Module::InitResult::ERROR);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::ERROR);
 }
 
 TEST_F(f142Init, CheckInitDataType) {

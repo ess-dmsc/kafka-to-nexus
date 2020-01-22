@@ -21,6 +21,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string>
+#include "WriterRegistrar.h"
 
 // These should only be visible in this translation unit
 static std::atomic_bool GotSignal{false};
@@ -69,10 +70,10 @@ int main(int argc, char **argv) {
          FileWriter::FlatbufferReaderRegistry::getReaders()) {
       fmt::print("---- {}\n", ReaderPair.first);
     }
-    fmt::print("\n--Identifiers of HDFWriterModule factories\n");
+    fmt::print("\n--Identifiers of writer module factories\n");
     for (auto &WriterPair :
-         Module::getFactoriesFromHash()) {
-      fmt::print("---- {}\n", WriterPair.); // We want the module name here
+         WriterModule::Registry::getFactoryIdsAndNames()) {
+      fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
     fmt::print("\nDone, exiting\n");
     return 0;

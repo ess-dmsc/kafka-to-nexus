@@ -12,7 +12,7 @@
 #include "WriterTyped.h"
 #include "logger.h"
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 WriterUntyped::ptr WriterUntyped::createFromJson(json const &Json) {
@@ -116,4 +116,4 @@ WriterUntyped::createFromHDFWithDataTypeAndEdgeType(hdf5::node::Group &Group,
                   Json.at("error_type").get<std::string>()));
 }
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule

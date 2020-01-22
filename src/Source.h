@@ -25,7 +25,7 @@ namespace FileWriter {
 class Source final {
 public:
   Source(std::string Name, std::string ID, std::string Topic,
-         Module::ptr Writer);
+         WriterModule::ptr Writer);
   Source(Source &&) = default;
   ~Source() = default;
   std::string const &topic() const;
@@ -39,7 +39,7 @@ private:
   std::string SchemaID;
   std::string TopicName;
   FlatbufferMessage::SrcHash Hash;
-  std::unique_ptr<Module::WriterBase> WriterModule;
+  std::unique_ptr<WriterModule::Base> WriterModule;
   SharedLogger Logger = getLogger();
 };
 

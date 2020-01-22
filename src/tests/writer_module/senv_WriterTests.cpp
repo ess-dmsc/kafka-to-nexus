@@ -56,11 +56,11 @@ public:
   hdf5::node::Group UsedGroup;
 };
 
-using Module::InitResult;
+using WriterModule::InitResult;
 
 TEST_F(FastSampleEnvironmentWriter, InitFile) {
   {
-    Module::senv::senv_Writer Writer;
+    WriterModule::senv::senv_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   }
   ASSERT_TRUE(RootGroup.has_group(NXLogGroup));
@@ -72,18 +72,18 @@ TEST_F(FastSampleEnvironmentWriter, InitFile) {
 }
 
 TEST_F(FastSampleEnvironmentWriter, ReopenFileFailure) {
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_FALSE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
 
 TEST_F(FastSampleEnvironmentWriter, InitFileFail) {
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
 }
 
 TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
 }
@@ -91,7 +91,7 @@ TEST_F(FastSampleEnvironmentWriter, ReopenFileSuccess) {
 TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
@@ -131,7 +131,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataOnce) {
 TEST_F(FastSampleEnvironmentWriter, WriteDataTwice) {
   size_t BufferSize;
   std::unique_ptr<std::int8_t[]> Buffer = GenerateFlatbufferData(BufferSize);
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
@@ -175,7 +175,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteNoElements) {
           const_cast<std::uint8_t *>(FbPointer->Values()->Data())) -
       1;
   *ValueLengthPtr = 0;
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(
@@ -200,7 +200,7 @@ TEST_F(FastSampleEnvironmentWriter, WriteDataWithNoTimestampsInFB) {
           const_cast<std::uint8_t *>(FbPointer->Timestamps()->Data())) -
       1;
   *TimestampsLengthPtr = 0;
-  Module::senv::senv_Writer Writer;
+  WriterModule::senv::senv_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(UsedGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(UsedGroup) == InitResult::OK);
   FileWriter::FlatbufferMessage TestMsg(

@@ -20,10 +20,10 @@
 #include "Msg.h"
 #include "NeXusDataset.h"
 
-namespace Module {
+namespace WriterModule {
 namespace senv {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
-using FileWriterBase = Module::WriterBase;
+using FileWriterBase = WriterModule::Base;
 
 std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
                                               double TimeDelta,
@@ -52,4 +52,4 @@ protected:
   SharedLogger Logger = spdlog::get("filewriterlogger");
 };
 } // namespace senv
-} // namespace Module
+} // namespace WriterModule
