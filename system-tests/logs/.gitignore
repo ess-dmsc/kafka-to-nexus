@@ -1,0 +1,2 @@
+# ignore system-test log files
+*.txt

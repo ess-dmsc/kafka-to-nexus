@@ -1,6 +1,7 @@
 /build*/
 /cmake-build-*/
 .idea/
+*__pycache__*
 *.user
 pipeline.gdsl
 *.yml~
