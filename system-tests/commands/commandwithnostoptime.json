@@ -2,7 +2,6 @@
   "cmd": "FileWriter_new",
   "broker": "localhost:9092",
   "job_id": "a8e31c99-8df9-4123-8060-2e009d84a0df",
-  "use_hdf_swmr": false,
   "file_attributes": {
     "file_name": "output_file_no_stop_time.nxs"
   },
