@@ -13,4 +13,4 @@ See [CONTRIBUTING.MD](CONTRIBUTING.MD) for more information on code standards et
 
 ### Reminder
 
-*Breaking changes should be documented in `breaking-changes.md`*
+*Changes should be documented in `changes.md`*
