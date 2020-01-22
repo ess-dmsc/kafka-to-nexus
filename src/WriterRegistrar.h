@@ -48,6 +48,8 @@ ModuleFactory const &find(std::string const &FlatbufferID);
 ModuleFactory const &find(std::string const &FlatbufferID, std::string const &ModuleName);
 
 ModuleFactory const &find(IdNameHash ModuleHash);
+  
+void clear();
 
 /// \brief  Registers the writer module at program start if instantiated in the
 /// namespace of each writer module with the writer module given as `Module`.

@@ -15,18 +15,13 @@
 #include <map>
 #include <memory>
 #include <string>
+#include "FlatbufferMessage.h"
 
 namespace Module {
 
 
 class FlatbufferMessage;
-
-namespace HDFWriterModule_detail {
-
-/// \brief Result type for the initialization of the writer module.
 enum class InitResult { ERROR = -1, OK = 0 };
-
-} // namespace HDFWriterModule_detail
 
 /// \brief Writes a given flatbuffer to HDF.
 ///
@@ -40,7 +35,6 @@ enum class InitResult { ERROR = -1, OK = 0 };
 /// Example: Please see `src/schemas/ev42/ev42_rw.cpp`.
 class WriterBase {
 public:
-  using InitResult = HDFWriterModule_detail::InitResult;
   virtual ~WriterBase() = default;
 
   /// \brief Parses the configuration of a stream.
@@ -80,7 +74,7 @@ public:
   /// \brief Process the message in some way, for example write to the HDF file.
   ///
   /// \param msg The message to process
-  virtual void write(FlatbufferMessage const &Message) = 0;
+  virtual void write(FileWriter::FlatbufferMessage const &Message) = 0;
 };
 
 class WriterException : public std::runtime_error {

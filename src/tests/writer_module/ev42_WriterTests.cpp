@@ -125,7 +125,7 @@ public:
   std::string const TestGroupName = "test_group";
 };
 
-using FileWriter::HDFWriterModule_detail::InitResult;
+using Module::InitResult;
 
 TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {

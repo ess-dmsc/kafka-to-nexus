@@ -18,9 +18,9 @@ namespace hs00 {
 
 template <typename T> using uptr = std::unique_ptr<T>;
 
-class hs00_Writer : public FileWriter::HDFWriterModule {
+class hs00_Writer : public Module::WriterBase {
 public:
-  static FileWriter::HDFWriterModule::ptr create();
+  static Module::ptr create();
   void parse_config(std::string const &ConfigurationStream) override;
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;

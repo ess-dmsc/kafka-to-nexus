@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
+#include "WriterRegistrar.h"
 
 using json = nlohmann::json;
 using Module::hs00::Dimension;
@@ -36,8 +37,8 @@ public:
   void SetUp() override {
     setExtractorModule<FlatbufferMetadata::hs00_Extractor>("hs00");
     try {
-      Module::Registrar<hs00_Writer> RegisterIt(
-          "hs00");
+      Module::Registry::Registrar<hs00_Writer> RegisterIt(
+          "hs00", "test_name");
     } catch (...) {
     }
   }
@@ -362,7 +363,7 @@ wrapBuilder(std::unique_ptr<flatbuffers::FlatBufferBuilder> const &Builder) {
       Builder->GetSize());
 }
 
-using FileWriter::HDFWriterModule_detail::InitResult;
+using Module::InitResult;
 
 TEST_F(EventHistogramWriter, WriterInitHDF) {
   auto File = createFile("Test.EventHistogramWriter.WriterInitHDF",

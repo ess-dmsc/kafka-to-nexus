@@ -17,6 +17,7 @@
 #include "Msg.h"
 #include "StreamMaster.h"
 #include "json.h"
+#include "WriterRegistrar.h"
 #include <algorithm>
 #include <chrono>
 
@@ -63,9 +64,9 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
 
 void setUpHdfStructure(StreamSettings const &StreamSettings,
                        std::unique_ptr<FileWriterTask> const &Task) {
-  HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+  Module::Registry::ModuleFactory ModuleFactory;
   try {
-    ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+    ModuleFactory = Module::Registry::find(StreamSettings.Module);
   } catch (std::exception const &E) {
     throw std::runtime_error(
         fmt::format("Error while getting '{}',  source: {}  what: {}",
@@ -182,10 +183,10 @@ void JobCreator::addStreamSourceToWriterModule(
 
   for (auto const &StreamSettings : StreamSettingsList) {
     Logger->trace("Add Source: {}", StreamSettings.Topic);
-    HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+    Module::Registry::ModuleFactory ModuleFactory;
 
     try {
-      ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      ModuleFactory = Module::Registry::find(StreamSettings.Module);
     } catch (std::exception const &E) {
       Logger->info("Module '{}' is not available, error {}",
                    StreamSettings.Module, E.what());
@@ -207,7 +208,7 @@ void JobCreator::addStreamSourceToWriterModule(
         auto StreamGroup = hdf5::node::get_group(
             RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
         auto Err = HDFWriterModule->reopen({StreamGroup});
-        if (Err != HDFWriterModule_detail::InitResult::OK) {
+        if (Err != Module::InitResult::OK) {
           Logger->error("can not reopen HDF file for stream {}",
                         StreamSettings.StreamHDFInfoObj.HDFParentName);
           continue;

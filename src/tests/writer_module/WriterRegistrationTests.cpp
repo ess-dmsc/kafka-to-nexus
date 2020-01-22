@@ -11,61 +11,58 @@
 #include "helpers/StubWriterModule.h"
 #include <WriterModuleBase.h>
 #include <gtest/gtest.h>
+#include "WriterRegistrar.h"
 
 using namespace FileWriter;
 
-using ModuleFactory = HDFWriterModuleRegistry::ModuleFactory;
+using ModuleFactory = Module::Registry::ModuleFactory;
 
 class WriterRegistrationTest : public ::testing::Test {
 public:
   void SetUp() override {
-    std::map<std::string, ModuleFactory> &WriterFactories =
-        HDFWriterModuleRegistry::getFactories();
-    WriterFactories.clear();
+    Module::Registry::clear();
   };
 };
 
 TEST_F(WriterRegistrationTest, SimpleRegistration) {
-  std::map<std::string, ModuleFactory> &Factories =
-      HDFWriterModuleRegistry::getFactories();
   std::string TestKey("temp");
-  EXPECT_EQ(Factories.size(), 0u);
-  { HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey); }
-  EXPECT_EQ(Factories.size(), 1u);
-  EXPECT_NE(Factories.find(TestKey), Factories.end());
+  EXPECT_EQ(Module::Registry::getFactoryIdsAndNames().size(), 0u);
+  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
+  EXPECT_EQ(Module::Registry::getFactoryIdsAndNames().size(), 1u);
+  EXPECT_NO_THROW(Module::Registry::find(TestKey));
 }
 
 TEST_F(WriterRegistrationTest, SameKeyRegistration) {
   std::string TestKey("temp");
-  { HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey); }
+  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
   EXPECT_THROW(
-      HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey),
+      Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
       std::runtime_error);
 }
 
 TEST_F(WriterRegistrationTest, KeyTooShort) {
   std::string TestKey("tem");
   EXPECT_THROW(
-      HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey),
+      Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
       std::runtime_error);
 }
 
 TEST_F(WriterRegistrationTest, KeyTooLong) {
   std::string TestKey("tempp");
   EXPECT_THROW(
-      HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey),
+      Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"),
       std::runtime_error);
 }
 
 TEST_F(WriterRegistrationTest, StrKeyFound) {
   std::string TestKey("t3mp");
-  { HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey); }
-  EXPECT_NE(HDFWriterModuleRegistry::find(TestKey), nullptr);
+  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
+  EXPECT_NE(Module::Registry::find(TestKey), nullptr);
 }
 
 TEST_F(WriterRegistrationTest, StrKeyNotFound) {
   std::string TestKey("t3mp");
-  { HDFWriterModuleRegistry::Registrar<StubWriterModule> RegisterIt(TestKey); }
+  { Module::Registry::Registrar<StubWriterModule> RegisterIt(TestKey, "some_name"); }
   std::string FailKey("trump");
-  EXPECT_THROW(HDFWriterModuleRegistry::find(FailKey), std::out_of_range);
+  EXPECT_THROW(Module::Registry::find(FailKey), std::out_of_range);
 }

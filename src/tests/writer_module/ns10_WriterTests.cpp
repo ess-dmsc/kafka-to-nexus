@@ -18,6 +18,7 @@
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "writer_modules/ns10/ns10_Writer.h"
+#include "WriterRegistrar.h"
 #include <ns10_cache_entry_generated.h>
 
 using Module::ns10::ns10_Writer;
@@ -65,8 +66,8 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 
 void registerSchema() {
   try {
-    Module::Registrar<ns10_Writer> RegisterIt(
-        "ns10");
+    Module::Registry::Registrar<ns10_Writer> RegisterIt(
+        "ns10", "another_test_name");
   } catch (...) {
   }
 }
@@ -107,9 +108,9 @@ public:
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
-              FileWriter::HDFWriterModule_detail::InitResult::OK);
+              Module::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
-              FileWriter::HDFWriterModule_detail::InitResult::OK);
+              Module::InitResult::OK);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {

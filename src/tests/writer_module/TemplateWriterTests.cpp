@@ -14,8 +14,8 @@ TEST(TemplateTests, WriterReturnValues) {
   TemplateWriter::WriterClass SomeWriter;
   hdf5::node::Group SomeGroup;
   EXPECT_TRUE(SomeWriter.init_hdf(SomeGroup, "{}") ==
-              FileWriter::HDFWriterModule_detail::InitResult::OK);
+              Module::InitResult::OK);
   EXPECT_TRUE(SomeWriter.reopen(SomeGroup) ==
-              FileWriter::HDFWriterModule_detail::InitResult::OK);
+              Module::InitResult::OK);
   EXPECT_NO_THROW(SomeWriter.write(FileWriter::FlatbufferMessage()));
 }

@@ -24,7 +24,7 @@ namespace f142 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using ForwarderDebugDataset = NeXusDataset::ExtensibleDataset<std::uint64_t>;
 
-class f142_Writer : public FileWriter::HDFWriterModule {
+class f142_Writer : public Module::WriterBase {
 public:
   /// Implements HDFWriterModule interface.
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
@@ -32,7 +32,7 @@ public:
   /// Implements HDFWriterModule interface.
   void parse_config(std::string const &ConfigurationStream) override;
   /// Implements HDFWriterModule interface.
-  f142_Writer::InitResult reopen(hdf5::node::Group &HDFGroup) override;
+  Module::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;

@@ -29,17 +29,16 @@ IdNameHash getWriterModuleHash(std::string const &FlatbufferID, std::string cons
 
 std::map<std::string, std::string> getFactoryIdsAndNames() {
   std::map<std::string, std::string> ReturnMap;
-  auto Factories = getFactories();
-  std::transform(Factories.begin(), Factories.end(), std::back_inserter(ReturnMap),
-                 [](auto &Item) -> std::pair<std::string, std::string> {
-                   return {Item.second.Id, Item.second.Name};
-                 });
+  auto const Factories = getFactories();
+  for (auto const &Item : Factories) {
+    ReturnMap.insert({Item.second.Id, Item.second.Name});
+  }
   return ReturnMap;
 }
 
 ModuleFactory const &find(std::string const &FlatbufferID) {
   auto const &Factories = getFactories();
-  auto FoundFactory = std::find(Factories.begin(), Factories.end(), [&FlatbufferID](auto &CItem) {
+  auto FoundFactory = std::find_if(Factories.begin(), Factories.end(), [&FlatbufferID](auto const &CItem) {
     return CItem.second.Id == FlatbufferID;
   });
   if (FoundFactory == Factories.end()) {
@@ -55,12 +54,12 @@ ModuleFactory const &find(std::string const &FlatbufferID, std::string const &Mo
   if (FoundItem != Factories.end()) {
     return FoundItem->second.FactoryPtr;
   }
-  FoundItem = std::find(Factories.begin(), Factories.end(), [&ModuleName](auto &CItem) {
+  FoundItem = std::find_if(std::cbegin(Factories), std::cend(Factories), [&ModuleName](auto const &CItem) {
     return CItem.second.Name == ModuleName;
   });
   if (FoundItem != Factories.end()) {
     if (not FlatbufferID.empty() and FoundItem->second.Id != FlatbufferID) {
-      throw std::runtime_error("The provided flatbuffer id (" + FlatbufferID +") does not correspont to (" + FoundItem->second.Id + ") that of the found writer module (" + ModuleName + ")".);
+      throw std::runtime_error("The provided flatbuffer id (" + FlatbufferID + ") does not correspont to (" + FoundItem->second.Id + ") that of the found writer module (" + ModuleName + ").");
     }
     return FoundItem->second.FactoryPtr;
   }
@@ -69,10 +68,12 @@ ModuleFactory const &find(std::string const &FlatbufferID, std::string const &Mo
   } catch (std::out_of_range &) {
 
   }
-  if (FlatbufferID.empty()) {
-    throw std::runtime_error("Unable to find module ");
-  }
+    throw std::runtime_error("Unable to find module with name \" " + ModuleName + "\"");
 }
+  
+  void clear() {
+    getFactories().clear();
+  }
 
 void addWriterModule(std::string const &FlatbufferID, std::string const &ModuleName, ModuleFactory Value) {
   auto &Factories = getFactories();
@@ -88,5 +89,5 @@ void addWriterModule(std::string const &FlatbufferID, std::string const &ModuleN
   }
   Factories[ModuleHash] = {Value, FlatbufferID, ModuleName};
 }
-} // namespace Registry
+} // namespace Registry
 } // namespace Module

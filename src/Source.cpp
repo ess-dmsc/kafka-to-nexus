@@ -12,7 +12,7 @@
 namespace FileWriter {
 
 Source::Source(std::string Name, std::string ID, std::string Topic,
-               HDFWriterModule::ptr Writer)
+               Module::ptr Writer)
     : SourceName(std::move(Name)), SchemaID(std::move(ID)),
       TopicName(std::move(Topic)), Hash(calcSourceHash(SchemaID, SourceName)),
       WriterModule(std::move(Writer)) {}
@@ -33,7 +33,7 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     if (HDFFileForSWMR != nullptr) {
       HDFFileForSWMR->SWMRFlush();
     }
-  } catch (const HDFWriterModuleRegistry::WriterException &E) {
+  } catch (const Module::WriterException &E) {
     Logger->error("Failure while writing message: {}", E.what());
     return ProcessMessageResult::ERR;
   }

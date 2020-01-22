@@ -22,7 +22,7 @@ namespace FlatbufferMetadata {
 } // namespace FlatbufferMetadata
 
 using FileWriter::FlatbufferMessage;
-using FileWriter::HDFWriterModule;
+using Module::WriterBase;
 using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
 

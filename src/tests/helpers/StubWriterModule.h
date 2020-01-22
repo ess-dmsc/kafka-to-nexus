@@ -11,7 +11,9 @@
 #include "FlatbufferMessage.h"
 #include "WriterModuleBase.h"
 
-class StubWriterModule : public FileWriter::HDFWriterModule {
+using Module::InitResult;
+
+class StubWriterModule : public Module::WriterBase {
 public:
   void parse_config(std::string const & /*ConfigurationStream*/) override {}
   InitResult init_hdf(hdf5::node::Group & /*HDFGroup*/,

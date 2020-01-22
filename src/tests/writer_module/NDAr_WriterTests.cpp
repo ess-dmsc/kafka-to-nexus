@@ -87,7 +87,7 @@ TEST_F(AreaDetectorWriter, WriterInitTest) {
   EXPECT_TRUE(FoundAttribute);
 }
 
-using FileWriter::HDFWriterModule_detail::InitResult;
+using Module::InitResult;
 
 TEST_F(AreaDetectorWriter, WriterAttributeExists) {
   auto ClassAttribute = UsedGroup.attributes.create<std::string>("NX_class");

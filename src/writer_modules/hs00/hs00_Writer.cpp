@@ -9,6 +9,7 @@
 
 #include "hs00_Writer.h"
 #include "Exceptions.h"
+#include "WriterRegistrar.h"
 
 namespace Module {
 namespace hs00 {
@@ -18,17 +19,17 @@ void hs00_Writer::parse_config(std::string const &ConfigurationStream) {
       WriterUntyped::json::parse(ConfigurationStream));
 }
 
-FileWriter::HDFWriterModule::InitResult
+Module::InitResult
 hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
   }
   TheWriterUntyped->createHDFStructure(HDFGroup, ChunkBytes);
-  return FileWriter::HDFWriterModule::InitResult::OK;
+  return Module::InitResult::OK;
 }
 
-FileWriter::HDFWriterModule::InitResult
+Module::InitResult
 hs00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
@@ -36,9 +37,9 @@ hs00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   }
   TheWriterUntyped = WriterUntyped::createFromHDF(HDFGroup);
   if (!TheWriterUntyped) {
-    return FileWriter::HDFWriterModule::InitResult::ERROR;
+    return Module::InitResult::ERROR;
   }
-  return FileWriter::HDFWriterModule::InitResult::OK;
+  return Module::InitResult::OK;
 }
 
 void hs00_Writer::write(FlatbufferMessage const &Message) {
@@ -49,11 +50,10 @@ void hs00_Writer::write(FlatbufferMessage const &Message) {
   TheWriterUntyped->write(Message, DoFlushEachWrite);
 }
 
-FileWriter::HDFWriterModule::ptr hs00_Writer::create() {
-  return FileWriter::HDFWriterModule::ptr(new hs00_Writer);
+Module::ptr hs00_Writer::create() {
+  return std::make_unique<hs00_Writer>();
 }
 
-Module::Registrar<hs00_Writer>
-    RegisterWriter("hs00");
+  Module::Registry::Registrar<hs00_Writer> Register("hs00", "event_histogram");
 } // namespace hs00
 } // namespace Module

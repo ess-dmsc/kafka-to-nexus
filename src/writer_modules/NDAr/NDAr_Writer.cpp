@@ -17,13 +17,14 @@
 #include "HDFFile.h"
 #include "NDAr_Writer.h"
 #include <NDAr_NDArray_schema_generated.h>
+#include "WriterRegistrar.h"
 
 namespace Module {
 namespace NDAr {
 
 // Register the file writing part of this module.
-static Module::Registrar<NDAr_Writer>
-    RegisterNDArWriter("NDAr");
+  static Module::Registry::Registrar<NDAr_Writer>
+    RegisterNDArWriter("NDAr", "area_detector_writer");
 
 std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
                                            std::uint64_t nsec) {
@@ -83,7 +84,7 @@ void NDAr_Writer::parse_config(std::string const &ConfigurationStream) {
   Logger->info("Using a cue interval of {}.", CueInterval);
 }
 
-FileWriterBase::InitResult
+Module::InitResult
 NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   const int DefaultChunkSize = ChunkSize.at(0);
@@ -111,12 +112,12 @@ NDAr_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return HDFWriterModule::InitResult::ERROR;
+    return Module::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return Module::InitResult::OK;
 }
 
-FileWriterBase::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
+Module::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Values = std::make_unique<NeXusDataset::MultiDimDatasetBase>(
@@ -130,9 +131,9 @@ FileWriterBase::InitResult NDAr_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR;
+    return Module::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return Module::InitResult::OK;
 }
 template <typename DataType, class DatasetType>
 void appendData(DatasetType &Dataset, const std::uint8_t *Pointer, size_t Size,

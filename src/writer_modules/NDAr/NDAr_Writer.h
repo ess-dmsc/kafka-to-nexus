@@ -23,7 +23,7 @@
 namespace Module {
 namespace NDAr {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
-using FileWriterBase = FileWriter::HDFWriterModule;
+using FileWriterBase = Module::WriterBase;
 
 /// See parent class for documentation.
 class NDAr_Writer : public FileWriterBase {

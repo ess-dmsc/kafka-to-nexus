@@ -56,7 +56,7 @@ public:
   hdf5::node::Group UsedGroup;
 };
 
-using FileWriter::HDFWriterModule_detail::InitResult;
+using Module::InitResult;
 
 TEST_F(FastSampleEnvironmentWriter, InitFile) {
   {

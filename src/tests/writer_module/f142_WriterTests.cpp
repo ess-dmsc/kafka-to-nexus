@@ -61,12 +61,12 @@ TEST_F(f142Init, BasicDefaultInit) {
 TEST_F(f142Init, ReOpenSuccess) {
   f142_Writer TestWriter;
   TestWriter.init_hdf(RootGroup, "");
-  EXPECT_EQ(TestWriter.reopen(RootGroup), f142_Writer::InitResult::OK);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), Module::InitResult::OK);
 }
 
 TEST_F(f142Init, ReOpenFailure) {
   f142_Writer TestWriter;
-  EXPECT_EQ(TestWriter.reopen(RootGroup), f142_Writer::InitResult::ERROR);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), Module::InitResult::ERROR);
 }
 
 TEST_F(f142Init, CheckInitDataType) {

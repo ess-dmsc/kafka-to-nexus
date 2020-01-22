@@ -40,9 +40,9 @@ void ns10_Writer::parse_config(std::string const &ConfigurationStream) {
   }
 }
 
-using FileWriterBase = FileWriter::HDFWriterModule;
+using FileWriterBase = Module::WriterBase;
 
-FileWriterBase::InitResult
+Module::InitResult
 ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   const int DefaultChunkSize = ChunkSize.at(0);
@@ -73,12 +73,12 @@ ns10_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise areaDetector data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return HDFWriterModule::InitResult::ERROR;
+    return Module::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return Module::InitResult::OK;
 }
 
-FileWriterBase::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
+Module::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Values = NeXusDataset::DoubleValue(CurrentGroup, NeXusDataset::Mode::Open);
@@ -91,9 +91,9 @@ FileWriterBase::InitResult ns10_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR;
+    return Module::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return Module::InitResult::OK;
 }
 
 static CacheEntry const *getRoot(char const *Data) {

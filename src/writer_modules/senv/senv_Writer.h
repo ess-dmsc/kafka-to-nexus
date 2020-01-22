@@ -23,7 +23,7 @@
 namespace Module {
 namespace senv {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
-using FileWriterBase = FileWriter::HDFWriterModule;
+using FileWriterBase = Module::WriterBase;
 
 std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
                                               double TimeDelta,

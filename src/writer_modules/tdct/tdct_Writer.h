@@ -21,10 +21,9 @@
 namespace Module {
 namespace tdct {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
-using FileWriterBase = FileWriter::HDFWriterModule;
 
 /// See parent class for documentation.
-class tdct_Writer : public FileWriterBase {
+  class tdct_Writer : public Module::WriterBase {
 public:
   tdct_Writer() = default;
   ~tdct_Writer() override = default;
