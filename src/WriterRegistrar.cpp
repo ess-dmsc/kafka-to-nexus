@@ -75,8 +75,12 @@ ModuleFactory const &find(std::string const &FlatbufferID,
     return find(FlatbufferID);
   } catch (std::out_of_range &) {
   }
-  throw std::runtime_error("Unable to find module with name \" " + ModuleName +
+  throw std::out_of_range("Unable to find module with name \" " + ModuleName +
                            "\"");
+}
+
+ModuleFactory const &find(IdNameHash ModuleHash) {
+  return getFactories().at(ModuleHash).FactoryPtr;
 }
 
 void clear() { getFactories().clear(); }

@@ -44,9 +44,11 @@ ModuleFactory const &find(std::string const &FlatbufferID);
 
 /// \brief Get module factory for a given flatbuffer id and/or module name.
 /// \param[in] FlatbufferID A four character flatbuffer id. Will be ignored if
-/// empty string. \param[in] ModuleName Module name of module instantiated by
-/// factory function. \return A module factory. \throw std::runtime_error if
-/// module name and flatbuffer id does not exist or they do not match.
+/// empty string.
+/// \param[in] ModuleName Module name of module instantiated by
+/// factory function.
+/// \return A module factory.
+/// \throw std::runtime_error if module name and flatbuffer id does not exist or they do not match.
 ModuleFactory const &find(std::string const &FlatbufferID,
                           std::string const &ModuleName);
 
