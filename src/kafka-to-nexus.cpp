@@ -64,17 +64,15 @@ int main(int argc, char **argv) {
   }
 
   if (Options->ListWriterModules) {
-    fmt::print("Registered writer/reader classes\n");
-    fmt::print("\n--Identifiers of FlatbufferReader instances\n");
+    fmt::print("\n-- Known flatbuffer metadata extractors\n");
     for (auto &ReaderPair :
          FileWriter::FlatbufferReaderRegistry::getReaders()) {
       fmt::print("---- {}\n", ReaderPair.first);
     }
-    fmt::print("\n--Identifiers of writer module factories\n");
+    fmt::print("\n--Known writer modules\n");
     for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
       fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
-    fmt::print("\nDone, exiting\n");
     return 0;
   }
 
