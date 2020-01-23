@@ -115,9 +115,7 @@ public:
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
   KafkaW::BrokerSettings Settings{};
-  ProducerStandIn Producer1(Settings);
-  ProducerStandIn Producer2(Settings);
-  EXPECT_EQ(Producer1.ProducerID + 1, Producer2.ProducerID);
+  EXPECT_EQ(ProducerStandIn(Settings).ProducerID + 1, ProducerStandIn(Settings).ProducerID);
 }
 
 TEST_F(ProducerTests, callPollTest) {
@@ -187,8 +185,7 @@ TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
   // Needs to be put in a scope here so we can check that outq_len is called on
   // destruction
   {
-    ProducerStandIn Producer(Settings);
-    ASSERT_NO_THROW(Producer.ProducerPtr = std::move(TempProducerPtr));
+    ASSERT_NO_THROW(ProducerStandIn(Settings).ProducerPtr = std::move(TempProducerPtr));
   }
 }
 
