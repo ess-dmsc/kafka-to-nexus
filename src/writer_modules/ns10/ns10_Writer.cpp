@@ -11,9 +11,13 @@
 #include "FlatbufferMessage.h"
 #include "HDFFile.h"
 #include <ns10_cache_entry_generated.h>
+#include "WriterRegistrar.h"
 
 namespace WriterModule {
 namespace ns10 {
+
+static WriterModule::Registry::Registrar<ns10_Writer>
+    RegisterWriter("ns10", "nicos_cache_writer");
 
 void ns10_Writer::parse_config(std::string const &ConfigurationStream) {
   auto Config = nlohmann::json::parse(ConfigurationStream);
