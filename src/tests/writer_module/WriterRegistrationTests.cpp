@@ -80,7 +80,8 @@ TEST_F(WriterRegistrationTest, StrKeyNotFound) {
 TEST_F(WriterRegistrationTest, HashKeyFound) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
-  auto UsedHash = WriterModule::Registry::getWriterModuleHash(UsedKey, UsedName);
+  auto UsedHash =
+      WriterModule::Registry::getWriterModuleHash(UsedKey, UsedName);
   {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
@@ -92,7 +93,8 @@ TEST_F(WriterRegistrationTest, HashKeyNotFound) {
   std::string UsedKey("t3mp");
   std::string WrongKey("1234");
   std::string UsedName("some_module_name");
-  auto UsedHash = WriterModule::Registry::getWriterModuleHash(WrongKey, UsedName);
+  auto UsedHash =
+      WriterModule::Registry::getWriterModuleHash(WrongKey, UsedName);
   {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
@@ -101,7 +103,8 @@ TEST_F(WriterRegistrationTest, HashKeyNotFound) {
 }
 
 TEST_F(WriterRegistrationTest, FacoryIdsAndNames) {
-  std::map<std::string, std::string> NamesAndIds{{"1234", "name 1"}, {"2345", "name 2"}, {"3456", "name 3"}};
+  std::map<std::string, std::string> NamesAndIds{
+      {"1234", "name 1"}, {"2345", "name 2"}, {"3456", "name 3"}};
   for (auto &Itm : NamesAndIds) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(Itm.first,
                                                                    Itm.second);
@@ -141,7 +144,8 @@ TEST_F(WriterRegistrationTest, FailFindModuleUsingName) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
   }
-  EXPECT_THROW(WriterModule::Registry::find("", "Some other name"), std::out_of_range);
+  EXPECT_THROW(WriterModule::Registry::find("", "Some other name"),
+               std::out_of_range);
 }
 
 TEST_F(WriterRegistrationTest, FindModuleUsingNameAndId) {
@@ -161,7 +165,8 @@ TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndId) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
   }
-  EXPECT_THROW(WriterModule::Registry::find("tst2", "Some other name"), std::out_of_range);
+  EXPECT_THROW(WriterModule::Registry::find("tst2", "Some other name"),
+               std::out_of_range);
 }
 
 TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndWrongId) {
@@ -171,5 +176,6 @@ TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndWrongId) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
   }
-  EXPECT_THROW(WriterModule::Registry::find("tst2", UsedName), std::runtime_error);
+  EXPECT_THROW(WriterModule::Registry::find("tst2", UsedName),
+               std::runtime_error);
 }

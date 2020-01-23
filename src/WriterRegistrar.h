@@ -48,7 +48,8 @@ ModuleFactory const &find(std::string const &FlatbufferID);
 /// \param[in] ModuleName Module name of module instantiated by
 /// factory function.
 /// \return A module factory.
-/// \throw std::runtime_error if module name and flatbuffer id does not exist or they do not match.
+/// \throw std::runtime_error if module name and flatbuffer id does not exist or
+/// they do not match.
 ModuleFactory const &find(std::string const &FlatbufferID,
                           std::string const &ModuleName);
 
