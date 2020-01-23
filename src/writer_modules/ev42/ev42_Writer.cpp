@@ -10,10 +10,10 @@
 #include <ev42_events_generated.h>
 
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include "ev42_Writer.h"
 #include "helper.h"
 #include "json.h"
-#include "WriterRegistrar.h"
 
 namespace {
 template <typename DataType>

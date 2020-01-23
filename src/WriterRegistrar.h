@@ -13,16 +13,17 @@
 /// `WriterModule::Registry::Registrar`.
 
 #pragma once
+#include "WriterModuleBase.h"
 #include <map>
 #include <string>
-#include "WriterModuleBase.h"
 
 namespace WriterModule {
 namespace Registry {
 using ModuleFactory = std::function<std::unique_ptr<WriterModule::Base>()>;
 using IdNameHash = size_t;
 
-IdNameHash getWriterModuleHash(std::string const &FlatbufferID, std::string const &ModuleName);
+IdNameHash getWriterModuleHash(std::string const &FlatbufferID,
+                               std::string const &ModuleName);
 
 /// \brief Get all registered modules.
 ///
@@ -33,7 +34,8 @@ std::map<std::string, std::string> getFactoryIdsAndNames();
 ///
 /// \param key
 /// \param value
-void addWriterModule(std::string const &FlatbufferID, std::string const &ModuleName, ModuleFactory Value);
+void addWriterModule(std::string const &FlatbufferID,
+                     std::string const &ModuleName, ModuleFactory Value);
 
 /// \brief Get `ModuleFactory for a given flatbuffer id.
 ///
@@ -41,30 +43,31 @@ void addWriterModule(std::string const &FlatbufferID, std::string const &ModuleN
 ModuleFactory const &find(std::string const &FlatbufferID);
 
 /// \brief Get module factory for a given flatbuffer id and/or module name.
-/// \param[in] FlatbufferID A four character flatbuffer id. Will be ignored if empty string.
-/// \param[in] ModuleName Module name of module instantiated by factory function.
-/// \return A module factory.
-/// \throw std::runtime_error if module name and flatbuffer id does not exist or they do not match.
-ModuleFactory const &find(std::string const &FlatbufferID, std::string const &ModuleName);
+/// \param[in] FlatbufferID A four character flatbuffer id. Will be ignored if
+/// empty string. \param[in] ModuleName Module name of module instantiated by
+/// factory function. \return A module factory. \throw std::runtime_error if
+/// module name and flatbuffer id does not exist or they do not match.
+ModuleFactory const &find(std::string const &FlatbufferID,
+                          std::string const &ModuleName);
 
 ModuleFactory const &find(IdNameHash ModuleHash);
-  
+
 void clear();
 
 /// \brief  Registers the writer module at program start if instantiated in the
 /// namespace of each writer module with the writer module given as `Module`.
-template<typename Module>
-class Registrar {
+template <typename Module> class Registrar {
 public:
   /// \brief Register the writer module given in template parameter `Module`
   /// under the
   /// identifier `FlatbufferID`.
   ///
   /// \param FlatbufferID The unique identifier for this writer module.
-  explicit Registrar(std::string const &FlatbufferID, std::string const &ModuleName) {
+  explicit Registrar(std::string const &FlatbufferID,
+                     std::string const &ModuleName) {
     auto FactoryFunction = []() { return std::make_unique<Module>(); };
     addWriterModule(FlatbufferID, ModuleName, FactoryFunction);
   };
 };
-} //namespace Registry
+} // namespace Registry
 } // namespace WriterModule

@@ -438,10 +438,9 @@ void WriterTyped<DataType, EdgeType, ErrorType>::write(
   Record.addToItemsWritten(DataPtr->size());
   {
     std::vector<uint64_t> Timestamps;
-    Timestamps.resize(2 *
-                      hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
-                          .current_dimensions()
-                          .at(0));
+    Timestamps.resize(2 * hdf5::dataspace::Simple(DatasetTimestamps.dataspace())
+                              .current_dimensions()
+                              .at(0));
     DatasetTimestamps.read(Timestamps, hdf5::property::DatasetTransferList());
     Timestamps.resize(2 * HistogramRecords.size());
     Timestamps.at(2 * Record.getHDFIndex()) = Timestamp;

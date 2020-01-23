@@ -19,8 +19,8 @@ void hs00_Writer::parse_config(std::string const &ConfigurationStream) {
       WriterUntyped::json::parse(ConfigurationStream));
 }
 
-WriterModule::InitResult
-hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
+WriterModule::InitResult hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup,
+                                               std::string const &) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
@@ -29,8 +29,7 @@ hs00_Writer::init_hdf(hdf5::node::Group &HDFGroup, std::string const &) {
   return WriterModule::InitResult::OK;
 }
 
-WriterModule::InitResult
-hs00_Writer::reopen(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult hs00_Writer::reopen(hdf5::node::Group &HDFGroup) {
   if (!TheWriterUntyped) {
     throw std::runtime_error("TheWriterUntyped is not initialized. Make sure "
                              "that you call parse_config() before.");
@@ -54,6 +53,7 @@ WriterModule::ptr hs00_Writer::create() {
   return std::make_unique<hs00_Writer>();
 }
 
-  WriterModule::Registry::Registrar<hs00_Writer> Register("hs00", "event_histogram");
+WriterModule::Registry::Registrar<hs00_Writer> Register("hs00",
+                                                        "event_histogram");
 } // namespace hs00
 } // namespace WriterModule

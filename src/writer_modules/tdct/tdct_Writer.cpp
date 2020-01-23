@@ -14,16 +14,16 @@
 
 #include "tdct_Writer.h"
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include <limits>
 #include <nlohmann/json.hpp>
 #include <tdct_timestamps_generated.h>
-#include "WriterRegistrar.h"
 
 namespace WriterModule {
 namespace tdct {
 
 // Register the file writing part of this module
-  static WriterModule::Registry::Registrar<tdct_Writer>
+static WriterModule::Registry::Registrar<tdct_Writer>
     RegisterSenvWriter("tdct", "chopper_tdc_writer");
 
 void tdct_Writer::parse_config(std::string const &) {

@@ -15,10 +15,10 @@
 #include "helper.h"
 
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include "senv_Writer.h"
 #include <limits>
 #include <senv_data_generated.h>
-#include "WriterRegistrar.h"
 
 namespace WriterModule {
 namespace senv {

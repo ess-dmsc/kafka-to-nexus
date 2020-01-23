@@ -9,11 +9,11 @@
 
 #include "f142_Writer.h"
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
 #include <cctype>
 #include <f142_logdata_generated.h>
-#include "WriterRegistrar.h"
 
 namespace WriterModule {
 namespace f142 {
@@ -122,7 +122,7 @@ void f142_Writer::parse_config(std::string const &ConfigurationStream) {
 /// of
 /// `init_hdf`.
 InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                              std::string const &) {
+                                 std::string const &) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,

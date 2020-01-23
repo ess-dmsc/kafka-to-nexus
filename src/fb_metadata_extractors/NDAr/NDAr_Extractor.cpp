@@ -23,8 +23,7 @@ static FileWriter::FlatbufferReaderRegistry::Registrar<NDAr_Extractor>
 
 bool NDAr_Extractor::verify(FlatbufferMessage const &Message) const {
   auto Verifier = flatbuffers::Verifier(
-      reinterpret_cast<const std::uint8_t *>(Message.data()),
-      Message.size());
+      reinterpret_cast<const std::uint8_t *>(Message.data()), Message.size());
   return FB_Tables::VerifyNDArrayBuffer(Verifier);
 }
 

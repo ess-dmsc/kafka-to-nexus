@@ -9,8 +9,8 @@
 
 #include "AdcDatasets.h"
 #include "FlatbufferMessage.h"
-#include "WriterModuleBase.h"
 #include "NeXusDataset.h"
+#include "WriterModuleBase.h"
 
 namespace WriterModule {
 namespace ev42 {

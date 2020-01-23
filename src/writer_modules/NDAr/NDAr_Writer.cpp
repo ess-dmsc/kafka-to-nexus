@@ -16,14 +16,14 @@
 
 #include "HDFFile.h"
 #include "NDAr_Writer.h"
-#include <NDAr_NDArray_schema_generated.h>
 #include "WriterRegistrar.h"
+#include <NDAr_NDArray_schema_generated.h>
 
 namespace WriterModule {
 namespace NDAr {
 
 // Register the file writing part of this module.
-  static WriterModule::Registry::Registrar<NDAr_Writer>
+static WriterModule::Registry::Registrar<NDAr_Writer>
     RegisterNDArWriter("NDAr", "area_detector_writer");
 
 std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
@@ -183,8 +183,7 @@ void NDAr_Writer::write(const FileWriter::FlatbufferMessage &Message) {
     appendData<const char>(Values, DataPtr, NrOfElements, DataShape);
     break;
   default:
-    throw WriterModule::WriterException(
-        "Error in flatbuffer.");
+    throw WriterModule::WriterException("Error in flatbuffer.");
   }
   Timestamp.appendElement(CurrentTimestamp);
   if (++CueCounter == CueInterval) {

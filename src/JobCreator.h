@@ -51,9 +51,9 @@ public:
                        SharedLogger const &Logger) override;
 
 private:
-  static void
-  addStreamSourceToWriterModule(std::vector<StreamSettings> const &StreamSettingsList,
-                                std::unique_ptr<FileWriterTask> &Task);
+  static void addStreamSourceToWriterModule(
+      std::vector<StreamSettings> const &StreamSettingsList,
+      std::unique_ptr<FileWriterTask> &Task);
 
   static std::vector<StreamHDFInfo>
   initializeHDF(FileWriterTask &Task, std::string const &NexusStructureString,

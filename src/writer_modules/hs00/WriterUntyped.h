@@ -9,8 +9,8 @@
 
 #pragma once
 
-#include "WriterModuleBase.h"
 #include "Shape.h"
+#include "WriterModuleBase.h"
 #include "json.h"
 #include <h5cpp/hdf5.hpp>
 #include <vector>

@@ -13,11 +13,11 @@
 #include "CommandParser.h"
 #include "EventLogger.h"
 #include "FileWriterTask.h"
-#include "WriterModuleBase.h"
 #include "Msg.h"
 #include "StreamMaster.h"
-#include "json.h"
+#include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
+#include "json.h"
 #include <algorithm>
 #include <chrono>
 
@@ -83,10 +83,10 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   try {
     HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Exception while WriterModule::Base::parse_config  module: {} "
-                    " source: {}  what: {}",
-                    StreamSettings.Module, StreamSettings.Source, E.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Exception while WriterModule::Base::parse_config  module: {} "
+        " source: {}  what: {}",
+        StreamSettings.Module, StreamSettings.Source, E.what())));
   }
 
   auto StreamGroup = hdf5::node::get_group(
@@ -214,7 +214,8 @@ void JobCreator::addStreamSourceToWriterModule(
           continue;
         }
       } catch (std::runtime_error const &e) {
-        Logger->error("Exception on WriterModule::Base->reopen(): {}", e.what());
+        Logger->error("Exception on WriterModule::Base->reopen(): {}",
+                      e.what());
         continue;
       }
 

@@ -22,9 +22,9 @@ namespace FlatbufferMetadata {
 } // namespace FlatbufferMetadata
 
 using FileWriter::FlatbufferMessage;
-using WriterModule::Base;
 using FileWriter::Source;
 using FileWriter::FlatbufferReaderRegistry::ReaderPtr;
+using WriterModule::Base;
 
 flatbuffers::DetachedBuffer createEventMessageBuffer() {
   flatbuffers::FlatBufferBuilder Builder;

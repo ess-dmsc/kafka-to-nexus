@@ -15,15 +15,15 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "WriterModuleBase.h"
 #include "NeXusDataset.h"
+#include "WriterModuleBase.h"
 
 namespace WriterModule {
 namespace tdct {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 
 /// See parent class for documentation.
-  class tdct_Writer : public WriterModule::Base {
+class tdct_Writer : public WriterModule::Base {
 public:
   tdct_Writer() = default;
   ~tdct_Writer() override = default;

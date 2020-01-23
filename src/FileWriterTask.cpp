@@ -64,7 +64,7 @@ void FileWriterTask::addSource(Source &&Source) {
   }
 
   TopicNameToDemuxerMap.emplace(Source.topic(),
-                                  std::make_shared<DemuxTopic>(Source.topic()));
+                                std::make_shared<DemuxTopic>(Source.topic()));
 
   // Add the source to the demuxer for its topic
   TopicNameToDemuxerMap[Source.topic()]->addSource(std::move(Source));

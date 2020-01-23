@@ -34,8 +34,9 @@ public:
   MAKE_CONST_MOCK0(memberid, const std::string(), override);
   MAKE_MOCK1(poll, int(int), override);
   MAKE_MOCK0(outq_len, int(), override);
-  MAKE_MOCK4(metadata, RdKafka::ErrorCode(bool, const RdKafka::Topic *,
-                                          RdKafka::Metadata **, int),
+  MAKE_MOCK4(metadata,
+             RdKafka::ErrorCode(bool, const RdKafka::Topic *,
+                                RdKafka::Metadata **, int),
              override);
   MAKE_MOCK1(pause,
              RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
@@ -61,19 +62,22 @@ public:
   MAKE_MOCK1(clusterid, const std::string(int), override);
   MAKE_MOCK0(c_ptr, rd_kafka_s *(), override);
   MAKE_MOCK2(create, RdKafka::Producer *(RdKafka::Conf *, std::string));
-  MAKE_MOCK7(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *,
-                                         size_t, const std::string *, void *),
+  MAKE_MOCK7(produce,
+             RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *, size_t,
+                                const std::string *, void *),
              override);
-  MAKE_MOCK8(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *,
-                                         size_t, const void *, size_t, void *),
+  MAKE_MOCK8(produce,
+             RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *, size_t,
+                                const void *, size_t, void *),
              override);
   MAKE_MOCK9(produce,
              RdKafka::ErrorCode(const std::string, int32_t, int, void *, size_t,
                                 const void *, size_t, int64_t, void *),
              override);
-  MAKE_MOCK5(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t,
-                                         const std::vector<char> *,
-                                         const std::vector<char> *, void *),
+  MAKE_MOCK5(produce,
+             RdKafka::ErrorCode(RdKafka::Topic *, int32_t,
+                                const std::vector<char> *,
+                                const std::vector<char> *, void *),
              override);
   MAKE_MOCK1(flush, RdKafka::ErrorCode(int), override);
   MAKE_MOCK1(controllerid, int32_t(int), override);
@@ -85,9 +89,10 @@ public:
              override);
   MAKE_MOCK1(oauthbearer_set_token_failure,
              RdKafka::ErrorCode(const std::string &), override);
-  MAKE_MOCK10(produce, RdKafka::ErrorCode(std::string, int32_t, int, void *,
-                                          size_t, const void *, size_t, int64_t,
-                                          RdKafka::Headers *, void *),
+  MAKE_MOCK10(produce,
+              RdKafka::ErrorCode(std::string, int32_t, int, void *, size_t,
+                                 const void *, size_t, int64_t,
+                                 RdKafka::Headers *, void *),
               override);
   MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
 };
@@ -115,7 +120,8 @@ public:
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
   KafkaW::BrokerSettings Settings{};
-  EXPECT_EQ(ProducerStandIn(Settings).ProducerID + 1, ProducerStandIn(Settings).ProducerID);
+  EXPECT_EQ(ProducerStandIn(Settings).ProducerID + 1,
+            ProducerStandIn(Settings).ProducerID);
 }
 
 TEST_F(ProducerTests, callPollTest) {
@@ -185,7 +191,8 @@ TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
   // Needs to be put in a scope here so we can check that outq_len is called on
   // destruction
   {
-    ASSERT_NO_THROW(ProducerStandIn(Settings).ProducerPtr = std::move(TempProducerPtr));
+    ASSERT_NO_THROW(ProducerStandIn(Settings).ProducerPtr =
+                        std::move(TempProducerPtr));
   }
 }
 

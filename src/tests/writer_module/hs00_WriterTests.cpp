@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "WriterRegistrar.h"
 #include "fb_metadata_extractors/hs00/hs00_Extractor.h"
 #include "helper.h"
 #include "helpers/SetExtractorModule.h"
@@ -22,7 +23,6 @@
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
-#include "WriterRegistrar.h"
 
 using json = nlohmann::json;
 using WriterModule::hs00::Dimension;
@@ -37,8 +37,8 @@ public:
   void SetUp() override {
     setExtractorModule<FlatbufferMetadata::hs00_Extractor>("hs00");
     try {
-      WriterModule::Registry::Registrar<hs00_Writer> RegisterIt(
-          "hs00", "test_name");
+      WriterModule::Registry::Registrar<hs00_Writer> RegisterIt("hs00",
+                                                                "test_name");
     } catch (...) {
     }
   }

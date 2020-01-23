@@ -11,8 +11,8 @@
 
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
-#include "WriterModuleBase.h"
 #include "ProcessMessageResult.h"
+#include "WriterModuleBase.h"
 #include "logger.h"
 #include <string>
 

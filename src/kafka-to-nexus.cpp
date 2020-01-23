@@ -9,19 +9,19 @@
 
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
-#include "WriterModuleBase.h"
 #include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
 #include "URI.h"
 #include "Version.h"
+#include "WriterModuleBase.h"
+#include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
 #include <csignal>
 #include <cstdio>
 #include <cstdlib>
 #include <string>
-#include "WriterRegistrar.h"
 
 // These should only be visible in this translation unit
 static std::atomic_bool GotSignal{false};
@@ -71,8 +71,7 @@ int main(int argc, char **argv) {
       fmt::print("---- {}\n", ReaderPair.first);
     }
     fmt::print("\n--Identifiers of writer module factories\n");
-    for (auto &WriterPair :
-         WriterModule::Registry::getFactoryIdsAndNames()) {
+    for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
       fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
     fmt::print("\nDone, exiting\n");

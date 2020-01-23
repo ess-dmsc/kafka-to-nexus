@@ -13,12 +13,12 @@
 #include <memory>
 
 #include "FlatbufferMessage.h"
+#include "WriterRegistrar.h"
 #include "fb_metadata_extractors/ns10/ns10_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
 #include "json.h"
 #include "writer_modules/ns10/ns10_Writer.h"
-#include "WriterRegistrar.h"
 #include <ns10_cache_entry_generated.h>
 
 using WriterModule::ns10::ns10_Writer;
@@ -109,8 +109,7 @@ TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
               WriterModule::InitResult::OK);
-  EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
-              WriterModule::InitResult::OK);
+  EXPECT_TRUE(SomeWriter.reopen(UsedGroup) == WriterModule::InitResult::OK);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {
