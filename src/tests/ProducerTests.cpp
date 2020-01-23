@@ -120,8 +120,8 @@ public:
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
   KafkaW::BrokerSettings Settings{};
-  EXPECT_EQ(ProducerStandIn(Settings).ProducerID + 1,
-            ProducerStandIn(Settings).ProducerID);
+  EXPECT_EQ(1, std::abs(ProducerStandIn(Settings).ProducerID -
+            ProducerStandIn(Settings).ProducerID));
 }
 
 TEST_F(ProducerTests, callPollTest) {
