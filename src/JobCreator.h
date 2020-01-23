@@ -52,7 +52,7 @@ public:
 
 private:
   static void
-  addStreamSourceToWriterModule(std::vector<StreamSettings> &StreamSettingsList,
+  addStreamSourceToWriterModule(std::vector<StreamSettings> const &StreamSettingsList,
                                 std::unique_ptr<FileWriterTask> &Task);
 
   static std::vector<StreamHDFInfo>

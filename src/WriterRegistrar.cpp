@@ -75,6 +75,7 @@ ModuleFactory const &find(std::string const &FlatbufferID, std::string const &Mo
     getFactories().clear();
   }
 
+  // cppcheck-suppress unusedFunction
 void addWriterModule(std::string const &FlatbufferID, std::string const &ModuleName, ModuleFactory Value) {
   auto &Factories = getFactories();
   if (FlatbufferID.size() != 4) {

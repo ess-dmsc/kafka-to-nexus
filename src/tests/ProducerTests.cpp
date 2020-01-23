@@ -117,7 +117,7 @@ TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
   KafkaW::BrokerSettings Settings{};
   ProducerStandIn Producer1(Settings);
   ProducerStandIn Producer2(Settings);
-  ASSERT_EQ(-1, Producer1.ProducerID - Producer2.ProducerID);
+  EXPECT_EQ(Producer1.ProducerID + 1, Producer2.ProducerID);
 }
 
 TEST_F(ProducerTests, callPollTest) {

@@ -177,7 +177,7 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
 }
 
 void JobCreator::addStreamSourceToWriterModule(
-    std::vector<StreamSettings> &StreamSettingsList,
+    vector<StreamSettings> const &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   auto Logger = getLogger();
 
