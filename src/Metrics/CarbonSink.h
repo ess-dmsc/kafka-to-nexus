@@ -27,4 +27,4 @@ private:
   Carbon::Connection CarbonConnection;
   SharedLogger Logger = getLogger();
 };
-}
+} // namespace Metrics

@@ -21,4 +21,4 @@ public:
   bool isHealthy() override { return true; };
   SharedLogger Logger = getLogger();
 };
-}
+} // namespace Metrics

@@ -33,4 +33,4 @@ struct InternalMetric {
       std::chrono::system_clock::now()};
   Severity const ValueSeverity;
 };
-}
+} // namespace Metrics
