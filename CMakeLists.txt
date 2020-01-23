@@ -19,6 +19,8 @@ if(CMAKE_COMPILER_IS_GNUCXX AND COV)
   include(CodeCoverage)
   setup_target_for_coverage(coverage UnitTests coverage)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CMAKE_CXX_FLAGS_COVERAGE}")
+  set(CMAKE_EXE_LINKER_FLAGS ${CMAKE_EXE_LINKER_FLAGS} -coverage)
+  set(CMAKE_MODULE_LINKER_FLAGS ${CMAKE_MODULE_LINKER_FLAGS} -coverage)
 endif()
 
 set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
