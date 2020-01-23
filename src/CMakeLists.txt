@@ -92,7 +92,13 @@ set(kafka_to_nexus_SRC
         CommandParser.cpp
         ExtensibleDataset.cpp
         WriterRegistrar.cpp
-        )
+        Metrics/Reporter.cpp
+        Metrics/Registrar.cpp
+        Metrics/Metric.cpp
+        Metrics/CarbonInterface.cpp
+        Metrics/CarbonConnection.cpp
+        Metrics/LogSink.cpp
+        Metrics/CarbonSink.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -133,13 +139,24 @@ set(kafka_to_nexus_INC
         KafkaW/ConfigureKafka.h
         CommandParser.h
         ExtensibleDataset.h
-        WriterRegistrar.h)
+        WriterRegistrar.h
+        Metrics/Registrar.h
+        Metrics/Metric.h
+        Metrics/CarbonInterface.h
+        Metrics/CarbonConnection.h
+        Metrics/Sink.h
+        Metrics/LogSink.h
+        Metrics/CarbonSink.h
+        Metrics/InternalMetric.h
+        Metrics/Reporter.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
         ${kafka_to_nexus_SRC}
         ${kafka_to_nexus_INC}
         )
+
+find_package(ASIO REQUIRED)
 
 add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
