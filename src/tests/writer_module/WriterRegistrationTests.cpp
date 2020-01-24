@@ -89,7 +89,7 @@ TEST_F(WriterRegistrationTest, HashKeyFound) {
   EXPECT_NE(WriterModule::Registry::find(UsedHash), nullptr);
 }
 
-TEST_F(WriterRegistrationTest, HashKeyNotFound) {
+TEST_F(WriterRegistrationTest, HashKeyNotFoundThrows) {
   std::string UsedKey("t3mp");
   std::string WrongKey("1234");
   std::string UsedName("some_module_name");
@@ -102,7 +102,7 @@ TEST_F(WriterRegistrationTest, HashKeyNotFound) {
   EXPECT_THROW(WriterModule::Registry::find(UsedHash), std::out_of_range);
 }
 
-TEST_F(WriterRegistrationTest, FacoryIdsAndNames) {
+TEST_F(WriterRegistrationTest, FactoryIdsAndNamesRegisterCorrectly) {
   std::map<std::string, std::string> NamesAndIds{
       {"1234", "name 1"}, {"2345", "name 2"}, {"3456", "name 3"}};
   for (auto &Itm : NamesAndIds) {
@@ -137,7 +137,7 @@ TEST_F(WriterRegistrationTest, FindModuleUsingName) {
   EXPECT_NE(WriterModule::Registry::find("", UsedName), nullptr);
 }
 
-TEST_F(WriterRegistrationTest, FailFindModuleUsingName) {
+TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownName) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
   {
@@ -158,7 +158,7 @@ TEST_F(WriterRegistrationTest, FindModuleUsingNameAndId) {
   EXPECT_NE(WriterModule::Registry::find(UsedKey, UsedName), nullptr);
 }
 
-TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndId) {
+TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownNameAndUnknownId) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
   {
@@ -169,7 +169,7 @@ TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndId) {
                std::out_of_range);
 }
 
-TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndWrongId) {
+TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownId) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
   {

@@ -10,8 +10,8 @@
 #include "ns10_Writer.h"
 #include "FlatbufferMessage.h"
 #include "HDFFile.h"
-#include <ns10_cache_entry_generated.h>
 #include "WriterRegistrar.h"
+#include <ns10_cache_entry_generated.h>
 
 namespace WriterModule {
 namespace ns10 {
