@@ -102,7 +102,7 @@ TEST_F(WriterRegistrationTest, HashKeyNotFoundThrows) {
   EXPECT_THROW(WriterModule::Registry::find(UsedHash), std::out_of_range);
 }
 
-TEST_F(WriterRegistrationTest, FacoryIdsAndNames) {
+TEST_F(WriterRegistrationTest, FactoryIdsAndNamesRegisterCorrectly) {
   std::map<std::string, std::string> NamesAndIds{
       {"1234", "name 1"}, {"2345", "name 2"}, {"3456", "name 3"}};
   for (auto &Itm : NamesAndIds) {
