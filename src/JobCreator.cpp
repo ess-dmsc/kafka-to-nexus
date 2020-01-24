@@ -51,8 +51,13 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
       CommandParser::getRequiredValue<std::string>("topic", ConfigStreamInner);
   StreamSettings.Source =
       CommandParser::getRequiredValue<std::string>("source", ConfigStreamInner);
-  StreamSettings.Module = CommandParser::getRequiredValue<std::string>(
-      "writer_module", ConfigStreamInner);
+  StreamSettings.ModuleName = CommandParser::getOptionalValue<std::string>(
+      "writer_module", ConfigStreamInner, "");
+  StreamSettings.FlatbufferId = CommandParser::getOptionalValue<std::string>(
+      "flatbuffer_id", ConfigStreamInner, "");
+  if (StreamSettings.ModuleName.empty() and StreamSettings.FlatbufferId.empty()) {
+    throw std::runtime_error(fmt::format("No writer module or flatbuffer id defined for source \"{}\" on topic \"{}\".", StreamSettings.Source, StreamSettings.Topic));
+  }
   StreamSettings.Attributes =
       CommandParser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
@@ -184,19 +189,14 @@ void JobCreator::addStreamSourceToWriterModule(
     WriterModule::Registry::ModuleFactory ModuleFactory;
 
     try {
-      ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
+      ModuleFactory = findWriterModuleFactory(StreamSettings.ModuleName, StreamSettings.FlatbufferId);
+//      ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
     } catch (std::exception const &E) {
-      Logger->info("WriterModule '{}' is not available, error {}",
-                   StreamSettings.Module, E.what());
+      Logger->info(E.what());
       continue;
     }
 
     auto HDFWriterModule = ModuleFactory();
-    if (!HDFWriterModule) {
-      Logger->info("Can not create a writer module for '{}'",
-                   StreamSettings.Module);
-      continue;
-    }
 
     try {
       // Reopen the previously created HDF dataset.
@@ -224,7 +224,7 @@ void JobCreator::addStreamSourceToWriterModule(
     } catch (std::runtime_error const &E) {
       Logger->warn(
           "Exception while initializing writer module {} for source {}: {}",
-          StreamSettings.Module, StreamSettings.Source, E.what());
+          StreamSettings.ModuleName, StreamSettings.Source, E.what());
       continue;
     }
   }
