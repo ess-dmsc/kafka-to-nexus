@@ -158,7 +158,7 @@ TEST_F(WriterRegistrationTest, FindModuleUsingNameAndId) {
   EXPECT_NE(WriterModule::Registry::find(UsedKey, UsedName), nullptr);
 }
 
-TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndId) {
+TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownNameAndUnknownId) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
   {
