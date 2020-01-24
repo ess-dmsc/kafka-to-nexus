@@ -99,7 +99,7 @@ void addWriterModule(std::string const &FlatbufferID,
                          ModuleName, FlatbufferID);
     throw std::runtime_error(s);
   }
-  Factories[ModuleHash] = {Value, FlatbufferID, ModuleName};
+  Factories[ModuleHash] = {std::move(Value), FlatbufferID, ModuleName};
 }
 } // namespace Registry
 } // namespace WriterModule

@@ -11,7 +11,6 @@
 
 #include "JobCreator.h"
 #include "CommandParser.h"
-#include "EventLogger.h"
 #include "FileWriterTask.h"
 #include "Msg.h"
 #include "StreamMaster.h"
@@ -19,7 +18,6 @@
 #include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
-#include <chrono>
 
 using std::vector;
 
