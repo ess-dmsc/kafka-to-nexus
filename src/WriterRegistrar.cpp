@@ -31,7 +31,7 @@ IdNameHash getWriterModuleHash(std::string const &FlatbufferID,
 std::map<std::string, std::string> getFactoryIdsAndNames() {
   std::map<std::string, std::string> ReturnMap;
   auto const Factories = getFactories();
-  for (auto const &Item : Factories) {
+  for (auto const &Item : getFactories()) {
     ReturnMap.insert({Item.second.Id, Item.second.Name});
   }
   return ReturnMap;
