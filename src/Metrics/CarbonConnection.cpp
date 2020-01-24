@@ -38,7 +38,7 @@ struct QueryResult {
 
 void Connection::Impl::tryConnect(QueryResult AllEndpoints) {
   asio::ip::tcp::endpoint CurrentEndpoint = AllEndpoints.getNextEndpoint();
-  auto HandlerGlue = [this, AllEndpoints](auto &Err) {
+  auto HandlerGlue = [this, AllEndpoints](auto const &Err) {
     this->connectHandler(Err, AllEndpoints);
   };
   Socket.async_connect(CurrentEndpoint, HandlerGlue);
@@ -69,7 +69,7 @@ void Connection::Impl::connectHandler(asio::error_code const &Error,
                                       QueryResult const &AllEndpoints) {
   if (!Error) {
     setState(Status::SEND_LOOP);
-    auto HandlerGlue = [this](auto &Error, auto Size) {
+    auto HandlerGlue = [this](auto const &Error, auto Size) {
       this->receiveHandler(Error, Size);
     };
     Socket.async_receive(asio::buffer(InputBuffer), HandlerGlue);
@@ -107,7 +107,7 @@ void Connection::Impl::receiveHandler(asio::error_code const &Error,
     reconnect(ReconnectDelay::SHORT);
     return;
   }
-  auto HandlerGlue = [this](auto &Error, auto Size) {
+  auto HandlerGlue = [this](auto const &Error, auto Size) {
     this->receiveHandler(Error, Size);
   };
   Socket.async_receive(asio::buffer(InputBuffer), HandlerGlue);
@@ -117,7 +117,7 @@ void Connection::Impl::trySendMessage() {
   if (not Socket.is_open()) {
     return;
   }
-  auto HandlerGlue = [this](auto &Err, auto Size) {
+  auto HandlerGlue = [this](auto const &Err, auto Size) {
     this->sentMessageHandler(Err, Size);
   };
   if (MessageBuffer.size() > MessageAdditionLimit) {
@@ -171,7 +171,7 @@ void Connection::Impl::waitForMessage() {
 void Connection::Impl::doAddressQuery() {
   setState(Status::ADDR_LOOKUP);
   asio::ip::tcp::resolver::query Query(HostAddress, HostPort);
-  auto HandlerGlue = [this](auto &Error, auto EndpointIter) {
+  auto HandlerGlue = [this](auto const &Error, auto EndpointIter) {
     this->resolverHandler(Error, EndpointIter);
   };
   Resolver.async_resolve(Query, HandlerGlue);

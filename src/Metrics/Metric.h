@@ -43,7 +43,7 @@ public:
 
   void setDeregistrationDetails(
       std::string const &NameWithPrefix,
-      std::shared_ptr<Reporter> &ReporterResponsibleForMetric) {
+      std::shared_ptr<Reporter> const &ReporterResponsibleForMetric) {
     FullName = NameWithPrefix;
     ReporterForMetric = ReporterResponsibleForMetric;
   }
