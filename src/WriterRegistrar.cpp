@@ -18,13 +18,13 @@ struct FactoryInfo {
   std::string Name;
 };
 
-std::map<IdNameHash, FactoryInfo> &getFactories() {
-  static std::map<IdNameHash, FactoryInfo> Factories;
+std::map<WriterModuleHash, FactoryInfo> &getFactories() {
+  static std::map<WriterModuleHash, FactoryInfo> Factories;
   return Factories;
 }
 
-IdNameHash getWriterModuleHash(std::string const &FlatbufferID,
-                               std::string const &ModuleName) {
+WriterModuleHash getWriterModuleHash(std::string const &FlatbufferID,
+                                     std::string const &ModuleName) {
   return std::hash<std::string>{}(FlatbufferID + ModuleName);
 }
 
@@ -79,7 +79,7 @@ ModuleFactory const &find(std::string const &FlatbufferID,
                           "\"");
 }
 
-ModuleFactory const &find(IdNameHash ModuleHash) {
+ModuleFactory const &find(WriterModuleHash ModuleHash) {
   return getFactories().at(ModuleHash).FactoryPtr;
 }
 

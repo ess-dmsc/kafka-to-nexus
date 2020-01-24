@@ -20,10 +20,10 @@
 namespace WriterModule {
 namespace Registry {
 using ModuleFactory = std::function<std::unique_ptr<WriterModule::Base>()>;
-using IdNameHash = size_t;
+using WriterModuleHash = size_t;
 
-IdNameHash getWriterModuleHash(std::string const &FlatbufferID,
-                               std::string const &ModuleName);
+WriterModuleHash getWriterModuleHash(std::string const &FlatbufferID,
+                                     std::string const &ModuleName);
 
 /// \brief Get all registered modules.
 ///
@@ -53,7 +53,7 @@ ModuleFactory const &find(std::string const &FlatbufferID);
 ModuleFactory const &find(std::string const &FlatbufferID,
                           std::string const &ModuleName);
 
-ModuleFactory const &find(IdNameHash ModuleHash);
+ModuleFactory const &find(WriterModuleHash ModuleHash);
 
 void clear();
 
