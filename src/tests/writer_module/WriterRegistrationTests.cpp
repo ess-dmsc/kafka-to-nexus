@@ -89,7 +89,7 @@ TEST_F(WriterRegistrationTest, HashKeyFound) {
   EXPECT_NE(WriterModule::Registry::find(UsedHash), nullptr);
 }
 
-TEST_F(WriterRegistrationTest, HashKeyNotFound) {
+TEST_F(WriterRegistrationTest, HashKeyNotFoundThrows) {
   std::string UsedKey("t3mp");
   std::string WrongKey("1234");
   std::string UsedName("some_module_name");
