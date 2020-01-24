@@ -169,7 +169,7 @@ TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownNameAndUnknownId) {
                std::out_of_range);
 }
 
-TEST_F(WriterRegistrationTest, FailFindModuleUsingNameAndWrongId) {
+TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownId) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
   {
