@@ -865,10 +865,10 @@ void HDFFile::init(std::string const &Filename,
     hdf5::property::FileAccessList fapl;
 
     if (UseHDFSWMR) {
-      H5File =
-          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
-                                           hdf5::file::AccessFlags::SWMR_WRITE,
-                             fcpl, fapl);
+      H5File = hdf5::file::create(Filename,
+                                  hdf5::file::AccessFlags::TRUNCATE |
+                                      hdf5::file::AccessFlags::SWMR_WRITE,
+                                  fcpl, fapl);
       SWMREnabled = true;
     } else {
       H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,

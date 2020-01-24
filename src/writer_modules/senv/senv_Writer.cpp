@@ -15,23 +15,24 @@
 #include "helper.h"
 
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include "senv_Writer.h"
 #include <limits>
 #include <senv_data_generated.h>
 
-namespace Module {
+namespace WriterModule {
 namespace senv {
 
 // Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<senv_Writer>
-    RegisterSenvWriter("senv");
+static WriterModule::Registry::Registrar<senv_Writer>
+    RegisterSenvWriter("senv", "adc_sample_writer");
 
 void senv_Writer::parse_config(std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
                 "FastSampleEnvironmentWriter class.");
 }
 
-FileWriterBase::InitResult
+WriterModule::InitResult
 senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
@@ -62,12 +63,12 @@ senv_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise fast sample environment data tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return HDFWriterModule::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
-FileWriterBase::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Value = NeXusDataset::UInt16Value(CurrentGroup, NeXusDataset::Mode::Open);
@@ -80,9 +81,9 @@ FileWriterBase::InitResult senv_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
 std::vector<std::uint64_t> GenerateTimeStamps(std::uint64_t OriginTimeStamp,
@@ -124,4 +125,4 @@ void senv_Writer::write(const FileWriter::FlatbufferMessage &Message) {
 }
 
 } // namespace senv
-} // namespace Module
+} // namespace WriterModule

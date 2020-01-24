@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "WriterRegistrar.h"
 #include "fb_metadata_extractors/hs00/hs00_Extractor.h"
 #include "helper.h"
 #include "helpers/SetExtractorModule.h"
@@ -17,27 +18,27 @@
 #include "writer_modules/hs00/Slice.h"
 #include "writer_modules/hs00/WriterTyped.h"
 #include "writer_modules/hs00/hs00_Writer.h"
-#include <HDFWriterModule.h>
+#include <WriterModuleBase.h>
 #include <flatbuffers/flatbuffers.h>
 #include <gtest/gtest.h>
 #include <h5cpp/hdf5.hpp>
 #include <memory>
 
 using json = nlohmann::json;
-using Module::hs00::Dimension;
-using Module::hs00::hs00_Writer;
-using Module::hs00::Shape;
-using Module::hs00::Slice;
-using Module::hs00::UnexpectedJsonInput;
-using Module::hs00::WriterTyped;
+using WriterModule::hs00::Dimension;
+using WriterModule::hs00::hs00_Writer;
+using WriterModule::hs00::Shape;
+using WriterModule::hs00::Slice;
+using WriterModule::hs00::UnexpectedJsonInput;
+using WriterModule::hs00::WriterTyped;
 
 class EventHistogramWriter : public ::testing::Test {
 public:
   void SetUp() override {
     setExtractorModule<FlatbufferMetadata::hs00_Extractor>("hs00");
     try {
-      FileWriter::HDFWriterModuleRegistry::Registrar<hs00_Writer> RegisterIt(
-          "hs00");
+      WriterModule::Registry::Registrar<hs00_Writer> RegisterIt("hs00",
+                                                                "test_name");
     } catch (...) {
     }
   }
@@ -256,7 +257,7 @@ uint64_t getValueAtFlatIndex(uint32_t HistogramID, size_t Index,
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createTestMessage(size_t HistogramID, size_t PacketID,
                   std::vector<uint32_t> const &DimLengths) {
-  namespace hs00 = Module::hs00;
+  namespace hs00 = WriterModule::hs00;
   auto BuilderPtr = std::make_unique<flatbuffers::FlatBufferBuilder>();
   auto &Builder = *BuilderPtr;
   flatbuffers::Offset<void> BinBoundaries;
@@ -362,7 +363,7 @@ wrapBuilder(std::unique_ptr<flatbuffers::FlatBufferBuilder> const &Builder) {
       Builder->GetSize());
 }
 
-using FileWriter::HDFWriterModule_detail::InitResult;
+using WriterModule::InitResult;
 
 TEST_F(EventHistogramWriter, WriterInitHDF) {
   auto File = createFile("Test.EventHistogramWriter.WriterInitHDF",

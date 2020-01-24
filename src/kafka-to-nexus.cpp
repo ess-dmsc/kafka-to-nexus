@@ -9,12 +9,13 @@
 
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
-#include "HDFWriterModule.h"
 #include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
 #include "URI.h"
 #include "Version.h"
+#include "WriterModuleBase.h"
+#include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
 #include <csignal>
@@ -63,18 +64,15 @@ int main(int argc, char **argv) {
   }
 
   if (Options->ListWriterModules) {
-    fmt::print("Registered writer/reader classes\n");
-    fmt::print("\n--Identifiers of FlatbufferReader instances\n");
+    fmt::print("\n-- Known flatbuffer metadata extractors\n");
     for (auto &ReaderPair :
          FileWriter::FlatbufferReaderRegistry::getReaders()) {
       fmt::print("---- {}\n", ReaderPair.first);
     }
-    fmt::print("\n--Identifiers of HDFWriterModule factories\n");
-    for (auto &WriterPair :
-         FileWriter::HDFWriterModuleRegistry::getFactories()) {
-      fmt::print("---- {}\n", WriterPair.first);
+    fmt::print("\n--Known writer modules\n");
+    for (auto &WriterPair : WriterModule::Registry::getFactoryIdsAndNames()) {
+      fmt::print("---- {} : {}\n", WriterPair.first, WriterPair.second);
     }
-    fmt::print("\nDone, exiting\n");
     return 0;
   }
 

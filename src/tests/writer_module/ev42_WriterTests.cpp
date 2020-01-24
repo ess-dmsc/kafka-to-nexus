@@ -21,7 +21,7 @@
 #include "helpers/SetExtractorModule.h"
 #include "writer_modules/ev42/ev42_Writer.h"
 
-using namespace Module::ev42;
+using namespace WriterModule::ev42;
 
 struct AdcDebugInfo {
   explicit AdcDebugInfo(std::vector<uint32_t> Amplitude = {0, 1, 2},
@@ -125,11 +125,11 @@ public:
   std::string const TestGroupName = "test_group";
 };
 
-using FileWriter::HDFWriterModule_detail::InitResult;
+using WriterModule::InitResult;
 
 TEST_F(EventWriterTests, WriterInitialisesFileWithNXEventDataDatasets) {
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     Writer.parse_config("{}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   }
@@ -154,7 +154,7 @@ TEST_F(
     EventWriterTests,
     WriterInitialisesFileWithNXEventDataDatasetsAndAdcDatasetsWhenRequested) {
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
@@ -177,18 +177,18 @@ TEST_F(
 }
 
 TEST_F(EventWriterTests, WriterFailsToReopenGroupWhichWasNeverInitialised) {
-  Module::ev42::ev42_Writer Writer;
+  WriterModule::ev42::ev42_Writer Writer;
   EXPECT_FALSE(Writer.reopen(TestGroup) == InitResult::OK);
 }
 
 TEST_F(EventWriterTests, WriterSuccessfullyReopensGroupWhichWasInitialised) {
-  Module::ev42::ev42_Writer Writer;
+  WriterModule::ev42::ev42_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
 }
 
 TEST_F(EventWriterTests, WriterReportsFailureIfTryToInitialiseTwice) {
-  Module::ev42::ev42_Writer Writer;
+  WriterModule::ev42::ev42_Writer Writer;
   EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
   EXPECT_FALSE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
 }
@@ -207,7 +207,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromSingleMessage) {
 
   // Create writer and give it the message to write
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -263,7 +263,7 @@ TEST_F(EventWriterTests, WriterSuccessfullyRecordsEventDataFromTwoMessages) {
 
   // Create writer and give it the message to write
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
     EXPECT_TRUE(Writer.reopen(TestGroup) == InitResult::OK);
     EXPECT_NO_THROW(Writer.write(TestMessage));
@@ -327,7 +327,7 @@ TEST_F(EventWriterTests,
 
   // Create writer and give it the message to write
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
@@ -364,7 +364,7 @@ TEST_F(EventWriterTests,
 
   // Create writer and give it the message to write
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);
@@ -420,7 +420,7 @@ TEST_F(EventWriterTests,
 
   // Create writer and give it the message to write
   {
-    Module::ev42::ev42_Writer Writer;
+    WriterModule::ev42::ev42_Writer Writer;
     // Tell writer module to write ADC pulse debug data
     Writer.parse_config("{\"adc_pulse_debug\": true}");
     EXPECT_TRUE(Writer.init_hdf(TestGroup, "{}") == InitResult::OK);

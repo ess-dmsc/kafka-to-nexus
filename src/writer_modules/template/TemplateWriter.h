@@ -25,7 +25,7 @@
 /// flatbuffer. See the documentation of the individual member functions for
 /// more information on how these should be implemented.
 /// The second class which you must implement is a class that inherits from the
-/// abstract class FileWriter::HDFWriterModule. This class should implement the
+/// abstract class WriterModule::Base. This class should implement the
 /// actual writing of flatbuffer data to the HDF5 file. More information on the
 /// pure virtual functions that you must implement can be found below.
 
@@ -34,7 +34,7 @@
 
 #pragma once
 #include "FlatbufferMessage.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include <iostream>
 
 /// \brief A separate namespace for this specific file writing module. Use this
@@ -47,7 +47,7 @@ namespace TemplateWriter {
 /// initialising the hdf-file (creating datasets etc.). The second instantiation
 /// is used for writing the actual data. More information on this can be found
 /// in the documentation for the member functions below.
-class WriterClass : public FileWriter::HDFWriterModule {
+class WriterClass : public WriterModule::Base {
 public:
   /// \brief Constructor, initialise state here.
   ///
@@ -61,10 +61,10 @@ public:
   ///
   /// Use the destructor to close any open datasets and deallocate buffers etc.
   /// As mentioned previously, this class is instantiated twice for every data
-  /// source. FileWriter::HDFWriterModule::close() is called only on the first
+  /// source. WriterModule::Base::close() is called only on the first
   /// instantiation. Thus if you have any resources that you allocate/claim in
   /// the constructor, you should probable return those here (the destructor)
-  /// instead of in FileWriter::HDFWriterModule::close().
+  /// instead of in WriterModule::Base::close().
   ~WriterClass() override { std::cout << "WriterClass::~WriterClass()\n"; }
 
   /// \brief Used to pass configuration/settings to the current instance of this
@@ -103,11 +103,11 @@ public:
   /// https://support.hdfgroup.org/HDF5/docNewFeatures/SWMR/HDF5_SWMR_Users_Guide.pdf.
   /// When initialising the HDF5 file, the call order (relevant to this class)
   /// is as follows:
-  /// \li FileWriter::HDFWriterModule::HDFWriterModule()
-  /// \li FileWriter::HDFWriterModule::parse_config()
-  /// \li FileWriter::HDFWriterModule::init_hdf()
-  /// \li FileWriter::HDFWriterModule::close()
-  /// \li FileWriter::HDFWriterModule::~HDFWriterModule()
+  /// \li WriterModule::Base::Base()
+  /// \li WriterModule::Base::parse_config()
+  /// \li WriterModule::Base::init_hdf()
+  /// \li WriterModule::Base::close()
+  /// \li WriterModule::Base::~Base()
   ///
   /// \note This call is executed in a catch-all block (which re-throws)
   /// relatively high up in call hierarchy the first time it is called for a
@@ -122,7 +122,7 @@ public:
   /// datasets should be created.
   /// \param HDFAttributes Additional attributes as defined in the Nexus
   /// structure which the HDFWriterModule should write to the file. Because the
-  /// HDFWriterModule is free to create the structure and datasets according to
+  /// writer module is free to create the structure and datasets according to
   /// its needs, it must also take the responsibility to write these
   /// attributes.
   /// \return An instance of InitResult. Note that these instances can only be
@@ -131,14 +131,14 @@ public:
   /// Note that the return value is not actually checked and thus returning an
   /// error has no side effects.
   // cppcheck-suppress functionStatic
-  InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/,
-                      std::string const &/*HDFAttributes*/) override {
+  WriterModule::InitResult init_hdf(hdf5::node::Group &/*HDFGroup*/,
+                                    std::string const &/*HDFAttributes*/) override {
     std::cout << "WriterClass::init_hdf()\n";
-    return InitResult::OK;
+    return WriterModule::InitResult::OK;
   }
 
   /// \brief Re-open datasets that have been created when calling
-  /// FileWriter::HDFWriterModule::init_hdf().
+  /// WriterModule::Base::init_hdf().
   ///
   /// This function should not modify attributes, create datasets or a number of
   /// other things. See the following link for a list of things that you are not
@@ -147,11 +147,11 @@ public:
   /// This member function is called in the second instantiation of this class
   /// (for a specific data source). The order in which methods (relevant to this
   /// class) are called is as follows:
-  /// \li FileWriter::HDFWriterModule::HDFWriterModule()
-  /// \li FileWriter::HDFWriterModule::parse_config()
-  /// \li FileWriter::HDFWriterModule::reopen()
-  /// \li Multiple calls to FileWriter::HDFWriterModule::write()
-  /// \li FileWriter::HDFWriterModule::~HDFWriterModule()
+  /// \li WriterModule::Base::Base()
+  /// \li WriterModule::Base::parse_config()
+  /// \li WriterModule::Base::reopen()
+  /// \li Multiple calls to WriterModule::Base::write()
+  /// \li WriterModule::Base::~Base()
   ///
   /// \note This call is executed in a catch-all block (which re-throws)
   /// relatively high up in call hierarchy the first time it is called for a
@@ -166,9 +166,9 @@ public:
   /// constructed using the static methods InitResult::OK(),
   /// InitResult::ERROR_IO() and InitResult::ERROR_INCOMPLETE_CONFIGURATION().
   // cppcheck-suppress functionStatic
-  InitResult reopen(hdf5::node::Group &/*HDFGroup*/) override {
+  WriterModule::InitResult reopen(hdf5::node::Group &/*HDFGroup*/) override {
     std::cout << "WriterClass::reopen()\n";
-    return InitResult::OK;
+    return WriterModule::InitResult::OK;
   }
 
   /// \brief Implements the data writing functionality of the file writing
@@ -181,11 +181,11 @@ public:
   /// This member function is called on the second instance of this class for a
   /// specific data source. The order in which methods (relevant to this class)
   /// are called is as follows:
-  /// \li FileWriter::HDFWriterModule::HDFWriterModule()
-  /// \li FileWriter::HDFWriterModule::parse_config()
-  /// \li FileWriter::HDFWriterModule::reopen()
-  /// \li Multiple calls to FileWriter::HDFWriterModule::write()
-  /// \li FileWriter::HDFWriterModule::~HDFWriterModule()
+  /// \li WriterModule::Base::Base()
+  /// \li WriterModule::Base::parse_config()
+  /// \li WriterModule::Base::reopen()
+  /// \li Multiple calls to WriterModule::Base::write()
+  /// \li WriterModule::Base::~Base()
   ///
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.

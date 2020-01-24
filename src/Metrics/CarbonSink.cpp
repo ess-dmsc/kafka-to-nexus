@@ -19,4 +19,4 @@ bool CarbonSink::isHealthy() {
   // healthy and ready for a next batch
   return (CarbonConnection.messageQueueSize() == 0);
 }
-}
+} // namespace Metrics

@@ -9,13 +9,13 @@
 
 #pragma once
 
-#include "HDFWriterModule.h"
 #include "Shape.h"
+#include "WriterModuleBase.h"
 #include "json.h"
 #include <h5cpp/hdf5.hpp>
 #include <vector>
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 using FileWriter::FlatbufferMessage;
@@ -58,4 +58,4 @@ private:
                                        json const &Json);
 };
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule

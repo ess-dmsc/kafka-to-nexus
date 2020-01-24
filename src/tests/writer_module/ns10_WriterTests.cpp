@@ -13,6 +13,7 @@
 #include <memory>
 
 #include "FlatbufferMessage.h"
+#include "WriterRegistrar.h"
 #include "fb_metadata_extractors/ns10/ns10_Extractor.h"
 #include "helpers/HDFFileTestHelper.h"
 #include "helpers/SetExtractorModule.h"
@@ -20,7 +21,7 @@
 #include "writer_modules/ns10/ns10_Writer.h"
 #include <ns10_cache_entry_generated.h>
 
-using Module::ns10::ns10_Writer;
+using WriterModule::ns10::ns10_Writer;
 
 std::unique_ptr<flatbuffers::FlatBufferBuilder>
 createFlatbufferMessageFromJson(nlohmann::json const &Json) {
@@ -65,8 +66,8 @@ createFlatbufferMessageFromJson(nlohmann::json const &Json) {
 
 void registerSchema() {
   try {
-    FileWriter::HDFWriterModuleRegistry::Registrar<ns10_Writer> RegisterIt(
-        "ns10");
+    WriterModule::Registry::Registrar<ns10_Writer> RegisterIt(
+        "ns10", "another_test_name");
   } catch (...) {
   }
 }
@@ -107,9 +108,8 @@ public:
 TEST_F(NicosCacheWriterTest, WriterReturnValues) {
   ns10_Writer SomeWriter;
   EXPECT_TRUE(SomeWriter.init_hdf(UsedGroup, "{}") ==
-              FileWriter::HDFWriterModule_detail::InitResult::OK);
-  EXPECT_TRUE(SomeWriter.reopen(UsedGroup) ==
-              FileWriter::HDFWriterModule_detail::InitResult::OK);
+              WriterModule::InitResult::OK);
+  EXPECT_TRUE(SomeWriter.reopen(UsedGroup) == WriterModule::InitResult::OK);
 }
 
 TEST_F(NicosCacheWriterTest, WriterInitCreateGroupTest) {

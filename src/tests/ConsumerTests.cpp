@@ -404,8 +404,7 @@ TEST_F(ConsumerTests, testGetCurrentOffsetsThrowsIfTopicDoesntExist) {
   auto TopicVector =
       RdKafka::Metadata::TopicMetadataVector{TopicMetadata.get()};
   auto PartitionMetadata = std::make_unique<MockPartitionMetadata>();
-  auto PartitionMetadataVector =
-      RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
+  RdKafka::TopicMetadata::PartitionMetadataVector{PartitionMetadata.get()};
   REQUIRE_CALL(*Metadata, topics()).TIMES(1).RETURN(&TopicVector);
   {
     auto Consumer = std::make_unique<KafkaW::Consumer>(

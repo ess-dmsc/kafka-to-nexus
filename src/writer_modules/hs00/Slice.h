@@ -12,7 +12,7 @@
 #include "json.h"
 #include <vector>
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 class Slice {
@@ -27,4 +27,4 @@ private:
   std::vector<uint32_t> Sizes;
 };
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule

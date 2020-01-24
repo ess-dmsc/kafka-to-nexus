@@ -10,7 +10,7 @@
 #pragma once
 
 #include "FlatbufferMessage.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include <NeXusDataset.h>
 #include <array>
 #include <chrono>
@@ -19,20 +19,20 @@
 #include <nonstd/optional.hpp>
 #include <vector>
 
-namespace Module {
+namespace WriterModule {
 namespace f142 {
 using FlatbufferMessage = FileWriter::FlatbufferMessage;
 using ForwarderDebugDataset = NeXusDataset::ExtensibleDataset<std::uint64_t>;
 
-class f142_Writer : public FileWriter::HDFWriterModule {
+class f142_Writer : public WriterModule::Base {
 public:
-  /// Implements HDFWriterModule interface.
+  /// Implements writer module interface.
   InitResult init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) override;
-  /// Implements HDFWriterModule interface.
+  /// Implements writer module interface.
   void parse_config(std::string const &ConfigurationStream) override;
-  /// Implements HDFWriterModule interface.
-  f142_Writer::InitResult reopen(hdf5::node::Group &HDFGroup) override;
+  /// Implements writer module interface.
+  WriterModule::InitResult reopen(hdf5::node::Group &HDFGroup) override;
 
   /// Write an incoming message which should contain a flatbuffer.
   void write(FlatbufferMessage const &Message) override;
@@ -78,4 +78,4 @@ protected:
 };
 
 } // namespace f142
-} // namespace Module
+} // namespace WriterModule

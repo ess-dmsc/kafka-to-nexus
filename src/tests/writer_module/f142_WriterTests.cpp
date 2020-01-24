@@ -24,7 +24,7 @@
 
 using nlohmann::json;
 
-using namespace Module::f142;
+using namespace WriterModule::f142;
 
 class f142Init : public ::testing::Test {
 public:
@@ -61,12 +61,12 @@ TEST_F(f142Init, BasicDefaultInit) {
 TEST_F(f142Init, ReOpenSuccess) {
   f142_Writer TestWriter;
   TestWriter.init_hdf(RootGroup, "");
-  EXPECT_EQ(TestWriter.reopen(RootGroup), f142_Writer::InitResult::OK);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::OK);
 }
 
 TEST_F(f142Init, ReOpenFailure) {
   f142_Writer TestWriter;
-  EXPECT_EQ(TestWriter.reopen(RootGroup), f142_Writer::InitResult::ERROR);
+  EXPECT_EQ(TestWriter.reopen(RootGroup), WriterModule::InitResult::ERROR);
 }
 
 TEST_F(f142Init, CheckInitDataType) {
@@ -220,8 +220,8 @@ TEST_F(f142ConfigParse, DataTypes) {
     f142_WriterStandIn TestWriter;
     EXPECT_EQ(TestWriter.ElementType, Type::float64);
     TestWriter.parse_config("{\"type\":\"" + CType.first + "\"}");
-    EXPECT_EQ(TestWriter.ElementType, CType.second) << "Failed on type string: "
-                                                    << CType.first;
+    EXPECT_EQ(TestWriter.ElementType, CType.second)
+        << "Failed on type string: " << CType.first;
   }
 }
 

@@ -25,7 +25,7 @@
 /// flatbuffer. See the documentation of the individual member functions for
 /// more information on how these should be implemented.
 /// The second class which you must implement is a class that inherits from the
-/// abstract class FileWriter::HDFWriterModule. This class should implement the
+/// abstract class WriterModule::Base. This class should implement the
 /// actual writing of flatbuffer data to the HDF5 file. More information on the
 /// pure virtual functions that you must implement can be found below.
 
@@ -34,7 +34,7 @@
 
 #pragma once
 #include "FlatbufferReader.h"
-#include "HDFWriterModule.h"
+#include "WriterModuleBase.h"
 #include <iostream>
 
 /// \brief A separate namespace for this specific file writing module. Use this
@@ -68,7 +68,7 @@ public:
   /// call this function.
   ///
   /// The alternative is to do verification in the file writing part of the code
-  /// i.e. FileWriter::HDFWriterModule::write().
+  /// i.e. WriterModule::Base::write().
   ///
   /// \note Try to avoid throwing any exceptions here as it (appears) to likely
   /// either crash the application or leave it in an inconsistent state.

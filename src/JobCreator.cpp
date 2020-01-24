@@ -11,14 +11,13 @@
 
 #include "JobCreator.h"
 #include "CommandParser.h"
-#include "EventLogger.h"
 #include "FileWriterTask.h"
-#include "HDFWriterModule.h"
 #include "Msg.h"
 #include "StreamMaster.h"
+#include "WriterModuleBase.h"
+#include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
-#include <chrono>
 
 using std::vector;
 
@@ -63,9 +62,9 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
 
 void setUpHdfStructure(StreamSettings const &StreamSettings,
                        std::unique_ptr<FileWriterTask> const &Task) {
-  HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+  WriterModule::Registry::ModuleFactory ModuleFactory;
   try {
-    ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+    ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
   } catch (std::exception const &E) {
     throw std::runtime_error(
         fmt::format("Error while getting '{}',  source: {}  what: {}",
@@ -75,17 +74,17 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
   auto HDFWriterModule = ModuleFactory();
   if (!HDFWriterModule) {
     throw std::runtime_error(fmt::format(
-        "Can not create a HDFWriterModule for '{}'", StreamSettings.Module));
+        "Can not create a writer module for '{}'", StreamSettings.Module));
   }
 
   auto RootGroup = Task->hdfGroup();
   try {
     HDFWriterModule->parse_config(StreamSettings.ConfigStreamJson);
   } catch (std::exception const &E) {
-    std::throw_with_nested(std::runtime_error(
-        fmt::format("Exception while HDFWriterModule::parse_config  module: {} "
-                    " source: {}  what: {}",
-                    StreamSettings.Module, StreamSettings.Source, E.what())));
+    std::throw_with_nested(std::runtime_error(fmt::format(
+        "Exception while WriterModule::Base::parse_config  module: {} "
+        " source: {}  what: {}",
+        StreamSettings.Module, StreamSettings.Source, E.what())));
   }
 
   auto StreamGroup = hdf5::node::get_group(
@@ -176,25 +175,25 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
 }
 
 void JobCreator::addStreamSourceToWriterModule(
-    std::vector<StreamSettings> &StreamSettingsList,
+    vector<StreamSettings> const &StreamSettingsList,
     std::unique_ptr<FileWriterTask> &Task) {
   auto Logger = getLogger();
 
   for (auto const &StreamSettings : StreamSettingsList) {
     Logger->trace("Add Source: {}", StreamSettings.Topic);
-    HDFWriterModuleRegistry::ModuleFactory ModuleFactory;
+    WriterModule::Registry::ModuleFactory ModuleFactory;
 
     try {
-      ModuleFactory = HDFWriterModuleRegistry::find(StreamSettings.Module);
+      ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
     } catch (std::exception const &E) {
-      Logger->info("Module '{}' is not available, error {}",
+      Logger->info("WriterModule '{}' is not available, error {}",
                    StreamSettings.Module, E.what());
       continue;
     }
 
     auto HDFWriterModule = ModuleFactory();
     if (!HDFWriterModule) {
-      Logger->info("Can not create a HDFWriterModule for '{}'",
+      Logger->info("Can not create a writer module for '{}'",
                    StreamSettings.Module);
       continue;
     }
@@ -207,13 +206,14 @@ void JobCreator::addStreamSourceToWriterModule(
         auto StreamGroup = hdf5::node::get_group(
             RootGroup, StreamSettings.StreamHDFInfoObj.HDFParentName);
         auto Err = HDFWriterModule->reopen({StreamGroup});
-        if (Err != HDFWriterModule_detail::InitResult::OK) {
+        if (Err != WriterModule::InitResult::OK) {
           Logger->error("can not reopen HDF file for stream {}",
                         StreamSettings.StreamHDFInfoObj.HDFParentName);
           continue;
         }
       } catch (std::runtime_error const &e) {
-        Logger->error("Exception on HDFWriterModule->reopen(): {}", e.what());
+        Logger->error("Exception on WriterModule::Base->reopen(): {}",
+                      e.what());
         continue;
       }
 

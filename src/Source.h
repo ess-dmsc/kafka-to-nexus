@@ -11,8 +11,8 @@
 
 #include "FlatbufferReader.h"
 #include "HDFFile.h"
-#include "HDFWriterModule.h"
 #include "ProcessMessageResult.h"
+#include "WriterModuleBase.h"
 #include "logger.h"
 #include <string>
 
@@ -25,7 +25,7 @@ namespace FileWriter {
 class Source final {
 public:
   Source(std::string Name, std::string ID, std::string Topic,
-         HDFWriterModule::ptr Writer);
+         WriterModule::ptr Writer);
   Source(Source &&) = default;
   ~Source() = default;
   std::string const &topic() const;
@@ -39,7 +39,7 @@ private:
   std::string SchemaID;
   std::string TopicName;
   FlatbufferMessage::SrcHash Hash;
-  std::unique_ptr<HDFWriterModule> WriterModule;
+  std::unique_ptr<WriterModule::Base> WriterModule;
   SharedLogger Logger = getLogger();
 };
 

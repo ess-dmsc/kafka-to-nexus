@@ -10,6 +10,7 @@
 #include <ev42_events_generated.h>
 
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include "ev42_Writer.h"
 #include "helper.h"
 #include "json.h"
@@ -22,11 +23,11 @@ getFBVectorAsArrayAdapter(const flatbuffers::Vector<DataType> *Data) {
 }
 } // namespace
 
-namespace Module {
+namespace WriterModule {
 namespace ev42 {
 
 using nlohmann::json;
-using HDFWriterModule = FileWriter::HDFWriterModule;
+using HDFWriterModule = WriterModule::Base;
 
 struct append_ret {
   int status;
@@ -107,7 +108,7 @@ void ev42_Writer::createAdcDatasets(hdf5::node::Group &HDFGroup) const {
       ChunkSizeFor64BitTypes);    // NOLINT(bugprone-unused-raii)
 }
 
-HDFWriterModule::InitResult
+WriterModule::InitResult
 ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   auto Create = NeXusDataset::Mode::Create;
@@ -161,12 +162,12 @@ ev42_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     auto message = hdf5::error::print_nested(E);
     Logger->error("ev42 could not init hdf_parent: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
-    return HDFWriterModule::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return HDFWriterModule::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
-HDFWriterModule::InitResult ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     EventTimeOffset = NeXusDataset::EventTimeOffset(HDFGroup, Open);
@@ -182,9 +183,9 @@ HDFWriterModule::InitResult ev42_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return HDFWriterModule::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 void ev42_Writer::reopenAdcDatasets(const hdf5::node::Group &HDFGroup) {
   AmplitudeDataset =
@@ -283,8 +284,8 @@ void ev42_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
   PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
 
-static FileWriter::HDFWriterModuleRegistry::Registrar<ev42_Writer>
-    RegisterWriter("ev42");
+static WriterModule::Registry::Registrar<ev42_Writer>
+    RegisterWriter("ev42", "general_event_writer");
 
 } // namespace ev42
-} // namespace Module
+} // namespace WriterModule

@@ -29,4 +29,4 @@ void LogSink::reportMetric(InternalMetric &MetricToBeReported) {
   }
   MetricToBeReported.LastTime = Now;
 }
-}
+} // namespace Metrics

@@ -78,7 +78,6 @@ set(kafka_to_nexus_SRC
         EventLogger.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
-        HDFWriterModule.cpp
         KafkaW/Consumer.cpp
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
@@ -92,6 +91,7 @@ set(kafka_to_nexus_SRC
         StreamMaster.cpp
         CommandParser.cpp
         ExtensibleDataset.cpp
+        WriterRegistrar.cpp
         Metrics/Reporter.cpp
         Metrics/Registrar.cpp
         Metrics/Metric.cpp
@@ -109,7 +109,7 @@ set(kafka_to_nexus_INC
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
-        HDFWriterModule.h
+    WriterModuleBase.h
         helper.h
         json.h
         KafkaW/BrokerSettings.h
@@ -139,6 +139,7 @@ set(kafka_to_nexus_INC
         KafkaW/ConfigureKafka.h
         CommandParser.h
         ExtensibleDataset.h
+        WriterRegistrar.h
         Metrics/Registrar.h
         Metrics/Metric.h
         Metrics/CarbonInterface.h

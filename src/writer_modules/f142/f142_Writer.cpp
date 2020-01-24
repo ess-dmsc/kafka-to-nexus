@@ -9,12 +9,13 @@
 
 #include "f142_Writer.h"
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include "json.h"
 #include <algorithm>
 #include <cctype>
 #include <f142_logdata_generated.h>
 
-namespace Module {
+namespace WriterModule {
 namespace f142 {
 
 using nlohmann::json;
@@ -117,11 +118,11 @@ void f142_Writer::parse_config(std::string const &ConfigurationStream) {
   }
 }
 
-/// \brief Implement the HDFWriterModule interface, forward to the CREATE case
+/// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
-f142_Writer::InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
-                                              std::string const &) {
+InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
+                                 std::string const &) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::Time(HDFGroup, Create,
@@ -146,15 +147,15 @@ f142_Writer::InitResult f142_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     auto message = hdf5::error::print_nested(E);
     Logger->error("f142 could not init hdf_parent: {}  trace: {}",
                   static_cast<std::string>(HDFGroup.link().path()), message);
-    return f142_Writer::InitResult::ERROR;
+    return InitResult::ERROR;
   }
 
-  return f142_Writer::InitResult::OK;
+  return InitResult::OK;
 }
 
-/// \brief Implement the HDFWriterModule interface, forward to the OPEN case of
+/// \brief Implement the writer module interface, forward to the OPEN case of
 /// `init_hdf`.
-f142_Writer::InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
+InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
   auto Open = NeXusDataset::Mode::Open;
   try {
     Timestamp = NeXusDataset::Time(HDFGroup, Open);
@@ -165,9 +166,9 @@ f142_Writer::InitResult f142_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return f142_Writer::InitResult::ERROR;
+    return InitResult::ERROR;
   }
-  return f142_Writer::InitResult::OK;
+  return InitResult::OK;
 }
 
 template <typename DataType, class DatasetType>
@@ -247,13 +248,13 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
     appendData<const double>(Values, DataPtr, NrOfElements);
     break;
   default:
-    throw FileWriter::HDFWriterModuleRegistry::WriterException(
+    throw WriterModule::WriterException(
         "Unknown data type in f142 flatbuffer.");
   }
 }
 /// Register the writer module.
-static FileWriter::HDFWriterModuleRegistry::Registrar<f142_Writer>
-    RegisterWriter("f142");
+static WriterModule::Registry::Registrar<f142_Writer>
+    RegisterWriter("f142", "general_epics_writer");
 
 } // namespace f142
-} // namespace Module
+} // namespace WriterModule

@@ -45,4 +45,4 @@ private:
   asio::steady_timer AsioTimer;
   std::thread ReporterThread;
 };
-}
+} // namespace Metrics

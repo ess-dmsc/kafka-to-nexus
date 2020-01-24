@@ -14,23 +14,24 @@
 
 #include "tdct_Writer.h"
 #include "HDFFile.h"
+#include "WriterRegistrar.h"
 #include <limits>
 #include <nlohmann/json.hpp>
 #include <tdct_timestamps_generated.h>
 
-namespace Module {
+namespace WriterModule {
 namespace tdct {
 
 // Register the file writing part of this module
-static FileWriter::HDFWriterModuleRegistry::Registrar<tdct_Writer>
-    RegisterSenvWriter("tdct");
+static WriterModule::Registry::Registrar<tdct_Writer>
+    RegisterSenvWriter("tdct", "chopper_tdc_writer");
 
 void tdct_Writer::parse_config(std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
                 "ChopperTimeStampWriter class.");
 }
 
-FileWriterBase::InitResult
+WriterModule::InitResult
 tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
                       std::string const &HDFAttributes) {
   const int DefaultChunkSize = 1024;
@@ -57,12 +58,12 @@ tdct_Writer::init_hdf(hdf5::node::Group &HDFGroup,
     Logger->error("Unable to initialise chopper time stamp tree in "
                   "HDF file with error message: \"{}\"",
                   E.what());
-    return HDFWriterModule::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
-FileWriterBase::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
+WriterModule::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
   try {
     auto &CurrentGroup = HDFGroup;
     Timestamp = NeXusDataset::Time(CurrentGroup, NeXusDataset::Mode::Open);
@@ -74,9 +75,9 @@ FileWriterBase::InitResult tdct_Writer::reopen(hdf5::node::Group &HDFGroup) {
     Logger->error(
         "Failed to reopen datasets in HDF file with error message: \"{}\"",
         std::string(E.what()));
-    return HDFWriterModule::InitResult::ERROR;
+    return WriterModule::InitResult::ERROR;
   }
-  return FileWriterBase::InitResult::OK;
+  return WriterModule::InitResult::OK;
 }
 
 void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
@@ -96,4 +97,4 @@ void tdct_Writer::write(const FileWriter::FlatbufferMessage &Message) {
 }
 
 } // namespace tdct
-} // namespace Module
+} // namespace WriterModule

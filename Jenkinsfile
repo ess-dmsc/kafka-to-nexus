@@ -13,11 +13,11 @@ release_os = "centos7-release"
 no_graylog = "centos7-no_graylog"
 
 container_build_nodes = [
-  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
-  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
-  'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7'),
-  'debian9': ContainerBuildNode.getDefaultContainerBuildNode('debian9'),
-  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804')
+  'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
+  'debian9': ContainerBuildNode.getDefaultContainerBuildNode('debian10'),
+  'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804-gcc8')
 ]
 
 // Define number of old builds to keep. These numbers are somewhat arbitrary,
@@ -119,7 +119,7 @@ builders = pipeline_builder.createBuilders { container ->
     container.sh """
     cd build
     . ./activate_run.sh
-    make -j4 all VERBOSE=1
+    make -j4 all
     """
   }  // stage
 
@@ -334,7 +334,7 @@ def get_macos_pipeline() {
           }
 
           try {
-            sh "make -j4 all UnitTests VERBOSE=1"
+            sh "make -j4 all UnitTests"
             sh ". ./activate_run.sh && ./bin/UnitTests"
           } catch (e) {
             failure_function(e, 'MacOSX / build+test failed')

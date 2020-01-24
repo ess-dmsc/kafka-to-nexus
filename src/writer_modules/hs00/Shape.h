@@ -13,7 +13,7 @@
 #include "json.h"
 #include <vector>
 
-namespace Module {
+namespace WriterModule {
 namespace hs00 {
 
 template <typename EdgeType> class Shape {
@@ -30,4 +30,4 @@ private:
   std::vector<Dimension<EdgeType>> Dimensions;
 };
 } // namespace hs00
-} // namespace Module
+} // namespace WriterModule
