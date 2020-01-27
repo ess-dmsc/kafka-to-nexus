@@ -31,7 +31,6 @@ std::string StatusReporter::createReport() {
   std::lock_guard<std::mutex> const lock(StatusMutex);
 
   Info["update_interval"] = Period.count();
-  Info["number_of_events_written"] = -1;
   Info["job_id"] = Status.jobId;
   Info["file_being_written"] = Status.filename;
   Info["start_time"] = Status.startTime.count();
@@ -54,7 +53,7 @@ void StatusReporter::reportStatus() {
 
 StatusReporter::~StatusReporter() { this->waitForStop(); }
 
-void StatusReporter::updateStatusInfo(StatusInfo NewInfo) {
+void StatusReporter::updateStatusInfo(StatusInfo const &NewInfo) {
   const std::lock_guard<std::mutex> lock(StatusMutex);
   Status = NewInfo;
 }

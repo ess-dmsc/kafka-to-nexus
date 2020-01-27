@@ -33,7 +33,7 @@ public:
   /// \brief Set the slow changing information to report.
   ///
   /// \param NewInfo The new information to report
-  void updateStatusInfo(StatusInfo NewInfo);
+  void updateStatusInfo(StatusInfo const & NewInfo);
 
   /// \brief Clear out the current information.
   ///
