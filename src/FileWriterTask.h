@@ -16,10 +16,6 @@
 #include <string>
 #include <vector>
 
-namespace KafkaW {
-class ProducerTopic;
-};
-
 namespace FileWriter {
 class DemuxTopic;
 
@@ -82,9 +78,7 @@ public:
   /// \return The job ID.
   std::string jobID() const;
 
-  /// \brief  Name of the file being written.
-  ///
-  /// Important for reopening of files.
+  /// \brief  Get the name of the file being written.
   ///
   /// \return The file name.
   std::string filename() const;
