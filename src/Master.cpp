@@ -79,9 +79,7 @@ void Master::handle_command(std::string const &Command,
         } else {
           Logger->info("Received request to gracefully stop file with id : {}",
                        StopInfo.JobID);
-          CurrentStreamMaster.reset(nullptr);
-          // TODO: Wait for it to finish writing?
-          IsWriting = false;
+          CurrentStreamMaster->setStopTime(getCurrentTimeStampMS());
         }
       } else {
         throw std::runtime_error(fmt::format(
@@ -149,6 +147,7 @@ void Master::run() {
         CurrentStreamMaster->isDoneWriting()) {
       CurrentStreamMaster.reset(nullptr);
       IsWriting = false;
+      StatusReporter->resetStatusInfo();
     }
   }
 }
