@@ -26,37 +26,40 @@ void StatusReporter::waitForStop() {
   StatusThread.join();
 }
 
+std::string StatusReporter::createReport() {
+  auto Info = nlohmann::json::object();
+  std::lock_guard<std::mutex> const lock(StatusMutex);
+
+  Info["update_interval"] = Period.count();
+  Info["number_of_events_written"] = -1;
+  Info["job_id"] = Status.jobId;
+  Info["file_being_written"] = Status.filename;
+  Info["start_time"] = Status.startTime.count();
+
+  return Info.dump();
+}
+
 void StatusReporter::reportStatus() {
   if (!StatusProducerTopic || !Running) {
     return;
   }
-  using nlohmann::json;
-  auto Info = json::object();
 
-  Info["update_interval"] = Period.count();
-  Info["number_of_events_written"] = -1;
-  {
-    const std::lock_guard<std::mutex> lock(StatusMutex);
-    Info["job_id"] = Status.jobId;
-    Info["file_being_written"] = Status.filename;
-    Info["start_time"] = Status.startTime.count();
-  }
-
-  auto StatusString = Info.dump();
-  auto StatusStringSize = StatusString.size();
-  if (StatusStringSize > 1000) {
-    auto StatusStringShort =
-        StatusString.substr(0, 1000) +
-            fmt::format(" ... {} chars total ...", StatusStringSize);
-    Logger->debug("status: {}", StatusStringShort);
-  } else {
-    Logger->debug("status: {}", StatusString);
-  }
-  StatusProducerTopic->produce(StatusString);
+  auto const StatusReport = createReport();
+  Logger->debug("status: {}", StatusReport);
+  StatusProducerTopic->produce(StatusReport);
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
   AsioTimer.async_wait(
       [this](std::error_code const & /*error*/) { this->reportStatus(); });
 }
 
 StatusReporter::~StatusReporter() { this->waitForStop(); }
+
+void StatusReporter::updateStatusInfo(StatusInfo NewInfo) {
+  const std::lock_guard<std::mutex> lock(StatusMutex);
+  Status = NewInfo;
+}
+
+void StatusReporter::resetStatusInfo() {
+  updateStatusInfo({"", "", std::chrono::milliseconds(0)});
+}
 } // namespace Status

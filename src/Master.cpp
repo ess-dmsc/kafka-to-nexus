@@ -117,15 +117,18 @@ struct OnScopeExit {
   SharedLogger Logger;
 };
 
-void Master::run() {
-  OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
-
+void Master::initialiseStatusReporter() {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
   auto StatusProducer = std::make_shared<KafkaW::Producer>(BrokerSettings);
   auto StatusProducerTopic = std::make_unique<KafkaW::ProducerTopic>(
       StatusProducer, MainConfig.KafkaStatusURI.Topic);
   StatusReporter = std::make_unique<Status::StatusReporter>(MainConfig.StatusMasterIntervalMS, StatusProducerTopic);
+}
+
+void Master::run() {
+  OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
+  initialiseStatusReporter();
 
   // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {

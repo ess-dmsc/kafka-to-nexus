@@ -65,5 +65,6 @@ private:
   static nlohmann::json parseCommand(std::string const &Command);
   bool IsWriting{false};
   std::unique_ptr<Status::StatusReporter> StatusReporter;
+  void initialiseStatusReporter();
 };
 } // namespace FileWriter

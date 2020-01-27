@@ -20,7 +20,7 @@ namespace Status {
 
 class StatusReporter {
 public:
-  explicit StatusReporter(
+  StatusReporter(
       std::chrono::milliseconds Interval,
       std::unique_ptr<KafkaW::ProducerTopic> &ApplicationStatusProducerTopic)
       : IO(), Period(Interval), AsioTimer(IO, Period), Running(false),
@@ -28,18 +28,19 @@ public:
     this->start();
   }
 
-  void updateStatusInfo(StatusInfo NewInfo) {
-    const std::lock_guard<std::mutex> lock(StatusMutex);
-    Status = NewInfo;
-  }
+  ~StatusReporter();
 
-  void resetStatusInfo() {
-    updateStatusInfo({"", "", std::chrono::milliseconds(0)});
-  }
+  /// \brief Set the slow changing information to report.
+  ///
+  /// \param NewInfo The new information to report
+  void updateStatusInfo(StatusInfo NewInfo);
+
+  /// \brief Clear out the current information.
+  ///
+  /// Used when a file has finished writing
+  void resetStatusInfo();
 
   void reportStatus();
-
-  ~StatusReporter();
 
 private:
   void start();
@@ -55,6 +56,7 @@ private:
   mutable std::mutex StatusMutex;
   /// Blocks until the timer thread has stopped
   void waitForStop();
+  std::string createReport();
 };
 
 } // namespace Status
