@@ -9,9 +9,8 @@
 
 #include "StreamStatus.h"
 
-using StreamerStatus = FileWriter::Status::StreamerStatus;
 
-std::string FileWriter::Status::StatusDescription(const StreamerStatus &Error) {
+std::string FileWriter::StatusDescription(const StreamerStatus &Error) {
   switch (Error) {
   case StreamerStatus::OK:
     return "No error.";

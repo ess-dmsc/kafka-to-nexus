@@ -96,7 +96,7 @@ void StreamMaster::run() {
 
     for (auto &TopicStreamerPair : Streamers) {
       if (TopicStreamerPair.second.runStatus() !=
-          Status::StreamerStatus::HAS_FINISHED) {
+          StreamerStatus::HAS_FINISHED) {
         StreamsStillWriting = true;
         processStream(TopicStreamerPair.second);
       }
@@ -114,9 +114,9 @@ void StreamMaster::doStop() {
     Logger->info("Shutting down {}", Stream.first);
     Logger->info("Shut down {}", Stream.first);
     auto CloseResult = Stream.second.close();
-    if (CloseResult != Status::StreamerStatus::HAS_FINISHED) {
+    if (CloseResult != StreamerStatus::HAS_FINISHED) {
       Logger->info("Problem with stopping {} : {}", Stream.first,
-                   Status::StatusDescription(CloseResult));
+                   StatusDescription(CloseResult));
     } else {
       Logger->info("Stopped {}", Stream.first);
     }
