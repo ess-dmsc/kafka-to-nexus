@@ -144,9 +144,8 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
       ->required();
 
   addUriOption(App, "--status-uri", MainOptions.KafkaStatusURI,
-               MainOptions.ReportStatus,
                "<host[:port][/topic]> Kafka broker/topic to publish status "
-               "updates on");
+               "updates on")->required();
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
                "<host:port> Log to Graylog via graylog_logger library");

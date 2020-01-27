@@ -72,9 +72,6 @@ struct MainOpt {
   /// Used for command line argument.
   bool ListWriterModules = false;
 
-  /// Whether we want to publish status to Kafka.
-  bool ReportStatus = false;
-
   /// Kafka topic where status updates are to be published.
   uri::URI KafkaStatusURI{"localhost:9092/kafka-to-nexus.status"};
 
