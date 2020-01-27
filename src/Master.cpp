@@ -94,6 +94,7 @@ void Master::handle_command(std::string const &Command,
         CurrentStreamMaster =
             Creator_->createFileWritingJob(StartInfo, getMainOpt(), Logger);
         IsWriting = true;
+        StatusReporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime});
       } else {
         throw std::runtime_error(fmt::format(
             "The command \"{}\" is not allowed when idle.", CommandName));
@@ -120,6 +121,13 @@ struct OnScopeExit {
 
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
+
+  KafkaW::BrokerSettings BrokerSettings;
+  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
+  auto StatusProducer = std::make_shared<KafkaW::Producer>(BrokerSettings);
+  auto StatusProducerTopic = std::make_unique<KafkaW::ProducerTopic>(
+      StatusProducer, MainConfig.KafkaStatusURI.Topic);
+  StatusReporter = std::make_unique<Status::StatusReporter>(MainConfig.StatusMasterIntervalMS, StatusProducerTopic);
 
   // Interpret commands given directly from the configuration file, if present.
   for (auto const &cmd : getMainOpt().CommandsFromJson) {

@@ -11,13 +11,16 @@
 
 #include "CommandListener.h"
 #include "KafkaW/ProducerTopic.h"
+#include "Status/StatusReporter.h"
 #include "MainOpt.h"
 #include "MasterInterface.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
 #include <atomic>
+#include <memory>
 #include <string>
 #include <vector>
+
 
 namespace FileWriter {
 class IJobCreator;
@@ -61,5 +64,6 @@ private:
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
   static nlohmann::json parseCommand(std::string const &Command);
   bool IsWriting{false};
+  std::unique_ptr<Status::StatusReporter> StatusReporter;
 };
 } // namespace FileWriter
