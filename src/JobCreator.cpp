@@ -51,13 +51,8 @@ extractStreamInformationFromJsonForSource(StreamHDFInfo const &StreamInfo) {
       CommandParser::getRequiredValue<std::string>("topic", ConfigStreamInner);
   StreamSettings.Source =
       CommandParser::getRequiredValue<std::string>("source", ConfigStreamInner);
-  StreamSettings.ModuleName = CommandParser::getOptionalValue<std::string>(
-      "writer_module", ConfigStreamInner, "");
-  StreamSettings.FlatbufferId = CommandParser::getOptionalValue<std::string>(
-      "flatbuffer_id", ConfigStreamInner, "");
-  if (StreamSettings.ModuleName.empty() and StreamSettings.FlatbufferId.empty()) {
-    throw std::runtime_error(fmt::format("No writer module or flatbuffer id defined for source \"{}\" on topic \"{}\".", StreamSettings.Source, StreamSettings.Topic));
-  }
+  StreamSettings.ModuleName = CommandParser::getRequiredValue<std::string>(
+      "writer_module", ConfigStreamInner);
   StreamSettings.Attributes =
       CommandParser::getOptionalValue<json>("attributes", ConfigStream, "")
           .dump();
@@ -69,17 +64,18 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
                        std::unique_ptr<FileWriterTask> const &Task) {
   WriterModule::Registry::ModuleFactory ModuleFactory;
   try {
-    ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
+    auto Find = WriterModule::Registry::find(StreamSettings.ModuleName);
+    ModuleFactory = Find.first;
   } catch (std::exception const &E) {
-    throw std::runtime_error(
-        fmt::format("Error while getting '{}',  source: {}  what: {}",
-                    StreamSettings.Module, StreamSettings.Source, E.what()));
+    throw std::runtime_error(fmt::format(
+        "Error while getting '{}',  source: {}  what: {}",
+        StreamSettings.ModuleName, StreamSettings.Source, E.what()));
   }
 
   auto HDFWriterModule = ModuleFactory();
   if (!HDFWriterModule) {
     throw std::runtime_error(fmt::format(
-        "Can not create a writer module for '{}'", StreamSettings.Module));
+        "Can not create a writer module for '{}'", StreamSettings.ModuleName));
   }
 
   auto RootGroup = Task->hdfGroup();
@@ -89,7 +85,7 @@ void setUpHdfStructure(StreamSettings const &StreamSettings,
     std::throw_with_nested(std::runtime_error(fmt::format(
         "Exception while WriterModule::Base::parse_config  module: {} "
         " source: {}  what: {}",
-        StreamSettings.Module, StreamSettings.Source, E.what())));
+        StreamSettings.ModuleName, StreamSettings.Source, E.what())));
   }
 
   auto StreamGroup = hdf5::node::get_group(
@@ -187,10 +183,12 @@ void JobCreator::addStreamSourceToWriterModule(
   for (auto const &StreamSettings : StreamSettingsList) {
     Logger->trace("Add Source: {}", StreamSettings.Topic);
     WriterModule::Registry::ModuleFactory ModuleFactory;
+    std::string FlatbufferID("noID");
 
     try {
-      ModuleFactory = findWriterModuleFactory(StreamSettings.ModuleName, StreamSettings.FlatbufferId);
-//      ModuleFactory = WriterModule::Registry::find(StreamSettings.Module);
+      auto Find = WriterModule::Registry::find(StreamSettings.ModuleName);
+      ModuleFactory = Find.first;
+      FlatbufferID = Find.second;
     } catch (std::exception const &E) {
       Logger->info(E.what());
       continue;
@@ -218,7 +216,7 @@ void JobCreator::addStreamSourceToWriterModule(
       }
 
       // Create a Source instance for the stream and add to the task.
-      Source ThisSource(StreamSettings.Source, StreamSettings.Module,
+      Source ThisSource(StreamSettings.Source, FlatbufferID,
                         StreamSettings.Topic, move(HDFWriterModule));
       Task->addSource(std::move(ThisSource));
     } catch (std::runtime_error const &E) {

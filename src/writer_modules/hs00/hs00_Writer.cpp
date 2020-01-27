@@ -53,7 +53,6 @@ WriterModule::ptr hs00_Writer::create() {
   return std::make_unique<hs00_Writer>();
 }
 
-WriterModule::Registry::Registrar<hs00_Writer> Register("hs00",
-                                                        "event_histogram");
+WriterModule::Registry::Registrar<hs00_Writer> Register("hs00", "hs00");
 } // namespace hs00
 } // namespace WriterModule
