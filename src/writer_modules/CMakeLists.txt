@@ -7,3 +7,6 @@ add_subdirectory(template)
 add_subdirectory(hs00)
 add_subdirectory(tdct)
 add_subdirectory(ns10)
+
+
+add_subdirectory(f142_test)
