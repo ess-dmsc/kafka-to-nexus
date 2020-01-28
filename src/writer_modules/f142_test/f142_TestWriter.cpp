@@ -15,14 +15,13 @@ namespace WriterModule {
 namespace f142 {
 
 /// Parse the configuration for this stream.
-void f142_TestWriter::parse_config(std::string const &) {
-}
+void f142_TestWriter::parse_config(std::string const &) {}
 
 /// \brief Implement the writer module interface, forward to the CREATE case
 /// of
 /// `init_hdf`.
 InitResult f142_TestWriter::init_hdf(hdf5::node::Group &HDFGroup,
-                                 std::string const &) {
+                                     std::string const &) {
   auto Create = NeXusDataset::Mode::Create;
   try {
     NeXusDataset::CueIndex(HDFGroup, Create,
@@ -51,8 +50,8 @@ void f142_TestWriter::write(FlatbufferMessage const &) {
   Counter.appendElement(CounterValue++);
 }
 /// Register the writer module.
-static WriterModule::Registry::Registrar<f142_TestWriter> RegisterWriter("f142",
-                                                                     "f142_test");
+static WriterModule::Registry::Registrar<f142_TestWriter>
+    RegisterWriter("f142", "f142_test");
 
 } // namespace f142
 } // namespace WriterModule
