@@ -88,9 +88,12 @@ int main(int argc, char **argv) {
                             std::make_unique<FileWriter::CommandListener>(*Options),
                             std::make_unique<FileWriter::JobCreator>(),
                             createStatusReporter(*Options));
-  std::thread MasterThread([&Master, Logger] {
+  bool Running = true;
+  std::thread MasterThread([&Master, Logger, &Running] {
     try {
-      Master.run();
+      while (Running) {
+        Master.run();
+      }
     } catch (std::system_error const &e) {
       Logger->critical(
           "std::system_error  code: {}  category: {}  message: {}  what: {}",
@@ -106,11 +109,11 @@ int main(int argc, char **argv) {
     }
   });
 
-  while (!Master.runLoopExited()) {
+  while (true) {
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     if (GotSignal) {
       Logger->debug("SIGNAL {}", SignalId);
-      Master.stop();
+      Running = false;
       GotSignal = false;
       break;
     }

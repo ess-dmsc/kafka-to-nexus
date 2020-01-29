@@ -67,7 +67,7 @@ Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener, std::
                std::unique_ptr<Status::StatusReporter> Reporter)
     : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
       Creator_(std::move(Creator)), Reporter(std::move(Reporter)) {
-
+  CmdListener->start();
   Logger->info("getFileWriterProcessId: {}", Config.ServiceID);
 }
 
@@ -87,26 +87,12 @@ FileWriterState Master::handleCommand(std::unique_ptr<Msg> CommandMessage) {
   return getNextState(Message, TimeStamp, CurrentState);
 }
 
-struct OnScopeExit {
-  explicit OnScopeExit(std::function<void()> Action)
-      : ExitAction(std::move(Action)), Logger(getLogger()){};
-  ~OnScopeExit() {
-    try {
-      ExitAction();
-    } catch (std::bad_function_call &Error) {
-      Logger->warn("OnScopeExit::~OnScopeExit(): Failure to call.");
-    }
-  };
-  std::function<void()> ExitAction;
-  SharedLogger Logger;
-};
-
 void Master::startWriting(StartCommandInfo const &StartInfo) {
   Logger->info("Received request to start writing file with id : {} at "
                "time {} ms",
                StartInfo.JobID, StartInfo.StartTime.count());
   CurrentStreamMaster =
-      Creator_->createFileWritingJob(StartInfo, getMainOpt(), Logger);
+      Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
   Reporter->updateStatusInfo(
       {StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime});
 }
@@ -117,12 +103,8 @@ void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
   CurrentStreamMaster->setStopTime(StopInfo.StopTime);
 }
 
-void Master::checkForWritingStop() {
-  if (CurrentStreamMaster != nullptr and CurrentStreamMaster->isDoneWriting()) {
-    CurrentStreamMaster.reset(nullptr);
-    CurrentState = States::Idle();
-    Reporter->resetStatusInfo();
-  }
+bool Master::hasWritingStopped() {
+  return CurrentStreamMaster != nullptr and CurrentStreamMaster->isDoneWriting();
 }
 
 void Master::moveToNewState(FileWriterState const &NewState) {
@@ -148,11 +130,6 @@ std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Master::pollForMessage() {
 }
 
 void Master::run() {
-  OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
-
-  CmdListener->start();
-
-  while (Running) {
     if (auto const KafkaMessage = pollForMessage()) {
       Logger->debug("Command received");
       auto const NewState = this->handleCommand(
@@ -160,16 +137,17 @@ void Master::run() {
       moveToNewState(NewState);
     }
 
-    checkForWritingStop();
-  }
+    // Doesn't stop immediately when commanded to.
+    // Also, can stop even if not commanded to.
+    if (hasWritingStopped()) {
+      CurrentStreamMaster.reset(nullptr);
+      CurrentState = States::Idle();
+      Reporter->resetStatusInfo();
+    }
 }
 
 bool Master::isWriting() const {
-  return mpark::get_if<States::Writing>(&CurrentState) != nullptr;
+  return mpark::get_if<States::Idle>(&CurrentState) == nullptr;
 }
-
-void Master::stop() { Running = false; }
-
-MainOpt &Master::getMainOpt() { return MainConfig; }
 
 } // namespace FileWriter

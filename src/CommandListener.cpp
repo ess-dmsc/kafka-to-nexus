@@ -17,7 +17,7 @@ namespace FileWriter {
 
 using std::string;
 
-CommandListener::CommandListener(MainOpt &config) : config(config) {}
+CommandListener::CommandListener(MainOpt &Config) : config(Config) {}
 
 void CommandListener::start() {
   KafkaW::BrokerSettings BrokerSettings =

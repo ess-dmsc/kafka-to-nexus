@@ -53,14 +53,11 @@ public:
   /// Stop running.
   void stop();
 
-  MainOpt &getMainOpt();
-  bool runLoopExited() const { return HasExitedRunLoop; };
   bool isWriting() const;
 
 private:
   SharedLogger Logger;
   MainOpt &MainConfig;
-  std::atomic<bool> Running{true};
   std::atomic<bool> HasExitedRunLoop{false};
   std::unique_ptr<CommandListener> CmdListener;
   std::unique_ptr<IJobCreator> Creator_;
@@ -69,9 +66,9 @@ private:
   FileWriterState CurrentState = States::Idle();
   virtual void startWriting(StartCommandInfo const &StartInfo);
   virtual void requestStopWriting(StopCommandInfo const &StopInfo);
-  virtual void checkForWritingStop();
+  virtual bool hasWritingStopped();
   virtual std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> pollForMessage();
-  void moveToNewState(FileWriterState const &NewState);
+  virtual void moveToNewState(FileWriterState const &NewState);
   FileWriterState handleCommand(std::unique_ptr<Msg> CommandMessage);
 };
 } // namespace FileWriter
