@@ -8,36 +8,70 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Master.h"
+#include "CommandListener.h"
 #include "CommandParser.h"
 #include "JobCreator.h"
 #include "Msg.h"
+#include "Status/StatusReporter.h"
 #include "helper.h"
 #include "json.h"
 #include "logger.h"
 #include <chrono>
 #include <functional>
-#include <unistd.h>
 
 namespace FileWriter {
 
-Master::Master(MainOpt &Config, std::unique_ptr<IJobCreator> Creator)
-    : Logger(getLogger()), Listener(Config), MainConfig(Config),
-      Creator_(std::move(Creator)) {
-  std::vector<char> buffer;
-  buffer.resize(128);
-  gethostname(buffer.data(), buffer.size());
-  if (buffer.back() != 0) {
-    // likely an error
-    buffer.back() = 0;
-    Logger->info("Hostname got truncated: {}", buffer.data());
+nlohmann::json parseCommand(std::string const &Command) {
+  try {
+    return nlohmann::json::parse(Command);
+  } catch (nlohmann::json::parse_error const &Error) {
+    throw std::runtime_error("Could not parse command JSON");
   }
-  std::string hostname(buffer.data());
-  FileWriterProcessId =
-      fmt::format("kafka-to-nexus--{}--{}", hostname, getpid_wrapper());
-  Logger->info("getFileWriterProcessId: {}", Master::getFileWriterProcessId());
 }
 
-void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
+FileWriterState getNextState(std::string const &Command,
+                             std::chrono::milliseconds TimeStamp,
+                             FileWriterState const &CurrentState) {
+  try {
+    auto CommandJson = parseCommand(Command);
+    auto CommandName = CommandParser::extractCommandName(CommandJson);
+
+    if (mpark::get_if<States::Writing>(&CurrentState)) {
+      if (CommandName == CommandParser::StopCommand) {
+        auto StopInfo = CommandParser::extractStopInformation(CommandJson);
+        if (StopInfo.StopTime.count() == 0) {
+          StopInfo.StopTime = getCurrentTimeStampMS();
+        }
+        return States::StopRequested{StopInfo};
+      } else {
+        throw std::runtime_error(fmt::format(
+            "The command \"{}\" is not allowed when writing.", CommandName));
+      }
+    } else {
+      if (CommandName == CommandParser::StartCommand) {
+        auto const StartInfo =
+            CommandParser::extractStartInformation(CommandJson, TimeStamp);
+        return States::StartRequested{StartInfo};
+      } else {
+        throw std::runtime_error(fmt::format(
+            "The command \"{}\" is not allowed when idle.", CommandName));
+      }
+    }
+  } catch (std::runtime_error const &Error) {
+    getLogger()->error("{}", Error.what());
+  }
+  return CurrentState;
+}
+
+Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener, std::unique_ptr<IJobCreator> Creator,
+               std::unique_ptr<Status::StatusReporter> Reporter)
+    : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
+      Creator_(std::move(Creator)), Reporter(std::move(Reporter)) {
+
+  Logger->info("getFileWriterProcessId: {}", Config.ServiceID);
+}
+
+FileWriterState Master::handleCommand(std::unique_ptr<Msg> CommandMessage) {
   std::string Message = {CommandMessage->data(), CommandMessage->size()};
 
   // If Kafka message does not contain a timestamp then use current time.
@@ -47,60 +81,10 @@ void Master::handle_command(std::unique_ptr<Msg> CommandMessage) {
       RdKafka::MessageTimestamp::MSG_TIMESTAMP_NOT_AVAILABLE) {
     TimeStamp = CommandMessage->MetaData.Timestamp;
   } else {
-    Logger->info(
-        "Kafka command doesn't contain timestamp, so using current time.");
+    Logger->info("Command doesn't contain timestamp, so using current time.");
   }
 
-  handle_command(Message, TimeStamp);
-}
-
-nlohmann::json Master::parseCommand(std::string const &Command) {
-  try {
-    return nlohmann::json::parse(Command);
-  } catch (nlohmann::json::parse_error const &Error) {
-    throw std::runtime_error("Could not parse command JSON");
-  }
-}
-
-void Master::handle_command(std::string const &Command,
-                            std::chrono::milliseconds TimeStamp) {
-  try {
-    auto CommandJson = parseCommand(Command);
-    auto CommandName = CommandParser::extractCommandName(CommandJson);
-
-    if (IsWriting) {
-      if (CommandName == CommandParser::StopCommand) {
-        auto StopInfo = CommandParser::extractStopInformation(CommandJson);
-        if (StopInfo.StopTime.count() > 0) {
-          Logger->info(
-              "Received request to gracefully stop file with id : {} at {} ms",
-              StopInfo.JobID, StopInfo.StopTime.count());
-          CurrentStreamMaster->setStopTime(StopInfo.StopTime);
-        } else {
-          Logger->info("Received request to gracefully stop file with id : {}",
-                       StopInfo.JobID);
-          CurrentStreamMaster->setStopTime(getCurrentTimeStampMS());
-        }
-      } else {
-        throw std::runtime_error(fmt::format(
-            "The command \"{}\" is not allowed when writing.", CommandName));
-      }
-    } else {
-      if (CommandName == CommandParser::StartCommand) {
-        auto StartInfo =
-            CommandParser::extractStartInformation(CommandJson, TimeStamp);
-        CurrentStreamMaster =
-            Creator_->createFileWritingJob(StartInfo, getMainOpt(), Logger);
-        IsWriting = true;
-        StatusReporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime});
-      } else {
-        throw std::runtime_error(fmt::format(
-            "The command \"{}\" is not allowed when idle.", CommandName));
-      }
-    }
-  } catch (std::runtime_error const &Error) {
-    Logger->error("{}", Error.what());
-  }
+  return getNextState(Message, TimeStamp, CurrentState);
 }
 
 struct OnScopeExit {
@@ -117,49 +101,74 @@ struct OnScopeExit {
   SharedLogger Logger;
 };
 
-void Master::initialiseStatusReporter() {
-  KafkaW::BrokerSettings BrokerSettings;
-  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
-  auto StatusProducer = std::make_shared<KafkaW::Producer>(BrokerSettings);
-  auto StatusProducerTopic = std::make_unique<KafkaW::ProducerTopic>(
-      StatusProducer, MainConfig.KafkaStatusURI.Topic);
-  StatusReporter = std::make_unique<Status::StatusReporter>(MainConfig.StatusMasterIntervalMS, StatusProducerTopic);
+void Master::startWriting(StartCommandInfo const &StartInfo) {
+  Logger->info("Received request to start writing file with id : {} at "
+               "time {} ms",
+               StartInfo.JobID, StartInfo.StartTime.count());
+  CurrentStreamMaster =
+      Creator_->createFileWritingJob(StartInfo, getMainOpt(), Logger);
+  Reporter->updateStatusInfo(
+      {StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime});
+}
+
+void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
+  Logger->info("Received request to stop file with id : {} at time {} ms",
+               StopInfo.JobID, StopInfo.StopTime.count());
+  CurrentStreamMaster->setStopTime(StopInfo.StopTime);
+}
+
+void Master::checkForWritingStop() {
+  if (CurrentStreamMaster != nullptr and CurrentStreamMaster->isDoneWriting()) {
+    CurrentStreamMaster.reset(nullptr);
+    CurrentState = States::Idle();
+    Reporter->resetStatusInfo();
+  }
+}
+
+void Master::moveToNewState(FileWriterState const &NewState) {
+  if (auto StartReq = mpark::get_if<States::StartRequested>(&NewState)) {
+    try {
+      startWriting(StartReq->StartInfo);
+      CurrentState = States::Writing();
+    } catch (std::runtime_error const &Error) {
+      Logger->error("{}", Error.what());
+    }
+  } else if (auto StopReq =
+      mpark::get_if<States::StopRequested>(&NewState)) {
+    requestStopWriting(StopReq->StopInfo);
+  }
+}
+
+std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Master::pollForMessage() {
+  auto KafkaMessage = CmdListener->poll();
+  if (KafkaMessage->first == KafkaW::PollStatus::Message) {
+    return KafkaMessage;
+  }
+  return nullptr;
 }
 
 void Master::run() {
   OnScopeExit SetExitFlag([this]() { HasExitedRunLoop = true; });
-  initialiseStatusReporter();
 
-  // Interpret commands given directly from the configuration file, if present.
-  for (auto const &cmd : getMainOpt().CommandsFromJson) {
-    this->handle_command(cmd, getCurrentTimeStampMS());
-  }
-
-  Listener.start();
+  CmdListener->start();
 
   while (Running) {
-    std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> KafkaMessage =
-        Listener.poll();
-    if (KafkaMessage->first == KafkaW::PollStatus::Message) {
+    if (auto const KafkaMessage = pollForMessage()) {
       Logger->debug("Command received");
-      this->handle_command(
+      auto const NewState = this->handleCommand(
           std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
+      moveToNewState(NewState);
     }
 
-    if (CurrentStreamMaster != nullptr and
-        CurrentStreamMaster->isDoneWriting()) {
-      CurrentStreamMaster.reset(nullptr);
-      IsWriting = false;
-      StatusReporter->resetStatusInfo();
-    }
+    checkForWritingStop();
   }
+}
+
+bool Master::isWriting() const {
+  return mpark::get_if<States::Writing>(&CurrentState) != nullptr;
 }
 
 void Master::stop() { Running = false; }
-
-std::string Master::getFileWriterProcessId() const {
-  return FileWriterProcessId;
-}
 
 MainOpt &Master::getMainOpt() { return MainConfig; }
 

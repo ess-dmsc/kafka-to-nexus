@@ -16,7 +16,6 @@ set(UnitTests_SRC
         DemuxerTests.cpp
         MessageTests.cpp
         EventLoggerTests.cpp
-        MainOptTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
         ProducerTests.cpp

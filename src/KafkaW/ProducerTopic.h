@@ -26,6 +26,7 @@ public:
 class ProducerTopic {
 public:
   ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
+
   virtual ~ProducerTopic() = default;
 
   /// \brief Send a message to Kafka for publishing on this topic.
@@ -42,6 +43,7 @@ public:
 private:
   std::unique_ptr<RdKafka::Conf> ConfigPtr{
       RdKafka::Conf::create(RdKafka::Conf::CONF_TOPIC)};
+  // TODO: Does this need to be shared?
   std::shared_ptr<Producer> KafkaProducer;
   std::unique_ptr<RdKafka::Topic> RdKafkaTopic;
   std::string Name;

@@ -118,8 +118,8 @@ TEST_F(StreamerProcessTest, CreationNotYetDoneThenDoesNotPoll) {
   TestStreamer.ConsumerInitialised =
       std::async(std::launch::async, [EmptyPollerConsumer]() {
         std::this_thread::sleep_for(std::chrono::milliseconds(2500));
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
   TestStreamer.process();
 }
@@ -127,7 +127,7 @@ TEST_F(StreamerProcessTest, CreationNotYetDoneThenDoesNotPoll) {
 TEST_F(StreamerProcessTest, InvalidFuture) {
   StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerInitialised =
-      std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>();
+      std::future<std::pair<StreamerStatus, ConsumerPtr>>();
   EXPECT_THROW(TestStreamer.process(), std::runtime_error);
 }
 
@@ -135,8 +135,8 @@ TEST_F(StreamerProcessTest,
        PollAndProcessReturnsErrorIfConsumerHasAConfigurationError) {
   StreamerStandIn TestStreamer(Options);
   TestStreamer.ConsumerInitialised = std::async(std::launch::async, []() {
-    return std::pair<Status::StreamerStatus, ConsumerPtr>{
-        Status::StreamerStatus::INITIALISATION_FAILED, nullptr};
+    return std::pair<StreamerStatus, ConsumerPtr>{
+        StreamerStatus::INITIALISATION_FAILED, nullptr};
   });
   EXPECT_THROW(TestStreamer.process(), std::runtime_error);
 }
@@ -239,8 +239,8 @@ TEST_F(StreamerProcessTimingTest,
       .TIMES(1);
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   TestStreamer->process();
@@ -278,8 +278,8 @@ TEST_F(StreamerProcessTimingTest,
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
   TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
@@ -318,8 +318,8 @@ TEST_F(
       .TIMES(1);
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   // A message will be received here
@@ -364,8 +364,8 @@ TEST_F(
       .RETURN(std::vector<int64_t>{0});
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   TestStreamer->setStopTime(std::chrono::milliseconds{1});
@@ -402,8 +402,8 @@ TEST_F(
       .RETURN(std::vector<int64_t>{0});
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   TestStreamer->setStopTime(std::chrono::milliseconds{1});
@@ -435,8 +435,8 @@ TEST_F(StreamerProcessTimingTest,
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   TestStreamer->process();
@@ -457,8 +457,8 @@ TEST_F(StreamerProcessTimingTest, EmptyMessageBeforeStopAreNotProcessed) {
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
   TestStreamer->process();
   EXPECT_EQ(TestStreamer->getNumberProcessedMessages(), 0);
@@ -478,8 +478,8 @@ TEST_F(StreamerProcessTimingTest,
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   TestStreamer->process();
@@ -509,8 +509,8 @@ TEST_F(StreamerProcessTimingTest, MessageAfterStopTimeIsOkButNotProcessed) {
       .TIMES(1);
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
 
   TestStreamer->process();
@@ -541,8 +541,8 @@ TEST(FlatBufferValidationTest,
 
   TestStreamer->ConsumerInitialised =
       std::async(std::launch::async, [&EmptyPollerConsumer]() {
-        return std::pair<Status::StreamerStatus, ConsumerPtr>{
-            Status::StreamerStatus::OK, EmptyPollerConsumer};
+        return std::pair<StreamerStatus, ConsumerPtr>{
+            StreamerStatus::OK, EmptyPollerConsumer};
       });
   TestStreamer->process();
 

@@ -9,39 +9,29 @@
 
 #pragma once
 
-#include "CommandListener.h"
-#include "KafkaW/ProducerTopic.h"
 #include <memory>
+#include <mpark/variant.hpp>
 #include <string>
 
 struct MainOpt;
 
 namespace FileWriter {
 
-class Streamer;
+namespace States {
+struct Idle {};
 
-/// \brief Listens to the Kafka configuration topic and handles any requests.
-///
-/// On a new file writing request, creates new nexusWriter instance.
-/// Reacts also to stop, and possibly other future commands.
-class MasterInterface {
-public:
-  /// \brief Sets up command listener and handles any commands received.
-  ///
-  /// Continues running until stop requested.
-  virtual void run() = 0;
-
-  virtual void stop() = 0;
-  virtual void handle_command(std::unique_ptr<Msg> msg) = 0;
-  virtual void handle_command(std::string const &command,
-                              std::chrono::milliseconds TimeStamp) = 0;
-
-  /// \brief The unique identifier for this file writer on the network.
-  ///
-  /// \return The unique id.
-  virtual std::string getFileWriterProcessId() const = 0;
-  virtual bool runLoopExited() const = 0;
-  virtual MainOpt &getMainOpt() = 0;
+struct StartRequested {
+  StartCommandInfo StartInfo;
 };
+
+struct Writing {};
+
+struct StopRequested {
+  StopCommandInfo StopInfo;
+};
+} // namespace States
+
+using FileWriterState = mpark::variant<States::Idle, States::StartRequested,
+                                       States::Writing, States::StopRequested>;
 
 } // namespace FileWriter

@@ -7,20 +7,18 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "CommandListener.h"
 #include "CLIOptions.h"
 #include "FlatbufferReader.h"
 #include "JobCreator.h"
 #include "MainOpt.h"
 #include "Master.h"
-#include "URI.h"
+#include "Status/StatusReporter.h"
 #include "Version.h"
-#include "WriterModuleBase.h"
 #include "WriterRegistrar.h"
 #include "logger.h"
 #include <CLI/CLI.hpp>
 #include <csignal>
-#include <cstdio>
-#include <cstdlib>
 #include <string>
 
 // These should only be visible in this translation unit
@@ -30,6 +28,16 @@ static std::atomic_int SignalId{0};
 void signal_handler(int Signal) {
   GotSignal = true;
   SignalId = Signal;
+}
+
+std::unique_ptr<Status::StatusReporter> createStatusReporter(MainOpt const &MainConfig) {
+  KafkaW::BrokerSettings BrokerSettings;
+  BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
+  auto StatusProducer = std::make_shared<KafkaW::Producer>(BrokerSettings);
+  auto StatusProducerTopic = std::make_unique<KafkaW::ProducerTopic>(
+      StatusProducer, MainConfig.KafkaStatusURI.Topic);
+  return std::make_unique<Status::StatusReporter>(
+      MainConfig.StatusMasterIntervalMS, StatusProducerTopic);
 }
 
 int main(int argc, char **argv) {
@@ -59,10 +67,6 @@ int main(int argc, char **argv) {
   setupLoggerFromOptions(*Options);
   auto Logger = getLogger();
 
-  if (!Options->CommandsJsonFilename.empty()) {
-    Options->parseJsonCommands();
-  }
-
   if (Options->ListWriterModules) {
     fmt::print("\n-- Known flatbuffer metadata extractors\n");
     for (auto &ReaderPair :
@@ -81,7 +85,9 @@ int main(int argc, char **argv) {
     std::signal(SIGTERM, signal_handler);
   }
   FileWriter::Master Master(*Options,
-                            std::make_unique<FileWriter::JobCreator>());
+                            std::make_unique<FileWriter::CommandListener>(*Options),
+                            std::make_unique<FileWriter::JobCreator>(),
+                            createStatusReporter(*Options));
   std::thread MasterThread([&Master, Logger] {
     try {
       Master.run();

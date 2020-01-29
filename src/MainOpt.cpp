@@ -24,27 +24,6 @@ void MainOpt::init() {
                           gethostname_wrapper(), getpid_wrapper());
 }
 
-int MainOpt::parseJsonCommands() {
-  auto jsontxt = readFileIntoVector(CommandsJsonFilename);
-  using nlohmann::json;
-  try {
-    CommandsJson = json::parse(jsontxt);
-  } catch (...) {
-    return 1;
-  }
-  findAndAddCommands();
-  return 0;
-}
-
-void MainOpt::findAndAddCommands() {
-  if (auto v = find<nlohmann::json>("commands", CommandsJson)) {
-    for (auto const &Command : *v) {
-      // cppcheck-suppress useStlAlgorithm
-      CommandsFromJson.emplace_back(Command.dump());
-    }
-  }
-}
-
 void setupLoggerFromOptions(MainOpt const &opt) {
   setUpLogging(opt.LoggingLevel, opt.ServiceID, opt.LogFilename,
                opt.GraylogLoggerAddress);
