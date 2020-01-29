@@ -26,7 +26,7 @@ void StatusReporter::waitForStop() {
   StatusThread.join();
 }
 
-std::string StatusReporter::createReport() {
+std::string StatusReporter::createReport() const {
   auto Info = nlohmann::json::object();
   std::lock_guard<std::mutex> const lock(StatusMutex);
 

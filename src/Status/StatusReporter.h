@@ -56,7 +56,7 @@ private:
   mutable std::mutex StatusMutex;
   /// Blocks until the timer thread has stopped
   void waitForStop();
-  std::string createReport();
+  std::string createReport() const;
 };
 
 } // namespace Status
