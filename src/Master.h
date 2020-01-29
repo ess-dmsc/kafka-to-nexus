@@ -12,7 +12,7 @@
 #include "CommandParser.h"
 #include "KafkaW/PollStatus.h"
 #include "MainOpt.h"
-#include "MasterInterface.h"
+#include "States.h"
 #include "Msg.h"
 #include <atomic>
 #include <memory>
