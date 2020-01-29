@@ -7,21 +7,11 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "JobCreator.h"
 #include "Master.h"
-#include "helpers/FakeStreamMaster.h"
 #include <gtest/gtest.h>
 #include <memory>
 
-class FakeJobCreator : public FileWriter::IJobCreator {
-public:
-  std::unique_ptr<FileWriter::IStreamMaster>
-  createFileWritingJob(FileWriter::StartCommandInfo const & /*StartInfo*/,
-                       MainOpt & /*Settings*/,
-                       SharedLogger const & /*Logger*/) override {
-    return std::make_unique<FakeStreamMaster>("some_id");
-  };
-};
+using namespace FileWriter;
 
 std::string StartCommand{R"""({
     "cmd": "filewriter_new",
@@ -36,25 +26,42 @@ std::string StopCommand{R"""({
     "job_id": "1234"
   })"""};
 
-TEST(MasterTests, IfWritingStartedThenIsWriting) {
-  MainOpt MainOpts;
-  std::unique_ptr<FileWriter::IJobCreator> Creator =
-      std::make_unique<FakeJobCreator>();
-  FileWriter::Master Master(MainOpts, std::move(Creator));
-
-  Master.handle_command(StartCommand, std::chrono::milliseconds{0});
-
-  ASSERT_TRUE(Master.isWriting());
+TEST(ParseCommandTests, IfCommandStringIsParseableThenDoesNotThrow) {
+  ASSERT_NO_THROW(parseCommand(StartCommand));
 }
 
-TEST(MasterTests, IfWritingStartedThenStoppedThenIsNotWriting) {
-  MainOpt MainOpts;
-  std::unique_ptr<FileWriter::IJobCreator> Creator =
-      std::make_unique<FakeJobCreator>();
-  FileWriter::Master Master(MainOpts, std::move(Creator));
-  Master.handle_command(StartCommand, std::chrono::milliseconds{0});
+TEST(ParseCommandTests, IfCommandStringIsNotParseableThenThrows) {
+  ASSERT_THROW(parseCommand("{Invalid: JSON"), std::runtime_error);
+}
 
-  Master.handle_command(StopCommand, std::chrono::milliseconds{0});
+TEST(GetNewStateTests, IfIdleThenOnStartCommandStartIsRequested) {
+  FileWriterState CurrentState = States::Idle();
+  auto const NewState =
+      getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
 
-  ASSERT_FALSE(Master.isWriting());
+  ASSERT_TRUE(mpark::get_if<States::StartRequested>(&NewState));
+}
+
+TEST(GetNewStateTests, IfWritingThenOnStartCommandNoStateChange) {
+  FileWriterState CurrentState = States::Writing();
+  auto const NewState =
+      getNextState(StartCommand, std::chrono::milliseconds{0}, CurrentState);
+
+  ASSERT_TRUE(mpark::get_if<States::Writing>(&NewState));
+}
+
+TEST(GetNewStateTests, IfWritingThenOnStopCommandStopIsRequested) {
+  FileWriterState CurrentState = States::Writing();
+  auto const NewState =
+      getNextState(StopCommand, std::chrono::milliseconds{0}, CurrentState);
+
+  ASSERT_TRUE(mpark::get_if<States::StopRequested>(&NewState));
+}
+
+TEST(GetNewStateTests, IfIdleThenOnStopCommandNoStateChange) {
+  FileWriterState CurrentState = States::Idle();
+  auto const NewState =
+      getNextState(StopCommand, std::chrono::milliseconds{0}, CurrentState);
+
+  ASSERT_TRUE(mpark::get_if<States::Idle>(&NewState));
 }
