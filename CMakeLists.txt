@@ -34,8 +34,7 @@ if(${CONAN} MATCHES "AUTO")
           BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"
           BUILD outdated
-          KEEP_RPATHS
-          GENERATORS cmake_find_package)
+          KEEP_RPATHS)
 elseif(${CONAN} MATCHES "MANUAL")
   if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
