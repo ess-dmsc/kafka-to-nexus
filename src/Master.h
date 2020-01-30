@@ -69,6 +69,6 @@ private:
   virtual bool hasWritingStopped();
   virtual std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> pollForMessage();
   virtual void moveToNewState(FileWriterState const &NewState);
-  FileWriterState handleCommand(std::unique_ptr<Msg> CommandMessage);
+  virtual FileWriterState handleCommand(std::unique_ptr<Msg> CommandMessage);
 };
 } // namespace FileWriter
