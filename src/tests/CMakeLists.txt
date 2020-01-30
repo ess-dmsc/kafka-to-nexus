@@ -1,4 +1,4 @@
-find_package(Trompeloeil REQUIRED)
+find_package(trompeloeil REQUIRED)
 
 set(UnitTests_SRC
         UnitTests.cpp
@@ -55,8 +55,9 @@ add_executable(UnitTests
         )
 
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
-target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
+target_include_directories(UnitTests PRIVATE ${path_include_common})
 target_link_libraries(UnitTests
+        trompeloeil::trompeloeil
         ${libraries_common}
         ${CONAN_LIBS_GTEST}
         )

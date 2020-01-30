@@ -6,7 +6,7 @@ librdkafka/1.2.0@ess-dmsc/stable
 jsonformoderncpp/3.6.1@vthiery/stable
 streaming-data-types/358b661@ess-dmsc/stable
 CLI11/1.8.0@cliutils/stable
-trompeloeil/v31@ess-dmsc/stable
+trompeloeil/v36@rollbear/stable
 date/4b46deb@ess-dmsc/stable
 spdlog-graylog/1.5.0@ess-dmsc/stable
 asio/1.13.0@bincrafters/stable
