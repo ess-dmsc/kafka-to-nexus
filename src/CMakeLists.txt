@@ -5,7 +5,7 @@ endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
 find_package(librdkafka REQUIRED)
-find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
+find_package(hdf5 REQUIRED)
 find_package(flatbuffers REQUIRED)
 find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
@@ -30,21 +30,19 @@ endif()
 set(compile_defs_common "")
 
 set(path_include_common
-        ${HDF5_INCLUDE_DIRS}
-        ${H5CPP_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
         )
 
 set(libraries_common
-        ${HDF5_C_LIBRARIES}
-        ${H5CPP_LIBRARIES}
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         date::date
         fmt::fmt
         librdkafka::librdkafka
+        hdf5::hdf5
+        h5cpp::h5cpp
         pthread
         z
         )
