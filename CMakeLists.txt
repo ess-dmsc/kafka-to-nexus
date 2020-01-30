@@ -24,11 +24,12 @@ if(CMAKE_COMPILER_IS_GNUCXX AND COV)
 endif()
 
 set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
+set(CONAN_FILE "conanfile.txt" CACHE STRING "Name of the conanfile to use, must be placed in the project's conan directory")
 set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
 
 if(${CONAN} MATCHES "AUTO")
   include(${SRC_CMAKE_MODULE_PATH}/conan.cmake)
-  conan_cmake_run(CONANFILE conan/conanfile.txt
+  conan_cmake_run(CONANFILE conan/${CONAN_FILE}
           PROFILE ${CONAN_PROFILE}
           BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"

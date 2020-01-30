@@ -51,6 +51,9 @@ if (${USE_GRAYLOG_LOGGER})
   message(STATUS "Using graylog_logger")
   list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
   list(APPEND libraries_common graylog-logger::graylog-logger)
+else()
+  find_package(spdlog REQUIRED)
+  list(APPEND libraries_common spdlog::spdlog)
 endif()
 
 set(kafka_to_nexus_SRC
