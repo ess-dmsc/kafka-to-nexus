@@ -45,6 +45,7 @@ set(libraries_common
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
+set(USE_GRAYLOG_LOGGER ON CACHE BOOL "Set to OFF to disable log reporting to graylog")
 if (${USE_GRAYLOG_LOGGER})
   find_package(graylog-logger REQUIRED)
   message(STATUS "Using graylog_logger")
