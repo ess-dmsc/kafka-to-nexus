@@ -3,13 +3,15 @@ project("kafka-to-nexus")
 
 set(CMAKE_CXX_STANDARD 14)
 
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${PROJECT_SOURCE_DIR}/cmake")
+set(SRC_CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH ${SRC_CMAKE_MODULE_PATH})
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_BINARY_DIR})
 
-include(${CMAKE_MODULE_PATH}/Versioning.cmake)
+include(${SRC_CMAKE_MODULE_PATH}/Versioning.cmake)
 set_version()
 set(VERSION_INCLUDE_DIR ${CMAKE_BINARY_DIR}/version)
 create_version_header(
-  ${CMAKE_MODULE_PATH}/templates/Version.h.in
+  ${SRC_CMAKE_MODULE_PATH}/templates/Version.h.in
   ${VERSION_INCLUDE_DIR}/Version.h
 )
 
@@ -25,13 +27,14 @@ set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses def
 set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
 
 if(${CONAN} MATCHES "AUTO")
-  include(${CMAKE_MODULE_PATH}/conan.cmake)
+  include(${SRC_CMAKE_MODULE_PATH}/conan.cmake)
   conan_cmake_run(CONANFILE conan/conanfile.txt
           PROFILE ${CONAN_PROFILE}
           BASIC_SETUP ${OUTPUT_DIRS}
           BUILD_TYPE "None"
           BUILD outdated
-          KEEP_RPATHS)
+          KEEP_RPATHS
+          GENERATORS cmake_find_package)
 elseif(${CONAN} MATCHES "MANUAL")
   if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
     include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
