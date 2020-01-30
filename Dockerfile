@@ -11,13 +11,11 @@ COPY ./conan ../kafka_to_nexus_src/conan
 # Install packages - We don't want to purge kafkacat and tzdata after building
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
-    && apt-get --no-install-recommends -y install gcc-8 g++-8 build-essential git python3 python3-pip cmake python3-setuptools autoconf libtool automake kafkacat tzdata \
+    && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools autoconf libtool automake kafkacat tzdata \
     && apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
-    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8 \
-    && pip3 install --upgrade pip \
-    && pip3 install conan \
+    && pip install conan \
     && mkdir kafka_to_nexus \
     && conan config install http://github.com/ess-dmsc/conan-configuration.git \
     && if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
@@ -33,7 +31,7 @@ RUN cd kafka_to_nexus \
     && make -j8 kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
-    && apt purge -y build-essential git python3 python3-pip cmake python3-setuptools autoconf libtool automake \
+    && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 
