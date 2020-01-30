@@ -25,8 +25,7 @@ endif()
 
 set(CONAN_PROFILE "default" CACHE STRING "Name of conan profile to use, uses default by default")
 set(CONAN_FILE "conanfile.txt" CACHE STRING "Name of the conanfile to use, must be placed in the project's conan directory")
-set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path), MANUAL (expects conanbuildinfo.cmake in build directory) or DISABLE")
-
+set(CONAN "AUTO" CACHE STRING "conan options AUTO (conan must be in path) or DISABLE")
 if(${CONAN} MATCHES "AUTO")
   include(${SRC_CMAKE_MODULE_PATH}/conan.cmake)
   conan_cmake_run(CONANFILE conan/${CONAN_FILE}
@@ -36,15 +35,8 @@ if(${CONAN} MATCHES "AUTO")
           BUILD outdated
           KEEP_RPATHS
           GENERATORS cmake_find_package)
-elseif(${CONAN} MATCHES "MANUAL")
-  if(EXISTS "${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    include("${CMAKE_BINARY_DIR}/conanbuildinfo.cmake")
-    conan_basic_setup(${OUTPUT_DIRS} KEEP_RPATHS)
-  else()
-    message(FATAL_ERROR "CONAN set to MANUAL but no file named conanbuildinfo.cmake found in build directory")
-  endif()
 elseif(NOT ${CONAN} MATCHES "DISABLE")
-  message(FATAL_ERROR "Unrecognised option for CONAN, use AUTO, MANUAL or DISABLE")
+  message(FATAL_ERROR "Unrecognised option for CONAN, use AUTO or DISABLE")
 endif()
 
 add_subdirectory(src)

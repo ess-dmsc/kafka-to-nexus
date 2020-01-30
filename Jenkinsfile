@@ -64,7 +64,6 @@ builders = pipeline_builder.createBuilders { container ->
           conan remote add \
             --insert 0 \
             ${conan_remote} ${local_conan_server}
-          conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile_no_graylog.txt
         """
     } else {
     container.sh """
@@ -73,7 +72,6 @@ builders = pipeline_builder.createBuilders { container ->
       conan remote add \
         --insert 0 \
         ${conan_remote} ${local_conan_server}
-      conan install --build=outdated ../${pipeline_builder.project}/conan/conanfile.txt
     """
     }
   }  // stage
@@ -100,12 +98,19 @@ builders = pipeline_builder.createBuilders { container ->
         cmake ${coverage_on} ${doxygen_on} ../${pipeline_builder.project}
       """
     } else {
+    def no_graylog_cmake_option
+      if (container.key == no_graylog) {
+        no_graylog_cmake_option = '-DCONAN_FILE=conanfile_no_graylog.txt'
+      } else {
+        no_graylog_cmake_option = ''
+      }
+
       container.sh """
         cd build
         . ./activate_run.sh
         cmake \
           -DCMAKE_BUILD_TYPE=Release \
-          -DCONAN=MANUAL \
+          {no_graylog_cmake_option} \
           -DCMAKE_SKIP_RPATH=FALSE \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
