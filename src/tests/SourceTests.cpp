@@ -17,7 +17,7 @@
 #include <trompeloeil.hpp>
 
 namespace ev42 {
-#include "ev42_events_generated.h"
+#include "schemas/ev42_events_generated.h"
 } // namespace ev42
 
 using FileWriter::FlatbufferMessage;
