@@ -8,12 +8,10 @@ from helpers.kafkahelpers import (
 from helpers.timehelpers import unix_time_milliseconds
 from time import sleep
 from datetime import datetime
+import json
 import pytest
 
 
-@pytest.mark.skip(
-    reason="Test relies on status reporting which is currently being replaced"
-)
 def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     producer = create_producer()
     sleep(10)
@@ -40,10 +38,10 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     stopped = False
     started = False
     for message in msgs:
-        message = str(message.value(), encoding="utf-8")
-        if '"code":"START"' in message and f'"job_id":"{job_id}"' in message:
+        message = json.loads(str(message.value(), encoding="utf-8"));
+        if message["start_time"] > 0 and message["job_id"] == job_id:
             started = True
-        if '"code":"CLOSE"' in message and f'"job_id":"{job_id}"' in message:
+        if message["stop_time"] > 0 and message["job_id"] == job_id:
             stopped = True
 
     assert started
@@ -54,9 +52,6 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     sleep(10)
 
 
-@pytest.mark.skip(
-    reason="Test relies on status reporting which is currently being replaced"
-)
 def test_filewriter_can_write_data_when_start_and_stop_time_are_in_the_past(
     docker_compose_stop_command,
 ):

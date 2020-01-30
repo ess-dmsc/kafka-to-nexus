@@ -35,6 +35,11 @@ public:
   /// \param NewInfo The new information to report
   void updateStatusInfo(StatusInfo const & NewInfo);
 
+  /// \brief Update the stop time to be reported.
+  ///
+  /// \param StopTime The new stop time.
+  void updateStopTime(std::chrono::milliseconds StopTime);
+
   /// \brief Clear out the current information.
   ///
   /// Used when a file has finished writing

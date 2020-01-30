@@ -31,9 +31,10 @@ std::string StatusReporter::createReport() const {
   std::lock_guard<std::mutex> const lock(StatusMutex);
 
   Info["update_interval"] = Period.count();
-  Info["job_id"] = Status.jobId;
-  Info["file_being_written"] = Status.filename;
-  Info["start_time"] = Status.startTime.count();
+  Info["job_id"] = Status.JobId;
+  Info["file_being_written"] = Status.Filename;
+  Info["start_time"] = Status.StartTime.count();
+  Info["stop_time"] = Status.StopTime.count();
 
   return Info.dump();
 }
@@ -56,6 +57,11 @@ StatusReporter::~StatusReporter() { this->waitForStop(); }
 void StatusReporter::updateStatusInfo(StatusInfo const &NewInfo) {
   const std::lock_guard<std::mutex> lock(StatusMutex);
   Status = NewInfo;
+}
+
+void StatusReporter::updateStopTime(std::chrono::milliseconds StopTime) {
+  const std::lock_guard<std::mutex> lock(StatusMutex);
+  Status.StopTime = StopTime;
 }
 
 void StatusReporter::resetStatusInfo() {

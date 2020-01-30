@@ -3,9 +3,6 @@ from time import sleep
 import pytest
 
 
-@pytest.mark.skip(
-    reason="Test relies on status reporting which is currently being replaced"
-)
 def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_instances):
     producer = create_producer()
     sleep(20)
@@ -36,7 +33,7 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
 
     for i in range(30):
         msg = consumer.poll()
-        if b'"files":{}' in msg.value():
+        if b'"file_being_written":""' in msg.value():
             # filewriter2 is not currently writing a file - stop command has been processed.
             stopped = True
             break
@@ -50,4 +47,4 @@ def test_ignores_commands_with_incorrect_service_id(docker_compose_multiple_inst
     writer1msg = consumer.poll()
 
     # Check filewriter1's job queue is not empty
-    assert b'"files":{}' not in writer1msg.value()
+    assert b'"file_being_written":""' not in writer1msg.value()

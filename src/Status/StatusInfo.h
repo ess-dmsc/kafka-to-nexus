@@ -15,9 +15,10 @@
 namespace Status {
 
 struct StatusInfo {
-  std::string jobId{""};
-  std::string filename{""};
-  std::chrono::milliseconds startTime{0};
+  std::string JobId{""};
+  std::string Filename{""};
+  std::chrono::milliseconds StartTime{0};
+  std::chrono::milliseconds StopTime{0};
 };
 
 } // namespace Status

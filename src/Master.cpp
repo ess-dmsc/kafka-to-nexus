@@ -94,13 +94,14 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
   CurrentStreamMaster =
       Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
   Reporter->updateStatusInfo(
-      {StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime});
+      {StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime, StartInfo.StopTime});
 }
 
 void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
   Logger->info("Received request to stop file with id : {} at time {} ms",
                StopInfo.JobID, StopInfo.StopTime.count());
   CurrentStreamMaster->setStopTime(StopInfo.StopTime);
+  Reporter->updateStopTime(StopInfo.StopTime);
 }
 
 bool Master::hasWritingStopped() {

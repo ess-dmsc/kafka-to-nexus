@@ -94,7 +94,7 @@ class ProducerTopicStandIn : public KafkaW::ProducerTopic {
 public:
   ProducerTopicStandIn(std::shared_ptr<KafkaW::Producer> ProducerPtr,
                        std::string const &TopicName)
-      : ProducerTopic(ProducerPtr, TopicName){};
+      : ProducerTopic(std::move(ProducerPtr), std::move(TopicName)){};
   int produce(const std::string & /*MsgData*/) override { return 0; }
 };
 
