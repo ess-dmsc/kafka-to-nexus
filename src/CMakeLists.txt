@@ -4,12 +4,12 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
-find_package(fmt REQUIRED)
-find_package(RdKafka REQUIRED)
+find_package(librdkafka REQUIRED)
 find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
-find_package(FlatBuffers REQUIRED)
+find_package(flatbuffers REQUIRED)
+find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
-find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
+find_package(streaming-data-types COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(Date REQUIRED)
 find_package(GraylogLogger)
@@ -31,7 +31,6 @@ set(compile_defs_common "")
 
 
 set(path_include_common
-        ${RDKAFKA_INCLUDE_DIR}
         ${DATE_INCLUDE_DIR}
         ${HDF5_INCLUDE_DIRS}
         ${FLATBUFFERS_INCLUDE_DIR}
@@ -39,16 +38,16 @@ set(path_include_common
         ${Boost_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src
         )
 
 set(libraries_common
-        ${RDKAFKA_LIBRARIES}
         ${HDF5_C_LIBRARIES}
         ${H5CPP_LIBRARIES}
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
         ${DATE_LIBRARY}
+        fmt::fmt
+        librdkafka::librdkafka
         pthread
         z
         )
@@ -148,7 +147,6 @@ add_library(${tgt} OBJECT
         ${kafka_to_nexus_INC}
         )
 
-add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
@@ -161,8 +159,7 @@ set(sources
 add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common}  fmt::fmt
-        )
+target_link_libraries(${tgt} ${libraries_common})
 
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
 
@@ -175,10 +172,9 @@ set(sources
         ${WRITER_MODULES}
         )
 add_executable(${tgt} ${sources})
-add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
+target_link_libraries(${tgt} ${libraries_common})
 
 option(BUILD_TESTS "Build unit tests" ON)
 if (BUILD_TESTS)
