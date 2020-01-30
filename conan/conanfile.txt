@@ -18,7 +18,7 @@ virtualbuildenv
 virtualrunenv
 
 [options]
-FlatBuffers:shared=True
+flatbuffers:shared=True
 gtest:shared=False
 hdf5:shared=True
 librdkafka:shared=True

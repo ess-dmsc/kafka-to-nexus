@@ -10,7 +10,6 @@ find_package(flatbuffers REQUIRED)
 find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(streaming-data-types)
-find_package(Boost COMPONENTS filesystem system REQUIRED)
 find_package(date REQUIRED)
 find_package(graylog-logger)
 
@@ -30,14 +29,12 @@ endif()
 set(compile_defs_common "")
 
 set(path_include_common
-        ${Boost_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
         )
 
 set(libraries_common
         ${CURL_LIBRARIES}
-        ${Boost_LIBRARIES}
         date::date
         fmt::fmt
         librdkafka::librdkafka
