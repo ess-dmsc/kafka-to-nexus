@@ -48,7 +48,7 @@ public:
   std::string createReport() const;
 
 protected:
-  std::chrono::milliseconds Period;
+  std::chrono::milliseconds const Period;
   SharedLogger Logger = getLogger();
   void reportStatus();
 

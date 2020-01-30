@@ -8,12 +8,10 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Status/StatusReporterBase.h"
-#include "helpers/FakeStreamMaster.h"
-#include "helpers/KafkaWMocks.h"
+#include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
 #include <memory>
 
-using namespace FileWriter;
 
 class ProducerStandIn : public KafkaW::Producer {
 public:
@@ -57,14 +55,40 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
   ASSERT_EQ(Json["stop_time"], 0);
 }
 
-
-TEST_F(StatusReporterTests, OnWritingFileIsFilledOutCorrectly) {
+TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
   Status::StatusInfo const Info{"1234", "file1.nxs", std::chrono::milliseconds(1234567890), std::chrono::milliseconds(19876543210)};
   ReporterPtr->updateStatusInfo(Info);
 
+  auto const Report = ReporterPtr->createReport();
+  auto const Json = nlohmann::json::parse(Report);
+
+  ASSERT_EQ(Json["job_id"], Info.JobId);
+  ASSERT_EQ(Json["file_being_written"], Info.Filename);
+  ASSERT_EQ(Json["start_time"], Info.StartTime.count());
+  ASSERT_EQ(Json["stop_time"], Info.StopTime.count());
+}
+
+TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
+  auto const StopTime = std::chrono::milliseconds(1234567890);
+  ReporterPtr->updateStopTime(StopTime);
+
+  auto const Report = ReporterPtr->createReport();
+  auto const Json = nlohmann::json::parse(Report);
+
+  ASSERT_EQ(Json["stop_time"], StopTime.count());
+}
+
+TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
+  Status::StatusInfo const Info{"1234", "file1.nxs", std::chrono::milliseconds(1234567890), std::chrono::milliseconds(19876543210)};
+  ReporterPtr->updateStatusInfo(Info);
+
+  ReporterPtr->resetStatusInfo();
   auto Report = ReporterPtr->createReport();
   auto Json = nlohmann::json::parse(Report);
 
-  ASSERT_EQ(Json["file_being_written"], Info.Filename);
+  ASSERT_EQ(Json["update_interval"], 100);
+  ASSERT_EQ(Json["job_id"], "");
+  ASSERT_EQ(Json["file_being_written"], "");
+  ASSERT_EQ(Json["start_time"], 0);
+  ASSERT_EQ(Json["stop_time"], 0);
 }
-
