@@ -100,6 +100,13 @@ builders = pipeline_builder.createBuilders { container ->
         cmake ${coverage_on} ${doxygen_on} ../${pipeline_builder.project}
       """
     } else {
+      def graylog_cmake_option
+      if (container.key == no_graylog) {
+        graylog_cmake_option = '-DUSE_GRAYLOG_LOGGER=OFF'
+      } else {
+        graylog_cmake_option = '-DUSE_GRAYLOG_LOGGER=ON'
+      }
+
       container.sh """
         cd build
         . ./activate_run.sh
@@ -107,6 +114,7 @@ builders = pipeline_builder.createBuilders { container ->
           -DCMAKE_BUILD_TYPE=Release \
           -DCONAN=MANUAL \
           -DCMAKE_SKIP_RPATH=FALSE \
+          ${graylog_cmake_option} \
           -DCMAKE_INSTALL_RPATH='\\\\\\\$ORIGIN/../lib' \
           -DCMAKE_BUILD_WITH_INSTALL_RPATH=TRUE \
           -DBUILD_TESTS=FALSE \
