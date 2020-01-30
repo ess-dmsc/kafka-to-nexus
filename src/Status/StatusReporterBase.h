@@ -22,7 +22,7 @@ class StatusReporterBase {
 public:
   StatusReporterBase(
       std::chrono::milliseconds Interval,
-      std::unique_ptr<KafkaW::ProducerTopic> &StatusProducerTopic)
+      std::unique_ptr<KafkaW::ProducerTopic> StatusProducerTopic)
       : Period(Interval), StatusProducerTopic(std::move(StatusProducerTopic)) {}
 
   virtual ~StatusReporterBase() = default;

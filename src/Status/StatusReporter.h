@@ -19,7 +19,7 @@ class StatusReporter : public StatusReporterBase {
 public:
   StatusReporter(std::chrono::milliseconds Interval,
                  std::unique_ptr<KafkaW::ProducerTopic> &StatusProducerTopic)
-      : StatusReporterBase(Interval, StatusProducerTopic), IO(),
+      : StatusReporterBase(Interval, std::move(StatusProducerTopic)), IO(),
         AsioTimer(IO, Interval) {
     this->start();
   }

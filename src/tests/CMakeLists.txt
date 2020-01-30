@@ -44,7 +44,7 @@ set(UnitTests_INC
         Metrics/CarbonTestServer.h
         Metrics/MockSink.h
         Metrics/MockReporter.h
-        helpers/SetExtractorModule.h)
+        helpers/SetExtractorModule.h StatusReporterTests.cpp)
 
 add_executable(UnitTests
         ${UnitTests_SRC}
