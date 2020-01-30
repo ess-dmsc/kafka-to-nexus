@@ -11,7 +11,6 @@ find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(streaming-data-types)
 find_package(date REQUIRED)
-find_package(graylog-logger)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -46,12 +45,11 @@ set(libraries_common
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
-if (TARGET graylog-logger::graylog-logger AND ${USE_GRAYLOG_LOGGER})
+if (${USE_GRAYLOG_LOGGER})
+  find_package(graylog-logger REQUIRED)
   message(STATUS "Using graylog_logger")
   list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
   list(APPEND libraries_common graylog-logger::graylog-logger)
-elseif (NOT TARGET graylog-logger::graylog-logger AND USE_GRAYLOG_LOGGER)
-  message(WARNING "graylog_logger requested but not found")
 endif()
 
 set(kafka_to_nexus_SRC
