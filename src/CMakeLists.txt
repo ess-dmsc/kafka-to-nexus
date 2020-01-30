@@ -9,10 +9,10 @@ find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10
 find_package(flatbuffers REQUIRED)
 find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
-find_package(streaming-data-types COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
+find_package(streaming-data-types)
 find_package(Boost COMPONENTS filesystem system REQUIRED)
-find_package(Date REQUIRED)
-find_package(GraylogLogger)
+find_package(date REQUIRED)
+find_package(graylog-logger)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -29,11 +29,8 @@ endif()
 
 set(compile_defs_common "")
 
-
 set(path_include_common
-        ${DATE_INCLUDE_DIR}
         ${HDF5_INCLUDE_DIRS}
-        ${FLATBUFFERS_INCLUDE_DIR}
         ${H5CPP_INCLUDE_DIR}
         ${Boost_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
@@ -45,7 +42,7 @@ set(libraries_common
         ${H5CPP_LIBRARIES}
         ${CURL_LIBRARIES}
         ${Boost_LIBRARIES}
-        ${DATE_LIBRARY}
+        date::date
         fmt::fmt
         librdkafka::librdkafka
         pthread
@@ -54,12 +51,11 @@ set(libraries_common
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
-if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
+if (TARGET graylog-logger::graylog-logger AND ${USE_GRAYLOG_LOGGER})
   message(STATUS "Using graylog_logger")
   list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
-  list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})
-  list(APPEND libraries_common ${GRAYLOGLOGGER_LIBRARY})
-elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
+  list(APPEND libraries_common graylog-logger::graylog-logger)
+elseif (NOT TARGET graylog-logger::graylog-logger AND USE_GRAYLOG_LOGGER)
   message(WARNING "graylog_logger requested but not found")
 endif()
 
