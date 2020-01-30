@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
                             std::make_unique<FileWriter::CommandListener>(*Options),
                             std::make_unique<FileWriter::JobCreator>(),
                             createStatusReporter(*Options));
-  bool Running = true;
+  std::atomic<bool> Running{true};
   std::thread MasterThread([&Master, Logger, &Running] {
     try {
       while (Running) {
