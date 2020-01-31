@@ -8,7 +8,7 @@ streaming-data-types/358b661@ess-dmsc/stable
 CLI11/1.8.0@cliutils/stable
 trompeloeil/v36@rollbear/stable
 date/4b46deb@ess-dmsc/stable
-spdlog-graylog/1.5.0@ess-dmsc/stable
+spdlog-graylog/1.5.0-dm1@ess-dmsc/stable
 asio/1.13.0@bincrafters/stable
 optional-lite/3.2.0@bincrafters/stable
 
