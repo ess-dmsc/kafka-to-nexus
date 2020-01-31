@@ -2,9 +2,8 @@
 
 Commands in the form of JSON messages are used to start and stop file writing.
 
-Commands are generally sent through Kafka via the broker and topic specified by the
-`--command-uri` option; however, commands can also be given in the [configuration
-file](Commands via the configuration file).
+Commands are sent through Kafka via the broker and topic specified by the
+`--command-uri` option.
 
 Note: some example commands can be found in the system tests.
 
@@ -214,36 +213,6 @@ For example:
   "stop_time": 1547200800000,
   "service_id": "filewriter1"
 }
-```
-
-## Command to exit the file-writer
-
-The file-writer can be requested to exit.
-The parameters for the command are:
-
-- cmd: The command name, must be `filewriter_exit`
-- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present
-
-For example:
-
-```json
-{
-  "cmd": "FileWriter_exit",
-  "service_id": "filewriter1"
-}
-```
-
-### Commands via the configuration file
-
-When running the file-writer is is possible to use a configuration file by specifying `--config-file <file.json>`.
-This file can also contain commands, for example: it could be configured to start file-writing immediately.
-
-The syntax for including commands is:
-
-```json
-"commands": [
-  { "some command": "as discussed above" }
-]
 ```
 
 ## Single Writer Multiple Reader
