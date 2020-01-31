@@ -7,8 +7,8 @@
 //
 // Screaming Udder!                              https://esss.se
 
-#include "CommandListener.h"
 #include "CLIOptions.h"
+#include "CommandListener.h"
 #include "FlatbufferReader.h"
 #include "JobCreator.h"
 #include "MainOpt.h"
@@ -30,7 +30,8 @@ void signal_handler(int Signal) {
   SignalId = Signal;
 }
 
-std::unique_ptr<Status::StatusReporter> createStatusReporter(MainOpt const &MainConfig) {
+std::unique_ptr<Status::StatusReporter>
+createStatusReporter(MainOpt const &MainConfig) {
   KafkaW::BrokerSettings BrokerSettings;
   BrokerSettings.Address = MainConfig.KafkaStatusURI.HostPort;
   auto StatusProducer = std::make_shared<KafkaW::Producer>(BrokerSettings);
@@ -84,10 +85,10 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, signal_handler);
     std::signal(SIGTERM, signal_handler);
   }
-  FileWriter::Master Master(*Options,
-                            std::make_unique<FileWriter::CommandListener>(*Options),
-                            std::make_unique<FileWriter::JobCreator>(),
-                            createStatusReporter(*Options));
+  FileWriter::Master Master(
+      *Options, std::make_unique<FileWriter::CommandListener>(*Options),
+      std::make_unique<FileWriter::JobCreator>(),
+      createStatusReporter(*Options));
   std::atomic<bool> Running{true};
   std::thread MasterThread([&Master, Logger, &Running] {
     try {

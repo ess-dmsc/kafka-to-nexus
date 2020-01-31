@@ -63,7 +63,8 @@ FileWriterState getNextState(std::string const &Command,
   return CurrentState;
 }
 
-Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener, std::unique_ptr<IJobCreator> Creator,
+Master::Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
+               std::unique_ptr<IJobCreator> Creator,
                std::unique_ptr<Status::StatusReporter> Reporter)
     : Logger(getLogger()), MainConfig(Config), CmdListener(std::move(Listener)),
       Creator_(std::move(Creator)), Reporter(std::move(Reporter)) {
@@ -93,8 +94,8 @@ void Master::startWriting(StartCommandInfo const &StartInfo) {
                StartInfo.JobID, StartInfo.StartTime.count());
   CurrentStreamMaster =
       Creator_->createFileWritingJob(StartInfo, MainConfig, Logger);
-  Reporter->updateStatusInfo(
-      {StartInfo.JobID, StartInfo.Filename, StartInfo.StartTime, StartInfo.StopTime});
+  Reporter->updateStatusInfo({StartInfo.JobID, StartInfo.Filename,
+                              StartInfo.StartTime, StartInfo.StopTime});
 }
 
 void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
@@ -105,7 +106,8 @@ void Master::requestStopWriting(StopCommandInfo const &StopInfo) {
 }
 
 bool Master::hasWritingStopped() {
-  return CurrentStreamMaster != nullptr and CurrentStreamMaster->isDoneWriting();
+  return CurrentStreamMaster != nullptr and
+         CurrentStreamMaster->isDoneWriting();
 }
 
 void Master::moveToNewState(FileWriterState const &NewState) {
@@ -116,8 +118,7 @@ void Master::moveToNewState(FileWriterState const &NewState) {
     } catch (std::runtime_error const &Error) {
       Logger->error("{}", Error.what());
     }
-  } else if (auto StopReq =
-      mpark::get_if<States::StopRequested>(&NewState)) {
+  } else if (auto StopReq = mpark::get_if<States::StopRequested>(&NewState)) {
     requestStopWriting(StopReq->StopInfo);
   }
 }
@@ -131,20 +132,20 @@ std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> Master::pollForMessage() {
 }
 
 void Master::run() {
-    if (auto const KafkaMessage = pollForMessage()) {
-      Logger->debug("Command received");
-      auto const NewState = this->handleCommand(
-          std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
-      moveToNewState(NewState);
-    }
+  if (auto const KafkaMessage = pollForMessage()) {
+    Logger->debug("Command received");
+    auto const NewState = this->handleCommand(
+        std::make_unique<FileWriter::Msg>(std::move(KafkaMessage->second)));
+    moveToNewState(NewState);
+  }
 
-    // Doesn't stop immediately when commanded to.
-    // Also, can stop even if not commanded to.
-    if (hasWritingStopped()) {
-      CurrentStreamMaster.reset(nullptr);
-      CurrentState = States::Idle();
-      Reporter->resetStatusInfo();
-    }
+  // Doesn't stop immediately when commanded to.
+  // Also, can stop even if not commanded to.
+  if (hasWritingStopped()) {
+    CurrentStreamMaster.reset(nullptr);
+    CurrentState = States::Idle();
+    Reporter->resetStatusInfo();
+  }
 }
 
 bool Master::isWriting() const {

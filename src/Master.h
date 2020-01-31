@@ -12,8 +12,8 @@
 #include "CommandParser.h"
 #include "KafkaW/PollStatus.h"
 #include "MainOpt.h"
-#include "States.h"
 #include "Msg.h"
+#include "States.h"
 #include <atomic>
 #include <memory>
 #include <mpark/variant.hpp>
@@ -41,7 +41,8 @@ FileWriterState getNextState(std::string const &Command,
 /// Reacts also to stop, and possibly other future commands.
 class Master {
 public:
-  Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener, std::unique_ptr<IJobCreator> Creator,
+  Master(MainOpt &Config, std::unique_ptr<CommandListener> Listener,
+         std::unique_ptr<IJobCreator> Creator,
          std::unique_ptr<Status::StatusReporter> Reporter);
   virtual ~Master() = default;
 

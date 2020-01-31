@@ -58,9 +58,10 @@ Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
                                    Options, Logger, std::move(Consumer));
 }
 
-std::pair<StreamerStatus, ConsumerPtr>
-initTopic(std::string const &TopicName, StreamerOptions const &Options,
-          SharedLogger const &Logger, ConsumerPtr Consumer) {
+std::pair<StreamerStatus, ConsumerPtr> initTopic(std::string const &TopicName,
+                                                 StreamerOptions const &Options,
+                                                 SharedLogger const &Logger,
+                                                 ConsumerPtr Consumer) {
   Logger->trace("Trying to connect to \"{}\"", TopicName);
   try {
     if (Options.StartTimestamp.count() != 0) {

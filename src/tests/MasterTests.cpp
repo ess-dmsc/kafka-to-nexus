@@ -110,8 +110,8 @@ public:
 class MockMaster : public Master {
 public:
   MockMaster(MainOpt Opt, std::unique_ptr<CommandListener> CmdListener,
-                std::unique_ptr<IJobCreator> JobCreator,
-                std::unique_ptr<Status::StatusReporter> Reporter)
+             std::unique_ptr<IJobCreator> JobCreator,
+             std::unique_ptr<Status::StatusReporter> Reporter)
       : Master(Opt, std::move(CmdListener), std::move(JobCreator),
                std::move(Reporter)) {}
   void injectMessage(KafkaW::PollStatus Status, Msg Message) {
@@ -155,9 +155,9 @@ public:
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
     auto Reporter = std::make_unique<Status::StatusReporter>(
         std::chrono::milliseconds{1000}, ProducerTopic);
-    MasterPtr = std::make_unique<MockMaster>(
-        MainOpts, std::move(CmdListener), std::move(Creator),
-        std::move(Reporter));
+    MasterPtr =
+        std::make_unique<MockMaster>(MainOpts, std::move(CmdListener),
+                                     std::move(Creator), std::move(Reporter));
   };
 
   std::unique_ptr<Master> MasterPtr;

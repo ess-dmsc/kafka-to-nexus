@@ -20,9 +20,8 @@ namespace Status {
 
 class StatusReporterBase {
 public:
-  StatusReporterBase(
-      std::chrono::milliseconds Interval,
-      std::unique_ptr<KafkaW::ProducerTopic> StatusProducerTopic)
+  StatusReporterBase(std::chrono::milliseconds Interval,
+                     std::unique_ptr<KafkaW::ProducerTopic> StatusProducerTopic)
       : Period(Interval), StatusProducerTopic(std::move(StatusProducerTopic)) {}
 
   virtual ~StatusReporterBase() = default;
@@ -53,7 +52,7 @@ protected:
   void reportStatus();
 
 private:
-  virtual void postReportStatusActions() {};
+  virtual void postReportStatusActions(){};
   StatusInfo Status{};
   mutable std::mutex StatusMutex;
   std::unique_ptr<KafkaW::ProducerTopic> StatusProducerTopic;

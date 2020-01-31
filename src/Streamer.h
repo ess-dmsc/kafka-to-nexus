@@ -90,8 +90,7 @@ protected:
   void setStartTime(std::chrono::milliseconds const &StartTime);
 
   /// Protected so unit tests can inject it.
-  std::future<std::pair<StreamerStatus, ConsumerPtr>>
-      ConsumerInitialised;
+  std::future<std::pair<StreamerStatus, ConsumerPtr>> ConsumerInitialised;
 
 private:
   std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALISED};
