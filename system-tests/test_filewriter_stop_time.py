@@ -38,7 +38,7 @@ def test_filewriter_clears_stop_time_between_jobs(docker_compose_stop_command):
     stopped = False
     started = False
     for message in msgs:
-        message = json.loads(str(message.value(), encoding="utf-8"));
+        message = json.loads(str(message.value(), encoding="utf-8"))
         if message["start_time"] > 0 and message["job_id"] == job_id:
             started = True
         if message["stop_time"] > 0 and message["job_id"] == job_id:
