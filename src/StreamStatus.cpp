@@ -9,7 +9,6 @@
 
 #include "StreamStatus.h"
 
-
 std::string FileWriter::StatusDescription(const StreamerStatus &Error) {
   switch (Error) {
   case StreamerStatus::OK:

@@ -33,5 +33,4 @@ void StatusReporter::postReportStatusActions() {
 
 StatusReporter::~StatusReporter() { this->waitForStop(); }
 
-
 } // namespace Status

@@ -8,10 +8,9 @@
 // Screaming Udder!                              https://esss.se
 
 #include "Status/StatusReporterBase.h"
-#include <nlohmann/json.hpp>
 #include <gtest/gtest.h>
 #include <memory>
-
+#include <nlohmann/json.hpp>
 
 class ProducerStandIn : public KafkaW::Producer {
 public:
@@ -38,7 +37,8 @@ public:
 
     std::unique_ptr<KafkaW::ProducerTopic> ProducerTopic =
         std::make_unique<ProducerTopicStandIn>(Producer, "SomeTopic");
-    ReporterPtr = std::make_unique<Status::StatusReporterBase>(std::chrono::milliseconds{100}, std::move(ProducerTopic));
+    ReporterPtr = std::make_unique<Status::StatusReporterBase>(
+        std::chrono::milliseconds{100}, std::move(ProducerTopic));
   }
 
   std::unique_ptr<Status::StatusReporterBase> ReporterPtr;
@@ -56,7 +56,9 @@ TEST_F(StatusReporterTests, OnInitialisationAllValuesHaveNonRunningValues) {
 }
 
 TEST_F(StatusReporterTests, OnWritingInfoIsFilledOutCorrectly) {
-  Status::StatusInfo const Info{"1234", "file1.nxs", std::chrono::milliseconds(1234567890), std::chrono::milliseconds(19876543210)};
+  Status::StatusInfo const Info{"1234", "file1.nxs",
+                                std::chrono::milliseconds(1234567890),
+                                std::chrono::milliseconds(19876543210)};
   ReporterPtr->updateStatusInfo(Info);
 
   auto const Report = ReporterPtr->createReport();
@@ -79,7 +81,9 @@ TEST_F(StatusReporterTests, UpdatingStoptimeUpdatesReport) {
 }
 
 TEST_F(StatusReporterTests, ResettingValuesClearsValuesSet) {
-  Status::StatusInfo const Info{"1234", "file1.nxs", std::chrono::milliseconds(1234567890), std::chrono::milliseconds(19876543210)};
+  Status::StatusInfo const Info{"1234", "file1.nxs",
+                                std::chrono::milliseconds(1234567890),
+                                std::chrono::milliseconds(19876543210)};
   ReporterPtr->updateStatusInfo(Info);
 
   ReporterPtr->resetStatusInfo();
