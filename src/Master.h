@@ -51,9 +51,6 @@ public:
   /// Continues running until stop requested.
   void run();
 
-  /// Stop running.
-  void stop();
-
   bool isWriting() const;
 
 private:
