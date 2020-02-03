@@ -30,11 +30,10 @@ void StatusReporter::waitForStop() {
 
 void StatusReporter::postReportStatusActions() {
   AsioTimer.expires_at(AsioTimer.expires_at() + Period);
-  AsioTimer.async_wait(
-      [this](std::error_code const & Error) {
-        if (Error != asio::error::operation_aborted) {
-          this->reportStatus();
-        }
+  AsioTimer.async_wait([this](std::error_code const &Error) {
+    if (Error != asio::error::operation_aborted) {
+      this->reportStatus();
+    }
   });
 }
 
