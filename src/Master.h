@@ -59,7 +59,6 @@ public:
 private:
   SharedLogger Logger;
   MainOpt &MainConfig;
-  std::atomic<bool> HasExitedRunLoop{false};
   std::unique_ptr<CommandListener> CmdListener;
   std::unique_ptr<IJobCreator> Creator_;
   std::unique_ptr<IStreamMaster> CurrentStreamMaster{nullptr};
