@@ -15,7 +15,6 @@
 #include <string>
 
 namespace FileWriter {
-namespace Status {
 
 /// \brief Class that lists possible states and helps the Streamer to define its
 /// status.
@@ -35,5 +34,4 @@ enum class StreamerStatus {
 /// \return A string that briefly describes the status.
 std::string StatusDescription(const StreamerStatus &Error);
 
-} // namespace Status
 } // namespace FileWriter

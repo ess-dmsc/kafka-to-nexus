@@ -98,7 +98,8 @@ set(kafka_to_nexus_SRC
         Metrics/CarbonInterface.cpp
         Metrics/CarbonConnection.cpp
         Metrics/LogSink.cpp
-        Metrics/CarbonSink.cpp)
+        Metrics/CarbonSink.cpp
+        Status/StatusReporterBase.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
@@ -109,7 +110,7 @@ set(kafka_to_nexus_INC
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
-    WriterModuleBase.h
+        WriterModuleBase.h
         helper.h
         json.h
         KafkaW/BrokerSettings.h
@@ -148,7 +149,11 @@ set(kafka_to_nexus_INC
         Metrics/LogSink.h
         Metrics/CarbonSink.h
         Metrics/InternalMetric.h
-        Metrics/Reporter.h)
+        Metrics/Reporter.h
+        Status/StatusInfo.h
+        Status/StatusReporter.h
+        Status/StatusReporter.cpp
+        Status/StatusReporterBase.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT

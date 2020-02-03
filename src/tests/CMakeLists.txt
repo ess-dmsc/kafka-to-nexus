@@ -16,7 +16,6 @@ set(UnitTests_SRC
         DemuxerTests.cpp
         MessageTests.cpp
         EventLoggerTests.cpp
-        MainOptTests.cpp
         FileWriterTaskTests.cpp
         SourceTests.cpp
         ProducerTests.cpp
@@ -45,7 +44,7 @@ set(UnitTests_INC
         Metrics/CarbonTestServer.h
         Metrics/MockSink.h
         Metrics/MockReporter.h
-        helpers/SetExtractorModule.h)
+        helpers/SetExtractorModule.h StatusReporterTests.cpp)
 
 add_executable(UnitTests
         ${UnitTests_SRC}

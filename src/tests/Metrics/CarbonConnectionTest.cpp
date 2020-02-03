@@ -3,7 +3,7 @@
 #include "Metrics/CarbonSink.h"
 #include "Metrics/Metric.h"
 #include "Metrics/Registrar.h"
-#include <Metrics/Reporter.h>
+#include "Metrics/Reporter.h"
 #include <chrono>
 #include <gtest/gtest.h>
 #include <regex>

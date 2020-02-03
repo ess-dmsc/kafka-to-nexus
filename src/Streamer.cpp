@@ -58,9 +58,10 @@ Streamer::Streamer(const std::string &Broker, const std::string &TopicName,
                                    Options, Logger, std::move(Consumer));
 }
 
-std::pair<Status::StreamerStatus, ConsumerPtr>
-initTopic(std::string const &TopicName, StreamerOptions const &Options,
-          SharedLogger const &Logger, ConsumerPtr Consumer) {
+std::pair<StreamerStatus, ConsumerPtr> initTopic(std::string const &TopicName,
+                                                 StreamerOptions const &Options,
+                                                 SharedLogger const &Logger,
+                                                 ConsumerPtr Consumer) {
   Logger->trace("Trying to connect to \"{}\"", TopicName);
   try {
     if (Options.StartTimestamp.count() != 0) {
@@ -74,14 +75,14 @@ initTopic(std::string const &TopicName, StreamerOptions const &Options,
       throw std::runtime_error(
           fmt::format("could not find topic \"{}\"", TopicName));
     }
-    return {Status::StreamerStatus::WRITING, std::move(Consumer)};
+    return {StreamerStatus::WRITING, std::move(Consumer)};
   } catch (std::exception &Error) {
     Logger->error("Initialisation failed: {}", Error.what());
-    return {Status::StreamerStatus::INITIALISATION_FAILED, nullptr};
+    return {StreamerStatus::INITIALISATION_FAILED, nullptr};
   }
 }
 
-FileWriter::Streamer::StreamerStatus FileWriter::Streamer::close() {
+FileWriter::StreamerStatus FileWriter::Streamer::close() {
   RunStatus.store(StreamerStatus::HAS_FINISHED);
   return StreamerStatus::HAS_FINISHED;
 }

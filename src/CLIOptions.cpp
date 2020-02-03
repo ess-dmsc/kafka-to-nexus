@@ -133,20 +133,15 @@ void setCLIOptions(CLI::App &App, MainOpt &MainOptions) {
   App.add_flag("--version", MainOptions.PrintVersion,
                "Print application version and exit");
 
-  // and add option for json config file instead
-  App.add_option("--commands-json", MainOptions.CommandsJsonFilename,
-                 "Specify a json file to set config")
-      ->check(CLI::ExistingFile);
-
   addUriOption(
       App, "--command-uri", MainOptions.CommandBrokerURI,
       "<host[:port][/topic]> Kafka broker/topic to listen for commands")
       ->required();
 
   addUriOption(App, "--status-uri", MainOptions.KafkaStatusURI,
-               MainOptions.ReportStatus,
                "<host[:port][/topic]> Kafka broker/topic to publish status "
-               "updates on");
+               "updates on")
+      ->required();
   addUriOption(App, "--graylog-logger-address",
                MainOptions.GraylogLoggerAddress,
                "<host:port> Log to Graylog via graylog_logger library");

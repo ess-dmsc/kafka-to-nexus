@@ -12,7 +12,7 @@
 #include "CommandParser.h"
 #include "FileWriterTask.h"
 #include "MainOpt.h"
-#include "MasterInterface.h"
+#include "States.h"
 #include "StreamMaster.h"
 #include "json.h"
 #include <memory>
