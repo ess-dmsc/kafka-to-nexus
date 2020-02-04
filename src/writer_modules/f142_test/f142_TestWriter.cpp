@@ -27,7 +27,7 @@ InitResult f142_TestWriter::init_hdf(hdf5::node::Group &HDFGroup,
     NeXusDataset::CueIndex(HDFGroup, Create,
                            1024); // NOLINT(bugprone-unused-raii)
   } catch (std::exception const &E) {
-    auto message = hdf5::error::print_nested(E);
+    hdf5::error::print_nested(E);
     return InitResult::ERROR;
   }
 
