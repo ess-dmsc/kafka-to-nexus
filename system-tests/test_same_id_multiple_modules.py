@@ -19,5 +19,6 @@ def test_data_reaches_file(docker_compose):
 
     filepath = "output-files/output_file.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
-        assert len(file["entry/sample/dataset2/value"][:]) > 0
-        assert file["entry/sample/dataset2/value"][0] == 0
+        assert len(file["entry/sample/dataset2/cue_index"][:]) > 1
+        assert file["entry/sample/dataset2/cue_index"][0] == 0
+        assert file["entry/sample/dataset2/cue_index"][1] == 1
