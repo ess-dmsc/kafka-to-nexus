@@ -11,7 +11,7 @@ COPY ./conan ../kafka_to_nexus_src/conan
 # Install packages - We don't want to purge kafkacat and tzdata after building
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
-    && apt-get --no-install-recommends -y install gcc-8 g++-8 build-essential git python3 python3-pip cmake python3-setuptools autoconf libtool automake kafkacat tzdata \
+    && apt-get --no-install-recommends -y install gcc-8 g++-8 make git python3 python3-pip cmake python3-setuptools autoconf libtool automake kafkacat tzdata \
     && apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
@@ -30,10 +30,10 @@ COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
 
 RUN cd kafka_to_nexus \
     && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
-    && make -j8 kafka-to-nexus \
+    && make kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
-    && apt purge -y build-essential git python3 python3-pip cmake python3-setuptools autoconf libtool automake \
+    && apt purge -y git python3 python3-pip cmake python3-setuptools autoconf libtool automake \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 
