@@ -9,7 +9,9 @@ def test_data_reaches_file(docker_compose):
     sleep(20)
     # Start file writing
     job_id = send_writer_command(
-        "commands/start-command-multiple-modules.json", producer, start_time=int(docker_compose)
+        "commands/start-command-multiple-modules.json",
+        producer,
+        start_time=int(docker_compose),
     )
     # Give it some time to accumulate data
     sleep(10)
