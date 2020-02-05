@@ -2,6 +2,7 @@ from helpers.kafkahelpers import create_producer, send_writer_command
 from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from time import sleep
 import numpy as np
+import pytest
 
 @pytest.mark.skip(reason="Is painfully slow to run")
 def test_data_reaches_file(docker_compose):
