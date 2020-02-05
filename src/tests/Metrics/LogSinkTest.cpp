@@ -9,9 +9,8 @@ using trompeloeil::re;
 
 class LogSinkTest : public ::testing::Test {};
 
-bool messageContainsSubstring(
-    spdlog::details::log_msg const &InputStringMessage,
-    std::string const &InputSubstring) {
+bool messageContainsSubstring(spdlog::details::log_msg &InputStringMessage,
+                              std::string const &InputSubstring) {
   return std::string(InputStringMessage.payload.data(),
                      InputStringMessage.payload.size())
              .find(InputSubstring) != std::string::npos;
@@ -20,7 +19,7 @@ bool messageContainsSubstring(
 class MockLogger : public spdlog::logger {
 public:
   MockLogger() : spdlog::logger("unused_name", nullptr) {}
-  MAKE_MOCK1(sink_it_, void(spdlog::details::log_msg const &), override);
+  MAKE_MOCK1(sink_it_, void(spdlog::details::log_msg &), override);
 };
 
 namespace Metrics {
