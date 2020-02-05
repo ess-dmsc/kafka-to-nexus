@@ -3,7 +3,7 @@ from helpers.nexushelpers import OpenNexusFileWhenAvailable
 from time import sleep
 import numpy as np
 
-
+@pytest.mark.skip(reason="Is painfully slow to run")
 def test_data_reaches_file(docker_compose):
     producer = create_producer()
     sleep(20)
