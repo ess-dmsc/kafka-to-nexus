@@ -34,7 +34,7 @@
                   {
                     "type": "stream",
                     "stream": {
-                      "source": "Det_Temp_RRB1",
+                      "source": "test_source_1",
                       "topic": "TEST_sampleEnv",
                       "writer_module": "f142"
                     }
@@ -48,7 +48,7 @@
                   {
                     "type": "stream",
                     "stream": {
-                      "source": "Det_Temp_RRB",
+                      "source": "test_source_2",
                       "topic": "TEST_sampleEnv",
                       "writer_module": "f142_test"
                     }
