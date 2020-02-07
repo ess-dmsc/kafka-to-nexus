@@ -28,8 +28,7 @@ public:
     return Counter.load(MemoryOrder);
   };
 
-  template <typename CType>
-  bool operator==(CType const& Rhs) {
+  template <typename CType> bool operator==(CType const &Rhs) {
     return Counter.load(MemoryOrder) == Rhs;
   };
 

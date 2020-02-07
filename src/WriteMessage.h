@@ -4,8 +4,8 @@
 
 #pragma once
 
-#include <memory>
 #include "FlatbufferMessage.h"
+#include <memory>
 
 class WriteMessage {
 public:
