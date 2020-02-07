@@ -19,15 +19,19 @@
 #include "WriterModuleBase.h"
 #include "Metrics/Registrar.h"
 #include "Metrics/Metric.h"
+#include "logger.h"
 
 class DataMessageWriter {
 public:
   DataMessageWriter(Metrics::Registrar const &MetricReg);
   void addMessage(WriteMessage Msg);
-
+  using ModuleHash = size_t;
 protected:
   void writeMsgImpl(intptr_t ModulePtr, FileWriter::FlatbufferMessage const &Msg);
+  SharedLogger Log{getLogger()};
   Metrics::Metric WritesDone{"writes_done", "Number of completed writes to HDF file."};
-  Metrics::Metric WriteErrors{"write_errors", "Number of failed HDF file writes."};
+  Metrics::Metric WriteErrors{"write_errors", "Number of failed HDF file writes.", Metrics::Severity::ERROR};
+  std::map<ModuleHash, std::unique_ptr<Metrics::Metric>> ModuleErrorCounters;
+  Metrics::Registrar Registrar;
   ThreadedExecutor Executor; // Must be last
 };
