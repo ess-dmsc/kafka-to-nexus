@@ -4,6 +4,6 @@
 
 #include "WriteMessage.h"
 
-
-WriteMessage::WriteMessage(DstId DestinationId, FileWriter::FlatbufferMessage const &Msg) : FbMsg(Msg), DestId(DestinationId) {
-}
+WriteMessage::WriteMessage(DstId DestinationId,
+                           FileWriter::FlatbufferMessage const &Msg)
+    : FbMsg(Msg), DestId(DestinationId) {}
