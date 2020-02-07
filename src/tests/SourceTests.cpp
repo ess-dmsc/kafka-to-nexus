@@ -18,7 +18,7 @@
 #include <trompeloeil.hpp>
 
 namespace FlatbufferMetadata {
-#include "schemas/ev42_events_generated.h"
+#include <ev42_events_generated.h>
 } // namespace FlatbufferMetadata
 
 using FileWriter::FlatbufferMessage;

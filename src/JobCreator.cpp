@@ -135,12 +135,12 @@ JobCreator::createFileWritingJob(StartCommandInfo const &StartInfo,
   Task->setFilename(Settings.HDFOutputPrefix, StartInfo.Filename);
 
   std::vector<StreamHDFInfo> StreamHDFInfoList =
-      initializeHDF(*Task, StartInfo.NexusStructure, StartInfo.UseSwmr);
+      initializeHDF(*Task, StartInfo.NexusStructure, Settings.UseHdfSwmr);
 
   std::vector<StreamSettings> StreamSettingsList =
       extractStreamInformationFromJson(Task, StreamHDFInfoList, Logger);
 
-  if (StartInfo.AbortOnStreamFailure) {
+  if (Settings.AbortOnUninitialisedStream) {
     for (auto const &Item : StreamHDFInfoList) {
       // cppcheck-suppress useStlAlgorithm
       if (!Item.InitialisedOk) {

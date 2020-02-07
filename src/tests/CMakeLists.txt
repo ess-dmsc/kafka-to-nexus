@@ -1,4 +1,4 @@
-find_package(Trompeloeil REQUIRED)
+find_package(trompeloeil REQUIRED)
 
 get_filename_component(TEST_DATA_PATH "data/" ABSOLUTE)
 
@@ -54,12 +54,11 @@ add_executable(UnitTests
         ${FB_METADATA_EXTRACTORS}
         )
 
-add_dependencies(UnitTests flatbuffers_generate)
 target_compile_definitions(UnitTests PRIVATE ${compile_defs_common})
-target_include_directories(UnitTests PRIVATE ${path_include_common} ${Trompeloeil_INCLUDE_DIR})
+target_include_directories(UnitTests PRIVATE ${path_include_common})
 target_link_libraries(UnitTests
+        trompeloeil::trompeloeil
         ${libraries_common}
-        fmt::fmt
         ${CONAN_LIBS_GTEST}
         )
 

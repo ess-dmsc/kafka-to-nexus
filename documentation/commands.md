@@ -25,8 +25,6 @@ Optional:
 - start_time: The start time in milliseconds (UNIX epoch) for data to be written from. If not supplied then the timestamp of the Kafka message containing the start command is used.
 - stop_time: The stop time in milliseconds (UNIX epoch) for data writing to stop. If not supplied then file writing continues until a stop command is received
 - service_id: The identifier for the instance of the file-writer that should handle this command. Only needed if multiple file-writers present.
-- abort_on_uninitialised_stream: Whether to abort if the stream cannot be initialised. Default is not to abort but carry on.
-- use_hdf_swmr: Whether to use HDF5's Single Writer Multiple Reader (SWMR) capabilities. Default is true. For more on SWMR see [below](Single Writer Multiple Reader).
 
 
 An example command with the `nexus_structure` skipped for brevity:
@@ -39,8 +37,6 @@ An example command with the `nexus_structure` skipped for brevity:
   "start_time": 1547198055000,
   "stop_time": 1547200800000,
   "service_id": "filewriter1",
-  "abort_on_uninitialised_stream": false,
-  "use_hdf_swmr": true,
   "file_attributes": {
     "file_name": "my_nexus_file.h5"
   } ,

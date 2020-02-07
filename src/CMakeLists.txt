@@ -4,15 +4,14 @@ if (NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
 
+find_package(librdkafka REQUIRED)
+find_package(hdf5 REQUIRED)
+find_package(flatbuffers REQUIRED)
 find_package(fmt REQUIRED)
-find_package(RdKafka REQUIRED)
-find_package(HDF5_SIMPLE REQUIRED)  # the built in FindHDF5 does not handle 1.10 correctly
-find_package(FlatBuffers REQUIRED)
 find_package(h5cpp REQUIRED)
-find_package(StreamingDataTypes COMPONENTS 2246f84b16423b7ac18e901bf4c43a006fe635dc)
-find_package(Boost COMPONENTS filesystem system REQUIRED)
-find_package(Date REQUIRED)
-find_package(GraylogLogger)
+find_package(streaming-data-types)
+find_package(date REQUIRED)
+find_package(asio REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -29,39 +28,34 @@ endif()
 
 set(compile_defs_common "")
 
-
 set(path_include_common
-        ${RDKAFKA_INCLUDE_DIR}
-        ${DATE_INCLUDE_DIR}
-        ${HDF5_INCLUDE_DIRS}
-        ${FLATBUFFERS_INCLUDE_DIR}
-        ${H5CPP_INCLUDE_DIR}
-        ${Boost_INCLUDE_DIRS}
         ${CURL_INCLUDE_DIRS}
         ${PROJECT_SOURCE_DIR}/src
-        ${PROJECT_BINARY_DIR}/src
         )
 
 set(libraries_common
-        ${RDKAFKA_LIBRARIES}
-        ${HDF5_C_LIBRARIES}
-        ${H5CPP_LIBRARIES}
         ${CURL_LIBRARIES}
-        ${Boost_LIBRARIES}
-        ${DATE_LIBRARY}
+        date::date
+        fmt::fmt
+        librdkafka::librdkafka
+        hdf5::hdf5
+        h5cpp::h5cpp
+        asio::asio
         pthread
         z
         )
 
 list(APPEND compile_defs_common "HAS_REMOTE_API=0")
 
-if (${GRAYLOGLOGGER_FOUND} AND ${USE_GRAYLOG_LOGGER})
+set(USE_GRAYLOG_LOGGER ON CACHE BOOL "Set to OFF to disable log reporting to graylog")
+if (${USE_GRAYLOG_LOGGER})
+  find_package(spdlog-graylog REQUIRED)
   message(STATUS "Using graylog_logger")
   list(APPEND compile_defs_common "HAVE_GRAYLOG_LOGGER=1")
-  list(APPEND path_include_common ${GRAYLOGLOGGER_INCLUDE_DIR})
-  list(APPEND libraries_common ${GRAYLOGLOGGER_LIBRARY})
-elseif (NOT GRAYLOGLOGGER_FOUND AND USE_GRAYLOG_LOGGER)
-  message(WARNING "graylog_logger requested but not found")
+  list(APPEND libraries_common spdlog-graylog::spdlog-graylog)
+else()
+  find_package(spdlog REQUIRED)
+  list(APPEND libraries_common spdlog::spdlog)
 endif()
 
 set(kafka_to_nexus_SRC
@@ -161,9 +155,6 @@ add_library(${tgt} OBJECT
         ${kafka_to_nexus_INC}
         )
 
-find_package(ASIO REQUIRED)
-
-add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
@@ -181,10 +172,9 @@ set(sources
         ${FB_METADATA_EXTRACTORS}
         )
 add_executable(${tgt} ${sources})
-add_dependencies(${tgt} flatbuffers_generate)
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common} fmt::fmt)
+target_link_libraries(${tgt} ${libraries_common})
 
 option(BUILD_TESTS "Build unit tests" ON)
 if (BUILD_TESTS)
