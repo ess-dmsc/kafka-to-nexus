@@ -15,6 +15,7 @@
 #include "EventLogger.h"
 #include "MainOpt.h"
 #include <atomic>
+#include <thread>
 
 namespace FileWriter {
 class Streamer;
