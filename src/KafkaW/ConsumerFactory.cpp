@@ -17,11 +17,12 @@ std::unique_ptr<Consumer> createConsumer(const BrokerSettings &Settings,
   auto SettingsCopy = Settings;
 
   // Create a unique group.id for this consumer
-  SettingsCopy.KafkaConfiguration["group.id"] = fmt::format(
-      "filewriter--streamer--host:{}--pid:{}--time:{}", gethostname_wrapper(),
-      getpid_wrapper(), std::chrono::duration_cast<std::chrono::milliseconds>(
-                            std::chrono::steady_clock::now().time_since_epoch())
-                            .count());
+  SettingsCopy.KafkaConfiguration["group.id"] =
+      fmt::format("filewriter--streamer--host:{}--pid:{}--time:{}",
+                  gethostname_wrapper(), getpid_wrapper(),
+                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                      std::chrono::steady_clock::now().time_since_epoch())
+                      .count());
   SettingsCopy.Address = Broker;
 
   auto Conf = std::unique_ptr<RdKafka::Conf>(

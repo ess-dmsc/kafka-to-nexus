@@ -12,11 +12,10 @@
 
 #pragma once
 
-#include "Errors.h"
 #include "EventLogger.h"
 #include "MainOpt.h"
-#include "Report.h"
 #include <atomic>
+#include <thread>
 
 namespace FileWriter {
 class Streamer;
@@ -26,16 +25,12 @@ class IStreamMaster {
 public:
   virtual ~IStreamMaster() = default;
   virtual std::string getJobId() const = 0;
-  virtual void requestStop() = 0;
-  virtual bool isRemovable() const = 0;
   virtual void setStopTime(const std::chrono::milliseconds &StopTime) = 0;
-  virtual nlohmann::json getStats() const = 0;
+  virtual bool isDoneWriting() = 0;
 };
 
 /// \brief The StreamMaster's task is to coordinate the different Streamers.
 class StreamMaster : public IStreamMaster {
-  using StreamMasterError = Status::StreamMasterError;
-
 public:
   /// \brief Builder method for StreamMaster.
   ///
@@ -44,13 +39,13 @@ public:
   /// \param Options The general application settings.
   /// \param Producer The Kafka producer used for reporting.
   /// \return
-  static std::unique_ptr<StreamMaster> createStreamMaster(
-      const std::string &Broker, std::unique_ptr<FileWriterTask> FileWriterTask,
-      const MainOpt &Options, std::shared_ptr<KafkaW::ProducerTopic> Producer);
+  static std::unique_ptr<StreamMaster>
+  createStreamMaster(const std::string &Broker,
+                     std::unique_ptr<FileWriterTask> FileWriterTask,
+                     const MainOpt &Options);
 
   StreamMaster(std::unique_ptr<FileWriterTask> FileWriterTask,
                std::string const &ServiceID,
-               std::shared_ptr<KafkaW::ProducerTopic> Producer,
                std::map<std::string, Streamer> Streams);
   ~StreamMaster() override;
   StreamMaster(const StreamMaster &) = delete;
@@ -78,57 +73,33 @@ public:
   /// Start writing the streams.
   void start();
 
-  /// Request to stop writing the streams.
-  void requestStop() override;
-
-  /// \brief Start the reporting thread.
-  ///
-  /// \param ReportMs How often to report.
-  void report(const std::chrono::milliseconds &ReportMs =
-                  std::chrono::milliseconds{1000});
-
-  /// \brief Get whether this stream master can be removed.
-  ///
-  /// \return True, if can be removed.
-  bool isRemovable() const override;
+  bool isDoneWriting() override;
 
   /// \brief Get the unique job id associated with the streamer (and hence
   /// with the NeXus file).
   ///
   /// \return The job id.
-  std::string getJobId() const override { return WriterTask->jobID(); }
-
-  nlohmann::json getStats() const override { return WriterTask->stats(); }
+  std::string getJobId() const override;
 
 private:
   /// \brief Process the messages in the specified stream.
   ///
   /// \param Stream The stream that will consume messages.
-  /// \param Demux The demux associated with the topic.
-  void processStream(Streamer &Stream, DemuxTopic &Demux);
+  void processStream(Streamer &Stream);
 
   /// \brief Main loop that handles the writer process for each stream.
   void run();
 
-  /// \brief Close the Kafka connection in the specified stream.
-  ///
-  /// \param Stream The stream to close.
-  void closeStream(Streamer &Stream, const std::string &TopicName);
-
   /// \brief Stops the streamers and prepares for being removed.
   void doStop();
 
-  size_t NumStreamers{0};
+  std::atomic<bool> StreamersRemaining{true};
   std::map<std::string, Streamer> Streamers;
   std::thread WriteThread;
-  std::thread ReportThread;
-  std::atomic<StreamMasterError> RunStatus{StreamMasterError::OK};
   std::atomic<bool> Stop{false};
   std::unique_ptr<FileWriterTask> WriterTask{nullptr};
-  std::unique_ptr<Report> ReportPtr{nullptr};
   std::chrono::milliseconds TopicWriteDuration{1000};
   std::string ServiceId;
-  std::shared_ptr<KafkaW::ProducerTopic> ProducerTopic;
   SharedLogger Logger = getLogger();
 };
 

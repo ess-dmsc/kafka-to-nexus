@@ -13,28 +13,29 @@
 
 #pragma once
 
-#include "DemuxTopic.h"
 #include "EventLogger.h"
 #include "KafkaW/Consumer.h"
-#include "Status.h"
+#include "StreamStatus.h"
 #include "StreamerOptions.h"
 #include "logger.h"
 #include <chrono>
 #include <future>
+#include <memory>
 #include <utility>
 
 namespace FileWriter {
+class DemuxTopic;
 using ConsumerPtr = std::unique_ptr<KafkaW::ConsumerInterface>;
+using DemuxPtr = std::shared_ptr<DemuxTopic>;
 
 /// \brief Connect to kafka topics eventually at a given point in time
 /// and consume messages.
 class Streamer {
-  using StreamerStatus = Status::StreamerStatus;
 
 public:
   Streamer() = default;
 
-  /// \brief Create an instance of Streamer.
+  /// \brief Constructor.
   ///
   /// \param Broker Broker name or address of one of the brokers in the
   /// partition.
@@ -43,24 +44,20 @@ public:
   /// RdKafka.
   /// \param Consumer The Consumer.
   Streamer(const std::string &Broker, const std::string &TopicName,
-           StreamerOptions Opts, ConsumerPtr Consumer);
+           StreamerOptions Opts, ConsumerPtr Consumer, DemuxPtr Demuxer);
   Streamer(const Streamer &) = delete;
 
   ~Streamer() = default;
 
-  /// \brief Polls for message and processes it if there is one
-  ///
-  /// \param MessageProcessor instance of the policy that describe how to
-  /// process the message
-  ProcessMessageResult pollAndProcess(FileWriter::DemuxTopic &MessageProcessor);
+  /// \brief Polls for message and processes it if there is one.
+  void process();
 
   /// \brief Processes received message
   ///
   /// \param MessageProcessor instance of the policy that describe how to
   /// process the message
   /// \param KafkaMessage the received message
-  ProcessMessageResult processMessage(
-      FileWriter::DemuxTopic &MessageProcessor,
+  void processMessage(
       std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> &KafkaMessage);
 
   /// \brief Disconnect the kafka consumer and destroy the TopicPartition
@@ -74,34 +71,38 @@ public:
 
   /// \brief Returns the status of the Streamer.
   ///
-  /// See "Error.h".
-  ///
   /// \return The current status.
   StreamerStatus runStatus() const { return RunStatus.load(); }
 
-  /// Return all the information about the messages consumed.
-  Status::MessageInfo &messageInfo() { return MessageInfo; }
+  /// \brief Set the stop time.
+  void setStopTime(std::chrono::milliseconds const &StopTime);
 
-  /// \brief Return a reference to the Options that has been set for the current
-  /// Streamer.
-  ///
-  /// The method can be used to change the current values.
-  StreamerOptions &getOptions() { return Options; }
+  /// \brief Use to force stream to finish if something has gone wrong.
+  void setFinished() { RunStatus.store(StreamerStatus::HAS_FINISHED); }
+
+  int getNumberProcessedMessages() { return NumberProcessedMessages.load(); }
+  int getNumberFailedValidation() { return NumberFailedValidation.load(); }
 
 protected:
-  ConsumerPtr Consumer{nullptr};
+  /// \brief Set the start time.
+  ///
+  /// Only used in unit tests.
+  void setStartTime(std::chrono::milliseconds const &StartTime);
 
-  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALIZED};
-  Status::MessageInfo MessageInfo;
-
-  StreamerOptions Options;
-
-  std::future<std::pair<Status::StreamerStatus, ConsumerPtr>>
-      ConsumerInitialised;
+  /// Protected so unit tests can inject it.
+  std::future<std::pair<StreamerStatus, ConsumerPtr>> ConsumerInitialised;
 
 private:
+  std::atomic<StreamerStatus> RunStatus{StreamerStatus::NOT_INITIALISED};
+  std::atomic<int> NumberProcessedMessages{0};
+  std::atomic<int> NumberFailedValidation{0};
+  StreamerOptions Options;
+  std::string ConsumerTopicName;
+  DemuxPtr MessageProcessor;
+  ConsumerPtr Consumer{nullptr};
+
   bool ifConsumerIsReadyThenAssignIt();
-  bool stopTimeExceeded(FileWriter::DemuxTopic &MessageProcessor);
+  bool stopTimeExceeded();
 
   /// Creates StopOffsets vector
   std::vector<std::pair<int64_t, bool>>
@@ -109,12 +110,25 @@ private:
                  std::chrono::milliseconds StopTime,
                  std::string const &TopicName);
 
+  std::unique_ptr<std::pair<KafkaW::PollStatus, Msg>> poll();
+
   /// Checks whether current message means we've now reached the stop offsets
   bool stopOffsetsNowReached(int32_t NewMessagePartition,
                              int64_t NewMessageOffset);
 
+  bool haveReachedStopOffsets(int32_t Partition, int64_t Offset);
+
+  static bool messageHasPayload(KafkaW::PollStatus MessageStatus);
+
+  bool messageSourceIsValid(FlatbufferMessage::SrcHash SourceHash) const;
+
+  bool messageTimestampInRange(std::uint64_t Timestamp) const;
+
+  std::unique_ptr<FlatbufferMessage> createFlatBufferMessage(char const *Data,
+                                                             size_t Size);
+
   /// Checks whether we've reached the stop offsets
-  bool stopOffsetsReached();
+  bool stopOffsetsReached() const;
 
   SharedLogger Logger = getLogger();
   bool CatchingUpToStopOffset = false;
@@ -139,8 +153,8 @@ private:
 /// \return If the connection is successful returns ``SEC::writing``. If the
 /// consumer can't be created returns ``SEC::configuration_error``, if the topic
 /// is not in the partition ``SEC::topic_partition_error``;
-std::pair<FileWriter::Status::StreamerStatus, FileWriter::ConsumerPtr>
-initTopics(std::string const &TopicName,
-           FileWriter::StreamerOptions const &Options,
-           SharedLogger const &Logger, ConsumerPtr Consumer);
+std::pair<StreamerStatus, FileWriter::ConsumerPtr>
+initTopic(std::string const &TopicName,
+          FileWriter::StreamerOptions const &Options,
+          SharedLogger const &Logger, ConsumerPtr Consumer);
 } // namespace FileWriter

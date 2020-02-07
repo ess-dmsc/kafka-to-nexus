@@ -5,17 +5,19 @@ ARG https_proxy
 ARG local_conan_server
 
 # Replace the default profile and remotes with the ones from our Ubuntu build node
-ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/7a4840422e78d451ada97662399116c31a4bc44e/files/default_profile" "/root/.conan/profiles/default"
+ADD "https://raw.githubusercontent.com/ess-dmsc/docker-ubuntu18.04-build-node/master/files/default_profile" "/root/.conan/profiles/default"
 COPY ./conan ../kafka_to_nexus_src/conan
 
 # Install packages - We don't want to purge kafkacat and tzdata after building
 RUN export DEBIAN_FRONTEND=noninteractive \
     && apt-get update -y \
-    && apt-get --no-install-recommends -y install build-essential git python python-pip cmake python-setuptools autoconf libtool automake kafkacat tzdata \
+    && apt-get --no-install-recommends -y install gcc-8 g++-8 build-essential git python3 python3-pip cmake python3-setuptools autoconf libtool automake kafkacat tzdata \
     && apt-get -y autoremove  \
     && apt-get clean all \
     && rm -rf /var/lib/apt/lists/* \
-    && pip install conan \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-8 800 --slave /usr/bin/g++ g++ /usr/bin/g++-8 \
+    && pip3 install --upgrade pip \
+    && pip3 install conan \
     && mkdir kafka_to_nexus \
     && conan config install http://github.com/ess-dmsc/conan-configuration.git \
     && if [ ! -z "$local_conan_server" ]; then conan remote add --insert 0 ess-dmsc-local "$local_conan_server"; fi \
@@ -31,7 +33,7 @@ RUN cd kafka_to_nexus \
     && make -j8 kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
-    && apt purge -y build-essential git python python-pip cmake python-setuptools autoconf libtool automake \
+    && apt purge -y build-essential git python3 python3-pip cmake python3-setuptools autoconf libtool automake \
     && rm -rf ../../kafka_to_nexus_src/* \
     && rm -rf /tmp/* /var/tmp/* /kafka_to_nexus/src /root/.conan/
 

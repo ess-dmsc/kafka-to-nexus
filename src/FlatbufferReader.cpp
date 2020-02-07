@@ -29,6 +29,7 @@ FlatbufferReaderRegistry::ReaderPtr &find(std::string const &Key) {
   }
 }
 
+// cppcheck-suppress unusedFunction
 void addReader(std::string const &FlatbufferID, FlatbufferReader::ptr &&item) {
   auto &m = getReaders();
   if (FlatbufferID.size() != 4) {

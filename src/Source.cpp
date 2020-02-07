@@ -11,12 +11,11 @@
 
 namespace FileWriter {
 
-Source::Source(std::string Name, std::string ID, HDFWriterModule::ptr Writer)
+Source::Source(std::string Name, std::string ID, std::string Topic,
+               WriterModule::ptr Writer)
     : SourceName(std::move(Name)), SchemaID(std::move(ID)),
-      Hash(calcSourceHash(SchemaID, SourceName)),
+      TopicName(std::move(Topic)), Hash(calcSourceHash(SchemaID, SourceName)),
       WriterModule(std::move(Writer)) {}
-
-Source::~Source() { close_writer_module(); }
 
 std::string const &Source::topic() const { return TopicName; }
 
@@ -29,38 +28,17 @@ ProcessMessageResult Source::process_message(FlatbufferMessage const &Message) {
     return ProcessMessageResult::ERR;
   }
 
-  if (!is_parallel) {
-    if (!WriterModule) {
-      Logger->trace("!_hdf_writer_module for {}", SourceName);
-      return ProcessMessageResult::ERR;
+  try {
+    WriterModule->write(Message);
+    if (HDFFileForSWMR != nullptr) {
+      HDFFileForSWMR->SWMRFlush();
     }
-    try {
-      WriterModule->write(Message);
-      _cnt_msg_written += 1;
-      _processed_messages_count += 1;
-      if (HDFFileForSWMR != nullptr) {
-        HDFFileForSWMR->SWMRFlush();
-      }
-      return ProcessMessageResult::OK;
-    } catch (const HDFWriterModuleRegistry::WriterException &E) {
-      Logger->error("Failure while writing message: {}", E.what());
-      return ProcessMessageResult::ERR;
-    }
+  } catch (const WriterModule::WriterException &E) {
+    Logger->error("Failure while writing message: {}", E.what());
+    return ProcessMessageResult::ERR;
   }
-  return ProcessMessageResult::ERR;
-}
 
-void Source::close_writer_module() {
-  if (WriterModule) {
-    getLogger()->trace("Closing writer module for {}", SourceName);
-    WriterModule->close();
-    WriterModule.reset();
-    getLogger()->trace("Writer module closed for {}", SourceName);
-  } else {
-    getLogger()->trace("No writer module to close for {}", SourceName);
-  }
+  return ProcessMessageResult::OK;
 }
-
-void Source::setTopic(std::string const &Name) { TopicName = Name; }
 
 } // namespace FileWriter

@@ -30,8 +30,8 @@ void defaultDatasetCreation(hdf5::node::Group &RootGroup,
                             std::string DatasetName) {
   size_t ChunkSize = 256;
   { Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize); }
-  ASSERT_TRUE(RootGroup.has_dataset(DatasetName)) << "Missing dataset: "
-                                                  << DatasetName;
+  ASSERT_TRUE(RootGroup.has_dataset(DatasetName))
+      << "Missing dataset: " << DatasetName;
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset(DatasetName);
   auto CreationProperties = TestDataset.creation_list();
   auto ChunkDims = CreationProperties.chunk();
@@ -47,8 +47,8 @@ void defaultTimeDatasetCreation(hdf5::node::Group &RootGroup,
                                 std::string DatasetName) {
   size_t ChunkSize = 256;
   { Dataset UnderTest(RootGroup, NeXusDataset::Mode::Create, ChunkSize); }
-  ASSERT_TRUE(RootGroup.has_dataset(DatasetName)) << "Missing dataset: "
-                                                  << DatasetName;
+  ASSERT_TRUE(RootGroup.has_dataset(DatasetName))
+      << "Missing dataset: " << DatasetName;
   hdf5::node::Dataset TestDataset = RootGroup.get_dataset(DatasetName);
   auto CreationProperties = TestDataset.creation_list();
   auto ChunkDims = CreationProperties.chunk();

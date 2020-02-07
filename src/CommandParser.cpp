@@ -97,5 +97,5 @@ std::string extractCommandName(const nlohmann::json &JSONCommand) {
   std::transform(Cmd.begin(), Cmd.end(), Cmd.begin(), ::tolower);
   return Cmd;
 }
-}
-}
+} // namespace CommandParser
+} // namespace FileWriter

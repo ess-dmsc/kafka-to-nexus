@@ -12,7 +12,7 @@
 #include <gtest/gtest.h>
 
 TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task("SomeID", nullptr);
+  FileWriter::FileWriterTask Task("SomeID");
 
   Task.setFilename("SomePrefix", "File.hdf");
 
@@ -20,7 +20,7 @@ TEST(FileWriterTask, WithPrefixFullFileNameIsCorrect) {
 }
 
 TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
-  FileWriter::FileWriterTask Task("SomeID", nullptr);
+  FileWriter::FileWriterTask Task("SomeID");
 
   Task.setFilename("", "File.hdf");
 
@@ -28,8 +28,8 @@ TEST(FileWriterTask, WithoutPrefixFileNameIsCorrect) {
 }
 
 TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
-  FileWriter::FileWriterTask Task("SomeID", nullptr);
-  FileWriter::Source Src("Src1", "Id1", nullptr);
+  FileWriter::FileWriterTask Task("SomeID");
+  FileWriter::Source Src("Src1", "Id1", "Topic1", nullptr);
 
   Task.addSource(std::move(Src));
 
@@ -37,7 +37,7 @@ TEST(FileWriterTask, AddingSourceAddsToDemuxers) {
 }
 
 TEST(FileWriterTask, SettingJobIdSetsID) {
-  FileWriter::FileWriterTask Task("SomeID", nullptr);
+  FileWriter::FileWriterTask Task("SomeID");
   std::string NewId = "NewID";
 
   Task.setJobId(NewId);

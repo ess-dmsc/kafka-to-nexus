@@ -7,6 +7,7 @@
 //
 // Screaming Udder!                              https://esss.se
 
+#include "KafkaW/Producer.h"
 #include "StreamMaster.h"
 #include "Streamer.h"
 #include <gtest/gtest.h>
@@ -23,11 +24,11 @@ class StreamMasterTests : public ::testing::Test {
 public:
   void SetUp() override {
     FileWriterTask =
-        std::make_unique<FileWriter::FileWriterTask>("Not Important", nullptr);
+        std::make_unique<FileWriter::FileWriterTask>("Not Important");
     FileWriterTask->setJobId(JobId);
     std::map<std::string, FileWriter::Streamer> Streamers;
     StreamMaster = std::make_unique<FileWriter::StreamMaster>(
-        std::move(FileWriterTask), "ServiceID", nullptr, std::move(Streamers));
+        std::move(FileWriterTask), "ServiceID", std::move(Streamers));
   };
   std::string JobId = "TestID";
   std::unique_ptr<FileWriter::FileWriterTask> FileWriterTask;
@@ -36,14 +37,4 @@ public:
 
 TEST_F(StreamMasterTests, getJobIdReturnsCorrectValue) {
   ASSERT_EQ(JobId, StreamMaster->getJobId());
-}
-
-TEST_F(StreamMasterTests, whenConstructedIsNotRemovable) {
-  ASSERT_FALSE(StreamMaster->isRemovable());
-}
-
-TEST_F(StreamMasterTests, whenRunningIsNotRemovable) {
-  StreamMaster->start();
-
-  ASSERT_FALSE(StreamMaster->isRemovable());
 }

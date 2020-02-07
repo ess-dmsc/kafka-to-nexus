@@ -26,6 +26,7 @@ public:
 class ProducerTopic {
 public:
   ProducerTopic(std::shared_ptr<Producer> ProducerPtr, std::string TopicName);
+
   virtual ~ProducerTopic() = default;
 
   /// \brief Send a message to Kafka for publishing on this topic.

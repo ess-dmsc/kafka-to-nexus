@@ -121,5 +121,5 @@ T getOptionalValue(std::string const &Key, nlohmann::json const &JSONCommand,
 
   return Default;
 }
-}
+} // namespace CommandParser
 } // namespace FileWriter

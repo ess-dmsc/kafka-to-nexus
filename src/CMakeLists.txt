@@ -11,6 +11,7 @@ find_package(fmt REQUIRED)
 find_package(h5cpp REQUIRED)
 find_package(streaming-data-types)
 find_package(date REQUIRED)
+find_package(asio REQUIRED)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -fPIC -g -D_GLIBCXX_USE_NANOSLEEP")
 if (DEFINED _GLIBCXX_USE_CXX11_ABI)
@@ -39,6 +40,7 @@ set(libraries_common
         librdkafka::librdkafka
         hdf5::hdf5
         h5cpp::h5cpp
+        asio::asio
         pthread
         z
         )
@@ -57,9 +59,7 @@ else()
 endif()
 
 set(kafka_to_nexus_SRC
-        Status.cpp
-        StatusWriter.cpp
-        Errors.cpp
+        StreamStatus.cpp
         Streamer.cpp
         StreamMaster.cpp
         Master.cpp
@@ -72,7 +72,6 @@ set(kafka_to_nexus_SRC
         EventLogger.cpp
         FlatbufferReader.cpp
         HDFFile.cpp
-        HDFWriterModule.cpp
         KafkaW/Consumer.cpp
         KafkaW/Producer.cpp
         KafkaW/ProducerTopic.cpp
@@ -85,20 +84,27 @@ set(kafka_to_nexus_SRC
         NeXusDataset.cpp
         StreamMaster.cpp
         CommandParser.cpp
-        StreamsController.cpp
         ExtensibleDataset.cpp
-        )
+        WriterRegistrar.cpp
+        Metrics/Reporter.cpp
+        Metrics/Registrar.cpp
+        Metrics/Metric.cpp
+        Metrics/CarbonInterface.cpp
+        Metrics/CarbonConnection.cpp
+        Metrics/LogSink.cpp
+        Metrics/CarbonSink.cpp
+        Status/StatusReporterBase.cpp)
 
 set(kafka_to_nexus_INC
         JobCreator.h
         CommandListener.h
         DemuxTopic.h
-        Errors.h
+        StreamStatus.h
         EventLogger.h
         FileWriterTask.h
         FlatbufferReader.h
         HDFFile.h
-        HDFWriterModule.h
+        WriterModuleBase.h
         helper.h
         json.h
         KafkaW/BrokerSettings.h
@@ -117,10 +123,7 @@ set(kafka_to_nexus_INC
         Msg.h
         FlatbufferMessage.h
         ProcessMessageResult.h
-        Report.h
         Source.h
-        Status.h
-        StatusWriter.h
         Streamer.h
         StreamerOptions.h
         StreamMaster.h
@@ -129,10 +132,22 @@ set(kafka_to_nexus_INC
         NeXusDataset.h
         KafkaW/ConfigureKafka.cpp
         KafkaW/ConfigureKafka.h
-        StreamsController.h
         CommandParser.h
         ExtensibleDataset.h
-    )
+        WriterRegistrar.h
+        Metrics/Registrar.h
+        Metrics/Metric.h
+        Metrics/CarbonInterface.h
+        Metrics/CarbonConnection.h
+        Metrics/Sink.h
+        Metrics/LogSink.h
+        Metrics/CarbonSink.h
+        Metrics/InternalMetric.h
+        Metrics/Reporter.h
+        Status/StatusInfo.h
+        Status/StatusReporter.h
+        Status/StatusReporter.cpp
+        Status/StatusReporterBase.h)
 
 set(tgt "kafka_to_nexus__objects")
 add_library(${tgt} OBJECT
@@ -143,26 +158,18 @@ add_library(${tgt} OBJECT
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
 target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
 
-
-set(tgt "send-command")
-set(sources
-        send-command.cpp
-        $<TARGET_OBJECTS:kafka_to_nexus__objects>
-        )
-add_executable(${tgt} EXCLUDE_FROM_ALL ${sources})
-target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})
-target_include_directories(${tgt} PRIVATE ${path_include_common} ${VERSION_INCLUDE_DIR})
-target_link_libraries(${tgt} ${libraries_common})
-
 set(WRITER_MODULES "" CACHE INTERNAL "WRITER_MODULES")
+set(FB_METADATA_EXTRACTORS "" CACHE INTERNAL "FB_METADATA_EXTRACTORS")
 
-add_subdirectory(schemas)
+add_subdirectory(writer_modules)
+add_subdirectory(fb_metadata_extractors)
 
 set(tgt "kafka-to-nexus")
 set(sources
         kafka-to-nexus.cpp
         $<TARGET_OBJECTS:kafka_to_nexus__objects>
         ${WRITER_MODULES}
+        ${FB_METADATA_EXTRACTORS}
         )
 add_executable(${tgt} ${sources})
 target_compile_definitions(${tgt} PRIVATE ${compile_defs_common})

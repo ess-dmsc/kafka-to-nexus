@@ -8,13 +8,14 @@
 // Screaming Udder!                              https://esss.se
 
 #include "FileWriterTask.h"
+#include "DemuxTopic.h"
 #include "EventLogger.h"
 #include "HDFFile.h"
+#include "KafkaW/ProducerTopic.h"
 #include "Source.h"
 #include "helper.h"
 #include "logger.h"
 #include <atomic>
-#include <thread>
 
 namespace FileWriter {
 
@@ -22,7 +23,7 @@ namespace {
 
 using nlohmann::json;
 
-json hdf_parse(std::string const &Structure, SharedLogger Logger) {
+json hdf_parse(std::string const &Structure, SharedLogger const &Logger) {
   try {
     auto StructureDocument = json::parse(Structure);
     return StructureDocument;
@@ -33,23 +34,18 @@ json hdf_parse(std::string const &Structure, SharedLogger Logger) {
 }
 } // namespace
 
-std::vector<DemuxTopic> &FileWriterTask::demuxers() { return Demuxers; }
+std::map<std::string, std::shared_ptr<DemuxTopic>> &FileWriterTask::demuxers() {
+  return TopicNameToDemuxerMap;
+}
 
 FileWriterTask::~FileWriterTask() {
   Logger->trace("~FileWriterTask");
-  Demuxers.clear();
+  TopicNameToDemuxerMap.clear();
   try {
     File.close();
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Close, ServiceId, JobId,
-               "File closed");
-    }
   } catch (std::exception const &E) {
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Fail, ServiceId, JobId,
-               fmt::format("Exception while finishing FileWriterTask: {}",
-                           E.what()));
-    }
+    Logger->error(fmt::format(
+        "Exception while closing file in ~FileWriterTask: {}", E.what()));
   }
 }
 
@@ -67,19 +63,11 @@ void FileWriterTask::addSource(Source &&Source) {
     Source.HDFFileForSWMR = &File;
   }
 
-  // If source already exists then replace
-  for (auto &Demux : Demuxers) {
-    // cppcheck-suppress useStlAlgorithm
-    if (Demux.topic() == Source.topic()) {
-      Demux.add_source(std::move(Source));
-      return;
-    }
-  }
+  TopicNameToDemuxerMap.emplace(Source.topic(),
+                                std::make_shared<DemuxTopic>(Source.topic()));
 
-  // Add new source
-  Demuxers.emplace_back(Source.topic());
-  auto &Demux = Demuxers.back();
-  Demux.add_source(std::move(Source));
+  // Add the source to the demuxer for its topic
+  TopicNameToDemuxerMap[Source.topic()]->addSource(std::move(Source));
 }
 
 void FileWriterTask::InitialiseHdf(std::string const &NexusStructure,
@@ -109,11 +97,7 @@ void FileWriterTask::reopenFile() {
   try {
     File.reopen(Filename);
   } catch (std::exception const &E) {
-    Logger->error("Exception: {}", E.what());
-    if (StatusProducer) {
-      logEvent(StatusProducer, StatusCode::Error, ServiceId, JobId,
-               fmt::format("Exception: {}", E.what()));
-    }
+    Logger->error("Exception when reopening file: {}", E.what());
     throw;
   }
 }
@@ -126,24 +110,6 @@ bool FileWriterTask::swmrEnabled() const { return File.isSWMREnabled(); }
 
 void FileWriterTask::setJobId(std::string const &Id) { JobId = Id; }
 
-json FileWriterTask::stats() const {
-  auto Topics = json::object();
-  for (auto &Demux : Demuxers) {
-    auto DemuxStats = json::object();
-    DemuxStats["messages_processed"] = Demux.messages_processed.load();
-    DemuxStats["error_message_too_small"] =
-        Demux.error_message_too_small.load();
-    DemuxStats["error_no_flatbuffer_reader"] =
-        Demux.error_no_flatbuffer_reader.load();
-    DemuxStats["error_no_source_instance"] =
-        Demux.error_no_source_instance.load();
-    Topics[Demux.topic()] = DemuxStats;
-  }
-  auto FWT = json::object();
-  FWT["filename"] = Filename;
-  FWT["topics"] = Topics;
-  return FWT;
-}
 std::string FileWriterTask::filename() const { return Filename; }
 
 } // namespace FileWriter

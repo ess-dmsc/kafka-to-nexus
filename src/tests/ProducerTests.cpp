@@ -8,6 +8,7 @@
 // Screaming Udder!                              https://esss.se
 
 #include "../KafkaW/Producer.h"
+#include "helpers/KafkaWMocks.h"
 #include <gtest/gtest.h>
 #include <librdkafka/rdkafkacpp.h>
 #include <memory>
@@ -26,70 +27,6 @@ public:
       : Producer(Settings){};
   using Producer::ProducerID;
   using Producer::ProducerPtr;
-};
-
-class MockProducer : public RdKafka::Producer {
-public:
-  MAKE_CONST_MOCK0(name, const std::string(), override);
-  MAKE_CONST_MOCK0(memberid, const std::string(), override);
-  MAKE_MOCK1(poll, int(int), override);
-  MAKE_MOCK0(outq_len, int(), override);
-  MAKE_MOCK4(metadata, RdKafka::ErrorCode(bool, const RdKafka::Topic *,
-                                          RdKafka::Metadata **, int),
-             override);
-  MAKE_MOCK1(pause,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
-             override);
-  MAKE_MOCK1(resume,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &),
-             override);
-  MAKE_MOCK5(query_watermark_offsets,
-             RdKafka::ErrorCode(const std::string &, int32_t, int64_t *,
-                                int64_t *, int),
-             override);
-  MAKE_MOCK4(get_watermark_offsets,
-             RdKafka::ErrorCode(const std::string &, int32_t, int64_t *,
-                                int64_t *),
-             override);
-  MAKE_MOCK2(offsetsForTimes,
-             RdKafka::ErrorCode(std::vector<RdKafka::TopicPartition *> &, int),
-             override);
-  MAKE_MOCK1(get_partition_queue,
-             RdKafka::Queue *(const RdKafka::TopicPartition *), override);
-  MAKE_MOCK1(set_log_queue, RdKafka::ErrorCode(RdKafka::Queue *), override);
-  MAKE_MOCK0(yield, void(), override);
-  MAKE_MOCK1(clusterid, const std::string(int), override);
-  MAKE_MOCK0(c_ptr, rd_kafka_s *(), override);
-  MAKE_MOCK2(create, RdKafka::Producer *(RdKafka::Conf *, std::string));
-  MAKE_MOCK7(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *,
-                                         size_t, const std::string *, void *),
-             override);
-  MAKE_MOCK8(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t, int, void *,
-                                         size_t, const void *, size_t, void *),
-             override);
-  MAKE_MOCK9(produce,
-             RdKafka::ErrorCode(const std::string, int32_t, int, void *, size_t,
-                                const void *, size_t, int64_t, void *),
-             override);
-  MAKE_MOCK5(produce, RdKafka::ErrorCode(RdKafka::Topic *, int32_t,
-                                         const std::vector<char> *,
-                                         const std::vector<char> *, void *),
-             override);
-  MAKE_MOCK1(flush, RdKafka::ErrorCode(int), override);
-  MAKE_MOCK1(controllerid, int32_t(int), override);
-  MAKE_MOCK1(fatal_error, RdKafka::ErrorCode(std::string &), override);
-  MAKE_MOCK5(oauthbearer_set_token,
-             RdKafka::ErrorCode(const std::string &, int64_t,
-                                const std::string &,
-                                const std::list<std::string> &, std::string &),
-             override);
-  MAKE_MOCK1(oauthbearer_set_token_failure,
-             RdKafka::ErrorCode(const std::string &), override);
-  MAKE_MOCK10(produce, RdKafka::ErrorCode(std::string, int32_t, int, void *,
-                                          size_t, const void *, size_t, int64_t,
-                                          RdKafka::Headers *, void *),
-              override);
-  MAKE_MOCK1(purge, RdKafka::ErrorCode(int), override);
 };
 
 // Don't really care if anything gets called with this as it's RdKafka's
@@ -115,9 +52,8 @@ public:
 
 TEST_F(ProducerTests, creatingForwarderIncrementsForwarderCounter) {
   KafkaW::BrokerSettings Settings{};
-  ProducerStandIn Producer1(Settings);
-  ProducerStandIn Producer2(Settings);
-  ASSERT_EQ(-1, Producer1.ProducerID - Producer2.ProducerID);
+  EXPECT_EQ(1, std::abs(ProducerStandIn(Settings).ProducerID -
+                        ProducerStandIn(Settings).ProducerID));
 }
 
 TEST_F(ProducerTests, callPollTest) {
@@ -187,8 +123,8 @@ TEST_F(ProducerTests, testDestructorOutputQueueWithTooManyItemsToProduce) {
   // Needs to be put in a scope here so we can check that outq_len is called on
   // destruction
   {
-    ProducerStandIn Producer(Settings);
-    ASSERT_NO_THROW(Producer.ProducerPtr = std::move(TempProducerPtr));
+    ASSERT_NO_THROW(ProducerStandIn(Settings).ProducerPtr =
+                        std::move(TempProducerPtr));
   }
 }
 

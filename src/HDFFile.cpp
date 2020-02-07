@@ -461,7 +461,7 @@ void writeAttrOfSpecifiedType(std::string const &DType,
 /// \param jsv    Json value object of attributes.
 void writeObjectOfAttributes(hdf5::node::Node const &Node,
                              nlohmann::json const &Values) {
-  for (auto It = Values.begin(); It != Values.end(); ++It) {
+  for (auto It = Values.cbegin(); It != Values.cend(); ++It) {
 
     auto const Name = It.key();
     writeScalarAttribute(Node, Name, It.value());
@@ -865,10 +865,10 @@ void HDFFile::init(std::string const &Filename,
     hdf5::property::FileAccessList fapl;
 
     if (UseHDFSWMR) {
-      H5File =
-          hdf5::file::create(Filename, hdf5::file::AccessFlags::TRUNCATE |
-                                           hdf5::file::AccessFlags::SWMR_WRITE,
-                             fcpl, fapl);
+      H5File = hdf5::file::create(Filename,
+                                  hdf5::file::AccessFlags::TRUNCATE |
+                                      hdf5::file::AccessFlags::SWMR_WRITE,
+                                  fcpl, fapl);
       SWMREnabled = true;
     } else {
       H5File = hdf5::file::create(Filename, hdf5::file::AccessFlags::EXCLUSIVE,

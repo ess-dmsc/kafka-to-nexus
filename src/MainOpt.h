@@ -51,21 +51,6 @@ struct MainOpt {
   /// Used for logging to file
   std::string LogFilename;
 
-  /// The commands file given by the `--commands-json` option.
-  nlohmann::json CommandsJson = nlohmann::json::object();
-
-  /// The commands filename given by the `--commands-json` option.
-  std::string CommandsJsonFilename;
-
-  /// \brief Holds commands from the configuration file.
-  ///
-  /// The configuration file may contain commands which are executed before any
-  /// other command from the Kafka command topic.
-  std::vector<std::string> CommandsFromJson;
-
-  /// Called on startup when a `--commands-json` is found.
-  int parseJsonCommands();
-
   /// Kafka broker and topic where file writer commands are published.
   uri::URI CommandBrokerURI{"localhost:9092/kafka-to-nexus.command"};
 
@@ -77,9 +62,6 @@ struct MainOpt {
 
   /// Used for command line argument.
   bool ListWriterModules = false;
-
-  /// Whether we want to publish status to Kafka.
-  bool ReportStatus = false;
 
   /// Kafka topic where status updates are to be published.
   uri::URI KafkaStatusURI{"localhost:9092/kafka-to-nexus.status"};
@@ -99,7 +81,6 @@ struct MainOpt {
   // The constructor was removed because of the issue with the integration test
   // (see cpp file for more details).
   void init();
-  void findAndAddCommands();
 };
 
 void setupLoggerFromOptions(MainOpt const &opt);

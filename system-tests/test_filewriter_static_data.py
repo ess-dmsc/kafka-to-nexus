@@ -9,17 +9,17 @@ def test_static_data_reaches_file(docker_compose):
     producer = create_producer()
     sleep(20)
     # Start file writing
-    send_writer_command(
-        "commands/static-data-add.json", producer, start_time=docker_compose
+    job_id = send_writer_command(
+        "commands/start-command-for-static-data.json",
+        producer,
+        start_time=int(docker_compose),
     )
-    producer.flush()
+
     # Give it some time to accumulate data
     sleep(10)
     # Stop file writing
-    send_writer_command("commands/static-data-stop.json", producer)
+    send_writer_command("commands/stop-command.json", producer, job_id=job_id)
     sleep(10)
-    send_writer_command("commands/writer-exit.json", producer)
-    producer.flush()
 
     filepath = "output-files/output_file_static.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:

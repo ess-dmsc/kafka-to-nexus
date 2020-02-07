@@ -2,9 +2,8 @@
 
 Commands in the form of JSON messages are used to start and stop file writing.
 
-Commands are generally sent through Kafka via the broker and topic specified by the
-`--command-uri` option; however, commands can also be given in the [configuration
-file](Commands via the configuration file).
+Commands are sent through Kafka via the broker and topic specified by the
+`--command-uri` option.
 
 Note: some example commands can be found in the system tests.
 
@@ -212,35 +211,22 @@ For example:
 }
 ```
 
-## Command to exit the file-writer
+## Single Writer Multiple Reader
 
-The file-writer can be requested to exit.
-The parameters for the command are:
+The file-writer can use HDF5's Single Writer Multiple Reader feature (SWMR) which is enable by default.
 
-- cmd: The command name, must be `filewriter_exit`
-- service_id: The identifier for the instance of the file-writer that should handle this command. Optional, only needed if multiple file-writers present
+To read and write HDF files which use the SWMR feature requires HDF5 version 1.10 or higher.
+One can also use the HDF5 tool `h5repack` with the `--high` option to convert the file into a HDF5 1.8 compatible version.  Please refer to see the `h5repack` documentation for more information.
 
-For example:
+Please note, the HDF documentation warns that:
 
-```json
-{
-  "cmd": "FileWriter_exit",
-  "service_id": "filewriter1"
-}
-```
+"The HDF5 file that is accessed by SWMR HDF5 applications must be located on a
+file system that complies with the POSIX `write()` semantics."
 
-### Commands via the configuration file
+Also:
 
-When running the file-writer is is possible to use a configuration file by specifying `--config-file <file.json>`.
-This file can also contain commands, for example: it could be configured to start file-writing immediately.
-
-The syntax for including commands is:
-
-```json
-"commands": [
-  { "some command": "as discussed above" }
-]
-```
+"The writer is not allowed to modify or append to any data items containing
+variable-size datatypes (including string and region references datatypes)."
 
 ## Attributes
 

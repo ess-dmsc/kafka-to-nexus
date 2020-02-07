@@ -12,10 +12,6 @@
 #include "FileWriterTask.h"
 #include <chrono>
 
-namespace KafkaW {
-class ProducerTopic;
-}
-
 namespace FileWriter {
 /// \brief Enum class to map NICOS status code values.
 ///
