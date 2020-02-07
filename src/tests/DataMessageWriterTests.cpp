@@ -12,6 +12,7 @@
 #include <gtest/gtest.h>
 #include <trompeloeil.hpp>
 #include "Metrics/Registrar.h"
+#include <array>
 
 class WriterModuleStandIn : public WriterModule::Base {
 public:
@@ -27,12 +28,12 @@ public:
   using DataMessageWriter::WritesDone;
   using DataMessageWriter::WriteErrors;
   using DataMessageWriter::Executor;
+  using DataMessageWriter::ModuleErrorCounters;
 };
 
 class DataMessageWriterTest : public ::testing::Test {
 public:
   WriterModuleStandIn WriterModule;
-  FileWriter::FlatbufferMessage Msg;
   Metrics::Registrar MetReg{"some_prefix", {}};
 };
 
@@ -51,15 +52,39 @@ TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   }
 }
 
-TEST_F(DataMessageWriterTest, WriteMessageException) {
+TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1).THROW(WriterModule::WriterException("Some error."));
+  FileWriter::FlatbufferMessage Msg;
   WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
+    Writer.Executor.SendWork([&Writer](){
+      EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 1);
+    });
     Writer.addMessage(SomeMessage);
     Writer.Executor.SendWork([&Writer](){
       EXPECT_TRUE(Writer.WritesDone == 0);
       EXPECT_TRUE(Writer.WriteErrors == 1);
+      EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 1);
+    });
+  }
+}
+
+TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
+  REQUIRE_CALL(WriterModule, write(_)).TIMES(1).THROW(WriterModule::WriterException("Some error."));
+  std::array<char,8> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
+  FileWriter::FlatbufferMessage Msg(SomeData.data(), SomeData.size());
+  WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
+  {
+    DataMessageWriterStandIn Writer{MetReg};
+    Writer.Executor.SendWork([&Writer](){
+      EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 1);
+    });
+    Writer.addMessage(SomeMessage);
+    Writer.Executor.SendWork([&Writer](){
+      EXPECT_TRUE(Writer.WritesDone == 0);
+      EXPECT_TRUE(Writer.WriteErrors == 1);
+      EXPECT_TRUE(Writer.ModuleErrorCounters.size() == 2);
     });
   }
 }
