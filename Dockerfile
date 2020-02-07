@@ -30,7 +30,7 @@ COPY ./CMakeLists.txt ../kafka_to_nexus_src/CMakeLists.txt
 
 RUN cd kafka_to_nexus \
     && cmake -DCONAN="MANUAL" --target="kafka-to-nexus" -DCMAKE_BUILD_TYPE=Release -DUSE_GRAYLOG_LOGGER=True -DRUN_DOXYGEN=False -DBUILD_TESTS=False ../kafka_to_nexus_src \
-    && make kafka-to-nexus \
+    && make -j2 kafka-to-nexus \
     && mkdir /output-files \
     && conan remove "*" -s -f \
     && apt purge -y git python3 python3-pip cmake python3-setuptools autoconf libtool automake \
