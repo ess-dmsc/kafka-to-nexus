@@ -5,7 +5,7 @@ from time import sleep
 from datetime import datetime
 
 
-def test_data_reaches_file(docker_compose):
+def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
     producer = create_producer()
 
     # Produce some f142 data
