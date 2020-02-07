@@ -17,14 +17,17 @@
 #include "ThreadedExecutor.h"
 #include "WriteMessage.h"
 #include "WriterModuleBase.h"
+#include "Metrics/Registrar.h"
+#include "Metrics/Metric.h"
 
 class DataMessageWriter {
 public:
-  DataMessageWriter() = default;
+  DataMessageWriter(Metrics::Registrar const &MetricReg);
   void addMessage(WriteMessage Msg);
 
 protected:
   void writeMsgImpl(intptr_t ModulePtr, FileWriter::FlatbufferMessage const &Msg);
-private:
+  Metrics::Metric WritesDone{"writes_done", "Number of completed writes to HDF file."};
+  Metrics::Metric WriteErrors{"write_errors", "Number of failed HDF file writes."};
   ThreadedExecutor Executor; // Must be last
 };
