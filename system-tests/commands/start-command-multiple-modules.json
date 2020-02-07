@@ -4,7 +4,7 @@
   "job_id": "e094c12a-cd4b-11e8-93f1-484d7e9b68dc",
   "use_hdf_swmr": true,
   "file_attributes": {
-    "file_name": "output_file.nxs"
+    "file_name": "output_file_multiple_modules.nxs"
   },
   "nexus_structure": {
     "children": [

@@ -15,7 +15,6 @@ def test_data_reaches_file(docker_compose):
     sleep(10)
     # Stop file writing
     send_writer_command("commands/stop-command.json", producer, job_id=job_id)
-    sleep(10)
 
     filepath = "output-files/output_file.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:

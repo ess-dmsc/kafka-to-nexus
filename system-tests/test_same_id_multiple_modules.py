@@ -18,9 +18,8 @@ def test_data_reaches_file(docker_compose):
     sleep(10)
     # Stop file writing
     send_writer_command("commands/stop-command.json", producer, job_id=job_id)
-    sleep(10)
 
-    filepath = "output-files/output_file.nxs"
+    filepath = "output-files/output_file_multiple_modules.nxs"
     with OpenNexusFileWhenAvailable(filepath) as file:
         assert len(file["entry/sample/dataset2/cue_index"][:]) > 1
         assert file["entry/sample/dataset2/cue_index"][0] == 0
