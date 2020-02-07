@@ -34,6 +34,6 @@ def test_two_different_writer_modules_with_same_flatbuffer_id(docker_compose):
             "f142 module should have written this dataset, it should have written a value and time"
 
         assert "cue_timestamp_zero" not in file["entry/sample/dataset2"], \
-            "f142_test module should have been written this dataset, it writes cue_index but no cue_timestamp_zero"
+            "f142_test module should have written this dataset, it writes cue_index but no cue_timestamp_zero"
         assert file["entry/sample/dataset2/cue_index"][0] == 0, "Expect consecutive integers to be written by f142_test"
         assert file["entry/sample/dataset2/cue_index"][1] == 1, "Expect consecutive integers to be written by f142_test"
