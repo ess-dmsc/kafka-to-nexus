@@ -5,7 +5,6 @@ import numpy as np
 import pytest
 
 
-@pytest.mark.skip(reason="Is painfully slow to run")
 def test_data_reaches_file(docker_compose):
     producer = create_producer()
     sleep(20)
