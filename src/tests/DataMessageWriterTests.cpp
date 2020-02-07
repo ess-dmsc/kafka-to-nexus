@@ -13,6 +13,7 @@
 #include <trompeloeil.hpp>
 #include "Metrics/Registrar.h"
 #include <array>
+#include "helpers/SetExtractorModule.h"
 
 class WriterModuleStandIn : public WriterModule::Base {
 public:
@@ -41,6 +42,7 @@ using trompeloeil::_;
 
 TEST_F(DataMessageWriterTest, WriteMessageSuccess) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1);
+  FileWriter::FlatbufferMessage Msg;
   WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
   {
     DataMessageWriterStandIn Writer{MetReg};
@@ -70,9 +72,24 @@ TEST_F(DataMessageWriterTest, WriteMessageExceptionUnknownFb) {
   }
 }
 
+class xxxFbReader : public FileWriter::FlatbufferReader {
+  bool verify(FileWriter::FlatbufferMessage const&) const override {
+    return true;
+  }
+
+  std::string source_name(FileWriter::FlatbufferMessage const&) const override {
+    return "some_name";
+  }
+
+  uint64_t timestamp(FileWriter::FlatbufferMessage const&) const override {
+    return 1;
+  }
+};
+
 TEST_F(DataMessageWriterTest, WriteMessageExceptionKnownFb) {
   REQUIRE_CALL(WriterModule, write(_)).TIMES(1).THROW(WriterModule::WriterException("Some error."));
-  std::array<char,8> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
+  std::array<char,9> SomeData{'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x', 'x'};
+  setExtractorModule<xxxFbReader>("xxxx");
   FileWriter::FlatbufferMessage Msg(SomeData.data(), SomeData.size());
   WriteMessage SomeMessage(reinterpret_cast<WriteMessage::DstId>(&WriterModule), Msg);
   {
