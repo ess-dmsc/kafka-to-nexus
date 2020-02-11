@@ -36,50 +36,23 @@ std::map<std::string, std::string> getFactoryIdsAndNames() {
   return ReturnMap;
 }
 
-ModuleFactory const &find(std::string const &FlatbufferID) {
+std::pair<ModuleFactory, std::string> const
+find(std::string const &ModuleName) {
   auto const &Factories = getFactories();
-  auto FoundFactory = std::find_if(Factories.begin(), Factories.end(),
-                                   [&FlatbufferID](auto const &CItem) {
-                                     return CItem.second.Id == FlatbufferID;
-                                   });
-  if (FoundFactory == Factories.end()) {
-    throw std::out_of_range("Unable to find factory with the id: " +
-                            FlatbufferID);
+  auto FoundItem = std::find_if(std::cbegin(Factories), std::cend(Factories),
+                                [&ModuleName](auto const &CItem) {
+                                  return CItem.second.Name == ModuleName;
+                                });
+  if (FoundItem == Factories.end()) {
+    throw std::out_of_range("Unable to find module with name \" " + ModuleName +
+                            "\"");
   }
-  return (*FoundFactory).second.FactoryPtr;
+  return {FoundItem->second.FactoryPtr, FoundItem->second.Id};
 }
 
-ModuleFactory const &find(std::string const &FlatbufferID,
-                          std::string const &ModuleName) {
-  auto const &Factories = getFactories();
-  auto CurrentHash = getWriterModuleHash(FlatbufferID, ModuleName);
-  auto FoundItem = Factories.find(CurrentHash);
-  if (FoundItem != Factories.end()) {
-    return FoundItem->second.FactoryPtr;
-  }
-  FoundItem = std::find_if(std::cbegin(Factories), std::cend(Factories),
-                           [&ModuleName](auto const &CItem) {
-                             return CItem.second.Name == ModuleName;
-                           });
-  if (FoundItem != Factories.end()) {
-    if (not FlatbufferID.empty() and FoundItem->second.Id != FlatbufferID) {
-      throw std::runtime_error(
-          "The provided flatbuffer id (" + FlatbufferID +
-          ") does not correspont to (" + FoundItem->second.Id +
-          ") that of the found writer module (" + ModuleName + ").");
-    }
-    return FoundItem->second.FactoryPtr;
-  }
-  try {
-    return find(FlatbufferID);
-  } catch (std::out_of_range &) {
-  }
-  throw std::out_of_range("Unable to find module with name \" " + ModuleName +
-                          "\"");
-}
-
-ModuleFactory const &find(WriterModuleHash ModuleHash) {
-  return getFactories().at(ModuleHash).FactoryPtr;
+std::pair<ModuleFactory, std::string> const find(WriterModuleHash ModuleHash) {
+  auto FoundModule = getFactories().at(ModuleHash);
+  return {FoundModule.FactoryPtr, FoundModule.Id};
 }
 
 void clear() { getFactories().clear(); }
@@ -96,6 +69,14 @@ void addWriterModule(std::string const &FlatbufferID,
   if (Factories.find(ModuleHash) != Factories.end()) {
     auto s = fmt::format("Writer module with name \"{}\" that processes \"{}\" "
                          "flatbuffers already exists.",
+                         ModuleName, FlatbufferID);
+    throw std::runtime_error(s);
+  }
+  if (std::find_if(Factories.begin(), Factories.end(),
+                   [&ModuleName](auto const &CItem) {
+                     return CItem.second.Name == ModuleName;
+                   }) != Factories.end()) {
+    auto s = fmt::format("Writer module with name \"{}\" already exists.",
                          ModuleName, FlatbufferID);
     throw std::runtime_error(s);
   }

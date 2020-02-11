@@ -8,10 +8,10 @@ def _millseconds_to_nanoseconds(time_ms):
     return int(time_ms * 1000000)
 
 
-def create_f142_message(timestamp_unix_ms=None):
+def create_f142_message(timestamp_unix_ms=None, source_name: str = "fw-test-helpers"):
     file_identifier = b"f142"
     builder = flatbuffers.Builder(1024)
-    source = builder.CreateString("fw-test-helpers")
+    source = builder.CreateString(source_name)
     IntStart(builder)
     IntAddValue(builder, 42)
     int_position = IntEnd(builder)

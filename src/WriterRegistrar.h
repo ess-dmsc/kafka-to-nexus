@@ -37,23 +37,14 @@ std::map<std::string, std::string> getFactoryIdsAndNames();
 void addWriterModule(std::string const &FlatbufferID,
                      std::string const &ModuleName, ModuleFactory Value);
 
-/// \brief Get `ModuleFactory for a given flatbuffer id.
-///
-/// \return Matching `ModuleFactory`.
-ModuleFactory const &find(std::string const &FlatbufferID);
-
-/// \brief Get module factory for a given flatbuffer id and/or module name.
-/// \param[in] FlatbufferID A four character flatbuffer id. Will be ignored if
-/// empty string.
+/// \brief Get module factory for a module name.
 /// \param[in] ModuleName Module name of module instantiated by
 /// factory function.
-/// \return A module factory.
-/// \throw std::runtime_error if module name and flatbuffer id does not exist or
-/// they do not match.
-ModuleFactory const &find(std::string const &FlatbufferID,
-                          std::string const &ModuleName);
+/// \return A module factory and flatbuffer id that this module will accept.
+/// \throw std::runtime_error if module name does not exist.
+std::pair<ModuleFactory, std::string> const find(std::string const &ModuleName);
 
-ModuleFactory const &find(WriterModuleHash ModuleHash);
+std::pair<ModuleFactory, std::string> const find(WriterModuleHash ModuleHash);
 
 void clear();
 

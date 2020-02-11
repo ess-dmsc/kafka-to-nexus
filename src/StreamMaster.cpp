@@ -3,7 +3,6 @@
 #include "KafkaW/ConsumerFactory.h"
 #include "Streamer.h"
 #include "helper.h"
-#include <condition_variable>
 
 namespace FileWriter {
 

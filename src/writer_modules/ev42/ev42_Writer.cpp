@@ -284,8 +284,8 @@ void ev42_Writer::padDatasetsWithZeroesEqualToNumberOfEvents(
   PeakTimeDataset.appendArray(ZeroesUInt64ArrayAdapter);
 }
 
-static WriterModule::Registry::Registrar<ev42_Writer>
-    RegisterWriter("ev42", "general_event_writer");
+static WriterModule::Registry::Registrar<ev42_Writer> RegisterWriter("ev42",
+                                                                     "ev42");
 
 } // namespace ev42
 } // namespace WriterModule

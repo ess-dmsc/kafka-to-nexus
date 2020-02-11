@@ -63,13 +63,17 @@ def consume_everything(topic):
     return consumer.consume(high - 1)
 
 
-def publish_f142_message(producer, topic, kafka_timestamp=None):
+def publish_f142_message(producer, topic, kafka_timestamp=None, source_name=None):
     """
     Publish an f142 message to a given topic.
     Optionally set the timestamp in the kafka header to allow, for example, fake "historical" data.
     :param topic: Name of topic to publish to
     :param kafka_timestamp: Timestamp to set in the Kafka header (milliseconds after unix epoch)
+    :param source_name: Name of the source in the f142 message
     """
-    f142_message = create_f142_message(kafka_timestamp)
+    if source_name is not None:
+        f142_message = create_f142_message(kafka_timestamp, source_name)
+    else:
+        f142_message = create_f142_message(kafka_timestamp)
     producer.produce(topic, f142_message, timestamp=kafka_timestamp)
     producer.poll(0)

@@ -7,7 +7,7 @@ project = "kafka-to-nexus"
 
 // 'no_graylog' builds code with plain spdlog conan package instead of ess-dmsc spdlog-graylog.
 // It fails to build in case graylog functionality was used without prior checking if graylog was available.
-clangformat_os = "debian9"
+clangformat_os = "debian10"
 test_and_coverage_os = "centos7"
 release_os = "centos7-release"
 no_graylog = "centos7-no_graylog"
@@ -16,7 +16,7 @@ container_build_nodes = [
   'centos7': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'centos7-release': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
   'centos7-no_graylog': ContainerBuildNode.getDefaultContainerBuildNode('centos7-gcc8'),
-  'debian9': ContainerBuildNode.getDefaultContainerBuildNode('debian10'),
+  'debian10': ContainerBuildNode.getDefaultContainerBuildNode('debian10'),
   'ubuntu1804': ContainerBuildNode.getDefaultContainerBuildNode('ubuntu1804-gcc8')
 ]
 

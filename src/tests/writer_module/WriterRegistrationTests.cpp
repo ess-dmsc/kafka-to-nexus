@@ -24,13 +24,14 @@ public:
 
 TEST_F(WriterRegistrationTest, SimpleRegistration) {
   std::string TestKey("temp");
+  std::string TestName("SomeName");
   EXPECT_EQ(WriterModule::Registry::getFactoryIdsAndNames().size(), 0u);
   {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey,
-                                                                   "some_name");
+                                                                   TestName);
   }
   EXPECT_EQ(WriterModule::Registry::getFactoryIdsAndNames().size(), 1u);
-  EXPECT_NO_THROW(WriterModule::Registry::find(TestKey));
+  EXPECT_NO_THROW(WriterModule::Registry::find(TestName));
 }
 
 TEST_F(WriterRegistrationTest, SameKeyRegistration) {
@@ -41,6 +42,18 @@ TEST_F(WriterRegistrationTest, SameKeyRegistration) {
   }
   EXPECT_THROW(WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(
                    TestKey, "some_name"),
+               std::runtime_error);
+}
+
+TEST_F(WriterRegistrationTest, SameNameRegistration) {
+  std::string TestKey("temp");
+  std::string TestName("some_name");
+  {
+    WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey,
+                                                                   TestName);
+  }
+  EXPECT_THROW(WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(
+                   "tmp2", TestName),
                std::runtime_error);
 }
 
@@ -58,25 +71,6 @@ TEST_F(WriterRegistrationTest, KeyTooLong) {
                std::runtime_error);
 }
 
-TEST_F(WriterRegistrationTest, StrKeyFound) {
-  std::string TestKey("t3mp");
-  {
-    WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey,
-                                                                   "some_name");
-  }
-  EXPECT_NE(WriterModule::Registry::find(TestKey), nullptr);
-}
-
-TEST_F(WriterRegistrationTest, StrKeyNotFound) {
-  std::string TestKey("t3mp");
-  {
-    WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(TestKey,
-                                                                   "some_name");
-  }
-  std::string FailKey("trump");
-  EXPECT_THROW(WriterModule::Registry::find(FailKey), std::out_of_range);
-}
-
 TEST_F(WriterRegistrationTest, HashKeyFound) {
   std::string UsedKey("t3mp");
   std::string UsedName("some_module_name");
@@ -86,7 +80,7 @@ TEST_F(WriterRegistrationTest, HashKeyFound) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
   }
-  EXPECT_NE(WriterModule::Registry::find(UsedHash), nullptr);
+  EXPECT_NE(WriterModule::Registry::find(UsedHash).first, nullptr);
 }
 
 TEST_F(WriterRegistrationTest, HashKeyNotFoundThrows) {
@@ -134,7 +128,7 @@ TEST_F(WriterRegistrationTest, FindModuleUsingName) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
   }
-  EXPECT_NE(WriterModule::Registry::find("", UsedName), nullptr);
+  EXPECT_NE(WriterModule::Registry::find(UsedName).first, nullptr);
 }
 
 TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownName) {
@@ -144,38 +138,6 @@ TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownName) {
     WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
                                                                    UsedName);
   }
-  EXPECT_THROW(WriterModule::Registry::find("", "Some other name"),
+  EXPECT_THROW(WriterModule::Registry::find("Some other name"),
                std::out_of_range);
-}
-
-TEST_F(WriterRegistrationTest, FindModuleUsingNameAndId) {
-  std::string UsedKey("t3mp");
-  std::string UsedName("some_module_name");
-  {
-    WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
-                                                                   UsedName);
-  }
-  EXPECT_NE(WriterModule::Registry::find(UsedKey, UsedName), nullptr);
-}
-
-TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownNameAndUnknownId) {
-  std::string UsedKey("t3mp");
-  std::string UsedName("some_module_name");
-  {
-    WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
-                                                                   UsedName);
-  }
-  EXPECT_THROW(WriterModule::Registry::find("tst2", "Some other name"),
-               std::out_of_range);
-}
-
-TEST_F(WriterRegistrationTest, FindModuleThrowsForUnknownId) {
-  std::string UsedKey("t3mp");
-  std::string UsedName("some_module_name");
-  {
-    WriterModule::Registry::Registrar<StubWriterModule> RegisterIt(UsedKey,
-                                                                   UsedName);
-  }
-  EXPECT_THROW(WriterModule::Registry::find("tst2", UsedName),
-               std::runtime_error);
 }

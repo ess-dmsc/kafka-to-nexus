@@ -253,8 +253,8 @@ void f142_Writer::write(FlatbufferMessage const &Message) {
   }
 }
 /// Register the writer module.
-static WriterModule::Registry::Registrar<f142_Writer>
-    RegisterWriter("f142", "general_epics_writer");
+static WriterModule::Registry::Registrar<f142_Writer> RegisterWriter("f142",
+                                                                     "f142");
 
 } // namespace f142
 } // namespace WriterModule

@@ -23,7 +23,7 @@ namespace FileWriter {
 struct StreamSettings {
   StreamHDFInfo StreamHDFInfoObj;
   std::string Topic;
-  std::string Module;
+  std::string ModuleName;
   std::string Source;
   std::string ConfigStreamJson;
   std::string Attributes;

@@ -24,7 +24,7 @@ namespace NDAr {
 
 // Register the file writing part of this module.
 static WriterModule::Registry::Registrar<NDAr_Writer>
-    RegisterNDArWriter("NDAr", "area_detector_writer");
+    RegisterNDArWriter("NDAr", "NDAr");
 
 std::uint64_t NDAr_Writer::epicsTimeToNsec(std::uint64_t sec,
                                            std::uint64_t nsec) {

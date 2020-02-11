@@ -25,7 +25,7 @@ namespace senv {
 
 // Register the file writing part of this module
 static WriterModule::Registry::Registrar<senv_Writer>
-    RegisterSenvWriter("senv", "adc_sample_writer");
+    RegisterSenvWriter("senv", "senv");
 
 void senv_Writer::parse_config(std::string const &) {
   Logger->trace("There are currently no runtime configurable options in the "
